@@ -1,0 +1,53 @@
+{
+    "keystone": {
+        "username": "ran",
+        "password": "PPP",
+        "auth_url": "https://region-a.geo-1.identity.hpcloudsvc.com:35357/v2.0/",
+        "tenant_name": "ilya-project"
+    },
+    "neutron": {
+        "url": "https://region-b.geo-1.network.hpcloudsvc.com"
+    },
+    "management": {
+        "region": "az-2.region-a.geo-1",
+        "instance": {
+            "name": "cosmofied-widget-test",
+            "image": "67074",
+            "flavor": "101",
+            "key_name": "cosmofied-widget-kp"
+        },
+        "network": {
+            "externally_provisioned": true,
+            "name": "cosmo-admin-network"
+        },
+        "subnet": {
+            "externally_provisioned": true,
+            "name": "cosmo-admin-network-subnet",
+            "ip_version": 4,
+            "cidr": "10.67.79.0/24"
+        },
+        "ext_network": {
+            "externally_provisioned": true,
+            "name": "Ext-Net"
+        },
+        "router": {
+            "externally_provisioned": true,
+            "name": "cosmo-router"
+        },
+        "security_group_user": {
+            "name": "cosmo-sg-user"
+        },
+        "security_group_manager": {
+            "name": "cosmo-sg-manager",
+            "cidr": "62.90.11.161/32"
+        }
+    },
+    "env": {
+        "workdir": "/home/ran/dev/cosmo/cosmo-widget-cosmofied/widget-app",
+        "dsl_relative_path_in_workdir": "widget-cosmofied-dsl.yaml",
+        "user_on_management": "ubuntu",
+        "userhome_on_management": "/home/ubuntu",
+        "management_key_path": "/home/ran/.ssh/cosmofied-widget-kp.pem",
+        "agents_key_path": "/home/ran/dev/cosmo/cosmo-widget-cosmofied/cosmofied-widget-kp.pem"
+    }
+}
