@@ -26,7 +26,7 @@ setup(
     packages=['cosmo_cli'],
     license='LICENSE',
     description='the cosmo cli',
-    package_data={'cosmo_cli': ['../cosmo-config.json']},
+    package_data={'cosmo_cli': ['cosmo-config.json']},
     install_requires=[
         "python-novaclient",
         "python-keystoneclient",
