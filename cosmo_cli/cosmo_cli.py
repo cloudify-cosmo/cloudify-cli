@@ -302,13 +302,13 @@ class CosmoOnOpenStackInstaller(object):
         self._bootstrap_manager(mgmt_ip)
 
     def _bootstrap_manager(self, mgmt_ip):
-        self.logger.debug()
+        self.logger.debug('initializing manager on the machine at {0}'.format(mgmt_ip))
         env_config = self.config['env']
         ssh = self._create_ssh_channel_with_mgmt(mgmt_ip, env_config)
         try:
             self._copy_files_to_manager(ssh, env_config, self.config['keystone'])
 
-            # installing required packages to run bootstrap_lxc_manager
+            self.logger.debug('installing required packages on manager')
             self._exec_command_on_manager(ssh, 'sudo apt-get -y -q update')
             self._exec_install_command_on_manager(ssh, 'apt-get install -y -q python-dev git rsync openjdk-7-jdk maven')
             self._exec_install_command_on_manager(ssh, 'apt-get install -y -q python-pip')
@@ -325,22 +325,23 @@ class CosmoOnOpenStackInstaller(object):
             version = '0.1-SNAPSHOT'
             configdir = '{0}/cosmo-manager/vagrant'.format(workingdir)
 
+            self.logger.debug('cloning cosmo on manager')
             self._exec_command_on_manager(ssh, 'mkdir -p {0}'.format(workingdir))
-            # cloning and selecting branch
             self._exec_command_on_manager(ssh, 'git clone https://github.com/CloudifySource/cosmo-manager.git '
                                                '{0}/cosmo-manager'
-            .format(workingdir))
+                                          .format(workingdir))
             self._exec_command_on_manager(ssh, '( cd {0}/cosmo-manager ; git checkout {1} )'.format(workingdir, branch))
 
-            # bootstrap the machine as a management machine
+            self.logger.debug('running the manager bootstrap script remotely')
             self._exec_command_on_manager(ssh, 'DEBIAN_FRONTEND=noninteractive python2.7 {0}/cosmo-manager/vagrant/'
                                                'bootstrap_lxc_manager.py --working_dir={0} --cosmo_version={1} '
                                                '--config_dir={2} --install_openstack_provisioner --install_logstash'
-            .format(workingdir, version, configdir))
+                                          .format(workingdir, version, configdir))
 
+            self.logger.debug('rebuilding cosmo on manager')
             self._exec_command_on_manager(ssh, 'mvn -q clean package -DskipTests -Pall -f '
                                                '{0}/cosmo-manager/orchestrator/pom.xml'
-            .format(workingdir))
+                                          .format(workingdir))
             self._exec_command_on_manager(ssh, 'rm {0}/cosmo.jar'.format(workingdir))
             self._exec_command_on_manager(ssh, 'cp {0}/cosmo-manager/orchestrator/target/cosmo.jar {0}'.format(
                 workingdir))
@@ -364,6 +365,7 @@ class CosmoOnOpenStackInstaller(object):
         raise RuntimeError('Failed to ssh connect to management server')
 
     def _copy_files_to_manager(self, ssh, env_config, keystone_config):
+        self.logger.debug('copying files to manager')
         scp = SCPClient(ssh.get_transport())
 
         userhome_on_management = env_config['userhome_on_management']
