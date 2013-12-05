@@ -18,15 +18,20 @@ __author__ = 'ran'
 
 from setuptools import setup
 
+version = '0.1.0'
+
 setup(
     name='cosmo-cli',
-    version='0.1.0',
+    version=version,
     author='ran',
     author_email='ran@gigaspaces.com',
     packages=['cosmo_cli'],
     license='LICENSE',
     description='the cosmo cli',
     package_data={'cosmo_cli': ['cosmo-config.json']},
+    entry_points={
+        'console_scripts': ['cosmo = cosmo_cli.cosmo_cli:main']
+    },
     install_requires=[
         "python-novaclient",
         "python-keystoneclient",

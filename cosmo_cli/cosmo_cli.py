@@ -306,7 +306,7 @@ class CosmoOnOpenStackInstaller(object):
         env_config = self.config['env']
         ssh = self._create_ssh_channel_with_mgmt(mgmt_ip, env_config)
         try:
-            self._copy_files_to_manager(ssh, env_config, config['keystone'])
+            self._copy_files_to_manager(ssh, env_config, self.config['keystone'])
 
             # installing required packages to run bootstrap_lxc_manager
             self._exec_command_on_manager(ssh, 'sudo apt-get -y -q update')
@@ -426,7 +426,7 @@ class CosmoOnOpenStackInstaller(object):
             chan.close()
 
 
-if __name__ == '__main__':
+def main():
     parser = argparse.ArgumentParser(description='Installs Cosmo in an OpenStack environment')
     parser.add_argument(
         'config_file_path',
@@ -451,3 +451,7 @@ if __name__ == '__main__':
     installer = CosmoOnOpenStackInstaller(logger, config, network_creator, subnet_creator, router_creator, sg_creator,
                                           server_creator)
     installer.run()
+
+
+if __name__ == '__main__':
+    main()
