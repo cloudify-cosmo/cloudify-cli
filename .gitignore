@@ -3,6 +3,9 @@
 # Project-specific
 cosmo-config.json
 
+# VIM
+*.swp
+
 # C extensions
 *.so
 
