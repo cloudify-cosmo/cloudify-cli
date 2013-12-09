@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# vim: ts=4 sw=4 et
+
 __author__ = 'ran'
 
 # Standard
@@ -175,7 +178,8 @@ class OpenStackServerCreator(CreateOrEnsureExistsNova):
     WHAT = 'server'
 
     def list_objects_with_name(self, name):
-        return self.nova_client.servers.list(True, {'name': name})
+        servers = self.nova_client.servers.list(True, {'name': name})
+        return [{'id': server.id} for server in servers]
 
     def create(self, name, server_config, *args, **kwargs):
         """
@@ -209,21 +213,30 @@ class OpenStackServerCreator(CreateOrEnsureExistsNova):
 
         self.create_or_ensure_logger.info("Asking Nova to create server. Parameters: {0}".format(str(params)))
 
-        server_info = self.nova_client.servers.create(**params)
-        server_info = self._wait_for_server_to_become_active(server_name, server_info)
-        # returning the public ip of the server
-        return server_info.networks['private'][1]
+        server = self.nova_client.servers.create(**params)
+        server = self._wait_for_server_to_become_active(server_name, server)
+        return server.id
 
-    def _wait_for_server_to_become_active(self, server_name, server_info):
+    def add_floating_ip(self, server_id, ip):
+        server = self.nova_client.servers.get(server_id)
+        server.add_floating_ip(ip)
+
+    def get_server_ip_in_network(self, server_id, network_name):
+        server = self.nova_client.servers.get(server_id)
+        if network_name not in server.networks:
+            raise OpenStackLogicError("Server {0} ({1}) does not have address in network {2}".format(server.name, server_id, network_name))
+        return server.networks[network_name][0]
+
+    def _wait_for_server_to_become_active(self, server_name, server):
         timeout = 100
-        while server_info.status != "ACTIVE":
+        while server.status != "ACTIVE":
             timeout -= 5
             if timeout <= 0:
                 raise RuntimeError('Server failed to start in time')
             time.sleep(5)
-            server_info = self.find_by_name(server_name)
+            server = self.nova_client.servers.get(server.id)
 
-        return server_info
+        return server
 
 
 class OpenStackConnector(object):
@@ -271,38 +284,46 @@ class CosmoOnOpenStackInstaller(object):
 
     def run(self):
         nconf = self.config['management']['network']
-        #net_id = self.network_creator.create_or_ensure_exists(nconf, nconf['name'])
+        net_id = self.network_creator.create_or_ensure_exists(nconf, nconf['name'])
 
         sconf = self.config['management']['subnet']
-        # subnet_id = self.subnet_creator.create_or_ensure_exists(sconf, sconf['name'], sconf['ip_version'],
-        #                                                         sconf['cidr'], net_id)
+        subnet_id = self.subnet_creator.create_or_ensure_exists(sconf, sconf['name'], sconf['ip_version'],
+                                                                sconf['cidr'], net_id)
 
         enconf = self.config['management']['ext_network']
-        # enet_id = self.network_creator.create_or_ensure_exists(enconf, enconf['name'], ext=True)
+        enet_id = self.network_creator.create_or_ensure_exists(enconf, enconf['name'], ext=True)
 
         rconf = self.config['management']['router']
-        # self.router_creator.create_or_ensure_exists(rconf, rconf['name'], interfaces=[
-        #     {'subnet_id': subnet_id},
-        #     ], external_gateway_info={"network_id": enet_id})
-        #
+        self.router_creator.create_or_ensure_exists(rconf, rconf['name'], interfaces=[
+            {'subnet_id': subnet_id},
+            ], external_gateway_info={"network_id": enet_id})
+
         # Security group for Cosmo created instances
         sguconf = self.config['management']['security_group_user']
-        # sgu_id = self.sg_creator.create_or_ensure_exists(sguconf, sguconf['name'], 'Cosmo created machines', [])
+        sgu_id = self.sg_creator.create_or_ensure_exists(sguconf, sguconf['name'], 'Cosmo created machines', [])
 
         # Security group for Cosmo manager, allows created instances -> manager communication
         sgmconf = self.config['management']['security_group_manager']
-        # sg_rules = [{'port': p, 'group_id': sgu_id} for p in INTERNAL_PORTS] + \
-        #            [{'port': p, 'cidr': sgmconf['cidr']} for p in EXTERNAL_PORTS]
-        # sgm_id = self.sg_creator.create_or_ensure_exists(sgmconf, sgmconf['name'], 'Cosmo Manager', sg_rules)
+        sg_rules = [{'port': p, 'group_id': sgu_id} for p in INTERNAL_PORTS] + \
+                   [{'port': p, 'cidr': sgmconf['cidr']} for p in EXTERNAL_PORTS]
+        sgm_id = self.sg_creator.create_or_ensure_exists(sgmconf, sgmconf['name'], 'Cosmo Manager', sg_rules)
 
-        mconf = self.config['management']
-        insconf = mconf['instance']
-        mgmt_ip = self.server_creator.create_or_ensure_exists(mconf, insconf['name'], insconf)
+        insconf = self.config['management']['instance']
+        insconf['nics'] = [
+            {'net-id': net_id},
+        ]
 
-        self._bootstrap_manager(mgmt_ip)
+        self.logger.info('Creating server')
+        server_id = self.server_creator.create_or_ensure_exists(insconf, insconf['name'],
+                                                                {k: v for k,v in insconf.iteritems() if k != EP_FLAG})
+
+        self.logger.info('Attaching IP {0} to the instance'.format(enconf['floating_ip']))
+        self.server_creator.add_floating_ip(server_id, enconf['floating_ip'])
+        # mgmt_ip = self.server_creator.get_server_ip_in_network(server_id, enconf['name'])
+        self._bootstrap_manager(enconf['floating_ip'])
 
     def _bootstrap_manager(self, mgmt_ip):
-        self.logger.debug('initializing manager on the machine at {0}'.format(mgmt_ip))
+        self.logger.info('initializing manager on the machine at {0}'.format(mgmt_ip))
         env_config = self.config['env']
         ssh = self._create_ssh_channel_with_mgmt(mgmt_ip, env_config)
         try:

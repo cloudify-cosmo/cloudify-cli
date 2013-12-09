@@ -28,7 +28,8 @@
         },
         "ext_network": {
             "externally_provisioned": true,
-            "name": "Ext-Net"
+            "name": "Ext-Net",
+            "floating_ip": "1.2.3.4"
         },
         "router": {
             "externally_provisioned": true,
