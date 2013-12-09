@@ -28,7 +28,7 @@ setup(
     packages=['cosmo_cli'],
     license='LICENSE',
     description='the cosmo cli',
-    package_data={'cosmo_cli': ['cosmo-config.json']},
+    package_data={'cosmo_cli': ['cosmo-config.example.json']},
     entry_points={
         'console_scripts': ['cosmo = cosmo_cli.cosmo_cli:main']
     },
