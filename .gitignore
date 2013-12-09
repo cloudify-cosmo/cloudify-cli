@@ -1,5 +1,8 @@
 *.py[cod]
 
+# Project-specific
+cosmo-config.json
+
 # C extensions
 *.so
 
