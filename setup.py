@@ -25,7 +25,7 @@ setup(
     version=version,
     author='ran',
     author_email='ran@gigaspaces.com',
-    packages=['cosmo_cli'],
+    packages=['cosmo_cli','cosmo_rest_client'],
     license='LICENSE',
     description='the cosmo cli',
     package_data={'cosmo_cli': ['cosmo-config.json']},
