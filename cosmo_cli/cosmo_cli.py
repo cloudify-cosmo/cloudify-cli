@@ -9,16 +9,18 @@ import itertools
 import socket
 import os
 import paramiko
-import tarfile
 import shutil
 import tempfile
+import logging
 from scp import SCPClient
-
 
 # OpenStack
 import keystoneclient.v2_0.client as keystone_client
 import novaclient.v1_1.client as nova_client
 import neutronclient.neutron.client as neutron_client
+
+# Project
+from cosmo_rest_client.cosmo_rest_client import CosmoRestClient
 
 EP_FLAG = 'externally_provisioned'
 
@@ -257,8 +259,8 @@ class OpenStackConnector(object):
         return self.nova_client
 
 
-class CosmoOnOpenStackInstaller(object):
-    """ Installs Cosmo on OpenStack """
+class CosmoOnOpenStackBootstrapper(object):
+    """ Bootstraps Cosmo on OpenStack """
 
     def __init__(self, logger, config, network_creator, subnet_creator, router_creator, sg_creator, server_creator):
         self.logger = logger
@@ -270,16 +272,18 @@ class CosmoOnOpenStackInstaller(object):
         self.server_creator = server_creator
 
     def run(self):
+        mgmt_ip = self._create_topology()
+        self._bootstrap_manager(mgmt_ip)
+        return mgmt_ip
+
+    def _create_topology(self):
         nconf = self.config['management']['network']
         #net_id = self.network_creator.create_or_ensure_exists(nconf, nconf['name'])
-
         sconf = self.config['management']['subnet']
         # subnet_id = self.subnet_creator.create_or_ensure_exists(sconf, sconf['name'], sconf['ip_version'],
         #                                                         sconf['cidr'], net_id)
-
         enconf = self.config['management']['ext_network']
         # enet_id = self.network_creator.create_or_ensure_exists(enconf, enconf['name'], ext=True)
-
         rconf = self.config['management']['router']
         # self.router_creator.create_or_ensure_exists(rconf, rconf['name'], interfaces=[
         #     {'subnet_id': subnet_id},
@@ -288,18 +292,15 @@ class CosmoOnOpenStackInstaller(object):
         # Security group for Cosmo created instances
         sguconf = self.config['management']['security_group_user']
         # sgu_id = self.sg_creator.create_or_ensure_exists(sguconf, sguconf['name'], 'Cosmo created machines', [])
-
         # Security group for Cosmo manager, allows created instances -> manager communication
         sgmconf = self.config['management']['security_group_manager']
         # sg_rules = [{'port': p, 'group_id': sgu_id} for p in INTERNAL_PORTS] + \
         #            [{'port': p, 'cidr': sgmconf['cidr']} for p in EXTERNAL_PORTS]
         # sgm_id = self.sg_creator.create_or_ensure_exists(sgmconf, sgmconf['name'], 'Cosmo Manager', sg_rules)
-
         mconf = self.config['management']
         insconf = mconf['instance']
         mgmt_ip = self.server_creator.create_or_ensure_exists(mconf, insconf['name'], insconf)
-
-        self._bootstrap_manager(mgmt_ip)
+        return mgmt_ip
 
     def _bootstrap_manager(self, mgmt_ip):
         self.logger.debug('initializing manager on the machine at {0}'.format(mgmt_ip))
@@ -329,22 +330,14 @@ class CosmoOnOpenStackInstaller(object):
             self._exec_command_on_manager(ssh, 'mkdir -p {0}'.format(workingdir))
             self._exec_command_on_manager(ssh, 'git clone https://github.com/CloudifySource/cosmo-manager.git '
                                                '{0}/cosmo-manager'
-                                          .format(workingdir))
+            .format(workingdir))
             self._exec_command_on_manager(ssh, '( cd {0}/cosmo-manager ; git checkout {1} )'.format(workingdir, branch))
 
             self.logger.debug('running the manager bootstrap script remotely')
             self._exec_command_on_manager(ssh, 'DEBIAN_FRONTEND=noninteractive python2.7 {0}/cosmo-manager/vagrant/'
                                                'bootstrap_lxc_manager.py --working_dir={0} --cosmo_version={1} '
                                                '--config_dir={2} --install_openstack_provisioner --install_logstash'
-                                          .format(workingdir, version, configdir))
-
-            self.logger.debug('rebuilding cosmo on manager')
-            self._exec_command_on_manager(ssh, 'mvn -q clean package -DskipTests -Pall -f '
-                                               '{0}/cosmo-manager/orchestrator/pom.xml'
-                                          .format(workingdir))
-            self._exec_command_on_manager(ssh, 'rm {0}/cosmo.jar'.format(workingdir))
-            self._exec_command_on_manager(ssh, 'cp {0}/cosmo-manager/orchestrator/target/cosmo.jar {0}'.format(
-                workingdir))
+            .format(workingdir, version, configdir))
         finally:
             ssh.close()
 
@@ -369,29 +362,11 @@ class CosmoOnOpenStackInstaller(object):
         scp = SCPClient(ssh.get_transport())
 
         userhome_on_management = env_config['userhome_on_management']
-        workdir = env_config['workdir']
-
         tempdir = tempfile.mkdtemp()
         try:
             scp.put(env_config['agents_key_path'], userhome_on_management + '/.ssh', preserve_times=True)
             keystone_file_path = self._make_keystone_file(tempdir, keystone_config)
             scp.put(keystone_file_path, userhome_on_management, preserve_times=True)
-
-            runtime_dir = os.getcwd()
-            os.chdir(workdir)
-            try:
-                app_name = os.path.basename(workdir)
-                tar_name = '{0}.tar.gz'.format(app_name)
-                tar_path = os.path.join('{0}'.format(tempdir), tar_name)
-                tar = tarfile.open(tar_path, 'w:gz')
-                try:
-                    tar.add(workdir, arcname=app_name)
-                finally:
-                    tar.close()
-                scp.put(tar_path, userhome_on_management, preserve_times=True)
-                self._exec_command_on_manager(ssh, 'tar xzvf {0}/{1}'.format(userhome_on_management, tar_name))
-            finally:
-                os.chdir(runtime_dir)
         finally:
             shutil.rmtree(tempdir)
 
@@ -429,20 +404,62 @@ class CosmoOnOpenStackInstaller(object):
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Installs Cosmo in an OpenStack environment')
-    parser.add_argument(
-        'config_file_path',
-        metavar='CONFIG_FILE',
-        help='Path to the cosmo configuration file'
-    )
-    args = parser.parse_args()
-
-    with open(args.config_file_path) as f:
-        config = json.loads(f.read())
-
-    import logging
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
+
+    parser = argparse.ArgumentParser(description='Installs Cosmo in an OpenStack environment')
+    subparsers = parser.add_subparsers()
+
+    parser_bootstrap = subparsers.add_parser('bootstrap', help='command for bootstrapping cosmo on openstack')
+    parser_publish = subparsers.add_parser('publish', help='command for publishing an application deployment plan')
+    parser_execute = subparsers.add_parser('execute', help='command for executing an application deployment plan '
+                                                           'operation')
+
+    parser_bootstrap.add_argument(
+        'config_file_path',
+        metavar='CONFIG_FILE',
+        type=argparse.FileType(),
+        help='Path to the cosmo configuration file'
+    )
+    parser_bootstrap.set_defaults(handler=_bootstrap_cosmo)
+
+    parser_publish.add_argument(
+        'blueprint_path',
+        metavar='BLUEPRINT_FILE',
+        help="Path to the application's blueprint file"
+    )
+    parser_publish.add_argument(
+        'management_ip',
+        metavar='MANAGEMENT_IP',
+        help='The cosmo management server ip address'
+    )
+    parser_publish.set_defaults(handler=_publish_blueprint)
+
+    parser_execute.add_argument(
+        'operation',
+        metavar='OPERATION',
+        choices=['install'],
+        help='The operation to execute'
+    )
+    parser_execute.add_argument(
+        'blueprint_id',
+        metavar='BLUEPRINT_ID',
+        help='The blueprint id in the catalog'
+    )
+    parser_execute.add_argument(
+        'management_ip',
+        metavar='MANAGEMENT_IP',
+        help='The cosmo management server ip address'
+    )
+    parser_execute.set_defaults(handler=_execute_blueprint)
+
+    args = parser.parse_args()
+    args.handler(logger, **args)
+
+
+def _bootstrap_cosmo(logger, config_file_path, **kwargs):
+    with open(config_file_path) as f:
+        config = json.loads(f.read())
 
     connector = OpenStackConnector(config)
     network_creator = OpenStackNetworkCreator(logger, connector)
@@ -450,9 +467,22 @@ def main():
     router_creator = OpenStackRouterCreator(logger, connector)
     server_creator = OpenStackServerCreator(logger, connector)
     sg_creator = OpenStackSecurityGroupCreator(logger, connector)
-    installer = CosmoOnOpenStackInstaller(logger, config, network_creator, subnet_creator, router_creator, sg_creator,
-                                          server_creator)
-    installer.run()
+    bootstrapper = CosmoOnOpenStackBootstrapper(logger, config, network_creator, subnet_creator, router_creator,
+                                                sg_creator, server_creator)
+    mgmt_ip = bootstrapper.run()
+    print("Management server is up at {0}".format(mgmt_ip))
+
+
+def _publish_blueprint(logger, blueprint_path, management_ip, **kwargs):
+    client = CosmoRestClient(management_ip)
+    blueprint_state = client.publish_blueprint(blueprint_path)
+    print("Published blueprint; State: {0}".format(blueprint_state))
+
+
+def _execute_blueprint(logger, blueprint_id, operation, management_ip, **kwargs):
+    client = CosmoRestClient(management_ip)
+    client.execute_blueprint(blueprint_id, operation)
+    print("Finished executing operation {0} on blueprint".format(operation))
 
 
 if __name__ == '__main__':
