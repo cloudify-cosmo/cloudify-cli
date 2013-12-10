@@ -25,9 +25,11 @@ import neutronclient.neutron.client as neutron_client
 
 EP_FLAG = 'externally_provisioned'
 
-EXTERNAL_PORTS = (22, 9000)
+EXTERNAL_PORTS = (22, 8100) # SSH, REST service
 INTERNAL_PORTS = (5555, 5672) # Riemann, RabbitMQ
 
+SSH_CONNECT_RETRIES = 5
+SSH_CONNECT_SLEEP = 5
 
 class OpenStackLogicError(RuntimeError):
     pass
@@ -313,7 +315,6 @@ class CosmoOnOpenStackInstaller(object):
             {'net-id': net_id},
         ]
 
-        self.logger.info('Creating server')
         server_id = self.server_creator.create_or_ensure_exists(insconf, insconf['name'],
                                                                 {k: v for k,v in insconf.iteritems() if k != EP_FLAG})
 
@@ -330,6 +331,7 @@ class CosmoOnOpenStackInstaller(object):
             self._copy_files_to_manager(ssh, env_config, self.config['keystone'])
 
             self.logger.debug('installing required packages on manager')
+            self._exec_command_on_manager(ssh, 'echo "127.0.0.1 $(cat /etc/hostname)" | sudo tee -a /etc/hosts')
             self._exec_command_on_manager(ssh, 'sudo apt-get -y -q update')
             self._exec_install_command_on_manager(ssh, 'apt-get install -y -q python-dev git rsync openjdk-7-jdk maven')
             self._exec_install_command_on_manager(ssh, 'apt-get install -y -q python-pip')
@@ -356,37 +358,40 @@ class CosmoOnOpenStackInstaller(object):
             self.logger.debug('running the manager bootstrap script remotely')
             self._exec_command_on_manager(ssh, 'DEBIAN_FRONTEND=noninteractive python2.7 {0}/cosmo-manager/vagrant/'
                                                'bootstrap_lxc_manager.py --working_dir={0} --cosmo_version={1} '
-                                               '--config_dir={2} --install_openstack_provisioner --install_logstash'
+                                               '--config_dir={2} --install_openstack_provisioner --install_logstash '
+                                               '|& logger -i -t cosmo-bootstrap -p local0.info'
                                           .format(workingdir, version, configdir))
 
             self.logger.debug('rebuilding cosmo on manager')
+
+            # TODO: remove - start
             self._exec_command_on_manager(ssh, 'mvn -q clean package -DskipTests -Pall -f '
                                                '{0}/cosmo-manager/orchestrator/pom.xml'
                                           .format(workingdir))
             self._exec_command_on_manager(ssh, 'rm {0}/cosmo.jar'.format(workingdir))
             self._exec_command_on_manager(ssh, 'cp {0}/cosmo-manager/orchestrator/target/cosmo.jar {0}'.format(
                 workingdir))
+            # TODO: remove - end
         finally:
             ssh.close()
 
     def _create_ssh_channel_with_mgmt(self, mgmt_ip, env_config):
         ssh = paramiko.SSHClient()
+        # TODO: support fingerprint in config json
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         #trying to ssh connect to management server. Using retries since it might take some time to find routes to host
-        retries = 5
-        while retries > 0:
+        for retry in range(0, SSH_CONNECT_RETRIES):
             try:
                 ssh.connect(mgmt_ip, username=env_config['user_on_management'],
                             key_filename=env_config['management_key_path'], look_for_keys=False)
                 return ssh
             except socket.error:
-                retries -= 1
-                time.sleep(5)
+                time.sleep(SSH_CONNECT_SLEEP)
         raise RuntimeError('Failed to ssh connect to management server')
 
     def _copy_files_to_manager(self, ssh, env_config, keystone_config):
-        self.logger.debug('copying files to manager')
+        self.logger.info('Uploading files to manager')
         scp = SCPClient(ssh.get_transport())
 
         userhome_on_management = env_config['userhome_on_management']
@@ -398,21 +403,21 @@ class CosmoOnOpenStackInstaller(object):
             keystone_file_path = self._make_keystone_file(tempdir, keystone_config)
             scp.put(keystone_file_path, userhome_on_management, preserve_times=True)
 
-            runtime_dir = os.getcwd()
-            os.chdir(workdir)
-            try:
-                app_name = os.path.basename(workdir)
-                tar_name = '{0}.tar.gz'.format(app_name)
-                tar_path = os.path.join('{0}'.format(tempdir), tar_name)
-                tar = tarfile.open(tar_path, 'w:gz')
-                try:
-                    tar.add(workdir, arcname=app_name)
-                finally:
-                    tar.close()
-                scp.put(tar_path, userhome_on_management, preserve_times=True)
-                self._exec_command_on_manager(ssh, 'tar xzvf {0}/{1}'.format(userhome_on_management, tar_name))
-            finally:
-                os.chdir(runtime_dir)
+            # runtime_dir = os.getcwd()
+            # os.chdir(workdir)
+            # try:
+            #     app_name = os.path.basename(workdir)
+            #     tar_name = '{0}.tar.gz'.format(app_name)
+            #     tar_path = os.path.join('{0}'.format(tempdir), tar_name)
+            #     tar = tarfile.open(tar_path, 'w:gz')
+            #     try:
+            #         tar.add(workdir, arcname=app_name)
+            #     finally:
+            #         tar.close()
+            #     scp.put(tar_path, userhome_on_management, preserve_times=True)
+            #     self._exec_command_on_manager(ssh, 'tar xzvf {0}/{1}'.format(userhome_on_management, tar_name))
+            # finally:
+            #     os.chdir(runtime_dir)
         finally:
             shutil.rmtree(tempdir)
 
@@ -427,6 +432,7 @@ class CosmoOnOpenStackInstaller(object):
         return self._exec_command_on_manager(ssh, command)
 
     def _exec_command_on_manager(self, ssh, command):
+        self.logger.info('EXEC START: {0}'.format(command))
         chan = ssh.get_transport().open_session()
         chan.exec_command(command)
         stdin = chan.makefile('wb', -1)
@@ -441,6 +447,7 @@ class CosmoOnOpenStackInstaller(object):
                                    'was: {0} ; Error(s): {1}'.format(command, errors))
 
             response_lines = stdout.readlines()
+            self.logger.info('EXEC END: {0}'.format(command))
             return response_lines
         finally:
             stdin.close()
