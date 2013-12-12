@@ -24,8 +24,11 @@ from cosmo_rest_client.cosmo_rest_client import CosmoRestClient
 
 EP_FLAG = 'externally_provisioned'
 
-EXTERNAL_PORTS = (22, 9000)
+EXTERNAL_PORTS = (22, 8100) # SSH, REST service
 INTERNAL_PORTS = (5555, 5672) # Riemann, RabbitMQ
+
+SSH_CONNECT_RETRIES = 5
+SSH_CONNECT_SLEEP = 5
 
 
 class OpenStackLogicError(RuntimeError):
@@ -177,7 +180,8 @@ class OpenStackServerCreator(CreateOrEnsureExistsNova):
     WHAT = 'server'
 
     def list_objects_with_name(self, name):
-        return self.nova_client.servers.list(True, {'name': name})
+        servers = self.nova_client.servers.list(True, {'name': name})
+        return [{'id': server.id} for server in servers]
 
     def create(self, name, server_config, *args, **kwargs):
         """
@@ -211,21 +215,21 @@ class OpenStackServerCreator(CreateOrEnsureExistsNova):
 
         self.create_or_ensure_logger.info("Asking Nova to create server. Parameters: {0}".format(str(params)))
 
-        server_info = self.nova_client.servers.create(**params)
-        server_info = self._wait_for_server_to_become_active(server_name, server_info)
+        server = self.nova_client.servers.create(**params)
+        server = self._wait_for_server_to_become_active(server_name, server)
         # returning the public ip of the server
-        return server_info.networks['private'][1]
+        return server.networks['private'][1]
 
-    def _wait_for_server_to_become_active(self, server_name, server_info):
+    def _wait_for_server_to_become_active(self, server_name, server):
         timeout = 100
-        while server_info.status != "ACTIVE":
+        while server.status != "ACTIVE":
             timeout -= 5
             if timeout <= 0:
                 raise RuntimeError('Server failed to start in time')
             time.sleep(5)
-            server_info = self.find_by_name(server_name)
+            server = self.nova_client.servers.get(server.id)
 
-        return server_info
+        return server
 
 
 class OpenStackConnector(object):
@@ -297,13 +301,18 @@ class CosmoOnOpenStackBootstrapper(object):
         # sg_rules = [{'port': p, 'group_id': sgu_id} for p in INTERNAL_PORTS] + \
         #            [{'port': p, 'cidr': sgmconf['cidr']} for p in EXTERNAL_PORTS]
         # sgm_id = self.sg_creator.create_or_ensure_exists(sgmconf, sgmconf['name'], 'Cosmo Manager', sg_rules)
+        insconf = self.config['management']['instance']
+        # insconf['nics'] = [
+        #     {'net-id': net_id},
+        # ]
+
         mconf = self.config['management']
         insconf = mconf['instance']
         mgmt_ip = self.server_creator.create_or_ensure_exists(mconf, insconf['name'], insconf)
         return mgmt_ip
 
     def _bootstrap_manager(self, mgmt_ip):
-        self.logger.debug('initializing manager on the machine at {0}'.format(mgmt_ip))
+        self.logger.info('initializing manager on the machine at {0}'.format(mgmt_ip))
         env_config = self.config['env']
         ssh = self._create_ssh_channel_with_mgmt(mgmt_ip, env_config)
         try:
@@ -336,29 +345,29 @@ class CosmoOnOpenStackBootstrapper(object):
             self.logger.debug('running the manager bootstrap script remotely')
             self._exec_command_on_manager(ssh, 'DEBIAN_FRONTEND=noninteractive python2.7 {0}/cosmo-manager/vagrant/'
                                                'bootstrap_lxc_manager.py --working_dir={0} --cosmo_version={1} '
-                                               '--config_dir={2} --install_openstack_provisioner --install_logstash'
+                                               '--config_dir={2} --install_openstack_provisioner --install_logstash '
+                                               '|& logger -i -t cosmo-bootstrap -p local0.info'
             .format(workingdir, version, configdir))
         finally:
             ssh.close()
 
     def _create_ssh_channel_with_mgmt(self, mgmt_ip, env_config):
         ssh = paramiko.SSHClient()
+        # TODO: support fingerprint in config json
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
         #trying to ssh connect to management server. Using retries since it might take some time to find routes to host
-        retries = 5
-        while retries > 0:
+        for retry in range(0, SSH_CONNECT_RETRIES):
             try:
                 ssh.connect(mgmt_ip, username=env_config['user_on_management'],
                             key_filename=env_config['management_key_path'], look_for_keys=False)
                 return ssh
             except socket.error:
-                retries -= 1
-                time.sleep(5)
+                time.sleep(SSH_CONNECT_SLEEP)
         raise RuntimeError('Failed to ssh connect to management server')
 
     def _copy_files_to_manager(self, ssh, env_config, keystone_config):
-        self.logger.debug('copying files to manager')
+        self.logger.info('Uploading files to manager')
         scp = SCPClient(ssh.get_transport())
 
         userhome_on_management = env_config['userhome_on_management']
@@ -381,6 +390,7 @@ class CosmoOnOpenStackBootstrapper(object):
         return self._exec_command_on_manager(ssh, command)
 
     def _exec_command_on_manager(self, ssh, command):
+        self.logger.debug('EXEC START: {0}'.format(command))
         chan = ssh.get_transport().open_session()
         chan.exec_command(command)
         stdin = chan.makefile('wb', -1)
@@ -395,6 +405,7 @@ class CosmoOnOpenStackBootstrapper(object):
                                    'was: {0} ; Error(s): {1}'.format(command, errors))
 
             response_lines = stdout.readlines()
+            self.logger.debug('EXEC END: {0}'.format(command))
             return response_lines
         finally:
             stdin.close()
@@ -411,12 +422,11 @@ def main():
     subparsers = parser.add_subparsers()
 
     parser_bootstrap = subparsers.add_parser('bootstrap', help='command for bootstrapping cosmo on openstack')
-    parser_publish = subparsers.add_parser('publish', help='command for publishing an application deployment plan')
-    parser_execute = subparsers.add_parser('execute', help='command for executing an application deployment plan '
-                                                           'operation')
+    parser_publish = subparsers.add_parser('publish', help='command for publishing a blueprint')
+    parser_execute = subparsers.add_parser('execute', help='command for executing a blueprint\'s operation')
 
     parser_bootstrap.add_argument(
-        'config_file_path',
+        'config_file',
         metavar='CONFIG_FILE',
         type=argparse.FileType(),
         help='Path to the cosmo configuration file'
@@ -451,15 +461,17 @@ def main():
         metavar='MANAGEMENT_IP',
         help='The cosmo management server ip address'
     )
-    parser_execute.set_defaults(handler=_execute_blueprint)
+    parser_execute.set_defaults(handler=_execute_blueprint_operation)
 
     args = parser.parse_args()
-    args.handler(logger, **args)
+    args.handler(logger, args)
 
 
-def _bootstrap_cosmo(logger, config_file_path, **kwargs):
-    with open(config_file_path) as f:
-        config = json.loads(f.read())
+def _bootstrap_cosmo(logger, args):
+    try:
+        config = json.loads(args.config_file.read())
+    finally:
+        args.config_file.close()
 
     connector = OpenStackConnector(config)
     network_creator = OpenStackNetworkCreator(logger, connector)
@@ -473,16 +485,26 @@ def _bootstrap_cosmo(logger, config_file_path, **kwargs):
     print("Management server is up at {0}".format(mgmt_ip))
 
 
-def _publish_blueprint(logger, blueprint_path, management_ip, **kwargs):
+def _publish_blueprint(logger, args):
+    blueprint_path = args.blueprint_path
+    management_ip = args.management_ip
+
+    logger.info('publishing blueprint {0} to management server {1}'.format(blueprint_path, management_ip))
     client = CosmoRestClient(management_ip)
     blueprint_state = client.publish_blueprint(blueprint_path)
-    print("Published blueprint; State: {0}".format(blueprint_state))
+    logger.info("Published blueprint, blueprint's id is: {0}".format(blueprint_state.id))
 
 
-def _execute_blueprint(logger, blueprint_id, operation, management_ip, **kwargs):
+def _execute_blueprint_operation(logger, args):
+    blueprint_id = args.blueprint_id
+    operation = args.operation
+    management_ip = args.management_ip
+
+    logger.info('executing operation {0} on blueprint {1} at management server {2}'.format(operation, blueprint_id,
+                                                                                           management_ip))
     client = CosmoRestClient(management_ip)
     client.execute_blueprint(blueprint_id, operation)
-    print("Finished executing operation {0} on blueprint".format(operation))
+    logger.info("Finished executing operation {0} on blueprint".format(operation))
 
 
 if __name__ == '__main__':

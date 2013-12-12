@@ -28,7 +28,7 @@ class ExecutionsApi(object):
     def __init__(self, apiClient):
         self.apiClient = apiClient
 
-    
+
     def get(self, id, **kwargs):
         """Get an execution by ID
 

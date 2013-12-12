@@ -28,7 +28,7 @@ class ApiClient:
         self.cookie = None
 
     def callAPI(self, resourcePath, method, queryParams, postData,
-                headerParams=None):
+                headerParams=None, isPostDataBinary=False):
 
         url = self.apiServer + resourcePath
         headers = {}
@@ -58,11 +58,14 @@ class ApiClient:
             pass
 
         elif method in ['POST', 'PUT', 'DELETE']:
-
+            headers['Content-type'] = 'application/json'
             if postData:
-                headers['Content-type'] = 'application/json'
-                data = self.sanitizeForSerialization(postData)
-                data = json.dumps(data)
+                if not isPostDataBinary:
+                    data = self.sanitizeForSerialization(postData)
+                    data = json.dumps(data)
+                else:
+                    headers['Content-type'] = 'application/octet-stream'
+                    data = postData
 
         else:
             raise Exception('Method ' + method + ' is not recognized.')
@@ -172,7 +175,7 @@ class ApiClient:
                     setattr(instance, attr, value)
                 elif (attrType == 'datetime'):
                     setattr(instance, attr, datetime.datetime.strptime(value[:-5],
-                                              "%Y-%m-%dT%H:%M:%S.%f"))
+                                                                       "%Y-%m-%dT%H:%M:%S.%f"))
                 elif 'list[' in attrType:
                     match = re.match('list\[(.*)\]', attrType)
                     subClass = match.group(1)

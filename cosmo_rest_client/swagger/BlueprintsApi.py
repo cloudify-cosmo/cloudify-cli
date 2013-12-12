@@ -28,16 +28,19 @@ class BlueprintsApi(object):
     def __init__(self, apiClient):
         self.apiClient = apiClient
 
-    def upload(self, body, **kwargs):
+
+    def upload(self, body, application_archive_name, application_file_name, **kwargs):
         """Upload a new blueprint to Cloudify
 
         Args:
-            body, Blueprint: blueprint object that needs to be added. YAML. (required)
+            body, file: application archive (required)
+            application_archive_name, str: application archive name (required)
+            application_file_name, str: application file name (required)
             
         Returns: BlueprintState
         """
 
-        allParams = ['body']
+        allParams = ['body', 'application_archive_name', 'application_file_name']
 
         params = locals()
         for (key, val) in params['kwargs'].iteritems():
@@ -53,18 +56,22 @@ class BlueprintsApi(object):
         queryParams = {}
         headerParams = {}
 
+        if ('application_archive_name' in params):
+            queryParams['application_archive_name'] = self.apiClient.toPathValue(params['application_archive_name'])
+        if ('application_file_name' in params):
+            queryParams['application_file_name'] = self.apiClient.toPathValue(params['application_file_name'])
         postData = (params['body'] if 'body' in params else None)
 
         response = self.apiClient.callAPI(resourcePath, method, queryParams,
-                                          postData, headerParams)
+                                          postData, headerParams, True)
 
         if not response:
             return None
 
         responseObject = self.apiClient.deserialize(response, 'BlueprintState')
         return responseObject
-        
-        
+
+
     def list(self, **kwargs):
         """Lists all blueprints
 
@@ -99,20 +106,20 @@ class BlueprintsApi(object):
 
         responseObject = self.apiClient.deserialize(response, 'array[BlueprintState]')
         return responseObject
-        
-        
-    def run(self, id, workflowId, deploymentId, **kwargs):
+
+
+    def run(self, id, body, deploymentId, **kwargs):
         """Run a blueprint
 
         Args:
             id, str: ID of the blueprint to run (required)
-            workflowId, str: ID of the workflow to run (required)
+            body, str: json data to send to the server (required)
             deploymentId, str: ID of the deployment, if empty then create a new one (required)
-            
+
         Returns: Execution
         """
 
-        allParams = ['id', 'workflowId', 'deploymentId']
+        allParams = ['id', 'body', 'deploymentId']
 
         params = locals()
         for (key, val) in params['kwargs'].iteritems():
@@ -132,10 +139,6 @@ class BlueprintsApi(object):
             replacement = str(self.apiClient.toPathValue(params['id']))
             resourcePath = resourcePath.replace('{' + 'id' + '}',
                                                 replacement)
-        if ('workflowId' in params):
-            replacement = str(self.apiClient.toPathValue(params['workflowId']))
-            resourcePath = resourcePath.replace('{' + 'workflowId' + '}',
-                                                replacement)
         if ('deploymentId' in params):
             replacement = str(self.apiClient.toPathValue(params['deploymentId']))
             resourcePath = resourcePath.replace('{' + 'deploymentId' + '}',
@@ -150,8 +153,8 @@ class BlueprintsApi(object):
 
         responseObject = self.apiClient.deserialize(response, 'Execution')
         return responseObject
-        
-        
+
+
     def list_deployments(self, id, **kwargs):
         """Get a list of all deployments of this blueprint
 
@@ -166,7 +169,7 @@ class BlueprintsApi(object):
         params = locals()
         for (key, val) in params['kwargs'].iteritems():
             if key not in allParams:
-                raise TypeError("Got an unexpected keyword argument '%s' to method " % key)
+                raise TypeError("Got an unexpected keyword argument '%s' to method list_deployments" % key)
             params[key] = val
         del params['kwargs']
 
