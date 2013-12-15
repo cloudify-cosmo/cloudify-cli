@@ -29,18 +29,17 @@ class BlueprintsApi(object):
         self.apiClient = apiClient
 
 
-    def upload(self, body, application_archive_name, application_file_name, **kwargs):
+    def upload(self, body, application_file_name, **kwargs):
         """Upload a new blueprint to Cloudify
 
         Args:
             body, file: application archive (required)
-            application_archive_name, str: application archive name (required)
             application_file_name, str: application file name (required)
             
         Returns: BlueprintState
         """
 
-        allParams = ['body', 'application_archive_name', 'application_file_name']
+        allParams = ['body', 'application_file_name']
 
         params = locals()
         for (key, val) in params['kwargs'].iteritems():
@@ -56,8 +55,6 @@ class BlueprintsApi(object):
         queryParams = {}
         headerParams = {}
 
-        if ('application_archive_name' in params):
-            queryParams['application_archive_name'] = self.apiClient.toPathValue(params['application_archive_name'])
         if ('application_file_name' in params):
             queryParams['application_file_name'] = self.apiClient.toPathValue(params['application_file_name'])
         postData = (params['body'] if 'body' in params else None)
