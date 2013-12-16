@@ -1,6 +1,6 @@
 {
     "keystone": {
-        "username": "ran",
+        "username": "UUU",
         "password": "PPP",
         "auth_url": "https://region-a.geo-1.identity.hpcloudsvc.com:35357/v2.0/",
         "tenant_name": "ilya-project"
@@ -13,7 +13,7 @@
         "instance": {
             "name": "cosmofied-widget-test",
             "image": "67074",
-            "flavor": "101",
+            "flavor": "102",
             "key_name": "cosmofied-widget-kp"
         },
         "network": {
@@ -44,8 +44,6 @@
         }
     },
     "env": {
-        "workdir": "/home/ran/dev/cosmo/cosmo-widget-cosmofied/widget-app",
-        "dsl_relative_path_in_workdir": "widget-cosmofied-dsl.yaml",
         "user_on_management": "ubuntu",
         "userhome_on_management": "/home/ubuntu",
         "management_key_path": "/path/to/key/for/ssh/connection/while/bootstrapping/manager",
