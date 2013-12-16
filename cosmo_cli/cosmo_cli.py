@@ -524,7 +524,7 @@ def _publish_blueprint(logger, args):
     blueprint_path = args.blueprint_path
     management_ip = args.management_ip
 
-    logger.info('publishing blueprint {0} to management server {1}'.format(blueprint_path, management_ip))
+    logger.info('Publishing blueprint {0} to management server {1}'.format(blueprint_path, management_ip))
     client = CosmoRestClient(management_ip)
     blueprint_state = client.publish_blueprint(blueprint_path)
     logger.info("Published blueprint, blueprint's id is: {0}".format(blueprint_state.id))
@@ -535,7 +535,7 @@ def _execute_blueprint_operation(logger, args):
     operation = args.operation
     management_ip = args.management_ip
 
-    logger.info('executing operation {0} on blueprint {1} at management server {2}'.format(operation, blueprint_id,
+    logger.info('Executing operation {0} on blueprint {1} at management server {2}'.format(operation, blueprint_id,
                                                                                            management_ip))
     client = CosmoRestClient(management_ip)
     client.execute_blueprint(blueprint_id, operation)
