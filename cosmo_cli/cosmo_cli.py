@@ -101,13 +101,15 @@ class OpenStackNetworkCreator(CreateOrEnsureExistsNeutron):
         return self.neutron_client.list_networks(name=name)['networks']
 
     def create(self, name, ext=False):
-        ret = self.neutron_client.create_network({
+        n = {
             'network': {
                 'name': name,
                 'admin_state_up': True,
-                'router:external': ext
             }
-        })
+        }
+        if ext:
+            n['router:external'] =  ext
+        ret = self.neutron_client.create_network(n)
         return ret['network']['id']
 
 
