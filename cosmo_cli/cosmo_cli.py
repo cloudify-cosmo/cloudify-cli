@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# vim: ts=4 sw=4 et
+
 __author__ = 'ran'
 
 # Standard
@@ -30,6 +33,7 @@ INTERNAL_PORTS = (5555, 5672) # Riemann, RabbitMQ
 SSH_CONNECT_RETRIES = 5
 SSH_CONNECT_SLEEP = 5
 
+SHELL_PIPE_TO_LOGGER = ' |& logger -i -t cosmo-bootstrap -p local0.info'
 
 class OpenStackLogicError(RuntimeError):
     pass
@@ -101,13 +105,15 @@ class OpenStackNetworkCreator(CreateOrEnsureExistsNeutron):
         return self.neutron_client.list_networks(name=name)['networks']
 
     def create(self, name, ext=False):
-        ret = self.neutron_client.create_network({
+        n = {
             'network': {
                 'name': name,
                 'admin_state_up': True,
-                'router:external': ext
             }
-        })
+        }
+        if ext:
+            n['router:external'] =  ext
+        ret = self.neutron_client.create_network(n)
         return ret['network']['id']
 
 
@@ -183,7 +189,7 @@ class OpenStackServerCreator(CreateOrEnsureExistsNova):
         servers = self.nova_client.servers.list(True, {'name': name})
         return [{'id': server.id} for server in servers]
 
-    def create(self, name, server_config, *args, **kwargs):
+    def create(self, name, server_config, sgm_id, *args, **kwargs):
         """
         Creates a server. Exposes the parameters mentioned in
         http://docs.openstack.org/developer/python-novaclient/api/novaclient.v1_1.servers.html#novaclient.v1_1.servers.ServerManager.create
@@ -215,10 +221,24 @@ class OpenStackServerCreator(CreateOrEnsureExistsNova):
 
         self.create_or_ensure_logger.info("Asking Nova to create server. Parameters: {0}".format(str(params)))
 
+        configured_sgs = []
+        if params['security_groups'] is not None:
+            configured_sgs = params['security_groups']
+        params['security_groups'] = [sgm_id] + configured_sgs
+
         server = self.nova_client.servers.create(**params)
         server = self._wait_for_server_to_become_active(server_name, server)
-        # returning the public ip of the server
-        return server.networks['private'][1]
+        return server.id
+
+    def add_floating_ip(self, server_id, ip):
+        server = self.nova_client.servers.get(server_id)
+        server.add_floating_ip(ip)
+
+    def get_server_ip_in_network(self, server_id, network_name):
+        server = self.nova_client.servers.get(server_id)
+        if network_name not in server.networks:
+            raise OpenStackLogicError("Server {0} ({1}) does not have address in network {2}".format(server.name, server_id, network_name))
+        return server.networks[network_name][0]
 
     def _wait_for_server_to_become_active(self, server_name, server):
         timeout = 100
@@ -282,48 +302,58 @@ class CosmoOnOpenStackBootstrapper(object):
 
     def _create_topology(self):
         nconf = self.config['management']['network']
-        #net_id = self.network_creator.create_or_ensure_exists(nconf, nconf['name'])
+        net_id = self.network_creator.create_or_ensure_exists(nconf, nconf['name'])
+
         sconf = self.config['management']['subnet']
-        # subnet_id = self.subnet_creator.create_or_ensure_exists(sconf, sconf['name'], sconf['ip_version'],
-        #                                                         sconf['cidr'], net_id)
+        subnet_id = self.subnet_creator.create_or_ensure_exists(sconf, sconf['name'], sconf['ip_version'],
+                                                                sconf['cidr'], net_id)
+
         enconf = self.config['management']['ext_network']
-        # enet_id = self.network_creator.create_or_ensure_exists(enconf, enconf['name'], ext=True)
+        enet_id = self.network_creator.create_or_ensure_exists(enconf, enconf['name'], ext=True)
+
         rconf = self.config['management']['router']
-        # self.router_creator.create_or_ensure_exists(rconf, rconf['name'], interfaces=[
-        #     {'subnet_id': subnet_id},
-        #     ], external_gateway_info={"network_id": enet_id})
-        #
+        self.router_creator.create_or_ensure_exists(rconf, rconf['name'], interfaces=[
+            {'subnet_id': subnet_id},
+            ], external_gateway_info={"network_id": enet_id})
+
         # Security group for Cosmo created instances
         sguconf = self.config['management']['security_group_user']
-        # sgu_id = self.sg_creator.create_or_ensure_exists(sguconf, sguconf['name'], 'Cosmo created machines', [])
+        sgu_id = self.sg_creator.create_or_ensure_exists(sguconf, sguconf['name'], 'Cosmo created machines', [])
+
         # Security group for Cosmo manager, allows created instances -> manager communication
         sgmconf = self.config['management']['security_group_manager']
-        # sg_rules = [{'port': p, 'group_id': sgu_id} for p in INTERNAL_PORTS] + \
-        #            [{'port': p, 'cidr': sgmconf['cidr']} for p in EXTERNAL_PORTS]
-        # sgm_id = self.sg_creator.create_or_ensure_exists(sgmconf, sgmconf['name'], 'Cosmo Manager', sg_rules)
-        insconf = self.config['management']['instance']
-        # insconf['nics'] = [
-        #     {'net-id': net_id},
-        # ]
+        sg_rules = [{'port': p, 'group_id': sgu_id} for p in INTERNAL_PORTS] + \
+                   [{'port': p, 'cidr': sgmconf['cidr']} for p in EXTERNAL_PORTS]
+        sgm_id = self.sg_creator.create_or_ensure_exists(sgmconf, sgmconf['name'], 'Cosmo Manager', sg_rules)
 
-        mconf = self.config['management']
-        insconf = mconf['instance']
-        mgmt_ip = self.server_creator.create_or_ensure_exists(mconf, insconf['name'], insconf)
-        return mgmt_ip
+        insconf = self.config['management']['instance']
+        insconf['nics'] = [
+            {'net-id': net_id},
+        ]
+
+        server_id = self.server_creator.create_or_ensure_exists(
+            insconf,
+            insconf['name'],
+            {k: v for k,v in insconf.iteritems() if k != EP_FLAG},
+            sgm_id,
+        )
+
+        self.logger.info('Attaching IP {0} to the instance'.format(enconf['floating_ip']))
+        self.server_creator.add_floating_ip(server_id, enconf['floating_ip'])
+        return enconf['floating_ip']
 
     def _bootstrap_manager(self, mgmt_ip):
-        self.logger.info('initializing manager on the machine at {0}'.format(mgmt_ip))
+        self.logger.info('Initializing manager on the machine at {0}'.format(mgmt_ip))
         env_config = self.config['env']
         ssh = self._create_ssh_channel_with_mgmt(mgmt_ip, env_config)
         try:
             self._copy_files_to_manager(ssh, env_config, self.config['keystone'])
 
-            self.logger.debug('installing required packages on manager')
-            self._exec_command_on_manager(ssh, 'sudo apt-get -y -q update')
-            self._exec_install_command_on_manager(ssh, 'apt-get install -y -q python-dev git rsync openjdk-7-jdk maven')
-            self._exec_install_command_on_manager(ssh, 'apt-get install -y -q python-pip')
-            self._exec_install_command_on_manager(ssh, 'pip install -q retrying')
-            self._exec_install_command_on_manager(ssh, 'pip install -q timeout-decorator')
+            self.logger.debug('Installing required packages on manager')
+            self._exec_command_on_manager(ssh, 'echo "127.0.0.1 $(cat /etc/hostname)" | sudo tee -a /etc/hosts')
+            self._exec_command_on_manager(ssh, 'sudo apt-get -y -q update' + SHELL_PIPE_TO_LOGGER)
+            self._exec_install_command_on_manager(ssh, 'apt-get install -y -q python-dev git rsync openjdk-7-jdk maven python-pip' + SHELL_PIPE_TO_LOGGER)
+            self._exec_install_command_on_manager(ssh, 'pip install -q retrying timeout-decorator')
 
             # use open sdk java 7
             self._exec_command_on_manager(ssh, 'sudo update-alternatives --set java '
@@ -339,15 +369,16 @@ class CosmoOnOpenStackBootstrapper(object):
             self._exec_command_on_manager(ssh, 'mkdir -p {0}'.format(workingdir))
             self._exec_command_on_manager(ssh, 'git clone https://github.com/CloudifySource/cosmo-manager.git '
                                                '{0}/cosmo-manager'
-            .format(workingdir))
+                                               .format(workingdir))
             self._exec_command_on_manager(ssh, '( cd {0}/cosmo-manager ; git checkout {1} )'.format(workingdir, branch))
 
             self.logger.debug('running the manager bootstrap script remotely')
             self._exec_command_on_manager(ssh, 'DEBIAN_FRONTEND=noninteractive python2.7 {0}/cosmo-manager/vagrant/'
                                                'bootstrap_lxc_manager.py --working_dir={0} --cosmo_version={1} '
-                                               '--config_dir={2} --install_openstack_provisioner --install_logstash '
-                                               '|& logger -i -t cosmo-bootstrap -p local0.info'
-            .format(workingdir, version, configdir))
+                                               '--config_dir={2} --install_openstack_provisioner --install_logstash {3}'
+                                               .format(workingdir, version, configdir, SHELL_PIPE_TO_LOGGER))
+
+            self.logger.debug('rebuilding cosmo on manager')
         finally:
             ssh.close()
 
@@ -376,6 +407,7 @@ class CosmoOnOpenStackBootstrapper(object):
             scp.put(env_config['agents_key_path'], userhome_on_management + '/.ssh', preserve_times=True)
             keystone_file_path = self._make_keystone_file(tempdir, keystone_config)
             scp.put(keystone_file_path, userhome_on_management, preserve_times=True)
+
         finally:
             shutil.rmtree(tempdir)
 
@@ -390,7 +422,7 @@ class CosmoOnOpenStackBootstrapper(object):
         return self._exec_command_on_manager(ssh, command)
 
     def _exec_command_on_manager(self, ssh, command):
-        self.logger.debug('EXEC START: {0}'.format(command))
+        self.logger.info('EXEC START: {0}'.format(command))
         chan = ssh.get_transport().open_session()
         chan.exec_command(command)
         stdin = chan.makefile('wb', -1)
@@ -405,7 +437,7 @@ class CosmoOnOpenStackBootstrapper(object):
                                    'was: {0} ; Error(s): {1}'.format(command, errors))
 
             response_lines = stdout.readlines()
-            self.logger.debug('EXEC END: {0}'.format(command))
+            self.logger.info('EXEC END: {0}'.format(command))
             return response_lines
         finally:
             stdin.close()
@@ -415,8 +447,12 @@ class CosmoOnOpenStackBootstrapper(object):
 
 
 def main():
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     logger = logging.getLogger(__name__)
+
+    # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
+    logging.getLogger("paramiko").setLevel(logging.WARNING)
+    logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
 
     parser = argparse.ArgumentParser(description='Installs Cosmo in an OpenStack environment')
     subparsers = parser.add_subparsers()
@@ -489,7 +525,7 @@ def _publish_blueprint(logger, args):
     blueprint_path = args.blueprint_path
     management_ip = args.management_ip
 
-    logger.info('publishing blueprint {0} to management server {1}'.format(blueprint_path, management_ip))
+    logger.info('Publishing blueprint {0} to management server {1}'.format(blueprint_path, management_ip))
     client = CosmoRestClient(management_ip)
     blueprint_state = client.publish_blueprint(blueprint_path)
     logger.info("Published blueprint, blueprint's id is: {0}".format(blueprint_state.id))
@@ -500,7 +536,7 @@ def _execute_blueprint_operation(logger, args):
     operation = args.operation
     management_ip = args.management_ip
 
-    logger.info('executing operation {0} on blueprint {1} at management server {2}'.format(operation, blueprint_id,
+    logger.info('Executing operation {0} on blueprint {1} at management server {2}'.format(operation, blueprint_id,
                                                                                            management_ip))
     client = CosmoRestClient(management_ip)
     client.execute_blueprint(blueprint_id, operation)
