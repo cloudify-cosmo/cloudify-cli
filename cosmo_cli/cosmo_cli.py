@@ -459,7 +459,8 @@ def main():
 
     parser_bootstrap = subparsers.add_parser('bootstrap', help='command for bootstrapping cosmo on openstack')
     parser_publish = subparsers.add_parser('publish', help='command for publishing a blueprint')
-    parser_execute = subparsers.add_parser('execute', help='command for executing a blueprint\'s operation')
+    parser_execute = subparsers.add_parser('execute', help='command for executing a deployment\'s operation')
+    parser_deploy = subparsers.add_parser('deploy', help='command for creating a new deployment')
 
     parser_bootstrap.add_argument(
         'config_file',
@@ -488,16 +489,28 @@ def main():
         help='The operation to execute'
     )
     parser_execute.add_argument(
-        'blueprint_id',
-        metavar='BLUEPRINT_ID',
-        help='The blueprint id in the catalog'
+        'deployment_id',
+        metavar='DEPLOYMENT_ID',
+        help='The id of the deployment to execute the operation on'
     )
     parser_execute.add_argument(
         'management_ip',
         metavar='MANAGEMENT_IP',
         help='The cosmo management server ip address'
     )
-    parser_execute.set_defaults(handler=_execute_blueprint_operation)
+    parser_execute.set_defaults(handler=_execute_deployment_operation)
+
+    parser_deploy.add_argument(
+        'blueprint_id',
+        metavar='BLUEPRINT_ID',
+        help='The blueprint id in the catalog'
+    )
+    parser_deploy.add_argument(
+        'management_ip',
+        metavar='MANAGEMENT_IP',
+        help='The cosmo management server ip address'
+    )
+    parser_deploy.set_defaults(handler=_create_deployment)
 
     args = parser.parse_args()
     args.handler(logger, args)
@@ -531,16 +544,27 @@ def _publish_blueprint(logger, args):
     logger.info("Published blueprint, blueprint's id is: {0}".format(blueprint_state.id))
 
 
-def _execute_blueprint_operation(logger, args):
+def _create_deployment(logger, args):
     blueprint_id = args.blueprint_id
+    management_ip = args.management_ip
+
+    logger.info('Creating new deployment from blueprint {0} at management server {1}'.format(blueprint_id,
+                                                                                             management_ip))
+    client = CosmoRestClient(management_ip)
+    deployment = client.create_deployment(blueprint_id)
+    logger.info("Deployment created, deployment's id is: {0}".format(deployment.id))
+
+
+def _execute_deployment_operation(logger, args):
+    deployment_id = args.deployment_id
     operation = args.operation
     management_ip = args.management_ip
 
-    logger.info('Executing operation {0} on blueprint {1} at management server {2}'.format(operation, blueprint_id,
-                                                                                           management_ip))
+    logger.info('Executing operation {0} on deployment {1} at management server {2}'.format(operation, deployment_id,
+                                                                                            management_ip))
     client = CosmoRestClient(management_ip)
-    client.execute_blueprint(blueprint_id, operation)
-    logger.info("Finished executing operation {0} on blueprint".format(operation))
+    client.execute_deployment(deployment_id, operation)
+    logger.info("Finished executing operation {0} on deployment".format(operation))
 
 
 if __name__ == '__main__':
