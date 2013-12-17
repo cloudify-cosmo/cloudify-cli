@@ -360,9 +360,9 @@ class CosmoOnOpenStackBootstrapper(object):
                                                '/usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java')
 
             # configure and clone cosmo-manager from github
-            branch = 'develop'
+            branch = env_config['cosmo_branch']
             workingdir = '{0}/cosmo-work'.format(env_config['userhome_on_management'])
-            version = '0.1-SNAPSHOT'
+            version = env_config['cosmo_version']
             configdir = '{0}/cosmo-manager/vagrant'.format(workingdir)
 
             self.logger.debug('cloning cosmo on manager')
@@ -373,10 +373,13 @@ class CosmoOnOpenStackBootstrapper(object):
             self._exec_command_on_manager(ssh, '( cd {0}/cosmo-manager ; git checkout {1} )'.format(workingdir, branch))
 
             self.logger.debug('running the manager bootstrap script remotely')
-            self._exec_command_on_manager(ssh, 'DEBIAN_FRONTEND=noninteractive python2.7 {0}/cosmo-manager/vagrant/'
-                                               'bootstrap_lxc_manager.py --working_dir={0} --cosmo_version={1} '
-                                               '--config_dir={2} --install_openstack_provisioner --install_logstash {3}'
-                                               .format(workingdir, version, configdir, SHELL_PIPE_TO_LOGGER))
+            run_script_command = 'DEBIAN_FRONTEND=noninteractive python2.7 {0}/cosmo-manager/vagrant/' \
+                                 'bootstrap_lxc_manager.py --working_dir={0} --cosmo_version={1} --config_dir={2} ' \
+                                 '--install_openstack_provisioner'.format(workingdir, version, configdir)
+            if 'install_logstash' in env_config and env_config['install_logstash']:
+                run_script_command += ' --install_logstash'
+            run_script_command += ' {0}'.format(SHELL_PIPE_TO_LOGGER)
+            self._exec_command_on_manager(ssh, run_script_command)
 
             self.logger.debug('rebuilding cosmo on manager')
         finally:

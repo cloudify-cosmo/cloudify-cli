@@ -47,6 +47,8 @@
     "env": {
         "user_on_management": "ubuntu",
         "userhome_on_management": "/home/ubuntu",
+        "cosmo_branch": "develop",
+        "cosmo_version": "0.1-SNAPSHOT",
         "management_key_path": "/path/to/key/for/ssh/connection/while/bootstrapping/manager",
         "agents_key_path": "/path/to/key/for/ssh/connection/from/manager/to/provisioned/instances"
     }
