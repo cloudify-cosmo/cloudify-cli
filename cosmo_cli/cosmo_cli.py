@@ -33,6 +33,7 @@ INTERNAL_PORTS = (5555, 5672) # Riemann, RabbitMQ
 SSH_CONNECT_RETRIES = 5
 SSH_CONNECT_SLEEP = 5
 
+SHELL_PIPE_TO_LOGGER = ' |& logger -i -t cosmo-bootstrap -p local0.info'
 
 class OpenStackLogicError(RuntimeError):
     pass
@@ -188,7 +189,7 @@ class OpenStackServerCreator(CreateOrEnsureExistsNova):
         servers = self.nova_client.servers.list(True, {'name': name})
         return [{'id': server.id} for server in servers]
 
-    def create(self, name, server_config, *args, **kwargs):
+    def create(self, name, server_config, sgm_id, *args, **kwargs):
         """
         Creates a server. Exposes the parameters mentioned in
         http://docs.openstack.org/developer/python-novaclient/api/novaclient.v1_1.servers.html#novaclient.v1_1.servers.ServerManager.create
@@ -219,6 +220,11 @@ class OpenStackServerCreator(CreateOrEnsureExistsNova):
             .format(server_name))
 
         self.create_or_ensure_logger.info("Asking Nova to create server. Parameters: {0}".format(str(params)))
+
+        configured_sgs = []
+        if params['security_groups'] is not None:
+            configured_sgs = params['security_groups']
+        params['security_groups'] = [sgm_id] + configured_sgs
 
         server = self.nova_client.servers.create(**params)
         server = self._wait_for_server_to_become_active(server_name, server)
@@ -325,28 +331,29 @@ class CosmoOnOpenStackBootstrapper(object):
             {'net-id': net_id},
         ]
 
-        server_id = self.server_creator.create_or_ensure_exists(insconf, insconf['name'],
-                                                                {k: v for k,v in insconf.iteritems() if k != EP_FLAG})
+        server_id = self.server_creator.create_or_ensure_exists(
+            insconf,
+            insconf['name'],
+            {k: v for k,v in insconf.iteritems() if k != EP_FLAG},
+            sgm_id,
+        )
 
         self.logger.info('Attaching IP {0} to the instance'.format(enconf['floating_ip']))
         self.server_creator.add_floating_ip(server_id, enconf['floating_ip'])
-        # mgmt_ip = self.server_creator.get_server_ip_in_network(server_id, enconf['name'])
-        self._bootstrap_manager(enconf['floating_ip'])
+        return enconf['floating_ip']
 
     def _bootstrap_manager(self, mgmt_ip):
-        self.logger.info('initializing manager on the machine at {0}'.format(mgmt_ip))
+        self.logger.info('Initializing manager on the machine at {0}'.format(mgmt_ip))
         env_config = self.config['env']
         ssh = self._create_ssh_channel_with_mgmt(mgmt_ip, env_config)
         try:
             self._copy_files_to_manager(ssh, env_config, self.config['keystone'])
 
-            self.logger.debug('installing required packages on manager')
+            self.logger.debug('Installing required packages on manager')
             self._exec_command_on_manager(ssh, 'echo "127.0.0.1 $(cat /etc/hostname)" | sudo tee -a /etc/hosts')
-            self._exec_command_on_manager(ssh, 'sudo apt-get -y -q update')
-            self._exec_install_command_on_manager(ssh, 'apt-get install -y -q python-dev git rsync openjdk-7-jdk maven')
-            self._exec_install_command_on_manager(ssh, 'apt-get install -y -q python-pip')
-            self._exec_install_command_on_manager(ssh, 'pip install -q retrying')
-            self._exec_install_command_on_manager(ssh, 'pip install -q timeout-decorator')
+            self._exec_command_on_manager(ssh, 'sudo apt-get -y -q update' + SHELL_PIPE_TO_LOGGER)
+            self._exec_install_command_on_manager(ssh, 'apt-get install -y -q python-dev git rsync openjdk-7-jdk maven python-pip' + SHELL_PIPE_TO_LOGGER)
+            self._exec_install_command_on_manager(ssh, 'pip install -q retrying timeout-decorator')
 
             # use open sdk java 7
             self._exec_command_on_manager(ssh, 'sudo update-alternatives --set java '
@@ -362,26 +369,16 @@ class CosmoOnOpenStackBootstrapper(object):
             self._exec_command_on_manager(ssh, 'mkdir -p {0}'.format(workingdir))
             self._exec_command_on_manager(ssh, 'git clone https://github.com/CloudifySource/cosmo-manager.git '
                                                '{0}/cosmo-manager'
-            .format(workingdir))
+                                               .format(workingdir))
             self._exec_command_on_manager(ssh, '( cd {0}/cosmo-manager ; git checkout {1} )'.format(workingdir, branch))
 
             self.logger.debug('running the manager bootstrap script remotely')
             self._exec_command_on_manager(ssh, 'DEBIAN_FRONTEND=noninteractive python2.7 {0}/cosmo-manager/vagrant/'
                                                'bootstrap_lxc_manager.py --working_dir={0} --cosmo_version={1} '
-                                               '--config_dir={2} --install_openstack_provisioner --install_logstash '
-                                               '|& logger -i -t cosmo-bootstrap -p local0.info'
-                                          .format(workingdir, version, configdir))
+                                               '--config_dir={2} --install_openstack_provisioner --install_logstash {3}'
+                                               .format(workingdir, version, configdir, SHELL_PIPE_TO_LOGGER))
 
             self.logger.debug('rebuilding cosmo on manager')
-
-            # TODO: remove - start
-            self._exec_command_on_manager(ssh, 'mvn -q clean package -DskipTests -Pall -f '
-                                               '{0}/cosmo-manager/orchestrator/pom.xml'
-                                          .format(workingdir))
-            self._exec_command_on_manager(ssh, 'rm {0}/cosmo.jar'.format(workingdir))
-            self._exec_command_on_manager(ssh, 'cp {0}/cosmo-manager/orchestrator/target/cosmo.jar {0}'.format(
-                workingdir))
-            # TODO: remove - end
         finally:
             ssh.close()
 
@@ -450,8 +447,12 @@ class CosmoOnOpenStackBootstrapper(object):
 
 
 def main():
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     logger = logging.getLogger(__name__)
+
+    # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
+    logging.getLogger("paramiko").setLevel(logging.WARNING)
+    logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
 
     parser = argparse.ArgumentParser(description='Installs Cosmo in an OpenStack environment')
     subparsers = parser.add_subparsers()
