@@ -29,12 +29,12 @@ class BlueprintsApi(object):
         self.apiClient = apiClient
 
 
-    def upload(self, body, application_file_name, **kwargs):
+    def upload(self, body, **kwargs):
         """Upload a new blueprint to Cloudify
 
         Args:
-            body, file: application archive (required)
-            application_file_name, str: application file name (required)
+            body, binary: Binary form of the tar gzipped blueprint directory (required)
+            application_file_name, : File name of yaml containing the &quot;main&quot; blueprint. (optional)
             
         Returns: BlueprintState
         """
@@ -70,7 +70,7 @@ class BlueprintsApi(object):
 
 
     def list(self, **kwargs):
-        """Lists all blueprints
+        """Returns a list a submitted blueprints.
 
         Args:
             
@@ -105,81 +105,34 @@ class BlueprintsApi(object):
         return responseObject
 
 
-    def run(self, id, body, deploymentId, **kwargs):
-        """Run a blueprint
+    def getById(self, blueprint_id, **kwargs):
+        """Returns a blueprint by its id.
 
         Args:
-            id, str: ID of the blueprint to run (required)
-            body, str: json data to send to the server (required)
-            deploymentId, str: ID of the deployment, if empty then create a new one (required)
-
-        Returns: Execution
-        """
-
-        allParams = ['id', 'body', 'deploymentId']
-
-        params = locals()
-        for (key, val) in params['kwargs'].iteritems():
-            if key not in allParams:
-                raise TypeError("Got an unexpected keyword argument '%s' to method run" % key)
-            params[key] = val
-        del params['kwargs']
-
-        resourcePath = '/blueprints/{id}/executions'
-        resourcePath = resourcePath.replace('{format}', 'json')
-        method = 'POST'
-
-        queryParams = {}
-        headerParams = {}
-
-        if ('id' in params):
-            replacement = str(self.apiClient.toPathValue(params['id']))
-            resourcePath = resourcePath.replace('{' + 'id' + '}',
-                                                replacement)
-        if ('deploymentId' in params):
-            replacement = str(self.apiClient.toPathValue(params['deploymentId']))
-            resourcePath = resourcePath.replace('{' + 'deploymentId' + '}',
-                                                replacement)
-        postData = (params['body'] if 'body' in params else None)
-
-        response = self.apiClient.callAPI(resourcePath, method, queryParams,
-                                          postData, headerParams)
-
-        if not response:
-            return None
-
-        responseObject = self.apiClient.deserialize(response, 'Execution')
-        return responseObject
-
-
-    def list_deployments(self, id, **kwargs):
-        """Get a list of all deployments of this blueprint
-
-        Args:
-            id, str: ID of blueprint that needs to be fetched (required)
+            blueprint_id, :  (optional)
             
-        Returns: array[Deployment]
+        Returns: BlueprintState
         """
 
-        allParams = ['id']
+        allParams = ['blueprint_id']
 
         params = locals()
         for (key, val) in params['kwargs'].iteritems():
             if key not in allParams:
-                raise TypeError("Got an unexpected keyword argument '%s' to method list_deployments" % key)
+                raise TypeError("Got an unexpected keyword argument '%s' to method getById" % key)
             params[key] = val
         del params['kwargs']
 
-        resourcePath = '/blueprints/{id}/deployments'
+        resourcePath = '/blueprints/{blueprint_id}'
         resourcePath = resourcePath.replace('{format}', 'json')
         method = 'GET'
 
         queryParams = {}
         headerParams = {}
 
-        if ('id' in params):
-            replacement = str(self.apiClient.toPathValue(params['id']))
-            resourcePath = resourcePath.replace('{' + 'id' + '}',
+        if ('blueprint_id' in params):
+            replacement = str(self.apiClient.toPathValue(params['blueprint_id']))
+            resourcePath = resourcePath.replace('{' + 'blueprint_id' + '}',
                                                 replacement)
         postData = (params['body'] if 'body' in params else None)
 
@@ -189,7 +142,48 @@ class BlueprintsApi(object):
         if not response:
             return None
 
-        responseObject = self.apiClient.deserialize(response, 'array[Deployment]')
+        responseObject = self.apiClient.deserialize(response, 'BlueprintState')
+        return responseObject
+
+
+    def validate(self, blueprint_id, **kwargs):
+        """Validates a given blueprint.
+
+        Args:
+            blueprint_id, :  (optional)
+            
+        Returns: BlueprintValidationStatus
+        """
+
+        allParams = ['blueprint_id']
+
+        params = locals()
+        for (key, val) in params['kwargs'].iteritems():
+            if key not in allParams:
+                raise TypeError("Got an unexpected keyword argument '%s' to method validate" % key)
+            params[key] = val
+        del params['kwargs']
+
+        resourcePath = '/blueprints/{blueprint_id}/validate'
+        resourcePath = resourcePath.replace('{format}', 'json')
+        method = 'GET'
+
+        queryParams = {}
+        headerParams = {}
+
+        if ('blueprint_id' in params):
+            replacement = str(self.apiClient.toPathValue(params['blueprint_id']))
+            resourcePath = resourcePath.replace('{' + 'blueprint_id' + '}',
+                                                replacement)
+        postData = (params['body'] if 'body' in params else None)
+
+        response = self.apiClient.callAPI(resourcePath, method, queryParams,
+                                          postData, headerParams)
+
+        if not response:
+            return None
+
+        responseObject = self.apiClient.deserialize(response, 'BlueprintValidationStatus')
         return responseObject
         
         

@@ -13,6 +13,7 @@ from urllib2 import HTTPError, URLError
 from swagger.swagger import ApiClient
 from swagger.BlueprintsApi import BlueprintsApi
 from swagger.ExecutionsApi import ExecutionsApi
+from swagger.DeploymentsApi import DeploymentsApi
 
 
 class CosmoRestClient(object):
@@ -21,6 +22,7 @@ class CosmoRestClient(object):
         api_client = ApiClient(apiServer=server_url, apiKey='')
         self.blueprints_api = BlueprintsApi(api_client)
         self.executions_api = ExecutionsApi(api_client)
+        self.deployments_api = DeploymentsApi(api_client)
 
     def publish_blueprint(self, blueprint_path):
         tempdir = tempfile.mkdtemp()
@@ -38,23 +40,32 @@ class CosmoRestClient(object):
         finally:
             shutil.rmtree(tempdir)
 
-    def execute_blueprint(self, blueprint_id, operation, timeout=900):
+    def create_deployment(self, blueprint_id):
+        with self._protected_call_to_server('creating new deployment'):
+            body = {
+                'blueprintId': blueprint_id
+            }
+            return self.deployments_api.createDeployment(body=body)
+
+    def execute_deployment(self, deployment_id, operation, timeout=900):
         end = time.time() + timeout
 
-        with self._protected_call_to_server('executing blueprint operation'):
+        with self._protected_call_to_server('executing deployment operation'):
             body = {
                 'workflowId': operation
             }
-            execution = self.blueprints_api.run(id=blueprint_id, body=body, deploymentId='')
+            execution = self.deployments_api.execute(deployment_id=deployment_id, body=body)
 
             end_states = ('terminated', 'failed')
             while execution.status not in end_states:
                 if end < time.time():
-                    raise RuntimeError('Timeout executing blueprint {0}'.format(blueprint_id))
+                    raise RuntimeError('Timeout executing deployment operation {0} of deployment {1}'.format(
+                                       operation, deployment_id))
                 time.sleep(1)
-                execution = self.executions_api.get(execution.id)
+                execution = self.executions_api.getById(execution.id)
             if execution.status != 'terminated':
-                raise RuntimeError('Application execution failed. (status response: {0})'.format(execution))
+                raise RuntimeError('Execution of deployment operation {0} of deployment {1} failed. (status response:'
+                                   ' {2})'.format(operation, deployment_id, execution))
 
     def _tar_blueprint(self, blueprint_path, tempdir):
         blueprint_name = os.path.basename(os.path.splitext(blueprint_path)[0])

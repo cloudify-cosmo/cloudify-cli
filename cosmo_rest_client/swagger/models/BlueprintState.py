@@ -22,22 +22,17 @@ class BlueprintState:
     def __init__(self):
         self.swaggerTypes = {
             'id': 'str',
-            'permalink': 'str',
-            'yml': 'str',
-            'createdAt': 'dateTime',
-            'updatedAt': 'dateTime',
-            'topology': 'Topology',
-            'deployments': 'list[Deployment]'
+            'createdAt': 'date-time',
+            'plan': 'str',
+            'name': 'str',
+            'updatedAt': 'date-time'
 
         }
 
 
         self.id = None # str
-        self.permalink = None # str
-        #The raw YAML definition of the blueprint
-        self.yml = None # str
-        self.createdAt = None # dateTime
-        self.updatedAt = None # dateTime
-        self.topology = None # Topology
-        self.deployments = None # list[Deployment]
+        self.createdAt = None # date-time
+        self.plan = None # str
+        self.name = None # str
+        self.updatedAt = None # date-time
         

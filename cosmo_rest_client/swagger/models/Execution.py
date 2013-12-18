@@ -21,20 +21,22 @@ class Execution:
 
     def __init__(self):
         self.swaggerTypes = {
-            'id': 'str',
-            'permalink': 'str',
             'status': 'str',
-            'deploymentId': 'str',
             'workflowId': 'str',
-            'blueprintId': 'str'
+            'deploymentId': 'str',
+            'error': 'str',
+            'blueprintId': 'str',
+            'id': 'str',
+            'createdAt': 'str'
 
         }
 
 
-        self.id = None # str
-        self.permalink = None # str
         self.status = None # str
-        self.deploymentId = None # str
         self.workflowId = None # str
+        self.deploymentId = None # str
+        self.error = None # str
         self.blueprintId = None # str
+        self.id = None # str
+        self.createdAt = None # str
         
