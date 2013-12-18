@@ -34,7 +34,7 @@ class CosmoRestClient(object):
 
             with self._protected_call_to_server('publishing blueprint'):
                 with open(tar_path, 'rb') as f:
-                    blueprint_state = self.blueprints_api.upload(f.read(), post_application_file)
+                    blueprint_state = self.blueprints_api.upload(f.read(), application_file_name=post_application_file)
 
                 return blueprint_state
         finally:
