@@ -295,8 +295,9 @@ class CosmoOnOpenStackBootstrapper(object):
         self.sg_creator = sg_creator
         self.server_creator = server_creator
 
-    def run(self):
-        mgmt_ip = self._create_topology()
+    def run(self, mgmt_ip):
+        if not mgmt_ip:
+            mgmt_ip = self._create_topology()
         self._bootstrap_manager(mgmt_ip)
         return mgmt_ip
 
@@ -471,12 +472,19 @@ def main():
         type=argparse.FileType(),
         help='Path to the cosmo configuration file'
     )
+    parser_bootstrap.add_argument(
+        '-management_ip',
+        metavar='MANAGEMENT_IP',
+        type=str,
+        help='Existing machine which should cosmo management should be installed and deployed on')
+
     parser_bootstrap.set_defaults(handler=_bootstrap_cosmo)
 
     parser_publish.add_argument(
         'blueprint_path',
         metavar='BLUEPRINT_FILE',
-        help="Path to the application's blueprint file"
+        help="Path to the application's blueprint file",
+
     )
     parser_publish.add_argument(
         'management_ip',
@@ -533,7 +541,7 @@ def _bootstrap_cosmo(logger, args):
     sg_creator = OpenStackSecurityGroupCreator(logger, connector)
     bootstrapper = CosmoOnOpenStackBootstrapper(logger, config, network_creator, subnet_creator, router_creator,
                                                 sg_creator, server_creator)
-    mgmt_ip = bootstrapper.run()
+    mgmt_ip = bootstrapper.run(args.management_ip)
     print("Management server is up at {0}".format(mgmt_ip))
 
 
