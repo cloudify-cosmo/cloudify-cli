@@ -29,34 +29,34 @@ class ExecutionsApi(object):
         self.apiClient = apiClient
 
 
-    def get(self, id, **kwargs):
-        """Get an execution by ID
+    def getById(self, execution_id, **kwargs):
+        """Returns the execution state by its id.
 
         Args:
-            id, str: ID of the execution that needs to be fetched (required)
+            execution_id, str: ID of the execution that needs to be fetched (required)
             
         Returns: Execution
         """
 
-        allParams = ['id']
+        allParams = ['execution_id']
 
         params = locals()
         for (key, val) in params['kwargs'].iteritems():
             if key not in allParams:
-                raise TypeError("Got an unexpected keyword argument '%s' to method get" % key)
+                raise TypeError("Got an unexpected keyword argument '%s' to method getById" % key)
             params[key] = val
         del params['kwargs']
 
-        resourcePath = '/executions/{id}'
+        resourcePath = '/executions/{execution_id}'
         resourcePath = resourcePath.replace('{format}', 'json')
         method = 'GET'
 
         queryParams = {}
         headerParams = {}
 
-        if ('id' in params):
-            replacement = str(self.apiClient.toPathValue(params['id']))
-            resourcePath = resourcePath.replace('{' + 'id' + '}',
+        if ('execution_id' in params):
+            replacement = str(self.apiClient.toPathValue(params['execution_id']))
+            resourcePath = resourcePath.replace('{' + 'execution_id' + '}',
                                                 replacement)
         postData = (params['body'] if 'body' in params else None)
 

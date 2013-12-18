@@ -21,25 +21,18 @@ class Deployment:
 
     def __init__(self):
         self.swaggerTypes = {
-            'id': 'str',
-            'permalink': 'str',
-            'createdAt': 'dateTime',
-            'updatedAt': 'dateTime',
-            'executionId': 'str',
-            'workflowId': 'str',
             'blueprintId': 'str',
-            'nodes': 'list[Node]'
+            'updatedAt': 'date-time',
+            'plan': 'str',
+            'createdAt': 'date-time',
+            'id': 'str'
 
         }
 
 
-        self.id = None # str
-        self.permalink = None # str
-        self.createdAt = None # dateTime
-        self.updatedAt = None # dateTime
-        self.executionId = None # str
-        self.workflowId = None # str
-        #The blueprint ID that created this deployment
         self.blueprintId = None # str
-        self.nodes = None # list[Node]
+        self.updatedAt = None # date-time
+        self.plan = None # str
+        self.createdAt = None # date-time
+        self.id = None # str
         
