@@ -5,7 +5,7 @@ python:
 install:
 
     # command to install dependencies
-    - python setup.py install
+    - sudo pip install .
 
 
 script:
