@@ -28,7 +28,7 @@ from cosmo_rest_client.cosmo_rest_client import CosmoRestClient
 EP_FLAG = 'externally_provisioned'
 
 EXTERNAL_PORTS = (22, 8100) # SSH, REST service
-INTERNAL_PORTS = (5555, 5672) # Riemann, RabbitMQ
+INTERNAL_PORTS = (5555, 5672, 53229) # Riemann, RabbitMQ, FileServer
 
 SSH_CONNECT_RETRIES = 5
 SSH_CONNECT_SLEEP = 5

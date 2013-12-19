@@ -29,12 +29,10 @@ class CosmoRestClient(object):
         try:
             tar_path = self._tar_blueprint(blueprint_path, tempdir)
             application_file = os.path.basename(blueprint_path)
-            blueprint_parent_dir = os.path.basename(os.path.dirname(blueprint_path))
-            post_application_file = '{0}/{1}'.format(blueprint_parent_dir, application_file)
 
             with self._protected_call_to_server('publishing blueprint'):
                 with open(tar_path, 'rb') as f:
-                    blueprint_state = self.blueprints_api.upload(f.read(), application_file_name=post_application_file)
+                    blueprint_state = self.blueprints_api.upload(f.read(), application_file_name=application_file)
 
                 return blueprint_state
         finally:
@@ -65,7 +63,7 @@ class CosmoRestClient(object):
                 execution = self.executions_api.getById(execution.id)
             if execution.status != 'terminated':
                 raise RuntimeError('Execution of deployment operation {0} of deployment {1} failed. (status response:'
-                                   ' {2})'.format(operation, deployment_id, execution))
+                                   ' {2})'.format(operation, deployment_id, execution.error))
 
     def _tar_blueprint(self, blueprint_path, tempdir):
         blueprint_name = os.path.basename(os.path.splitext(blueprint_path)[0])
