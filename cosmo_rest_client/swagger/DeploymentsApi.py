@@ -226,11 +226,12 @@ class DeploymentsApi(object):
         return responseObject
         
         
-    def eventsHeaders(self, id, **kwargs):
+    def eventsHeaders(self, id, responseHeadersBuffers, **kwargs):
         """Get headers for events associated with the deployment
 
         Args:
             id, str: ID of deployment that needs to be fetched (required)
+            responseHeadersBuffers, dict: a buffer for the response headers
             
         Returns: 
         """
@@ -258,22 +259,23 @@ class DeploymentsApi(object):
         postData = (params['body'] if 'body' in params else None)
 
         response = self.apiClient.callAPI(resourcePath, method, queryParams,
-                                          postData, headerParams)
+                                          postData, headerParams, responseHeadersBuffers=responseHeadersBuffers)
 
         
         
-    def readEvents(self, id, **kwargs):
+    def readEvents(self, id, responseHeadersBuffers=None, from_param=0, count_param=500, **kwargs):
         """Returns deployments events.
 
         Args:
             id, str: ID of deployment that needs to be fetched (required)
-            from, int: Index of the first request event. (optional)
-            count, int: Maximum number of events to read. (optional)
+            from_param, int: Index of the first request event. (optional)
+            count_param, int: Maximum number of events to read. (optional)
+            responseHeadersBuffers, dict: a buffer for the response headers (optional)
             
         Returns: DeploymentEvents
         """
 
-        allParams = ['id', 'from', 'count']
+        allParams = ['id', 'from_param', 'count_param']
 
         params = locals()
         for (key, val) in params['kwargs'].iteritems():
@@ -289,10 +291,10 @@ class DeploymentsApi(object):
         queryParams = {}
         headerParams = {}
 
-        if ('from' in params):
-            queryParams['from'] = self.apiClient.toPathValue(params['from'])
-        if ('count' in params):
-            queryParams['count'] = self.apiClient.toPathValue(params['count'])
+        if ('from_param' in params):
+            queryParams['from'] = self.apiClient.toPathValue(params['from_param'])
+        if ('count_param' in params):
+            queryParams['count'] = self.apiClient.toPathValue(params['count_param'])
         if ('id' in params):
             replacement = str(self.apiClient.toPathValue(params['id']))
             resourcePath = resourcePath.replace('{' + 'id' + '}',
@@ -300,7 +302,7 @@ class DeploymentsApi(object):
         postData = (params['body'] if 'body' in params else None)
 
         response = self.apiClient.callAPI(resourcePath, method, queryParams,
-                                          postData, headerParams)
+                                          postData, headerParams, responseHeadersBuffers=responseHeadersBuffers)
 
         if not response:
             return None

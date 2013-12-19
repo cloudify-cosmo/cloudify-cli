@@ -60,7 +60,7 @@ class BlueprintsApi(object):
         postData = (params['body'] if 'body' in params else None)
 
         response = self.apiClient.callAPI(resourcePath, method, queryParams,
-                                          postData, headerParams, True)
+                                          postData, headerParams, isPostDataBinary=True)
 
         if not response:
             return None

@@ -573,8 +573,13 @@ def _execute_deployment_operation(logger, args):
 
     logger.info('Executing operation {0} on deployment {1} at management server {2}'.format(operation, deployment_id,
                                                                                             management_ip))
+
+    def events_printer(events):
+        for event in events:
+            print(event)
+
     client = CosmoRestClient(management_ip)
-    client.execute_deployment(deployment_id, operation)
+    client.execute_deployment(deployment_id, operation, events_printer)
     logger.info("Finished executing operation {0} on deployment".format(operation))
 
 
