@@ -28,7 +28,7 @@ class ApiClient:
         self.cookie = None
 
     def callAPI(self, resourcePath, method, queryParams, postData,
-                headerParams=None, isPostDataBinary=False):
+                headerParams=None, responseHeadersBuffers=None, isPostDataBinary=False):
 
         url = self.apiServer + resourcePath
         headers = {}
@@ -57,7 +57,7 @@ class ApiClient:
             #Options to add statements later on and for compatibility
             pass
 
-        elif method in ['POST', 'PUT', 'DELETE']:
+        elif method in ['POST', 'PUT', 'DELETE', 'HEAD']:
             headers['Content-type'] = 'application/json'
             if postData:
                 if not isPostDataBinary:
@@ -77,6 +77,8 @@ class ApiClient:
         response = urllib2.urlopen(request)
         if 'Set-Cookie' in response.headers:
             self.cookie = response.headers['Set-Cookie']
+        if responseHeadersBuffers is not None:
+            responseHeadersBuffers.update(response.headers.dict)
         string = response.read()
 
         try:
