@@ -11,3 +11,4 @@ install:
 script:
 
     # command to run tests
+    - echo "No tests for now! Hooray!"
