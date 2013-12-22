@@ -10,7 +10,7 @@
     },
     "management": {
         "region": "region-b.geo-1",
-        "neutron_enabled_region": false,
+        "neutron_enabled_region": true,
         "instance": {
             "name": "ranz-mgmt-test",
             "image": "8c096c29-a666-4b82-99c4-c77dc70cfb40",
