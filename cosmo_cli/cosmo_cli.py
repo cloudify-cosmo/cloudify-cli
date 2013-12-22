@@ -234,11 +234,11 @@ class OpenStackServerCreator(CreateOrEnsureExistsNova):
         server = self.nova_client.servers.get(server_id)
         server.add_floating_ip(ip)
 
-    def get_server_ip_in_network(self, server_id, network_name):
+    def get_server_ips_in_network(self, server_id, network_name):
         server = self.nova_client.servers.get(server_id)
         if network_name not in server.networks:
             raise OpenStackLogicError("Server {0} ({1}) does not have address in network {2}".format(server.name, server_id, network_name))
-        return server.networks[network_name][0]
+        return server.networks[network_name]
 
     def _wait_for_server_to_become_active(self, server_name, server):
         timeout = 100
@@ -259,9 +259,12 @@ class OpenStackConnector(object):
         self.config = config
         self.keystone_client = keystone_client.Client(**self.config['keystone'])
 
-        self.neutron_client = neutron_client.Client('2.0', endpoint_url=config['neutron']['url'],
-                                                    token=self.keystone_client.auth_token)
-        self.neutron_client.format = 'json'
+        if self.config['management']['neutron_enabled_region']:
+            self.neutron_client = neutron_client.Client('2.0', endpoint_url=config['neutron']['url'],
+                                                        token=self.keystone_client.auth_token)
+            self.neutron_client.format = 'json'
+        else:
+            self.neutron_client = None
 
         kconf = self.config['keystone']
         self.nova_client = nova_client.Client(
@@ -302,20 +305,28 @@ class CosmoOnOpenStackBootstrapper(object):
         return mgmt_ip
 
     def _create_topology(self):
-        nconf = self.config['management']['network']
-        net_id = self.network_creator.create_or_ensure_exists(nconf, nconf['name'])
+        insconf = self.config['management']['instance']
 
-        sconf = self.config['management']['subnet']
-        subnet_id = self.subnet_creator.create_or_ensure_exists(sconf, sconf['name'], sconf['ip_version'],
-                                                                sconf['cidr'], net_id)
+        is_neutron_enabled_region = self.config['management']['neutron_enabled_region']
+        if is_neutron_enabled_region:
+            nconf = self.config['management']['network']
+            net_id = self.network_creator.create_or_ensure_exists(nconf, nconf['name'])
 
-        enconf = self.config['management']['ext_network']
-        enet_id = self.network_creator.create_or_ensure_exists(enconf, enconf['name'], ext=True)
+            sconf = self.config['management']['subnet']
+            subnet_id = self.subnet_creator.create_or_ensure_exists(sconf, sconf['name'], sconf['ip_version'],
+                                                                    sconf['cidr'], net_id)
 
-        rconf = self.config['management']['router']
-        self.router_creator.create_or_ensure_exists(rconf, rconf['name'], interfaces=[
-            {'subnet_id': subnet_id},
-            ], external_gateway_info={"network_id": enet_id})
+            enconf = self.config['management']['ext_network']
+            enet_id = self.network_creator.create_or_ensure_exists(enconf, enconf['name'], ext=True)
+
+            rconf = self.config['management']['router']
+            self.router_creator.create_or_ensure_exists(rconf, rconf['name'], interfaces=[
+                    {'subnet_id': subnet_id},
+                ], external_gateway_info={"network_id": enet_id})
+
+            insconf['nics'] = [
+                    {'net-id': net_id},
+                ]
 
         # Security group for Cosmo created instances
         sguconf = self.config['management']['security_group_user']
@@ -327,21 +338,19 @@ class CosmoOnOpenStackBootstrapper(object):
                    [{'port': p, 'cidr': sgmconf['cidr']} for p in EXTERNAL_PORTS]
         sgm_id = self.sg_creator.create_or_ensure_exists(sgmconf, sgmconf['name'], 'Cosmo Manager', sg_rules)
 
-        insconf = self.config['management']['instance']
-        insconf['nics'] = [
-            {'net-id': net_id},
-        ]
-
         server_id = self.server_creator.create_or_ensure_exists(
             insconf,
             insconf['name'],
             {k: v for k,v in insconf.iteritems() if k != EP_FLAG},
-            sgm_id,
+            sgm_id if is_neutron_enabled_region else sgmconf['name'],
         )
 
-        self.logger.info('Attaching IP {0} to the instance'.format(enconf['floating_ip']))
-        self.server_creator.add_floating_ip(server_id, enconf['floating_ip'])
-        return enconf['floating_ip']
+        if is_neutron_enabled_region:
+            self.logger.info('Attaching IP {0} to the instance'.format(enconf['floating_ip']))
+            self.server_creator.add_floating_ip(server_id, enconf['floating_ip'])
+            return enconf['floating_ip']
+        else:
+            return self.server_creator.get_server_ips_in_network(server_id, 'private')[1]
 
     def _bootstrap_manager(self, mgmt_ip):
         self.logger.info('Initializing manager on the machine at {0}'.format(mgmt_ip))
