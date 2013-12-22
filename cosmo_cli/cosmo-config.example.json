@@ -1,20 +1,20 @@
 {
     "keystone": {
-        "username": "UUU",
-        "password": "PPP",
+        "username": "[UUU]",
+        "password": "[PPP]",
         "auth_url": "https://region-a.geo-1.identity.hpcloudsvc.com:35357/v2.0/",
-        "tenant_name": "ilya-project"
+        "tenant_name": "[TTT]"
     },
     "neutron": {
         "url": "https://region-b.geo-1.network.hpcloudsvc.com"
     },
     "management": {
-        "region": "az-2.region-a.geo-1",
+        "region": "region-b.geo-1",
         "instance": {
-            "name": "cosmofied-widget-test",
-            "image": "67074",
-            "flavor": "102",
-            "key_name": "cosmofied-widget-kp"
+            "name": "ranz-mgmt-test",
+            "image": "8c096c29-a666-4b82-99c4-c77dc70cfb40",
+            "flavor": "101",
+            "key_name": "ranz-kp"
         },
         "network": {
             "externally_provisioned": true,
@@ -30,7 +30,7 @@
             "comment": "For now, this must be 'externally_provisioned': true",
             "externally_provisioned": true,
             "name": "Ext-Net",
-            "floating_ip": "1.2.3.4"
+            "floating_ip": "[FLOATING_IP]"
         },
         "router": {
             "externally_provisioned": true,
