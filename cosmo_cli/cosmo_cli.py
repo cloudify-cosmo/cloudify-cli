@@ -23,7 +23,7 @@ import novaclient.v1_1.client as nova_client
 import neutronclient.neutron.client as neutron_client
 
 # Project
-from cosmo_rest_client.cosmo_rest_client import CosmoRestClient
+from cosmo_manager_rest_client.cosmo_manager_rest_client import CosmoManagerRestClient
 
 EP_FLAG = 'externally_provisioned'
 
@@ -594,7 +594,7 @@ def _publish_blueprint(logger, args):
     management_ip = args.management_ip
 
     logger.info('Publishing blueprint {0} to management server {1}'.format(blueprint_path, management_ip))
-    client = CosmoRestClient(management_ip)
+    client = CosmoManagerRestClient(management_ip)
     blueprint_state = client.publish_blueprint(blueprint_path)
     logger.info("Published blueprint, blueprint's id is: {0}".format(blueprint_state.id))
 
@@ -605,7 +605,7 @@ def _create_deployment(logger, args):
 
     logger.info('Creating new deployment from blueprint {0} at management server {1}'.format(blueprint_id,
                                                                                              management_ip))
-    client = CosmoRestClient(management_ip)
+    client = CosmoManagerRestClient(management_ip)
     deployment = client.create_deployment(blueprint_id)
     logger.info("Deployment created, deployment's id is: {0}".format(deployment.id))
 
@@ -622,7 +622,7 @@ def _execute_deployment_operation(logger, args):
         for event in events:
             print(event)
 
-    client = CosmoRestClient(management_ip)
+    client = CosmoManagerRestClient(management_ip)
     client.execute_deployment(deployment_id, operation, events_printer)
     logger.info("Finished executing operation {0} on deployment".format(operation))
 
