@@ -159,9 +159,9 @@ class OpenStackRouterCreator(CreateOrEnsureExistsNeutron):
         return router_id
 
 
-class OpenStackSecurityGroupCreator(CreateOrEnsureExistsNova):
+class OpenStackNovaSecurityGroupCreator(CreateOrEnsureExistsNova):
 
-    WHAT = 'security group'
+    WHAT = 'nova security group'
 
     def list_objects_with_name(self, name):
         sgs = self.nova_client.security_groups.list()
@@ -179,6 +179,38 @@ class OpenStackSecurityGroupCreator(CreateOrEnsureExistsNova):
                 group_id=rule.get('group_id')
             )
         return sg.id
+
+
+class OpenStackNeutronSecurityGroupCreator(CreateOrEnsureExistsNeutron):
+
+    WHAT = 'neutron security group'
+
+    def list_objects_with_name(self, name):
+        return self.neutron_client.list_security_groups(name=name)['security_groups']
+
+    def create(self, name, description, rules):
+
+        sg = self.neutron_client.create_security_group({
+            'security_group': {
+                'name': name,
+                'description': description,
+            }
+        })['security_group']
+
+        for rule in rules:
+            self.neutron_client.create_security_group_rule({
+                'security_group_rule': {
+                    'security_group_id': sg['id'],
+                    'direction': 'ingress',
+                    'protocol': 'tcp',
+                    'port_range_min': rule['port'],
+                    'port_range_max': rule['port'],
+                    'remote_ip_prefix': rule.get('cidr'),
+                    'remote_group_id': rule.get('group_id'),
+                }
+            })
+
+        return sg['id']
 
 
 class OpenStackServerCreator(CreateOrEnsureExistsNova):
@@ -547,7 +579,10 @@ def _bootstrap_cosmo(logger, args):
     subnet_creator = OpenStackSubnetCreator(logger, connector)
     router_creator = OpenStackRouterCreator(logger, connector)
     server_creator = OpenStackServerCreator(logger, connector)
-    sg_creator = OpenStackSecurityGroupCreator(logger, connector)
+    if config['management']['neutron_enabled_region']:
+        sg_creator = OpenStackNeutronSecurityGroupCreator(logger, connector)
+    else:
+        sg_creator = OpenStackNovaSecurityGroupCreator(logger, connector)
     bootstrapper = CosmoOnOpenStackBootstrapper(logger, config, network_creator, subnet_creator, router_creator,
                                                 sg_creator, server_creator)
     mgmt_ip = bootstrapper.run(args.management_ip)
