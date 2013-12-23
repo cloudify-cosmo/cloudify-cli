@@ -20,12 +20,18 @@ from setuptools import setup
 
 version = '0.3'
 
+COSMO_MANAGER_REST_CLIENT_VERSION = '0.3'
+COSMO_MANAGER_REST_CLIENT_BRANCH = 'develop'
+COSMO_MANAGER_REST_CLIENT = "https://github.com/CloudifySource/cosmo-manager-rest-client/tarball/{" \
+                            "0}#egg=cosmo-manager-rest-client-{1}".format(COSMO_MANAGER_REST_CLIENT_BRANCH,
+                                                                          COSMO_MANAGER_REST_CLIENT_VERSION)
+
 setup(
     name='cosmo-cli',
     version=version,
     author='ran',
     author_email='ran@gigaspaces.com',
-    packages=['cosmo_cli','cosmo_rest_client', 'cosmo_rest_client.swagger', 'cosmo_rest_client.swagger.models'],
+    packages=['cosmo_cli'],
     license='LICENSE',
     description='the cosmo cli',
     package_data={'cosmo_cli': ['cosmo-config.example.json']},
@@ -37,5 +43,7 @@ setup(
         "python-keystoneclient",
         "python-neutronclient",
         "scp",
-        ]
+        "cosmo-manager-rest-client"
+    ],
+    dependency_links=[COSMO_MANAGER_REST_CLIENT]
 )
