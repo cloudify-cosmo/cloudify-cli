@@ -1,0 +1,4 @@
+keystone:
+    username: [UUU]
+    password: [PPP]
+    tenant_name: [TTT]

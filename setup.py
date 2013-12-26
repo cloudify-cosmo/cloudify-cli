@@ -34,15 +34,16 @@ setup(
     packages=['cosmo_cli'],
     license='LICENSE',
     description='the cosmo cli',
-    package_data={'cosmo_cli': ['cosmo-config.example.json']},
+    package_data={'cosmo_cli': ['cloudify-config.template.yaml', 'cloudify-config.defaults.yaml']},
     entry_points={
-        'console_scripts': ['cosmo = cosmo_cli.cosmo_cli:main']
+        'console_scripts': ['cfy = cosmo_cli.cosmo_cli:main']
     },
     install_requires=[
         "python-novaclient",
         "python-keystoneclient",
         "python-neutronclient",
         "scp",
+        "pyyaml",
         "cosmo-manager-rest-client"
     ],
     dependency_links=[COSMO_MANAGER_REST_CLIENT]

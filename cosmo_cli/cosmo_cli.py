@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # vim: ts=4 sw=4 et
-
 __author__ = 'ran'
 
 # Standard
@@ -15,6 +14,9 @@ import paramiko
 import shutil
 import tempfile
 import logging
+from os.path import expanduser
+from copy import deepcopy
+import yaml
 from scp import SCPClient
 
 # OpenStack
@@ -112,7 +114,7 @@ class OpenStackNetworkCreator(CreateOrEnsureExistsNeutron):
             }
         }
         if ext:
-            n['router:external'] =  ext
+            n['router:external'] = ext
         ret = self.neutron_client.create_network(n)
         return ret['network']['id']
 
@@ -134,6 +136,23 @@ class OpenStackSubnetCreator(CreateOrEnsureExistsNeutron):
             }
         })
         return ret['subnet']['id']
+
+
+class OpenStackFloatingIpCreator():
+
+    def __init__(self, logger, connector):
+        self.logger = logger
+        self.neutron_client = connector.get_neutron_client()
+
+    def allocate_ip(self, external_network_id):
+        floating_ip = self.neutron_client.create_floatingip(
+            {
+                "floatingip":
+                {
+                    "floating_network_id": external_network_id,
+                }
+            })
+        return floating_ip['floatingip']['floating_ip_address']
 
 
 class OpenStackRouterCreator(CreateOrEnsureExistsNeutron):
@@ -213,6 +232,29 @@ class OpenStackNeutronSecurityGroupCreator(CreateOrEnsureExistsNeutron):
         return sg['id']
 
 
+class OpenStackKeypairCreator(CreateOrEnsureExistsNova):
+
+    WHAT = 'keypair'
+
+    def list_objects_with_name(self, name):
+        keypairs = self.nova_client.keypairs.list()
+        return [{'id': keypair.id} for keypair in keypairs if keypair.id == name]
+
+    def create(self, key_name, private_key_target_path=None, public_key_filepath=None, *args, **kwargs):
+        if not private_key_target_path and not public_key_filepath:
+            raise RuntimeError("Must provide either private key target path or public key filepath to create keypair")
+
+        if public_key_filepath:
+            with open(public_key_filepath, 'r') as f:
+                self.nova_client.keypairs.create(key_name, f.read())
+        else:
+            key = self.nova_client.keypairs.create(key_name)
+            pk_target_path = expanduser(private_key_target_path)
+            with open(pk_target_path, 'w') as f:
+                f.write(key.private_key)
+                os.system('chmod 600 {0}'.format(pk_target_path))
+
+
 class OpenStackServerCreator(CreateOrEnsureExistsNova):
 
     WHAT = 'server'
@@ -221,14 +263,14 @@ class OpenStackServerCreator(CreateOrEnsureExistsNova):
         servers = self.nova_client.servers.list(True, {'name': name})
         return [{'id': server.id} for server in servers]
 
-    def create(self, name, server_config, sgm_id, *args, **kwargs):
+    def create(self, name, server_config, management_server_keypair_name, sgm_id, *args, **kwargs):
         """
         Creates a server. Exposes the parameters mentioned in
         http://docs.openstack.org/developer/python-novaclient/api/novaclient.v1_1.servers.html#novaclient.v1_1.servers.ServerManager.create
         """
 
-        self._fail_on_missing_required_parameters(server_config, ('name', 'flavor', 'image', 'key_name'),
-                                                  'nova.instance')
+        self._fail_on_missing_required_parameters(server_config, ('name', 'flavor', 'image'),
+                                                  'management_server.instance')
 
         # First parameter is 'self', skipping
         params_names = inspect.getargspec(self.nova_client.servers.create).args[1:]
@@ -239,7 +281,7 @@ class OpenStackServerCreator(CreateOrEnsureExistsNova):
         for k in server_config:
             if k not in params:
                 raise ValueError("Parameter with name '{0}' must not be passed to openstack provisioner "
-                                 "(under host's properties.nova.instance)".format(k))
+                                 "(under management_server.instance)".format(k))
 
         for k in params:
             if k in server_config:
@@ -257,6 +299,8 @@ class OpenStackServerCreator(CreateOrEnsureExistsNova):
         if params['security_groups'] is not None:
             configured_sgs = params['security_groups']
         params['security_groups'] = [sgm_id] + configured_sgs
+
+        params['key_name'] = management_server_keypair_name
 
         server = self.nova_client.servers.create(**params)
         server = self._wait_for_server_to_become_active(server_name, server)
@@ -291,8 +335,8 @@ class OpenStackConnector(object):
         self.config = config
         self.keystone_client = keystone_client.Client(**self.config['keystone'])
 
-        if self.config['management']['neutron_enabled_region']:
-            self.neutron_client = neutron_client.Client('2.0', endpoint_url=config['neutron']['url'],
+        if self.config['networks']['neutron_enabled_region']:
+            self.neutron_client = neutron_client.Client('2.0', endpoint_url=config['networks']['neutron_url'],
                                                         token=self.keystone_client.auth_token)
             self.neutron_client.format = 'json'
         else:
@@ -304,7 +348,7 @@ class OpenStackConnector(object):
             kconf['password'],
             kconf['tenant_name'],
             kconf['auth_url'],
-            region_name=self.config['management']['region'],
+            region_name=self.config['management_server']['region'],
             http_log_debug=False
         )
 
@@ -321,13 +365,16 @@ class OpenStackConnector(object):
 class CosmoOnOpenStackBootstrapper(object):
     """ Bootstraps Cosmo on OpenStack """
 
-    def __init__(self, logger, config, network_creator, subnet_creator, router_creator, sg_creator, server_creator):
+    def __init__(self, logger, config, network_creator, subnet_creator, router_creator, sg_creator,
+                 floating_ip_creator, keypair_creator, server_creator):
         self.logger = logger
         self.config = config
         self.network_creator = network_creator
         self.subnet_creator = subnet_creator
         self.router_creator = router_creator
         self.sg_creator = sg_creator
+        self.floating_ip_creator = floating_ip_creator
+        self.keypair_creator = keypair_creator
         self.server_creator = server_creator
 
     def run(self, mgmt_ip):
@@ -337,59 +384,91 @@ class CosmoOnOpenStackBootstrapper(object):
         return mgmt_ip
 
     def _create_topology(self):
-        insconf = self.config['management']['instance']
+        insconf = self.config['management_server']['instance']
 
-        is_neutron_enabled_region = self.config['management']['neutron_enabled_region']
+        is_neutron_enabled_region = self.config['networks']['neutron_enabled_region']
         if is_neutron_enabled_region:
-            nconf = self.config['management']['network']
+            nconf = self.config['networks']['int_network']
             net_id = self.network_creator.create_or_ensure_exists(nconf, nconf['name'])
 
-            sconf = self.config['management']['subnet']
+            sconf = self.config['networks']['subnet']
             subnet_id = self.subnet_creator.create_or_ensure_exists(sconf, sconf['name'], sconf['ip_version'],
                                                                     sconf['cidr'], net_id)
 
-            enconf = self.config['management']['ext_network']
+            enconf = self.config['networks']['ext_network']
             enet_id = self.network_creator.create_or_ensure_exists(enconf, enconf['name'], ext=True)
 
-            rconf = self.config['management']['router']
+            rconf = self.config['networks']['router']
             self.router_creator.create_or_ensure_exists(rconf, rconf['name'], interfaces=[
                     {'subnet_id': subnet_id},
                 ], external_gateway_info={"network_id": enet_id})
 
-            insconf['nics'] = [
-                    {'net-id': net_id},
-                ]
+            insconf['nics'] = [{'net-id': net_id}]
+
+            if 'floating_ip' in insconf:
+                floating_ip = insconf['floating_ip']
+            else:
+                floating_ip = self.floating_ip_creator.allocate_ip(enet_id)
 
         # Security group for Cosmo created instances
-        sguconf = self.config['management']['security_group_user']
+        sguconf = self.config['security']['security_group_user']
         sgu_id = self.sg_creator.create_or_ensure_exists(sguconf, sguconf['name'], 'Cosmo created machines', [])
 
         # Security group for Cosmo manager, allows created instances -> manager communication
-        sgmconf = self.config['management']['security_group_manager']
+        sgmconf = self.config['security']['security_group_manager']
         sg_rules = [{'port': p, 'group_id': sgu_id} for p in INTERNAL_PORTS] + \
                    [{'port': p, 'cidr': sgmconf['cidr']} for p in EXTERNAL_PORTS]
         sgm_id = self.sg_creator.create_or_ensure_exists(sgmconf, sgmconf['name'], 'Cosmo Manager', sg_rules)
+
+        # Keypairs setup
+        mgr_kpconf = self.config['security']['management_keypair']
+        self.keypair_creator.create_or_ensure_exists(
+            mgr_kpconf,
+            mgr_kpconf['name'],
+            private_key_target_path=mgr_kpconf['auto_generated']['private_key_target_path'] if 'auto_generated' in
+                                                                                               mgr_kpconf else None,
+            public_key_filepath=mgr_kpconf['provided']['public_key_filepath'] if 'provided' in mgr_kpconf else None
+        )
+        agents_kpconf = self.config['security']['agents_keypair']
+        self.keypair_creator.create_or_ensure_exists(
+            agents_kpconf,
+            agents_kpconf['name'],
+            private_key_target_path=agents_kpconf['auto_generated']['private_key_target_path'] if 'auto_generated' in
+                                                                                                  agents_kpconf else None,
+            public_key_filepath=agents_kpconf['provided']['public_key_filepath'] if 'provided' in agents_kpconf else None
+        )
 
         server_id = self.server_creator.create_or_ensure_exists(
             insconf,
             insconf['name'],
             {k: v for k,v in insconf.iteritems() if k != EP_FLAG},
+            mgr_kpconf['name'],
             sgm_id if is_neutron_enabled_region else sgmconf['name'],
         )
 
         if is_neutron_enabled_region:
-            self.logger.info('Attaching IP {0} to the instance'.format(enconf['floating_ip']))
-            self.server_creator.add_floating_ip(server_id, enconf['floating_ip'])
-            return enconf['floating_ip']
+            self.logger.info('Attaching IP {0} to the instance'.format(floating_ip))
+            self.server_creator.add_floating_ip(server_id, floating_ip)
+            return floating_ip
         else:
             return self.server_creator.get_server_ips_in_network(server_id, 'private')[1]
 
+    def _get_private_key_path_from_keypair_config(self, keypair_config):
+        path = keypair_config['provided']['private_key_filepath'] if 'provided' in keypair_config else \
+            keypair_config['auto_generated']['private_key_target_path']
+        return expanduser(path)
+
     def _bootstrap_manager(self, mgmt_ip):
         self.logger.info('Initializing manager on the machine at {0}'.format(mgmt_ip))
-        env_config = self.config['env']
-        ssh = self._create_ssh_channel_with_mgmt(mgmt_ip, env_config)
+        management_server_config = self.config['management_server']
+        cosmo_config = self.config['cloudify']
+
+        ssh = self._create_ssh_channel_with_mgmt(mgmt_ip, self._get_private_key_path_from_keypair_config(self.config[
+            'security']['management_keypair']), management_server_config['user_on_management'])
         try:
-            self._copy_files_to_manager(ssh, env_config, self.config['keystone'])
+            self._copy_files_to_manager(ssh, management_server_config['userhome_on_management'],
+                                        self.config['keystone'], self._get_private_key_path_from_keypair_config(self
+                                        .config['security']['agents_keypair']))
 
             self.logger.debug('Installing required packages on manager')
             self._exec_command_on_manager(ssh, 'echo "127.0.0.1 $(cat /etc/hostname)" | sudo tee -a /etc/hosts')
@@ -402,9 +481,9 @@ class CosmoOnOpenStackBootstrapper(object):
                                                '/usr/lib/jvm/java-7-openjdk-amd64/jre/bin/java')
 
             # configure and clone cosmo-manager from github
-            branch = env_config['cosmo_branch']
-            workingdir = '{0}/cosmo-work'.format(env_config['userhome_on_management'])
-            version = env_config['cosmo_version']
+            branch = cosmo_config['cloudify_branch']
+            workingdir = '{0}/cosmo-work'.format(management_server_config['userhome_on_management'])
+            version = cosmo_config['cloudify_version']
             configdir = '{0}/cosmo-manager/vagrant'.format(workingdir)
 
             self.logger.debug('cloning cosmo on manager')
@@ -418,7 +497,7 @@ class CosmoOnOpenStackBootstrapper(object):
             run_script_command = 'DEBIAN_FRONTEND=noninteractive python2.7 {0}/cosmo-manager/vagrant/' \
                                  'bootstrap_lxc_manager.py --working_dir={0} --cosmo_version={1} --config_dir={2} ' \
                                  '--install_openstack_provisioner'.format(workingdir, version, configdir)
-            if 'install_logstash' in env_config and env_config['install_logstash']:
+            if 'install_logstash' in cosmo_config and cosmo_config['install_logstash']:
                 run_script_command += ' --install_logstash'
             run_script_command += ' {0}'.format(SHELL_PIPE_TO_LOGGER)
             self._exec_command_on_manager(ssh, run_script_command)
@@ -427,7 +506,7 @@ class CosmoOnOpenStackBootstrapper(object):
         finally:
             ssh.close()
 
-    def _create_ssh_channel_with_mgmt(self, mgmt_ip, env_config):
+    def _create_ssh_channel_with_mgmt(self, mgmt_ip, management_key_path, user_on_management):
         ssh = paramiko.SSHClient()
         # TODO: support fingerprint in config json
         ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -435,21 +514,20 @@ class CosmoOnOpenStackBootstrapper(object):
         #trying to ssh connect to management server. Using retries since it might take some time to find routes to host
         for retry in range(0, SSH_CONNECT_RETRIES):
             try:
-                ssh.connect(mgmt_ip, username=env_config['user_on_management'],
-                            key_filename=env_config['management_key_path'], look_for_keys=False)
+                ssh.connect(mgmt_ip, username=user_on_management,
+                            key_filename=management_key_path, look_for_keys=False)
                 return ssh
             except socket.error:
                 time.sleep(SSH_CONNECT_SLEEP)
         raise RuntimeError('Failed to ssh connect to management server')
 
-    def _copy_files_to_manager(self, ssh, env_config, keystone_config):
+    def _copy_files_to_manager(self, ssh, userhome_on_management, keystone_config, agents_key_path):
         self.logger.info('Uploading files to manager')
         scp = SCPClient(ssh.get_transport())
 
-        userhome_on_management = env_config['userhome_on_management']
         tempdir = tempfile.mkdtemp()
         try:
-            scp.put(env_config['agents_key_path'], userhome_on_management + '/.ssh', preserve_times=True)
+            scp.put(agents_key_path, userhome_on_management + '/.ssh', preserve_times=True)
             keystone_file_path = self._make_keystone_file(tempdir, keystone_config)
             scp.put(keystone_file_path, userhome_on_management, preserve_times=True)
 
@@ -500,12 +578,37 @@ def main():
     logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
 
     parser = argparse.ArgumentParser(description='Installs Cosmo in an OpenStack environment')
+
+    # parser.add_argument(
+    #     'status',
+    #     metavar='STATUS',
+    #     type=str,
+    #     help='command for showing general status'
+    # )
+
     subparsers = parser.add_subparsers()
 
+    parser_init = subparsers.add_parser('init', help='command for initializing configuration files for installation')
+
     parser_bootstrap = subparsers.add_parser('bootstrap', help='command for bootstrapping cosmo on openstack')
-    parser_publish = subparsers.add_parser('publish', help='command for publishing a blueprint')
-    parser_execute = subparsers.add_parser('execute', help='command for executing a deployment\'s operation')
+    parser_upload = subparsers.add_parser('upload', help='command for uploading a blueprint')
     parser_deploy = subparsers.add_parser('deploy', help='command for creating a new deployment')
+    parser_execute = subparsers.add_parser('execute', help='command for executing a deployment\'s operation')
+
+    parser_init.add_argument(
+        'provider',
+        metavar='PROVIDER',
+        type=str,
+        help='command for initializing configuration files for a specific provider'
+    )
+    parser_init.add_argument(
+        '--config-target-dir',
+        metavar='CONFIG_TARGET_DIRECTORY',
+        type=str,
+        default=os.getcwd(),
+        help='the target directory for the template configuration files'
+    )
+    parser_init.set_defaults(handler=_init_openstack_bootstrap_config_files)
 
     parser_bootstrap.add_argument(
         'config_file',
@@ -514,25 +617,31 @@ def main():
         help='Path to the cosmo configuration file'
     )
     parser_bootstrap.add_argument(
-        '-management_ip',
+        '--defaults_config_file',
+        metavar='DEFAULTS_CONFIG_FILE',
+        type=argparse.FileType(),
+        help='Path to the cosmo defaults configuration file'
+    )
+    parser_bootstrap.add_argument(
+        '--management_ip',
         metavar='MANAGEMENT_IP',
         type=str,
-        help='Existing machine which should cosmo management should be installed and deployed on')
-
+        help='Existing machine which should cosmo management should be installed and deployed on'
+    )
     parser_bootstrap.set_defaults(handler=_bootstrap_cosmo)
 
-    parser_publish.add_argument(
+    parser_upload.add_argument(
         'blueprint_path',
         metavar='BLUEPRINT_FILE',
         help="Path to the application's blueprint file",
 
     )
-    parser_publish.add_argument(
+    parser_upload.add_argument(
         'management_ip',
         metavar='MANAGEMENT_IP',
         help='The cosmo management server ip address'
     )
-    parser_publish.set_defaults(handler=_publish_blueprint)
+    parser_upload.set_defaults(handler=_upload_blueprint)
 
     parser_execute.add_argument(
         'operation',
@@ -568,35 +677,68 @@ def main():
     args.handler(logger, args)
 
 
+def _init_openstack_bootstrap_config_files(logger, args):
+    config_target_directory = args.config_target_dir
+    cosmo_dir = os.path.dirname(os.path.realpath(__file__))
+    shutil.copy('{0}/cloudify-config.template.yaml'.format(cosmo_dir), config_target_directory)
+    shutil.copy('{0}/cloudify-config.defaults.yaml'.format(cosmo_dir), config_target_directory)
+
+
 def _bootstrap_cosmo(logger, args):
-    try:
-        config = json.loads(args.config_file.read())
-    finally:
-        args.config_file.close()
+    defaults_config_file = args.defaults_config_file if args.defaults_config_file else open(
+        'cloudify-config.defaults.yaml', 'r')
+    config = _read_config(args.config_file, defaults_config_file)
 
     connector = OpenStackConnector(config)
     network_creator = OpenStackNetworkCreator(logger, connector)
     subnet_creator = OpenStackSubnetCreator(logger, connector)
     router_creator = OpenStackRouterCreator(logger, connector)
+    floating_ip_creator = OpenStackFloatingIpCreator(logger, connector)
+    keypair_creator = OpenStackKeypairCreator(logger, connector)
     server_creator = OpenStackServerCreator(logger, connector)
-    if config['management']['neutron_enabled_region']:
+    if config['networks']['neutron_enabled_region']:
         sg_creator = OpenStackNeutronSecurityGroupCreator(logger, connector)
     else:
         sg_creator = OpenStackNovaSecurityGroupCreator(logger, connector)
     bootstrapper = CosmoOnOpenStackBootstrapper(logger, config, network_creator, subnet_creator, router_creator,
-                                                sg_creator, server_creator)
+                                                sg_creator, floating_ip_creator, keypair_creator, server_creator)
     mgmt_ip = bootstrapper.run(args.management_ip)
     print("Management server is up at {0}".format(mgmt_ip))
 
 
-def _publish_blueprint(logger, args):
+def _read_config(user_config_file, defaults_config_file):
+    try:
+        user_config = yaml.safe_load(user_config_file.read())
+        defaults_config = yaml.safe_load(defaults_config_file.read())
+    finally:
+        user_config_file.close()
+        defaults_config_file.close()
+
+    merged_config = _deep_merge_dictionaries(user_config, defaults_config)
+    return merged_config
+
+
+def _deep_merge_dictionaries(overriding_dict, overridden_dict):
+    merged_dict = deepcopy(overridden_dict)
+    for k, v in overriding_dict.iteritems():
+        if k in merged_dict and isinstance(v, dict):
+            if isinstance(merged_dict[k], dict):
+                merged_dict[k] = _deep_merge_dictionaries(v, merged_dict[k])
+            else:
+                raise RuntimeError('type conflict at key {0}'.format(k))
+        else:
+            merged_dict[k] = deepcopy(v)
+    return merged_dict
+
+
+def _upload_blueprint(logger, args):
     blueprint_path = args.blueprint_path
     management_ip = args.management_ip
 
-    logger.info('Publishing blueprint {0} to management server {1}'.format(blueprint_path, management_ip))
+    logger.info('Uploading blueprint {0} to management server {1}'.format(blueprint_path, management_ip))
     client = CosmoManagerRestClient(management_ip)
     blueprint_state = client.publish_blueprint(blueprint_path)
-    logger.info("Published blueprint, blueprint's id is: {0}".format(blueprint_state.id))
+    logger.info("Uploaded blueprint, blueprint's id is: {0}".format(blueprint_state.id))
 
 
 def _create_deployment(logger, args):

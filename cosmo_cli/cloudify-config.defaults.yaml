@@ -1,0 +1,63 @@
+cloudify:
+    cloudify_branch: develop
+    cloudify_version: 0.1-SNAPSHOT
+    install_logstash: false
+
+keystone:
+    #username: [UUU]
+    #password: [PPP]
+    #tenant_name: [TTT]
+    auth_url: https://region-a.geo-1.identity.hpcloudsvc.com:35357/v2.0/
+
+networks:
+    neutron_enabled_region: true
+    neutron_url: https://region-b.geo-1.network.hpcloudsvc.com
+    int_network:
+        externally_provisioned: true
+        name: cosmo-admin-network
+    subnet:
+        externally_provisioned: true
+        name: cosmo-admin-network-subnet
+        ip_version: 4
+        cidr: 10.67.79.0/24
+    ext_network:
+        externally_provisioned: true #For now, this must be 'externally_provisioned': true
+        name: Ext-Net
+    router:
+        externally_provisioned: true
+        name: cosmo-router
+
+security:
+    management_keypair:
+        externally_provisioned: true
+        name: cosmo-manager-kp
+        #provided:
+            #public_key_filepath: [PUBLIC-KEY-PATH]
+            #private_key_filepath: [PRIVATE-KEY-PATH]
+        auto_generated:
+            private_key_target_path: ~/.ssh/cosmo-manager-kp.pem
+    agents_keypair:
+        externally_provisioned: true
+        name: cosmo-agents-kp
+        #provided:
+            #public_key_filepath: [PUBLIC-KEY-PATH]
+            #private_key_filepath: [PRIVATE-KEY-PATH]
+        auto_generated:
+            private_key_target_path: ~/.ssh/cosmo-agents-kp.pem
+    security_group_user:
+        externally_provisioned: true
+        name: cosmo-sg-user
+    security_group_manager:
+        externally_provisioned: true
+        name: cosmo-sg-manager
+        cidr: 0.0.0.0/0
+
+management_server:
+    region: region-b.geo-1
+    #floating_ip: [FLOATING_IP] #uncomment and provide preallocated ip to disable auto-allocation
+    user_on_management: ubuntu
+    userhome_on_management: /home/ubuntu
+    instance:
+        name: cosmo-management-server
+        image: 8c096c29-a666-4b82-99c4-c77dc70cfb40
+        flavor: 102
