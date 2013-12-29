@@ -594,14 +594,24 @@ def main():
 
     subparsers = parser.add_subparsers()
     parser_status = subparsers.add_parser('status', help='command for showing general status')
+    parser_install = subparsers.add_parser('install', help='command for installing provider extensions')
     parser_bind = subparsers.add_parser('bind', help='command for binding to a given management server')
     parser_init = subparsers.add_parser('init', help='command for initializing configuration files for installation')
     parser_bootstrap = subparsers.add_parser('bootstrap', help='commands for bootstrapping cloudify')
-    parser_blueprints = subparsers.add_parser('upload', help='commands for blueprints')
-    parser_deployments = subparsers.add_parser('deploy', help='command for deployments')
+    parser_blueprints = subparsers.add_parser('blueprints', help='commands for blueprints')
+    parser_deployments = subparsers.add_parser('deployments', help='command for deployments')
 
     #status subparser
     parser_status.set_defaults(handler=_status)
+
+    #install subparser
+    parser_install.add_argument(
+        'provider',
+        metavar='PROVIDER',
+        type=str,
+        help='The name of the provider extension to install'
+    )
+    parser_install.set_defaults(handler=_install_extension)
 
     #bind subparser
     parser_bind.add_argument(
@@ -620,7 +630,8 @@ def main():
         help='command for initializing configuration files for a specific provider'
     )
     parser_init.add_argument(
-        '--config-target-dir',
+        '-t, --config-target-dir',
+        dest='config_target_dir',
         metavar='CONFIG_TARGET_DIRECTORY',
         type=str,
         default=os.getcwd(),
@@ -636,13 +647,15 @@ def main():
         help='Path to the cosmo configuration file'
     )
     parser_bootstrap.add_argument(
-        '--defaults_config_file',
+        '-d, --defaults-config-file',
+        dest='defaults_config_file',
         metavar='DEFAULTS_CONFIG_FILE',
         type=argparse.FileType(),
         help='Path to the cosmo defaults configuration file'
     )
     parser_bootstrap.add_argument(
-        '--management_ip',
+        '-t, --management-ip',
+        dest='management_ip',
         metavar='MANAGEMENT_IP',
         type=str,
         help='Existing machine which should cosmo management should be installed and deployed on'
@@ -667,10 +680,10 @@ def main():
     )
     _add_alias_optional_argument_to_parser(parser_blueprints_upload, 'blueprint')
     _add_management_ip_optional_argument_to_parser(parser_blueprints_upload)
-    parser_blueprints.set_defaults(handler=_upload_blueprint)
+    parser_blueprints_upload.set_defaults(handler=_upload_blueprint)
 
     _add_management_ip_optional_argument_to_parser(parser_blueprints_list)
-    parser_blueprints.set_defaults(handler=_list_blueprints)
+    parser_blueprints_list.set_defaults(handler=_list_blueprints)
 
     parser_blueprints_delete.add_argument(
         'blueprint_id',
@@ -710,7 +723,7 @@ def main():
     )
     _add_alias_optional_argument_to_parser(parser_deployments_create, 'deployment')
     _add_management_ip_optional_argument_to_parser(parser_deployments_create)
-    parser_deployments.set_defaults(handler=_create_deployment)
+    parser_deployments_create.set_defaults(handler=_create_deployment)
 
     args = parser.parse_args()
     args.handler(logger, args)
@@ -731,7 +744,8 @@ def _dump_cosmo_working_dir_settings(cosmo_wd_settings):
 
 def _add_management_ip_optional_argument_to_parser(parser):
     parser.add_argument(
-        '-t', '--management_ip',
+        '-t', '--management-ip',
+        dest='management_ip',
         metavar='MANAGEMENT_IP',
         type=str,
         help='The cloudify management server ip address'
@@ -741,6 +755,7 @@ def _add_management_ip_optional_argument_to_parser(parser):
 def _add_alias_optional_argument_to_parser(parser, object_name):
     parser.add_argument(
         '-a', '--alias',
+        dest='alias',
         metavar='ALIAS',
         type=str,
         help='An alias for the {0}'.format(object_name)
@@ -851,6 +866,13 @@ def _status(logger, args):
         logger.info("management server {0}'s REST service is up and running".format(management_ip))
     except CosmoManagerRestCallError:
         logger.info("management server {0}'s REST service is not responding".format(management_ip))
+
+
+def _install_extension(logger, args):
+    return_code = os.system('pip install {0}'.format(args.provider))
+    if return_code != 0:
+        raise CosmoCliError('Installation failed. Check provider name and try again.')
+    logger.info('Installed {0} successfully'.format(args.provider))
 
 
 def _bind_to_management_server(logger, args):
