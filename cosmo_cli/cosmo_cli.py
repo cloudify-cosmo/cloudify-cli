@@ -6,6 +6,7 @@ __author__ = 'ran'
 import argparse
 import json
 import time
+import sys
 import inspect
 import itertools
 import socket
@@ -26,6 +27,7 @@ import neutronclient.neutron.client as neutron_client
 
 # Project
 from cosmo_manager_rest_client.cosmo_manager_rest_client import CosmoManagerRestClient
+from cosmo_manager_rest_client.cosmo_manager_rest_client import CosmoManagerRestCallError
 
 EP_FLAG = 'externally_provisioned'
 
@@ -573,28 +575,44 @@ def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     logger = logging.getLogger(__name__)
 
+    old_excepthook = sys.excepthook
+    def new_excepthook(type, value, the_traceback):
+        if type == CosmoCliError:
+            logger.error(value.message)
+        elif type == CosmoManagerRestCallError:
+            logger.error("Failed making a call to REST service: {0}".format(value.message))
+        else:
+            old_excepthook(type, value, the_traceback)
+    sys.excepthook = new_excepthook
+
     # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
     logging.getLogger("paramiko").setLevel(logging.WARNING)
     logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
 
+    #main parser
     parser = argparse.ArgumentParser(description='Installs Cosmo in an OpenStack environment')
 
-    # parser.add_argument(
-    #     'status',
-    #     metavar='STATUS',
-    #     type=str,
-    #     help='command for showing general status'
-    # )
-
     subparsers = parser.add_subparsers()
-
+    parser_status = subparsers.add_parser('status', help='command for showing general status')
+    parser_bind = subparsers.add_parser('bind', help='command for binding to a given management server')
     parser_init = subparsers.add_parser('init', help='command for initializing configuration files for installation')
+    parser_bootstrap = subparsers.add_parser('bootstrap', help='commands for bootstrapping cloudify')
+    parser_blueprints = subparsers.add_parser('upload', help='commands for blueprints')
+    parser_deployments = subparsers.add_parser('deploy', help='command for deployments')
 
-    parser_bootstrap = subparsers.add_parser('bootstrap', help='command for bootstrapping cosmo on openstack')
-    parser_upload = subparsers.add_parser('upload', help='command for uploading a blueprint')
-    parser_deploy = subparsers.add_parser('deploy', help='command for creating a new deployment')
-    parser_execute = subparsers.add_parser('execute', help='command for executing a deployment\'s operation')
+    #status subparser
+    parser_status.set_defaults(handler=_status)
 
+    #bind subparser
+    parser_bind.add_argument(
+        'ip',
+        metavar='IP',
+        type=str,
+        help='The cloudify management server ip address'
+    )
+    parser_bind.set_defaults(handler=_bind_to_management_server)
+
+    #init subparser
     parser_init.add_argument(
         'provider',
         metavar='PROVIDER',
@@ -610,6 +628,7 @@ def main():
     )
     parser_init.set_defaults(handler=_init_openstack_bootstrap_config_files)
 
+    #bootstrap subparser
     parser_bootstrap.add_argument(
         'config_file',
         metavar='CONFIG_FILE',
@@ -630,51 +649,102 @@ def main():
     )
     parser_bootstrap.set_defaults(handler=_bootstrap_cosmo)
 
-    parser_upload.add_argument(
+    #blueprints subparser
+    blueprints_subparsers = parser_blueprints.add_subparsers()
+    parser_blueprints_upload = blueprints_subparsers.add_parser('upload',
+                                                                help='command for uploading a blueprint to the '
+                                                                     'management server')
+    parser_blueprints_list = blueprints_subparsers.add_parser('list', help='command for listing all uploaded '
+                                                                           'blueprints')
+    parser_blueprints_delete = blueprints_subparsers.add_parser('delete', help='command for deleting an uploaded '
+                                                                               'blueprint')
+
+    parser_blueprints_upload.add_argument(
         'blueprint_path',
         metavar='BLUEPRINT_FILE',
-        help="Path to the application's blueprint file",
-
+        type=str,
+        help="Path to the application's blueprint file"
     )
-    parser_upload.add_argument(
-        'management_ip',
-        metavar='MANAGEMENT_IP',
-        help='The cosmo management server ip address'
-    )
-    parser_upload.set_defaults(handler=_upload_blueprint)
+    _add_alias_optional_argument_to_parser(parser_blueprints_upload, 'blueprint')
+    _add_management_ip_optional_argument_to_parser(parser_blueprints_upload)
+    parser_blueprints.set_defaults(handler=_upload_blueprint)
 
-    parser_execute.add_argument(
+    _add_management_ip_optional_argument_to_parser(parser_blueprints_list)
+    parser_blueprints.set_defaults(handler=_list_blueprints)
+
+    parser_blueprints_delete.add_argument(
+        'blueprint_id',
+        metavar='BLUEPRINT_ID',
+        type=str,
+        help="the id or alias of the blueprint meant for deletion"
+    )
+    _add_management_ip_optional_argument_to_parser(parser_blueprints_delete)
+    parser_blueprints_delete.set_defaults(handler=_delete_blueprint)
+
+    #deployments subparser
+    deployments_subparsers = parser_deployments.add_subparsers()
+    parser_deployments_create = deployments_subparsers.add_parser('create', help='command for creating a deployment '
+                                                                                 'for a blueprint')
+    parser_deployments_execute = deployments_subparsers.add_parser('execute', help='command for executing a '
+                                                                                   'deployment of a blueprint')
+
+    parser_deployments_execute.add_argument(
         'operation',
         metavar='OPERATION',
         choices=['install'],
         help='The operation to execute'
     )
-    parser_execute.add_argument(
+    parser_deployments_execute.add_argument(
         'deployment_id',
         metavar='DEPLOYMENT_ID',
         help='The id of the deployment to execute the operation on'
     )
-    parser_execute.add_argument(
-        'management_ip',
-        metavar='MANAGEMENT_IP',
-        help='The cosmo management server ip address'
-    )
-    parser_execute.set_defaults(handler=_execute_deployment_operation)
+    _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
+    parser_deployments_execute.set_defaults(handler=_execute_deployment_operation)
 
-    parser_deploy.add_argument(
+    parser_deployments_create.add_argument(
         'blueprint_id',
         metavar='BLUEPRINT_ID',
-        help='The blueprint id in the catalog'
+        type=str,
+        help="the id or alias of the blueprint meant for deployment"
     )
-    parser_deploy.add_argument(
-        'management_ip',
-        metavar='MANAGEMENT_IP',
-        help='The cosmo management server ip address'
-    )
-    parser_deploy.set_defaults(handler=_create_deployment)
+    _add_alias_optional_argument_to_parser(parser_deployments_create, 'deployment')
+    _add_management_ip_optional_argument_to_parser(parser_deployments_create)
+    parser_deployments.set_defaults(handler=_create_deployment)
 
     args = parser.parse_args()
     args.handler(logger, args)
+
+
+def _load_cosmo_working_dir_settings():
+    try:
+        with open('.cosmo', 'r') as f:
+            return yaml.safe_load(f.read())
+    except IOError:
+        raise CosmoCliError('You must first initialize using "cosmo init <PROVIDER>"')
+
+
+def _dump_cosmo_working_dir_settings(cosmo_wd_settings):
+    with open('.cosmo', 'w') as f:
+        f.write(yaml.dump(cosmo_wd_settings))
+
+
+def _add_management_ip_optional_argument_to_parser(parser):
+    parser.add_argument(
+        '-t', '--management_ip',
+        metavar='MANAGEMENT_IP',
+        type=str,
+        help='The cloudify management server ip address'
+    )
+
+
+def _add_alias_optional_argument_to_parser(parser, object_name):
+    parser.add_argument(
+        '-a', '--alias',
+        metavar='ALIAS',
+        type=str,
+        help='An alias for the {0}'.format(object_name)
+    )
 
 
 def _init_openstack_bootstrap_config_files(logger, args):
@@ -682,6 +752,7 @@ def _init_openstack_bootstrap_config_files(logger, args):
     cosmo_dir = os.path.dirname(os.path.realpath(__file__))
     shutil.copy('{0}/cloudify-config.template.yaml'.format(cosmo_dir), config_target_directory)
     shutil.copy('{0}/cloudify-config.defaults.yaml'.format(cosmo_dir), config_target_directory)
+    _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings())
 
 
 def _bootstrap_cosmo(logger, args):
@@ -731,43 +802,147 @@ def _deep_merge_dictionaries(overriding_dict, overridden_dict):
     return merged_dict
 
 
+def _get_management_server_ip(args):
+    if args.management_ip:
+        return args.management_ip
+    cosmo_wd_settings = _load_cosmo_working_dir_settings()
+    if cosmo_wd_settings.management_ip:
+        return cosmo_wd_settings.management_ip
+    raise CosmoCliError('Must either bind to a management server or provide a management server ip explicitly')
+
+
+def _translate_blueprint_alias(blueprint_id_or_alias):
+    cosmo_wd_settings = _load_cosmo_working_dir_settings()
+    if blueprint_id_or_alias in cosmo_wd_settings.blueprint_alias_mappings:
+        return cosmo_wd_settings.blueprint_alias_mappings[blueprint_id_or_alias]
+    return blueprint_id_or_alias
+
+
+def _translate_deployment_alias(deployment_id_or_alias):
+    cosmo_wd_settings = _load_cosmo_working_dir_settings()
+    if deployment_id_or_alias in cosmo_wd_settings.deployment_alias_mappings:
+        return cosmo_wd_settings.deployment_alias_mappings[deployment_id_or_alias]
+    return deployment_id_or_alias
+
+
+def _save_blueprint_alias(blueprint_alias, blueprint_id):
+    cosmo_wd_settings = _load_cosmo_working_dir_settings()
+    if blueprint_alias in cosmo_wd_settings.blueprint_alias_mappings:
+        raise CosmoCliError('Blueprint alias {0} is already in use'.format(blueprint_alias))
+    cosmo_wd_settings.blueprint_alias_mappings[blueprint_alias] = blueprint_id
+    _dump_cosmo_working_dir_settings(cosmo_wd_settings)
+
+
+def _save_deployment_alias(deployment_alias, deployment_id):
+    cosmo_wd_settings = _load_cosmo_working_dir_settings()
+    if deployment_alias in cosmo_wd_settings.deployment_alias_mappings:
+        raise CosmoCliError('Deployment alias {0} is already in use'.format(deployment_alias))
+    cosmo_wd_settings.deployment_alias_mappings[deployment_alias] = deployment_id
+    _dump_cosmo_working_dir_settings(cosmo_wd_settings)
+
+
+def _status(logger, args):
+    cosmo_wd_settings = _load_cosmo_working_dir_settings()
+    management_ip = cosmo_wd_settings.management_ip
+    logger.info('querying management server {0}'.format(management_ip))
+    client = CosmoManagerRestClient(management_ip)
+    try:
+        client.list_blueprints()
+        logger.info("management server {0}'s REST service is up and running".format(management_ip))
+    except CosmoManagerRestCallError:
+        logger.info("management server {0}'s REST service is not responding".format(management_ip))
+
+
+def _bind_to_management_server(logger, args):
+    cosmo_wd_settings = _load_cosmo_working_dir_settings()
+    cosmo_wd_settings.management_ip = args.management_ip
+    _dump_cosmo_working_dir_settings(cosmo_wd_settings)
+    logger.info('Bound to management server {0}'.format(args.management_ip))
+
+
+def _list_blueprints(logger, args):
+    management_ip = _get_management_server_ip(args)
+    logger.info('querying blueprints list from management server {0}'.format(management_ip))
+    client = CosmoManagerRestClient(management_ip)
+    logger.info(client.list_blueprints())
+
+
+def _delete_blueprint(logger, args):
+    blueprint_id = _translate_blueprint_alias(args.blueprint_id)
+    management_ip = _get_management_server_ip(args)
+
+    logger.info('Deleting blueprint {0} from management server {1}'.format(args.blueprint_id, management_ip))
+    client = CosmoManagerRestClient(management_ip)
+    blueprint_state = client.delete_blueprint(blueprint_id)
+    logger.info("Deleted blueprint successfully")
+
+
 def _upload_blueprint(logger, args):
     blueprint_path = args.blueprint_path
-    management_ip = args.management_ip
+    management_ip = _get_management_server_ip(args)
+    blueprint_alias = args.alias
+    if blueprint_alias and _translate_blueprint_alias(blueprint_alias) != blueprint_alias:
+        raise CosmoCliError('Blueprint alias {0} is already in use'.format(blueprint_alias))
 
     logger.info('Uploading blueprint {0} to management server {1}'.format(blueprint_path, management_ip))
     client = CosmoManagerRestClient(management_ip)
     blueprint_state = client.publish_blueprint(blueprint_path)
-    logger.info("Uploaded blueprint, blueprint's id is: {0}".format(blueprint_state.id))
+
+    if not blueprint_alias:
+        logger.info("Uploaded blueprint, blueprint's id is: {0}".format(blueprint_state.id))
+    else:
+        _save_blueprint_alias(blueprint_alias, blueprint_state.id)
+        logger.info("Uploaded blueprint, blueprint's alias is: {0} (id: {1})".format(blueprint_alias,
+                                                                                     blueprint_state.id))
 
 
 def _create_deployment(logger, args):
     blueprint_id = args.blueprint_id
-    management_ip = args.management_ip
+    management_ip = _get_management_server_ip(args)
+    deployment_alias = args.alias
+    if deployment_alias and _translate_deployment_alias(deployment_alias) != deployment_alias:
+        raise CosmoCliError('Deployment alias {0} is already in use'.format(deployment_alias))
 
     logger.info('Creating new deployment from blueprint {0} at management server {1}'.format(blueprint_id,
                                                                                              management_ip))
     client = CosmoManagerRestClient(management_ip)
     deployment = client.create_deployment(blueprint_id)
-    logger.info("Deployment created, deployment's id is: {0}".format(deployment.id))
+    if not deployment_alias:
+        logger.info("Deployment created, deployment's id is: {0}".format(deployment.id))
+    else:
+        _save_deployment_alias(deployment_alias, deployment.id)
+        logger.info("Deployment created, deployment's alias is: {0} (id: {1})".format(deployment_alias, deployment.id))
 
 
 def _execute_deployment_operation(logger, args):
-    deployment_id = args.deployment_id
+    deployment_id = _translate_deployment_alias(args.deployment_id)
     operation = args.operation
-    management_ip = args.management_ip
+    management_ip = _get_management_server_ip(args)
 
-    logger.info('Executing operation {0} on deployment {1} at management server {2}'.format(operation, deployment_id,
-                                                                                            management_ip))
+    logger.info('Executing operation {0} on deployment {1} at management server {2}'
+                .format(operation, args.deployment_id, management_ip))
 
-    def events_printer(events):
+    def events_logger(events):
         for event in events:
-            print(event)
+            logger.info(event)
 
     client = CosmoManagerRestClient(management_ip)
-    client.execute_deployment(deployment_id, operation, events_printer)
+    client.execute_deployment(deployment_id, operation, events_logger)
     logger.info("Finished executing operation {0} on deployment".format(operation))
 
+
+class CosmoWorkingDirectorySettings(yaml.YAMLObject):
+    yaml_tag = u'!WD_Settings'
+    yaml_loader = yaml.SafeLoader
+
+    def __init__(self, management_ip=None, blueprint_alias_mappings=None, deployment_alias_mappings=None):
+        self.management_ip = management_ip
+        self.blueprint_alias_mappings = blueprint_alias_mappings if blueprint_alias_mappings else {}
+        self.deployment_alias_mappings = deployment_alias_mappings if deployment_alias_mappings else {}
+
+
+class CosmoCliError(Exception):
+    pass
 
 if __name__ == '__main__':
     main()
