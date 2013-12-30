@@ -13,43 +13,43 @@ networks:
     neutron_enabled_region: true
     neutron_url: https://region-b.geo-1.network.hpcloudsvc.com
     int_network:
-        externally_provisioned: true
-        name: cosmo-admin-network
+        externally_provisioned: false
+        name: cloudify-admin-network
     subnet:
-        externally_provisioned: true
-        name: cosmo-admin-network-subnet
+        externally_provisioned: false
+        name: cloudify-admin-network-subnet
         ip_version: 4
         cidr: 10.67.79.0/24
     ext_network:
         externally_provisioned: true #For now, this must be 'externally_provisioned': true
         name: Ext-Net
     router:
-        externally_provisioned: true
-        name: cosmo-router
+        externally_provisioned: false
+        name: cloudify-router
 
 security:
     management_keypair:
-        externally_provisioned: true
-        name: cosmo-manager-kp
+        externally_provisioned: false
+        name: cloudify-manager-kp
         #provided:
             #public_key_filepath: [PUBLIC-KEY-PATH]
             #private_key_filepath: [PRIVATE-KEY-PATH]
         auto_generated:
-            private_key_target_path: ~/.ssh/cosmo-manager-kp.pem
+            private_key_target_path: ~/.ssh/cloudify-manager-kp.pem
     agents_keypair:
-        externally_provisioned: true
-        name: cosmo-agents-kp
+        externally_provisioned: false
+        name: cloudify-agents-kp
         #provided:
             #public_key_filepath: [PUBLIC-KEY-PATH]
             #private_key_filepath: [PRIVATE-KEY-PATH]
         auto_generated:
-            private_key_target_path: ~/.ssh/cosmo-agents-kp.pem
+            private_key_target_path: ~/.ssh/cloudify-agents-kp.pem
     security_group_user:
-        externally_provisioned: true
-        name: cosmo-sg-user
+        externally_provisioned: false
+        name: cloudify-sg-user
     security_group_manager:
-        externally_provisioned: true
-        name: cosmo-sg-manager
+        externally_provisioned: false
+        name: cloudify-sg-manager
         cidr: 0.0.0.0/0
 
 management_server:
@@ -58,6 +58,6 @@ management_server:
     user_on_management: ubuntu
     userhome_on_management: /home/ubuntu
     instance:
-        name: cosmo-management-server
+        name: cloudify-management-server
         image: 8c096c29-a666-4b82-99c4-c77dc70cfb40
         flavor: 102

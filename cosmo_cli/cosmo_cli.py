@@ -737,14 +737,14 @@ def _get_provider_module(provider_name):
 
 def _load_cosmo_working_dir_settings():
     try:
-        with open('.cosmo', 'r') as f:
+        with open('.cloudify', 'r') as f:
             return yaml.safe_load(f.read())
     except IOError:
         raise CosmoCliError('You must first initialize using "cosmo init <PROVIDER>"')
 
 
 def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
-    target_file_path = '.cosmo' if not target_dir else '{0}/.cosmo'.format(target_dir)
+    target_file_path = '.cloudify' if not target_dir else '{0}/.cosmo'.format(target_dir)
     with open(target_file_path, 'w') as f:
         f.write(yaml.dump(cosmo_wd_settings))
 
