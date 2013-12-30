@@ -36,7 +36,7 @@ def main():
 
     subparsers = parser.add_subparsers()
     parser_status = subparsers.add_parser('status', help='command for showing general status')
-    parser_bind = subparsers.add_parser('bind', help='command for binding to a given management server')
+    parser_use = subparsers.add_parser('use', help='command for using a given management server')
     parser_init = subparsers.add_parser('init', help='command for initializing configuration files for installation')
     parser_bootstrap = subparsers.add_parser('bootstrap', help='commands for bootstrapping cloudify')
     parser_blueprints = subparsers.add_parser('blueprints', help='commands for blueprints')
@@ -45,14 +45,14 @@ def main():
     #status subparser
     parser_status.set_defaults(handler=_status)
 
-    #bind subparser
-    parser_bind.add_argument(
+    #use subparser
+    parser_use.add_argument(
         'ip',
         metavar='IP',
         type=str,
         help='The cloudify management server ip address'
     )
-    parser_bind.set_defaults(handler=_bind_to_management_server)
+    parser_use.set_defaults(handler=_use_to_management_server)
 
     #init subparser
     parser_init.add_argument(
@@ -136,12 +136,13 @@ def main():
     parser_deployments_execute.add_argument(
         'operation',
         metavar='OPERATION',
-        choices=['install', 'uninstall'],
+        type=str,
         help='The operation to execute'
     )
     parser_deployments_execute.add_argument(
         'deployment_id',
         metavar='DEPLOYMENT_ID',
+        type=str,
         help='The id of the deployment to execute the operation on'
     )
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
@@ -162,8 +163,18 @@ def main():
 
 
 def _get_provider_module(provider_name):
-    return imp.load_module(provider_name,
-                           *imp.find_module(provider_name)).create()
+    module_or_pkg_desc = imp.find_module(provider_name)
+    if not module_or_pkg_desc[1]:
+        #module_or_pkg_desc[1] is the pathname of found module/package, if it's empty none were found
+        raise CosmoCliError('Provider not found.')
+
+    module = imp.load_module(provider_name, *module_or_pkg_desc)
+
+    if not module_or_pkg_desc[0]:
+        #module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not empty only when we've loaded a package rather
+        #than a module. Re-searching for the module inside the now-loaded package with the same name.
+        module = imp.load_module(provider_name, *imp.find_module(provider_name, module.__path__))
+    return module
 
 
 def _load_cosmo_working_dir_settings():
@@ -202,9 +213,17 @@ def _add_alias_optional_argument_to_parser(parser, object_name):
 
 def _init_cosmo_provider(logger, args):
     config_target_directory = args.config_target_dir
+    #creating .cloudify file
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(), config_target_directory)
-    _get_provider_module(args.provider).init(logger, config_target_directory, CONFIG_FILE_NAME,
-                                             DEFAULTS_CONFIG_FILE_NAME)
+
+    try:
+        #searching first for the standard name for providers (i.e. cloudify_XXX)
+        provider_module = _get_provider_module('cloudify_{0}'.format(args.provider))
+    except CosmoCliError:
+        #if provider was not found, search for the exact literal the user requested instead
+        provider_module = _get_provider_module(args.provider)
+
+    provider_module.init(logger, config_target_directory, CONFIG_FILE_NAME, DEFAULTS_CONFIG_FILE_NAME)
 
 
 def _bootstrap_cosmo(logger, args):
@@ -247,7 +266,8 @@ def _get_management_server_ip(args):
     cosmo_wd_settings = _load_cosmo_working_dir_settings()
     if cosmo_wd_settings.management_ip:
         return cosmo_wd_settings.management_ip
-    raise CosmoCliError('Must either bind to a management server or provide a management server ip explicitly')
+    raise CosmoCliError("Must either first run 'use' command for a management server or provide a management server "
+                        "ip explicitly")
 
 
 def _translate_blueprint_alias(blueprint_id_or_alias):
@@ -292,7 +312,7 @@ def _status(logger, args):
         logger.info("management server {0}'s REST service is not responding".format(management_ip))
 
 
-def _bind_to_management_server(logger, args):
+def _use_to_management_server(logger, args):
     cosmo_wd_settings = _load_cosmo_working_dir_settings()
     cosmo_wd_settings.management_ip = args.management_ip
     _dump_cosmo_working_dir_settings(cosmo_wd_settings)
