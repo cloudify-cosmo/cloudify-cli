@@ -5,6 +5,7 @@ __author__ = 'ran'
 # Standard
 import argparse
 import json
+import imp
 import time
 import sys
 import inspect
@@ -594,7 +595,7 @@ def main():
 
     subparsers = parser.add_subparsers()
     parser_status = subparsers.add_parser('status', help='command for showing general status')
-    parser_install = subparsers.add_parser('install', help='command for installing provider extensions')
+    parser_install = subparsers.add_parser('install', help='command for installing providers')
     parser_bind = subparsers.add_parser('bind', help='command for binding to a given management server')
     parser_init = subparsers.add_parser('init', help='command for initializing configuration files for installation')
     parser_bootstrap = subparsers.add_parser('bootstrap', help='commands for bootstrapping cloudify')
@@ -609,9 +610,9 @@ def main():
         'provider',
         metavar='PROVIDER',
         type=str,
-        help='The name of the provider extension to install'
+        help='The name of the provider to install'
     )
-    parser_install.set_defaults(handler=_install_extension)
+    parser_install.set_defaults(handler=_install_provider)
 
     #bind subparser
     parser_bind.add_argument(
@@ -637,7 +638,7 @@ def main():
         default=os.getcwd(),
         help='the target directory for the template configuration files'
     )
-    parser_init.set_defaults(handler=_init_openstack_bootstrap_config_files)
+    parser_init.set_defaults(handler=_init_cosmo_provider)
 
     #bootstrap subparser
     parser_bootstrap.add_argument(
@@ -704,7 +705,7 @@ def main():
     parser_deployments_execute.add_argument(
         'operation',
         metavar='OPERATION',
-        choices=['install'],
+        choices=['install', 'uninstall'],
         help='The operation to execute'
     )
     parser_deployments_execute.add_argument(
@@ -729,6 +730,11 @@ def main():
     args.handler(logger, args)
 
 
+def _get_provider_module(provider_name):
+    return imp.load_module(provider_name,
+                           *imp.find_module(provider_name)).create()
+
+
 def _load_cosmo_working_dir_settings():
     try:
         with open('.cosmo', 'r') as f:
@@ -737,8 +743,9 @@ def _load_cosmo_working_dir_settings():
         raise CosmoCliError('You must first initialize using "cosmo init <PROVIDER>"')
 
 
-def _dump_cosmo_working_dir_settings(cosmo_wd_settings):
-    with open('.cosmo', 'w') as f:
+def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
+    target_file_path = '.cosmo' if not target_dir else '{0}/.cosmo'.format(target_dir)
+    with open(target_file_path, 'w') as f:
         f.write(yaml.dump(cosmo_wd_settings))
 
 
@@ -762,7 +769,7 @@ def _add_alias_optional_argument_to_parser(parser, object_name):
     )
 
 
-def _init_openstack_bootstrap_config_files(logger, args):
+def _init_cosmo_provider(logger, args):
     config_target_directory = args.config_target_dir
     cosmo_dir = os.path.dirname(os.path.realpath(__file__))
     shutil.copy('{0}/cloudify-config.template.yaml'.format(cosmo_dir), config_target_directory)
@@ -868,7 +875,7 @@ def _status(logger, args):
         logger.info("management server {0}'s REST service is not responding".format(management_ip))
 
 
-def _install_extension(logger, args):
+def _install_provider(logger, args):
     return_code = os.system('pip install {0}'.format(args.provider))
     if return_code != 0:
         raise CosmoCliError('Installation failed. Check provider name and try again.')
@@ -920,6 +927,7 @@ def _upload_blueprint(logger, args):
 
 def _create_deployment(logger, args):
     blueprint_id = args.blueprint_id
+    translated_blueprint_id = _translate_blueprint_alias(blueprint_id)
     management_ip = _get_management_server_ip(args)
     deployment_alias = args.alias
     if deployment_alias and _translate_deployment_alias(deployment_alias) != deployment_alias:
@@ -928,7 +936,7 @@ def _create_deployment(logger, args):
     logger.info('Creating new deployment from blueprint {0} at management server {1}'.format(blueprint_id,
                                                                                              management_ip))
     client = CosmoManagerRestClient(management_ip)
-    deployment = client.create_deployment(blueprint_id)
+    deployment = client.create_deployment(translated_blueprint_id)
     if not deployment_alias:
         logger.info("Deployment created, deployment's id is: {0}".format(deployment.id))
     else:
