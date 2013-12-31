@@ -295,7 +295,10 @@ def _bootstrap_cosmo(logger, args):
     config = _read_config(config_file, defaults_config_file)
 
     mgmt_ip = _get_provider_module(provider).bootstrap(logger, config)
-    logger.info("Management server is up at {0}".format(mgmt_ip))
+
+    with _update_wd_settings() as wd_settings:
+        wd_settings.set_management_server(mgmt_ip)
+    logger.info("Management server is up at {0} (is now set as the default management server".format(mgmt_ip))
 
 
 def _teardown_cosmo(logger, args):
@@ -312,8 +315,8 @@ def _teardown_cosmo(logger, args):
     #cleaning relevant data from working directory settings
     with _update_wd_settings() as wd_settings:
         if wd_settings.remove_management_server_context(mgmt_ip):
-            logger.info("No longer using management server {0} as the default target server - run 'cfy use' command "
-                        "to use a different server as default".format(mgmt_ip))
+            logger.info("No longer using management server {0} as the default management server - run 'cfy use' "
+                        "command to use a different server as default".format(mgmt_ip))
 
     logger.info("Teardown complete")
 
@@ -398,9 +401,9 @@ def _status(logger, args):
     client = CosmoManagerRestClient(management_ip)
     try:
         client.list_blueprints()
-        logger.info("management server {0}'s REST service is up and running".format(management_ip))
+        logger.info("REST service at management server {0} is up and running".format(management_ip))
     except CosmoManagerRestCallError:
-        logger.info("management server {0}'s REST service is not responding".format(management_ip))
+        logger.info("REST service at management server {0} is not responding".format(management_ip))
 
 
 def _use_management_server(logger, args):
@@ -411,7 +414,6 @@ def _use_management_server(logger, args):
             logger.info('Using management server {0} (alias {1})'.format(args.management_ip, args.alias))
         else:
             logger.info('Using management server {0}'.format(args.management_ip))
-
 
 
 def _list_blueprints(logger, args):
