@@ -70,7 +70,7 @@ def main():
         help='Command for initializing configuration files for a specific provider'
     )
     parser_init.add_argument(
-        '-t, --target-dir',
+        '-t', '--target-dir',
         dest='target_dir',
         metavar='TARGET_DIRECTORY',
         type=str,
@@ -81,21 +81,21 @@ def main():
 
     #bootstrap subparser
     parser_bootstrap.add_argument(
-        '-c, --config-file',
+        '-c', '--config-file',
         dest='config_file',
         metavar='CONFIG_FILE',
         type=argparse.FileType(),
         help='Path to the cosmo configuration file'
     )
     parser_bootstrap.add_argument(
-        '-d, --defaults-config-file',
+        '-d', '--defaults-config-file',
         dest='defaults_config_file',
         metavar='DEFAULTS_CONFIG_FILE',
         type=argparse.FileType(),
         help='Path to the cosmo defaults configuration file'
     )
     parser_bootstrap.add_argument(
-        '-t, --management-ip',
+        '-t', '--management-ip',
         dest='management_ip',
         metavar='MANAGEMENT_IP',
         type=str,
@@ -230,8 +230,8 @@ def _add_contextual_alias_subparser(subparsers_container, object_name, handler):
 
 def _add_force_optional_argument_to_parser(parser, help_message):
     parser.add_argument(
-        '-f, --force',
-        metavar="FORCE",
+        '-f', '--force',
+        dest='force',
         action='store_true',
         help=help_message
     )
@@ -264,15 +264,17 @@ def _init_cosmo_provider(logger, args):
 
     try:
         #searching first for the standard name for providers (i.e. cloudify_XXX)
-        provider_module = _get_provider_module('cloudify_{0}'.format(args.provider))
+        provider_module_name = 'cloudify_{0}'.format(args.provider)
+        provider_module = _get_provider_module(provider_module_name)
     except CosmoCliError:
         #if provider was not found, search for the exact literal the user requested instead
-        provider_module = _get_provider_module(args.provider)
+        provider_module_name = args.provider
+        provider_module = _get_provider_module(provider_module)
 
     provider_module.init(logger, target_directory, CONFIG_FILE_NAME, DEFAULTS_CONFIG_FILE_NAME)
 
     with _update_wd_settings() as wd_settings:
-        wd_settings.set_provider(args.provider)
+        wd_settings.set_provider(provider_module_name)
 
 
 def _bootstrap_cosmo(logger, args):
