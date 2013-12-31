@@ -294,7 +294,7 @@ def _bootstrap_cosmo(logger, args):
     defaults_config_file = _get_config_file_object('defaults_config_file', DEFAULTS_CONFIG_FILE_NAME)
     config = _read_config(config_file, defaults_config_file)
 
-    mgmt_ip = _get_provider_module(provider).bootstrap(logger, config, CONFIG_FILE_NAME, DEFAULTS_CONFIG_FILE_NAME)
+    mgmt_ip = _get_provider_module(provider).bootstrap(logger, config)
     logger.info("Management server is up at {0}".format(mgmt_ip))
 
 
