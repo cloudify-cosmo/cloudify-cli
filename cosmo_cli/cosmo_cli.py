@@ -162,7 +162,7 @@ def main():
     deployments_subparsers = parser_deployments.add_subparsers()
     _add_contextual_alias_subparser(deployments_subparsers, 'deployment', _save_deployment_alias_cmd)
     parser_deployments_create = deployments_subparsers.add_parser('create', help='command for creating a deployment '
-                                                                                 'for a blueprint')
+                                                                                 'of a blueprint')
     parser_deployments_execute = deployments_subparsers.add_parser('execute', help='command for executing a '
                                                                                    'deployment of a blueprint')
 
