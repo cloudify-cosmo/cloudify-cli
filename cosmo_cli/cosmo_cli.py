@@ -202,7 +202,7 @@ def main():
         help='The id or alias of the blueprint whose workflows to list'
     )
     _add_management_ip_optional_argument_to_parser(parser_workflows_list)
-    parser_deployments_execute.set_defaults(handler=_list_workflows)
+    parser_workflows_list.set_defaults(handler=_list_workflows)
 
     args = parser.parse_args()
     args.handler(logger, args)
@@ -376,12 +376,14 @@ def _save_blueprint_alias_cmd(logger, args):
     mgmt_ip = _get_management_server_ip(args)
     is_allow_overwrite = True if args.force else False
     _save_blueprint_alias(args.alias, args.blueprint_id, mgmt_ip, is_allow_overwrite)
+    logger.info('Blueprint {0} is now aliased {1}'.format(args.blueprint_id, args.alias))
 
 
 def _save_deployment_alias_cmd(logger, args):
     mgmt_ip = _get_management_server_ip(args)
     is_allow_overwrite = True if args.force else False
     _save_deployment_alias(args.alias, args.deployment_id, mgmt_ip, is_allow_overwrite)
+    logger.info('Deployment {0} is now aliased {1}'.format(args.deployment_id, args.alias))
 
 
 def _save_blueprint_alias(blueprint_alias, blueprint_id, management_ip, is_allow_overwrite=False):
@@ -411,6 +413,11 @@ def _get_provider():
     raise RuntimeError("Provider is not set in working directory settings")
 
 
+def _get_blueprints_alias_mapping(management_ip):
+    cosmo_wd_settings = _load_cosmo_working_dir_settings()
+    return cosmo_wd_settings.get_blueprints_alias_mapping(management_ip)
+
+
 def _status(logger, args):
     management_ip = _get_management_server_ip(args)
     logger.info('querying management server {0}'.format(management_ip))
@@ -436,7 +443,38 @@ def _list_blueprints(logger, args):
     management_ip = _get_management_server_ip(args)
     logger.info('querying blueprints list from management server {0}'.format(management_ip))
     client = CosmoManagerRestClient(management_ip)
-    logger.info(client.list_blueprints())
+    blueprints_list = client.list_blueprints()
+    alias_to_blueprint_id = _get_blueprints_alias_mapping(management_ip)
+    blueprint_id_to_aliases = _build_reversed_lookup(alias_to_blueprint_id)
+
+    if not blueprints_list:
+        logger.info('There are no blueprints available on the management server')
+    else:
+        logger.info('Blueprints:')
+        for blueprint_state in blueprints_list:
+            aliases_str = ''
+            if blueprint_state.id in blueprint_id_to_aliases:
+                aliases_str = ''.join('{0}, '.format(alias) for alias in blueprint_id_to_aliases[blueprint_state.id])
+                aliases_str = ' (' + aliases_str[:-2] + ')'
+            logger.info('\t' + blueprint_state.id + aliases_str)
+
+    #printing unused aliases if there are any
+    blueprints_ids_on_server = {blueprint.id for blueprint in blueprints_list}
+    unused_aliases = [alias for alias in alias_to_blueprint_id.iterkeys() if
+                      alias_to_blueprint_id[alias] not in blueprints_ids_on_server]
+    if unused_aliases:
+        logger.info('Unused aliases:')
+        unused_aliases_str = '\t' + ''.join('{0}, '.format(alias) for alias in unused_aliases)
+        logger.info(unused_aliases_str[:-2])
+
+
+def _build_reversed_lookup(dic):
+    rev_multidic = {}
+    for k,v in dic.iteritems():
+        if v not in rev_multidic:
+            rev_multidic[v] = []
+        rev_multidic[v].append(k)
+    return rev_multidic
 
 
 def _delete_blueprint(logger, args):
@@ -591,6 +629,18 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
             raise CosmoCliError("management-server alias {1} is already in use; use -f flag to allow overwrite."
                                 .format(management_alias))
         self._mgmt_aliases[management_alias] = management_address
+
+    def get_blueprints_alias_mapping(self, management_ip):
+        if management_ip not in self._mgmt_to_contextual_aliases or \
+           'blueprints' not in self._mgmt_to_contextual_aliases[management_ip]:
+            return {}
+        return deepcopy(self._mgmt_to_contextual_aliases[management_ip]['blueprints'])
+
+    def get_deployments_alias_mapping(self, management_ip):
+        if management_ip not in self._mgmt_to_contextual_aliases or \
+                        'deployments' not in self._mgmt_to_contextual_aliases[management_ip]:
+            return {}
+        return deepcopy(self._mgmt_to_contextual_aliases[management_ip]['deployments'])
 
     def translate_blueprint_alias(self, blueprint_id_or_alias, management_ip):
         return self._translate_contextual_alias('blueprints', blueprint_id_or_alias, management_ip)
