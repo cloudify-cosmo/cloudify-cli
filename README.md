@@ -4,7 +4,7 @@ Command line interface for [Cloudify](https://github.com/CloudifySource/cosmo-ma
 
 * [Deploying your first application - Walkthrough](#deploying-your-first-application---walkthrough)
 * [Providers](#providers)
-  * [Current Supported Providers](#current-supported-providers)
+  * [Currently Supported Providers](#currently-supported-providers)
   * [Creating a new provider extension](#creating-a-new-provider-extension)
 * [Working-Directory Settings and Configurations](#working-directory-settings-and-configurations)
 * [Commands Docs](#commands-docs)
@@ -57,7 +57,7 @@ A provider is any platform which allows for the creation and bootstrapping of a 
 Note that the CLI can be used even without the installation of any providers - if you already possess a bootstrapped management server, you may simply direct the CLI to work with that server (`cfy use <management-ip> -a my-server`), and you can then issue any of the CLI commands to that server (with the exception of the "cfy teardown" command)
 
 
-###Current Supported Providers:
+###Currently Supported Providers:
 * [Openstack](https://github.com/CloudifySource/cloudify-openstack/tree/develop)
 
 
