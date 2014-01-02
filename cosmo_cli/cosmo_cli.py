@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# vim: ts=4 sw=4 et
-
 ########
 # Copyright (c) 2013 GigaSpaces Technologies Ltd. All rights reserved
 #
@@ -100,6 +97,7 @@ def main():
         '-c', '--config-file',
         dest='config_file',
         metavar='CONFIG_FILE',
+        default=CONFIG_FILE_NAME,
         type=argparse.FileType(),
         help='Path to the cosmo configuration file'
     )
@@ -107,6 +105,7 @@ def main():
         '-d', '--defaults-config-file',
         dest='defaults_config_file',
         metavar='DEFAULTS_CONFIG_FILE',
+        default=DEFAULTS_CONFIG_FILE_NAME,
         type=argparse.FileType(),
         help='Path to the cosmo defaults configuration file'
     )
@@ -297,19 +296,7 @@ def _bootstrap_cosmo(logger, args):
     provider = _get_provider()
     logger.info("Bootstrapping using {0}".format(provider))
 
-    def _get_config_file_object(arg_name, file_default_name):
-        if getattr(args, arg_name):
-            return getattr(args, arg_name)
-        try:
-            return open(file_default_name, 'r')
-        except IOError:
-            raise CosmoCliError('Could not find configuration file "{0}". Pass the path explicitly if using '
-                                'configuration files with names different than the default.')
-
-    config_file = _get_config_file_object('config_file', CONFIG_FILE_NAME)
-    defaults_config_file = _get_config_file_object('defaults_config_file', DEFAULTS_CONFIG_FILE_NAME)
-    config = _read_config(config_file, defaults_config_file)
-
+    config = _read_config(args.config_file, args.defaults_config_file)
     mgmt_ip = _get_provider_module(provider).bootstrap(logger, config)
 
     with _update_wd_settings() as wd_settings:
