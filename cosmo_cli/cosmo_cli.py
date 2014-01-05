@@ -301,7 +301,7 @@ def _bootstrap_cosmo(logger, args):
 
     with _update_wd_settings() as wd_settings:
         wd_settings.set_management_server(mgmt_ip)
-    logger.info("Management server is up at {0} (is now set as the default management server".format(mgmt_ip))
+    logger.info("Management server is up at {0} (is now set as the default management server)".format(mgmt_ip))
 
 
 def _teardown_cosmo(logger, args):
