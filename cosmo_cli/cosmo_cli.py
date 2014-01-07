@@ -298,6 +298,7 @@ def _bootstrap_cosmo(logger, args):
 
     config = _read_config(args.config_file, args.defaults_config_file)
     mgmt_ip = _get_provider_module(provider).bootstrap(logger, config)
+    mgmt_ip = mgmt_ip.encode('utf-8')
 
     with _update_wd_settings() as wd_settings:
         wd_settings.set_management_server(mgmt_ip)
