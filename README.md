@@ -18,7 +18,8 @@ Command line interface for [Cloudify](https://github.com/CloudifySource/cosmo-ma
   - Install Cloudify CLI (temporary url, will be on PyPI soon):  
   `pip install https://github.com/CloudifySource/cosmo-cli/archive/develop.zip`
 
-  - Install a Cloudify provider extension (Openstack is used in this example):  
+  - Install a Cloudify provider extension (Openstack is used in this example):
+  `apt-get install python-dev # or the equivalent *nix version of this command`
   `pip install https://github.com/CloudifySource/cloudify-openstack/archive/develop.zip`
 
 <br>
