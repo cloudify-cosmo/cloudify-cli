@@ -16,7 +16,8 @@ Command line interface for [Cloudify](https://github.com/CloudifySource/cosmo-ma
 ## Deploying your first application - Walkthrough
 **1. Installing the CLI and a provider extension:**
   - Install Cloudify CLI (temporary url, will be on PyPI soon):  
-  `pip install https://github.com/CloudifySource/cosmo-cli/archive/develop.zip`
+  `pip install https://github.com/CloudifySource/cosmo-cli/archive/develop.zip`  
+  (Note: if you're using Pip 1.5 or above, add the "--process-dependency-links" flag to the 'pip install' command)  
 
   - Install a Cloudify provider extension (Openstack is used in this example):  
   `pip install https://github.com/CloudifySource/cloudify-openstack/archive/develop.zip`
