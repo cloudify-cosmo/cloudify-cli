@@ -35,16 +35,22 @@ CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
 CONFIG_FILE_NAME = 'cloudify-config.yaml'
 DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 
+logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logger = logging.getLogger(__name__)
+
+# http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
+logging.getLogger("paramiko").setLevel(logging.WARNING)
+logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
+
 
 def main():
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-    logger = logging.getLogger(__name__)
+    _set_cli_except_hook()
+    args = _parse_args(sys.argv[1:])
+    args.handler(args)
 
-    _set_cli_except_hook(logger)
 
-    # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
-    logging.getLogger("paramiko").setLevel(logging.WARNING)
-    logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
+def _parse_args(args):
+    #Parses the arguments using the Python argparse library
 
     #main parser
     parser = argparse.ArgumentParser(description='Installs Cosmo in an OpenStack environment')
@@ -90,7 +96,7 @@ def main():
         default=os.getcwd(),
         help='The target directory to be initialized for the given provider'
     )
-    parser_init.set_defaults(handler=_init_cosmo_provider)
+    parser_init.set_defaults(handler=_init_cosmo)
 
     #bootstrap subparser
     parser_bootstrap.add_argument(
@@ -193,18 +199,17 @@ def main():
     #workflows subparser
     workflows_subparsers = parser_workflows.add_subparsers()
     parser_workflows_list = workflows_subparsers.add_parser('list', help='command for listing workflows '
-                                                                                 'for a blueprint')
+                                                                         'for a deployment')
     parser_workflows_list.add_argument(
-        'blueprint_id',
-        metavar='BLUEPRINT_ID',
+        'deployment_id',
+        metavar='DEPLOYMENT_ID',
         type=str,
-        help='The id or alias of the blueprint whose workflows to list'
+        help='The id or alias of the deployment whose workflows to list'
     )
     _add_management_ip_optional_argument_to_parser(parser_workflows_list)
     parser_workflows_list.set_defaults(handler=_list_workflows)
 
-    args = parser.parse_args()
-    args.handler(logger, args)
+    return parser.parse_args(args)
 
 
 def _get_provider_module(provider_name):
@@ -272,7 +277,8 @@ def _add_alias_optional_argument_to_parser(parser, object_name):
     )
 
 
-def _init_cosmo_provider(logger, args):
+def _init_cosmo(args):
+    logger.info("Initializing Cloudify")
     target_directory = args.target_dir
     #creating .cloudify file
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(), target_directory)
@@ -284,15 +290,16 @@ def _init_cosmo_provider(logger, args):
     except CosmoCliError:
         #if provider was not found, search for the exact literal the user requested instead
         provider_module_name = args.provider
-        provider_module = _get_provider_module(provider_module)
+        provider_module = _get_provider_module(provider_module_name)
 
     provider_module.init(logger, target_directory, CONFIG_FILE_NAME, DEFAULTS_CONFIG_FILE_NAME)
 
     with _update_wd_settings() as wd_settings:
         wd_settings.set_provider(provider_module_name)
+    logger.info("Initialization complete")
 
 
-def _bootstrap_cosmo(logger, args):
+def _bootstrap_cosmo(args):
     provider = _get_provider()
     logger.info("Bootstrapping using {0}".format(provider))
 
@@ -305,7 +312,7 @@ def _bootstrap_cosmo(logger, args):
     logger.info("Management server is up at {0} (is now set as the default management server)".format(mgmt_ip))
 
 
-def _teardown_cosmo(logger, args):
+def _teardown_cosmo(args):
     if not args.force:
         raise CosmoCliError("This action requires additional confirmation. Add the '-f' or '--force' flags to your "
                             "command if you are certain this command should be executed.")
@@ -360,14 +367,14 @@ def _translate_deployment_alias(deployment_id_or_alias, management_ip):
     return wd_settings.translate_deployment_alias(deployment_id_or_alias, management_ip)
 
 
-def _save_blueprint_alias_cmd(logger, args):
+def _save_blueprint_alias_cmd(args):
     mgmt_ip = _get_management_server_ip(args)
     is_allow_overwrite = True if args.force else False
     _save_blueprint_alias(args.alias, args.blueprint_id, mgmt_ip, is_allow_overwrite)
     logger.info('Blueprint {0} is now aliased {1}'.format(args.blueprint_id, args.alias))
 
 
-def _save_deployment_alias_cmd(logger, args):
+def _save_deployment_alias_cmd(args):
     mgmt_ip = _get_management_server_ip(args)
     is_allow_overwrite = True if args.force else False
     _save_deployment_alias(args.alias, args.deployment_id, mgmt_ip, is_allow_overwrite)
@@ -406,7 +413,7 @@ def _get_blueprints_alias_mapping(management_ip):
     return cosmo_wd_settings.get_blueprints_alias_mapping(management_ip)
 
 
-def _status(logger, args):
+def _status(args):
     management_ip = _get_management_server_ip(args)
     logger.info('querying management server {0}'.format(management_ip))
     client = CosmoManagerRestClient(management_ip)
@@ -417,7 +424,7 @@ def _status(logger, args):
         logger.info("REST service at management server {0} is not responding".format(management_ip))
 
 
-def _use_management_server(logger, args):
+def _use_management_server(args):
     with _update_wd_settings() as wd_settings:
         wd_settings.set_management_server(wd_settings.translate_management_alias(args.management_ip))
         if args.alias:
@@ -427,7 +434,7 @@ def _use_management_server(logger, args):
             logger.info('Using management server {0}'.format(args.management_ip))
 
 
-def _list_blueprints(logger, args):
+def _list_blueprints(args):
     management_ip = _get_management_server_ip(args)
     logger.info('querying blueprints list from management server {0}'.format(management_ip))
     client = CosmoManagerRestClient(management_ip)
@@ -465,7 +472,7 @@ def _build_reversed_lookup(dic):
     return rev_multidic
 
 
-def _delete_blueprint(logger, args):
+def _delete_blueprint(args):
     management_ip = _get_management_server_ip(args)
     blueprint_id = _translate_blueprint_alias(args.blueprint_id, management_ip)
 
@@ -475,7 +482,7 @@ def _delete_blueprint(logger, args):
     logger.info("Deleted blueprint successfully")
 
 
-def _upload_blueprint(logger, args):
+def _upload_blueprint(args):
     blueprint_path = args.blueprint_path
     management_ip = _get_management_server_ip(args)
     blueprint_alias = args.alias
@@ -494,7 +501,7 @@ def _upload_blueprint(logger, args):
                                                                                      blueprint_state.id))
 
 
-def _create_deployment(logger, args):
+def _create_deployment(args):
     blueprint_id = args.blueprint_id
     management_ip = _get_management_server_ip(args)
     translated_blueprint_id = _translate_blueprint_alias(blueprint_id, management_ip)
@@ -513,7 +520,7 @@ def _create_deployment(logger, args):
         logger.info("Deployment created, deployment's alias is: {0} (id: {1})".format(deployment_alias, deployment.id))
 
 
-def _execute_deployment_operation(logger, args):
+def _execute_deployment_operation(args):
     management_ip = _get_management_server_ip(args)
     operation = args.operation
     deployment_id = _translate_deployment_alias(args.deployment_id, management_ip)
@@ -530,17 +537,20 @@ def _execute_deployment_operation(logger, args):
     logger.info("Finished executing operation {0} on deployment".format(operation))
 
 
-def _list_workflows(logger, args):
+def _list_workflows(args):
     management_ip = _get_management_server_ip(args)
-    blueprint_id = _translate_blueprint_alias(args.blueprint_id, management_ip)
+    deployment_id = _translate_deployment_alias(args.deployment_id, management_ip)
 
-    logger.info('querying workflows list from management server {0} for blueprint {1}'.format(management_ip),
-                args.blueprint_id)
+    logger.info('querying workflows list from management server {0} for deployment {1}'.format(management_ip,
+                args.deployment_id))
     client = CosmoManagerRestClient(management_ip)
-    logger.info(client.list_workflows(blueprint_id))
+    workflow_names = [workflow.name for workflow in client.list_workflows(deployment_id).workflows]
+    logger.info("deployments workflows:")
+    for name in workflow_names:
+        logger.info("\t{0}".format(name))
 
 
-def _set_cli_except_hook(logger):
+def _set_cli_except_hook():
     old_excepthook = sys.excepthook
 
     def new_excepthook(type, value, the_traceback):
