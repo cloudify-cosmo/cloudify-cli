@@ -281,3 +281,18 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 - management-ip: the management-server to use (Optional)
 
 **Example:** `cfy deployments alias my-deployment 38f8520f-809f-4162-ae96-75555d906faa`  
+
+------
+  
+**Command:** workflows list
+
+**Description:** lists the workflows of a deployment
+  
+**Usage:** `cfy workflows list <deployment_id> [-t, --management-ip <ip>]`
+
+**Parameters**:
+
+- deployment_id: the alias or id of the deployment whose workflows to list
+- management-ip: the management-server to use (Optional)
+
+**Example:** `cfy workflows list my-deployment`  
