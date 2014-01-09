@@ -5,7 +5,7 @@ python:
 install:
 
     # command to install dependencies
-    - sudo pip install .
+    - sudo pip install --process-dependencies-links .
 
 
 script:
