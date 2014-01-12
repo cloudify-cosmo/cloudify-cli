@@ -21,9 +21,10 @@ version = '0.3'
 
 COSMO_MANAGER_REST_CLIENT_VERSION = '0.3'
 COSMO_MANAGER_REST_CLIENT_BRANCH = 'develop'
-COSMO_MANAGER_REST_CLIENT = "https://github.com/CloudifySource/cosmo-manager-rest-client/tarball/{" \
-                            "0}#egg=cosmo-manager-rest-client-{1}".format(COSMO_MANAGER_REST_CLIENT_BRANCH,
-                                                                          COSMO_MANAGER_REST_CLIENT_VERSION)
+COSMO_MANAGER_REST_CLIENT = \
+    "https://github.com/CloudifySource/cosmo-manager-rest-client/tarball/{" \
+    "0}#egg=cosmo-manager-rest-client-{1}".format(
+        COSMO_MANAGER_REST_CLIENT_BRANCH, COSMO_MANAGER_REST_CLIENT_VERSION)
 
 setup(
     name='cosmo-cli',

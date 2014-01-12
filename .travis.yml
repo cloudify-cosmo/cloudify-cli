@@ -6,9 +6,10 @@ install:
 
     # command to install dependencies
     - sudo pip install --process-dependency-links .
-
+    - sudo pip install flake8
 
 script:
 
+    - flake8 .
     # command to run tests
     - echo "No tests for now! Hooray!"

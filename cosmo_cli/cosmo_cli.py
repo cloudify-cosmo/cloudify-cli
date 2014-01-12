@@ -27,20 +27,24 @@ from contextlib import contextmanager
 
 
 # Project
-from cosmo_manager_rest_client.cosmo_manager_rest_client import CosmoManagerRestClient
-from cosmo_manager_rest_client.cosmo_manager_rest_client import CosmoManagerRestCallError
+from cosmo_manager_rest_client.cosmo_manager_rest_client \
+    import CosmoManagerRestClient
+from cosmo_manager_rest_client.cosmo_manager_rest_client \
+    import CosmoManagerRestCallError
 
 
 CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
 CONFIG_FILE_NAME = 'cloudify-config.yaml'
 DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
 # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
 logging.getLogger("paramiko").setLevel(logging.WARNING)
-logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(logging.WARNING)
+logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
+    logging.WARNING)
 
 
 def main():
@@ -53,17 +57,34 @@ def _parse_args(args):
     #Parses the arguments using the Python argparse library
 
     #main parser
-    parser = argparse.ArgumentParser(description='Installs Cosmo in an OpenStack environment')
+    parser = argparse.ArgumentParser(
+        description='Installs Cosmo in an OpenStack environment')
 
     subparsers = parser.add_subparsers()
-    parser_status = subparsers.add_parser('status', help='Command for showing general status')
-    parser_use = subparsers.add_parser('use', help='Command for using a given management server')
-    parser_init = subparsers.add_parser('init', help='Command for initializing configuration files for installation')
-    parser_bootstrap = subparsers.add_parser('bootstrap', help='Command for bootstrapping cloudify')
-    parser_teardown = subparsers.add_parser('teardown', help='Command for tearing down cloudify')
-    parser_blueprints = subparsers.add_parser('blueprints', help='Commands for blueprints')
-    parser_deployments = subparsers.add_parser('deployments', help='Commands for deployments')
-    parser_workflows = subparsers.add_parser('workflows', help='Commands for workflows')
+    parser_status = subparsers.add_parser(
+        'status',
+        help='Command for showing general status')
+    parser_use = subparsers.add_parser(
+        'use',
+        help='Command for using a given management server')
+    parser_init = subparsers.add_parser(
+        'init',
+        help='Command for initializing configuration files for installation')
+    parser_bootstrap = subparsers.add_parser(
+        'bootstrap',
+        help='Command for bootstrapping cloudify')
+    parser_teardown = subparsers.add_parser(
+        'teardown',
+        help='Command for tearing down cloudify')
+    parser_blueprints = subparsers.add_parser(
+        'blueprints',
+        help='Commands for blueprints')
+    parser_deployments = subparsers.add_parser(
+        'deployments',
+        help='Commands for deployments')
+    parser_workflows = subparsers.add_parser(
+        'workflows',
+        help='Commands for workflows')
 
     #status subparser
     _add_management_ip_optional_argument_to_parser(parser_status)
@@ -77,8 +98,10 @@ def _parse_args(args):
         help='The cloudify management server ip address'
     )
     _add_alias_optional_argument_to_parser(parser_use, 'management server')
-    _add_force_optional_argument_to_parser(parser_use, 'A flag indicating authorization to overwrite the alias '
-                                                       'if it already exists')
+    _add_force_optional_argument_to_parser(
+        parser_use,
+        'A flag indicating authorization to overwrite the alias if it '
+        'already exists')
     parser_use.set_defaults(handler=_use_management_server)
 
     #init subparser
@@ -86,7 +109,8 @@ def _parse_args(args):
         'provider',
         metavar='PROVIDER',
         type=str,
-        help='Command for initializing configuration files for a specific provider'
+        help='Command for initializing configuration files for a'
+             ' specific provider'
     )
     parser_init.add_argument(
         '-t', '--target-dir',
@@ -120,26 +144,33 @@ def _parse_args(args):
         dest='management_ip',
         metavar='MANAGEMENT_IP',
         type=str,
-        help='Existing machine which should cosmo management should be installed and deployed on'
+        help='Existing machine which should cosmo management should be '
+             'installed and deployed on'
     )
     parser_bootstrap.set_defaults(handler=_bootstrap_cosmo)
 
     #teardown subparser
-    _add_force_optional_argument_to_parser(parser_teardown, 'A flag indicating confirmation for the teardown request')
+    _add_force_optional_argument_to_parser(
+        parser_teardown,
+        'A flag indicating confirmation for the teardown request')
     _add_management_ip_optional_argument_to_parser(parser_teardown)
     parser_teardown.set_defaults(handler=_teardown_cosmo)
 
     #blueprints subparser
     blueprints_subparsers = parser_blueprints.add_subparsers()
 
-    _add_contextual_alias_subparser(blueprints_subparsers, 'blueprint', _save_blueprint_alias_cmd)
-    parser_blueprints_upload = blueprints_subparsers.add_parser('upload',
-                                                                help='command for uploading a blueprint to the '
-                                                                     'management server')
-    parser_blueprints_list = blueprints_subparsers.add_parser('list', help='command for listing all uploaded '
-                                                                           'blueprints')
-    parser_blueprints_delete = blueprints_subparsers.add_parser('delete', help='command for deleting an uploaded '
-                                                                               'blueprint')
+    _add_contextual_alias_subparser(blueprints_subparsers,
+                                    'blueprint',
+                                    _save_blueprint_alias_cmd)
+    parser_blueprints_upload = blueprints_subparsers.add_parser(
+        'upload',
+        help='command for uploading a blueprint to the management server')
+    parser_blueprints_list = blueprints_subparsers.add_parser(
+        'list',
+        help='command for listing all uploaded blueprints')
+    parser_blueprints_delete = blueprints_subparsers.add_parser(
+        'delete',
+        help='command for deleting an uploaded blueprint')
 
     parser_blueprints_upload.add_argument(
         'blueprint_path',
@@ -147,7 +178,8 @@ def _parse_args(args):
         type=str,
         help="Path to the application's blueprint file"
     )
-    _add_alias_optional_argument_to_parser(parser_blueprints_upload, 'blueprint')
+    _add_alias_optional_argument_to_parser(parser_blueprints_upload,
+                                           'blueprint')
     _add_management_ip_optional_argument_to_parser(parser_blueprints_upload)
     parser_blueprints_upload.set_defaults(handler=_upload_blueprint)
 
@@ -165,11 +197,15 @@ def _parse_args(args):
 
     #deployments subparser
     deployments_subparsers = parser_deployments.add_subparsers()
-    _add_contextual_alias_subparser(deployments_subparsers, 'deployment', _save_deployment_alias_cmd)
-    parser_deployments_create = deployments_subparsers.add_parser('create', help='command for creating a deployment '
-                                                                                 'of a blueprint')
-    parser_deployments_execute = deployments_subparsers.add_parser('execute', help='command for executing a '
-                                                                                   'deployment of a blueprint')
+    _add_contextual_alias_subparser(deployments_subparsers,
+                                    'deployment',
+                                    _save_deployment_alias_cmd)
+    parser_deployments_create = deployments_subparsers.add_parser(
+        'create',
+        help='command for creating a deployment of a blueprint')
+    parser_deployments_execute = deployments_subparsers.add_parser(
+        'execute',
+        help='command for executing a deployment of a blueprint')
 
     parser_deployments_create.add_argument(
         'blueprint_id',
@@ -177,7 +213,8 @@ def _parse_args(args):
         type=str,
         help="The id or alias of the blueprint meant for deployment"
     )
-    _add_alias_optional_argument_to_parser(parser_deployments_create, 'deployment')
+    _add_alias_optional_argument_to_parser(parser_deployments_create,
+                                           'deployment')
     _add_management_ip_optional_argument_to_parser(parser_deployments_create)
     parser_deployments_create.set_defaults(handler=_create_deployment)
 
@@ -194,12 +231,14 @@ def _parse_args(args):
         help='The id of the deployment to execute the operation on'
     )
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
-    parser_deployments_execute.set_defaults(handler=_execute_deployment_operation)
+    parser_deployments_execute.set_defaults(
+        handler=_execute_deployment_operation)
 
     #workflows subparser
     workflows_subparsers = parser_workflows.add_subparsers()
-    parser_workflows_list = workflows_subparsers.add_parser('list', help='command for listing workflows '
-                                                                         'for a deployment')
+    parser_workflows_list = workflows_subparsers.add_parser(
+        'list',
+        help='command for listing workflows for a deployment')
     parser_workflows_list.add_argument(
         'deployment_id',
         metavar='DEPLOYMENT_ID',
@@ -215,21 +254,28 @@ def _parse_args(args):
 def _get_provider_module(provider_name):
     module_or_pkg_desc = imp.find_module(provider_name)
     if not module_or_pkg_desc[1]:
-        #module_or_pkg_desc[1] is the pathname of found module/package, if it's empty none were found
+        #module_or_pkg_desc[1] is the pathname of found module/package,
+        #if it's empty none were found
         raise CosmoCliError('Provider not found.')
 
     module = imp.load_module(provider_name, *module_or_pkg_desc)
 
     if not module_or_pkg_desc[0]:
-        #module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not empty only when we've loaded a package rather
-        #than a module. Re-searching for the module inside the now-loaded package with the same name.
-        module = imp.load_module(provider_name, *imp.find_module(provider_name, module.__path__))
+        #module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not
+        #empty only when we've loaded a package rather than a module.
+        #Re-searching for the module inside the now-loaded package
+        #with the same name.
+        module = imp.load_module(
+            provider_name,
+            *imp.find_module(provider_name, module.__path__))
     return module
 
 
-def _add_contextual_alias_subparser(subparsers_container, object_name, handler):
-    alias_subparser = subparsers_container.add_parser('alias', help='command for adding an alias for a {0}'.format(
-        object_name))
+def _add_contextual_alias_subparser(subparsers_container, object_name,
+                                    handler):
+    alias_subparser = subparsers_container.add_parser(
+        'alias',
+        help='command for adding an alias for a {0}'.format(object_name))
     alias_subparser.add_argument(
         'alias',
         metavar='ALIAS',
@@ -242,8 +288,10 @@ def _add_contextual_alias_subparser(subparsers_container, object_name, handler):
         type=str,
         help='The id of the {0}'.format(object_name)
     )
-    _add_force_optional_argument_to_parser(alias_subparser, 'A flag indicating authorization to overwrite the alias '
-                                                            'if it already exists')
+    _add_force_optional_argument_to_parser(
+        alias_subparser,
+        'A flag indicating authorization to overwrite the alias if '
+        'it already exists')
     _add_management_ip_optional_argument_to_parser(alias_subparser)
     alias_subparser.set_defaults(handler=handler)
 
@@ -281,18 +329,22 @@ def _init_cosmo(args):
     logger.info("Initializing Cloudify")
     target_directory = args.target_dir
     #creating .cloudify file
-    _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(), target_directory)
+    _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
+                                     target_directory)
 
     try:
-        #searching first for the standard name for providers (i.e. cloudify_XXX)
+        #searching first for the standard name for providers
+        #(i.e. cloudify_XXX)
         provider_module_name = 'cloudify_{0}'.format(args.provider)
         provider_module = _get_provider_module(provider_module_name)
     except CosmoCliError:
-        #if provider was not found, search for the exact literal the user requested instead
+        #if provider was not found, search for the exact literal the
+        #user requested instead
         provider_module_name = args.provider
         provider_module = _get_provider_module(provider_module_name)
 
-    provider_module.init(logger, target_directory, CONFIG_FILE_NAME, DEFAULTS_CONFIG_FILE_NAME)
+    provider_module.init(logger, target_directory,
+                         CONFIG_FILE_NAME, DEFAULTS_CONFIG_FILE_NAME)
 
     with _update_wd_settings() as wd_settings:
         wd_settings.set_provider(provider_module_name)
@@ -309,13 +361,16 @@ def _bootstrap_cosmo(args):
 
     with _update_wd_settings() as wd_settings:
         wd_settings.set_management_server(mgmt_ip)
-    logger.info("Management server is up at {0} (is now set as the default management server)".format(mgmt_ip))
+    logger.info("Management server is up at {0} (is now set as the default "
+                "management server)".format(mgmt_ip))
 
 
 def _teardown_cosmo(args):
     if not args.force:
-        raise CosmoCliError("This action requires additional confirmation. Add the '-f' or '--force' flags to your "
-                            "command if you are certain this command should be executed.")
+        raise CosmoCliError("This action requires additional confirmation. "
+                            "Add the '-f' or '--force' flags to your command "
+                            "if you are certain this command should"
+                            " be executed.")
 
     mgmt_ip = _get_management_server_ip(args)
     logger.info("Tearing down {0}".format(mgmt_ip))
@@ -326,8 +381,10 @@ def _teardown_cosmo(args):
     #cleaning relevant data from working directory settings
     with _update_wd_settings() as wd_settings:
         if wd_settings.remove_management_server_context(mgmt_ip):
-            logger.info("No longer using management server {0} as the default management server - run 'cfy use' "
-                        "command to use a different server as default".format(mgmt_ip))
+            logger.info("No longer using management server {0} as the "
+                        "default management server - run 'cfy use' "
+                        "command to use a different server as default"
+                        .format(mgmt_ip))
 
     logger.info("Teardown complete")
 
@@ -359,45 +416,57 @@ def _deep_merge_dictionaries(overriding_dict, overridden_dict):
 
 def _translate_blueprint_alias(blueprint_id_or_alias, management_ip):
     wd_settings = _load_cosmo_working_dir_settings()
-    return wd_settings.translate_blueprint_alias(blueprint_id_or_alias, management_ip)
+    return wd_settings.translate_blueprint_alias(blueprint_id_or_alias,
+                                                 management_ip)
 
 
 def _translate_deployment_alias(deployment_id_or_alias, management_ip):
     wd_settings = _load_cosmo_working_dir_settings()
-    return wd_settings.translate_deployment_alias(deployment_id_or_alias, management_ip)
+    return wd_settings.translate_deployment_alias(deployment_id_or_alias,
+                                                  management_ip)
 
 
 def _save_blueprint_alias_cmd(args):
     mgmt_ip = _get_management_server_ip(args)
     is_allow_overwrite = True if args.force else False
-    _save_blueprint_alias(args.alias, args.blueprint_id, mgmt_ip, is_allow_overwrite)
-    logger.info('Blueprint {0} is now aliased {1}'.format(args.blueprint_id, args.alias))
+    _save_blueprint_alias(args.alias, args.blueprint_id,
+                          mgmt_ip, is_allow_overwrite)
+    logger.info('Blueprint {0} is now aliased {1}'.format(
+        args.blueprint_id, args.alias))
 
 
 def _save_deployment_alias_cmd(args):
     mgmt_ip = _get_management_server_ip(args)
     is_allow_overwrite = True if args.force else False
-    _save_deployment_alias(args.alias, args.deployment_id, mgmt_ip, is_allow_overwrite)
-    logger.info('Deployment {0} is now aliased {1}'.format(args.deployment_id, args.alias))
+    _save_deployment_alias(args.alias, args.deployment_id,
+                           mgmt_ip, is_allow_overwrite)
+    logger.info('Deployment {0} is now aliased {1}'.format(
+        args.deployment_id, args.alias))
 
 
-def _save_blueprint_alias(blueprint_alias, blueprint_id, management_ip, is_allow_overwrite=False):
+def _save_blueprint_alias(blueprint_alias, blueprint_id, management_ip,
+                          is_allow_overwrite=False):
     with _update_wd_settings() as wd_settings:
-        wd_settings.save_blueprint_alias(blueprint_alias, blueprint_id, management_ip, is_allow_overwrite)
+        wd_settings.save_blueprint_alias(blueprint_alias, blueprint_id,
+                                         management_ip, is_allow_overwrite)
 
 
-def _save_deployment_alias(deployment_alias, deployment_id, management_ip, is_allow_overwrite=False):
+def _save_deployment_alias(deployment_alias, deployment_id, management_ip,
+                           is_allow_overwrite=False):
     with _update_wd_settings() as wd_settings:
-        wd_settings.save_deployment_alias(deployment_alias, deployment_id, management_ip, is_allow_overwrite)
+        wd_settings.save_deployment_alias(deployment_alias, deployment_id,
+                                          management_ip, is_allow_overwrite)
 
 
 def _get_management_server_ip(args):
     cosmo_wd_settings = _load_cosmo_working_dir_settings()
     if args.management_ip:
-        return cosmo_wd_settings.translate_management_alias(args.management_ip)
+        return cosmo_wd_settings.translate_management_alias(
+            args.management_ip)
     if cosmo_wd_settings.get_management_server():
         return cosmo_wd_settings.get_management_server()
-    raise CosmoCliError("Must either first run 'cfy use' command for a management server or provide a management "
+    raise CosmoCliError("Must either first run 'cfy use' command for a "
+                        "management server or provide a management "
                         "server ip explicitly")
 
 
@@ -419,53 +488,66 @@ def _status(args):
     client = CosmoManagerRestClient(management_ip)
     try:
         client.list_blueprints()
-        logger.info("REST service at management server {0} is up and running".format(management_ip))
+        logger.info("REST service at management server {0} is up and running"
+                    .format(management_ip))
     except CosmoManagerRestCallError:
-        logger.info("REST service at management server {0} is not responding".format(management_ip))
+        logger.info("REST service at management server {0} is not responding"
+                    .format(management_ip))
 
 
 def _use_management_server(args):
     with _update_wd_settings() as wd_settings:
-        wd_settings.set_management_server(wd_settings.translate_management_alias(args.management_ip))
+        wd_settings.set_management_server(
+            wd_settings.translate_management_alias(args.management_ip))
         if args.alias:
-            wd_settings.save_management_alias(args.alias, args.management_ip, args.force)
-            logger.info('Using management server {0} (alias {1})'.format(args.management_ip, args.alias))
+            wd_settings.save_management_alias(args.alias,
+                                              args.management_ip,
+                                              args.force)
+            logger.info('Using management server {0} (alias {1})'.format(
+                args.management_ip, args.alias))
         else:
-            logger.info('Using management server {0}'.format(args.management_ip))
+            logger.info('Using management server {0}'.format(
+                args.management_ip))
 
 
 def _list_blueprints(args):
     management_ip = _get_management_server_ip(args)
-    logger.info('querying blueprints list from management server {0}'.format(management_ip))
+    logger.info('querying blueprints list from management '
+                'server {0}'.format(management_ip))
     client = CosmoManagerRestClient(management_ip)
     blueprints_list = client.list_blueprints()
     alias_to_blueprint_id = _get_blueprints_alias_mapping(management_ip)
     blueprint_id_to_aliases = _build_reversed_lookup(alias_to_blueprint_id)
 
     if not blueprints_list:
-        logger.info('There are no blueprints available on the management server')
+        logger.info('There are no blueprints available on the '
+                    'management server')
     else:
         logger.info('Blueprints:')
         for blueprint_state in blueprints_list:
             aliases_str = ''
-            if blueprint_state.id in blueprint_id_to_aliases:
-                aliases_str = ''.join('{0}, '.format(alias) for alias in blueprint_id_to_aliases[blueprint_state.id])
+            blueprint_id = blueprint_state.id
+            if blueprint_id in blueprint_id_to_aliases:
+                aliases_str = ''.join('{0}, '.format(alias) for alias in
+                                      blueprint_id_to_aliases[blueprint_id])
                 aliases_str = ' (' + aliases_str[:-2] + ')'
-            logger.info('\t' + blueprint_state.id + aliases_str)
+            logger.info('\t' + blueprint_id + aliases_str)
 
     #printing unused aliases if there are any
     blueprints_ids_on_server = {blueprint.id for blueprint in blueprints_list}
     unused_aliases = [alias for alias in alias_to_blueprint_id.iterkeys() if
-                      alias_to_blueprint_id[alias] not in blueprints_ids_on_server]
+                      alias_to_blueprint_id[alias] not in
+                      blueprints_ids_on_server]
     if unused_aliases:
         logger.info('Unused aliases:')
-        unused_aliases_str = '\t' + ''.join('{0}, '.format(alias) for alias in unused_aliases)
+        unused_aliases_str = '\t' + ''.join('{0}, '.format(alias)
+                                            for alias in unused_aliases)
         logger.info(unused_aliases_str[:-2])
 
 
 def _build_reversed_lookup(dic):
     rev_multidic = {}
-    for k,v in dic.iteritems():
+    for k, v in dic.iteritems():
         if v not in rev_multidic:
             rev_multidic[v] = []
         rev_multidic[v].append(k)
@@ -474,11 +556,13 @@ def _build_reversed_lookup(dic):
 
 def _delete_blueprint(args):
     management_ip = _get_management_server_ip(args)
-    blueprint_id = _translate_blueprint_alias(args.blueprint_id, management_ip)
+    blueprint_id = _translate_blueprint_alias(args.blueprint_id,
+                                              management_ip)
 
-    logger.info('Deleting blueprint {0} from management server {1}'.format(args.blueprint_id, management_ip))
+    logger.info('Deleting blueprint {0} from management server {1}'.format(
+        args.blueprint_id, management_ip))
     client = CosmoManagerRestClient(management_ip)
-    blueprint_state = client.delete_blueprint(blueprint_id)
+    client.delete_blueprint(blueprint_id)
     logger.info("Deleted blueprint successfully")
 
 
@@ -486,46 +570,61 @@ def _upload_blueprint(args):
     blueprint_path = args.blueprint_path
     management_ip = _get_management_server_ip(args)
     blueprint_alias = args.alias
-    if blueprint_alias and _translate_blueprint_alias(blueprint_alias, management_ip) != blueprint_alias:
-        raise CosmoCliError('Blueprint alias {0} is already in use'.format(blueprint_alias))
+    if blueprint_alias and \
+            _translate_blueprint_alias(blueprint_alias,
+                                       management_ip) != blueprint_alias:
+        raise CosmoCliError('Blueprint alias {0} is already in use'.format(
+            blueprint_alias))
 
-    logger.info('Uploading blueprint {0} to management server {1}'.format(blueprint_path, management_ip))
+    logger.info('Uploading blueprint {0} to management server {1}'.format(
+        blueprint_path, management_ip))
     client = CosmoManagerRestClient(management_ip)
     blueprint_state = client.publish_blueprint(blueprint_path)
 
     if not blueprint_alias:
-        logger.info("Uploaded blueprint, blueprint's id is: {0}".format(blueprint_state.id))
+        logger.info("Uploaded blueprint, blueprint's id is: {0}".format(
+            blueprint_state.id))
     else:
-        _save_blueprint_alias(blueprint_alias, blueprint_state.id, management_ip)
-        logger.info("Uploaded blueprint, blueprint's alias is: {0} (id: {1})".format(blueprint_alias,
-                                                                                     blueprint_state.id))
+        _save_blueprint_alias(blueprint_alias,
+                              blueprint_state.id,
+                              management_ip)
+        logger.info("Uploaded blueprint, blueprint's alias is: {0}"
+                    " (id: {1})".format(blueprint_alias, blueprint_state.id))
 
 
 def _create_deployment(args):
     blueprint_id = args.blueprint_id
     management_ip = _get_management_server_ip(args)
-    translated_blueprint_id = _translate_blueprint_alias(blueprint_id, management_ip)
+    translated_blueprint_id = _translate_blueprint_alias(blueprint_id,
+                                                         management_ip)
     deployment_alias = args.alias
-    if deployment_alias and _translate_deployment_alias(deployment_alias, management_ip) != deployment_alias:
-        raise CosmoCliError('Deployment alias {0} is already in use'.format(deployment_alias))
+    if deployment_alias and \
+            _translate_deployment_alias(deployment_alias,
+                                        management_ip) != deployment_alias:
+        raise CosmoCliError('Deployment alias {0} is already in use'.format(
+            deployment_alias))
 
-    logger.info('Creating new deployment from blueprint {0} at management server {1}'.format(blueprint_id,
-                                                                                             management_ip))
+    logger.info('Creating new deployment from blueprint {0} at '
+                'management server {1}'.format(blueprint_id, management_ip))
     client = CosmoManagerRestClient(management_ip)
     deployment = client.create_deployment(translated_blueprint_id)
     if not deployment_alias:
-        logger.info("Deployment created, deployment's id is: {0}".format(deployment.id))
+        logger.info("Deployment created, deployment's id is: {0}".format(
+            deployment.id))
     else:
         _save_deployment_alias(deployment_alias, deployment.id, management_ip)
-        logger.info("Deployment created, deployment's alias is: {0} (id: {1})".format(deployment_alias, deployment.id))
+        logger.info("Deployment created, deployment's alias is: "
+                    "{0} (id: {1})".format(deployment_alias, deployment.id))
 
 
 def _execute_deployment_operation(args):
     management_ip = _get_management_server_ip(args)
     operation = args.operation
-    deployment_id = _translate_deployment_alias(args.deployment_id, management_ip)
+    deployment_id = _translate_deployment_alias(args.deployment_id,
+                                                management_ip)
 
-    logger.info('Executing operation {0} on deployment {1} at management server {2}'
+    logger.info('Executing operation {0} on deployment {1} at'
+                ' management server {2}'
                 .format(operation, args.deployment_id, management_ip))
 
     def events_logger(events):
@@ -534,17 +633,20 @@ def _execute_deployment_operation(args):
 
     client = CosmoManagerRestClient(management_ip)
     client.execute_deployment(deployment_id, operation, events_logger)
-    logger.info("Finished executing operation {0} on deployment".format(operation))
+    logger.info("Finished executing operation {0} on deployment".format(
+        operation))
 
 
 def _list_workflows(args):
     management_ip = _get_management_server_ip(args)
-    deployment_id = _translate_deployment_alias(args.deployment_id, management_ip)
+    deployment_id = _translate_deployment_alias(args.deployment_id,
+                                                management_ip)
 
-    logger.info('querying workflows list from management server {0} for deployment {1}'.format(management_ip,
-                args.deployment_id))
+    logger.info('querying workflows list from management server {0} for '
+                'deployment {1}'.format(management_ip, args.deployment_id))
     client = CosmoManagerRestClient(management_ip)
-    workflow_names = [workflow.name for workflow in client.list_workflows(deployment_id).workflows]
+    workflow_names = [workflow.name for workflow in
+                      client.list_workflows(deployment_id).workflows]
     logger.info("deployments workflows:")
     for name in workflow_names:
         logger.info("\t{0}".format(name))
@@ -557,7 +659,8 @@ def _set_cli_except_hook():
         if type == CosmoCliError:
             logger.error(value.message)
         elif type == CosmoManagerRestCallError:
-            logger.error("Failed making a call to REST service: {0}".format(value.message))
+            logger.error("Failed making a call to REST service: {0}".format(
+                value.message))
         else:
             old_excepthook(type, value, the_traceback)
 
@@ -569,12 +672,14 @@ def _load_cosmo_working_dir_settings():
         with open('{0}'.format(CLOUDIFY_WD_SETTINGS_FILE_NAME), 'r') as f:
             return yaml.safe_load(f.read())
     except IOError:
-        raise CosmoCliError('You must first initialize by running the command "cfy init"')
+        raise CosmoCliError('You must first initialize by running the '
+                            'command "cfy init"')
 
 
 def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
-    target_file_path = '{0}'.format(CLOUDIFY_WD_SETTINGS_FILE_NAME) if not target_dir else '{0}/{1}'.format(
-        target_dir, CLOUDIFY_WD_SETTINGS_FILE_NAME)
+    target_file_path = '{0}'.format(CLOUDIFY_WD_SETTINGS_FILE_NAME) if \
+        not target_dir else '{0}/{1}'.format(target_dir,
+                                             CLOUDIFY_WD_SETTINGS_FILE_NAME)
     with open(target_file_path, 'w') as f:
         f.write(yaml.dump(cosmo_wd_settings))
 
@@ -603,8 +708,9 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
         self._management_ip = management_ip
 
     def remove_management_server_context(self, management_ip):
-        # Clears management server context data. Returns True if the management server was the management
-        # server being used at the time of the call
+        # Clears management server context data.
+        # Returns True if the management server was the management
+        #   server being used at the time of the call
         if management_ip in self._mgmt_to_contextual_aliases:
             del(self._mgmt_to_contextual_aliases[management_ip])
         if self._management_ip == management_ip:
@@ -619,55 +725,80 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
         self._provider = provider
 
     def translate_management_alias(self, management_address_or_alias):
-        return self._mgmt_aliases[management_address_or_alias] if management_address_or_alias in self._mgmt_aliases \
+        return self._mgmt_aliases[management_address_or_alias] if \
+            management_address_or_alias in self._mgmt_aliases \
             else management_address_or_alias
 
-    def save_management_alias(self, management_alias, management_address, is_allow_overwrite):
+    def save_management_alias(self, management_alias, management_address,
+                              is_allow_overwrite):
         if not is_allow_overwrite and management_alias in self._mgmt_aliases:
-            raise CosmoCliError("management-server alias {1} is already in use; use -f flag to allow overwrite."
+            raise CosmoCliError("management-server alias {1} is already in"
+                                " use; use -f flag to allow overwrite."
                                 .format(management_alias))
         self._mgmt_aliases[management_alias] = management_address
 
     def get_blueprints_alias_mapping(self, management_ip):
         if management_ip not in self._mgmt_to_contextual_aliases or \
-           'blueprints' not in self._mgmt_to_contextual_aliases[management_ip]:
+           'blueprints' not in \
+                self._mgmt_to_contextual_aliases[management_ip]:
             return {}
-        return deepcopy(self._mgmt_to_contextual_aliases[management_ip]['blueprints'])
+        return deepcopy(
+            self._mgmt_to_contextual_aliases[management_ip]['blueprints'])
 
     def get_deployments_alias_mapping(self, management_ip):
         if management_ip not in self._mgmt_to_contextual_aliases or \
-                        'deployments' not in self._mgmt_to_contextual_aliases[management_ip]:
+                'deployments' not in \
+                self._mgmt_to_contextual_aliases[management_ip]:
             return {}
-        return deepcopy(self._mgmt_to_contextual_aliases[management_ip]['deployments'])
+        return deepcopy(
+            self._mgmt_to_contextual_aliases[management_ip]['deployments'])
 
-    def translate_blueprint_alias(self, blueprint_id_or_alias, management_ip):
-        return self._translate_contextual_alias('blueprints', blueprint_id_or_alias, management_ip)
+    def translate_blueprint_alias(self, blueprint_id_or_alias,
+                                  management_ip):
+        return self._translate_contextual_alias('blueprints',
+                                                blueprint_id_or_alias,
+                                                management_ip)
 
-    def translate_deployment_alias(self, deployment_id_or_alias, management_ip):
-        return self._translate_contextual_alias('deployments', deployment_id_or_alias, management_ip)
+    def translate_deployment_alias(self, deployment_id_or_alias,
+                                   management_ip):
+        return self._translate_contextual_alias('deployments',
+                                                deployment_id_or_alias,
+                                                management_ip)
 
-    def save_blueprint_alias(self, blueprint_alias, blueprint_id, management_ip, is_allow_overwrite):
-        self._save_alias('blueprints', blueprint_alias, blueprint_id, management_ip, is_allow_overwrite)
+    def save_blueprint_alias(self, blueprint_alias, blueprint_id,
+                             management_ip, is_allow_overwrite):
+        self._save_alias('blueprints', blueprint_alias, blueprint_id,
+                         management_ip, is_allow_overwrite)
 
-    def save_deployment_alias(self, deployment_alias, deployment_id, management_ip, is_allow_overwrite):
-        self._save_alias('deployments', deployment_alias, deployment_id, management_ip, is_allow_overwrite)
+    def save_deployment_alias(self, deployment_alias, deployment_id,
+                              management_ip, is_allow_overwrite):
+        self._save_alias('deployments', deployment_alias, deployment_id,
+                         management_ip, is_allow_overwrite)
 
-    def _translate_contextual_alias(self, alias_type, id_or_alias, management_ip):
+    def _translate_contextual_alias(self, alias_type, id_or_alias,
+                                    management_ip):
         if management_ip not in self._mgmt_to_contextual_aliases or \
-                        alias_type not in self._mgmt_to_contextual_aliases[management_ip] or \
-                        id_or_alias not in self._mgmt_to_contextual_aliases[management_ip][alias_type]:
+                alias_type not in \
+                self._mgmt_to_contextual_aliases[management_ip] or \
+                id_or_alias not in \
+                self._mgmt_to_contextual_aliases[management_ip][alias_type]:
             return id_or_alias
 
-        return self._mgmt_to_contextual_aliases[management_ip][alias_type][id_or_alias]
+        contextual_aliases = self._mgmt_to_contextual_aliases[management_ip]
+        return contextual_aliases[alias_type][id_or_alias]
 
-    def _save_alias(self, alias_type, alias, id, management_ip, is_allow_overwrite):
+    def _save_alias(self, alias_type, alias, id, management_ip,
+                    is_allow_overwrite):
         if management_ip not in self._mgmt_to_contextual_aliases:
             self._mgmt_to_contextual_aliases[management_ip] = {}
             self._mgmt_to_contextual_aliases[management_ip][alias_type] = {}
-        elif alias_type not in self._mgmt_to_contextual_aliases[management_ip]:
+        elif alias_type not in \
+                self._mgmt_to_contextual_aliases[management_ip]:
             self._mgmt_to_contextual_aliases[management_ip][alias_type] = {}
-        elif not is_allow_overwrite and alias in self._mgmt_to_contextual_aliases[management_ip][alias_type]:
-            raise CosmoCliError("{0} alias {1} is already in use; use -f flag to allow overwrite."
+        elif not is_allow_overwrite and alias in \
+                self._mgmt_to_contextual_aliases[management_ip][alias_type]:
+            raise CosmoCliError("{0} alias {1} is already in use; "
+                                "use -f flag to allow overwrite."
                                 .format(alias_type, alias))
 
         self._mgmt_to_contextual_aliases[management_ip][alias_type][alias] = id
