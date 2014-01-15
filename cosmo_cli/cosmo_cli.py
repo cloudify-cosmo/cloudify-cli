@@ -327,8 +327,11 @@ def _add_alias_optional_argument_to_parser(parser, object_name):
 
 
 def _init_cosmo(args):
-    logger.info("Initializing Cloudify")
     target_directory = args.target_dir
+    if os.path.exists(target_directory):
+        raise CosmoCliError('Directory already initialized. Remove "'
+                            '.cloudify" file to allow reinitialization.')
+    logger.info("Initializing Cloudify")
     #creating .cloudify file
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
                                      target_directory)
