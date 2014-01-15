@@ -22,6 +22,7 @@ import sys
 import os
 import logging
 import yaml
+import json
 from copy import deepcopy
 from contextlib import contextmanager
 
@@ -629,7 +630,7 @@ def _execute_deployment_operation(args):
 
     def events_logger(events):
         for event in events:
-            logger.info(event)
+            logger.info(json.dumps(json.loads(event), indent=4))
 
     client = CosmoManagerRestClient(management_ip)
     client.execute_deployment(deployment_id, operation, events_logger)
