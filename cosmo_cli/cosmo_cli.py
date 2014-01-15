@@ -733,7 +733,7 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
     def save_management_alias(self, management_alias, management_address,
                               is_allow_overwrite):
         if not is_allow_overwrite and management_alias in self._mgmt_aliases:
-            raise CosmoCliError("management-server alias {1} is already in"
+            raise CosmoCliError("management-server alias {0} is already in"
                                 " use; use -f flag to allow overwrite."
                                 .format(management_alias))
         self._mgmt_aliases[management_alias] = management_address
