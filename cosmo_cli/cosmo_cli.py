@@ -253,23 +253,27 @@ def _parse_args(args):
 
 
 def _get_provider_module(provider_name):
-    module_or_pkg_desc = imp.find_module(provider_name)
-    if not module_or_pkg_desc[1]:
-        #module_or_pkg_desc[1] is the pathname of found module/package,
-        #if it's empty none were found
-        raise CosmoCliError('Provider not found.')
+    try:
+        module_or_pkg_desc = imp.find_module(provider_name)
+        if not module_or_pkg_desc[1]:
+            #module_or_pkg_desc[1] is the pathname of found module/package,
+            #if it's empty none were found
+            raise CosmoCliError('Provider {0} not found.'
+                                .format(provider_name))
 
-    module = imp.load_module(provider_name, *module_or_pkg_desc)
+        module = imp.load_module(provider_name, *module_or_pkg_desc)
 
-    if not module_or_pkg_desc[0]:
-        #module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not
-        #empty only when we've loaded a package rather than a module.
-        #Re-searching for the module inside the now-loaded package
-        #with the same name.
-        module = imp.load_module(
-            provider_name,
-            *imp.find_module(provider_name, module.__path__))
-    return module
+        if not module_or_pkg_desc[0]:
+            #module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not
+            #empty only when we've loaded a package rather than a module.
+            #Re-searching for the module inside the now-loaded package
+            #with the same name.
+            module = imp.load_module(
+                provider_name,
+                *imp.find_module(provider_name, module.__path__))
+        return module
+    except ImportError, ex:
+        raise CosmoCliError(ex.message)
 
 
 def _add_contextual_alias_subparser(subparsers_container, object_name,
@@ -327,17 +331,15 @@ def _add_alias_optional_argument_to_parser(parser, object_name):
 
 
 def _init_cosmo(args):
-    target_directory = args.target_dir
+    target_directory = os.path.expanduser(args.target_dir)
     if not os.path.isdir(target_directory):
         raise CosmoCliError("Target directory doesn't exist.")
     if os.path.exists('{0}/{1}'.format(target_directory,
                                        CLOUDIFY_WD_SETTINGS_FILE_NAME)):
         raise CosmoCliError('Target directory already initialized. Remove "'
                             '.cloudify" file to allow reinitialization.')
+
     logger.info("Initializing Cloudify")
-    #creating .cloudify file
-    _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
-                                     target_directory)
 
     try:
         #searching first for the standard name for providers
@@ -353,6 +355,10 @@ def _init_cosmo(args):
     with _protected_provider_call():
         provider.init(logger, target_directory,
                       CONFIG_FILE_NAME, DEFAULTS_CONFIG_FILE_NAME)
+
+    #creating .cloudify file
+    _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
+                                     target_directory)
 
     with _update_wd_settings() as wd_settings:
         wd_settings.set_provider(provider_module_name)
@@ -709,10 +715,10 @@ def _update_wd_settings():
 def _protected_provider_call():
     try:
         yield
-    except CosmoCliError:
-        raise
     except Exception, ex:
-        raise CosmoCliError('Exception occurred in provider', ex)
+        trace = sys.exc_info()[2]
+        raise CosmoCliError('Exception occurred in provider: {0}'
+                            .format(ex.message)), None, trace
 
 
 class CosmoWorkingDirectorySettings(yaml.YAMLObject):
