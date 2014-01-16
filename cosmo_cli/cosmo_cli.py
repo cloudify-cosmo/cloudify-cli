@@ -343,15 +343,16 @@ def _init_cosmo(args):
         #searching first for the standard name for providers
         #(i.e. cloudify_XXX)
         provider_module_name = 'cloudify_{0}'.format(args.provider)
-        provider_module = _get_provider_module(provider_module_name)
+        provider = _get_provider_module(provider_module_name)
     except CosmoCliError:
         #if provider was not found, search for the exact literal the
         #user requested instead
         provider_module_name = args.provider
-        provider_module = _get_provider_module(provider_module_name)
+        provider = _get_provider_module(provider_module_name)
 
-    provider_module.init(logger, target_directory,
-                         CONFIG_FILE_NAME, DEFAULTS_CONFIG_FILE_NAME)
+    with _protected_provider_call():
+        provider.init(logger, target_directory,
+                      CONFIG_FILE_NAME, DEFAULTS_CONFIG_FILE_NAME)
 
     with _update_wd_settings() as wd_settings:
         wd_settings.set_provider(provider_module_name)
@@ -359,11 +360,15 @@ def _init_cosmo(args):
 
 
 def _bootstrap_cosmo(args):
-    provider = _get_provider()
-    logger.info("Bootstrapping using {0}".format(provider))
+    provider_name = _get_provider()
+    logger.info("Bootstrapping using {0}".format(provider_name))
 
     config = _read_config(args.config_file, args.defaults_config_file)
-    mgmt_ip = _get_provider_module(provider).bootstrap(logger, config)
+    provider = _get_provider_module(provider_name)
+
+    with _protected_provider_call():
+        mgmt_ip = provider.bootstrap(logger, config)
+
     mgmt_ip = mgmt_ip.encode('utf-8')
 
     with _update_wd_settings() as wd_settings:
@@ -382,8 +387,10 @@ def _teardown_cosmo(args):
     mgmt_ip = _get_management_server_ip(args)
     logger.info("Tearing down {0}".format(mgmt_ip))
 
-    provider = _get_provider()
-    _get_provider_module(provider).teardown(logger, mgmt_ip)
+    provider_name = _get_provider()
+    provider = _get_provider_module(provider_name)
+    with _protected_provider_call():
+        provider.teardown(logger, mgmt_ip)
 
     #cleaning relevant data from working directory settings
     with _update_wd_settings() as wd_settings:
@@ -696,6 +703,16 @@ def _update_wd_settings():
     cosmo_wd_settings = _load_cosmo_working_dir_settings()
     yield cosmo_wd_settings
     _dump_cosmo_working_dir_settings(cosmo_wd_settings)
+
+
+@contextmanager
+def _protected_provider_call():
+    try:
+        yield
+    except CosmoCliError:
+        raise
+    except Exception, ex:
+        raise CosmoCliError('Exception occurred in provider', ex)
 
 
 class CosmoWorkingDirectorySettings(yaml.YAMLObject):
