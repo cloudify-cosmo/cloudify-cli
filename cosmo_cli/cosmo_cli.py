@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
-    logging.WARNING)
+    logging.ERROR)
 
 
 def main():
