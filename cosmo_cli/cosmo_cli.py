@@ -587,7 +587,11 @@ def _delete_blueprint(args):
 
 
 def _upload_blueprint(args):
-    blueprint_path = args.blueprint_path
+    blueprint_path = os.path.expanduser(args.blueprint_path)
+    if not os.path.isfile(blueprint_path):
+        raise CosmoCliError("Path to blueprint doesn't exist: {0}."
+                            .format(blueprint_path))
+
     management_ip = _get_management_server_ip(args)
     blueprint_alias = args.alias
     if blueprint_alias and \
