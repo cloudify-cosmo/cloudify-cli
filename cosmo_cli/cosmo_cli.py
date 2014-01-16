@@ -22,6 +22,7 @@ import sys
 import os
 import logging
 import yaml
+import json
 from copy import deepcopy
 from contextlib import contextmanager
 
@@ -44,7 +45,7 @@ logger = logging.getLogger(__name__)
 # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
-    logging.WARNING)
+    logging.ERROR)
 
 
 def main():
@@ -252,23 +253,27 @@ def _parse_args(args):
 
 
 def _get_provider_module(provider_name):
-    module_or_pkg_desc = imp.find_module(provider_name)
-    if not module_or_pkg_desc[1]:
-        #module_or_pkg_desc[1] is the pathname of found module/package,
-        #if it's empty none were found
-        raise CosmoCliError('Provider not found.')
+    try:
+        module_or_pkg_desc = imp.find_module(provider_name)
+        if not module_or_pkg_desc[1]:
+            #module_or_pkg_desc[1] is the pathname of found module/package,
+            #if it's empty none were found
+            raise CosmoCliError('Provider {0} not found.'
+                                .format(provider_name))
 
-    module = imp.load_module(provider_name, *module_or_pkg_desc)
+        module = imp.load_module(provider_name, *module_or_pkg_desc)
 
-    if not module_or_pkg_desc[0]:
-        #module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not
-        #empty only when we've loaded a package rather than a module.
-        #Re-searching for the module inside the now-loaded package
-        #with the same name.
-        module = imp.load_module(
-            provider_name,
-            *imp.find_module(provider_name, module.__path__))
-    return module
+        if not module_or_pkg_desc[0]:
+            #module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not
+            #empty only when we've loaded a package rather than a module.
+            #Re-searching for the module inside the now-loaded package
+            #with the same name.
+            module = imp.load_module(
+                provider_name,
+                *imp.find_module(provider_name, module.__path__))
+        return module
+    except ImportError, ex:
+        raise CosmoCliError(ex.message)
 
 
 def _add_contextual_alias_subparser(subparsers_container, object_name,
@@ -326,25 +331,34 @@ def _add_alias_optional_argument_to_parser(parser, object_name):
 
 
 def _init_cosmo(args):
+    target_directory = os.path.expanduser(args.target_dir)
+    if not os.path.isdir(target_directory):
+        raise CosmoCliError("Target directory doesn't exist.")
+    if os.path.exists('{0}/{1}'.format(target_directory,
+                                       CLOUDIFY_WD_SETTINGS_FILE_NAME)):
+        raise CosmoCliError('Target directory already initialized. Remove "'
+                            '.cloudify" file to allow reinitialization.')
+
     logger.info("Initializing Cloudify")
-    target_directory = args.target_dir
-    #creating .cloudify file
-    _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
-                                     target_directory)
 
     try:
         #searching first for the standard name for providers
         #(i.e. cloudify_XXX)
         provider_module_name = 'cloudify_{0}'.format(args.provider)
-        provider_module = _get_provider_module(provider_module_name)
+        provider = _get_provider_module(provider_module_name)
     except CosmoCliError:
         #if provider was not found, search for the exact literal the
         #user requested instead
         provider_module_name = args.provider
-        provider_module = _get_provider_module(provider_module_name)
+        provider = _get_provider_module(provider_module_name)
 
-    provider_module.init(logger, target_directory,
-                         CONFIG_FILE_NAME, DEFAULTS_CONFIG_FILE_NAME)
+    with _protected_provider_call():
+        provider.init(logger, target_directory,
+                      CONFIG_FILE_NAME, DEFAULTS_CONFIG_FILE_NAME)
+
+    #creating .cloudify file
+    _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
+                                     target_directory)
 
     with _update_wd_settings() as wd_settings:
         wd_settings.set_provider(provider_module_name)
@@ -352,11 +366,15 @@ def _init_cosmo(args):
 
 
 def _bootstrap_cosmo(args):
-    provider = _get_provider()
-    logger.info("Bootstrapping using {0}".format(provider))
+    provider_name = _get_provider()
+    logger.info("Bootstrapping using {0}".format(provider_name))
 
     config = _read_config(args.config_file, args.defaults_config_file)
-    mgmt_ip = _get_provider_module(provider).bootstrap(logger, config)
+    provider = _get_provider_module(provider_name)
+
+    with _protected_provider_call():
+        mgmt_ip = provider.bootstrap(logger, config)
+
     mgmt_ip = mgmt_ip.encode('utf-8')
 
     with _update_wd_settings() as wd_settings:
@@ -375,8 +393,10 @@ def _teardown_cosmo(args):
     mgmt_ip = _get_management_server_ip(args)
     logger.info("Tearing down {0}".format(mgmt_ip))
 
-    provider = _get_provider()
-    _get_provider_module(provider).teardown(logger, mgmt_ip)
+    provider_name = _get_provider()
+    provider = _get_provider_module(provider_name)
+    with _protected_provider_call():
+        provider.teardown(logger, mgmt_ip)
 
     #cleaning relevant data from working directory settings
     with _update_wd_settings() as wd_settings:
@@ -567,7 +587,11 @@ def _delete_blueprint(args):
 
 
 def _upload_blueprint(args):
-    blueprint_path = args.blueprint_path
+    blueprint_path = os.path.expanduser(args.blueprint_path)
+    if not os.path.isfile(blueprint_path):
+        raise CosmoCliError("Path to blueprint doesn't exist: {0}."
+                            .format(blueprint_path))
+
     management_ip = _get_management_server_ip(args)
     blueprint_alias = args.alias
     if blueprint_alias and \
@@ -629,7 +653,7 @@ def _execute_deployment_operation(args):
 
     def events_logger(events):
         for event in events:
-            logger.info(event)
+            logger.info(json.dumps(json.loads(event), indent=4))
 
     client = CosmoManagerRestClient(management_ip)
     client.execute_deployment(deployment_id, operation, events_logger)
@@ -691,6 +715,16 @@ def _update_wd_settings():
     _dump_cosmo_working_dir_settings(cosmo_wd_settings)
 
 
+@contextmanager
+def _protected_provider_call():
+    try:
+        yield
+    except Exception, ex:
+        trace = sys.exc_info()[2]
+        raise CosmoCliError('Exception occurred in provider: {0}'
+                            .format(ex.message)), None, trace
+
+
 class CosmoWorkingDirectorySettings(yaml.YAMLObject):
     yaml_tag = u'!WD_Settings'
     yaml_loader = yaml.SafeLoader
@@ -732,7 +766,7 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
     def save_management_alias(self, management_alias, management_address,
                               is_allow_overwrite):
         if not is_allow_overwrite and management_alias in self._mgmt_aliases:
-            raise CosmoCliError("management-server alias {1} is already in"
+            raise CosmoCliError("management-server alias {0} is already in"
                                 " use; use -f flag to allow overwrite."
                                 .format(management_alias))
         self._mgmt_aliases[management_alias] = management_address
