@@ -23,20 +23,35 @@ import unittest
 
 class CliTest(unittest.TestCase):
 
+    def test_validate_bad_blueprint(self):
+        input = ["cosmo_cli.py", "blueprints", "validate",
+                 "bad_blueprint/blueprint.yaml"]
+        try:
+            args = cosmo_cli._parse_args(input[1:])
+            args.handler(args)
+            self.fail("Validation should have failed")
+        except CosmoCliError as e:
+            self.assertTrue(e.message)
+
+    @unittest.skip
     def test_validate_blueprint_missing_file(self):
-        input = ["cosmo_cli.py", "validate", "/path/to/no/such/file"]
-        args = cosmo_cli.parse_args(input[1:])
+        """the argparser calls sysexit if the file is not found,
+        so this test can't run"""
+
+        input = ["cosmo_cli.py", "blueprints", "validate",
+                 "/path/to/no/such/file"]
+        args = cosmo_cli._parse_args(input[1:])
         try:
             args.handler(args)
             self.fail("Expected file not found error")
-        except CosmoCliError as e:
-            self.assertTrue("Could not file file" in e.message)
+        except Exception as e:
+            self.assertTrue("Failed to validate blueprint" in e.message)
 
     def test_validate_helloworld_blueprint(self):
-        input = ["cosmo_cli.py", "validate", "helloworld/blueprint.yaml"]
-        args = cosmo_cli.parse_args(input[1:])
+        input = ["cosmo_cli.py", "blueprints", "validate",
+                 "helloworld/blueprint.yaml"]
+        args = cosmo_cli._parse_args(input[1:])
         args.handler(args)
-
 
 if __name__ == '__main__':
     unittest.main()

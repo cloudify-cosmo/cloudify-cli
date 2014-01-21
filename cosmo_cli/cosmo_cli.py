@@ -58,10 +58,6 @@ def main():
     args.handler(args)
 
 
-def parse_args(args):
-    return _parse_args(args)
-
-
 def _parse_args(args):
     #Parses the arguments using the Python argparse library
 
@@ -94,10 +90,6 @@ def _parse_args(args):
     parser_workflows = subparsers.add_parser(
         'workflows',
         help='Commands for workflows')
-
-    parser_validate_blueprint = subparsers.add_parser(
-        'validate',
-        help='Validate blueprint format')
 
     #status subparser
     _add_management_ip_optional_argument_to_parser(parser_status)
@@ -184,6 +176,17 @@ def _parse_args(args):
     parser_blueprints_delete = blueprints_subparsers.add_parser(
         'delete',
         help='command for deleting an uploaded blueprint')
+    parser_blueprints_validate = blueprints_subparsers.add_parser(
+        'validate',
+        help='command for validating a blueprint')
+
+    parser_blueprints_validate.add_argument(
+        'blueprint_file',
+        metavar='BLUEPRINT_FILE',
+        type=argparse.FileType(),
+        help='Path to blueprint file to be validated'
+    )
+    parser_blueprints_validate.set_defaults(handler=_validate_blueprint)
 
     parser_blueprints_upload.add_argument(
         'blueprint_path',
@@ -260,14 +263,6 @@ def _parse_args(args):
     )
     _add_management_ip_optional_argument_to_parser(parser_workflows_list)
     parser_workflows_list.set_defaults(handler=_list_workflows)
-
-    parser_validate_blueprint.add_argument(
-        'blueprint_file',
-        metavar='BLUEPRINT_FILE',
-        type=str,
-        help='Path to blueprint file to be validated'
-    )
-    parser_validate_blueprint.set_defaults(handler=_validate_blueprint)
 
     return parser.parse_args(args)
 
@@ -725,21 +720,18 @@ def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
         not target_dir else '{0}/{1}'.format(target_dir,
                                              CLOUDIFY_WD_SETTINGS_FILE_NAME)
     with open(target_file_path, 'w') as f:
-        f.writenot(yaml.dump(cosmo_wd_settings))
+        f.write(yaml.dump(cosmo_wd_settings))
 
 
 def _validate_blueprint(args):
     target_file = args.blueprint_file
 
-    if not os.path.isfile(target_file):
-        raise CosmoCliError(messages.FILE_NOT_FOUND.format(target_file))
-
     resources = _get_resource_base()
     mapping = resources + "org/cloudifysource/cosmo/dsl/alias-mappings.yaml"
 
-    logger.info(messages.VALIDATING_BLUEPRINT.format(target_file))
+    logger.info(messages.VALIDATING_BLUEPRINT.format(target_file.name))
     try:
-        parse_from_path(target_file, None, mapping, resources)
+        parse_from_path(target_file.name, None, mapping, resources)
     except DSLParsingException as e:
         raise CosmoCliError(messages.VALIDATING_BLUEPRINT_FAILED.format(
             target_file, e.message))
