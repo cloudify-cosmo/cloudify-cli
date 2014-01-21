@@ -24,6 +24,8 @@ import os
 import logging
 import yaml
 import json
+import urlparse
+import urllib
 from copy import deepcopy
 from contextlib import contextmanager
 
@@ -56,11 +58,9 @@ def main():
     args.handler(args)
 
 
-def other_method():
-    print "baaa"
-
 def parse_args(args):
     return _parse_args(args)
+
 
 def _parse_args(args):
     #Parses the arguments using the Python argparse library
@@ -98,7 +98,6 @@ def _parse_args(args):
     parser_validate_blueprint = subparsers.add_parser(
         'validate',
         help='Validate blueprint format')
-
 
     #status subparser
     _add_management_ip_optional_argument_to_parser(parser_status)
@@ -269,7 +268,6 @@ def _parse_args(args):
         help='Path to blueprint file to be validated'
     )
     parser_validate_blueprint.set_defaults(handler=_validate_blueprint)
-
 
     return parser.parse_args(args)
 
@@ -729,37 +727,39 @@ def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
     with open(target_file_path, 'w') as f:
         f.writenot(yaml.dump(cosmo_wd_settings))
 
+
 def _validate_blueprint(args):
     target_file = args.blueprint_file
 
     if not os.path.isfile(target_file):
         raise CosmoCliError(messages.FILE_NOT_FOUND.format(target_file))
 
-    # mapping = "file:/home/barakme/dev/cosmo/cosmo-manager/orchestrator/src/main/resources/org/cloudifysource/cosmo/dsl/alias-mappings.yaml"
-    # resources = "file:/home/barakme/dev/cosmo/cosmo-manager/orchestrator/src/main/resources/"
-
-    # mapping = "https://raw.github.com/CloudifySource/cosmo-manager/develop/orchestrator/src/main/resources/org/cloudifysource/cosmo/dsl/alias-mappings.yaml"
-    # resources = "https://raw.github.com/CloudifySource/cosmo-manager/develop/orchestrator/src/main/resources/"
-    resources = _getResourceBase()
+    resources = _get_resource_base()
     mapping = resources + "org/cloudifysource/cosmo/dsl/alias-mappings.yaml"
 
     logger.info(messages.VALIDATING_BLUEPRINT.format(target_file))
     try:
-        parse_from_path(target_file, None, mapping, resources )
+        parse_from_path(target_file, None, mapping, resources)
     except DSLParsingException as e:
-        raise CosmoCliError(messages.VALIDATING_BLUEPRINT_FAILED.format(target_file, e.message))
+        raise CosmoCliError(messages.VALIDATING_BLUEPRINT_FAILED.format(
+            target_file, e.message))
     logger.info(messages.VALIDATING_BLUEPRINT_SUCCEEDED)
 
-def _getResourceBase():
+
+def _get_resource_base():
     script_directory = os.path.dirname(os.path.realpath(__file__))
-    resource_directory = script_directory + "/../../cosmo-manager/orchestrator/src/main/resources/"
+    resource_directory = script_directory \
+        + "/../../cosmo-manager/orchestrator" \
+        "/src/main/resources/"
     if os.path.isdir(resource_directory):
         logger.debug("Found resource directory")
-        import urlparse, urllib
-        resource_directory_url = urlparse.urljoin('file:', urllib.pathname2url(resource_directory))
+
+        resource_directory_url = urlparse.urljoin('file:', urllib.pathname2url(
+            resource_directory))
         return resource_directory_url
     logger.debug("Using resources from github")
-    return "https://raw.github.com/CloudifySource/cosmo-manager/develop/orchestrator/src/main/resources/"
+    return "https://raw.github.com/CloudifySource/cosmo-manager/develop/" \
+           "orchestrator/src/main/resources/"
 
 
 @contextmanager

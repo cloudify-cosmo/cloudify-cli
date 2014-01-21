@@ -23,7 +23,6 @@ import unittest
 
 class CliTest(unittest.TestCase):
 
-
     def test_validate_blueprint_missing_file(self):
         input = ["cosmo_cli.py", "validate", "/path/to/no/such/file"]
         args = cosmo_cli.parse_args(input[1:])
@@ -32,8 +31,6 @@ class CliTest(unittest.TestCase):
             self.fail("Expected file not found error")
         except CosmoCliError as e:
             self.assertTrue("Could not file file" in e.message)
-
-
 
     def test_validate_helloworld_blueprint(self):
         input = ["cosmo_cli.py", "validate", "helloworld/blueprint.yaml"]
