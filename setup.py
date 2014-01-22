@@ -45,7 +45,9 @@ setup(
         'console_scripts': ['cfy = cosmo_cli.cosmo_cli:main']
     },
     install_requires=[
-        "pyyaml"
+        "pyyaml",
+        "cosmo-manager-rest-client",
+        "cosmo-plugin-dsl-parser"
     ],
     dependency_links=[COSMO_MANAGER_REST_CLIENT, COSMO_PLUGIN_DSL_PARSER]
 )
