@@ -345,7 +345,7 @@ def _init_provider(provider, target_directory, reset_config):
         provider_module_name = provider
         provider = _get_provider_module(provider_module_name)
     with _protected_provider_call():
-        success = provider.configure(target_directory, reset_config)
+        success = provider.init(target_directory, reset_config)
         if not success:
             raise CosmoCliError('Target directory already contains a provider '
                                 'configuration file; use the "-r" flag to '
