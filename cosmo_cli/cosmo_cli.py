@@ -276,7 +276,7 @@ def _get_provider_module(provider_name):
                 *imp.find_module(provider_name, module.__path__))
         return module
     except ImportError, ex:
-        raise CosmoCliError(ex.message)
+        raise CosmoCliError(str(ex))
 
 
 def _add_contextual_alias_subparser(subparsers_container, object_name,
@@ -676,10 +676,10 @@ def _set_cli_except_hook():
 
     def new_excepthook(type, value, the_traceback):
         if type == CosmoCliError:
-            logger.error(value.message)
+            logger.error(str(value))
         elif type == CosmoManagerRestCallError:
             logger.error("Failed making a call to REST service: {0}".format(
-                value.message))
+                str(value)))
         else:
             old_excepthook(type, value, the_traceback)
 
@@ -712,9 +712,9 @@ def _validate_blueprint(args):
     logger.info(messages.VALIDATING_BLUEPRINT.format(target_file.name))
     try:
         parse_from_path(target_file.name, None, mapping, resources)
-    except DSLParsingException as e:
+    except DSLParsingException as ex:
         raise CosmoCliError(messages.VALIDATING_BLUEPRINT_FAILED.format(
-            target_file, e.message))
+            target_file, str(ex)))
     logger.info(messages.VALIDATING_BLUEPRINT_SUCCEEDED)
 
 
@@ -748,7 +748,7 @@ def _protected_provider_call():
     except Exception, ex:
         trace = sys.exc_info()[2]
         raise CosmoCliError('Exception occurred in provider: {0}'
-                            .format(ex.message)), None, trace
+                            .format(str(ex))), None, trace
 
 
 class CosmoWorkingDirectorySettings(yaml.YAMLObject):
