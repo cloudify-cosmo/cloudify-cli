@@ -39,8 +39,6 @@ from dsl_parser.parser import parse_from_path, DSLParsingException
 
 
 CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
-CONFIG_FILE_NAME = 'cloudify-config.yaml'
-DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -125,32 +123,23 @@ def _parse_args(args):
         default=os.getcwd(),
         help='The target directory to be initialized for the given provider'
     )
+    parser_init.add_argument(
+        '-r', '--reset-config',
+        dest='reset_config',
+        metavar='RESET_CONFIG',
+        action='store_true',
+        help='A flag indicating overwriting existing configuration is allowed'
+    )
     parser_init.set_defaults(handler=_init_cosmo)
 
     #bootstrap subparser
     parser_bootstrap.add_argument(
         '-c', '--config-file',
-        dest='config_file',
+        dest='config_file_path',
         metavar='CONFIG_FILE',
-        default=CONFIG_FILE_NAME,
-        type=argparse.FileType(),
-        help='Path to the cosmo configuration file'
-    )
-    parser_bootstrap.add_argument(
-        '-d', '--defaults-config-file',
-        dest='defaults_config_file',
-        metavar='DEFAULTS_CONFIG_FILE',
-        default=DEFAULTS_CONFIG_FILE_NAME,
-        type=argparse.FileType(),
-        help='Path to the cosmo defaults configuration file'
-    )
-    parser_bootstrap.add_argument(
-        '-t', '--management-ip',
-        dest='management_ip',
-        metavar='MANAGEMENT_IP',
+        default=None,
         type=str,
-        help='Existing machine which should cosmo management should be '
-             'installed and deployed on'
+        help='Path to a provider configuration file'
     )
     parser_bootstrap.set_defaults(handler=_bootstrap_cosmo)
 
@@ -345,31 +334,49 @@ def _add_alias_optional_argument_to_parser(parser, object_name):
     )
 
 
-def _init_cosmo(args):
-    target_directory = os.path.expanduser(args.target_dir)
-    if not os.path.isdir(target_directory):
-        raise CosmoCliError("Target directory doesn't exist.")
-    if os.path.exists('{0}/{1}'.format(target_directory,
-                                       CLOUDIFY_WD_SETTINGS_FILE_NAME)):
-        raise CosmoCliError('Target directory already initialized. Remove "'
-                            '.cloudify" file to allow reinitialization.')
-
-    logger.info("Initializing Cloudify")
-
+def _init_provider(provider, target_directory, reset_config):
     try:
         #searching first for the standard name for providers
         #(i.e. cloudify_XXX)
-        provider_module_name = 'cloudify_{0}'.format(args.provider)
+        provider_module_name = 'cloudify_{0}'.format(provider)
         provider = _get_provider_module(provider_module_name)
     except CosmoCliError:
         #if provider was not found, search for the exact literal the
         #user requested instead
-        provider_module_name = args.provider
+        provider_module_name = provider
         provider = _get_provider_module(provider_module_name)
-
     with _protected_provider_call():
-        provider.init(logger, target_directory,
-                      CONFIG_FILE_NAME, DEFAULTS_CONFIG_FILE_NAME)
+        success = provider.configure(target_directory, reset_config)
+        if not success:
+            raise CosmoCliError('Target directory already contains a provider '
+                                'configuration file; use the "-r" flag to '
+                                'reset it back to its default values.')
+
+    return provider_module_name
+
+
+def _init_cosmo(args):
+    target_directory = os.path.expanduser(args.target_dir)
+    provider = args.provider
+    if not os.path.isdir(target_directory):
+        raise CosmoCliError("Target directory doesn't exist.")
+
+    if os.path.exists('{0}/{1}'.format(target_directory,
+                                       CLOUDIFY_WD_SETTINGS_FILE_NAME)):
+        if not args.reset_config:
+            raise CosmoCliError('Target directory is already initialized. '
+                                'Remove ".cloudify" file to allow '
+                                'reinitialization, or use the "-r" flag '
+                                'to reset the provider configuration '
+                                'file only.')
+        else:  # resetting provider configuration
+            _init_provider(provider, target_directory, args.reset_config)
+            logger.info("Configuration reset complete")
+            return
+
+    logger.info("Initializing Cloudify")
+    provider_module_name = _init_provider(provider, target_directory,
+                                          args.reset_config)
 
     #creating .cloudify file
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
@@ -384,11 +391,10 @@ def _bootstrap_cosmo(args):
     provider_name = _get_provider()
     logger.info("Bootstrapping using {0}".format(provider_name))
 
-    config = _read_config(args.config_file, args.defaults_config_file)
     provider = _get_provider_module(provider_name)
 
     with _protected_provider_call():
-        mgmt_ip = provider.bootstrap(logger, config)
+        mgmt_ip = provider.bootstrap(args.config_file_path)
 
     mgmt_ip = mgmt_ip.encode('utf-8')
 
@@ -411,7 +417,7 @@ def _teardown_cosmo(args):
     provider_name = _get_provider()
     provider = _get_provider_module(provider_name)
     with _protected_provider_call():
-        provider.teardown(logger, mgmt_ip)
+        provider.teardown(mgmt_ip)
 
     #cleaning relevant data from working directory settings
     with _update_wd_settings() as wd_settings:
@@ -422,31 +428,6 @@ def _teardown_cosmo(args):
                         .format(mgmt_ip))
 
     logger.info("Teardown complete")
-
-
-def _read_config(user_config_file, defaults_config_file):
-    try:
-        user_config = yaml.safe_load(user_config_file.read())
-        defaults_config = yaml.safe_load(defaults_config_file.read())
-    finally:
-        user_config_file.close()
-        defaults_config_file.close()
-
-    merged_config = _deep_merge_dictionaries(user_config, defaults_config)
-    return merged_config
-
-
-def _deep_merge_dictionaries(overriding_dict, overridden_dict):
-    merged_dict = deepcopy(overridden_dict)
-    for k, v in overriding_dict.iteritems():
-        if k in merged_dict and isinstance(v, dict):
-            if isinstance(merged_dict[k], dict):
-                merged_dict[k] = _deep_merge_dictionaries(v, merged_dict[k])
-            else:
-                raise RuntimeError('type conflict at key {0}'.format(k))
-        else:
-            merged_dict[k] = deepcopy(v)
-    return merged_dict
 
 
 def _translate_blueprint_alias(blueprint_id_or_alias, management_ip):
