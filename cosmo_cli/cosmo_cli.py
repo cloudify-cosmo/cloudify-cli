@@ -126,7 +126,6 @@ def _parse_args(args):
     parser_init.add_argument(
         '-r', '--reset-config',
         dest='reset_config',
-        metavar='RESET_CONFIG',
         action='store_true',
         help='A flag indicating overwriting existing configuration is allowed'
     )
