@@ -15,6 +15,6 @@ script:
     - pip freeze
     - source /home/travis/virtualenv/python2.7/bin/activate
     - pip freeze
-    - sudo pip install --process-dependency-links .
+    - pip install .
     - pip freeze
     - nosetests cosmo_cli/tests
