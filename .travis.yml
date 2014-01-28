@@ -12,4 +12,5 @@ script:
 
     - flake8 .
     # command to run tests
-    - nosetests cosmo_cli/tests
+    - actual_nosetests=$(which nosetests)
+    - $actual_nosetests cosmo_cli/tests
