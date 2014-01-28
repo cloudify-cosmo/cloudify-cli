@@ -5,7 +5,7 @@ python:
 install:
 
     # command to install dependencies
-    - pip install --process-dependency-links .
+    - pip install .
     - pip install flake8
 
 script:
