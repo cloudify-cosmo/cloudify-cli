@@ -12,5 +12,4 @@ script:
 
     - flake8 .
     # command to run tests
-    - actual_nosetests=$(which nosetests)
-    - $actual_nosetests cosmo_cli/tests
+    - /home/travis/virtualenv/python2.7/bin/nosetests-2.7 cosmo_cli/tests

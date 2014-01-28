@@ -30,8 +30,8 @@ from cosmo_manager_rest_client.cosmo_manager_rest_client \
 TEST_DIR = '/tmp/cloudify-cli-unit-tests'
 TEST_WORK_DIR = TEST_DIR + "/cloudify"
 TEST_PROVIDER_DIR = TEST_DIR + "/mock-provider"
-BLUEPRINTS_DIR = os.path.join(
-    os.path.dirname(os.path.realpath(__file__)), 'blueprints')
+THIS_DIR = os.path.dirname(os.path.realpath(__file__))
+BLUEPRINTS_DIR = os.path.join(THIS_DIR, 'blueprints')
 
 
 class CliTest(unittest.TestCase):
@@ -41,8 +41,11 @@ class CliTest(unittest.TestCase):
         os.mkdir(TEST_DIR)
         os.mkdir(TEST_PROVIDER_DIR)
         sys.path.append(TEST_PROVIDER_DIR)
-        shutil.copy('providers/mock_provider.py', TEST_PROVIDER_DIR)
-        shutil.copy('providers/cloudify_mock_provider2.py', TEST_PROVIDER_DIR)
+        shutil.copy('{0}/providers/mock_provider.py'.format(THIS_DIR),
+                    TEST_PROVIDER_DIR)
+        shutil.copy('{0}/providers/cloudify_mock_provider2.py'
+                    .format(THIS_DIR),
+                    TEST_PROVIDER_DIR)
 
     @classmethod
     def tearDownClass(cls):
