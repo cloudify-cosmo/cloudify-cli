@@ -8,6 +8,7 @@
 
 # cloudify.types contains Cloudify's built-in types, relationships, workflows etc...
 # openstack_host_provisioner contains Cloudify's built-in OpenStack plugin definition.
+
 imports:
     - cloudify.types
     - openstack_host_provisioner
@@ -16,7 +17,6 @@ imports:
 # Plugin will be downloaded and installed from the provided url.
 plugins:
     python_webserver_installer:
-        # Specify that this plugin runs in an agent vm (not manager)
         derived_from: cloudify.plugins.agent_plugin
         properties:
             url: https://github.com/CloudifySource/cosmo-plugin-python-webserver/archive/develop.zip
@@ -25,18 +25,18 @@ types:
     openstack_host:
         derived_from: cloudify.types.host
         properties:
-            install_agent: true
-            worker_config:
-                user: ubuntu
-                port: 22
-                key: ~/.ssh/cloudify-agents.pem
-            nova_config:
-                region: az-2.region-a.geo-1
-                instance:
-                    name: web_server_vm_idan
-                    image: 67074
-                    flavor: 101
-                    key_name: cloudify_agents_idan
+            -   install_agent: true
+            -   worker_config:
+                    user: ubuntu
+                    port: 22
+                    key: ~/.ssh/cloudify-agents.pem
+            -   nova_config:
+                    region: az-2.region-a.geo-1
+                    instance:
+                        name: web_server_vm_idan
+                        image: 67074
+                        flavor: 101
+                        key_name: cloudify_agents_idan
         interfaces:
             cloudify.interfaces.lifecycle:
                 -   create: cloudify.plugins.openstack_host_provisioner.tasks.provision
@@ -48,7 +48,6 @@ types:
                         properties:
                             service: openstack machine status
                             state: running
-
     web_server:
         derived_from: cloudify.types.web_server
         interfaces:

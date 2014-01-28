@@ -51,7 +51,6 @@ logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
 
 
 def main():
-    _set_cli_except_hook()
     args = _parse_args(sys.argv[1:])
     args.handler(args)
 
@@ -360,8 +359,8 @@ def _init_cosmo(args):
     if not os.path.isdir(target_directory):
         raise CosmoCliError("Target directory doesn't exist.")
 
-    if os.path.exists('{0}/{1}'.format(target_directory,
-                                       CLOUDIFY_WD_SETTINGS_FILE_NAME)):
+    if os.path.exists(os.path.join(target_directory,
+                                   CLOUDIFY_WD_SETTINGS_FILE_NAME)):
         if not args.reset_config:
             raise CosmoCliError('Target directory is already initialized. '
                                 'Remove ".cloudify" file to allow '
@@ -505,9 +504,11 @@ def _status(args):
         client.list_blueprints()
         logger.info("REST service at management server {0} is up and running"
                     .format(management_ip))
+        return True
     except CosmoManagerRestCallError:
         logger.info("REST service at management server {0} is not responding"
                     .format(management_ip))
+        return False
 
 
 def _use_management_server(args):
@@ -697,8 +698,8 @@ def _load_cosmo_working_dir_settings():
 
 def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
     target_file_path = '{0}'.format(CLOUDIFY_WD_SETTINGS_FILE_NAME) if \
-        not target_dir else '{0}/{1}'.format(target_dir,
-                                             CLOUDIFY_WD_SETTINGS_FILE_NAME)
+        not target_dir else os.path.join(target_dir,
+                                         CLOUDIFY_WD_SETTINGS_FILE_NAME)
     with open(target_file_path, 'w') as f:
         f.write(yaml.dump(cosmo_wd_settings))
 
@@ -868,4 +869,5 @@ class CosmoCliError(Exception):
     pass
 
 if __name__ == '__main__':
+    _set_cli_except_hook()  # only enable hook when this is called directly.
     main()

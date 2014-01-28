@@ -13,45 +13,187 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ############
-from cosmo_cli import cosmo_cli
-from cosmo_cli.cosmo_cli import CosmoCliError
 
-__author__ = 'barakme'
+__author__ = 'ran'
 
 import unittest
+import os
+import sys
+import shutil
+from cosmo_cli import cosmo_cli as cli
+from cosmo_cli.cosmo_cli import CosmoCliError
+
+
+TEST_DIR = '/tmp/cloudify-cli-unit-tests'
+TEST_WORK_DIR = TEST_DIR + "/cloudify"
+TEST_PROVIDER_DIR = TEST_DIR + "/mock-provider"
+BLUEPRINTS_DIR = os.path.join(
+    os.path.dirname(os.path.realpath(__file__)), 'blueprints')
 
 
 class CliTest(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        os.mkdir(TEST_DIR)
+        os.mkdir(TEST_PROVIDER_DIR)
+        sys.path.append(TEST_PROVIDER_DIR)
+        shutil.copy('providers/mock_provider.py', TEST_PROVIDER_DIR)
+        shutil.copy('providers/cloudify_mock_provider2.py', TEST_PROVIDER_DIR)
+
+    @classmethod
+    def tearDownClass(cls):
+        shutil.rmtree(TEST_DIR)
+
+    def setUp(self):
+        os.mkdir(TEST_WORK_DIR)
+        os.chdir(TEST_WORK_DIR)
+
+    def tearDown(self):
+        shutil.rmtree(TEST_WORK_DIR)
+
+    def _assert_ex(self, cli_cmd, err_str_segment):
+        try:
+            self._run_cli(cli_cmd)
+            self.fail('Expected error {0} was not raised for command {1}'
+                .format(err_str_segment, cli_cmd))
+        except CosmoCliError, ex:
+            self.assertTrue(err_str_segment in str(ex))
+
+    def _run_cli(self, args_str):
+        sys.argv = args_str.split()
+        cli.main()
+
+    def _create_cosmo_wd_settings(self):
+        cli._dump_cosmo_working_dir_settings(
+            cli.CosmoWorkingDirectorySettings())
+
+    def _read_cosmo_wd_settings(self):
+        return cli._load_cosmo_working_dir_settings()
+
     def test_validate_bad_blueprint(self):
-        input = ["cosmo_cli.py", "blueprints", "validate",
-                 "bad_blueprint/blueprint.yaml"]
-        try:
-            args = cosmo_cli._parse_args(input[1:])
-            args.handler(args)
-            self.fail("Validation should have failed")
-        except CosmoCliError as e:
-            self.assertTrue(e.message)
-
-    @unittest.skip
-    def test_validate_blueprint_missing_file(self):
-        """the argparser calls sysexit if the file is not found,
-        so this test can't run"""
-
-        input = ["cosmo_cli.py", "blueprints", "validate",
-                 "/path/to/no/such/file"]
-        args = cosmo_cli._parse_args(input[1:])
-        try:
-            args.handler(args)
-            self.fail("Expected file not found error")
-        except Exception as e:
-            self.assertTrue("Failed to validate blueprint" in e.message)
+        self._create_cosmo_wd_settings()
+        self._assert_ex("cfy blueprints validate "
+                        "{0}/bad_blueprint/blueprint.yaml".format(
+                            BLUEPRINTS_DIR),
+                        "Failed to validate blueprint")
 
     def test_validate_helloworld_blueprint(self):
-        input = ["cosmo_cli.py", "blueprints", "validate",
-                 "helloworld/blueprint.yaml"]
-        args = cosmo_cli._parse_args(input[1:])
-        args.handler(args)
+        self._create_cosmo_wd_settings()
+        self._run_cli(
+            "cfy blueprints validate {0}/helloworld/blueprint.yaml".format(
+                BLUEPRINTS_DIR))
 
-if __name__ == '__main__':
-    unittest.main()
+    def test_use_command(self):
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy use 127.0.0.1")
+        cwds = self._read_cosmo_wd_settings()
+        self.assertEquals("127.0.0.1", cwds.get_management_server())
+
+    def test_init_explicit_provider_name(self):
+        self._run_cli("cfy init mock_provider")
+        self.assertEquals(
+            "mock_provider",
+            self._read_cosmo_wd_settings().get_provider())
+
+    def test_init_implicit_provider_name(self):
+        #the actual provider name is "cloudify_mock_provider2"
+        self._run_cli("cfy init mock_provider2")
+        self.assertEquals(
+            "cloudify_mock_provider2",
+            self._read_cosmo_wd_settings().get_provider())
+
+    def test_init_nonexistent_provider(self):
+        self._assert_ex("cfy init mock_provider3",
+                        "No module named mock_provider3")
+
+    def test_init_initialized_directory(self):
+        self._create_cosmo_wd_settings()
+        self._assert_ex("cfy init mock_provider",
+                        "Target directory is already initialized")
+
+    def test_init_explicit_directory(self):
+        self._run_cli("cfy init mock_provider -t {0}".format(os.getcwd()))
+
+    def test_init_nonexistent_directory(self):
+        self._assert_ex("cfy init mock_provider -t nonexistent-dir",
+                        "Target directory doesn't exist")
+
+    def test_init_existing_provider_config_no_overwrite(self):
+        self._run_cli("cfy init mock_provider")
+        os.remove('.cloudify')
+        self._assert_ex(
+            "cfy init mock_provider",
+            "Target directory already contains a provider configuration file")
+
+    def test_init_existing_provider_config_with_overwrite(self):
+        self._run_cli("cfy init mock_provider")
+        os.remove('.cloudify')
+        self._run_cli("cfy init mock_provider -r")
+
+    def test_init_initial_init_with_overwrite(self):
+        #simply verifying the overwrite flag doesn't break the first init
+        self._run_cli("cfy init mock_provider -r")
+
+    def test_no_init(self):
+        self._assert_ex("cfy bootstrap",
+                        'You must first initialize by running the command '
+                        '"cfy init"')
+
+    def test_bootstrap(self):
+        self._run_cli("cfy init mock_provider")
+        self._run_cli("cfy bootstrap")
+        self.assertEquals(
+            "10.0.0.1",
+            self._read_cosmo_wd_settings().get_management_server())
+
+    def test_bootstrap_explicit_config_file(self):
+        #note the mock providers don't actually try to read the file;
+        #this test merely ensures such a flag is accepted by the CLI.
+        self._run_cli("cfy init mock_provider")
+        self._run_cli("cfy bootstrap -c my-file")
+        self.assertEquals(
+            "10.0.0.1",
+            self._read_cosmo_wd_settings().get_management_server())
+
+    def test_teardown_no_force(self):
+        self._run_cli("cfy init mock_provider")
+        self._assert_ex("cfy teardown -t 10.0.0.1",
+                        "This action requires additional confirmation.")
+
+    def test_teardown_force(self):
+        self._run_cli("cfy init mock_provider")
+        self._run_cli("cfy use 10.0.0.1")
+        self._run_cli("cfy teardown -f")
+        #the teardown should have cleared the current target management server
+        self.assertEquals(
+            None,
+            self._read_cosmo_wd_settings().get_management_server())
+
+    def test_teardown_force_explicit_management_server(self):
+        self._run_cli("cfy init mock_provider")
+        self._run_cli("cfy use 10.0.0.1")
+        self._run_cli("cfy teardown -t 10.0.0.2 -f")
+        self.assertEquals(
+            "10.0.0.1",
+            self._read_cosmo_wd_settings().get_management_server())
+
+    def test_no_management_server_defined(self):
+        #running a command which requires a target management server without
+        #first calling "cfy use" or providing a target server explicitly
+        self._run_cli("cfy init mock_provider")
+        self._assert_ex("cfy teardown -f",
+                        "Must either first run 'cfy use' command")
+
+    def test_provider_exception(self):
+        #verifying that exceptions thrown from providers are converted to
+        #CosmoCliError and retain the original error message
+        self._run_cli("cfy init cloudify_mock_provider2")
+        self._assert_ex("cfy teardown -t 10.0.0.1 -f",
+                        "cloudify_mock_provider2 teardown exception")
+
+    def test_status_command_no_rest_service(self):
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy use 127.0.0.1")
+        self.assertFalse(self._run_cli("cfy status"))
+
