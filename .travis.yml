@@ -12,4 +12,8 @@ script:
 
     - flake8 .
     # command to run tests
+    - ls /home/travis/virtualenv/
+    - ls /home/travis/virtualenv/python2.7
+    - source /home/travis/virtualenv/python2.7/bin/activate
+    - sudo pip install --process-dependency-links .
     - /home/travis/virtualenv/python2.7/bin/nosetests-2.7 cosmo_cli/tests
