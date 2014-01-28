@@ -39,8 +39,6 @@ from dsl_parser.parser import parse_from_path, DSLParsingException
 
 
 CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
-CONFIG_FILE_NAME = 'cloudify-config.yaml'
-DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
@@ -53,7 +51,6 @@ logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
 
 
 def main():
-    _set_cli_except_hook()
     args = _parse_args(sys.argv[1:])
     args.handler(args)
 
@@ -125,32 +122,22 @@ def _parse_args(args):
         default=os.getcwd(),
         help='The target directory to be initialized for the given provider'
     )
+    parser_init.add_argument(
+        '-r', '--reset-config',
+        dest='reset_config',
+        action='store_true',
+        help='A flag indicating overwriting existing configuration is allowed'
+    )
     parser_init.set_defaults(handler=_init_cosmo)
 
     #bootstrap subparser
     parser_bootstrap.add_argument(
         '-c', '--config-file',
-        dest='config_file',
+        dest='config_file_path',
         metavar='CONFIG_FILE',
-        default=CONFIG_FILE_NAME,
-        type=argparse.FileType(),
-        help='Path to the cosmo configuration file'
-    )
-    parser_bootstrap.add_argument(
-        '-d', '--defaults-config-file',
-        dest='defaults_config_file',
-        metavar='DEFAULTS_CONFIG_FILE',
-        default=DEFAULTS_CONFIG_FILE_NAME,
-        type=argparse.FileType(),
-        help='Path to the cosmo defaults configuration file'
-    )
-    parser_bootstrap.add_argument(
-        '-t', '--management-ip',
-        dest='management_ip',
-        metavar='MANAGEMENT_IP',
+        default=None,
         type=str,
-        help='Existing machine which should cosmo management should be '
-             'installed and deployed on'
+        help='Path to a provider configuration file'
     )
     parser_bootstrap.set_defaults(handler=_bootstrap_cosmo)
 
@@ -288,7 +275,7 @@ def _get_provider_module(provider_name):
                 *imp.find_module(provider_name, module.__path__))
         return module
     except ImportError, ex:
-        raise CosmoCliError(ex.message)
+        raise CosmoCliError(str(ex))
 
 
 def _add_contextual_alias_subparser(subparsers_container, object_name,
@@ -345,31 +332,49 @@ def _add_alias_optional_argument_to_parser(parser, object_name):
     )
 
 
-def _init_cosmo(args):
-    target_directory = os.path.expanduser(args.target_dir)
-    if not os.path.isdir(target_directory):
-        raise CosmoCliError("Target directory doesn't exist.")
-    if os.path.exists('{0}/{1}'.format(target_directory,
-                                       CLOUDIFY_WD_SETTINGS_FILE_NAME)):
-        raise CosmoCliError('Target directory already initialized. Remove "'
-                            '.cloudify" file to allow reinitialization.')
-
-    logger.info("Initializing Cloudify")
-
+def _init_provider(provider, target_directory, reset_config):
     try:
         #searching first for the standard name for providers
         #(i.e. cloudify_XXX)
-        provider_module_name = 'cloudify_{0}'.format(args.provider)
+        provider_module_name = 'cloudify_{0}'.format(provider)
         provider = _get_provider_module(provider_module_name)
     except CosmoCliError:
         #if provider was not found, search for the exact literal the
         #user requested instead
-        provider_module_name = args.provider
+        provider_module_name = provider
         provider = _get_provider_module(provider_module_name)
-
     with _protected_provider_call():
-        provider.init(logger, target_directory,
-                      CONFIG_FILE_NAME, DEFAULTS_CONFIG_FILE_NAME)
+        success = provider.init(target_directory, reset_config)
+        if not success:
+            raise CosmoCliError('Target directory already contains a provider '
+                                'configuration file; use the "-r" flag to '
+                                'reset it back to its default values.')
+
+    return provider_module_name
+
+
+def _init_cosmo(args):
+    target_directory = os.path.expanduser(args.target_dir)
+    provider = args.provider
+    if not os.path.isdir(target_directory):
+        raise CosmoCliError("Target directory doesn't exist.")
+
+    if os.path.exists(os.path.join(target_directory,
+                                   CLOUDIFY_WD_SETTINGS_FILE_NAME)):
+        if not args.reset_config:
+            raise CosmoCliError('Target directory is already initialized. '
+                                'Remove ".cloudify" file to allow '
+                                'reinitialization, or use the "-r" flag '
+                                'to reset the provider configuration '
+                                'file only.')
+        else:  # resetting provider configuration
+            _init_provider(provider, target_directory, args.reset_config)
+            logger.info("Configuration reset complete")
+            return
+
+    logger.info("Initializing Cloudify")
+    provider_module_name = _init_provider(provider, target_directory,
+                                          args.reset_config)
 
     #creating .cloudify file
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
@@ -384,11 +389,10 @@ def _bootstrap_cosmo(args):
     provider_name = _get_provider()
     logger.info("Bootstrapping using {0}".format(provider_name))
 
-    config = _read_config(args.config_file, args.defaults_config_file)
     provider = _get_provider_module(provider_name)
 
     with _protected_provider_call():
-        mgmt_ip = provider.bootstrap(logger, config)
+        mgmt_ip = provider.bootstrap(args.config_file_path)
 
     mgmt_ip = mgmt_ip.encode('utf-8')
 
@@ -411,7 +415,7 @@ def _teardown_cosmo(args):
     provider_name = _get_provider()
     provider = _get_provider_module(provider_name)
     with _protected_provider_call():
-        provider.teardown(logger, mgmt_ip)
+        provider.teardown(mgmt_ip)
 
     #cleaning relevant data from working directory settings
     with _update_wd_settings() as wd_settings:
@@ -422,31 +426,6 @@ def _teardown_cosmo(args):
                         .format(mgmt_ip))
 
     logger.info("Teardown complete")
-
-
-def _read_config(user_config_file, defaults_config_file):
-    try:
-        user_config = yaml.safe_load(user_config_file.read())
-        defaults_config = yaml.safe_load(defaults_config_file.read())
-    finally:
-        user_config_file.close()
-        defaults_config_file.close()
-
-    merged_config = _deep_merge_dictionaries(user_config, defaults_config)
-    return merged_config
-
-
-def _deep_merge_dictionaries(overriding_dict, overridden_dict):
-    merged_dict = deepcopy(overridden_dict)
-    for k, v in overriding_dict.iteritems():
-        if k in merged_dict and isinstance(v, dict):
-            if isinstance(merged_dict[k], dict):
-                merged_dict[k] = _deep_merge_dictionaries(v, merged_dict[k])
-            else:
-                raise RuntimeError('type conflict at key {0}'.format(k))
-        else:
-            merged_dict[k] = deepcopy(v)
-    return merged_dict
 
 
 def _translate_blueprint_alias(blueprint_id_or_alias, management_ip):
@@ -520,14 +499,16 @@ def _get_blueprints_alias_mapping(management_ip):
 def _status(args):
     management_ip = _get_management_server_ip(args)
     logger.info('querying management server {0}'.format(management_ip))
-    client = CosmoManagerRestClient(management_ip)
+    client = _get_rest_client(management_ip)
     try:
         client.list_blueprints()
         logger.info("REST service at management server {0} is up and running"
                     .format(management_ip))
+        return True
     except CosmoManagerRestCallError:
         logger.info("REST service at management server {0} is not responding"
                     .format(management_ip))
+        return False
 
 
 def _use_management_server(args):
@@ -549,7 +530,7 @@ def _list_blueprints(args):
     management_ip = _get_management_server_ip(args)
     logger.info('querying blueprints list from management '
                 'server {0}'.format(management_ip))
-    client = CosmoManagerRestClient(management_ip)
+    client = _get_rest_client(management_ip)
     blueprints_list = client.list_blueprints()
     alias_to_blueprint_id = _get_blueprints_alias_mapping(management_ip)
     blueprint_id_to_aliases = _build_reversed_lookup(alias_to_blueprint_id)
@@ -596,7 +577,7 @@ def _delete_blueprint(args):
 
     logger.info('Deleting blueprint {0} from management server {1}'.format(
         args.blueprint_id, management_ip))
-    client = CosmoManagerRestClient(management_ip)
+    client = _get_rest_client(management_ip)
     client.delete_blueprint(blueprint_id)
     logger.info("Deleted blueprint successfully")
 
@@ -617,7 +598,7 @@ def _upload_blueprint(args):
 
     logger.info('Uploading blueprint {0} to management server {1}'.format(
         blueprint_path, management_ip))
-    client = CosmoManagerRestClient(management_ip)
+    client = _get_rest_client(management_ip)
     blueprint_state = client.publish_blueprint(blueprint_path)
 
     if not blueprint_alias:
@@ -645,7 +626,7 @@ def _create_deployment(args):
 
     logger.info('Creating new deployment from blueprint {0} at '
                 'management server {1}'.format(blueprint_id, management_ip))
-    client = CosmoManagerRestClient(management_ip)
+    client = _get_rest_client(management_ip)
     deployment = client.create_deployment(translated_blueprint_id)
     if not deployment_alias:
         logger.info("Deployment created, deployment's id is: {0}".format(
@@ -670,7 +651,7 @@ def _execute_deployment_operation(args):
         for event in events:
             logger.info(json.dumps(json.loads(event), indent=4))
 
-    client = CosmoManagerRestClient(management_ip)
+    client = _get_rest_client(management_ip)
     client.execute_deployment(deployment_id, operation, events_logger)
     logger.info("Finished executing operation {0} on deployment".format(
         operation))
@@ -683,7 +664,7 @@ def _list_workflows(args):
 
     logger.info('querying workflows list from management server {0} for '
                 'deployment {1}'.format(management_ip, args.deployment_id))
-    client = CosmoManagerRestClient(management_ip)
+    client = _get_rest_client(management_ip)
     workflow_names = [workflow.name for workflow in
                       client.list_workflows(deployment_id).workflows]
     logger.info("deployments workflows:")
@@ -696,10 +677,10 @@ def _set_cli_except_hook():
 
     def new_excepthook(type, value, the_traceback):
         if type == CosmoCliError:
-            logger.error(value.message)
+            logger.error(str(value))
         elif type == CosmoManagerRestCallError:
             logger.error("Failed making a call to REST service: {0}".format(
-                value.message))
+                str(value)))
         else:
             old_excepthook(type, value, the_traceback)
 
@@ -717,8 +698,8 @@ def _load_cosmo_working_dir_settings():
 
 def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
     target_file_path = '{0}'.format(CLOUDIFY_WD_SETTINGS_FILE_NAME) if \
-        not target_dir else '{0}/{1}'.format(target_dir,
-                                             CLOUDIFY_WD_SETTINGS_FILE_NAME)
+        not target_dir else os.path.join(target_dir,
+                                         CLOUDIFY_WD_SETTINGS_FILE_NAME)
     with open(target_file_path, 'w') as f:
         f.write(yaml.dump(cosmo_wd_settings))
 
@@ -732,9 +713,9 @@ def _validate_blueprint(args):
     logger.info(messages.VALIDATING_BLUEPRINT.format(target_file.name))
     try:
         parse_from_path(target_file.name, None, mapping, resources)
-    except DSLParsingException as e:
+    except DSLParsingException as ex:
         raise CosmoCliError(messages.VALIDATING_BLUEPRINT_FAILED.format(
-            target_file, e.message))
+            target_file, str(ex)))
     logger.info(messages.VALIDATING_BLUEPRINT_SUCCEEDED)
 
 
@@ -754,6 +735,10 @@ def _get_resource_base():
            "orchestrator/src/main/resources/"
 
 
+def _get_rest_client(management_ip):
+    return CosmoManagerRestClient(management_ip)
+
+
 @contextmanager
 def _update_wd_settings():
     cosmo_wd_settings = _load_cosmo_working_dir_settings()
@@ -768,7 +753,7 @@ def _protected_provider_call():
     except Exception, ex:
         trace = sys.exc_info()[2]
         raise CosmoCliError('Exception occurred in provider: {0}'
-                            .format(ex.message)), None, trace
+                            .format(str(ex))), None, trace
 
 
 class CosmoWorkingDirectorySettings(yaml.YAMLObject):
@@ -888,4 +873,5 @@ class CosmoCliError(Exception):
     pass
 
 if __name__ == '__main__':
+    _set_cli_except_hook()  # only enable hook when this is called directly.
     main()
