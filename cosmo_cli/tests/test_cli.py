@@ -20,8 +20,11 @@ import unittest
 import os
 import sys
 import shutil
+from mock_cosmo_manager_rest_client import MockCosmoManagerRestClient
 from cosmo_cli import cosmo_cli as cli
 from cosmo_cli.cosmo_cli import CosmoCliError
+from cosmo_manager_rest_client.cosmo_manager_rest_client \
+    import CosmoManagerRestCallError
 
 
 TEST_DIR = '/tmp/cloudify-cli-unit-tests'
@@ -70,6 +73,10 @@ class CliTest(unittest.TestCase):
 
     def _read_cosmo_wd_settings(self):
         return cli._load_cosmo_working_dir_settings()
+
+    def _set_mock_rest_client(self):
+        cli._get_rest_client =\
+            lambda ip: MockCosmoManagerRestClient()
 
     def test_validate_bad_blueprint(self):
         self._create_cosmo_wd_settings()
@@ -194,6 +201,67 @@ class CliTest(unittest.TestCase):
 
     def test_status_command_no_rest_service(self):
         self._create_cosmo_wd_settings()
-        self._run_cli("cfy use 127.0.0.1")
-        self.assertFalse(self._run_cli("cfy status"))
+        self.assertFalse(self._run_cli("cfy status -t 127.0.0.1"))
 
+    def test_status_command(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy status -t 127.0.0.1")
+
+    def test_blueprints_list(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy blueprints list -t 127.0.0.1")
+
+    def test_blueprints_delete(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy blueprints delete a-blueprint-id -t 127.0.0.1")
+
+    def test_blueprints_upload_nonexistent_file(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._assert_ex(
+            "cfy blueprints upload nonexistent-file -t 127.0.0.1",
+            "Path to blueprint doesn't exist")
+
+    def test_blueprints_upload(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy use 127.0.0.1")
+        self._run_cli("cfy blueprints upload {0}/helloworld/blueprint.yaml"
+                      .format(BLUEPRINTS_DIR))
+
+    def test_workflows_list(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy workflows list a-deployment-id -t 127.0.0.1")
+
+    def test_deployment_create(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy deployments create a-blueprint-id -t 127.0.0.1")
+
+    def test_deployments_execute(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy use 127.0.0.1")
+        self._run_cli("cfy deployments execute install a-deployment-id")
+
+    def test_deployments_execute_nonexistent_operation(self):
+        #verifying that the CLI allows for arbitrary operation names,
+        #while also ensuring correct error-handling of nonexistent
+        #operations
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy use 127.0.0.1")
+
+        expected_error = "operation nonexistent-operation doesn't exist"
+        command = "cfy deployments execute nonexistent-operation " \
+                  "a-deployment-id"
+        try:
+            self._run_cli(command)
+            self.fail('Expected error {0} was not raised for command {1}'
+                      .format(expected_error, command))
+        except CosmoManagerRestCallError, ex:
+            self.assertTrue(expected_error in str(ex))

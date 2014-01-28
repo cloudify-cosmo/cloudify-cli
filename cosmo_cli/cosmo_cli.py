@@ -499,7 +499,7 @@ def _get_blueprints_alias_mapping(management_ip):
 def _status(args):
     management_ip = _get_management_server_ip(args)
     logger.info('querying management server {0}'.format(management_ip))
-    client = CosmoManagerRestClient(management_ip)
+    client = _get_rest_client(management_ip)
     try:
         client.list_blueprints()
         logger.info("REST service at management server {0} is up and running"
@@ -530,7 +530,7 @@ def _list_blueprints(args):
     management_ip = _get_management_server_ip(args)
     logger.info('querying blueprints list from management '
                 'server {0}'.format(management_ip))
-    client = CosmoManagerRestClient(management_ip)
+    client = _get_rest_client(management_ip)
     blueprints_list = client.list_blueprints()
     alias_to_blueprint_id = _get_blueprints_alias_mapping(management_ip)
     blueprint_id_to_aliases = _build_reversed_lookup(alias_to_blueprint_id)
@@ -577,7 +577,7 @@ def _delete_blueprint(args):
 
     logger.info('Deleting blueprint {0} from management server {1}'.format(
         args.blueprint_id, management_ip))
-    client = CosmoManagerRestClient(management_ip)
+    client = _get_rest_client(management_ip)
     client.delete_blueprint(blueprint_id)
     logger.info("Deleted blueprint successfully")
 
@@ -598,7 +598,7 @@ def _upload_blueprint(args):
 
     logger.info('Uploading blueprint {0} to management server {1}'.format(
         blueprint_path, management_ip))
-    client = CosmoManagerRestClient(management_ip)
+    client = _get_rest_client(management_ip)
     blueprint_state = client.publish_blueprint(blueprint_path)
 
     if not blueprint_alias:
@@ -626,7 +626,7 @@ def _create_deployment(args):
 
     logger.info('Creating new deployment from blueprint {0} at '
                 'management server {1}'.format(blueprint_id, management_ip))
-    client = CosmoManagerRestClient(management_ip)
+    client = _get_rest_client(management_ip)
     deployment = client.create_deployment(translated_blueprint_id)
     if not deployment_alias:
         logger.info("Deployment created, deployment's id is: {0}".format(
@@ -651,7 +651,7 @@ def _execute_deployment_operation(args):
         for event in events:
             logger.info(json.dumps(json.loads(event), indent=4))
 
-    client = CosmoManagerRestClient(management_ip)
+    client = _get_rest_client(management_ip)
     client.execute_deployment(deployment_id, operation, events_logger)
     logger.info("Finished executing operation {0} on deployment".format(
         operation))
@@ -664,7 +664,7 @@ def _list_workflows(args):
 
     logger.info('querying workflows list from management server {0} for '
                 'deployment {1}'.format(management_ip, args.deployment_id))
-    client = CosmoManagerRestClient(management_ip)
+    client = _get_rest_client(management_ip)
     workflow_names = [workflow.name for workflow in
                       client.list_workflows(deployment_id).workflows]
     logger.info("deployments workflows:")
@@ -733,6 +733,10 @@ def _get_resource_base():
     logger.debug("Using resources from github")
     return "https://raw.github.com/CloudifySource/cosmo-manager/develop/" \
            "orchestrator/src/main/resources/"
+
+
+def _get_rest_client(management_ip):
+    return CosmoManagerRestClient(management_ip)
 
 
 @contextmanager
