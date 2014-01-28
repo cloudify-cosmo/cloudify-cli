@@ -12,9 +12,4 @@ script:
 
     - flake8 .
     # command to run tests
-    - pip freeze
-    - source /home/travis/virtualenv/python2.7/bin/activate
-    - pip freeze
-    - pip install .
-    - pip freeze
     - nosetests cosmo_cli/tests
