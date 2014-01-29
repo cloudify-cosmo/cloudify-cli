@@ -144,12 +144,13 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 **Description:** initializes a cloudify working directory for a given provider
 
-**Usage:** `cfy init <provider> [-t, --target-dir <dir>]`
+**Usage:** `cfy init <provider> [-t, --target-dir <dir>] [-r, --reset-config]`
 
 **Parameters**:
 
 - provider: the cloudify provider to use for initialization
 - target-dir: the directory that will be used as the cloudify working directory (Optional)
+- reset-config: a flag indicating overwriting existing configuration is allowed (Optional)
 
 **Example:** `cfy init openstack`
   
@@ -159,12 +160,11 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 **Description:** bootstraps cloudify on the current provider
 
-**Usage:** `cfy bootstrap [-c, --config-file <file>] [-d, --defaults-config-file <file>]`
+**Usage:** `cfy bootstrap [-c, --config-file <file>]`
 
 **Parameters**:
 
 - config-file: path to the config file (Optional)
-- defaults-config-file: path to the defaults config file (Optional)
 
 **Example:** `cfy bootstrap`
   
