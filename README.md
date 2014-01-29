@@ -38,7 +38,8 @@ Command line interface for [Cloudify](https://github.com/CloudifySource/cosmo-ma
 <br>
 **3. Deploying your application:**
   - Upload your blueprint:  
-  `cfy blueprints upload my-app/blueprint.yaml -a my-blueprint`
+  `cfy blueprints upload my-app/blueprint.yaml -a my-blueprint`  
+  (Don't have a blueprint? You can download a sample one [here](https://github.com/CloudifySource/cloudify-hello-world/tree/develop/openstack)).
 
   - Create a deployment of the blueprint:  
   `cfy deployments create my-blueprint -a my-deployment`
