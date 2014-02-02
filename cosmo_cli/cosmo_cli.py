@@ -564,7 +564,7 @@ def _use_management_server(args):
                                               args.force)
             _output(logging.INFO,
                     'Using management server {0} (alias {1})'.format(
-                    args.management_ip, args.alias))
+                        args.management_ip, args.alias))
         else:
             _output(logging.INFO, 'Using management server {0}'.format(
                     args.management_ip))
@@ -621,7 +621,7 @@ def _delete_blueprint(args):
 
     _output(logging.INFO,
             'Deleting blueprint {0} from management server {1}'.format(
-            args.blueprint_id, management_ip))
+                args.blueprint_id, management_ip))
     client = _get_rest_client(management_ip)
     client.delete_blueprint(blueprint_id)
     _output(logging.INFO, "Deleted blueprint successfully")
@@ -643,14 +643,14 @@ def _upload_blueprint(args):
 
     _output(logging.INFO,
             'Uploading blueprint {0} to management server {1}'.format(
-            blueprint_path, management_ip))
+                blueprint_path, management_ip))
     client = _get_rest_client(management_ip)
     blueprint_state = client.publish_blueprint(blueprint_path)
 
     if not blueprint_alias:
         _output(logging.INFO,
                 "Uploaded blueprint, blueprint's id is: {0}".format(
-                blueprint_state.id))
+                    blueprint_state.id))
     else:
         _save_blueprint_alias(blueprint_alias,
                               blueprint_state.id,
@@ -678,7 +678,7 @@ def _create_deployment(args):
     if not deployment_alias:
         _output(logging.INFO,
                 "Deployment created, deployment's id is: {0}".format(
-                deployment.id))
+                    deployment.id))
     else:
         _save_deployment_alias(deployment_alias, deployment.id, management_ip)
         _output(logging.INFO, "Deployment created, deployment's alias is: "
@@ -702,7 +702,7 @@ def _execute_deployment_operation(args):
     client = _get_rest_client(management_ip)
     client.execute_deployment(deployment_id, operation, events_logger)
     _output(logging.INFO, "Finished executing operation {0} on deployment"
-        .format(operation))
+            .format(operation))
 
 
 def _list_workflows(args):
@@ -733,7 +733,7 @@ def _set_cli_except_hook():
         elif type == CosmoManagerRestCallError:
             _output(logging.ERROR,
                     "Failed making a call to REST service: {0}".format(
-                    str(value)))
+                        str(value)))
             if output_level <= logging.DEBUG:
                 print("Stack trace:")
                 traceback.print_tb(the_traceback)
