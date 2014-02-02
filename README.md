@@ -56,7 +56,7 @@ This will install your deployment - all you have left to do is sit back and watc
 ## Providers
 A provider is any platform which allows for the creation and bootstrapping of a management server (e.g. Openstack). The CLI can work with any provider once the appropriate extension has been installed. A provider extension is provider-specific code which handles environment-related operations such as bootstrap and teardown.
 
-Note that the CLI can be used even without the installation of any providers - if you already possess a bootstrapped management server, you may simply direct the CLI to work with that server (`cfy use <management-ip> -a my-server`), and you can then issue any of the CLI commands to that server (with the exception of the "**cfy teardown**" command)
+Note that the CLI can be used even without the installation of any providers - if you already possess a bootstrapped management server, you may simply direct the CLI to work with that server (`cfy use <management-ip>`), and you can then issue any of the CLI commands to that server (with the exception of the "**cfy teardown**" command)
 
 
 ###Currently Supported Providers:
