@@ -71,23 +71,26 @@ By convention, the module name is called "*cloudify_<provider-name>.py*". While 
 
 Every provider extention is expected to implement the following interface:
 
-  - **init**(*target_directory*, *reset_config*)  
+  - **init**(*target_directory*, *reset_config*, *is_verbose_output=False*)  
     - **Description**: This method is used to create any required configuration files at the given target directory, as well as make any other initializations required by the specific provider.  
     - **Parameters:**:
       - *target_directory* - Target directory for configuration files, if any.
       - *reset_config* - A boolean describing whether overwriting existing configuration files is allowed.
+      - *is_verbose_output* - A flag for setting verbose output
     - **Returns:**: False if a configuration file already exists and reset_config is False; True otherwise.
   
-  - **bootstrap**(*config_file_path=None*)  
+  - **bootstrap**(*config_file_path=None*, *is_verbose_output=False*)  
     - **Description**: This method is used to set up the management server as well as the environment (e.g. network) in which it resides. It is currently also responsible for bootstrapping the server as a management server.  
     - **Parameters**:
       - *config_file_path=None* - A path to an appropriate configuration file to be used in the bootstrap process. If one is required yet not passed, the Provider is expected to assume this command is called from the same path from which "init" was called, and search for the relevant file in the current directory.
+      - *is_verbose_output* - A flag for setting verbose output
     - **Returns**: The IP of the bootstrapped management server.
   
-  - **teardown**(*management_ip*)  
+  - **teardown**(*management_ip*, *is_verbose_output=False*)  
     - **Description**: This method is used to tear down the server at the address supplied, as well as any environment objects related to the server which will no longer be of use.
     - **Parameters**:
       - *management_ip* - The IP of the management server to teardown.
+      - *is_verbose_output* - A flag for setting verbose output
     - **Returns**: None.  
 
 
@@ -109,16 +112,17 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 
 ## Commands Docs
-
+re
 **Command:** status
 
 **Description:** queries the status of the management server
 
-**Usage:** `cfy status [-t, --management-ip <ip>]`
+**Usage:** `cfy status [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy status`
 
@@ -128,13 +132,14 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 **Description:** defines a default management server to work with
 
-**Usage:** `cfy use <management_ip> [-a, --alias <alias>] [-f, --force]`
+**Usage:** `cfy use <management_ip> [-a, --alias <alias>] [-f, --force] [-v, --verbosity]`
 
 **Parameters**:
 
 - management_ip: the management-server to define as the default management server
 - alias: a local alias for the given management server address (Optional)
 - force: a flag indicating authorization to overwrite the alias provided if it's already in use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy use 10.0.0.1 -a my-mgmt-server`
   
@@ -144,13 +149,14 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 **Description:** initializes a cloudify working directory for a given provider
 
-**Usage:** `cfy init <provider> [-t, --target-dir <dir>] [-r, --reset-config]`
+**Usage:** `cfy init <provider> [-t, --target-dir <dir>] [-r, --reset-config] [-v, --verbosity]`
 
 **Parameters**:
 
 - provider: the cloudify provider to use for initialization
 - target-dir: the directory that will be used as the cloudify working directory (Optional)
 - reset-config: a flag indicating overwriting existing configuration is allowed (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy init openstack`
   
@@ -160,11 +166,12 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 **Description:** bootstraps cloudify on the current provider
 
-**Usage:** `cfy bootstrap [-c, --config-file <file>]`
+**Usage:** `cfy bootstrap [-c, --config-file <file>] [-v, --verbosity]`
 
 **Parameters**:
 
 - config-file: path to the config file (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy bootstrap`
   
@@ -174,12 +181,13 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 **Description:** tears down the management-server, as well as any local aliases under its context
 
-**Usage:** `cfy teardown [-f, --force] [-t, --management-ip <ip>]`
+**Usage:** `cfy teardown [-f, --force] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - force: a flag indicating confirmation for this irreversable action (Optional)
 - management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy teardown -f`
   
@@ -189,13 +197,14 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 **Description:** uploads a blueprint to the management server
   
-**Usage:** `cfy blueprints upload <blueprint_path> [-a, --alias <alias>] [-t, --management-ip <ip>]`
+**Usage:** `cfy blueprints upload <blueprint_path> [-a, --alias <alias>] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - blueprint_path: path to the blueprint (yaml file) to upload
 - alias: a local alias for the blueprint id that will be created for the uploaded blueprint (Optional)
 - management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy blueprints upload blueprint.yaml -a my-blueprint`
   
@@ -205,11 +214,12 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 **Description:** lists the blueprint on the management server, as well as the blueprints local aliases
   
-**Usage:** `cfy blueprints list [-t, --management-ip <ip>]`
+**Usage:** `cfy blueprints list [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy blueprints list`
   
@@ -219,12 +229,13 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 **Description:** deletes the blueprint from the management server
   
-**Usage:** `cfy blueprints delete <blueprint_id> [-t, --management-ip <ip>]`
+**Usage:** `cfy blueprints delete <blueprint_id> [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - blueprint_id: the id or alias of the blueprint to delete
 - management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy blueprints delete my-blueprint`
   
@@ -234,7 +245,7 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 **Description:** creates a local alias for a blueprint id
   
-**Usage:** `cfy blueprints alias <alias> <blueprint_id> [-f, --force] [-t, --management-ip <ip>]`
+**Usage:** `cfy blueprints alias <alias> <blueprint_id> [-f, --force] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
@@ -242,6 +253,7 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 - blueprint_id: the id of the blueprint
 - force: a flag indicating authorization to overwrite the alias provided if it's already in use (Optional)
 - management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy blueprints alias my-blueprint 38f8520f-809f-4162-ae96-75555d906faa`
 
@@ -251,13 +263,14 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 **Description:** creates a deployment of a blueprint
   
-**Usage:** `cfy deployments create <blueprint_id> [-a, --alias <alias>] [-t, --management-ip <ip>]`
+**Usage:** `cfy deployments create <blueprint_id> [-a, --alias <alias>] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - blueprint_id: the id or alias of the blueprint to deploy
 - alias: a local alias for the deployment id that will be created for the new deployment (Optional)
 - management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy deployments create my-blueprint -a my-deployment`  
 
@@ -267,13 +280,14 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 **Description:** executes an operation on a deployment
   
-**Usage:** `cfy deployments execute <operation> <deployment_id> [-t, --management-ip <ip>]`
+**Usage:** `cfy deployments execute <operation> <deployment_id> [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - operation: the name of the operation to execute
 - deployment_id: the deployment id or alias on which the operation should be executed
 - management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy deployments execute install my-deployment`
   
@@ -283,7 +297,7 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 **Description:** creates a local alias for a deployment id
   
-**Usage:** `cfy deployments alias <alias> <deployment_id> [-f, --force] [-t, --management-ip <ip>]`
+**Usage:** `cfy deployments alias <alias> <deployment_id> [-f, --force] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
@@ -291,6 +305,7 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 - deployment_id: the id of the deployment
 - force: a flag indicating authorization to overwrite the alias provided if it's already in use (Optional)
 - management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy deployments alias my-deployment 38f8520f-809f-4162-ae96-75555d906faa`  
 
@@ -300,11 +315,12 @@ Note: If the Cloudify working directory is also a git repository, it's recommend
 
 **Description:** lists the workflows of a deployment
   
-**Usage:** `cfy workflows list <deployment_id> [-t, --management-ip <ip>]`
+**Usage:** `cfy workflows list <deployment_id> [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - deployment_id: the alias or id of the deployment whose workflows to list
 - management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy workflows list my-deployment`  
