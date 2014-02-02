@@ -728,12 +728,14 @@ def _set_cli_except_hook():
         if type == CosmoCliError:
             _output(logging.ERROR, str(value))
             if output_level <= logging.DEBUG:
+                print("Stack trace:")
                 traceback.print_tb(the_traceback)
         elif type == CosmoManagerRestCallError:
             _output(logging.ERROR,
                     "Failed making a call to REST service: {0}".format(
                     str(value)))
             if output_level <= logging.DEBUG:
+                print("Stack trace:")
                 traceback.print_tb(the_traceback)
         else:
             old_excepthook(type, value, the_traceback)
