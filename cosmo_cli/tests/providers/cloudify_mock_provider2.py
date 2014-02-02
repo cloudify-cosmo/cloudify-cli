@@ -19,7 +19,7 @@ __author__ = 'ran'
 import os
 
 
-def init(target_dir, reset_config):
+def init(target_dir, reset_config, is_verbose_output=False):
     config_file_path = os.path.join(target_dir, 'cloudify-config.yaml')
     if not reset_config and os.path.exists(config_file_path):
         return False
@@ -27,9 +27,9 @@ def init(target_dir, reset_config):
     return True
 
 
-def bootstrap(config_path=None):
+def bootstrap(config_path=None, is_verbose_output=False):
     return '10.0.0.2'
 
 
-def teardown(management_ip):
+def teardown(management_ip, is_verbose_output=False):
     raise RuntimeError('cloudify_mock_provider2 teardown exception')
