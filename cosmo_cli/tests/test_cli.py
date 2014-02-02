@@ -100,6 +100,11 @@ class CliTest(unittest.TestCase):
         cwds = self._read_cosmo_wd_settings()
         self.assertEquals("127.0.0.1", cwds.get_management_server())
 
+    def test_use_command_no_prior_init(self):
+        self._run_cli("cfy use 127.0.0.1")
+        cwds = self._read_cosmo_wd_settings()
+        self.assertEquals("127.0.0.1", cwds.get_management_server())
+
     def test_init_explicit_provider_name(self):
         self._run_cli("cfy init mock_provider")
         self.assertEquals(

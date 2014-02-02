@@ -363,10 +363,9 @@ def _init_cosmo(args):
                                    CLOUDIFY_WD_SETTINGS_FILE_NAME)):
         if not args.reset_config:
             raise CosmoCliError('Target directory is already initialized. '
-                                'Remove ".cloudify" file to allow '
-                                'reinitialization, or use the "-r" flag '
-                                'to reset the provider configuration '
-                                'file only.')
+                                'Use the "-r" flag to force '
+                                'reinitialization (might overwrite provider '
+                                'configuration files if exist).')
         else:  # resetting provider configuration
             _init_provider(provider, target_directory, args.reset_config)
             logger.info("Configuration reset complete")
@@ -512,6 +511,11 @@ def _status(args):
 
 
 def _use_management_server(args):
+    if not os.path.exists(CLOUDIFY_WD_SETTINGS_FILE_NAME):
+        #Allowing the user to work with an existing management server
+        #even if "init" wasn't called prior to this.
+        _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings())
+
     with _update_wd_settings() as wd_settings:
         wd_settings.set_management_server(
             wd_settings.translate_management_alias(args.management_ip))
@@ -693,7 +697,9 @@ def _load_cosmo_working_dir_settings():
             return yaml.safe_load(f.read())
     except IOError:
         raise CosmoCliError('You must first initialize by running the '
-                            'command "cfy init"')
+                            'command "cfy init", or choose to work with an '
+                            'existing management server by running the '
+                            'command "cfy use".')
 
 
 def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
