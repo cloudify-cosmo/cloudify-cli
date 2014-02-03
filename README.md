@@ -315,11 +315,12 @@ re
 
 **Description** Lists deployments on management server
 
-**Usage** `cfy deployments list [-b, --blueprint-id <blueprint-id>] [-t, --management-ip <ip>]`
+**Usage** `cfy deployments list [-b, --blueprint-id <blueprint-id>] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 - blueprint-id: the id or alias of the blueprint to to list deployments for (Optional, lists all deployments if not provided)
 - management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
 
 ------
   
