@@ -246,7 +246,7 @@ def _parse_args(args):
                              _execute_deployment_operation)
 
     parser_deployments_list.add_argument(
-        '-b' '--blueprint_id',
+        '-b', '--blueprint-id',
         dest='blueprint_id',
         metavar='BLUEPRINT_ID',
         type=str,
@@ -744,7 +744,7 @@ def _list_blueprint_deployments(args):
     logger.info(message)
 
     client = _get_rest_client(management_ip)
-    deployments = client.list_deployments(translated_blueprint_id)
+    deployments = client.list_deployments()
     if translated_blueprint_id:
         deployments = filter(lambda deployment:
                              deployment.blueprintId == translated_blueprint_id,
