@@ -718,7 +718,7 @@ def _execute_deployment_operation(args):
 
     def events_logger(events):
         for event in events:
-            _output(logging.INFO, json.dumps(json.loads(event), indent=4))
+            _output(logging.INFO, json.dumps(event, indent=4))
 
     client = _get_rest_client(management_ip)
     client.execute_deployment(deployment_id, operation, events_logger)
