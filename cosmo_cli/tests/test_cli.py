@@ -271,8 +271,8 @@ class CliTest(unittest.TestCase):
         # test with explicit target
         self._run_cli('cfy deployments list -t 127.0.0.1')
         self._run_cli('cfy use 127.0.0.1')
-        # test with -b
-        self._run_cli('cfy deployments list -b b1')
+        # test with -b and -v
+        self._run_cli('cfy deployments list -b b1 -v')
         # test with --blueprint-id
         self._run_cli('cfy deployments list --blueprint-id b1')
 

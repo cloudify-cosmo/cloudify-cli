@@ -253,9 +253,8 @@ def _parse_args(args):
         help='The id or alias of a blueprint to list deployments for'
     )
     _add_management_ip_optional_argument_to_parser(parser_deployments_list)
-    parser_deployments_list.set_defaults(
-        handler=_list_blueprint_deployments
-    )
+    _set_handler_for_command(parser_deployments_list,
+                             _list_blueprint_deployments)
 
     #workflows subparser
     workflows_subparsers = parser_workflows.add_subparsers()
