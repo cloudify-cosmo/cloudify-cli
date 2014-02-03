@@ -310,6 +310,18 @@ re
 **Example:** `cfy deployments alias my-deployment 38f8520f-809f-4162-ae96-75555d906faa`  
 
 ------
+
+**Command** deployments list
+
+**Description** Lists deployments on management server
+
+**Usage** `cfy deployments list [-b, --blueprint-id <blueprint-id>] [-t, --management-ip <ip>]`
+
+**Parameters**:
+- blueprint-id: the id or alias of the blueprint to to list deployments for (Optional, lists all deployments if not provided)
+- management-ip: the management-server to use (Optional)
+
+------
   
 **Command:** workflows list
 

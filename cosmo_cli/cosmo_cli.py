@@ -212,6 +212,11 @@ def _parse_args(args):
     parser_deployments_execute = deployments_subparsers.add_parser(
         'execute',
         help='command for executing a deployment of a blueprint')
+    parser_deployments_list = deployments_subparsers.add_parser(
+        'list',
+        help='command for listing all deployments or all deployments'
+             'of a blueprint'
+    )
 
     parser_deployments_create.add_argument(
         'blueprint_id',
@@ -239,6 +244,18 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
     _set_handler_for_command(parser_deployments_execute,
                              _execute_deployment_operation)
+
+    parser_deployments_list.add_argument(
+        '-b', '--blueprint-id',
+        dest='blueprint_id',
+        metavar='BLUEPRINT_ID',
+        type=str,
+        help='The id or alias of a blueprint to list deployments for'
+    )
+    _add_management_ip_optional_argument_to_parser(parser_deployments_list)
+    parser_deployments_list.set_defaults(
+        handler=_list_blueprint_deployments
+    )
 
     #workflows subparser
     workflows_subparsers = parser_workflows.add_subparsers()
@@ -531,6 +548,11 @@ def _get_blueprints_alias_mapping(management_ip):
     return cosmo_wd_settings.get_blueprints_alias_mapping(management_ip)
 
 
+def _get_deployments_alias_mapping(management_ip):
+    cosmo_wd_settings = _load_cosmo_working_dir_settings()
+    return cosmo_wd_settings.get_deployments_alias_mapping(management_ip)
+
+
 def _status(args):
     management_ip = _get_management_server_ip(args)
     _output(logging.INFO,
@@ -703,6 +725,49 @@ def _execute_deployment_operation(args):
     client.execute_deployment(deployment_id, operation, events_logger)
     _output(logging.INFO, "Finished executing operation {0} on deployment"
             .format(operation))
+
+
+# TODO implement blueprint deployments on server side
+# because it is currently filter by the CLI
+def _list_blueprint_deployments(args):
+    blueprint_id = args.blueprint_id
+    management_ip = _get_management_server_ip(args)
+    translated_blueprint_id = _translate_blueprint_alias(blueprint_id,
+                                                         management_ip)
+    alias_to_deployment_id = _get_deployments_alias_mapping(management_ip)
+    deployment_id_to_aliases = _build_reversed_lookup(alias_to_deployment_id)
+
+    message = 'Querying deployments list from management server {0}'\
+              .format(management_ip)
+    if translated_blueprint_id:
+        message += ' for blueprint {0}'.format(blueprint_id)
+    logger.info(message)
+
+    client = _get_rest_client(management_ip)
+    deployments = client.list_deployments()
+    if translated_blueprint_id:
+        deployments = filter(lambda deployment:
+                             deployment.blueprintId == translated_blueprint_id,
+                             deployments)
+
+    if len(deployments) == 0:
+        logger.info('There are no deployments on the '
+                    'management server for blueprint {0}'.format(blueprint_id))
+    else:
+        logger.info('Deployments:')
+        for deployment in deployments:
+            aliases_str = ''
+            deployment_id = deployment.id
+            if deployment_id in deployment_id_to_aliases:
+                aliases_str = ''.join('{0}, '.format(alias) for alias in
+                                      deployment_id_to_aliases[deployment_id])
+                aliases_str = ' (' + aliases_str[:-2] + ')'
+            if translated_blueprint_id:
+                blueprint_str = ''
+            else:
+                blueprint_str = ' [Blueprint: {0}]' \
+                    .format(deployment.blueprintId)
+            logger.info('\t' + deployment_id + aliases_str + blueprint_str)
 
 
 def _list_workflows(args):
