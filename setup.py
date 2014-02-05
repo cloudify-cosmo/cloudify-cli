@@ -27,7 +27,7 @@ COSMO_MANAGER_REST_CLIENT = \
         COSMO_MANAGER_REST_CLIENT_BRANCH, COSMO_MANAGER_REST_CLIENT_VERSION)
 
 COSMO_PLUGIN_DSL_PARSER_VERSION = '0.3'
-COSMO_PLUGIN_DSL_PARSER_BRANCH = 'develop'
+COSMO_PLUGIN_DSL_PARSER_BRANCH = 'feature/CLOUDIFY-2370-plugins-as-python-libs'
 COSMO_PLUGIN_DSL_PARSER = \
     "https://github.com/CloudifySource/cosmo-plugin-dsl-parser/tarball/{" \
     "0}#egg=cosmo-plugin-dsl-parser-{1}".format(
