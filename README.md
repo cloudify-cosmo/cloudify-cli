@@ -56,15 +56,6 @@ This will install your deployment - all you have left to do is sit back and watc
 
   - Fetch execution events by execution id:
   `cfy events --execution-id f6269ccf-1243-439e-b779-c0f8d06a9894`
-  By default only events are fetched, no logs.
-
-  - Fetch execution logs:
-  In order to fetch both events and logs, pass the `--include-logs` argument:
-  `cfy events --execution-id f6269ccf-1243-439e-b779-c0f8d06a9894 --include-logs`
-
-  - Fetch detailed events/logs:
-  For displaying detailed events/logs, use the verbosity flag `-v`:
-  `cfy events --execution-id f6269ccf-1243-439e-b779-c0f8d06a9894 -v`
 
 
 ---
@@ -354,3 +345,38 @@ re
 - is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy workflows list my-deployment`  
+
+
+------
+
+**Command:** executions list
+
+**Description:** lists the executions of a deployment
+
+**Usage:** `cfy executions list <deployment_id> [-t, --management-ip <ip>] [-v, --verbosity]`
+
+**Parameters**:
+
+- deployment_id: the id of the deployment whose executions to list
+- management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
+
+**Example:** `cfy executions list my-deployment`
+
+
+------
+
+**Command:** events
+
+**Description:** fetches events of an execution
+
+**Usage:** `cfy events [-h] [-e EXECUTION_ID] [-l, --include-logs] [-t, --management-ip <ip>] [-v, --verbosity]`
+
+**Parameters**:
+
+- execution-id: the id of the execution to fetch events for
+- include-logs: determines whether to fetch logs in addition to events
+- management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
+
+**Example:** `cfy events --execution-id 92515e66-5c8f-41e0-a361-2a1ad92706b2`
