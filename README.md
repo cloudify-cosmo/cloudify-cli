@@ -49,6 +49,23 @@ Command line interface for [Cloudify](https://github.com/CloudifySource/cosmo-ma
 
 This will install your deployment - all you have left to do is sit back and watch the events flow by until the deployment is complete.
 
+<br>
+**4. Fetching execution events:**
+  - Listing deployment executions:
+  `cfy executions list my-deployment`
+
+  - Fetching execution events by execution id:
+  `cfy events --execution-id f6269ccf-1243-439e-b779-c0f8d06a9894`
+  By default only events are fetched, no logs.
+
+  - Fetching execution logs:
+  In order to fetch both events and logs, pass the `--include-logs` argument:
+  `cfy events --execution-id f6269ccf-1243-439e-b779-c0f8d06a9894 --include-logs`
+
+  - Detailed events/logs:
+  For displaying detailed events/logs, use the verbosity flag `-v`:
+  `cfy events --execution-id f6269ccf-1243-439e-b779-c0f8d06a9894 -v`
+
 
 ---
 

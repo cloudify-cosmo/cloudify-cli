@@ -87,6 +87,9 @@ def _parse_args(args):
     parser_deployments = subparsers.add_parser(
         'deployments',
         help='Commands for deployments')
+    parser_executions = subparsers.add_parser(
+        'executions',
+        help='Commands for executions')
     parser_workflows = subparsers.add_parser(
         'workflows',
         help='Commands for workflows')
@@ -273,6 +276,23 @@ def _parse_args(args):
     )
     _add_management_ip_optional_argument_to_parser(parser_workflows_list)
     _set_handler_for_command(parser_workflows_list, _list_workflows)
+
+    # Executions list sub parser
+    executions_subparsers = parser_executions.add_subparsers()
+    parser_executions_list = executions_subparsers.add_parser(
+        'list',
+        help='command for listing all executions of a deployment'
+    )
+    parser_executions_list.add_argument(
+        'deployment_id',
+        metavar='DEPLOYMENT_ID',
+        type=str,
+        help='The id of the deployment whose executions to list'
+    )
+
+    _add_management_ip_optional_argument_to_parser(parser_executions_list)
+    _set_handler_for_command(parser_executions_list,
+                             _list_deployment_executions)
 
     parser_events.add_argument(
         '-e', '--execution-id',
@@ -731,18 +751,19 @@ def _create_event_message_prefix(event):
     node_id = None
     if 'node_id' in event['context']:
         node_id = event['context']['node_id']
-    level = 'E'
+    level = 'E  '
     message = event['message']['text']
     if 'cloudify_log' in event['type']:
-        level = 'L'
+        level = 'LOG'
         message = '{0}: {1}'.format(event['level'].upper(), message)
+    timestamp = event['@timestamp'].split('.')[0]
     if node_id is None:
-        return '{0} {1} [{2}] {3}'.format(event['@timestamp'],
+        return '{0} {1} [{2}] {3}'.format(timestamp,
                                           level,
                                           deployment_id,
                                           message)
     else:
-        return '{0} {1} [{2}:{3}] {4}'.format(event['@timestamp'],
+        return '{0} {1} [{2}:{3}] {4}'.format(timestamp,
                                               level,
                                               deployment_id,
                                               node_id,
@@ -804,7 +825,7 @@ def _list_blueprint_deployments(args):
               .format(management_ip)
     if translated_blueprint_id:
         message += ' for blueprint {0}'.format(blueprint_id)
-    logger.info(message)
+    _output(logging.INFO, message)
 
     client = _get_rest_client(management_ip)
     deployments = client.list_deployments()
@@ -814,10 +835,11 @@ def _list_blueprint_deployments(args):
                              deployments)
 
     if len(deployments) == 0:
-        logger.info('There are no deployments on the '
-                    'management server for blueprint {0}'.format(blueprint_id))
+        _output(logging.INFO,
+                'There are no deployments on the '
+                'management server for blueprint {0}'.format(blueprint_id))
     else:
-        logger.info('Deployments:')
+        _output(logging.INFO, 'Deployments:')
         for deployment in deployments:
             aliases_str = ''
             deployment_id = deployment.id
@@ -830,7 +852,8 @@ def _list_blueprint_deployments(args):
             else:
                 blueprint_str = ' [Blueprint: {0}]' \
                     .format(deployment.blueprintId)
-            logger.info('\t' + deployment_id + aliases_str + blueprint_str)
+            _output(logging.INFO,
+                    '\t' + deployment_id + aliases_str + blueprint_str)
 
 
 def _list_workflows(args):
@@ -839,7 +862,7 @@ def _list_workflows(args):
                                                 management_ip)
 
     _output(logging.INFO,
-            'querying workflows list from management server {0} for '
+            'Querying workflows list from management server {0} for '
             'deployment {1}'.format(management_ip, args.deployment_id))
     client = _get_rest_client(management_ip)
     workflow_names = [workflow.name for workflow in
@@ -849,11 +872,38 @@ def _list_workflows(args):
         _output(logging.INFO, "\t{0}".format(name))
 
 
-def _get_events(args):
-    _output(logging.INFO, "Getting events for execution id '{0}' "
-                          "[include_logs={1}]".format(args.execution_id,
-                                                      args.include_logs))
+def _list_deployment_executions(args):
     management_ip = _get_management_server_ip(args)
+    client = _get_rest_client(management_ip)
+    deployment_id = args.deployment_id
+    _output(logging.INFO,
+            'Querying executions list from management server {0} for '
+            'deployment {1}'.format(management_ip, deployment_id))
+    executions = client.list_deployment_executions(deployment_id)
+
+    if len(executions) == 0:
+        _output(logging.INFO,
+                'There are no executions on the '
+                'management server for '
+                'deployment {0}'.format(deployment_id))
+    else:
+        _output(logging.INFO,
+                'Executions for deployment {0}:'.format(deployment_id))
+        for execution in executions:
+            _output(logging.INFO,
+                    '\t{0}\t[deployment_id={1}, blueprint_id={2}]'.format(
+                        execution.id,
+                        execution.deploymentId,
+                        execution.blueprintId))
+
+
+def _get_events(args):
+    management_ip = _get_management_server_ip(args)
+    _output(logging.INFO, "Getting events from management server {0} for "
+                          "execution id '{1}' "
+                          "[include_logs={2}]".format(management_ip,
+                                                      args.execution_id,
+                                                      args.include_logs))
     client = _get_rest_client(management_ip)
     events = client.get_all_execution_events(args.execution_id,
                                              include_logs=args.include_logs)
