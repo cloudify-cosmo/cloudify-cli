@@ -90,6 +90,10 @@ def _parse_args(args):
     parser_workflows = subparsers.add_parser(
         'workflows',
         help='Commands for workflows')
+    parser_events = subparsers.add_parser(
+        'events',
+        help='Commands for events'
+    )
 
     #status subparser
     _add_management_ip_optional_argument_to_parser(parser_status)
@@ -269,6 +273,22 @@ def _parse_args(args):
     )
     _add_management_ip_optional_argument_to_parser(parser_workflows_list)
     _set_handler_for_command(parser_workflows_list, _list_workflows)
+
+    parser_events.add_argument(
+        '-e', '--execution-id',
+        dest='execution_id',
+        metavar='EXECUTION_ID',
+        type=str,
+        help='The id of the execution to get events for'
+    )
+    parser_events.add_argument(
+        '-l', '--include-logs',
+        dest='include_logs',
+        action='store_true',
+        help='A flag whether to include logs in returned events'
+    )
+    _add_management_ip_optional_argument_to_parser(parser_events)
+    _set_handler_for_command(parser_events, _get_events)
 
     return parser.parse_args(args)
 
@@ -706,24 +726,68 @@ def _create_deployment(args):
                 "{0} (id: {1})".format(deployment_alias, deployment.id))
 
 
+def _create_event_message_prefix(event):
+    deployment_id = event['context']['deployment_id']
+    node_id = None
+    if 'node_id' in event['context']:
+        node_id = event['context']['node_id']
+    level = 'E'
+    message = event['message']['text']
+    if 'cloudify_log' in event['type']:
+        level = 'L'
+        message = '{0}: {1}'.format(event['level'].upper(), message)
+    if node_id is None:
+        return '{0} {1} [{2}] {3}'.format(event['@timestamp'],
+                                          level,
+                                          deployment_id,
+                                          message)
+    else:
+        return '{0} {1} [{2}:{3}] {4}'.format(event['@timestamp'],
+                                              level,
+                                              deployment_id,
+                                              node_id,
+                                              message)
+
+
+def _get_events_logger(args):
+    def verbose_events_logger(events):
+        for event in events:
+            _output(logging.INFO, json.dumps(event, indent=4))
+
+    def default_events_logger(events):
+        for event in events:
+            _output(logging.INFO, _create_event_message_prefix(event))
+
+    if args.verbosity:
+        return verbose_events_logger
+    return default_events_logger
+
+
 def _execute_deployment_operation(args):
     management_ip = _get_management_server_ip(args)
     operation = args.operation
     deployment_id = _translate_deployment_alias(args.deployment_id,
                                                 management_ip)
 
-    _output(logging.INFO, 'Executing operation {0} on deployment {1} at'
-            ' management server {2}'
+    _output(logging.INFO, "Executing workflow '{0}' on deployment '{1}' at"
+            " management server {2}"
             .format(operation, args.deployment_id, management_ip))
 
-    def events_logger(events):
-        for event in events:
-            _output(logging.INFO, json.dumps(event, indent=4))
-
+    events_logger = _get_events_logger(args)
     client = _get_rest_client(management_ip)
-    client.execute_deployment(deployment_id, operation, events_logger)
-    _output(logging.INFO, "Finished executing operation {0} on deployment"
-            .format(operation))
+    execution_id, error = client.execute_deployment(deployment_id,
+                                                    operation,
+                                                    events_logger)
+    if error is None:
+        _output(logging.INFO, "Finished executing workflow "
+                              "'{0}' on deployment '{1}'".format(operation))
+    else:
+        _output(logging.INFO, "Execution of workflow '{0}' for deployment "
+                              "'{1}' failed. [error={2}]".format(
+                operation, deployment_id))
+    _output(logging.INFO, "* Run 'cfy events --include-logs "
+                          "--execution-id {0}' for retrieving the "
+                          "execution's events/logs")
 
 
 # TODO implement blueprint deployments on server side
@@ -783,6 +847,19 @@ def _list_workflows(args):
     _output(logging.INFO, "deployments workflows:")
     for name in workflow_names:
         _output(logging.INFO, "\t{0}".format(name))
+
+
+def _get_events(args):
+    _output(logging.INFO, "Getting events for execution id '{0}' "
+                          "[include_logs={1}]".format(args.execution_id,
+                                                      args.include_logs))
+    management_ip = _get_management_server_ip(args)
+    client = _get_rest_client(management_ip)
+    events = client.get_all_execution_events(args.execution_id,
+                                             include_logs=args.include_logs)
+    events_logger = _get_events_logger(args)
+    events_logger(events)
+    _output(logging.INFO, '\nTotal events: {0}'.format(len(events)))
 
 
 def _set_cli_except_hook():
