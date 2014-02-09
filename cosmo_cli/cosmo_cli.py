@@ -804,8 +804,8 @@ def _execute_deployment_operation(args):
                               "'{0}' on deployment '{1}'".format(operation))
     else:
         _output(logging.INFO, "Execution of workflow '{0}' for deployment "
-                              "'{1}' failed. [error={2}]".format(
-                operation, deployment_id))
+                              "'{1}' failed. "
+                              "[error={2}]".format(operation, deployment_id))
     _output(logging.INFO, "* Run 'cfy events --include-logs "
                           "--execution-id {0}' for retrieving the "
                           "execution's events/logs")
