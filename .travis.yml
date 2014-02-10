@@ -4,8 +4,8 @@ python:
 
 install:
 
-    # command to install dependencies
-    - pip install .
+    # command to upgrade pip
+    - pip install --upgrade pip
     - pip install flake8
 
 script:
