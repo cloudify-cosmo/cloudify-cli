@@ -853,7 +853,7 @@ def _get_resource_base():
         resource_directory_url = urlparse.urljoin('file:', urllib.pathname2url(
             resource_directory))
         return resource_directory_url
-    _output(logging.debug, "Using resources from github")
+    _output(logging.debug, "Using resources from github. Branch is develop")
     return "https://raw.github.com/CloudifySource/cosmo-manager/develop/" \
            "orchestrator/src/main/resources/"
 
