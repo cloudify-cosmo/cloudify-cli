@@ -808,7 +808,7 @@ def _execute_deployment_operation(args):
                               "[error={2}]".format(operation, deployment_id))
     _output(logging.INFO, "* Run 'cfy events --include-logs "
                           "--execution-id {0}' for retrieving the "
-                          "execution's events/logs")
+                          "execution's events/logs".format(execution_id))
 
 
 # TODO implement blueprint deployments on server side
