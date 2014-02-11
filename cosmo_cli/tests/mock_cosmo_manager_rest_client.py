@@ -44,12 +44,19 @@ class MockCosmoManagerRestClient(object):
         if operation != 'install':
             raise CosmoManagerRestCallError("operation {0} doesn't exist"
                                             .format(operation))
+        return 'execution-id', None
 
     def list_workflows(self, deployment_id):
         return MicroMock(workflows=[])
 
+    def list_deployment_executions(self, deployment_id):
+        return []
+
+    def get_all_execution_events(self, execution_id, include_logs=False):
+        return []
+
 
 class MicroMock(object):
-    #A class to help ease the creation of "anonymous objects"
+    """A class to help ease the creation of anonymous objects"""
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)

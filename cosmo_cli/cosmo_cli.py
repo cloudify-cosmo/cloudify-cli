@@ -800,8 +800,8 @@ def _execute_deployment_operation(args):
                                                     operation,
                                                     events_logger)
     if error is None:
-        _output(logging.INFO, "Finished executing workflow "
-                              "'{0}' on deployment '{1}'".format(operation))
+        _output(logging.INFO, "Finished executing workflow '{0}' on deployment"
+                              "'{1}'".format(operation, deployment_id))
     else:
         _output(logging.INFO, "Execution of workflow '{0}' for deployment "
                               "'{1}' failed. "
