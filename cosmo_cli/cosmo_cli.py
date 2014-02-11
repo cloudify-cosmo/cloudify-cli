@@ -751,7 +751,7 @@ def _create_event_message_prefix(event):
     node_id = None
     if 'node_id' in event['context']:
         node_id = event['context']['node_id']
-    level = 'E  '
+    level = 'CFY'
     message = event['message']['text']
     if 'cloudify_log' in event['type']:
         level = 'LOG'
