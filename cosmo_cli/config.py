@@ -1,0 +1,5 @@
+CLOUDIFY_COMPONENTS_PACKAGE_URL = "https://s3-us-west-1.amazonaws.com/gigaspaces-cosmo-packages/cloudify3-components_3.0.0_amd64.deb"
+CLOUDIFY_PACKAGE_URL = "https://s3-us-west-1.amazonaws.com/gigaspaces-cosmo-packages/cloudify3_3.0.0_amd64.deb"
+CLOUDIFY_PACKAGES_DOWNLOAD_PATH = "/cloudify"
+CLOUDIFY_COMPONENTS_PACKAGE_PATH = "cloudify3-components"
+CLOUDIFY_PACKAGE_PATH = "/cloudify3"
