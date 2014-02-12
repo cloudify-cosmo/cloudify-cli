@@ -293,3 +293,17 @@ class CliTest(unittest.TestCase):
                       .format(expected_error, command))
         except CosmoManagerRestCallError, ex:
             self.assertTrue(expected_error in str(ex))
+
+    def test_executions_list(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy executions list deployment-id -t 127.0.0.1")
+
+    def test_events(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy events --execution-id execution-id -t 127.0.0.1")
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy events --include-logs --execution-id execution-id "
+                      "-t 127.0.0.1")
