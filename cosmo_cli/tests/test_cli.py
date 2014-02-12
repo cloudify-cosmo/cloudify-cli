@@ -157,7 +157,7 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy init mock_provider -r")
 
     def test_no_init(self):
-        self._assert_ex("cfy bootstrap",
+        self._assert_ex("cfy bootstrap -a",
                         'You must first initialize by running the command '
                         '"cfy init"')
 
