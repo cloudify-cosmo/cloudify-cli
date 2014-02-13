@@ -149,6 +149,12 @@ def _parse_args(args):
         type=str,
         help='Path to a provider configuration file'
     )
+
+    parser_bootstrap.add_argument(
+        '-a', '--alternate-bootstrap-method',
+        dest='bootstrap_using_script',
+        action='store_true',
+        help='A flag indicating bootstrap will be performed via a script')
     _set_handler_for_command(parser_bootstrap, _bootstrap_cosmo)
 
     #teardown subparser
@@ -481,7 +487,8 @@ def _bootstrap_cosmo(args):
 
     with _protected_provider_call():
         mgmt_ip = provider.bootstrap(args.config_file_path,
-                                     args.verbosity is not None)
+                                     args.verbosity is not None,
+                                     args.bootstrap_using_script)
 
     mgmt_ip = mgmt_ip.encode('utf-8')
 

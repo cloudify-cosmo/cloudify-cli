@@ -33,6 +33,9 @@ Command line interface for [Cloudify](https://github.com/CloudifySource/cosmo-ma
 
   - Bootstrap cloudify on Openstack:  
   `cfy bootstrap`  
+  You can also use the -a flag to bootstrap using the script instead of using the packages (the packages' urls can be found under *cloudify-config.yaml*)
+  This is probably temporary (in favor of development purposes), afterwhich the flag will be depracated.
+
   This could take a bit of time to finish... Looking for something to do in the meanwhile? http://dynamic.xkcd.com/random/comic/
 
 <br>

@@ -157,7 +157,7 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy init mock_provider -r")
 
     def test_no_init(self):
-        self._assert_ex("cfy bootstrap",
+        self._assert_ex("cfy bootstrap -a",
                         'You must first initialize by running the command '
                         '"cfy init"')
 
@@ -166,7 +166,7 @@ class CliTest(unittest.TestCase):
 
     def test_bootstrap(self):
         self._run_cli("cfy init mock_provider")
-        self._run_cli("cfy bootstrap")
+        self._run_cli("cfy bootstrap -a")
         self.assertEquals(
             "10.0.0.1",
             self._read_cosmo_wd_settings().get_management_server())
@@ -175,7 +175,7 @@ class CliTest(unittest.TestCase):
         #note the mock providers don't actually try to read the file;
         #this test merely ensures such a flag is accepted by the CLI.
         self._run_cli("cfy init mock_provider")
-        self._run_cli("cfy bootstrap -c my-file")
+        self._run_cli("cfy bootstrap -a -c my-file")
         self.assertEquals(
             "10.0.0.1",
             self._read_cosmo_wd_settings().get_management_server())
