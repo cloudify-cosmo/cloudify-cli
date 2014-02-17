@@ -15,6 +15,9 @@
 #    * limitations under the License.
 
 # logger configuration
+import os
+LOG_DIR = os.getcwd()
+
 MODULE = 'cli'
 LOGGER = {
     "version": 1,
@@ -31,7 +34,7 @@ LOGGER = {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "file",
             "level": "DEBUG",
-            "filename": "/var/log/cloudify_{0}.log".format(MODULE),
+            "filename": "{0}/cloudify-{1}.log".format(LOG_DIR, MODULE),
             "maxBytes": "5000000",
             "backupCount": "20"
         },
@@ -43,7 +46,7 @@ LOGGER = {
     },
     "loggers": {
         "main": {
-            "handlers": ["file", "console"]
+            "handlers": ["console", "file"]
         }
     }
 }
