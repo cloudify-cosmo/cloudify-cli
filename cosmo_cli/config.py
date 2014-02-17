@@ -31,7 +31,7 @@ LOGGER = {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "file",
             "level": "DEBUG",
-            "filename": "/var/log/cloudify/{0}.log".format(MODULE),
+            "filename": "/var/log/cloudify_{0}.log".format(MODULE),
             "maxBytes": "5000000",
             "backupCount": "20"
         },

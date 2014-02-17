@@ -52,9 +52,6 @@ logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
     logging.ERROR)
 
 try:
-    d = os.path.dirname(config.LOGGER['handlers']['file']['filename'])
-    if not os.path.exists(d):
-        os.makedirs(d)
     logging.config.dictConfig(config.LOGGER)
     lgr = logging.getLogger('main')
     lgr.setLevel(logging.INFO)
