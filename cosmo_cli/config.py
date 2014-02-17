@@ -15,11 +15,12 @@
 #    * limitations under the License.
 
 # logger configuration
-PACKAGER_LOGGER = {
+MODULE = 'cli'
+LOGGER = {
     "version": 1,
     "formatters": {
         "file": {
-            "format": "%(asctime)s %(levelname)s - %(message)s"
+            "format": "%(asctime)s [%(levelname)s] %(message)s"
         },
         "console": {
             "format": "%(message)s"
@@ -30,7 +31,7 @@ PACKAGER_LOGGER = {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "file",
             "level": "DEBUG",
-            "filename": "/var/log/packager/packager.log",
+            "filename": "/var/log/cloudify/{0}.log".format(MODULE),
             "maxBytes": "5000000",
             "backupCount": "20"
         },
@@ -41,8 +42,7 @@ PACKAGER_LOGGER = {
         }
     },
     "loggers": {
-        "packager": {
-            "level": "DEBUG",
+        "main": {
             "handlers": ["file", "console"]
         }
     }
