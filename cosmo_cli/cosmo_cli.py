@@ -41,16 +41,10 @@ from dsl_parser.parser import parse_from_path, DSLParsingException
 
 
 output_level = logging.INFO
+CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
 
-# logging.basicConfig(
-    # level=logging.INFO, format="%(message)s")
-# logger = logging.getLogger(__name__)
 
-# http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
-logging.getLogger("paramiko").setLevel(logging.WARNING)
-logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
-    logging.ERROR)
-
+#initialize logger
 try:
     d = os.path.dirname(config.LOGGER['handlers']['file']['filename'])
     if not os.path.exists(d):
@@ -59,11 +53,10 @@ try:
     lgr = logging.getLogger('main')
     lgr.setLevel(logging.INFO)
 except ValueError:
-    sys.exit('could not initiate logger.'
-             ' try sudo and/or verify your logger config...')
-
-
-CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
+    sys.exit('could not initialize logger.'
+             ' verify your logger config'
+             ' and permissions to write to {0}'
+             .format(config.LOGGER['handlers']['file']['filename']))
 
 
 def main():
@@ -330,11 +323,6 @@ def _parse_args(args):
     _set_handler_for_command(parser_events, _get_events)
 
     return parser.parse_args(args)
-
-
-def _output(level, message):
-    if level >= output_level:
-        print message
 
 
 def _get_provider_module(provider_name):

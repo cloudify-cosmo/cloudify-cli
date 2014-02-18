@@ -17,7 +17,6 @@
 # logger configuration
 import os
 LOG_DIR = os.getcwd()
-
 MODULE = 'cli'
 LOGGER = {
     "version": 1,
@@ -46,7 +45,10 @@ LOGGER = {
     },
     "loggers": {
         "main": {
-            "handlers": ["console", "file"]
+            "handlers": [
+                "console",
+                "file"
+            ]
         }
     }
 }
