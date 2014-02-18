@@ -22,14 +22,15 @@ import imp
 import sys
 import os
 import traceback
-import logging
 import yaml
 import json
 import urlparse
 import urllib
 from copy import deepcopy
 from contextlib import contextmanager
-
+import logging
+import logging.config
+import config
 
 # Project
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
@@ -39,18 +40,23 @@ from cosmo_manager_rest_client.cosmo_manager_rest_client \
 from dsl_parser.parser import parse_from_path, DSLParsingException
 
 
+output_level = logging.INFO
 CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
 
-output_level = logging.INFO
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-logger = logging.getLogger(__name__)
-
-# http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
-logging.getLogger("paramiko").setLevel(logging.WARNING)
-logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
-    logging.ERROR)
+#initialize logger
+try:
+    d = os.path.dirname(config.LOGGER['handlers']['file']['filename'])
+    if not os.path.exists(d):
+        os.makedirs(d)
+    logging.config.dictConfig(config.LOGGER)
+    lgr = logging.getLogger('main')
+    lgr.setLevel(logging.INFO)
+except ValueError:
+    sys.exit('could not initialize logger.'
+             ' verify your logger config'
+             ' and permissions to write to {0}'
+             .format(config.LOGGER['handlers']['file']['filename']))
 
 
 def main():
@@ -319,11 +325,6 @@ def _parse_args(args):
     return parser.parse_args(args)
 
 
-def _output(level, message):
-    if level >= output_level:
-        print message
-
-
 def _get_provider_module(provider_name):
     try:
         module_or_pkg_desc = imp.find_module(provider_name)
@@ -408,6 +409,7 @@ def _set_handler_for_command(parser, handler):
     def verbosity_aware_handler(args):
         global output_level
         if args.verbosity:
+            lgr.setLevel(logging.DEBUG)
             output_level = logging.DEBUG
         handler(args)
 
@@ -452,7 +454,7 @@ def _init_cosmo(args):
     if not os.path.isdir(target_directory):
         raise CosmoCliError("Target directory doesn't exist.")
 
-    is_verbose_output = args.verbosity is not None
+    is_verbose_output = args.verbosity
     if os.path.exists(os.path.join(target_directory,
                                    CLOUDIFY_WD_SETTINGS_FILE_NAME)):
         if not args.reset_config:
@@ -463,40 +465,39 @@ def _init_cosmo(args):
         else:  # resetting provider configuration
             _init_provider(provider, target_directory, args.reset_config,
                            is_verbose_output)
-            _output(logging.INFO, "Configuration reset complete")
+            lgr.info("Configuration reset complete")
             return
 
-    _output(logging.INFO, "Initializing Cloudify")
+    lgr.info("Initializing Cloudify")
     provider_module_name = _init_provider(provider, target_directory,
                                           args.reset_config, is_verbose_output)
 
     #creating .cloudify file
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
                                      target_directory)
-
     with _update_wd_settings() as wd_settings:
         wd_settings.set_provider(provider_module_name)
-    _output(logging.INFO, "Initialization complete")
+    lgr.info("Initialization complete")
 
 
 def _bootstrap_cosmo(args):
     provider_name = _get_provider()
-    _output(logging.INFO, "Bootstrapping using {0}".format(provider_name))
+    lgr.info("bootstrapping using {0}".format(provider_name))
 
     provider = _get_provider_module(provider_name)
 
     with _protected_provider_call():
         mgmt_ip = provider.bootstrap(args.config_file_path,
-                                     args.verbosity is not None,
+                                     args.verbosity,
                                      args.bootstrap_using_script)
 
     mgmt_ip = mgmt_ip.encode('utf-8')
 
     with _update_wd_settings() as wd_settings:
         wd_settings.set_management_server(mgmt_ip)
-    _output(logging.INFO,
-            "Management server is up at {0} (is now set as the default "
-            "management server)".format(mgmt_ip))
+    lgr.info(
+        "management server is up at {0} (is now set as the default "
+        "management server)".format(mgmt_ip))
 
 
 def _teardown_cosmo(args):
@@ -507,23 +508,23 @@ def _teardown_cosmo(args):
                             " be executed.")
 
     mgmt_ip = _get_management_server_ip(args)
-    _output(logging.INFO, "Tearing down {0}".format(mgmt_ip))
+    lgr.info("tearing down {0}".format(mgmt_ip))
 
     provider_name = _get_provider()
     provider = _get_provider_module(provider_name)
     with _protected_provider_call():
-        provider.teardown(mgmt_ip, args.verbosity is not None,)
+        provider.teardown(mgmt_ip, args.verbosity,)
 
     #cleaning relevant data from working directory settings
     with _update_wd_settings() as wd_settings:
         if wd_settings.remove_management_server_context(mgmt_ip):
-            _output(logging.INFO,
-                    "No longer using management server {0} as the "
-                    "default management server - run 'cfy use' "
-                    "command to use a different server as default"
-                    .format(mgmt_ip))
+            lgr.info(
+                "No longer using management server {0} as the "
+                "default management server - run 'cfy use' "
+                "command to use a different server as default"
+                .format(mgmt_ip))
 
-    _output(logging.INFO, "Teardown complete")
+    lgr.info("teardown complete")
 
 
 def _translate_blueprint_alias(blueprint_id_or_alias, management_ip):
@@ -543,8 +544,8 @@ def _save_blueprint_alias_cmd(args):
     is_allow_overwrite = True if args.force else False
     _save_blueprint_alias(args.alias, args.blueprint_id,
                           mgmt_ip, is_allow_overwrite)
-    _output(logging.INFO, 'Blueprint {0} is now aliased {1}'.format(
-            args.blueprint_id, args.alias))
+    lgr.info('Blueprint {0} is now aliased {1}'.format(
+             args.blueprint_id, args.alias))
 
 
 def _save_deployment_alias_cmd(args):
@@ -552,8 +553,8 @@ def _save_deployment_alias_cmd(args):
     is_allow_overwrite = True if args.force else False
     _save_deployment_alias(args.alias, args.deployment_id,
                            mgmt_ip, is_allow_overwrite)
-    _output(logging.INFO, 'Deployment {0} is now aliased {1}'.format(
-            args.deployment_id, args.alias))
+    lgr.info('Deployment {0} is now aliased {1}'.format(
+             args.deployment_id, args.alias))
 
 
 def _save_blueprint_alias(blueprint_alias, blueprint_id, management_ip,
@@ -601,19 +602,19 @@ def _get_deployments_alias_mapping(management_ip):
 
 def _status(args):
     management_ip = _get_management_server_ip(args)
-    _output(logging.INFO,
-            'querying management server {0}'.format(management_ip))
+    lgr.info(
+        'querying management server {0}'.format(management_ip))
     client = _get_rest_client(management_ip)
     try:
         client.list_blueprints()
-        _output(logging.INFO,
-                "REST service at management server {0} is up and running"
-                .format(management_ip))
+        lgr.info(
+            "REST service at management server {0} is up and running"
+            .format(management_ip))
         return True
     except CosmoManagerRestCallError:
-        _output(logging.INFO,
-                "REST service at management server {0} is not responding"
-                .format(management_ip))
+        lgr.info(
+            "REST service at management server {0} is not responding"
+            .format(management_ip))
         return False
 
 
@@ -630,28 +631,28 @@ def _use_management_server(args):
             wd_settings.save_management_alias(args.alias,
                                               args.management_ip,
                                               args.force)
-            _output(logging.INFO,
-                    'Using management server {0} (alias {1})'.format(
-                        args.management_ip, args.alias))
+            lgr.info(
+                'Using management server {0} (alias {1})'.format(
+                    args.management_ip, args.alias))
         else:
-            _output(logging.INFO, 'Using management server {0}'.format(
-                    args.management_ip))
+            lgr.info('Using management server {0}'.format(
+                     args.management_ip))
 
 
 def _list_blueprints(args):
     management_ip = _get_management_server_ip(args)
-    _output(logging.INFO, 'querying blueprints list from management '
-            'server {0}'.format(management_ip))
+    lgr.info('querying blueprints list from management '
+             'server {0}'.format(management_ip))
     client = _get_rest_client(management_ip)
     blueprints_list = client.list_blueprints()
     alias_to_blueprint_id = _get_blueprints_alias_mapping(management_ip)
     blueprint_id_to_aliases = _build_reversed_lookup(alias_to_blueprint_id)
 
     if not blueprints_list:
-        _output(logging.INFO, 'There are no blueprints available on the '
-                'management server')
+        lgr.info('There are no blueprints available on the '
+                 'management server')
     else:
-        _output(logging.INFO, 'Blueprints:')
+        lgr.info('Blueprints:')
         for blueprint_state in blueprints_list:
             aliases_str = ''
             blueprint_id = blueprint_state.id
@@ -659,7 +660,7 @@ def _list_blueprints(args):
                 aliases_str = ''.join('{0}, '.format(alias) for alias in
                                       blueprint_id_to_aliases[blueprint_id])
                 aliases_str = ' (' + aliases_str[:-2] + ')'
-            _output(logging.INFO, '\t' + blueprint_id + aliases_str)
+            lgr.info('\t' + blueprint_id + aliases_str)
 
     #printing unused aliases if there are any
     blueprints_ids_on_server = {blueprint.id for blueprint in blueprints_list}
@@ -667,10 +668,10 @@ def _list_blueprints(args):
                       alias_to_blueprint_id[alias] not in
                       blueprints_ids_on_server]
     if unused_aliases:
-        _output(logging.INFO, 'Unused aliases:')
+        lgr.info('Unused aliases:')
         unused_aliases_str = '\t' + ''.join('{0}, '.format(alias)
                                             for alias in unused_aliases)
-        _output(logging.INFO, unused_aliases_str[:-2])
+        lgr.info(unused_aliases_str[:-2])
 
 
 def _build_reversed_lookup(dic):
@@ -687,12 +688,12 @@ def _delete_blueprint(args):
     blueprint_id = _translate_blueprint_alias(args.blueprint_id,
                                               management_ip)
 
-    _output(logging.INFO,
-            'Deleting blueprint {0} from management server {1}'.format(
-                args.blueprint_id, management_ip))
+    lgr.info(
+        'Deleting blueprint {0} from management server {1}'.format(
+            args.blueprint_id, management_ip))
     client = _get_rest_client(management_ip)
     client.delete_blueprint(blueprint_id)
-    _output(logging.INFO, "Deleted blueprint successfully")
+    lgr.info("Deleted blueprint successfully")
 
 
 def _upload_blueprint(args):
@@ -709,22 +710,22 @@ def _upload_blueprint(args):
         raise CosmoCliError('Blueprint alias {0} is already in use'.format(
             blueprint_alias))
 
-    _output(logging.INFO,
-            'Uploading blueprint {0} to management server {1}'.format(
-                blueprint_path, management_ip))
+    lgr.info(
+        'Uploading blueprint {0} to management server {1}'.format(
+            blueprint_path, management_ip))
     client = _get_rest_client(management_ip)
     blueprint_state = client.publish_blueprint(blueprint_path)
 
     if not blueprint_alias:
-        _output(logging.INFO,
-                "Uploaded blueprint, blueprint's id is: {0}".format(
-                    blueprint_state.id))
+        lgr.info(
+            "Uploaded blueprint, blueprint's id is: {0}".format(
+                blueprint_state.id))
     else:
         _save_blueprint_alias(blueprint_alias,
                               blueprint_state.id,
                               management_ip)
-        _output(logging.INFO, "Uploaded blueprint, blueprint's alias is: {0}"
-                " (id: {1})".format(blueprint_alias, blueprint_state.id))
+        lgr.info("Uploaded blueprint, blueprint's alias is: {0}"
+                 " (id: {1})".format(blueprint_alias, blueprint_state.id))
 
 
 def _create_deployment(args):
@@ -739,18 +740,18 @@ def _create_deployment(args):
         raise CosmoCliError('Deployment alias {0} is already in use'.format(
             deployment_alias))
 
-    _output(logging.INFO, 'Creating new deployment from blueprint {0} at '
-            'management server {1}'.format(blueprint_id, management_ip))
+    lgr.info('Creating new deployment from blueprint {0} at '
+             'management server {1}'.format(blueprint_id, management_ip))
     client = _get_rest_client(management_ip)
     deployment = client.create_deployment(translated_blueprint_id)
     if not deployment_alias:
-        _output(logging.INFO,
-                "Deployment created, deployment's id is: {0}".format(
-                    deployment.id))
+        lgr.info(
+            "Deployment created, deployment's id is: {0}".format(
+                deployment.id))
     else:
         _save_deployment_alias(deployment_alias, deployment.id, management_ip)
-        _output(logging.INFO, "Deployment created, deployment's alias is: "
-                "{0} (id: {1})".format(deployment_alias, deployment.id))
+        lgr.info("Deployment created, deployment's alias is: "
+                 "{0} (id: {1})".format(deployment_alias, deployment.id))
 
 
 def _create_event_message_prefix(event):
@@ -780,11 +781,11 @@ def _create_event_message_prefix(event):
 def _get_events_logger(args):
     def verbose_events_logger(events):
         for event in events:
-            _output(logging.INFO, json.dumps(event, indent=4))
+            lgr.info(json.dumps(event, indent=4))
 
     def default_events_logger(events):
         for event in events:
-            _output(logging.INFO, _create_event_message_prefix(event))
+            lgr.info(_create_event_message_prefix(event))
 
     if args.verbosity:
         return verbose_events_logger
@@ -797,9 +798,9 @@ def _execute_deployment_operation(args):
     deployment_id = _translate_deployment_alias(args.deployment_id,
                                                 management_ip)
 
-    _output(logging.INFO, "Executing workflow '{0}' on deployment '{1}' at"
-            " management server {2}"
-            .format(operation, args.deployment_id, management_ip))
+    lgr.info("Executing workflow '{0}' on deployment '{1}' at"
+             " management server {2}"
+             .format(operation, args.deployment_id, management_ip))
 
     events_logger = _get_events_logger(args)
     client = _get_rest_client(management_ip)
@@ -807,15 +808,15 @@ def _execute_deployment_operation(args):
                                                     operation,
                                                     events_logger)
     if error is None:
-        _output(logging.INFO, "Finished executing workflow '{0}' on deployment"
-                              "'{1}'".format(operation, deployment_id))
+        lgr.info("Finished executing workflow '{0}' on deployment"
+                 "'{1}'".format(operation, deployment_id))
     else:
-        _output(logging.INFO, "Execution of workflow '{0}' for deployment "
-                              "'{1}' failed. "
-                              "[error={2}]".format(operation, deployment_id))
-    _output(logging.INFO, "* Run 'cfy events --include-logs "
-                          "--execution-id {0}' for retrieving the "
-                          "execution's events/logs".format(execution_id))
+        lgr.info("Execution of workflow '{0}' for deployment "
+                 "'{1}' failed. "
+                 "[error={2}]".format(operation, deployment_id))
+    lgr.info("* Run 'cfy events --include-logs "
+             "--execution-id {0}' for retrieving the "
+             "execution's events/logs".format(execution_id))
 
 
 # TODO implement blueprint deployments on server side
@@ -832,7 +833,7 @@ def _list_blueprint_deployments(args):
               .format(management_ip)
     if translated_blueprint_id:
         message += ' for blueprint {0}'.format(blueprint_id)
-    _output(logging.INFO, message)
+    lgr.info(message)
 
     client = _get_rest_client(management_ip)
     deployments = client.list_deployments()
@@ -842,11 +843,11 @@ def _list_blueprint_deployments(args):
                              deployments)
 
     if len(deployments) == 0:
-        _output(logging.INFO,
-                'There are no deployments on the '
-                'management server for blueprint {0}'.format(blueprint_id))
+        lgr.info(
+            'There are no deployments on the '
+            'management server for blueprint {0}'.format(blueprint_id))
     else:
-        _output(logging.INFO, 'Deployments:')
+        lgr.info('Deployments:')
         for deployment in deployments:
             aliases_str = ''
             deployment_id = deployment.id
@@ -859,8 +860,8 @@ def _list_blueprint_deployments(args):
             else:
                 blueprint_str = ' [Blueprint: {0}]' \
                     .format(deployment.blueprintId)
-            _output(logging.INFO,
-                    '\t' + deployment_id + aliases_str + blueprint_str)
+            lgr.info(
+                '\t' + deployment_id + aliases_str + blueprint_str)
 
 
 def _list_workflows(args):
@@ -868,55 +869,55 @@ def _list_workflows(args):
     deployment_id = _translate_deployment_alias(args.deployment_id,
                                                 management_ip)
 
-    _output(logging.INFO,
-            'Querying workflows list from management server {0} for '
-            'deployment {1}'.format(management_ip, args.deployment_id))
+    lgr.info(
+        'Querying workflows list from management server {0} for '
+        'deployment {1}'.format(management_ip, args.deployment_id))
     client = _get_rest_client(management_ip)
     workflow_names = [workflow.name for workflow in
                       client.list_workflows(deployment_id).workflows]
-    _output(logging.INFO, "deployments workflows:")
+    lgr.info("deployments workflows:")
     for name in workflow_names:
-        _output(logging.INFO, "\t{0}".format(name))
+        lgr.info("\t{0}".format(name))
 
 
 def _list_deployment_executions(args):
     management_ip = _get_management_server_ip(args)
     client = _get_rest_client(management_ip)
     deployment_id = args.deployment_id
-    _output(logging.INFO,
-            'Querying executions list from management server {0} for '
-            'deployment {1}'.format(management_ip, deployment_id))
+    lgr.info(
+        'Querying executions list from management server {0} for '
+        'deployment {1}'.format(management_ip, deployment_id))
     executions = client.list_deployment_executions(deployment_id)
 
     if len(executions) == 0:
-        _output(logging.INFO,
-                'There are no executions on the '
-                'management server for '
-                'deployment {0}'.format(deployment_id))
+        lgr.info(
+            'There are no executions on the '
+            'management server for '
+            'deployment {0}'.format(deployment_id))
     else:
-        _output(logging.INFO,
-                'Executions for deployment {0}:'.format(deployment_id))
+        lgr.info(
+            'Executions for deployment {0}:'.format(deployment_id))
         for execution in executions:
-            _output(logging.INFO,
-                    '\t{0}\t[deployment_id={1}, blueprint_id={2}]'.format(
-                        execution.id,
-                        execution.deploymentId,
-                        execution.blueprintId))
+            lgr.info(
+                '\t{0}\t[deployment_id={1}, blueprint_id={2}]'.format(
+                    execution.id,
+                    execution.deploymentId,
+                    execution.blueprintId))
 
 
 def _get_events(args):
     management_ip = _get_management_server_ip(args)
-    _output(logging.INFO, "Getting events from management server {0} for "
-                          "execution id '{1}' "
-                          "[include_logs={2}]".format(management_ip,
-                                                      args.execution_id,
-                                                      args.include_logs))
+    lgr.info("Getting events from management server {0} for "
+             "execution id '{1}' "
+             "[include_logs={2}]".format(management_ip,
+                                         args.execution_id,
+                                         args.include_logs))
     client = _get_rest_client(management_ip)
     events = client.get_all_execution_events(args.execution_id,
                                              include_logs=args.include_logs)
     events_logger = _get_events_logger(args)
     events_logger(events)
-    _output(logging.INFO, '\nTotal events: {0}'.format(len(events)))
+    lgr.info('\nTotal events: {0}'.format(len(events)))
 
 
 def _set_cli_except_hook():
@@ -924,14 +925,13 @@ def _set_cli_except_hook():
 
     def new_excepthook(type, value, the_traceback):
         if type == CosmoCliError:
-            _output(logging.ERROR, str(value))
+            lgr.error(str(value))
             if output_level <= logging.DEBUG:
                 print("Stack trace:")
                 traceback.print_tb(the_traceback)
         elif type == CosmoManagerRestCallError:
-            _output(logging.ERROR,
-                    "Failed making a call to REST service: {0}".format(
-                        str(value)))
+            lgr.error("Failed making a call to REST service: {0}".format(
+                      str(value)))
             if output_level <= logging.DEBUG:
                 print("Stack trace:")
                 traceback.print_tb(the_traceback)
@@ -966,14 +966,14 @@ def _validate_blueprint(args):
     resources = _get_resource_base()
     mapping = resources + "org/cloudifysource/cosmo/dsl/alias-mappings.yaml"
 
-    _output(logging.INFO,
-            messages.VALIDATING_BLUEPRINT.format(target_file.name))
+    lgr.info(
+        messages.VALIDATING_BLUEPRINT.format(target_file.name))
     try:
         parse_from_path(target_file.name, None, mapping, resources)
     except DSLParsingException as ex:
         raise CosmoCliError(messages.VALIDATING_BLUEPRINT_FAILED.format(
             target_file, str(ex)))
-    _output(logging.INFO, messages.VALIDATING_BLUEPRINT_SUCCEEDED)
+    lgr.info(messages.VALIDATING_BLUEPRINT_SUCCEEDED)
 
 
 def _get_resource_base():
@@ -982,12 +982,12 @@ def _get_resource_base():
         + "/../../cosmo-manager/orchestrator" \
         "/src/main/resources/"
     if os.path.isdir(resource_directory):
-        _output(logging.debug, "Found resource directory")
+        lgr.debug("Found resource directory")
 
         resource_directory_url = urlparse.urljoin('file:', urllib.pathname2url(
             resource_directory))
         return resource_directory_url
-    _output(logging.debug, "Using resources from github. Branch is develop")
+    lgr.debug("Using resources from github. Branch is develop")
     return "https://raw.github.com/CloudifySource/cosmo-manager/develop/" \
            "orchestrator/src/main/resources/"
 
