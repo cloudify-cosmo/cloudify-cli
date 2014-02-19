@@ -36,7 +36,7 @@ class MockCosmoManagerRestClient(object):
     def delete_blueprint(self, blueprint_id):
         pass
 
-    def create_deployment(self, blueprint_id):
+    def create_deployment(self, blueprint_id, deployment_id):
         return MicroMock(id='a-deployment-id')
 
     def execute_deployment(self, deployment_id, operation, events_handler=None,
