@@ -257,7 +257,8 @@ class CliTest(unittest.TestCase):
     def test_deployment_create(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
-        self._run_cli("cfy deployments create a-blueprint-id -t 127.0.0.1")
+        self._run_cli("cfy deployments create a-blueprint-id -t 127.0.0.1"
+                      " -d deployment")
 
     def test_deployments_execute(self):
         self._set_mock_rest_client()

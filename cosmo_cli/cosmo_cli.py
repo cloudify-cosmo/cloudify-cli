@@ -243,6 +243,14 @@ def _parse_args(args):
         type=str,
         help="The id or alias of the blueprint meant for deployment"
     )
+    parser_deployments_create.add_argument(
+        '-d', '--deployment-id',
+        dest='deployment_id',
+        metavar='DEPLOYMENT_ID',
+        type=str,
+        required=True,
+        help="A unique id that will be assigned to the created deployment"
+    )
     _add_alias_optional_argument_to_parser(parser_deployments_create,
                                            'deployment')
     _add_management_ip_optional_argument_to_parser(parser_deployments_create)
@@ -730,9 +738,12 @@ def _upload_blueprint(args):
 
 def _create_deployment(args):
     blueprint_id = args.blueprint_id
+    deployment_id = args.deployment_id
     management_ip = _get_management_server_ip(args)
     translated_blueprint_id = _translate_blueprint_alias(blueprint_id,
                                                          management_ip)
+    translated_deployment_id = _translate_deployment_alias(deployment_id,
+                                                           management_ip)
     deployment_alias = args.alias
     if deployment_alias and \
             _translate_deployment_alias(deployment_alias,
@@ -743,7 +754,8 @@ def _create_deployment(args):
     lgr.info('Creating new deployment from blueprint {0} at '
              'management server {1}'.format(blueprint_id, management_ip))
     client = _get_rest_client(management_ip)
-    deployment = client.create_deployment(translated_blueprint_id)
+    deployment = client.create_deployment(translated_blueprint_id,
+                                          translated_deployment_id)
     if not deployment_alias:
         lgr.info(
             "Deployment created, deployment's id is: {0}".format(
