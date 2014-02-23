@@ -41,21 +41,21 @@ Command line interface for [Cloudify](https://github.com/CloudifySource/cosmo-ma
 <br>
 **3. Deploying your application:**
   - Upload your blueprint:  
-  `cfy blueprints upload my-app/blueprint.yaml -a my-blueprint`  
+  `cfy blueprints upload my-app/blueprint.yamlt`  
   (Don't have a blueprint? You can download a sample one [here](https://github.com/CloudifySource/cloudify-hello-world/tree/develop/openstack)).
 
   - Create a deployment of the blueprint:  
-  `cfy deployments create my-blueprint -a my-deployment`
+  `cfy deployments create -b hello_world -d my-deployment`
 
   - Execute an install operation on the deployment:  
-  `cfy deployments execute install my-deployment`
+  `cfy deployments execute install -d my-deployment`
 
 This will install your deployment - all you have left to do is sit back and watch the events flow by until the deployment is complete.
 
 <br>
 **4. Fetching execution events:**
   - List deployment executions:
-  `cfy executions list my-deployment`
+  `cfy executions list -d my-deployment`
 
   - Fetch execution events by execution id:
   `cfy events --execution-id f6269ccf-1243-439e-b779-c0f8d06a9894`
@@ -208,16 +208,15 @@ re
 
 **Description:** uploads a blueprint to the management server
   
-**Usage:** `cfy blueprints upload <blueprint_path> [-a, --alias <alias>] [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy blueprints upload <blueprint_path> [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - blueprint_path: path to the blueprint (yaml file) to upload
-- alias: a local alias for the blueprint id that will be created for the uploaded blueprint (Optional)
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 
-**Example:** `cfy blueprints upload blueprint.yaml -a my-blueprint`
+**Example:** `cfy blueprints upload blueprint.yaml`
   
 ------
   
@@ -240,50 +239,32 @@ re
 
 **Description:** deletes the blueprint from the management server
   
-**Usage:** `cfy blueprints delete <blueprint_id> [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy blueprints delete [-b, --blueprint-id <blueprint_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
-- blueprint_id: the id or alias of the blueprint to delete
+- blueprint_id: the id of the blueprint to delete
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 
-**Example:** `cfy blueprints delete my-blueprint`
+**Example:** `cfy blueprints delete -b my-blueprint`
   
-------
-  
-**Command:** blueprints alias
-
-**Description:** creates a local alias for a blueprint id
-  
-**Usage:** `cfy blueprints alias <alias> <blueprint_id> [-f, --force] [-t, --management-ip <ip>] [-v, --verbosity]`
-
-**Parameters**:
-
-- alias: the alias for the blueprint id
-- blueprint_id: the id of the blueprint
-- force: a flag indicating authorization to overwrite the alias provided if it's already in use (Optional)
-- management-ip: the management-server to use (Optional)
-- is_verbose_output - A flag for setting verbose output (Optional)
-
-**Example:** `cfy blueprints alias my-blueprint 38f8520f-809f-4162-ae96-75555d906faa`
-
 ------
   
 **Command:** deployments create
 
 **Description:** creates a deployment of a blueprint
   
-**Usage:** `cfy deployments create <blueprint_id> [-a, --alias <alias>] [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy deployments create [-b, --blueprint-id <blueprint_id>] [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
-- blueprint_id: the id or alias of the blueprint to deploy
-- alias: a local alias for the deployment id that will be created for the new deployment (Optional)
+- blueprint_id: the id of the blueprint to deploy
+- deployment_id: a unique id for the created deployment
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 
-**Example:** `cfy deployments create my-blueprint -a my-deployment`  
+**Example:** `cfy deployments create -b my-blueprint -d my-deployment`  
 
 ------
   
@@ -291,35 +272,17 @@ re
 
 **Description:** executes an operation on a deployment
   
-**Usage:** `cfy deployments execute <operation> <deployment_id> [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy deployments execute <operation> [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - operation: the name of the operation to execute
-- deployment_id: the deployment id or alias on which the operation should be executed
+- deployment_id: the deployment id on which the operation should be executed
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 
-**Example:** `cfy deployments execute install my-deployment`
+**Example:** `cfy deployments execute install -d my-deployment`
   
-------
-  
-**Command:** deployments alias
-
-**Description:** creates a local alias for a deployment id
-  
-**Usage:** `cfy deployments alias <alias> <deployment_id> [-f, --force] [-t, --management-ip <ip>] [-v, --verbosity]`
-
-**Parameters**:
-
-- alias: the alias for the deployment id
-- deployment_id: the id of the deployment
-- force: a flag indicating authorization to overwrite the alias provided if it's already in use (Optional)
-- management-ip: the management-server to use (Optional)
-- is_verbose_output - A flag for setting verbose output (Optional)
-
-**Example:** `cfy deployments alias my-deployment 38f8520f-809f-4162-ae96-75555d906faa`  
-
 ------
 
 **Command** deployments list
@@ -329,7 +292,7 @@ re
 **Usage** `cfy deployments list [-b, --blueprint-id <blueprint-id>] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
-- blueprint-id: the id or alias of the blueprint to to list deployments for (Optional, lists all deployments if not provided)
+- blueprint-id: the id of the blueprint to to list deployments for (Optional, lists all deployments if not provided)
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 
@@ -339,15 +302,15 @@ re
 
 **Description:** lists the workflows of a deployment
   
-**Usage:** `cfy workflows list <deployment_id> [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy workflows list [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
-- deployment_id: the alias or id of the deployment whose workflows to list
+- deployment_id: the  id of the deployment whose workflows to list
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 
-**Example:** `cfy workflows list my-deployment`  
+**Example:** `cfy workflows list -d my-deployment`  
 
 
 ------
@@ -356,7 +319,7 @@ re
 
 **Description:** lists the executions of a deployment
 
-**Usage:** `cfy executions list <deployment_id> [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy executions list [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
@@ -364,7 +327,7 @@ re
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 
-**Example:** `cfy executions list my-deployment`
+**Example:** `cfy executions list -d my-deployment`
 
 
 ------
