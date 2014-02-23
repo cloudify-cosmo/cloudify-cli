@@ -208,11 +208,12 @@ re
 
 **Description:** uploads a blueprint to the management server
   
-**Usage:** `cfy blueprints upload <blueprint_path> [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy blueprints upload <blueprint_path> [-b, --blueprint-id <blueprint_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - blueprint_path: path to the blueprint (yaml file) to upload
+- blueprint_id: a unique id for the uploaded blueprint (Optional, plan name is used if not provided)
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 
