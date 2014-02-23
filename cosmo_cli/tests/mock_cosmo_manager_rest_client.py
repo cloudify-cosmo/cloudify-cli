@@ -30,8 +30,8 @@ class MockCosmoManagerRestClient(object):
     def list_deployments(self):
         return []
 
-    def publish_blueprint(self, blueprint_path):
-        return MicroMock(id='a-blueprint-id')
+    def publish_blueprint(self, blueprint_path, blueprint_id='a-blueprint-id'):
+        return MicroMock(id=blueprint_id)
 
     def delete_blueprint(self, blueprint_id):
         pass

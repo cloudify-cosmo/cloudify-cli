@@ -251,6 +251,17 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy blueprints upload {0}/helloworld/blueprint.yaml"
                       .format(BLUEPRINTS_DIR))
 
+    def test_blueprints_upload_override_id(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy use 127.0.0.1")
+        self._run_cli("cfy blueprints upload {0}/helloworld/blueprint.yaml "
+                      "-b my_blueprint_id"
+            .format(BLUEPRINTS_DIR))
+        self._run_cli("cfy blueprints upload {0}/helloworld/blueprint.yaml "
+                      "--blueprint-id my_blueprint_id2"
+            .format(BLUEPRINTS_DIR))
+
     def test_workflows_list(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()

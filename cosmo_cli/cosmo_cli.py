@@ -205,6 +205,15 @@ def _parse_args(args):
         type=str,
         help="Path to the application's blueprint file"
     )
+    parser_blueprints_upload.add_argument(
+        '-b', '--blueprint-id',
+        dest='blueprint_id',
+        metavar='BLUEPRINT_ID',
+        type=str,
+        default=None,
+        required=False,
+        help="Set the id of the uploaded blueprint"
+    )
     _add_management_ip_optional_argument_to_parser(parser_blueprints_upload)
     _set_handler_for_command(parser_blueprints_upload, _upload_blueprint)
 
@@ -216,6 +225,7 @@ def _parse_args(args):
         dest='blueprint_id',
         metavar='BLUEPRINT_ID',
         type=str,
+        required=True,
         help="The id of the blueprint meant for deletion"
     )
     _add_management_ip_optional_argument_to_parser(parser_blueprints_delete)
@@ -240,6 +250,7 @@ def _parse_args(args):
         dest='blueprint_id',
         metavar='BLUEPRINT_ID',
         type=str,
+        required=True,
         help="The id of the blueprint meant for deployment"
     )
     parser_deployments_create.add_argument(
@@ -264,6 +275,7 @@ def _parse_args(args):
         dest='deployment_id',
         metavar='DEPLOYMENT_ID',
         type=str,
+        required=True,
         help='The id of the deployment to execute the operation on'
     )
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
@@ -275,6 +287,7 @@ def _parse_args(args):
         dest='blueprint_id',
         metavar='BLUEPRINT_ID',
         type=str,
+        required=False,
         help='The id of a blueprint to list deployments for'
     )
     _add_management_ip_optional_argument_to_parser(parser_deployments_list)
@@ -291,6 +304,7 @@ def _parse_args(args):
         dest='deployment_id',
         metavar='DEPLOYMENT_ID',
         type=str,
+        required=True,
         help='The id of the deployment whose workflows to list'
     )
     _add_management_ip_optional_argument_to_parser(parser_workflows_list)
@@ -307,6 +321,7 @@ def _parse_args(args):
         dest='deployment_id',
         metavar='DEPLOYMENT_ID',
         type=str,
+        required=True,
         help='The id of the deployment whose executions to list'
     )
 
@@ -319,6 +334,7 @@ def _parse_args(args):
         dest='execution_id',
         metavar='EXECUTION_ID',
         type=str,
+        required=True,
         help='The id of the execution to get events for'
     )
     parser_events.add_argument(
@@ -588,6 +604,7 @@ def _delete_blueprint(args):
 
 
 def _upload_blueprint(args):
+    blueprint_id = args.blueprint_id
     blueprint_path = os.path.expanduser(args.blueprint_path)
     if not os.path.isfile(blueprint_path):
         raise CosmoCliError("Path to blueprint doesn't exist: {0}."
@@ -599,7 +616,7 @@ def _upload_blueprint(args):
         'Uploading blueprint {0} to management server {1}'.format(
             blueprint_path, management_ip))
     client = _get_rest_client(management_ip)
-    blueprint_state = client.publish_blueprint(blueprint_path)
+    blueprint_state = client.publish_blueprint(blueprint_path, blueprint_id)
 
     lgr.info(
         "Uploaded blueprint, blueprint's id is: {0}".format(
