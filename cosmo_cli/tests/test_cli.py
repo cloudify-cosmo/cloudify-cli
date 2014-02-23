@@ -233,7 +233,9 @@ class CliTest(unittest.TestCase):
     def test_blueprints_delete(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
-        self._run_cli("cfy blueprints delete a-blueprint-id -t 127.0.0.1")
+        self._run_cli("cfy blueprints delete -b a-blueprint-id -t 127.0.0.1")
+        self._run_cli("cfy blueprints delete --blueprint-id a-blueprint-id "
+                      "-t 127.0.0.1")
 
     def test_blueprints_upload_nonexistent_file(self):
         self._set_mock_rest_client()
@@ -252,19 +254,25 @@ class CliTest(unittest.TestCase):
     def test_workflows_list(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
-        self._run_cli("cfy workflows list a-deployment-id -t 127.0.0.1")
+        self._run_cli("cfy workflows list -d a-deployment-id -t 127.0.0.1")
+        self._run_cli("cfy workflows list --deployment-id a-deployment-id "
+                      "-t 127.0.0.1")
 
     def test_deployment_create(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
-        self._run_cli("cfy deployments create a-blueprint-id -t 127.0.0.1"
+        self._run_cli("cfy deployments create -b a-blueprint-id -t 127.0.0.1"
                       " -d deployment")
+        self._run_cli("cfy deployments create --blueprint-id a-blueprint-id "
+                      "-t 127.0.0.1 --deployment-id deployment2")
 
     def test_deployments_execute(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
         self._run_cli("cfy use 127.0.0.1")
-        self._run_cli("cfy deployments execute install a-deployment-id")
+        self._run_cli("cfy deployments execute install -d a-deployment-id")
+        self._run_cli("cfy deployments execute install "
+                      "--deployment-id a-deployment-id")
 
     def test_deployments_list(self):
         self._set_mock_rest_client()
@@ -287,7 +295,7 @@ class CliTest(unittest.TestCase):
 
         expected_error = "operation nonexistent-operation doesn't exist"
         command = "cfy deployments execute nonexistent-operation " \
-                  "a-deployment-id"
+                  "-d a-deployment-id"
         try:
             self._run_cli(command)
             self.fail('Expected error {0} was not raised for command {1}'
@@ -298,12 +306,16 @@ class CliTest(unittest.TestCase):
     def test_executions_list(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
-        self._run_cli("cfy executions list deployment-id -t 127.0.0.1")
+        self._run_cli("cfy executions list -d deployment-id -t 127.0.0.1")
+        self._run_cli("cfy executions list "
+                      "--deployment-id deployment-id -t 127.0.0.1")
 
     def test_events(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
         self._run_cli("cfy events --execution-id execution-id -t 127.0.0.1")
+        self._set_mock_rest_client()
+        self._run_cli("cfy events --e execution-id -t 127.0.0.1")
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
         self._run_cli("cfy events --include-logs --execution-id execution-id "
