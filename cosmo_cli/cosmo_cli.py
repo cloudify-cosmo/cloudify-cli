@@ -695,7 +695,7 @@ def _execute_deployment_operation(args):
     else:
         lgr.info("Execution of workflow '{0}' for deployment "
                  "'{1}' failed. "
-                 "[error={2}]".format(operation, deployment_id))
+                 "[error={2}]".format(operation, deployment_id, error))
     lgr.info("* Run 'cfy events --include-logs "
              "--execution-id {0}' for retrieving the "
              "execution's events/logs".format(execution_id))
