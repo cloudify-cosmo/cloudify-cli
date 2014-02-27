@@ -49,6 +49,11 @@ LOGGER = {
                 "console",
                 "file"
             ]
+        },
+        "file": {
+            "handlers": [
+                "file"
+            ]
         }
     }
 }
