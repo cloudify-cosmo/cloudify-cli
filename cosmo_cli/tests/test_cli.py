@@ -165,8 +165,8 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy init mock_provider -r -v")
 
     def test_bootstrap(self):
-        self._run_cli("cfy init mock_provider")
-        self._run_cli("cfy bootstrap -a")
+        self._run_cli("cfy init mock_provider -v")
+        self._run_cli("cfy bootstrap -a -v")
         self.assertEquals(
             "10.0.0.1",
             self._read_cosmo_wd_settings().get_management_server())
