@@ -357,10 +357,10 @@ def _get_provider_module(provider_name, is_verbose_output=False):
             #if it's empty none were found
             msg = ('Provider {0} not found.'
                    .format(provider_name))
+            lgr.error(msg)
             if is_verbose_output:
                 raise CosmoCliError(msg)
             else:
-                lgr.error(msg)
                 raise CosmoCliError(msg)
 
         module = imp.load_module(provider_name, *module_or_pkg_desc)
@@ -375,12 +375,13 @@ def _get_provider_module(provider_name, is_verbose_output=False):
                 *imp.find_module(provider_name, module.__path__))
         return module
     except ImportError, ex:
+        msg = ('Could not import module {0} '
+               'maybe {0} provider module was not installed?'
+               .format(provider_name))
+        lgr.error(msg)
         if is_verbose_output:
             raise CosmoCliError(str(ex))
         else:
-            lgr.error('Could not import module {0} '
-                      'maybe {0} provider module was not installed?'
-                      .format(provider_name))
             raise CosmoCliError(str(ex))
 
 
@@ -447,10 +448,10 @@ def _init_provider(provider, target_directory, reset_config,
                    'provider configuration file; '
                    'use the "-r" flag to '
                    'reset it back to its default values.')
+            lgr.error(msg)
             if is_verbose_output:
                 raise CosmoCliError(msg)
             else:
-                lgr.error(msg)
                 raise CosmoCliError(msg)
 
     return provider_module_name
@@ -463,10 +464,10 @@ def _init_cosmo(args):
     provider = args.provider
     if not os.path.isdir(target_directory):
         msg = "Target directory doesn't exist."
+        lgr.error(msg)
         if is_verbose_output:
             raise CosmoCliError(msg)
         else:
-            lgr.error(msg)
             raise CosmoCliError(msg)
 
     is_verbose_output = args.verbosity
@@ -477,10 +478,10 @@ def _init_cosmo(args):
                    'Use the "-r" flag to force '
                    'reinitialization (might overwrite '
                    'provider configuration files if exist).')
+            lgr.error(msg)
             if is_verbose_output:
                 raise CosmoCliError(msg)
             else:
-                lgr.error(msg)
                 raise CosmoCliError(msg)
         else:  # resetting provider configuration
             _init_provider(provider, target_directory, args.reset_config,
@@ -527,10 +528,10 @@ def _teardown_cosmo(args):
                "confirmation. Add the '-f' or '--force' "
                "flags to your command if you are certain "
                "this command should be executed.")
+        lgr.error(msg)
         if is_verbose_output:
             raise CosmoCliError(msg)
         else:
-            lgr.error(msg)
             raise CosmoCliError(msg)
 
     mgmt_ip = _get_management_server_ip(args)
@@ -565,10 +566,10 @@ def _get_management_server_ip(args):
     msg = ("Must either first run 'cfy use' command for a "
            "management server or provide a management "
            "server ip explicitly")
+    lgr.error(msg)
     if is_verbose_output:
         raise CosmoCliError(msg)
     else:
-        lgr.error(msg)
         raise CosmoCliError(msg)
 
 
@@ -577,11 +578,11 @@ def _get_provider(is_verbose_output=False):
     if cosmo_wd_settings.get_provider():
         return cosmo_wd_settings.get_provider()
     msg = "Provider is not set in working directory settings"
+    lgr.error(msg)
     if is_verbose_output:
         raise RuntimeError(msg)
     else:
-        lgr.error(msg)
-        raise RuntimeError(msg)
+        sys.exit(0)
 
 
 def _status(args):
@@ -660,10 +661,10 @@ def _upload_blueprint(args):
     if not os.path.isfile(blueprint_path):
         msg = ("Path to blueprint doesn't exist: {0}."
                .format(blueprint_path))
+        lgr.error(msg)
         if is_verbose_output:
             raise CosmoCliError(msg)
         else:
-            lgr.error(msg)
             raise CosmoCliError(msg)
 
     management_ip = _get_management_server_ip(args)
@@ -878,10 +879,10 @@ def _load_cosmo_working_dir_settings(is_verbose_output=False):
                'command "cfy init", or choose to work with '
                'an existing management server by running the '
                'command "cfy use".')
+        lgr.error(msg)
         if is_verbose_output:
             raise CosmoCliError(msg)
         else:
-            lgr.error(msg)
             raise CosmoCliError(msg)
 
 
@@ -907,10 +908,10 @@ def _validate_blueprint(args):
     except DSLParsingException as ex:
         msg = (messages.VALIDATING_BLUEPRINT_FAILED
                .format(target_file, str(ex)))
+        lgr.error(msg)
         if is_verbose_output:
             raise CosmoCliError(msg)
         else:
-            lgr.error(msg)
             raise CosmoCliError(msg)
     lgr.info(messages.VALIDATING_BLUEPRINT_SUCCEEDED)
 
@@ -950,10 +951,10 @@ def _protected_provider_call(is_verbose_output=False):
         trace = sys.exc_info()[2]
         msg = ('Exception occurred in provider: {0}'
                .format(str(ex)))
+        lgr.error(msg)
         if is_verbose_output:
             raise CosmoCliError(msg), None, trace
         else:
-            lgr.error(msg)
             raise CosmoCliError(msg), None, trace
 
 
@@ -1001,10 +1002,10 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
             msg = ("management-server alias {0} is already in "
                    "use; use -f flag to allow overwrite."
                    .format(management_alias))
+            lgr.error(msg)
             if is_verbose_output:
                 raise CosmoCliError(msg)
             else:
-                lgr.error(msg)
                 raise CosmoCliError(msg)
         self._mgmt_aliases[management_alias] = management_address
 
