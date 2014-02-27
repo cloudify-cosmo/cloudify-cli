@@ -128,14 +128,14 @@ class CliTest(unittest.TestCase):
                         "Target directory is already initialized")
 
     def test_init_explicit_directory(self):
-        self._run_cli("cfy init mock_provider -t {0}".format(os.getcwd()))
+        self._run_cli("cfy init mock_provider -t {0} -v".format(os.getcwd()))
 
     def test_init_nonexistent_directory(self):
         self._assert_ex("cfy init mock_provider -t nonexistent-dir -v",
                         "Target directory doesn't exist")
 
     def test_init_existing_provider_config_no_overwrite(self):
-        self._run_cli("cfy init mock_provider")
+        self._run_cli("cfy init mock_provider -v")
         os.remove('.cloudify')
         self._assert_ex(
             "cfy init mock_provider -v",
@@ -174,8 +174,8 @@ class CliTest(unittest.TestCase):
     def test_bootstrap_explicit_config_file(self):
         #note the mock providers don't actually try to read the file;
         #this test merely ensures such a flag is accepted by the CLI.
-        self._run_cli("cfy init mock_provider")
-        self._run_cli("cfy bootstrap -a -c my-file")
+        self._run_cli("cfy init mock_provider -v")
+        self._run_cli("cfy bootstrap -a -c my-file -v")
         self.assertEquals(
             "10.0.0.1",
             self._read_cosmo_wd_settings().get_management_server())

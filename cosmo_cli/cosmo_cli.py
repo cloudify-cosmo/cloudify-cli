@@ -349,7 +349,7 @@ def _parse_args(args):
     return parser.parse_args(args)
 
 
-def _get_provider_module(provider_name, is_verbose_output):
+def _get_provider_module(provider_name, is_verbose_output=False):
     try:
         module_or_pkg_desc = imp.find_module(provider_name)
         if not module_or_pkg_desc[1]:
@@ -378,10 +378,10 @@ def _get_provider_module(provider_name, is_verbose_output):
         if is_verbose_output:
             raise CosmoCliError(str(ex))
         else:
-                lgr.error('Could not import module {0} '
-                          'maybe {0} provider module was not installed?'
-                          .format(provider_name))
-                sys.exit(0)
+            lgr.error('Could not import module {0} '
+                      'maybe {0} provider module was not installed?'
+                      .format(provider_name))
+            sys.exit(0)
 
 
 def _add_force_optional_argument_to_parser(parser, help_message):
