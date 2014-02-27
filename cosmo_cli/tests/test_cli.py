@@ -63,6 +63,8 @@ class CliTest(unittest.TestCase):
             self._run_cli(cli_cmd)
             self.fail('Expected error {0} was not raised for command {1}'
                 .format(err_str_segment, cli_cmd))
+        except SystemExit, ex:
+            self.assertTrue(err_str_segment in str(ex))
         except CosmoCliError, ex:
             self.assertTrue(err_str_segment in str(ex))
 
