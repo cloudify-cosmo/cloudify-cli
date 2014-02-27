@@ -121,7 +121,7 @@ class CliTest(unittest.TestCase):
             self._read_cosmo_wd_settings().get_provider())
 
     def test_init_nonexistent_provider(self):
-        self._assert_ex("cfy init mock_provider3",
+        self._assert_ex("cfy init mock_provider3 -v",
                         "No module named mock_provider3")
 
     def test_init_initialized_directory(self):
