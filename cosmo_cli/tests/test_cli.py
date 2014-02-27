@@ -83,7 +83,7 @@ class CliTest(unittest.TestCase):
 
     def test_validate_bad_blueprint(self):
         self._create_cosmo_wd_settings()
-        self._assert_ex("cfy blueprints validate -v"
+        self._assert_ex("cfy blueprints validate"
                         "{0}/bad_blueprint/blueprint.yaml".format(
                             BLUEPRINTS_DIR),
                         "Failed to validate blueprint")
