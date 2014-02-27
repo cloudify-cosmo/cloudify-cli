@@ -426,7 +426,7 @@ def _add_verbosity_argument_to_parser(parser):
 
 
 def _init_provider(provider, target_directory, reset_config,
-                   is_verbose_output):
+                   is_verbose_output=False):
     try:
         #searching first for the standard name for providers
         #(i.e. cloudify_XXX)
@@ -572,7 +572,7 @@ def _get_management_server_ip(args):
         sys.exit(0)
 
 
-def _get_provider(is_verbose_output):
+def _get_provider(is_verbose_output=False):
     cosmo_wd_settings = _load_cosmo_working_dir_settings(is_verbose_output)
     if cosmo_wd_settings.get_provider():
         return cosmo_wd_settings.get_provider()
@@ -869,7 +869,7 @@ def _set_cli_except_hook():
     sys.excepthook = new_excepthook
 
 
-def _load_cosmo_working_dir_settings(is_verbose_output):
+def _load_cosmo_working_dir_settings(is_verbose_output=False):
     try:
         with open('{0}'.format(CLOUDIFY_WD_SETTINGS_FILE_NAME), 'r') as f:
             return yaml.safe_load(f.read())
@@ -936,14 +936,14 @@ def _get_rest_client(management_ip):
 
 
 @contextmanager
-def _update_wd_settings(is_verbose_output):
+def _update_wd_settings(is_verbose_output=False):
     cosmo_wd_settings = _load_cosmo_working_dir_settings(is_verbose_output)
     yield cosmo_wd_settings
     _dump_cosmo_working_dir_settings(cosmo_wd_settings)
 
 
 @contextmanager
-def _protected_provider_call(is_verbose_output):
+def _protected_provider_call(is_verbose_output=False):
     try:
         yield
     except Exception, ex:
@@ -996,7 +996,7 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
             else management_address_or_alias
 
     def save_management_alias(self, management_alias, management_address,
-                              is_allow_overwrite, is_verbose_output):
+                              is_allow_overwrite, is_verbose_output=False):
         if not is_allow_overwrite and management_alias in self._mgmt_aliases:
             msg = ("management-server alias {0} is already in "
                    "use; use -f flag to allow overwrite."
