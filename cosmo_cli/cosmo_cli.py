@@ -568,7 +568,7 @@ def _get_management_server_ip(args):
     msg = ("Must either first run 'cfy use' command for a "
            "management server or provide a management "
            "server ip explicitly")
-    lgr.error(msg)
+    flgr.error(msg)
     if is_verbose_output:
         raise CosmoCliError(msg)
     else:
