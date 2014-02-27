@@ -570,7 +570,7 @@ def _get_management_server_ip(args):
     if is_verbose_output:
         raise CosmoCliError(msg)
     else:
-        sys.exit(0)
+        sys.exit(msg)
 
 
 def _get_provider(is_verbose_output=False):
