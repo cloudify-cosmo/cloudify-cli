@@ -140,13 +140,13 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy init mock_provider -v")
         os.remove('.cloudify')
         self._assert_ex(
-            "cfy init mock_provider",
+            "cfy init mock_provider -v",
             "Target directory already contains a provider configuration file")
 
     def test_init_overwrite_existing_provider_config(self):
         self._run_cli("cfy init mock_provider -v")
         os.remove('.cloudify')
-        self._run_cli("cfy init mock_provider -r")
+        self._run_cli("cfy init mock_provider -r -v")
 
     def test_init_overwrite_existing_provider_config_with_cloudify_file(self):
         #ensuring the init with overwrite command also works when the
