@@ -363,7 +363,7 @@ def _get_provider_module(provider_name, is_verbose_output=False):
             if is_verbose_output:
                 raise CosmoCliError(msg)
             else:
-                sys.exit(msg)
+                raise CosmoCliError(msg)
 
         module = imp.load_module(provider_name, *module_or_pkg_desc)
 
