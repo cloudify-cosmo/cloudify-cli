@@ -381,7 +381,7 @@ def _get_provider_module(provider_name, is_verbose_output=False):
             lgr.error('Could not import module {0} '
                       'maybe {0} provider module was not installed?'
                       .format(provider_name))
-            raise
+            raise CosmoCliError(str(ex))
 
 
 def _add_force_optional_argument_to_parser(parser, help_message):
