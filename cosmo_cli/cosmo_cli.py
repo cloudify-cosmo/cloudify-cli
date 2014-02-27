@@ -363,7 +363,7 @@ def _get_provider_module(provider_name, is_verbose_output=False):
             if is_verbose_output:
                 raise CosmoCliError(msg)
             else:
-                raise CosmoCliError(msg)
+                sys.exit(msg)
 
         module = imp.load_module(provider_name, *module_or_pkg_desc)
 
@@ -384,7 +384,7 @@ def _get_provider_module(provider_name, is_verbose_output=False):
         if is_verbose_output:
             raise CosmoCliError(str(ex))
         else:
-            sys.exit(str(ex))
+            raise CosmoCliError(str(ex))
 
 
 def _add_force_optional_argument_to_parser(parser, help_message):
