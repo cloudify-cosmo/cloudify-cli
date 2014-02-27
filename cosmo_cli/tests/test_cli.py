@@ -83,7 +83,7 @@ class CliTest(unittest.TestCase):
 
     def test_validate_bad_blueprint(self):
         self._create_cosmo_wd_settings()
-        self._assert_ex("cfy blueprints validate "
+        self._assert_ex("cfy blueprints validate -v"
                         "{0}/bad_blueprint/blueprint.yaml".format(
                             BLUEPRINTS_DIR),
                         "Failed to validate blueprint")
@@ -119,26 +119,26 @@ class CliTest(unittest.TestCase):
             self._read_cosmo_wd_settings().get_provider())
 
     def test_init_nonexistent_provider(self):
-        self._assert_ex("cfy init mock_provider3",
+        self._assert_ex("cfy init mock_provider3 -v",
                         "No module named mock_provider3")
 
     def test_init_initialized_directory(self):
         self._create_cosmo_wd_settings()
-        self._assert_ex("cfy init mock_provider",
+        self._assert_ex("cfy init mock_provider -v",
                         "Target directory is already initialized")
 
     def test_init_explicit_directory(self):
         self._run_cli("cfy init mock_provider -t {0}".format(os.getcwd()))
 
     def test_init_nonexistent_directory(self):
-        self._assert_ex("cfy init mock_provider -t nonexistent-dir",
+        self._assert_ex("cfy init mock_provider -t nonexistent-dir -v",
                         "Target directory doesn't exist")
 
     def test_init_existing_provider_config_no_overwrite(self):
         self._run_cli("cfy init mock_provider")
         os.remove('.cloudify')
         self._assert_ex(
-            "cfy init mock_provider",
+            "cfy init mock_provider -v",
             "Target directory already contains a provider configuration file")
 
     def test_init_overwrite_existing_provider_config(self):
@@ -157,7 +157,7 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy init mock_provider -r")
 
     def test_no_init(self):
-        self._assert_ex("cfy bootstrap -a",
+        self._assert_ex("cfy bootstrap -a -v",
                         'You must first initialize by running the command '
                         '"cfy init"')
 
@@ -182,7 +182,7 @@ class CliTest(unittest.TestCase):
 
     def test_teardown_no_force(self):
         self._run_cli("cfy init mock_provider")
-        self._assert_ex("cfy teardown -t 10.0.0.1",
+        self._assert_ex("cfy teardown -t 10.0.0.1 -v",
                         "This action requires additional confirmation.")
 
     def test_teardown_force(self):
@@ -206,14 +206,14 @@ class CliTest(unittest.TestCase):
         #running a command which requires a target management server without
         #first calling "cfy use" or providing a target server explicitly
         self._run_cli("cfy init mock_provider")
-        self._assert_ex("cfy teardown -f",
+        self._assert_ex("cfy teardown -f -v",
                         "Must either first run 'cfy use' command")
 
     def test_provider_exception(self):
         #verifying that exceptions thrown from providers are converted to
         #CosmoCliError and retain the original error message
         self._run_cli("cfy init cloudify_mock_provider2")
-        self._assert_ex("cfy teardown -t 10.0.0.1 -f",
+        self._assert_ex("cfy teardown -t 10.0.0.1 -f -v",
                         "cloudify_mock_provider2 teardown exception")
 
     def test_status_command_no_rest_service(self):
@@ -241,7 +241,7 @@ class CliTest(unittest.TestCase):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
         self._assert_ex(
-            "cfy blueprints upload nonexistent-file -t 127.0.0.1",
+            "cfy blueprints upload nonexistent-file -t 127.0.0.1 -v",
             "Path to blueprint doesn't exist")
 
     def test_blueprints_upload(self):
