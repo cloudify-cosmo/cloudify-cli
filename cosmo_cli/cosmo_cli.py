@@ -384,7 +384,7 @@ def _get_provider_module(provider_name, is_verbose_output=False):
         if is_verbose_output:
             raise CosmoCliError(str(ex))
         else:
-            sys.exit(msg)
+            sys.exit(str(ex))
 
 
 def _add_force_optional_argument_to_parser(parser, help_message):
