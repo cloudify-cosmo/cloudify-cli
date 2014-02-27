@@ -534,7 +534,7 @@ def _teardown_cosmo(args):
         if is_verbose_output:
             raise CosmoCliError(msg)
         else:
-            sys.exit(0)
+            sys.exit(msg)
 
     mgmt_ip = _get_management_server_ip(args)
     lgr.info("tearing down {0}".format(mgmt_ip))
@@ -584,7 +584,7 @@ def _get_provider(is_verbose_output=False):
     if is_verbose_output:
         raise RuntimeError(msg)
     else:
-        sys.exit(0)
+        sys.exit(msg)
 
 
 def _status(args):
