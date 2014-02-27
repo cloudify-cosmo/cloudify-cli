@@ -361,7 +361,7 @@ def _get_provider_module(provider_name, is_verbose_output=False):
                 raise CosmoCliError(msg)
             else:
                 lgr.error(msg)
-                sys.exit(0)
+                raise
 
         module = imp.load_module(provider_name, *module_or_pkg_desc)
 
@@ -451,7 +451,7 @@ def _init_provider(provider, target_directory, reset_config,
                 raise CosmoCliError(msg)
             else:
                 lgr.error(msg)
-                sys.exit(0)
+                raise
 
     return provider_module_name
 
@@ -467,7 +467,7 @@ def _init_cosmo(args):
             raise CosmoCliError(msg)
         else:
             lgr.error(msg)
-            sys.exit(0)
+            raise
 
     is_verbose_output = args.verbosity
     if os.path.exists(os.path.join(target_directory,
@@ -481,7 +481,7 @@ def _init_cosmo(args):
                 raise CosmoCliError(msg)
             else:
                 lgr.error(msg)
-                sys.exit(0)
+                raise
         else:  # resetting provider configuration
             _init_provider(provider, target_directory, args.reset_config,
                            is_verbose_output)
@@ -531,7 +531,7 @@ def _teardown_cosmo(args):
             raise CosmoCliError(msg)
         else:
             lgr.error(msg)
-            sys.exit(0)
+            raise
 
     mgmt_ip = _get_management_server_ip(args)
     lgr.info("tearing down {0}".format(mgmt_ip))
@@ -569,7 +569,7 @@ def _get_management_server_ip(args):
         raise CosmoCliError(msg)
     else:
         lgr.error(msg)
-        sys.exit(0)
+        raise
 
 
 def _get_provider(is_verbose_output=False):
@@ -581,7 +581,7 @@ def _get_provider(is_verbose_output=False):
         raise RuntimeError(msg)
     else:
         lgr.error(msg)
-        sys.exit(0)
+        raise
 
 
 def _status(args):
@@ -664,7 +664,7 @@ def _upload_blueprint(args):
             raise CosmoCliError(msg)
         else:
             lgr.error(msg)
-            sys.exit(0)
+            raise
 
     management_ip = _get_management_server_ip(args)
 
@@ -882,7 +882,7 @@ def _load_cosmo_working_dir_settings(is_verbose_output=False):
             raise CosmoCliError(msg)
         else:
             lgr.error(msg)
-            sys.exit(0)
+            raise
 
 
 def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
@@ -911,7 +911,7 @@ def _validate_blueprint(args):
             raise CosmoCliError(msg)
         else:
             lgr.error(msg)
-            sys.exit(0)
+            raise
     lgr.info(messages.VALIDATING_BLUEPRINT_SUCCEEDED)
 
 
@@ -954,7 +954,7 @@ def _protected_provider_call(is_verbose_output=False):
             raise CosmoCliError(msg), None, trace
         else:
             lgr.error(msg)
-            sys.exit(0)
+            raise
 
 
 class CosmoWorkingDirectorySettings(yaml.YAMLObject):
@@ -1005,7 +1005,7 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
                 raise CosmoCliError(msg)
             else:
                 lgr.error(msg)
-                sys.exit(0)
+                raise
         self._mgmt_aliases[management_alias] = management_address
 
 
