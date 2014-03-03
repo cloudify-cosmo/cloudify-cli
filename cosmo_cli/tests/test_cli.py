@@ -283,7 +283,8 @@ class CliTest(unittest.TestCase):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
         self._run_cli("cfy use 127.0.0.1")
-        self._run_cli("cfy deployments execute install -d a-deployment-id")
+        self._run_cli("cfy deployments execute install -d a-deployment-id "
+                      "--timeout 50")
         self._run_cli("cfy deployments execute install "
                       "--deployment-id a-deployment-id")
 

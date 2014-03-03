@@ -275,7 +275,7 @@ re
 
 **Description:** executes an operation on a deployment
   
-**Usage:** `cfy deployments execute <operation> [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy deployments execute <operation> [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity] [--timeout <timeout>]`
 
 **Parameters**:
 
@@ -283,6 +283,8 @@ re
 - deployment_id: the deployment id on which the operation should be executed
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
+- timeout: operation timeout in seconds (Optional, The execution itself will keep
+going. It is the CLI that will stop waiting for it to terminate)
 
 **Example:** `cfy deployments execute install -d my-deployment`
   
