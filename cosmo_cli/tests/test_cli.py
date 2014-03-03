@@ -323,6 +323,13 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy executions list "
                       "--deployment-id deployment-id -t 127.0.0.1")
 
+    def test_executions_cancel(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy use 127.0.0.1")
+        self._run_cli("cfy executions cancel -e e_id -v")
+        self._run_cli("cfy executions cancel --execution-id e_id -t 127.0.0.1")
+
     def test_events(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()

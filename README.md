@@ -335,6 +335,23 @@ re
 
 ------
 
+**Command:** executions cancel
+
+**Description:** Cancels an execution by its id
+
+**Usage:** `cfy executions cancel [-e, --execution-id <execution_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
+
+**Parameters**:
+
+- execution_id: the id of the execution to cancel
+- management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
+
+**Example:** `cfy executions cancel -e some-execution-id`
+
+
+------
+
 **Command:** events
 
 **Description:** fetches events of an execution

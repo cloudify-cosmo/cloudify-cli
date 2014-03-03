@@ -331,6 +331,22 @@ def _parse_args(args):
     _set_handler_for_command(parser_executions_list,
                              _list_deployment_executions)
 
+    parser_executions_cancel = executions_subparsers.add_parser(
+        'cancel',
+        help='Cancel an execution by its id'
+    )
+    parser_executions_cancel.add_argument(
+        '-e', '--execution-id',
+        dest='execution_id',
+        metavar='EXECUTION_ID',
+        type=str,
+        required=True,
+        help='The id of the execution to cancel'
+    )
+    _add_management_ip_optional_argument_to_parser(parser_executions_cancel)
+    _set_handler_for_command(parser_executions_cancel,
+                             _cancel_execution)
+
     parser_events.add_argument(
         '-e', '--execution-id',
         dest='execution_id',
@@ -809,6 +825,19 @@ def _list_workflows(args):
     lgr.info("deployments workflows:")
     for name in workflow_names:
         lgr.info("\t{0}".format(name))
+
+
+def _cancel_execution(args):
+    management_ip = _get_management_server_ip(args)
+    client = _get_rest_client(management_ip)
+    execution_id = args.execution_id
+    lgr.info(
+        'Canceling execution {0} on management server {1}'
+        .format(execution_id, management_ip))
+    client.cancel_execution(execution_id)
+    lgr.info(
+        'Cancelled execution {0} on management server {1}'
+        .format(execution_id, management_ip))
 
 
 def _list_deployment_executions(args):
