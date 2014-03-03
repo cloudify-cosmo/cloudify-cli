@@ -63,6 +63,8 @@ class CliTest(unittest.TestCase):
             self._run_cli(cli_cmd)
             self.fail('Expected error {0} was not raised for command {1}'
                 .format(err_str_segment, cli_cmd))
+        except SystemExit, ex:
+            self.assertTrue(err_str_segment in str(ex))
         except CosmoCliError, ex:
             self.assertTrue(err_str_segment in str(ex))
 
@@ -106,20 +108,20 @@ class CliTest(unittest.TestCase):
         self.assertEquals("127.0.0.1", cwds.get_management_server())
 
     def test_init_explicit_provider_name(self):
-        self._run_cli("cfy init mock_provider")
+        self._run_cli("cfy init mock_provider -v")
         self.assertEquals(
             "mock_provider",
             self._read_cosmo_wd_settings().get_provider())
 
     def test_init_implicit_provider_name(self):
         #the actual provider name is "cloudify_mock_provider2"
-        self._run_cli("cfy init mock_provider2")
+        self._run_cli("cfy init mock_provider2 -v")
         self.assertEquals(
             "cloudify_mock_provider2",
             self._read_cosmo_wd_settings().get_provider())
 
     def test_init_nonexistent_provider(self):
-        self._assert_ex("cfy init mock_provider3",
+        self._assert_ex("cfy init mock_provider3 -v",
                         "No module named mock_provider3")
 
     def test_init_initialized_directory(self):
@@ -128,33 +130,33 @@ class CliTest(unittest.TestCase):
                         "Target directory is already initialized")
 
     def test_init_explicit_directory(self):
-        self._run_cli("cfy init mock_provider -t {0}".format(os.getcwd()))
+        self._run_cli("cfy init mock_provider -t {0} -v".format(os.getcwd()))
 
     def test_init_nonexistent_directory(self):
         self._assert_ex("cfy init mock_provider -t nonexistent-dir",
                         "Target directory doesn't exist")
 
     def test_init_existing_provider_config_no_overwrite(self):
-        self._run_cli("cfy init mock_provider")
+        self._run_cli("cfy init mock_provider -v")
         os.remove('.cloudify')
         self._assert_ex(
-            "cfy init mock_provider",
+            "cfy init mock_provider -v",
             "Target directory already contains a provider configuration file")
 
     def test_init_overwrite_existing_provider_config(self):
-        self._run_cli("cfy init mock_provider")
+        self._run_cli("cfy init mock_provider -v")
         os.remove('.cloudify')
-        self._run_cli("cfy init mock_provider -r")
+        self._run_cli("cfy init mock_provider -r -v")
 
     def test_init_overwrite_existing_provider_config_with_cloudify_file(self):
         #ensuring the init with overwrite command also works when the
         #directory already contains a ".cloudify" file
-        self._run_cli("cfy init mock_provider")
-        self._run_cli("cfy init mock_provider -r")
+        self._run_cli("cfy init mock_provider -v")
+        self._run_cli("cfy init mock_provider -r -v")
 
     def test_init_overwrite_on_initial_init(self):
         #simply verifying the overwrite flag doesn't break the first init
-        self._run_cli("cfy init mock_provider -r")
+        self._run_cli("cfy init mock_provider -r -v")
 
     def test_no_init(self):
         self._assert_ex("cfy bootstrap -a",
@@ -165,8 +167,8 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy init mock_provider -r -v")
 
     def test_bootstrap(self):
-        self._run_cli("cfy init mock_provider")
-        self._run_cli("cfy bootstrap -a")
+        self._run_cli("cfy init mock_provider -v")
+        self._run_cli("cfy bootstrap -a -v")
         self.assertEquals(
             "10.0.0.1",
             self._read_cosmo_wd_settings().get_management_server())
@@ -174,19 +176,19 @@ class CliTest(unittest.TestCase):
     def test_bootstrap_explicit_config_file(self):
         #note the mock providers don't actually try to read the file;
         #this test merely ensures such a flag is accepted by the CLI.
-        self._run_cli("cfy init mock_provider")
+        self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy bootstrap -a -c my-file")
         self.assertEquals(
             "10.0.0.1",
             self._read_cosmo_wd_settings().get_management_server())
 
     def test_teardown_no_force(self):
-        self._run_cli("cfy init mock_provider")
+        self._run_cli("cfy init mock_provider -v")
         self._assert_ex("cfy teardown -t 10.0.0.1",
                         "This action requires additional confirmation.")
 
     def test_teardown_force(self):
-        self._run_cli("cfy init mock_provider")
+        self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy use 10.0.0.1")
         self._run_cli("cfy teardown -f")
         #the teardown should have cleared the current target management server
@@ -195,7 +197,7 @@ class CliTest(unittest.TestCase):
             self._read_cosmo_wd_settings().get_management_server())
 
     def test_teardown_force_explicit_management_server(self):
-        self._run_cli("cfy init mock_provider")
+        self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy use 10.0.0.1")
         self._run_cli("cfy teardown -t 10.0.0.2 -f")
         self.assertEquals(
@@ -205,14 +207,14 @@ class CliTest(unittest.TestCase):
     def test_no_management_server_defined(self):
         #running a command which requires a target management server without
         #first calling "cfy use" or providing a target server explicitly
-        self._run_cli("cfy init mock_provider")
+        self._run_cli("cfy init mock_provider -v")
         self._assert_ex("cfy teardown -f",
                         "Must either first run 'cfy use' command")
 
     def test_provider_exception(self):
         #verifying that exceptions thrown from providers are converted to
         #CosmoCliError and retain the original error message
-        self._run_cli("cfy init cloudify_mock_provider2")
+        self._run_cli("cfy init cloudify_mock_provider2 -v")
         self._assert_ex("cfy teardown -t 10.0.0.1 -f",
                         "cloudify_mock_provider2 teardown exception")
 
