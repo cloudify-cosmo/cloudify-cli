@@ -24,6 +24,8 @@ Command line interface for [Cloudify](https://github.com/CloudifySource/cosmo-ma
   `pip install https://github.com/CloudifySource/cloudify-openstack/archive/develop.zip`
 
 <br>
+**NOTE: you can run CLI commands with the -v (verbosity) flag to view tracebacks and additional debug info.**
+
 **2. Initializing:**
   - Cd into your favorite working directory and initialize Cloudify for some provider:  
   `cfy init openstack`
