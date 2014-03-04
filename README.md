@@ -275,7 +275,7 @@ re
 
 **Description:** executes an operation on a deployment
   
-**Usage:** `cfy deployments execute <operation> [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy deployments execute <operation> [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity] [--timeout <timeout>]`
 
 **Parameters**:
 
@@ -283,6 +283,8 @@ re
 - deployment_id: the deployment id on which the operation should be executed
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
+- timeout: operation timeout in seconds (Optional, The execution itself will keep
+going. It is the CLI that will stop waiting for it to terminate)
 
 **Example:** `cfy deployments execute install -d my-deployment`
   
@@ -331,6 +333,23 @@ re
 - is_verbose_output - A flag for setting verbose output (Optional)
 
 **Example:** `cfy executions list -d my-deployment`
+
+
+------
+
+**Command:** executions cancel
+
+**Description:** Cancels an execution by its id
+
+**Usage:** `cfy executions cancel [-e, --execution-id <execution_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
+
+**Parameters**:
+
+- execution_id: the id of the execution to cancel
+- management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
+
+**Example:** `cfy executions cancel -e some-execution-id`
 
 
 ------
