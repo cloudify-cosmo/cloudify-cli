@@ -45,34 +45,37 @@ class CliAdvancedInstallation(install):
     def run(self):
         _install.run(self)
 
-        from fabric.operations import local as lrun  # NOQA
-        from fabric.context_managers import hide
         import platform
+        import subprocess
+        import getpass
+        from os.path import expanduser
 
-        with hide('aborts'):
+        if platform.dist()[0] in ('Ubuntu', 'Debian'):
+            user = getpass.getuser()
+            home = expanduser("~")
 
-            if platform.dist()[0] in ('Ubuntu', 'Debian'):
-
-                import getpass
-                user = getpass.getuser()
-                print 'adding bash completion for user {0}'.format(user)
-                try:
-                    print 'checking if autocomplete is already installed'
-                    lrun('grep "register-python-argcomplete cfy" ~/.bashrc')
-                    print 'autocomplete already installed'
-                    return
-                except:
-                    print 'adding autocomplete to ~/.bashrc'
-                    pass
-                lrun('''echo 'eval "$(register-python-argcomplete cfy)"' '
-                     '>> ~/.bashrc''')
-                lrun('bash')
-            if platform.dist()[0] == 'Windows':
-                return 0
-            if platform.dist()[0] == 'CentOS':
-                return 0
-            if platform.dist()[0] == 'openSUSE':
-                return 0
+            print 'adding bash completion for user {0}'.format(user)
+            cmd = 'grep "register-python-argcomplete cfy" {0}/.bashrc'
+            x = subprocess.Popen(cmd.format(home),
+                                 shell=True,
+                                 stdout=subprocess.PIPE)
+            output = x.communicate()[0]
+            if output == '':
+                print 'adding autocomplete to ~/.bashrc'
+                cmd = ('''echo 'eval "$(register-python-argcomplete cfy)"
+                       ' >> {0}/.bashrc''')
+                subprocess.Popen(cmd.format(home),
+                                 shell=True,
+                                 stdout=subprocess.PIPE)
+                subprocess.Popen('bash')
+            else:
+                print 'autocomplete already installed'
+        if platform.dist()[0] == 'Windows':
+            return 0
+        if platform.dist()[0] == 'CentOS':
+            return 0
+        if platform.dist()[0] == 'openSUSE':
+            return 0
 
 setup(
     name='cosmo-cli',
