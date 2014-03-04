@@ -768,8 +768,9 @@ def _execute_deployment_operation(args):
     timeout = args.timeout
 
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
-             " management server {2}"
-             .format(operation, args.deployment_id, management_ip))
+             " management server {2} (timeout: {3} seconds)"
+             .format(operation, args.deployment_id, management_ip,
+                     timeout))
 
     events_logger = _get_events_logger(args)
     client = _get_rest_client(management_ip)
