@@ -4,7 +4,6 @@ python:
 
 install:
     - pip install --upgrade pip
-    - pip install --process-dependency-links https://github.com/CloudifySource/cosmo-manager-rest-client/archive/feature/CLOUDIFY-2544-terminate-workflow.zip
     - pip install --process-dependency-links .
     - pip install flake8
 
