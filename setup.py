@@ -13,9 +13,16 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+# activate venv
+# pip install argcomplete
+# eval "$(register-python-argcomplete cfy)"
+# echo 'eval "$(register-python-argcomplete cfy)"' >> ~/.bashrc
+
 __author__ = 'ran'
 
 from setuptools import setup
+from setuptools.command.install import install
+from distutils.command.install import install as _install
 
 version = '0.3'
 
@@ -33,6 +40,40 @@ COSMO_PLUGIN_DSL_PARSER = \
     "0}#egg=cosmo-plugin-dsl-parser-{1}".format(
         COSMO_PLUGIN_DSL_PARSER_BRANCH, COSMO_PLUGIN_DSL_PARSER_VERSION)
 
+
+class CliAdvancedInstallation(install):
+    def run(self):
+        _install.run(self)
+
+        from fabric.operations import local as lrun  # NOQA
+        from fabric.context_managers import hide
+        import platform
+
+        with hide('aborts'):
+
+            if platform.dist()[0] in ('Ubuntu', 'Debian'):
+
+                import getpass
+                user = getpass.getuser()
+                print 'adding bash completion for user {0}'.format(user)
+                try:
+                    print 'checking if autocomplete is already installed'
+                    lrun('grep "register-python-argcomplete cfy" ~/.bashrc')
+                    print 'autocomplete already installed'
+                    return
+                except:
+                    print 'adding autocomplete to ~/.bashrc'
+                    pass
+                lrun('''echo 'eval "$(register-python-argcomplete cfy)"' '
+                     '>> ~/.bashrc''')
+                lrun('bash')
+            if platform.dist()[0] == 'Windows':
+                return 0
+            if platform.dist()[0] == 'CentOS':
+                return 0
+            if platform.dist()[0] == 'openSUSE':
+                return 0
+
 setup(
     name='cosmo-cli',
     version=version,
@@ -47,7 +88,20 @@ setup(
     install_requires=[
         "pyyaml",
         "cosmo-manager-rest-client",
-        "cosmo-plugin-dsl-parser"
+        "cosmo-plugin-dsl-parser",
+        "argcomplete",
+        "fabric"
     ],
     dependency_links=[COSMO_MANAGER_REST_CLIENT, COSMO_PLUGIN_DSL_PARSER]
+)
+
+setup(
+    name='cosmo-cli',
+    version=version,
+    author='ran',
+    author_email='ran@gigaspaces.com',
+    packages=['cosmo_cli'],
+    license='LICENSE',
+    description='the cosmo cli',
+    cmdclass=dict(install=CliAdvancedInstallation)
 )
