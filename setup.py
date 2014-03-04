@@ -67,7 +67,13 @@ class CliAdvancedInstallation(install):
                 subprocess.Popen(cmd.format(home),
                                  shell=True,
                                  stdout=subprocess.PIPE)
-                subprocess.Popen('bash')
+                cmd = ('source {0}/.bashrc')
+                subprocess.Popen(cmd.format(home),
+                                 shell=True,
+                                 stdout=subprocess.PIPE)
+                print 'if cfy autocomplete doesn\'t work, reload your shell'
+                # subprocess.Popen('bash')
+                return
             else:
                 print 'autocomplete already installed'
         if platform.dist()[0] == 'Windows':
@@ -93,7 +99,7 @@ setup(
         "cosmo-manager-rest-client",
         "cosmo-plugin-dsl-parser",
         "argcomplete",
-        "fabric"
+        # "fabric"
     ],
     dependency_links=[COSMO_MANAGER_REST_CLIENT, COSMO_PLUGIN_DSL_PARSER],
     cmdclass=dict(install=CliAdvancedInstallation)
