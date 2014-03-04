@@ -95,16 +95,17 @@ setup(
         "argcomplete",
         "fabric"
     ],
-    dependency_links=[COSMO_MANAGER_REST_CLIENT, COSMO_PLUGIN_DSL_PARSER]
-)
-
-setup(
-    name='cosmo-cli',
-    version=version,
-    author='ran',
-    author_email='ran@gigaspaces.com',
-    packages=['cosmo_cli'],
-    license='LICENSE',
-    description='the cosmo cli',
+    dependency_links=[COSMO_MANAGER_REST_CLIENT, COSMO_PLUGIN_DSL_PARSER],
     cmdclass=dict(install=CliAdvancedInstallation)
 )
+
+# setup(
+#     name='cosmo-cli',
+#     version=version,
+#     author='ran',
+#     author_email='ran@gigaspaces.com',
+#     packages=['cosmo_cli'],
+#     license='LICENSE',
+#     description='the cosmo cli',
+#     cmdclass=dict(install=CliAdvancedInstallation)
+# )
