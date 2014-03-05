@@ -67,13 +67,8 @@ class CliAdvancedInstallation(install):
                 subprocess.Popen(cmd.format(home),
                                  shell=True,
                                  stdout=subprocess.PIPE)
-                cmd = ('source {0}/.bashrc')
-                subprocess.Popen(cmd.format(home),
-                                 shell=True,
-                                 stdout=subprocess.PIPE)
+                execfile('{0}/.bashrc'.format(home))
                 print 'if cfy autocomplete doesn\'t work, reload your shell'
-                # subprocess.Popen('bash')
-                return
             else:
                 print 'autocomplete already installed'
         if platform.dist()[0] == 'Windows':
