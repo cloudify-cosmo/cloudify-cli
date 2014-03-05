@@ -36,7 +36,7 @@ import config
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
     import CosmoManagerRestClient
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
-    import CosmoManagerRestCallError
+    import CosmoManagerRestCallError, CosmoManagerRestCallTimeoutError
 from dsl_parser.parser import parse_from_path, DSLParsingException
 
 
@@ -281,6 +281,17 @@ def _parse_args(args):
         required=True,
         help='The id of the deployment to execute the operation on'
     )
+    parser_deployments_execute.add_argument(
+        '--timeout',
+        dest='timeout',
+        metavar='TIMEOUT',
+        type=int,
+        required=False,
+        default=900,
+        help='Operation timeout in seconds (The execution itself will keep '
+             'going, it is the CLI that will stop waiting for it to terminate)'
+    )
+
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
     _set_handler_for_command(parser_deployments_execute,
                              _execute_deployment_operation)
@@ -331,6 +342,22 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_executions_list)
     _set_handler_for_command(parser_executions_list,
                              _list_deployment_executions)
+
+    parser_executions_cancel = executions_subparsers.add_parser(
+        'cancel',
+        help='Cancel an execution by its id'
+    )
+    parser_executions_cancel.add_argument(
+        '-e', '--execution-id',
+        dest='execution_id',
+        metavar='EXECUTION_ID',
+        type=str,
+        required=True,
+        help='The id of the execution to cancel'
+    )
+    _add_management_ip_optional_argument_to_parser(parser_executions_cancel)
+    _set_handler_for_command(parser_executions_cancel,
+                             _cancel_execution)
 
     parser_events.add_argument(
         '-e', '--execution-id',
@@ -740,26 +767,39 @@ def _execute_deployment_operation(args):
     management_ip = _get_management_server_ip(args)
     operation = args.operation
     deployment_id = args.deployment_id
+    timeout = args.timeout
 
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
-             " management server {2}"
-             .format(operation, args.deployment_id, management_ip))
+             " management server {2} (timeout: {3} seconds)"
+             .format(operation, args.deployment_id, management_ip,
+                     timeout))
 
     events_logger = _get_events_logger(args)
     client = _get_rest_client(management_ip)
-    execution_id, error = client.execute_deployment(deployment_id,
-                                                    operation,
-                                                    events_logger)
-    if error is None:
-        lgr.info("Finished executing workflow '{0}' on deployment"
-                 "'{1}'".format(operation, deployment_id))
-    else:
-        lgr.info("Execution of workflow '{0}' for deployment "
-                 "'{1}' failed. "
-                 "[error={2}]".format(operation, deployment_id, error))
-    lgr.info("* Run 'cfy events --include-logs "
-             "--execution-id {0}' for retrieving the "
-             "execution's events/logs".format(execution_id))
+
+    events_message = "* Run 'cfy events --include-logs "\
+                     "--execution-id {0}' for retrieving the "\
+                     "execution's events/logs"
+
+    try:
+        execution_id, error = client.execute_deployment(deployment_id,
+                                                        operation,
+                                                        events_logger,
+                                                        timeout=timeout)
+        if error is None:
+            lgr.info("Finished executing workflow '{0}' on deployment"
+                     "'{1}'".format(operation, deployment_id))
+        else:
+            lgr.info("Execution of workflow '{0}' for deployment "
+                     "'{1}' failed. "
+                     "[error={2}]".format(operation, deployment_id, error))
+        lgr.info(events_message.format(execution_id))
+    except CosmoManagerRestCallTimeoutError, e:
+        lgr.info("Execution of workflow '{0}' for deployment '{1}' timed out. "
+                 "* Run 'cfy executions cancel --execution-id {2}' to cancel"
+                 " the running workflow.".format(operation, deployment_id,
+                                                 e.execution_id))
+        lgr.info(events_message.format(e.execution_id))
 
 
 # TODO implement blueprint deployments on server side
@@ -811,6 +851,19 @@ def _list_workflows(args):
     lgr.info("deployments workflows:")
     for name in workflow_names:
         lgr.info("\t{0}".format(name))
+
+
+def _cancel_execution(args):
+    management_ip = _get_management_server_ip(args)
+    client = _get_rest_client(management_ip)
+    execution_id = args.execution_id
+    lgr.info(
+        'Canceling execution {0} on management server {1}'
+        .format(execution_id, management_ip))
+    client.cancel_execution(execution_id)
+    lgr.info(
+        'Cancelled execution {0} on management server {1}'
+        .format(execution_id, management_ip))
 
 
 def _list_deployment_executions(args):

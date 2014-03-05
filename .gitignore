@@ -43,3 +43,5 @@ nosetests.xml
 
 *.iml
 .idea
+
+*cloudify-cli.log

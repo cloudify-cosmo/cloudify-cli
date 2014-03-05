@@ -46,6 +46,9 @@ class MockCosmoManagerRestClient(object):
                                             .format(operation))
         return 'execution-id', None
 
+    def cancel_execution(self, execution_id):
+        return 'execution-id'
+
     def list_workflows(self, deployment_id):
         return MicroMock(workflows=[])
 
