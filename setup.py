@@ -45,21 +45,16 @@ class CliAdvancedInstallation(install):
     def run(self):
         _install.run(self)
 
-        import logging
         import platform
         import subprocess
         import getpass
         from os.path import expanduser
 
-        logging.basicConfig(
-            level=logging.INFO, format="%(%(message)s")
-        lgr = logging.getLogger(__name__)
-
         if platform.dist()[0] in ('Ubuntu', 'Debian'):
             user = getpass.getuser()
             home = expanduser("~")
 
-            lgr.info('adding bash completion for user {0}'.format(user))
+            print 'adding bash completion for user {0}'.format(user)
             cmd_check_if_registered = ('grep "register-python-argcomplete '
                                        'cfy" {0}/.bashrc')
             x = subprocess.Popen(cmd_check_if_registered.format(home),
@@ -67,16 +62,16 @@ class CliAdvancedInstallation(install):
                                  stdout=subprocess.PIPE)
             output = x.communicate()[0]
             if output == '':
-                lgr.info('adding autocomplete to ~/.bashrc')
+                print 'adding autocomplete to ~/.bashrc'
                 cmd_register_to_bash = ('''echo 'eval "$(register-python-
                     argcomplete cfy)"' >> {0}/.bashrc''')
                 subprocess.Popen(cmd_register_to_bash.format(home),
                                  shell=True,
                                  stdout=subprocess.PIPE)
                 execfile('{0}/.bashrc'.format(home))
-                lgr.info('if cfy completion doesn\'t work, reload your shell')
+                print 'if cfy autocomplete doesn\'t work, reload your shell'
             else:
-                lgr.info('autocomplete already installed')
+                print 'autocomplete already installed'
         if platform.dist()[0] == 'Windows':
             return 0
         if platform.dist()[0] == 'CentOS':
