@@ -72,7 +72,7 @@ class CliAdvancedInstallation(install):
                     execfile('{0}/.bashrc'.format(home))
                 except:
                     print 'could not source bashrc'
-                print 'if cfy autocomplete doesn\'t work, reload your shell'
+                print 'if cfy autocomplete doesn\'t work, reload your shell or run ". ~/.bashrc'  # NOQA
             else:
                 print 'autocomplete already installed'
         if platform.dist()[0] == 'Windows':
