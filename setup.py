@@ -68,7 +68,7 @@ class CliAdvancedInstallation(install):
                 subprocess.Popen(cmd_register_to_bash.format(home),
                                  shell=True,
                                  stdout=subprocess.PIPE)
-                execfile('{0}/.bashrc'.format(home))
+                # execfile('{0}/.bashrc'.format(home))
                 print 'if cfy autocomplete doesn\'t work, reload your shell'
             else:
                 print 'autocomplete already installed'
