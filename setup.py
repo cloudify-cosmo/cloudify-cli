@@ -68,7 +68,11 @@ class CliAdvancedInstallation(install):
                 subprocess.Popen(cmd_register_to_bash.format(home),
                                  shell=True,
                                  stdout=subprocess.PIPE)
-                # execfile('{0}/.bashrc'.format(home))
+                try:
+                    print 'attempting to source bashrc'
+                    execfile('{0}/.bashrc'.format(home))
+                except:
+                    print 'could not source bashrc.'
                 print 'if cfy autocomplete doesn\'t work, reload your shell'
             else:
                 print 'autocomplete already installed'
