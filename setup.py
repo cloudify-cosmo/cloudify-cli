@@ -63,8 +63,7 @@ class CliAdvancedInstallation(install):
             output = x.communicate()[0]
             if output == '':
                 print 'adding autocomplete to ~/.bashrc'
-                cmd_register_to_bash = ('''echo 'eval "$(register-python-
-                    argcomplete cfy)"' >> {0}/.bashrc''')
+                cmd_register_to_bash = ('''echo 'eval "$(register-python-argcomplete cfy)"' >> {0}/.bashrc''')  # NOQA
                 subprocess.Popen(cmd_register_to_bash.format(home),
                                  shell=True,
                                  stdout=subprocess.PIPE)
@@ -72,7 +71,7 @@ class CliAdvancedInstallation(install):
                     print 'attempting to source bashrc'
                     execfile('{0}/.bashrc'.format(home))
                 except:
-                    print 'could not source bashrc.'
+                    print 'could not source bashrc'
                 print 'if cfy autocomplete doesn\'t work, reload your shell'
             else:
                 print 'autocomplete already installed'
