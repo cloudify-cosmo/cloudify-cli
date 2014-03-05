@@ -28,7 +28,7 @@ def init(target_dir, reset_config, is_verbose_output=False):
 
 
 def bootstrap(config_path=None, is_verbose_output=False,
-              bootstrap_using_script=True):
+              bootstrap_using_script=True, keep_up=False):
     return '10.0.0.1'
 
 
