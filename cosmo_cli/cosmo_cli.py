@@ -170,7 +170,7 @@ def _parse_args(args):
         help='A flag indicating bootstrap will be performed via a script')
 
     parser_bootstrap.add_argument(
-        '-k', '--keep-up-on-failure',
+        '--keep-up-on-failure',
         dest='keep_up',
         action='store_true',
         help='A flag indicating that even if bootstrap fails,'
