@@ -50,6 +50,21 @@ class CliAdvancedInstallation(install):
                ' (Y/y to add, else to skip)?'
                '')
         print msg
+        msg = ('Would you like to add cfy '
+               'bash completion to bashrc'
+               ' (Y/y to add, else to skip)?'
+               '')
+        print msg
+        msg = ('Would you like to add cfy '
+               'bash completion to bashrc'
+               ' (Y/y to add, else to skip)?'
+               '')
+        print msg
+        msg = ('Would you like to add cfy '
+               'bash completion to bashrc'
+               ' (Y/y to add, else to skip)?'
+               '')
+        print msg
         install_bash_completion = raw_input()
 
         if install_bash_completion in ('Y', 'y'):
