@@ -45,42 +45,49 @@ class CliAdvancedInstallation(install):
     def run(self):
         _install.run(self)
 
-        import platform
-        import subprocess
-        import getpass
-        from os.path import expanduser
+        install_bash_completion = raw_input('Would you like to add cfy '
+                                            'bash completion to bashrc'
+                                            ' (Y/y to add, else to skip)?')
 
-        if platform.dist()[0] in ('Ubuntu', 'Debian'):
-            user = getpass.getuser()
-            home = expanduser("~")
+        if install_bash_completion in ('Y', 'y'):
+            import platform
+            import subprocess
+            import getpass
+            from os.path import expanduser
 
-            print 'adding bash completion for user {0}'.format(user)
-            cmd_check_if_registered = ('grep "register-python-argcomplete '
-                                       'cfy" {0}/.bashrc')
-            x = subprocess.Popen(cmd_check_if_registered.format(home),
-                                 shell=True,
-                                 stdout=subprocess.PIPE)
-            output = x.communicate()[0]
-            if output == '':
-                print 'adding autocomplete to ~/.bashrc'
-                cmd_register_to_bash = ('''echo 'eval "$(register-python-argcomplete cfy)"' >> {0}/.bashrc''')  # NOQA
-                subprocess.Popen(cmd_register_to_bash.format(home),
-                                 shell=True,
-                                 stdout=subprocess.PIPE)
-                try:
-                    print 'attempting to source bashrc'
-                    execfile('{0}/.bashrc'.format(home))
-                except:
-                    print 'could not source bashrc'
-                print 'if cfy autocomplete doesn\'t work, reload your shell or run ". ~/.bashrc'  # NOQA
-            else:
-                print 'autocomplete already installed'
-        if platform.dist()[0] == 'Windows':
-            return 0
-        if platform.dist()[0] == 'CentOS':
-            return 0
-        if platform.dist()[0] == 'openSUSE':
-            return 0
+            if platform.dist()[0] in ('Ubuntu', 'Debian'):
+                user = getpass.getuser()
+                home = expanduser("~")
+
+                print 'adding bash completion for user {0}'.format(user)
+                cmd_check_if_registered = ('grep "register-python-argcomplete '
+                                           'cfy" {0}/.bashrc')
+                x = subprocess.Popen(cmd_check_if_registered.format(home),
+                                     shell=True,
+                                     stdout=subprocess.PIPE)
+                output = x.communicate()[0]
+                if output == '':
+                    print 'adding autocomplete to ~/.bashrc'
+                    cmd_register_to_bash = ('''echo 'eval "$(register-python-argcomplete cfy)"' >> {0}/.bashrc''')  # NOQA
+                    subprocess.Popen(cmd_register_to_bash.format(home),
+                                     shell=True,
+                                     stdout=subprocess.PIPE)
+                    try:
+                        print 'attempting to source bashrc'
+                        execfile('{0}/.bashrc'.format(home))
+                    except:
+                        print 'could not source bashrc'
+                    print 'if cfy autocomplete doesn\'t work, reload your shell or run ". ~/.bashrc'  # NOQA
+                else:
+                    print 'autocomplete already installed'
+            if platform.dist()[0] == 'Windows':
+                return 0
+            if platform.dist()[0] == 'CentOS':
+                return 0
+            if platform.dist()[0] == 'openSUSE':
+                return 0
+        else:
+            print 'skipping bash completion installation'
 
 setup(
     name='cosmo-cli',
