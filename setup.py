@@ -13,11 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-# activate venv
-# pip install argcomplete
-# eval "$(register-python-argcomplete cfy)"
-# echo 'eval "$(register-python-argcomplete cfy)"' >> ~/.bashrc
-
 __author__ = 'ran'
 
 from setuptools import setup
