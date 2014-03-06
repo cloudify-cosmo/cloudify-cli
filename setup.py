@@ -44,43 +44,9 @@ COSMO_PLUGIN_DSL_PARSER = \
 class CliAdvancedInstallation(install):
     def run(self):
         _install.run(self)
-
-        import platform
-        import subprocess
-        import getpass
-        from os.path import expanduser
-
-        if platform.dist()[0] in ('Ubuntu', 'Debian'):
-            user = getpass.getuser()
-            home = expanduser("~")
-
-            print 'adding bash completion for user {0}'.format(user)
-            cmd_check_if_registered = ('grep "register-python-argcomplete '
-                                       'cfy" {0}/.bashrc')
-            x = subprocess.Popen(cmd_check_if_registered.format(home),
-                                 shell=True,
-                                 stdout=subprocess.PIPE)
-            output = x.communicate()[0]
-            if output == '':
-                print 'adding autocomplete to ~/.bashrc'
-                cmd_register_to_bash = ('''echo 'eval "$(register-python-argcomplete cfy)"' >> {0}/.bashrc''')  # NOQA
-                subprocess.Popen(cmd_register_to_bash.format(home),
-                                 shell=True,
-                                 stdout=subprocess.PIPE)
-                try:
-                    print 'attempting to source bashrc'
-                    execfile('{0}/.bashrc'.format(home))
-                except:
-                    print 'could not source bashrc'
-                print 'if cfy autocomplete doesn\'t work, reload your shell or run ". ~/.bashrc'  # NOQA
-            else:
-                print 'autocomplete already installed'
-        if platform.dist()[0] == 'Windows':
-            return 0
-        if platform.dist()[0] == 'CentOS':
-            return 0
-        if platform.dist()[0] == 'openSUSE':
-            return 0
+        bash_completion_msg = ('You can enable bash completion by '
+                               'running activate_cfy_bash_completion')
+        print bash_completion_msg
 
 setup(
     name='cosmo-cli',
@@ -91,14 +57,16 @@ setup(
     license='LICENSE',
     description='the cosmo cli',
     entry_points={
-        'console_scripts': ['cfy = cosmo_cli.cosmo_cli:main']
+        'console_scripts': [
+            'cfy = cosmo_cli.cosmo_cli:main',
+            'activate_cfy_bash_completion = cosmo_cli.activate_bash_completion:main'  # NOQA
+        ]
     },
     install_requires=[
         "pyyaml",
         "cosmo-manager-rest-client",
         "cosmo-plugin-dsl-parser",
-        "argcomplete",
-        # "fabric"
+        "argcomplete"
     ],
     dependency_links=[COSMO_MANAGER_REST_CLIENT, COSMO_PLUGIN_DSL_PARSER],
     cmdclass=dict(install=CliAdvancedInstallation)
