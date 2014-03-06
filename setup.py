@@ -45,9 +45,12 @@ class CliAdvancedInstallation(install):
     def run(self):
         _install.run(self)
 
-        install_bash_completion = raw_input('Would you like to add cfy '
-                                            'bash completion to bashrc'
-                                            ' (Y/y to add, else to skip)?')
+        msg = ('Would you like to add cfy '
+               'bash completion to bashrc'
+               ' (Y/y to add, else to skip)?'
+               '')
+        print msg
+        install_bash_completion = raw_input()
 
         if install_bash_completion in ('Y', 'y'):
             import platform
