@@ -16,6 +16,8 @@
 __author__ = 'ran'
 
 from setuptools import setup
+from setuptools.command.install import install
+from distutils.command.install import install as _install
 
 version = '0.3'
 
@@ -33,6 +35,14 @@ COSMO_PLUGIN_DSL_PARSER = \
     "0}#egg=cosmo-plugin-dsl-parser-{1}".format(
         COSMO_PLUGIN_DSL_PARSER_BRANCH, COSMO_PLUGIN_DSL_PARSER_VERSION)
 
+
+class CliAdvancedInstallation(install):
+    def run(self):
+        _install.run(self)
+        bash_completion_msg = ('You can enable bash completion by '
+                               'running activate_cfy_bash_completion')
+        print bash_completion_msg
+
 setup(
     name='cosmo-cli',
     version=version,
@@ -42,12 +52,28 @@ setup(
     license='LICENSE',
     description='the cosmo cli',
     entry_points={
-        'console_scripts': ['cfy = cosmo_cli.cosmo_cli:main']
+        'console_scripts': [
+            'cfy = cosmo_cli.cosmo_cli:main',
+            'activate_cfy_bash_completion = cosmo_cli.activate_bash_completion:main'  # NOQA
+        ]
     },
     install_requires=[
         "pyyaml",
         "cosmo-manager-rest-client",
-        "cosmo-plugin-dsl-parser"
+        "cosmo-plugin-dsl-parser",
+        "argcomplete"
     ],
-    dependency_links=[COSMO_MANAGER_REST_CLIENT, COSMO_PLUGIN_DSL_PARSER]
+    dependency_links=[COSMO_MANAGER_REST_CLIENT, COSMO_PLUGIN_DSL_PARSER],
+    cmdclass=dict(install=CliAdvancedInstallation)
 )
+
+# setup(
+#     name='cosmo-cli',
+#     version=version,
+#     author='ran',
+#     author_email='ran@gigaspaces.com',
+#     packages=['cosmo_cli'],
+#     license='LICENSE',
+#     description='the cosmo cli',
+#     cmdclass=dict(install=CliAdvancedInstallation)
+# )

@@ -18,6 +18,7 @@ __author__ = 'ran'
 
 # Standard
 import argparse
+import argcomplete
 import imp
 import sys
 import os
@@ -382,6 +383,7 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_events)
     _set_handler_for_command(parser_events, _get_events)
 
+    argcomplete.autocomplete(parser)
     return parser.parse_args(args)
 
 
