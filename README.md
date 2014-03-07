@@ -18,6 +18,8 @@ Command line interface for [Cloudify](https://github.com/CloudifySource/cosmo-ma
   - Install Cloudify CLI (temporary url, will be on PyPI soon):  
   `pip install https://github.com/CloudifySource/cosmo-cli/archive/develop.zip`  
   (Note: if you're using Pip 1.5 or above, add the "*--process-dependency-links*" flag to the 'pip install' command)  
+  (Note: after installing the cli you can run the "activate_cfy_bash_completion" script which will permanently add bash completion to you shell
+  and then follow the instructions or run "eval "$(register-python-argcomplete cfy)"" if you want to activate bash completion for your active shell only)
 
   - Install a Cloudify provider extension (Openstack is used in this example):
   `apt-get install python-dev # or the equivalent *nix version of this command`
