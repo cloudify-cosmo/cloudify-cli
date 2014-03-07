@@ -23,6 +23,8 @@ __author__ = 'nir'
 
 def main():
     if platform.dist()[0] in ('Ubuntu', 'Debian'):
+        print 'identified distro {0}'.format(platform.dist()[0])
+
         user = getpass.getuser()
         home = expanduser("~")
 
@@ -39,14 +41,15 @@ def main():
             subprocess.Popen(cmd_register_to_bash.format(home),
                              shell=True,
                              stdout=subprocess.PIPE)
-            try:
-                print 'attempting to source bashrc'
-                execfile('{0}/.bashrc'.format(home))
-            except:
-                print 'could not source bashrc'
-            print 'if cfy autocomplete doesn\'t work, reload your shell or run ". ~/.bashrc'  # NOQA
         else:
             print 'autocomplete already installed'
+        try:
+            print 'attempting to source ~/.bashrc'
+            execfile('{0}/.bashrc'.format(home))
+            print 'cfy bash completion is now active in your shell'
+        except:
+            print 'failed to source ~/.bashrc'
+            print 'reload your shell or run ". ~/.bashrc"'
     if platform.dist()[0] == 'Windows':
         return 0
     if platform.dist()[0] == 'CentOS':
