@@ -33,6 +33,7 @@ COSMO_PLUGIN_DSL_PARSER = \
     "0}#egg=cosmo-plugin-dsl-parser-{1}".format(
         COSMO_PLUGIN_DSL_PARSER_BRANCH, COSMO_PLUGIN_DSL_PARSER_VERSION)
 
+
 setup(
     name='cosmo-cli',
     version=version,
@@ -42,12 +43,16 @@ setup(
     license='LICENSE',
     description='the cosmo cli',
     entry_points={
-        'console_scripts': ['cfy = cosmo_cli.cosmo_cli:main']
+        'console_scripts': [
+            'cfy = cosmo_cli.cosmo_cli:main',
+            'activate_cfy_bash_completion = cosmo_cli.activate_bash_completion:main'  # NOQA
+        ]
     },
     install_requires=[
         "pyyaml",
         "cosmo-manager-rest-client",
-        "cosmo-plugin-dsl-parser"
+        "cosmo-plugin-dsl-parser",
+        "argcomplete"
     ],
     dependency_links=[COSMO_MANAGER_REST_CLIENT, COSMO_PLUGIN_DSL_PARSER]
 )

@@ -18,6 +18,7 @@ __author__ = 'ran'
 
 # Standard
 import argparse
+import argcomplete
 import imp
 import sys
 import os
@@ -168,6 +169,13 @@ def _parse_args(args):
         dest='bootstrap_using_script',
         action='store_true',
         help='A flag indicating bootstrap will be performed via a script')
+
+    parser_bootstrap.add_argument(
+        '--keep-up-on-failure',
+        dest='keep_up',
+        action='store_true',
+        help='A flag indicating that even if bootstrap fails,'
+        ' the instance will remain running')
     _set_handler_for_command(parser_bootstrap, _bootstrap_cosmo)
 
     #teardown subparser
@@ -381,6 +389,7 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_events)
     _set_handler_for_command(parser_events, _get_events)
 
+    argcomplete.autocomplete(parser)
     return parser.parse_args(args)
 
 
@@ -545,7 +554,8 @@ def _bootstrap_cosmo(args):
     with _protected_provider_call(args.verbosity):
         mgmt_ip = provider.bootstrap(args.config_file_path,
                                      args.verbosity,
-                                     args.bootstrap_using_script)
+                                     args.bootstrap_using_script,
+                                     args.keep_up)
 
     mgmt_ip = mgmt_ip.encode('utf-8')
 
