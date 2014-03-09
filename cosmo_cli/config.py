@@ -15,8 +15,8 @@
 #    * limitations under the License.
 
 # logger configuration
-import os
-LOG_DIR = os.getcwd()
+from os import path
+LOG_DIR = path.expanduser('~/.cloudify')
 MODULE = 'cli'
 LOGGER = {
     "version": 1,
