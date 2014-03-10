@@ -46,13 +46,11 @@ LOGGER = {
     "loggers": {
         "main": {
             "handlers": [
-                "console",
-                "file"
+                "console"
             ]
         },
         "file": {
             "handlers": [
-                "file"
             ]
         }
     }
