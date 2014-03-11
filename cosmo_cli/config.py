@@ -46,7 +46,7 @@ LOGGER = {
     "loggers": {
         "main": {
             "handlers": [
-                "console"
+                "console",
                 "file"
             ]
         },
