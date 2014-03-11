@@ -62,10 +62,10 @@ try:
     flgr = logging.getLogger('file')
     flgr.setLevel(logging.DEBUG)
 except ValueError:
-    sys.exit('could not initialize logger.'
-             ' verify your logger config'
-             ' and permissions to write to {0}'
-             .format(logfile))
+    raise CosmoCliError('could not initialize logger.'
+                        ' verify your logger config'
+                        ' and permissions to write to {0}'
+                        .format(logfile))
 
 
 def main():
