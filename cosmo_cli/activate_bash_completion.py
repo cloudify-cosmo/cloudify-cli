@@ -15,41 +15,40 @@
 
 import platform
 import subprocess
-import getpass
-from os.path import expanduser
+from getpass import getuser
+from sys import executable
+from os.path import expanduser, dirname
 
 __author__ = 'nir'
 
 
 def main():
     if platform.dist()[0] in ('Ubuntu', 'Debian'):
-        print 'identified distro {0}'.format(platform.dist()[0])
-
-        user = getpass.getuser()
+        user = getuser()
         home = expanduser("~")
+        intd = dirname(executable)
 
-        print 'adding bash completion for user {0}'.format(user)
-        cmd_check_if_registered = ('grep "register-python-argcomplete '
-                                   'cfy" {0}/.bashrc')
-        x = subprocess.Popen(cmd_check_if_registered.format(home),
+        print 'adding bash completion for user {0}, in {1}'.format(user, intd)
+        cmd_check_if_registered = ('grep "{0}/register-python-argcomplete '
+                                   'cfy" {1}/.bashrc')
+        x = subprocess.Popen(cmd_check_if_registered.format(intd, home),
                              shell=True,
                              stdout=subprocess.PIPE)
         output = x.communicate()[0]
         if output == '':
             print 'adding autocomplete to ~/.bashrc'
-            cmd_register_to_bash = ('''echo 'eval "$(register-python-argcomplete cfy)"' >> {0}/.bashrc''')  # NOQA
-            subprocess.Popen(cmd_register_to_bash.format(home),
+            cmd_register_to_bash = ('''echo 'eval "$({0}/register-python-argcomplete cfy)"' >> {1}/.bashrc''')  # NOQA
+            subprocess.Popen(cmd_register_to_bash.format(intd, home),
                              shell=True,
                              stdout=subprocess.PIPE)
+            try:
+                print 'attempting to source bashrc'
+                execfile('{0}/.bashrc'.format(home))
+            except:
+                print 'could not source bashrc'
+            print 'if cfy autocomplete doesn\'t work, reload your shell or run ". ~/.bashrc'  # NOQA
         else:
             print 'autocomplete already installed'
-        try:
-            print 'attempting to source ~/.bashrc'
-            execfile('{0}/.bashrc'.format(home))
-            print 'cfy bash completion is now active in your shell'
-        except:
-            print 'failed to source ~/.bashrc'
-            print 'reload your shell or run ". ~/.bashrc"'
     if platform.dist()[0] == 'Windows':
         return 0
     if platform.dist()[0] == 'CentOS':
