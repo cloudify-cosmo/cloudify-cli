@@ -9,9 +9,11 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
+
 import messages
 
 __author__ = 'ran'
@@ -45,8 +47,13 @@ CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
 
 
 #initialize logger
+if os.path.isfile(config.LOG_DIR):
+    sys.exit('file {0} exists - cloudify log directory cannot be created '
+             'there. please remove the file and try again.'
+             .format(config.LOG_DIR))
 try:
-    d = os.path.dirname(config.LOGGER['handlers']['file']['filename'])
+    logfile = config.LOGGER['handlers']['file']['filename']
+    d = os.path.dirname(logfile)
     if not os.path.exists(d):
         os.makedirs(d)
     logging.config.dictConfig(config.LOGGER)
@@ -58,7 +65,7 @@ except ValueError:
     sys.exit('could not initialize logger.'
              ' verify your logger config'
              ' and permissions to write to {0}'
-             .format(config.LOGGER['handlers']['file']['filename']))
+             .format(logfile))
 
 
 def main():
