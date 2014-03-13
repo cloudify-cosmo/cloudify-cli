@@ -747,27 +747,27 @@ def _create_deployment(args):
 
 
 def _create_event_message_prefix(event):
-    deployment_id = event['context']['deployment_id']
-    node_id = None
-    if 'node_id' in event['context']:
-        node_id = event['context']['node_id']
+    context = event['context']
+    deployment_id = context['deployment_id']
+    node_info = ''
+    operation = ''
+    if 'node_id' in context:
+        node_id = context['node_id']
+        if 'operation' in context and context['operation'] is not None:
+            operation = '.{0}'.format(context['operation'].split('.')[-1])
+        node_info = '[{0}{1}] '.format(node_id, operation)
     level = 'CFY'
     message = event['message']['text']
     if 'cloudify_log' in event['type']:
         level = 'LOG'
         message = '{0}: {1}'.format(event['level'].upper(), message)
     timestamp = event['@timestamp'].split('.')[0]
-    if node_id is None:
-        return '{0} {1} [{2}] {3}'.format(timestamp,
-                                          level,
-                                          deployment_id,
-                                          message)
-    else:
-        return '{0} {1} [{2}:{3}] {4}'.format(timestamp,
-                                              level,
-                                              deployment_id,
-                                              node_id,
-                                              message)
+
+    return '{0} {1} <{2}> {3}{4}'.format(timestamp,
+                                       level,
+                                       deployment_id,
+                                       node_info,
+                                       message)
 
 
 def _get_events_logger(args):
@@ -791,7 +791,7 @@ def _execute_deployment_operation(args):
     timeout = args.timeout
 
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
-             " management server {2} (timeout: {3} seconds)"
+             " management server {2} [timeout={3} seconds]"
              .format(operation, args.deployment_id, management_ip,
                      timeout))
 
