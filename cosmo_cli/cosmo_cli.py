@@ -764,10 +764,10 @@ def _create_event_message_prefix(event):
     timestamp = event['@timestamp'].split('.')[0]
 
     return '{0} {1} <{2}> {3}{4}'.format(timestamp,
-                                       level,
-                                       deployment_id,
-                                       node_info,
-                                       message)
+                                         level,
+                                         deployment_id,
+                                         node_info,
+                                         message)
 
 
 def _get_events_logger(args):
