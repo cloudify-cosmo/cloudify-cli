@@ -183,6 +183,13 @@ def _parse_args(args):
         action='store_true',
         help='A flag indicating that even if bootstrap fails,'
         ' the instance will remain running')
+
+    parser_bootstrap.add_argument(
+        '--dev-mode',
+        dest='dev_mode',
+        action='store_true',
+        help='A flag indicating that bootstrap will be run in dev-mode,'
+        ' allowing to choose specific branches to run with')
     _set_handler_for_command(parser_bootstrap, _bootstrap_cosmo)
 
     #teardown subparser
@@ -562,7 +569,8 @@ def _bootstrap_cosmo(args):
         mgmt_ip = provider.bootstrap(args.config_file_path,
                                      args.verbosity,
                                      args.bootstrap_using_script,
-                                     args.keep_up)
+                                     args.keep_up,
+                                     args.dev_mode)
 
     mgmt_ip = mgmt_ip.encode('utf-8')
 
