@@ -18,12 +18,19 @@ import subprocess
 from getpass import getuser
 from sys import executable
 from os.path import expanduser, dirname
+import sys
 
 __author__ = 'nir'
 
 
 def main():
-    if platform.dist()[0] in ('Ubuntu', 'Debian'):
+    try:
+        distro = platform.dist()[0]
+        print 'distribution identified: {0}'.format(distro)
+    except:
+        sys.exit('failed to retrieve os distribution')
+
+    if distro in ('Ubuntu', 'debian'):
         user = getuser()
         home = expanduser("~")
         intd = dirname(executable)
@@ -49,12 +56,16 @@ def main():
             print 'if cfy autocomplete doesn\'t work, reload your shell or run ". ~/.bashrc'  # NOQA
         else:
             print 'autocomplete already installed'
-    if platform.dist()[0] == 'Windows':
-        return 0
-    if platform.dist()[0] == 'CentOS':
-        return 0
-    if platform.dist()[0] == 'openSUSE':
-        return 0
+    elif platform.dist()[0] == 'Windows':
+        return
+    elif platform.dist()[0] == 'CentOS':
+        return
+    elif platform.dist()[0] == 'openSUSE':
+        return
+    else:
+        sys.exit('your distribution ({0}) is not supported.'
+                 ' could not complete activation.'
+                 .format(distro))
 
 if __name__ == '__main__':
     main()
