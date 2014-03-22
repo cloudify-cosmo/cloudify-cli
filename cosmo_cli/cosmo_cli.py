@@ -38,6 +38,7 @@ from contextlib import contextmanager
 import logging
 import logging.config
 import config
+from jsonschema import ValidationError, Draft4Validator
 
 # Project
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
@@ -515,6 +516,7 @@ def _set_global_verbosity_level(is_verbose_output=False):
 
 def _init_provider(provider, target_directory, reset_config,
                    is_verbose_output=False):
+    _set_global_verbosity_level(is_verbose_output)
     try:
         #searching first for the standard name for providers
         #(i.e. cloudify_XXX)
@@ -522,7 +524,6 @@ def _init_provider(provider, target_directory, reset_config,
         # print provider_module_name
         provider = _get_provider_module(provider_module_name,
                                         is_verbose_output)
-        # print provider
     except CosmoCliError:
         #if provider was not found, search for the exact literal the
         #user requested instead
@@ -552,7 +553,6 @@ def _init_provider(provider, target_directory, reset_config,
 
 
 def _init(args):
-
     _set_global_verbosity_level(args.verbosity)
     target_directory = os.path.expanduser(args.target_dir)
     provider = args.provider
@@ -721,7 +721,7 @@ def _bootstrap_manager(mgmt_ip, private_ip, mgmt_ssh_key, mgmt_ssh_user,
             return False
 
         try:
-            lgr.debug('verifying verbosity for installation process')
+            lgr.debug('enhancing verbosity for installation process')
             v = is_verbose_output
             is_verbose_output = True
 
@@ -796,21 +796,27 @@ def _bootstrap_manager(mgmt_ip, private_ip, mgmt_ssh_key, mgmt_ssh_user,
 
 
 def _bootstrap(args):
-
     _set_global_verbosity_level(args.verbosity)
-    provider_name = _get_provider(args.verbosity)
-    lgr.info("bootstrapping using {0}".format(provider_name))
 
+    provider_name = _get_provider(args.verbosity)
     provider = _get_provider_module(provider_name, args.verbosity)
     provider_dir = provider.__path__[0]
+
+    lgr.info("bootstrapping using {0}".format(provider_name))
     provider_config = _read_config(args.config_file_path,
                                    provider_dir,
                                    args.verbosity)
+
     sys.path.append(provider_dir)
     from schemas import PROVIDER_SCHEMA
     _validate_config_schema(provider_config, PROVIDER_SCHEMA, args.verbosity)
-    # provider._validate_provider(provider_config, PROVIDER_SCHEMA,
-    #                             args.verbosity)
+    lgr.info('validating additional provider resources and configuration')
+    if provider.validate(provider_config, PROVIDER_SCHEMA,
+                         args.verbosity):
+        lgr.info('provider validations completed successfully')
+    else:
+        lgr.error('provider validations failed!')
+        sys.exit(1)
     with _protected_provider_call(args.verbosity):
         lgr.info('provisioning resources for management server...')
         mgmt_ip, private_ip, ssh_key, ssh_user = provider.provision(
@@ -845,8 +851,6 @@ def _bootstrap(args):
 
 def _validate_config_schema(provider_config, schema=None,
                             is_verbose_output=False):
-    from jsonschema import ValidationError, Draft4Validator
-
     _set_global_verbosity_level(is_verbose_output)
     if schema is not None:
         global validated
@@ -895,18 +899,22 @@ def _teardown_cosmo(args):
                                    provider_dir=provider_dir,
                                    is_verbose_output=args.verbosity)
     with _protected_provider_call(args.verbosity):
-        provider.teardown(provider_config, mgmt_ip, args.verbosity)
+        t = provider.teardown(provider_config, mgmt_ip, args.verbosity)
 
     #cleaning relevant data from working directory settings
-    with _update_wd_settings(args.verbosity) as wd_settings:
-        if wd_settings.remove_management_server_context(mgmt_ip):
-            lgr.info(
-                "No longer using management server {0} as the "
-                "default management server - run 'cfy use' "
-                "command to use a different server as default"
-                .format(mgmt_ip))
+    if t:
+        with _update_wd_settings(args.verbosity) as wd_settings:
+            if wd_settings.remove_management_server_context(mgmt_ip):
+                lgr.info(
+                    "No longer using management server {0} as the "
+                    "default management server - run 'cfy use' "
+                    "command to use a different server as default"
+                    .format(mgmt_ip))
 
-    lgr.info("teardown complete")
+        lgr.info("teardown complete")
+    else:
+        lgr.error("teardown failed!")
+        sys.exit(1)
 
 
 def _get_management_server_ip(args):
