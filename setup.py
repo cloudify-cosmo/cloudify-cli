@@ -52,7 +52,9 @@ setup(
         "pyyaml",
         "cosmo-manager-rest-client",
         "cosmo-plugin-dsl-parser",
-        "argcomplete"
+        "argcomplete",
+        "fabric",
+        "jsonschema"
     ],
     dependency_links=[COSMO_MANAGER_REST_CLIENT, COSMO_PLUGIN_DSL_PARSER]
 )
