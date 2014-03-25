@@ -759,7 +759,7 @@ def _create_event_message_prefix(event):
     deployment_id = context['deployment_id']
     node_info = ''
     operation = ''
-    if 'node_id' in context:
+    if 'node_id' in context and context['node_id'] is not None:
         node_id = context['node_id']
         if 'operation' in context and context['operation'] is not None:
             operation = '.{0}'.format(context['operation'].split('.')[-1])
