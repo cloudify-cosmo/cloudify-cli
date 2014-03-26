@@ -46,7 +46,7 @@ output_level = logging.INFO
 CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
 
 
-#initialize logger
+# initialize logger
 if os.path.isfile(config.LOG_DIR):
     sys.exit('file {0} exists - cloudify log directory cannot be created '
              'there. please remove the file and try again.'
@@ -74,9 +74,9 @@ def main():
 
 
 def _parse_args(args):
-    #Parses the arguments using the Python argparse library
+    # Parses the arguments using the Python argparse library
 
-    #main parser
+    # main parser
     parser = argparse.ArgumentParser(
         description='Installs Cosmo in an OpenStack environment')
 
@@ -113,11 +113,11 @@ def _parse_args(args):
         help='Commands for events'
     )
 
-    #status subparser
+    # status subparser
     _add_management_ip_optional_argument_to_parser(parser_status)
     _set_handler_for_command(parser_status, _status)
 
-    #use subparser
+    # use subparser
     parser_use.add_argument(
         'management_ip',
         metavar='MANAGEMENT_IP',
@@ -137,7 +137,7 @@ def _parse_args(args):
         'already exists')
     _set_handler_for_command(parser_use, _use_management_server)
 
-    #init subparser
+    # init subparser
     parser_init.add_argument(
         'provider',
         metavar='PROVIDER',
@@ -161,7 +161,7 @@ def _parse_args(args):
     )
     _set_handler_for_command(parser_init, _init_cosmo)
 
-    #bootstrap subparser
+    # bootstrap subparser
     parser_bootstrap.add_argument(
         '-c', '--config-file',
         dest='config_file_path',
@@ -192,14 +192,14 @@ def _parse_args(args):
         ' allowing to choose specific branches to run with')
     _set_handler_for_command(parser_bootstrap, _bootstrap_cosmo)
 
-    #teardown subparser
+    # teardown subparser
     _add_force_optional_argument_to_parser(
         parser_teardown,
         'A flag indicating confirmation for the teardown request')
     _add_management_ip_optional_argument_to_parser(parser_teardown)
     _set_handler_for_command(parser_teardown, _teardown_cosmo)
 
-    #blueprints subparser
+    # blueprints subparser
     blueprints_subparsers = parser_blueprints.add_subparsers()
 
     parser_blueprints_upload = blueprints_subparsers.add_parser(
@@ -255,7 +255,7 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_blueprints_delete)
     _set_handler_for_command(parser_blueprints_delete, _delete_blueprint)
 
-    #deployments subparser
+    # deployments subparser
     deployments_subparsers = parser_deployments.add_subparsers()
     parser_deployments_create = deployments_subparsers.add_parser(
         'create',
@@ -337,7 +337,7 @@ def _parse_args(args):
     _set_handler_for_command(parser_deployments_list,
                              _list_blueprint_deployments)
 
-    #workflows subparser
+    # workflows subparser
     workflows_subparsers = parser_workflows.add_subparsers()
     parser_workflows_list = workflows_subparsers.add_parser(
         'list',
@@ -419,8 +419,8 @@ def _get_provider_module(provider_name, is_verbose_output=False):
     try:
         module_or_pkg_desc = imp.find_module(provider_name)
         if not module_or_pkg_desc[1]:
-            #module_or_pkg_desc[1] is the pathname of found module/package,
-            #if it's empty none were found
+            # module_or_pkg_desc[1] is the pathname of found module/package,
+            # if it's empty none were found
             msg = ('Provider {0} not found.'
                    .format(provider_name))
             flgr.error(msg)
@@ -432,10 +432,10 @@ def _get_provider_module(provider_name, is_verbose_output=False):
         module = imp.load_module(provider_name, *module_or_pkg_desc)
 
         if not module_or_pkg_desc[0]:
-            #module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not
-            #empty only when we've loaded a package rather than a module.
-            #Re-searching for the module inside the now-loaded package
-            #with the same name.
+            # module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not
+            # empty only when we've loaded a package rather than a module.
+            # Re-searching for the module inside the now-loaded package
+            # with the same name.
             module = imp.load_module(
                 provider_name,
                 *imp.find_module(provider_name, module.__path__))
@@ -495,14 +495,14 @@ def _add_verbosity_argument_to_parser(parser):
 def _init_provider(provider, target_directory, reset_config,
                    is_verbose_output=False):
     try:
-        #searching first for the standard name for providers
-        #(i.e. cloudify_XXX)
+        # searching first for the standard name for providers
+        # (i.e. cloudify_XXX)
         provider_module_name = 'cloudify_{0}'.format(provider)
         provider = _get_provider_module(provider_module_name,
                                         is_verbose_output)
     except CosmoCliError:
-        #if provider was not found, search for the exact literal the
-        #user requested instead
+        # if provider was not found, search for the exact literal the
+        # user requested instead
         provider_module_name = provider
         provider = _get_provider_module(provider_module_name,
                                         is_verbose_output)
@@ -559,7 +559,7 @@ def _init_cosmo(args):
     provider_module_name = _init_provider(provider, target_directory,
                                           args.reset_config, is_verbose_output)
 
-    #creating .cloudify file
+    # creating .cloudify file
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
                                      target_directory)
     with _update_wd_settings(args.verbosity) as wd_settings:
@@ -610,7 +610,7 @@ def _teardown_cosmo(args):
     with _protected_provider_call(args.verbosity):
         provider.teardown(mgmt_ip, args.verbosity,)
 
-    #cleaning relevant data from working directory settings
+    # cleaning relevant data from working directory settings
     with _update_wd_settings(args.verbosity) as wd_settings:
         if wd_settings.remove_management_server_context(mgmt_ip):
             lgr.info(
@@ -673,8 +673,8 @@ def _status(args):
 
 def _use_management_server(args):
     if not os.path.exists(CLOUDIFY_WD_SETTINGS_FILE_NAME):
-        #Allowing the user to work with an existing management server
-        #even if "init" wasn't called prior to this.
+        # Allowing the user to work with an existing management server
+        # even if "init" wasn't called prior to this.
         _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings())
 
     with _update_wd_settings(args.verbosity) as wd_settings:
@@ -1075,7 +1075,7 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
     def remove_management_server_context(self, management_ip):
         # Clears management server context data.
         # Returns True if the management server was the management
-        #   server being used at the time of the call
+        # server being used at the time of the call
         if management_ip in self._mgmt_to_contextual_aliases:
             del(self._mgmt_to_contextual_aliases[management_ip])
         if self._management_ip == management_ip:

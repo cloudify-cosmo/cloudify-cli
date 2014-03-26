@@ -21,8 +21,8 @@ from cosmo_manager_rest_client.cosmo_manager_rest_client \
 
 
 class MockCosmoManagerRestClient(object):
-    #A mock of the rest client, containing only the methods and object types
-    #that are relevant to test the CLI in its current form.
+    # A mock of the rest client, containing only the methods and object types
+    # that are relevant to test the CLI in its current form.
 
     def list_blueprints(self):
         return []
