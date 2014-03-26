@@ -40,7 +40,7 @@ class MockCosmoManagerRestClient(object):
         return MicroMock(id='a-deployment-id')
 
     def execute_deployment(self, deployment_id, operation, events_handler=None,
-                           timeout=900):
+                           timeout=900, force=False):
         if operation != 'install':
             raise CosmoManagerRestCallError("operation {0} doesn't exist"
                                             .format(operation))

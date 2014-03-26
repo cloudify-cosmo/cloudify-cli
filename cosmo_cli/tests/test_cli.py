@@ -287,6 +287,7 @@ class CliTest(unittest.TestCase):
                       "--timeout 50")
         self._run_cli("cfy deployments execute install "
                       "--deployment-id a-deployment-id")
+        self._run_cli("cfy deployments execute install -d dep-id --force")
 
     def test_deployments_list(self):
         self._set_mock_rest_client()

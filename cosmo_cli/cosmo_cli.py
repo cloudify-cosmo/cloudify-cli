@@ -312,6 +312,14 @@ def _parse_args(args):
         help='Operation timeout in seconds (The execution itself will keep '
              'going, it is the CLI that will stop waiting for it to terminate)'
     )
+    parser_deployments_execute.add_argument(
+        '--force',
+        dest='force',
+        action='store_true',
+        default=False,
+        help='Whether the workflow should execute even if there is an ongoing'
+             ' execution for the provided deployment'
+    )
 
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
     _set_handler_for_command(parser_deployments_execute,
@@ -797,6 +805,7 @@ def _execute_deployment_operation(args):
     operation = args.operation
     deployment_id = args.deployment_id
     timeout = args.timeout
+    force = args.force
 
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
              " management server {2} [timeout={3} seconds]"
@@ -814,7 +823,8 @@ def _execute_deployment_operation(args):
         execution_id, error = client.execute_deployment(deployment_id,
                                                         operation,
                                                         events_logger,
-                                                        timeout=timeout)
+                                                        timeout=timeout,
+                                                        force=force)
         if error is None:
             lgr.info("Finished executing workflow '{0}' on deployment"
                      "'{1}'".format(operation, deployment_id))
