@@ -620,7 +620,7 @@ def _teardown_cosmo(args):
 
     mgmt_ip = _get_management_server_ip(args)
     if not args.force_deployments and \
-        len(_get_rest_client(mgmt_ip).list_deployments()) > 0:
+            len(_get_rest_client(mgmt_ip).list_deployments()) > 0:
         msg = ("Management server {0} has active deployments. Add the '-fd' "
                "or '--force-deployments' flags to your command to ignore "
                "these deployments and execute topology teardown."
