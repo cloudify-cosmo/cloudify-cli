@@ -619,17 +619,17 @@ def _teardown_cosmo(args):
             sys.exit(msg)
 
     mgmt_ip = _get_management_server_ip(args)
-    # if not args.force_deployments and \
-    #     len(_get_rest_client(mgmt_ip).list_deployments()) > 0:
-    #     msg = ("Management server {0} has active deployments. Add the '-fd' "
-    #            "or '--force-deployments' flags to your command to ignore "
-    #            "these deployments and execute topology teardown."
-    #            .format(mgmt_ip))
-    #     flgr.error(msg)
-    #     if is_verbose_output:
-    #         raise CosmoCliError(msg)
-    #     else:
-    #         sys.exit(msg)
+    if not args.force_deployments and \
+        len(_get_rest_client(mgmt_ip).list_deployments()) > 0:
+        msg = ("Management server {0} has active deployments. Add the '-fd' "
+               "or '--force-deployments' flags to your command to ignore "
+               "these deployments and execute topology teardown."
+               .format(mgmt_ip))
+        flgr.error(msg)
+        if is_verbose_output:
+            raise CosmoCliError(msg)
+        else:
+            sys.exit(msg)
 
     lgr.info("tearing down {0}".format(mgmt_ip))
 
