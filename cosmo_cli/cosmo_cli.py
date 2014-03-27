@@ -828,17 +828,20 @@ def _execute_deployment_operation(args):
         if error is None:
             lgr.info("Finished executing workflow '{0}' on deployment"
                      "'{1}'".format(operation, deployment_id))
+            lgr.info(events_message.format(execution_id))
         else:
             lgr.info("Execution of workflow '{0}' for deployment "
                      "'{1}' failed. "
                      "[error={2}]".format(operation, deployment_id, error))
-        lgr.info(events_message.format(execution_id))
+            lgr.info(events_message.format(execution_id))
+            raise SuppressedCosmoCliError()
     except CosmoManagerRestCallTimeoutError, e:
         lgr.info("Execution of workflow '{0}' for deployment '{1}' timed out. "
                  "* Run 'cfy executions cancel --execution-id {2}' to cancel"
                  " the running workflow.".format(operation, deployment_id,
                                                  e.execution_id))
         lgr.info(events_message.format(e.execution_id))
+        raise SuppressedCosmoCliError()
 
 
 # TODO implement blueprint deployments on server side
@@ -962,6 +965,10 @@ def _set_cli_except_hook():
             if output_level <= logging.DEBUG:
                 print("Stack trace:")
                 traceback.print_tb(the_traceback)
+        elif type == SuppressedCosmoCliError:
+            # output is already generated elsewhere
+            # we only want and exit code that is not 0
+            pass
         else:
             old_excepthook(type, value, the_traceback)
 
@@ -1109,6 +1116,10 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
 
 
 class CosmoCliError(Exception):
+    pass
+
+
+class SuppressedCosmoCliError(Exception):
     pass
 
 if __name__ == '__main__':
