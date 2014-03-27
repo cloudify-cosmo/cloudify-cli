@@ -20,6 +20,7 @@ import unittest
 import os
 import sys
 import shutil
+import subprocess
 from mock_cosmo_manager_rest_client import MockCosmoManagerRestClient
 from cosmo_cli import cosmo_cli as cli
 from cosmo_cli.cosmo_cli import CosmoCliError
@@ -82,6 +83,11 @@ class CliTest(unittest.TestCase):
     def _set_mock_rest_client(self):
         cli._get_rest_client =\
             lambda ip: MockCosmoManagerRestClient()
+
+    def test_get_basic_help(self):
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call("cfy", stdout=f, stderr=f)
+        self.assertEquals(returncode, 2)
 
     def test_validate_bad_blueprint(self):
         self._create_cosmo_wd_settings()
