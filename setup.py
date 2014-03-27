@@ -49,7 +49,7 @@ setup(
         ]
     },
     install_requires=[
-        "pyyaml",
+        "pyyaml==3.10",
         "cosmo-manager-rest-client",
         "cosmo-plugin-dsl-parser",
         "argcomplete"
