@@ -193,6 +193,28 @@ def _parse_args(args):
     _set_handler_for_command(parser_bootstrap, _bootstrap_cosmo)
 
     #teardown subparser
+    parser_teardown.add_argument(
+        '-c', '--config-file',
+        dest='config_file_path',
+        metavar='CONFIG_FILE',
+        default=None,
+        type=str,
+        help='Path to a provider configuration file'
+    )
+    parser_teardown.add_argument(
+        '-fd', '--force_deployments',
+        dest='force_deployments',
+        action='store_true',
+        help='A flag indicating confirmation for teardown even if there '
+             'exist active deployments'
+    )
+    parser_teardown.add_argument(
+        '-fv', '--force_validation',
+        dest='force_validation',
+        action='store_true',
+        help='A flag indicating confirmation for teardown even if there '
+             'are validation conflicts'
+    )
     _add_force_optional_argument_to_parser(
         parser_teardown,
         'A flag indicating confirmation for the teardown request')
@@ -566,16 +588,18 @@ def _bootstrap_cosmo(args):
     provider = _get_provider_module(provider_name, args.verbosity)
 
     with _protected_provider_call(args.verbosity):
-        mgmt_ip = provider.bootstrap(args.config_file_path,
-                                     args.verbosity,
-                                     args.bootstrap_using_script,
-                                     args.keep_up,
-                                     args.dev_mode)
+        mgmt_ip, provider_context =\
+            provider.bootstrap(args.config_file_path,
+                               args.verbosity,
+                               args.bootstrap_using_script,
+                               args.keep_up,
+                               args.dev_mode)
 
     mgmt_ip = mgmt_ip.encode('utf-8')
 
     with _update_wd_settings(args.verbosity) as wd_settings:
         wd_settings.set_management_server(mgmt_ip)
+        wd_settings.set_provider_context(provider_context)
     lgr.info(
         "management server is up at {0} (is now set as the default "
         "management server)".format(mgmt_ip))
@@ -595,12 +619,26 @@ def _teardown_cosmo(args):
             sys.exit(msg)
 
     mgmt_ip = _get_management_server_ip(args)
+    # if not args.force_deployments and \
+    #     len(_get_rest_client(mgmt_ip).list_deployments()) > 0:
+    #     msg = ("Management server {0} has active deployments. Add the '-fd' "
+    #            "or '--force-deployments' flags to your command to ignore "
+    #            "these deployments and execute topology teardown."
+    #            .format(mgmt_ip))
+    #     flgr.error(msg)
+    #     if is_verbose_output:
+    #         raise CosmoCliError(msg)
+    #     else:
+    #         sys.exit(msg)
+
     lgr.info("tearing down {0}".format(mgmt_ip))
 
     provider_name = _get_provider(args.verbosity)
+    provider_context = _get_provider_context(args.verbosity)
     provider = _get_provider_module(provider_name, args.verbosity)
     with _protected_provider_call(args.verbosity):
-        provider.teardown(mgmt_ip, args.verbosity,)
+        provider.teardown(args.config_file_path, provider_context,
+                          args.force_validation, args.verbosity)
 
     #cleaning relevant data from working directory settings
     with _update_wd_settings(args.verbosity) as wd_settings:
@@ -638,6 +676,18 @@ def _get_provider(is_verbose_output=False):
     if cosmo_wd_settings.get_provider():
         return cosmo_wd_settings.get_provider()
     msg = "Provider is not set in working directory settings"
+    flgr.error(msg)
+    if is_verbose_output:
+        raise RuntimeError(msg)
+    else:
+        sys.exit(msg)
+
+
+def _get_provider_context(is_verbose_output=False):
+    cosmo_wd_settings = _load_cosmo_working_dir_settings(is_verbose_output)
+    if cosmo_wd_settings.get_provider_context():
+        return cosmo_wd_settings.get_provider_context()
+    msg = "Provider context is not set in working directory settings"
     flgr.error(msg)
     if is_verbose_output:
         raise RuntimeError(msg)
@@ -1053,6 +1103,7 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
     def __init__(self):
         self._management_ip = None
         self._provider = None
+        self._provider_context = None
         self._mgmt_aliases = {}
         self._mgmt_to_contextual_aliases = {}
 
@@ -1061,6 +1112,12 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
 
     def set_management_server(self, management_ip):
         self._management_ip = management_ip
+
+    def get_provider_context(self):
+        return self._provider_context
+
+    def set_provider_context(self, provider_context):
+        self._provider_context = provider_context
 
     def remove_management_server_context(self, management_ip):
         # Clears management server context data.
