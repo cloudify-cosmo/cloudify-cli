@@ -202,14 +202,14 @@ def _parse_args(args):
         help='Path to a provider configuration file'
     )
     parser_teardown.add_argument(
-        '-fd', '--force_deployments',
+        '-fd', '--force-deployments',
         dest='force_deployments',
         action='store_true',
         help='A flag indicating confirmation for teardown even if there '
              'exist active deployments'
     )
     parser_teardown.add_argument(
-        '-fv', '--force_validation',
+        '-fv', '--force-validation',
         dest='force_validation',
         action='store_true',
         help='A flag indicating confirmation for teardown even if there '
