@@ -649,8 +649,8 @@ def _teardown_cosmo(args):
     provider_context = _get_provider_context(mgmt_ip, args.verbosity)
     provider = _get_provider_module(provider_name, args.verbosity)
     with _protected_provider_call(args.verbosity):
-        provider.teardown(args.config_file_path, provider_context,
-                          args.force_validation, args.verbosity)
+        provider.teardown(provider_context, args.force_validation,
+                          args.config_file_path, args.verbosity)
 
     # cleaning relevant data from working directory settings
     with _update_wd_settings(args.verbosity) as wd_settings:
