@@ -600,6 +600,10 @@ def _bootstrap_cosmo(args):
     with _update_wd_settings(args.verbosity) as wd_settings:
         wd_settings.set_management_server(mgmt_ip)
         wd_settings.set_provider_context(provider_context)
+
+    #storing provider context on management server
+    _get_rest_client(mgmt_ip).post_provider_context(provider_context)
+
     lgr.info(
         "management server is up at {0} (is now set as the default "
         "management server)".format(mgmt_ip))
@@ -634,7 +638,7 @@ def _teardown_cosmo(args):
     lgr.info("tearing down {0}".format(mgmt_ip))
 
     provider_name = _get_provider(args.verbosity)
-    provider_context = _get_provider_context(args.verbosity)
+    provider_context = _get_provider_context(mgmt_ip, args.verbosity)
     provider = _get_provider_module(provider_name, args.verbosity)
     with _protected_provider_call(args.verbosity):
         provider.teardown(args.config_file_path, provider_context,
@@ -684,11 +688,26 @@ def _get_provider(is_verbose_output=False):
         sys.exit(msg)
 
 
-def _get_provider_context(is_verbose_output=False):
+def _get_provider_context(mgmt_ip, is_verbose_output=False):
+    #trying to retrieve provider context from server
+    try:
+        return _get_rest_client(mgmt_ip).get_provider_context()
+    except CosmoManagerRestCallError as e:
+        lgr.debug('Failed to get provider context from server: {0}'.format(
+            str(e)))
+
+    #using the local provider context instead (if it's relevant for the
+    # target server)
     cosmo_wd_settings = _load_cosmo_working_dir_settings(is_verbose_output)
     if cosmo_wd_settings.get_provider_context():
-        return cosmo_wd_settings.get_provider_context()
-    msg = "Provider context is not set in working directory settings"
+        default_mgmt_server_ip = cosmo_wd_settings.get_management_server()
+        if default_mgmt_server_ip == mgmt_ip:
+            return cosmo_wd_settings.get_provider_context()
+        else:
+            #the local provider context data is for a different server
+            msg = "Failed to get provider context from target server"
+    else:
+        msg = "Provider context is not set in working directory settings"
     flgr.error(msg)
     if is_verbose_output:
         raise RuntimeError(msg)
@@ -720,9 +739,13 @@ def _use_management_server(args):
         #even if "init" wasn't called prior to this.
         _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings())
 
+    provider_context = _get_rest_client(args.management_ip)\
+        .get_provider_context()
+
     with _update_wd_settings(args.verbosity) as wd_settings:
         wd_settings.set_management_server(
             wd_settings.translate_management_alias(args.management_ip))
+        wd_settings.set_provider_context(provider_context)
         if args.alias:
             wd_settings.save_management_alias(args.alias,
                                               args.management_ip,
