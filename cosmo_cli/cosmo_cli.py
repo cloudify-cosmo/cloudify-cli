@@ -172,12 +172,6 @@ def _parse_args(args):
     )
 
     parser_bootstrap.add_argument(
-        '-a', '--alternate-bootstrap-method',
-        dest='bootstrap_using_script',
-        action='store_true',
-        help='A flag indicating bootstrap will be performed via a script')
-
-    parser_bootstrap.add_argument(
         '--keep-up-on-failure',
         dest='keep_up',
         action='store_true',
@@ -576,7 +570,7 @@ def _bootstrap_cosmo(args):
     with _protected_provider_call(args.verbosity):
         mgmt_ip = provider.bootstrap(args.config_file_path,
                                      args.verbosity,
-                                     args.bootstrap_using_script,
+                                     False,
                                      args.keep_up,
                                      args.dev_mode)
 
