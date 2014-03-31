@@ -282,7 +282,7 @@ re
 
 **Description:** executes an operation on a deployment
   
-**Usage:** `cfy deployments execute <operation> [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity] [--timeout <timeout>]`
+**Usage:** `cfy deployments execute <operation> [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity] [--timeout <timeout>] [--force]`
 
 **Parameters**:
 
@@ -292,6 +292,9 @@ re
 - is_verbose_output - A flag for setting verbose output (Optional)
 - timeout: operation timeout in seconds (Optional, The execution itself will keep
 going. It is the CLI that will stop waiting for it to terminate)
+- force: A flag indicating whether the workflow should execute even if there is
+ an ongoing execution for the provided deployment (default: false)
+
 
 **Example:** `cfy deployments execute install -d my-deployment`
   

@@ -46,7 +46,7 @@ output_level = logging.INFO
 CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
 
 
-#initialize logger
+# initialize logger
 if os.path.isfile(config.LOG_DIR):
     sys.exit('file {0} exists - cloudify log directory cannot be created '
              'there. please remove the file and try again.'
@@ -74,9 +74,9 @@ def main():
 
 
 def _parse_args(args):
-    #Parses the arguments using the Python argparse library
+    # Parses the arguments using the Python argparse library
 
-    #main parser
+    # main parser
     parser = argparse.ArgumentParser(
         description='Installs Cosmo in an OpenStack environment')
 
@@ -113,11 +113,11 @@ def _parse_args(args):
         help='Commands for events'
     )
 
-    #status subparser
+    # status subparser
     _add_management_ip_optional_argument_to_parser(parser_status)
     _set_handler_for_command(parser_status, _status)
 
-    #use subparser
+    # use subparser
     parser_use.add_argument(
         'management_ip',
         metavar='MANAGEMENT_IP',
@@ -137,7 +137,7 @@ def _parse_args(args):
         'already exists')
     _set_handler_for_command(parser_use, _use_management_server)
 
-    #init subparser
+    # init subparser
     parser_init.add_argument(
         'provider',
         metavar='PROVIDER',
@@ -161,7 +161,7 @@ def _parse_args(args):
     )
     _set_handler_for_command(parser_init, _init_cosmo)
 
-    #bootstrap subparser
+    # bootstrap subparser
     parser_bootstrap.add_argument(
         '-c', '--config-file',
         dest='config_file_path',
@@ -192,7 +192,7 @@ def _parse_args(args):
         ' allowing to choose specific branches to run with')
     _set_handler_for_command(parser_bootstrap, _bootstrap_cosmo)
 
-    #teardown subparser
+    # teardown subparser
     parser_teardown.add_argument(
         '-c', '--config-file',
         dest='config_file_path',
@@ -221,7 +221,7 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_teardown)
     _set_handler_for_command(parser_teardown, _teardown_cosmo)
 
-    #blueprints subparser
+    # blueprints subparser
     blueprints_subparsers = parser_blueprints.add_subparsers()
 
     parser_blueprints_upload = blueprints_subparsers.add_parser(
@@ -277,7 +277,7 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_blueprints_delete)
     _set_handler_for_command(parser_blueprints_delete, _delete_blueprint)
 
-    #deployments subparser
+    # deployments subparser
     deployments_subparsers = parser_deployments.add_subparsers()
     parser_deployments_create = deployments_subparsers.add_parser(
         'create',
@@ -334,6 +334,14 @@ def _parse_args(args):
         help='Operation timeout in seconds (The execution itself will keep '
              'going, it is the CLI that will stop waiting for it to terminate)'
     )
+    parser_deployments_execute.add_argument(
+        '--force',
+        dest='force',
+        action='store_true',
+        default=False,
+        help='Whether the workflow should execute even if there is an ongoing'
+             ' execution for the provided deployment'
+    )
 
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
     _set_handler_for_command(parser_deployments_execute,
@@ -351,7 +359,7 @@ def _parse_args(args):
     _set_handler_for_command(parser_deployments_list,
                              _list_blueprint_deployments)
 
-    #workflows subparser
+    # workflows subparser
     workflows_subparsers = parser_workflows.add_subparsers()
     parser_workflows_list = workflows_subparsers.add_parser(
         'list',
@@ -433,8 +441,8 @@ def _get_provider_module(provider_name, is_verbose_output=False):
     try:
         module_or_pkg_desc = imp.find_module(provider_name)
         if not module_or_pkg_desc[1]:
-            #module_or_pkg_desc[1] is the pathname of found module/package,
-            #if it's empty none were found
+            # module_or_pkg_desc[1] is the pathname of found module/package,
+            # if it's empty none were found
             msg = ('Provider {0} not found.'
                    .format(provider_name))
             flgr.error(msg)
@@ -446,10 +454,10 @@ def _get_provider_module(provider_name, is_verbose_output=False):
         module = imp.load_module(provider_name, *module_or_pkg_desc)
 
         if not module_or_pkg_desc[0]:
-            #module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not
-            #empty only when we've loaded a package rather than a module.
-            #Re-searching for the module inside the now-loaded package
-            #with the same name.
+            # module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not
+            # empty only when we've loaded a package rather than a module.
+            # Re-searching for the module inside the now-loaded package
+            # with the same name.
             module = imp.load_module(
                 provider_name,
                 *imp.find_module(provider_name, module.__path__))
@@ -509,14 +517,14 @@ def _add_verbosity_argument_to_parser(parser):
 def _init_provider(provider, target_directory, reset_config,
                    is_verbose_output=False):
     try:
-        #searching first for the standard name for providers
-        #(i.e. cloudify_XXX)
+        # searching first for the standard name for providers
+        # (i.e. cloudify_XXX)
         provider_module_name = 'cloudify_{0}'.format(provider)
         provider = _get_provider_module(provider_module_name,
                                         is_verbose_output)
     except CosmoCliError:
-        #if provider was not found, search for the exact literal the
-        #user requested instead
+        # if provider was not found, search for the exact literal the
+        # user requested instead
         provider_module_name = provider
         provider = _get_provider_module(provider_module_name,
                                         is_verbose_output)
@@ -573,7 +581,7 @@ def _init_cosmo(args):
     provider_module_name = _init_provider(provider, target_directory,
                                           args.reset_config, is_verbose_output)
 
-    #creating .cloudify file
+    # creating .cloudify file
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
                                      target_directory)
     with _update_wd_settings(args.verbosity) as wd_settings:
@@ -601,7 +609,7 @@ def _bootstrap_cosmo(args):
         wd_settings.set_management_server(mgmt_ip)
         wd_settings.set_provider_context(provider_context)
 
-    #storing provider context on management server
+    # storing provider context on management server
     _get_rest_client(mgmt_ip).post_provider_context(provider_context)
 
     lgr.info(
@@ -644,7 +652,7 @@ def _teardown_cosmo(args):
         provider.teardown(args.config_file_path, provider_context,
                           args.force_validation, args.verbosity)
 
-    #cleaning relevant data from working directory settings
+    # cleaning relevant data from working directory settings
     with _update_wd_settings(args.verbosity) as wd_settings:
         # wd_settings.set_provider_context(provider_context)
         if wd_settings.remove_management_server_context(mgmt_ip):
@@ -689,14 +697,14 @@ def _get_provider(is_verbose_output=False):
 
 
 def _get_provider_context(mgmt_ip, is_verbose_output=False):
-    #trying to retrieve provider context from server
+    # trying to retrieve provider context from server
     try:
         return _get_rest_client(mgmt_ip).get_provider_context()
     except CosmoManagerRestCallError as e:
         lgr.debug('Failed to get provider context from server: {0}'.format(
             str(e)))
 
-    #using the local provider context instead (if it's relevant for the
+    # using the local provider context instead (if it's relevant for the
     # target server)
     cosmo_wd_settings = _load_cosmo_working_dir_settings(is_verbose_output)
     if cosmo_wd_settings.get_provider_context():
@@ -704,7 +712,7 @@ def _get_provider_context(mgmt_ip, is_verbose_output=False):
         if default_mgmt_server_ip == mgmt_ip:
             return cosmo_wd_settings.get_provider_context()
         else:
-            #the local provider context data is for a different server
+            # the local provider context data is for a different server
             msg = "Failed to get provider context from target server"
     else:
         msg = "Provider context is not set in working directory settings"
@@ -735,8 +743,8 @@ def _status(args):
 
 def _use_management_server(args):
     if not os.path.exists(CLOUDIFY_WD_SETTINGS_FILE_NAME):
-        #Allowing the user to work with an existing management server
-        #even if "init" wasn't called prior to this.
+        # Allowing the user to work with an existing management server
+        # even if "init" wasn't called prior to this.
         _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings())
 
     provider_context = _get_rest_client(args.management_ip)\
@@ -833,7 +841,7 @@ def _create_event_message_prefix(event):
     deployment_id = context['deployment_id']
     node_info = ''
     operation = ''
-    if 'node_id' in context:
+    if 'node_id' in context and context['node_id'] is not None:
         node_id = context['node_id']
         if 'operation' in context and context['operation'] is not None:
             operation = '.{0}'.format(context['operation'].split('.')[-1])
@@ -871,6 +879,7 @@ def _execute_deployment_operation(args):
     operation = args.operation
     deployment_id = args.deployment_id
     timeout = args.timeout
+    force = args.force
 
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
              " management server {2} [timeout={3} seconds]"
@@ -888,21 +897,25 @@ def _execute_deployment_operation(args):
         execution_id, error = client.execute_deployment(deployment_id,
                                                         operation,
                                                         events_logger,
-                                                        timeout=timeout)
+                                                        timeout=timeout,
+                                                        force=force)
         if error is None:
             lgr.info("Finished executing workflow '{0}' on deployment"
                      "'{1}'".format(operation, deployment_id))
+            lgr.info(events_message.format(execution_id))
         else:
             lgr.info("Execution of workflow '{0}' for deployment "
                      "'{1}' failed. "
                      "[error={2}]".format(operation, deployment_id, error))
-        lgr.info(events_message.format(execution_id))
+            lgr.info(events_message.format(execution_id))
+            raise SuppressedCosmoCliError()
     except CosmoManagerRestCallTimeoutError, e:
         lgr.info("Execution of workflow '{0}' for deployment '{1}' timed out. "
                  "* Run 'cfy executions cancel --execution-id {2}' to cancel"
                  " the running workflow.".format(operation, deployment_id,
                                                  e.execution_id))
         lgr.info(events_message.format(e.execution_id))
+        raise SuppressedCosmoCliError()
 
 
 # TODO implement blueprint deployments on server side
@@ -1026,6 +1039,10 @@ def _set_cli_except_hook():
             if output_level <= logging.DEBUG:
                 print("Stack trace:")
                 traceback.print_tb(the_traceback)
+        elif type == SuppressedCosmoCliError:
+            # output is already generated elsewhere
+            # we only want and exit code that is not 0
+            pass
         else:
             old_excepthook(type, value, the_traceback)
 
@@ -1146,7 +1163,7 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
     def remove_management_server_context(self, management_ip):
         # Clears management server context data.
         # Returns True if the management server was the management
-        #   server being used at the time of the call
+        # server being used at the time of the call
         if management_ip in self._mgmt_to_contextual_aliases:
             del(self._mgmt_to_contextual_aliases[management_ip])
         if self._management_ip == management_ip:
@@ -1180,6 +1197,10 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
 
 
 class CosmoCliError(Exception):
+    pass
+
+
+class SuppressedCosmoCliError(Exception):
     pass
 
 if __name__ == '__main__':

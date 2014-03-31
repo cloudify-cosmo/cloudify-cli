@@ -21,8 +21,8 @@ from cosmo_manager_rest_client.cosmo_manager_rest_client \
 
 
 class MockCosmoManagerRestClient(object):
-    #A mock of the rest client, containing only the methods and object types
-    #that are relevant to test the CLI in its current form.
+    # A mock of the rest client, containing only the methods and object types
+    # that are relevant to test the CLI in its current form.
 
     def list_blueprints(self):
         return []
@@ -40,7 +40,7 @@ class MockCosmoManagerRestClient(object):
         return MicroMock(id='a-deployment-id')
 
     def execute_deployment(self, deployment_id, operation, events_handler=None,
-                           timeout=900):
+                           timeout=900, force=False):
         if operation != 'install':
             raise CosmoManagerRestCallError("operation {0} doesn't exist"
                                             .format(operation))
