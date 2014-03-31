@@ -59,6 +59,10 @@ SHELL_PIPE_TO_LOGGER = ' |& logger -i -t cosmo-bootstrap -p local0.info'
 CLOUDIFY_PACKAGES_PATH = '/cloudify'
 CLOUDIFY_COMPONENTS_PACKAGE_PATH = '/cloudify3-components'
 CLOUDIFY_PACKAGE_PATH = '/cloudify3'
+AGENT_PACKAGES_PATH = '/cloudify-agents'
+
+FABRIC_RETRIES = 3
+FABRIC_SLEEPTIME = 3
 
 
 def logger():
@@ -178,7 +182,7 @@ def _parse_args(args):
         action='store_true',
         help='A flag indicating overwriting existing configuration is allowed'
     )
-    _set_handler_for_command(parser_init, _init)
+    _set_handler_for_command(parser_init, _init_provider)
 
     #bootstrap subparser
     parser_bootstrap.add_argument(
@@ -209,14 +213,14 @@ def _parse_args(args):
         action='store_true',
         help='A flag indicating that bootstrap will be run in dev-mode,'
         ' allowing to choose specific branches to run with')
-    _set_handler_for_command(parser_bootstrap, _bootstrap)
+    _set_handler_for_command(parser_bootstrap, _bootstrap_manager)
 
     #teardown subparser
     _add_force_optional_argument_to_parser(
         parser_teardown,
         'A flag indicating confirmation for the teardown request')
     _add_management_ip_optional_argument_to_parser(parser_teardown)
-    _set_handler_for_command(parser_teardown, _teardown_cosmo)
+    _set_handler_for_command(parser_teardown, _teardown_manager)
 
     #blueprints subparser
     blueprints_subparsers = parser_blueprints.add_subparsers()
@@ -514,8 +518,8 @@ def _set_global_verbosity_level(is_verbose_output=False):
     # print 'level is: ' + str(lgr.getEffectiveLevel())
 
 
-def _init_provider(provider, target_directory, reset_config,
-                   is_verbose_output=False):
+def _init(provider, target_directory, reset_config,
+          is_verbose_output=False):
     _set_global_verbosity_level(is_verbose_output)
     try:
         #searching first for the standard name for providers
@@ -552,7 +556,7 @@ def _init_provider(provider, target_directory, reset_config,
         return provider_module_name
 
 
-def _init(args):
+def _init_provider(args):
     _set_global_verbosity_level(args.verbosity)
     target_directory = os.path.expanduser(args.target_dir)
     provider = args.provider
@@ -578,14 +582,14 @@ def _init(args):
                 sys.exit(msg)
         else:  # resetting provider configuration
             lgr.debug('resetting configuration...')
-            _init_provider(provider, target_directory, args.reset_config,
-                           args.verbosity)
+            _init(provider, target_directory,
+                  args.reset_config, args.verbosity)
             lgr.info("Configuration reset complete")
             return
 
     lgr.info("Initializing Cloudify")
-    provider_module_name = _init_provider(provider, target_directory,
-                                          args.reset_config, args.verbosity)
+    provider_module_name = _init(provider, target_directory,
+                                 args.reset_config, args.verbosity)
 
     #creating .cloudify file
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
@@ -642,160 +646,7 @@ def _deep_merge_dictionaries(overriding_dict, overridden_dict):
     return merged_dict
 
 
-def _bootstrap_manager(mgmt_ip, private_ip, mgmt_ssh_key, mgmt_ssh_user,
-                       provider_config, dev_mode, is_verbose_output=False):
-
-    def _run_with_retries(command, retries=3, sleeper=3):
-
-        for execution in range(retries):
-            lgr.debug('running command: {0}'
-                      .format(command))
-            if not is_verbose_output:
-                with hide('running', 'stdout'):
-                    r = run(command)
-            else:
-                r = run(command)
-            if r.succeeded:
-                lgr.debug('successfully ran command: {0}'
-                          .format(command))
-                return
-            else:
-                lgr.warning('retrying command: {0}'
-                            .format(command))
-                time.sleep(sleeper)
-        lgr.error('failed to run: {0}, {1}'
-                  .format(command), r.stdout)
-        return
-
-    def _download_package(url, path):
-        _run_with_retries('sudo wget %s -P %s' % (path, url))
-
-    def _unpack(path):
-        _run_with_retries('sudo dpkg -i %s/*.deb' % path)
-
-    def _run(command):
-        _run_with_retries(command)
-
-    lgr.info('initializing manager on the machine at {0}'
-             .format(mgmt_ip))
-    cosmo_config = provider_config['cloudify']
-
-    env.user = mgmt_ssh_user
-    env.key_filename = mgmt_ssh_key
-    env.warn_only = 0
-    env.abort_on_prompts = False
-    env.connection_attempts = 5
-    env.keepalive = 0
-    env.linewise = False
-    env.pool_size = 0
-    env.skip_bad_hosts = False
-    env.timeout = 10
-    env.forward_agent = True
-    env.status = False
-    env.disable_known_hosts = False
-
-    with settings(host_string=mgmt_ip), hide('running', 'stderr',
-                                             'aborts', 'warnings'):
-        try:
-            lgr.info('downloading cloudify components package...')
-            _download_package(
-                CLOUDIFY_PACKAGES_PATH,
-                cosmo_config['cloudify_components_package_url'])
-
-            lgr.info('downloading cloudify package...')
-            _download_package(
-                CLOUDIFY_PACKAGES_PATH,
-                cosmo_config['cloudify_package_url'])
-        except:
-            lgr.error('failed to download cloudify packages. '
-                      'please ensure packages exist in their '
-                      'configured locations in the config file')
-            return False
-
-        try:
-            lgr.info('unpacking cloudify packages...')
-            _unpack(
-                CLOUDIFY_PACKAGES_PATH)
-        except:
-            lgr.error('failed to unpack cloudify packages')
-            return False
-
-        try:
-            lgr.debug('enhancing verbosity for installation process')
-            v = is_verbose_output
-            is_verbose_output = True
-
-            lgr.info('installing cloudify on {0}...'.format(mgmt_ip))
-            _run('sudo {0}/cloudify3-components-bootstrap.sh'
-                 .format(CLOUDIFY_COMPONENTS_PACKAGE_PATH))
-
-            _run('sudo {0}/cloudify3-bootstrap.sh'
-                 .format(CLOUDIFY_PACKAGE_PATH))
-        except:
-            lgr.error('failed to install manager')
-            return False
-
-        if dev_mode:
-            lgr.info('\n\n\n\n\nentering dev-mode. '
-                     'dev configuration will be applied...\n'
-                     'NOTE: an internet connection might be '
-                     'required...')
-
-            dev_config = provider_config['dev']
-            # lgr.debug(json.dumps(dev_config, sort_keys=True,
-            #           indent=4, separators=(',', ': ')))
-
-            for key, value in dev_config.iteritems():
-                virtualenv = value['virtualenv']
-                lgr.debug('virtualenv is: ' + str(virtualenv))
-
-                if 'preruns' in value:
-                    for command in value['preruns']:
-                        _run(command)
-
-                if 'downloads' in value:
-                    _run('mkdir -p /tmp')
-                    for download in value['downloads']:
-                        lgr.debug('downloading: ' + download)
-                        _run('sudo wget {0} -O '
-                             '/tmp/module.tar.gz'
-                             .format(download))
-                        _run('sudo tar -C /tmp -xvf {0}'
-                             .format('/tmp/module.tar.gz'))
-
-                if 'installs' in value:
-                    src_wfs = False
-                    try:
-                        src_wfs = value['installs']['workflow_service']
-                    except:
-                        pass
-                    if src_wfs:
-                        lgr.debug('installing wfs')
-                        dst_wfs = ('{0}/cosmo-manager-*/'
-                                   'workflow-service/'
-                                   .format(virtualenv))
-                        lgr.debug('workflow service config..')
-                        _run('sudo cp -R {0} {1}'
-                             .format(src_wfs, dst_wfs))
-                    else:
-                        for install in value['installs']:
-                            lgr.debug('installing: ' + install)
-                            _run('sudo {0}/bin/pip '
-                                 '--default-timeout'
-                                 '=45 install {1} --upgrade'
-                                 .format(virtualenv, install))
-
-                if 'runs' in value:
-                    for command in value['runs']:
-                        _run(command)
-
-            # lgr.info('managenet ip is {0}'.format(mgmt_ip))
-        lgr.debug('setting verbosity to previous state')
-        is_verbose_output = v
-        return True
-
-
-def _bootstrap(args):
+def _bootstrap_manager(args):
     _set_global_verbosity_level(args.verbosity)
 
     provider_name = _get_provider(args.verbosity)
@@ -807,26 +658,31 @@ def _bootstrap(args):
                                    provider_dir,
                                    args.verbosity)
 
-    sys.path.append(provider_dir)
-    from schemas import PROVIDER_SCHEMA
-    _validate_config_schema(provider_config, PROVIDER_SCHEMA, args.verbosity)
-    lgr.info('validating additional provider resources and configuration')
-    if provider.validate(provider_config, PROVIDER_SCHEMA,
-                         args.verbosity):
+    # sys.path.append(provider_dir)
+    provider_manager = provider.ProviderManager(provider_config,
+                                                args.verbosity)
+    lgr.info('validating provider resources and configuration')
+    if provider_manager.validate():
         lgr.info('provider validations completed successfully')
     else:
         lgr.error('provider validations failed!')
         sys.exit(1)
     with _protected_provider_call(args.verbosity):
         lgr.info('provisioning resources for management server...')
-        mgmt_ip, private_ip, ssh_key, ssh_user = provider.provision(
-            provider_config, args.verbosity)
-        lgr.info('provisioning complete')
-    if mgmt_ip is not None:
-        installed = _bootstrap_manager(mgmt_ip, private_ip, ssh_key, ssh_user,
-                                       provider_config, args.dev_mode,
-                                       args.verbosity)
-    if mgmt_ip is not None and installed:
+        params = provider_manager.provision(provider_config)
+        if params is not None:
+            mgmt_ip, private_ip, ssh_key, ssh_user = params
+            lgr.info('provisioning complete')
+        else:
+            lgr.error('provisioning failed!')
+    if params is not None:
+        lgr.info('bootstrapping the management server...')
+        installed = provider_manager.bootstrap(provider_config,
+                                               mgmt_ip, private_ip, ssh_key,
+                                               ssh_user, args.dev_mode)
+        lgr.info('bootstrapping complete') if installed else \
+            lgr.error('bootstrapping failed!')
+    if params is not None and installed:
         mgmt_ip = mgmt_ip.encode('utf-8')
 
         with _update_wd_settings(args.verbosity) as wd_settings:
@@ -842,41 +698,11 @@ def _bootstrap(args):
         else:
             lgr.info('tearing down manager server'
                      ' due to bootstrap failure')
-            # servers = self.server_killer.list_objects_with_name(
-                # provider_config['compute']
-                               # ['management_server']['instance']['name'])
-            provider.teardown(provider_config, mgmt_ip, args.verbosity)
+            provider_manager.teardown(mgmt_ip)
             sys.exit(1)
 
 
-def _validate_config_schema(provider_config, schema=None,
-                            is_verbose_output=False):
-    _set_global_verbosity_level(is_verbose_output)
-    if schema is not None:
-        global validated
-        v = Draft4Validator(schema)
-        if v.iter_errors(provider_config):
-            errors = ';\n'.join('config file validation error found at key:'
-                                ' %s, %s' % ('.'.join(e.path), e.message)
-                                for e in v.iter_errors(provider_config))
-        try:
-            lgr.info('validating provider configuration file...')
-            v.validate(provider_config)
-            lgr.info('provider configuration file validated successfully')
-        except ValidationError:
-            lgr.error('{0}'.format(errors))
-            lgr.error('provider configuration validation failed!')
-            sys.exit(1)
-    else:
-        msg = ("no schema provided to validate against!")
-        flgr.error(msg)
-        if is_verbose_output:
-            raise CosmoCliError(msg)
-        else:
-            sys.exit(msg)
-
-
-def _teardown_cosmo(args):
+def _teardown_manager(args):
     is_verbose_output = args.verbosity
     if not args.force:
         msg = ("This action requires additional "
@@ -898,8 +724,10 @@ def _teardown_cosmo(args):
     provider_config = _read_config(config_file_path=None,
                                    provider_dir=provider_dir,
                                    is_verbose_output=args.verbosity)
+    provider_manager = provider.ProviderManager(provider_config,
+                                                args.verbosity)
     with _protected_provider_call(args.verbosity):
-        t = provider.teardown(provider_config, mgmt_ip, args.verbosity)
+        t = provider_manager.teardown(mgmt_ip)
 
     #cleaning relevant data from working directory settings
     if t:
@@ -1399,6 +1227,231 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
             else:
                 sys.exit(msg)
         self._mgmt_aliases[management_alias] = management_address
+
+
+class BaseProviderClass(object):
+
+    def bootstrap(self, provider_config, mgmt_ip, private_ip,
+                  mgmt_ssh_key, mgmt_ssh_user, dev_mode=False):
+
+        def _run_with_retries(command, retries=FABRIC_RETRIES,
+                              sleeper=FABRIC_SLEEPTIME):
+
+            for execution in range(retries):
+                lgr.debug('running command: {0}'
+                          .format(command))
+                if not self.is_verbose_output:
+                    with hide('running', 'stdout'):
+                        r = run(command)
+                else:
+                    r = run(command)
+                if r.succeeded:
+                    lgr.debug('successfully ran command: {0}'
+                              .format(command))
+                    return True
+                else:
+                    lgr.warning('retrying command: {0}'
+                                .format(command))
+                    time.sleep(sleeper)
+            lgr.error('failed to run: {0}, {1}'
+                      .format(command, r.stderr))
+            return False
+
+        def _download_package(url, path):
+            return _run_with_retries('sudo wget {0} -P {1}'
+                                     .format(path, url))
+
+        def _unpack(path):
+            return _run_with_retries('sudo dpkg -i {0}/*.deb'
+                                     .format(path))
+
+        def _run(command):
+            return _run_with_retries(command)
+
+        lgr.info('initializing manager on the machine at {0}'
+                 .format(mgmt_ip))
+        cosmo_config = self.provider_config['cloudify']
+
+        env.user = mgmt_ssh_user
+        env.key_filename = mgmt_ssh_key
+        env.warn_only = True
+        env.abort_on_prompts = False
+        env.connection_attempts = 5
+        env.keepalive = 0
+        env.linewise = False
+        env.pool_size = 0
+        env.skip_bad_hosts = False
+        env.timeout = 10
+        env.forward_agent = True
+        env.status = False
+        env.disable_known_hosts = False
+
+        with settings(host_string=mgmt_ip), hide('running', 'stderr',
+                                                 'aborts', 'warnings'):
+            lgr.info('downloading cloudify components package...')
+            r = _download_package(
+                CLOUDIFY_PACKAGES_PATH,
+                cosmo_config['cloudify_components_package_url'])
+            if not r:
+                lgr.error('failed to download components package. '
+                          'please ensure package exists in its '
+                          'configured location in the config file')
+                return False
+
+            lgr.info('downloading cloudify package...')
+            r = _download_package(
+                CLOUDIFY_PACKAGES_PATH,
+                cosmo_config['cloudify_package_url'])
+            if not r:
+                lgr.error('failed to download cloudify package. '
+                          'please ensure package exists in its '
+                          'configured location in the config file')
+                return False
+
+            lgr.info('downloading cloudify ubuntu agent...')
+            r = _download_package(
+                AGENT_PACKAGES_PATH,
+                cosmo_config['cloudify_ubuntu_agent_url'])
+            if not r:
+                lgr.error('failed to download cloudify ubuntu agent. '
+                          'please ensure package exists in its '
+                          'configured location in the config file')
+                return False
+
+            lgr.info('unpacking cloudify packages...')
+            r = _unpack(CLOUDIFY_PACKAGES_PATH)
+            if not r:
+                lgr.error('failed to unpack cloudify packages')
+                return False
+
+            lgr.debug('verifying verbosity for installation process')
+            v = self.is_verbose_output
+            self.is_verbose_output = True
+
+            lgr.info('installing cloudify on {0}...'.format(mgmt_ip))
+            r = _run('sudo {0}/cloudify3-components-bootstrap.sh'
+                     .format(CLOUDIFY_COMPONENTS_PACKAGE_PATH))
+            if not r:
+                lgr.error('failed to install components')
+                return False
+
+            celery_user = mgmt_ssh_user
+            r = _run('sudo {0}/cloudify3-bootstrap.sh {1} {2}'
+                     .format(CLOUDIFY_PACKAGE_PATH,
+                             celery_user, private_ip))
+            if not r:
+                lgr.error('failed to install cloudify')
+                return False
+
+            self.is_verbose_output = False
+            lgr.info('unpacking cloudify agent...')
+            r = _unpack(AGENT_PACKAGES_PATH)
+            if not r:
+                lgr.error('failed to unpack cloudify agent')
+                return False
+
+            self.is_verbose_output = True
+            if dev_mode:
+                lgr.info('\n\n\n\n\nentering dev-mode. '
+                         'dev configuration will be applied...\n'
+                         'NOTE: an internet connection might be '
+                         'required...')
+
+                dev_config = self.provider_config['dev']
+                # lgr.debug(json.dumps(dev_config, sort_keys=True,
+                #           indent=4, separators=(',', ': ')))
+
+                for key, value in dev_config.iteritems():
+                    virtualenv = value['virtualenv']
+                    lgr.debug('virtualenv is: ' + str(virtualenv))
+
+                    if 'preruns' in value:
+                        for command in value['preruns']:
+                            _run(command)
+
+                    if 'downloads' in value:
+                        _run('mkdir -p /tmp')
+                        for download in value['downloads']:
+                            lgr.debug('downloading: ' + download)
+                            _run('sudo wget {0} -O '
+                                 '/tmp/module.tar.gz'
+                                 .format(download))
+                            _run('sudo tar -C /tmp -xvf {0}'
+                                 .format('/tmp/module.tar.gz'))
+
+                    if 'installs' in value:
+                        src_wfs = False
+                        src_orc = False
+                        try:
+                            src_wfs = value['installs']['workflow_service']
+                        except:
+                            pass
+                        try:
+                            src_orc = value['installs']['orchestrator']
+                        except:
+                            pass
+                        if src_wfs:
+                            lgr.debug('installing wfs')
+                            dst_wfs = ('{0}/cosmo-manager-*/'
+                                       'workflow-service/'
+                                       .format(virtualenv))
+                            lgr.debug('workflow service config..')
+                            _run('sudo cp -R {0} {1}'
+                                 .format(src_wfs, dst_wfs))
+                        elif src_orc:
+                            lgr.debug('installing orchestrator')
+                            dst_orc = ('{0}/resources/'.format(virtualenv))
+                            lgr.debug('orchestrator config..')
+                            _run('sudo cp -R {0} {1}'
+                                      .format('{0}/cloudify/'.format(src_orc),  # NOQA
+                                              dst_orc))
+                            _run('sudo cp -R {0} {1}'
+                                      .format('{0}/org/cloudifysource/cosmo/dsl/alias-mappings.yaml'  # NOQA
+                                              .format(src_orc),  # NOQA
+                                              '{0}/cloudify/'.format(dst_orc)))  # NOQA
+                        else:
+                            for install in value['installs']:
+                                lgr.debug('installing: ' + install)
+                                _run('sudo {0}/bin/pip '
+                                     '--default-timeout'
+                                     '=45 install {1} --upgrade'
+
+                                     .format(virtualenv, install))
+
+                    if 'runs' in value:
+                        for command in value['runs']:
+                            _run(command)
+
+                lgr.info('managenet ip is {0}'.format(mgmt_ip))
+            lgr.debug('setting verbosity to previous state')
+            self.is_verbose_output = v
+            return True
+
+    def _validate_config_schema(self, schema=None):
+        _set_global_verbosity_level(self.is_verbose_output)
+        if schema is not None:
+            global validated
+            v = Draft4Validator(schema)
+            if v.iter_errors(self.provider_config):
+                errors = ';\n'.join('config file validation error found. key:'
+                                    ' %s, %s' % ('.'.join(e.path), e.message)
+                                    for e in v.iter_errors(
+                                        self.provider_config))
+            try:
+                lgr.info('validating provider configuration file...')
+                v.validate(self.provider_config)
+                lgr.info('provider configuration file validated successfully')
+            except ValidationError:
+                lgr.error('{0}'.format(errors))
+                lgr.error('provider configuration validation failed!')
+                sys.exit(1)
+        else:
+            msg = ("no schema provided to validate against!")
+            flgr.error(msg)
+            if self.is_verbose_output:
+                raise CosmoCliError(msg)
+            else:
+                sys.exit(msg)
 
 
 class CosmoCliError(Exception):
