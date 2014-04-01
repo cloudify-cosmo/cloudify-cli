@@ -59,6 +59,12 @@ class MockCosmoManagerRestClient(object):
     def get_all_execution_events(self, execution_id, include_logs=False):
         return []
 
+    def get_provider_context(self):
+        return {}
+
+    def post_provider_context(self, provider_context):
+        pass
+
 
 class MicroMock(object):
     """A class to help ease the creation of anonymous objects"""
