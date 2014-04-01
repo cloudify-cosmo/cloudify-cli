@@ -70,7 +70,7 @@ This will install your deployment - all you have left to do is sit back and watc
 ## Providers
 A provider is any platform which allows for the creation and bootstrapping of a management server (e.g. Openstack). The CLI can work with any provider once the appropriate extension has been installed. A provider extension is provider-specific code which handles environment-related operations such as bootstrap and teardown.
 
-Note that the CLI can be used even without the installation of any providers - if you already possess a bootstrapped management server, you may simply direct the CLI to work with that server (`cfy use <management-ip>`), and you can then issue any of the CLI commands to that server (with the exception of the "**cfy teardown**" command)
+Note that the CLI can be used even without the installation of any providers - if you already possess a bootstrapped management server, you may simply direct the CLI to work with that server (`cfy use <management-ip>`), and you can then issue any of the CLI commands to that server
 
 
 ###Currently Supported Providers:
@@ -94,19 +94,21 @@ Every provider extention is expected to implement the following interface:
     - **Returns:**: False if a configuration file already exists and reset_config is False; True otherwise.
   
   - **bootstrap**(*config_file_path=None*, *is_verbose_output=False*, *bootstrap_using_script=False*, *keep_up=False*, "dev_mode=False*")  
-    - **Description**: This method is used to set up the management server as well as the environment (e.g. network) in which it resides. It is currently also responsible for bootstrapping the server as a management server.  
+    - **Description**: This method is used to set up the management server as well as the environment (e.g. network) in which it resides. It is currently also responsible for bootstrapping the server as a management server. This method is also in charge of creating the provider-context object, which will be stored on both the management server and locally, and will be retrieved and used upon a call to the teardown command - making it useful for storing bootstrap information which will be needed at the teardown stage.
     - **Parameters**:
-      - *config_file_path=None* - A path to an appropriate configuration file to be used in the bootstrap process. If one is required yet not passed, the Provider is expected to assume this command is called from the same path from which "init" was called, and search for the relevant file in the current directory.
+      - *config_file_path* - A path to an appropriate configuration file to be used in the bootstrap process. If one is required yet not passed, the Provider is expected to assume this command is called from the same path from which "init" was called, and search for the relevant file in the current directory.
       - *is_verbose_output* - A flag for setting verbose output,
       - *bootstrap_using_script* - A flag indicating that bootstrap will be performed via a script (rather than a package. the script is provided within the provider's code).
       - *keep_up* - A flag indicating that even if bootstrap fails, the instance will remain running.
       - *--dev-mode* - A flag indicating that bootstrap will be run in dev-mode, allowing to choose specific branches to run with.
-    - **Returns**: The IP of the bootstrapped management server.
+    - **Returns**: A 2-tuple: The IP of the bootstrapped management server, and the provider context object.
   
-  - **teardown**(*management_ip*, *is_verbose_output=False*)  
-    - **Description**: This method is used to tear down the server at the address supplied, as well as any environment objects related to the server which will no longer be of use.
+  - **teardown**(*provider_context*, *ignore_conflicts=False*, *config_path=None*, *is_verbose_output=False*)  
+    - **Description**: This method is used to tear down the management server, as well as any environment objects related to the server which will no longer be of use.
     - **Parameters**:
-      - *management_ip* - The IP of the management server to teardown.
+      - *provider_context* - The provider context object which the provider creates at bootstrap stage.
+      - *ignore_conflicts* - A flag for ignoring detected conflicts, allowing the teardown operation to continue and delete whatever resources which there aren't any conflicts on.
+      - *config_path* - A path to an appropriate configuration file to be used in the bootstrap process. If one is required yet not passed, the Provider is expected to assume this command is called from the same path from which "init" was called, and search for the relevant file in the current directory.
       - *is_verbose_output* - A flag for setting verbose output
     - **Returns**: None.  
 
@@ -198,11 +200,14 @@ re
 
 **Description:** tears down the management-server, as well as any local aliases under its context
 
-**Usage:** `cfy teardown [-f, --force] [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy teardown [-c, --config-file] [-f, --force] [-fv, --force-validation] [-fd, --force-deployments] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
+- config-file: path to the config file (Optional)
 - force: a flag indicating confirmation for this irreversable action (Optional)
+- force-validation: A flag indicating confirmation for the provider to continue with the teardown process even if there are conflicts detected, allowing whatever resources which there aren't any conflicts on to be removed (Optional)
+- force-deployments: A flag indicating confirmation to continue with the teardown process even if the management server currently has active deployments (Optional)
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 
