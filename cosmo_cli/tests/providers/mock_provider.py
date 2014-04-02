@@ -33,6 +33,6 @@ def bootstrap(config_path=None, is_verbose_output=False,
     return '10.0.0.1', {}
 
 
-def teardown(provider_context, ignore_conflicts=False, config_path=None,
+def teardown(provider_context, ignore_validation=False, config_path=None,
              is_verbose_output=False):
     pass
