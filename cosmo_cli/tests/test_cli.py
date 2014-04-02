@@ -197,7 +197,7 @@ class CliTest(unittest.TestCase):
     def test_teardown_parameters(self):
         self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
-        self._run_cli("cfy teardown -t 10.0.0.1 -f --ignore-verification "
+        self._run_cli("cfy teardown -t 10.0.0.1 -f --ignore-validation "
                       "--ignore-deployments -c myfile")
 
     def test_teardown_force_deployments(self):
@@ -206,7 +206,7 @@ class CliTest(unittest.TestCase):
         cli._get_rest_client = \
             lambda ip: rest_client
         self._run_cli("cfy init mock_provider -v")
-        self._assert_ex("cfy teardown -t 10.0.0.1 -f --ignore-verification "
+        self._assert_ex("cfy teardown -t 10.0.0.1 -f --ignore-validation "
                         "-c myfile",
                         "has active deployments")
 
