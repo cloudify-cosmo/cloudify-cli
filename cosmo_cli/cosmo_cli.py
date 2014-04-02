@@ -649,12 +649,12 @@ def _teardown_cosmo(args):
     # cleaning relevant data from working directory settings
     with _update_wd_settings(args.verbosity) as wd_settings:
         # wd_settings.set_provider_context(provider_context)
-        if wd_settings.remove_management_server_context(mgmt_ip):
-            lgr.info(
-                "No longer using management server {0} as the "
-                "default management server - run 'cfy use' "
-                "command to use a different server as default"
-                .format(mgmt_ip))
+        wd_settings.remove_management_server_context(mgmt_ip)
+        lgr.info(
+            "No longer using management server {0} as the "
+            "default management server - run 'cfy use' "
+            "command to use a different server as default"
+            .format(mgmt_ip))
 
     lgr.info("teardown complete")
 
@@ -1173,14 +1173,8 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
 
     def remove_management_server_context(self, management_ip):
         # Clears management server context data.
-        # Returns True if the management server was the management
-        # server being used at the time of the call
         if management_ip in self._mgmt_to_contextual_aliases:
             del(self._mgmt_to_contextual_aliases[management_ip])
-        if self._management_ip == management_ip:
-            self._management_ip = None
-            return True
-        return False
 
     def get_provider(self):
         return self._provider
