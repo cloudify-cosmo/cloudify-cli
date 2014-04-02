@@ -196,15 +196,15 @@ def _parse_args(args):
         help='Path to a provider configuration file'
     )
     parser_teardown.add_argument(
-        '-fd', '--force-deployments',
-        dest='force_deployments',
+        '--ignore-deployments',
+        dest='ignore_deployments',
         action='store_true',
         help='A flag indicating confirmation for teardown even if there '
              'exist active deployments'
     )
     parser_teardown.add_argument(
-        '-fv', '--force-validation',
-        dest='force_validation',
+        '--ignore-validation',
+        dest='ignore_validation',
         action='store_true',
         help='A flag indicating confirmation for teardown even if there '
              'are validation conflicts'
@@ -625,10 +625,10 @@ def _teardown_cosmo(args):
             sys.exit(msg)
 
     mgmt_ip = _get_management_server_ip(args)
-    if not args.force_deployments and \
+    if not args.ignore_deployments and \
             len(_get_rest_client(mgmt_ip).list_deployments()) > 0:
-        msg = ("Management server {0} has active deployments. Add the '-fd' "
-               "or '--force-deployments' flags to your command to ignore "
+        msg = ("Management server {0} has active deployments. Add the "
+               "'--ignore-deployments' flag to your command to ignore "
                "these deployments and execute topology teardown."
                .format(mgmt_ip))
         flgr.error(msg)
@@ -643,7 +643,7 @@ def _teardown_cosmo(args):
     provider_context = _get_provider_context(mgmt_ip, args.verbosity)
     provider = _get_provider_module(provider_name, args.verbosity)
     with _protected_provider_call(args.verbosity):
-        provider.teardown(provider_context, args.force_validation,
+        provider.teardown(provider_context, args.ignore_validation,
                           args.config_file_path, args.verbosity)
 
     # cleaning relevant data from working directory settings
