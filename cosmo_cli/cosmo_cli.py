@@ -196,15 +196,15 @@ def _parse_args(args):
         help='Path to a provider configuration file'
     )
     parser_teardown.add_argument(
-        '-fd', '--force-deployments',
-        dest='force_deployments',
+        '--ignore-deployments',
+        dest='ignore_deployments',
         action='store_true',
         help='A flag indicating confirmation for teardown even if there '
              'exist active deployments'
     )
     parser_teardown.add_argument(
-        '-fv', '--force-validation',
-        dest='force_validation',
+        '--ignore-validation',
+        dest='ignore_validation',
         action='store_true',
         help='A flag indicating confirmation for teardown even if there '
              'are validation conflicts'
@@ -625,10 +625,10 @@ def _teardown_cosmo(args):
             sys.exit(msg)
 
     mgmt_ip = _get_management_server_ip(args)
-    if not args.force_deployments and \
+    if not args.ignore_deployments and \
             len(_get_rest_client(mgmt_ip).list_deployments()) > 0:
-        msg = ("Management server {0} has active deployments. Add the '-fd' "
-               "or '--force-deployments' flags to your command to ignore "
+        msg = ("Management server {0} has active deployments. Add the "
+               "'--ignore-deployments' flag to your command to ignore "
                "these deployments and execute topology teardown."
                .format(mgmt_ip))
         flgr.error(msg)
@@ -643,18 +643,18 @@ def _teardown_cosmo(args):
     provider_context = _get_provider_context(mgmt_ip, args.verbosity)
     provider = _get_provider_module(provider_name, args.verbosity)
     with _protected_provider_call(args.verbosity):
-        provider.teardown(provider_context, args.force_validation,
+        provider.teardown(provider_context, args.ignore_validation,
                           args.config_file_path, args.verbosity)
 
     # cleaning relevant data from working directory settings
     with _update_wd_settings(args.verbosity) as wd_settings:
         # wd_settings.set_provider_context(provider_context)
-        if wd_settings.remove_management_server_context(mgmt_ip):
-            lgr.info(
-                "No longer using management server {0} as the "
-                "default management server - run 'cfy use' "
-                "command to use a different server as default"
-                .format(mgmt_ip))
+        wd_settings.remove_management_server_context(mgmt_ip)
+        lgr.info(
+            "No longer using management server {0} as the "
+            "default management server - run 'cfy use' "
+            "command to use a different server as default"
+            .format(mgmt_ip))
 
     lgr.info("teardown complete")
 
@@ -1063,7 +1063,7 @@ def _set_cli_except_hook():
 def _load_cosmo_working_dir_settings(is_verbose_output=False):
     try:
         with open('{0}'.format(CLOUDIFY_WD_SETTINGS_FILE_NAME), 'r') as f:
-            return yaml.safe_load(f.read())
+            return yaml.load(f.read())
     except IOError:
         msg = ('You must first initialize by running the '
                'command "cfy init", or choose to work with '
@@ -1150,7 +1150,7 @@ def _protected_provider_call(is_verbose_output=False):
 
 class CosmoWorkingDirectorySettings(yaml.YAMLObject):
     yaml_tag = u'!WD_Settings'
-    yaml_loader = yaml.SafeLoader
+    yaml_loader = yaml.Loader
 
     def __init__(self):
         self._management_ip = None
@@ -1173,14 +1173,8 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
 
     def remove_management_server_context(self, management_ip):
         # Clears management server context data.
-        # Returns True if the management server was the management
-        # server being used at the time of the call
         if management_ip in self._mgmt_to_contextual_aliases:
             del(self._mgmt_to_contextual_aliases[management_ip])
-        if self._management_ip == management_ip:
-            self._management_ip = None
-            return True
-        return False
 
     def get_provider(self):
         return self._provider
