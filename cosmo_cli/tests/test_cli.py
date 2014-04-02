@@ -195,8 +195,16 @@ class CliTest(unittest.TestCase):
 
     def test_teardown_parameters(self):
         self._run_cli("cfy init mock_provider -v")
-        self._assert_ex("cfy teardown -t 10.0.0.1 -f -fv -fd -c myfile",
-                        "This action requires additional confirmation.")
+        self._run_cli("cfy teardown -t 10.0.0.1 -f -fv -fd -c myfile")
+
+    def test_teardown_force_deployments(self):
+        rest_client = MockCosmoManagerRestClient()
+        rest_client.list_deployments = lambda: [{}]
+        cli._get_rest_client = \
+            lambda ip: rest_client
+        self._run_cli("cfy init mock_provider -v")
+        self._assert_ex("cfy teardown -t 10.0.0.1 -f -fv -c myfile",
+                        "has active deployments")
 
     def test_teardown_force(self):
         self._run_cli("cfy init mock_provider -v")
