@@ -193,6 +193,11 @@ class CliTest(unittest.TestCase):
         self._assert_ex("cfy teardown -t 10.0.0.1",
                         "This action requires additional confirmation.")
 
+    def test_teardown_parameters(self):
+        self._run_cli("cfy init mock_provider -v")
+        self._assert_ex("cfy teardown -t 10.0.0.1 -f -fv -fd -c myfile",
+                        "This action requires additional confirmation.")
+
     def test_teardown_force(self):
         self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy use 10.0.0.1")
