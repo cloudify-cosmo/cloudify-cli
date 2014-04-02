@@ -1063,7 +1063,7 @@ def _set_cli_except_hook():
 def _load_cosmo_working_dir_settings(is_verbose_output=False):
     try:
         with open('{0}'.format(CLOUDIFY_WD_SETTINGS_FILE_NAME), 'r') as f:
-            return yaml.safe_load(f.read())
+            return yaml.load(f.read())
     except IOError:
         msg = ('You must first initialize by running the '
                'command "cfy init", or choose to work with '
@@ -1150,7 +1150,7 @@ def _protected_provider_call(is_verbose_output=False):
 
 class CosmoWorkingDirectorySettings(yaml.YAMLObject):
     yaml_tag = u'!WD_Settings'
-    yaml_loader = yaml.SafeLoader
+    yaml_loader = yaml.Loader
 
     def __init__(self):
         self._management_ip = None
