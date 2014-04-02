@@ -30,8 +30,9 @@ def init(target_dir, reset_config, is_verbose_output=False):
 def bootstrap(config_path=None, is_verbose_output=False,
               bootstrap_using_script=True, keep_up=False,
               dev_mode=False):
-    return '10.0.0.1'
+    return '10.0.0.1', {}
 
 
-def teardown(management_ip, is_verbose_output=False):
+def teardown(provider_context, ignore_conflicts=False, config_path=None,
+             is_verbose_output=False):
     pass
