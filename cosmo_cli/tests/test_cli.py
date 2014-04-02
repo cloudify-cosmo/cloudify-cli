@@ -189,11 +189,13 @@ class CliTest(unittest.TestCase):
             self._read_cosmo_wd_settings().get_management_server())
 
     def test_teardown_no_force(self):
+        self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
         self._assert_ex("cfy teardown -t 10.0.0.1",
                         "This action requires additional confirmation.")
 
     def test_teardown_parameters(self):
+        self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy teardown -t 10.0.0.1 -f -fv -fd -c myfile")
 
@@ -207,6 +209,7 @@ class CliTest(unittest.TestCase):
                         "has active deployments")
 
     def test_teardown_force(self):
+        self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy use 10.0.0.1")
         self._run_cli("cfy teardown -f")
@@ -216,6 +219,7 @@ class CliTest(unittest.TestCase):
             self._read_cosmo_wd_settings().get_management_server())
 
     def test_teardown_force_explicit_management_server(self):
+        self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy use 10.0.0.1")
         self._run_cli("cfy teardown -t 10.0.0.2 -f")
@@ -226,6 +230,7 @@ class CliTest(unittest.TestCase):
     def test_no_management_server_defined(self):
         # running a command which requires a target management server without
         # first calling "cfy use" or providing a target server explicitly
+        self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
         self._assert_ex("cfy teardown -f",
                         "Must either first run 'cfy use' command")
@@ -233,6 +238,7 @@ class CliTest(unittest.TestCase):
     def test_provider_exception(self):
         # verifying that exceptions thrown from providers are converted to
         # CosmoCliError and retain the original error message
+        self._set_mock_rest_client()
         self._run_cli("cfy init cloudify_mock_provider2 -v")
         self._assert_ex("cfy teardown -t 10.0.0.1 -f",
                         "cloudify_mock_provider2 teardown exception")
