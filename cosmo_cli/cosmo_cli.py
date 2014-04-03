@@ -650,11 +650,6 @@ def _teardown_cosmo(args):
     with _update_wd_settings(args.verbosity) as wd_settings:
         # wd_settings.set_provider_context(provider_context)
         wd_settings.remove_management_server_context(mgmt_ip)
-        lgr.info(
-            "No longer using management server {0} as the "
-            "default management server - run 'cfy use' "
-            "command to use a different server as default"
-            .format(mgmt_ip))
 
     lgr.info("teardown complete")
 
