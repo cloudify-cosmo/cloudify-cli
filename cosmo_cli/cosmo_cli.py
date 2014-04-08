@@ -1084,7 +1084,7 @@ def _validate_blueprint(args):
     target_file = args.blueprint_file
 
     resources = _get_resource_base()
-    mapping = resources + "org/cloudifysource/cosmo/dsl/alias-mappings.yaml"
+    mapping = resources + "cloudify/alias-mappings.yaml"
 
     lgr.info(
         messages.VALIDATING_BLUEPRINT.format(target_file.name))
@@ -1104,8 +1104,7 @@ def _validate_blueprint(args):
 def _get_resource_base():
     script_directory = os.path.dirname(os.path.realpath(__file__))
     resource_directory = script_directory \
-        + "/../../cosmo-manager/orchestrator" \
-        "/src/main/resources/"
+        + "/../../cloudify-manager/resources/rest-service/"
     if os.path.isdir(resource_directory):
         lgr.debug("Found resource directory")
 
@@ -1113,8 +1112,8 @@ def _get_resource_base():
             resource_directory))
         return resource_directory_url
     lgr.debug("Using resources from github. Branch is develop")
-    return "https://raw.github.com/CloudifySource/cosmo-manager/develop/" \
-           "orchestrator/src/main/resources/"
+    return "https://raw.githubusercontent.com/cloudify-cosmo/" \
+           "cloudify-manager/develop/resources/rest-service/"
 
 
 def _get_rest_client(management_ip):
