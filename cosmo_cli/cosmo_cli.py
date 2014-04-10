@@ -958,9 +958,12 @@ def _list_blueprint_deployments(args):
                              deployments)
 
     if len(deployments) == 0:
-        lgr.info(
-            'There are no deployments on the '
-            'management server for blueprint {0}'.format(blueprint_id))
+        if blueprint_id:
+            suffix = 'for blueprint {0}'.format(blueprint_id)
+        else:
+            suffix = ''
+        lgr.info('There are no deployments on the management server {0}'
+                 .format(suffix))
     else:
         lgr.info('Deployments:')
         for deployment in deployments:
