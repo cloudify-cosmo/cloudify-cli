@@ -38,7 +38,9 @@ import config
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
     import CosmoManagerRestClient
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
-    import CosmoManagerRestCallError, CosmoManagerRestCallTimeoutError
+    import (CosmoManagerRestCallError,
+            CosmoManagerRestCallTimeoutError,
+            CosmoManagerRestCallHTTPError)
 from dsl_parser.parser import parse_from_path, DSLParsingException
 
 
@@ -1006,6 +1008,7 @@ def _cancel_execution(args):
 
 
 def _list_deployment_executions(args):
+    is_verbose_output = args.verbosity
     management_ip = _get_management_server_ip(args)
     client = _get_rest_client(management_ip)
     deployment_id = args.deployment_id
@@ -1013,7 +1016,19 @@ def _list_deployment_executions(args):
     lgr.info(
         'Querying executions list from management server {0} for '
         'deployment {1}'.format(management_ip, deployment_id))
-    executions = client.list_deployment_executions(deployment_id, inc_statuses)
+    try:
+        executions = client.list_deployment_executions(deployment_id,
+                                                       inc_statuses)
+    except CosmoManagerRestCallHTTPError, e:
+        if not e.status_code == 404:
+            raise
+        msg = ('Deployment {0} does not exist on management server'
+               .format(deployment_id))
+        flgr.error(msg)
+        if is_verbose_output:
+            raise CosmoCliError(msg)
+        else:
+            sys.exit(msg)
 
     if len(executions) == 0:
         lgr.info(
