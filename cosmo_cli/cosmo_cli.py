@@ -692,7 +692,7 @@ def _get_provider_name_and_context(mgmt_ip, is_verbose_output=False):
         response = _get_rest_client(mgmt_ip).get_provider_context()
         return response['name'], response['context']
     except CosmoManagerRestCallError as e:
-        lgr.debug('Failed to get provider context from server: {0}'.format(
+        lgr.warn('Failed to get provider context from server: {0}'.format(
             str(e)))
 
     # using the local provider context instead (if it's relevant for the
@@ -707,7 +707,11 @@ def _get_provider_name_and_context(mgmt_ip, is_verbose_output=False):
             # the local provider context data is for a different server
             msg = "Failed to get provider context from target server"
     else:
-        msg = "Provider context is not set in working directory settings"
+        msg = "Provider context is not set in working directory settings (" \
+              "The provider is used during the bootstrap and teardown " \
+              "process. This probably means that the manager was started " \
+              "manually, without the bootstrap command therefore calling " \
+              "teardown is not supported)."
     flgr.error(msg)
     if is_verbose_output:
         raise RuntimeError(msg)
@@ -762,8 +766,8 @@ def _use_management_server(args):
         provider_name = response['name']
         provider_context = response['context']
     except CosmoManagerRestCallError:
-        provider_name = ''
-        provider_context = {}
+        provider_name = None
+        provider_context = None
 
     with _update_wd_settings(args.verbosity) as wd_settings:
         wd_settings.set_management_server(
