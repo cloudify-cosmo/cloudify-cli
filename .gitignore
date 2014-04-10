@@ -45,3 +45,5 @@ nosetests.xml
 .idea
 
 *cloudify-cli.log
+
+*COMMIT_MSG
