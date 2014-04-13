@@ -1055,11 +1055,23 @@ def _get_events(args):
                                          args.execution_id,
                                          args.include_logs))
     client = _get_rest_client(management_ip)
-    events = client.get_all_execution_events(args.execution_id,
-                                             include_logs=args.include_logs)
-    events_logger = _get_events_logger(args)
-    events_logger(events)
-    lgr.info('\nTotal events: {0}'.format(len(events)))
+    try:
+        events = client.get_all_execution_events(
+            args.execution_id,
+            include_logs=args.include_logs)
+        events_logger = _get_events_logger(args)
+        events_logger(events)
+        lgr.info('\nTotal events: {0}'.format(len(events)))
+    except CosmoManagerRestCallHTTPError, e:
+        if e.status_code != 404:
+            raise
+        msg = ('Execution "{0}" not found on management server'
+               .format(args.execution_id))
+        flgr.error(msg)
+        if args.verbosity:
+            raise CosmoCliError(msg)
+        else:
+            raise sys.exit(msg)
 
 
 def _set_cli_except_hook():
