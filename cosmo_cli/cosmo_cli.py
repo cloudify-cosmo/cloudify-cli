@@ -1065,7 +1065,7 @@ def _get_events(args):
     except CosmoManagerRestCallHTTPError, e:
         if e.status_code != 404:
             raise
-        msg = ('Execution "{0}" not found on management server'
+        msg = ("Execution '{0}' not found on management server"
                .format(args.execution_id))
         flgr.error(msg)
         if args.verbosity:
