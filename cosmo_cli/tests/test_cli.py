@@ -89,6 +89,16 @@ class CliTest(unittest.TestCase):
             returncode = subprocess.call("cfy", stdout=f, stderr=f)
         self.assertEquals(returncode, 2)
 
+    def test_validate_blueprint_in_cwd(self):
+        prev_cwd = os.getcwd()
+
+        try:
+            os.chdir('{0}/helloworld'.format(BLUEPRINTS_DIR))
+            self._create_cosmo_wd_settings()
+            self._run_cli("cfy blueprints validate blueprint.yaml")
+        finally:
+            os.chdir(prev_cwd)
+
     def test_validate_bad_blueprint(self):
         self._create_cosmo_wd_settings()
         self._assert_ex("cfy blueprints validate "
