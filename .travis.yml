@@ -4,6 +4,7 @@ python:
 
 install:
     - pip install --upgrade pip
+    - pip install --process-dependency-links https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/feature/CFY-466-validate-ValueError.zip
     - pip install --process-dependency-links .
     - pip install flake8
 
