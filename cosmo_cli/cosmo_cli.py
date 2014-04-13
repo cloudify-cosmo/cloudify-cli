@@ -38,7 +38,9 @@ import config
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
     import CosmoManagerRestClient
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
-    import CosmoManagerRestCallError, CosmoManagerRestCallTimeoutError
+    import (CosmoManagerRestCallError,
+            CosmoManagerRestCallTimeoutError,
+            CosmoManagerRestCallHTTPError)
 from dsl_parser.parser import parse_from_path, DSLParsingException
 
 
@@ -958,9 +960,12 @@ def _list_blueprint_deployments(args):
                              deployments)
 
     if len(deployments) == 0:
-        lgr.info(
-            'There are no deployments on the '
-            'management server for blueprint {0}'.format(blueprint_id))
+        if blueprint_id:
+            suffix = 'for blueprint {0}'.format(blueprint_id)
+        else:
+            suffix = ''
+        lgr.info('There are no deployments on the management server {0}'
+                 .format(suffix))
     else:
         lgr.info('Deployments:')
         for deployment in deployments:
@@ -1003,6 +1008,7 @@ def _cancel_execution(args):
 
 
 def _list_deployment_executions(args):
+    is_verbose_output = args.verbosity
     management_ip = _get_management_server_ip(args)
     client = _get_rest_client(management_ip)
     deployment_id = args.deployment_id
@@ -1010,7 +1016,19 @@ def _list_deployment_executions(args):
     lgr.info(
         'Querying executions list from management server {0} for '
         'deployment {1}'.format(management_ip, deployment_id))
-    executions = client.list_deployment_executions(deployment_id, inc_statuses)
+    try:
+        executions = client.list_deployment_executions(deployment_id,
+                                                       inc_statuses)
+    except CosmoManagerRestCallHTTPError, e:
+        if not e.status_code == 404:
+            raise
+        msg = ('Deployment {0} does not exist on management server'
+               .format(deployment_id))
+        flgr.error(msg)
+        if is_verbose_output:
+            raise CosmoCliError(msg)
+        else:
+            sys.exit(msg)
 
     if len(executions) == 0:
         lgr.info(
@@ -1037,11 +1055,23 @@ def _get_events(args):
                                          args.execution_id,
                                          args.include_logs))
     client = _get_rest_client(management_ip)
-    events = client.get_all_execution_events(args.execution_id,
-                                             include_logs=args.include_logs)
-    events_logger = _get_events_logger(args)
-    events_logger(events)
-    lgr.info('\nTotal events: {0}'.format(len(events)))
+    try:
+        events = client.get_all_execution_events(
+            args.execution_id,
+            include_logs=args.include_logs)
+        events_logger = _get_events_logger(args)
+        events_logger(events)
+        lgr.info('\nTotal events: {0}'.format(len(events)))
+    except CosmoManagerRestCallHTTPError, e:
+        if e.status_code != 404:
+            raise
+        msg = ("Execution '{0}' not found on management server"
+               .format(args.execution_id))
+        flgr.error(msg)
+        if args.verbosity:
+            raise CosmoCliError(msg)
+        else:
+            raise sys.exit(msg)
 
 
 def _set_cli_except_hook():
