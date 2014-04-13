@@ -34,6 +34,8 @@ class MockCosmoManagerRestClient(object):
         return MicroMock(id=blueprint_id)
 
     def delete_blueprint(self, blueprint_id):
+        if not isinstance(blueprint_id, str):
+            raise RuntimeError("blueprint_id should be a string")
         pass
 
     def create_deployment(self, blueprint_id, deployment_id):

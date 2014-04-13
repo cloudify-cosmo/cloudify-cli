@@ -792,7 +792,7 @@ def _list_blueprints(args):
 
 def _delete_blueprint(args):
     management_ip = _get_management_server_ip(args)
-    blueprint_id = args.blueprint_id, management_ip
+    blueprint_id = args.blueprint_id
 
     lgr.info(
         'Deleting blueprint {0} from management server {1}'.format(
