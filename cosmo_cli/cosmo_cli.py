@@ -640,15 +640,15 @@ def _init_cosmo(args):
                 sys.exit(msg)
         else:  # resetting provider configuration
             lgr.debug('resetting configuration...')
-            base_instance._init(provider, target_directory,
-                                args.reset_config, args.verbosity)
+            base_instance.init(provider, target_directory,
+                               args.reset_config, args.verbosity)
             lgr.info("Configuration reset complete")
             return
 
     lgr.info("Initializing Cloudify")
-    provider_module_name = base_instance._init(provider, target_directory,
-                                               args.reset_config,
-                                               args.verbosity)
+    provider_module_name = base_instance.init(provider, target_directory,
+                                              args.reset_config,
+                                              args.verbosity)
 
     # creating .cloudify file
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
@@ -671,7 +671,7 @@ def _bootstrap_cosmo(args):
     lgr.info("bootstrapping using {0}".format(provider_name))
     with _protected_provider_call(args.verbosity):
         lgr.info('provisioning resources for management server...')
-        params = provider_manager.provision()
+        params = provider_manager.provision(args.skip_validations)
     if params is not None:
         mgmt_ip, private_ip, ssh_key, ssh_user, provider_context = params
         lgr.info('provisioning complete')
@@ -1340,8 +1340,8 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
 
 class BaseProviderClass(object):
 
-    def _init(self, provider, target_directory, reset_config,
-              is_verbose_output=False):
+    def init(self, provider, target_directory, reset_config,
+             is_verbose_output=False):
         set_global_verbosity_level(is_verbose_output)
         try:
             # searching first for the standard name for providers
