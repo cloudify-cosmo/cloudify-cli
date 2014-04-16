@@ -83,7 +83,7 @@ logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
 
 
 def init_logger():
-    #initialize logger
+    # initialize logger
     if os.path.isfile(config.LOG_DIR):
         sys.exit('file {0} exists - cloudify log directory cannot be created '
                  'there. please remove the file and try again.'
@@ -606,97 +606,6 @@ def _read_config(config_file_path, provider_dir, is_verbose_output=False):
     return merged_config
 
 
-# def init(target_directory, reset_config, is_verbose_output=False):
-#     set_global_verbosity_level(is_verbose_output)
-
-#     if not reset_config and os.path.exists(
-#             os.path.join(target_directory, CONFIG_FILE_NAME)):
-#         return False
-
-#     provider_dir = os.path.dirname(os.path.realpath(__file__))
-#     files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
-
-#     lgr.debug('copying provider files from {0} to {1}'
-#               .format(files_path, target_directory))
-#     shutil.copy(files_path, target_directory)
-#     return True
-
-
-# def _init_provider(provider, target_directory, reset_config,
-#                    is_verbose_output=False):
-#     try:
-#         # searching first for the standard name for providers
-#         # (i.e. cloudify_XXX)
-#         provider_module_name = 'cloudify_{0}'.format(provider)
-#         provider = _get_provider_module(provider_module_name,
-#                                         is_verbose_output)
-#     except CosmoCliError:
-#         # if provider was not found, search for the exact literal the
-#         # user requested instead
-#         provider_module_name = provider
-#         provider = _get_provider_module(provider_module_name,
-#                                         is_verbose_output)
-#     with _protected_provider_call(is_verbose_output):
-#         success = provider.init(target_directory, reset_config,
-#                                 is_verbose_output)
-#         if not success:
-#             msg = ('Target directory already contains a '
-#                    'provider configuration file; '
-#                    'use the "-r" flag to '
-#                    'reset it back to its default values.')
-#             flgr.error(msg)
-#             if is_verbose_output:
-#                 raise CosmoCliError(msg)
-#             else:
-#                 raise sys.exit(msg)
-
-#     return provider_module_name
-
-
-# def _init_cosmo(args):
-
-#     is_verbose_output = args.verbosity
-#     target_directory = os.path.expanduser(args.target_dir)
-#     provider = args.provider
-#     if not os.path.isdir(target_directory):
-#         msg = "Target directory doesn't exist."
-#         flgr.error(msg)
-#         if is_verbose_output:
-#             raise CosmoCliError(msg)
-#         else:
-#             sys.exit(msg)
-
-#     is_verbose_output = args.verbosity
-#     if os.path.exists(os.path.join(target_directory,
-#                                    CLOUDIFY_WD_SETTINGS_FILE_NAME)):
-#         if not args.reset_config:
-#             msg = ('Target directory is already initialized. '
-#                    'Use the "-r" flag to force '
-#                    'reinitialization (might overwrite '
-#                    'provider configuration files if exist).')
-#             flgr.error(msg)
-#             if is_verbose_output:
-#                 raise CosmoCliError(msg)
-#             else:
-#                 sys.exit(msg)
-#         else:  # resetting provider configuration
-#             _init_provider(provider, target_directory, args.reset_config,
-#                            is_verbose_output)
-#             lgr.info("Configuration reset complete")
-#             return
-
-#     lgr.info("Initializing Cloudify")
-#     provider_module_name = _init_provider(provider, target_directory,
-#                                         args.reset_config, is_verbose_output)
-
-#     # creating .cloudify file
-#     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
-#                                      target_directory)
-#     with _update_wd_settings(args.verbosity) as wd_settings:
-#         wd_settings.set_provider(provider_module_name)
-#     lgr.info("Initialization complete")
-
-
 def _init_cosmo(args):
     set_global_verbosity_level(args.verbosity)
     target_directory = os.path.expanduser(args.target_dir)
@@ -734,7 +643,7 @@ def _init_cosmo(args):
                                                args.reset_config,
                                                args.verbosity)
 
-    #creating .cloudify file
+    # creating .cloudify file
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
                                      target_directory)
     with _update_wd_settings(args.verbosity) as wd_settings:
@@ -1430,15 +1339,15 @@ class BaseProviderClass(object):
               is_verbose_output=False):
         set_global_verbosity_level(is_verbose_output)
         try:
-            #searching first for the standard name for providers
-            #(i.e. cloudify_XXX)
+            # searching first for the standard name for providers
+            # (i.e. cloudify_XXX)
             provider_module_name = 'cloudify_{0}'.format(provider)
             # print provider_module_name
             provider = _get_provider_module(provider_module_name,
                                             is_verbose_output)
         except CosmoCliError:
-            #if provider was not found, search for the exact literal the
-            #user requested instead
+            # if provider was not found, search for the exact literal the
+            # user requested instead
             provider_module_name = provider
             provider = _get_provider_module(provider_module_name,
                                             is_verbose_output)

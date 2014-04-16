@@ -114,7 +114,7 @@ class CliTest(unittest.TestCase):
             self._read_cosmo_wd_settings().get_provider())
 
     def test_init_implicit_provider_name(self):
-        #the actual provider name is "cloudify_mock_provider2"
+        # the actual provider name is "cloudify_mock_provider2"
         self._run_cli("cfy init mock_provider2 -v")
         self.assertEquals(
             "cloudify_mock_provider2",
@@ -149,13 +149,13 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy init mock_provider -r -v")
 
     def test_init_overwrite_existing_provider_config_with_cloudify_file(self):
-        #ensuring the init with overwrite command also works when the
-        #directory already contains a ".cloudify" file
+        # ensuring the init with overwrite command also works when the
+        # directory already contains a ".cloudify" file
         self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy init mock_provider -r -v")
 
     def test_init_overwrite_on_initial_init(self):
-        #simply verifying the overwrite flag doesn't break the first init
+        # simply verifying the overwrite flag doesn't break the first init
         self._run_cli("cfy init mock_provider -r -v")
 
     def test_no_init(self):
@@ -174,8 +174,8 @@ class CliTest(unittest.TestCase):
             self._read_cosmo_wd_settings().get_management_server())
 
     def test_bootstrap_explicit_config_file(self):
-        #note the mock providers don't actually try to read the file;
-        #this test merely ensures such a flag is accepted by the CLI.
+        # note the mock providers don't actually try to read the file;
+        # this test merely ensures such a flag is accepted by the CLI.
         self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy bootstrap -a -c my-file")
         self.assertEquals(
@@ -191,7 +191,7 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy use 10.0.0.1")
         self._run_cli("cfy teardown -f")
-        #the teardown should have cleared the current target management server
+        # the teardown should have cleared the current target management server
         self.assertEquals(
             None,
             self._read_cosmo_wd_settings().get_management_server())
@@ -205,15 +205,15 @@ class CliTest(unittest.TestCase):
             self._read_cosmo_wd_settings().get_management_server())
 
     def test_no_management_server_defined(self):
-        #running a command which requires a target management server without
-        #first calling "cfy use" or providing a target server explicitly
+        # running a command which requires a target management server without
+        # first calling "cfy use" or providing a target server explicitly
         self._run_cli("cfy init mock_provider -v")
         self._assert_ex("cfy teardown -f",
                         "Must either first run 'cfy use' command")
 
     def test_provider_exception(self):
-        #verifying that exceptions thrown from providers are converted to
-        #CosmoCliError and retain the original error message
+        # verifying that exceptions thrown from providers are converted to
+        # CosmoCliError and retain the original error message
         self._run_cli("cfy init cloudify_mock_provider2 -v")
         self._assert_ex("cfy teardown -t 10.0.0.1 -f",
                         "cloudify_mock_provider2 teardown exception")
@@ -259,10 +259,10 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy use 127.0.0.1")
         self._run_cli("cfy blueprints upload {0}/helloworld/blueprint.yaml "
                       "-b my_blueprint_id"
-            .format(BLUEPRINTS_DIR))
+                      .format(BLUEPRINTS_DIR))
         self._run_cli("cfy blueprints upload {0}/helloworld/blueprint.yaml "
                       "--blueprint-id my_blueprint_id2"
-            .format(BLUEPRINTS_DIR))
+                      .format(BLUEPRINTS_DIR))
 
     def test_workflows_list(self):
         self._set_mock_rest_client()
@@ -300,9 +300,9 @@ class CliTest(unittest.TestCase):
         self._run_cli('cfy deployments list --blueprint-id b1')
 
     def test_deployments_execute_nonexistent_operation(self):
-        #verifying that the CLI allows for arbitrary operation names,
-        #while also ensuring correct error-handling of nonexistent
-        #operations
+        # verifying that the CLI allows for arbitrary operation names,
+        # while also ensuring correct error-handling of nonexistent
+        # operations
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
         self._run_cli("cfy use 127.0.0.1")
