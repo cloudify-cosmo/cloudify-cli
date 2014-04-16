@@ -869,7 +869,7 @@ def _create_event_message_prefix(event):
             operation = '.{0}'.format(context['operation'].split('.')[-1])
         node_info = '[{0}{1}] '.format(node_id, operation)
     level = 'CFY'
-    message = event['message']['text']
+    message = event['message']['text'].encode('utf-8')
     if 'cloudify_log' in event['type']:
         level = 'LOG'
         message = '{0}: {1}'.format(event['level'].upper(), message)
