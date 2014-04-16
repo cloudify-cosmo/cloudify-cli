@@ -17,31 +17,29 @@ __author__ = 'ran'
 
 from setuptools import setup
 
-version = '0.3'
+VERSION = '3.0'
 
-COSMO_MANAGER_REST_CLIENT_VERSION = '0.3'
-COSMO_MANAGER_REST_CLIENT_BRANCH = 'develop'
-COSMO_MANAGER_REST_CLIENT = \
-    "https://github.com/CloudifySource/cosmo-manager-rest-client/tarball/{" \
-    "0}#egg=cosmo-manager-rest-client-{1}".format(
-        COSMO_MANAGER_REST_CLIENT_BRANCH, COSMO_MANAGER_REST_CLIENT_VERSION)
+REST_CLIENT_VERSION = '3.0'
+REST_CLIENT_BRANCH = 'develop'
+REST_CLIENT = 'https://github.com/cloudify-cosmo/cloudify-rest-client' \
+              '/tarball/{0}#egg=cloudify-rest-client-{1}'.format(
+                  REST_CLIENT_BRANCH, REST_CLIENT_VERSION)
 
-COSMO_PLUGIN_DSL_PARSER_VERSION = '0.3'
-COSMO_PLUGIN_DSL_PARSER_BRANCH = 'develop'
-COSMO_PLUGIN_DSL_PARSER = \
-    "https://github.com/CloudifySource/cosmo-plugin-dsl-parser/tarball/{" \
-    "0}#egg=cosmo-plugin-dsl-parser-{1}".format(
-        COSMO_PLUGIN_DSL_PARSER_BRANCH, COSMO_PLUGIN_DSL_PARSER_VERSION)
+DSL_PARSER_VERSION = '3.0'
+DSL_PARSER_BRANCH = 'develop'
+DSL_PARSER = 'https://github.com/cloudify-cosmo/cloudify-dsl-parser/tarball/' \
+             '{0}#egg=cloudify-dsl-parser-{1}'.format(
+                 DSL_PARSER_BRANCH, DSL_PARSER_VERSION)
 
 
 setup(
-    name='cosmo-cli',
-    version=version,
+    name='cloudify-cli',
+    version=VERSION,
     author='ran',
     author_email='ran@gigaspaces.com',
     packages=['cosmo_cli'],
     license='LICENSE',
-    description='the cosmo cli',
+    description='Cloudify CLI',
     entry_points={
         'console_scripts': [
             'cfy = cosmo_cli.cosmo_cli:main',
@@ -49,13 +47,13 @@ setup(
         ]
     },
     install_requires=[
-        "pyyaml",
-        "cosmo-manager-rest-client",
-        "cosmo-plugin-dsl-parser",
-        "argcomplete",
-        "fabric",
-        "jsonschema",
-        "scp"
+        'pyyaml==3.10',
+        'cloudify-rest-client',
+        'cloudify-dsl-parser',
+        'argcomplete==0.7.1',
+        "scp==0.7.2",
+        "fabric==1.8.3",
+        "jsonschema==2.3.0",
     ],
-    dependency_links=[COSMO_MANAGER_REST_CLIENT, COSMO_PLUGIN_DSL_PARSER]
+    dependency_links=[REST_CLIENT, DSL_PARSER]
 )
