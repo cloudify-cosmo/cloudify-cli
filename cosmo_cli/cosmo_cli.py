@@ -24,48 +24,65 @@ import argcomplete
 import imp
 import sys
 import os
-import shutil
 import traceback
 import yaml
-import time
-from copy import deepcopy
 import json
-from fabric.api import run, env
-from fabric.context_managers import settings, hide
 import urlparse
 import urllib
+import time
+import shutil
+import socket
+import paramiko
+import tempfile
+from copy import deepcopy
+from scp import SCPClient
 from contextlib import contextmanager
 import logging
 import logging.config
 import config
 from jsonschema import ValidationError, Draft4Validator
+from fabric.api import run, env
+from fabric.context_managers import settings, hide
+from os.path import expanduser
 
 # Project
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
     import CosmoManagerRestClient
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
-    import CosmoManagerRestCallError, CosmoManagerRestCallTimeoutError
+    import (CosmoManagerRestCallError,
+            CosmoManagerRestCallTimeoutError,
+            CosmoManagerRestCallHTTPError)
 from dsl_parser.parser import parse_from_path, DSLParsingException
 
 
 output_level = logging.INFO
 CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
 
+SSH_CONNECT_RETRIES = 12
+SSH_CONNECT_SLEEP = 5
+SSH_CONNECT_PORT = 22
+
 CONFIG_FILE_NAME = 'cloudify-config.yaml'
 DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 
-SHELL_PIPE_TO_LOGGER = ' |& logger -i -t cosmo-bootstrap -p local0.info'
-
 CLOUDIFY_PACKAGES_PATH = '/cloudify'
-CLOUDIFY_COMPONENTS_PACKAGE_PATH = '/cloudify3-components'
-CLOUDIFY_PACKAGE_PATH = '/cloudify3'
-AGENT_PACKAGES_PATH = '/cloudify-agents'
+CLOUDIFY_COMPONENTS_PACKAGE_PATH = '/cloudify-components'
+CLOUDIFY_CORE_PACKAGE_PATH = '/cloudify-core'
+CLOUDIFY_UI_PACKAGE_PATH = '/cloudify-ui'
+CLOUDIFY_AGENT_PACKAGE_PATH = '/cloudify-agents'
 
+SHELL_PIPE_TO_LOGGER = ' |& logger -i -t cosmo-bootstrap -p local0.info'
 FABRIC_RETRIES = 3
 FABRIC_SLEEPTIME = 3
 
 
-def logger():
+# http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
+logging.getLogger("paramiko").setLevel(logging.WARNING)
+logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
+    logging.ERROR)
+
+
+def init_logger():
     #initialize logger
     if os.path.isfile(config.LOG_DIR):
         sys.exit('file {0} exists - cloudify log directory cannot be created '
@@ -88,7 +105,7 @@ def logger():
                  ' and permissions to write to {0}'
                  .format(logfile))
 
-lgr, flgr = logger()
+lgr, flgr = init_logger()
 
 
 def main():
@@ -97,9 +114,9 @@ def main():
 
 
 def _parse_args(args):
-    #Parses the arguments using the Python argparse library
+    # Parses the arguments using the Python argparse library
 
-    #main parser
+    # main parser
     parser = argparse.ArgumentParser(
         description='Installs Cosmo in an OpenStack environment')
 
@@ -136,11 +153,11 @@ def _parse_args(args):
         help='Commands for events'
     )
 
-    #status subparser
+    # status subparser
     _add_management_ip_optional_argument_to_parser(parser_status)
     _set_handler_for_command(parser_status, _status)
 
-    #use subparser
+    # use subparser
     parser_use.add_argument(
         'management_ip',
         metavar='MANAGEMENT_IP',
@@ -160,7 +177,7 @@ def _parse_args(args):
         'already exists')
     _set_handler_for_command(parser_use, _use_management_server)
 
-    #init subparser
+    # init subparser
     parser_init.add_argument(
         'provider',
         metavar='PROVIDER',
@@ -182,9 +199,9 @@ def _parse_args(args):
         action='store_true',
         help='A flag indicating overwriting existing configuration is allowed'
     )
-    _set_handler_for_command(parser_init, _init_provider)
+    _set_handler_for_command(parser_init, _init_cosmo)
 
-    #bootstrap subparser
+    # bootstrap subparser
     parser_bootstrap.add_argument(
         '-c', '--config-file',
         dest='config_file_path',
@@ -193,12 +210,6 @@ def _parse_args(args):
         type=str,
         help='Path to a provider configuration file'
     )
-
-    parser_bootstrap.add_argument(
-        '-a', '--alternate-bootstrap-method',
-        dest='bootstrap_using_script',
-        action='store_true',
-        help='A flag indicating bootstrap will be performed via a script')
 
     parser_bootstrap.add_argument(
         '--keep-up-on-failure',
@@ -213,16 +224,38 @@ def _parse_args(args):
         action='store_true',
         help='A flag indicating that bootstrap will be run in dev-mode,'
         ' allowing to choose specific branches to run with')
-    _set_handler_for_command(parser_bootstrap, _bootstrap_manager)
+    _set_handler_for_command(parser_bootstrap, _bootstrap_cosmo)
 
-    #teardown subparser
+    # teardown subparser
+    parser_teardown.add_argument(
+        '-c', '--config-file',
+        dest='config_file_path',
+        metavar='CONFIG_FILE',
+        default=None,
+        type=str,
+        help='Path to a provider configuration file'
+    )
+    parser_teardown.add_argument(
+        '--ignore-deployments',
+        dest='ignore_deployments',
+        action='store_true',
+        help='A flag indicating confirmation for teardown even if there '
+             'exist active deployments'
+    )
+    parser_teardown.add_argument(
+        '--ignore-validation',
+        dest='ignore_validation',
+        action='store_true',
+        help='A flag indicating confirmation for teardown even if there '
+             'are validation conflicts'
+    )
     _add_force_optional_argument_to_parser(
         parser_teardown,
         'A flag indicating confirmation for the teardown request')
     _add_management_ip_optional_argument_to_parser(parser_teardown)
-    _set_handler_for_command(parser_teardown, _teardown_manager)
+    _set_handler_for_command(parser_teardown, _teardown_cosmo)
 
-    #blueprints subparser
+    # blueprints subparser
     blueprints_subparsers = parser_blueprints.add_subparsers()
 
     parser_blueprints_upload = blueprints_subparsers.add_parser(
@@ -278,7 +311,7 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_blueprints_delete)
     _set_handler_for_command(parser_blueprints_delete, _delete_blueprint)
 
-    #deployments subparser
+    # deployments subparser
     deployments_subparsers = parser_deployments.add_subparsers()
     parser_deployments_create = deployments_subparsers.add_parser(
         'create',
@@ -335,6 +368,14 @@ def _parse_args(args):
         help='Operation timeout in seconds (The execution itself will keep '
              'going, it is the CLI that will stop waiting for it to terminate)'
     )
+    parser_deployments_execute.add_argument(
+        '--force',
+        dest='force',
+        action='store_true',
+        default=False,
+        help='Whether the workflow should execute even if there is an ongoing'
+             ' execution for the provided deployment'
+    )
 
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
     _set_handler_for_command(parser_deployments_execute,
@@ -352,7 +393,7 @@ def _parse_args(args):
     _set_handler_for_command(parser_deployments_list,
                              _list_blueprint_deployments)
 
-    #workflows subparser
+    # workflows subparser
     workflows_subparsers = parser_workflows.add_subparsers()
     parser_workflows_list = workflows_subparsers.add_parser(
         'list',
@@ -434,8 +475,8 @@ def _get_provider_module(provider_name, is_verbose_output=False):
     try:
         module_or_pkg_desc = imp.find_module(provider_name)
         if not module_or_pkg_desc[1]:
-            #module_or_pkg_desc[1] is the pathname of found module/package,
-            #if it's empty none were found
+            # module_or_pkg_desc[1] is the pathname of found module/package,
+            # if it's empty none were found
             msg = ('Provider {0} not found.'
                    .format(provider_name))
             flgr.error(msg)
@@ -447,10 +488,10 @@ def _get_provider_module(provider_name, is_verbose_output=False):
         module = imp.load_module(provider_name, *module_or_pkg_desc)
 
         if not module_or_pkg_desc[0]:
-            #module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not
-            #empty only when we've loaded a package rather than a module.
-            #Re-searching for the module inside the now-loaded package
-            #with the same name.
+            # module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not
+            # empty only when we've loaded a package rather than a module.
+            # Re-searching for the module inside the now-loaded package
+            # with the same name.
             module = imp.load_module(
                 provider_name,
                 *imp.find_module(provider_name, module.__path__))
@@ -507,7 +548,7 @@ def _add_verbosity_argument_to_parser(parser):
     )
 
 
-def _set_global_verbosity_level(is_verbose_output=False):
+def set_global_verbosity_level(is_verbose_output=False):
     # we need both lgr.setLevel and the verbose_output parameter
     # since not all output is generated at the logger level.
     # verbose_output can help us control that.
@@ -518,90 +559,22 @@ def _set_global_verbosity_level(is_verbose_output=False):
     # print 'level is: ' + str(lgr.getEffectiveLevel())
 
 
-def _init(provider, target_directory, reset_config,
-          is_verbose_output=False):
-    _set_global_verbosity_level(is_verbose_output)
-    try:
-        #searching first for the standard name for providers
-        #(i.e. cloudify_XXX)
-        provider_module_name = 'cloudify_{0}'.format(provider)
-        # print provider_module_name
-        provider = _get_provider_module(provider_module_name,
-                                        is_verbose_output)
-    except CosmoCliError:
-        #if provider was not found, search for the exact literal the
-        #user requested instead
-        provider_module_name = provider
-        provider = _get_provider_module(provider_module_name,
-                                        is_verbose_output)
-    # with _protected_provider_call(is_verbose_output):
-    if not reset_config and os.path.exists(
-            os.path.join(target_directory, CONFIG_FILE_NAME)):
-        msg = ('Target directory already contains a '
-               'provider configuration file; '
-               'use the "-r" flag to '
-               'reset it back to its default values.')
-        flgr.error(msg)
-        if is_verbose_output:
-            raise CosmoCliError(msg)
-        else:
-            raise sys.exit(msg)
-    else:
-        provider_dir = provider.__path__[0]
-        files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
-
-        lgr.debug('copying provider files from {0} to {1}'
-                  .format(files_path, target_directory))
-        shutil.copy(files_path, target_directory)
-        return provider_module_name
-
-
-def _init_provider(args):
-    _set_global_verbosity_level(args.verbosity)
-    target_directory = os.path.expanduser(args.target_dir)
-    provider = args.provider
-    if not os.path.isdir(target_directory):
-        msg = "Target directory doesn't exist."
-        flgr.error(msg)
-        if args.verbosity:
-            raise CosmoCliError(msg)
-        else:
-            sys.exit(msg)
-
-    if os.path.exists(os.path.join(target_directory,
-                                   CLOUDIFY_WD_SETTINGS_FILE_NAME)):
-        if not args.reset_config:
-            msg = ('Target directory is already initialized. '
-                   'Use the "-r" flag to force '
-                   'reinitialization (might overwrite '
-                   'provider configuration files if exist).')
-            flgr.error(msg)
-            if args.verbosity:
-                raise CosmoCliError(msg)
-            else:
-                sys.exit(msg)
-        else:  # resetting provider configuration
-            lgr.debug('resetting configuration...')
-            _init(provider, target_directory,
-                  args.reset_config, args.verbosity)
-            lgr.info("Configuration reset complete")
-            return
-
-    lgr.info("Initializing Cloudify")
-    provider_module_name = _init(provider, target_directory,
-                                 args.reset_config, args.verbosity)
-
-    #creating .cloudify file
-    _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
-                                     target_directory)
-    with _update_wd_settings(args.verbosity) as wd_settings:
-        wd_settings.set_provider(provider_module_name)
-    lgr.info("Initialization complete")
-
-
 def _read_config(config_file_path, provider_dir, is_verbose_output=False):
 
-    _set_global_verbosity_level(is_verbose_output)
+    def _deep_merge_dictionaries(overriding_dict, overridden_dict):
+        merged_dict = deepcopy(overridden_dict)
+        for k, v in overriding_dict.iteritems():
+            if k in merged_dict and isinstance(v, dict):
+                if isinstance(merged_dict[k], dict):
+                    merged_dict[k] = \
+                        _deep_merge_dictionaries(v, merged_dict[k])
+                else:
+                    raise RuntimeError('type conflict at key {0}'.format(k))
+            else:
+                merged_dict[k] = deepcopy(v)
+        return merged_dict
+
+    set_global_verbosity_level(is_verbose_output)
     if not config_file_path:
         config_file_path = CONFIG_FILE_NAME
     defaults_config_file_path = os.path.join(
@@ -633,76 +606,200 @@ def _read_config(config_file_path, provider_dir, is_verbose_output=False):
     return merged_config
 
 
-def _deep_merge_dictionaries(overriding_dict, overridden_dict):
-    merged_dict = deepcopy(overridden_dict)
-    for k, v in overriding_dict.iteritems():
-        if k in merged_dict and isinstance(v, dict):
-            if isinstance(merged_dict[k], dict):
-                merged_dict[k] = _deep_merge_dictionaries(v, merged_dict[k])
-            else:
-                raise RuntimeError('type conflict at key {0}'.format(k))
+# def init(target_directory, reset_config, is_verbose_output=False):
+#     set_global_verbosity_level(is_verbose_output)
+
+#     if not reset_config and os.path.exists(
+#             os.path.join(target_directory, CONFIG_FILE_NAME)):
+#         return False
+
+#     provider_dir = os.path.dirname(os.path.realpath(__file__))
+#     files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
+
+#     lgr.debug('copying provider files from {0} to {1}'
+#               .format(files_path, target_directory))
+#     shutil.copy(files_path, target_directory)
+#     return True
+
+
+# def _init_provider(provider, target_directory, reset_config,
+#                    is_verbose_output=False):
+#     try:
+#         # searching first for the standard name for providers
+#         # (i.e. cloudify_XXX)
+#         provider_module_name = 'cloudify_{0}'.format(provider)
+#         provider = _get_provider_module(provider_module_name,
+#                                         is_verbose_output)
+#     except CosmoCliError:
+#         # if provider was not found, search for the exact literal the
+#         # user requested instead
+#         provider_module_name = provider
+#         provider = _get_provider_module(provider_module_name,
+#                                         is_verbose_output)
+#     with _protected_provider_call(is_verbose_output):
+#         success = provider.init(target_directory, reset_config,
+#                                 is_verbose_output)
+#         if not success:
+#             msg = ('Target directory already contains a '
+#                    'provider configuration file; '
+#                    'use the "-r" flag to '
+#                    'reset it back to its default values.')
+#             flgr.error(msg)
+#             if is_verbose_output:
+#                 raise CosmoCliError(msg)
+#             else:
+#                 raise sys.exit(msg)
+
+#     return provider_module_name
+
+
+# def _init_cosmo(args):
+
+#     is_verbose_output = args.verbosity
+#     target_directory = os.path.expanduser(args.target_dir)
+#     provider = args.provider
+#     if not os.path.isdir(target_directory):
+#         msg = "Target directory doesn't exist."
+#         flgr.error(msg)
+#         if is_verbose_output:
+#             raise CosmoCliError(msg)
+#         else:
+#             sys.exit(msg)
+
+#     is_verbose_output = args.verbosity
+#     if os.path.exists(os.path.join(target_directory,
+#                                    CLOUDIFY_WD_SETTINGS_FILE_NAME)):
+#         if not args.reset_config:
+#             msg = ('Target directory is already initialized. '
+#                    'Use the "-r" flag to force '
+#                    'reinitialization (might overwrite '
+#                    'provider configuration files if exist).')
+#             flgr.error(msg)
+#             if is_verbose_output:
+#                 raise CosmoCliError(msg)
+#             else:
+#                 sys.exit(msg)
+#         else:  # resetting provider configuration
+#             _init_provider(provider, target_directory, args.reset_config,
+#                            is_verbose_output)
+#             lgr.info("Configuration reset complete")
+#             return
+
+#     lgr.info("Initializing Cloudify")
+#     provider_module_name = _init_provider(provider, target_directory,
+#                                         args.reset_config, is_verbose_output)
+
+#     # creating .cloudify file
+#     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
+#                                      target_directory)
+#     with _update_wd_settings(args.verbosity) as wd_settings:
+#         wd_settings.set_provider(provider_module_name)
+#     lgr.info("Initialization complete")
+
+
+def _init_cosmo(args):
+    set_global_verbosity_level(args.verbosity)
+    target_directory = os.path.expanduser(args.target_dir)
+    provider = args.provider
+    if not os.path.isdir(target_directory):
+        msg = "Target directory doesn't exist."
+        flgr.error(msg)
+        if args.verbosity:
+            raise CosmoCliError(msg)
         else:
-            merged_dict[k] = deepcopy(v)
-    return merged_dict
+            sys.exit(msg)
+
+    base_instance = BaseProviderClass()
+    if os.path.exists(os.path.join(target_directory,
+                                   CLOUDIFY_WD_SETTINGS_FILE_NAME)):
+        if not args.reset_config:
+            msg = ('Target directory is already initialized. '
+                   'Use the "-r" flag to force '
+                   'reinitialization (might overwrite '
+                   'provider configuration files if exist).')
+            flgr.error(msg)
+            if args.verbosity:
+                raise CosmoCliError(msg)
+            else:
+                sys.exit(msg)
+        else:  # resetting provider configuration
+            lgr.debug('resetting configuration...')
+            base_instance._init(provider, target_directory,
+                                args.reset_config, args.verbosity)
+            lgr.info("Configuration reset complete")
+            return
+
+    lgr.info("Initializing Cloudify")
+    provider_module_name = base_instance._init(provider, target_directory,
+                                               args.reset_config,
+                                               args.verbosity)
+
+    #creating .cloudify file
+    _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
+                                     target_directory)
+    with _update_wd_settings(args.verbosity) as wd_settings:
+        wd_settings.set_provider(provider_module_name)
+    lgr.info("Initialization complete")
 
 
-def _bootstrap_manager(args):
-    _set_global_verbosity_level(args.verbosity)
-
+def _bootstrap_cosmo(args):
     provider_name = _get_provider(args.verbosity)
     provider = _get_provider_module(provider_name, args.verbosity)
     provider_dir = provider.__path__[0]
-
-    lgr.info("bootstrapping using {0}".format(provider_name))
     provider_config = _read_config(args.config_file_path,
                                    provider_dir,
                                    args.verbosity)
-
-    # sys.path.append(provider_dir)
     provider_manager = provider.ProviderManager(provider_config,
                                                 args.verbosity)
+
+    lgr.info("bootstrapping using {0}".format(provider_name))
     lgr.info('validating provider resources and configuration')
     if provider_manager.validate():
         lgr.info('provider validations completed successfully')
     else:
         lgr.error('provider validations failed!')
         sys.exit(1)
+
     with _protected_provider_call(args.verbosity):
         lgr.info('provisioning resources for management server...')
-        params = provider_manager.provision(provider_config)
-        if params is not None:
-            mgmt_ip, private_ip, ssh_key, ssh_user = params
-            lgr.info('provisioning complete')
-        else:
-            lgr.error('provisioning failed!')
+        params = provider_manager.provision()
     if params is not None:
+        mgmt_ip, private_ip, ssh_key, ssh_user, provider_context = params
+        lgr.info('provisioning complete')
         lgr.info('bootstrapping the management server...')
-        installed = provider_manager.bootstrap(provider_config,
-                                               mgmt_ip, private_ip, ssh_key,
+        installed = provider_manager.bootstrap(mgmt_ip, private_ip, ssh_key,
                                                ssh_user, args.dev_mode)
         lgr.info('bootstrapping complete') if installed else \
             lgr.error('bootstrapping failed!')
+    else:
+        lgr.error('provisioning failed!')
+
     if params is not None and installed:
         mgmt_ip = mgmt_ip.encode('utf-8')
 
         with _update_wd_settings(args.verbosity) as wd_settings:
             wd_settings.set_management_server(mgmt_ip)
+            wd_settings.set_provider_context(provider_context)
+
+        # storing provider context on management server
+        _get_rest_client(mgmt_ip).post_provider_context(provider_name,
+                                                        provider_context)
+
         lgr.info(
             "management server is up at {0} (is now set as the default "
             "management server)".format(mgmt_ip))
-        return mgmt_ip
     else:
         if args.keep_up:
-            lgr.info('manager server will remain up')
+            lgr.info('topology will remain up')
             sys.exit(1)
         else:
-            lgr.info('tearing down manager server'
+            lgr.info('tearing down topology'
                      ' due to bootstrap failure')
-            provider_manager.teardown(mgmt_ip)
+            provider_manager.teardown(provider_context)
             sys.exit(1)
 
 
-def _teardown_manager(args):
+def _teardown_cosmo(args):
     is_verbose_output = args.verbosity
     if not args.force:
         msg = ("This action requires additional "
@@ -716,33 +813,33 @@ def _teardown_manager(args):
             sys.exit(msg)
 
     mgmt_ip = _get_management_server_ip(args)
+    if not args.ignore_deployments and \
+            len(_get_rest_client(mgmt_ip).list_deployments()) > 0:
+        msg = ("Management server {0} has active deployments. Add the "
+               "'--ignore-deployments' flag to your command to ignore "
+               "these deployments and execute topology teardown."
+               .format(mgmt_ip))
+        flgr.error(msg)
+        if is_verbose_output:
+            raise CosmoCliError(msg)
+        else:
+            sys.exit(msg)
+
     lgr.info("tearing down {0}".format(mgmt_ip))
 
-    provider_name = _get_provider(args.verbosity)
+    provider_name, provider_context = \
+        _get_provider_name_and_context(mgmt_ip, args.verbosity)
     provider = _get_provider_module(provider_name, args.verbosity)
-    provider_dir = provider.__path__[0]
-    provider_config = _read_config(config_file_path=None,
-                                   provider_dir=provider_dir,
-                                   is_verbose_output=args.verbosity)
-    provider_manager = provider.ProviderManager(provider_config,
-                                                args.verbosity)
     with _protected_provider_call(args.verbosity):
-        t = provider_manager.teardown(mgmt_ip)
+        provider.teardown(provider_context, args.ignore_validation,
+                          args.config_file_path, args.verbosity)
 
-    #cleaning relevant data from working directory settings
-    if t:
-        with _update_wd_settings(args.verbosity) as wd_settings:
-            if wd_settings.remove_management_server_context(mgmt_ip):
-                lgr.info(
-                    "No longer using management server {0} as the "
-                    "default management server - run 'cfy use' "
-                    "command to use a different server as default"
-                    .format(mgmt_ip))
+    # cleaning relevant data from working directory settings
+    with _update_wd_settings(args.verbosity) as wd_settings:
+        # wd_settings.set_provider_context(provider_context)
+        wd_settings.remove_management_server_context(mgmt_ip)
 
-        lgr.info("teardown complete")
-    else:
-        lgr.error("teardown failed!")
-        sys.exit(1)
+    lgr.info("teardown complete")
 
 
 def _get_management_server_ip(args):
@@ -776,33 +873,94 @@ def _get_provider(is_verbose_output=False):
         sys.exit(msg)
 
 
+def _get_provider_name_and_context(mgmt_ip, is_verbose_output=False):
+    # trying to retrieve provider context from server
+    try:
+        response = _get_rest_client(mgmt_ip).get_provider_context()
+        return response['name'], response['context']
+    except CosmoManagerRestCallError as e:
+        lgr.warn('Failed to get provider context from server: {0}'.format(
+            str(e)))
+
+    # using the local provider context instead (if it's relevant for the
+    # target server)
+    cosmo_wd_settings = _load_cosmo_working_dir_settings(is_verbose_output)
+    if cosmo_wd_settings.get_provider_context():
+        default_mgmt_server_ip = cosmo_wd_settings.get_management_server()
+        if default_mgmt_server_ip == mgmt_ip:
+            provider_name = _get_provider(is_verbose_output)
+            return provider_name, cosmo_wd_settings.get_provider_context()
+        else:
+            # the local provider context data is for a different server
+            msg = "Failed to get provider context from target server"
+    else:
+        msg = "Provider context is not set in working directory settings (" \
+              "The provider is used during the bootstrap and teardown " \
+              "process. This probably means that the manager was started " \
+              "manually, without the bootstrap command therefore calling " \
+              "teardown is not supported)."
+    flgr.error(msg)
+    if is_verbose_output:
+        raise RuntimeError(msg)
+    else:
+        sys.exit(msg)
+
+
 def _status(args):
     management_ip = _get_management_server_ip(args)
     lgr.info(
         'querying management server {0}'.format(management_ip))
-    client = _get_rest_client(management_ip)
-    try:
-        client.list_blueprints()
+
+    if _check_management_server_status(management_ip):
         lgr.info(
             "REST service at management server {0} is up and running"
             .format(management_ip))
         return True
-    except CosmoManagerRestCallError:
+    else:
         lgr.info(
             "REST service at management server {0} is not responding"
             .format(management_ip))
         return False
 
 
+def _check_management_server_status(management_ip):
+    client = _get_rest_client(management_ip)
+    try:
+        client.status()
+        return True
+    except CosmoManagerRestCallError:
+        return False
+
+
 def _use_management_server(args):
     if not os.path.exists(CLOUDIFY_WD_SETTINGS_FILE_NAME):
-        #Allowing the user to work with an existing management server
-        #even if "init" wasn't called prior to this.
+        # Allowing the user to work with an existing management server
+        # even if "init" wasn't called prior to this.
         _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings())
+
+    if not _check_management_server_status(args.management_ip):
+        msg = ("Can't use management server {0}: No response.".format(
+            args.management_ip))
+        flgr.error(msg)
+        if args.verbosity:
+            raise CosmoCliError(msg)
+        else:
+            raise sys.exit(msg)
+
+    try:
+        response = _get_rest_client(args.management_ip)\
+            .get_provider_context()
+        provider_name = response['name']
+        provider_context = response['context']
+    except CosmoManagerRestCallError:
+        provider_name = None
+        provider_context = None
 
     with _update_wd_settings(args.verbosity) as wd_settings:
         wd_settings.set_management_server(
             wd_settings.translate_management_alias(args.management_ip))
+        wd_settings.set_provider_context(provider_context)
+        wd_settings.set_provider(provider_name)
         if args.alias:
             wd_settings.save_management_alias(args.alias,
                                               args.management_ip,
@@ -835,7 +993,7 @@ def _list_blueprints(args):
 
 def _delete_blueprint(args):
     management_ip = _get_management_server_ip(args)
-    blueprint_id = args.blueprint_id, management_ip
+    blueprint_id = args.blueprint_id
 
     lgr.info(
         'Deleting blueprint {0} from management server {1}'.format(
@@ -890,7 +1048,7 @@ def _create_event_message_prefix(event):
     deployment_id = context['deployment_id']
     node_info = ''
     operation = ''
-    if 'node_id' in context:
+    if 'node_id' in context and context['node_id'] is not None:
         node_id = context['node_id']
         if 'operation' in context and context['operation'] is not None:
             operation = '.{0}'.format(context['operation'].split('.')[-1])
@@ -928,6 +1086,7 @@ def _execute_deployment_operation(args):
     operation = args.operation
     deployment_id = args.deployment_id
     timeout = args.timeout
+    force = args.force
 
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
              " management server {2} [timeout={3} seconds]"
@@ -945,21 +1104,25 @@ def _execute_deployment_operation(args):
         execution_id, error = client.execute_deployment(deployment_id,
                                                         operation,
                                                         events_logger,
-                                                        timeout=timeout)
+                                                        timeout=timeout,
+                                                        force=force)
         if error is None:
             lgr.info("Finished executing workflow '{0}' on deployment"
                      "'{1}'".format(operation, deployment_id))
+            lgr.info(events_message.format(execution_id))
         else:
             lgr.info("Execution of workflow '{0}' for deployment "
                      "'{1}' failed. "
                      "[error={2}]".format(operation, deployment_id, error))
-        lgr.info(events_message.format(execution_id))
+            lgr.info(events_message.format(execution_id))
+            raise SuppressedCosmoCliError()
     except CosmoManagerRestCallTimeoutError, e:
         lgr.info("Execution of workflow '{0}' for deployment '{1}' timed out. "
                  "* Run 'cfy executions cancel --execution-id {2}' to cancel"
                  " the running workflow.".format(operation, deployment_id,
                                                  e.execution_id))
         lgr.info(events_message.format(e.execution_id))
+        raise SuppressedCosmoCliError()
 
 
 # TODO implement blueprint deployments on server side
@@ -982,9 +1145,12 @@ def _list_blueprint_deployments(args):
                              deployments)
 
     if len(deployments) == 0:
-        lgr.info(
-            'There are no deployments on the '
-            'management server for blueprint {0}'.format(blueprint_id))
+        if blueprint_id:
+            suffix = 'for blueprint {0}'.format(blueprint_id)
+        else:
+            suffix = ''
+        lgr.info('There are no deployments on the management server {0}'
+                 .format(suffix))
     else:
         lgr.info('Deployments:')
         for deployment in deployments:
@@ -1027,6 +1193,7 @@ def _cancel_execution(args):
 
 
 def _list_deployment_executions(args):
+    is_verbose_output = args.verbosity
     management_ip = _get_management_server_ip(args)
     client = _get_rest_client(management_ip)
     deployment_id = args.deployment_id
@@ -1034,7 +1201,19 @@ def _list_deployment_executions(args):
     lgr.info(
         'Querying executions list from management server {0} for '
         'deployment {1}'.format(management_ip, deployment_id))
-    executions = client.list_deployment_executions(deployment_id, inc_statuses)
+    try:
+        executions = client.list_deployment_executions(deployment_id,
+                                                       inc_statuses)
+    except CosmoManagerRestCallHTTPError, e:
+        if not e.status_code == 404:
+            raise
+        msg = ('Deployment {0} does not exist on management server'
+               .format(deployment_id))
+        flgr.error(msg)
+        if is_verbose_output:
+            raise CosmoCliError(msg)
+        else:
+            sys.exit(msg)
 
     if len(executions) == 0:
         lgr.info(
@@ -1061,11 +1240,23 @@ def _get_events(args):
                                          args.execution_id,
                                          args.include_logs))
     client = _get_rest_client(management_ip)
-    events = client.get_all_execution_events(args.execution_id,
-                                             include_logs=args.include_logs)
-    events_logger = _get_events_logger(args)
-    events_logger(events)
-    lgr.info('\nTotal events: {0}'.format(len(events)))
+    try:
+        events = client.get_all_execution_events(
+            args.execution_id,
+            include_logs=args.include_logs)
+        events_logger = _get_events_logger(args)
+        events_logger(events)
+        lgr.info('\nTotal events: {0}'.format(len(events)))
+    except CosmoManagerRestCallHTTPError, e:
+        if e.status_code != 404:
+            raise
+        msg = ("Execution '{0}' not found on management server"
+               .format(args.execution_id))
+        flgr.error(msg)
+        if args.verbosity:
+            raise CosmoCliError(msg)
+        else:
+            raise sys.exit(msg)
 
 
 def _set_cli_except_hook():
@@ -1083,6 +1274,10 @@ def _set_cli_except_hook():
             if output_level <= logging.DEBUG:
                 print("Stack trace:")
                 traceback.print_tb(the_traceback)
+        elif type == SuppressedCosmoCliError:
+            # output is already generated elsewhere
+            # we only want and exit code that is not 0
+            pass
         else:
             old_excepthook(type, value, the_traceback)
 
@@ -1092,7 +1287,7 @@ def _set_cli_except_hook():
 def _load_cosmo_working_dir_settings(is_verbose_output=False):
     try:
         with open('{0}'.format(CLOUDIFY_WD_SETTINGS_FILE_NAME), 'r') as f:
-            return yaml.safe_load(f.read())
+            return yaml.load(f.read())
     except IOError:
         msg = ('You must first initialize by running the '
                'command "cfy init", or choose to work with '
@@ -1118,7 +1313,7 @@ def _validate_blueprint(args):
     target_file = args.blueprint_file
 
     resources = _get_resource_base()
-    mapping = resources + "org/cloudifysource/cosmo/dsl/alias-mappings.yaml"
+    mapping = resources + "cloudify/alias-mappings.yaml"
 
     lgr.info(
         messages.VALIDATING_BLUEPRINT.format(target_file.name))
@@ -1138,8 +1333,7 @@ def _validate_blueprint(args):
 def _get_resource_base():
     script_directory = os.path.dirname(os.path.realpath(__file__))
     resource_directory = script_directory \
-        + "/../../cosmo-manager/orchestrator" \
-        "/src/main/resources/"
+        + "/../../cloudify-manager/resources/rest-service/"
     if os.path.isdir(resource_directory):
         lgr.debug("Found resource directory")
 
@@ -1147,8 +1341,8 @@ def _get_resource_base():
             resource_directory))
         return resource_directory_url
     lgr.debug("Using resources from github. Branch is develop")
-    return "https://raw.github.com/CloudifySource/cosmo-manager/develop/" \
-           "orchestrator/src/main/resources/"
+    return "https://raw.githubusercontent.com/cloudify-cosmo/" \
+           "cloudify-manager/develop/resources/rest-service/"
 
 
 def _get_rest_client(management_ip):
@@ -1179,11 +1373,12 @@ def _protected_provider_call(is_verbose_output=False):
 
 class CosmoWorkingDirectorySettings(yaml.YAMLObject):
     yaml_tag = u'!WD_Settings'
-    yaml_loader = yaml.SafeLoader
+    yaml_loader = yaml.Loader
 
     def __init__(self):
         self._management_ip = None
         self._provider = None
+        self._provider_context = None
         self._mgmt_aliases = {}
         self._mgmt_to_contextual_aliases = {}
 
@@ -1193,16 +1388,16 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
     def set_management_server(self, management_ip):
         self._management_ip = management_ip
 
+    def get_provider_context(self):
+        return self._provider_context
+
+    def set_provider_context(self, provider_context):
+        self._provider_context = provider_context
+
     def remove_management_server_context(self, management_ip):
         # Clears management server context data.
-        # Returns True if the management server was the management
-        #   server being used at the time of the call
         if management_ip in self._mgmt_to_contextual_aliases:
             del(self._mgmt_to_contextual_aliases[management_ip])
-        if self._management_ip == management_ip:
-            self._management_ip = None
-            return True
-        return False
 
     def get_provider(self):
         return self._provider
@@ -1231,8 +1426,142 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
 
 class BaseProviderClass(object):
 
-    def bootstrap(self, provider_config, mgmt_ip, private_ip,
-                  mgmt_ssh_key, mgmt_ssh_user, dev_mode=False):
+    def _init(self, provider, target_directory, reset_config,
+              is_verbose_output=False):
+        set_global_verbosity_level(is_verbose_output)
+        try:
+            #searching first for the standard name for providers
+            #(i.e. cloudify_XXX)
+            provider_module_name = 'cloudify_{0}'.format(provider)
+            # print provider_module_name
+            provider = _get_provider_module(provider_module_name,
+                                            is_verbose_output)
+        except CosmoCliError:
+            #if provider was not found, search for the exact literal the
+            #user requested instead
+            provider_module_name = provider
+            provider = _get_provider_module(provider_module_name,
+                                            is_verbose_output)
+        # with _protected_provider_call(is_verbose_output):
+        if not reset_config and os.path.exists(
+                os.path.join(target_directory, CONFIG_FILE_NAME)):
+            msg = ('Target directory already contains a '
+                   'provider configuration file; '
+                   'use the "-r" flag to '
+                   'reset it back to its default values.')
+            flgr.error(msg)
+            if is_verbose_output:
+                raise CosmoCliError(msg)
+            else:
+                raise sys.exit(msg)
+        else:
+            provider_dir = provider.__path__[0]
+            files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
+
+            lgr.debug('copying provider files from {0} to {1}'
+                      .format(files_path, target_directory))
+            shutil.copy(files_path, target_directory)
+            return provider_module_name
+
+    def bootstrap(self, mgmt_ip, private_ip, mgmt_ssh_key, mgmt_ssh_user,
+                  dev_mode=False):
+
+        def _create_ssh_channel_with_mgmt(mgmt_ip, management_key_path,
+                                          user_on_management):
+            ssh = paramiko.SSHClient()
+            # TODO: support fingerprint in config json
+            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+            # trying to ssh connect to management server. Using retries
+            # since it might take some time to find routes to host
+            for retry in range(0, SSH_CONNECT_RETRIES):
+                try:
+                    ssh.connect(mgmt_ip, username=user_on_management,
+                                key_filename=management_key_path,
+                                look_for_keys=False, timeout=10)
+                    lgr.debug('ssh connection successful')
+                    return ssh
+                except socket.error as err:
+                    lgr.debug(
+                        "SSH connection to {0} failed ({1}). Waiting {2} "
+                        "seconds before retrying".format(mgmt_ip, err, 5))
+                    time.sleep(5)
+            lgr.error('Failed to ssh connect to management server ({0}'
+                      .format(err))
+
+        def _copy_files_to_manager(ssh, userhome_on_management,
+                                   keystone_config, agents_key_path,
+                                   networking):
+            lgr.info('uploading keystone and neutron files to manager')
+            scp = SCPClient(ssh.get_transport())
+
+            tempdir = tempfile.mkdtemp()
+            try:
+                scp.put(agents_key_path, userhome_on_management + '/.ssh',
+                        preserve_times=True)
+                keystone_file_path = _make_keystone_file(tempdir,
+                                                         keystone_config)
+                scp.put(keystone_file_path, userhome_on_management,
+                        preserve_times=True)
+                if networking['neutron_supported_region']:
+                    neutron_file_path = _make_neutron_file(tempdir,
+                                                           networking)
+                    scp.put(neutron_file_path, userhome_on_management,
+                            preserve_times=True)
+            finally:
+                shutil.rmtree(tempdir)
+
+        def _make_keystone_file(tempdir, keystone_config):
+            # put default region in keystone_config file
+            keystone_config['region'] = \
+                self.provider_config['compute']['region']
+            keystone_file_path = os.path.join(tempdir, 'keystone_config.json')
+            with open(keystone_file_path, 'w') as f:
+                json.dump(keystone_config, f)
+            return keystone_file_path
+
+        def _make_neutron_file(tempdir, networking):
+            neutron_file_path = os.path.join(tempdir, 'neutron_config.json')
+            with open(neutron_file_path, 'w') as f:
+                json.dump({'url': networking['neutron_url']}, f)
+            return neutron_file_path
+
+        def _exec_install_command_on_manager(ssh, install_command):
+            command = 'DEBIAN_FRONTEND=noninteractive sudo -E {0}'.format(
+                install_command)
+            return _exec_command_on_manager(ssh, command)
+
+        def _exec_command_on_manager(ssh, command):
+            lgr.info('EXEC START: {0}'.format(command))
+            chan = ssh.get_transport().open_session()
+            chan.exec_command(command)
+            stdin = chan.makefile('wb', -1)
+            stdout = chan.makefile('rb', -1)
+            stderr = chan.makefile_stderr('rb', -1)
+
+            try:
+                exit_code = chan.recv_exit_status()
+                if exit_code != 0:
+                    errors = stderr.readlines()
+                    raise RuntimeError('Error occurred when trying to run a '
+                                       'command on the management machine. '
+                                       'command was: {0} ; Error(s): {1}'
+                                       .format(command, errors))
+
+                response_lines = stdout.readlines()
+                lgr.info('EXEC END: {0}'.format(command))
+                return response_lines
+            finally:
+                stdin.close()
+                stdout.close()
+                stderr.close()
+                chan.close()
+
+        def _get_private_key_path_from_keypair_config(keypair_config):
+            path = keypair_config['provided']['private_key_filepath'] if \
+                'provided' in keypair_config else \
+                keypair_config['auto_generated']['private_key_target_path']
+            return expanduser(path)
 
         def _run_with_retries(command, retries=FABRIC_RETRIES,
                               sleeper=FABRIC_SLEEPTIME):
@@ -1270,7 +1599,23 @@ class BaseProviderClass(object):
 
         lgr.info('initializing manager on the machine at {0}'
                  .format(mgmt_ip))
+        compute_config = self.provider_config['compute']
         cosmo_config = self.provider_config['cloudify']
+        mgmt_server_config = compute_config['management_server']
+
+        lgr.debug('creating ssh channel to machine...')
+        try:
+            ssh = _create_ssh_channel_with_mgmt(
+                mgmt_ip,
+                _get_private_key_path_from_keypair_config(
+                    mgmt_server_config['management_keypair']),
+                mgmt_server_config['user_on_management'])
+        except:
+            lgr.info('ssh channel creation failed. '
+                     'your private and public keys might not be matching or '
+                     'your security group might not be configured to allow '
+                     'connections to port {0}.'.format(SSH_CONNECT_PORT))
+            return False
 
         env.user = mgmt_ssh_user
         env.key_filename = mgmt_ssh_key
@@ -1286,9 +1631,24 @@ class BaseProviderClass(object):
         env.status = False
         env.disable_known_hosts = False
 
-        with settings(host_string=mgmt_ip), hide('running', 'stderr',
-                                                 'aborts', 'warnings'):
-            lgr.info('downloading cloudify components package...')
+        try:
+            _copy_files_to_manager(
+                ssh,
+                mgmt_server_config['userhome_on_management'],
+                self.provider_config['keystone'],
+                _get_private_key_path_from_keypair_config(
+                    compute_config['agent_servers']['agents_keypair']),
+                self.provider_config['networking'])
+        except:
+            lgr.error('failed to copy keystone files')
+            return False
+
+        with settings(host_string=mgmt_ip), hide('running',
+                                                 'stderr',
+                                                 'aborts',
+                                                 'warnings'):
+
+            lgr.info('downloading cloudify-components package...')
             r = _download_package(
                 CLOUDIFY_PACKAGES_PATH,
                 cosmo_config['cloudify_components_package_url'])
@@ -1298,30 +1658,41 @@ class BaseProviderClass(object):
                           'configured location in the config file')
                 return False
 
-            lgr.info('downloading cloudify package...')
+            lgr.info('downloading cloudify-core package...')
             r = _download_package(
                 CLOUDIFY_PACKAGES_PATH,
-                cosmo_config['cloudify_package_url'])
+                cosmo_config['cloudify_core_package_url'])
             if not r:
-                lgr.error('failed to download cloudify package. '
+                lgr.error('failed to download core package. '
                           'please ensure package exists in its '
                           'configured location in the config file')
                 return False
 
-            lgr.info('downloading cloudify ubuntu agent...')
+            lgr.info('downloading cloudify-ui...')
             r = _download_package(
-                AGENT_PACKAGES_PATH,
+                CLOUDIFY_UI_PACKAGE_PATH,
+                cosmo_config['cloudify_ui_package_url'])
+            if not r:
+                lgr.error('failed to download ui package. '
+                          'please ensure package exists in its '
+                          'configured location in the config file')
+                return False
+
+            lgr.info('downloading cloudify-ubuntu-agent...')
+            r = _download_package(
+                CLOUDIFY_AGENT_PACKAGE_PATH,
                 cosmo_config['cloudify_ubuntu_agent_url'])
             if not r:
-                lgr.error('failed to download cloudify ubuntu agent. '
+                lgr.error('failed to download ubuntu agent. '
                           'please ensure package exists in its '
                           'configured location in the config file')
                 return False
 
-            lgr.info('unpacking cloudify packages...')
-            r = _unpack(CLOUDIFY_PACKAGES_PATH)
+            lgr.info('unpacking cloudify-core packages...')
+            r = _unpack(
+                CLOUDIFY_PACKAGES_PATH)
             if not r:
-                lgr.error('failed to unpack cloudify packages')
+                lgr.error('failed to unpack cloudify-core package')
                 return False
 
             lgr.debug('verifying verbosity for installation process')
@@ -1329,26 +1700,37 @@ class BaseProviderClass(object):
             self.is_verbose_output = True
 
             lgr.info('installing cloudify on {0}...'.format(mgmt_ip))
-            r = _run('sudo {0}/cloudify3-components-bootstrap.sh'
+            r = _run('sudo {0}/cloudify-components-bootstrap.sh'
                      .format(CLOUDIFY_COMPONENTS_PACKAGE_PATH))
             if not r:
-                lgr.error('failed to install components')
+                lgr.error('failed to install cloudify-components')
                 return False
 
-            celery_user = mgmt_ssh_user
-            r = _run('sudo {0}/cloudify3-bootstrap.sh {1} {2}'
-                     .format(CLOUDIFY_PACKAGE_PATH,
+            celery_user = mgmt_server_config['user_on_management']
+            r = _run('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'
+                     .format(CLOUDIFY_CORE_PACKAGE_PATH,
                              celery_user, private_ip))
             if not r:
-                lgr.error('failed to install cloudify')
+                lgr.error('failed to install cloudify-core')
                 return False
 
+            lgr.info('deploying cloudify-ui')
             self.is_verbose_output = False
-            lgr.info('unpacking cloudify agent...')
-            r = _unpack(AGENT_PACKAGES_PATH)
+            r = _unpack(
+                CLOUDIFY_UI_PACKAGE_PATH)
             if not r:
-                lgr.error('failed to unpack cloudify agent')
+                lgr.error('failed to install cloudify-ui')
                 return False
+            lgr.info('done')
+
+            lgr.info('deploying cloudify agent')
+            self.is_verbose_output = False
+            r = _unpack(
+                CLOUDIFY_AGENT_PACKAGE_PATH)
+            if not r:
+                lgr.error('failed to install cloudify-agent')
+                return False
+            lgr.info('done')
 
             self.is_verbose_output = True
             if dev_mode:
@@ -1370,54 +1752,26 @@ class BaseProviderClass(object):
                             _run(command)
 
                     if 'downloads' in value:
-                        _run('mkdir -p /tmp')
+                        _run('mkdir -p /tmp/{0}'.format(virtualenv))
                         for download in value['downloads']:
                             lgr.debug('downloading: ' + download)
                             _run('sudo wget {0} -O '
                                  '/tmp/module.tar.gz'
                                  .format(download))
-                            _run('sudo tar -C /tmp -xvf {0}'
-                                 .format('/tmp/module.tar.gz'))
+                            _run('sudo tar -C /tmp/{0} -xvf {1}'
+                                 .format(virtualenv,
+                                         '/tmp/module.tar.gz'))
 
                     if 'installs' in value:
-                        src_wfs = False
-                        src_orc = False
-                        try:
-                            src_wfs = value['installs']['workflow_service']
-                        except:
-                            pass
-                        try:
-                            src_orc = value['installs']['orchestrator']
-                        except:
-                            pass
-                        if src_wfs:
-                            lgr.debug('installing wfs')
-                            dst_wfs = ('{0}/cosmo-manager-*/'
-                                       'workflow-service/'
-                                       .format(virtualenv))
-                            lgr.debug('workflow service config..')
-                            _run('sudo cp -R {0} {1}'
-                                 .format(src_wfs, dst_wfs))
-                        elif src_orc:
-                            lgr.debug('installing orchestrator')
-                            dst_orc = ('{0}/resources/'.format(virtualenv))
-                            lgr.debug('orchestrator config..')
-                            _run('sudo cp -R {0} {1}'
-                                      .format('{0}/cloudify/'.format(src_orc),  # NOQA
-                                              dst_orc))
-                            _run('sudo cp -R {0} {1}'
-                                      .format('{0}/org/cloudifysource/cosmo/dsl/alias-mappings.yaml'  # NOQA
-                                              .format(src_orc),  # NOQA
-                                              '{0}/cloudify/'.format(dst_orc)))  # NOQA
-                        else:
-                            for install in value['installs']:
-                                lgr.debug('installing: ' + install)
-                                _run('sudo {0}/bin/pip '
-                                     '--default-timeout'
-                                     '=45 install {1} --upgrade'
-
-                                     .format(virtualenv, install))
-
+                        for module in value['installs']:
+                            lgr.debug('installing: ' + module)
+                            if module.startswith('/'):
+                                module = '/tmp' + virtualenv + module
+                            _run('sudo {0}/bin/pip '
+                                 '--default-timeout'
+                                 '=45 install {1} --upgrade'
+                                 ' --process-dependency-links'
+                                 .format(virtualenv, module))
                     if 'runs' in value:
                         for command in value['runs']:
                             _run(command)
@@ -1427,8 +1781,9 @@ class BaseProviderClass(object):
             self.is_verbose_output = v
             return True
 
-    def _validate_config_schema(self, schema=None):
-        _set_global_verbosity_level(self.is_verbose_output)
+    def validate_config_schema(self, schema=None):
+        set_global_verbosity_level(self.is_verbose_output)
+
         if schema is not None:
             global validated
             v = Draft4Validator(schema)
@@ -1455,6 +1810,10 @@ class BaseProviderClass(object):
 
 
 class CosmoCliError(Exception):
+    pass
+
+
+class SuppressedCosmoCliError(Exception):
     pass
 
 if __name__ == '__main__':
