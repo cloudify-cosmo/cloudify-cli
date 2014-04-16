@@ -186,6 +186,13 @@ def _parse_args(args):
         action='store_true',
         help='A flag indicating that bootstrap will be run in dev-mode,'
         ' allowing to choose specific branches to run with')
+
+    parser_bootstrap.add_argument(
+        '--skip-validations',
+        dest='skip_validations',
+        action='store_true',
+        help='A flag indicating that bootstrap will be run without,'
+        ' validating resources prior to bootstrapping the manager')
     _set_handler_for_command(parser_bootstrap, _bootstrap_cosmo)
 
     # teardown subparser
@@ -597,6 +604,7 @@ def _bootstrap_cosmo(args):
                                args.verbosity,
                                False,
                                args.keep_up,
+                               args.skip_validations,
                                args.dev_mode)
 
     mgmt_ip = mgmt_ip.encode('utf-8')
