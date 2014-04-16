@@ -89,6 +89,16 @@ class CliTest(unittest.TestCase):
             returncode = subprocess.call("cfy", stdout=f, stderr=f)
         self.assertEquals(returncode, 2)
 
+    def test_validate_blueprint_in_cwd(self):
+        prev_cwd = os.getcwd()
+
+        try:
+            os.chdir('{0}/helloworld'.format(BLUEPRINTS_DIR))
+            self._create_cosmo_wd_settings()
+            self._run_cli("cfy blueprints validate blueprint.yaml")
+        finally:
+            os.chdir(prev_cwd)
+
     def test_validate_bad_blueprint(self):
         self._create_cosmo_wd_settings()
         self._assert_ex("cfy blueprints validate "
@@ -173,11 +183,20 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy init mock_provider -r -v")
 
     def test_bootstrap(self):
-        self._run_cli("cfy init mock_provider -v")
+        self._run_cli("cfy init cloudify_mock_provider2 -v")
         self._run_cli("cfy bootstrap -v")
-        self.assertEquals(
-            "10.0.0.1",
-            self._read_cosmo_wd_settings().get_management_server())
+        settings = self._read_cosmo_wd_settings()
+        self.assertEquals("10.0.0.2", settings.get_management_server())
+        self.assertEquals('value', settings.get_provider_context()['key'])
+
+        from cosmo_cli.tests.mock_cosmo_manager_rest_client import \
+            _provider_context, _provider_name
+        self.assertEquals('cloudify_mock_provider2', _provider_name)
+        self.assertEquals('value', _provider_context['key'])
+
+        # restore global state /:
+        self._run_cli("cfy init mock_provider -v -r")
+        self._run_cli("cfy bootstrap -v")
 
     def test_bootstrap_explicit_config_file(self):
         # note the mock providers don't actually try to read the file;
@@ -238,8 +257,16 @@ class CliTest(unittest.TestCase):
         # CosmoCliError and retain the original error message
         self._set_mock_rest_client()
         self._run_cli("cfy init cloudify_mock_provider2 -v")
-        self._assert_ex("cfy teardown -t 10.0.0.1 -f",
-                        "cloudify_mock_provider2 teardown exception")
+
+        from cosmo_cli.tests import mock_cosmo_manager_rest_client
+        original = mock_cosmo_manager_rest_client.get_mock_provider_name
+        mock_cosmo_manager_rest_client.get_mock_provider_name = \
+            lambda: 'cloudify_mock_provider2'
+        try:
+                self._assert_ex("cfy teardown -t 10.0.0.1 -f",
+                                "cloudify_mock_provider2 teardown exception")
+        finally:
+            mock_cosmo_manager_rest_client.get_mock_provider_name = original
 
     def test_status_command_no_rest_service(self):
         self._create_cosmo_wd_settings()

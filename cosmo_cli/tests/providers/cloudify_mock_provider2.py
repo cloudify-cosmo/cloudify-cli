@@ -30,7 +30,7 @@ def init(target_dir, reset_config, is_verbose_output=False):
 def bootstrap(config_path=None, is_verbose_output=False,
               bootstrap_using_script=True, keep_up=False,
               skip_validations=False, dev_mode=False):
-    return '10.0.0.2', {}
+    return '10.0.0.2', {'key': 'value'}
 
 
 def teardown(provider_context, ignore_validation=False, config_path=None,

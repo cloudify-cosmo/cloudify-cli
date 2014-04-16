@@ -38,7 +38,9 @@ import config
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
     import CosmoManagerRestClient
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
-    import CosmoManagerRestCallError, CosmoManagerRestCallTimeoutError
+    import (CosmoManagerRestCallError,
+            CosmoManagerRestCallTimeoutError,
+            CosmoManagerRestCallHTTPError)
 from dsl_parser.parser import parse_from_path, DSLParsingException
 
 
@@ -612,7 +614,8 @@ def _bootstrap_cosmo(args):
         wd_settings.set_provider_context(provider_context)
 
     # storing provider context on management server
-    _get_rest_client(mgmt_ip).post_provider_context(provider_context)
+    _get_rest_client(mgmt_ip).post_provider_context(provider_name,
+                                                    provider_context)
 
     lgr.info(
         "management server is up at {0} (is now set as the default "
@@ -647,8 +650,8 @@ def _teardown_cosmo(args):
 
     lgr.info("tearing down {0}".format(mgmt_ip))
 
-    provider_name = _get_provider(args.verbosity)
-    provider_context = _get_provider_context(mgmt_ip, args.verbosity)
+    provider_name, provider_context = \
+        _get_provider_name_and_context(mgmt_ip, args.verbosity)
     provider = _get_provider_module(provider_name, args.verbosity)
     with _protected_provider_call(args.verbosity):
         provider.teardown(provider_context, args.ignore_validation,
@@ -693,12 +696,13 @@ def _get_provider(is_verbose_output=False):
         sys.exit(msg)
 
 
-def _get_provider_context(mgmt_ip, is_verbose_output=False):
+def _get_provider_name_and_context(mgmt_ip, is_verbose_output=False):
     # trying to retrieve provider context from server
     try:
-        return _get_rest_client(mgmt_ip).get_provider_context()
+        response = _get_rest_client(mgmt_ip).get_provider_context()
+        return response['name'], response['context']
     except CosmoManagerRestCallError as e:
-        lgr.debug('Failed to get provider context from server: {0}'.format(
+        lgr.warn('Failed to get provider context from server: {0}'.format(
             str(e)))
 
     # using the local provider context instead (if it's relevant for the
@@ -707,12 +711,17 @@ def _get_provider_context(mgmt_ip, is_verbose_output=False):
     if cosmo_wd_settings.get_provider_context():
         default_mgmt_server_ip = cosmo_wd_settings.get_management_server()
         if default_mgmt_server_ip == mgmt_ip:
-            return cosmo_wd_settings.get_provider_context()
+            provider_name = _get_provider(is_verbose_output)
+            return provider_name, cosmo_wd_settings.get_provider_context()
         else:
             # the local provider context data is for a different server
             msg = "Failed to get provider context from target server"
     else:
-        msg = "Provider context is not set in working directory settings"
+        msg = "Provider context is not set in working directory settings (" \
+              "The provider is used during the bootstrap and teardown " \
+              "process. This probably means that the manager was started " \
+              "manually, without the bootstrap command therefore calling " \
+              "teardown is not supported)."
     flgr.error(msg)
     if is_verbose_output:
         raise RuntimeError(msg)
@@ -740,7 +749,7 @@ def _status(args):
 def _check_management_server_status(management_ip):
     client = _get_rest_client(management_ip)
     try:
-        client.list_blueprints()
+        client.status()
         return True
     except CosmoManagerRestCallError:
         return False
@@ -761,13 +770,20 @@ def _use_management_server(args):
         else:
             raise sys.exit(msg)
 
-    provider_context = _get_rest_client(args.management_ip)\
-        .get_provider_context()
+    try:
+        response = _get_rest_client(args.management_ip)\
+            .get_provider_context()
+        provider_name = response['name']
+        provider_context = response['context']
+    except CosmoManagerRestCallError:
+        provider_name = None
+        provider_context = None
 
     with _update_wd_settings(args.verbosity) as wd_settings:
         wd_settings.set_management_server(
             wd_settings.translate_management_alias(args.management_ip))
         wd_settings.set_provider_context(provider_context)
+        wd_settings.set_provider(provider_name)
         if args.alias:
             wd_settings.save_management_alias(args.alias,
                                               args.management_ip,
@@ -800,7 +816,7 @@ def _list_blueprints(args):
 
 def _delete_blueprint(args):
     management_ip = _get_management_server_ip(args)
-    blueprint_id = args.blueprint_id, management_ip
+    blueprint_id = args.blueprint_id
 
     lgr.info(
         'Deleting blueprint {0} from management server {1}'.format(
@@ -861,7 +877,7 @@ def _create_event_message_prefix(event):
             operation = '.{0}'.format(context['operation'].split('.')[-1])
         node_info = '[{0}{1}] '.format(node_id, operation)
     level = 'CFY'
-    message = event['message']['text']
+    message = event['message']['text'].encode('utf-8')
     if 'cloudify_log' in event['type']:
         level = 'LOG'
         message = '{0}: {1}'.format(event['level'].upper(), message)
@@ -952,9 +968,12 @@ def _list_blueprint_deployments(args):
                              deployments)
 
     if len(deployments) == 0:
-        lgr.info(
-            'There are no deployments on the '
-            'management server for blueprint {0}'.format(blueprint_id))
+        if blueprint_id:
+            suffix = 'for blueprint {0}'.format(blueprint_id)
+        else:
+            suffix = ''
+        lgr.info('There are no deployments on the management server {0}'
+                 .format(suffix))
     else:
         lgr.info('Deployments:')
         for deployment in deployments:
@@ -997,6 +1016,7 @@ def _cancel_execution(args):
 
 
 def _list_deployment_executions(args):
+    is_verbose_output = args.verbosity
     management_ip = _get_management_server_ip(args)
     client = _get_rest_client(management_ip)
     deployment_id = args.deployment_id
@@ -1004,7 +1024,19 @@ def _list_deployment_executions(args):
     lgr.info(
         'Querying executions list from management server {0} for '
         'deployment {1}'.format(management_ip, deployment_id))
-    executions = client.list_deployment_executions(deployment_id, inc_statuses)
+    try:
+        executions = client.list_deployment_executions(deployment_id,
+                                                       inc_statuses)
+    except CosmoManagerRestCallHTTPError, e:
+        if not e.status_code == 404:
+            raise
+        msg = ('Deployment {0} does not exist on management server'
+               .format(deployment_id))
+        flgr.error(msg)
+        if is_verbose_output:
+            raise CosmoCliError(msg)
+        else:
+            sys.exit(msg)
 
     if len(executions) == 0:
         lgr.info(
@@ -1031,11 +1063,23 @@ def _get_events(args):
                                          args.execution_id,
                                          args.include_logs))
     client = _get_rest_client(management_ip)
-    events = client.get_all_execution_events(args.execution_id,
-                                             include_logs=args.include_logs)
-    events_logger = _get_events_logger(args)
-    events_logger(events)
-    lgr.info('\nTotal events: {0}'.format(len(events)))
+    try:
+        events = client.get_all_execution_events(
+            args.execution_id,
+            include_logs=args.include_logs)
+        events_logger = _get_events_logger(args)
+        events_logger(events)
+        lgr.info('\nTotal events: {0}'.format(len(events)))
+    except CosmoManagerRestCallHTTPError, e:
+        if e.status_code != 404:
+            raise
+        msg = ("Execution '{0}' not found on management server"
+               .format(args.execution_id))
+        flgr.error(msg)
+        if args.verbosity:
+            raise CosmoCliError(msg)
+        else:
+            raise sys.exit(msg)
 
 
 def _set_cli_except_hook():
