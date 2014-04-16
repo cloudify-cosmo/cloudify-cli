@@ -14,25 +14,27 @@
 # limitations under the License.
 ############
 
-__author__ = 'ran'
+__author__ = 'dan'
 
-import os
+import unittest
 
-
-def init(target_dir, reset_config, is_verbose_output=False):
-    config_file_path = os.path.join(target_dir, 'cloudify-config.yaml')
-    if not reset_config and os.path.exists(config_file_path):
-        return False
-    open(config_file_path, 'a').close()
-    return True
+from cosmo_cli.cosmo_cli import (
+    _create_event_message_prefix
+)
 
 
-def bootstrap(config_path=None, is_verbose_output=False,
-              bootstrap_using_script=True, keep_up=False,
-              skip_validations=False, dev_mode=False):
-    return '10.0.0.1', {}
+class CliUnitTests(unittest.TestCase):
 
+    def test_create_event_message_prefix_with_unicode(self):
 
-def teardown(provider_context, ignore_validation=False, config_path=None,
-             is_verbose_output=False):
-    pass
+        unicode_message = u'\u2018'
+
+        event = {
+            'context': {'deployment_id': 'deployment'},
+            'message': {'text': unicode_message},
+            'type': 'cloudify_log',
+            'level': 'INFO',
+            '@timestamp': 'NOW'
+        }
+
+        print _create_event_message_prefix(event)

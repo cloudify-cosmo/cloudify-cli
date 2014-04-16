@@ -224,6 +224,13 @@ def _parse_args(args):
         action='store_true',
         help='A flag indicating that bootstrap will be run in dev-mode,'
         ' allowing to choose specific branches to run with')
+
+    parser_bootstrap.add_argument(
+        '--skip-validations',
+        dest='skip_validations',
+        action='store_true',
+        help='A flag indicating that bootstrap will be run without,'
+        ' validating resources prior to bootstrapping the manager')
     _set_handler_for_command(parser_bootstrap, _bootstrap_cosmo)
 
     # teardown subparser
@@ -956,7 +963,7 @@ def _create_event_message_prefix(event):
             operation = '.{0}'.format(context['operation'].split('.')[-1])
         node_info = '[{0}{1}] '.format(node_id, operation)
     level = 'CFY'
-    message = event['message']['text']
+    message = event['message']['text'].encode('utf-8')
     if 'cloudify_log' in event['type']:
         level = 'LOG'
         message = '{0}: {1}'.format(event['level'].upper(), message)

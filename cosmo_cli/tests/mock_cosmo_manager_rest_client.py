@@ -19,10 +19,19 @@ __author__ = 'ran'
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
     import CosmoManagerRestCallError
 
+_provider_context = {}
+_provider_name = 'mock_provider'
+
+
+def get_mock_provider_name():
+    return _provider_name
+
 
 class MockCosmoManagerRestClient(object):
     # A mock of the rest client, containing only the methods and object types
     # that are relevant to test the CLI in its current form.
+    def status(self):
+        return []
 
     def list_blueprints(self):
         return []
@@ -34,13 +43,15 @@ class MockCosmoManagerRestClient(object):
         return MicroMock(id=blueprint_id)
 
     def delete_blueprint(self, blueprint_id):
+        if not isinstance(blueprint_id, str):
+            raise RuntimeError("blueprint_id should be a string")
         pass
 
     def create_deployment(self, blueprint_id, deployment_id):
         return MicroMock(id='a-deployment-id')
 
     def execute_deployment(self, deployment_id, operation, events_handler=None,
-                           timeout=900):
+                           timeout=900, force=False):
         if operation != 'install':
             raise CosmoManagerRestCallError("operation {0} doesn't exist"
                                             .format(operation))
@@ -58,6 +69,18 @@ class MockCosmoManagerRestClient(object):
 
     def get_all_execution_events(self, execution_id, include_logs=False):
         return []
+
+    def get_provider_context(self):
+        return {
+            'name': get_mock_provider_name(),
+            'context': _provider_context
+        }
+
+    def post_provider_context(self, name, provider_context):
+        global _provider_context
+        global _provider_name
+        _provider_context = provider_context
+        _provider_name = name
 
 
 class MicroMock(object):
