@@ -54,7 +54,8 @@ setup(
         "cosmo-plugin-dsl-parser",
         "argcomplete",
         "fabric",
-        "jsonschema"
+        "jsonschema",
+        "scp"
     ],
     dependency_links=[COSMO_MANAGER_REST_CLIENT, COSMO_PLUGIN_DSL_PARSER]
 )

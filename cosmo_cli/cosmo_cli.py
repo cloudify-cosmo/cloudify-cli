@@ -662,13 +662,6 @@ def _bootstrap_cosmo(args):
                                                 args.verbosity)
 
     lgr.info("bootstrapping using {0}".format(provider_name))
-    lgr.info('validating provider resources and configuration')
-    if provider_manager.validate():
-        lgr.info('provider validations completed successfully')
-    else:
-        lgr.error('provider validations failed!')
-        sys.exit(1)
-
     with _protected_provider_call(args.verbosity):
         lgr.info('provisioning resources for management server...')
         params = provider_manager.provision()
