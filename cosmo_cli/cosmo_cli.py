@@ -83,7 +83,6 @@ logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
 
 
 def init_logger():
-    # initialize logger
     if os.path.isfile(config.LOG_DIR):
         sys.exit('file {0} exists - cloudify log directory cannot be created '
                  'there. please remove the file and try again.'
@@ -105,6 +104,7 @@ def init_logger():
                  ' and permissions to write to {0}'
                  .format(logfile))
 
+# initialize logger
 lgr, flgr = init_logger()
 
 
@@ -1721,6 +1721,11 @@ class BaseProviderClass(object):
                 raise CosmoCliError(msg)
             else:
                 sys.exit(msg)
+
+
+class CosmoBootstrapError(Exception):
+    def __init__(self, provider_context):
+        self.provider_context = provider_context
 
 
 class CosmoCliError(Exception):
