@@ -41,7 +41,7 @@ import logging
 import logging.config
 import config
 from jsonschema import ValidationError, Draft4Validator
-from fabric.api import run, env
+from fabric.api import run, env, local
 from fabric.context_managers import settings, hide
 from os.path import expanduser
 
@@ -198,6 +198,14 @@ def _parse_args(args):
         dest='reset_config',
         action='store_true',
         help='A flag indicating overwriting existing configuration is allowed'
+    )
+
+    parser_init.add_argument(
+        '--install',
+        dest='install',
+        metavar='PROVIDER_URL',
+        type=str,
+        help='url to provider module'
     )
     _set_handler_for_command(parser_init, _init_cosmo)
 
@@ -649,15 +657,16 @@ def _init_cosmo(args):
         else:  # resetting provider configuration
             lgr.debug('resetting configuration...')
             base_instance.init(provider, target_directory,
-                               args.reset_config, args.verbosity)
+                               args.reset_config,
+                               is_verbose_output=args.verbosity)
             lgr.info("Configuration reset complete")
             return
 
     lgr.info("Initializing Cloudify")
     provider_module_name = base_instance.init(provider, target_directory,
                                               args.reset_config,
+                                              args.install,
                                               args.verbosity)
-
     # creating .cloudify file
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
                                      target_directory)
@@ -1372,23 +1381,35 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
 
 class BaseProviderClass(object):
 
-    def init(self, provider, target_directory, reset_config,
+    def init(self, provider, target_directory, reset_config, install=False,
              is_verbose_output=False):
+
         set_global_verbosity_level(is_verbose_output)
+
+        def _get_provider_by_name():
+            try:
+                # searching first for the standard name for providers
+                # (i.e. cloudify_XXX)
+                provider_module_name = 'cloudify_{0}'.format(provider)
+                # print provider_module_name
+                return (provider_module_name,
+                        _get_provider_module(provider_module_name,
+                                             is_verbose_output))
+            except CosmoCliError:
+                # if provider was not found, search for the exact literal the
+                # user requested instead
+                provider_module_name = provider
+                return (provider_module_name,
+                        _get_provider_module(provider_module_name,
+                                             is_verbose_output))
         try:
-            # searching first for the standard name for providers
-            # (i.e. cloudify_XXX)
-            provider_module_name = 'cloudify_{0}'.format(provider)
-            # print provider_module_name
-            provider = _get_provider_module(provider_module_name,
-                                            is_verbose_output)
-        except CosmoCliError:
-            # if provider was not found, search for the exact literal the
-            # user requested instead
-            provider_module_name = provider
-            provider = _get_provider_module(provider_module_name,
-                                            is_verbose_output)
-        # with _protected_provider_call(is_verbose_output):
+            provider_module_name, provider = _get_provider_by_name()
+        except:
+            if install:
+                local('pip install {0} --process-dependency-links'
+                      .format(install))
+            provider_module_name, provider = _get_provider_by_name()
+
         if not reset_config and os.path.exists(
                 os.path.join(target_directory, CONFIG_FILE_NAME)):
             msg = ('Target directory already contains a '
