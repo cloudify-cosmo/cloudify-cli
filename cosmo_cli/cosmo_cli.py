@@ -231,6 +231,14 @@ def _parse_args(args):
         action='store_true',
         help='A flag indicating that bootstrap will be run without,'
         ' validating resources prior to bootstrapping the manager')
+
+    parser_bootstrap.add_argument(
+        '--validate-only',
+        dest='validate_only',
+        action='store_true',
+        help='A flag indicating that validations will run without,'
+        ' actually performing the bootstrap process.')
+
     _set_handler_for_command(parser_bootstrap, _bootstrap_cosmo)
 
     # teardown subparser
@@ -665,19 +673,42 @@ def _bootstrap_cosmo(args):
     provider_config = _read_config(args.config_file_path,
                                    provider_dir,
                                    args.verbosity)
-    provider_manager = provider.ProviderManager(provider_config,
-                                                args.verbosity)
+    pm = provider.ProviderManager(provider_config, args.verbosity)
 
+    if args.skip_validations and args.validate_only:
+        sys.exit('really? you\'re skipping validations and want to'
+                 ' validate only?')
     lgr.info("bootstrapping using {0}".format(provider_name))
+    if not args.skip_validations:
+        lgr.info('validating provider resources and configuration')
+        validation_errors = {}
+        try:
+            pm.schema
+            validation_errors = pm.validate_schema(validation_errors,
+                                                   schema=pm.schema)
+        except:
+            lgr.debug('schema validation disabled')
+        # if the validation_errors dict return empty
+        if not pm.validate(validation_errors) and not validation_errors:
+            lgr.info('provider validations completed successfully')
+        else:
+            lgr.error('provider validations failed!')
+            # TODO: raise instead.
+            if args.verbosity:
+                raise CosmoValidationError()
+            else:
+                sys.exit(1)
+    if args.validate_only:
+        return
     with _protected_provider_call(args.verbosity):
         lgr.info('provisioning resources for management server...')
-        params = provider_manager.provision(args.skip_validations)
+        params = pm.provision()
     if params is not None:
         mgmt_ip, private_ip, ssh_key, ssh_user, provider_context = params
         lgr.info('provisioning complete')
         lgr.info('bootstrapping the management server...')
-        installed = provider_manager.bootstrap(mgmt_ip, private_ip, ssh_key,
-                                               ssh_user, args.dev_mode)
+        installed = pm.bootstrap(mgmt_ip, private_ip, ssh_key,
+                                 ssh_user, args.dev_mode)
         lgr.info('bootstrapping complete') if installed else \
             lgr.error('bootstrapping failed!')
     else:
@@ -703,9 +734,9 @@ def _bootstrap_cosmo(args):
         else:
             lgr.info('tearing down topology'
                      ' due to bootstrap failure')
-            provider_manager.teardown(provider_context)
+            pm.teardown(provider_context)
         if args.verbosity:
-            raise CosmoCliError()
+            raise CosmoBootstrapError()
         else:
             sys.exit(1)
 
@@ -736,8 +767,6 @@ def _teardown_cosmo(args):
         else:
             sys.exit(msg)
 
-    lgr.info("tearing down {0}".format(mgmt_ip))
-
     provider_name, provider_context = \
         _get_provider_name_and_context(mgmt_ip, args.verbosity)
     provider = _get_provider_module(provider_name, args.verbosity)
@@ -745,10 +774,11 @@ def _teardown_cosmo(args):
     provider_config = _read_config(args.config_file_path,
                                    provider_dir,
                                    args.verbosity)
-    provider_manager = provider.ProviderManager(provider_config,
-                                                args.verbosity)
+    pm = provider.ProviderManager(provider_config, args.verbosity)
+
+    lgr.info("tearing down {0}".format(mgmt_ip))
     with _protected_provider_call(args.verbosity):
-        provider_manager.teardown(provider_context, args.ignore_validation)
+        pm.teardown(provider_context, args.ignore_validation)
 
     # cleaning relevant data from working directory settings
     with _update_wd_settings(args.verbosity) as wd_settings:
@@ -1697,37 +1727,34 @@ class BaseProviderClass(object):
             self.is_verbose_output = v
             return True
 
-    def validate_config_schema(self, schema=None):
-        set_global_verbosity_level(self.is_verbose_output)
+    def validate(self, validation_errors={}):
+        lgr.debug("no resource validation methods defined!")
+        return validation_errors
 
-        if schema is not None:
-            global validated
-            v = Draft4Validator(schema)
-            if v.iter_errors(self.provider_config):
-                errors = ';\n'.join('config file validation error found. key:'
-                                    ' %s, %s' % ('.'.join(e.path), e.message)
-                                    for e in v.iter_errors(
-                                        self.provider_config))
-            try:
-                lgr.info('validating provider configuration file...')
-                v.validate(self.provider_config)
-                lgr.info('provider configuration file validated successfully')
-            except ValidationError:
-                lgr.error('{0}'.format(errors))
-                lgr.error('provider configuration validation failed!')
-                sys.exit(1)
-        else:
-            msg = ("no schema provided to validate against!")
-            flgr.error(msg)
-            if self.is_verbose_output:
-                raise CosmoCliError(msg)
-            else:
-                sys.exit(msg)
+    def validate_schema(self, validation_errors={}, schema=None):
+        lgr.debug('validating config file against provided schema...')
+        v = Draft4Validator(schema)
+        if v.iter_errors(self.provider_config):
+            for e in v.iter_errors(self.provider_config):
+                err = ('config file validation error originating at key: {0}, '
+                       '{0}, {1}'.format('.'.join(e.path), e.message))
+                validation_errors.setdefault('schema', []).append(err)
+            errors = ';\n'.join(err for e in v.iter_errors(
+                self.provider_config))
+        try:
+            v.validate(self.provider_config)
+        except ValidationError:
+            lgr.error('VALIDATION ERROR:'
+                      '{0}'.format(errors))
+        return validation_errors
 
 
 class CosmoBootstrapError(Exception):
-    def __init__(self, provider_context):
-        self.provider_context = provider_context
+    pass
+
+
+class CosmoValidationError(Exception):
+    pass
 
 
 class CosmoCliError(Exception):
