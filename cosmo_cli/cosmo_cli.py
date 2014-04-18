@@ -700,11 +700,13 @@ def _bootstrap_cosmo(args):
     else:
         if args.keep_up:
             lgr.info('topology will remain up')
-            sys.exit(1)
         else:
             lgr.info('tearing down topology'
                      ' due to bootstrap failure')
             provider_manager.teardown(provider_context)
+        if args.verbosity:
+            raise CosmoCliError()
+        else:
             sys.exit(1)
 
 
