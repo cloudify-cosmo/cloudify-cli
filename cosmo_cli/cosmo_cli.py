@@ -1746,6 +1746,10 @@ class BaseProviderClass(object):
         except ValidationError:
             lgr.error('VALIDATION ERROR:'
                       '{0}'.format(errors))
+        lgr.error('schema validation failed!') if validation_errors \
+            else lgr.info('schema validated successfully')
+        # print json.dumps(validation_errors, sort_keys=True,
+        #                  indent=4, separators=(',', ': '))
         return validation_errors
 
 
