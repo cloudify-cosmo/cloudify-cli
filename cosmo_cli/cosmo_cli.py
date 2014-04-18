@@ -203,7 +203,7 @@ def _parse_args(args):
     parser_init.add_argument(
         '--install',
         dest='install',
-        metavar='PROVIDER_URL',
+        metavar='PROVIDER_MODULE_URL',
         type=str,
         help='url to provider module'
     )
@@ -503,10 +503,7 @@ def _get_provider_module(provider_name, is_verbose_output=False):
             msg = ('Provider {0} not found.'
                    .format(provider_name))
             flgr.error(msg)
-            if is_verbose_output:
-                raise CosmoCliError(msg)
-            else:
-                sys.exit(msg)
+            raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
 
         module = imp.load_module(provider_name, *module_or_pkg_desc)
 
@@ -524,10 +521,7 @@ def _get_provider_module(provider_name, is_verbose_output=False):
                'maybe {0} provider module was not installed?'
                .format(provider_name))
         flgr.error(msg)
-        if is_verbose_output:
-            raise CosmoCliError(str(ex))
-        else:
-            sys.exit(msg)
+        raise CosmoCliError(str(ex)) if is_verbose_output else sys.exit(msg)
 
 
 def _add_force_optional_argument_to_parser(parser, help_message):
@@ -636,10 +630,7 @@ def _init_cosmo(args):
     if not os.path.isdir(target_directory):
         msg = "Target directory doesn't exist."
         flgr.error(msg)
-        if args.verbosity:
-            raise CosmoCliError(msg)
-        else:
-            sys.exit(msg)
+        raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
 
     base_instance = BaseProviderClass()
     if os.path.exists(os.path.join(target_directory,
@@ -650,10 +641,8 @@ def _init_cosmo(args):
                    'reinitialization (might overwrite '
                    'provider configuration files if exist).')
             flgr.error(msg)
-            if args.verbosity:
-                raise CosmoCliError(msg)
-            else:
-                sys.exit(msg)
+            raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
+
         else:  # resetting provider configuration
             lgr.debug('resetting configuration...')
             base_instance.init(provider, target_directory,
@@ -685,13 +674,15 @@ def _bootstrap_cosmo(args):
     pm = provider.ProviderManager(provider_config, args.verbosity)
 
     if args.skip_validations and args.validate_only:
-        sys.exit('really? you\'re skipping validations and want to'
-                 ' validate only?')
+        sys.exit('please choose one of skip_validations and '
+                 'validate_only flags, not both.')
     lgr.info("bootstrapping using {0}".format(provider_name))
     if not args.skip_validations:
         lgr.info('validating provider resources and configuration')
         validation_errors = {}
         try:
+            # check if ProviderManager class attr schema exists
+            # and if it is, validate using the schema
             pm.schema
             validation_errors = pm.validate_schema(validation_errors,
                                                    schema=pm.schema)
@@ -703,10 +694,7 @@ def _bootstrap_cosmo(args):
         else:
             lgr.error('provider validations failed!')
             # TODO: raise instead.
-            if args.verbosity:
-                raise CosmoValidationError()
-            else:
-                sys.exit(1)
+            raise CosmoValidationError() if args.verbosity else sys.exit(1)
     if args.validate_only:
         return
     with _protected_provider_call(args.verbosity):
@@ -744,10 +732,7 @@ def _bootstrap_cosmo(args):
             lgr.info('tearing down topology'
                      ' due to bootstrap failure')
             pm.teardown(provider_context)
-        if args.verbosity:
-            raise CosmoBootstrapError()
-        else:
-            sys.exit(1)
+        raise CosmoBootstrapError() if args.verbosity else sys.exit(1)
 
 
 def _teardown_cosmo(args):
@@ -758,10 +743,7 @@ def _teardown_cosmo(args):
                "flags to your command if you are certain "
                "this command should be executed.")
         flgr.error(msg)
-        if is_verbose_output:
-            raise CosmoCliError(msg)
-        else:
-            sys.exit(msg)
+        raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
 
     mgmt_ip = _get_management_server_ip(args)
     if not args.ignore_deployments and \
@@ -771,10 +753,7 @@ def _teardown_cosmo(args):
                "these deployments and execute topology teardown."
                .format(mgmt_ip))
         flgr.error(msg)
-        if is_verbose_output:
-            raise CosmoCliError(msg)
-        else:
-            sys.exit(msg)
+        raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
 
     provider_name, provider_context = \
         _get_provider_name_and_context(mgmt_ip, args.verbosity)
@@ -810,10 +789,7 @@ def _get_management_server_ip(args):
            "management server or provide a management "
            "server ip explicitly")
     flgr.error(msg)
-    if is_verbose_output:
-        raise CosmoCliError(msg)
-    else:
-        sys.exit(msg)
+    raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
 
 
 def _get_provider(is_verbose_output=False):
@@ -822,10 +798,7 @@ def _get_provider(is_verbose_output=False):
         return cosmo_wd_settings.get_provider()
     msg = "Provider is not set in working directory settings"
     flgr.error(msg)
-    if is_verbose_output:
-        raise RuntimeError(msg)
-    else:
-        sys.exit(msg)
+    raise RuntimeError(msg) if is_verbose_output else sys.exit(msg)
 
 
 def _get_provider_name_and_context(mgmt_ip, is_verbose_output=False):
@@ -855,10 +828,7 @@ def _get_provider_name_and_context(mgmt_ip, is_verbose_output=False):
               "manually, without the bootstrap command therefore calling " \
               "teardown is not supported)."
     flgr.error(msg)
-    if is_verbose_output:
-        raise RuntimeError(msg)
-    else:
-        sys.exit(msg)
+    raise RuntimeError(msg) if is_verbose_output else sys.exit(msg)
 
 
 def _status(args):
@@ -897,10 +867,7 @@ def _use_management_server(args):
         msg = ("Can't use management server {0}: No response.".format(
             args.management_ip))
         flgr.error(msg)
-        if args.verbosity:
-            raise CosmoCliError(msg)
-        else:
-            raise sys.exit(msg)
+        raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
 
     try:
         response = _get_rest_client(args.management_ip)\
@@ -966,10 +933,7 @@ def _upload_blueprint(args):
         msg = ("Path to blueprint doesn't exist: {0}."
                .format(blueprint_path))
         flgr.error(msg)
-        if is_verbose_output:
-            raise CosmoCliError(msg)
-        else:
-            raise sys.exit(msg)
+        raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
 
     management_ip = _get_management_server_ip(args)
 
@@ -1165,10 +1129,7 @@ def _list_deployment_executions(args):
         msg = ('Deployment {0} does not exist on management server'
                .format(deployment_id))
         flgr.error(msg)
-        if is_verbose_output:
-            raise CosmoCliError(msg)
-        else:
-            sys.exit(msg)
+        raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
 
     if len(executions) == 0:
         lgr.info(
@@ -1208,10 +1169,7 @@ def _get_events(args):
         msg = ("Execution '{0}' not found on management server"
                .format(args.execution_id))
         flgr.error(msg)
-        if args.verbosity:
-            raise CosmoCliError(msg)
-        else:
-            raise sys.exit(msg)
+        raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
 
 
 def _set_cli_except_hook():
@@ -1249,10 +1207,7 @@ def _load_cosmo_working_dir_settings(is_verbose_output=False):
                'an existing management server by running the '
                'command "cfy use".')
         flgr.error(msg)
-        if is_verbose_output:
-            raise CosmoCliError(msg)
-        else:
-            sys.exit(msg)
+        raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
 
 
 def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
@@ -1278,10 +1233,7 @@ def _validate_blueprint(args):
         msg = (messages.VALIDATING_BLUEPRINT_FAILED
                .format(target_file, str(ex)))
         flgr.error(msg)
-        if is_verbose_output:
-            raise CosmoCliError(msg)
-        else:
-            sys.exit(msg)
+        raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
     lgr.info(messages.VALIDATING_BLUEPRINT_SUCCEEDED)
 
 
@@ -1320,10 +1272,8 @@ def _protected_provider_call(is_verbose_output=False):
         msg = ('Exception occurred in provider: {0}'
                .format(str(ex)))
         flgr.error(msg)
-        if is_verbose_output:
-            raise CosmoCliError(msg), None, trace
-        else:
-            sys.exit(msg)
+        raise CosmoCliError(msg), None, trace if is_verbose_output \
+            else sys.exit(msg)
 
 
 class CosmoWorkingDirectorySettings(yaml.YAMLObject):
@@ -1372,10 +1322,7 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
                    "use; use -f flag to allow overwrite."
                    .format(management_alias))
             flgr.error(msg)
-            if is_verbose_output:
-                raise CosmoCliError(msg)
-            else:
-                sys.exit(msg)
+            raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
         self._mgmt_aliases[management_alias] = management_address
 
 
@@ -1417,10 +1364,7 @@ class BaseProviderClass(object):
                    'use the "-r" flag to '
                    'reset it back to its default values.')
             flgr.error(msg)
-            if is_verbose_output:
-                raise CosmoCliError(msg)
-            else:
-                raise sys.exit(msg)
+            raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
         else:
             provider_dir = provider.__path__[0]
             files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
