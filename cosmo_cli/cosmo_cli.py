@@ -31,17 +31,17 @@ import urlparse
 import urllib
 import time
 import shutil
-import socket
-import paramiko
+# import socket
+# import paramiko
 import tempfile
 from copy import deepcopy
-from scp import SCPClient
+# from scp import SCPClient
 from contextlib import contextmanager
 import logging
 import logging.config
 import config
 from jsonschema import ValidationError, Draft4Validator
-from fabric.api import run, env, local
+from fabric.api import run, env, local, put
 from fabric.context_managers import settings, hide
 from os.path import expanduser
 
@@ -500,8 +500,7 @@ def _get_provider_module(provider_name, is_verbose_output=False):
         if not module_or_pkg_desc[1]:
             # module_or_pkg_desc[1] is the pathname of found module/package,
             # if it's empty none were found
-            msg = ('Provider {0} not found.'
-                   .format(provider_name))
+            msg = ('Provider {0} not found.'.format(provider_name))
             flgr.error(msg)
             raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
 
@@ -1377,50 +1376,67 @@ class BaseProviderClass(object):
     def bootstrap(self, mgmt_ip, private_ip, mgmt_ssh_key, mgmt_ssh_user,
                   dev_mode=False):
 
-        def _create_ssh_channel_with_mgmt(mgmt_ip, management_key_path,
-                                          user_on_management):
-            ssh = paramiko.SSHClient()
-            # TODO: support fingerprint in config json
-            ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        env.user = mgmt_ssh_user
+        env.key_filename = mgmt_ssh_key
+        env.warn_only = True
+        env.abort_on_prompts = False
+        env.connection_attempts = 5
+        env.keepalive = 0
+        env.linewise = False
+        env.pool_size = 0
+        env.skip_bad_hosts = False
+        env.timeout = 10
+        env.forward_agent = True
+        env.status = False
+        env.disable_known_hosts = False
+        # def _create_ssh_channel_with_mgmt(mgmt_ip, management_key_path,
+        #                                   user_on_management):
+        #     ssh = paramiko.SSHClient()
+        #     # TODO: support fingerprint in config json
+        #     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-            # trying to ssh connect to management server. Using retries
-            # since it might take some time to find routes to host
-            for retry in range(0, SSH_CONNECT_RETRIES):
-                try:
-                    ssh.connect(mgmt_ip, username=user_on_management,
-                                key_filename=management_key_path,
-                                look_for_keys=False, timeout=10)
-                    lgr.debug('ssh connection successful')
-                    return ssh
-                except socket.error as err:
-                    lgr.debug(
-                        "SSH connection to {0} failed ({1}). Waiting {2} "
-                        "seconds before retrying".format(mgmt_ip, err, 5))
-                    time.sleep(5)
-            lgr.error('Failed to ssh connect to management server ({0}'
-                      .format(err))
+        #     # trying to ssh connect to management server. Using retries
+        #     # since it might take some time to find routes to host
+        #     for retry in range(0, SSH_CONNECT_RETRIES):
+        #         try:
+        #             ssh.connect(mgmt_ip, username=user_on_management,
+        #                         key_filename=management_key_path,
+        #                         look_for_keys=False, timeout=10)
+        #             lgr.debug('ssh connection successful')
+        #             return ssh
+        #         except socket.error as err:
+        #             lgr.debug(
+        #                 "SSH connection to {0} failed ({1}). Waiting {2} "
+        #                 "seconds before retrying".format(mgmt_ip, err, 5))
+        #             time.sleep(5)
+        #     lgr.error('Failed to ssh connect to management server ({0}'
+        #               .format(err))
 
-        def _copy_files_to_manager(ssh, userhome_on_management,
+        def _copy_files_to_manager(userhome_on_management,
                                    keystone_config, agents_key_path,
                                    networking):
             lgr.info('uploading keystone and neutron files to manager')
-            scp = SCPClient(ssh.get_transport())
+            # scp = SCPClient(ssh.get_transport())
 
             tempdir = tempfile.mkdtemp()
-            try:
-                scp.put(agents_key_path, userhome_on_management + '/.ssh',
-                        preserve_times=True)
-                keystone_file_path = _make_keystone_file(tempdir,
-                                                         keystone_config)
-                scp.put(keystone_file_path, userhome_on_management,
-                        preserve_times=True)
-                if networking['neutron_supported_region']:
-                    neutron_file_path = _make_neutron_file(tempdir,
-                                                           networking)
-                    scp.put(neutron_file_path, userhome_on_management,
-                            preserve_times=True)
-            finally:
-                shutil.rmtree(tempdir)
+            # try:
+                # scp.put(agents_key_path, userhome_on_management + '/.ssh',
+                #         preserve_times=True)
+
+            put(agents_key_path, userhome_on_management + '/.ssh')
+            keystone_file_path = _make_keystone_file(tempdir,
+                                                     keystone_config)
+            put(keystone_file_path, userhome_on_management)
+            # scp.put(keystone_file_path, userhome_on_management,
+            #         preserve_times=True)
+            if networking['neutron_supported_region']:
+                neutron_file_path = _make_neutron_file(tempdir,
+                                                       networking)
+                put(neutron_file_path, userhome_on_management)
+                # scp.put(neutron_file_path, userhome_on_management,
+                #         preserve_times=True)
+            # finally:
+            shutil.rmtree(tempdir)
 
         def _make_keystone_file(tempdir, keystone_config):
             # put default region in keystone_config file
@@ -1437,36 +1453,36 @@ class BaseProviderClass(object):
                 json.dump({'url': networking['neutron_url']}, f)
             return neutron_file_path
 
-        def _exec_install_command_on_manager(ssh, install_command):
-            command = 'DEBIAN_FRONTEND=noninteractive sudo -E {0}'.format(
-                install_command)
-            return _exec_command_on_manager(ssh, command)
+        # def _exec_install_command_on_manager(ssh, install_command):
+        #     command = 'DEBIAN_FRONTEND=noninteractive sudo -E {0}'.format(
+        #         install_command)
+        #     return _exec_command_on_manager(ssh, command)
 
-        def _exec_command_on_manager(ssh, command):
-            lgr.info('EXEC START: {0}'.format(command))
-            chan = ssh.get_transport().open_session()
-            chan.exec_command(command)
-            stdin = chan.makefile('wb', -1)
-            stdout = chan.makefile('rb', -1)
-            stderr = chan.makefile_stderr('rb', -1)
+        # def _exec_command_on_manager(ssh, command):
+        #     lgr.info('EXEC START: {0}'.format(command))
+        #     chan = ssh.get_transport().open_session()
+        #     chan.exec_command(command)
+        #     stdin = chan.makefile('wb', -1)
+        #     stdout = chan.makefile('rb', -1)
+        #     stderr = chan.makefile_stderr('rb', -1)
 
-            try:
-                exit_code = chan.recv_exit_status()
-                if exit_code != 0:
-                    errors = stderr.readlines()
-                    raise RuntimeError('Error occurred when trying to run a '
-                                       'command on the management machine. '
-                                       'command was: {0} ; Error(s): {1}'
-                                       .format(command, errors))
+        #     try:
+        #         exit_code = chan.recv_exit_status()
+        #         if exit_code != 0:
+        #             errors = stderr.readlines()
+        #             raise RuntimeError('Error occurred when trying to run a '
+        #                                'command on the management machine. '
+        #                                'command was: {0} ; Error(s): {1}'
+        #                                .format(command, errors))
 
-                response_lines = stdout.readlines()
-                lgr.info('EXEC END: {0}'.format(command))
-                return response_lines
-            finally:
-                stdin.close()
-                stdout.close()
-                stderr.close()
-                chan.close()
+        #         response_lines = stdout.readlines()
+        #         lgr.info('EXEC END: {0}'.format(command))
+        #         return response_lines
+        #     finally:
+        #         stdin.close()
+        #         stdout.close()
+        #         stderr.close()
+        #         chan.close()
 
         def _get_private_key_path_from_keypair_config(keypair_config):
             path = keypair_config['provided']['private_key_filepath'] if \
@@ -1514,45 +1530,31 @@ class BaseProviderClass(object):
         cosmo_config = self.provider_config['cloudify']
         mgmt_server_config = compute_config['management_server']
 
-        lgr.debug('creating ssh channel to machine...')
-        try:
-            ssh = _create_ssh_channel_with_mgmt(
-                mgmt_ip,
-                _get_private_key_path_from_keypair_config(
-                    mgmt_server_config['management_keypair']),
-                mgmt_server_config['user_on_management'])
-        except:
-            lgr.info('ssh channel creation failed. '
-                     'your private and public keys might not be matching or '
-                     'your security group might not be configured to allow '
-                     'connections to port {0}.'.format(SSH_CONNECT_PORT))
-            return False
+        # lgr.debug('creating ssh channel to machine...')
+        # try:
+        #     ssh = _create_ssh_channel_with_mgmt(
+        #         mgmt_ip,
+        #         _get_private_key_path_from_keypair_config(
+        #             mgmt_server_config['management_keypair']),
+        #         mgmt_server_config['user_on_management'])
+        # except:
+        #     lgr.info('ssh channel creation failed. '
+        #              'your private and public keys might not be matching or '
+        #              'your security group might not be configured to allow '
+        #              'connections to port {0}.'.format(SSH_CONNECT_PORT))
+        #     return False
 
-        env.user = mgmt_ssh_user
-        env.key_filename = mgmt_ssh_key
-        env.warn_only = True
-        env.abort_on_prompts = False
-        env.connection_attempts = 5
-        env.keepalive = 0
-        env.linewise = False
-        env.pool_size = 0
-        env.skip_bad_hosts = False
-        env.timeout = 10
-        env.forward_agent = True
-        env.status = False
-        env.disable_known_hosts = False
-
-        try:
-            _copy_files_to_manager(
-                ssh,
-                mgmt_server_config['userhome_on_management'],
-                self.provider_config['keystone'],
-                _get_private_key_path_from_keypair_config(
-                    compute_config['agent_servers']['agents_keypair']),
-                self.provider_config['networking'])
-        except:
-            lgr.error('failed to copy keystone files')
-            return False
+        with settings(host_string=mgmt_ip):
+            try:
+                _copy_files_to_manager(
+                    mgmt_server_config['userhome_on_management'],
+                    self.provider_config['keystone'],
+                    _get_private_key_path_from_keypair_config(
+                        compute_config['agent_servers']['agents_keypair']),
+                    self.provider_config['networking'])
+            except:
+                lgr.error('failed to copy keystone files')
+                return False
 
         with settings(host_string=mgmt_ip), hide('running',
                                                  'stderr',
