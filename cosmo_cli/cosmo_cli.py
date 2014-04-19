@@ -1240,7 +1240,14 @@ def _run_dev(args):
         with settings(host_string=mgmt_ip):
             if args.tasks:
                 for task in args.tasks.split(','):
-                    getattr(tasks, task)()
+                    try:
+                        getattr(tasks, task)()
+                    except AttributeError:
+                        lgr.error('task named "{0}" not found'
+                                  .format(task))
+                    except:
+                        lgr.error('failed to execute task named "{0}"'
+                                  .format(task))
             else:
                 for task in dir(tasks):
                     if task.startswith('task'):
