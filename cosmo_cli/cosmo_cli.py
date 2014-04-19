@@ -31,11 +31,8 @@ import urlparse
 import urllib
 import time
 import shutil
-# import socket
-# import paramiko
 import tempfile
 from copy import deepcopy
-# from scp import SCPClient
 from contextlib import contextmanager
 import logging
 import logging.config
@@ -58,10 +55,6 @@ from dsl_parser.parser import parse_from_path, DSLParsingException
 output_level = logging.INFO
 CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
 
-SSH_CONNECT_RETRIES = 12
-SSH_CONNECT_SLEEP = 5
-SSH_CONNECT_PORT = 22
-
 CONFIG_FILE_NAME = 'cloudify-config.yaml'
 DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 
@@ -71,7 +64,6 @@ CLOUDIFY_CORE_PACKAGE_PATH = '/cloudify-core'
 CLOUDIFY_UI_PACKAGE_PATH = '/cloudify-ui'
 CLOUDIFY_AGENT_PACKAGE_PATH = '/cloudify-agents'
 
-SHELL_PIPE_TO_LOGGER = ' |& logger -i -t cosmo-bootstrap -p local0.info'
 FABRIC_RETRIES = 3
 FABRIC_SLEEPTIME = 3
 
@@ -491,6 +483,7 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_events)
     _set_handler_for_command(parser_events, _get_events)
 
+    # dev subparser
     parser_dev.add_argument(
         'run',
         metavar='RUN',
@@ -1486,53 +1479,23 @@ class BaseProviderClass(object):
         env.forward_agent = True
         env.status = False
         env.disable_known_hosts = False
-        # def _create_ssh_channel_with_mgmt(mgmt_ip, management_key_path,
-        #                                   user_on_management):
-        #     ssh = paramiko.SSHClient()
-        #     # TODO: support fingerprint in config json
-        #     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-
-        #     # trying to ssh connect to management server. Using retries
-        #     # since it might take some time to find routes to host
-        #     for retry in range(0, SSH_CONNECT_RETRIES):
-        #         try:
-        #             ssh.connect(mgmt_ip, username=user_on_management,
-        #                         key_filename=management_key_path,
-        #                         look_for_keys=False, timeout=10)
-        #             lgr.debug('ssh connection successful')
-        #             return ssh
-        #         except socket.error as err:
-        #             lgr.debug(
-        #                 "SSH connection to {0} failed ({1}). Waiting {2} "
-        #                 "seconds before retrying".format(mgmt_ip, err, 5))
-        #             time.sleep(5)
-        #     lgr.error('Failed to ssh connect to management server ({0}'
-        #               .format(err))
 
         def _copy_files_to_manager(userhome_on_management,
                                    keystone_config, agents_key_path,
                                    networking):
             lgr.info('uploading keystone and neutron files to manager')
-            # scp = SCPClient(ssh.get_transport())
 
             tempdir = tempfile.mkdtemp()
-            # try:
-                # scp.put(agents_key_path, userhome_on_management + '/.ssh',
-                #         preserve_times=True)
 
             put(agents_key_path, userhome_on_management + '/.ssh')
             keystone_file_path = _make_keystone_file(tempdir,
                                                      keystone_config)
             put(keystone_file_path, userhome_on_management)
-            # scp.put(keystone_file_path, userhome_on_management,
-            #         preserve_times=True)
             if networking['neutron_supported_region']:
                 neutron_file_path = _make_neutron_file(tempdir,
                                                        networking)
                 put(neutron_file_path, userhome_on_management)
-                # scp.put(neutron_file_path, userhome_on_management,
-                #         preserve_times=True)
-            # finally:
+
             shutil.rmtree(tempdir)
 
         def _make_keystone_file(tempdir, keystone_config):
@@ -1549,37 +1512,6 @@ class BaseProviderClass(object):
             with open(neutron_file_path, 'w') as f:
                 json.dump({'url': networking['neutron_url']}, f)
             return neutron_file_path
-
-        # def _exec_install_command_on_manager(ssh, install_command):
-        #     command = 'DEBIAN_FRONTEND=noninteractive sudo -E {0}'.format(
-        #         install_command)
-        #     return _exec_command_on_manager(ssh, command)
-
-        # def _exec_command_on_manager(ssh, command):
-        #     lgr.info('EXEC START: {0}'.format(command))
-        #     chan = ssh.get_transport().open_session()
-        #     chan.exec_command(command)
-        #     stdin = chan.makefile('wb', -1)
-        #     stdout = chan.makefile('rb', -1)
-        #     stderr = chan.makefile_stderr('rb', -1)
-
-        #     try:
-        #         exit_code = chan.recv_exit_status()
-        #         if exit_code != 0:
-        #             errors = stderr.readlines()
-        #             raise RuntimeError('Error occurred when trying to run a '
-        #                                'command on the management machine. '
-        #                                'command was: {0} ; Error(s): {1}'
-        #                                .format(command, errors))
-
-        #         response_lines = stdout.readlines()
-        #         lgr.info('EXEC END: {0}'.format(command))
-        #         return response_lines
-        #     finally:
-        #         stdin.close()
-        #         stdout.close()
-        #         stderr.close()
-        #         chan.close()
 
         def _get_private_key_path_from_keypair_config(keypair_config):
             path = keypair_config['provided']['private_key_filepath'] if \
@@ -1626,20 +1558,6 @@ class BaseProviderClass(object):
         compute_config = self.provider_config['compute']
         cosmo_config = self.provider_config['cloudify']
         mgmt_server_config = compute_config['management_server']
-
-        # lgr.debug('creating ssh channel to machine...')
-        # try:
-        #     ssh = _create_ssh_channel_with_mgmt(
-        #         mgmt_ip,
-        #         _get_private_key_path_from_keypair_config(
-        #             mgmt_server_config['management_keypair']),
-        #         mgmt_server_config['user_on_management'])
-        # except:
-        #     lgr.info('ssh channel creation failed. '
-        #              'your private and public keys might not be matching or '
-        #              'your security group might not be configured to allow '
-        #              'connections to port {0}.'.format(SSH_CONNECT_PORT))
-        #     return False
 
         with settings(host_string=mgmt_ip):
             try:
