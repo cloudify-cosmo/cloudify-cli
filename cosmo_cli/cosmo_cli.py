@@ -150,8 +150,9 @@ def _parse_args(args):
         help='Commands for workflows')
     parser_events = subparsers.add_parser(
         'events',
-        help='Commands for events'
-    )
+        help='Commands for events')
+    parser_dev = subparsers.add_parser(
+        'dev')
 
     # status subparser
     _add_management_ip_optional_argument_to_parser(parser_status)
@@ -490,6 +491,29 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_events)
     _set_handler_for_command(parser_events, _get_events)
 
+    parser_dev.add_argument(
+        'run',
+        metavar='RUN',
+        type=str,
+        help='Command for running tasks.'
+    )
+    parser_dev.add_argument(
+        '--tasks',
+        dest='tasks',
+        metavar='TASKS_LIST',
+        type=str,
+        help='A comma separated list of fabric tasks to run.'
+    )
+    parser_dev.add_argument(
+        '--tasks-file',
+        dest='tasks_file',
+        metavar='TASKS_FILE',
+        type=str,
+        help='Path to a tasks file'
+    )
+    _add_management_ip_optional_argument_to_parser(parser_dev)
+    _set_handler_for_command(parser_dev, _run_dev)
+
     argcomplete.autocomplete(parser)
     return parser.parse_args(args)
 
@@ -715,6 +739,8 @@ def _bootstrap_cosmo(args):
 
         with _update_wd_settings(args.verbosity) as wd_settings:
             wd_settings.set_management_server(mgmt_ip)
+            wd_settings.set_management_key(ssh_key)
+            wd_settings.set_management_user(ssh_user)
             wd_settings.set_provider_context(provider_context)
 
         # storing provider context on management server
@@ -796,6 +822,24 @@ def _get_provider(is_verbose_output=False):
     if cosmo_wd_settings.get_provider():
         return cosmo_wd_settings.get_provider()
     msg = "Provider is not set in working directory settings"
+    flgr.error(msg)
+    raise RuntimeError(msg) if is_verbose_output else sys.exit(msg)
+
+
+def _get_mgmt_user(is_verbose_output=False):
+    cosmo_wd_settings = _load_cosmo_working_dir_settings(is_verbose_output)
+    if cosmo_wd_settings.get_management_user():
+        return cosmo_wd_settings.get_management_user()
+    msg = "Management User is not set in working directory settings"
+    flgr.error(msg)
+    raise RuntimeError(msg) if is_verbose_output else sys.exit(msg)
+
+
+def _get_mgmt_key(is_verbose_output=False):
+    cosmo_wd_settings = _load_cosmo_working_dir_settings(is_verbose_output)
+    if cosmo_wd_settings.get_management_key():
+        return cosmo_wd_settings.get_management_key()
+    msg = "Management Key is not set in working directory settings"
     flgr.error(msg)
     raise RuntimeError(msg) if is_verbose_output else sys.exit(msg)
 
@@ -1171,6 +1215,45 @@ def _get_events(args):
         raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
 
 
+def _run_dev(args):
+    # env.user = args.user if args.user else _get_mgmt_user()
+    # env.key_filename = args.key if args.key else _get_mgmt_key()
+    env.user = _get_mgmt_user()
+    env.key_filename = _get_mgmt_key()
+    env.warn_only = True
+    env.abort_on_prompts = False
+    env.connection_attempts = 5
+    env.keepalive = 0
+    env.linewise = False
+    env.pool_size = 0
+    env.skip_bad_hosts = False
+    env.timeout = 10
+    env.forward_agent = True
+    env.status = False
+    env.disable_known_hosts = False
+
+    mgmt_ip = args.management_ip if args.management_ip \
+        else _get_management_server_ip(args)
+    # hmm... it's also possible to just pass the tasks string to fabric
+    # and let it run... need to think about it...
+    if args.run:
+        if args.tasks_file:
+            sys.path.append(os.path.dirname(args.tasks_file))
+            tasks = __import__(os.path.basename(os.path.splitext(
+                args.tasks_file)[0]))
+        else:
+            sys.path.append(os.getcwd())
+            import tasks
+        with settings(host_string=mgmt_ip):
+            if args.tasks:
+                for task in args.tasks.split(','):
+                    getattr(tasks, task)()
+            else:
+                for task in dir(tasks):
+                    if task.startswith('task'):
+                        getattr(tasks, task)()
+
+
 def _set_cli_except_hook():
     old_excepthook = sys.excepthook
 
@@ -1281,6 +1364,8 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
 
     def __init__(self):
         self._management_ip = None
+        self._management_key = None
+        self._management_user = None
         self._provider = None
         self._provider_context = None
         self._mgmt_aliases = {}
@@ -1291,6 +1376,18 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
 
     def set_management_server(self, management_ip):
         self._management_ip = management_ip
+
+    def get_management_key(self):
+        return self._management_key
+
+    def set_management_key(self, management_key):
+        self._management_key = management_key
+
+    def get_management_user(self):
+        return self._management_user
+
+    def set_management_user(self, _management_user):
+        self._management_user = _management_user
 
     def get_provider_context(self):
         return self._provider_context
@@ -1689,7 +1786,7 @@ class BaseProviderClass(object):
                         for command in value['runs']:
                             _run(command)
 
-                lgr.info('managenet ip is {0}'.format(mgmt_ip))
+                lgr.info('management ip is {0}'.format(mgmt_ip))
             lgr.debug('setting verbosity to previous state')
             self.is_verbose_output = v
             return True
