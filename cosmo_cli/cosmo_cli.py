@@ -1236,18 +1236,24 @@ def _run_dev(args):
                 args.tasks_file)[0]))
         else:
             sys.path.append(os.getcwd())
-            import tasks
+            try:
+                import tasks
+            except ImportError:
+                raise CosmoDevError('could not find a tasks file to import.'
+                                    ' either create a tasks.py file in your '
+                                    'cwd or use the --tasks-file flag to '
+                                    'point to one.')
         with settings(host_string=mgmt_ip):
             if args.tasks:
                 for task in args.tasks.split(','):
                     try:
                         getattr(tasks, task)()
                     except AttributeError:
-                        lgr.error('task named "{0}" not found'
-                                  .format(task))
+                        raise CosmoDevError('task: "{0}" not found'
+                                            .format(task))
                     except:
-                        lgr.error('failed to execute task named "{0}"'
-                                  .format(task))
+                        raise CosmoDevError('failed to execute task: "{0}"'
+                                            .format(task))
             else:
                 for task in dir(tasks):
                     if task.startswith('task'):
@@ -1740,6 +1746,10 @@ class BaseProviderClass(object):
         # print json.dumps(validation_errors, sort_keys=True,
         #                  indent=4, separators=(',', ': '))
         return validation_errors
+
+
+class CosmoDevError(Exception):
+    pass
 
 
 class CosmoBootstrapError(Exception):
