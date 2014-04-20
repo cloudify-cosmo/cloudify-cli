@@ -548,7 +548,6 @@ def _get_provider_module(provider_name, is_verbose_output=False):
 
         module = imp.load_module(provider_name, *module_or_pkg_desc)
 
-        lgr.debug('..............modulepath.' + module.__path__)
         if not module_or_pkg_desc[0]:
             # module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not
             # empty only when we've loaded a package rather than a module.
