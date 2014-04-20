@@ -1528,9 +1528,6 @@ class BaseProviderClass(object):
             flgr.error(msg)
             raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
         else:
-            lgr.debug('....................provider.' + str(dir(provider)))
-            lgr.debug('....................name.' + str(provider_module_name))
-            lgr.debug('....................file.' + str(provider.__file__))
             try:
                 provider_dir = provider.__path__[0]
             except:
