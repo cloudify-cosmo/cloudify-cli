@@ -37,7 +37,7 @@ from contextlib import contextmanager
 import logging
 import logging.config
 import config
-# from jsonschema import ValidationError, Draft4Validator
+from jsonschema import ValidationError, Draft4Validator
 from fabric.api import run, env, local, put
 from fabric.context_managers import settings, hide
 from os.path import expanduser
@@ -713,7 +713,9 @@ def _init_cosmo(args):
 
 def _bootstrap_cosmo(args):
     provider_name = _get_provider(args.verbosity)
+    print 'test provider name: ' + provider_name
     provider = _get_provider_module(provider_name, args.verbosity)
+    print 'test provider: ' + str(dir(provider_name))
     provider_dir = provider.__path__[0]
     provider_config = _read_config(args.config_file_path,
                                    provider_dir,
