@@ -46,6 +46,9 @@ class CliTest(unittest.TestCase):
                     TEST_PROVIDER_DIR)
         shutil.copy('{0}/providers/cloudify-config.yaml'.format(THIS_DIR),
                     TEST_PROVIDER_DIR)
+        shutil.copy('{0}/providers/cloudify-config.defaults.yaml'
+                    .format(THIS_DIR),
+                    TEST_PROVIDER_DIR)
         shutil.copy('{0}/providers/cloudify_mock_provider2.py'
                     .format(THIS_DIR),
                     TEST_PROVIDER_DIR)

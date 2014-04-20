@@ -1528,8 +1528,10 @@ class BaseProviderClass(object):
             flgr.error(msg)
             raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
         else:
+            # try to get the path if the provider is a module
             try:
                 provider_dir = provider.__path__[0]
+            # if not, assume it's in the package's dir
             except:
                 provider_dir = os.path.dirname(provider.__file__)
             files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
