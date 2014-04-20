@@ -713,9 +713,7 @@ def _init_cosmo(args):
 
 def _bootstrap_cosmo(args):
     provider_name = _get_provider(args.verbosity)
-    print 'test provider name: ' + provider_name
     provider = _get_provider_module(provider_name, args.verbosity)
-    print 'test provider: ' + str(dir(provider_name))
     provider_dir = provider.__path__[0]
     provider_config = _read_config(args.config_file_path,
                                    provider_dir,
@@ -1524,6 +1522,8 @@ class BaseProviderClass(object):
             flgr.error(msg)
             raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
         else:
+            lgr.debug('....................provider.' + str(dir(provider)))
+            lgr.debug('....................name.' + str(provider_module_name))
             provider_dir = provider.__path__[0]
             files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
 
