@@ -714,7 +714,10 @@ def _init_cosmo(args):
 def _bootstrap_cosmo(args):
     provider_name = _get_provider(args.verbosity)
     provider = _get_provider_module(provider_name, args.verbosity)
-    provider_dir = provider.__path__[0]
+    try:
+        provider_dir = provider.__path__[0]
+    except:
+        provider_dir = os.path.dirname(provider.__file__)
     provider_config = _read_config(args.config_file_path,
                                    provider_dir,
                                    args.verbosity)
@@ -807,7 +810,10 @@ def _teardown_cosmo(args):
     provider_name, provider_context = \
         _get_provider_name_and_context(mgmt_ip, args.verbosity)
     provider = _get_provider_module(provider_name, args.verbosity)
-    provider_dir = provider.__path__[0]
+    try:
+        provider_dir = provider.__path__[0]
+    except:
+        provider_dir = os.path.dirname(provider.__file__)
     provider_config = _read_config(args.config_file_path,
                                    provider_dir,
                                    args.verbosity)
@@ -1527,12 +1533,12 @@ class BaseProviderClass(object):
             lgr.debug('....................file.' + str(provider.__file__))
             try:
                 provider_dir = provider.__path__[0]
-                files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
-                lgr.debug('copying provider files from {0} to {1}'
-                          .format(files_path, target_directory))
-                shutil.copy(files_path, target_directory)
             except:
-                lgr.debug('probably a mock module...')
+                provider_dir = os.path.dirname(provider.__file__)
+            files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
+            lgr.debug('copying provider files from {0} to {1}'
+                      .format(files_path, target_directory))
+            shutil.copy(files_path, target_directory)
 
             return provider_module_name
 
