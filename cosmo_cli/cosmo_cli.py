@@ -548,6 +548,7 @@ def _get_provider_module(provider_name, is_verbose_output=False):
 
         module = imp.load_module(provider_name, *module_or_pkg_desc)
 
+        lgr.debug('..............modulepath.' + module.__path__)
         if not module_or_pkg_desc[0]:
             # module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not
             # empty only when we've loaded a package rather than a module.
@@ -1524,12 +1525,16 @@ class BaseProviderClass(object):
         else:
             lgr.debug('....................provider.' + str(dir(provider)))
             lgr.debug('....................name.' + str(provider_module_name))
-            provider_dir = provider.__path__[0]
-            files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
+            lgr.debug('....................file.' + str(provider.__file__))
+            try:
+                provider_dir = provider.__path__[0]
+                files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
+                lgr.debug('copying provider files from {0} to {1}'
+                          .format(files_path, target_directory))
+                shutil.copy(files_path, target_directory)
+            except:
+                lgr.debug('probably a mock module...')
 
-            lgr.debug('copying provider files from {0} to {1}'
-                      .format(files_path, target_directory))
-            shutil.copy(files_path, target_directory)
             return provider_module_name
 
     def bootstrap(self, mgmt_ip, private_ip, mgmt_ssh_key, mgmt_ssh_user,
