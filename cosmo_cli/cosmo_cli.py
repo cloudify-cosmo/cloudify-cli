@@ -75,6 +75,13 @@ logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
 
 
 def init_logger():
+    """
+    initializes a logger to be used throughout the CLI
+    can be used by provider codes.
+
+    :rtype: `tupel` with 2 loggers, one for users (writes to console and file),
+     and the other for archiving (writes to file only).
+    """
     if os.path.isfile(config.LOG_DIR):
         sys.exit('file {0} exists - cloudify log directory cannot be created '
                  'there. please remove the file and try again.'
@@ -106,8 +113,13 @@ def main():
 
 
 def _parse_args(args):
-    # Parses the arguments using the Python argparse library
+    """
+    Parses the arguments using the Python argparse library.
+    Generates shell autocomplete using argcomplete
 
+    :param list args: arguments from cli
+    :rtype: `python argument parser`
+    """
     # main parser
     parser = argparse.ArgumentParser(
         description='Installs Cosmo in an OpenStack environment')
@@ -115,36 +127,47 @@ def _parse_args(args):
     subparsers = parser.add_subparsers()
     parser_status = subparsers.add_parser(
         'status',
-        help='Command for showing general status')
+        help='Command for showing general status'
+    )
     parser_use = subparsers.add_parser(
         'use',
-        help='Command for using a given management server')
+        help='Command for using a given management server'
+    )
     parser_init = subparsers.add_parser(
         'init',
-        help='Command for initializing configuration files for installation')
+        help='Command for initializing configuration files for installation'
+    )
     parser_bootstrap = subparsers.add_parser(
         'bootstrap',
-        help='Command for bootstrapping cloudify')
+        help='Command for bootstrapping cloudify'
+    )
     parser_teardown = subparsers.add_parser(
         'teardown',
-        help='Command for tearing down cloudify')
+        help='Command for tearing down cloudify'
+    )
     parser_blueprints = subparsers.add_parser(
         'blueprints',
-        help='Commands for blueprints')
+        help='Commands for blueprints'
+    )
     parser_deployments = subparsers.add_parser(
         'deployments',
-        help='Commands for deployments')
+        help='Commands for deployments'
+    )
     parser_executions = subparsers.add_parser(
         'executions',
-        help='Commands for executions')
+        help='Commands for executions'
+    )
     parser_workflows = subparsers.add_parser(
         'workflows',
-        help='Commands for workflows')
+        help='Commands for workflows'
+    )
     parser_events = subparsers.add_parser(
         'events',
-        help='Commands for events')
+        help='Commands for events'
+    )
     parser_dev = subparsers.add_parser(
-        'dev')
+        'dev'
+    )
 
     # status subparser
     _add_management_ip_optional_argument_to_parser(parser_status)
@@ -167,7 +190,8 @@ def _parse_args(args):
     _add_force_optional_argument_to_parser(
         parser_use,
         'A flag indicating authorization to overwrite the alias if it '
-        'already exists')
+        'already exists'
+    )
     _set_handler_for_command(parser_use, _use_management_server)
 
     # init subparser
@@ -192,7 +216,6 @@ def _parse_args(args):
         action='store_true',
         help='A flag indicating overwriting existing configuration is allowed'
     )
-
     parser_init.add_argument(
         '--install',
         dest='install',
@@ -211,35 +234,34 @@ def _parse_args(args):
         type=str,
         help='Path to a provider configuration file'
     )
-
     parser_bootstrap.add_argument(
         '--keep-up-on-failure',
         dest='keep_up',
         action='store_true',
         help='A flag indicating that even if bootstrap fails,'
-        ' the instance will remain running')
-
+        ' the instance will remain running'
+    )
     parser_bootstrap.add_argument(
         '--dev-mode',
         dest='dev_mode',
         action='store_true',
         help='A flag indicating that bootstrap will be run in dev-mode,'
-        ' allowing to choose specific branches to run with')
-
+        ' allowing to choose specific branches to run with'
+    )
     parser_bootstrap.add_argument(
         '--skip-validations',
         dest='skip_validations',
         action='store_true',
         help='A flag indicating that bootstrap will be run without,'
-        ' validating resources prior to bootstrapping the manager')
-
+        ' validating resources prior to bootstrapping the manager'
+    )
     parser_bootstrap.add_argument(
         '--validate-only',
         dest='validate_only',
         action='store_true',
         help='A flag indicating that validations will run without,'
-        ' actually performing the bootstrap process.')
-
+        ' actually performing the bootstrap process.'
+    )
     _set_handler_for_command(parser_bootstrap, _bootstrap_cosmo)
 
     # teardown subparser
@@ -276,17 +298,20 @@ def _parse_args(args):
 
     parser_blueprints_upload = blueprints_subparsers.add_parser(
         'upload',
-        help='command for uploading a blueprint to the management server')
+        help='command for uploading a blueprint to the management server'
+    )
     parser_blueprints_list = blueprints_subparsers.add_parser(
         'list',
-        help='command for listing all uploaded blueprints')
+        help='command for listing all uploaded blueprints'
+    )
     parser_blueprints_delete = blueprints_subparsers.add_parser(
         'delete',
-        help='command for deleting an uploaded blueprint')
+        help='command for deleting an uploaded blueprint'
+    )
     parser_blueprints_validate = blueprints_subparsers.add_parser(
         'validate',
-        help='command for validating a blueprint')
-
+        help='command for validating a blueprint'
+    )
     parser_blueprints_validate.add_argument(
         'blueprint_file',
         metavar='BLUEPRINT_FILE',
@@ -331,16 +356,17 @@ def _parse_args(args):
     deployments_subparsers = parser_deployments.add_subparsers()
     parser_deployments_create = deployments_subparsers.add_parser(
         'create',
-        help='command for creating a deployment of a blueprint')
+        help='command for creating a deployment of a blueprint'
+    )
     parser_deployments_execute = deployments_subparsers.add_parser(
         'execute',
-        help='command for executing a deployment of a blueprint')
+        help='command for executing a deployment of a blueprint'
+    )
     parser_deployments_list = deployments_subparsers.add_parser(
         'list',
         help='command for listing all deployments or all deployments'
              'of a blueprint'
     )
-
     parser_deployments_create.add_argument(
         '-b', '--blueprint-id',
         dest='blueprint_id',
@@ -392,7 +418,6 @@ def _parse_args(args):
         help='Whether the workflow should execute even if there is an ongoing'
              ' execution for the provided deployment'
     )
-
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
     _set_handler_for_command(parser_deployments_execute,
                              _execute_deployment_operation)
@@ -582,6 +607,12 @@ def _add_verbosity_argument_to_parser(parser):
 
 
 def set_global_verbosity_level(is_verbose_output=False):
+    """
+    sets the global verbosity level for console and the lgr logger.
+
+    :param bool is_verbose_output: should be output be verbose
+    :rtype: `None`
+    """
     # we need both lgr.setLevel and the verbose_output parameter
     # since not all output is generated at the logger level.
     # verbose_output can help us control that.
@@ -1251,13 +1282,17 @@ def _run_dev(args):
                     except AttributeError:
                         raise CosmoDevError('task: "{0}" not found'
                                             .format(task))
-                    except:
-                        raise CosmoDevError('failed to execute task: "{0}"'
-                                            .format(task))
+                    except Exception as e:
+                        raise CosmoDevError('failed to execute: "{0}" '
+                                            '({1}) '.format(task, str(e)))
             else:
                 for task in dir(tasks):
                     if task.startswith('task'):
-                        getattr(tasks, task)()
+                        try:
+                            getattr(tasks, task)()
+                        except Exception as e:
+                            raise CosmoDevError('failed to execute: "{0}" '
+                                                '({1}) '.format(task, str(e)))
 
 
 def _set_cli_except_hook():
@@ -1428,11 +1463,30 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
         self._mgmt_aliases[management_alias] = management_address
 
 
+# TODO: move to different file
 class BaseProviderClass(object):
-
+    """
+    this is the basic provider class supplied with the CLI. it can be imported
+     by the provider's code by inheritence into the ProviderManager class.
+     each of the below methods can be overriden in favor of a different impl.
+    """
     def init(self, provider, target_directory, reset_config, install=False,
              is_verbose_output=False):
+        """
+        iniatializes a provider by copying its config files to the cwd.
+        First, will look for a modlue named cloudify_#provider_param#.
+        If not found, will look for #provider_param#.
+        If install is True, will install the supplied provider and perform
+         the search again.
 
+        :param string provider: the provider's name
+        :param string target_directory: target directory for the config files
+        :param bool reset_config: if True, overrides the current config.
+        :param bool install: if supplied, will also install the desired
+         provider according to the given url or module name (pypi).
+        :param bool is_verbose_output: if True, output will be verbose.
+        :rtype: `string` representing the provider's module name
+        """
         set_global_verbosity_level(is_verbose_output)
 
         def _get_provider_by_name():
@@ -1478,7 +1532,22 @@ class BaseProviderClass(object):
 
     def bootstrap(self, mgmt_ip, private_ip, mgmt_ssh_key, mgmt_ssh_user,
                   dev_mode=False):
+        """
+        bootstraps Cloudify on the management server.
 
+        :param string mgmt_ip: public ip of the provisioned instance.
+        :param string private_ip: private ip of the provisioned instance.
+         (for configuration purposes).
+        :param string mgmt_ssh_key: path to the ssh key to be used for
+         connecting to the instance.
+        :param string mgmt_ssh_user: the user to use when connecting to the
+         instance.
+        :param bool dev_mode: states whether dev_mode should be applied.
+        :rtype: `bool` True if succeeded, False otherwise. If False is returned
+         and 'cfy bootstrap' was executed with the keep-up-on-failure flag, the
+         provisioned resources will remain. If the flag is ommited, they will
+         be torn down.
+        """
         env.user = mgmt_ssh_user
         env.key_filename = mgmt_ssh_key
         env.warn_only = True
@@ -1723,10 +1792,32 @@ class BaseProviderClass(object):
             return True
 
     def validate(self, validation_errors={}):
+        """
+        base method for resource validation. must be overriden in the
+         provider's config to apply resource validation for the specific
+         provider.
+
+        :param dict validation_errors: dict to hold all validation errors.
+        :rtype: `dict` of validaiton_errors.
+        """
         lgr.debug("no resource validation methods defined!")
         return validation_errors
 
     def validate_schema(self, validation_errors={}, schema=None):
+        """
+        this is a basic implementation of schema validation.
+        uses the Draft4Validator from jsonschema to validate the provider's
+         config.
+        a schema file must be created and its contents supplied
+         when initializing the ProviderManager class using the schema
+         parameter.
+
+        :param dict validation_errors: dict to hold all validation errors.
+        :param dict schema: a schema to compare the provider's config to.
+         the provider's config is already initialized within the
+         ProviderManager class in the provider's code.
+        :rtype: `dict` of validaiton_errors.
+        """
         lgr.debug('validating config file against provided schema...')
         v = Draft4Validator(schema)
         if v.iter_errors(self.provider_config):
