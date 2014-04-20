@@ -51,10 +51,8 @@ setup(
         'cloudify-rest-client',
         'cloudify-dsl-parser',
         'argcomplete==0.7.1',
-        "scp==0.7.2",
         "fabric==1.8.3",
         "jsonschema==2.3.0",
-        "paramiko==1.13.0",
     ],
     dependency_links=[REST_CLIENT, DSL_PARSER]
 )

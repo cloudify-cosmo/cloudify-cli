@@ -37,7 +37,7 @@ from contextlib import contextmanager
 import logging
 import logging.config
 import config
-from jsonschema import ValidationError, Draft4Validator
+# from jsonschema import ValidationError, Draft4Validator
 from fabric.api import run, env, local, put
 from fabric.context_managers import settings, hide
 from os.path import expanduser
@@ -76,7 +76,7 @@ logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
 
 def init_logger():
     """
-    initializes a logger to be used throughout the CLI
+    initializes a logger to be used throughout the cli
     can be used by provider codes.
 
     :rtype: `tupel` with 2 loggers, one for users (writes to console and file),
@@ -115,7 +115,7 @@ def main():
 def _parse_args(args):
     """
     Parses the arguments using the Python argparse library.
-    Generates shell autocomplete using argcomplete
+    Generates shell autocomplete using the argcomplete library.
 
     :param list args: arguments from cli
     :rtype: `python argument parser`
@@ -1474,8 +1474,8 @@ class BaseProviderClass(object):
              is_verbose_output=False):
         """
         iniatializes a provider by copying its config files to the cwd.
-        First, will look for a modlue named cloudify_#provider_param#.
-        If not found, will look for #provider_param#.
+        First, will look for a module named cloudify_#provider#.
+        If not found, will look for #provider#.
         If install is True, will install the supplied provider and perform
          the search again.
 
