@@ -37,4 +37,4 @@ class CliUnitTests(unittest.TestCase):
             '@timestamp': 'NOW'
         }
 
-        print _create_event_message_prefix(event)
+        _create_event_message_prefix(event)
