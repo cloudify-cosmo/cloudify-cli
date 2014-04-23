@@ -221,6 +221,13 @@ def _parse_args(args):
         type=str,
         help='url to provider module'
     )
+    parser_init.add_argument(
+        '--creds',
+        dest='creds',
+        metavar='PROVIDER_CREDENTIALS',
+        type=str,
+        help='a comma separated list of key=value credentials'
+    )
     _set_handler_for_command(parser_init, _init_cosmo)
 
     # bootstrap subparser
@@ -692,6 +699,7 @@ def _init_cosmo(args):
             lgr.debug('resetting configuration...')
             base_instance.init(provider, target_directory,
                                args.reset_config,
+                               creds=args.creds,
                                is_verbose_output=args.verbosity)
             lgr.info("Configuration reset complete")
             return
@@ -700,6 +708,7 @@ def _init_cosmo(args):
     provider_module_name = base_instance.init(provider, target_directory,
                                               args.reset_config,
                                               args.install,
+                                              args.creds,
                                               args.verbosity)
     # creating .cloudify file
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
@@ -1475,7 +1484,7 @@ class BaseProviderClass(object):
      each of the below methods can be overriden in favor of a different impl.
     """
     def init(self, provider, target_directory, reset_config, install=False,
-             is_verbose_output=False):
+             creds=None, is_verbose_output=False):
         """
         iniatializes a provider by copying its config files to the cwd.
         First, will look for a module named cloudify_#provider#.
@@ -1488,6 +1497,8 @@ class BaseProviderClass(object):
         :param bool reset_config: if True, overrides the current config.
         :param bool install: if supplied, will also install the desired
          provider according to the given url or module name (pypi).
+        :param creds: a comma separated key=value list of credential info.
+         this is specific to each provider.
         :param bool is_verbose_output: if True, output will be verbose.
         :rtype: `string` representing the provider's module name
         """
@@ -1509,6 +1520,7 @@ class BaseProviderClass(object):
                 return (provider_module_name,
                         _get_provider_module(provider_module_name,
                                              is_verbose_output))
+
         try:
             provider_module_name, provider = _get_provider_by_name()
         except:
@@ -1537,7 +1549,31 @@ class BaseProviderClass(object):
                       .format(files_path, target_directory))
             shutil.copy(files_path, target_directory)
 
-            return provider_module_name
+        if creds:
+            src_config_file = '{}/{}'.format(provider_dir,
+                                             DEFAULTS_CONFIG_FILE_NAME)
+            dst_config_file = '{}/{}'.format(target_directory,
+                                             CONFIG_FILE_NAME)
+            with open(src_config_file, 'r') as f:
+                provider_config = yaml.load(f.read())
+                # print provider_config
+                if 'credentials' in provider_config.keys():
+                # TODO: handle cases in which creds might contain ',' or '='
+                    for cred in creds.split(','):
+                        key, value = cred.split('=')
+                        if key in provider_config['credentials'].keys():
+                            provider_config['credentials'][key] = value
+                        else:
+                            lgr.error('could not find key "{0}" in config file'
+                                      .format(key))
+                            raise CosmoCliError('key not found')
+                else:
+                    lgr.error('credentials section not found in config')
+            # print yaml.dump(provider_config)
+            with open(dst_config_file, 'w') as f:
+                f.write(yaml.dump(provider_config, default_flow_style=False))
+
+        return provider_module_name
 
     def bootstrap(self, mgmt_ip, private_ip, mgmt_ssh_key, mgmt_ssh_user,
                   dev_mode=False):
@@ -1608,6 +1644,7 @@ class BaseProviderClass(object):
         lgr.info('initializing manager on the machine at {0}'
                  .format(mgmt_ip))
         cosmo_config = self.provider_config['cloudify']
+        print cosmo_config
 
         with settings(host_string=mgmt_ip), hide('running',
                                                  'stderr',

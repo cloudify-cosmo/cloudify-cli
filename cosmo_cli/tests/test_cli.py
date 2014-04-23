@@ -207,7 +207,7 @@ class CliTest(unittest.TestCase):
         # note the mock providers don't actually try to read the file;
         # this test merely ensures such a flag is accepted by the CLI.
         self._run_cli("cfy init mock_provider -v")
-        self._run_cli("cfy bootstrap -c my-file")
+        self._run_cli("cfy bootstrap -c myfile")
         self.assertEquals(
             "10.0.0.1",
             self._read_cosmo_wd_settings().get_management_server())
