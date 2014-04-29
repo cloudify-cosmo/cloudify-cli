@@ -16,23 +16,27 @@
 
 __author__ = 'ran'
 
-import os
+from cosmo_cli.provider_common import BaseProviderClass
 
 
-def init(target_dir, reset_config, is_verbose_output=False):
-    config_file_path = os.path.join(target_dir, 'cloudify-config.yaml')
-    if not reset_config and os.path.exists(config_file_path):
-        return False
-    open(config_file_path, 'a').close()
-    return True
+class ProviderManager(BaseProviderClass):
 
+    # def __init__(self, provider_config=None, is_verbose_output=False):
+    #     self.provider_config = provider_config
+    #     self.is_verbose_output = is_verbose_output
+    #     # self.schema = PROVIDER_SCHEMA
 
-def bootstrap(config_path=None, is_verbose_output=False,
-              bootstrap_using_script=True, keep_up=False,
-              skip_validations=False, dev_mode=False):
-    return '10.0.0.2', {'key': 'value'}
+    def provision(self):
+        return '10.0.0.2', '10.10.10.10', 'key_path', 'user', {'key': 'value'}
 
+    def bootstrap(self, mgmt_ip, private_ip, mgmt_ssh_key, mgmt_ssh_user,
+                  dev_mode=False):
+        return True
 
-def teardown(provider_context, ignore_validation=False, config_path=None,
-             is_verbose_output=False):
-    raise RuntimeError('cloudify_mock_provider2 teardown exception')
+    def validate(self, validation_errors={}):
+        # get openstack clients
+        return validation_errors
+
+    def teardown(self, provider_context, ignore_validation=False):
+        print 'failed teardown'
+        raise RuntimeError('cloudify_mock_provider2 teardown exception')
