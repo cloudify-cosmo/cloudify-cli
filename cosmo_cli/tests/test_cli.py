@@ -207,7 +207,7 @@ class CliTest(unittest.TestCase):
         # note the mock providers don't actually try to read the file;
         # this test merely ensures such a flag is accepted by the CLI.
         self._run_cli("cfy init mock_provider -v")
-        self._run_cli("cfy bootstrap -c myfile")
+        self._run_cli("cfy bootstrap -c cloudify-config.yaml")
         self.assertEquals(
             "10.0.0.1",
             self._read_cosmo_wd_settings().get_management_server())
@@ -222,7 +222,7 @@ class CliTest(unittest.TestCase):
         self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy teardown -t 10.0.0.1 -f --ignore-validation "
-                      "--ignore-deployments -c myfile")
+                      "--ignore-deployments -c cloudify-config.yaml")
 
     def test_teardown_force_deployments(self):
         rest_client = MockCosmoManagerRestClient()
@@ -231,7 +231,7 @@ class CliTest(unittest.TestCase):
             lambda ip: rest_client
         self._run_cli("cfy init mock_provider -v")
         self._assert_ex("cfy teardown -t 10.0.0.1 -f --ignore-validation "
-                        "-c myfile",
+                        "-c cloudify-config.yaml",
                         "has active deployments")
 
     def test_teardown_force(self):

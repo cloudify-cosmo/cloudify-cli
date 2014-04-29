@@ -567,7 +567,7 @@ def _get_provider_module(provider_name, is_verbose_output=False):
         msg = ('Could not import module {0} '
                'maybe {0} provider module was not installed?'
                .format(provider_name))
-        flgr.error(msg)
+        flgr.warning(msg)
         raise CosmoCliError(str(ex)) if is_verbose_output else sys.exit(msg)
 
 
