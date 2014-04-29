@@ -31,6 +31,7 @@ import urlparse
 import urllib
 import time
 import shutil
+from abc import abstractmethod, ABCMeta
 from copy import deepcopy
 from contextlib import contextmanager
 import logging
@@ -684,7 +685,6 @@ def _init_cosmo(args):
         flgr.error(msg)
         raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
 
-    base_instance = BaseProviderClass()
     if os.path.exists(os.path.join(target_directory,
                                    CLOUDIFY_WD_SETTINGS_FILE_NAME)):
         if not args.reset_config:
@@ -697,25 +697,118 @@ def _init_cosmo(args):
 
         else:  # resetting provider configuration
             lgr.debug('resetting configuration...')
-            base_instance.init(provider, target_directory,
-                               args.reset_config,
-                               creds=args.creds,
-                               is_verbose_output=args.verbosity)
+            init(provider, target_directory,
+                 args.reset_config,
+                 creds=args.creds,
+                 is_verbose_output=args.verbosity)
             lgr.info("Configuration reset complete")
             return
 
     lgr.info("Initializing Cloudify")
-    provider_module_name = base_instance.init(provider, target_directory,
-                                              args.reset_config,
-                                              args.install,
-                                              args.creds,
-                                              args.verbosity)
+    provider_module_name = init(provider, target_directory,
+                                args.reset_config,
+                                args.install,
+                                args.creds,
+                                args.verbosity)
     # creating .cloudify file
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
                                      target_directory)
     with _update_wd_settings(args.verbosity) as wd_settings:
         wd_settings.set_provider(provider_module_name)
     lgr.info("Initialization complete")
+
+
+def init(provider, target_directory, reset_config, install=False,
+         creds=None, is_verbose_output=False):
+        """
+        iniatializes a provider by copying its config files to the cwd.
+        First, will look for a module named cloudify_#provider#.
+        If not found, will look for #provider#.
+        If install is True, will install the supplied provider and perform
+         the search again.
+
+        :param string provider: the provider's name
+        :param string target_directory: target directory for the config files
+        :param bool reset_config: if True, overrides the current config.
+        :param bool install: if supplied, will also install the desired
+         provider according to the given url or module name (pypi).
+        :param creds: a comma separated key=value list of credential info.
+         this is specific to each provider.
+        :param bool is_verbose_output: if True, output will be verbose.
+        :rtype: `string` representing the provider's module name
+        """
+        set_global_verbosity_level(is_verbose_output)
+
+        def _get_provider_by_name():
+            try:
+                # searching first for the standard name for providers
+                # (i.e. cloudify_XXX)
+                provider_module_name = 'cloudify_{0}'.format(provider)
+                # print provider_module_name
+                return (provider_module_name,
+                        _get_provider_module(provider_module_name,
+                                             is_verbose_output))
+            except CosmoCliError:
+                # if provider was not found, search for the exact literal the
+                # user requested instead
+                provider_module_name = provider
+                return (provider_module_name,
+                        _get_provider_module(provider_module_name,
+                                             is_verbose_output))
+
+        try:
+            provider_module_name, provider = _get_provider_by_name()
+        except:
+            if install:
+                local('pip install {0} --process-dependency-links'
+                      .format(install))
+            provider_module_name, provider = _get_provider_by_name()
+
+        if not reset_config and os.path.exists(
+                os.path.join(target_directory, CONFIG_FILE_NAME)):
+            msg = ('Target directory already contains a '
+                   'provider configuration file; '
+                   'use the "-r" flag to '
+                   'reset it back to its default values.')
+            flgr.error(msg)
+            raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
+        else:
+            # try to get the path if the provider is a module
+            try:
+                provider_dir = provider.__path__[0]
+            # if not, assume it's in the package's dir
+            except:
+                provider_dir = os.path.dirname(provider.__file__)
+            files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
+            lgr.debug('copying provider files from {0} to {1}'
+                      .format(files_path, target_directory))
+            shutil.copy(files_path, target_directory)
+
+        if creds:
+            src_config_file = '{}/{}'.format(provider_dir,
+                                             DEFAULTS_CONFIG_FILE_NAME)
+            dst_config_file = '{}/{}'.format(target_directory,
+                                             CONFIG_FILE_NAME)
+            with open(src_config_file, 'r') as f:
+                provider_config = yaml.load(f.read())
+                # print provider_config
+                if 'credentials' in provider_config.keys():
+                # TODO: handle cases in which creds might contain ',' or '='
+                    for cred in creds.split(','):
+                        key, value = cred.split('=')
+                        if key in provider_config['credentials'].keys():
+                            provider_config['credentials'][key] = value
+                        else:
+                            lgr.error('could not find key "{0}" in config file'
+                                      .format(key))
+                            raise CosmoCliError('key not found')
+                else:
+                    lgr.error('credentials section not found in config')
+            # print yaml.dump(provider_config)
+            with open(dst_config_file, 'w') as f:
+                f.write(yaml.dump(provider_config, default_flow_style=False))
+
+        return provider_module_name
 
 
 def _bootstrap_cosmo(args):
@@ -731,26 +824,22 @@ def _bootstrap_cosmo(args):
     pm = provider.ProviderManager(provider_config, args.verbosity)
 
     if args.skip_validations and args.validate_only:
-        sys.exit('please choose one of skip_validations and '
-                 'validate_only flags, not both.')
+        sys.exit('please choose one of skip-validations or '
+                 'validate-only flags, not both.')
     lgr.info("bootstrapping using {0}".format(provider_name))
     if not args.skip_validations:
         lgr.info('validating provider resources and configuration')
         validation_errors = {}
-        try:
-            # check if ProviderManager class attr schema exists
-            # and if it is, validate using the schema
-            pm.schema
+        if pm.schema is not None:
             validation_errors = pm.validate_schema(validation_errors,
                                                    schema=pm.schema)
-        except:
+        else:
             lgr.debug('schema validation disabled')
         # if the validation_errors dict return empty
         if not pm.validate(validation_errors) and not validation_errors:
             lgr.info('provider validations completed successfully')
         else:
             lgr.error('provider validations failed!')
-            # TODO: raise instead.
             raise CosmoValidationError() if args.verbosity else sys.exit(1)
     if args.validate_only:
         return
@@ -1483,97 +1572,42 @@ class BaseProviderClass(object):
      by the provider's code by inheritence into the ProviderManager class.
      each of the below methods can be overriden in favor of a different impl.
     """
-    def init(self, provider, target_directory, reset_config, install=False,
-             creds=None, is_verbose_output=False):
-        """
-        iniatializes a provider by copying its config files to the cwd.
-        First, will look for a module named cloudify_#provider#.
-        If not found, will look for #provider#.
-        If install is True, will install the supplied provider and perform
-         the search again.
+    __metaclass__ = ABCMeta
 
-        :param string provider: the provider's name
-        :param string target_directory: target directory for the config files
-        :param bool reset_config: if True, overrides the current config.
-        :param bool install: if supplied, will also install the desired
-         provider according to the given url or module name (pypi).
-        :param creds: a comma separated key=value list of credential info.
-         this is specific to each provider.
-        :param bool is_verbose_output: if True, output will be verbose.
-        :rtype: `string` representing the provider's module name
-        """
+    def __init__(self, provider_config=None, is_verbose_output=False,
+                 schema=None):
+
         set_global_verbosity_level(is_verbose_output)
+        self.provider_config = provider_config
+        self.is_verbose_output = is_verbose_output
+        self.schema = schema
 
-        def _get_provider_by_name():
-            try:
-                # searching first for the standard name for providers
-                # (i.e. cloudify_XXX)
-                provider_module_name = 'cloudify_{0}'.format(provider)
-                # print provider_module_name
-                return (provider_module_name,
-                        _get_provider_module(provider_module_name,
-                                             is_verbose_output))
-            except CosmoCliError:
-                # if provider was not found, search for the exact literal the
-                # user requested instead
-                provider_module_name = provider
-                return (provider_module_name,
-                        _get_provider_module(provider_module_name,
-                                             is_verbose_output))
+    @abstractmethod
+    def provision(self):
+        """
+        provisions resources for the management server
+        """
+        return
 
-        try:
-            provider_module_name, provider = _get_provider_by_name()
-        except:
-            if install:
-                local('pip install {0} --process-dependency-links'
-                      .format(install))
-            provider_module_name, provider = _get_provider_by_name()
+    @abstractmethod
+    def validate(self, validation_errors={}):
+        """
+        validations to be performed before provisioning and bootstrapping
+        the management server.
 
-        if not reset_config and os.path.exists(
-                os.path.join(target_directory, CONFIG_FILE_NAME)):
-            msg = ('Target directory already contains a '
-                   'provider configuration file; '
-                   'use the "-r" flag to '
-                   'reset it back to its default values.')
-            flgr.error(msg)
-            raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
-        else:
-            # try to get the path if the provider is a module
-            try:
-                provider_dir = provider.__path__[0]
-            # if not, assume it's in the package's dir
-            except:
-                provider_dir = os.path.dirname(provider.__file__)
-            files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
-            lgr.debug('copying provider files from {0} to {1}'
-                      .format(files_path, target_directory))
-            shutil.copy(files_path, target_directory)
+        :param dict validation_errors: dict to hold all validation errors.
+        :rtype: `dict` of validaiton_errors.
+        """
+        lgr.debug("no resource validation methods defined!")
+        return
 
-        if creds:
-            src_config_file = '{}/{}'.format(provider_dir,
-                                             DEFAULTS_CONFIG_FILE_NAME)
-            dst_config_file = '{}/{}'.format(target_directory,
-                                             CONFIG_FILE_NAME)
-            with open(src_config_file, 'r') as f:
-                provider_config = yaml.load(f.read())
-                # print provider_config
-                if 'credentials' in provider_config.keys():
-                # TODO: handle cases in which creds might contain ',' or '='
-                    for cred in creds.split(','):
-                        key, value = cred.split('=')
-                        if key in provider_config['credentials'].keys():
-                            provider_config['credentials'][key] = value
-                        else:
-                            lgr.error('could not find key "{0}" in config file'
-                                      .format(key))
-                            raise CosmoCliError('key not found')
-                else:
-                    lgr.error('credentials section not found in config')
-            # print yaml.dump(provider_config)
-            with open(dst_config_file, 'w') as f:
-                f.write(yaml.dump(provider_config, default_flow_style=False))
-
-        return provider_module_name
+    @abstractmethod
+    def teardown(self, provider_context, ignore_validation=False):
+        """
+        tears down the management server and its accompanied provisioned
+        resources
+        """
+        return
 
     def bootstrap(self, mgmt_ip, private_ip, mgmt_ssh_key, mgmt_ssh_user,
                   dev_mode=False):
@@ -1784,18 +1818,6 @@ class BaseProviderClass(object):
             self.is_verbose_output = v
             return True
 
-    def validate(self, validation_errors={}):
-        """
-        base method for resource validation. must be overriden in the
-         provider's config to apply resource validation for the specific
-         provider.
-
-        :param dict validation_errors: dict to hold all validation errors.
-        :rtype: `dict` of validaiton_errors.
-        """
-        lgr.debug("no resource validation methods defined!")
-        return validation_errors
-
     def validate_schema(self, validation_errors={}, schema=None):
         """
         this is a basic implementation of schema validation.
@@ -1812,7 +1834,12 @@ class BaseProviderClass(object):
         :rtype: `dict` of validaiton_errors.
         """
         lgr.debug('validating config file against provided schema...')
-        v = Draft4Validator(schema)
+        try:
+            v = Draft4Validator(schema)
+        except AttributeError as e:
+            flgr.error('schema is invalid. error: {}'.format(e))
+            raise ValidationError('schema is invalid. error: {}'.format(e)) \
+                if self.is_verbose_output else sys.exit(1)
         if v.iter_errors(self.provider_config):
             for e in v.iter_errors(self.provider_config):
                 err = ('config file validation error originating at key: {0}, '
