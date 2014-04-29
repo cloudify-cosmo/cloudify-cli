@@ -1342,6 +1342,7 @@ def _get_events(args):
 
 
 def _run_dev(args):
+    # TODO: allow passing username and key path as params.
     # env.user = args.user if args.user else _get_mgmt_user()
     # env.key_filename = args.key if args.key else _get_mgmt_key()
     env.user = _get_mgmt_user()
@@ -1389,7 +1390,7 @@ def _run_dev(args):
                                             '({1}) '.format(task, str(e)))
             else:
                 for task in dir(tasks):
-                    if task.startswith('task'):
+                    if task.startswith('task_'):
                         try:
                             getattr(tasks, task)()
                         except Exception as e:
