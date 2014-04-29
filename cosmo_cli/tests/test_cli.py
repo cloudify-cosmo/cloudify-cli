@@ -209,7 +209,7 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy init cloudify_mock_provider2 -v")
         self._run_cli("cfy bootstrap -c cloudify-config.yaml -v")
         self.assertEquals(
-            "10.0.0.1",
+            "10.0.0.2",
             self._read_cosmo_wd_settings().get_management_server())
 
     def test_teardown_no_force(self):
