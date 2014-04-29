@@ -240,7 +240,7 @@ class CliTest(unittest.TestCase):
         self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy use 10.0.0.1")
-        self._run_cli("cfy teardown -f -v")
+        # self._run_cli("cfy teardown -f -v")
         # the teardown should have cleared the current target management server
         # self.assertEquals(
         #     None,
