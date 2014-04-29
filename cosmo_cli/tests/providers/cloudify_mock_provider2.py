@@ -16,7 +16,7 @@
 
 __author__ = 'ran'
 
-from cosmo_cli.cosmo_cli import BaseProviderClass
+from cosmo_cli.provider_common import BaseProviderClass
 
 
 class ProviderManager(BaseProviderClass):
