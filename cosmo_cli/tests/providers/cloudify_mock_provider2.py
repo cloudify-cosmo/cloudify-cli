@@ -38,4 +38,5 @@ class ProviderManager(BaseProviderClass):
         return validation_errors
 
     def teardown(self, provider_context, ignore_validation=False):
+        print 'failed teardown'
         raise RuntimeError('cloudify_mock_provider2 teardown exception')

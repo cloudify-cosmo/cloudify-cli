@@ -200,7 +200,7 @@ class CliTest(unittest.TestCase):
         self.assertEquals('value', _provider_context['key'])
 
         # restore global state /:
-        self._run_cli("cfy init mock_provider -v -r")
+        self._run_cli("cfy init cloudify_mock_provider2 -v -r")
         self._run_cli("cfy bootstrap -v")
 
     def test_bootstrap_explicit_config_file(self):
@@ -216,13 +216,14 @@ class CliTest(unittest.TestCase):
         self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
         self._assert_ex("cfy teardown -t 10.0.0.1",
-                        "This action requires additional confirmation.")
+                        "This action requires additional confirmationd.")
 
+    # FAILS
     def test_teardown_parameters(self):
         self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy teardown -t 10.0.0.1 -f --ignore-validation "
-                      "--ignore-deployments -c cloudify-config.yaml")
+                      "--ignore-deployments -c cloudify-config.yaml -v")
 
     def test_teardown_force_deployments(self):
         rest_client = MockCosmoManagerRestClient()
@@ -232,8 +233,9 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy init mock_provider -v")
         self._assert_ex("cfy teardown -t 10.0.0.1 -f --ignore-validation "
                         "-c cloudify-config.yaml -v",
-                        "has active deployments")
+                        "has active deploymentsd")
 
+    # FAILS
     def test_teardown_force(self):
         self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
@@ -244,11 +246,12 @@ class CliTest(unittest.TestCase):
             None,
             self._read_cosmo_wd_settings().get_management_server())
 
+    # FAILS
     def test_teardown_force_explicit_management_server(self):
         self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy use 10.0.0.1")
-        self._run_cli("cfy teardown -t 10.0.0.2 -f")
+        self._run_cli("cfy teardown -t 10.0.0.2 -f -v")
         self.assertEquals(
             "10.0.0.1",
             self._read_cosmo_wd_settings().get_management_server())

@@ -34,6 +34,7 @@ class ProviderManager(BaseProviderClass):
         return validation_errors
 
     def teardown(self, provider_context, ignore_validation=False):
+        print 'successful teardown'
         pass
 
 

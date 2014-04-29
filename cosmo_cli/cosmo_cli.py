@@ -792,8 +792,8 @@ def init(provider, target_directory, reset_config, install=False,
             with open(src_config_file, 'r') as f:
                 provider_config = yaml.load(f.read())
                 # print provider_config
-                if 'credentials' in provider_config.keys():
                 # TODO: handle cases in which creds might contain ',' or '='
+                if 'credentials' in provider_config.keys():
                     for cred in creds.split(','):
                         key, value = cred.split('=')
                         if key in provider_config['credentials'].keys():
