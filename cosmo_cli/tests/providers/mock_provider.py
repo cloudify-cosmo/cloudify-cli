@@ -21,10 +21,10 @@ from cosmo_cli.cosmo_cli import BaseProviderClass
 
 class ProviderManager(BaseProviderClass):
 
-    def __init__(self, provider_config=None, is_verbose_output=False):
-        self.provider_config = provider_config
-        self.is_verbose_output = is_verbose_output
-        # self.schema = PROVIDER_SCHEMA
+    # def __init__(self, provider_config=None, is_verbose_output=False):
+    #     self.provider_config = provider_config
+    #     self.is_verbose_output = is_verbose_output
+    #     # self.schema = PROVIDER_SCHEMA
 
     def provision(self):
         return '10.0.0.1', {}
