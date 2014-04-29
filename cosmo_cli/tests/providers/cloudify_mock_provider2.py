@@ -29,6 +29,10 @@ class ProviderManager(BaseProviderClass):
     def provision(self):
         return '10.0.0.2', '10.10.10.10', 'key_path', 'user', {'key': 'value'}
 
+    def bootstrap(self, mgmt_ip, private_ip, mgmt_ssh_key, mgmt_ssh_user,
+                  dev_mode=False):
+        return True
+
     def validate(self, validation_errors={}):
         # get openstack clients
         return validation_errors
