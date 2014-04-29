@@ -27,7 +27,7 @@ class ProviderManager(BaseProviderClass):
     #     # self.schema = PROVIDER_SCHEMA
 
     def provision(self):
-        return '10.0.0.1', {}
+        return '10.0.0.1', '10.10.10.10', 'key_path', 'user', {'key': 'value'}
 
     def validate(self, validation_errors={}):
         # get openstack clients
