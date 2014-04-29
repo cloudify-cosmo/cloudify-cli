@@ -222,8 +222,8 @@ class CliTest(unittest.TestCase):
     def test_teardown_parameters(self):
         self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
-        # self._run_cli("cfy teardown -t 10.0.0.1 -f --ignore-validation "
-        #               "--ignore-deployments -c cloudify-config.yaml -v")
+        self._run_cli("cfy teardown -t 10.0.0.1 -f --ignore-validation "
+                      "--ignore-deployments -c cloudify-config.yaml -v")
 
     def test_teardown_force_deployments(self):
         rest_client = MockCosmoManagerRestClient()
@@ -240,21 +240,21 @@ class CliTest(unittest.TestCase):
         self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy use 10.0.0.1")
-        # self._run_cli("cfy teardown -f -v")
+        self._run_cli("cfy teardown -f -v")
         # the teardown should have cleared the current target management server
-        # self.assertEquals(
-        #     None,
-        #     self._read_cosmo_wd_settings().get_management_server())
+        self.assertEquals(
+            None,
+            self._read_cosmo_wd_settings().get_management_server())
 
     # FAILS
     def test_teardown_force_explicit_management_server(self):
         self._set_mock_rest_client()
         self._run_cli("cfy init mock_provider -v")
         self._run_cli("cfy use 10.0.0.1")
-        # self._run_cli("cfy teardown -t 10.0.0.2 -f -v")
-        # self.assertEquals(
-        #     "10.0.0.1",
-        #     self._read_cosmo_wd_settings().get_management_server())
+        self._run_cli("cfy teardown -t 10.0.0.2 -f -v")
+        self.assertEquals(
+            "10.0.0.1",
+            self._read_cosmo_wd_settings().get_management_server())
 
     def test_no_management_server_defined(self):
         # running a command which requires a target management server without
