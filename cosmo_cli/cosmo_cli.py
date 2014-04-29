@@ -839,8 +839,9 @@ def _bootstrap_cosmo(args):
         if not pm.validate(validation_errors) and not validation_errors:
             lgr.info('provider validations completed successfully')
         else:
-            lgr.error('provider validations failed!')
-            raise CosmoValidationError() if args.verbosity else sys.exit(1)
+            flgr.error('provider validations failed!')
+            raise CosmoValidationError('provider validations failed!') \
+                if args.verbosity else sys.exit('provider validations failed!')
     if args.validate_only:
         return
     with _protected_provider_call(args.verbosity):
