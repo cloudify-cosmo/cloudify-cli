@@ -1,5 +1,11 @@
 *.py[cod]
 
+# Project-specific
+cosmo-config.json
+
+# VIM
+*.swp
+
 # C extensions
 *.so
 
@@ -34,3 +40,10 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+
+*.iml
+.idea
+
+*cloudify-cli.log
+
+*COMMIT_MSG

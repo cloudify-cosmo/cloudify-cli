@@ -1,0 +1,6 @@
+cloudify:
+   cloudify_branch: develop
+   cloudify_components_package_url: https://dl.dropboxusercontent.com/u/407576/cloudify-components_3.0.0_amd64_training.deb
+   cloudify_core_package_url: https://dl.dropboxusercontent.com/u/407576/cloudify-core_3.0.0_amd64_training.deb
+   cloudify_ui_package_url: https://dl.dropboxusercontent.com/u/407576/cloudify-ui_1.0.0_amd64_demo.deb
+   cloudify_ubuntu_agent_url: https://dl.dropboxusercontent.com/u/407576/ubuntu-agent_3.0.0_amd64_training.deb

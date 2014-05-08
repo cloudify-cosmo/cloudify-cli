@@ -1,0 +1,15 @@
+
+imports:
+    - cloudify.types
+
+types:
+    openstack_host:
+        derived_from: cloudify.types.host
+        properties:
+            -   install_agent: true
+            -   worker_config:
+                    user: ubuntu
+                    port: 22
+                    key: ~/.ssh/cloudify-agents.pem
+    web_server:
+        derived_from: cloudify.types.web_server
