@@ -1462,9 +1462,9 @@ def _get_resource_base():
         resource_directory_url = urlparse.urljoin('file:', urllib.pathname2url(
             resource_directory))
         return resource_directory_url
-    lgr.debug("Using resources from github. Branch is develop")
+    lgr.debug("Using resources from github. Branch is master")
     return "https://raw.githubusercontent.com/cloudify-cosmo/" \
-           "cloudify-manager/develop/resources/rest-service/"
+           "cloudify-manager/master/resources/rest-service/"
 
 
 def _get_rest_client(management_ip):
