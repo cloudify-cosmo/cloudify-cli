@@ -413,6 +413,7 @@ def _parse_args(args):
              ' execution for the provided deployment'
     )
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
+    _add_include_logs_argument_to_parser(parser_deployments_execute)
     _set_handler_for_command(parser_deployments_execute,
                              _execute_deployment_operation)
 
@@ -493,12 +494,7 @@ def _parse_args(args):
         required=True,
         help='The id of the execution to get events for'
     )
-    parser_events.add_argument(
-        '-l', '--include-logs',
-        dest='include_logs',
-        action='store_true',
-        help='A flag whether to include logs in returned events'
-    )
+    _add_include_logs_argument_to_parser(parser_events)
     _add_management_ip_optional_argument_to_parser(parser_events)
     _set_handler_for_command(parser_events, _get_events)
 
@@ -557,6 +553,15 @@ def _get_provider_module(provider_name, is_verbose_output=False):
                .format(provider_name))
         flgr.warning(msg)
         raise CosmoCliError(str(ex)) if is_verbose_output else sys.exit(msg)
+
+
+def _add_include_logs_argument_to_parser(parser):
+    parser.add_argument(
+        '-l', '--include-logs',
+        dest='include_logs',
+        action='store_true',
+        help='A flag whether to include logs in returned events'
+    )
 
 
 def _add_force_optional_argument_to_parser(parser, help_message):
@@ -1178,11 +1183,13 @@ def _execute_deployment_operation(args):
                      "execution's events/logs"
 
     try:
-        execution_id, error = client.execute_deployment(deployment_id,
-                                                        operation,
-                                                        events_logger,
-                                                        timeout=timeout,
-                                                        force=force)
+        execution_id, error = client.execute_deployment(
+            deployment_id,
+            operation,
+            events_logger,
+            include_logs=args.include_logs,
+            timeout=timeout,
+            force=force)
         if error is None:
             lgr.info("Finished executing workflow '{0}' on deployment"
                      "'{1}'".format(operation, deployment_id))
