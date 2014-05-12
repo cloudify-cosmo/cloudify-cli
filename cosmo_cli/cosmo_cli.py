@@ -109,48 +109,49 @@ def _parse_args(args):
     """
     # main parser
     parser = argparse.ArgumentParser(
-        description='Installs Cosmo in an OpenStack environment')
+        description='Manages Cloudify in different Cloud Environments')
 
     subparsers = parser.add_subparsers()
     parser_status = subparsers.add_parser(
         'status',
-        help='Command for showing general status'
+        help='Show a management server\'s status'
     )
     parser_use = subparsers.add_parser(
         'use',
-        help='Command for using a given management server'
+        help='Use/switch to the specified management server'
     )
     parser_init = subparsers.add_parser(
         'init',
-        help='Command for initializing configuration files for installation'
+        help='Initialize configuration files for a specific cloud provider'
+
     )
     parser_bootstrap = subparsers.add_parser(
         'bootstrap',
-        help='Command for bootstrapping cloudify'
+        help='Bootstrap Cloudify on the currently active provider'
     )
     parser_teardown = subparsers.add_parser(
         'teardown',
-        help='Command for tearing down cloudify'
+        help='Teardown Cloudify'
     )
     parser_blueprints = subparsers.add_parser(
         'blueprints',
-        help='Commands for blueprints'
+        help='Manages Cloudify\'s Blueprints'
     )
     parser_deployments = subparsers.add_parser(
         'deployments',
-        help='Commands for deployments'
+        help='Manages and Executes Cloudify\'s Deployments'
     )
     parser_executions = subparsers.add_parser(
         'executions',
-        help='Commands for executions'
+        help='Manages Cloudify Executions'
     )
     parser_workflows = subparsers.add_parser(
         'workflows',
-        help='Commands for workflows'
+        help='Manages Deployment Workflows'
     )
     parser_events = subparsers.add_parser(
         'events',
-        help='Commands for events'
+        help='Displays Events for different executions'
     )
     parser_dev = subparsers.add_parser(
         'dev'
