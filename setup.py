@@ -20,13 +20,13 @@ from setuptools import setup
 VERSION = '3.0'
 
 REST_CLIENT_VERSION = '3.0'
-REST_CLIENT_BRANCH = '3.0'
+REST_CLIENT_BRANCH = 'develop'
 REST_CLIENT = 'https://github.com/cloudify-cosmo/cloudify-rest-client' \
               '/tarball/{0}#egg=cloudify-rest-client-{1}'.format(
                   REST_CLIENT_BRANCH, REST_CLIENT_VERSION)
 
 DSL_PARSER_VERSION = '3.0'
-DSL_PARSER_BRANCH = '3.0'
+DSL_PARSER_BRANCH = 'develop'
 DSL_PARSER = 'https://github.com/cloudify-cosmo/cloudify-dsl-parser/tarball/' \
              '{0}#egg=cloudify-dsl-parser-{1}'.format(
                  DSL_PARSER_BRANCH, DSL_PARSER_VERSION)
