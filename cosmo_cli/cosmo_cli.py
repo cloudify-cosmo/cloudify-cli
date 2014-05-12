@@ -1170,6 +1170,7 @@ def _execute_deployment_operation(args):
     deployment_id = args.deployment_id
     timeout = args.timeout
     force = args.force
+    include_logs = args.include_logs
 
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
              " management server {2} [timeout={3} seconds]"
@@ -1188,7 +1189,7 @@ def _execute_deployment_operation(args):
             deployment_id,
             operation,
             events_logger,
-            include_logs=args.include_logs,
+            include_logs=include_logs,
             timeout=timeout,
             force=force)
         if error is None:
