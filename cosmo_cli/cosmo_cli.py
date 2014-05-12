@@ -118,7 +118,7 @@ def _parse_args(args):
     )
     parser_use = subparsers.add_parser(
         'use',
-        help='use/switch to the specified management server'
+        help='Use/switch to the specified management server'
     )
     parser_init = subparsers.add_parser(
         'init',
