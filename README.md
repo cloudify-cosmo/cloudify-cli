@@ -17,7 +17,7 @@ Command line interface for [Cloudify](https://github.com/cloudify-cosmo/cloudify
 **1. Installing the CLI and a provider extension:**
   - Install a Cloudify provider extension (Openstack is used in this example):
   `apt-get install python-dev # or the equivalent *nix version of this command`
-  `pip install https://github.com/cloudify-cosmo/cloudify-openstack-provider/archive/develop.zip`
+  `pip install https://github.com/cloudify-cosmo/cloudify-openstack-provider/archive/1.0.zip`
 
   NOTES:
    - **If you're using Pip 1.5 or above, add the "*--process-dependency-links*" flag to the 'pip install' command**
