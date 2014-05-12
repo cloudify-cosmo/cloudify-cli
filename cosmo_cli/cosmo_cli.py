@@ -122,7 +122,7 @@ def _parse_args(args):
     )
     parser_init = subparsers.add_parser(
         'init',
-        help='initialize configuration files for a specific cloud provider'
+        help='Initialize configuration files for a specific cloud provider'
 
     )
     parser_bootstrap = subparsers.add_parser(
@@ -1463,9 +1463,9 @@ def _get_resource_base():
         resource_directory_url = urlparse.urljoin('file:', urllib.pathname2url(
             resource_directory))
         return resource_directory_url
-    lgr.debug("Using resources from github. Branch is master")
+    lgr.debug("Using resources from github. Branch is develop")
     return "https://raw.githubusercontent.com/cloudify-cosmo/" \
-           "cloudify-manager/master/resources/rest-service/"
+           "cloudify-manager/develop/resources/rest-service/"
 
 
 def _get_rest_client(management_ip):
