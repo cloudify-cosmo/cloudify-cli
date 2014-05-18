@@ -353,6 +353,10 @@ def _parse_args(args):
         'create',
         help='command for creating a deployment of a blueprint'
     )
+    parser_deployments_delete = deployments_subparsers.add_parser(
+        'delete',
+        help='command for deleting a deployment'
+    )
     parser_deployments_execute = deployments_subparsers.add_parser(
         'execute',
         help='command for executing a deployment of a blueprint'
@@ -380,6 +384,25 @@ def _parse_args(args):
     )
     _add_management_ip_optional_argument_to_parser(parser_deployments_create)
     _set_handler_for_command(parser_deployments_create, _create_deployment)
+
+    parser_deployments_delete.add_argument(
+        '-d', '--deployment-id',
+        dest='deployment_id',
+        metavar='DEPLOYMENT_ID',
+        type=str,
+        required=True,
+        help="The deployment's id"
+    )
+    parser_deployments_delete.add_argument(
+        '-f', '--ignore-live-nodes',
+        dest='ignore_live_nodes',
+        action='store_true',
+        default=False,
+        help='A flag indicating whether or not to delete the deployment even '
+             'if there exist live nodes for it'
+    )
+    _add_management_ip_optional_argument_to_parser(parser_deployments_delete)
+    _set_handler_for_command(parser_deployments_delete, _delete_deployment)
 
     parser_deployments_execute.add_argument(
         'operation',
@@ -1083,10 +1106,23 @@ def _delete_blueprint(args):
 
     lgr.info(
         'Deleting blueprint {0} from management server {1}'.format(
-            args.blueprint_id, management_ip))
+            blueprint_id, management_ip))
     client = _get_rest_client(management_ip)
     client.delete_blueprint(blueprint_id)
     lgr.info("Deleted blueprint successfully")
+
+
+def _delete_deployment(args):
+    management_ip = _get_management_server_ip(args)
+    deployment_id = args.deployment_id
+    ignore_live_nodes = args.ignore_live_nodes
+
+    lgr.info(
+        'Deleting deployment {0} from management server {1}'.format(
+            deployment_id, management_ip))
+    client = _get_rest_client(management_ip)
+    client.delete_deployment(deployment_id, ignore_live_nodes)
+    lgr.info("Deleted deployment successfully")
 
 
 def _upload_blueprint(args):
