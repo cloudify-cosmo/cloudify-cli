@@ -54,6 +54,9 @@ CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
 CONFIG_FILE_NAME = 'cloudify-config.yaml'
 DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 
+AGENT_MIN_WORKERS = 2
+AGENT_MAX_WORKERS = 5
+AGENT_KEY_PATH = '~/.ssh/cloudify-agents-kp.pem'
 
 # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
 logging.getLogger("paramiko").setLevel(logging.WARNING)
@@ -841,6 +844,8 @@ def _bootstrap_cosmo(args):
     with _protected_provider_call(args.verbosity):
         lgr.info('provisioning resources for management server...')
         params = pm.provision()
+
+    provider_context = {}
     if params is not None:
         mgmt_ip, private_ip, ssh_key, ssh_user, provider_context = params
         lgr.info('provisioning complete')
@@ -853,6 +858,8 @@ def _bootstrap_cosmo(args):
         lgr.error('provisioning failed!')
 
     if params is not None and installed:
+        _update_provider_context(provider_config, provider_context)
+
         mgmt_ip = mgmt_ip.encode('utf-8')
 
         with _update_wd_settings(args.verbosity) as wd_settings:
@@ -876,6 +883,26 @@ def _bootstrap_cosmo(args):
                      ' due to bootstrap failure')
             pm.teardown(provider_context)
         raise CosmoBootstrapError() if args.verbosity else sys.exit(1)
+
+
+def _update_provider_context(provider_config, provider_context):
+    cloudify = provider_config.get('cloudify', {})
+    agent = cloudify.get('cloudify_agent', {})
+    min_workers = agent.get('min_workers', AGENT_MIN_WORKERS)
+    max_workers = agent.get('max_workers', AGENT_MAX_WORKERS)
+    compute = provider_config.get('compute', {})
+    agent_servers = compute.get('agent_servers', {})
+    agents_keypair = agent_servers.get('agents_keypair', {})
+    auto_generated = agents_keypair.get('auto_generated', {})
+    private_key_target_path = auto_generated.get('private_key_target_path',
+                                                 AGENT_KEY_PATH)
+    provider_context['cloudify'] = {
+        'cloudify_agent': {
+            'min_workers': min_workers,
+            'max_workers': max_workers,
+            'agent_key_path': private_key_target_path
+        }
+    }
 
 
 def _teardown_cosmo(args):
