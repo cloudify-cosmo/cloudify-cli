@@ -280,6 +280,23 @@ re
 
 ------
 
+**Command:** deployments delete
+
+**Description:** deletes the deployment (and its resources) from the management server
+
+**Usage:** `cfy deployments delete [-d, --deployments-id <deployment_id>] [-f, --ignore-live-nodes] [-t, --management-ip <ip>] [-v, --verbosity]`
+
+**Parameters**:
+
+- blueprint_id: the id of the blueprint to delete
+- ignore-live-nodes: a flag determining whether to delete the deployment even if it still has live nodes (Optional)
+- management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
+
+**Example:** `cfy deployments delete -d my-deployment`
+
+------
+
 **Command:** deployments execute
 
 **Description:** executes an operation on a deployment
