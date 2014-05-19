@@ -50,6 +50,12 @@ class MockCosmoManagerRestClient(object):
     def create_deployment(self, blueprint_id, deployment_id):
         return MicroMock(id='a-deployment-id')
 
+    def delete_deployment(self, deployment_id, ignore_live_nodes=False):
+        if not isinstance(deployment_id, str) or not isinstance(
+                ignore_live_nodes, bool):
+            raise RuntimeError("bad parameters types provided")
+        pass
+
     def execute_deployment(self, deployment_id, operation, events_handler=None,
                            timeout=900, include_logs=False, force=False):
         if operation != 'install':
