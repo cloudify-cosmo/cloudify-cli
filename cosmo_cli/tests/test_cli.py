@@ -350,6 +350,8 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy deployments delete --deployment-id my-dep -t 127.0"
                       ".0.1")
         self._run_cli("cfy deployments delete -d my-dep -f -t 127.0.0.1")
+        self._run_cli("cfy deployments delete -d my-dep --ignore-live-nodes"
+                      " -t 127.0.0.1")
 
     def test_deployments_execute(self):
         self._set_mock_rest_client()
