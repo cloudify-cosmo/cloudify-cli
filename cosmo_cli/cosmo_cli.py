@@ -1364,7 +1364,7 @@ def _list_deployment_executions(args):
             lgr.info(
                 '\t{0}{1}\t[deployment_id={2}, blueprint_id={3}]'.format(
                     execution.id,
-                    '\t{0}'.format(execution.status) if inc_statuses else '',
+                    '\t{0}'.format(execution.status),
                     execution.deploymentId,
                     execution.blueprintId))
 
