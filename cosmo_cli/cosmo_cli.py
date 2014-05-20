@@ -54,6 +54,9 @@ CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
 CONFIG_FILE_NAME = 'cloudify-config.yaml'
 DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 
+AGENT_MIN_WORKERS = 2
+AGENT_MAX_WORKERS = 5
+AGENT_KEY_PATH = '~/.ssh/cloudify-agents-kp.pem'
 
 # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
 logging.getLogger("paramiko").setLevel(logging.WARNING)
@@ -353,6 +356,10 @@ def _parse_args(args):
         'create',
         help='command for creating a deployment of a blueprint'
     )
+    parser_deployments_delete = deployments_subparsers.add_parser(
+        'delete',
+        help='command for deleting a deployment'
+    )
     parser_deployments_execute = deployments_subparsers.add_parser(
         'execute',
         help='command for executing a deployment of a blueprint'
@@ -380,6 +387,25 @@ def _parse_args(args):
     )
     _add_management_ip_optional_argument_to_parser(parser_deployments_create)
     _set_handler_for_command(parser_deployments_create, _create_deployment)
+
+    parser_deployments_delete.add_argument(
+        '-d', '--deployment-id',
+        dest='deployment_id',
+        metavar='DEPLOYMENT_ID',
+        type=str,
+        required=True,
+        help="The deployment's id"
+    )
+    parser_deployments_delete.add_argument(
+        '-f', '--ignore-live-nodes',
+        dest='ignore_live_nodes',
+        action='store_true',
+        default=False,
+        help='A flag indicating whether or not to delete the deployment even '
+             'if there exist live nodes for it'
+    )
+    _add_management_ip_optional_argument_to_parser(parser_deployments_delete)
+    _set_handler_for_command(parser_deployments_delete, _delete_deployment)
 
     parser_deployments_execute.add_argument(
         'operation',
@@ -834,6 +860,8 @@ def _bootstrap_cosmo(args):
     with _protected_provider_call(args.verbosity):
         lgr.info('provisioning resources for management server...')
         params = pm.provision()
+
+    provider_context = {}
     if params is not None:
         mgmt_ip, private_ip, ssh_key, ssh_user, provider_context = params
         lgr.info('provisioning complete')
@@ -846,6 +874,8 @@ def _bootstrap_cosmo(args):
         lgr.error('provisioning failed!')
 
     if params is not None and installed:
+        _update_provider_context(provider_config, provider_context)
+
         mgmt_ip = mgmt_ip.encode('utf-8')
 
         with _update_wd_settings(args.verbosity) as wd_settings:
@@ -869,6 +899,26 @@ def _bootstrap_cosmo(args):
                      ' due to bootstrap failure')
             pm.teardown(provider_context)
         raise CosmoBootstrapError() if args.verbosity else sys.exit(1)
+
+
+def _update_provider_context(provider_config, provider_context):
+    cloudify = provider_config.get('cloudify', {})
+    agent = cloudify.get('cloudify_agent', {})
+    min_workers = agent.get('min_workers', AGENT_MIN_WORKERS)
+    max_workers = agent.get('max_workers', AGENT_MAX_WORKERS)
+    compute = provider_config.get('compute', {})
+    agent_servers = compute.get('agent_servers', {})
+    agents_keypair = agent_servers.get('agents_keypair', {})
+    auto_generated = agents_keypair.get('auto_generated', {})
+    private_key_target_path = auto_generated.get('private_key_target_path',
+                                                 AGENT_KEY_PATH)
+    provider_context['cloudify'] = {
+        'cloudify_agent': {
+            'min_workers': min_workers,
+            'max_workers': max_workers,
+            'agent_key_path': private_key_target_path
+        }
+    }
 
 
 def _teardown_cosmo(args):
@@ -1076,10 +1126,23 @@ def _delete_blueprint(args):
 
     lgr.info(
         'Deleting blueprint {0} from management server {1}'.format(
-            args.blueprint_id, management_ip))
+            blueprint_id, management_ip))
     client = _get_rest_client(management_ip)
     client.delete_blueprint(blueprint_id)
     lgr.info("Deleted blueprint successfully")
+
+
+def _delete_deployment(args):
+    management_ip = _get_management_server_ip(args)
+    deployment_id = args.deployment_id
+    ignore_live_nodes = args.ignore_live_nodes
+
+    lgr.info(
+        'Deleting deployment {0} from management server {1}'.format(
+            deployment_id, management_ip))
+    client = _get_rest_client(management_ip)
+    client.delete_deployment(deployment_id, ignore_live_nodes)
+    lgr.info("Deleted deployment successfully")
 
 
 def _upload_blueprint(args):
