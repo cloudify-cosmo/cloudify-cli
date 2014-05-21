@@ -414,7 +414,6 @@ def _parse_args(args):
              ' execution for the provided deployment'
     )
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
-    _add_include_logs_argument_to_parser(parser_deployments_execute)
     _set_handler_for_command(parser_deployments_execute,
                              _execute_deployment_operation)
 
@@ -1170,7 +1169,6 @@ def _execute_deployment_operation(args):
     deployment_id = args.deployment_id
     timeout = args.timeout
     force = args.force
-    include_logs = args.include_logs
 
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
              " management server {2} [timeout={3} seconds]"
@@ -1189,7 +1187,6 @@ def _execute_deployment_operation(args):
             deployment_id,
             operation,
             events_logger,
-            include_logs=include_logs,
             timeout=timeout,
             force=force)
         if error is None:
