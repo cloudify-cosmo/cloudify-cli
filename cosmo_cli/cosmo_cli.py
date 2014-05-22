@@ -57,6 +57,7 @@ DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 AGENT_MIN_WORKERS = 2
 AGENT_MAX_WORKERS = 5
 AGENT_KEY_PATH = '~/.ssh/cloudify-agents-kp.pem'
+REMOTE_EXECUTION_PORT = 22
 
 # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
 logging.getLogger("paramiko").setLevel(logging.WARNING)
@@ -913,6 +914,9 @@ def _update_provider_context(provider_config, provider_context):
     agent = cloudify.get('cloudify_agent', {})
     min_workers = agent.get('min_workers', AGENT_MIN_WORKERS)
     max_workers = agent.get('max_workers', AGENT_MAX_WORKERS)
+    user = agent.get('user')
+    remote_execution_port = agent.get('remote_execution_port',
+                                      REMOTE_EXECUTION_PORT)
     compute = provider_config.get('compute', {})
     agent_servers = compute.get('agent_servers', {})
     agents_keypair = agent_servers.get('agents_keypair', {})
@@ -923,9 +927,13 @@ def _update_provider_context(provider_config, provider_context):
         'cloudify_agent': {
             'min_workers': min_workers,
             'max_workers': max_workers,
-            'agent_key_path': private_key_target_path
+            'agent_key_path': private_key_target_path,
+            'remote_execution_port': remote_execution_port
         }
     }
+
+    if user:
+        provider_context['cloudify']['cloudify_agent']['user'] = user
 
 
 def _teardown_cosmo(args):
