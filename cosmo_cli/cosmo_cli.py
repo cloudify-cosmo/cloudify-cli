@@ -299,6 +299,10 @@ def _parse_args(args):
         'upload',
         help='command for uploading a blueprint to the management server'
     )
+    parser_blueprints_download = blueprints_subparsers.add_parser(
+        'download',
+        help='command for downloading a blueprint from the management server'
+    )
     parser_blueprints_list = blueprints_subparsers.add_parser(
         'list',
         help='command for listing all uploaded blueprints'
@@ -339,6 +343,26 @@ def _parse_args(args):
 
     _add_management_ip_optional_argument_to_parser(parser_blueprints_list)
     _set_handler_for_command(parser_blueprints_list, _list_blueprints)
+
+    _add_management_ip_optional_argument_to_parser(parser_blueprints_download)
+    _set_handler_for_command(parser_blueprints_download, _download_blueprint)
+
+    parser_blueprints_download.add_argument(
+        '-b', '--blueprint-id',
+        dest='blueprint_id',
+        metavar='BLUEPRINT_ID',
+        type=str,
+        required=True,
+        help="The id fo the blueprint to download"
+    )
+    parser_blueprints_download.add_argument(
+        '-o', '--output',
+        dest='output',
+        metavar='OUTPUT',
+        type=str,
+        required=False,
+        help="The output file path of the blueprint to be downloaded"
+    )
 
     parser_blueprints_delete.add_argument(
         '-b', '--blueprint-id',
@@ -1511,6 +1535,16 @@ def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
                                          CLOUDIFY_WD_SETTINGS_FILE_NAME)
     with open(target_file_path, 'w') as f:
         f.write(yaml.dump(cosmo_wd_settings))
+
+
+def _download_blueprint(args):
+    lgr.info(messages.DOWNLOADING_BLUEPRINT.format(args.blueprint_id))
+    rest_client = _get_rest_client(_get_management_server_ip(args))
+    target_file = rest_client.download_blueprint(args.blueprint_id,
+                                                 args.output)
+    lgr.info(messages.DOWNLOADING_BLUEPRINT_SUCCEEDED.format(
+        args.blueprint_id,
+        target_file))
 
 
 def _validate_blueprint(args):
