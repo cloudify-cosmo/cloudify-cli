@@ -1538,20 +1538,13 @@ def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
 
 
 def _download_blueprint(args):
-    is_verbose_output = args.verbosity
     lgr.info(messages.DOWNLOADING_BLUEPRINT.format(args.blueprint_id))
     rest_client = _get_rest_client(_get_management_server_ip(args))
-    try:
-        target_file = rest_client.download_blueprint(args.blueprint_id,
-                                                     args.output)
-        lgr.info(messages.DOWNLOADING_BLUEPRINT_SUCCEEDED.format(
-            args.blueprint_id,
-            target_file))
-    except Exception, e:
-        lgr.error(e.message)
-        flgr.error(e.message)
-        if is_verbose_output:
-            raise CosmoCliError(e.message)
+    target_file = rest_client.download_blueprint(args.blueprint_id,
+                                                 args.output)
+    lgr.info(messages.DOWNLOADING_BLUEPRINT_SUCCEEDED.format(
+        args.blueprint_id,
+        target_file))
 
 
 def _validate_blueprint(args):
