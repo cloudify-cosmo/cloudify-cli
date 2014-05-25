@@ -21,3 +21,7 @@ FILE_NOT_FOUND = "Could not file file: {0}"
 VALIDATING_BLUEPRINT = "Validating {0}"
 VALIDATING_BLUEPRINT_FAILED = "Failed to validate blueprint {0}: {1}"
 VALIDATING_BLUEPRINT_SUCCEEDED = "Blueprint validated successfully"
+
+DOWNLOADING_BLUEPRINT = "Downloading blueprint '{0}' ..."
+DOWNLOADING_BLUEPRINT_SUCCEEDED = \
+    "Blueprint '{0}' has been downloaded successfully as '{1}'"
