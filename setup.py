@@ -19,18 +19,6 @@ from setuptools import setup
 
 VERSION = '3.0'
 
-REST_CLIENT_VERSION = '3.0'
-REST_CLIENT_BRANCH = 'develop'
-REST_CLIENT = 'https://github.com/cloudify-cosmo/cloudify-rest-client' \
-              '/tarball/{0}#egg=cloudify-rest-client-{1}'.format(
-                  REST_CLIENT_BRANCH, REST_CLIENT_VERSION)
-
-DSL_PARSER_VERSION = '3.0'
-DSL_PARSER_BRANCH = 'develop'
-DSL_PARSER = 'https://github.com/cloudify-cosmo/cloudify-dsl-parser/tarball/' \
-             '{0}#egg=cloudify-dsl-parser-{1}'.format(
-                 DSL_PARSER_BRANCH, DSL_PARSER_VERSION)
-
 
 setup(
     name='cloudify-cli',
@@ -48,11 +36,10 @@ setup(
     },
     install_requires=[
         'pyyaml==3.10',
-        'cloudify-rest-client',
-        'cloudify-dsl-parser',
+        'cloudify-rest-client==3.0',
+        'cloudify-dsl-parser==3.0',
         'argcomplete==0.7.1',
         "fabric==1.8.3",
         "jsonschema==2.3.0",
-    ],
-    dependency_links=[REST_CLIENT, DSL_PARSER]
+    ]
 )
