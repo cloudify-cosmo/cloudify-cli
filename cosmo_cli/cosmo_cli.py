@@ -57,6 +57,7 @@ DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 AGENT_MIN_WORKERS = 2
 AGENT_MAX_WORKERS = 5
 AGENT_KEY_PATH = '~/.ssh/cloudify-agents-kp.pem'
+REMOTE_EXECUTION_PORT = 22
 
 # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
 logging.getLogger("paramiko").setLevel(logging.WARNING)
@@ -298,6 +299,10 @@ def _parse_args(args):
         'upload',
         help='command for uploading a blueprint to the management server'
     )
+    parser_blueprints_download = blueprints_subparsers.add_parser(
+        'download',
+        help='command for downloading a blueprint from the management server'
+    )
     parser_blueprints_list = blueprints_subparsers.add_parser(
         'list',
         help='command for listing all uploaded blueprints'
@@ -338,6 +343,26 @@ def _parse_args(args):
 
     _add_management_ip_optional_argument_to_parser(parser_blueprints_list)
     _set_handler_for_command(parser_blueprints_list, _list_blueprints)
+
+    _add_management_ip_optional_argument_to_parser(parser_blueprints_download)
+    _set_handler_for_command(parser_blueprints_download, _download_blueprint)
+
+    parser_blueprints_download.add_argument(
+        '-b', '--blueprint-id',
+        dest='blueprint_id',
+        metavar='BLUEPRINT_ID',
+        type=str,
+        required=True,
+        help="The id fo the blueprint to download"
+    )
+    parser_blueprints_download.add_argument(
+        '-o', '--output',
+        dest='output',
+        metavar='OUTPUT',
+        type=str,
+        required=False,
+        help="The output file path of the blueprint to be downloaded"
+    )
 
     parser_blueprints_delete.add_argument(
         '-b', '--blueprint-id',
@@ -906,6 +931,9 @@ def _update_provider_context(provider_config, provider_context):
     agent = cloudify.get('cloudify_agent', {})
     min_workers = agent.get('min_workers', AGENT_MIN_WORKERS)
     max_workers = agent.get('max_workers', AGENT_MAX_WORKERS)
+    user = agent.get('user')
+    remote_execution_port = agent.get('remote_execution_port',
+                                      REMOTE_EXECUTION_PORT)
     compute = provider_config.get('compute', {})
     agent_servers = compute.get('agent_servers', {})
     agents_keypair = agent_servers.get('agents_keypair', {})
@@ -916,9 +944,13 @@ def _update_provider_context(provider_config, provider_context):
         'cloudify_agent': {
             'min_workers': min_workers,
             'max_workers': max_workers,
-            'agent_key_path': private_key_target_path
+            'agent_key_path': private_key_target_path,
+            'remote_execution_port': remote_execution_port
         }
     }
+
+    if user:
+        provider_context['cloudify']['cloudify_agent']['user'] = user
 
 
 def _teardown_cosmo(args):
@@ -1494,6 +1526,16 @@ def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
                                          CLOUDIFY_WD_SETTINGS_FILE_NAME)
     with open(target_file_path, 'w') as f:
         f.write(yaml.dump(cosmo_wd_settings))
+
+
+def _download_blueprint(args):
+    lgr.info(messages.DOWNLOADING_BLUEPRINT.format(args.blueprint_id))
+    rest_client = _get_rest_client(_get_management_server_ip(args))
+    target_file = rest_client.download_blueprint(args.blueprint_id,
+                                                 args.output)
+    lgr.info(messages.DOWNLOADING_BLUEPRINT_SUCCEEDED.format(
+        args.blueprint_id,
+        target_file))
 
 
 def _validate_blueprint(args):
