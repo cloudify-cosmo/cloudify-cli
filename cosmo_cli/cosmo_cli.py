@@ -511,13 +511,6 @@ def _parse_args(args):
         required=True,
         help='The id of the deployment whose executions to list'
     )
-    parser_executions_list.add_argument(
-        '-s', '--statuses',
-        dest='with_statuses',
-        action='store_true',
-        help='A flag indicating whether or not to also retrieve executions '
-             'statuses'
-    )
     _add_management_ip_optional_argument_to_parser(parser_executions_list)
     _set_handler_for_command(parser_executions_list,
                              _list_deployment_executions)
@@ -1378,13 +1371,11 @@ def _list_deployment_executions(args):
     management_ip = _get_management_server_ip(args)
     client = _get_rest_client(management_ip)
     deployment_id = args.deployment_id
-    inc_statuses = args.with_statuses
     lgr.info(
         'Querying executions list from management server {0} for '
         'deployment {1}'.format(management_ip, deployment_id))
     try:
-        executions = client.list_deployment_executions(deployment_id,
-                                                       inc_statuses)
+        executions = client.list_deployment_executions(deployment_id)
     except CosmoManagerRestCallHTTPError, e:
         if not e.status_code == 404:
             raise
@@ -1405,7 +1396,7 @@ def _list_deployment_executions(args):
             lgr.info(
                 '\t{0}{1}\t[deployment_id={2}, blueprint_id={3}]'.format(
                     execution.id,
-                    '\t{0}'.format(execution.status) if inc_statuses else '',
+                    '\t{0}'.format(execution.status),
                     execution.deploymentId,
                     execution.blueprintId))
 

@@ -353,12 +353,11 @@ going. It is the CLI that will stop waiting for it to terminate)
 
 **Description:** lists the executions of a deployment
 
-**Usage:** `cfy executions list [-d, --deployment-id <deployment_id>] [-s, --statuses] [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy executions list [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - deployment_id: the id of the deployment whose executions to list
-- statuses: A flag for retrieving the executions current statuses as well
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 
