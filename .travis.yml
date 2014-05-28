@@ -4,7 +4,6 @@ python:
 
 install:
     - pip install --upgrade pip
-    - pip install --process-dependency-links https://github.com/cloudify-cosmo/cloudify-rest-client/archive/feature/CFY-642-workflow-framework.zip
     - pip install --process-dependency-links .
     - pip install flake8
 
