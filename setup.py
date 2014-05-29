@@ -16,13 +16,15 @@
 __author__ = 'ran'
 
 from setuptools import setup
+from pip.req import parse_requirements
 
-VERSION = '3.0'
+install_requires = [
+    str(ir.req) for ir in parse_requirements('requirements.txt')]
 
 
 setup(
     name='cloudify-cli',
-    version=VERSION,
+    version=3.0,
     author='ran',
     author_email='ran@gigaspaces.com',
     packages=['cosmo_cli'],
@@ -34,12 +36,5 @@ setup(
             'activate_cfy_bash_completion = cosmo_cli.activate_bash_completion:main'  # NOQA
         ]
     },
-    install_requires=[
-        'pyyaml==3.10',
-        'cloudify-rest-client==3.0',
-        'cloudify-dsl-parser==3.0',
-        'argcomplete==0.7.1',
-        "fabric==1.8.3",
-        "jsonschema==2.3.0",
-    ]
+    install_requires=install_requires
 )

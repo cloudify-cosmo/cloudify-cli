@@ -3,9 +3,7 @@ python:
   - "2.7"
 
 install:
-    - pip install https://github.com/cloudify-cosmo/cloudify-rest-client/archive/develop.zip
-    - pip install https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/develop.zip
-    - pip install .
+    - pip install . -r requirements.txt
     - pip install flake8
 
 script:
