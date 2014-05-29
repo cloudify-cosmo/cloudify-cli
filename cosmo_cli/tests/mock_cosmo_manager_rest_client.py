@@ -69,8 +69,7 @@ class MockCosmoManagerRestClient(object):
     def list_workflows(self, deployment_id):
         return MicroMock(workflows=[])
 
-    def list_deployment_executions(self, deployment_id,
-                                   get_executions_statuses=False):
+    def list_deployment_executions(self, deployment_id):
         return []
 
     def get_all_execution_events(self, execution_id, include_logs=False):
