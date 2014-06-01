@@ -1075,10 +1075,18 @@ def _status(args):
     lgr.info(
         'querying management server {0}'.format(management_ip))
 
-    if _check_management_server_status(management_ip):
+    status_result = _get_management_server_status(management_ip)
+    if status_result:
         lgr.info(
             "REST service at management server {0} is up and running"
             .format(management_ip))
+
+        lgr.info('Services information:')
+        for service in status_result.services:
+            lgr.info('\t{0}\t{1}'.format(
+                service.display_name.ljust(20),
+                service.instances[0]['state'] if service.instances else
+                'Unknown'))
         return True
     else:
         lgr.info(
@@ -1087,13 +1095,12 @@ def _status(args):
         return False
 
 
-def _check_management_server_status(management_ip):
+def _get_management_server_status(management_ip):
     client = _get_rest_client(management_ip)
     try:
-        client.status()
-        return True
+        return client.status()
     except CosmoManagerRestCallError:
-        return False
+        return None
 
 
 def _use_management_server(args):
@@ -1102,7 +1109,7 @@ def _use_management_server(args):
         # even if "init" wasn't called prior to this.
         _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings())
 
-    if not _check_management_server_status(args.management_ip):
+    if not _get_management_server_status(args.management_ip):
         msg = ("Can't use management server {0}: No response.".format(
             args.management_ip))
         flgr.error(msg)
