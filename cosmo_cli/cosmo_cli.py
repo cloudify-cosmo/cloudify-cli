@@ -47,8 +47,7 @@ from cosmo_manager_rest_client.cosmo_manager_rest_client \
             CosmoManagerRestCallTimeoutError,
             CosmoManagerRestCallHTTPError)
 from dsl_parser.parser import parse_from_path, DSLParsingException
-
-
+from cloudify_rest_client import RestClient
 
 
 output_level = logging.INFO
@@ -1147,9 +1146,9 @@ def _use_management_server(args):
 
 def _list_blueprints(args):
     management_ip = _get_management_server_ip(args)
-    client = _get_rest_client(management_ip)
+    client = _get_new_rest_client(management_ip)
 
-    pt = formatting.table(['id'], data=client.list_blueprints())
+    pt = formatting.table(['id', 'createdAt', 'updatedAt'], data=client.blueprints.list())
     lgr.info(pt)
 
 
@@ -1305,33 +1304,30 @@ def _execute_deployment_operation(args):
 def _list_blueprint_deployments(args):
     blueprint_id = args.blueprint_id
     management_ip = _get_management_server_ip(args)
-
-    message = 'Querying deployments list from management server {0}'\
-              .format(management_ip)
-    if blueprint_id:
-        message += ' for blueprint {0}'.format(blueprint_id)
-    lgr.info(message)
-
-    client = _get_rest_client(management_ip)
-    deployments = client.list_deployments()
+    client = _get_new_rest_client(management_ip)
+    deployments = client.deployments.list()
     if blueprint_id:
         deployments = filter(lambda deployment:
-                             deployment.blueprintId == blueprint_id,
+                             deployment['blueprintId'] == blueprint_id,
                              deployments)
 
-    formatting.table(['id', 'blueprintId', 'createdAt', 'updatedAt'], deployments)
+    pt = formatting.table(['id', 'blueprintId', 'createdAt', 'updatedAt'], deployments)
+    lgr.info(pt)
+
 
 
 def _list_workflows(args):
     management_ip = _get_management_server_ip(args)
     deployment_id = args.deployment_id
-    client = _get_rest_client(management_ip)
-    workflows = client.list_workflows(deployment_id)
+    client = _get_new_rest_client(management_ip)
+    workflows = client.deployments.list_workflows(deployment_id)
 
     pt = formatting.table(['blueprintId', 'deploymentId', 'name', 'createdAt'],
                           data=workflows,
-                          defaults={'blueprintId': workflows.blueprintId,
-                                    'deploymentId': workflows.deploymentId})
+                          defaults={'blueprintId': workflows['blueprintId']
+                          if 'blueprintId' in workflows else None,
+                                    'deploymentId': workflows['deploymentId']
+                                    if 'deploymentId' in workflows else None})
 
     lgr.info(pt)
 
@@ -1352,13 +1348,10 @@ def _cancel_execution(args):
 def _list_deployment_executions(args):
     is_verbose_output = args.verbosity
     management_ip = _get_management_server_ip(args)
-    client = _get_rest_client(management_ip)
+    client = _get_new_rest_client(management_ip)
     deployment_id = args.deployment_id
-    lgr.info(
-        'Querying executions list from management server {0} for '
-        'deployment {1}'.format(management_ip, deployment_id))
     try:
-        executions = client.list_deployment_executions(deployment_id)
+        executions = client.executions.list(deployment_id)
     except CosmoManagerRestCallHTTPError, e:
         if not e.status_code == 404:
             raise
@@ -1367,21 +1360,10 @@ def _list_deployment_executions(args):
         flgr.error(msg)
         raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
 
-    if len(executions) == 0:
-        lgr.info(
-            'There are no executions on the '
-            'management server for '
-            'deployment {0}'.format(deployment_id))
-    else:
-        lgr.info(
-            'Executions for deployment {0}:'.format(deployment_id))
-        for execution in executions:
-            lgr.info(
-                '\t{0}{1}\t[deployment_id={2}, blueprint_id={3}]'.format(
-                    execution.id,
-                    '\t{0}'.format(execution.status),
-                    execution.deploymentId,
-                    execution.blueprintId))
+    pt = formatting.table(['status', 'workflowId', 'deploymentId',
+                           'blueprintId', 'error', 'id', 'createdAt'],
+                          executions)
+    lgr.info(pt)
 
 
 def _get_events(args):
@@ -1557,6 +1539,10 @@ def _get_resource_base():
 
 def _get_rest_client(management_ip):
     return CosmoManagerRestClient(management_ip)
+
+
+def _get_new_rest_client(management_ip):
+    return RestClient(management_ip)
 
 
 @contextmanager
