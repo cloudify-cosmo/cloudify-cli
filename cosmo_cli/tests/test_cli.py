@@ -89,6 +89,9 @@ class CliTest(unittest.TestCase):
         cli._get_rest_client =\
             lambda ip: MockCosmoManagerRestClient()
 
+        cli._get_new_rest_client = \
+            lambda ip: MockCosmoManagerRestClient()
+
     def test_get_basic_help(self):
         with open(os.devnull, "w") as f:
             returncode = subprocess.call("cfy", stdout=f, stderr=f)
