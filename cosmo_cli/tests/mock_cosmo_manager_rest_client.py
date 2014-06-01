@@ -28,14 +28,18 @@ def get_mock_provider_name():
 
 
 class MockCosmoManagerRestClient(object):
-    # A mock of the rest client, containing only the methods and object types
-    # that are relevant to test the CLI in its current form.
+
+    """
+    A mock of the rest client, containing only the methods and object types
+    that are relevant to test the CLI in its current form.
+    """
+
     def status(self):
         return type('obj', (object,), {'status': 'running',
                                        'services': []})
 
     def list_blueprints(self):
-        return []
+        return [{'id': '1'}]
 
     def list_deployments(self):
         return []

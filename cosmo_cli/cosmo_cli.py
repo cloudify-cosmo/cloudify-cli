@@ -35,6 +35,7 @@ from contextlib import contextmanager
 import logging
 import logging.config
 import config
+import formatting
 from fabric.api import env, local
 from fabric.context_managers import settings
 
@@ -46,6 +47,8 @@ from cosmo_manager_rest_client.cosmo_manager_rest_client \
             CosmoManagerRestCallTimeoutError,
             CosmoManagerRestCallHTTPError)
 from dsl_parser.parser import parse_from_path, DSLParsingException
+
+
 
 
 output_level = logging.INFO
@@ -1144,19 +1147,10 @@ def _use_management_server(args):
 
 def _list_blueprints(args):
     management_ip = _get_management_server_ip(args)
-    lgr.info('querying blueprints list from management '
-             'server {0}'.format(management_ip))
     client = _get_rest_client(management_ip)
-    blueprints_list = client.list_blueprints()
 
-    if not blueprints_list:
-        lgr.info('There are no blueprints available on the '
-                 'management server')
-    else:
-        lgr.info('Blueprints:')
-        for blueprint_state in blueprints_list:
-            blueprint_id = blueprint_state.id
-            lgr.info('\t' + blueprint_id)
+    pt = formatting.table(['id'], data=client.list_blueprints())
+    lgr.info(pt)
 
 
 def _delete_blueprint(args):
@@ -1325,39 +1319,21 @@ def _list_blueprint_deployments(args):
                              deployment.blueprintId == blueprint_id,
                              deployments)
 
-    if len(deployments) == 0:
-        if blueprint_id:
-            suffix = 'for blueprint {0}'.format(blueprint_id)
-        else:
-            suffix = ''
-        lgr.info('There are no deployments on the management server {0}'
-                 .format(suffix))
-    else:
-        lgr.info('Deployments:')
-        for deployment in deployments:
-            deployment_id = deployment.id
-            if blueprint_id:
-                blueprint_str = ''
-            else:
-                blueprint_str = ' [Blueprint: {0}]' \
-                    .format(deployment.blueprintId)
-            lgr.info(
-                '\t' + deployment_id + blueprint_str)
+    formatting.table(['id', 'blueprintId', 'createdAt', 'updatedAt'], deployments)
 
 
 def _list_workflows(args):
     management_ip = _get_management_server_ip(args)
     deployment_id = args.deployment_id
-
-    lgr.info(
-        'Querying workflows list from management server {0} for '
-        'deployment {1}'.format(management_ip, args.deployment_id))
     client = _get_rest_client(management_ip)
-    workflow_names = [workflow.name for workflow in
-                      client.list_workflows(deployment_id).workflows]
-    lgr.info("deployments workflows:")
-    for name in workflow_names:
-        lgr.info("\t{0}".format(name))
+    workflows = client.list_workflows(deployment_id)
+
+    pt = formatting.table(['blueprintId', 'deploymentId', 'name', 'createdAt'],
+                          data=workflows,
+                          defaults={'blueprintId': workflows.blueprintId,
+                                    'deploymentId': workflows.deploymentId})
+
+    lgr.info(pt)
 
 
 def _cancel_execution(args):
