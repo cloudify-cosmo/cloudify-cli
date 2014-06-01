@@ -1516,21 +1516,17 @@ def _run_dev(args):
 def _run_ssh(args):
     ssh_path = find_executable('ssh')
     lgr.debug('SSH executable path: {0}'.format(ssh_path or 'Not found'))
-    if not ssh_path and system == 'Windows':
-        lgr.info("""\
-        ssh.exe not found. Are you sure you have it installed?
-        As alternative you can use PuTTY to ssh into the management server. \
-        Do not forget to convert your private key from OpenSSH format to \
-        PuTTY's format using PuTTYGen.
-        """)
+    if not ssh_path and system() == 'Windows':
+        lgr.info("""ssh.exe not found. Are you sure you have it installed?
+As alternative you can use PuTTY to ssh into the management server. \
+Do not forget to convert your private key from OpenSSH format to \
+PuTTY's format using PuTTYGen.""")
     elif not ssh_path:
-        lgr.info("""\
-        ssh not found. Possible reasons:
-        1) You don't have ssh installed (try installing OpenSSH)
-        2) Your PATH variable is not configured correctly
-        3) You are running this command with Sudo which can manipulate \
-        environment variables for security reasons
-        """)
+        lgr.info("""ssh not found. Possible reasons:
+1) You don't have ssh installed (try installing OpenSSH)
+2) Your PATH variable is not configured correctly
+3) You are running this command with Sudo which can manipulate \
+environment variables for security reasons""")
     else:
         _ssh(ssh_path, args)
 
