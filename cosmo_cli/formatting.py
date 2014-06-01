@@ -41,14 +41,21 @@ def table(cols, data, defaults=None):
 
     Arguments:
 
-        cols - An iterable of strings that specify what are the columns of the table.
+        cols - An iterable of strings that specify what
+               are the columns of the table.
+
                for example: ['id','name']
 
-        data - An iterable of dictionaries, each dictionary must have key's corresponding to the cols items.
+        data - An iterable of dictionaries, each dictionary must
+               have key's corresponding to the cols items.
+
                for example: [{'id':'123', 'name':'Pete']
 
-        defaults - A dictionary specifying default values for key's that don't exist in the data itself.
-               for example: {'deploymentId':'123'} will set the deploymentId value for all rows to '123'.
+        defaults - A dictionary specifying default values for
+                   key's that don't exist in the data itself.
+
+                   for example: {'deploymentId':'123'} will set the
+                   deploymentId value for all rows to '123'.
 
     """
 

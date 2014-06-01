@@ -1148,7 +1148,8 @@ def _list_blueprints(args):
     management_ip = _get_management_server_ip(args)
     client = _get_new_rest_client(management_ip)
 
-    pt = formatting.table(['id', 'createdAt', 'updatedAt'], data=client.blueprints.list())
+    pt = formatting.table(['id', 'createdAt', 'updatedAt'],
+                          data=client.blueprints.list())
     lgr.info(pt)
 
 
@@ -1311,9 +1312,9 @@ def _list_blueprint_deployments(args):
                              deployment['blueprintId'] == blueprint_id,
                              deployments)
 
-    pt = formatting.table(['id', 'blueprintId', 'createdAt', 'updatedAt'], deployments)
+    pt = formatting.table(['id', 'blueprintId', 'createdAt', 'updatedAt'],
+                          deployments)
     lgr.info(pt)
-
 
 
 def _list_workflows(args):
@@ -1322,12 +1323,15 @@ def _list_workflows(args):
     client = _get_new_rest_client(management_ip)
     workflows = client.deployments.list_workflows(deployment_id)
 
+    blueprint_id = workflows['blueprintId'] if \
+        'blueprintId' in workflows else None
+    deployment_id = workflows['deploymentId'] if \
+        'deploymentId' in workflows else None
+
     pt = formatting.table(['blueprintId', 'deploymentId', 'name', 'createdAt'],
                           data=workflows,
-                          defaults={'blueprintId': workflows['blueprintId']
-                          if 'blueprintId' in workflows else None,
-                                    'deploymentId': workflows['deploymentId']
-                                    if 'deploymentId' in workflows else None})
+                          defaults={'blueprintId': blueprint_id,
+                                    'deploymentId': deployment_id})
 
     lgr.info(pt)
 

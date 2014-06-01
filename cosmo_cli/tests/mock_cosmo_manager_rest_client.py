@@ -38,7 +38,6 @@ class MockCosmoManagerRestClient(object):
         self.blueprints = MicroMock()
         self.deployments = MicroMock()
 
-
     def status(self):
         return type('obj', (object,), {'status': 'running',
                                        'services': []})
@@ -112,4 +111,3 @@ class MicroMock(object):
 
     def list_workflows(self, deployment_id):
         return {}
-
