@@ -47,7 +47,7 @@ from cosmo_manager_rest_client.cosmo_manager_rest_client \
             CosmoManagerRestCallTimeoutError,
             CosmoManagerRestCallHTTPError)
 from dsl_parser.parser import parse_from_path, DSLParsingException
-from cloudify_rest_client import RestClient
+from cloudify_rest_client import CloudifyClient
 
 
 output_level = logging.INFO
@@ -1148,9 +1148,16 @@ def _list_blueprints(args):
     management_ip = _get_management_server_ip(args)
     client = _get_new_rest_client(management_ip)
 
+    lgr.info('Getting blueprints list... [manager={0}]'.format(management_ip))
+
     pt = formatting.table(['id', 'createdAt', 'updatedAt'],
                           data=client.blueprints.list())
-    lgr.info(pt)
+
+    _output_table('Blueprints:', pt)
+
+
+def _output_table(title, table):
+    lgr.info('{0}{1}{0}{2}{0}'.format(os.linesep, title, table))
 
 
 def _delete_blueprint(args):
@@ -1306,6 +1313,13 @@ def _list_blueprint_deployments(args):
     blueprint_id = args.blueprint_id
     management_ip = _get_management_server_ip(args)
     client = _get_new_rest_client(management_ip)
+    if blueprint_id:
+        lgr.info('Getting deployments list for blueprint: '
+                 '\'{0}\'... [manager={1}]'.format(blueprint_id,
+                                                   management_ip))
+    else:
+        lgr.info('Getting deployments list... '
+                 '[manager={0}]'.format(management_ip))
     deployments = client.deployments.list()
     if blueprint_id:
         deployments = filter(lambda deployment:
@@ -1314,13 +1328,17 @@ def _list_blueprint_deployments(args):
 
     pt = formatting.table(['id', 'blueprintId', 'createdAt', 'updatedAt'],
                           deployments)
-    lgr.info(pt)
+    _output_table('Deployments:', pt)
 
 
 def _list_workflows(args):
     management_ip = _get_management_server_ip(args)
     deployment_id = args.deployment_id
     client = _get_new_rest_client(management_ip)
+
+    lgr.info('Getting workflows list for deployment: '
+             '\'{0}\'... [manager={1}]'.format(deployment_id, management_ip))
+
     workflows = client.deployments.list_workflows(deployment_id)
 
     blueprint_id = workflows['blueprintId'] if \
@@ -1329,11 +1347,11 @@ def _list_workflows(args):
         'deploymentId' in workflows else None
 
     pt = formatting.table(['blueprintId', 'deploymentId', 'name', 'createdAt'],
-                          data=workflows,
+                          data=workflows.workflows,
                           defaults={'blueprintId': blueprint_id,
                                     'deploymentId': deployment_id})
 
-    lgr.info(pt)
+    _output_table('Workflows:', pt)
 
 
 def _cancel_execution(args):
@@ -1355,6 +1373,8 @@ def _list_deployment_executions(args):
     client = _get_new_rest_client(management_ip)
     deployment_id = args.deployment_id
     try:
+        lgr.info('Getting executions list for deployment: '
+                 '\'{0}\' [manager={1}]'.format(deployment_id, management_ip))
         executions = client.executions.list(deployment_id)
     except CosmoManagerRestCallHTTPError, e:
         if not e.status_code == 404:
@@ -1367,7 +1387,7 @@ def _list_deployment_executions(args):
     pt = formatting.table(['status', 'workflowId', 'deploymentId',
                            'blueprintId', 'error', 'id', 'createdAt'],
                           executions)
-    lgr.info(pt)
+    _output_table('Executions:', pt)
 
 
 def _get_events(args):
@@ -1546,7 +1566,7 @@ def _get_rest_client(management_ip):
 
 
 def _get_new_rest_client(management_ip):
-    return RestClient(management_ip)
+    return CloudifyClient(management_ip)
 
 
 @contextmanager
