@@ -17,9 +17,16 @@ __author__ = 'ran'
 
 from setuptools import setup
 from pip.req import parse_requirements
+import shutil
+from os import getcwd
 
-install_requires = [
-    str(ir.req) for ir in parse_requirements('requirements.txt')]
+
+def reqs():
+    print('HAAAAAAAAAAAAAAAAAAAAAA', getcwd())
+    shutil.copy('requirements.txt', '.tox/')
+    install_requires = [
+        str(ir.req) for ir in parse_requirements('requirements.txt')]
+    return install_requires
 
 
 setup(
@@ -36,5 +43,12 @@ setup(
             'activate_cfy_bash_completion = cosmo_cli.activate_bash_completion:main'  # NOQA
         ]
     },
-    install_requires=install_requires
+    install_requires=[
+        'cloudify-rest-client==3.0',
+        'cloudify-dsl-parser==3.0',
+        'pyyaml==3.10',
+        'argcomplete==0.7.1',
+        'fabric==1.8.3',
+        'jsonschema==2.3.0',
+    ]
 )
