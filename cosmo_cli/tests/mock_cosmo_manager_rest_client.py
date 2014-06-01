@@ -37,6 +37,7 @@ class MockCosmoManagerRestClient(object):
     def __init__(self):
         self.blueprints = MicroMock()
         self.deployments = MicroMock()
+        self.executions = MicroMock()
 
     def status(self):
         return type('obj', (object,), {'status': 'running',
@@ -106,7 +107,7 @@ class MicroMock(object):
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
-    def list(self):
+    def list(self, *args):
         return []
 
     def list_workflows(self, deployment_id):
