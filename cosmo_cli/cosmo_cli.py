@@ -37,6 +37,9 @@ import logging.config
 import config
 from fabric.api import env, local
 from fabric.context_managers import settings
+from platform import system
+from distutils.spawn import find_executable
+from subprocess import call
 
 # Project
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
@@ -159,6 +162,10 @@ def _parse_args(args):
     )
     parser_dev = subparsers.add_parser(
         'dev'
+    )
+    parser_ssh = subparsers.add_parser(
+        'ssh',
+        help='SSH to management server'
     )
 
     # status subparser
@@ -566,6 +573,23 @@ def _parse_args(args):
     )
     _add_management_ip_optional_argument_to_parser(parser_dev)
     _set_handler_for_command(parser_dev, _run_dev)
+
+    # ssh subparser
+    parser_ssh.add_argument(
+        '-c', '--command',
+        dest='ssh_command',
+        metavar='COMMAND',
+        default=None,
+        type=str,
+        help='Execute command over SSH'
+    )
+    parser_ssh.add_argument(
+        '-p', '--plain',
+        dest='ssh_plain_mode',
+        action='store_true',
+        help='Leave authentication to user'
+    )
+    _set_handler_for_command(parser_ssh, _run_ssh)
 
     argcomplete.autocomplete(parser)
     return parser.parse_args(args)
@@ -1000,7 +1024,7 @@ def _teardown_cosmo(args):
 def _get_management_server_ip(args):
     is_verbose_output = args.verbosity
     cosmo_wd_settings = _load_cosmo_working_dir_settings(is_verbose_output)
-    if args.management_ip:
+    if hasattr(args, 'management_ip') and args.management_ip:
         return cosmo_wd_settings.translate_management_alias(
             args.management_ip)
     if cosmo_wd_settings.get_management_server():
@@ -1487,6 +1511,43 @@ def _run_dev(args):
                         except Exception as e:
                             raise CosmoDevError('failed to execute: "{0}" '
                                                 '({1}) '.format(task, str(e)))
+
+
+def _run_ssh(args):
+    ssh_path = find_executable('ssh')
+    lgr.debug('SSH executable path: {0}'.format(ssh_path or 'Not found'))
+    if not ssh_path and system == 'Windows':
+        lgr.info("""\
+        ssh.exe not found. Are you sure you have it installed?
+        As alternative you can use PuTTY to ssh into the management server. \
+        Do not forget to convert your private key from OpenSSH format to \
+        PuTTY's format using PuTTYGen.
+        """)
+    elif not ssh_path:
+        lgr.info("""\
+        ssh not found. Possible reasons:
+        1) You don't have ssh installed (try installing OpenSSH)
+        2) Your PATH variable is not configured correctly
+        3) You are running this command with Sudo which can manipulate \
+        environment variables for security reasons
+        """)
+    else:
+        _ssh(ssh_path, args)
+
+
+def _ssh(path, args):
+    command = [path]
+    command.append('{0}@{1}'.format(_get_mgmt_user(),
+                                    _get_management_server_ip(args)))
+    if args.verbosity:
+        command.append('-v')
+    if not args.ssh_plain_mode:
+        command.extend(['-i', _get_mgmt_key()])
+    if args.ssh_command:
+        command.extend(['--', args.ssh_command])
+    lgr.debug('executing command: {0}'.format(' '.join(command)))
+    lgr.info('Trying to connect...')
+    call(command)
 
 
 def _set_cli_except_hook():
