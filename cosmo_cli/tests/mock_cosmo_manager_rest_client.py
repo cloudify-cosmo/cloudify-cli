@@ -31,7 +31,8 @@ class MockCosmoManagerRestClient(object):
     # A mock of the rest client, containing only the methods and object types
     # that are relevant to test the CLI in its current form.
     def status(self):
-        return []
+        return type('obj', (object,), {'status': 'running',
+                                       'services': []})
 
     def list_blueprints(self):
         return []
