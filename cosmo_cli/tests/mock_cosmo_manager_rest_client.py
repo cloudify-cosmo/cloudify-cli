@@ -44,7 +44,7 @@ class MockCosmoManagerRestClient(object):
                                        'services': []})
 
     def list_blueprints(self):
-        return [{'id': '1'}]
+        return []
 
     def list_deployments(self):
         return []
