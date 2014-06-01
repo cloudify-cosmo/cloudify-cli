@@ -111,4 +111,11 @@ class MicroMock(object):
         return []
 
     def list_workflows(self, deployment_id):
-        return {}
+        return WorkflowsMock()
+
+
+class WorkflowsMock(dict):
+
+    @property
+    def workflows(self):
+        return []
