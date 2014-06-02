@@ -1513,20 +1513,15 @@ def _run_dev(args):
                                                 '({1}) '.format(task, str(e)))
 
 
-def _run_ssh(args):
+def _run_ssh(args, is_verbose_output=False):
     ssh_path = find_executable('ssh')
     lgr.debug('SSH executable path: {0}'.format(ssh_path or 'Not found'))
     if not ssh_path and system() == 'Windows':
-        lgr.info("""ssh.exe not found. Are you sure you have it installed?
-As alternative you can use PuTTY to ssh into the management server. \
-Do not forget to convert your private key from OpenSSH format to \
-PuTTY's format using PuTTYGen.""")
+        msg = messages.SSH_WIN_NOT_FOUND
+        raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
     elif not ssh_path:
-        lgr.info("""ssh not found. Possible reasons:
-1) You don't have ssh installed (try installing OpenSSH)
-2) Your PATH variable is not configured correctly
-3) You are running this command with Sudo which can manipulate \
-environment variables for security reasons""")
+        msg = messages.SSH_LINUX_NOT_FOUND
+        raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
     else:
         _ssh(ssh_path, args)
 
