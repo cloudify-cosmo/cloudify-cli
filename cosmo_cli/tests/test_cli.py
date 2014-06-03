@@ -78,9 +78,9 @@ class CliTest(unittest.TestCase):
         sys.argv = args_str.split()
         cli.main()
 
-    def _create_cosmo_wd_settings(self):
+    def _create_cosmo_wd_settings(self, settings=None):
         cli._dump_cosmo_working_dir_settings(
-            cli.CosmoWorkingDirectorySettings())
+            settings or cli.CosmoWorkingDirectorySettings())
 
     def _read_cosmo_wd_settings(self):
         return cli._load_cosmo_working_dir_settings()
@@ -419,3 +419,61 @@ class CliTest(unittest.TestCase):
         self._create_cosmo_wd_settings()
         self._run_cli("cfy events --include-logs --execution-id execution-id "
                       "-t 127.0.0.1")
+
+    def test_ssh_no_prior_init(self):
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_with_empty_config(self):
+        self._create_cosmo_wd_settings()
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_with_no_key(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_user('test')
+        settings.set_management_server('127.0.0.1')
+        self._create_cosmo_wd_settings(settings)
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_with_no_user(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_server('127.0.0.1')
+        settings.set_management_key('/tmp/test.pem')
+        self._create_cosmo_wd_settings(settings)
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_with_no_server(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_user('test')
+        settings.set_management_key('/tmp/test.pem')
+        self._create_cosmo_wd_settings(settings)
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_without_ssh_windows(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_user('test')
+        settings.set_management_key('/tmp/test.pem')
+        settings.set_management_server('127.0.0.1')
+        self._create_cosmo_wd_settings(settings)
+        cli.find_executable = lambda x: None
+        cli.system = lambda: 'Windows'
+        self._assert_ex('cfy ssh', 'ssh.exe not found')
+
+    def test_ssh_without_ssh_linux(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_user('test')
+        settings.set_management_key('/tmp/test.pem')
+        settings.set_management_server('127.0.0.1')
+        self._create_cosmo_wd_settings(settings)
+        cli.find_executable = lambda x: None
+        cli.system = lambda: 'Linux'
+        self._assert_ex('cfy ssh', 'ssh not found')

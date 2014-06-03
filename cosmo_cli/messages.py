@@ -25,3 +25,14 @@ VALIDATING_BLUEPRINT_SUCCEEDED = "Blueprint validated successfully"
 DOWNLOADING_BLUEPRINT = "Downloading blueprint '{0}' ..."
 DOWNLOADING_BLUEPRINT_SUCCEEDED = \
     "Blueprint '{0}' has been downloaded successfully as '{1}'"
+
+SSH_LINUX_NOT_FOUND = """ssh not found. Possible reasons:
+1) You don't have ssh installed (try installing OpenSSH)
+2) Your PATH variable is not configured correctly
+3) You are running this command with Sudo which can manipulate \
+environment variables for security reasons"""
+
+SSH_WIN_NOT_FOUND = """ssh.exe not found. Are you sure you have it installed?
+As alternative you can use PuTTY to ssh into the management server. \
+Do not forget to convert your private key from OpenSSH format to \
+PuTTY's format using PuTTYGen."""
