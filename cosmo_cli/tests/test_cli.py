@@ -16,11 +16,14 @@
 
 __author__ = 'ran'
 
+import glob
 import unittest
 import os
+import re
 import sys
 import shutil
 import subprocess
+import yaml
 from mock_cosmo_manager_rest_client import MockCosmoManagerRestClient
 from cosmo_cli import cosmo_cli as cli
 from cosmo_cli.cosmo_cli import CosmoCliError
@@ -477,3 +480,44 @@ class CliTest(unittest.TestCase):
         cli.find_executable = lambda x: None
         cli.system = lambda: 'Linux'
         self._assert_ex('cfy ssh', 'ssh not found')
+
+    def _compare_config_item(self, actual, expected, path):
+        r = re.escape(expected)
+        r = r.replace('X', '[0-9]')
+        r = '^' + r + '$'
+        self.assertRegexpMatches(actual, r)
+
+    def _compare_configs(self, actual, expected, path=None):
+        p = path or []
+        self.assertEquals(type(actual), type(expected))
+        if isinstance(actual, dict) and isinstance(expected, dict):
+            self.assertEquals(actual.keys(), expected.keys())
+            for k in expected.keys():
+                self._compare_configs(actual[k], expected[k], p + [k])
+            return
+        self._compare_config_item(str(actual), str(expected), p)
+
+
+def _create_config_modification_test_method(name, in_file, out_file):
+    def config_mod_test(self):
+        data_in = yaml.load(open(in_file))
+        provider_name = data_in.pop('PROVIDER')
+        provider_module = cli._get_provider_module(provider_name)
+        pm = provider_module.ProviderManager(data_in, False)
+        pm.update_names_in_config()
+        self._compare_configs(pm.provider_config, yaml.load(open(out_file)))
+    return config_mod_test
+
+d = os.path.join(THIS_DIR, 'config_transformations')
+for input_file_name in glob.glob(os.path.join(d, '*.in.yaml')):
+    test_name = os.path.basename(input_file_name)
+    test_name, _, _ = test_name.partition('.')
+    test_name = 'test_config_mod_' + test_name
+    output_file_name = input_file_name.replace('.in.yaml', '.out.yaml')
+    m = _create_config_modification_test_method(
+        test_name,
+        input_file_name,
+        output_file_name
+    )
+    m.__name__ = test_name
+    setattr(CliTest, test_name, m)
