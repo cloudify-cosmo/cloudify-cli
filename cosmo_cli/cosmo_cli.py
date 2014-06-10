@@ -1316,6 +1316,7 @@ def _execute_deployment_workflow(args):
                                                         deployment_id,
                                                         execution.error))
             lgr.info(events_message.format(execution.id))
+            raise SuppressedCosmoCliError()
         else:
             lgr.info("Finished executing workflow '{0}' on deployment"
                      "'{1}'".format(workflow, deployment_id))
@@ -1326,6 +1327,7 @@ def _execute_deployment_workflow(args):
                  " the running workflow.".format(workflow, deployment_id,
                                                  e.execution_id))
         lgr.info(events_message.format(e.execution_id))
+        raise SuppressedCosmoCliError()
 
 
 # TODO implement blueprint deployments on server side
