@@ -1515,7 +1515,7 @@ def _ssh(path, args):
     if args.verbosity:
         command.append('-v')
     if not args.ssh_plain_mode:
-        command.extend(['-i', _get_mgmt_key()])
+        command.extend(['-i', os.path.expanduser(_get_mgmt_key())])
     if args.ssh_command:
         command.extend(['--', args.ssh_command])
     lgr.debug('executing command: {0}'.format(' '.join(command)))
