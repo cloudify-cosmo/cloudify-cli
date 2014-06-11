@@ -47,10 +47,12 @@ from cosmo_manager_rest_client.cosmo_manager_rest_client \
     import CosmoManagerRestClient
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
     import (CosmoManagerRestCallError,
-            CosmoManagerRestCallTimeoutError,
             CosmoManagerRestCallHTTPError)
 from dsl_parser.parser import parse_from_path, DSLParsingException
 from cloudify_rest_client import CloudifyClient
+from executions import wait_for_execution
+from executions import get_all_execution_events
+from executions import ExecutionTimeoutError
 
 
 output_level = logging.INFO
@@ -442,10 +444,10 @@ def _parse_args(args):
     _set_handler_for_command(parser_deployments_delete, _delete_deployment)
 
     parser_deployments_execute.add_argument(
-        'operation',
-        metavar='OPERATION',
+        'workflow',
+        metavar='WORKFLOW',
         type=str,
-        help='The operation to execute'
+        help='The workflow to execute'
     )
     parser_deployments_execute.add_argument(
         '-d', '--deployment-id',
@@ -476,7 +478,7 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
     _add_include_logs_argument_to_parser(parser_deployments_execute)
     _set_handler_for_command(parser_deployments_execute,
-                             _execute_deployment_operation)
+                             _execute_deployment_workflow)
 
     parser_deployments_list.add_argument(
         '-b', '--blueprint-id',
@@ -990,8 +992,8 @@ def _teardown_cosmo(args):
         raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
 
     mgmt_ip = _get_management_server_ip(args)
-    if not args.ignore_deployments and \
-            len(_get_rest_client(mgmt_ip).list_deployments()) > 0:
+    client = _get_new_rest_client(mgmt_ip)
+    if not args.ignore_deployments and len(client.deployments.list()) > 0:
         msg = ("Management server {0} has active deployments. Add the "
                "'--ignore-deployments' flag to your command to ignore "
                "these deployments and execute topology teardown."
@@ -1191,8 +1193,8 @@ def _delete_blueprint(args):
     lgr.info(
         'Deleting blueprint {0} from management server {1}'.format(
             blueprint_id, management_ip))
-    client = _get_rest_client(management_ip)
-    client.delete_blueprint(blueprint_id)
+    client = _get_new_rest_client(management_ip)
+    client.blueprints.delete(blueprint_id)
     lgr.info("Deleted blueprint successfully")
 
 
@@ -1204,8 +1206,8 @@ def _delete_deployment(args):
     lgr.info(
         'Deleting deployment {0} from management server {1}'.format(
             deployment_id, management_ip))
-    client = _get_rest_client(management_ip)
-    client.delete_deployment(deployment_id, ignore_live_nodes)
+    client = _get_new_rest_client(management_ip)
+    client.deployments.delete(deployment_id, ignore_live_nodes)
     lgr.info("Deleted deployment successfully")
 
 
@@ -1224,12 +1226,10 @@ def _upload_blueprint(args):
     lgr.info(
         'Uploading blueprint {0} to management server {1}'.format(
             blueprint_path, management_ip))
-    client = _get_rest_client(management_ip)
-    blueprint_state = client.publish_blueprint(blueprint_path, blueprint_id)
-
+    client = _get_new_rest_client(management_ip)
+    blueprint = client.blueprints.upload(blueprint_path, blueprint_id)
     lgr.info(
-        "Uploaded blueprint, blueprint's id is: {0}".format(
-            blueprint_state.id))
+        "Uploaded blueprint, blueprint's id is: {0}".format(blueprint.id))
 
 
 def _create_deployment(args):
@@ -1239,11 +1239,10 @@ def _create_deployment(args):
 
     lgr.info('Creating new deployment from blueprint {0} at '
              'management server {1}'.format(blueprint_id, management_ip))
-    client = _get_rest_client(management_ip)
-    deployment = client.create_deployment(blueprint_id, deployment_id)
+    client = _get_new_rest_client(management_ip)
+    deployment = client.deployments.create(blueprint_id, deployment_id)
     lgr.info(
-        "Deployment created, deployment's id is: {0}".format(
-            deployment.id))
+        "Deployment created, deployment's id is: {0}".format(deployment.id))
 
 
 def _create_event_message_prefix(event):
@@ -1284,9 +1283,9 @@ def _get_events_logger(args):
     return default_events_logger
 
 
-def _execute_deployment_operation(args):
+def _execute_deployment_workflow(args):
     management_ip = _get_management_server_ip(args)
-    operation = args.operation
+    workflow = args.workflow
     deployment_id = args.deployment_id
     timeout = args.timeout
     force = args.force
@@ -1294,38 +1293,38 @@ def _execute_deployment_operation(args):
 
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
              " management server {2} [timeout={3} seconds]"
-             .format(operation, args.deployment_id, management_ip,
+             .format(workflow, args.deployment_id, management_ip,
                      timeout))
 
     events_logger = _get_events_logger(args)
-    client = _get_rest_client(management_ip)
 
     events_message = "* Run 'cfy events --include-logs "\
                      "--execution-id {0}' for retrieving the "\
                      "execution's events/logs"
-
     try:
-        execution_id, error = client.execute_deployment(
-            deployment_id,
-            operation,
-            events_logger,
-            include_logs=include_logs,
-            timeout=timeout,
-            force=force)
-        if error is None:
-            lgr.info("Finished executing workflow '{0}' on deployment"
-                     "'{1}'".format(operation, deployment_id))
-            lgr.info(events_message.format(execution_id))
-        else:
+        client = _get_new_rest_client(management_ip)
+        execution = client.deployments.execute(deployment_id, workflow, force)
+        execution = wait_for_execution(client,
+                                       deployment_id,
+                                       execution,
+                                       events_handler=events_logger,
+                                       include_logs=include_logs,
+                                       timeout=timeout)
+        if execution.error:
             lgr.info("Execution of workflow '{0}' for deployment "
-                     "'{1}' failed. "
-                     "[error={2}]".format(operation, deployment_id, error))
-            lgr.info(events_message.format(execution_id))
+                     "'{1}' failed. [error={2}]".format(workflow,
+                                                        deployment_id,
+                                                        execution.error))
+            lgr.info(events_message.format(execution.id))
             raise SuppressedCosmoCliError()
-    except CosmoManagerRestCallTimeoutError, e:
+        else:
+            lgr.info("Finished executing workflow '{0}' on deployment"
+                     "'{1}'".format(workflow, deployment_id))
+            lgr.info(events_message.format(execution.id))
+    except ExecutionTimeoutError, e:
         lgr.info("Execution of workflow '{0}' for deployment '{1}' timed out. "
                  "* Run 'cfy executions cancel --execution-id {2}' to cancel"
-                 " the running workflow.".format(operation, deployment_id,
+                 " the running workflow.".format(workflow, deployment_id,
                                                  e.execution_id))
         lgr.info(events_message.format(e.execution_id))
         raise SuppressedCosmoCliError()
@@ -1380,14 +1379,14 @@ def _list_workflows(args):
 
 def _cancel_execution(args):
     management_ip = _get_management_server_ip(args)
-    client = _get_rest_client(management_ip)
+    client = _get_new_rest_client(management_ip)
     execution_id = args.execution_id
     lgr.info(
         'Canceling execution {0} on management server {1}'
         .format(execution_id, management_ip))
-    client.cancel_execution(execution_id)
+    client.executions.cancel(execution_id)
     lgr.info(
-        'Cancelled execution {0} on management server {1}'
+        'Execution {0} on management server {1} has been cancelled.'
         .format(execution_id, management_ip))
 
 
@@ -1421,11 +1420,11 @@ def _get_events(args):
              "[include_logs={2}]".format(management_ip,
                                          args.execution_id,
                                          args.include_logs))
-    client = _get_rest_client(management_ip)
+    client = _get_new_rest_client(management_ip)
     try:
-        events = client.get_all_execution_events(
-            args.execution_id,
-            include_logs=args.include_logs)
+        events = get_all_execution_events(client,
+                                          args.execution_id,
+                                          args.include_logs)
         events_logger = _get_events_logger(args)
         events_logger(events)
         lgr.info('\nTotal events: {0}'.format(len(events)))
@@ -1571,9 +1570,8 @@ def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
 
 def _download_blueprint(args):
     lgr.info(messages.DOWNLOADING_BLUEPRINT.format(args.blueprint_id))
-    rest_client = _get_rest_client(_get_management_server_ip(args))
-    target_file = rest_client.download_blueprint(args.blueprint_id,
-                                                 args.output)
+    client = _get_new_rest_client(_get_management_server_ip(args))
+    target_file = client.blueprints.download(args.blueprint_id, args.output)
     lgr.info(messages.DOWNLOADING_BLUEPRINT_SUCCEEDED.format(
         args.blueprint_id,
         target_file))
