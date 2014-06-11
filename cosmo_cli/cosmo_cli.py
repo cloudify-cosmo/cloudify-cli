@@ -993,7 +993,7 @@ def _teardown_cosmo(args):
 
     mgmt_ip = _get_management_server_ip(args)
     client = _get_new_rest_client(mgmt_ip)
-    if not args.ignore_deployments and len(client.deployments.list) > 0:
+    if not args.ignore_deployments and len(client.deployments.list()) > 0:
         msg = ("Management server {0} has active deployments. Add the "
                "'--ignore-deployments' flag to your command to ignore "
                "these deployments and execute topology teardown."

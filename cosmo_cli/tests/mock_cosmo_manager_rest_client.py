@@ -19,6 +19,8 @@ __author__ = 'ran'
 from cosmo_manager_rest_client.cosmo_manager_rest_client \
     import CosmoManagerRestCallError
 
+from cloudify_rest_client.exceptions import CloudifyClientError
+
 _provider_context = {}
 _provider_name = 'mock_provider'
 
@@ -37,7 +39,8 @@ class MockCosmoManagerRestClient(object):
     def __init__(self):
         self.blueprints = MicroMock()
         self.deployments = MicroMock()
-        self.executions = MicroMock()
+        self.executions = ExecutionsMock()
+        self.events = EventsMock()
 
     def status(self):
         return type('obj', (object,), {'status': 'running',
@@ -106,6 +109,12 @@ class MicroMock(object):
 
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
+        self.id = 'id'
+        self.status = 'terminated'
+        self.error = None
+
+    def create(self, blueprint_id, deployment_id):
+        return MicroMock(id='a-deployment-id')
 
     def list(self, *args):
         return []
@@ -113,9 +122,46 @@ class MicroMock(object):
     def list_workflows(self, deployment_id):
         return WorkflowsMock()
 
+    def delete(self, *args, **kwargs):
+        pass
+
+    def upload(self, *args, **kwargs):
+        return MicroMock()
+
+    def execute(self, deployment_id, operation, force=False):
+        if operation != 'install':
+            raise CloudifyClientError("operation {0} doesn't exist"
+                                      .format(operation))
+        return MicroMock()
+
+    def get(self, id):
+        return []
+
 
 class WorkflowsMock(dict):
 
     @property
     def workflows(self):
+        return []
+
+
+class EventsMock(object):
+
+    def get(self,
+            execution_id,
+            from_event=0,
+            batch_size=100,
+            include_logs=False):
+        return [], 0
+
+
+class ExecutionsMock(object):
+
+    def get(self, id):
+        return MicroMock()
+
+    def cancel(self, id):
+        pass
+
+    def list(self, deployment_id):
         return []
