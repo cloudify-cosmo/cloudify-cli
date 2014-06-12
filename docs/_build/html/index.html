@@ -1,0 +1,445 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Welcome to cloudify-cli’s documentation! &mdash; cloudify-cli 3.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="cloudify-cli 3.0 documentation" href="#"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="#" class="fa fa-home"> cloudify-cli</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="simple">
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="#">cloudify-cli</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="#">Docs</a> &raquo;</li>
+      
+    <li>Welcome to cloudify-cli&#8217;s documentation!</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          <a href="_sources/index.txt" rel="nofollow"> View page source</a>
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <div class="section" id="welcome-to-cloudify-cli-s-documentation">
+<h1>Welcome to cloudify-cli&#8217;s documentation!<a class="headerlink" href="#welcome-to-cloudify-cli-s-documentation" title="Permalink to this headline">¶</a></h1>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul class="simple">
+</ul>
+</div>
+<span class="target" id="module-cosmo_cli.cosmo_cli"></span><dl class="function">
+<dt id="cosmo_cli.cosmo_cli.init_logger">
+<tt class="descclassname">cosmo_cli.cosmo_cli.</tt><tt class="descname">init_logger</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#init_logger"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.init_logger" title="Permalink to this definition">¶</a></dt>
+<dd><p>initializes a logger to be used throughout the cli
+can be used by provider codes.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><cite>tupel</cite> with 2 loggers, one for users (writes to console and file),
+and the other for archiving (writes to file only).</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cosmo_cli.cosmo_cli.main">
+<tt class="descclassname">cosmo_cli.cosmo_cli.</tt><tt class="descname">main</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#main"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="cosmo_cli.cosmo_cli.set_global_verbosity_level">
+<tt class="descclassname">cosmo_cli.cosmo_cli.</tt><tt class="descname">set_global_verbosity_level</tt><big>(</big><em>is_verbose_output=False</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#set_global_verbosity_level"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.set_global_verbosity_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>sets the global verbosity level for console and the lgr logger.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>is_verbose_output</strong> (<em>bool</em>) &#8211; should be output be verbose</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><cite>None</cite></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="cosmo_cli.cosmo_cli.init">
+<tt class="descclassname">cosmo_cli.cosmo_cli.</tt><tt class="descname">init</tt><big>(</big><em>provider</em>, <em>target_directory</em>, <em>reset_config</em>, <em>install=False</em>, <em>creds=None</em>, <em>is_verbose_output=False</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#init"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.init" title="Permalink to this definition">¶</a></dt>
+<dd><p>iniatializes a provider by copying its config files to the cwd.
+First, will look for a module named cloudify_#provider#.
+If not found, will look for #provider#.
+If install is True, will install the supplied provider and perform
+the search again.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>provider</strong> (<em>string</em>) &#8211; the provider&#8217;s name</li>
+<li><strong>target_directory</strong> (<em>string</em>) &#8211; target directory for the config files</li>
+<li><strong>reset_config</strong> (<em>bool</em>) &#8211; if True, overrides the current config.</li>
+<li><strong>install</strong> (<em>bool</em>) &#8211; if supplied, will also install the desired
+provider according to the given url or module name (pypi).</li>
+<li><strong>creds</strong> &#8211; a comma separated key=value list of credential info.
+this is specific to each provider.</li>
+<li><strong>is_verbose_output</strong> (<em>bool</em>) &#8211; if True, output will be verbose.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><cite>string</cite> representing the provider&#8217;s module name</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings">
+<em class="property">class </em><tt class="descclassname">cosmo_cli.cosmo_cli.</tt><tt class="descname">CosmoWorkingDirectorySettings</tt><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoWorkingDirectorySettings"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">yaml.YAMLObject</span></tt></p>
+<dl class="attribute">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.yaml_tag">
+<tt class="descname">yaml_tag</tt><em class="property"> = u'!WD_Settings'</em><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.yaml_tag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.yaml_loader">
+<tt class="descname">yaml_loader</tt><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.yaml_loader" title="Permalink to this definition">¶</a></dt>
+<dd><p>alias of <tt class="xref py py-class docutils literal"><span class="pre">Loader</span></tt></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.get_management_server">
+<tt class="descname">get_management_server</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoWorkingDirectorySettings.get_management_server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.get_management_server" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.set_management_server">
+<tt class="descname">set_management_server</tt><big>(</big><em>management_ip</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoWorkingDirectorySettings.set_management_server"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.set_management_server" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.get_management_key">
+<tt class="descname">get_management_key</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoWorkingDirectorySettings.get_management_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.get_management_key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.set_management_key">
+<tt class="descname">set_management_key</tt><big>(</big><em>management_key</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoWorkingDirectorySettings.set_management_key"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.set_management_key" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.get_management_user">
+<tt class="descname">get_management_user</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoWorkingDirectorySettings.get_management_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.get_management_user" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.set_management_user">
+<tt class="descname">set_management_user</tt><big>(</big><em>_management_user</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoWorkingDirectorySettings.set_management_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.set_management_user" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.get_provider_context">
+<tt class="descname">get_provider_context</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoWorkingDirectorySettings.get_provider_context"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.get_provider_context" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.set_provider_context">
+<tt class="descname">set_provider_context</tt><big>(</big><em>provider_context</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoWorkingDirectorySettings.set_provider_context"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.set_provider_context" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.remove_management_server_context">
+<tt class="descname">remove_management_server_context</tt><big>(</big><em>management_ip</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoWorkingDirectorySettings.remove_management_server_context"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.remove_management_server_context" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.get_provider">
+<tt class="descname">get_provider</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoWorkingDirectorySettings.get_provider"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.get_provider" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.set_provider">
+<tt class="descname">set_provider</tt><big>(</big><em>provider</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoWorkingDirectorySettings.set_provider"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.set_provider" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.translate_management_alias">
+<tt class="descname">translate_management_alias</tt><big>(</big><em>management_address_or_alias</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoWorkingDirectorySettings.translate_management_alias"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.translate_management_alias" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.save_management_alias">
+<tt class="descname">save_management_alias</tt><big>(</big><em>management_alias</em>, <em>management_address</em>, <em>is_allow_overwrite</em>, <em>is_verbose_output=False</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoWorkingDirectorySettings.save_management_alias"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoWorkingDirectorySettings.save_management_alias" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="cosmo_cli.cosmo_cli.CosmoDevError">
+<em class="property">exception </em><tt class="descclassname">cosmo_cli.cosmo_cli.</tt><tt class="descname">CosmoDevError</tt><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoDevError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoDevError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="cosmo_cli.cosmo_cli.CosmoBootstrapError">
+<em class="property">exception </em><tt class="descclassname">cosmo_cli.cosmo_cli.</tt><tt class="descname">CosmoBootstrapError</tt><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoBootstrapError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoBootstrapError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="cosmo_cli.cosmo_cli.CosmoValidationError">
+<em class="property">exception </em><tt class="descclassname">cosmo_cli.cosmo_cli.</tt><tt class="descname">CosmoValidationError</tt><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoValidationError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoValidationError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="cosmo_cli.cosmo_cli.CosmoCliError">
+<em class="property">exception </em><tt class="descclassname">cosmo_cli.cosmo_cli.</tt><tt class="descname">CosmoCliError</tt><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#CosmoCliError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.CosmoCliError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="cosmo_cli.cosmo_cli.SuppressedCosmoCliError">
+<em class="property">exception </em><tt class="descclassname">cosmo_cli.cosmo_cli.</tt><tt class="descname">SuppressedCosmoCliError</tt><a class="reference internal" href="_modules/cosmo_cli/cosmo_cli.html#SuppressedCosmoCliError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.cosmo_cli.SuppressedCosmoCliError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">exceptions.Exception</span></tt></p>
+</dd></dl>
+
+<span class="target" id="module-cosmo_cli.provider_common"></span><dl class="class">
+<dt id="cosmo_cli.provider_common.BaseProviderClass">
+<em class="property">class </em><tt class="descclassname">cosmo_cli.provider_common.</tt><tt class="descname">BaseProviderClass</tt><big>(</big><em>provider_config=None</em>, <em>is_verbose_output=False</em>, <em>schema=None</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/provider_common.html#BaseProviderClass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.provider_common.BaseProviderClass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <tt class="xref py py-class docutils literal"><span class="pre">object</span></tt></p>
+<dl class="docutils">
+<dt>this is the basic provider class supplied with the CLI. it can be imported</dt>
+<dd>by the provider&#8217;s code by inheritence into the ProviderManager class.
+each of the below methods can be overriden in favor of a different impl.</dd>
+</dl>
+<dl class="method">
+<dt id="cosmo_cli.provider_common.BaseProviderClass.provision">
+<tt class="descname">provision</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/cosmo_cli/provider_common.html#BaseProviderClass.provision"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.provider_common.BaseProviderClass.provision" title="Permalink to this definition">¶</a></dt>
+<dd><p>provisions resources for the management server</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.provider_common.BaseProviderClass.validate">
+<tt class="descname">validate</tt><big>(</big><em>validation_errors={}</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/provider_common.html#BaseProviderClass.validate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.provider_common.BaseProviderClass.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>validations to be performed before provisioning and bootstrapping
+the management server.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>validation_errors</strong> (<em>dict</em>) &#8211; dict to hold all validation errors.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><cite>dict</cite> of validaiton_errors.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.provider_common.BaseProviderClass.teardown">
+<tt class="descname">teardown</tt><big>(</big><em>provider_context</em>, <em>ignore_validation=False</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/provider_common.html#BaseProviderClass.teardown"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.provider_common.BaseProviderClass.teardown" title="Permalink to this definition">¶</a></dt>
+<dd><p>tears down the management server and its accompanied provisioned
+resources</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.provider_common.BaseProviderClass.bootstrap">
+<tt class="descname">bootstrap</tt><big>(</big><em>mgmt_ip</em>, <em>private_ip</em>, <em>mgmt_ssh_key</em>, <em>mgmt_ssh_user</em>, <em>dev_mode=False</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/provider_common.html#BaseProviderClass.bootstrap"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.provider_common.BaseProviderClass.bootstrap" title="Permalink to this definition">¶</a></dt>
+<dd><p>bootstraps Cloudify on the management server.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mgmt_ip</strong> (<em>string</em>) &#8211; public ip of the provisioned instance.</li>
+<li><strong>private_ip</strong> (<em>string</em>) &#8211; private ip of the provisioned instance.
+(for configuration purposes).</li>
+<li><strong>mgmt_ssh_key</strong> (<em>string</em>) &#8211; path to the ssh key to be used for
+connecting to the instance.</li>
+<li><strong>mgmt_ssh_user</strong> (<em>string</em>) &#8211; the user to use when connecting to the
+instance.</li>
+<li><strong>dev_mode</strong> (<em>bool</em>) &#8211; states whether dev_mode should be applied.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><cite>bool</cite> True if succeeded, False otherwise. If False is returned
+and &#8216;cfy bootstrap&#8217; was executed with the keep-up-on-failure flag, the
+provisioned resources will remain. If the flag is ommited, they will
+be torn down.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="cosmo_cli.provider_common.BaseProviderClass.validate_schema">
+<tt class="descname">validate_schema</tt><big>(</big><em>validation_errors={}</em>, <em>schema=None</em><big>)</big><a class="reference internal" href="_modules/cosmo_cli/provider_common.html#BaseProviderClass.validate_schema"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#cosmo_cli.provider_common.BaseProviderClass.validate_schema" title="Permalink to this definition">¶</a></dt>
+<dd><p>this is a basic implementation of schema validation.
+uses the Draft4Validator from jsonschema to validate the provider&#8217;s
+config.
+a schema file must be created and its contents supplied
+when initializing the ProviderManager class using the schema
+parameter.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>validation_errors</strong> (<em>dict</em>) &#8211; dict to hold all validation errors.</li>
+<li><strong>schema</strong> (<em>dict</em>) &#8211; a schema to compare the provider&#8217;s config to.
+the provider&#8217;s config is already initialized within the
+ProviderManager class in the provider&#8217;s code.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><cite>dict</cite> of validation_errors.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
+<li><a class="reference internal" href="py-modindex.html"><em>Module Index</em></a></li>
+<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+</ul>
+</div>
+
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Gigaspaces.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'3.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

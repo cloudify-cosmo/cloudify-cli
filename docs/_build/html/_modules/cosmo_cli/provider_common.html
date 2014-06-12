@@ -1,0 +1,464 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>cosmo_cli.provider_common &mdash; cloudify-cli 3.0 documentation</title>
+  
+
+  
+  
+
+  
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="top" title="cloudify-cli 3.0 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/modernizr/2.6.2/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-nav-search">
+        <a href="../../index.html" class="fa fa-home"> cloudify-cli</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+        
+        
+            <ul class="simple">
+</ul>
+
+        
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../index.html">cloudify-cli</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>cosmo_cli.provider_common</li>
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            
+  <h1>Source code for cosmo_cli.provider_common</h1><div class="highlight"><pre>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span><span class="p">,</span> <span class="n">ABCMeta</span>
+<span class="kn">from</span> <span class="nn">jsonschema</span> <span class="kn">import</span> <span class="n">ValidationError</span><span class="p">,</span> <span class="n">Draft4Validator</span>
+<span class="kn">from</span> <span class="nn">fabric.api</span> <span class="kn">import</span> <span class="n">run</span><span class="p">,</span> <span class="n">env</span>
+<span class="kn">from</span> <span class="nn">fabric.context_managers</span> <span class="kn">import</span> <span class="n">settings</span><span class="p">,</span> <span class="n">hide</span>
+<span class="kn">from</span> <span class="nn">cosmo_cli</span> <span class="kn">import</span> <span class="n">set_global_verbosity_level</span>
+<span class="kn">from</span> <span class="nn">cosmo_cli</span> <span class="kn">import</span> <span class="n">init_logger</span>
+
+<span class="n">lgr</span><span class="p">,</span> <span class="n">flgr</span> <span class="o">=</span> <span class="n">init_logger</span><span class="p">()</span>
+
+<span class="n">CLOUDIFY_PACKAGES_PATH</span> <span class="o">=</span> <span class="s">&#39;/cloudify&#39;</span>
+<span class="n">CLOUDIFY_COMPONENTS_PACKAGE_PATH</span> <span class="o">=</span> <span class="s">&#39;/cloudify-components&#39;</span>
+<span class="n">CLOUDIFY_CORE_PACKAGE_PATH</span> <span class="o">=</span> <span class="s">&#39;/cloudify-core&#39;</span>
+<span class="n">CLOUDIFY_UI_PACKAGE_PATH</span> <span class="o">=</span> <span class="s">&#39;/cloudify-ui&#39;</span>
+<span class="n">CLOUDIFY_AGENT_PACKAGE_PATH</span> <span class="o">=</span> <span class="s">&#39;/cloudify-agents&#39;</span>
+
+<span class="n">FABRIC_RETRIES</span> <span class="o">=</span> <span class="mi">3</span>
+<span class="n">FABRIC_SLEEPTIME</span> <span class="o">=</span> <span class="mi">3</span>
+
+
+<div class="viewcode-block" id="BaseProviderClass"><a class="viewcode-back" href="../../index.html#cosmo_cli.provider_common.BaseProviderClass">[docs]</a><span class="k">class</span> <span class="nc">BaseProviderClass</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    this is the basic provider class supplied with the CLI. it can be imported</span>
+<span class="sd">     by the provider&#39;s code by inheritence into the ProviderManager class.</span>
+<span class="sd">     each of the below methods can be overriden in favor of a different impl.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">__metaclass__</span> <span class="o">=</span> <span class="n">ABCMeta</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider_config</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">is_verbose_output</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                 <span class="n">schema</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="n">set_global_verbosity_level</span><span class="p">(</span><span class="n">is_verbose_output</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">provider_config</span> <span class="o">=</span> <span class="n">provider_config</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_verbose_output</span> <span class="o">=</span> <span class="n">is_verbose_output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">schema</span> <span class="o">=</span> <span class="n">schema</span>
+
+    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="BaseProviderClass.provision"><a class="viewcode-back" href="../../index.html#cosmo_cli.provider_common.BaseProviderClass.provision">[docs]</a>    <span class="k">def</span> <span class="nf">provision</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        provisions resources for the management server</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span>
+</div>
+    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="BaseProviderClass.validate"><a class="viewcode-back" href="../../index.html#cosmo_cli.provider_common.BaseProviderClass.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">validation_errors</span><span class="o">=</span><span class="p">{}):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        validations to be performed before provisioning and bootstrapping</span>
+<span class="sd">        the management server.</span>
+
+<span class="sd">        :param dict validation_errors: dict to hold all validation errors.</span>
+<span class="sd">        :rtype: `dict` of validaiton_errors.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lgr</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&quot;no resource validation methods defined!&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+</div>
+    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="BaseProviderClass.teardown"><a class="viewcode-back" href="../../index.html#cosmo_cli.provider_common.BaseProviderClass.teardown">[docs]</a>    <span class="k">def</span> <span class="nf">teardown</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">provider_context</span><span class="p">,</span> <span class="n">ignore_validation</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        tears down the management server and its accompanied provisioned</span>
+<span class="sd">        resources</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span>
+</div>
+<div class="viewcode-block" id="BaseProviderClass.bootstrap"><a class="viewcode-back" href="../../index.html#cosmo_cli.provider_common.BaseProviderClass.bootstrap">[docs]</a>    <span class="k">def</span> <span class="nf">bootstrap</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mgmt_ip</span><span class="p">,</span> <span class="n">private_ip</span><span class="p">,</span> <span class="n">mgmt_ssh_key</span><span class="p">,</span> <span class="n">mgmt_ssh_user</span><span class="p">,</span>
+                  <span class="n">dev_mode</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        bootstraps Cloudify on the management server.</span>
+
+<span class="sd">        :param string mgmt_ip: public ip of the provisioned instance.</span>
+<span class="sd">        :param string private_ip: private ip of the provisioned instance.</span>
+<span class="sd">         (for configuration purposes).</span>
+<span class="sd">        :param string mgmt_ssh_key: path to the ssh key to be used for</span>
+<span class="sd">         connecting to the instance.</span>
+<span class="sd">        :param string mgmt_ssh_user: the user to use when connecting to the</span>
+<span class="sd">         instance.</span>
+<span class="sd">        :param bool dev_mode: states whether dev_mode should be applied.</span>
+<span class="sd">        :rtype: `bool` True if succeeded, False otherwise. If False is returned</span>
+<span class="sd">         and &#39;cfy bootstrap&#39; was executed with the keep-up-on-failure flag, the</span>
+<span class="sd">         provisioned resources will remain. If the flag is ommited, they will</span>
+<span class="sd">         be torn down.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">mgmt_ssh_user</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">key_filename</span> <span class="o">=</span> <span class="n">mgmt_ssh_key</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">warn_only</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">abort_on_prompts</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">connection_attempts</span> <span class="o">=</span> <span class="mi">5</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">keepalive</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">linewise</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">pool_size</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">skip_bad_hosts</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">forward_agent</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="n">env</span><span class="o">.</span><span class="n">disable_known_hosts</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="k">def</span> <span class="nf">_run_with_retries</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">retries</span><span class="o">=</span><span class="n">FABRIC_RETRIES</span><span class="p">,</span>
+                              <span class="n">sleeper</span><span class="o">=</span><span class="n">FABRIC_SLEEPTIME</span><span class="p">):</span>
+
+            <span class="k">for</span> <span class="n">execution</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">retries</span><span class="p">):</span>
+                <span class="n">lgr</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;running command: {0}&#39;</span>
+                          <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">command</span><span class="p">))</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_verbose_output</span><span class="p">:</span>
+                    <span class="k">with</span> <span class="n">hide</span><span class="p">(</span><span class="s">&#39;running&#39;</span><span class="p">,</span> <span class="s">&#39;stdout&#39;</span><span class="p">):</span>
+                        <span class="n">r</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">r</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">succeeded</span><span class="p">:</span>
+                    <span class="n">lgr</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;successfully ran command: {0}&#39;</span>
+                              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">command</span><span class="p">))</span>
+                    <span class="k">return</span> <span class="bp">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">lgr</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s">&#39;retrying command: {0}&#39;</span>
+                                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">command</span><span class="p">))</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">sleeper</span><span class="p">)</span>
+            <span class="n">lgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;failed to run: {0}, {1}&#39;</span>
+                      <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">stderr</span><span class="p">))</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">def</span> <span class="nf">_download_package</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_run_with_retries</span><span class="p">(</span><span class="s">&#39;sudo wget {0} -P {1}&#39;</span>
+                                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">url</span><span class="p">))</span>
+
+        <span class="k">def</span> <span class="nf">_unpack</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_run_with_retries</span><span class="p">(</span><span class="s">&#39;sudo dpkg -i {0}/*.deb&#39;</span>
+                                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">))</span>
+
+        <span class="k">def</span> <span class="nf">_run</span><span class="p">(</span><span class="n">command</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_run_with_retries</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+
+        <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;initializing manager on the machine at {0}&#39;</span>
+                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mgmt_ip</span><span class="p">))</span>
+        <span class="n">cosmo_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">provider_config</span><span class="p">[</span><span class="s">&#39;cloudify&#39;</span><span class="p">]</span>
+        <span class="k">print</span> <span class="n">cosmo_config</span>
+
+        <span class="k">with</span> <span class="n">settings</span><span class="p">(</span><span class="n">host_string</span><span class="o">=</span><span class="n">mgmt_ip</span><span class="p">),</span> <span class="n">hide</span><span class="p">(</span><span class="s">&#39;running&#39;</span><span class="p">,</span>
+                                                 <span class="s">&#39;stderr&#39;</span><span class="p">,</span>
+                                                 <span class="s">&#39;aborts&#39;</span><span class="p">,</span>
+                                                 <span class="s">&#39;warnings&#39;</span><span class="p">):</span>
+
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;downloading cloudify-components package...&#39;</span><span class="p">)</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">_download_package</span><span class="p">(</span>
+                <span class="n">CLOUDIFY_PACKAGES_PATH</span><span class="p">,</span>
+                <span class="n">cosmo_config</span><span class="p">[</span><span class="s">&#39;cloudify_components_package_url&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="p">:</span>
+                <span class="n">lgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;failed to download components package. &#39;</span>
+                          <span class="s">&#39;please ensure package exists in its &#39;</span>
+                          <span class="s">&#39;configured location in the config file&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;downloading cloudify-core package...&#39;</span><span class="p">)</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">_download_package</span><span class="p">(</span>
+                <span class="n">CLOUDIFY_PACKAGES_PATH</span><span class="p">,</span>
+                <span class="n">cosmo_config</span><span class="p">[</span><span class="s">&#39;cloudify_core_package_url&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="p">:</span>
+                <span class="n">lgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;failed to download core package. &#39;</span>
+                          <span class="s">&#39;please ensure package exists in its &#39;</span>
+                          <span class="s">&#39;configured location in the config file&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;downloading cloudify-ui...&#39;</span><span class="p">)</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">_download_package</span><span class="p">(</span>
+                <span class="n">CLOUDIFY_UI_PACKAGE_PATH</span><span class="p">,</span>
+                <span class="n">cosmo_config</span><span class="p">[</span><span class="s">&#39;cloudify_ui_package_url&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="p">:</span>
+                <span class="n">lgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;failed to download ui package. &#39;</span>
+                          <span class="s">&#39;please ensure package exists in its &#39;</span>
+                          <span class="s">&#39;configured location in the config file&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;downloading cloudify-ubuntu-agent...&#39;</span><span class="p">)</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">_download_package</span><span class="p">(</span>
+                <span class="n">CLOUDIFY_AGENT_PACKAGE_PATH</span><span class="p">,</span>
+                <span class="n">cosmo_config</span><span class="p">[</span><span class="s">&#39;cloudify_ubuntu_agent_url&#39;</span><span class="p">])</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="p">:</span>
+                <span class="n">lgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;failed to download ubuntu agent. &#39;</span>
+                          <span class="s">&#39;please ensure package exists in its &#39;</span>
+                          <span class="s">&#39;configured location in the config file&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;unpacking cloudify-core packages...&#39;</span><span class="p">)</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">_unpack</span><span class="p">(</span>
+                <span class="n">CLOUDIFY_PACKAGES_PATH</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="p">:</span>
+                <span class="n">lgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;failed to unpack cloudify-core package&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+            <span class="n">lgr</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;verifying verbosity for installation process&#39;</span><span class="p">)</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_verbose_output</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_verbose_output</span> <span class="o">=</span> <span class="bp">True</span>
+
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;installing cloudify on {0}...&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mgmt_ip</span><span class="p">))</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">_run</span><span class="p">(</span><span class="s">&#39;sudo {0}/cloudify-components-bootstrap.sh&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">CLOUDIFY_COMPONENTS_PACKAGE_PATH</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="p">:</span>
+                <span class="n">lgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;failed to install cloudify-components&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+            <span class="n">celery_user</span> <span class="o">=</span> <span class="n">mgmt_ssh_user</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">_run</span><span class="p">(</span><span class="s">&#39;sudo {0}/cloudify-core-bootstrap.sh {1} {2}&#39;</span>
+                     <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">CLOUDIFY_CORE_PACKAGE_PATH</span><span class="p">,</span>
+                             <span class="n">celery_user</span><span class="p">,</span> <span class="n">private_ip</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="p">:</span>
+                <span class="n">lgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;failed to install cloudify-core&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">False</span>
+
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;deploying cloudify-ui&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_verbose_output</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">_unpack</span><span class="p">(</span>
+                <span class="n">CLOUDIFY_UI_PACKAGE_PATH</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="p">:</span>
+                <span class="n">lgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;failed to install cloudify-ui&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">False</span>
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;done&#39;</span><span class="p">)</span>
+
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;deploying cloudify agent&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_verbose_output</span> <span class="o">=</span> <span class="bp">False</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">_unpack</span><span class="p">(</span>
+                <span class="n">CLOUDIFY_AGENT_PACKAGE_PATH</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">r</span><span class="p">:</span>
+                <span class="n">lgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;failed to install cloudify-agent&#39;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">False</span>
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;done&#39;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_verbose_output</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">if</span> <span class="n">dev_mode</span><span class="p">:</span>
+                <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n\n\n\n\n</span><span class="s">entering dev-mode. &#39;</span>
+                         <span class="s">&#39;dev configuration will be applied...</span><span class="se">\n</span><span class="s">&#39;</span>
+                         <span class="s">&#39;NOTE: an internet connection might be &#39;</span>
+                         <span class="s">&#39;required...&#39;</span><span class="p">)</span>
+
+                <span class="n">dev_config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">provider_config</span><span class="p">[</span><span class="s">&#39;dev&#39;</span><span class="p">]</span>
+                <span class="c"># lgr.debug(json.dumps(dev_config, sort_keys=True,</span>
+                <span class="c">#           indent=4, separators=(&#39;,&#39;, &#39;: &#39;)))</span>
+
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">dev_config</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                    <span class="n">virtualenv</span> <span class="o">=</span> <span class="n">value</span><span class="p">[</span><span class="s">&#39;virtualenv&#39;</span><span class="p">]</span>
+                    <span class="n">lgr</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;virtualenv is: &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">virtualenv</span><span class="p">))</span>
+
+                    <span class="k">if</span> <span class="s">&#39;preruns&#39;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">value</span><span class="p">[</span><span class="s">&#39;preruns&#39;</span><span class="p">]:</span>
+                            <span class="n">_run</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="s">&#39;downloads&#39;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+                        <span class="n">_run</span><span class="p">(</span><span class="s">&#39;mkdir -p /tmp/{0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">virtualenv</span><span class="p">))</span>
+                        <span class="k">for</span> <span class="n">download</span> <span class="ow">in</span> <span class="n">value</span><span class="p">[</span><span class="s">&#39;downloads&#39;</span><span class="p">]:</span>
+                            <span class="n">lgr</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;downloading: &#39;</span> <span class="o">+</span> <span class="n">download</span><span class="p">)</span>
+                            <span class="n">_run</span><span class="p">(</span><span class="s">&#39;sudo wget {0} -O &#39;</span>
+                                 <span class="s">&#39;/tmp/module.tar.gz&#39;</span>
+                                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">download</span><span class="p">))</span>
+                            <span class="n">_run</span><span class="p">(</span><span class="s">&#39;sudo tar -C /tmp/{0} -xvf {1}&#39;</span>
+                                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">virtualenv</span><span class="p">,</span>
+                                         <span class="s">&#39;/tmp/module.tar.gz&#39;</span><span class="p">))</span>
+
+                    <span class="k">if</span> <span class="s">&#39;installs&#39;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">module</span> <span class="ow">in</span> <span class="n">value</span><span class="p">[</span><span class="s">&#39;installs&#39;</span><span class="p">]:</span>
+                            <span class="n">lgr</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;installing: &#39;</span> <span class="o">+</span> <span class="n">module</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">module</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">):</span>
+                                <span class="n">module</span> <span class="o">=</span> <span class="s">&#39;/tmp&#39;</span> <span class="o">+</span> <span class="n">virtualenv</span> <span class="o">+</span> <span class="n">module</span>
+                            <span class="n">_run</span><span class="p">(</span><span class="s">&#39;sudo {0}/bin/pip &#39;</span>
+                                 <span class="s">&#39;--default-timeout&#39;</span>
+                                 <span class="s">&#39;=45 install {1} --upgrade&#39;</span>
+                                 <span class="s">&#39; --process-dependency-links&#39;</span>
+                                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">virtualenv</span><span class="p">,</span> <span class="n">module</span><span class="p">))</span>
+                    <span class="k">if</span> <span class="s">&#39;runs&#39;</span> <span class="ow">in</span> <span class="n">value</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">command</span> <span class="ow">in</span> <span class="n">value</span><span class="p">[</span><span class="s">&#39;runs&#39;</span><span class="p">]:</span>
+                            <span class="n">_run</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+
+                <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;management ip is {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mgmt_ip</span><span class="p">))</span>
+            <span class="n">lgr</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;setting verbosity to previous state&#39;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_verbose_output</span> <span class="o">=</span> <span class="n">v</span>
+            <span class="k">return</span> <span class="bp">True</span>
+</div>
+<div class="viewcode-block" id="BaseProviderClass.validate_schema"><a class="viewcode-back" href="../../index.html#cosmo_cli.provider_common.BaseProviderClass.validate_schema">[docs]</a>    <span class="k">def</span> <span class="nf">validate_schema</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">validation_errors</span><span class="o">=</span><span class="p">{},</span> <span class="n">schema</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        this is a basic implementation of schema validation.</span>
+<span class="sd">        uses the Draft4Validator from jsonschema to validate the provider&#39;s</span>
+<span class="sd">        config.</span>
+<span class="sd">        a schema file must be created and its contents supplied</span>
+<span class="sd">        when initializing the ProviderManager class using the schema</span>
+<span class="sd">        parameter.</span>
+
+<span class="sd">        :param dict validation_errors: dict to hold all validation errors.</span>
+<span class="sd">        :param dict schema: a schema to compare the provider&#39;s config to.</span>
+<span class="sd">         the provider&#39;s config is already initialized within the</span>
+<span class="sd">         ProviderManager class in the provider&#39;s code.</span>
+<span class="sd">        :rtype: `dict` of validation_errors.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">lgr</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;validating config file against provided schema...&#39;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">Draft4Validator</span><span class="p">(</span><span class="n">schema</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">flgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;schema is invalid. error: {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">raise</span> <span class="n">ValidationError</span><span class="p">(</span><span class="s">&#39;schema is invalid. error: {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="p">))</span> \
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_verbose_output</span> <span class="k">else</span> <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">iter_errors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">provider_config</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">iter_errors</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">provider_config</span><span class="p">):</span>
+                <span class="n">err</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;config file validation error originating at key: {0}, &#39;</span>
+                       <span class="s">&#39;{0}, {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;.&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">path</span><span class="p">),</span> <span class="n">e</span><span class="o">.</span><span class="n">message</span><span class="p">))</span>
+                <span class="n">validation_errors</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s">&#39;schema&#39;</span><span class="p">,</span> <span class="p">[])</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+            <span class="n">errors</span> <span class="o">=</span> <span class="s">&#39;;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">err</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">v</span><span class="o">.</span><span class="n">iter_errors</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">provider_config</span><span class="p">))</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">v</span><span class="o">.</span><span class="n">validate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">provider_config</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">ValidationError</span><span class="p">:</span>
+            <span class="n">lgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;VALIDATION ERROR:&#39;</span>
+                      <span class="s">&#39;{0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">errors</span><span class="p">))</span>
+        <span class="n">lgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&#39;schema validation failed!&#39;</span><span class="p">)</span> <span class="k">if</span> <span class="n">validation_errors</span> \
+            <span class="k">else</span> <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;schema validated successfully&#39;</span><span class="p">)</span>
+        <span class="c"># print json.dumps(validation_errors, sort_keys=True,</span>
+        <span class="c">#                  indent=4, separators=(&#39;,&#39;, &#39;: &#39;))</span>
+        <span class="k">return</span> <span class="n">validation_errors</span></div></div>
+</pre></div>
+
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2014, Gigaspaces.
+    </p>
+  </div>
+
+  <a href="https://github.com/snide/sphinx_rtd_theme">Sphinx theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'3.0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
