@@ -1,0 +1,17 @@
+language: python
+python:
+  - "2.7"
+env:
+    - TOX_ENV=docs
+    - TOX_ENV=flake8
+    - TOX_ENV=py27
+# TODO: add coveralls support
+install:
+    - pip install tox
+    # - pip install coveralls
+script:
+    - tox -e $TOX_ENV
+# after_success:
+#     coveralls
+notifications:
+    flowdock: a73d66c41c6e4406e1c47e042dfd2b59
