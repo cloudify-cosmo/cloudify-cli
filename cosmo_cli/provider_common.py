@@ -3,9 +3,11 @@ import sys
 from abc import abstractmethod, ABCMeta
 from jsonschema import ValidationError, Draft4Validator
 from fabric.api import run, env
-from fabric.context_managers import settings, hide
+from fabric.context_managers import settings, hide, cd
 from cosmo_cli import set_global_verbosity_level
 from cosmo_cli import init_logger
+from os import path
+import urllib2
 
 lgr, flgr = init_logger()
 
@@ -17,6 +19,8 @@ CLOUDIFY_AGENT_PACKAGE_PATH = '/cloudify-agents'
 
 FABRIC_RETRIES = 3
 FABRIC_SLEEPTIME = 3
+
+DISTRO_EXT = {'Ubuntu': '.deb', 'centos': '.rpm'}
 
 
 class BaseProviderClass(object):
@@ -98,51 +102,87 @@ class BaseProviderClass(object):
                               sleeper=FABRIC_SLEEPTIME):
 
             for execution in range(retries):
-                lgr.debug('running command: {0}'
-                          .format(command))
+                lgr.debug('running command: {0}'.format(command))
                 if not self.is_verbose_output:
                     with hide('running', 'stdout'):
                         r = run(command)
                 else:
                     r = run(command)
                 if r.succeeded:
-                    lgr.debug('successfully ran command: {0}'
-                              .format(command))
-                    return True
+                    lgr.debug('successfully ran command: {0}'.format(command))
+                    return r
                 else:
-                    lgr.warning('retrying command: {0}'
-                                .format(command))
+                    lgr.warning('retrying command: {0}'.format(command))
                     time.sleep(sleeper)
-            lgr.error('failed to run: {0}, {1}'
-                      .format(command, r.stderr))
-            return False
+            lgr.error('failed to run: {0}, {1}'.format(command, r.stderr))
+            return r
 
-        def _download_package(url, path):
-            return _run_with_retries('sudo wget {0} -P {1}'
-                                     .format(path, url))
+        def _download_package(url, path, distro):
+            if distro in ('Ubuntu'):
+                return _run_with_retries('sudo wget {0} -P {1}'.format(
+                    path, url))
+            elif distro in ('centos'):
+                with cd(path):
+                    return _run_with_retries('sudo curl -O {0}')
 
-        def _unpack(path):
-            return _run_with_retries('sudo dpkg -i {0}/*.deb'
-                                     .format(path))
+        def _unpack(path, distro):
+            if distro in ('Ubuntu'):
+                return _run_with_retries('sudo dpkg -i {0}/*.deb'.format(path))
+            elif distro in ('centos'):
+                return _run_with_retries('sudo rpm -i {0}/*.rpm'.format(path))
+
+        def check_distro_type_match(url, distro):
+            lgr.debug('checking distro-type match for url: {}'.format(url))
+            ext = get_ext(url)
+            if not DISTRO_EXT[distro] == ext:
+                lgr.error('wrong package type: '
+                          '{} required. {} supplied. in url: {}').format(
+                    DISTRO_EXT[d.stdout], ext, url)
+                return False
+            return True
+
+        def get_distro():
+            lgr.debug('identifying instance distribution...')
+            return _run(
+                'python -c "import platform; print platform.dist()[0]"')
+
+        def get_ext(url):
+            lgr.debug('extracting file extension from url')
+            file = urllib2.unquote(url).decode('utf8').split('/')[-1]
+            return path.splitext(file)[1]
 
         def _run(command):
             return _run_with_retries(command)
 
-        lgr.info('initializing manager on the machine at {0}'
-                 .format(mgmt_ip))
-        cosmo_config = self.provider_config['cloudify']
-        print cosmo_config
+        lgr.info('initializing manager on the machine at {0}'.format(mgmt_ip))
+        cloudify_config = self.provider_config['cloudify']
 
         with settings(host_string=mgmt_ip), hide('running',
                                                  'stderr',
                                                  'aborts',
                                                  'warnings'):
 
+            d = get_distro()
+            if d.succeeded:
+                lgr.debug('distribution is: {0}'.format(d.stdout))
+            else:
+                lgr.error('could not identify distribution.')
+                return False
+
+            lgr.debug('checking package-distro compatibility')
+            for key, url in cloudify_config['server'].items():
+                if not check_distro_type_match(url, d.stdout):
+                    raise RuntimeError('wrong package type')
+            for key, url in cloudify_config['agents'].items():
+                if not check_distro_type_match(url, d.stdout):
+                    raise RuntimeError('wrong agent package type')
+
             lgr.info('downloading cloudify-components package...')
             r = _download_package(
                 CLOUDIFY_PACKAGES_PATH,
-                cosmo_config['cloudify_components_package_url'])
-            if not r:
+                cloudify_config['server']['cloudify_components_package_url'],
+                d.stdout)
+            if not r.succeeded:
                 lgr.error('failed to download components package. '
                           'please ensure package exists in its '
                           'configured location in the config file')
@@ -151,37 +191,49 @@ class BaseProviderClass(object):
             lgr.info('downloading cloudify-core package...')
             r = _download_package(
                 CLOUDIFY_PACKAGES_PATH,
-                cosmo_config['cloudify_core_package_url'])
-            if not r:
+                cloudify_config['server']['cloudify_core_package_url'],
+                d.stdout)
+            if not r.succeeded:
                 lgr.error('failed to download core package. '
                           'please ensure package exists in its '
                           'configured location in the config file')
                 return False
 
-            lgr.info('downloading cloudify-ui...')
-            r = _download_package(
-                CLOUDIFY_UI_PACKAGE_PATH,
-                cosmo_config['cloudify_ui_package_url'])
-            if not r:
-                lgr.error('failed to download ui package. '
-                          'please ensure package exists in its '
-                          'configured location in the config file')
-                return False
+            if 'cloudify_ui_package_url' in cloudify_config['agents']:
+                lgr.info('downloading cloudify-ui...')
+                r = _download_package(
+                    CLOUDIFY_UI_PACKAGE_PATH,
+                    cloudify_config['server']['cloudify_ui_package_url'],
+                    d.stdout)
+                if not r.succeeded:
+                    lgr.error('failed to download ui package. '
+                              'please ensure package exists in its '
+                              'configured location in the config file')
+                    return False
+            else:
+                lgr.debug('ui url not configured. skipping.')
 
-            lgr.info('downloading cloudify-ubuntu-agent...')
-            r = _download_package(
-                CLOUDIFY_AGENT_PACKAGE_PATH,
-                cosmo_config['cloudify_ubuntu_agent_url'])
-            if not r:
-                lgr.error('failed to download ubuntu agent. '
-                          'please ensure package exists in its '
-                          'configured location in the config file')
-                return False
+            for agent, agent_url in cloudify_config['agents'].items():
+            # if 'cloudify_ubuntu_agent_url' in cloudify_config['agents']:
+            #     lgr.info('downloading cloudify-ubuntu-agent...')
+                r = _download_package(
+                    CLOUDIFY_AGENT_PACKAGE_PATH,
+                    cloudify_config['agents'][agent],
+                    d.stdout)
+                if not r.succeeded:
+                    lgr.error('failed to download {}. '
+                              'please ensure package exists in its '
+                              'configured location in the config file').format(
+                        agent_url)
+                    return False
+            # else:
+            #     lgr.debug('ubuntu agent url not configured. skipping.')
 
             lgr.info('unpacking cloudify-core packages...')
             r = _unpack(
-                CLOUDIFY_PACKAGES_PATH)
-            if not r:
+                CLOUDIFY_PACKAGES_PATH,
+                d.stdout)
+            if not r.succeeded:
                 lgr.error('failed to unpack cloudify-core package')
                 return False
 
@@ -190,35 +242,37 @@ class BaseProviderClass(object):
             self.is_verbose_output = True
 
             lgr.info('installing cloudify on {0}...'.format(mgmt_ip))
-            r = _run('sudo {0}/cloudify-components-bootstrap.sh'
-                     .format(CLOUDIFY_COMPONENTS_PACKAGE_PATH))
-            if not r:
+            r = _run('sudo {0}/cloudify-components-bootstrap.sh'.format(
+                CLOUDIFY_COMPONENTS_PACKAGE_PATH))
+            if not r.succeeded:
                 lgr.error('failed to install cloudify-components')
                 return False
 
             celery_user = mgmt_ssh_user
-            r = _run('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'
-                     .format(CLOUDIFY_CORE_PACKAGE_PATH,
-                             celery_user, private_ip))
-            if not r:
+            r = _run('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'.format(
+                CLOUDIFY_CORE_PACKAGE_PATH, celery_user, private_ip))
+            if not r.succeeded:
                 lgr.error('failed to install cloudify-core')
                 return False
 
-            lgr.info('deploying cloudify-ui')
-            self.is_verbose_output = False
-            r = _unpack(
-                CLOUDIFY_UI_PACKAGE_PATH)
-            if not r:
-                lgr.error('failed to install cloudify-ui')
-                return False
-            lgr.info('done')
+            if 'cloudify_ui_package_url' in cloudify_config['agents']:
+                lgr.info('deploying cloudify-ui')
+                self.is_verbose_output = False
+                r = _unpack(
+                    CLOUDIFY_UI_PACKAGE_PATH,
+                    d.stdout)
+                if not r.succeeded:
+                    lgr.error('failed to install cloudify-ui')
+                    return False
+                lgr.info('done')
 
-            lgr.info('deploying cloudify agent')
+            lgr.info('deploying cloudify agents')
             self.is_verbose_output = False
             r = _unpack(
-                CLOUDIFY_AGENT_PACKAGE_PATH)
-            if not r:
-                lgr.error('failed to install cloudify-agent')
+                CLOUDIFY_AGENT_PACKAGE_PATH,
+                d.stdout)
+            if not r.succeeded:
+                lgr.error('failed to install cloudify agents')
                 return False
             lgr.info('done')
 
