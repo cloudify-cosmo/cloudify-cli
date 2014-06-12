@@ -199,7 +199,7 @@ class BaseProviderClass(object):
                           'configured location in the config file')
                 return False
 
-            if 'cloudify_ui_package_url' in cloudify_config['agents']:
+            if 'cloudify_ui_package_url' in cloudify_config['server']:
                 lgr.info('downloading cloudify-ui...')
                 r = _download_package(
                     CLOUDIFY_UI_PACKAGE_PATH,
