@@ -214,8 +214,6 @@ class BaseProviderClass(object):
                 lgr.debug('ui url not configured. skipping.')
 
             for agent, agent_url in cloudify_config['agents'].items():
-            # if 'cloudify_ubuntu_agent_url' in cloudify_config['agents']:
-            #     lgr.info('downloading cloudify-ubuntu-agent...')
                 r = _download_package(
                     CLOUDIFY_AGENT_PACKAGE_PATH,
                     cloudify_config['agents'][agent],
@@ -226,8 +224,6 @@ class BaseProviderClass(object):
                               'configured location in the config file').format(
                         agent_url)
                     return False
-            # else:
-            #     lgr.debug('ubuntu agent url not configured. skipping.')
 
             lgr.info('unpacking cloudify-core packages...')
             r = _unpack(
