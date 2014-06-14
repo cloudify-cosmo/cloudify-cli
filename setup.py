@@ -16,18 +16,6 @@
 __author__ = 'ran'
 
 from setuptools import setup
-from pip.req import parse_requirements
-import shutil
-from os import getcwd
-
-
-def reqs():
-    print('HAAAAAAAAAAAAAAAAAAAAAA', getcwd())
-    shutil.copy('requirements.txt', '.tox/')
-    install_requires = [
-        str(ir.req) for ir in parse_requirements('requirements.txt')]
-    return install_requires
-
 
 setup(
     name='cloudify-cli',
