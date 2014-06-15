@@ -1,34 +1,36 @@
-.PHONY: release dev instdev install files test docs prepare publish
+.PHONY: release install files test docs prepare publish
 
 all:
 	@echo "make release - prepares a release and publishes it"
-	@echo "make test - run tox"
-	@echo "make dev - installs module and builds docs"
-	@echo "make instdev - installs module"
+	@echo "make dev - prepares a development environment (includes tests)"
+	@echo "make instdev - prepares a development environment (no tests)"
 	@echo "make install - install on local system"
 	@echo "make files - update changelog and todo files"
+	@echo "make test - run tox"
 	@echo "make docs - build docs"
-	@echo "make prepare - prepare module for release"
+	@echo "prepare - prepare module for release (CURRENTLY IRRELEVANT)"
 	@echo "make publish - upload to pypi"
 
-release: test docs prepare publish
+release: test docs publish
 
-dev: instdev docs
+dev: instdev test
 
 instdev:
+	pip install -rtest-requirements.txt
 	python setup.py develop
 
 install:
 	python setup.py install
 
 files:
-	grep '# TODO' -rn * --exclude-dir=docs --exclude-dir=build --exclude-dir=*.egg --exclude=TODO.md | sed 's/: \+#/:    # /g;s/:#/:    # /g' | sed -e 's/^/- /' | grep -v Makefile > TODO.md
+	grep '# TODO' -rn * --exclude-dir=docs --exclude-dir=build --exclude=TODO.md | sed 's/: \+#/:    # /g;s/:#/:    # /g' | sed -e 's/^/- /' | grep -v Makefile > TODO.md
 	git log --oneline --decorate --color > CHANGELOG
 
 test:
 	tox
 
 docs:
+	pip install sphinx sphinx-rtd-theme
 	cd docs && make html
 	pandoc README.md -f markdown -t rst -s -o README.rst
 
