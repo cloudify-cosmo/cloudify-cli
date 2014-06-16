@@ -27,9 +27,7 @@ import yaml
 from mock_cosmo_manager_rest_client import MockCosmoManagerRestClient
 from cosmo_cli import cosmo_cli as cli
 from cosmo_cli.cosmo_cli import CosmoCliError
-from cosmo_manager_rest_client.cosmo_manager_rest_client \
-    import CosmoManagerRestCallError
-
+from cloudify_rest_client.exceptions import CloudifyClientError
 
 TEST_DIR = '/tmp/cloudify-cli-unit-tests'
 TEST_WORK_DIR = TEST_DIR + "/cloudify"
@@ -194,6 +192,7 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy init mock_provider -r -v")
 
     def test_bootstrap(self):
+        self._set_mock_rest_client()
         self._run_cli("cfy init cloudify_mock_provider2 -v")
         self._run_cli("cfy bootstrap -v")
         settings = self._read_cosmo_wd_settings()
@@ -234,8 +233,10 @@ class CliTest(unittest.TestCase):
     def test_teardown_force_deployments(self):
         rest_client = MockCosmoManagerRestClient()
         rest_client.list_deployments = lambda: [{}]
+        rest_client.deployments.list = lambda: [{}]
         cli._get_rest_client = \
             lambda ip: rest_client
+        cli._get_new_rest_client = lambda ip: rest_client
         self._run_cli("cfy init mock_provider -v")
         self._assert_ex("cfy teardown -t 10.0.0.1 -f --ignore-validation "
                         "-c cloudify-config.yaml -v",
@@ -395,7 +396,7 @@ class CliTest(unittest.TestCase):
             self._run_cli(command)
             self.fail('Expected error {0} was not raised for command {1}'
                       .format(expected_error, command))
-        except CosmoManagerRestCallError, ex:
+        except CloudifyClientError, ex:
             self.assertTrue(expected_error in str(ex))
 
     def test_executions_list(self):
