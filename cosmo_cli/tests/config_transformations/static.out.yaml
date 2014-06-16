@@ -1,4 +1,4 @@
-prefix_for_all_resources: p2
+prefix_for_all_resources: p2_
 
 keystone:
     username: UU

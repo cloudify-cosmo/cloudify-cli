@@ -498,7 +498,7 @@ class CliTest(unittest.TestCase):
         self._compare_config_item(str(actual), str(expected), p)
 
 
-def _create_config_modification_test_method(name, in_file, out_file):
+def _create_config_modification_test_method(in_file, out_file):
     def config_mod_test(self):
         data_in = yaml.load(open(in_file))
         provider_name = data_in.pop('PROVIDER')
@@ -515,7 +515,6 @@ for input_file_name in glob.glob(os.path.join(d, '*.in.yaml')):
     test_name = 'test_config_mod_' + test_name
     output_file_name = input_file_name.replace('.in.yaml', '.out.yaml')
     m = _create_config_modification_test_method(
-        test_name,
         input_file_name,
         output_file_name
     )

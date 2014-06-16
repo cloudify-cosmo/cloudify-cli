@@ -302,9 +302,6 @@ class BaseProviderClass(object):
             "prefix_for_all_resources": {
                 "type": "string",
             },
-            "random_suffix_for_all_resources": {
-                "type": "boolean",
-            },
         })
 
     def validate_schema(self):
@@ -353,19 +350,9 @@ class BaseProviderClass(object):
 
         config = self.provider_config
         pfx = config.get('prefix_for_all_resources', '')
-        if pfx:
-            pfx = pfx + '_'
-
-        if config.get('random_suffix_for_all_resources'):
-            sfx = (
-                '_' +
-                ''.join(random.choice(string.digits) for _ in range(6))
-            )
-        else:
-            sfx = ''
 
         def updater(name):
-            return pfx + name + sfx
+            return pfx + name
 
         return updater
 
