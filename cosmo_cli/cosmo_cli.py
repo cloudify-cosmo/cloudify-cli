@@ -884,6 +884,7 @@ def _fatal_error(verbosity, msg):
     else:
         sys.exit(msg)
 
+
 def _bootstrap_cosmo(args):
     provider_name = _get_provider(args.verbosity)
     provider = _get_provider_module(provider_name, args.verbosity)
@@ -894,7 +895,12 @@ def _bootstrap_cosmo(args):
     provider_config = _read_config(args.config_file_path,
                                    provider_dir,
                                    args.verbosity)
-    pm = provider.ProviderManager(provider_config, args.verbosity)
+    prefix_for_all_resources = \
+        provider_config.get('cloudify', {}).get('prefix_for_all_resources')
+    lgr.info("prefix for all resources: '{0}'".
+             format(prefix_for_all_resources))
+    pm = provider.ProviderManager(provider_config, prefix_for_all_resources,
+                                  args.verbosity)
 
     if args.skip_validations and args.validate_only:
         sys.exit('please choose one of skip-validations or '
@@ -911,7 +917,6 @@ def _bootstrap_cosmo(args):
         if pm.validate():
             _fatal_error(args.verbosity, 'provider validations failed!')
         lgr.info('provider validations completed successfully')
-
 
     if args.validate_only:
         return
@@ -932,7 +937,8 @@ def _bootstrap_cosmo(args):
         lgr.error('provisioning failed!')
 
     if installed:
-        _update_provider_context(provider_config, provider_context)
+        _update_provider_context(prefix_for_all_resources,
+                                 provider_config, provider_context)
 
         mgmt_ip = mgmt_ip.encode('utf-8')
 
@@ -959,7 +965,8 @@ def _bootstrap_cosmo(args):
         raise CosmoBootstrapError() if args.verbosity else sys.exit(1)
 
 
-def _update_provider_context(provider_config, provider_context):
+def _update_provider_context(prefix_for_all_resources,
+                             provider_config, provider_context):
     cloudify = provider_config.get('cloudify', {})
     agent = cloudify.get('cloudify_agent', {})
     min_workers = agent.get('min_workers', AGENT_MIN_WORKERS)
@@ -974,6 +981,7 @@ def _update_provider_context(provider_config, provider_context):
     private_key_target_path = auto_generated.get('private_key_target_path',
                                                  AGENT_KEY_PATH)
     provider_context['cloudify'] = {
+        'prefix_for_all_resources': prefix_for_all_resources,
         'cloudify_agent': {
             'min_workers': min_workers,
             'max_workers': max_workers,

@@ -52,11 +52,13 @@ class BaseProviderClass(object):
     CONFIG_NAMES_TO_MODIFY = ()  # No default (empty tuple)
     CONFIG_FILES_PATHS_TO_MODIFY = ()  # No default (empty tuple)
 
-    def __init__(self, provider_config=None, is_verbose_output=False):
+    def __init__(self, provider_config, prefix_for_all_resources,
+                 is_verbose_output):
 
         set_global_verbosity_level(is_verbose_output)
         self.provider_config = provider_config
         self.is_verbose_output = is_verbose_output
+        self.prefix_for_all_resources = prefix_for_all_resources
 
     @abstractmethod
     def provision(self):
@@ -348,15 +350,8 @@ class BaseProviderClass(object):
         return validation_errors
 
     def get_names_updater(self):
-
-        config = self.provider_config.get('cloudify', {})
-        pfx = config.get('prefix_for_all_resources', '')
-
-        lgr.info("prefix for all resources: '{0}'".format(pfx))
-
         def updater(name):
-            return pfx + name
-
+            return self.prefix_for_all_resources + name
         return updater
 
     def get_files_names_updater(self, updater):
