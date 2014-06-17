@@ -16,9 +16,6 @@
 
 __author__ = 'ran'
 
-from cosmo_manager_rest_client.cosmo_manager_rest_client \
-    import CosmoManagerRestCallError
-
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 _provider_context = {}
@@ -29,7 +26,7 @@ def get_mock_provider_name():
     return _provider_name
 
 
-class MockCosmoManagerRestClient(object):
+class MockCloudifyClient(object):
 
     """
     A mock of the rest client, containing only the methods and object types
@@ -41,64 +38,7 @@ class MockCosmoManagerRestClient(object):
         self.deployments = MicroMock()
         self.executions = ExecutionsMock()
         self.events = EventsMock()
-
-    def status(self):
-        return type('obj', (object,), {'status': 'running',
-                                       'services': []})
-
-    def list_blueprints(self):
-        return []
-
-    def list_deployments(self):
-        return []
-
-    def publish_blueprint(self, blueprint_path, blueprint_id='a-blueprint-id'):
-        return MicroMock(id=blueprint_id)
-
-    def delete_blueprint(self, blueprint_id):
-        if not isinstance(blueprint_id, str):
-            raise RuntimeError("blueprint_id should be a string")
-        pass
-
-    def create_deployment(self, blueprint_id, deployment_id):
-        return MicroMock(id='a-deployment-id')
-
-    def delete_deployment(self, deployment_id, ignore_live_nodes=False):
-        if not isinstance(deployment_id, str) or not isinstance(
-                ignore_live_nodes, bool):
-            raise RuntimeError("bad parameters types provided")
-        pass
-
-    def execute_deployment(self, deployment_id, operation, events_handler=None,
-                           timeout=900, include_logs=False, force=False):
-        if operation != 'install':
-            raise CosmoManagerRestCallError("operation {0} doesn't exist"
-                                            .format(operation))
-        return 'execution-id', None
-
-    def cancel_execution(self, execution_id):
-        return 'execution-id'
-
-    def list_workflows(self, deployment_id):
-        return {}
-
-    def list_deployment_executions(self, deployment_id):
-        return []
-
-    def get_all_execution_events(self, execution_id, include_logs=False):
-        return []
-
-    def get_provider_context(self):
-        return {
-            'name': get_mock_provider_name(),
-            'context': _provider_context
-        }
-
-    def post_provider_context(self, name, provider_context):
-        global _provider_context
-        global _provider_name
-        _provider_context = provider_context
-        _provider_name = name
+        self.manager = ManagerMock()
 
 
 class MicroMock(object):
@@ -131,7 +71,7 @@ class MicroMock(object):
     def execute(self, deployment_id, operation, force=False):
         if operation != 'install':
             raise CloudifyClientError("operation {0} doesn't exist"
-                                      .format(operation))
+                                      .format(operation), 500)
         return MicroMock()
 
     def get(self, id):
@@ -153,6 +93,27 @@ class EventsMock(object):
             batch_size=100,
             include_logs=False):
         return [], 0
+
+
+class ManagerMock(object):
+
+    def get_status(self):
+        return {
+            'status': 'running',
+            'services': []
+        }
+
+    def get_context(self):
+        return {
+            'name': get_mock_provider_name(),
+            'context': _provider_context
+        }
+
+    def create_context(self, name, provider_context):
+        global _provider_context
+        global _provider_name
+        _provider_context = provider_context
+        _provider_name = name
 
 
 class ExecutionsMock(object):
