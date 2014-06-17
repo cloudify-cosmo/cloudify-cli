@@ -1,5 +1,3 @@
-prefix_for_all_resources: p2_
-
 keystone:
     username: UU
     password: PP
@@ -60,3 +58,5 @@ compute:
             auto_generated:
                 private_key_target_path: ../_auth/p2_cloudify-agents-kp-ilya.pem
 
+cloudify:
+    prefix_for_all_resources: p2_

@@ -298,7 +298,10 @@ class BaseProviderClass(object):
 
     def augment_schema_with_common(self):
         self.schema.setdefault('type', 'object')
-        self.schema.setdefault('properties', {}).update({
+        props = self.schema.setdefault('properties', {})
+        cloudify = props.setdefault('cloudify', {})
+        cloudify.setdefault('type', 'object')
+        cloudify.setdefault('properties', {}).update({
             "prefix_for_all_resources": {
                 "type": "string",
             },
@@ -348,8 +351,10 @@ class BaseProviderClass(object):
 
     def get_names_updater(self):
 
-        config = self.provider_config
+        config = self.provider_config.get('cloudify', {})
         pfx = config.get('prefix_for_all_resources', '')
+
+        lgr.info("prefix for all resources: '{0}'".format(pfx))
 
         def updater(name):
             return pfx + name
