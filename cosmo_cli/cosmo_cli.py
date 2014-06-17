@@ -1069,7 +1069,7 @@ def _get_provider_name_and_context(mgmt_ip, is_verbose_output=False):
     try:
         response = _get_rest_client(mgmt_ip).manager.get_context()
         return response['name'], response['context']
-    except CloudifyClient as e:
+    except CloudifyClientError as e:
         lgr.warn('Failed to get provider context from server: {0}'.format(
             str(e)))
 
