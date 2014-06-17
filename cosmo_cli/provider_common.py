@@ -1,7 +1,5 @@
 from abc import abstractmethod, ABCMeta
 import os
-import random
-import string
 import sys
 import time
 
@@ -392,3 +390,16 @@ class BaseProviderClass(object):
             self.CONFIG_FILES_PATHS_TO_MODIFY,
             self.get_files_names_updater(updater),
         )
+
+    # Simplifed basic API for resources' and files' names mainpulation
+    def get_updated_resource_name(self, resource_name):
+        """ Returns possibly prefixed resource name,
+        according to configuration """
+        return self.get_names_updater()(resource_name)
+
+    def get_updated_file_name(self, file_name):
+        """ Returns possibly prefixed file name,
+        according to configuration. Handles correctly file path
+        and extension. """
+        updater = self.get_names_updater()
+        return self.get_files_names_updater(updater)(file_name)

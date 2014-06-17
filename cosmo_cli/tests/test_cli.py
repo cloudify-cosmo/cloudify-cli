@@ -482,6 +482,27 @@ class CliTest(unittest.TestCase):
         cli.system = lambda: 'Linux'
         self._assert_ex('cfy ssh', 'ssh not found')
 
+    def test_resources_names_updater(self):
+        provider_module = cli._get_provider_module('cloudify_openstack')
+        pm = provider_module.ProviderManager({
+            'cloudify': {
+                'prefix_for_all_resources': 'PFX_'
+            }
+        }, False)
+        self.assertEquals(pm.get_updated_resource_name('x'), 'PFX_x')
+
+    def test_files_names_updater(self):
+        provider_module = cli._get_provider_module('cloudify_openstack')
+        pm = provider_module.ProviderManager({
+            'cloudify': {
+                'prefix_for_all_resources': 'PFX_'
+            }
+        }, False)
+        self.assertEquals(
+            pm.get_updated_file_name('/home/my/file.ext'),
+            '/home/my/PFX_file.ext'
+        )
+
     def _compare_config_item(self, actual, expected, path):
         r = re.escape(expected)
         r = r.replace('X', '[0-9]')
@@ -521,3 +542,4 @@ for input_file_name in glob.glob(os.path.join(d, '*.in.yaml')):
     )
     m.__name__ = test_name
     setattr(CliTest, test_name, m)
+    del m  # Or it will be called by Nose without arguments

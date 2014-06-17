@@ -901,13 +901,13 @@ def _bootstrap_cosmo(args):
                  'validate-only flags, not both.')
     lgr.info("bootstrapping using {0}".format(provider_name))
     if args.skip_validations:
-        pm.update_names_in_config()  # Prefixes / suffixes
+        pm.update_names_in_config()  # Prefixes
     else:
         lgr.info('validating provider resources and configuration')
         pm.augment_schema_with_common()
         if pm.validate_schema():
             _fatal_error(args.verbosity, 'provider schema validations failed!')
-        pm.update_names_in_config()  # Prefixes / suffixes
+        pm.update_names_in_config()  # Prefixes
         if pm.validate():
             _fatal_error(args.verbosity, 'provider validations failed!')
         lgr.info('provider validations completed successfully')
