@@ -935,7 +935,7 @@ def _bootstrap_cosmo(args):
 
         # storing provider context on management server
         _get_rest_client(mgmt_ip).manager.create_context(provider_name,
-                                                             provider_context)
+                                                         provider_context)
 
         lgr.info(
             "management server is up at {0} (is now set as the default "
