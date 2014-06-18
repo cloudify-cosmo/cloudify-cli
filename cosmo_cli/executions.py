@@ -23,11 +23,6 @@ from cloudify_rest_client.executions import Execution
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 
-EXECUTION_END_STATES = [
-    Execution.TERMINATED, Execution.FAILED, Execution.CANCELLED
-]
-
-
 class ExecutionEvents(object):
 
     def __init__(self, client, execution_id, batch_size=100,
@@ -121,7 +116,7 @@ def wait_for_execution(client,
                                        include_logs=include_logs)
 
     # Poll for execution status until execution ends
-    while execution.status not in EXECUTION_END_STATES:
+    while execution.status not in Execution.END_STATES:
         if time.time() > deadline:
             raise ExecutionTimeoutError(
                 execution.id,
