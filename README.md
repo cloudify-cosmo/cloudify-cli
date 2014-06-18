@@ -15,13 +15,12 @@ Command line interface for [Cloudify](https://github.com/cloudify-cosmo/cloudify
 
 ## Deploying your first application - Walkthrough
 **1. Installing the CLI and a provider extension:**
-  - Install a Cloudify provider extension (Openstack is used in this example):
-  `apt-get install python-dev # or the equivalent *nix version of this command`
-  `pip install https://github.com/cloudify-cosmo/cloudify-openstack-provider/archive/develop.zip`
+  - Clone this repository: `git clone https://github.com/cloudify-cosmo/cloudify-cli`
+  - Run pip install: `pip install -r cloudify-cli/requirements.txt cloudify-cli/`
+  - Clone openstack provider CLI: `git clone https://github.com/cloudify-cosmo/cloudify-openstack-provider`
+  - Run pip install: `pip install -r cloudify-openstack-provider/requirements.txt cloudify-openstack-provider/`
 
   NOTES:
-   - **If you're using Pip 1.5 or above, add the "*--process-dependency-links*" flag to the 'pip install' command**
-   - This will also install Cloudify's CLI
    - After installing the cli you can run the "activate_cfy_bash_completion" script which will permanently add bash completion to you shel
    and then follow the instructions or run "eval "$(register-python-argcomplete cfy)"" if you want to activate bash completion for your active shell only)
 
