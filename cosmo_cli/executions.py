@@ -19,8 +19,13 @@ __author__ = 'idanmo'
 
 import time
 
+from cloudify_rest_client.executions import Execution
+from cloudify_rest_client.exceptions import CloudifyClientError
 
-EXECUTION_END_STATES = ['terminated', 'failed']
+
+EXECUTION_END_STATES = [
+    Execution.TERMINATED, Execution.FAILED, Execution.CANCELLED
+]
 
 
 class ExecutionEvents(object):
@@ -62,12 +67,19 @@ class ExecutionEvents(object):
             return self._fetch_events()
 
     def _fetch_events(self):
-        events, total = self._client.events.get(
-            self._execution_id,
-            from_event=self._from_event,
-            batch_size=self._batch_size,
-            include_logs=self._include_logs)
-        self._from_event += len(events)
+        try:
+            events, total = self._client.events.get(
+                self._execution_id,
+                from_event=self._from_event,
+                batch_size=self._batch_size,
+                include_logs=self._include_logs)
+            self._from_event += len(events)
+        except CloudifyClientError, e:
+            # A workaround in a case where events index was not yet created.
+            # This can happen if there were no events sent to logstash.
+            if e.status_code == 500 and 'IndexMissingException' in e.message:
+                return []
+            raise
         return events
 
     def fetch_all(self):
@@ -75,7 +87,10 @@ class ExecutionEvents(object):
 
 
 class ExecutionTimeoutError(Exception):
-    pass
+
+    def __init__(self, execution_id, message):
+        self.execution_id = execution_id
+        self.message = message
 
 
 def get_all_execution_events(client, execution_id, include_logs=False):
@@ -83,6 +98,15 @@ def get_all_execution_events(client, execution_id, include_logs=False):
                                        execution_id,
                                        include_logs=include_logs)
     return execution_events.fetch_all()
+
+
+def get_deployment_creation_execution(client, deployment_id):
+    executions = client.deployments.list_executions(deployment_id)
+    for e in executions:
+        if e.workflow_id == 'workers_installation':
+            return e
+    raise RuntimeError('Failed to get workers_installation workflow execution'
+                       '. Available executions: {0}'.format(executions))
 
 
 def wait_for_execution(client,
