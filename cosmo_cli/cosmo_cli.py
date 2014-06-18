@@ -30,6 +30,7 @@ import json
 import urlparse
 import urllib
 import shutil
+import time
 from copy import deepcopy
 from contextlib import contextmanager
 import logging
@@ -46,7 +47,9 @@ from subprocess import call
 from dsl_parser.parser import parse_from_path, DSLParsingException
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify_rest_client.exceptions import CreateDeploymentInProgressError
 from executions import wait_for_execution
+from executions import get_deployment_creation_execution
 from executions import get_all_execution_events
 from executions import ExecutionTimeoutError
 
@@ -1300,7 +1303,30 @@ def _execute_deployment_workflow(args):
                      "execution's events/logs"
     try:
         client = _get_rest_client(management_ip)
-        execution = client.deployments.execute(deployment_id, workflow, force)
+        try:
+            execution = client.deployments.execute(deployment_id,
+                                                   workflow,
+                                                   force)
+        except CreateDeploymentInProgressError:
+            # wait for deployment creation workflow to end
+            lgr.info('Deployment creation is in progress!')
+            lgr.info('Waiting for deployment '
+                     'creation workflow execution to finish...')
+            now = time.time()
+            wait_for_execution(client,
+                               deployment_id,
+                               get_deployment_creation_execution(
+                                   client, deployment_id),
+                               events_handler=events_logger,
+                               include_logs=include_logs,
+                               timeout=timeout)
+            remaining_timeout = time.time() - now
+            timeout -= remaining_timeout
+            # try to execute user specified workflow
+            execution = client.deployments.execute(deployment_id,
+                                                   workflow,
+                                                   force)
+
         execution = wait_for_execution(client,
                                        deployment_id,
                                        execution,
@@ -1321,7 +1347,8 @@ def _execute_deployment_workflow(args):
     except ExecutionTimeoutError, e:
         lgr.info("Execution of workflow '{0}' for deployment '{1}' timed out. "
                  "* Run 'cfy executions cancel --execution-id {2}' to cancel"
-                 " the running workflow.".format(workflow, deployment_id,
+                 " the running workflow.".format(workflow,
+                                                 deployment_id,
                                                  e.execution_id))
         lgr.info(events_message.format(e.execution_id))
         raise SuppressedCosmoCliError()
