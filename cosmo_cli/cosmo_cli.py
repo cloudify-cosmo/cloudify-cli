@@ -954,7 +954,7 @@ def _bootstrap_cosmo(args):
 
 def _update_provider_context(provider_config, provider_context):
     cloudify = provider_config.get('cloudify', {})
-    agent = cloudify.get('cloudify_agent', {})
+    agent = cloudify['agents'].get('config', {})
     min_workers = agent.get('min_workers', AGENT_MIN_WORKERS)
     max_workers = agent.get('max_workers', AGENT_MAX_WORKERS)
     user = agent.get('user')
