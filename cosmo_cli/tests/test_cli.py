@@ -396,6 +396,13 @@ class CliTest(unittest.TestCase):
         except CloudifyClientError, ex:
             self.assertTrue(expected_error in str(ex))
 
+    def test_executions_get(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy executions get -e execution-id -t 127.0.0.1")
+        self._run_cli("cfy executions get "
+                      "--execution-id execution-id -t 127.0.0.1")
+
     def test_executions_list(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()

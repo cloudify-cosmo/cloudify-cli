@@ -339,15 +339,9 @@ def _parse_args(args):
         type=str,
         help="Path to the application's blueprint file"
     )
-    parser_blueprints_upload.add_argument(
-        '-b', '--blueprint-id',
-        dest='blueprint_id',
-        metavar='BLUEPRINT_ID',
-        type=str,
-        default=None,
-        required=False,
-        help="Set the id of the uploaded blueprint"
-    )
+    _add_blueprint_id_argument_to_parser(
+        parser_blueprints_upload,
+        "Set the id of the uploaded blueprint")
     _add_management_ip_optional_argument_to_parser(parser_blueprints_upload)
     _set_handler_for_command(parser_blueprints_upload, _upload_blueprint)
 
@@ -357,14 +351,9 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_blueprints_download)
     _set_handler_for_command(parser_blueprints_download, _download_blueprint)
 
-    parser_blueprints_download.add_argument(
-        '-b', '--blueprint-id',
-        dest='blueprint_id',
-        metavar='BLUEPRINT_ID',
-        type=str,
-        required=True,
-        help="The id fo the blueprint to download"
-    )
+    _add_blueprint_id_argument_to_parser(
+        parser_blueprints_download,
+        "The id fo the blueprint to download")
     parser_blueprints_download.add_argument(
         '-o', '--output',
         dest='output',
@@ -374,14 +363,9 @@ def _parse_args(args):
         help="The output file path of the blueprint to be downloaded"
     )
 
-    parser_blueprints_delete.add_argument(
-        '-b', '--blueprint-id',
-        dest='blueprint_id',
-        metavar='BLUEPRINT_ID',
-        type=str,
-        required=True,
-        help="The id of the blueprint meant for deletion"
-    )
+    _add_blueprint_id_argument_to_parser(
+        parser_blueprints_delete,
+        "The id of the blueprint meant for deletion")
     _add_management_ip_optional_argument_to_parser(parser_blueprints_delete)
     _set_handler_for_command(parser_blueprints_delete, _delete_blueprint)
 
@@ -404,33 +388,18 @@ def _parse_args(args):
         help='command for listing all deployments or all deployments'
              'of a blueprint'
     )
-    parser_deployments_create.add_argument(
-        '-b', '--blueprint-id',
-        dest='blueprint_id',
-        metavar='BLUEPRINT_ID',
-        type=str,
-        required=True,
-        help="The id of the blueprint meant for deployment"
-    )
-    parser_deployments_create.add_argument(
-        '-d', '--deployment-id',
-        dest='deployment_id',
-        metavar='DEPLOYMENT_ID',
-        type=str,
-        required=True,
-        help="A unique id that will be assigned to the created deployment"
-    )
+    _add_blueprint_id_argument_to_parser(
+        parser_deployments_create,
+        "The id of the blueprint meant for deployment")
+    _add_deployment_id_argument_to_parser(
+        parser_deployments_create,
+        "A unique id that will be assigned to the created deployment")
     _add_management_ip_optional_argument_to_parser(parser_deployments_create)
     _set_handler_for_command(parser_deployments_create, _create_deployment)
 
-    parser_deployments_delete.add_argument(
-        '-d', '--deployment-id',
-        dest='deployment_id',
-        metavar='DEPLOYMENT_ID',
-        type=str,
-        required=True,
-        help="The deployment's id"
-    )
+    _add_deployment_id_argument_to_parser(
+        parser_deployments_delete,
+        "The deployment's id")
     parser_deployments_delete.add_argument(
         '-f', '--ignore-live-nodes',
         dest='ignore_live_nodes',
@@ -448,14 +417,9 @@ def _parse_args(args):
         type=str,
         help='The workflow to execute'
     )
-    parser_deployments_execute.add_argument(
-        '-d', '--deployment-id',
-        dest='deployment_id',
-        metavar='DEPLOYMENT_ID',
-        type=str,
-        required=True,
-        help='The id of the deployment to execute the operation on'
-    )
+    _add_deployment_id_argument_to_parser(
+        parser_deployments_execute,
+        'The id of the deployment to execute the operation on')
     parser_deployments_execute.add_argument(
         '--timeout',
         dest='timeout',
@@ -479,14 +443,9 @@ def _parse_args(args):
     _set_handler_for_command(parser_deployments_execute,
                              _execute_deployment_workflow)
 
-    parser_deployments_list.add_argument(
-        '-b', '--blueprint-id',
-        dest='blueprint_id',
-        metavar='BLUEPRINT_ID',
-        type=str,
-        required=False,
-        help='The id of a blueprint to list deployments for'
-    )
+    _add_blueprint_id_argument_to_parser(
+        parser_deployments_list,
+        'The id of a blueprint to list deployments for')
     _add_management_ip_optional_argument_to_parser(parser_deployments_list)
     _set_handler_for_command(parser_deployments_list,
                              _list_blueprint_deployments)
@@ -496,31 +455,32 @@ def _parse_args(args):
     parser_workflows_list = workflows_subparsers.add_parser(
         'list',
         help='command for listing workflows for a deployment')
-    parser_workflows_list.add_argument(
-        '-d', '--deployment-id',
-        dest='deployment_id',
-        metavar='DEPLOYMENT_ID',
-        type=str,
-        required=True,
-        help='The id of the deployment whose workflows to list'
-    )
+    _add_deployment_id_argument_to_parser(
+        parser_workflows_list,
+        'The id of the deployment whose workflows to list')
     _add_management_ip_optional_argument_to_parser(parser_workflows_list)
     _set_handler_for_command(parser_workflows_list, _list_workflows)
 
     # Executions list sub parser
     executions_subparsers = parser_executions.add_subparsers()
+    parser_executions_get = executions_subparsers.add_parser(
+        'get',
+        help='command for getting an execution by its id'
+    )
+    _add_execution_id_argument_to_parser(
+        parser_executions_get,
+        'The id of the execution to get')
+    _add_management_ip_optional_argument_to_parser(parser_executions_get)
+    _set_handler_for_command(parser_executions_get,
+                             _get_execution)
+
     parser_executions_list = executions_subparsers.add_parser(
         'list',
         help='command for listing all executions of a deployment'
     )
-    parser_executions_list.add_argument(
-        '-d', '--deployment-id',
-        dest='deployment_id',
-        metavar='DEPLOYMENT_ID',
-        type=str,
-        required=True,
-        help='The id of the deployment whose executions to list'
-    )
+    _add_deployment_id_argument_to_parser(
+        parser_executions_list,
+        'The id of the deployment whose executions to list')
     _add_management_ip_optional_argument_to_parser(parser_executions_list)
     _set_handler_for_command(parser_executions_list,
                              _list_deployment_executions)
@@ -529,26 +489,16 @@ def _parse_args(args):
         'cancel',
         help='Cancel an execution by its id'
     )
-    parser_executions_cancel.add_argument(
-        '-e', '--execution-id',
-        dest='execution_id',
-        metavar='EXECUTION_ID',
-        type=str,
-        required=True,
-        help='The id of the execution to cancel'
-    )
+    _add_execution_id_argument_to_parser(
+        parser_executions_cancel,
+        'The id of the execution to cancel')
     _add_management_ip_optional_argument_to_parser(parser_executions_cancel)
     _set_handler_for_command(parser_executions_cancel,
                              _cancel_execution)
 
-    parser_events.add_argument(
-        '-e', '--execution-id',
-        dest='execution_id',
-        metavar='EXECUTION_ID',
-        type=str,
-        required=True,
-        help='The id of the execution to get events for'
-    )
+    _add_execution_id_argument_to_parser(
+        parser_events,
+        'The id of the execution to get events for')
     _add_include_logs_argument_to_parser(parser_events)
     _add_management_ip_optional_argument_to_parser(parser_events)
     _set_handler_for_command(parser_events, _get_events)
@@ -652,6 +602,40 @@ def _add_management_ip_optional_argument_to_parser(parser):
         metavar='MANAGEMENT_IP',
         type=str,
         help='The cloudify management server ip address'
+    )
+
+
+def _add_blueprint_id_argument_to_parser(parser, help_message):
+    parser.add_argument(
+        '-b', '--blueprint-id',
+        dest='blueprint_id',
+        metavar='BLUEPRINT_ID',
+        type=str,
+        default=None,
+        required=False,
+        help=help_message
+    )
+
+
+def _add_deployment_id_argument_to_parser(parser, help_message):
+    parser.add_argument(
+        '-d', '--deployment-id',
+        dest='deployment_id',
+        metavar='DEPLOYMENT_ID',
+        type=str,
+        required=True,
+        help=help_message
+    )
+
+
+def _add_execution_id_argument_to_parser(parser, help_message):
+    parser.add_argument(
+        '-e', '--execution-id',
+        dest='execution_id',
+        metavar='EXECUTION_ID',
+        type=str,
+        required=True,
+        help=help_message
     )
 
 
@@ -1415,6 +1399,26 @@ def _cancel_execution(args):
         .format(execution_id, management_ip))
 
 
+def _get_execution(args):
+    management_ip = _get_management_server_ip(args)
+    client = _get_rest_client(management_ip)
+    execution_id = args.execution_id
+
+    try:
+        lgr.info('Getting execution: '
+                 '\'{0}\' [manager={1}]'.format(execution_id, management_ip))
+        execution = client.executions.get(execution_id)
+    except CloudifyClientError, e:
+        if e.status_code != 404:
+            raise
+        msg = ("Execution '{0}' not found on management server"
+               .format(execution_id))
+        flgr.error(msg)
+        raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
+
+    _print_executions([execution])
+
+
 def _list_deployment_executions(args):
     is_verbose_output = args.verbosity
     management_ip = _get_management_server_ip(args)
@@ -1425,13 +1429,17 @@ def _list_deployment_executions(args):
                  '\'{0}\' [manager={1}]'.format(deployment_id, management_ip))
         executions = client.executions.list(deployment_id)
     except CloudifyClientError, e:
-        if not e.status_code == 404:
+        if not e.status_code != 404:
             raise
         msg = ('Deployment {0} does not exist on management server'
                .format(deployment_id))
         flgr.error(msg)
         raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
 
+    _print_executions(executions)
+
+
+def _print_executions(executions):
     pt = formatting.table(['status', 'workflow_id', 'deployment_id',
                            'blueprint_id', 'error', 'id', 'created_at'],
                           executions)
