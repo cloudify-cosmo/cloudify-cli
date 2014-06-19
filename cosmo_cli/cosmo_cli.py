@@ -537,6 +537,10 @@ def _parse_args(args):
         required=True,
         help='The id of the execution to cancel'
     )
+    _add_force_optional_argument_to_parser(
+        parser_executions_cancel,
+        'A flag indicating authorization to terminate the execution abruptly '
+        'rather than request an orderly termination')
     _add_management_ip_optional_argument_to_parser(parser_executions_cancel)
     _set_handler_for_command(parser_executions_cancel,
                              _cancel_execution)
@@ -1406,12 +1410,15 @@ def _cancel_execution(args):
     management_ip = _get_management_server_ip(args)
     client = _get_rest_client(management_ip)
     execution_id = args.execution_id
+    force = args.force
     lgr.info(
-        'Canceling execution {0} on management server {1}'
-        .format(execution_id, management_ip))
-    client.executions.cancel(execution_id)
+        '{0}Cancelling execution {1} on management server {2}'
+        .format('Force-' if force else '', execution_id, management_ip))
+    client.executions.cancel(execution_id, force)
     lgr.info(
-        'Execution {0} on management server {1} has been cancelled.'
+        'A cancel request for execution {0} has been sent to management '
+        "server {1}. To track the execution's status, use:\n"
+        "cfy executions get {0}"
         .format(execution_id, management_ip))
 
 

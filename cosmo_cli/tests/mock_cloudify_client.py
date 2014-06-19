@@ -121,7 +121,7 @@ class ExecutionsMock(object):
     def get(self, id):
         return MicroMock()
 
-    def cancel(self, id):
+    def cancel(self, id, force=False):
         pass
 
     def list(self, deployment_id):
