@@ -17,6 +17,7 @@
 __author__ = 'ran'
 
 from cloudify_rest_client.exceptions import CloudifyClientError
+import datetime
 
 _provider_context = {}
 _provider_name = 'mock_provider'
@@ -119,7 +120,15 @@ class ManagerMock(object):
 class ExecutionsMock(object):
 
     def get(self, id):
-        return MicroMock()
+        return {
+            'status': 'terminated',
+            'workflow_id': 'mock_wf',
+            'deployment_id': 'deployment-id',
+            'blueprint_id': 'blueprint-id',
+            'error': '',
+            'id': id,
+            'created_at': datetime.datetime.now()
+        }
 
     def cancel(self, id):
         pass
