@@ -348,6 +348,23 @@ going. It is the CLI that will stop waiting for it to terminate)
 
 ------
 
+**Command:** executions get
+
+**Description:** gets an execution by its id
+
+**Usage:** `cfy executions get [-e, --execution-id <execution_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
+
+**Parameters**:
+
+- execution_id: the id of the execution to get
+- management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
+
+**Example:** `cfy executions get -e my-execution`
+
+
+------
+
 **Command:** executions list
 
 **Description:** lists the executions of a deployment
