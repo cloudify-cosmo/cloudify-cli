@@ -310,8 +310,8 @@ re
 - is_verbose_output - A flag for setting verbose output (Optional)
 - timeout: operation timeout in seconds (Optional, The execution itself will keep
 going. It is the CLI that will stop waiting for it to terminate)
-- force: A flag indicating whether the workflow should execute even if there is
- an ongoing execution for the provided deployment (default: false)
+- force: A flag indicating the workflow should execute even if there is
+ an ongoing execution for the provided deployment (Optional)
 
 
 **Example:** `cfy deployments execute install -d my-deployment`
@@ -386,15 +386,16 @@ going. It is the CLI that will stop waiting for it to terminate)
 
 **Description:** Cancels an execution by its id
 
-**Usage:** `cfy executions cancel [-e, --execution-id <execution_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy executions cancel [-e, --execution-id <execution_id>] [-f, --force] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - execution_id: the id of the execution to cancel
+- force: A flag indicating authorization to terminate the execution abruptly rather than request an orderly termination (Optional)
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 
-**Example:** `cfy executions cancel -e some-execution-id`
+**Example:** `cfy executions cancel -e some-execution-id -f`
 
 
 ------
