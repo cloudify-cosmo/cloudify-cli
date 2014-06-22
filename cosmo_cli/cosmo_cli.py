@@ -65,6 +65,9 @@ AGENT_MAX_WORKERS = 5
 AGENT_KEY_PATH = '~/.ssh/cloudify-agents-kp.pem'
 REMOTE_EXECUTION_PORT = 22
 
+WORKFLOW_TASK_RETRIES = -1
+WORKFLOW_TASK_RETRY_INTERVAL = 30
+
 # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
@@ -955,12 +958,22 @@ def _update_provider_context(provider_config, provider_context):
     auto_generated = agents_keypair.get('auto_generated', {})
     private_key_target_path = auto_generated.get('private_key_target_path',
                                                  AGENT_KEY_PATH)
+
+    workflows = cloudify.get('workflows', {})
+    workflow_task_retries = workflows.get('retries', WORKFLOW_TASK_RETRIES)
+    workflow_task_retry_interval = workflows.get('retry_interval',
+                                                 WORKFLOW_TASK_RETRY_INTERVAL)
+
     provider_context['cloudify'] = {
         'cloudify_agent': {
             'min_workers': min_workers,
             'max_workers': max_workers,
             'agent_key_path': private_key_target_path,
             'remote_execution_port': remote_execution_port
+        },
+        'workflow': {
+            'task_retries': workflow_task_retries,
+            'task_retry_interval': workflow_task_retry_interval
         }
     }
 
