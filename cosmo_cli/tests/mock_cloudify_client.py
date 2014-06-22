@@ -130,7 +130,7 @@ class ExecutionsMock(object):
             'created_at': datetime.datetime.now()
         }
 
-    def cancel(self, id):
+    def cancel(self, id, force=False):
         pass
 
     def list(self, deployment_id):
