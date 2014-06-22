@@ -523,9 +523,12 @@ class CliTest(unittest.TestCase):
 def _create_config_modification_test_method(in_file, out_file):
     def config_mod_test(self):
         data_in = yaml.load(open(in_file))
+        prefix_for_all_resources = \
+            data_in.get('cloudify', {}).get('prefix_for_all_resources')
         provider_name = data_in.pop('PROVIDER')
         provider_module = cli._get_provider_module(provider_name)
-        pm = provider_module.ProviderManager(data_in, False)
+        pm = provider_module.ProviderManager(data_in, prefix_for_all_resources,
+                                             False)
         pm.update_names_in_config()
         self._compare_configs(pm.provider_config, yaml.load(open(out_file)))
     return config_mod_test

@@ -1011,7 +1011,10 @@ def _teardown_cosmo(args):
     provider_config = _read_config(args.config_file_path,
                                    provider_dir,
                                    args.verbosity)
-    pm = provider.ProviderManager(provider_config, args.verbosity)
+    prefix_for_all_resources = \
+        provider_config.get('cloudify', {}).get('prefix_for_all_resources')
+    pm = provider.ProviderManager(provider_config, prefix_for_all_resources,
+                                  args.verbosity)
 
     lgr.info("tearing down {0}".format(mgmt_ip))
     with _protected_provider_call(args.verbosity):
