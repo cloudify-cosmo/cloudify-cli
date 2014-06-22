@@ -492,20 +492,12 @@ class CliTest(unittest.TestCase):
 
     def test_resources_names_updater(self):
         provider_module = cli._get_provider_module('cloudify_openstack')
-        pm = provider_module.ProviderManager({
-            'cloudify': {
-                'prefix_for_all_resources': 'PFX_'
-            }
-        }, False)
+        pm = provider_module.ProviderManager({}, 'PFX_', False)
         self.assertEquals(pm.get_updated_resource_name('x'), 'PFX_x')
 
     def test_files_names_updater(self):
         provider_module = cli._get_provider_module('cloudify_openstack')
-        pm = provider_module.ProviderManager({
-            'cloudify': {
-                'prefix_for_all_resources': 'PFX_'
-            }
-        }, False)
+        pm = provider_module.ProviderManager({}, 'PFX_', False)
         self.assertEquals(
             pm.get_updated_file_name('/home/my/file.ext'),
             '/home/my/PFX_file.ext'
