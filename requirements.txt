@@ -1,5 +1,6 @@
 -e git+https://github.com/cloudify-cosmo/cloudify-rest-client@develop#egg=cloudify-rest-client==3.0
 -e git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@develop#egg=cloudify-dsl-parser==3.0
+-e git+https://github.com/Fewbytes/cloudify-openstack-provider.git@feature/CFY-747-prefix#egg=cloudify-openstack-provider==1.0
 pyyaml==3.10
 argcomplete==0.7.1
 fabric==1.8.3
