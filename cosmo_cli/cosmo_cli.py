@@ -1447,8 +1447,8 @@ def _list_deployment_executions(args):
 
 
 def _print_executions(executions):
-    pt = formatting.table(['status', 'workflow_id', 'deployment_id',
-                           'blueprint_id', 'error', 'id', 'created_at'],
+    pt = formatting.table(['id', 'workflow_id', 'status',
+                           'created_at', 'error'],
                           executions)
     _output_table('Executions:', pt)
 
