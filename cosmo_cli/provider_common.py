@@ -231,8 +231,8 @@ class BaseProviderClass(object):
                 if not r.succeeded:
                     lgr.error('failed to download {}. '
                               'please ensure package exists in its '
-                              'configured location in the config file').format(
-                        agent_url)
+                              'configured location in the config file'.format(
+                                  agent_url))
                     return False
 
             lgr.info('unpacking cloudify-core packages...')
