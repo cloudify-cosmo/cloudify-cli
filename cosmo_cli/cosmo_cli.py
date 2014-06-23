@@ -972,7 +972,7 @@ def _update_provider_context(provider_config, provider_context):
             'agent_key_path': private_key_target_path,
             'remote_execution_port': remote_execution_port
         },
-        'workflow': {
+        'workflows': {
             'task_retries': workflow_task_retries,
             'task_retry_interval': workflow_task_retry_interval
         }
