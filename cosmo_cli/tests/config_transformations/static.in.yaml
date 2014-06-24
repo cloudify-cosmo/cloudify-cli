@@ -1,5 +1,3 @@
-PROVIDER: cloudify_openstack
-
 keystone:
     username: UU
     password: PP

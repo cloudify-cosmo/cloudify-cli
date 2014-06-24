@@ -44,6 +44,34 @@ class SomeProvider(BaseProviderClass):
     teardown = mock.Mock()
     validate = mock.Mock()
 
+    # OpenStack data for names transformations tests - start
+    CONFIG_NAMES_TO_MODIFY = (
+        ('networking', 'int_network'),
+        ('networking', 'subnet'),
+        ('networking', 'router'),
+        ('networking', 'agents_security_group'),
+        ('networking', 'management_security_group'),
+        ('compute', 'agent_servers', 'agents_keypair'),
+        ('compute', 'management_server', 'instance'),
+        ('compute', 'management_server', 'management_keypair'),
+    )
+
+    CONFIG_FILES_PATHS_TO_MODIFY = (
+        ('compute', 'agent_servers', 'agents_keypair',
+            'auto_generated', 'private_key_target_path'),
+        ('compute', 'agent_servers', 'agents_keypair',
+            'provided', 'private_key_filepath'),
+        ('compute', 'agent_servers', 'agents_keypair',
+            'provided', 'public_key_filepath'),
+        ('compute', 'management_server', 'management_keypair',
+            'auto_generated', 'private_key_target_path'),
+        ('compute', 'management_server', 'management_keypair',
+            'provided', 'private_key_filepath'),
+        ('compute', 'management_server', 'management_keypair',
+            'provided', 'public_key_filepath'),
+    )
+    # OpenStack data for names transformations tests - end
+
 
 class CliTest(unittest.TestCase):
 
@@ -530,7 +558,7 @@ class CliTest(unittest.TestCase):
         p = path or []
         self.assertEquals(type(actual), type(expected))
         if isinstance(actual, dict) and isinstance(expected, dict):
-            self.assertEquals(actual.keys(), expected.keys())
+            self.assertEquals(set(actual.keys()), set(expected.keys()))
             for k in expected.keys():
                 self._compare_configs(actual[k], expected[k], p + [k])
             return
@@ -540,10 +568,8 @@ class CliTest(unittest.TestCase):
 def _create_config_modification_test_method(in_file, out_file):
     def config_mod_test(self):
         data_in = yaml.load(open(in_file))
-        provider_name = data_in.pop('PROVIDER')
-        provider_module = cli._get_provider_module(provider_name)
         provider_config = cli.ProviderConfig(data_in)
-        pm = provider_module.ProviderManager(provider_config, False)
+        pm = SomeProvider(provider_config, False)
         pm.update_names_in_config()
         expected_provider_config = cli.ProviderConfig(
             yaml.load(open(out_file))
