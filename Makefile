@@ -2,8 +2,7 @@
 
 all:
 	@echo "make release - prepares a release and publishes it"
-	@echo "make dev - prepares a development environment (includes tests)"
-	@echo "make instdev - prepares a development environment (no tests)"
+	@echo "make dev - prepares a development environment"
 	@echo "make install - install on local system"
 	@echo "make files - update changelog and todo files"
 	@echo "make test - run tox"
@@ -13,10 +12,8 @@ all:
 
 release: test docs publish
 
-dev: instdev test
-
-instdev:
-	pip install -rtest-requirements.txt
+dev:
+	pip install -rdev-requirements.txt
 	python setup.py develop
 
 install:
@@ -27,6 +24,7 @@ files:
 	git log --oneline --decorate --color > CHANGELOG
 
 test:
+	pip install tox
 	tox
 
 docs:
