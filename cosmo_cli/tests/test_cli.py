@@ -17,6 +17,7 @@
 __author__ = 'ran'
 
 import glob
+import mock
 import os
 import re
 import shutil
@@ -28,6 +29,7 @@ import yaml
 from mock_cloudify_client import MockCloudifyClient
 from cosmo_cli import cosmo_cli as cli
 from cosmo_cli.cosmo_cli import CosmoCliError
+from cosmo_cli.provider_common import BaseProviderClass
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 TEST_DIR = '/tmp/cloudify-cli-unit-tests'
@@ -36,6 +38,11 @@ TEST_PROVIDER_DIR = TEST_DIR + "/mock-provider"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 BLUEPRINTS_DIR = os.path.join(THIS_DIR, 'blueprints')
 
+
+class SomeProvider(BaseProviderClass):
+    provision = mock.Mock()
+    teardown = mock.Mock()
+    validate = mock.Mock()
 
 class CliTest(unittest.TestCase):
 
@@ -501,14 +508,12 @@ class CliTest(unittest.TestCase):
 
     def test_resources_names_updater(self):
         provider_config = self._create_provider_config_with_prefix()
-        provider_module = cli._get_provider_module('cloudify_openstack')
-        pm = provider_module.ProviderManager(provider_config, False)
+        pm = SomeProvider(provider_config, False)
         self.assertEquals(pm.get_updated_resource_name('x'), 'PFX_x')
 
     def test_files_names_updater(self):
         provider_config = self._create_provider_config_with_prefix()
-        provider_module = cli._get_provider_module('cloudify_openstack')
-        pm = provider_module.ProviderManager(provider_config, False)
+        pm = SomeProvider(provider_config, False)
         self.assertEquals(
             pm.get_updated_file_name('/home/my/file.ext'),
             '/home/my/PFX_file.ext'
