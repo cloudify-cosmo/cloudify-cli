@@ -30,22 +30,28 @@ import json
 import urlparse
 import urllib
 import shutil
+import time
 from copy import deepcopy
 from contextlib import contextmanager
 import logging
 import logging.config
 import config
+import formatting
 from fabric.api import env, local
 from fabric.context_managers import settings
+from platform import system
+from distutils.spawn import find_executable
+from subprocess import call
 
 # Project
-from cosmo_manager_rest_client.cosmo_manager_rest_client \
-    import CosmoManagerRestClient
-from cosmo_manager_rest_client.cosmo_manager_rest_client \
-    import (CosmoManagerRestCallError,
-            CosmoManagerRestCallTimeoutError,
-            CosmoManagerRestCallHTTPError)
 from dsl_parser.parser import parse_from_path, DSLParsingException
+from cloudify_rest_client import CloudifyClient
+from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify_rest_client.exceptions import CreateDeploymentInProgressError
+from executions import wait_for_execution
+from executions import get_deployment_creation_execution
+from executions import get_all_execution_events
+from executions import ExecutionTimeoutError
 
 
 output_level = logging.INFO
@@ -58,6 +64,9 @@ AGENT_MIN_WORKERS = 2
 AGENT_MAX_WORKERS = 5
 AGENT_KEY_PATH = '~/.ssh/cloudify-agents-kp.pem'
 REMOTE_EXECUTION_PORT = 22
+
+WORKFLOW_TASK_RETRIES = -1
+WORKFLOW_TASK_RETRY_INTERVAL = 30
 
 # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
 logging.getLogger("paramiko").setLevel(logging.WARNING)
@@ -159,6 +168,10 @@ def _parse_args(args):
     )
     parser_dev = subparsers.add_parser(
         'dev'
+    )
+    parser_ssh = subparsers.add_parser(
+        'ssh',
+        help='SSH to management server'
     )
 
     # status subparser
@@ -329,15 +342,9 @@ def _parse_args(args):
         type=str,
         help="Path to the application's blueprint file"
     )
-    parser_blueprints_upload.add_argument(
-        '-b', '--blueprint-id',
-        dest='blueprint_id',
-        metavar='BLUEPRINT_ID',
-        type=str,
-        default=None,
-        required=False,
-        help="Set the id of the uploaded blueprint"
-    )
+    _add_blueprint_id_argument_to_parser(
+        parser_blueprints_upload,
+        "Set the id of the uploaded blueprint")
     _add_management_ip_optional_argument_to_parser(parser_blueprints_upload)
     _set_handler_for_command(parser_blueprints_upload, _upload_blueprint)
 
@@ -347,14 +354,9 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_blueprints_download)
     _set_handler_for_command(parser_blueprints_download, _download_blueprint)
 
-    parser_blueprints_download.add_argument(
-        '-b', '--blueprint-id',
-        dest='blueprint_id',
-        metavar='BLUEPRINT_ID',
-        type=str,
-        required=True,
-        help="The id fo the blueprint to download"
-    )
+    _add_blueprint_id_argument_to_parser(
+        parser_blueprints_download,
+        "The id fo the blueprint to download")
     parser_blueprints_download.add_argument(
         '-o', '--output',
         dest='output',
@@ -364,14 +366,9 @@ def _parse_args(args):
         help="The output file path of the blueprint to be downloaded"
     )
 
-    parser_blueprints_delete.add_argument(
-        '-b', '--blueprint-id',
-        dest='blueprint_id',
-        metavar='BLUEPRINT_ID',
-        type=str,
-        required=True,
-        help="The id of the blueprint meant for deletion"
-    )
+    _add_blueprint_id_argument_to_parser(
+        parser_blueprints_delete,
+        "The id of the blueprint meant for deletion")
     _add_management_ip_optional_argument_to_parser(parser_blueprints_delete)
     _set_handler_for_command(parser_blueprints_delete, _delete_blueprint)
 
@@ -394,33 +391,18 @@ def _parse_args(args):
         help='command for listing all deployments or all deployments'
              'of a blueprint'
     )
-    parser_deployments_create.add_argument(
-        '-b', '--blueprint-id',
-        dest='blueprint_id',
-        metavar='BLUEPRINT_ID',
-        type=str,
-        required=True,
-        help="The id of the blueprint meant for deployment"
-    )
-    parser_deployments_create.add_argument(
-        '-d', '--deployment-id',
-        dest='deployment_id',
-        metavar='DEPLOYMENT_ID',
-        type=str,
-        required=True,
-        help="A unique id that will be assigned to the created deployment"
-    )
+    _add_blueprint_id_argument_to_parser(
+        parser_deployments_create,
+        "The id of the blueprint meant for deployment")
+    _add_deployment_id_argument_to_parser(
+        parser_deployments_create,
+        "A unique id that will be assigned to the created deployment")
     _add_management_ip_optional_argument_to_parser(parser_deployments_create)
     _set_handler_for_command(parser_deployments_create, _create_deployment)
 
-    parser_deployments_delete.add_argument(
-        '-d', '--deployment-id',
-        dest='deployment_id',
-        metavar='DEPLOYMENT_ID',
-        type=str,
-        required=True,
-        help="The deployment's id"
-    )
+    _add_deployment_id_argument_to_parser(
+        parser_deployments_delete,
+        "The deployment's id")
     parser_deployments_delete.add_argument(
         '-f', '--ignore-live-nodes',
         dest='ignore_live_nodes',
@@ -433,19 +415,14 @@ def _parse_args(args):
     _set_handler_for_command(parser_deployments_delete, _delete_deployment)
 
     parser_deployments_execute.add_argument(
-        'operation',
-        metavar='OPERATION',
+        'workflow',
+        metavar='WORKFLOW',
         type=str,
-        help='The operation to execute'
+        help='The workflow to execute'
     )
-    parser_deployments_execute.add_argument(
-        '-d', '--deployment-id',
-        dest='deployment_id',
-        metavar='DEPLOYMENT_ID',
-        type=str,
-        required=True,
-        help='The id of the deployment to execute the operation on'
-    )
+    _add_deployment_id_argument_to_parser(
+        parser_deployments_execute,
+        'The id of the deployment to execute the operation on')
     parser_deployments_execute.add_argument(
         '--timeout',
         dest='timeout',
@@ -467,16 +444,11 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
     _add_include_logs_argument_to_parser(parser_deployments_execute)
     _set_handler_for_command(parser_deployments_execute,
-                             _execute_deployment_operation)
+                             _execute_deployment_workflow)
 
-    parser_deployments_list.add_argument(
-        '-b', '--blueprint-id',
-        dest='blueprint_id',
-        metavar='BLUEPRINT_ID',
-        type=str,
-        required=False,
-        help='The id of a blueprint to list deployments for'
-    )
+    _add_blueprint_id_argument_to_parser(
+        parser_deployments_list,
+        'The id of a blueprint to list deployments for')
     _add_management_ip_optional_argument_to_parser(parser_deployments_list)
     _set_handler_for_command(parser_deployments_list,
                              _list_blueprint_deployments)
@@ -486,31 +458,32 @@ def _parse_args(args):
     parser_workflows_list = workflows_subparsers.add_parser(
         'list',
         help='command for listing workflows for a deployment')
-    parser_workflows_list.add_argument(
-        '-d', '--deployment-id',
-        dest='deployment_id',
-        metavar='DEPLOYMENT_ID',
-        type=str,
-        required=True,
-        help='The id of the deployment whose workflows to list'
-    )
+    _add_deployment_id_argument_to_parser(
+        parser_workflows_list,
+        'The id of the deployment whose workflows to list')
     _add_management_ip_optional_argument_to_parser(parser_workflows_list)
     _set_handler_for_command(parser_workflows_list, _list_workflows)
 
     # Executions list sub parser
     executions_subparsers = parser_executions.add_subparsers()
+    parser_executions_get = executions_subparsers.add_parser(
+        'get',
+        help='command for getting an execution by its id'
+    )
+    _add_execution_id_argument_to_parser(
+        parser_executions_get,
+        'The id of the execution to get')
+    _add_management_ip_optional_argument_to_parser(parser_executions_get)
+    _set_handler_for_command(parser_executions_get,
+                             _get_execution)
+
     parser_executions_list = executions_subparsers.add_parser(
         'list',
         help='command for listing all executions of a deployment'
     )
-    parser_executions_list.add_argument(
-        '-d', '--deployment-id',
-        dest='deployment_id',
-        metavar='DEPLOYMENT_ID',
-        type=str,
-        required=True,
-        help='The id of the deployment whose executions to list'
-    )
+    _add_deployment_id_argument_to_parser(
+        parser_executions_list,
+        'The id of the deployment whose executions to list')
     _add_management_ip_optional_argument_to_parser(parser_executions_list)
     _set_handler_for_command(parser_executions_list,
                              _list_deployment_executions)
@@ -519,26 +492,20 @@ def _parse_args(args):
         'cancel',
         help='Cancel an execution by its id'
     )
-    parser_executions_cancel.add_argument(
-        '-e', '--execution-id',
-        dest='execution_id',
-        metavar='EXECUTION_ID',
-        type=str,
-        required=True,
-        help='The id of the execution to cancel'
-    )
+    _add_execution_id_argument_to_parser(
+        parser_executions_cancel,
+        'The id of the execution to cancel')
+    _add_force_optional_argument_to_parser(
+        parser_executions_cancel,
+        'A flag indicating authorization to terminate the execution abruptly '
+        'rather than request an orderly termination')
     _add_management_ip_optional_argument_to_parser(parser_executions_cancel)
     _set_handler_for_command(parser_executions_cancel,
                              _cancel_execution)
 
-    parser_events.add_argument(
-        '-e', '--execution-id',
-        dest='execution_id',
-        metavar='EXECUTION_ID',
-        type=str,
-        required=True,
-        help='The id of the execution to get events for'
-    )
+    _add_execution_id_argument_to_parser(
+        parser_events,
+        'The id of the execution to get events for')
     _add_include_logs_argument_to_parser(parser_events)
     _add_management_ip_optional_argument_to_parser(parser_events)
     _set_handler_for_command(parser_events, _get_events)
@@ -566,6 +533,23 @@ def _parse_args(args):
     )
     _add_management_ip_optional_argument_to_parser(parser_dev)
     _set_handler_for_command(parser_dev, _run_dev)
+
+    # ssh subparser
+    parser_ssh.add_argument(
+        '-c', '--command',
+        dest='ssh_command',
+        metavar='COMMAND',
+        default=None,
+        type=str,
+        help='Execute command over SSH'
+    )
+    parser_ssh.add_argument(
+        '-p', '--plain',
+        dest='ssh_plain_mode',
+        action='store_true',
+        help='Leave authentication to user'
+    )
+    _set_handler_for_command(parser_ssh, _run_ssh)
 
     argcomplete.autocomplete(parser)
     return parser.parse_args(args)
@@ -625,6 +609,40 @@ def _add_management_ip_optional_argument_to_parser(parser):
         metavar='MANAGEMENT_IP',
         type=str,
         help='The cloudify management server ip address'
+    )
+
+
+def _add_blueprint_id_argument_to_parser(parser, help_message):
+    parser.add_argument(
+        '-b', '--blueprint-id',
+        dest='blueprint_id',
+        metavar='BLUEPRINT_ID',
+        type=str,
+        default=None,
+        required=False,
+        help=help_message
+    )
+
+
+def _add_deployment_id_argument_to_parser(parser, help_message):
+    parser.add_argument(
+        '-d', '--deployment-id',
+        dest='deployment_id',
+        metavar='DEPLOYMENT_ID',
+        type=str,
+        required=True,
+        help=help_message
+    )
+
+
+def _add_execution_id_argument_to_parser(parser, help_message):
+    parser.add_argument(
+        '-e', '--execution-id',
+        dest='execution_id',
+        metavar='EXECUTION_ID',
+        type=str,
+        required=True,
+        help=help_message
     )
 
 
@@ -910,8 +928,8 @@ def _bootstrap_cosmo(args):
             wd_settings.set_provider_context(provider_context)
 
         # storing provider context on management server
-        _get_rest_client(mgmt_ip).post_provider_context(provider_name,
-                                                        provider_context)
+        _get_rest_client(mgmt_ip).manager.create_context(provider_name,
+                                                         provider_context)
 
         lgr.info(
             "management server is up at {0} (is now set as the default "
@@ -940,12 +958,23 @@ def _update_provider_context(provider_config, provider_context):
     auto_generated = agents_keypair.get('auto_generated', {})
     private_key_target_path = auto_generated.get('private_key_target_path',
                                                  AGENT_KEY_PATH)
+
+    workflows = cloudify.get('workflows', {})
+    workflow_task_retries = workflows.get('task_retries',
+                                          WORKFLOW_TASK_RETRIES)
+    workflow_task_retry_interval = workflows.get('retry_interval',
+                                                 WORKFLOW_TASK_RETRY_INTERVAL)
+
     provider_context['cloudify'] = {
         'cloudify_agent': {
             'min_workers': min_workers,
             'max_workers': max_workers,
             'agent_key_path': private_key_target_path,
             'remote_execution_port': remote_execution_port
+        },
+        'workflows': {
+            'task_retries': workflow_task_retries,
+            'task_retry_interval': workflow_task_retry_interval
         }
     }
 
@@ -964,8 +993,8 @@ def _teardown_cosmo(args):
         raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
 
     mgmt_ip = _get_management_server_ip(args)
-    if not args.ignore_deployments and \
-            len(_get_rest_client(mgmt_ip).list_deployments()) > 0:
+    client = _get_rest_client(mgmt_ip)
+    if not args.ignore_deployments and len(client.deployments.list()) > 0:
         msg = ("Management server {0} has active deployments. Add the "
                "'--ignore-deployments' flag to your command to ignore "
                "these deployments and execute topology teardown."
@@ -1000,7 +1029,7 @@ def _teardown_cosmo(args):
 def _get_management_server_ip(args):
     is_verbose_output = args.verbosity
     cosmo_wd_settings = _load_cosmo_working_dir_settings(is_verbose_output)
-    if args.management_ip:
+    if hasattr(args, 'management_ip') and args.management_ip:
         return cosmo_wd_settings.translate_management_alias(
             args.management_ip)
     if cosmo_wd_settings.get_management_server():
@@ -1043,9 +1072,9 @@ def _get_mgmt_key(is_verbose_output=False):
 def _get_provider_name_and_context(mgmt_ip, is_verbose_output=False):
     # trying to retrieve provider context from server
     try:
-        response = _get_rest_client(mgmt_ip).get_provider_context()
+        response = _get_rest_client(mgmt_ip).manager.get_context()
         return response['name'], response['context']
-    except CosmoManagerRestCallError as e:
+    except CloudifyClientError as e:
         lgr.warn('Failed to get provider context from server: {0}'.format(
             str(e)))
 
@@ -1082,10 +1111,11 @@ def _status(args):
             .format(management_ip))
 
         lgr.info('Services information:')
-        for service in status_result.services:
+
+        for service in status_result['services']:
             lgr.info('\t{0}\t{1}'.format(
-                service.display_name.ljust(20),
-                service.instances[0]['state'] if service.instances else
+                service['display_name'].ljust(20),
+                service['instances'][0]['state'] if 'instances' in service else
                 'Unknown'))
         return True
     else:
@@ -1098,8 +1128,8 @@ def _status(args):
 def _get_management_server_status(management_ip):
     client = _get_rest_client(management_ip)
     try:
-        return client.status()
-    except CosmoManagerRestCallError:
+        return client.manager.get_status()
+    except CloudifyClientError:
         return None
 
 
@@ -1116,11 +1146,11 @@ def _use_management_server(args):
         raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
 
     try:
-        response = _get_rest_client(args.management_ip)\
-            .get_provider_context()
+        response = _get_rest_client(
+            args.management_ip).manager.get_context()
         provider_name = response['name']
         provider_context = response['context']
-    except CosmoManagerRestCallError:
+    except CloudifyClientError:
         provider_name = None
         provider_context = None
 
@@ -1144,19 +1174,18 @@ def _use_management_server(args):
 
 def _list_blueprints(args):
     management_ip = _get_management_server_ip(args)
-    lgr.info('querying blueprints list from management '
-             'server {0}'.format(management_ip))
     client = _get_rest_client(management_ip)
-    blueprints_list = client.list_blueprints()
 
-    if not blueprints_list:
-        lgr.info('There are no blueprints available on the '
-                 'management server')
-    else:
-        lgr.info('Blueprints:')
-        for blueprint_state in blueprints_list:
-            blueprint_id = blueprint_state.id
-            lgr.info('\t' + blueprint_id)
+    lgr.info('Getting blueprints list... [manager={0}]'.format(management_ip))
+
+    pt = formatting.table(['id', 'created_at', 'updated_at'],
+                          data=client.blueprints.list())
+
+    _output_table('Blueprints:', pt)
+
+
+def _output_table(title, table):
+    lgr.info('{0}{1}{0}{2}{0}'.format(os.linesep, title, table))
 
 
 def _delete_blueprint(args):
@@ -1167,7 +1196,7 @@ def _delete_blueprint(args):
         'Deleting blueprint {0} from management server {1}'.format(
             blueprint_id, management_ip))
     client = _get_rest_client(management_ip)
-    client.delete_blueprint(blueprint_id)
+    client.blueprints.delete(blueprint_id)
     lgr.info("Deleted blueprint successfully")
 
 
@@ -1180,7 +1209,7 @@ def _delete_deployment(args):
         'Deleting deployment {0} from management server {1}'.format(
             deployment_id, management_ip))
     client = _get_rest_client(management_ip)
-    client.delete_deployment(deployment_id, ignore_live_nodes)
+    client.deployments.delete(deployment_id, ignore_live_nodes)
     lgr.info("Deleted deployment successfully")
 
 
@@ -1200,11 +1229,9 @@ def _upload_blueprint(args):
         'Uploading blueprint {0} to management server {1}'.format(
             blueprint_path, management_ip))
     client = _get_rest_client(management_ip)
-    blueprint_state = client.publish_blueprint(blueprint_path, blueprint_id)
-
+    blueprint = client.blueprints.upload(blueprint_path, blueprint_id)
     lgr.info(
-        "Uploaded blueprint, blueprint's id is: {0}".format(
-            blueprint_state.id))
+        "Uploaded blueprint, blueprint's id is: {0}".format(blueprint.id))
 
 
 def _create_deployment(args):
@@ -1215,10 +1242,9 @@ def _create_deployment(args):
     lgr.info('Creating new deployment from blueprint {0} at '
              'management server {1}'.format(blueprint_id, management_ip))
     client = _get_rest_client(management_ip)
-    deployment = client.create_deployment(blueprint_id, deployment_id)
+    deployment = client.deployments.create(blueprint_id, deployment_id)
     lgr.info(
-        "Deployment created, deployment's id is: {0}".format(
-            deployment.id))
+        "Deployment created, deployment's id is: {0}".format(deployment.id))
 
 
 def _create_event_message_prefix(event):
@@ -1259,9 +1285,9 @@ def _get_events_logger(args):
     return default_events_logger
 
 
-def _execute_deployment_operation(args):
+def _execute_deployment_workflow(args):
     management_ip = _get_management_server_ip(args)
-    operation = args.operation
+    workflow = args.workflow
     deployment_id = args.deployment_id
     timeout = args.timeout
     force = args.force
@@ -1269,38 +1295,62 @@ def _execute_deployment_operation(args):
 
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
              " management server {2} [timeout={3} seconds]"
-             .format(operation, args.deployment_id, management_ip,
+             .format(workflow, args.deployment_id, management_ip,
                      timeout))
 
     events_logger = _get_events_logger(args)
-    client = _get_rest_client(management_ip)
 
     events_message = "* Run 'cfy events --include-logs "\
                      "--execution-id {0}' for retrieving the "\
                      "execution's events/logs"
-
     try:
-        execution_id, error = client.execute_deployment(
-            deployment_id,
-            operation,
-            events_logger,
-            include_logs=include_logs,
-            timeout=timeout,
-            force=force)
-        if error is None:
-            lgr.info("Finished executing workflow '{0}' on deployment"
-                     "'{1}'".format(operation, deployment_id))
-            lgr.info(events_message.format(execution_id))
-        else:
+        client = _get_rest_client(management_ip)
+        try:
+            execution = client.deployments.execute(deployment_id,
+                                                   workflow,
+                                                   force)
+        except CreateDeploymentInProgressError:
+            # wait for deployment creation workflow to end
+            lgr.info('Deployment creation is in progress!')
+            lgr.info('Waiting for deployment '
+                     'creation workflow execution to finish...')
+            now = time.time()
+            wait_for_execution(client,
+                               deployment_id,
+                               get_deployment_creation_execution(
+                                   client, deployment_id),
+                               events_handler=events_logger,
+                               include_logs=include_logs,
+                               timeout=timeout)
+            remaining_timeout = time.time() - now
+            timeout -= remaining_timeout
+            # try to execute user specified workflow
+            execution = client.deployments.execute(deployment_id,
+                                                   workflow,
+                                                   force)
+
+        execution = wait_for_execution(client,
+                                       deployment_id,
+                                       execution,
+                                       events_handler=events_logger,
+                                       include_logs=include_logs,
+                                       timeout=timeout)
+        if execution.error:
             lgr.info("Execution of workflow '{0}' for deployment "
-                     "'{1}' failed. "
-                     "[error={2}]".format(operation, deployment_id, error))
-            lgr.info(events_message.format(execution_id))
+                     "'{1}' failed. [error={2}]".format(workflow,
+                                                        deployment_id,
+                                                        execution.error))
+            lgr.info(events_message.format(execution.id))
             raise SuppressedCosmoCliError()
-    except CosmoManagerRestCallTimeoutError, e:
+        else:
+            lgr.info("Finished executing workflow '{0}' on deployment"
+                     "'{1}'".format(workflow, deployment_id))
+            lgr.info(events_message.format(execution.id))
+    except ExecutionTimeoutError, e:
         lgr.info("Execution of workflow '{0}' for deployment '{1}' timed out. "
                  "* Run 'cfy executions cancel --execution-id {2}' to cancel"
-                 " the running workflow.".format(operation, deployment_id,
+                 " the running workflow.".format(workflow,
+                                                 deployment_id,
                                                  e.execution_id))
         lgr.info(events_message.format(e.execution_id))
         raise SuppressedCosmoCliError()
@@ -1311,66 +1361,83 @@ def _execute_deployment_operation(args):
 def _list_blueprint_deployments(args):
     blueprint_id = args.blueprint_id
     management_ip = _get_management_server_ip(args)
-
-    message = 'Querying deployments list from management server {0}'\
-              .format(management_ip)
-    if blueprint_id:
-        message += ' for blueprint {0}'.format(blueprint_id)
-    lgr.info(message)
-
     client = _get_rest_client(management_ip)
-    deployments = client.list_deployments()
+    if blueprint_id:
+        lgr.info('Getting deployments list for blueprint: '
+                 '\'{0}\'... [manager={1}]'.format(blueprint_id,
+                                                   management_ip))
+    else:
+        lgr.info('Getting deployments list... '
+                 '[manager={0}]'.format(management_ip))
+    deployments = client.deployments.list()
     if blueprint_id:
         deployments = filter(lambda deployment:
-                             deployment.blueprintId == blueprint_id,
+                             deployment['blueprintId'] == blueprint_id,
                              deployments)
 
-    if len(deployments) == 0:
-        if blueprint_id:
-            suffix = 'for blueprint {0}'.format(blueprint_id)
-        else:
-            suffix = ''
-        lgr.info('There are no deployments on the management server {0}'
-                 .format(suffix))
-    else:
-        lgr.info('Deployments:')
-        for deployment in deployments:
-            deployment_id = deployment.id
-            if blueprint_id:
-                blueprint_str = ''
-            else:
-                blueprint_str = ' [Blueprint: {0}]' \
-                    .format(deployment.blueprintId)
-            lgr.info(
-                '\t' + deployment_id + blueprint_str)
+    pt = formatting.table(['id', 'blueprint_id', 'created_at', 'updated_at'],
+                          deployments)
+    _output_table('Deployments:', pt)
 
 
 def _list_workflows(args):
     management_ip = _get_management_server_ip(args)
     deployment_id = args.deployment_id
-
-    lgr.info(
-        'Querying workflows list from management server {0} for '
-        'deployment {1}'.format(management_ip, args.deployment_id))
     client = _get_rest_client(management_ip)
-    workflow_names = [workflow.name for workflow in
-                      client.list_workflows(deployment_id).workflows]
-    lgr.info("deployments workflows:")
-    for name in workflow_names:
-        lgr.info("\t{0}".format(name))
+
+    lgr.info('Getting workflows list for deployment: '
+             '\'{0}\'... [manager={1}]'.format(deployment_id, management_ip))
+
+    workflows = client.deployments.list_workflows(deployment_id)
+
+    blueprint_id = workflows['blueprintId'] if \
+        'blueprintId' in workflows else None
+    deployment_id = workflows['deploymentId'] if \
+        'deploymentId' in workflows else None
+
+    pt = formatting.table(['blueprint_id', 'deployment_id',
+                           'name', 'created_at'],
+                          data=workflows.workflows,
+                          defaults={'blueprint_id': blueprint_id,
+                                    'deployment_id': deployment_id})
+
+    _output_table('Workflows:', pt)
 
 
 def _cancel_execution(args):
     management_ip = _get_management_server_ip(args)
     client = _get_rest_client(management_ip)
     execution_id = args.execution_id
+    force = args.force
     lgr.info(
-        'Canceling execution {0} on management server {1}'
-        .format(execution_id, management_ip))
-    client.cancel_execution(execution_id)
+        '{0}Cancelling execution {1} on management server {2}'
+        .format('Force-' if force else '', execution_id, management_ip))
+    client.executions.cancel(execution_id, force)
     lgr.info(
-        'Cancelled execution {0} on management server {1}'
+        'A cancel request for execution {0} has been sent to management '
+        "server {1}. To track the execution's status, use:\n"
+        "cfy executions get {0}"
         .format(execution_id, management_ip))
+
+
+def _get_execution(args):
+    management_ip = _get_management_server_ip(args)
+    client = _get_rest_client(management_ip)
+    execution_id = args.execution_id
+
+    try:
+        lgr.info('Getting execution: '
+                 '\'{0}\' [manager={1}]'.format(execution_id, management_ip))
+        execution = client.executions.get(execution_id)
+    except CloudifyClientError, e:
+        if e.status_code != 404:
+            raise
+        msg = ("Execution '{0}' not found on management server"
+               .format(execution_id))
+        flgr.error(msg)
+        raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
+
+    _print_executions([execution])
 
 
 def _list_deployment_executions(args):
@@ -1378,34 +1445,26 @@ def _list_deployment_executions(args):
     management_ip = _get_management_server_ip(args)
     client = _get_rest_client(management_ip)
     deployment_id = args.deployment_id
-    lgr.info(
-        'Querying executions list from management server {0} for '
-        'deployment {1}'.format(management_ip, deployment_id))
     try:
-        executions = client.list_deployment_executions(deployment_id)
-    except CosmoManagerRestCallHTTPError, e:
-        if not e.status_code == 404:
+        lgr.info('Getting executions list for deployment: '
+                 '\'{0}\' [manager={1}]'.format(deployment_id, management_ip))
+        executions = client.executions.list(deployment_id)
+    except CloudifyClientError, e:
+        if not e.status_code != 404:
             raise
         msg = ('Deployment {0} does not exist on management server'
                .format(deployment_id))
         flgr.error(msg)
         raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
 
-    if len(executions) == 0:
-        lgr.info(
-            'There are no executions on the '
-            'management server for '
-            'deployment {0}'.format(deployment_id))
-    else:
-        lgr.info(
-            'Executions for deployment {0}:'.format(deployment_id))
-        for execution in executions:
-            lgr.info(
-                '\t{0}{1}\t[deployment_id={2}, blueprint_id={3}]'.format(
-                    execution.id,
-                    '\t{0}'.format(execution.status),
-                    execution.deploymentId,
-                    execution.blueprintId))
+    _print_executions(executions)
+
+
+def _print_executions(executions):
+    pt = formatting.table(['id', 'workflow_id', 'status',
+                           'created_at', 'error'],
+                          executions)
+    _output_table('Executions:', pt)
 
 
 def _get_events(args):
@@ -1417,13 +1476,13 @@ def _get_events(args):
                                          args.include_logs))
     client = _get_rest_client(management_ip)
     try:
-        events = client.get_all_execution_events(
-            args.execution_id,
-            include_logs=args.include_logs)
+        events = get_all_execution_events(client,
+                                          args.execution_id,
+                                          args.include_logs)
         events_logger = _get_events_logger(args)
         events_logger(events)
         lgr.info('\nTotal events: {0}'.format(len(events)))
-    except CosmoManagerRestCallHTTPError, e:
+    except CloudifyClientError, e:
         if e.status_code != 404:
             raise
         msg = ("Execution '{0}' not found on management server"
@@ -1489,6 +1548,34 @@ def _run_dev(args):
                                                 '({1}) '.format(task, str(e)))
 
 
+def _run_ssh(args, is_verbose_output=False):
+    ssh_path = find_executable('ssh')
+    lgr.debug('SSH executable path: {0}'.format(ssh_path or 'Not found'))
+    if not ssh_path and system() == 'Windows':
+        msg = messages.SSH_WIN_NOT_FOUND
+        raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
+    elif not ssh_path:
+        msg = messages.SSH_LINUX_NOT_FOUND
+        raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
+    else:
+        _ssh(ssh_path, args)
+
+
+def _ssh(path, args):
+    command = [path]
+    command.append('{0}@{1}'.format(_get_mgmt_user(),
+                                    _get_management_server_ip(args)))
+    if args.verbosity:
+        command.append('-v')
+    if not args.ssh_plain_mode:
+        command.extend(['-i', os.path.expanduser(_get_mgmt_key())])
+    if args.ssh_command:
+        command.extend(['--', args.ssh_command])
+    lgr.debug('executing command: {0}'.format(' '.join(command)))
+    lgr.info('Trying to connect...')
+    call(command)
+
+
 def _set_cli_except_hook():
     old_excepthook = sys.excepthook
 
@@ -1498,7 +1585,7 @@ def _set_cli_except_hook():
             if output_level <= logging.DEBUG:
                 print("Stack trace:")
                 traceback.print_tb(the_traceback)
-        elif type == CosmoManagerRestCallError:
+        elif type == CloudifyClientError:
             lgr.error("Failed making a call to REST service: {0}".format(
                       str(value)))
             if output_level <= logging.DEBUG:
@@ -1537,9 +1624,8 @@ def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
 
 def _download_blueprint(args):
     lgr.info(messages.DOWNLOADING_BLUEPRINT.format(args.blueprint_id))
-    rest_client = _get_rest_client(_get_management_server_ip(args))
-    target_file = rest_client.download_blueprint(args.blueprint_id,
-                                                 args.output)
+    client = _get_rest_client(_get_management_server_ip(args))
+    target_file = client.blueprints.download(args.blueprint_id, args.output)
     lgr.info(messages.DOWNLOADING_BLUEPRINT_SUCCEEDED.format(
         args.blueprint_id,
         target_file))
@@ -1580,7 +1666,7 @@ def _get_resource_base():
 
 
 def _get_rest_client(management_ip):
-    return CosmoManagerRestClient(management_ip)
+    return CloudifyClient(management_ip)
 
 
 @contextmanager

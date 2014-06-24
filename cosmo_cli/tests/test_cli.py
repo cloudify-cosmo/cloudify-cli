@@ -21,12 +21,10 @@ import os
 import sys
 import shutil
 import subprocess
-from mock_cosmo_manager_rest_client import MockCosmoManagerRestClient
+from mock_cloudify_client import MockCloudifyClient
 from cosmo_cli import cosmo_cli as cli
 from cosmo_cli.cosmo_cli import CosmoCliError
-from cosmo_manager_rest_client.cosmo_manager_rest_client \
-    import CosmoManagerRestCallError
-
+from cloudify_rest_client.exceptions import CloudifyClientError
 
 TEST_DIR = '/tmp/cloudify-cli-unit-tests'
 TEST_WORK_DIR = TEST_DIR + "/cloudify"
@@ -78,16 +76,19 @@ class CliTest(unittest.TestCase):
         sys.argv = args_str.split()
         cli.main()
 
-    def _create_cosmo_wd_settings(self):
+    def _create_cosmo_wd_settings(self, settings=None):
         cli._dump_cosmo_working_dir_settings(
-            cli.CosmoWorkingDirectorySettings())
+            settings or cli.CosmoWorkingDirectorySettings())
 
     def _read_cosmo_wd_settings(self):
         return cli._load_cosmo_working_dir_settings()
 
     def _set_mock_rest_client(self):
         cli._get_rest_client =\
-            lambda ip: MockCosmoManagerRestClient()
+            lambda ip: MockCloudifyClient()
+
+        cli._get_rest_client = \
+            lambda ip: MockCloudifyClient()
 
     def test_get_basic_help(self):
         with open(os.devnull, "w") as f:
@@ -188,13 +189,14 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy init mock_provider -r -v")
 
     def test_bootstrap(self):
+        self._set_mock_rest_client()
         self._run_cli("cfy init cloudify_mock_provider2 -v")
         self._run_cli("cfy bootstrap -v")
         settings = self._read_cosmo_wd_settings()
         self.assertEquals("10.0.0.2", settings.get_management_server())
         self.assertEquals('value', settings.get_provider_context()['key'])
 
-        from cosmo_cli.tests.mock_cosmo_manager_rest_client import \
+        from cosmo_cli.tests.mock_cloudify_client import \
             _provider_context, _provider_name
         self.assertEquals('cloudify_mock_provider2', _provider_name)
         self.assertEquals('value', _provider_context['key'])
@@ -226,10 +228,12 @@ class CliTest(unittest.TestCase):
     #                   "--ignore-deployments -c cloudify-config.yaml -v")
 
     def test_teardown_force_deployments(self):
-        rest_client = MockCosmoManagerRestClient()
+        rest_client = MockCloudifyClient()
         rest_client.list_deployments = lambda: [{}]
+        rest_client.deployments.list = lambda: [{}]
         cli._get_rest_client = \
             lambda ip: rest_client
+        cli._get_rest_client = lambda ip: rest_client
         self._run_cli("cfy init mock_provider -v")
         self._assert_ex("cfy teardown -t 10.0.0.1 -f --ignore-validation "
                         "-c cloudify-config.yaml -v",
@@ -270,15 +274,15 @@ class CliTest(unittest.TestCase):
         self._set_mock_rest_client()
         self._run_cli("cfy init cloudify_mock_provider2 -v")
 
-        from cosmo_cli.tests import mock_cosmo_manager_rest_client
-        original = mock_cosmo_manager_rest_client.get_mock_provider_name
-        mock_cosmo_manager_rest_client.get_mock_provider_name = \
+        from cosmo_cli.tests import mock_cloudify_client
+        original = mock_cloudify_client.get_mock_provider_name
+        mock_cloudify_client.get_mock_provider_name = \
             lambda: 'cloudify_mock_provider2'
         try:
                 self._assert_ex("cfy teardown -t 10.0.0.1 -f",
                                 "cloudify_mock_provider2 teardown exception")
         finally:
-            mock_cosmo_manager_rest_client.get_mock_provider_name = original
+            mock_cloudify_client.get_mock_provider_name = original
 
     def test_status_command_no_rest_service(self):
         self._create_cosmo_wd_settings()
@@ -389,8 +393,15 @@ class CliTest(unittest.TestCase):
             self._run_cli(command)
             self.fail('Expected error {0} was not raised for command {1}'
                       .format(expected_error, command))
-        except CosmoManagerRestCallError, ex:
+        except CloudifyClientError, ex:
             self.assertTrue(expected_error in str(ex))
+
+    def test_executions_get(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy executions get -e execution-id -t 127.0.0.1")
+        self._run_cli("cfy executions get "
+                      "--execution-id execution-id -t 127.0.0.1")
 
     def test_executions_list(self):
         self._set_mock_rest_client()
@@ -405,6 +416,7 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy use 127.0.0.1")
         self._run_cli("cfy executions cancel -e e_id -v")
         self._run_cli("cfy executions cancel --execution-id e_id -t 127.0.0.1")
+        self._run_cli("cfy executions cancel -e e_id -f")
 
     def test_events(self):
         self._set_mock_rest_client()
@@ -416,3 +428,61 @@ class CliTest(unittest.TestCase):
         self._create_cosmo_wd_settings()
         self._run_cli("cfy events --include-logs --execution-id execution-id "
                       "-t 127.0.0.1")
+
+    def test_ssh_no_prior_init(self):
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_with_empty_config(self):
+        self._create_cosmo_wd_settings()
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_with_no_key(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_user('test')
+        settings.set_management_server('127.0.0.1')
+        self._create_cosmo_wd_settings(settings)
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_with_no_user(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_server('127.0.0.1')
+        settings.set_management_key('/tmp/test.pem')
+        self._create_cosmo_wd_settings(settings)
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_with_no_server(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_user('test')
+        settings.set_management_key('/tmp/test.pem')
+        self._create_cosmo_wd_settings(settings)
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_without_ssh_windows(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_user('test')
+        settings.set_management_key('/tmp/test.pem')
+        settings.set_management_server('127.0.0.1')
+        self._create_cosmo_wd_settings(settings)
+        cli.find_executable = lambda x: None
+        cli.system = lambda: 'Windows'
+        self._assert_ex('cfy ssh', 'ssh.exe not found')
+
+    def test_ssh_without_ssh_linux(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_user('test')
+        settings.set_management_key('/tmp/test.pem')
+        settings.set_management_server('127.0.0.1')
+        self._create_cosmo_wd_settings(settings)
+        cli.find_executable = lambda x: None
+        cli.system = lambda: 'Linux'
+        self._assert_ex('cfy ssh', 'ssh not found')

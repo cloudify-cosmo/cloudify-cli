@@ -15,13 +15,12 @@ Command line interface for [Cloudify](https://github.com/cloudify-cosmo/cloudify
 
 ## Deploying your first application - Walkthrough
 **1. Installing the CLI and a provider extension:**
-  - Install a Cloudify provider extension (Openstack is used in this example):
-  `apt-get install python-dev # or the equivalent *nix version of this command`
-  `pip install https://github.com/cloudify-cosmo/cloudify-openstack-provider/archive/develop.zip`
+  - Clone this repository: `git clone https://github.com/cloudify-cosmo/cloudify-cli`
+  - Run pip install: `pip install -r cloudify-cli/requirements.txt cloudify-cli/`
+  - Clone openstack provider CLI: `git clone https://github.com/cloudify-cosmo/cloudify-openstack-provider`
+  - Run pip install: `pip install -r cloudify-openstack-provider/requirements.txt cloudify-openstack-provider/`
 
   NOTES:
-   - **If you're using Pip 1.5 or above, add the "*--process-dependency-links*" flag to the 'pip install' command**
-   - This will also install Cloudify's CLI
    - After installing the cli you can run the "activate_cfy_bash_completion" script which will permanently add bash completion to you shel
    and then follow the instructions or run "eval "$(register-python-argcomplete cfy)"" if you want to activate bash completion for your active shell only)
 
@@ -311,8 +310,8 @@ re
 - is_verbose_output - A flag for setting verbose output (Optional)
 - timeout: operation timeout in seconds (Optional, The execution itself will keep
 going. It is the CLI that will stop waiting for it to terminate)
-- force: A flag indicating whether the workflow should execute even if there is
- an ongoing execution for the provided deployment (default: false)
+- force: A flag indicating the workflow should execute even if there is
+ an ongoing execution for the provided deployment (Optional)
 
 
 **Example:** `cfy deployments execute install -d my-deployment`
@@ -349,6 +348,23 @@ going. It is the CLI that will stop waiting for it to terminate)
 
 ------
 
+**Command:** executions get
+
+**Description:** gets an execution by its id
+
+**Usage:** `cfy executions get [-e, --execution-id <execution_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
+
+**Parameters**:
+
+- execution_id: the id of the execution to get
+- management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
+
+**Example:** `cfy executions get -e my-execution`
+
+
+------
+
 **Command:** executions list
 
 **Description:** lists the executions of a deployment
@@ -370,15 +386,16 @@ going. It is the CLI that will stop waiting for it to terminate)
 
 **Description:** Cancels an execution by its id
 
-**Usage:** `cfy executions cancel [-e, --execution-id <execution_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy executions cancel [-e, --execution-id <execution_id>] [-f, --force] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - execution_id: the id of the execution to cancel
+- force: A flag indicating authorization to terminate the execution abruptly rather than request an orderly termination (Optional)
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 
-**Example:** `cfy executions cancel -e some-execution-id`
+**Example:** `cfy executions cancel -e some-execution-id -f`
 
 
 ------
