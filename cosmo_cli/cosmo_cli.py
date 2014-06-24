@@ -1404,13 +1404,13 @@ def _list_workflows(args):
 
     workflows = client.deployments.list_workflows(deployment_id)
 
-    blueprint_id = workflows['blueprintId'] if \
-        'blueprintId' in workflows else None
-    deployment_id = workflows['deploymentId'] if \
-        'deploymentId' in workflows else None
+    blueprint_id = workflows['blueprint_id'] if \
+        'blueprint_id' in workflows else None
+    deployment_id = workflows['deployment_id'] if \
+        'deployment_id' in workflows else None
 
     pt = formatting.table(['blueprint_id', 'deployment_id',
-                           'name', 'created_at'],
+                           'name', 'created_at', 'parameters'],
                           data=workflows.workflows,
                           defaults={'blueprint_id': blueprint_id,
                                     'deployment_id': deployment_id})
@@ -1475,7 +1475,7 @@ def _list_deployment_executions(args):
 
 
 def _print_executions(executions):
-    pt = formatting.table(['id', 'workflow_id', 'status',
+    pt = formatting.table(['id', 'workflow_id', 'parameters', 'status',
                            'created_at', 'error'],
                           executions)
     _output_table('Executions:', pt)
