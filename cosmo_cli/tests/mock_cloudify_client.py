@@ -69,7 +69,7 @@ class MicroMock(object):
     def upload(self, *args, **kwargs):
         return MicroMock()
 
-    def execute(self, deployment_id, operation, force=False):
+    def execute(self, deployment_id, operation, parameters=None, force=False):
         if operation != 'install':
             raise CloudifyClientError("operation {0} doesn't exist"
                                       .format(operation), 500)

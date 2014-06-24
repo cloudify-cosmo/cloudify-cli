@@ -420,6 +420,13 @@ def _parse_args(args):
         type=str,
         help='The workflow to execute'
     )
+    parser_deployments_execute.add_argument(
+        '-p', '--parameters',
+        metavar='PARAMETERS',
+        type=str,
+        required=False,
+        help='Parameters for the workflow execution'
+    )
     _add_deployment_id_argument_to_parser(
         parser_deployments_execute,
         'The id of the deployment to execute the operation on')
@@ -433,14 +440,10 @@ def _parse_args(args):
         help='Operation timeout in seconds (The execution itself will keep '
              'going, it is the CLI that will stop waiting for it to terminate)'
     )
-    parser_deployments_execute.add_argument(
-        '--force',
-        dest='force',
-        action='store_true',
-        default=False,
-        help='Whether the workflow should execute even if there is an ongoing'
-             ' execution for the provided deployment'
-    )
+    _add_force_optional_argument_to_parser(
+        parser_deployments_execute,
+        'Whether the workflow should execute even if there is an ongoing'
+        ' execution for the provided deployment')
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
     _add_include_logs_argument_to_parser(parser_deployments_execute)
     _set_handler_for_command(parser_deployments_execute,
@@ -598,6 +601,7 @@ def _add_force_optional_argument_to_parser(parser, help_message):
         '-f', '--force',
         dest='force',
         action='store_true',
+        default=False,
         help=help_message
     )
 
@@ -1292,6 +1296,14 @@ def _execute_deployment_workflow(args):
     force = args.force
     include_logs = args.include_logs
 
+    try:
+        # load parameters JSON or use an empty parameters dict
+        parameters = json.loads(args.parameters or '{}')
+    except ValueError, e:
+        msg = "'parameters' argument must be a valid JSON. {}".format(str(e))
+        flgr.error(msg)
+        raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
+
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
              " management server {2} [timeout={3} seconds]"
              .format(workflow, args.deployment_id, management_ip,
@@ -1307,7 +1319,8 @@ def _execute_deployment_workflow(args):
         try:
             execution = client.deployments.execute(deployment_id,
                                                    workflow,
-                                                   force)
+                                                   parameters=parameters,
+                                                   force=force)
         except CreateDeploymentInProgressError:
             # wait for deployment creation workflow to end
             lgr.info('Deployment creation is in progress!')
@@ -1326,7 +1339,8 @@ def _execute_deployment_workflow(args):
             # try to execute user specified workflow
             execution = client.deployments.execute(deployment_id,
                                                    workflow,
-                                                   force)
+                                                   parameters=parameters,
+                                                   force=force)
 
         execution = wait_for_execution(client,
                                        deployment_id,
