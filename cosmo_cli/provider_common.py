@@ -300,7 +300,7 @@ class BaseProviderClass(object):
         cloudify = props.setdefault('cloudify', {})
         cloudify.setdefault('type', 'object')
         cloudify.setdefault('properties', {}).update({
-            "prefix_for_all_resources": {
+            "resources_prefix": {
                 "type": "string",
             },
         })
@@ -349,7 +349,7 @@ class BaseProviderClass(object):
 
     def get_names_updater(self):
         def updater(name):
-            return self.provider_config.prefix_for_all_resources + name
+            return self.provider_config.resources_prefix + name
         return updater
 
     def get_files_names_updater(self, updater):

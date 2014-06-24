@@ -59,4 +59,4 @@ compute:
                 private_key_target_path: ../_auth/p2_cloudify-agents-kp-ilya.pem
 
 cloudify:
-    prefix_for_all_resources: p2_
+    resources_prefix: p2_

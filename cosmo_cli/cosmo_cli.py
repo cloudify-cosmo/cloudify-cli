@@ -684,8 +684,8 @@ def set_global_verbosity_level(is_verbose_output=False):
 
 class ProviderConfig(dict):
     @property
-    def prefix_for_all_resources(self):
-        return self.get('cloudify', {}).get('prefix_for_all_resources', '')
+    def resources_prefix(self):
+        return self.get('cloudify', {}).get('resources_prefix', '')
 
 
 def _read_config(config_file_path, provider_dir, is_verbose_output=False):
@@ -889,7 +889,7 @@ def _bootstrap_cosmo(args):
                                    provider_dir,
                                    args.verbosity)
     lgr.info("prefix for all resources: '{0}'".
-             format(provider_config.prefix_for_all_resources))
+             format(provider_config.resources_prefix))
     pm = provider.ProviderManager(provider_config, args.verbosity)
 
     if args.skip_validations and args.validate_only:
@@ -969,7 +969,7 @@ def _update_provider_context(provider_config, provider_context):
     private_key_target_path = auto_generated.get('private_key_target_path',
                                                  AGENT_KEY_PATH)
     provider_context['cloudify'] = {
-        'prefix_for_all_resources': provider_config.prefix_for_all_resources,
+        'resources_prefix': provider_config.resources_prefix,
         'cloudify_agent': {
             'min_workers': min_workers,
             'max_workers': max_workers,

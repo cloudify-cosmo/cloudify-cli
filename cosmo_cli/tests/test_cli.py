@@ -17,13 +17,14 @@
 __author__ = 'ran'
 
 import glob
-import unittest
 import os
 import re
-import sys
 import shutil
 import subprocess
+import sys
+import unittest
 import yaml
+
 from mock_cloudify_client import MockCloudifyClient
 from cosmo_cli import cosmo_cli as cli
 from cosmo_cli.cosmo_cli import CosmoCliError
@@ -490,14 +491,24 @@ class CliTest(unittest.TestCase):
         cli.system = lambda: 'Linux'
         self._assert_ex('cfy ssh', 'ssh not found')
 
+    def _create_provider_config_with_prefix(self):
+        provider_config = cli.ProviderConfig({
+            'cloudify': {
+                'resources_prefix': 'PFX_'
+            }
+        })
+        return provider_config
+
     def test_resources_names_updater(self):
+        provider_config = self._create_provider_config_with_prefix()
         provider_module = cli._get_provider_module('cloudify_openstack')
-        pm = provider_module.ProviderManager({}, 'PFX_', False)
+        pm = provider_module.ProviderManager(provider_config, False)
         self.assertEquals(pm.get_updated_resource_name('x'), 'PFX_x')
 
     def test_files_names_updater(self):
+        provider_config = self._create_provider_config_with_prefix()
         provider_module = cli._get_provider_module('cloudify_openstack')
-        pm = provider_module.ProviderManager({}, 'PFX_', False)
+        pm = provider_module.ProviderManager(provider_config, False)
         self.assertEquals(
             pm.get_updated_file_name('/home/my/file.ext'),
             '/home/my/PFX_file.ext'
@@ -523,14 +534,15 @@ class CliTest(unittest.TestCase):
 def _create_config_modification_test_method(in_file, out_file):
     def config_mod_test(self):
         data_in = yaml.load(open(in_file))
-        prefix_for_all_resources = \
-            data_in.get('cloudify', {}).get('prefix_for_all_resources')
         provider_name = data_in.pop('PROVIDER')
         provider_module = cli._get_provider_module(provider_name)
-        pm = provider_module.ProviderManager(data_in, prefix_for_all_resources,
-                                             False)
+        provider_config = cli.ProviderConfig(data_in)
+        pm = provider_module.ProviderManager(provider_config, False)
         pm.update_names_in_config()
-        self._compare_configs(pm.provider_config, yaml.load(open(out_file)))
+        expected_provider_config = cli.ProviderConfig(
+            yaml.load(open(out_file))
+        )
+        self._compare_configs(pm.provider_config, expected_provider_config)
     return config_mod_test
 
 d = os.path.join(THIS_DIR, 'config_transformations')
