@@ -781,7 +781,7 @@ def init(provider, target_directory, reset_config, install=False,
         First, will look for a module named cloudify_#provider#.
         If not found, will look for #provider#.
         If install is True, will install the supplied provider and perform
-         the search again.
+        the search again.
 
         :param string provider: the provider's name
         :param string target_directory: target directory for the config files
