@@ -309,15 +309,15 @@ class BaseProviderClass(object):
         """
         this is a basic implementation of schema validation.
         uses the Draft4Validator from jsonschema to validate the provider's
-         config.
+        config.
         a schema file must be created and its contents supplied
-         when initializing the ProviderManager class using the schema
-         parameter.
+        when initializing the ProviderManager class using the schema
+        parameter.
 
         :param dict schema: a schema to compare the provider's config to.
          the provider's config is already initialized within the
          ProviderManager class in the provider's code.
-        :rtype: `dict` of validaiton_errors.
+        :rtype: `dict` of validation_errors.
         """
         if not self.schema:
             lgr.warn('schema is not provided in class "{0}", skipping schema '
