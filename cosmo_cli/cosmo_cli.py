@@ -1660,7 +1660,6 @@ def _validate_blueprint(args):
         msg = (messages.VALIDATING_BLUEPRINT_FAILED
                .format(target_file, str(ex)))
         flgr.error(msg)
-        raise
         raise CosmoCliError(msg) if is_verbose_output else sys.exit(msg)
     lgr.info(messages.VALIDATING_BLUEPRINT_SUCCEEDED)
 
