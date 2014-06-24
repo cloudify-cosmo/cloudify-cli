@@ -124,22 +124,28 @@
 <span class="kn">import</span> <span class="nn">urlparse</span>
 <span class="kn">import</span> <span class="nn">urllib</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
+<span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">contextmanager</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">logging.config</span>
 <span class="kn">import</span> <span class="nn">config</span>
+<span class="kn">import</span> <span class="nn">formatting</span>
 <span class="kn">from</span> <span class="nn">fabric.api</span> <span class="kn">import</span> <span class="n">env</span><span class="p">,</span> <span class="n">local</span>
 <span class="kn">from</span> <span class="nn">fabric.context_managers</span> <span class="kn">import</span> <span class="n">settings</span>
+<span class="kn">from</span> <span class="nn">platform</span> <span class="kn">import</span> <span class="n">system</span>
+<span class="kn">from</span> <span class="nn">distutils.spawn</span> <span class="kn">import</span> <span class="n">find_executable</span>
+<span class="kn">from</span> <span class="nn">subprocess</span> <span class="kn">import</span> <span class="n">call</span>
 
 <span class="c"># Project</span>
-<span class="kn">from</span> <span class="nn">cosmo_manager_rest_client.cosmo_manager_rest_client</span> \
-    <span class="kn">import</span> <span class="n">CosmoManagerRestClient</span>
-<span class="kn">from</span> <span class="nn">cosmo_manager_rest_client.cosmo_manager_rest_client</span> \
-    <span class="kn">import</span> <span class="p">(</span><span class="n">CosmoManagerRestCallError</span><span class="p">,</span>
-            <span class="n">CosmoManagerRestCallTimeoutError</span><span class="p">,</span>
-            <span class="n">CosmoManagerRestCallHTTPError</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">dsl_parser.parser</span> <span class="kn">import</span> <span class="n">parse_from_path</span><span class="p">,</span> <span class="n">DSLParsingException</span>
+<span class="kn">from</span> <span class="nn">cloudify_rest_client</span> <span class="kn">import</span> <span class="n">CloudifyClient</span>
+<span class="kn">from</span> <span class="nn">cloudify_rest_client.exceptions</span> <span class="kn">import</span> <span class="n">CloudifyClientError</span>
+<span class="kn">from</span> <span class="nn">cloudify_rest_client.exceptions</span> <span class="kn">import</span> <span class="n">CreateDeploymentInProgressError</span>
+<span class="kn">from</span> <span class="nn">executions</span> <span class="kn">import</span> <span class="n">wait_for_execution</span>
+<span class="kn">from</span> <span class="nn">executions</span> <span class="kn">import</span> <span class="n">get_deployment_creation_execution</span>
+<span class="kn">from</span> <span class="nn">executions</span> <span class="kn">import</span> <span class="n">get_all_execution_events</span>
+<span class="kn">from</span> <span class="nn">executions</span> <span class="kn">import</span> <span class="n">ExecutionTimeoutError</span>
 
 
 <span class="n">output_level</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">INFO</span>
@@ -152,6 +158,9 @@
 <span class="n">AGENT_MAX_WORKERS</span> <span class="o">=</span> <span class="mi">5</span>
 <span class="n">AGENT_KEY_PATH</span> <span class="o">=</span> <span class="s">&#39;~/.ssh/cloudify-agents-kp.pem&#39;</span>
 <span class="n">REMOTE_EXECUTION_PORT</span> <span class="o">=</span> <span class="mi">22</span>
+
+<span class="n">WORKFLOW_TASK_RETRIES</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">WORKFLOW_TASK_RETRY_INTERVAL</span> <span class="o">=</span> <span class="mi">30</span>
 
 <span class="c"># http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko</span>
 <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s">&quot;paramiko&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">WARNING</span><span class="p">)</span>
@@ -253,6 +262,10 @@
     <span class="p">)</span>
     <span class="n">parser_dev</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
         <span class="s">&#39;dev&#39;</span>
+    <span class="p">)</span>
+    <span class="n">parser_ssh</span> <span class="o">=</span> <span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s">&#39;ssh&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&#39;SSH to management server&#39;</span>
     <span class="p">)</span>
 
     <span class="c"># status subparser</span>
@@ -423,15 +436,9 @@
         <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s">&quot;Path to the application&#39;s blueprint file&quot;</span>
     <span class="p">)</span>
-    <span class="n">parser_blueprints_upload</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s">&#39;-b&#39;</span><span class="p">,</span> <span class="s">&#39;--blueprint-id&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;blueprint_id&#39;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;BLUEPRINT_ID&#39;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
-        <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-        <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s">&quot;Set the id of the uploaded blueprint&quot;</span>
-    <span class="p">)</span>
+    <span class="n">_add_blueprint_id_argument_to_parser</span><span class="p">(</span>
+        <span class="n">parser_blueprints_upload</span><span class="p">,</span>
+        <span class="s">&quot;Set the id of the uploaded blueprint&quot;</span><span class="p">)</span>
     <span class="n">_add_management_ip_optional_argument_to_parser</span><span class="p">(</span><span class="n">parser_blueprints_upload</span><span class="p">)</span>
     <span class="n">_set_handler_for_command</span><span class="p">(</span><span class="n">parser_blueprints_upload</span><span class="p">,</span> <span class="n">_upload_blueprint</span><span class="p">)</span>
 
@@ -441,14 +448,9 @@
     <span class="n">_add_management_ip_optional_argument_to_parser</span><span class="p">(</span><span class="n">parser_blueprints_download</span><span class="p">)</span>
     <span class="n">_set_handler_for_command</span><span class="p">(</span><span class="n">parser_blueprints_download</span><span class="p">,</span> <span class="n">_download_blueprint</span><span class="p">)</span>
 
-    <span class="n">parser_blueprints_download</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s">&#39;-b&#39;</span><span class="p">,</span> <span class="s">&#39;--blueprint-id&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;blueprint_id&#39;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;BLUEPRINT_ID&#39;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
-        <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s">&quot;The id fo the blueprint to download&quot;</span>
-    <span class="p">)</span>
+    <span class="n">_add_blueprint_id_argument_to_parser</span><span class="p">(</span>
+        <span class="n">parser_blueprints_download</span><span class="p">,</span>
+        <span class="s">&quot;The id fo the blueprint to download&quot;</span><span class="p">)</span>
     <span class="n">parser_blueprints_download</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s">&#39;-o&#39;</span><span class="p">,</span> <span class="s">&#39;--output&#39;</span><span class="p">,</span>
         <span class="n">dest</span><span class="o">=</span><span class="s">&#39;output&#39;</span><span class="p">,</span>
@@ -458,14 +460,9 @@
         <span class="n">help</span><span class="o">=</span><span class="s">&quot;The output file path of the blueprint to be downloaded&quot;</span>
     <span class="p">)</span>
 
-    <span class="n">parser_blueprints_delete</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s">&#39;-b&#39;</span><span class="p">,</span> <span class="s">&#39;--blueprint-id&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;blueprint_id&#39;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;BLUEPRINT_ID&#39;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
-        <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s">&quot;The id of the blueprint meant for deletion&quot;</span>
-    <span class="p">)</span>
+    <span class="n">_add_blueprint_id_argument_to_parser</span><span class="p">(</span>
+        <span class="n">parser_blueprints_delete</span><span class="p">,</span>
+        <span class="s">&quot;The id of the blueprint meant for deletion&quot;</span><span class="p">)</span>
     <span class="n">_add_management_ip_optional_argument_to_parser</span><span class="p">(</span><span class="n">parser_blueprints_delete</span><span class="p">)</span>
     <span class="n">_set_handler_for_command</span><span class="p">(</span><span class="n">parser_blueprints_delete</span><span class="p">,</span> <span class="n">_delete_blueprint</span><span class="p">)</span>
 
@@ -488,33 +485,18 @@
         <span class="n">help</span><span class="o">=</span><span class="s">&#39;command for listing all deployments or all deployments&#39;</span>
              <span class="s">&#39;of a blueprint&#39;</span>
     <span class="p">)</span>
-    <span class="n">parser_deployments_create</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s">&#39;-b&#39;</span><span class="p">,</span> <span class="s">&#39;--blueprint-id&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;blueprint_id&#39;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;BLUEPRINT_ID&#39;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
-        <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s">&quot;The id of the blueprint meant for deployment&quot;</span>
-    <span class="p">)</span>
-    <span class="n">parser_deployments_create</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s">&#39;-d&#39;</span><span class="p">,</span> <span class="s">&#39;--deployment-id&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;deployment_id&#39;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;DEPLOYMENT_ID&#39;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
-        <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s">&quot;A unique id that will be assigned to the created deployment&quot;</span>
-    <span class="p">)</span>
+    <span class="n">_add_blueprint_id_argument_to_parser</span><span class="p">(</span>
+        <span class="n">parser_deployments_create</span><span class="p">,</span>
+        <span class="s">&quot;The id of the blueprint meant for deployment&quot;</span><span class="p">)</span>
+    <span class="n">_add_deployment_id_argument_to_parser</span><span class="p">(</span>
+        <span class="n">parser_deployments_create</span><span class="p">,</span>
+        <span class="s">&quot;A unique id that will be assigned to the created deployment&quot;</span><span class="p">)</span>
     <span class="n">_add_management_ip_optional_argument_to_parser</span><span class="p">(</span><span class="n">parser_deployments_create</span><span class="p">)</span>
     <span class="n">_set_handler_for_command</span><span class="p">(</span><span class="n">parser_deployments_create</span><span class="p">,</span> <span class="n">_create_deployment</span><span class="p">)</span>
 
-    <span class="n">parser_deployments_delete</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s">&#39;-d&#39;</span><span class="p">,</span> <span class="s">&#39;--deployment-id&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;deployment_id&#39;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;DEPLOYMENT_ID&#39;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
-        <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s">&quot;The deployment&#39;s id&quot;</span>
-    <span class="p">)</span>
+    <span class="n">_add_deployment_id_argument_to_parser</span><span class="p">(</span>
+        <span class="n">parser_deployments_delete</span><span class="p">,</span>
+        <span class="s">&quot;The deployment&#39;s id&quot;</span><span class="p">)</span>
     <span class="n">parser_deployments_delete</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s">&#39;-f&#39;</span><span class="p">,</span> <span class="s">&#39;--ignore-live-nodes&#39;</span><span class="p">,</span>
         <span class="n">dest</span><span class="o">=</span><span class="s">&#39;ignore_live_nodes&#39;</span><span class="p">,</span>
@@ -527,19 +509,14 @@
     <span class="n">_set_handler_for_command</span><span class="p">(</span><span class="n">parser_deployments_delete</span><span class="p">,</span> <span class="n">_delete_deployment</span><span class="p">)</span>
 
     <span class="n">parser_deployments_execute</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s">&#39;operation&#39;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;OPERATION&#39;</span><span class="p">,</span>
+        <span class="s">&#39;workflow&#39;</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;WORKFLOW&#39;</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s">&#39;The operation to execute&#39;</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&#39;The workflow to execute&#39;</span>
     <span class="p">)</span>
-    <span class="n">parser_deployments_execute</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s">&#39;-d&#39;</span><span class="p">,</span> <span class="s">&#39;--deployment-id&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;deployment_id&#39;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;DEPLOYMENT_ID&#39;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
-        <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s">&#39;The id of the deployment to execute the operation on&#39;</span>
-    <span class="p">)</span>
+    <span class="n">_add_deployment_id_argument_to_parser</span><span class="p">(</span>
+        <span class="n">parser_deployments_execute</span><span class="p">,</span>
+        <span class="s">&#39;The id of the deployment to execute the operation on&#39;</span><span class="p">)</span>
     <span class="n">parser_deployments_execute</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
         <span class="s">&#39;--timeout&#39;</span><span class="p">,</span>
         <span class="n">dest</span><span class="o">=</span><span class="s">&#39;timeout&#39;</span><span class="p">,</span>
@@ -561,16 +538,11 @@
     <span class="n">_add_management_ip_optional_argument_to_parser</span><span class="p">(</span><span class="n">parser_deployments_execute</span><span class="p">)</span>
     <span class="n">_add_include_logs_argument_to_parser</span><span class="p">(</span><span class="n">parser_deployments_execute</span><span class="p">)</span>
     <span class="n">_set_handler_for_command</span><span class="p">(</span><span class="n">parser_deployments_execute</span><span class="p">,</span>
-                             <span class="n">_execute_deployment_operation</span><span class="p">)</span>
+                             <span class="n">_execute_deployment_workflow</span><span class="p">)</span>
 
-    <span class="n">parser_deployments_list</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s">&#39;-b&#39;</span><span class="p">,</span> <span class="s">&#39;--blueprint-id&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;blueprint_id&#39;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;BLUEPRINT_ID&#39;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
-        <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s">&#39;The id of a blueprint to list deployments for&#39;</span>
-    <span class="p">)</span>
+    <span class="n">_add_blueprint_id_argument_to_parser</span><span class="p">(</span>
+        <span class="n">parser_deployments_list</span><span class="p">,</span>
+        <span class="s">&#39;The id of a blueprint to list deployments for&#39;</span><span class="p">)</span>
     <span class="n">_add_management_ip_optional_argument_to_parser</span><span class="p">(</span><span class="n">parser_deployments_list</span><span class="p">)</span>
     <span class="n">_set_handler_for_command</span><span class="p">(</span><span class="n">parser_deployments_list</span><span class="p">,</span>
                              <span class="n">_list_blueprint_deployments</span><span class="p">)</span>
@@ -580,31 +552,32 @@
     <span class="n">parser_workflows_list</span> <span class="o">=</span> <span class="n">workflows_subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
         <span class="s">&#39;list&#39;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s">&#39;command for listing workflows for a deployment&#39;</span><span class="p">)</span>
-    <span class="n">parser_workflows_list</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s">&#39;-d&#39;</span><span class="p">,</span> <span class="s">&#39;--deployment-id&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;deployment_id&#39;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;DEPLOYMENT_ID&#39;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
-        <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s">&#39;The id of the deployment whose workflows to list&#39;</span>
-    <span class="p">)</span>
+    <span class="n">_add_deployment_id_argument_to_parser</span><span class="p">(</span>
+        <span class="n">parser_workflows_list</span><span class="p">,</span>
+        <span class="s">&#39;The id of the deployment whose workflows to list&#39;</span><span class="p">)</span>
     <span class="n">_add_management_ip_optional_argument_to_parser</span><span class="p">(</span><span class="n">parser_workflows_list</span><span class="p">)</span>
     <span class="n">_set_handler_for_command</span><span class="p">(</span><span class="n">parser_workflows_list</span><span class="p">,</span> <span class="n">_list_workflows</span><span class="p">)</span>
 
     <span class="c"># Executions list sub parser</span>
     <span class="n">executions_subparsers</span> <span class="o">=</span> <span class="n">parser_executions</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">()</span>
+    <span class="n">parser_executions_get</span> <span class="o">=</span> <span class="n">executions_subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
+        <span class="s">&#39;get&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&#39;command for getting an execution by its id&#39;</span>
+    <span class="p">)</span>
+    <span class="n">_add_execution_id_argument_to_parser</span><span class="p">(</span>
+        <span class="n">parser_executions_get</span><span class="p">,</span>
+        <span class="s">&#39;The id of the execution to get&#39;</span><span class="p">)</span>
+    <span class="n">_add_management_ip_optional_argument_to_parser</span><span class="p">(</span><span class="n">parser_executions_get</span><span class="p">)</span>
+    <span class="n">_set_handler_for_command</span><span class="p">(</span><span class="n">parser_executions_get</span><span class="p">,</span>
+                             <span class="n">_get_execution</span><span class="p">)</span>
+
     <span class="n">parser_executions_list</span> <span class="o">=</span> <span class="n">executions_subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span>
         <span class="s">&#39;list&#39;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s">&#39;command for listing all executions of a deployment&#39;</span>
     <span class="p">)</span>
-    <span class="n">parser_executions_list</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s">&#39;-d&#39;</span><span class="p">,</span> <span class="s">&#39;--deployment-id&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;deployment_id&#39;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;DEPLOYMENT_ID&#39;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
-        <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s">&#39;The id of the deployment whose executions to list&#39;</span>
-    <span class="p">)</span>
+    <span class="n">_add_deployment_id_argument_to_parser</span><span class="p">(</span>
+        <span class="n">parser_executions_list</span><span class="p">,</span>
+        <span class="s">&#39;The id of the deployment whose executions to list&#39;</span><span class="p">)</span>
     <span class="n">_add_management_ip_optional_argument_to_parser</span><span class="p">(</span><span class="n">parser_executions_list</span><span class="p">)</span>
     <span class="n">_set_handler_for_command</span><span class="p">(</span><span class="n">parser_executions_list</span><span class="p">,</span>
                              <span class="n">_list_deployment_executions</span><span class="p">)</span>
@@ -613,26 +586,20 @@
         <span class="s">&#39;cancel&#39;</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s">&#39;Cancel an execution by its id&#39;</span>
     <span class="p">)</span>
-    <span class="n">parser_executions_cancel</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s">&#39;-e&#39;</span><span class="p">,</span> <span class="s">&#39;--execution-id&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;execution_id&#39;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;EXECUTION_ID&#39;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
-        <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s">&#39;The id of the execution to cancel&#39;</span>
-    <span class="p">)</span>
+    <span class="n">_add_execution_id_argument_to_parser</span><span class="p">(</span>
+        <span class="n">parser_executions_cancel</span><span class="p">,</span>
+        <span class="s">&#39;The id of the execution to cancel&#39;</span><span class="p">)</span>
+    <span class="n">_add_force_optional_argument_to_parser</span><span class="p">(</span>
+        <span class="n">parser_executions_cancel</span><span class="p">,</span>
+        <span class="s">&#39;A flag indicating authorization to terminate the execution abruptly &#39;</span>
+        <span class="s">&#39;rather than request an orderly termination&#39;</span><span class="p">)</span>
     <span class="n">_add_management_ip_optional_argument_to_parser</span><span class="p">(</span><span class="n">parser_executions_cancel</span><span class="p">)</span>
     <span class="n">_set_handler_for_command</span><span class="p">(</span><span class="n">parser_executions_cancel</span><span class="p">,</span>
                              <span class="n">_cancel_execution</span><span class="p">)</span>
 
-    <span class="n">parser_events</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
-        <span class="s">&#39;-e&#39;</span><span class="p">,</span> <span class="s">&#39;--execution-id&#39;</span><span class="p">,</span>
-        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;execution_id&#39;</span><span class="p">,</span>
-        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;EXECUTION_ID&#39;</span><span class="p">,</span>
-        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
-        <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-        <span class="n">help</span><span class="o">=</span><span class="s">&#39;The id of the execution to get events for&#39;</span>
-    <span class="p">)</span>
+    <span class="n">_add_execution_id_argument_to_parser</span><span class="p">(</span>
+        <span class="n">parser_events</span><span class="p">,</span>
+        <span class="s">&#39;The id of the execution to get events for&#39;</span><span class="p">)</span>
     <span class="n">_add_include_logs_argument_to_parser</span><span class="p">(</span><span class="n">parser_events</span><span class="p">)</span>
     <span class="n">_add_management_ip_optional_argument_to_parser</span><span class="p">(</span><span class="n">parser_events</span><span class="p">)</span>
     <span class="n">_set_handler_for_command</span><span class="p">(</span><span class="n">parser_events</span><span class="p">,</span> <span class="n">_get_events</span><span class="p">)</span>
@@ -660,6 +627,23 @@
     <span class="p">)</span>
     <span class="n">_add_management_ip_optional_argument_to_parser</span><span class="p">(</span><span class="n">parser_dev</span><span class="p">)</span>
     <span class="n">_set_handler_for_command</span><span class="p">(</span><span class="n">parser_dev</span><span class="p">,</span> <span class="n">_run_dev</span><span class="p">)</span>
+
+    <span class="c"># ssh subparser</span>
+    <span class="n">parser_ssh</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s">&#39;-c&#39;</span><span class="p">,</span> <span class="s">&#39;--command&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;ssh_command&#39;</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;COMMAND&#39;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&#39;Execute command over SSH&#39;</span>
+    <span class="p">)</span>
+    <span class="n">parser_ssh</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s">&#39;-p&#39;</span><span class="p">,</span> <span class="s">&#39;--plain&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;ssh_plain_mode&#39;</span><span class="p">,</span>
+        <span class="n">action</span><span class="o">=</span><span class="s">&#39;store_true&#39;</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="s">&#39;Leave authentication to user&#39;</span>
+    <span class="p">)</span>
+    <span class="n">_set_handler_for_command</span><span class="p">(</span><span class="n">parser_ssh</span><span class="p">,</span> <span class="n">_run_ssh</span><span class="p">)</span>
 
     <span class="n">argcomplete</span><span class="o">.</span><span class="n">autocomplete</span><span class="p">(</span><span class="n">parser</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
@@ -719,6 +703,40 @@
         <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;MANAGEMENT_IP&#39;</span><span class="p">,</span>
         <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
         <span class="n">help</span><span class="o">=</span><span class="s">&#39;The cloudify management server ip address&#39;</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_add_blueprint_id_argument_to_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">help_message</span><span class="p">):</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s">&#39;-b&#39;</span><span class="p">,</span> <span class="s">&#39;--blueprint-id&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;blueprint_id&#39;</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;BLUEPRINT_ID&#39;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="n">help_message</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_add_deployment_id_argument_to_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">help_message</span><span class="p">):</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s">&#39;-d&#39;</span><span class="p">,</span> <span class="s">&#39;--deployment-id&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;deployment_id&#39;</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;DEPLOYMENT_ID&#39;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="n">help_message</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_add_execution_id_argument_to_parser</span><span class="p">(</span><span class="n">parser</span><span class="p">,</span> <span class="n">help_message</span><span class="p">):</span>
+    <span class="n">parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span>
+        <span class="s">&#39;-e&#39;</span><span class="p">,</span> <span class="s">&#39;--execution-id&#39;</span><span class="p">,</span>
+        <span class="n">dest</span><span class="o">=</span><span class="s">&#39;execution_id&#39;</span><span class="p">,</span>
+        <span class="n">metavar</span><span class="o">=</span><span class="s">&#39;EXECUTION_ID&#39;</span><span class="p">,</span>
+        <span class="nb">type</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span>
+        <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+        <span class="n">help</span><span class="o">=</span><span class="n">help_message</span>
     <span class="p">)</span>
 
 
@@ -1004,8 +1022,8 @@
             <span class="n">wd_settings</span><span class="o">.</span><span class="n">set_provider_context</span><span class="p">(</span><span class="n">provider_context</span><span class="p">)</span>
 
         <span class="c"># storing provider context on management server</span>
-        <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">mgmt_ip</span><span class="p">)</span><span class="o">.</span><span class="n">post_provider_context</span><span class="p">(</span><span class="n">provider_name</span><span class="p">,</span>
-                                                        <span class="n">provider_context</span><span class="p">)</span>
+        <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">mgmt_ip</span><span class="p">)</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">create_context</span><span class="p">(</span><span class="n">provider_name</span><span class="p">,</span>
+                                                         <span class="n">provider_context</span><span class="p">)</span>
 
         <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
             <span class="s">&quot;management server is up at {0} (is now set as the default &quot;</span>
@@ -1034,12 +1052,23 @@
     <span class="n">auto_generated</span> <span class="o">=</span> <span class="n">agents_keypair</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;auto_generated&#39;</span><span class="p">,</span> <span class="p">{})</span>
     <span class="n">private_key_target_path</span> <span class="o">=</span> <span class="n">auto_generated</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;private_key_target_path&#39;</span><span class="p">,</span>
                                                  <span class="n">AGENT_KEY_PATH</span><span class="p">)</span>
+
+    <span class="n">workflows</span> <span class="o">=</span> <span class="n">cloudify</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;workflows&#39;</span><span class="p">,</span> <span class="p">{})</span>
+    <span class="n">workflow_task_retries</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;task_retries&#39;</span><span class="p">,</span>
+                                          <span class="n">WORKFLOW_TASK_RETRIES</span><span class="p">)</span>
+    <span class="n">workflow_task_retry_interval</span> <span class="o">=</span> <span class="n">workflows</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;retry_interval&#39;</span><span class="p">,</span>
+                                                 <span class="n">WORKFLOW_TASK_RETRY_INTERVAL</span><span class="p">)</span>
+
     <span class="n">provider_context</span><span class="p">[</span><span class="s">&#39;cloudify&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s">&#39;cloudify_agent&#39;</span><span class="p">:</span> <span class="p">{</span>
             <span class="s">&#39;min_workers&#39;</span><span class="p">:</span> <span class="n">min_workers</span><span class="p">,</span>
             <span class="s">&#39;max_workers&#39;</span><span class="p">:</span> <span class="n">max_workers</span><span class="p">,</span>
             <span class="s">&#39;agent_key_path&#39;</span><span class="p">:</span> <span class="n">private_key_target_path</span><span class="p">,</span>
             <span class="s">&#39;remote_execution_port&#39;</span><span class="p">:</span> <span class="n">remote_execution_port</span>
+        <span class="p">},</span>
+        <span class="s">&#39;workflows&#39;</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s">&#39;task_retries&#39;</span><span class="p">:</span> <span class="n">workflow_task_retries</span><span class="p">,</span>
+            <span class="s">&#39;task_retry_interval&#39;</span><span class="p">:</span> <span class="n">workflow_task_retry_interval</span>
         <span class="p">}</span>
     <span class="p">}</span>
 
@@ -1058,8 +1087,8 @@
         <span class="k">raise</span> <span class="n">CosmoCliError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_verbose_output</span> <span class="k">else</span> <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="n">mgmt_ip</span> <span class="o">=</span> <span class="n">_get_management_server_ip</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">ignore_deployments</span> <span class="ow">and</span> \
-            <span class="nb">len</span><span class="p">(</span><span class="n">_get_rest_client</span><span class="p">(</span><span class="n">mgmt_ip</span><span class="p">)</span><span class="o">.</span><span class="n">list_deployments</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">mgmt_ip</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">ignore_deployments</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">client</span><span class="o">.</span><span class="n">deployments</span><span class="o">.</span><span class="n">list</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;Management server {0} has active deployments. Add the &quot;</span>
                <span class="s">&quot;&#39;--ignore-deployments&#39; flag to your command to ignore &quot;</span>
                <span class="s">&quot;these deployments and execute topology teardown.&quot;</span>
@@ -1094,7 +1123,7 @@
 <span class="k">def</span> <span class="nf">_get_management_server_ip</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="n">is_verbose_output</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">verbosity</span>
     <span class="n">cosmo_wd_settings</span> <span class="o">=</span> <span class="n">_load_cosmo_working_dir_settings</span><span class="p">(</span><span class="n">is_verbose_output</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">management_ip</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s">&#39;management_ip&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">args</span><span class="o">.</span><span class="n">management_ip</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">cosmo_wd_settings</span><span class="o">.</span><span class="n">translate_management_alias</span><span class="p">(</span>
             <span class="n">args</span><span class="o">.</span><span class="n">management_ip</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">cosmo_wd_settings</span><span class="o">.</span><span class="n">get_management_server</span><span class="p">():</span>
@@ -1137,9 +1166,9 @@
 <span class="k">def</span> <span class="nf">_get_provider_name_and_context</span><span class="p">(</span><span class="n">mgmt_ip</span><span class="p">,</span> <span class="n">is_verbose_output</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
     <span class="c"># trying to retrieve provider context from server</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">mgmt_ip</span><span class="p">)</span><span class="o">.</span><span class="n">get_provider_context</span><span class="p">()</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">mgmt_ip</span><span class="p">)</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">get_context</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">],</span> <span class="n">response</span><span class="p">[</span><span class="s">&#39;context&#39;</span><span class="p">]</span>
-    <span class="k">except</span> <span class="n">CosmoManagerRestCallError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="k">except</span> <span class="n">CloudifyClientError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">lgr</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s">&#39;Failed to get provider context from server: {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
             <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)))</span>
 
@@ -1176,10 +1205,11 @@
             <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">management_ip</span><span class="p">))</span>
 
         <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Services information:&#39;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">status_result</span><span class="o">.</span><span class="n">services</span><span class="p">:</span>
+
+        <span class="k">for</span> <span class="n">service</span> <span class="ow">in</span> <span class="n">status_result</span><span class="p">[</span><span class="s">&#39;services&#39;</span><span class="p">]:</span>
             <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\t</span><span class="s">{0}</span><span class="se">\t</span><span class="s">{1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                <span class="n">service</span><span class="o">.</span><span class="n">display_name</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">20</span><span class="p">),</span>
-                <span class="n">service</span><span class="o">.</span><span class="n">instances</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;state&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="n">service</span><span class="o">.</span><span class="n">instances</span> <span class="k">else</span>
+                <span class="n">service</span><span class="p">[</span><span class="s">&#39;display_name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">20</span><span class="p">),</span>
+                <span class="n">service</span><span class="p">[</span><span class="s">&#39;instances&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s">&#39;state&#39;</span><span class="p">]</span> <span class="k">if</span> <span class="s">&#39;instances&#39;</span> <span class="ow">in</span> <span class="n">service</span> <span class="k">else</span>
                 <span class="s">&#39;Unknown&#39;</span><span class="p">))</span>
         <span class="k">return</span> <span class="bp">True</span>
     <span class="k">else</span><span class="p">:</span>
@@ -1192,8 +1222,8 @@
 <span class="k">def</span> <span class="nf">_get_management_server_status</span><span class="p">(</span><span class="n">management_ip</span><span class="p">):</span>
     <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">status</span><span class="p">()</span>
-    <span class="k">except</span> <span class="n">CosmoManagerRestCallError</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">client</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">get_status</span><span class="p">()</span>
+    <span class="k">except</span> <span class="n">CloudifyClientError</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">None</span>
 
 
@@ -1210,11 +1240,11 @@
         <span class="k">raise</span> <span class="n">CosmoCliError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">verbosity</span> <span class="k">else</span> <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">response</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">management_ip</span><span class="p">)</span>\
-            <span class="o">.</span><span class="n">get_provider_context</span><span class="p">()</span>
+        <span class="n">response</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span>
+            <span class="n">args</span><span class="o">.</span><span class="n">management_ip</span><span class="p">)</span><span class="o">.</span><span class="n">manager</span><span class="o">.</span><span class="n">get_context</span><span class="p">()</span>
         <span class="n">provider_name</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s">&#39;name&#39;</span><span class="p">]</span>
         <span class="n">provider_context</span> <span class="o">=</span> <span class="n">response</span><span class="p">[</span><span class="s">&#39;context&#39;</span><span class="p">]</span>
-    <span class="k">except</span> <span class="n">CosmoManagerRestCallError</span><span class="p">:</span>
+    <span class="k">except</span> <span class="n">CloudifyClientError</span><span class="p">:</span>
         <span class="n">provider_name</span> <span class="o">=</span> <span class="bp">None</span>
         <span class="n">provider_context</span> <span class="o">=</span> <span class="bp">None</span>
 
@@ -1238,19 +1268,18 @@
 
 <span class="k">def</span> <span class="nf">_list_blueprints</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="n">management_ip</span> <span class="o">=</span> <span class="n">_get_management_server_ip</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-    <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;querying blueprints list from management &#39;</span>
-             <span class="s">&#39;server {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">management_ip</span><span class="p">))</span>
     <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
-    <span class="n">blueprints_list</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_blueprints</span><span class="p">()</span>
 
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">blueprints_list</span><span class="p">:</span>
-        <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;There are no blueprints available on the &#39;</span>
-                 <span class="s">&#39;management server&#39;</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Blueprints:&#39;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">blueprint_state</span> <span class="ow">in</span> <span class="n">blueprints_list</span><span class="p">:</span>
-            <span class="n">blueprint_id</span> <span class="o">=</span> <span class="n">blueprint_state</span><span class="o">.</span><span class="n">id</span>
-            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\t</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">blueprint_id</span><span class="p">)</span>
+    <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Getting blueprints list... [manager={0}]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">management_ip</span><span class="p">))</span>
+
+    <span class="n">pt</span> <span class="o">=</span> <span class="n">formatting</span><span class="o">.</span><span class="n">table</span><span class="p">([</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="s">&#39;created_at&#39;</span><span class="p">,</span> <span class="s">&#39;updated_at&#39;</span><span class="p">],</span>
+                          <span class="n">data</span><span class="o">=</span><span class="n">client</span><span class="o">.</span><span class="n">blueprints</span><span class="o">.</span><span class="n">list</span><span class="p">())</span>
+
+    <span class="n">_output_table</span><span class="p">(</span><span class="s">&#39;Blueprints:&#39;</span><span class="p">,</span> <span class="n">pt</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_output_table</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">table</span><span class="p">):</span>
+    <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;{0}{1}{0}{2}{0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">linesep</span><span class="p">,</span> <span class="n">title</span><span class="p">,</span> <span class="n">table</span><span class="p">))</span>
 
 
 <span class="k">def</span> <span class="nf">_delete_blueprint</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
@@ -1261,7 +1290,7 @@
         <span class="s">&#39;Deleting blueprint {0} from management server {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
             <span class="n">blueprint_id</span><span class="p">,</span> <span class="n">management_ip</span><span class="p">))</span>
     <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
-    <span class="n">client</span><span class="o">.</span><span class="n">delete_blueprint</span><span class="p">(</span><span class="n">blueprint_id</span><span class="p">)</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">blueprints</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">blueprint_id</span><span class="p">)</span>
     <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Deleted blueprint successfully&quot;</span><span class="p">)</span>
 
 
@@ -1274,7 +1303,7 @@
         <span class="s">&#39;Deleting deployment {0} from management server {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
             <span class="n">deployment_id</span><span class="p">,</span> <span class="n">management_ip</span><span class="p">))</span>
     <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
-    <span class="n">client</span><span class="o">.</span><span class="n">delete_deployment</span><span class="p">(</span><span class="n">deployment_id</span><span class="p">,</span> <span class="n">ignore_live_nodes</span><span class="p">)</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">deployments</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">deployment_id</span><span class="p">,</span> <span class="n">ignore_live_nodes</span><span class="p">)</span>
     <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Deleted deployment successfully&quot;</span><span class="p">)</span>
 
 
@@ -1294,11 +1323,9 @@
         <span class="s">&#39;Uploading blueprint {0} to management server {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
             <span class="n">blueprint_path</span><span class="p">,</span> <span class="n">management_ip</span><span class="p">))</span>
     <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
-    <span class="n">blueprint_state</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">publish_blueprint</span><span class="p">(</span><span class="n">blueprint_path</span><span class="p">,</span> <span class="n">blueprint_id</span><span class="p">)</span>
-
+    <span class="n">blueprint</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">blueprints</span><span class="o">.</span><span class="n">upload</span><span class="p">(</span><span class="n">blueprint_path</span><span class="p">,</span> <span class="n">blueprint_id</span><span class="p">)</span>
     <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="s">&quot;Uploaded blueprint, blueprint&#39;s id is: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-            <span class="n">blueprint_state</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
+        <span class="s">&quot;Uploaded blueprint, blueprint&#39;s id is: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">blueprint</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
 
 
 <span class="k">def</span> <span class="nf">_create_deployment</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
@@ -1309,10 +1336,9 @@
     <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Creating new deployment from blueprint {0} at &#39;</span>
              <span class="s">&#39;management server {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">blueprint_id</span><span class="p">,</span> <span class="n">management_ip</span><span class="p">))</span>
     <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
-    <span class="n">deployment</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">create_deployment</span><span class="p">(</span><span class="n">blueprint_id</span><span class="p">,</span> <span class="n">deployment_id</span><span class="p">)</span>
+    <span class="n">deployment</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">deployments</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">blueprint_id</span><span class="p">,</span> <span class="n">deployment_id</span><span class="p">)</span>
     <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="s">&quot;Deployment created, deployment&#39;s id is: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-            <span class="n">deployment</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
+        <span class="s">&quot;Deployment created, deployment&#39;s id is: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">deployment</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
 
 
 <span class="k">def</span> <span class="nf">_create_event_message_prefix</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
@@ -1353,9 +1379,9 @@
     <span class="k">return</span> <span class="n">default_events_logger</span>
 
 
-<span class="k">def</span> <span class="nf">_execute_deployment_operation</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">_execute_deployment_workflow</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="n">management_ip</span> <span class="o">=</span> <span class="n">_get_management_server_ip</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-    <span class="n">operation</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">operation</span>
+    <span class="n">workflow</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">workflow</span>
     <span class="n">deployment_id</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">deployment_id</span>
     <span class="n">timeout</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">timeout</span>
     <span class="n">force</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">force</span>
@@ -1363,38 +1389,62 @@
 
     <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Executing workflow &#39;{0}&#39; on deployment &#39;{1}&#39; at&quot;</span>
              <span class="s">&quot; management server {2} [timeout={3} seconds]&quot;</span>
-             <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">deployment_id</span><span class="p">,</span> <span class="n">management_ip</span><span class="p">,</span>
+             <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">workflow</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">deployment_id</span><span class="p">,</span> <span class="n">management_ip</span><span class="p">,</span>
                      <span class="n">timeout</span><span class="p">))</span>
 
     <span class="n">events_logger</span> <span class="o">=</span> <span class="n">_get_events_logger</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-    <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
 
     <span class="n">events_message</span> <span class="o">=</span> <span class="s">&quot;* Run &#39;cfy events --include-logs &quot;</span>\
                      <span class="s">&quot;--execution-id {0}&#39; for retrieving the &quot;</span>\
                      <span class="s">&quot;execution&#39;s events/logs&quot;</span>
-
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">execution_id</span><span class="p">,</span> <span class="n">error</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">execute_deployment</span><span class="p">(</span>
-            <span class="n">deployment_id</span><span class="p">,</span>
-            <span class="n">operation</span><span class="p">,</span>
-            <span class="n">events_logger</span><span class="p">,</span>
-            <span class="n">include_logs</span><span class="o">=</span><span class="n">include_logs</span><span class="p">,</span>
-            <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
-            <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">error</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Finished executing workflow &#39;{0}&#39; on deployment&quot;</span>
-                     <span class="s">&quot;&#39;{1}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">deployment_id</span><span class="p">))</span>
-            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">events_message</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">execution_id</span><span class="p">))</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">execution</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">deployments</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">deployment_id</span><span class="p">,</span>
+                                                   <span class="n">workflow</span><span class="p">,</span>
+                                                   <span class="n">force</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">CreateDeploymentInProgressError</span><span class="p">:</span>
+            <span class="c"># wait for deployment creation workflow to end</span>
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Deployment creation is in progress!&#39;</span><span class="p">)</span>
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Waiting for deployment &#39;</span>
+                     <span class="s">&#39;creation workflow execution to finish...&#39;</span><span class="p">)</span>
+            <span class="n">now</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">wait_for_execution</span><span class="p">(</span><span class="n">client</span><span class="p">,</span>
+                               <span class="n">deployment_id</span><span class="p">,</span>
+                               <span class="n">get_deployment_creation_execution</span><span class="p">(</span>
+                                   <span class="n">client</span><span class="p">,</span> <span class="n">deployment_id</span><span class="p">),</span>
+                               <span class="n">events_handler</span><span class="o">=</span><span class="n">events_logger</span><span class="p">,</span>
+                               <span class="n">include_logs</span><span class="o">=</span><span class="n">include_logs</span><span class="p">,</span>
+                               <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+            <span class="n">remaining_timeout</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">now</span>
+            <span class="n">timeout</span> <span class="o">-=</span> <span class="n">remaining_timeout</span>
+            <span class="c"># try to execute user specified workflow</span>
+            <span class="n">execution</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">deployments</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">deployment_id</span><span class="p">,</span>
+                                                   <span class="n">workflow</span><span class="p">,</span>
+                                                   <span class="n">force</span><span class="p">)</span>
+
+        <span class="n">execution</span> <span class="o">=</span> <span class="n">wait_for_execution</span><span class="p">(</span><span class="n">client</span><span class="p">,</span>
+                                       <span class="n">deployment_id</span><span class="p">,</span>
+                                       <span class="n">execution</span><span class="p">,</span>
+                                       <span class="n">events_handler</span><span class="o">=</span><span class="n">events_logger</span><span class="p">,</span>
+                                       <span class="n">include_logs</span><span class="o">=</span><span class="n">include_logs</span><span class="p">,</span>
+                                       <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">execution</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
             <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Execution of workflow &#39;{0}&#39; for deployment &quot;</span>
-                     <span class="s">&quot;&#39;{1}&#39; failed. &quot;</span>
-                     <span class="s">&quot;[error={2}]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">deployment_id</span><span class="p">,</span> <span class="n">error</span><span class="p">))</span>
-            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">events_message</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">execution_id</span><span class="p">))</span>
+                     <span class="s">&quot;&#39;{1}&#39; failed. [error={2}]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">workflow</span><span class="p">,</span>
+                                                        <span class="n">deployment_id</span><span class="p">,</span>
+                                                        <span class="n">execution</span><span class="o">.</span><span class="n">error</span><span class="p">))</span>
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">events_message</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">execution</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
             <span class="k">raise</span> <span class="n">SuppressedCosmoCliError</span><span class="p">()</span>
-    <span class="k">except</span> <span class="n">CosmoManagerRestCallTimeoutError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Finished executing workflow &#39;{0}&#39; on deployment&quot;</span>
+                     <span class="s">&quot;&#39;{1}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">workflow</span><span class="p">,</span> <span class="n">deployment_id</span><span class="p">))</span>
+            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">events_message</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">execution</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
+    <span class="k">except</span> <span class="n">ExecutionTimeoutError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
         <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;Execution of workflow &#39;{0}&#39; for deployment &#39;{1}&#39; timed out. &quot;</span>
                  <span class="s">&quot;* Run &#39;cfy executions cancel --execution-id {2}&#39; to cancel&quot;</span>
-                 <span class="s">&quot; the running workflow.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">operation</span><span class="p">,</span> <span class="n">deployment_id</span><span class="p">,</span>
+                 <span class="s">&quot; the running workflow.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">workflow</span><span class="p">,</span>
+                                                 <span class="n">deployment_id</span><span class="p">,</span>
                                                  <span class="n">e</span><span class="o">.</span><span class="n">execution_id</span><span class="p">))</span>
         <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">events_message</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">e</span><span class="o">.</span><span class="n">execution_id</span><span class="p">))</span>
         <span class="k">raise</span> <span class="n">SuppressedCosmoCliError</span><span class="p">()</span>
@@ -1405,66 +1455,83 @@
 <span class="k">def</span> <span class="nf">_list_blueprint_deployments</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="n">blueprint_id</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">blueprint_id</span>
     <span class="n">management_ip</span> <span class="o">=</span> <span class="n">_get_management_server_ip</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
-
-    <span class="n">message</span> <span class="o">=</span> <span class="s">&#39;Querying deployments list from management server {0}&#39;</span>\
-              <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">blueprint_id</span><span class="p">:</span>
-        <span class="n">message</span> <span class="o">+=</span> <span class="s">&#39; for blueprint {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">blueprint_id</span><span class="p">)</span>
-    <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
-
     <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
-    <span class="n">deployments</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_deployments</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">blueprint_id</span><span class="p">:</span>
+        <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Getting deployments list for blueprint: &#39;</span>
+                 <span class="s">&#39;</span><span class="se">\&#39;</span><span class="s">{0}</span><span class="se">\&#39;</span><span class="s">... [manager={1}]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">blueprint_id</span><span class="p">,</span>
+                                                   <span class="n">management_ip</span><span class="p">))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Getting deployments list... &#39;</span>
+                 <span class="s">&#39;[manager={0}]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">management_ip</span><span class="p">))</span>
+    <span class="n">deployments</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">deployments</span><span class="o">.</span><span class="n">list</span><span class="p">()</span>
     <span class="k">if</span> <span class="n">blueprint_id</span><span class="p">:</span>
         <span class="n">deployments</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">deployment</span><span class="p">:</span>
-                             <span class="n">deployment</span><span class="o">.</span><span class="n">blueprintId</span> <span class="o">==</span> <span class="n">blueprint_id</span><span class="p">,</span>
+                             <span class="n">deployment</span><span class="p">[</span><span class="s">&#39;blueprintId&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">blueprint_id</span><span class="p">,</span>
                              <span class="n">deployments</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">deployments</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">blueprint_id</span><span class="p">:</span>
-            <span class="n">suffix</span> <span class="o">=</span> <span class="s">&#39;for blueprint {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">blueprint_id</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">suffix</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
-        <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;There are no deployments on the management server {0}&#39;</span>
-                 <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">suffix</span><span class="p">))</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Deployments:&#39;</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">deployment</span> <span class="ow">in</span> <span class="n">deployments</span><span class="p">:</span>
-            <span class="n">deployment_id</span> <span class="o">=</span> <span class="n">deployment</span><span class="o">.</span><span class="n">id</span>
-            <span class="k">if</span> <span class="n">blueprint_id</span><span class="p">:</span>
-                <span class="n">blueprint_str</span> <span class="o">=</span> <span class="s">&#39;&#39;</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">blueprint_str</span> <span class="o">=</span> <span class="s">&#39; [Blueprint: {0}]&#39;</span> \
-                    <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">deployment</span><span class="o">.</span><span class="n">blueprintId</span><span class="p">)</span>
-            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s">&#39;</span><span class="se">\t</span><span class="s">&#39;</span> <span class="o">+</span> <span class="n">deployment_id</span> <span class="o">+</span> <span class="n">blueprint_str</span><span class="p">)</span>
+    <span class="n">pt</span> <span class="o">=</span> <span class="n">formatting</span><span class="o">.</span><span class="n">table</span><span class="p">([</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="s">&#39;blueprint_id&#39;</span><span class="p">,</span> <span class="s">&#39;created_at&#39;</span><span class="p">,</span> <span class="s">&#39;updated_at&#39;</span><span class="p">],</span>
+                          <span class="n">deployments</span><span class="p">)</span>
+    <span class="n">_output_table</span><span class="p">(</span><span class="s">&#39;Deployments:&#39;</span><span class="p">,</span> <span class="n">pt</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_list_workflows</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="n">management_ip</span> <span class="o">=</span> <span class="n">_get_management_server_ip</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
     <span class="n">deployment_id</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">deployment_id</span>
-
-    <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="s">&#39;Querying workflows list from management server {0} for &#39;</span>
-        <span class="s">&#39;deployment {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">management_ip</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">deployment_id</span><span class="p">))</span>
     <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
-    <span class="n">workflow_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">workflow</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">workflow</span> <span class="ow">in</span>
-                      <span class="n">client</span><span class="o">.</span><span class="n">list_workflows</span><span class="p">(</span><span class="n">deployment_id</span><span class="p">)</span><span class="o">.</span><span class="n">workflows</span><span class="p">]</span>
-    <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;deployments workflows:&quot;</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">workflow_names</span><span class="p">:</span>
-        <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&quot;</span><span class="se">\t</span><span class="s">{0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+    <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Getting workflows list for deployment: &#39;</span>
+             <span class="s">&#39;</span><span class="se">\&#39;</span><span class="s">{0}</span><span class="se">\&#39;</span><span class="s">... [manager={1}]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">deployment_id</span><span class="p">,</span> <span class="n">management_ip</span><span class="p">))</span>
+
+    <span class="n">workflows</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">deployments</span><span class="o">.</span><span class="n">list_workflows</span><span class="p">(</span><span class="n">deployment_id</span><span class="p">)</span>
+
+    <span class="n">blueprint_id</span> <span class="o">=</span> <span class="n">workflows</span><span class="p">[</span><span class="s">&#39;blueprintId&#39;</span><span class="p">]</span> <span class="k">if</span> \
+        <span class="s">&#39;blueprintId&#39;</span> <span class="ow">in</span> <span class="n">workflows</span> <span class="k">else</span> <span class="bp">None</span>
+    <span class="n">deployment_id</span> <span class="o">=</span> <span class="n">workflows</span><span class="p">[</span><span class="s">&#39;deploymentId&#39;</span><span class="p">]</span> <span class="k">if</span> \
+        <span class="s">&#39;deploymentId&#39;</span> <span class="ow">in</span> <span class="n">workflows</span> <span class="k">else</span> <span class="bp">None</span>
+
+    <span class="n">pt</span> <span class="o">=</span> <span class="n">formatting</span><span class="o">.</span><span class="n">table</span><span class="p">([</span><span class="s">&#39;blueprint_id&#39;</span><span class="p">,</span> <span class="s">&#39;deployment_id&#39;</span><span class="p">,</span>
+                           <span class="s">&#39;name&#39;</span><span class="p">,</span> <span class="s">&#39;created_at&#39;</span><span class="p">],</span>
+                          <span class="n">data</span><span class="o">=</span><span class="n">workflows</span><span class="o">.</span><span class="n">workflows</span><span class="p">,</span>
+                          <span class="n">defaults</span><span class="o">=</span><span class="p">{</span><span class="s">&#39;blueprint_id&#39;</span><span class="p">:</span> <span class="n">blueprint_id</span><span class="p">,</span>
+                                    <span class="s">&#39;deployment_id&#39;</span><span class="p">:</span> <span class="n">deployment_id</span><span class="p">})</span>
+
+    <span class="n">_output_table</span><span class="p">(</span><span class="s">&#39;Workflows:&#39;</span><span class="p">,</span> <span class="n">pt</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_cancel_execution</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="n">management_ip</span> <span class="o">=</span> <span class="n">_get_management_server_ip</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
     <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
     <span class="n">execution_id</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">execution_id</span>
+    <span class="n">force</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">force</span>
     <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="s">&#39;Canceling execution {0} on management server {1}&#39;</span>
-        <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">execution_id</span><span class="p">,</span> <span class="n">management_ip</span><span class="p">))</span>
-    <span class="n">client</span><span class="o">.</span><span class="n">cancel_execution</span><span class="p">(</span><span class="n">execution_id</span><span class="p">)</span>
+        <span class="s">&#39;{0}Cancelling execution {1} on management server {2}&#39;</span>
+        <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39;Force-&#39;</span> <span class="k">if</span> <span class="n">force</span> <span class="k">else</span> <span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">execution_id</span><span class="p">,</span> <span class="n">management_ip</span><span class="p">))</span>
+    <span class="n">client</span><span class="o">.</span><span class="n">executions</span><span class="o">.</span><span class="n">cancel</span><span class="p">(</span><span class="n">execution_id</span><span class="p">,</span> <span class="n">force</span><span class="p">)</span>
     <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="s">&#39;Cancelled execution {0} on management server {1}&#39;</span>
+        <span class="s">&#39;A cancel request for execution {0} has been sent to management &#39;</span>
+        <span class="s">&quot;server {1}. To track the execution&#39;s status, use:</span><span class="se">\n</span><span class="s">&quot;</span>
+        <span class="s">&quot;cfy executions get {0}&quot;</span>
         <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">execution_id</span><span class="p">,</span> <span class="n">management_ip</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_get_execution</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+    <span class="n">management_ip</span> <span class="o">=</span> <span class="n">_get_management_server_ip</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
+    <span class="n">execution_id</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">execution_id</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Getting execution: &#39;</span>
+                 <span class="s">&#39;</span><span class="se">\&#39;</span><span class="s">{0}</span><span class="se">\&#39;</span><span class="s"> [manager={1}]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">execution_id</span><span class="p">,</span> <span class="n">management_ip</span><span class="p">))</span>
+        <span class="n">execution</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">executions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">execution_id</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">CloudifyClientError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">404</span><span class="p">:</span>
+            <span class="k">raise</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;Execution &#39;{0}&#39; not found on management server&quot;</span>
+               <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">execution_id</span><span class="p">))</span>
+        <span class="n">flgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">CosmoCliError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">verbosity</span> <span class="k">else</span> <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="n">_print_executions</span><span class="p">([</span><span class="n">execution</span><span class="p">])</span>
 
 
 <span class="k">def</span> <span class="nf">_list_deployment_executions</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
@@ -1472,34 +1539,26 @@
     <span class="n">management_ip</span> <span class="o">=</span> <span class="n">_get_management_server_ip</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
     <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
     <span class="n">deployment_id</span> <span class="o">=</span> <span class="n">args</span><span class="o">.</span><span class="n">deployment_id</span>
-    <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-        <span class="s">&#39;Querying executions list from management server {0} for &#39;</span>
-        <span class="s">&#39;deployment {1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">management_ip</span><span class="p">,</span> <span class="n">deployment_id</span><span class="p">))</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">executions</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">list_deployment_executions</span><span class="p">(</span><span class="n">deployment_id</span><span class="p">)</span>
-    <span class="k">except</span> <span class="n">CosmoManagerRestCallHTTPError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+        <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Getting executions list for deployment: &#39;</span>
+                 <span class="s">&#39;</span><span class="se">\&#39;</span><span class="s">{0}</span><span class="se">\&#39;</span><span class="s"> [manager={1}]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">deployment_id</span><span class="p">,</span> <span class="n">management_ip</span><span class="p">))</span>
+        <span class="n">executions</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">executions</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="n">deployment_id</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">CloudifyClientError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">e</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">404</span><span class="p">:</span>
             <span class="k">raise</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&#39;Deployment {0} does not exist on management server&#39;</span>
                <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">deployment_id</span><span class="p">))</span>
         <span class="n">flgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
         <span class="k">raise</span> <span class="n">CosmoCliError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_verbose_output</span> <span class="k">else</span> <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">executions</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-        <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s">&#39;There are no executions on the &#39;</span>
-            <span class="s">&#39;management server for &#39;</span>
-            <span class="s">&#39;deployment {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">deployment_id</span><span class="p">))</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s">&#39;Executions for deployment {0}:&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">deployment_id</span><span class="p">))</span>
-        <span class="k">for</span> <span class="n">execution</span> <span class="ow">in</span> <span class="n">executions</span><span class="p">:</span>
-            <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="s">&#39;</span><span class="se">\t</span><span class="s">{0}{1}</span><span class="se">\t</span><span class="s">[deployment_id={2}, blueprint_id={3}]&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="n">execution</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
-                    <span class="s">&#39;</span><span class="se">\t</span><span class="s">{0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">execution</span><span class="o">.</span><span class="n">status</span><span class="p">),</span>
-                    <span class="n">execution</span><span class="o">.</span><span class="n">deploymentId</span><span class="p">,</span>
-                    <span class="n">execution</span><span class="o">.</span><span class="n">blueprintId</span><span class="p">))</span>
+    <span class="n">_print_executions</span><span class="p">(</span><span class="n">executions</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_print_executions</span><span class="p">(</span><span class="n">executions</span><span class="p">):</span>
+    <span class="n">pt</span> <span class="o">=</span> <span class="n">formatting</span><span class="o">.</span><span class="n">table</span><span class="p">([</span><span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="s">&#39;workflow_id&#39;</span><span class="p">,</span> <span class="s">&#39;status&#39;</span><span class="p">,</span>
+                           <span class="s">&#39;created_at&#39;</span><span class="p">,</span> <span class="s">&#39;error&#39;</span><span class="p">],</span>
+                          <span class="n">executions</span><span class="p">)</span>
+    <span class="n">_output_table</span><span class="p">(</span><span class="s">&#39;Executions:&#39;</span><span class="p">,</span> <span class="n">pt</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_get_events</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
@@ -1511,13 +1570,13 @@
                                          <span class="n">args</span><span class="o">.</span><span class="n">include_logs</span><span class="p">))</span>
     <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">events</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_all_execution_events</span><span class="p">(</span>
-            <span class="n">args</span><span class="o">.</span><span class="n">execution_id</span><span class="p">,</span>
-            <span class="n">include_logs</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">include_logs</span><span class="p">)</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="n">get_all_execution_events</span><span class="p">(</span><span class="n">client</span><span class="p">,</span>
+                                          <span class="n">args</span><span class="o">.</span><span class="n">execution_id</span><span class="p">,</span>
+                                          <span class="n">args</span><span class="o">.</span><span class="n">include_logs</span><span class="p">)</span>
         <span class="n">events_logger</span> <span class="o">=</span> <span class="n">_get_events_logger</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
         <span class="n">events_logger</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
         <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">Total events: {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)))</span>
-    <span class="k">except</span> <span class="n">CosmoManagerRestCallHTTPError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
+    <span class="k">except</span> <span class="n">CloudifyClientError</span><span class="p">,</span> <span class="n">e</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">404</span><span class="p">:</span>
             <span class="k">raise</span>
         <span class="n">msg</span> <span class="o">=</span> <span class="p">(</span><span class="s">&quot;Execution &#39;{0}&#39; not found on management server&quot;</span>
@@ -1583,6 +1642,34 @@
                                                 <span class="s">&#39;({1}) &#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)))</span>
 
 
+<span class="k">def</span> <span class="nf">_run_ssh</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">is_verbose_output</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="n">ssh_path</span> <span class="o">=</span> <span class="n">find_executable</span><span class="p">(</span><span class="s">&#39;ssh&#39;</span><span class="p">)</span>
+    <span class="n">lgr</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;SSH executable path: {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ssh_path</span> <span class="ow">or</span> <span class="s">&#39;Not found&#39;</span><span class="p">))</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ssh_path</span> <span class="ow">and</span> <span class="n">system</span><span class="p">()</span> <span class="o">==</span> <span class="s">&#39;Windows&#39;</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">messages</span><span class="o">.</span><span class="n">SSH_WIN_NOT_FOUND</span>
+        <span class="k">raise</span> <span class="n">CosmoCliError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_verbose_output</span> <span class="k">else</span> <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="ow">not</span> <span class="n">ssh_path</span><span class="p">:</span>
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">messages</span><span class="o">.</span><span class="n">SSH_LINUX_NOT_FOUND</span>
+        <span class="k">raise</span> <span class="n">CosmoCliError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span> <span class="k">if</span> <span class="n">is_verbose_output</span> <span class="k">else</span> <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">_ssh</span><span class="p">(</span><span class="n">ssh_path</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_ssh</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+    <span class="n">command</span> <span class="o">=</span> <span class="p">[</span><span class="n">path</span><span class="p">]</span>
+    <span class="n">command</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;{0}@{1}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_get_mgmt_user</span><span class="p">(),</span>
+                                    <span class="n">_get_management_server_ip</span><span class="p">(</span><span class="n">args</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">verbosity</span><span class="p">:</span>
+        <span class="n">command</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s">&#39;-v&#39;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="o">.</span><span class="n">ssh_plain_mode</span><span class="p">:</span>
+        <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s">&#39;-i&#39;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">_get_mgmt_key</span><span class="p">())])</span>
+    <span class="k">if</span> <span class="n">args</span><span class="o">.</span><span class="n">ssh_command</span><span class="p">:</span>
+        <span class="n">command</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s">&#39;--&#39;</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">ssh_command</span><span class="p">])</span>
+    <span class="n">lgr</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s">&#39;executing command: {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">command</span><span class="p">)))</span>
+    <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s">&#39;Trying to connect...&#39;</span><span class="p">)</span>
+    <span class="n">call</span><span class="p">(</span><span class="n">command</span><span class="p">)</span>
+
+
 <span class="k">def</span> <span class="nf">_set_cli_except_hook</span><span class="p">():</span>
     <span class="n">old_excepthook</span> <span class="o">=</span> <span class="n">sys</span><span class="o">.</span><span class="n">excepthook</span>
 
@@ -1592,7 +1679,7 @@
             <span class="k">if</span> <span class="n">output_level</span> <span class="o">&lt;=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">:</span>
                 <span class="k">print</span><span class="p">(</span><span class="s">&quot;Stack trace:&quot;</span><span class="p">)</span>
                 <span class="n">traceback</span><span class="o">.</span><span class="n">print_tb</span><span class="p">(</span><span class="n">the_traceback</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="n">CosmoManagerRestCallError</span><span class="p">:</span>
+        <span class="k">elif</span> <span class="nb">type</span> <span class="o">==</span> <span class="n">CloudifyClientError</span><span class="p">:</span>
             <span class="n">lgr</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s">&quot;Failed making a call to REST service: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                       <span class="nb">str</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span>
             <span class="k">if</span> <span class="n">output_level</span> <span class="o">&lt;=</span> <span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">:</span>
@@ -1631,9 +1718,8 @@
 
 <span class="k">def</span> <span class="nf">_download_blueprint</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
     <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">messages</span><span class="o">.</span><span class="n">DOWNLOADING_BLUEPRINT</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">blueprint_id</span><span class="p">))</span>
-    <span class="n">rest_client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">_get_management_server_ip</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
-    <span class="n">target_file</span> <span class="o">=</span> <span class="n">rest_client</span><span class="o">.</span><span class="n">download_blueprint</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">blueprint_id</span><span class="p">,</span>
-                                                 <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+    <span class="n">client</span> <span class="o">=</span> <span class="n">_get_rest_client</span><span class="p">(</span><span class="n">_get_management_server_ip</span><span class="p">(</span><span class="n">args</span><span class="p">))</span>
+    <span class="n">target_file</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">blueprints</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">blueprint_id</span><span class="p">,</span> <span class="n">args</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
     <span class="n">lgr</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">messages</span><span class="o">.</span><span class="n">DOWNLOADING_BLUEPRINT_SUCCEEDED</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">args</span><span class="o">.</span><span class="n">blueprint_id</span><span class="p">,</span>
         <span class="n">target_file</span><span class="p">))</span>
@@ -1674,7 +1760,7 @@
 
 
 <span class="k">def</span> <span class="nf">_get_rest_client</span><span class="p">(</span><span class="n">management_ip</span><span class="p">):</span>
-    <span class="k">return</span> <span class="n">CosmoManagerRestClient</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">CloudifyClient</span><span class="p">(</span><span class="n">management_ip</span><span class="p">)</span>
 
 
 <span class="nd">@contextmanager</span>
