@@ -682,6 +682,12 @@ def set_global_verbosity_level(is_verbose_output=False):
     # print 'level is: ' + str(lgr.getEffectiveLevel())
 
 
+class ProviderConfig(dict):
+    @property
+    def prefix_for_all_resources(self):
+        return self.get('cloudify', {}).get('prefix_for_all_resources', '')
+
+
 def _read_config(config_file_path, provider_dir, is_verbose_output=False):
 
     def _deep_merge_dictionaries(overriding_dict, overridden_dict):
@@ -726,7 +732,7 @@ def _read_config(config_file_path, provider_dir, is_verbose_output=False):
     lgr.debug('merging configs')
     merged_config = _deep_merge_dictionaries(user_config, defaults_config) \
         if user_config else defaults_config
-    return merged_config
+    return ProviderConfig(merged_config)
 
 
 def _init_cosmo(args):
@@ -882,12 +888,9 @@ def _bootstrap_cosmo(args):
     provider_config = _read_config(args.config_file_path,
                                    provider_dir,
                                    args.verbosity)
-    prefix_for_all_resources = \
-        provider_config.get('cloudify', {}).get('prefix_for_all_resources')
     lgr.info("prefix for all resources: '{0}'".
-             format(prefix_for_all_resources))
-    pm = provider.ProviderManager(provider_config, prefix_for_all_resources,
-                                  args.verbosity)
+             format(provider_config.prefix_for_all_resources))
+    pm = provider.ProviderManager(provider_config, args.verbosity)
 
     if args.skip_validations and args.validate_only:
         sys.exit('please choose one of skip-validations or '
@@ -924,8 +927,7 @@ def _bootstrap_cosmo(args):
         lgr.error('provisioning failed!')
 
     if installed:
-        _update_provider_context(prefix_for_all_resources,
-                                 provider_config, provider_context)
+        _update_provider_context(provider_config, provider_context)
 
         mgmt_ip = mgmt_ip.encode('utf-8')
 
@@ -952,8 +954,7 @@ def _bootstrap_cosmo(args):
         raise CosmoBootstrapError() if args.verbosity else sys.exit(1)
 
 
-def _update_provider_context(prefix_for_all_resources,
-                             provider_config, provider_context):
+def _update_provider_context(provider_config, provider_context):
     cloudify = provider_config.get('cloudify', {})
     agent = cloudify.get('cloudify_agent', {})
     min_workers = agent.get('min_workers', AGENT_MIN_WORKERS)
@@ -968,7 +969,7 @@ def _update_provider_context(prefix_for_all_resources,
     private_key_target_path = auto_generated.get('private_key_target_path',
                                                  AGENT_KEY_PATH)
     provider_context['cloudify'] = {
-        'prefix_for_all_resources': prefix_for_all_resources,
+        'prefix_for_all_resources': provider_config.prefix_for_all_resources,
         'cloudify_agent': {
             'min_workers': min_workers,
             'max_workers': max_workers,
@@ -1011,10 +1012,7 @@ def _teardown_cosmo(args):
     provider_config = _read_config(args.config_file_path,
                                    provider_dir,
                                    args.verbosity)
-    prefix_for_all_resources = \
-        provider_config.get('cloudify', {}).get('prefix_for_all_resources')
-    pm = provider.ProviderManager(provider_config, prefix_for_all_resources,
-                                  args.verbosity)
+    pm = provider.ProviderManager(provider_config, args.verbosity)
 
     lgr.info("tearing down {0}".format(mgmt_ip))
     with _protected_provider_call(args.verbosity):

@@ -23,7 +23,7 @@ FABRIC_SLEEPTIME = 3
 
 def update_config_at_paths(struct, paths, f):
 
-    """ Transforms "name" property at given paths using the "f" function.
+    """ Transforms properties at given paths using the "f" function.
     Ignores non-existing paths. """
 
     def kern(struct, path):
@@ -52,13 +52,11 @@ class BaseProviderClass(object):
     CONFIG_NAMES_TO_MODIFY = ()  # No default (empty tuple)
     CONFIG_FILES_PATHS_TO_MODIFY = ()  # No default (empty tuple)
 
-    def __init__(self, provider_config, prefix_for_all_resources,
-                 is_verbose_output):
+    def __init__(self, provider_config, is_verbose_output):
 
         set_global_verbosity_level(is_verbose_output)
         self.provider_config = provider_config
         self.is_verbose_output = is_verbose_output
-        self.prefix_for_all_resources = prefix_for_all_resources
 
     @abstractmethod
     def provision(self):
@@ -351,7 +349,7 @@ class BaseProviderClass(object):
 
     def get_names_updater(self):
         def updater(name):
-            return self.prefix_for_all_resources + name
+            return self.provider_config.prefix_for_all_resources + name
         return updater
 
     def get_files_names_updater(self, updater):
