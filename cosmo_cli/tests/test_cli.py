@@ -44,6 +44,7 @@ class SomeProvider(BaseProviderClass):
     teardown = mock.Mock()
     validate = mock.Mock()
 
+
 class CliTest(unittest.TestCase):
 
     @classmethod
