@@ -462,7 +462,7 @@ def _parse_args(args):
     workflows_subparsers = parser_workflows.add_subparsers()
     parser_workflows_get = workflows_subparsers.add_parser(
         'get',
-        help='command for getting a workflow by its name'
+        help='command for getting a workflow by its name and deployment'
     )
     _add_deployment_id_argument_to_parser(
         parser_workflows_get,
