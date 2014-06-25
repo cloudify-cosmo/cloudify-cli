@@ -1499,6 +1499,7 @@ def _get_workflow(args):
     lgr.info('\tOptional Parameters:')
     for param in optional_params:
         lgr.info('\t\t{0}: \t{1}'.format(param.keys()[0], param.values()[0]))
+    lgr.info('')
 
 
 def _get_execution(args):
@@ -1524,6 +1525,7 @@ def _get_execution(args):
     lgr.info('Execution Parameters:')
     for param_name, param_value in execution.parameters.iteritems():
         lgr.info('\t{0}: \t{1}'.format(param_name, param_value))
+    lgr.info('')
 
 
 def _list_deployment_executions(args):
