@@ -1102,25 +1102,25 @@ def _get_provider_name_and_context(mgmt_ip, is_verbose_output=False):
 def _status(args):
     management_ip = _get_management_server_ip(args)
     lgr.info(
-        'querying management server {0}'.format(management_ip))
+        'Getting management services status... [ip={0}]'.format(management_ip))
 
     status_result = _get_management_server_status(management_ip)
     if status_result:
-        lgr.info(
-            "REST service at management server {0} is up and running"
-            .format(management_ip))
-
-        lgr.info('Services information:')
-
+        services = []
         for service in status_result['services']:
-            lgr.info('\t{0}\t{1}'.format(
-                service['display_name'].ljust(20),
-                service['instances'][0]['state'] if 'instances' in service else
-                'Unknown'))
+            services.append({
+                'service': service['display_name'].ljust(30),
+                'status': service['instances'][0]['state']
+                if 'instances' in service else 'unknown'
+            })
+        pt = formatting.table(['service', 'status'],
+                              data=services)
+        _output_table('Services:', pt)
+
         return True
     else:
         lgr.info(
-            "REST service at management server {0} is not responding"
+            "REST service at management server {0} is not responding!"
             .format(management_ip))
         return False
 
