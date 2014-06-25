@@ -405,6 +405,30 @@ class CliTest(unittest.TestCase):
         except CloudifyClientError, ex:
             self.assertTrue(expected_error in str(ex))
 
+    def test_workflows_get(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy workflows get -w mock_workflow -d dep_id -t "
+                      "127.0.0.1")
+        self._run_cli("cfy workflows get "
+                      "--workflow-id mock_workflow -d dep_id -t 127.0.0.1")
+
+    def test_workflows_get_nonexistent_workflow(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._assert_ex("cfy workflows get -w nonexistent_workflow -d dep_id "
+                        "-t 127.0.0.1 -v",
+                        "Workflow 'nonexistent_workflow' not found on "
+                        "management server")
+
+    def test_workflows_get_nonexistent_deployment(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._assert_ex("cfy workflows get -w wf -d nonexistent-dep "
+                        "-t 127.0.0.1 -v",
+                        "Deployment 'nonexistent-dep' not found on management "
+                        "server")
+
     def test_executions_get(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()

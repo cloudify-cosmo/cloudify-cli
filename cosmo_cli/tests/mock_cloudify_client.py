@@ -36,7 +36,7 @@ class MockCloudifyClient(object):
 
     def __init__(self):
         self.blueprints = MicroMock()
-        self.deployments = MicroMock()
+        self.deployments = DeploymentsMock()
         self.executions = ExecutionsMock()
         self.events = EventsMock()
         self.manager = ManagerMock()
@@ -60,9 +60,6 @@ class MicroMock(object):
     def list(self, *args):
         return []
 
-    def list_workflows(self, deployment_id):
-        return WorkflowsMock()
-
     def delete(self, *args, **kwargs):
         pass
 
@@ -72,17 +69,10 @@ class MicroMock(object):
     def execute(self, deployment_id, operation, parameters=None, force=False):
         if operation != 'install':
             raise CloudifyClientError("operation {0} doesn't exist"
-                                      .format(operation), 500)
+                                      .format(operation), 400)
         return MicroMock()
 
     def get(self, id):
-        return []
-
-
-class WorkflowsMock(dict):
-
-    @property
-    def workflows(self):
         return []
 
 
@@ -128,7 +118,7 @@ class ExecutionsMock(object):
             'error': '',
             'id': id,
             'created_at': datetime.datetime.now(),
-            'parameters': {'key': 'value'}
+            'parameters': {}
         }
 
     def cancel(self, id, force=False):
@@ -136,3 +126,31 @@ class ExecutionsMock(object):
 
     def list(self, deployment_id):
         return []
+
+
+class DeploymentsMock(MicroMock):
+
+    def __init__(self, **kwargs):
+        super(DeploymentsMock, self).__init__(**kwargs)
+        self.blueprint_id = 'mock_blueprint_id'
+        self.workflows = {
+            'mock_workflow': {
+                'name': 'id',
+                'created_at': None,
+                'parameters': [
+                    {'test-key': 'test-value'},
+                    'test-mandatory-key',
+                    {
+                        'test-nested-key': {
+                            'key': 'val'
+                        }
+                    }
+                ]
+            }
+        }
+
+    def get(self, id):
+        if id == 'nonexistent-dep':
+            raise CloudifyClientError("deployment {0} doesn't exist"
+                                      .format('nonexistent-dep'), 404)
+        return self

@@ -344,7 +344,8 @@ def _parse_args(args):
     )
     _add_blueprint_id_argument_to_parser(
         parser_blueprints_upload,
-        "Set the id of the uploaded blueprint")
+        "Set the id of the uploaded blueprint",
+        False)
     _add_management_ip_optional_argument_to_parser(parser_blueprints_upload)
     _set_handler_for_command(parser_blueprints_upload, _upload_blueprint)
 
@@ -451,13 +452,33 @@ def _parse_args(args):
 
     _add_blueprint_id_argument_to_parser(
         parser_deployments_list,
-        'The id of a blueprint to list deployments for')
+        'The id of a blueprint to list deployments for',
+        False)
     _add_management_ip_optional_argument_to_parser(parser_deployments_list)
     _set_handler_for_command(parser_deployments_list,
                              _list_blueprint_deployments)
 
     # workflows subparser
     workflows_subparsers = parser_workflows.add_subparsers()
+    parser_workflows_get = workflows_subparsers.add_parser(
+        'get',
+        help='command for getting a workflow by its name'
+    )
+    _add_deployment_id_argument_to_parser(
+        parser_workflows_get,
+        'The id of the deployment for which the workflow belongs')
+    parser_workflows_get.add_argument(
+        '-w', '--workflow-id',
+        dest='workflow_id',
+        metavar='WORKFLOW_ID',
+        type=str,
+        required=True,
+        help='The id of the workflow to get'
+    )
+    _add_management_ip_optional_argument_to_parser(parser_workflows_get)
+    _set_handler_for_command(parser_workflows_get,
+                             _get_workflow)
+
     parser_workflows_list = workflows_subparsers.add_parser(
         'list',
         help='command for listing workflows for a deployment')
@@ -465,7 +486,7 @@ def _parse_args(args):
         parser_workflows_list,
         'The id of the deployment whose workflows to list')
     _add_management_ip_optional_argument_to_parser(parser_workflows_list)
-    _set_handler_for_command(parser_workflows_list, _list_workflows)
+    _set_handler_for_command(parser_workflows_list, _list_deployment_workflows)
 
     # Executions list sub parser
     executions_subparsers = parser_executions.add_subparsers()
@@ -616,14 +637,14 @@ def _add_management_ip_optional_argument_to_parser(parser):
     )
 
 
-def _add_blueprint_id_argument_to_parser(parser, help_message):
+def _add_blueprint_id_argument_to_parser(parser, help_message, required=True):
     parser.add_argument(
         '-b', '--blueprint-id',
         dest='blueprint_id',
         metavar='BLUEPRINT_ID',
         type=str,
         default=None,
-        required=False,
+        required=required,
         help=help_message
     )
 
@@ -1394,7 +1415,7 @@ def _list_blueprint_deployments(args):
     _output_table('Deployments:', pt)
 
 
-def _list_workflows(args):
+def _list_deployment_workflows(args):
     management_ip = _get_management_server_ip(args)
     deployment_id = args.deployment_id
     client = _get_rest_client(management_ip)
@@ -1402,18 +1423,17 @@ def _list_workflows(args):
     lgr.info('Getting workflows list for deployment: '
              '\'{0}\'... [manager={1}]'.format(deployment_id, management_ip))
 
-    workflows = client.deployments.list_workflows(deployment_id)
+    deployment = client.deployments.get(deployment_id)
+    workflows = deployment.workflows
+    _print_workflows(workflows, deployment)
 
-    blueprint_id = workflows['blueprint_id'] if \
-        'blueprint_id' in workflows else None
-    deployment_id = workflows['deployment_id'] if \
-        'deployment_id' in workflows else None
 
+def _print_workflows(workflows, deployment):
     pt = formatting.table(['blueprint_id', 'deployment_id',
-                           'name', 'created_at', 'parameters'],
-                          data=workflows.workflows,
-                          defaults={'blueprint_id': blueprint_id,
-                                    'deployment_id': deployment_id})
+                           'name', 'created_at'],
+                          data=workflows,
+                          defaults={'blueprint_id': deployment.blueprint_id,
+                                    'deployment_id': deployment.id})
 
     _output_table('Workflows:', pt)
 
@@ -1434,6 +1454,40 @@ def _cancel_execution(args):
         .format(execution_id, management_ip))
 
 
+def _get_workflow(args):
+    management_ip = _get_management_server_ip(args)
+    client = _get_rest_client(management_ip)
+    deployment_id = args.deployment_id
+    workflow_id = args.workflow_id
+
+    try:
+        lgr.info('Getting workflow '
+                 '\'{0}\' of deployment \'{1}\' [manager={2}]'
+                 .format(workflow_id, deployment_id, management_ip))
+        deployment = client.deployments.get(deployment_id)
+        workflow = next((wf for wfid, wf in deployment.workflows.iteritems()
+                         if wfid == workflow_id), None)
+        if not workflow:
+            msg = ("Workflow '{0}' not found on management server for "
+                   "deployment {1}".format(workflow_id, deployment_id))
+            flgr.error(msg)
+            raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
+    except CloudifyClientError, e:
+        if e.status_code != 404:
+            raise
+        msg = ("Deployment '{0}' not found on management server"
+               .format(deployment_id))
+        flgr.error(msg)
+        raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
+
+    _print_workflows([workflow], deployment)
+
+    # print workflow parameters
+    workflow_parameters = json.dumps(workflow.parameters)
+    lgr.info('Workflow Parameters:\n'
+             '\t{0}'.format(workflow_parameters))
+
+
 def _get_execution(args):
     management_ip = _get_management_server_ip(args)
     client = _get_rest_client(management_ip)
@@ -1452,6 +1506,11 @@ def _get_execution(args):
         raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
 
     _print_executions([execution])
+
+    # print execution parameters
+    execution_parameters = json.dumps(execution.parameters)
+    lgr.info('Execution Parameters:\n'
+             '\t{0}'.format(execution_parameters))
 
 
 def _list_deployment_executions(args):
