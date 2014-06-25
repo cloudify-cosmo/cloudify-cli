@@ -127,7 +127,8 @@ class ExecutionsMock(object):
             'blueprint_id': 'blueprint-id',
             'error': '',
             'id': id,
-            'created_at': datetime.datetime.now()
+            'created_at': datetime.datetime.now(),
+            'parameters': {'key': 'value'}
         }
 
     def cancel(self, id, force=False):
