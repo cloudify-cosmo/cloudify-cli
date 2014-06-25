@@ -1465,8 +1465,8 @@ def _get_workflow(args):
                  '\'{0}\' of deployment \'{1}\' [manager={2}]'
                  .format(workflow_id, deployment_id, management_ip))
         deployment = client.deployments.get(deployment_id)
-        workflow = next((wf for wfid, wf in deployment.workflows.iteritems()
-                         if wfid == workflow_id), None)
+        workflow = next((wf for wf in deployment.workflows if
+                         wf.name == workflow_id), None)
         if not workflow:
             msg = ("Workflow '{0}' not found on management server for "
                    "deployment {1}".format(workflow_id, deployment_id))
@@ -1483,9 +1483,22 @@ def _get_workflow(args):
     _print_workflows([workflow], deployment)
 
     # print workflow parameters
-    workflow_parameters = json.dumps(workflow.parameters)
-    lgr.info('Workflow Parameters:\n'
-             '\t{0}'.format(workflow_parameters))
+    mandatory_params = []
+    optional_params = []
+    for param in workflow.parameters:
+        if isinstance(param, basestring):
+            mandatory_params.append(param)
+        else:
+            optional_params.append(param)
+
+    lgr.info('Workflow Parameters:')
+    lgr.info('\tMandatory Parameters:')
+    for param_name in mandatory_params:
+        lgr.info('\t\t{0}'.format(param_name))
+
+    lgr.info('\tOptional Parameters:')
+    for param in optional_params:
+        lgr.info('\t\t{0}: \t{1}'.format(param.keys()[0], param.values()[0]))
 
 
 def _get_execution(args):
@@ -1508,9 +1521,9 @@ def _get_execution(args):
     _print_executions([execution])
 
     # print execution parameters
-    execution_parameters = json.dumps(execution.parameters)
-    lgr.info('Execution Parameters:\n'
-             '\t{0}'.format(execution_parameters))
+    lgr.info('Execution Parameters:')
+    for param_name, param_value in execution.parameters.iteritems():
+        lgr.info('\t{0}: \t{1}'.format(param_name, param_value))
 
 
 def _list_deployment_executions(args):
@@ -1534,7 +1547,7 @@ def _list_deployment_executions(args):
 
 
 def _print_executions(executions):
-    pt = formatting.table(['id', 'workflow_id', 'parameters', 'status',
+    pt = formatting.table(['id', 'workflow_id', 'status',
                            'created_at', 'error'],
                           executions)
     _output_table('Executions:', pt)

@@ -110,7 +110,7 @@ class ManagerMock(object):
 class ExecutionsMock(object):
 
     def get(self, id):
-        return {
+        return DictWithProperties({
             'status': 'terminated',
             'workflow_id': 'mock_wf',
             'deployment_id': 'deployment-id',
@@ -119,7 +119,7 @@ class ExecutionsMock(object):
             'id': id,
             'created_at': datetime.datetime.now(),
             'parameters': {}
-        }
+        })
 
     def cancel(self, id, force=False):
         pass
@@ -133,10 +133,10 @@ class DeploymentsMock(MicroMock):
     def __init__(self, **kwargs):
         super(DeploymentsMock, self).__init__(**kwargs)
         self.blueprint_id = 'mock_blueprint_id'
-        self.workflows = {
-            'mock_workflow': {
-                'name': 'id',
+        self.workflows = [
+            DictWithProperties({
                 'created_at': None,
+                'name': 'mock_workflow',
                 'parameters': [
                     {'test-key': 'test-value'},
                     'test-mandatory-key',
@@ -146,11 +146,23 @@ class DeploymentsMock(MicroMock):
                         }
                     }
                 ]
-            }
-        }
+            })
+        ]
 
     def get(self, id):
         if id == 'nonexistent-dep':
             raise CloudifyClientError("deployment {0} doesn't exist"
                                       .format('nonexistent-dep'), 404)
         return self
+
+
+class DictWithProperties(dict):
+    """
+    A helper class. the dictionary passed will be accessible via both
+    standard dictionary usage (['<field_name>']) as well as
+    via attributes (obj.field_name)
+    """
+
+    def __init__(self, props_dict):
+        self.update(props_dict)
+        self.__dict__ = props_dict
