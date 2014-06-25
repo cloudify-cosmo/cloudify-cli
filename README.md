@@ -328,6 +328,23 @@ going. It is the CLI that will stop waiting for it to terminate)
 - blueprint-id: the id of the blueprint to to list deployments for (Optional, lists all deployments if not provided)
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
+------
+
+**Command:** workflows get
+
+**Description:** gets a workflow by its name and deployment id. This command will also show the workflow's parameters.
+
+**Usage:** `cfy workflows get [-w, --workflow-id <workflow_id>] [-d, --deployment-id <deployment_id] [-t, --management-ip <ip>] [-v, --verbosity]`
+
+**Parameters**:
+
+- workflow_id: the id/name of the workflow to get
+- deployment_id: the id of the deployment for which the workflow belongs
+- management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
+
+**Example:** `cfy workflows get -w my-workflow -d my-deployment`
+
 
 ------
 
@@ -350,7 +367,7 @@ going. It is the CLI that will stop waiting for it to terminate)
 
 **Command:** executions get
 
-**Description:** gets an execution by its id
+**Description:** gets an execution by its id. This command will also show the execution's parameters.
 
 **Usage:** `cfy executions get [-e, --execution-id <execution_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
 
