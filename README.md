@@ -300,12 +300,14 @@ re
 
 **Description:** executes an operation on a deployment
 
-**Usage:** `cfy deployments execute <operation> [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity] [--timeout <timeout>] [--force]`
+**Usage:** `cfy deployments execute <operation> [-d, --deployment-id <deployment_id>] [-p, --parameters <parameters>] [--allow-custom-parameters] [-t, --management-ip <ip>] [-v, --verbosity] [--timeout <timeout>] [--force]`
 
 **Parameters**:
 
 - operation: the name of the operation to execute
 - deployment_id: the deployment id on which the operation should be executed
+- parameters: parameters for the workflow execution (in JSON format) (Optional)
+- allow-custom-parameters: A flag for allowing the passing of custom parameters (parameters which were not defined in the workflow's schema in the blueprint) to the execution (Optional)
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 - timeout: operation timeout in seconds (Optional, The execution itself will keep
