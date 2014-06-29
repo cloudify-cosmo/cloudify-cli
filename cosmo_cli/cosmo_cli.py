@@ -344,7 +344,8 @@ def _parse_args(args):
     )
     _add_blueprint_id_argument_to_parser(
         parser_blueprints_upload,
-        "Set the id of the uploaded blueprint")
+        "Set the id of the uploaded blueprint",
+        False)
     _add_management_ip_optional_argument_to_parser(parser_blueprints_upload)
     _set_handler_for_command(parser_blueprints_upload, _upload_blueprint)
 
@@ -420,6 +421,13 @@ def _parse_args(args):
         type=str,
         help='The workflow to execute'
     )
+    parser_deployments_execute.add_argument(
+        '-p', '--parameters',
+        metavar='PARAMETERS',
+        type=str,
+        required=False,
+        help='Parameters for the workflow execution'
+    )
     _add_deployment_id_argument_to_parser(
         parser_deployments_execute,
         'The id of the deployment to execute the operation on')
@@ -433,14 +441,10 @@ def _parse_args(args):
         help='Operation timeout in seconds (The execution itself will keep '
              'going, it is the CLI that will stop waiting for it to terminate)'
     )
-    parser_deployments_execute.add_argument(
-        '--force',
-        dest='force',
-        action='store_true',
-        default=False,
-        help='Whether the workflow should execute even if there is an ongoing'
-             ' execution for the provided deployment'
-    )
+    _add_force_optional_argument_to_parser(
+        parser_deployments_execute,
+        'Whether the workflow should execute even if there is an ongoing'
+        ' execution for the provided deployment')
     _add_management_ip_optional_argument_to_parser(parser_deployments_execute)
     _add_include_logs_argument_to_parser(parser_deployments_execute)
     _set_handler_for_command(parser_deployments_execute,
@@ -448,13 +452,33 @@ def _parse_args(args):
 
     _add_blueprint_id_argument_to_parser(
         parser_deployments_list,
-        'The id of a blueprint to list deployments for')
+        'The id of a blueprint to list deployments for',
+        False)
     _add_management_ip_optional_argument_to_parser(parser_deployments_list)
     _set_handler_for_command(parser_deployments_list,
                              _list_blueprint_deployments)
 
     # workflows subparser
     workflows_subparsers = parser_workflows.add_subparsers()
+    parser_workflows_get = workflows_subparsers.add_parser(
+        'get',
+        help='command for getting a workflow by its name and deployment'
+    )
+    _add_deployment_id_argument_to_parser(
+        parser_workflows_get,
+        'The id of the deployment for which the workflow belongs')
+    parser_workflows_get.add_argument(
+        '-w', '--workflow-id',
+        dest='workflow_id',
+        metavar='WORKFLOW_ID',
+        type=str,
+        required=True,
+        help='The id of the workflow to get'
+    )
+    _add_management_ip_optional_argument_to_parser(parser_workflows_get)
+    _set_handler_for_command(parser_workflows_get,
+                             _get_workflow)
+
     parser_workflows_list = workflows_subparsers.add_parser(
         'list',
         help='command for listing workflows for a deployment')
@@ -462,7 +486,7 @@ def _parse_args(args):
         parser_workflows_list,
         'The id of the deployment whose workflows to list')
     _add_management_ip_optional_argument_to_parser(parser_workflows_list)
-    _set_handler_for_command(parser_workflows_list, _list_workflows)
+    _set_handler_for_command(parser_workflows_list, _list_deployment_workflows)
 
     # Executions list sub parser
     executions_subparsers = parser_executions.add_subparsers()
@@ -598,6 +622,7 @@ def _add_force_optional_argument_to_parser(parser, help_message):
         '-f', '--force',
         dest='force',
         action='store_true',
+        default=False,
         help=help_message
     )
 
@@ -612,14 +637,14 @@ def _add_management_ip_optional_argument_to_parser(parser):
     )
 
 
-def _add_blueprint_id_argument_to_parser(parser, help_message):
+def _add_blueprint_id_argument_to_parser(parser, help_message, required=True):
     parser.add_argument(
         '-b', '--blueprint-id',
         dest='blueprint_id',
         metavar='BLUEPRINT_ID',
         type=str,
         default=None,
-        required=False,
+        required=required,
         help=help_message
     )
 
@@ -1116,25 +1141,25 @@ def _get_provider_name_and_context(mgmt_ip, is_verbose_output=False):
 def _status(args):
     management_ip = _get_management_server_ip(args)
     lgr.info(
-        'querying management server {0}'.format(management_ip))
+        'Getting management services status... [ip={0}]'.format(management_ip))
 
     status_result = _get_management_server_status(management_ip)
     if status_result:
-        lgr.info(
-            "REST service at management server {0} is up and running"
-            .format(management_ip))
-
-        lgr.info('Services information:')
-
+        services = []
         for service in status_result['services']:
-            lgr.info('\t{0}\t{1}'.format(
-                service['display_name'].ljust(20),
-                service['instances'][0]['state'] if 'instances' in service else
-                'Unknown'))
+            services.append({
+                'service': service['display_name'].ljust(30),
+                'status': service['instances'][0]['state']
+                if 'instances' in service else 'unknown'
+            })
+        pt = formatting.table(['service', 'status'],
+                              data=services)
+        _output_table('Services:', pt)
+
         return True
     else:
         lgr.info(
-            "REST service at management server {0} is not responding"
+            "REST service at management server {0} is not responding!"
             .format(management_ip))
         return False
 
@@ -1307,6 +1332,14 @@ def _execute_deployment_workflow(args):
     force = args.force
     include_logs = args.include_logs
 
+    try:
+        # load parameters JSON or use an empty parameters dict
+        parameters = json.loads(args.parameters or '{}')
+    except ValueError, e:
+        msg = "'parameters' argument must be a valid JSON. {}".format(str(e))
+        flgr.error(msg)
+        raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
+
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
              " management server {2} [timeout={3} seconds]"
              .format(workflow, args.deployment_id, management_ip,
@@ -1322,7 +1355,8 @@ def _execute_deployment_workflow(args):
         try:
             execution = client.deployments.execute(deployment_id,
                                                    workflow,
-                                                   force)
+                                                   parameters=parameters,
+                                                   force=force)
         except CreateDeploymentInProgressError:
             # wait for deployment creation workflow to end
             lgr.info('Deployment creation is in progress!')
@@ -1341,7 +1375,8 @@ def _execute_deployment_workflow(args):
             # try to execute user specified workflow
             execution = client.deployments.execute(deployment_id,
                                                    workflow,
-                                                   force)
+                                                   parameters=parameters,
+                                                   force=force)
 
         execution = wait_for_execution(client,
                                        deployment_id,
@@ -1394,7 +1429,7 @@ def _list_blueprint_deployments(args):
     _output_table('Deployments:', pt)
 
 
-def _list_workflows(args):
+def _list_deployment_workflows(args):
     management_ip = _get_management_server_ip(args)
     deployment_id = args.deployment_id
     client = _get_rest_client(management_ip)
@@ -1402,18 +1437,17 @@ def _list_workflows(args):
     lgr.info('Getting workflows list for deployment: '
              '\'{0}\'... [manager={1}]'.format(deployment_id, management_ip))
 
-    workflows = client.deployments.list_workflows(deployment_id)
+    deployment = client.deployments.get(deployment_id)
+    workflows = deployment.workflows
+    _print_workflows(workflows, deployment)
 
-    blueprint_id = workflows['blueprintId'] if \
-        'blueprintId' in workflows else None
-    deployment_id = workflows['deploymentId'] if \
-        'deploymentId' in workflows else None
 
+def _print_workflows(workflows, deployment):
     pt = formatting.table(['blueprint_id', 'deployment_id',
                            'name', 'created_at'],
-                          data=workflows.workflows,
-                          defaults={'blueprint_id': blueprint_id,
-                                    'deployment_id': deployment_id})
+                          data=workflows,
+                          defaults={'blueprint_id': deployment.blueprint_id,
+                                    'deployment_id': deployment.id})
 
     _output_table('Workflows:', pt)
 
@@ -1434,6 +1468,54 @@ def _cancel_execution(args):
         .format(execution_id, management_ip))
 
 
+def _get_workflow(args):
+    management_ip = _get_management_server_ip(args)
+    client = _get_rest_client(management_ip)
+    deployment_id = args.deployment_id
+    workflow_id = args.workflow_id
+
+    try:
+        lgr.info('Getting workflow '
+                 '\'{0}\' of deployment \'{1}\' [manager={2}]'
+                 .format(workflow_id, deployment_id, management_ip))
+        deployment = client.deployments.get(deployment_id)
+        workflow = next((wf for wf in deployment.workflows if
+                         wf.name == workflow_id), None)
+        if not workflow:
+            msg = ("Workflow '{0}' not found on management server for "
+                   "deployment {1}".format(workflow_id, deployment_id))
+            flgr.error(msg)
+            raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
+    except CloudifyClientError, e:
+        if e.status_code != 404:
+            raise
+        msg = ("Deployment '{0}' not found on management server"
+               .format(deployment_id))
+        flgr.error(msg)
+        raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
+
+    _print_workflows([workflow], deployment)
+
+    # print workflow parameters
+    mandatory_params = []
+    optional_params = []
+    for param in workflow.parameters:
+        if isinstance(param, basestring):
+            mandatory_params.append(param)
+        else:
+            optional_params.append(param)
+
+    lgr.info('Workflow Parameters:')
+    lgr.info('\tMandatory Parameters:')
+    for param_name in mandatory_params:
+        lgr.info('\t\t{0}'.format(param_name))
+
+    lgr.info('\tOptional Parameters:')
+    for param in optional_params:
+        lgr.info('\t\t{0}: \t{1}'.format(param.keys()[0], param.values()[0]))
+    lgr.info('')
+
+
 def _get_execution(args):
     management_ip = _get_management_server_ip(args)
     client = _get_rest_client(management_ip)
@@ -1452,6 +1534,12 @@ def _get_execution(args):
         raise CosmoCliError(msg) if args.verbosity else sys.exit(msg)
 
     _print_executions([execution])
+
+    # print execution parameters
+    lgr.info('Execution Parameters:')
+    for param_name, param_value in execution.parameters.iteritems():
+        lgr.info('\t{0}: \t{1}'.format(param_name, param_value))
+    lgr.info('')
 
 
 def _list_deployment_executions(args):
