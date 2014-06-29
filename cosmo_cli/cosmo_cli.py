@@ -1705,7 +1705,7 @@ def _set_cli_except_hook():
 
 def _load_cosmo_working_dir_settings(is_verbose_output=False):
     try:
-        with open('{0}'.format(CLOUDIFY_WD_SETTINGS_FILE_NAME), 'r') as f:
+        with open(CLOUDIFY_WD_SETTINGS_FILE_NAME, 'r') as f:
             return yaml.load(f.read())
     except IOError:
         msg = ('You must first initialize by running the '
