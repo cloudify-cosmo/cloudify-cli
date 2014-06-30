@@ -16,12 +16,18 @@
 __author__ = 'ran'
 
 from setuptools import setup
+import json
+
+
+def find_version():
+    with open('VERSION', 'rb') as ver_file:
+        return json.load(ver_file)['version']
 
 setup(
     name='cloudify-cli',
-    version=3.0,
-    author='ran',
-    author_email='ran@gigaspaces.com',
+    version=find_version(),
+    author='Gigaspaces',
+    author_email='cosmo-admin@gigaspaces.com',
     packages=['cosmo_cli'],
     license='LICENSE',
     description='Cloudify CLI',
@@ -38,5 +44,6 @@ setup(
         'argcomplete==0.7.1',
         'fabric==1.8.3',
         'jsonschema==2.3.0',
-    ]
+    ],
+    classifiers=[],
 )
