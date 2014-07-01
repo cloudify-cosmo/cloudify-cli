@@ -16,9 +16,9 @@ Command line interface for [Cloudify](https://github.com/cloudify-cosmo/cloudify
 ## Deploying your first application - Walkthrough
 **1. Installing the CLI and a provider extension:**
   - Clone this repository: `git clone https://github.com/cloudify-cosmo/cloudify-cli`
-  - Run pip install: `pip install -r cloudify-cli/requirements.txt cloudify-cli/`
+  - Run pip install: `pip install -r cloudify-cli/dev-requirements.txt cloudify-cli/`
   - Clone openstack provider CLI: `git clone https://github.com/cloudify-cosmo/cloudify-openstack-provider`
-  - Run pip install: `pip install -r cloudify-openstack-provider/requirements.txt cloudify-openstack-provider/`
+  - Run pip install: `pip install -r cloudify-openstack-provider/dev-requirements.txt cloudify-openstack-provider/`
 
   NOTES:
    - After installing the cli you can run the "activate_cfy_bash_completion" script which will permanently add bash completion to you shel
@@ -300,12 +300,14 @@ re
 
 **Description:** executes an operation on a deployment
 
-**Usage:** `cfy deployments execute <operation> [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity] [--timeout <timeout>] [--force]`
+**Usage:** `cfy deployments execute <operation> [-d, --deployment-id <deployment_id>] [-p, --parameters <parameters>] [--allow-custom-parameters] [-t, --management-ip <ip>] [-v, --verbosity] [--timeout <timeout>] [--force]`
 
 **Parameters**:
 
 - operation: the name of the operation to execute
 - deployment_id: the deployment id on which the operation should be executed
+- parameters: parameters for the workflow execution (in JSON format) (Optional)
+- allow-custom-parameters: A flag for allowing the passing of custom parameters (parameters which were not defined in the workflow's schema in the blueprint) to the execution (Optional)
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 - timeout: operation timeout in seconds (Optional, The execution itself will keep
@@ -328,6 +330,23 @@ going. It is the CLI that will stop waiting for it to terminate)
 - blueprint-id: the id of the blueprint to to list deployments for (Optional, lists all deployments if not provided)
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
+------
+
+**Command:** workflows get
+
+**Description:** gets a workflow by its name and deployment id. This command will also show the workflow's parameters.
+
+**Usage:** `cfy workflows get [-w, --workflow-id <workflow_id>] [-d, --deployment-id <deployment_id] [-t, --management-ip <ip>] [-v, --verbosity]`
+
+**Parameters**:
+
+- workflow_id: the id/name of the workflow to get
+- deployment_id: the id of the deployment for which the workflow belongs
+- management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
+
+**Example:** `cfy workflows get -w my-workflow -d my-deployment`
+
 
 ------
 
@@ -350,7 +369,7 @@ going. It is the CLI that will stop waiting for it to terminate)
 
 **Command:** executions get
 
-**Description:** gets an execution by its id
+**Description:** gets an execution by its id. This command will also show the execution's parameters.
 
 **Usage:** `cfy executions get [-e, --execution-id <execution_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
 
