@@ -15,8 +15,9 @@
 
 __author__ = 'ran'
 
-from setuptools import setup
 import json
+
+from setuptools import setup
 
 
 def find_version():
