@@ -426,7 +426,16 @@ def _parse_args(args):
         metavar='PARAMETERS',
         type=str,
         required=False,
-        help='Parameters for the workflow execution'
+        help='Parameters for the workflow execution (in JSON format)'
+    )
+    parser_deployments_execute.add_argument(
+        '--allow-custom-parameters',
+        dest='allow_custom_parameters',
+        action='store_true',
+        default=False,
+        help='A flag for allowing the passing of custom parameters ('
+             "parameters which were not defined in the workflow's schema in "
+             'the blueprint) to the execution'
     )
     _add_deployment_id_argument_to_parser(
         parser_deployments_execute,
@@ -1330,6 +1339,7 @@ def _execute_deployment_workflow(args):
     deployment_id = args.deployment_id
     timeout = args.timeout
     force = args.force
+    allow_custom_parameters = args.allow_custom_parameters
     include_logs = args.include_logs
 
     try:
@@ -1353,10 +1363,12 @@ def _execute_deployment_workflow(args):
     try:
         client = _get_rest_client(management_ip)
         try:
-            execution = client.deployments.execute(deployment_id,
-                                                   workflow,
-                                                   parameters=parameters,
-                                                   force=force)
+            execution = client.deployments.execute(
+                deployment_id,
+                workflow,
+                parameters=parameters,
+                allow_custom_parameters=allow_custom_parameters,
+                force=force)
         except CreateDeploymentInProgressError:
             # wait for deployment creation workflow to end
             lgr.info('Deployment creation is in progress!')
@@ -1373,10 +1385,12 @@ def _execute_deployment_workflow(args):
             remaining_timeout = time.time() - now
             timeout -= remaining_timeout
             # try to execute user specified workflow
-            execution = client.deployments.execute(deployment_id,
-                                                   workflow,
-                                                   parameters=parameters,
-                                                   force=force)
+            execution = client.deployments.execute(
+                deployment_id,
+                workflow,
+                parameters=parameters,
+                allow_custom_parameters=allow_custom_parameters,
+                force=force)
 
         execution = wait_for_execution(client,
                                        deployment_id,
