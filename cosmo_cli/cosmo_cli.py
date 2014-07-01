@@ -719,6 +719,12 @@ def set_global_verbosity_level(is_verbose_output=False):
     # print 'level is: ' + str(lgr.getEffectiveLevel())
 
 
+class ProviderConfig(dict):
+    @property
+    def resources_prefix(self):
+        return self.get('cloudify', {}).get('resources_prefix', '')
+
+
 def _read_config(config_file_path, provider_dir, is_verbose_output=False):
 
     def _deep_merge_dictionaries(overriding_dict, overridden_dict):
@@ -763,7 +769,7 @@ def _read_config(config_file_path, provider_dir, is_verbose_output=False):
     lgr.debug('merging configs')
     merged_config = _deep_merge_dictionaries(user_config, defaults_config) \
         if user_config else defaults_config
-    return merged_config
+    return ProviderConfig(merged_config)
 
 
 def _init_cosmo(args):
@@ -901,6 +907,14 @@ def init(provider, target_directory, reset_config, install=False,
         return provider_module_name
 
 
+def _fatal_error(verbosity, msg):
+    flgr.error(msg)
+    if verbosity:
+        raise CosmoValidationError(msg)
+    else:
+        sys.exit(msg)
+
+
 def _bootstrap_cosmo(args):
     provider_name = _get_provider(args.verbosity)
     provider = _get_provider_module(provider_name, args.verbosity)
@@ -911,35 +925,33 @@ def _bootstrap_cosmo(args):
     provider_config = _read_config(args.config_file_path,
                                    provider_dir,
                                    args.verbosity)
+    lgr.info("prefix for all resources: '{0}'".
+             format(provider_config.resources_prefix))
     pm = provider.ProviderManager(provider_config, args.verbosity)
 
     if args.skip_validations and args.validate_only:
         sys.exit('please choose one of skip-validations or '
                  'validate-only flags, not both.')
     lgr.info("bootstrapping using {0}".format(provider_name))
-    if not args.skip_validations:
+    if args.skip_validations:
+        pm.update_names_in_config()  # Prefixes
+    else:
         lgr.info('validating provider resources and configuration')
-        validation_errors = {}
-        if pm.schema is not None:
-            validation_errors = pm.validate_schema(validation_errors,
-                                                   schema=pm.schema)
-        else:
-            lgr.debug('schema validation disabled')
-        # if the validation_errors dict return empty
-        if not pm.validate(validation_errors) and not validation_errors:
-            lgr.info('provider validations completed successfully')
-        else:
-            flgr.error('provider validations failed!')
-            raise CosmoValidationError('provider validations failed!') \
-                if args.verbosity else sys.exit('provider validations failed!')
+        pm.augment_schema_with_common()
+        if pm.validate_schema():
+            _fatal_error(args.verbosity, 'provider schema validations failed!')
+        pm.update_names_in_config()  # Prefixes
+        if pm.validate():
+            _fatal_error(args.verbosity, 'provider validations failed!')
+        lgr.info('provider validations completed successfully')
+
     if args.validate_only:
         return
     with _protected_provider_call(args.verbosity):
         lgr.info('provisioning resources for management server...')
         params = pm.provision()
 
-    provider_context = {}
-    if params is not None:
+    if params:
         mgmt_ip, private_ip, ssh_key, ssh_user, provider_context = params
         lgr.info('provisioning complete')
         lgr.info('bootstrapping the management server...')
@@ -948,9 +960,10 @@ def _bootstrap_cosmo(args):
         lgr.info('bootstrapping complete') if installed else \
             lgr.error('bootstrapping failed!')
     else:
+        provider_context = {}
         lgr.error('provisioning failed!')
 
-    if params is not None and installed:
+    if installed:
         _update_provider_context(provider_config, provider_context)
 
         mgmt_ip = mgmt_ip.encode('utf-8')
@@ -1000,6 +1013,7 @@ def _update_provider_context(provider_config, provider_context):
                                                  WORKFLOW_TASK_RETRY_INTERVAL)
 
     provider_context['cloudify'] = {
+        'resources_prefix': provider_config.resources_prefix,
         'cloudify_agent': {
             'min_workers': min_workers,
             'max_workers': max_workers,
@@ -1705,7 +1719,7 @@ def _set_cli_except_hook():
 
 def _load_cosmo_working_dir_settings(is_verbose_output=False):
     try:
-        with open('{0}'.format(CLOUDIFY_WD_SETTINGS_FILE_NAME), 'r') as f:
+        with open(CLOUDIFY_WD_SETTINGS_FILE_NAME, 'r') as f:
             return yaml.load(f.read())
     except IOError:
         msg = ('You must first initialize by running the '
