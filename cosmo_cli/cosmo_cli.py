@@ -959,7 +959,7 @@ def _update_provider_context(provider_config, provider_context):
     private_key_target_path = auto_generated.get('private_key_target_path',
                                                  AGENT_KEY_PATH)
 
-    workflows = cloudify.get('workflows', {})
+    workflows = cloudify['agents'].get('workflows', {})
     workflow_task_retries = workflows.get('retries', WORKFLOW_TASK_RETRIES)
     workflow_task_retry_interval = workflows.get('retry_interval',
                                                  WORKFLOW_TASK_RETRY_INTERVAL)
