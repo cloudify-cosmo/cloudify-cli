@@ -25,7 +25,7 @@ from StringIO import StringIO
 
 def get_version():
     version_data = get_version_data()
-    return json.loads(version_data)['version']
+    return version_data['version']
 
 
 def get_detailed_version():
