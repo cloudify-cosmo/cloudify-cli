@@ -958,7 +958,7 @@ def _bootstrap_cosmo(args):
         lgr.info('ensuring connectivity with the management server...')
         if pm.ensure_connectivity_with_management_server(
                 mgmt_ip, ssh_key, ssh_user):
-            lgr.info('SSHed into the management server successfully')
+            lgr.info('connected with the management server successfully')
             lgr.info('bootstrapping the management server...')
             installed = pm.bootstrap(mgmt_ip, private_ip, ssh_key,
                                      ssh_user, args.dev_mode)
