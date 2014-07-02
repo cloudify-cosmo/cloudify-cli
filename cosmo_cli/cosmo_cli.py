@@ -18,7 +18,7 @@ import messages
 
 __author__ = 'ran'
 
-# Standard
+
 import argparse
 import argcomplete
 import imp
@@ -31,27 +31,28 @@ import urlparse
 import urllib
 import shutil
 import time
-from copy import deepcopy
-from contextlib import contextmanager
 import logging
 import logging.config
 import config
 import formatting
+from copy import deepcopy
+from contextlib import contextmanager
 from fabric.api import env, local
 from fabric.context_managers import settings
 from platform import system
 from distutils.spawn import find_executable
 from subprocess import call
 
-# Project
 from dsl_parser.parser import parse_from_path, DSLParsingException
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import CreateDeploymentInProgressError
+
 from executions import wait_for_execution
 from executions import get_deployment_creation_execution
 from executions import get_all_execution_events
 from executions import ExecutionTimeoutError
+from . import get_detailed_version
 
 
 output_level = logging.INFO
@@ -123,6 +124,13 @@ def _parse_args(args):
     # main parser
     parser = argparse.ArgumentParser(
         description='Manages Cloudify in different Cloud Environments')
+
+    parser.add_argument(
+        '--version',
+        help='Show version information and exit',
+        action='version',
+        version=get_detailed_version()
+    )
 
     subparsers = parser.add_subparsers()
     parser_status = subparsers.add_parser(
