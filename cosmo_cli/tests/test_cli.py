@@ -135,6 +135,12 @@ class CliTest(unittest.TestCase):
             returncode = subprocess.call("cfy", stdout=f, stderr=f)
         self.assertEquals(returncode, 2)
 
+    def test_version(self):
+        try:
+            self._run_cli('cfy --version')
+        except SystemExit, e:
+            self.assertEqual(e.code, 0)
+
     def test_validate_blueprint_in_cwd(self):
         prev_cwd = os.getcwd()
 
