@@ -939,14 +939,21 @@ def _bootstrap_cosmo(args):
         params = pm.provision()
 
     provider_context = {}
+    installed = False
     if params is not None:
         mgmt_ip, private_ip, ssh_key, ssh_user, provider_context = params
         lgr.info('provisioning complete')
-        lgr.info('bootstrapping the management server...')
-        installed = pm.bootstrap(mgmt_ip, private_ip, ssh_key,
-                                 ssh_user, args.dev_mode)
-        lgr.info('bootstrapping complete') if installed else \
-            lgr.error('bootstrapping failed!')
+        lgr.info('ensuring connectivity with the management server...')
+        if pm.ensure_connectivity_with_management_server(
+                mgmt_ip, ssh_key, ssh_user):
+            lgr.info('SSHed into the management server successfully')
+            lgr.info('bootstrapping the management server...')
+            installed = pm.bootstrap(mgmt_ip, private_ip, ssh_key,
+                                     ssh_user, args.dev_mode)
+            lgr.info('bootstrapping complete') if installed else \
+                lgr.error('bootstrapping failed!')
+        else:
+            lgr.error('failed connecting to the management server!')
     else:
         lgr.error('provisioning failed!')
 

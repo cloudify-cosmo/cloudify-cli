@@ -1,5 +1,6 @@
 import time
 import sys
+import socket
 from abc import abstractmethod, ABCMeta
 from jsonschema import ValidationError, Draft4Validator
 from fabric.api import run, env
@@ -14,9 +15,6 @@ CLOUDIFY_COMPONENTS_PACKAGE_PATH = '/cloudify-components'
 CLOUDIFY_CORE_PACKAGE_PATH = '/cloudify-core'
 CLOUDIFY_UI_PACKAGE_PATH = '/cloudify-ui'
 CLOUDIFY_AGENT_PACKAGE_PATH = '/cloudify-agents'
-
-FABRIC_RETRIES = 3
-FABRIC_SLEEPTIME = 3
 
 
 class BaseProviderClass(object):
@@ -77,25 +75,27 @@ class BaseProviderClass(object):
         :param bool dev_mode: states whether dev_mode should be applied.
         :rtype: `bool` True if succeeded, False otherwise. If False is returned
          and 'cfy bootstrap' was executed with the keep-up-on-failure flag, the
-         provisioned resources will remain. If the flag is ommited, they will
+         provisioned resources will remain. If the flag is omitted, they will
          be torn down.
         """
+        ssh_config = self.provider_config['cloudify']['bootstrap']['ssh']
+
         env.user = mgmt_ssh_user
         env.key_filename = mgmt_ssh_key
         env.warn_only = True
         env.abort_on_prompts = False
-        env.connection_attempts = 5
+        env.connection_attempts = ssh_config['connection_attempts']
         env.keepalive = 0
         env.linewise = False
         env.pool_size = 0
         env.skip_bad_hosts = False
-        env.timeout = 10
+        env.timeout = ssh_config['connection_timeout']
         env.forward_agent = True
         env.status = False
         env.disable_known_hosts = False
 
-        def _run_with_retries(command, retries=FABRIC_RETRIES,
-                              sleeper=FABRIC_SLEEPTIME):
+        def _run_with_retries(command, retries=ssh_config['command_retries'],
+                              sleeper=ssh_config['retries_interval']):
 
             for execution in range(retries):
                 lgr.debug('running command: {0}'
@@ -270,6 +270,39 @@ class BaseProviderClass(object):
             lgr.debug('setting verbosity to previous state')
             self.is_verbose_output = v
             return True
+
+    def ensure_connectivity_with_management_server(self, mgmt_ip, mgmt_ssh_key,
+                                                   mgmt_ssh_user):
+        """
+        Checks for connectivity with the management server.
+        This method is called right after provision(), but before bootstrap(),
+        to ensure that the management server is truly reachable (e.g.
+        verify sshd is up and running, etc..)
+
+        :param string mgmt_ip: public ip of the provisioned instance.
+        :param string mgmt_ssh_key: path to the ssh key to be used for
+         connecting to the instance.
+        :param string mgmt_ssh_user: the user to use when connecting to the
+         instance.
+        :return: True if successfully connected to the management server,
+            False otherwise.
+        """
+        ssh_config = self.provider_config['cloudify']['bootstrap']['ssh']
+        timeout = ssh_config['initial_connectivity_check_timeout']
+
+        try:
+            sock = socket.create_connection((mgmt_ip, 22), timeout)
+            sock.close()
+            return True
+        except socket.timeout:
+            lgr.error('Initial connectivity check with management server '
+                      'timed out after {} seconds'.format(timeout))
+            return False
+        except socket.error as e:
+            # TODO: handle 'socket.error: [Errno 110] Connection timed out'
+            lgr.error('Error in initial connectivity check with management '
+                      'server: {}'.format(str(e)))
+            return False
 
     def validate_schema(self, validation_errors={}, schema=None):
         """
