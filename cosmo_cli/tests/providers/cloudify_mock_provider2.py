@@ -33,9 +33,8 @@ class ProviderManager(BaseProviderClass):
                   dev_mode=False):
         return True
 
-    def validate(self, validation_errors={}):
-        # get openstack clients
-        return validation_errors
+    def validate(self):
+        return {}
 
     def teardown(self, provider_context, ignore_validation=False):
         print 'failed teardown'
