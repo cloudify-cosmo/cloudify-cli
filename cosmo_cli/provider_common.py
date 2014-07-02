@@ -1,6 +1,5 @@
 from abc import abstractmethod, ABCMeta
 import socket
-import math
 import os
 import sys
 import time
@@ -312,32 +311,30 @@ class BaseProviderClass(object):
             False otherwise.
         """
         ssh_config = self.provider_config['cloudify']['bootstrap']['ssh']
-        timeout = ssh_config['initial_connectivity_check_timeout']
-        now = time.time()
+        retries = ssh_config['initial_connectivity_retries']
+        retries_interval = ssh_config['initial_connectivity_retries_interval']
+        socket_timeout = ssh_config['socket_timeout']
 
-        while timeout > 0:
+        num_of_retries_without_log_message = 5
+
+        for retry in range(retries):
             try:
-                sock = socket.create_connection((mgmt_ip, 22), timeout)
+                log_func = lgr.info if \
+                    retry >= num_of_retries_without_log_message else lgr.debug
+                log_func('Trying to open an SSH socket to management machine '
+                         '(attempt {0} of {1})'.format(retry+1, retries))
+
+                sock = socket.create_connection((mgmt_ip, 22), socket_timeout)
                 sock.close()
                 return True
-            except socket.timeout:
-                break
-            except socket.error as e:
+            except (socket.timeout, socket.error) as e:
                 # note: This could possibly be a '[Errno 110] Connection timed
                 # out' error caused by the network stack, which has a different
-                # timeout setting than the one used for the python socket
-                time.sleep(5)
-                updated_now = time.time()
-                timeout -= updated_now - now
-                now = updated_now
+                # timeout setting than the one used for the python socket.
                 lgr.debug('Error occurred in initial connectivity check with '
-                          'management server (will retry for {0} more '
-                          'seconds): {1}'
-                          .format(int(math.ceil(timeout)), str(e)))
+                          'management server: {}'.format(str(e)))
+            time.sleep(retries_interval)
 
-        lgr.error('Initial connectivity check with management server '
-                  'timed out after {} seconds'
-                  .format(ssh_config['initial_connectivity_check_timeout']))
         return False
 
     def augment_schema_with_common(self):
