@@ -37,6 +37,9 @@ class ProviderManager(BaseProviderClass):
         print 'successful teardown'
         pass
 
+    def ensure_connectivity_with_management_server(self, mgmt_ip, mgmt_ssh_key,
+                                                   mgmt_ssh_user):
+        return True
 
 # def init(target_dir, reset_config, is_verbose_output=False):
 #     config_file_path = os.path.join(target_dir, 'cloudify-config.yaml')

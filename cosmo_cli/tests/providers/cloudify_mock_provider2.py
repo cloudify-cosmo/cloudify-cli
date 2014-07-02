@@ -40,3 +40,7 @@ class ProviderManager(BaseProviderClass):
     def teardown(self, provider_context, ignore_validation=False):
         print 'failed teardown'
         raise RuntimeError('cloudify_mock_provider2 teardown exception')
+
+    def ensure_connectivity_with_management_server(self, mgmt_ip, mgmt_ssh_key,
+                                                   mgmt_ssh_user):
+        return True
