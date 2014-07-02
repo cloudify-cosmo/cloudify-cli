@@ -1,12 +1,14 @@
-import time
-import sys
-import socket
 from abc import abstractmethod, ABCMeta
+import socket
+import os
+import sys
+import time
+
 from jsonschema import ValidationError, Draft4Validator
 from fabric.api import run, env
 from fabric.context_managers import settings, hide
-from cosmo_cli import set_global_verbosity_level
-from cosmo_cli import init_logger
+
+from cosmo_cli import set_global_verbosity_level, init_logger
 
 lgr, flgr = init_logger()
 
@@ -17,6 +19,26 @@ CLOUDIFY_UI_PACKAGE_PATH = '/cloudify-ui'
 CLOUDIFY_AGENT_PACKAGE_PATH = '/cloudify-agents'
 
 
+
+def update_config_at_paths(struct, paths, f):
+
+    """ Transforms properties at given paths using the "f" function.
+    Ignores non-existing paths. """
+
+    def kern(struct, path):
+        if not path:
+            return
+        if path[0] not in struct:
+            return
+        if len(path) == 1:
+            struct[path[0]] = f(struct[path[0]])
+            return
+        kern(struct[path[0]], path[1:])
+
+    for path in paths:
+        kern(struct, path)
+
+
 class BaseProviderClass(object):
     """
     this is the basic provider class supplied with the CLI. it can be imported
@@ -25,13 +47,15 @@ class BaseProviderClass(object):
     """
     __metaclass__ = ABCMeta
 
-    def __init__(self, provider_config=None, is_verbose_output=False,
-                 schema=None):
+    schema = {}
+    CONFIG_NAMES_TO_MODIFY = ()  # No default (empty tuple)
+    CONFIG_FILES_PATHS_TO_MODIFY = ()  # No default (empty tuple)
+
+    def __init__(self, provider_config, is_verbose_output):
 
         set_global_verbosity_level(is_verbose_output)
         self.provider_config = provider_config
         self.is_verbose_output = is_verbose_output
-        self.schema = schema
 
     @abstractmethod
     def provision(self):
@@ -41,7 +65,7 @@ class BaseProviderClass(object):
         return
 
     @abstractmethod
-    def validate(self, validation_errors={}):
+    def validate(self):
         """
         validations to be performed before provisioning and bootstrapping
         the management server.
@@ -50,7 +74,7 @@ class BaseProviderClass(object):
         :rtype: `dict` of validaiton_errors.
         """
         lgr.debug("no resource validation methods defined!")
-        return
+        return {}
 
     @abstractmethod
     def teardown(self, provider_context, ignore_validation=False):
@@ -304,7 +328,18 @@ class BaseProviderClass(object):
                       'server: {}'.format(str(e)))
             return False
 
-    def validate_schema(self, validation_errors={}, schema=None):
+    def augment_schema_with_common(self):
+        self.schema.setdefault('type', 'object')
+        props = self.schema.setdefault('properties', {})
+        cloudify = props.setdefault('cloudify', {})
+        cloudify.setdefault('type', 'object')
+        cloudify.setdefault('properties', {}).update({
+            "resources_prefix": {
+                "type": "string",
+            },
+        })
+
+    def validate_schema(self):
         """
         this is a basic implementation of schema validation.
         uses the Draft4Validator from jsonschema to validate the provider's
@@ -313,33 +348,85 @@ class BaseProviderClass(object):
         when initializing the ProviderManager class using the schema
         parameter.
 
-        :param dict validation_errors: dict to hold all validation errors.
         :param dict schema: a schema to compare the provider's config to.
          the provider's config is already initialized within the
          ProviderManager class in the provider's code.
         :rtype: `dict` of validation_errors.
         """
+        if not self.schema:
+            lgr.warn('schema is not provided in class "{0}", skipping schema '
+                     'validation'.format(self.__class__))
+            return {}
+
+        validation_errors = {}
         lgr.debug('validating config file against provided schema...')
         try:
-            v = Draft4Validator(schema)
+            v = Draft4Validator(self.schema)
         except AttributeError as e:
             flgr.error('schema is invalid. error: {}'.format(e))
             raise ValidationError('schema is invalid. error: {}'.format(e)) \
                 if self.is_verbose_output else sys.exit(1)
-        if v.iter_errors(self.provider_config):
-            for e in v.iter_errors(self.provider_config):
-                err = ('config file validation error originating at key: {0}, '
-                       '{0}, {1}'.format('.'.join(e.path), e.message))
-                validation_errors.setdefault('schema', []).append(err)
-            errors = ';\n'.join(err for e in v.iter_errors(
-                self.provider_config))
-        try:
-            v.validate(self.provider_config)
-        except ValidationError:
-            lgr.error('VALIDATION ERROR:'
-                      '{0}'.format(errors))
+
+        for e in v.iter_errors(self.provider_config):
+            err = ('config file validation error originating at key: {0}, '
+                   '{0}, {1}'.format('.'.join(e.path), e.message))
+            validation_errors.setdefault('schema', []).append(err)
+        errors = ';\n'.join(map(str, v.iter_errors(self.provider_config)))
+
+        if errors:
+            lgr.error('VALIDATION ERROR: {0}'.format(errors))
         lgr.error('schema validation failed!') if validation_errors \
             else lgr.info('schema validated successfully')
         # print json.dumps(validation_errors, sort_keys=True,
         #                  indent=4, separators=(',', ': '))
         return validation_errors
+
+    def get_names_updater(self):
+        def updater(name):
+            return self.provider_config.resources_prefix + name
+        return updater
+
+    def get_files_names_updater(self, updater):
+        """ Returns a function that updates file path base on the given basic
+        updater: files_names_updater(path/to/file.ext) ->
+        path/to/{updater(file)}.ext """
+
+        def files_names_updater(file_path):
+            # Unpack
+            p = list(os.path.split(file_path))
+            base, ext = os.path.splitext(p[-1])
+            # Modify
+            base = updater(base)
+            # Pack and return
+            p[-1] = base + ext
+            return os.path.join(*p)
+
+        return files_names_updater
+
+    def update_names_in_config(self):
+        """ Modifies resources' names in files' paths in config """
+        updater = self.get_names_updater()
+        names_paths = [x + ('name',) for x in self.CONFIG_NAMES_TO_MODIFY]
+        update_config_at_paths(
+            self.provider_config,
+            names_paths,
+            updater,
+        )
+        update_config_at_paths(
+            self.provider_config,
+            self.CONFIG_FILES_PATHS_TO_MODIFY,
+            self.get_files_names_updater(updater),
+        )
+
+    # Simplifed basic API for resources' and files' names mainpulation
+    def get_updated_resource_name(self, resource_name):
+        """ Returns possibly prefixed resource name,
+        according to configuration """
+        return self.get_names_updater()(resource_name)
+
+    def get_updated_file_name(self, file_name):
+        """ Returns possibly prefixed file name,
+        according to configuration. Handles correctly file path
+        and extension. """
+        updater = self.get_names_updater()
+        return self.get_files_names_updater(updater)(file_name)

@@ -1,0 +1,62 @@
+keystone:
+    username: UU
+    password: PP
+    # tenant_name: hpcloud-paid@gigaspaces.com
+    tenant_name: TT
+    auth_url: SOME_URL
+
+networking:
+    neutron_supported_region: true
+    neutron_url: https://region-b.geo-1.network.hpcloudsvc.com
+    int_network:
+        create_if_missing: true
+        name: p2_cloudify-admin-network
+    subnet:
+        create_if_missing: true
+        name: p2_cloudify-admin-network-subnet
+        ip_version: 4
+        cidr: 10.67.79.0/24
+    ext_network:
+        create_if_missing: true
+        name: Ext-Net
+    router:
+        create_if_missing: true
+        name: p2_cloudify-router
+    agents_security_group:
+            create_if_missing: true
+            name: p2_cloudify-sg-agents
+    management_security_group:
+        create_if_missing: true
+        name: p2_cloudify-sg-management
+        cidr: 0.0.0.0/0
+
+compute:
+    region: region-b.geo-1
+    management_server:
+        floating_ip: 1.2.3.4
+        user_on_management: ubuntu
+        userhome_on_management: /home/ubuntu
+        instance:
+            name: p2_manager-server-name
+            image: 8c096c29-a666-4b82-99c4-c77dc70cfb40
+            flavor: 102
+        management_keypair:
+            create_if_missing: true
+            name: p2_cloudify-manager-kp-ilya
+            #provided:
+                #public_key_filepath: [PUBLIC-KEY-PATH]
+                #private_key_filepath: [PRIVATE-KEY-PATH]
+            auto_generated:
+                private_key_target_path: ../_auth/p2_cloudify-manager-kp-ilya.pem
+    agent_servers:
+        agents_keypair:
+            create_if_missing: true
+            name: p2_cloudify-agents-kp-ilya
+            #provided:
+                #public_key_filepath: [PUBLIC-KEY-PATH]
+                #private_key_filepath: [PRIVATE-KEY-PATH]
+            auto_generated:
+                private_key_target_path: ../_auth/p2_cloudify-agents-kp-ilya.pem
+
+cloudify:
+    resources_prefix: p2_
