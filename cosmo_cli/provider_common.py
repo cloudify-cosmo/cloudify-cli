@@ -113,7 +113,7 @@ class BaseProviderClass(object):
         env.linewise = False
         env.pool_size = 0
         env.skip_bad_hosts = False
-        env.timeout = ssh_config['connection_timeout']
+        env.timeout = ssh_config['socket_timeout']
         env.forward_agent = True
         env.status = False
         env.disable_known_hosts = False
