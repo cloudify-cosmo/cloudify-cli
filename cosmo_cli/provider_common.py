@@ -1,5 +1,6 @@
 from abc import abstractmethod, ABCMeta
 import socket
+import math
 import os
 import sys
 import time
@@ -17,7 +18,6 @@ CLOUDIFY_COMPONENTS_PACKAGE_PATH = '/cloudify-components'
 CLOUDIFY_CORE_PACKAGE_PATH = '/cloudify-core'
 CLOUDIFY_UI_PACKAGE_PATH = '/cloudify-ui'
 CLOUDIFY_AGENT_PACKAGE_PATH = '/cloudify-agents'
-
 
 
 def update_config_at_paths(struct, paths, f):
@@ -313,20 +313,32 @@ class BaseProviderClass(object):
         """
         ssh_config = self.provider_config['cloudify']['bootstrap']['ssh']
         timeout = ssh_config['initial_connectivity_check_timeout']
+        now = time.time()
 
-        try:
-            sock = socket.create_connection((mgmt_ip, 22), timeout)
-            sock.close()
-            return True
-        except socket.timeout:
-            lgr.error('Initial connectivity check with management server '
-                      'timed out after {} seconds'.format(timeout))
-            return False
-        except socket.error as e:
-            # TODO: handle 'socket.error: [Errno 110] Connection timed out'
-            lgr.error('Error in initial connectivity check with management '
-                      'server: {}'.format(str(e)))
-            return False
+        while timeout > 0:
+            try:
+                sock = socket.create_connection((mgmt_ip, 22), timeout)
+                sock.close()
+                return True
+            except socket.timeout:
+                break
+            except socket.error as e:
+                # note: This could possibly be a '[Errno 110] Connection timed
+                # out' error caused by the network stack, which has a different
+                # timeout setting than the one used for the python socket
+                time.sleep(5)
+                updated_now = time.time()
+                timeout -= updated_now - now
+                now = updated_now
+                lgr.debug('Error occurred in initial connectivity check with '
+                          'management server (will retry for {0} more '
+                          'seconds): {1}'
+                          .format(int(math.ceil(timeout)), str(e)))
+
+        lgr.error('Initial connectivity check with management server '
+                  'timed out after {} seconds'
+                  .format(ssh_config['initial_connectivity_check_timeout']))
+        return False
 
     def augment_schema_with_common(self):
         self.schema.setdefault('type', 'object')
