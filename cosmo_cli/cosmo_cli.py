@@ -18,40 +18,44 @@ import messages
 
 __author__ = 'ran'
 
-# Standard
+
 import argparse
-import argcomplete
 import imp
 import sys
 import os
 import traceback
-import yaml
 import json
 import urlparse
 import urllib
 import shutil
 import time
-from copy import deepcopy
-from contextlib import contextmanager
 import logging
 import logging.config
-import config
 import formatting
-from fabric.api import env, local
-from fabric.context_managers import settings
+import socket
+from copy import deepcopy
+from contextlib import contextmanager
 from platform import system
 from distutils.spawn import find_executable
 from subprocess import call
+from StringIO import StringIO
 
-# Project
+import argcomplete
+import yaml
+from fabric.api import env, local
+from fabric.context_managers import settings
+
 from dsl_parser.parser import parse_from_path, DSLParsingException
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import CreateDeploymentInProgressError
+
+import config
 from executions import wait_for_execution
 from executions import get_deployment_creation_execution
 from executions import get_all_execution_events
 from executions import ExecutionTimeoutError
+from . import get_version_data
 
 
 output_level = logging.INFO
@@ -67,6 +71,9 @@ REMOTE_EXECUTION_PORT = 22
 
 WORKFLOW_TASK_RETRIES = -1
 WORKFLOW_TASK_RETRY_INTERVAL = 30
+
+REST_PORT = 80
+
 
 # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
 logging.getLogger("paramiko").setLevel(logging.WARNING)
@@ -112,6 +119,77 @@ def main():
     args.handler(args)
 
 
+class VersionAction(argparse.Action):
+    def __init__(self,
+                 option_strings,
+                 dest=argparse.SUPPRESS,
+                 default=argparse.SUPPRESS,
+                 help=None):
+        super(VersionAction, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            default=default,
+            nargs=0,
+            help=help)
+
+    @staticmethod
+    def _format_version_data(version_data, prefix=None, suffix=None,
+                             infix=None):
+        all_data = version_data.copy()
+        all_data['prefix'] = prefix or ''
+        all_data['suffix'] = suffix or ''
+        all_data['infix'] = infix or ''
+        output = StringIO()
+        output.write('{prefix}{version}'.format(**all_data))
+        if version_data['build']:
+            output.write('{infix}(build: {build}, date: {date})'.format(
+                **all_data))
+        output.write('{suffix}'.format(**all_data))
+        return output.getvalue()
+
+    def _get_manager_version_data(self):
+        settings = _load_cosmo_working_dir_settings(suppress_error=True)
+        if not (settings and settings.get_management_server()):
+            return None
+        management_ip = settings.get_management_server()
+        if not self._connected_to_manager(management_ip):
+            return None
+        client = _get_rest_client(management_ip)
+        try:
+            version_data = client.manager.get_version()
+        except CloudifyClientError:
+            return None
+        version_data['ip'] = management_ip
+        return version_data
+
+    @staticmethod
+    def _connected_to_manager(management_ip):
+        try:
+            sock = socket.create_connection((management_ip, REST_PORT), 5)
+            sock.close()
+            return True
+        except socket.error:
+            return False
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        cli_version_data = get_version_data()
+        rest_version_data = self._get_manager_version_data()
+        cli_version = self._format_version_data(
+            cli_version_data,
+            prefix='Cloudify CLI ',
+            infix=' '*5,
+            suffix='\n')
+        rest_version = ''
+        if rest_version_data:
+            rest_version = self._format_version_data(
+                rest_version_data,
+                prefix='Cloudify Manager ',
+                infix=' ',
+                suffix=' [ip={ip}]\n'.format(**rest_version_data))
+        parser.exit(message='{}{}'.format(cli_version,
+                                          rest_version))
+
+
 def _parse_args(args):
     """
     Parses the arguments using the Python argparse library.
@@ -123,6 +201,12 @@ def _parse_args(args):
     # main parser
     parser = argparse.ArgumentParser(
         description='Manages Cloudify in different Cloud Environments')
+
+    parser.add_argument(
+        '--version',
+        help='show version information and exit',
+        action=VersionAction
+    )
 
     subparsers = parser.add_subparsers()
     parser_status = subparsers.add_parser(
@@ -1724,11 +1808,14 @@ def _set_cli_except_hook():
     sys.excepthook = new_excepthook
 
 
-def _load_cosmo_working_dir_settings(is_verbose_output=False):
+def _load_cosmo_working_dir_settings(is_verbose_output=False,
+                                     suppress_error=False):
     try:
         with open(CLOUDIFY_WD_SETTINGS_FILE_NAME, 'r') as f:
             return yaml.load(f.read())
     except IOError:
+        if suppress_error:
+            return None
         msg = ('You must first initialize by running the '
                'command "cfy init", or choose to work with '
                'an existing management server by running the '
