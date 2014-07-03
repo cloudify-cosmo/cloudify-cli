@@ -72,6 +72,9 @@ REMOTE_EXECUTION_PORT = 22
 WORKFLOW_TASK_RETRIES = -1
 WORKFLOW_TASK_RETRY_INTERVAL = 30
 
+REST_PORT = 80
+
+
 # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
@@ -162,7 +165,7 @@ class VersionAction(argparse.Action):
     @staticmethod
     def _connected_to_manager(management_ip):
         try:
-            sock = socket.create_connection((management_ip, 80), 1)
+            sock = socket.create_connection((management_ip, REST_PORT), 5)
             sock.close()
             return True
         except socket.error:

@@ -22,8 +22,8 @@ from cosmo_cli import get_version
 setup(
     name='cloudify-cli',
     version=get_version(),
-    author='ran',
-    author_email='ran@gigaspaces.com',
+    author='Gigaspaces',
+    author_email='cosmo-admin@gigaspaces.com',
     packages=['cosmo_cli'],
     package_data={'cosmo_cli': ['VERSION']},
     license='LICENSE',
