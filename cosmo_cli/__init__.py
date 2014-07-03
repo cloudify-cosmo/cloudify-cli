@@ -20,21 +20,11 @@ __author__ = 'dank'
 
 import json
 import pkgutil
-from StringIO import StringIO
 
 
 def get_version():
     version_data = get_version_data()
     return version_data['version']
-
-
-def get_detailed_version():
-    version_data = get_version_data()
-    version = StringIO()
-    version.write('Cloudify CLI {version}'.format(**version_data))
-    if version_data['build']:
-        version.write(' (build: {build}, date: {date})'.format(**version_data))
-    return version.getvalue()
 
 
 def get_version_data():
