@@ -1566,7 +1566,7 @@ def _cancel_execution(args):
     lgr.info(
         'A cancel request for execution {0} has been sent to management '
         "server {1}. To track the execution's status, use:\n"
-        "cfy executions get {0}"
+        "cfy executions get -e {0}"
         .format(execution_id, management_ip))
 
 
