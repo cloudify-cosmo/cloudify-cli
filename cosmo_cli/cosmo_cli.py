@@ -162,7 +162,7 @@ class VersionAction(argparse.Action):
     @staticmethod
     def _connected_to_manager(management_ip):
         try:
-            sock = socket.create_connection((management_ip, 8100), 1)
+            sock = socket.create_connection((management_ip, 80), 1)
             sock.close()
             return True
         except socket.error:
@@ -1873,7 +1873,7 @@ def _get_resource_base():
 
 
 def _get_rest_client(management_ip):
-    return CloudifyClient(management_ip, 8100)
+    return CloudifyClient(management_ip)
 
 
 @contextmanager
