@@ -15,16 +15,25 @@
 
 __author__ = 'ran'
 
+import json
+
 from setuptools import setup
+
+
+def find_version():
+    with open('VERSION', 'rb') as ver_file:
+        return json.load(ver_file)['version']
+
 
 setup(
     name='cloudify-cli',
-    version=3.0,
-    author='ran',
-    author_email='ran@gigaspaces.com',
+    version=find_version(),
+    author='Gigaspaces',
+    author_email='cosmo-admin@gigaspaces.com',
     packages=['cosmo_cli'],
+    include_package_data=True,
     license='LICENSE',
-    description='Cloudify CLI',
+    description='Cloudify Command Line Interface',
     entry_points={
         'console_scripts': [
             'cfy = cosmo_cli.cosmo_cli:main',
@@ -32,11 +41,12 @@ setup(
         ]
     },
     install_requires=[
-        'cloudify-rest-client==3.0',
-        'cloudify-dsl-parser==3.0',
+        'cloudify-rest-client>=3.0',
+        'cloudify-dsl-parser>=3.0',
         'pyyaml==3.10',
         'argcomplete==0.7.1',
         'fabric==1.8.3',
         'jsonschema==2.3.0',
-    ]
+    ],
+    classifiers=[],
 )
