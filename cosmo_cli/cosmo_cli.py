@@ -1093,9 +1093,8 @@ def _update_provider_context(provider_config, provider_context):
     compute = provider_config.get('compute', {})
     agent_servers = compute.get('agent_servers', {})
     agents_keypair = agent_servers.get('agents_keypair', {})
-    auto_generated = agents_keypair.get('auto_generated', {})
-    private_key_target_path = auto_generated.get('private_key_target_path',
-                                                 AGENT_KEY_PATH)
+    agent_key_path = agents_keypair.get(
+        'private_key_path', AGENT_KEY_PATH)
 
     workflows = cloudify.get('workflows', {})
     workflow_task_retries = workflows.get('task_retries',
@@ -1108,7 +1107,7 @@ def _update_provider_context(provider_config, provider_context):
         'cloudify_agent': {
             'min_workers': min_workers,
             'max_workers': max_workers,
-            'agent_key_path': private_key_target_path,
+            'agent_key_path': agent_key_path,
             'remote_execution_port': remote_execution_port
         },
         'workflows': {
