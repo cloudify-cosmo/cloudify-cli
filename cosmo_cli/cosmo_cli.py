@@ -1781,7 +1781,7 @@ def _set_cli_except_hook():
         prefix = ''
         output_message = True
         output_traceback = output_level <= logging.DEBUG
-        if tpe == CloudifyClientError:
+        if issubclass(tpe, CloudifyClientError):
             prefix = 'Failed making a call to REST service: '
         elif tpe in [CosmoCliError, CosmoValidationError]:
             pass
