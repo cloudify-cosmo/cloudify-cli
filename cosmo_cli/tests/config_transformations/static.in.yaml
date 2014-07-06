@@ -43,20 +43,12 @@ compute:
         management_keypair:
             create_if_missing: true
             name: cloudify-manager-kp-ilya
-            #provided:
-                #public_key_filepath: [PUBLIC-KEY-PATH]
-                #private_key_filepath: [PRIVATE-KEY-PATH]
-            auto_generated:
-                private_key_target_path: ../_auth/cloudify-manager-kp-ilya.pem
+            private_key_path: ../_auth/cloudify-manager-kp-ilya.pem
     agent_servers:
         agents_keypair:
             create_if_missing: true
             name: cloudify-agents-kp-ilya
-            #provided:
-                #public_key_filepath: [PUBLIC-KEY-PATH]
-                #private_key_filepath: [PRIVATE-KEY-PATH]
-            auto_generated:
-                private_key_target_path: ../_auth/cloudify-agents-kp-ilya.pem
+            private_key_path: ../_auth/cloudify-agents-kp-ilya.pem
 
 cloudify:
     resources_prefix: p2_

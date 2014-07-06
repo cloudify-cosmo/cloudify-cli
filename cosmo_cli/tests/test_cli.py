@@ -58,17 +58,9 @@ class SomeProvider(BaseProviderClass):
 
     CONFIG_FILES_PATHS_TO_MODIFY = (
         ('compute', 'agent_servers', 'agents_keypair',
-            'auto_generated', 'private_key_target_path'),
-        ('compute', 'agent_servers', 'agents_keypair',
-            'provided', 'private_key_filepath'),
-        ('compute', 'agent_servers', 'agents_keypair',
-            'provided', 'public_key_filepath'),
+            'private_key_path'),
         ('compute', 'management_server', 'management_keypair',
-            'auto_generated', 'private_key_target_path'),
-        ('compute', 'management_server', 'management_keypair',
-            'provided', 'private_key_filepath'),
-        ('compute', 'management_server', 'management_keypair',
-            'provided', 'public_key_filepath'),
+            'private_key_path'),
     )
     # OpenStack data for names transformations tests - end
 
