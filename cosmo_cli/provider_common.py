@@ -123,7 +123,6 @@ class BaseProviderClass(object):
                 except BaseException as e:
                     lgr.warning('Error occurred while running command: '
                                 '{}'.format(str(e)))
-                    error_message = str(e)
                 if r and r.succeeded:
                     lgr.debug('successfully ran command: {0}'
                               .format(command))
