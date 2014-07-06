@@ -108,9 +108,9 @@ class CliTest(unittest.TestCase):
             self.fail('Expected error {0} was not raised for command {1}'
                       .format(err_str_segment, cli_cmd))
         except SystemExit, ex:
-            self.assertTrue(err_str_segment in str(ex))
+            self.assertIn(err_str_segment, str(ex))
         except CosmoCliError, ex:
-            self.assertTrue(err_str_segment in str(ex))
+            self.assertIn(err_str_segment, str(ex))
 
     def _run_cli(self, args_str):
         sys.argv = args_str.split()
@@ -192,7 +192,7 @@ class CliTest(unittest.TestCase):
 
     def test_init_nonexistent_provider(self):
         self._assert_ex("cfy init mock_provider3 -v",
-                        "No module named mock_provider3")
+                        "Could not import module mock_provider3")
 
     def test_init_initialized_directory(self):
         self._create_cosmo_wd_settings()
