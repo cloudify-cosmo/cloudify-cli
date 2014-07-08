@@ -152,10 +152,10 @@ class VersionAction(argparse.Action):
         return output.getvalue()
 
     def _get_manager_version_data(self):
-        settings = _load_cosmo_working_dir_settings(suppress_error=True)
-        if not (settings and settings.get_management_server()):
+        dir_settings = _load_cosmo_working_dir_settings(suppress_error=True)
+        if not (dir_settings and dir_settings.get_management_server()):
             return None
-        management_ip = settings.get_management_server()
+        management_ip = dir_settings.get_management_server()
         if not self._connected_to_manager(management_ip):
             return None
         client = _get_rest_client(management_ip)
@@ -181,7 +181,7 @@ class VersionAction(argparse.Action):
         cli_version = self._format_version_data(
             cli_version_data,
             prefix='Cloudify CLI ',
-            infix=' '*5,
+            infix=' ' * 5,
             suffix='\n')
         rest_version = ''
         if rest_version_data:
@@ -1081,8 +1081,8 @@ def _bootstrap_cosmo(args):
 
 
 def _update_provider_context(provider_config, provider_context):
-    cloudify = provider_config.get('cloudify', {})
-    agent = cloudify.get('cloudify_agent', {})
+    cloudify = provider_config['cloudify']
+    agent = cloudify['agents']['config']
     min_workers = agent.get('min_workers', AGENT_MIN_WORKERS)
     max_workers = agent.get('max_workers', AGENT_MAX_WORKERS)
     user = agent.get('user')
