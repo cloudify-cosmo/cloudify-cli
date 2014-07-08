@@ -26,15 +26,15 @@ def update_config_at_paths(struct, paths, f):
     """ Transforms properties at given paths using the "f" function.
     Ignores non-existing paths. """
 
-    def kern(struct, path):
-        if not path:
+    def kern(struct, p):
+        if not p:
             return
-        if path[0] not in struct:
+        if p[0] not in struct:
             return
-        if len(path) == 1:
-            struct[path[0]] = f(struct[path[0]])
+        if len(p) == 1:
+            struct[p[0]] = f(struct[p[0]])
             return
-        kern(struct[path[0]], path[1:])
+        kern(struct[p[0]], p[1:])
 
     for p in paths:
         kern(struct, p)
