@@ -16,14 +16,20 @@
 
 __author__ = 'ran'
 
-import unittest
+import glob
+import mock
 import os
-import sys
+import re
 import shutil
 import subprocess
+import sys
+import unittest
+import yaml
+
 from mock_cloudify_client import MockCloudifyClient
 from cosmo_cli import cosmo_cli as cli
 from cosmo_cli.cosmo_cli import CosmoCliError
+from cosmo_cli.provider_common import BaseProviderClass
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 TEST_DIR = '/tmp/cloudify-cli-unit-tests'
@@ -31,6 +37,32 @@ TEST_WORK_DIR = TEST_DIR + "/cloudify"
 TEST_PROVIDER_DIR = TEST_DIR + "/mock-provider"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 BLUEPRINTS_DIR = os.path.join(THIS_DIR, 'blueprints')
+
+
+class SomeProvider(BaseProviderClass):
+    provision = mock.Mock()
+    teardown = mock.Mock()
+    validate = mock.Mock()
+
+    # OpenStack data for names transformations tests - start
+    CONFIG_NAMES_TO_MODIFY = (
+        ('networking', 'int_network'),
+        ('networking', 'subnet'),
+        ('networking', 'router'),
+        ('networking', 'agents_security_group'),
+        ('networking', 'management_security_group'),
+        ('compute', 'agent_servers', 'agents_keypair'),
+        ('compute', 'management_server', 'instance'),
+        ('compute', 'management_server', 'management_keypair'),
+    )
+
+    CONFIG_FILES_PATHS_TO_MODIFY = (
+        ('compute', 'agent_servers', 'agents_keypair',
+            'private_key_path'),
+        ('compute', 'management_server', 'management_keypair',
+            'private_key_path'),
+    )
+    # OpenStack data for names transformations tests - end
 
 
 class CliTest(unittest.TestCase):
@@ -68,9 +100,9 @@ class CliTest(unittest.TestCase):
             self.fail('Expected error {0} was not raised for command {1}'
                       .format(err_str_segment, cli_cmd))
         except SystemExit, ex:
-            self.assertTrue(err_str_segment in str(ex))
+            self.assertIn(err_str_segment, str(ex))
         except CosmoCliError, ex:
-            self.assertTrue(err_str_segment in str(ex))
+            self.assertIn(err_str_segment, str(ex))
 
     def _run_cli(self, args_str):
         sys.argv = args_str.split()
@@ -94,6 +126,14 @@ class CliTest(unittest.TestCase):
         with open(os.devnull, "w") as f:
             returncode = subprocess.call("cfy", stdout=f, stderr=f)
         self.assertEquals(returncode, 2)
+
+    def test_version(self):
+        try:
+            self._run_cli('cfy --version')
+        except SystemExit, e:
+            self.assertEqual(e.code, 0)
+        else:
+            self.fail()
 
     def test_validate_blueprint_in_cwd(self):
         prev_cwd = os.getcwd()
@@ -144,7 +184,7 @@ class CliTest(unittest.TestCase):
 
     def test_init_nonexistent_provider(self):
         self._assert_ex("cfy init mock_provider3 -v",
-                        "No module named mock_provider3")
+                        "Could not import module mock_provider3")
 
     def test_init_initialized_directory(self):
         self._create_cosmo_wd_settings()
@@ -526,3 +566,67 @@ class CliTest(unittest.TestCase):
         cli.find_executable = lambda x: None
         cli.system = lambda: 'Linux'
         self._assert_ex('cfy ssh', 'ssh not found')
+
+    def _create_provider_config_with_prefix(self):
+        provider_config = cli.ProviderConfig({
+            'cloudify': {
+                'resources_prefix': 'PFX_'
+            }
+        })
+        return provider_config
+
+    def test_resources_names_updater(self):
+        provider_config = self._create_provider_config_with_prefix()
+        pm = SomeProvider(provider_config, False)
+        self.assertEquals(pm.get_updated_resource_name('x'), 'PFX_x')
+
+    def test_files_names_updater(self):
+        provider_config = self._create_provider_config_with_prefix()
+        pm = SomeProvider(provider_config, False)
+        self.assertEquals(
+            pm.get_updated_file_name('/home/my/file.ext'),
+            '/home/my/PFX_file.ext'
+        )
+
+    def _compare_config_item(self, actual, expected, path):
+        r = re.escape(expected)
+        r = r.replace('X', '[0-9]')
+        r = '^' + r + '$'
+        self.assertRegexpMatches(actual, r)
+
+    def _compare_configs(self, actual, expected, path=None):
+        p = path or []
+        self.assertEquals(type(actual), type(expected))
+        if isinstance(actual, dict) and isinstance(expected, dict):
+            self.assertEquals(set(actual.keys()), set(expected.keys()))
+            for k in expected.keys():
+                self._compare_configs(actual[k], expected[k], p + [k])
+            return
+        self._compare_config_item(str(actual), str(expected), p)
+
+
+def _create_config_modification_test_method(in_file, out_file):
+    def config_mod_test(self):
+        data_in = yaml.load(open(in_file))
+        provider_config = cli.ProviderConfig(data_in)
+        pm = SomeProvider(provider_config, False)
+        pm.update_names_in_config()
+        expected_provider_config = cli.ProviderConfig(
+            yaml.load(open(out_file))
+        )
+        self._compare_configs(pm.provider_config, expected_provider_config)
+    return config_mod_test
+
+d = os.path.join(THIS_DIR, 'config_transformations')
+for input_file_name in glob.glob(os.path.join(d, '*.in.yaml')):
+    test_name = os.path.basename(input_file_name)
+    test_name, _, _ = test_name.partition('.')
+    test_name = 'test_config_mod_' + test_name
+    output_file_name = input_file_name.replace('.in.yaml', '.out.yaml')
+    m = _create_config_modification_test_method(
+        input_file_name,
+        output_file_name
+    )
+    m.__name__ = test_name
+    setattr(CliTest, test_name, m)
+    del m  # Or it will be called by Nose without arguments

@@ -33,10 +33,13 @@ class ProviderManager(BaseProviderClass):
                   dev_mode=False):
         return True
 
-    def validate(self, validation_errors={}):
-        # get openstack clients
-        return validation_errors
+    def validate(self):
+        return {}
 
     def teardown(self, provider_context, ignore_validation=False):
         print 'failed teardown'
         raise RuntimeError('cloudify_mock_provider2 teardown exception')
+
+    def ensure_connectivity_with_management_server(self, mgmt_ip, mgmt_ssh_key,
+                                                   mgmt_ssh_user):
+        return True

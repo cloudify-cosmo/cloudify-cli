@@ -7,7 +7,7 @@ types:
         derived_from: cloudify.types.host
         properties:
             -   install_agent: true
-            -   worker_config:
+            -   cloudify_agent:
                     user: ubuntu
                     port: 22
                     key: ~/.ssh/cloudify-agents.pem
