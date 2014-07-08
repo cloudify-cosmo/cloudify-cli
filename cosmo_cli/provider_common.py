@@ -59,6 +59,7 @@ class BaseProviderClass(object):
         set_global_verbosity_level(is_verbose_output)
         self.provider_config = provider_config
         self.is_verbose_output = is_verbose_output
+        self.keep_up_on_failure = False
 
     @abstractmethod
     def provision(self):
