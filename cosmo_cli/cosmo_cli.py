@@ -1010,6 +1010,7 @@ def _bootstrap_cosmo(args):
     lgr.info("prefix for all resources: '{0}'".
              format(provider_config.resources_prefix))
     pm = provider.ProviderManager(provider_config, get_global_verbosity())
+    pm.keep_up_on_failure = args.keep_up
 
     if args.skip_validations and args.validate_only:
         raise CosmoCliError('please choose one of skip-validations or '
@@ -1034,6 +1035,16 @@ def _bootstrap_cosmo(args):
         params = pm.provision()
 
     installed = False
+    provider_context = {}
+
+    def keep_up_or_teardown():
+        if args.keep_up:
+            lgr.info('topology will remain up')
+        else:
+            lgr.info('tearing down topology'
+                     ' due to bootstrap failure')
+            pm.teardown(provider_context)
+
     if params:
         mgmt_ip, private_ip, ssh_key, ssh_user, provider_context = params
         lgr.info('provisioning complete')
@@ -1042,14 +1053,18 @@ def _bootstrap_cosmo(args):
                 mgmt_ip, ssh_key, ssh_user):
             lgr.info('connected with the management server successfully')
             lgr.info('bootstrapping the management server...')
-            installed = pm.bootstrap(mgmt_ip, private_ip, ssh_key,
-                                     ssh_user, args.dev_mode)
+            try:
+                installed = pm.bootstrap(mgmt_ip, private_ip, ssh_key,
+                                         ssh_user, args.dev_mode)
+            except BaseException:
+                lgr.error('bootstrapping failed!')
+                keep_up_or_teardown()
+                raise
             lgr.info('bootstrapping complete') if installed else \
                 lgr.error('bootstrapping failed!')
         else:
             lgr.error('failed connecting to the management server!')
     else:
-        provider_context = {}
         lgr.error('provisioning failed!')
 
     if installed:
@@ -1071,12 +1086,7 @@ def _bootstrap_cosmo(args):
             "management server is up at {0} (is now set as the default "
             "management server)".format(mgmt_ip))
     else:
-        if args.keep_up:
-            lgr.info('topology will remain up')
-        else:
-            lgr.info('tearing down topology'
-                     ' due to bootstrap failure')
-            pm.teardown(provider_context)
+        keep_up_or_teardown()
         raise CosmoBootstrapError()
 
 
