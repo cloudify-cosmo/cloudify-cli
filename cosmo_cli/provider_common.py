@@ -109,12 +109,12 @@ class BaseProviderClass(object):
         ssh_config = self.provider_config['cloudify']['bootstrap']['ssh']
 
         def _run_with_retries(command, retries=ssh_config['command_retries'],
-                              sleeper=ssh_config['retries_interval']):
+                              sleeper=ssh_config['retries_interval'],
+                              return_output_on_success=False):
             r = None
             error_message = None
             for execution in range(retries):
-                lgr.debug('running command: {0}'
-                          .format(command))
+                lgr.debug('running command: {0}'.format(command))
                 try:
                     if not self.is_verbose_output:
                         with hide('running', 'stdout'):
@@ -128,15 +128,14 @@ class BaseProviderClass(object):
                 except BaseException as e:
                     lgr.warning('Error occurred while running command: '
                                 '{}'.format(str(e)))
+                    error_message = str(e)
                 if r and r.succeeded:
-                    lgr.debug('successfully ran command: {0}'
-                              .format(command))
-                    return True
-                else:
-                    lgr.warning('retrying command: {0}'
-                                .format(command))
+                    lgr.debug('successfully ran command: {0}'.format(command))
+                    return r.stdout if return_output_on_success else True
+                elif r:
                     error_message = r.stderr
-                    time.sleep(sleeper)
+                lgr.warning('retrying command: {0}'.format(command))
+                time.sleep(sleeper)
             lgr.error('failed to run: {0}, {1}'
                       .format(command, error_message))
             return False
@@ -161,14 +160,15 @@ class BaseProviderClass(object):
             if not DISTRO_EXT[distro] == ext:
                 lgr.error('wrong package type: '
                           '{} required. {} supplied. in url: {}').format(
-                    DISTRO_EXT[d.stdout], ext, url)
+                    DISTRO_EXT[dist], ext, url)
                 return False
             return True
 
         def get_distro():
             lgr.debug('identifying instance distribution...')
-            return _run(
-                'python -c "import platform; print platform.dist()[0]"')
+            return _run_with_retries(
+                'python -c "import platform; print platform.dist()[0]"',
+                return_output_on_success=True)
 
         def get_ext(url):
             lgr.debug('extracting file extension from url')
@@ -187,9 +187,9 @@ class BaseProviderClass(object):
             else False
         # get linux distribution to install and download
         # packages accordingly
-        d = get_distro()
-        if d.succeeded:
-            lgr.debug('distribution is: {0}'.format(d.stdout))
+        dist = get_distro()  # dist is either the dist name or False
+        if dist:
+            lgr.debug('distribution is: {0}'.format(dist))
         else:
             lgr.error('could not identify distribution.')
             return False
@@ -197,30 +197,30 @@ class BaseProviderClass(object):
         # check package compatibility with current distro
         lgr.debug('checking package-distro compatibility')
         for package, package_url in server_packages.items():
-            if not check_distro_type_match(package_url, d.stdout):
+            if not check_distro_type_match(package_url, dist):
                 raise RuntimeError('wrong package type')
         for package, package_url in agent_packages.items():
-            if not check_distro_type_match(package_url, d.stdout):
+            if not check_distro_type_match(package_url, dist):
                 raise RuntimeError('wrong agent package type')
 
         # TODO: consolidate server package downloading
         lgr.info('downloading cloudify-components package...')
-        r = _download_package(
+        success = _download_package(
             CLOUDIFY_PACKAGES_PATH,
             server_packages['components_package_url'],
-            d.stdout)
-        if not r.succeeded:
+            dist)
+        if not success:
             lgr.error('failed to download components package. '
                       'please ensure package exists in its '
                       'configured location in the config file')
             return False
 
         lgr.info('downloading cloudify-core package...')
-        r = _download_package(
+        success = _download_package(
             CLOUDIFY_PACKAGES_PATH,
             server_packages['core_package_url'],
-            d.stdout)
-        if not r.succeeded:
+            dist)
+        if not success:
             lgr.error('failed to download core package. '
                       'please ensure package exists in its '
                       'configured location in the config file')
@@ -228,11 +228,11 @@ class BaseProviderClass(object):
 
         if ui_included:
             lgr.info('downloading cloudify-ui...')
-            r = _download_package(
+            success = _download_package(
                 CLOUDIFY_UI_PACKAGE_PATH,
                 server_packages['ui_package_url'],
-                d.stdout)
-            if not r.succeeded:
+                dist)
+            if not success:
                 lgr.error('failed to download ui package. '
                           'please ensure package exists in its '
                           'configured location in the config file')
@@ -243,11 +243,11 @@ class BaseProviderClass(object):
 
         for agent, agent_url in \
                 agent_packages.items():
-            r = _download_package(
+            success = _download_package(
                 CLOUDIFY_AGENT_PACKAGE_PATH,
                 agent_packages[agent],
-                d.stdout)
-            if not r.succeeded:
+                dist)
+            if not success:
                 lgr.error('failed to download {}. '
                           'please ensure package exists in its '
                           'configured location in the config file'.format(
@@ -255,10 +255,10 @@ class BaseProviderClass(object):
                 return False
 
         lgr.info('unpacking cloudify-core packages...')
-        r = _unpack(
+        success = _unpack(
             CLOUDIFY_PACKAGES_PATH,
-            d.stdout)
-        if not r.succeeded:
+            dist)
+        if not success:
             lgr.error('failed to unpack cloudify-core package.')
             return False
 
@@ -267,38 +267,38 @@ class BaseProviderClass(object):
         self.is_verbose_output = True
 
         lgr.info('installing cloudify on {0}...'.format(mgmt_ip))
-        r = _run('sudo {0}/cloudify-components-bootstrap.sh'.format(
+        success = _run('sudo {0}/cloudify-components-bootstrap.sh'.format(
             CLOUDIFY_COMPONENTS_PACKAGE_PATH))
-        if not r.succeeded:
+        if not success:
             lgr.error('failed to install cloudify-components package.')
             return False
 
         # declare user to run celery. this is passed to the core package's
         # bootstrap script for installation.
         celery_user = mgmt_ssh_user
-        r = _run('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'.format(
+        success = _run('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'.format(
             CLOUDIFY_CORE_PACKAGE_PATH, celery_user, private_ip))
-        if not r.succeeded:
+        if not success:
             lgr.error('failed to install cloudify-core package.')
             return False
 
         if ui_included:
             lgr.info('installing cloudify-ui...')
             self.is_verbose_output = False
-            r = _unpack(
+            success = _unpack(
                 CLOUDIFY_UI_PACKAGE_PATH,
-                d.stdout)
-            if not r.succeeded:
+                dist)
+            if not success:
                 lgr.error('failed to install cloudify-ui.')
                 return False
             lgr.info('cloudify-ui installation successful.')
 
         lgr.info('deploying cloudify agents')
         self.is_verbose_output = False
-        r = _unpack(
+        success = _unpack(
             CLOUDIFY_AGENT_PACKAGE_PATH,
-            d.stdout)
-        if not r.succeeded:
+            dist)
+        if not success:
             lgr.error('failed to install cloudify agents.')
             return False
         lgr.info('cloudify agents installation successful.')
