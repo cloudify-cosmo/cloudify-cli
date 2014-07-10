@@ -24,7 +24,7 @@ setup(
     version=get_version(),
     author='Gigaspaces',
     author_email='cosmo-admin@gigaspaces.com',
-    packages=['cosmo_cli'],
+    packages=['cosmo_cli', 'cloudify_simple_provider'],
     package_data={'cosmo_cli': ['VERSION']},
     license='LICENSE',
     description='Cloudify CLI',
