@@ -25,7 +25,11 @@ setup(
     author='Gigaspaces',
     author_email='cosmo-admin@gigaspaces.com',
     packages=['cosmo_cli', 'cloudify_simple_provider'],
-    package_data={'cosmo_cli': ['VERSION']},
+    package_data={
+        'cosmo_cli': ['VERSION'],
+        'cloudify_simple_provider': ['cloudify-config.yaml',
+                                     'cloudify-config.defaults.yaml']
+    },
     license='LICENSE',
     description='Cloudify CLI',
     entry_points={
