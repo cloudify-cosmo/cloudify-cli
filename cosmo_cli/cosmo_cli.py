@@ -637,12 +637,13 @@ def _parse_args(args):
         'task',
         metavar='TASK',
         type=str,
-        help='name of fabric task to run.'
+        help='name of fabric task to run'
     )
     parser_dev.add_argument(
         'args',
         nargs=argparse.REMAINDER,
         metavar='ARGS',
+        help='arguments for the fabric task'
     )
     parser_dev.add_argument(
         '--tasks-file',
