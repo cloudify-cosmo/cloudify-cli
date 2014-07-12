@@ -42,8 +42,8 @@ from StringIO import StringIO
 
 import argcomplete
 import yaml
-from fabric.api import env, local
-from fabric.context_managers import settings
+from fabric.api import local
+
 
 from dsl_parser.parser import parse_from_path, DSLParsingException
 from cloudify_rest_client import CloudifyClient
@@ -51,6 +51,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import CreateDeploymentInProgressError
 
 import config
+import dev
 from executions import wait_for_execution
 from executions import get_deployment_creation_execution
 from executions import get_all_execution_events
@@ -633,17 +634,15 @@ def _parse_args(args):
 
     # dev subparser
     parser_dev.add_argument(
-        'run',
-        metavar='RUN',
+        'task',
+        metavar='TASK',
         type=str,
-        help='Command for running tasks.'
+        help='name of fabric task to run.'
     )
     parser_dev.add_argument(
-        '--tasks',
-        dest='tasks',
-        metavar='TASKS_LIST',
-        type=str,
-        help='A comma separated list of fabric tasks to run.'
+        'args',
+        nargs=argparse.REMAINDER,
+        metavar='ARGS',
     )
     parser_dev.add_argument(
         '--tasks-file',
@@ -1701,60 +1700,14 @@ def _get_events(args):
 
 
 def _run_dev(args):
-    # TODO: allow passing username and key path as params.
-    # env.user = args.user if args.user else _get_mgmt_user()
-    # env.key_filename = args.key if args.key else _get_mgmt_key()
-    env.user = _get_mgmt_user()
-    env.key_filename = _get_mgmt_key()
-    env.warn_only = True
-    env.abort_on_prompts = False
-    env.connection_attempts = 5
-    env.keepalive = 0
-    env.linewise = False
-    env.pool_size = 0
-    env.skip_bad_hosts = False
-    env.timeout = 10
-    env.forward_agent = True
-    env.status = False
-    env.disable_known_hosts = False
-
-    mgmt_ip = args.management_ip if args.management_ip \
+    management_ip = args.management_ip if args.management_ip \
         else _get_management_server_ip(args)
-    # hmm... it's also possible to just pass the tasks string to fabric
-    # and let it run... need to think about it...
-    if args.run:
-        if args.tasks_file:
-            sys.path.append(os.path.dirname(args.tasks_file))
-            tasks = __import__(os.path.basename(os.path.splitext(
-                args.tasks_file)[0]))
-        else:
-            sys.path.append(os.getcwd())
-            try:
-                import tasks
-            except ImportError:
-                raise CosmoDevError('could not find a tasks file to import.'
-                                    ' either create a tasks.py file in your '
-                                    'cwd or use the --tasks-file flag to '
-                                    'point to one.')
-        with settings(host_string=mgmt_ip):
-            if args.tasks:
-                for task in args.tasks.split(','):
-                    try:
-                        getattr(tasks, task)()
-                    except AttributeError:
-                        raise CosmoDevError('task: "{0}" not found'
-                                            .format(task))
-                    except Exception as e:
-                        raise CosmoDevError('failed to execute: "{0}" '
-                                            '({1}) '.format(task, str(e)))
-            else:
-                for task in dir(tasks):
-                    if task.startswith('task_'):
-                        try:
-                            getattr(tasks, task)()
-                        except Exception as e:
-                            raise CosmoDevError('failed to execute: "{0}" '
-                                                '({1}) '.format(task, str(e)))
+    dev.execute(username=_get_mgmt_user(),
+                key=_get_mgmt_key(),
+                ip=management_ip,
+                task=args.task,
+                tasks_file=args.tasks_file,
+                args=args.args)
 
 
 def _run_ssh(args):
@@ -1956,10 +1909,6 @@ class CosmoWorkingDirectorySettings(yaml.YAMLObject):
             flgr.error(msg)
             raise CosmoCliError(msg)
         self._mgmt_aliases[management_alias] = management_address
-
-
-class CosmoDevError(Exception):
-    pass
 
 
 class CosmoBootstrapError(Exception):
