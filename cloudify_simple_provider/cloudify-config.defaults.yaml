@@ -1,27 +1,24 @@
-public_ip: 11.0.0.7
-private_ip: 11.0.0.7
-ssh_key_path: ~/.vagrant.d/insecure_private_key
-ssh_username: vagrant
-context: {}
-
-#compute: {agent_servers: {agents_keypair: {
-#    private_key_path:
-#}}}
+public_ip: Enter-Public-IP-Here
+private_ip: Enter-Private-IP-Here
+ssh_key_path: Enter-SSH-Key-Path-Here
+ssh_username: Enter-SSH-Username-Here
+context: {} # Optional provider context
 
 cloudify:
     server:
         packages:
-            components_package_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/nightly/cloudify-components_amd64.deb
-            core_package_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/nightly/cloudify-core_amd64.deb
-            ui_package_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/nightly/cloudify-ui_amd64.deb
+            components_package_url: "{{ components_package_url }}"
+            core_package_url: "{{ core_package_url }}"
+            ui_package_url: "{{ ui_package_url }}"
     agents:
         packages:
-            ubuntu_agent_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/nightly/cloudify-ubuntu-agent_amd64.deb
+            ubuntu_agent_url: "{{ ubuntu_agent_url }}"
+            windows_agent_url: "{{ windows_agent_url }}"
         config:
             min_workers: 2
             max_workers: 5
             remote_execution_port: 22
-            user: vagrant
+            #user: (no default - optional parameter)
     workflows:
         task_retries: -1  # -1 means we retry forever
         retry_interval: 30
