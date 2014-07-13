@@ -39,7 +39,7 @@ def update_config_at_paths(struct, paths, f):
     for p in paths:
         kern(struct, p)
 
-DISTRO_EXT = {'Ubuntu': '.deb', 'centos': '.rpm'}
+DISTRO_EXT = {'Ubuntu': '.deb', 'centos': '.rpm', 'xitUbuntu': '.deb'}
 
 
 class BaseProviderClass(object):
