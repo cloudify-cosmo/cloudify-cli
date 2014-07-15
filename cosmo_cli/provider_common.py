@@ -39,7 +39,7 @@ def update_config_at_paths(struct, paths, f):
     for p in paths:
         kern(struct, p)
 
-DISTRO_EXT = {'Ubuntu': '.deb', 'centos': '.rpm'}
+DISTRO_EXT = {'Ubuntu': '.deb', 'centos': '.rpm', 'xitUbuntu': '.deb'}
 
 
 class BaseProviderClass(object):
@@ -160,7 +160,7 @@ class BaseProviderClass(object):
             if not DISTRO_EXT[distro] == ext:
                 lgr.error('wrong package type: '
                           '{} required. {} supplied. in url: {}').format(
-                    DISTRO_EXT[dist], ext, url)
+                    DISTRO_EXT[distro], ext, url)
                 return False
             return True
 
