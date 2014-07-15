@@ -13,6 +13,7 @@ cloudify:
     agents:
         packages:
             ubuntu_agent_url: "{{ ubuntu_agent_url }}"
+            centos_agent_url: "{{ centos_agent_url }}"
             windows_agent_url: "{{ windows_agent_url }}"
         config:
             min_workers: 2
