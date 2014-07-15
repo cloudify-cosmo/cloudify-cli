@@ -39,7 +39,7 @@ def update_config_at_paths(struct, paths, f):
     for p in paths:
         kern(struct, p)
 
-DISTRO_EXT = {'Ubuntu': '.deb', 'centos': '.rpm'}
+DISTRO_EXT = {'Ubuntu': '.deb', 'centos': '.rpm', 'xitUbuntu': '.deb'}
 
 
 class BaseProviderClass(object):
@@ -141,17 +141,17 @@ class BaseProviderClass(object):
             return False
 
         def _download_package(url, path, distro):
-            if distro in ('Ubuntu'):
+            if 'Ubuntu' in distro:
                 return _run_with_retries('sudo wget {0} -P {1}'.format(
                     path, url))
-            elif distro in ('centos'):
+            elif 'centos' in distro:
                 with cd(path):
                     return _run_with_retries('sudo curl -O {0}')
 
         def _unpack(path, distro):
-            if distro in ('Ubuntu'):
+            if 'Ubuntu' in distro:
                 return _run_with_retries('sudo dpkg -i {0}/*.deb'.format(path))
-            elif distro in ('centos'):
+            elif 'centos' in distro:
                 return _run_with_retries('sudo rpm -i {0}/*.rpm'.format(path))
 
         def check_distro_type_match(url, distro):
@@ -160,7 +160,7 @@ class BaseProviderClass(object):
             if not DISTRO_EXT[distro] == ext:
                 lgr.error('wrong package type: '
                           '{} required. {} supplied. in url: {}'
-                          .format(DISTRO_EXT[dist], ext, url))
+                          .format(DISTRO_EXT[distro], ext, url))
                 return False
             return True
 
