@@ -159,8 +159,8 @@ class BaseProviderClass(object):
             ext = get_ext(url)
             if not DISTRO_EXT[distro] == ext:
                 lgr.error('wrong package type: '
-                          '{} required. {} supplied. in url: {}').format(
-                    DISTRO_EXT[dist], ext, url)
+                          '{} required. {} supplied. in url: {}'
+                          .format(DISTRO_EXT[dist], ext, url))
                 return False
             return True
 
