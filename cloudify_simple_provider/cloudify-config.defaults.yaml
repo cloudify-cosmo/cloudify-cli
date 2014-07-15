@@ -1,0 +1,33 @@
+public_ip: Enter-Public-IP-Here
+private_ip: Enter-Private-IP-Here
+ssh_key_path: Enter-SSH-Key-Path-Here
+ssh_username: Enter-SSH-Username-Here
+context: {} # Optional provider context
+
+cloudify:
+    server:
+        packages:
+            components_package_url: "{{ components_package_url }}"
+            core_package_url: "{{ core_package_url }}"
+            ui_package_url: "{{ ui_package_url }}"
+    agents:
+        packages:
+            ubuntu_agent_url: "{{ ubuntu_agent_url }}"
+            windows_agent_url: "{{ windows_agent_url }}"
+        config:
+            min_workers: 2
+            max_workers: 5
+            remote_execution_port: 22
+            #user: (no default - optional parameter)
+    workflows:
+        task_retries: -1  # -1 means we retry forever
+        retry_interval: 30
+
+    bootstrap:
+        ssh:
+            initial_connectivity_retries: 20
+            initial_connectivity_retries_interval: 15
+            command_retries: 3
+            retries_interval: 3
+            connection_attempts: 1
+            socket_timeout: 10
