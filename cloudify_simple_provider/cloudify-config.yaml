@@ -7,14 +7,14 @@ context: {} # Optional provider context
 # cloudify:
 #     server:
 #         packages:
-#             components_package_url: "{{ components_package_url }}"
-#             core_package_url: "{{ core_package_url }}"
-#             ui_package_url: "{{ ui_package_url }}"
+#             components_package_url: "http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.0.0/nightly_6/cloudify-components_3.0.0-ga-b6_amd64.deb"
+#             core_package_url: "http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.0.0/nightly_6/cloudify-core_3.0.0-ga-b6_amd64.deb"
+#             ui_package_url: "http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.0.0/nightly_6/cloudify-ui_3.0.0-ga-b6_amd64.deb"
 #     agents:
 #         packages:
-#             ubuntu_agent_url: "{{ ubuntu_agent_url }}"
-#             centos_agent_url: "{{ centos_agent_url }}"
-#             windows_agent_url: "{{ windows_agent_url }}"
+#             ubuntu_agent_url: "http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.0.0/nightly_6/cloudify-ubuntu-agent_3.0.0-ga-b6_amd64.deb"
+#             centos_agent_url: "http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.0.0/nightly_6/cloudify-centos-agent_3.0.0-ga-b6_amd64.deb"
+#             windows_agent_url: "http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.0.0/nightly_6/cloudify-windows-agent_3.0.0-ga-b6_amd64.deb"
 #         config:
 #             min_workers: 2
 #             max_workers: 5
