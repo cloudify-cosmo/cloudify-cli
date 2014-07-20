@@ -1,0 +1,34 @@
+public_ip: Enter-Public-IP-Here
+private_ip: Enter-Private-IP-Here
+ssh_key_path: Enter-SSH-Key-Path-Here
+ssh_username: Enter-SSH-Username-Here
+context: {} # Optional provider context
+
+cloudify:
+    server:
+        packages:
+            components_package_url: "http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.0.0/nightly_6/cloudify-components_3.0.0-ga-b6_amd64.deb"
+            core_package_url: "http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.0.0/nightly_6/cloudify-core_3.0.0-ga-b6_amd64.deb"
+            ui_package_url: "http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.0.0/nightly_6/cloudify-ui_3.0.0-ga-b6_amd64.deb"
+    agents:
+        packages:
+            ubuntu_agent_url: "http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.0.0/nightly_6/cloudify-ubuntu-agent_3.0.0-ga-b6_amd64.deb"
+            centos_agent_url: "http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.0.0/nightly_6/cloudify-centos-agent_3.0.0-ga-b6_amd64.deb"
+            windows_agent_url: "http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.0.0/nightly_6/cloudify-windows-agent_3.0.0-ga-b6_amd64.deb"
+        config:
+            min_workers: 2
+            max_workers: 5
+            remote_execution_port: 22
+            #user: (no default - optional parameter)
+    workflows:
+        task_retries: -1  # -1 means we retry forever
+        retry_interval: 30
+
+    bootstrap:
+        ssh:
+            initial_connectivity_retries: 20
+            initial_connectivity_retries_interval: 15
+            command_retries: 3
+            retries_interval: 3
+            connection_attempts: 1
+            socket_timeout: 10

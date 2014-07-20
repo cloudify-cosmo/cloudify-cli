@@ -29,14 +29,15 @@ class ProviderManager(BaseProviderClass):
     def provision(self):
         return '10.0.0.1', '10.10.10.10', 'key_path', 'user', {'key': 'value'}
 
-    def validate(self, validation_errors={}):
-        # get openstack clients
-        return validation_errors
+    def validate(self):
+        return {}
 
     def teardown(self, provider_context, ignore_validation=False):
         print 'successful teardown'
-        pass
 
+    def ensure_connectivity_with_management_server(self, mgmt_ip, mgmt_ssh_key,
+                                                   mgmt_ssh_user):
+        return True
 
 # def init(target_dir, reset_config, is_verbose_output=False):
 #     config_file_path = os.path.join(target_dir, 'cloudify-config.yaml')

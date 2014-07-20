@@ -1,6 +1,17 @@
 cloudify:
-   cloudify_branch: develop
-   cloudify_components_package_url: https://dl.dropboxusercontent.com/u/407576/cloudify-components_3.0.0_amd64_training.deb
-   cloudify_core_package_url: https://dl.dropboxusercontent.com/u/407576/cloudify-core_3.0.0_amd64_training.deb
-   cloudify_ui_package_url: https://dl.dropboxusercontent.com/u/407576/cloudify-ui_1.0.0_amd64_demo.deb
-   cloudify_ubuntu_agent_url: https://dl.dropboxusercontent.com/u/407576/ubuntu-agent_3.0.0_amd64_training.deb
+    server:
+        packages:
+            components_package_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/nightly/cloudify-components_amd64.deb
+            core_package_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/nightly/cloudify-core_amd64.deb
+            ui_package_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/nightly/cloudify-ui_amd64.deb
+    agents:
+        packages:
+            ubuntu_agent_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/nightly/ubuntu-agent_amd64.deb
+        config:
+            min_workers: 2
+            max_workers: 5
+            remote_execution_port: 22
+            #user: (no default - optional parameter)
+    workflows:
+        task_retries: -1  # -1 means we retry forever
+        retry_interval: 30

@@ -17,27 +17,19 @@ __author__ = 'ran'
 
 from setuptools import setup
 
-VERSION = '3.0'
-
-REST_CLIENT_VERSION = '3.0'
-REST_CLIENT_BRANCH = '3.0'
-REST_CLIENT = 'https://github.com/cloudify-cosmo/cloudify-rest-client' \
-              '/tarball/{0}#egg=cloudify-rest-client-{1}'.format(
-                  REST_CLIENT_BRANCH, REST_CLIENT_VERSION)
-
-DSL_PARSER_VERSION = '3.0'
-DSL_PARSER_BRANCH = '3.0'
-DSL_PARSER = 'https://github.com/cloudify-cosmo/cloudify-dsl-parser/tarball/' \
-             '{0}#egg=cloudify-dsl-parser-{1}'.format(
-                 DSL_PARSER_BRANCH, DSL_PARSER_VERSION)
-
+from cosmo_cli import get_version
 
 setup(
     name='cloudify-cli',
-    version=VERSION,
-    author='ran',
-    author_email='ran@gigaspaces.com',
-    packages=['cosmo_cli'],
+    version=get_version(),
+    author='Gigaspaces',
+    author_email='cosmo-admin@gigaspaces.com',
+    packages=['cosmo_cli', 'cloudify_simple_provider'],
+    package_data={
+        'cosmo_cli': ['VERSION'],
+        'cloudify_simple_provider': ['cloudify-config.yaml',
+                                     'cloudify-config.defaults.yaml']
+    },
     license='LICENSE',
     description='Cloudify CLI',
     entry_points={
@@ -47,12 +39,12 @@ setup(
         ]
     },
     install_requires=[
+        'cloudify-rest-client==3.0',
+        'cloudify-dsl-parser==3.0',
         'pyyaml==3.10',
-        'cloudify-rest-client',
-        'cloudify-dsl-parser',
         'argcomplete==0.7.1',
-        "fabric==1.8.3",
-        "jsonschema==2.3.0",
-    ],
-    dependency_links=[REST_CLIENT, DSL_PARSER]
+        'fabric==1.8.3',
+        'jsonschema==2.3.0',
+        'PrettyTable>=0.7,<0.8'
+    ]
 )

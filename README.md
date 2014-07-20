@@ -15,15 +15,13 @@ Command line interface for [Cloudify](https://github.com/cloudify-cosmo/cloudify
 
 ## Deploying your first application - Walkthrough
 **1. Installing the CLI and a provider extension:**
-  - Install a Cloudify provider extension (Openstack is used in this example):
-  ```shell
-  apt-get install python-dev # or the equivalent *nix version of this command
-  pip install https://github.com/cloudify-cosmo/cloudify-openstack-provider/archive/1.0.zip
-  ```
+
+  - Clone this repository: `git clone https://github.com/cloudify-cosmo/cloudify-cli`
+  - Run pip install: `pip install -r cloudify-cli/dev-requirements.txt cloudify-cli/`
+  - Clone openstack provider CLI: `git clone https://github.com/cloudify-cosmo/cloudify-openstack-provider`
+  - Run pip install: `pip install -r cloudify-openstack-provider/dev-requirements.txt cloudify-openstack-provider/`
 
   NOTES:
-   - **If you're using Pip 1.5 or above, add the "*--process-dependency-links*" flag to the 'pip install' command**
-   - This will also install Cloudify's CLI
    - After installing the cli you can run the "activate_cfy_bash_completion" script which will permanently add bash completion to you shel
    and then follow the instructions or run "eval "$(register-python-argcomplete cfy)"" if you want to activate bash completion for your active shell only)
 
@@ -282,22 +280,41 @@ re
 
 ------
 
+**Command:** deployments delete
+
+**Description:** deletes the deployment (and its resources) from the management server
+
+**Usage:** `cfy deployments delete [-d, --deployments-id <deployment_id>] [-f, --ignore-live-nodes] [-t, --management-ip <ip>] [-v, --verbosity]`
+
+**Parameters**:
+
+- blueprint_id: the id of the blueprint to delete
+- ignore-live-nodes: a flag determining whether to delete the deployment even if it still has live nodes (Optional)
+- management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
+
+**Example:** `cfy deployments delete -d my-deployment`
+
+------
+
 **Command:** deployments execute
 
 **Description:** executes an operation on a deployment
 
-**Usage:** `cfy deployments execute <operation> [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity] [--timeout <timeout>] [--force]`
+**Usage:** `cfy deployments execute <operation> [-d, --deployment-id <deployment_id>] [-p, --parameters <parameters>] [--allow-custom-parameters] [-t, --management-ip <ip>] [-v, --verbosity] [--timeout <timeout>] [--force]`
 
 **Parameters**:
 
 - operation: the name of the operation to execute
 - deployment_id: the deployment id on which the operation should be executed
+- parameters: parameters for the workflow execution (in JSON format) (Optional)
+- allow-custom-parameters: A flag for allowing the passing of custom parameters (parameters which were not defined in the workflow's schema in the blueprint) to the execution (Optional)
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 - timeout: operation timeout in seconds (Optional, The execution itself will keep
 going. It is the CLI that will stop waiting for it to terminate)
-- force: A flag indicating whether the workflow should execute even if there is
- an ongoing execution for the provided deployment (default: false)
+- force: A flag indicating the workflow should execute even if there is
+ an ongoing execution for the provided deployment (Optional)
 
 
 **Example:** `cfy deployments execute install -d my-deployment`
@@ -314,6 +331,23 @@ going. It is the CLI that will stop waiting for it to terminate)
 - blueprint-id: the id of the blueprint to to list deployments for (Optional, lists all deployments if not provided)
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
+------
+
+**Command:** workflows get
+
+**Description:** gets a workflow by its name and deployment id. This command will also show the workflow's parameters.
+
+**Usage:** `cfy workflows get [-w, --workflow-id <workflow_id>] [-d, --deployment-id <deployment_id] [-t, --management-ip <ip>] [-v, --verbosity]`
+
+**Parameters**:
+
+- workflow_id: the id/name of the workflow to get
+- deployment_id: the id of the deployment for which the workflow belongs
+- management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
+
+**Example:** `cfy workflows get -w my-workflow -d my-deployment`
+
 
 ------
 
@@ -334,16 +368,32 @@ going. It is the CLI that will stop waiting for it to terminate)
 
 ------
 
+**Command:** executions get
+
+**Description:** gets an execution by its id. This command will also show the execution's parameters.
+
+**Usage:** `cfy executions get [-e, --execution-id <execution_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
+
+**Parameters**:
+
+- execution_id: the id of the execution to get
+- management-ip: the management-server to use (Optional)
+- is_verbose_output - A flag for setting verbose output (Optional)
+
+**Example:** `cfy executions get -e my-execution`
+
+
+------
+
 **Command:** executions list
 
 **Description:** lists the executions of a deployment
 
-**Usage:** `cfy executions list [-d, --deployment-id <deployment_id>] [-s, --statuses] [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy executions list [-d, --deployment-id <deployment_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - deployment_id: the id of the deployment whose executions to list
-- statuses: A flag for retrieving the executions current statuses as well
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 
@@ -356,15 +406,16 @@ going. It is the CLI that will stop waiting for it to terminate)
 
 **Description:** Cancels an execution by its id
 
-**Usage:** `cfy executions cancel [-e, --execution-id <execution_id>] [-t, --management-ip <ip>] [-v, --verbosity]`
+**Usage:** `cfy executions cancel [-e, --execution-id <execution_id>] [-f, --force] [-t, --management-ip <ip>] [-v, --verbosity]`
 
 **Parameters**:
 
 - execution_id: the id of the execution to cancel
+- force: A flag indicating authorization to terminate the execution abruptly rather than request an orderly termination (Optional)
 - management-ip: the management-server to use (Optional)
 - is_verbose_output - A flag for setting verbose output (Optional)
 
-**Example:** `cfy executions cancel -e some-execution-id`
+**Example:** `cfy executions cancel -e some-execution-id -f`
 
 
 ------

@@ -16,23 +16,53 @@
 
 __author__ = 'ran'
 
-import unittest
+import glob
+import mock
 import os
-import sys
+import re
 import shutil
 import subprocess
-from mock_cosmo_manager_rest_client import MockCosmoManagerRestClient
+import sys
+import unittest
+import yaml
+
+from mock_cloudify_client import MockCloudifyClient
 from cosmo_cli import cosmo_cli as cli
 from cosmo_cli.cosmo_cli import CosmoCliError
-from cosmo_manager_rest_client.cosmo_manager_rest_client \
-    import CosmoManagerRestCallError
-
+from cosmo_cli.provider_common import BaseProviderClass
+from cloudify_rest_client.exceptions import CloudifyClientError
 
 TEST_DIR = '/tmp/cloudify-cli-unit-tests'
 TEST_WORK_DIR = TEST_DIR + "/cloudify"
 TEST_PROVIDER_DIR = TEST_DIR + "/mock-provider"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 BLUEPRINTS_DIR = os.path.join(THIS_DIR, 'blueprints')
+
+
+class SomeProvider(BaseProviderClass):
+    provision = mock.Mock()
+    teardown = mock.Mock()
+    validate = mock.Mock()
+
+    # OpenStack data for names transformations tests - start
+    CONFIG_NAMES_TO_MODIFY = (
+        ('networking', 'int_network'),
+        ('networking', 'subnet'),
+        ('networking', 'router'),
+        ('networking', 'agents_security_group'),
+        ('networking', 'management_security_group'),
+        ('compute', 'agent_servers', 'agents_keypair'),
+        ('compute', 'management_server', 'instance'),
+        ('compute', 'management_server', 'management_keypair'),
+    )
+
+    CONFIG_FILES_PATHS_TO_MODIFY = (
+        ('compute', 'agent_servers', 'agents_keypair',
+            'private_key_path'),
+        ('compute', 'management_server', 'management_keypair',
+            'private_key_path'),
+    )
+    # OpenStack data for names transformations tests - end
 
 
 class CliTest(unittest.TestCase):
@@ -70,29 +100,40 @@ class CliTest(unittest.TestCase):
             self.fail('Expected error {0} was not raised for command {1}'
                       .format(err_str_segment, cli_cmd))
         except SystemExit, ex:
-            self.assertTrue(err_str_segment in str(ex))
+            self.assertIn(err_str_segment, str(ex))
         except CosmoCliError, ex:
-            self.assertTrue(err_str_segment in str(ex))
+            self.assertIn(err_str_segment, str(ex))
 
     def _run_cli(self, args_str):
         sys.argv = args_str.split()
         cli.main()
 
-    def _create_cosmo_wd_settings(self):
+    def _create_cosmo_wd_settings(self, settings=None):
         cli._dump_cosmo_working_dir_settings(
-            cli.CosmoWorkingDirectorySettings())
+            settings or cli.CosmoWorkingDirectorySettings())
 
     def _read_cosmo_wd_settings(self):
         return cli._load_cosmo_working_dir_settings()
 
     def _set_mock_rest_client(self):
         cli._get_rest_client =\
-            lambda ip: MockCosmoManagerRestClient()
+            lambda ip: MockCloudifyClient()
+
+        cli._get_rest_client = \
+            lambda ip: MockCloudifyClient()
 
     def test_get_basic_help(self):
         with open(os.devnull, "w") as f:
             returncode = subprocess.call("cfy", stdout=f, stderr=f)
         self.assertEquals(returncode, 2)
+
+    def test_version(self):
+        try:
+            self._run_cli('cfy --version')
+        except SystemExit, e:
+            self.assertEqual(e.code, 0)
+        else:
+            self.fail()
 
     def test_validate_blueprint_in_cwd(self):
         prev_cwd = os.getcwd()
@@ -143,7 +184,7 @@ class CliTest(unittest.TestCase):
 
     def test_init_nonexistent_provider(self):
         self._assert_ex("cfy init mock_provider3 -v",
-                        "No module named mock_provider3")
+                        "Could not import module mock_provider3")
 
     def test_init_initialized_directory(self):
         self._create_cosmo_wd_settings()
@@ -188,13 +229,14 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy init mock_provider -r -v")
 
     def test_bootstrap(self):
+        self._set_mock_rest_client()
         self._run_cli("cfy init cloudify_mock_provider2 -v")
         self._run_cli("cfy bootstrap -v")
         settings = self._read_cosmo_wd_settings()
         self.assertEquals("10.0.0.2", settings.get_management_server())
         self.assertEquals('value', settings.get_provider_context()['key'])
 
-        from cosmo_cli.tests.mock_cosmo_manager_rest_client import \
+        from cosmo_cli.tests.mock_cloudify_client import \
             _provider_context, _provider_name
         self.assertEquals('cloudify_mock_provider2', _provider_name)
         self.assertEquals('value', _provider_context['key'])
@@ -226,10 +268,12 @@ class CliTest(unittest.TestCase):
     #                   "--ignore-deployments -c cloudify-config.yaml -v")
 
     def test_teardown_force_deployments(self):
-        rest_client = MockCosmoManagerRestClient()
+        rest_client = MockCloudifyClient()
         rest_client.list_deployments = lambda: [{}]
+        rest_client.deployments.list = lambda: [{}]
         cli._get_rest_client = \
             lambda ip: rest_client
+        cli._get_rest_client = lambda ip: rest_client
         self._run_cli("cfy init mock_provider -v")
         self._assert_ex("cfy teardown -t 10.0.0.1 -f --ignore-validation "
                         "-c cloudify-config.yaml -v",
@@ -270,15 +314,15 @@ class CliTest(unittest.TestCase):
         self._set_mock_rest_client()
         self._run_cli("cfy init cloudify_mock_provider2 -v")
 
-        from cosmo_cli.tests import mock_cosmo_manager_rest_client
-        original = mock_cosmo_manager_rest_client.get_mock_provider_name
-        mock_cosmo_manager_rest_client.get_mock_provider_name = \
+        from cosmo_cli.tests import mock_cloudify_client
+        original = mock_cloudify_client.get_mock_provider_name
+        mock_cloudify_client.get_mock_provider_name = \
             lambda: 'cloudify_mock_provider2'
         try:
                 self._assert_ex("cfy teardown -t 10.0.0.1 -f",
                                 "cloudify_mock_provider2 teardown exception")
         finally:
-            mock_cosmo_manager_rest_client.get_mock_provider_name = original
+            mock_cloudify_client.get_mock_provider_name = original
 
     def test_status_command_no_rest_service(self):
         self._create_cosmo_wd_settings()
@@ -343,6 +387,16 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy deployments create --blueprint-id a-blueprint-id "
                       "-t 127.0.0.1 --deployment-id deployment2")
 
+    def test_deployments_delete(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy deployments delete -d my-dep -t 127.0.0.1")
+        self._run_cli("cfy deployments delete --deployment-id my-dep -t 127.0"
+                      ".0.1")
+        self._run_cli("cfy deployments delete -d my-dep -f -t 127.0.0.1")
+        self._run_cli("cfy deployments delete -d my-dep --ignore-live-nodes"
+                      " -t 127.0.0.1")
+
     def test_deployments_execute(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
@@ -352,6 +406,22 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy deployments execute install "
                       "--deployment-id a-deployment-id")
         self._run_cli("cfy deployments execute install -d dep-id --force")
+
+    def test_deployments_execute_with_params(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy use 127.0.0.1")
+        self._run_cli("cfy deployments execute install -d dep-id "
+                      "-p {\"key\":\"val\"}")
+        self._run_cli("cfy deployments execute install -d dep-id "
+                      "-p {\"key\":\"val\",\"key2\":\"val2\"}")
+
+    def test_deployments_execute_with_custom_params(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy use 127.0.0.1")
+        self._run_cli("cfy deployments execute install -d dep-id "
+                      "-p {\"key\":\"val\"} --allow-custom-parameters")
 
     def test_deployments_list(self):
         self._set_mock_rest_client()
@@ -379,15 +449,46 @@ class CliTest(unittest.TestCase):
             self._run_cli(command)
             self.fail('Expected error {0} was not raised for command {1}'
                       .format(expected_error, command))
-        except CosmoManagerRestCallError, ex:
+        except CloudifyClientError, ex:
             self.assertTrue(expected_error in str(ex))
+
+    def test_workflows_get(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy workflows get -w mock_workflow -d dep_id -t "
+                      "127.0.0.1")
+        self._run_cli("cfy workflows get "
+                      "--workflow-id mock_workflow -d dep_id -t 127.0.0.1")
+
+    def test_workflows_get_nonexistent_workflow(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._assert_ex("cfy workflows get -w nonexistent_workflow -d dep_id "
+                        "-t 127.0.0.1 -v",
+                        "Workflow 'nonexistent_workflow' not found on "
+                        "management server")
+
+    def test_workflows_get_nonexistent_deployment(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._assert_ex("cfy workflows get -w wf -d nonexistent-dep "
+                        "-t 127.0.0.1 -v",
+                        "Deployment 'nonexistent-dep' not found on management "
+                        "server")
+
+    def test_executions_get(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli("cfy executions get -e execution-id -t 127.0.0.1")
+        self._run_cli("cfy executions get "
+                      "--execution-id execution-id -t 127.0.0.1")
 
     def test_executions_list(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
         self._run_cli("cfy executions list -d deployment-id -t 127.0.0.1")
         self._run_cli("cfy executions list "
-                      "--deployment-id deployment-id -s -t 127.0.0.1")
+                      "--deployment-id deployment-id -t 127.0.0.1")
 
     def test_executions_cancel(self):
         self._set_mock_rest_client()
@@ -395,6 +496,7 @@ class CliTest(unittest.TestCase):
         self._run_cli("cfy use 127.0.0.1")
         self._run_cli("cfy executions cancel -e e_id -v")
         self._run_cli("cfy executions cancel --execution-id e_id -t 127.0.0.1")
+        self._run_cli("cfy executions cancel -e e_id -f")
 
     def test_events(self):
         self._set_mock_rest_client()
@@ -406,3 +508,125 @@ class CliTest(unittest.TestCase):
         self._create_cosmo_wd_settings()
         self._run_cli("cfy events --include-logs --execution-id execution-id "
                       "-t 127.0.0.1")
+
+    def test_ssh_no_prior_init(self):
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_with_empty_config(self):
+        self._create_cosmo_wd_settings()
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_with_no_key(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_user('test')
+        settings.set_management_server('127.0.0.1')
+        self._create_cosmo_wd_settings(settings)
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_with_no_user(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_server('127.0.0.1')
+        settings.set_management_key('/tmp/test.pem')
+        self._create_cosmo_wd_settings(settings)
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_with_no_server(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_user('test')
+        settings.set_management_key('/tmp/test.pem')
+        self._create_cosmo_wd_settings(settings)
+        with open(os.devnull, "w") as f:
+            returncode = subprocess.call(['cfy', 'ssh'], stdout=f, stderr=f)
+        self.assertEquals(returncode, 1)
+
+    def test_ssh_without_ssh_windows(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_user('test')
+        settings.set_management_key('/tmp/test.pem')
+        settings.set_management_server('127.0.0.1')
+        self._create_cosmo_wd_settings(settings)
+        cli.find_executable = lambda x: None
+        cli.system = lambda: 'Windows'
+        self._assert_ex('cfy ssh', 'ssh.exe not found')
+
+    def test_ssh_without_ssh_linux(self):
+        settings = cli.CosmoWorkingDirectorySettings()
+        settings.set_management_user('test')
+        settings.set_management_key('/tmp/test.pem')
+        settings.set_management_server('127.0.0.1')
+        self._create_cosmo_wd_settings(settings)
+        cli.find_executable = lambda x: None
+        cli.system = lambda: 'Linux'
+        self._assert_ex('cfy ssh', 'ssh not found')
+
+    def _create_provider_config_with_prefix(self):
+        provider_config = cli.ProviderConfig({
+            'cloudify': {
+                'resources_prefix': 'PFX_'
+            }
+        })
+        return provider_config
+
+    def test_resources_names_updater(self):
+        provider_config = self._create_provider_config_with_prefix()
+        pm = SomeProvider(provider_config, False)
+        self.assertEquals(pm.get_updated_resource_name('x'), 'PFX_x')
+
+    def test_files_names_updater(self):
+        provider_config = self._create_provider_config_with_prefix()
+        pm = SomeProvider(provider_config, False)
+        self.assertEquals(
+            pm.get_updated_file_name('/home/my/file.ext'),
+            '/home/my/PFX_file.ext'
+        )
+
+    def _compare_config_item(self, actual, expected, path):
+        r = re.escape(expected)
+        r = r.replace('X', '[0-9]')
+        r = '^' + r + '$'
+        self.assertRegexpMatches(actual, r)
+
+    def _compare_configs(self, actual, expected, path=None):
+        p = path or []
+        self.assertEquals(type(actual), type(expected))
+        if isinstance(actual, dict) and isinstance(expected, dict):
+            self.assertEquals(set(actual.keys()), set(expected.keys()))
+            for k in expected.keys():
+                self._compare_configs(actual[k], expected[k], p + [k])
+            return
+        self._compare_config_item(str(actual), str(expected), p)
+
+
+def _create_config_modification_test_method(in_file, out_file):
+    def config_mod_test(self):
+        data_in = yaml.load(open(in_file))
+        provider_config = cli.ProviderConfig(data_in)
+        pm = SomeProvider(provider_config, False)
+        pm.update_names_in_config()
+        expected_provider_config = cli.ProviderConfig(
+            yaml.load(open(out_file))
+        )
+        self._compare_configs(pm.provider_config, expected_provider_config)
+    return config_mod_test
+
+d = os.path.join(THIS_DIR, 'config_transformations')
+for input_file_name in glob.glob(os.path.join(d, '*.in.yaml')):
+    test_name = os.path.basename(input_file_name)
+    test_name, _, _ = test_name.partition('.')
+    test_name = 'test_config_mod_' + test_name
+    output_file_name = input_file_name.replace('.in.yaml', '.out.yaml')
+    m = _create_config_modification_test_method(
+        input_file_name,
+        output_file_name
+    )
+    m.__name__ = test_name
+    setattr(CliTest, test_name, m)
+    del m  # Or it will be called by Nose without arguments
