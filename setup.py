@@ -17,11 +17,10 @@ __author__ = 'ran'
 
 from setuptools import setup
 
-from cosmo_cli import get_version
 
 setup(
     name='cloudify-cli',
-    version=get_version(),
+    version='3.1',
     author='Gigaspaces',
     author_email='cosmo-admin@gigaspaces.com',
     packages=['cosmo_cli', 'cloudify_simple_provider'],
