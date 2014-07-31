@@ -1796,34 +1796,16 @@ def _download_blueprint(args):
 def _validate_blueprint(args):
     target_file = args.blueprint_file
 
-    resources = _get_resource_base()
-    mapping = resources + "cloudify/alias-mappings.yaml"
-
     lgr.info(
         messages.VALIDATING_BLUEPRINT.format(target_file.name))
     try:
-        parse_from_path(target_file.name, None, mapping, resources)
+        parse_from_path(target_file.name)
     except DSLParsingException as ex:
         msg = (messages.VALIDATING_BLUEPRINT_FAILED
                .format(target_file, str(ex)))
         flgr.error(msg)
         raise CosmoCliError(msg)
     lgr.info(messages.VALIDATING_BLUEPRINT_SUCCEEDED)
-
-
-def _get_resource_base():
-    script_directory = os.path.dirname(os.path.realpath(__file__))
-    resource_directory = script_directory \
-        + "/../../cloudify-manager/resources/rest-service/"
-    if os.path.isdir(resource_directory):
-        lgr.debug("Found resource directory")
-
-        resource_directory_url = urlparse.urljoin('file:', urllib.pathname2url(
-            resource_directory))
-        return resource_directory_url
-    lgr.debug("Using resources from github. Branch is master")
-    return "https://raw.githubusercontent.com/cloudify-cosmo/" \
-           "cloudify-manager/master/resources/rest-service/"
 
 
 def _get_rest_client(management_ip):
