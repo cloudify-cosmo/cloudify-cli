@@ -1,6 +1,6 @@
 
 imports:
-    - cloudify.types
+    - http://www.getcloudify.org/spec/cloudify/3.0/types.yaml
 
 types:
     openstack_host:
