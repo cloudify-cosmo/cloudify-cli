@@ -25,8 +25,6 @@ import sys
 import os
 import traceback
 import json
-import urlparse
-import urllib
 import shutil
 import time
 import logging
