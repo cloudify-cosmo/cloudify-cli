@@ -421,12 +421,12 @@ def _parse_args(args):
         type=argparse.FileType(),
         help='Path to blueprint file to be validated'
     )
-    _set_handler_for_command(parser_blueprints_validate, _validate_blueprint)
+    _set_handler_for_command(parser_blueprints_validate, _validate_blueprint_cmd)
 
     parser_blueprints_upload.add_argument(
         'blueprint_path',
         metavar='BLUEPRINT_FILE',
-        type=str,
+        type=argparse.FileType(),
         help="Path to the application's blueprint file"
     )
     _add_blueprint_id_argument_to_parser(
@@ -1354,21 +1354,17 @@ def _delete_deployment(args):
 
 
 def _upload_blueprint(args):
-    blueprint_id = args.blueprint_id
-    blueprint_path = os.path.expanduser(args.blueprint_path)
-    if not os.path.isfile(blueprint_path):
-        msg = ("Path to blueprint doesn't exist: {0}."
-               .format(blueprint_path))
-        flgr.error(msg)
-        raise CosmoCliError(msg)
+    blueprint_path = args.blueprint_path
+    _validate_blueprint(blueprint_path)
 
+    blueprint_id = args.blueprint_id
     management_ip = _get_management_server_ip(args)
 
     lgr.info(
         'Uploading blueprint {0} to management server {1}'.format(
-            blueprint_path, management_ip))
+            blueprint_path.name, management_ip))
     client = _get_rest_client(management_ip)
-    blueprint = client.blueprints.upload(blueprint_path, blueprint_id)
+    blueprint = client.blueprints.upload(blueprint_path.name, blueprint_id)
     lgr.info(
         "Uploaded blueprint, blueprint's id is: {0}".format(blueprint.id))
 
@@ -1791,9 +1787,11 @@ def _download_blueprint(args):
         target_file))
 
 
-def _validate_blueprint(args):
-    target_file = args.blueprint_file
+def _validate_blueprint_cmd(args):
+    _validate_blueprint(args.blueprint_file)
 
+
+def _validate_blueprint(target_file):
     lgr.info(
         messages.VALIDATING_BLUEPRINT.format(target_file.name))
     try:
