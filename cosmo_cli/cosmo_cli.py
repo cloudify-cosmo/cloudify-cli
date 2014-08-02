@@ -421,7 +421,8 @@ def _parse_args(args):
         type=argparse.FileType(),
         help='Path to blueprint file to be validated'
     )
-    _set_handler_for_command(parser_blueprints_validate, _validate_blueprint_cmd)
+    _set_handler_for_command(parser_blueprints_validate,
+                             _validate_blueprint_cmd)
 
     parser_blueprints_upload.add_argument(
         'blueprint_path',
