@@ -1800,7 +1800,7 @@ def _validate_blueprint(args):
         parse_from_path(target_file.name)
     except DSLParsingException as ex:
         msg = (messages.VALIDATING_BLUEPRINT_FAILED
-               .format(target_file, str(ex)))
+               .format(target_file.name, str(ex)))
         flgr.error(msg)
         raise CosmoCliError(msg)
     lgr.info(messages.VALIDATING_BLUEPRINT_SUCCEEDED)
