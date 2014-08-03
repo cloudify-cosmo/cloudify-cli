@@ -348,9 +348,10 @@ class CliTest(unittest.TestCase):
     def test_blueprints_upload_nonexistent_file(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
+        # looking for a "Errno 2" which is "No such file or directory"
         self._assert_ex(
             "cfy blueprints upload nonexistent-file -t 127.0.0.1",
-            "Path to blueprint doesn't exist")
+            "2")
 
     def test_blueprints_upload(self):
         self._set_mock_rest_client()

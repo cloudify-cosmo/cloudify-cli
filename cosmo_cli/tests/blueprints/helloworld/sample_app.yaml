@@ -1,0 +1,31 @@
+
+types:
+    type1:
+        interfaces:
+            interface1:
+                - install: plugin.tasks.install
+                - start: plugin.tasks.start
+
+        properties:
+            - prop1: true
+            - prop2: {}
+            - prop3: ''
+
+    type2:
+        derived_from: type1
+        properties:
+            -   prop1: true
+            -   prop2:
+                    sub_prop1: val1
+                    sub_prop2: val2
+    type3:
+        derived_from: type2
+
+plugins:
+    plugin:
+        derived_from: cloudify.plugins.remote_plugin
+        properties:
+            url: plugin_url.zip
+
+relationships:
+    relationship_type1: {}
