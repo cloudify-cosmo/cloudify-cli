@@ -1,23 +1,16 @@
-#######
-# Cloudify Blueprint which describes a virtual machine with a simple Python
-# HTTP server running on it.
-# 
-
-# The following import contains nodes implementation details
 imports:
-    - hello_world.yaml
+    - sample_app.yaml
 
-# The blueprint contains two nodes, a vm and a web server hosted in it.
 blueprint:
-    name: hello_world
+    name: sample_blueprint
     nodes:
-        -   name: vm
-            type: openstack_host
+        -   name: node1
+            type: type1
 
-        -   name: http_web_server
-            type: web_server
+        -   name: node2
+            type: type2
             properties:
-                port: 8080
+                prop3: 8080
             relationships:
-                -   type: cloudify.relationships.contained_in
-                    target: vm
+                -   type: relationship_type1
+                    target: node1
