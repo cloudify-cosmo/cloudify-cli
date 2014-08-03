@@ -25,6 +25,7 @@ import subprocess
 import sys
 import unittest
 import yaml
+from StringIO import StringIO
 
 from mock_cloudify_client import MockCloudifyClient
 from cosmo_cli import cosmo_cli as cli
@@ -348,10 +349,22 @@ class CliTest(unittest.TestCase):
     def test_blueprints_upload_nonexistent_file(self):
         self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
-        # looking for a "Errno 2" which is "No such file or directory"
-        self._assert_ex(
-            "cfy blueprints upload nonexistent-file -t 127.0.0.1",
-            "2")
+
+        cli_cmd = "cfy blueprints upload nonexistent-file -t 127.0.0.1"
+        expected_err_segment = 'No such file or directory'
+
+        # redirecting stdout and stderr to catch the error since argparse
+        # prints it out directly
+        output_buffer = StringIO()
+        sys.stdout = output_buffer
+        sys.stderr = output_buffer
+
+        try:
+            self._run_cli(cli_cmd)
+            self.fail('Expected error {0} was not raised for command {1}'
+                      .format(expected_err_segment, cli_cmd))
+        except SystemExit:
+            self.assertIn(expected_err_segment, output_buffer.getvalue())
 
     def test_blueprints_upload(self):
         self._set_mock_rest_client()
