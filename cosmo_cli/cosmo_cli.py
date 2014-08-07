@@ -432,8 +432,7 @@ def _parse_args(args):
     )
     _add_blueprint_id_argument_to_parser(
         parser_blueprints_upload,
-        "Set the id of the uploaded blueprint",
-        False)
+        "Set the id of the uploaded blueprint")
     _add_management_ip_optional_argument_to_parser(parser_blueprints_upload)
     _set_handler_for_command(parser_blueprints_upload, _upload_blueprint)
 
