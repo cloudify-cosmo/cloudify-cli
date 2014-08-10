@@ -1599,22 +1599,30 @@ def _get_workflow(args):
     _print_workflows([workflow], deployment)
 
     # print workflow parameters
-    mandatory_params = []
-    optional_params = []
-    for param in workflow.parameters:
-        if isinstance(param, basestring):
-            mandatory_params.append(param)
-        else:
-            optional_params.append(param)
+    mandatory_params = dict()
+    optional_params = dict()
+    for param_name, param_val in workflow.parameters.iteritems():
+        params_group = optional_params if 'default' in param_val else \
+            mandatory_params
+        params_group[param_name] = param_val
 
     lgr.info('Workflow Parameters:')
     lgr.info('\tMandatory Parameters:')
-    for param_name in mandatory_params:
-        lgr.info('\t\t{0}'.format(param_name))
+    for param_name, param_val in mandatory_params.iteritems():
+        if 'description' in param_val:
+            lgr.info('\t\t{0}\t({1})'.format(param_name,
+                                             param_val['description']))
+        else:
+            lgr.info('\t\t{0}'.format(param_name))
 
     lgr.info('\tOptional Parameters:')
-    for param in optional_params:
-        lgr.info('\t\t{0}: \t{1}'.format(param.keys()[0], param.values()[0]))
+    for param_name, param_val in optional_params.iteritems():
+        if 'description' in param_val:
+            lgr.info('\t\t{0}: \t{1}\t({2})'.format(
+                param_name, param_val['default'], param_val['description']))
+        else:
+            lgr.info('\t\t{0}: \t{1}'.format(param_name,
+                                             param_val['default']))
     lgr.info('')
 
 
