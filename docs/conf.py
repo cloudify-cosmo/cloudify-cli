@@ -23,7 +23,7 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
     html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # General information about the project.
-project = 'cloudify-cli'
+project = 'cloudify'
 package = 'cosmo_cli'
 author = 'Gigaspaces'
 copyright = '2014, Gigaspaces'
