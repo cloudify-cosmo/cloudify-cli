@@ -1250,13 +1250,16 @@ def _status(args):
     if status_result:
         services = []
         for service in status_result['services']:
+            state = service['instances'][0]['state']\
+                if 'instances' in service and \
+                   len(service['instances']) > 0 else 'unknown'
             services.append({
                 'service': service['display_name'].ljust(30),
-                'status': service['instances'][0]['state']
-                if 'instances' in service else 'unknown'
+                'status': state
             })
         pt = formatting.table(['service', 'status'],
                               data=services)
+
         _output_table('Services:', pt)
 
         return True
