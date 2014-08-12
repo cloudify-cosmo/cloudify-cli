@@ -13,13 +13,11 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-__author__ = 'ran'
-
 from setuptools import setup
 
 
 setup(
-    name='cloudify-cli',
+    name='cloudify',
     version='3.1a1',
     author='Gigaspaces',
     author_email='cosmo-admin@gigaspaces.com',
