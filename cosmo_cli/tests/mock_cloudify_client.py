@@ -138,15 +138,17 @@ class DeploymentsMock(MicroMock):
             DictWithProperties({
                 'created_at': None,
                 'name': 'mock_workflow',
-                'parameters': [
-                    {'test-key': 'test-value'},
-                    'test-mandatory-key',
-                    {
-                        'test-nested-key': {
+                'parameters': {
+                    'test-key': {
+                        'default': 'test-value'
+                    },
+                    'test-mandatory-key': {},
+                    'test-nested-key': {
+                        'default': {
                             'key': 'val'
                         }
                     }
-                ]
+                }
             })
         ]
 
