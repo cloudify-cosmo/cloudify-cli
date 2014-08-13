@@ -59,7 +59,6 @@ from . import get_version_data
 
 output_level = logging.INFO
 CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
-
 CONFIG_FILE_NAME = 'cloudify-config.yaml'
 DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 
@@ -72,6 +71,8 @@ WORKFLOW_TASK_RETRIES = -1
 WORKFLOW_TASK_RETRY_INTERVAL = 30
 
 REST_PORT = 80
+
+CURRENT_WORKING_DIR = os.getcwd()
 
 
 # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
@@ -293,14 +294,6 @@ def _parse_args(args):
         type=str,
         help='Command for initializing configuration files for a'
              ' specific provider'
-    )
-    parser_init.add_argument(
-        '-t', '--target-dir',
-        dest='target_dir',
-        metavar='TARGET_DIRECTORY',
-        type=str,
-        default=os.getcwd(),
-        help='The target directory to be initialized for the given provider'
     )
     parser_init.add_argument(
         '-r', '--reset-config',
@@ -865,17 +858,12 @@ def _read_config(config_file_path, provider_dir):
 
 
 def _init_cosmo(args):
-    target_directory = os.path.expanduser(args.target_dir)
     provider = args.provider
-    if not os.path.isdir(target_directory):
-        msg = "Target directory doesn't exist."
-        flgr.error(msg)
-        raise CosmoCliError(msg)
 
-    if os.path.exists(os.path.join(target_directory,
+    if os.path.exists(os.path.join(CURRENT_WORKING_DIR,
                                    CLOUDIFY_WD_SETTINGS_FILE_NAME)):
         if not args.reset_config:
-            msg = ('Target directory is already initialized. '
+            msg = ('Current directory is already initialized. '
                    'Use the "-r" flag to force '
                    'reinitialization (might overwrite '
                    'provider configuration files if exist).')
@@ -884,36 +872,36 @@ def _init_cosmo(args):
 
         else:  # resetting provider configuration
             lgr.debug('resetting configuration...')
-            init(provider, target_directory,
+            init(provider,
                  args.reset_config,
                  creds=args.creds)
             lgr.info("Configuration reset complete")
             return
 
     lgr.info("Initializing Cloudify")
-    provider_module_name = init(provider, target_directory,
+    provider_module_name = init(provider,
                                 args.reset_config,
                                 args.install,
                                 args.creds)
     # creating .cloudify file
-    _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings(),
-                                     target_directory)
+    _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings())
+
     with _update_wd_settings() as wd_settings:
         wd_settings.set_provider(provider_module_name)
     lgr.info("Initialization complete")
 
 
-def init(provider, target_directory, reset_config, install=False,
+def init(provider, reset_config, install=False,
          creds=None):
+
         """
-        iniatializes a provider by copying its config files to the cwd.
+        initializes a provider by copying its config files to the cwd.
         First, will look for a module named cloudify_#provider#.
         If not found, will look for #provider#.
         If install is True, will install the supplied provider and perform
         the search again.
 
         :param string provider: the provider's name
-        :param string target_directory: target directory for the config files
         :param bool reset_config: if True, overrides the current config.
         :param bool install: if supplied, will also install the desired
          provider according to the given url or module name (pypi).
@@ -945,7 +933,7 @@ def init(provider, target_directory, reset_config, install=False,
             provider_module_name, provider = _get_provider_by_name()
 
         if not reset_config and os.path.exists(
-                os.path.join(target_directory, CONFIG_FILE_NAME)):
+                os.path.join(CURRENT_WORKING_DIR, CONFIG_FILE_NAME)):
             msg = ('Target directory already contains a '
                    'provider configuration file; '
                    'use the "-r" flag to '
@@ -961,13 +949,13 @@ def init(provider, target_directory, reset_config, install=False,
                 provider_dir = os.path.dirname(provider.__file__)
             files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
             lgr.debug('copying provider files from {0} to {1}'
-                      .format(files_path, target_directory))
-            shutil.copy(files_path, target_directory)
+                      .format(files_path, CURRENT_WORKING_DIR))
+            shutil.copy(files_path, CURRENT_WORKING_DIR)
 
         if creds:
             src_config_file = '{}/{}'.format(provider_dir,
                                              DEFAULTS_CONFIG_FILE_NAME)
-            dst_config_file = '{}/{}'.format(target_directory,
+            dst_config_file = '{}/{}'.format(CURRENT_WORKING_DIR,
                                              CONFIG_FILE_NAME)
             with open(src_config_file, 'r') as f:
                 provider_config = yaml.load(f.read())
@@ -1768,7 +1756,9 @@ def _set_cli_except_hook():
 
 def _load_cosmo_working_dir_settings(suppress_error=False):
     try:
-        with open(CLOUDIFY_WD_SETTINGS_FILE_NAME, 'r') as f:
+        path = os.path.join(CURRENT_WORKING_DIR,
+                            CLOUDIFY_WD_SETTINGS_FILE_NAME)
+        with open(path, 'r') as f:
             return yaml.load(f.read())
     except IOError:
         if suppress_error:
@@ -1781,10 +1771,9 @@ def _load_cosmo_working_dir_settings(suppress_error=False):
         raise CosmoCliError(msg)
 
 
-def _dump_cosmo_working_dir_settings(cosmo_wd_settings, target_dir=None):
-    target_file_path = '{0}'.format(CLOUDIFY_WD_SETTINGS_FILE_NAME) if \
-        not target_dir else os.path.join(target_dir,
-                                         CLOUDIFY_WD_SETTINGS_FILE_NAME)
+def _dump_cosmo_working_dir_settings(cosmo_wd_settings):
+    target_file_path = os.path.join(CURRENT_WORKING_DIR,
+                                    CLOUDIFY_WD_SETTINGS_FILE_NAME)
     with open(target_file_path, 'w') as f:
         f.write(yaml.dump(cosmo_wd_settings))
 

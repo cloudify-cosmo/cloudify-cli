@@ -70,6 +70,9 @@ class CliTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+
+        cli.CURRENT_WORKING_DIR = TEST_WORK_DIR
+
         os.mkdir(TEST_DIR)
         os.mkdir(TEST_PROVIDER_DIR)
         sys.path.append(TEST_PROVIDER_DIR)
@@ -190,14 +193,7 @@ class CliTest(unittest.TestCase):
     def test_init_initialized_directory(self):
         self._create_cosmo_wd_settings()
         self._assert_ex("cfy init mock_provider",
-                        "Target directory is already initialized")
-
-    def test_init_explicit_directory(self):
-        self._run_cli("cfy init mock_provider -t {0} -v".format(os.getcwd()))
-
-    def test_init_nonexistent_directory(self):
-        self._assert_ex("cfy init mock_provider -t nonexistent-dir",
-                        "Target directory doesn't exist")
+                        "Current directory is already initialized")
 
     def test_init_existing_provider_config_no_overwrite(self):
         self._run_cli("cfy init mock_provider -v")
