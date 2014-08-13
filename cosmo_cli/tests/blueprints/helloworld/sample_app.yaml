@@ -1,5 +1,5 @@
 
-types:
+node_types:
     type1:
         interfaces:
             interface1:
@@ -7,15 +7,20 @@ types:
                 - start: plugin.tasks.start
 
         properties:
-            - prop1: true
-            - prop2: {}
-            - prop3: ''
+            prop1:
+                default: true
+            prop2:
+                default: {}
+            prop3:
+                default: ''
 
     type2:
         derived_from: type1
         properties:
-            -   prop1: true
-            -   prop2:
+            prop1:
+                default: true
+            prop2:
+                default:
                     sub_prop1: val1
                     sub_prop2: val2
     type3:

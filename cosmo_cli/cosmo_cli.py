@@ -425,8 +425,7 @@ def _parse_args(args):
     )
     _add_blueprint_id_argument_to_parser(
         parser_blueprints_upload,
-        "Set the id of the uploaded blueprint",
-        False)
+        "Set the id of the uploaded blueprint")
     _add_management_ip_optional_argument_to_parser(parser_blueprints_upload)
     _set_handler_for_command(parser_blueprints_upload, _upload_blueprint)
 
@@ -1591,22 +1590,30 @@ def _get_workflow(args):
     _print_workflows([workflow], deployment)
 
     # print workflow parameters
-    mandatory_params = []
-    optional_params = []
-    for param in workflow.parameters:
-        if isinstance(param, basestring):
-            mandatory_params.append(param)
-        else:
-            optional_params.append(param)
+    mandatory_params = dict()
+    optional_params = dict()
+    for param_name, param in workflow.parameters.iteritems():
+        params_group = optional_params if 'default' in param else \
+            mandatory_params
+        params_group[param_name] = param
 
     lgr.info('Workflow Parameters:')
     lgr.info('\tMandatory Parameters:')
-    for param_name in mandatory_params:
-        lgr.info('\t\t{0}'.format(param_name))
+    for param_name, param in mandatory_params.iteritems():
+        if 'description' in param:
+            lgr.info('\t\t{0}\t({1})'.format(param_name,
+                                             param['description']))
+        else:
+            lgr.info('\t\t{0}'.format(param_name))
 
     lgr.info('\tOptional Parameters:')
-    for param in optional_params:
-        lgr.info('\t\t{0}: \t{1}'.format(param.keys()[0], param.values()[0]))
+    for param_name, param in optional_params.iteritems():
+        if 'description' in param:
+            lgr.info('\t\t{0}: \t{1}\t({2})'.format(
+                param_name, param['default'], param['description']))
+        else:
+            lgr.info('\t\t{0}: \t{1}'.format(param_name,
+                                             param['default']))
     lgr.info('')
 
 
