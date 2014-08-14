@@ -17,21 +17,23 @@
 __author__ = 'ran'
 
 import glob
-import mock
 import os
 import re
 import shutil
 import subprocess
 import sys
 import unittest
-import yaml
 from StringIO import StringIO
+
+import mock
+import yaml
 
 from mock_cloudify_client import MockCloudifyClient
 from cosmo_cli import cosmo_cli as cli
 from cosmo_cli.cosmo_cli import CosmoCliError
 from cosmo_cli.provider_common import BaseProviderClass
 from cloudify_rest_client.exceptions import CloudifyClientError
+
 
 TEST_DIR = '/tmp/cloudify-cli-unit-tests'
 TEST_WORK_DIR = TEST_DIR + "/cloudify"
@@ -71,7 +73,7 @@ class CliTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
 
-        cli.CURRENT_WORKING_DIR = TEST_WORK_DIR
+        cli.get_cwd = lambda: TEST_WORK_DIR
 
         os.mkdir(TEST_DIR)
         os.mkdir(TEST_PROVIDER_DIR)

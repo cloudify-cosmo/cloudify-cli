@@ -72,9 +72,6 @@ WORKFLOW_TASK_RETRY_INTERVAL = 30
 
 REST_PORT = 80
 
-CURRENT_WORKING_DIR = os.getcwd()
-
-
 # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
 logging.getLogger("paramiko").setLevel(logging.WARNING)
 logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
@@ -82,6 +79,10 @@ logging.getLogger("requests.packages.urllib3.connectionpool").setLevel(
 
 
 verbose_output = False
+
+
+def get_cwd():
+    return os.getcwd()
 
 
 def init_logger():
@@ -860,7 +861,7 @@ def _read_config(config_file_path, provider_dir):
 def _init_cosmo(args):
     provider = args.provider
 
-    if os.path.exists(os.path.join(CURRENT_WORKING_DIR,
+    if os.path.exists(os.path.join(get_cwd(),
                                    CLOUDIFY_WD_SETTINGS_FILE_NAME)):
         if not args.reset_config:
             msg = ('Current directory is already initialized. '
@@ -933,7 +934,7 @@ def init(provider, reset_config, install=False,
             provider_module_name, provider = _get_provider_by_name()
 
         if not reset_config and os.path.exists(
-                os.path.join(CURRENT_WORKING_DIR, CONFIG_FILE_NAME)):
+                os.path.join(get_cwd(), CONFIG_FILE_NAME)):
             msg = ('Target directory already contains a '
                    'provider configuration file; '
                    'use the "-r" flag to '
@@ -949,13 +950,13 @@ def init(provider, reset_config, install=False,
                 provider_dir = os.path.dirname(provider.__file__)
             files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
             lgr.debug('copying provider files from {0} to {1}'
-                      .format(files_path, CURRENT_WORKING_DIR))
-            shutil.copy(files_path, CURRENT_WORKING_DIR)
+                      .format(files_path, get_cwd()))
+            shutil.copy(files_path, get_cwd())
 
         if creds:
             src_config_file = '{}/{}'.format(provider_dir,
                                              DEFAULTS_CONFIG_FILE_NAME)
-            dst_config_file = '{}/{}'.format(CURRENT_WORKING_DIR,
+            dst_config_file = '{}/{}'.format(get_cwd(),
                                              CONFIG_FILE_NAME)
             with open(src_config_file, 'r') as f:
                 provider_config = yaml.load(f.read())
@@ -1756,7 +1757,7 @@ def _set_cli_except_hook():
 
 def _load_cosmo_working_dir_settings(suppress_error=False):
     try:
-        path = os.path.join(CURRENT_WORKING_DIR,
+        path = os.path.join(get_cwd(),
                             CLOUDIFY_WD_SETTINGS_FILE_NAME)
         with open(path, 'r') as f:
             return yaml.load(f.read())
@@ -1772,7 +1773,7 @@ def _load_cosmo_working_dir_settings(suppress_error=False):
 
 
 def _dump_cosmo_working_dir_settings(cosmo_wd_settings):
-    target_file_path = os.path.join(CURRENT_WORKING_DIR,
+    target_file_path = os.path.join(get_cwd(),
                                     CLOUDIFY_WD_SETTINGS_FILE_NAME)
     with open(target_file_path, 'w') as f:
         f.write(yaml.dump(cosmo_wd_settings))
