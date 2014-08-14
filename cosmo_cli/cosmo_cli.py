@@ -58,7 +58,8 @@ from . import get_version_data
 
 
 output_level = logging.INFO
-CLOUDIFY_WD_SETTINGS_FILE_NAME = '.cloudify'
+CLOUDIFY_WD_SETTINGS_FILE_NAME = 'context'
+CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME = '.cloudify'
 CONFIG_FILE_NAME = 'cloudify-config.yaml'
 DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 
@@ -858,10 +859,20 @@ def _read_config(config_file_path, provider_dir):
     return ProviderConfig(merged_config)
 
 
+def _create_local_cloudify_folder():
+
+    path = os.path.join(get_cwd(),
+                        CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+
 def _init_cosmo(args):
     provider = args.provider
 
     if os.path.exists(os.path.join(get_cwd(),
+                                   CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
                                    CLOUDIFY_WD_SETTINGS_FILE_NAME)):
         if not args.reset_config:
             msg = ('Current directory is already initialized. '
@@ -884,7 +895,11 @@ def _init_cosmo(args):
                                 args.reset_config,
                                 args.install,
                                 args.creds)
-    # creating .cloudify file
+
+    # creating the local folder
+    _create_local_cloudify_folder()
+
+    # creating the context file inside the local folder
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings())
 
     with _update_wd_settings() as wd_settings:
@@ -949,7 +964,7 @@ def init(provider, reset_config, install=False,
             except:
                 provider_dir = os.path.dirname(provider.__file__)
             files_path = os.path.join(provider_dir, CONFIG_FILE_NAME)
-            lgr.debug('copying provider files from {0} to {1}'
+            lgr.debug('Copying provider files from {0} to {1}'
                       .format(files_path, get_cwd()))
             shutil.copy(files_path, get_cwd())
 
@@ -1267,7 +1282,12 @@ def _get_management_server_status(management_ip):
 
 
 def _use_management_server(args):
-    if not os.path.exists(CLOUDIFY_WD_SETTINGS_FILE_NAME):
+
+    context_path = os.path.join(get_cwd(),
+                                CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+                                CLOUDIFY_WD_SETTINGS_FILE_NAME)
+
+    if not os.path.exists(context_path):
         # Allowing the user to work with an existing management server
         # even if "init" wasn't called prior to this.
         _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings())
@@ -1758,6 +1778,7 @@ def _set_cli_except_hook():
 def _load_cosmo_working_dir_settings(suppress_error=False):
     try:
         path = os.path.join(get_cwd(),
+                            CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
                             CLOUDIFY_WD_SETTINGS_FILE_NAME)
         with open(path, 'r') as f:
             return yaml.load(f.read())
@@ -1773,7 +1794,9 @@ def _load_cosmo_working_dir_settings(suppress_error=False):
 
 
 def _dump_cosmo_working_dir_settings(cosmo_wd_settings):
+    _create_local_cloudify_folder()
     target_file_path = os.path.join(get_cwd(),
+                                    CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
                                     CLOUDIFY_WD_SETTINGS_FILE_NAME)
     with open(target_file_path, 'w') as f:
         f.write(yaml.dump(cosmo_wd_settings))

@@ -16,7 +16,7 @@
 
 # logger configuration
 from os import path
-LOG_DIR = path.expanduser('~/.cloudify')
+LOG_DIR = path.expanduser('/tmp/cloudify')
 MODULE = 'cli'
 LOGGER = {
     "version": 1,
