@@ -171,6 +171,7 @@ class CliTest(unittest.TestCase):
         self.assertEquals("127.0.0.1", cwds.get_management_server())
 
     def test_use_command_no_prior_init(self):
+        self._set_mock_rest_client()
         self._run_cli("cfy use 127.0.0.1")
         cwds = self._read_cosmo_wd_settings()
         self.assertEquals("127.0.0.1", cwds.get_management_server())
@@ -199,14 +200,18 @@ class CliTest(unittest.TestCase):
 
     def test_init_existing_provider_config_no_overwrite(self):
         self._run_cli("cfy init mock_provider -v")
-        os.remove('.cloudify')
+        os.remove(os.path.join(os.getcwd(),
+                               cli.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+                               cli.CLOUDIFY_WD_SETTINGS_FILE_NAME))
         self._assert_ex(
             "cfy init mock_provider -v",
             "Target directory already contains a provider configuration file")
 
     def test_init_overwrite_existing_provider_config(self):
         self._run_cli("cfy init mock_provider -v")
-        os.remove('.cloudify')
+        os.remove(os.path.join(os.getcwd(),
+                               cli.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+                               cli.CLOUDIFY_WD_SETTINGS_FILE_NAME))
         self._run_cli("cfy init mock_provider -r -v")
 
     def test_init_overwrite_existing_provider_config_with_cloudify_file(self):
