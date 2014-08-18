@@ -1280,7 +1280,7 @@ def _use_management_server(args):
 
     try:
         # check if cloudify was initialized.
-        path = _get_init_path()
+        path = _get_context_path()
         flgr.debug('Cloudify was initialized in {0}. '
                    'Will use existing context.'
                    .format(path))
@@ -1795,8 +1795,10 @@ def _get_init_path():
 
 
 def _get_context_path():
-    return os.path.join(_get_init_path(),
-                        CLOUDIFY_WD_SETTINGS_FILE_NAME)
+    context_path = os.path.join(_get_init_path(), CLOUDIFY_WD_SETTINGS_FILE_NAME)
+    if not os.path.exists(context_path):
+        raise CosmoCliError('File {0} does not exist'.format(context_path))
+    return context_path
 
 
 def _load_cosmo_working_dir_settings(suppress_error=False):
