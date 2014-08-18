@@ -35,7 +35,7 @@ from cosmo_cli.provider_common import BaseProviderClass
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 
-TEST_DIR = '/tmp/cloudify-cli-unit-tests'
+TEST_DIR = '/tmp/cloudify-cli-component-tests'
 TEST_WORK_DIR = TEST_DIR + "/cloudify"
 TEST_PROVIDER_DIR = TEST_DIR + "/mock-provider"
 THIS_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -72,9 +72,6 @@ class CliTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-
-        cli.get_cwd = lambda: TEST_WORK_DIR
-
         os.mkdir(TEST_DIR)
         os.mkdir(TEST_PROVIDER_DIR)
         sys.path.append(TEST_PROVIDER_DIR)
@@ -94,6 +91,7 @@ class CliTest(unittest.TestCase):
         shutil.rmtree(TEST_DIR)
 
     def setUp(self):
+        cli.get_cwd = lambda: TEST_WORK_DIR
         os.mkdir(TEST_WORK_DIR)
         os.chdir(TEST_WORK_DIR)
 
@@ -115,9 +113,8 @@ class CliTest(unittest.TestCase):
         cli.main()
 
     def _create_cosmo_wd_settings(self, settings=None):
-        cli._create_local_cloudify_folder()
         cli._dump_cosmo_working_dir_settings(
-            settings or cli.CosmoWorkingDirectorySettings())
+            settings or cli.CosmoWorkingDirectorySettings(), update=False)
 
     def _read_cosmo_wd_settings(self):
         return cli._load_cosmo_working_dir_settings()
@@ -165,7 +162,28 @@ class CliTest(unittest.TestCase):
             "cfy blueprints validate {0}/helloworld/blueprint.yaml".format(
                 BLUEPRINTS_DIR))
 
+    def test_command_from_inner_dir(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        cwd = cli.get_cwd()
+        new_dir = os.path.join(cwd, 'test_command_from_inner_dir')
+        os.mkdir(new_dir)
+        cli.get_cwd = lambda: new_dir
+        self._run_cli('cfy use 1.1.1.1')
+
+    def test_command_from_outer_dir(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        cwd = cli.get_cwd()
+        new_dir = os.path.dirname(cwd)
+        cli.get_cwd = lambda: new_dir
+        self._assert_ex("cfy status",
+                        "Cannot find .cloudify in {0}, "
+                        "or in any of its parent directories"
+                        .format(new_dir))
+
     def test_use_command(self):
+        self._set_mock_rest_client()
         self._create_cosmo_wd_settings()
         self._run_cli("cfy use 127.0.0.1")
         cwds = self._read_cosmo_wd_settings()
@@ -210,9 +228,8 @@ class CliTest(unittest.TestCase):
 
     def test_init_overwrite_existing_provider_config(self):
         self._run_cli("cfy init mock_provider -v")
-        os.remove(os.path.join(os.getcwd(),
-                               cli.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-                               cli.CLOUDIFY_WD_SETTINGS_FILE_NAME))
+        shutil.rmtree(os.path.join(os.getcwd(),
+                                   cli.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME))
         self._run_cli("cfy init mock_provider -r -v")
 
     def test_init_overwrite_existing_provider_config_with_cloudify_file(self):
@@ -516,7 +533,6 @@ class CliTest(unittest.TestCase):
         self._set_mock_rest_client()
         self._run_cli("cfy events --e execution-id -t 127.0.0.1")
         self._set_mock_rest_client()
-        self._create_cosmo_wd_settings()
         self._run_cli("cfy events --include-logs --execution-id execution-id "
                       "-t 127.0.0.1")
 

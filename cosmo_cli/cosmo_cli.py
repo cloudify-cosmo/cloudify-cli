@@ -865,6 +865,9 @@ def _create_local_cloudify_folder():
                         CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
 
     if not os.path.exists(path):
+        flgr.debug('Creating {0} in {1}'
+                   .format(CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+                           get_cwd()))
         os.mkdir(path)
 
 
@@ -891,19 +894,18 @@ def _init_cosmo(args):
             return
 
     lgr.info("Initializing Cloudify")
+
     provider_module_name = init(provider,
                                 args.reset_config,
                                 args.install,
                                 args.creds)
 
-    # creating the local folder
-    _create_local_cloudify_folder()
 
-    # creating the context file inside the local folder
-    _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings())
+    settings = CosmoWorkingDirectorySettings()
+    settings.set_provider(provider_module_name)
 
-    with _update_wd_settings() as wd_settings:
-        wd_settings.set_provider(provider_module_name)
+    _dump_cosmo_working_dir_settings(settings)
+
     lgr.info("Initialization complete")
 
 
@@ -1283,20 +1285,25 @@ def _get_management_server_status(management_ip):
 
 def _use_management_server(args):
 
-    context_path = os.path.join(get_cwd(),
-                                CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-                                CLOUDIFY_WD_SETTINGS_FILE_NAME)
-
-    if not os.path.exists(context_path):
-        # Allowing the user to work with an existing management server
-        # even if "init" wasn't called prior to this.
-        _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings())
-
+    # first check this server is available.
     if not _get_management_server_status(args.management_ip):
         msg = ("Can't use management server {0}: No response.".format(
             args.management_ip))
         flgr.error(msg)
         raise CosmoCliError(msg)
+
+    try:
+        # check if cloudify was initialized.
+        path = _get_init_path()
+        flgr.debug('Cloudify was initialized in {0}. '
+                   'Will use existing context.'
+                   .format(path))
+    except CosmoCliError:
+        # even if "init" wasn't called prior to this.
+        # Allowing the user to work with an existing management server
+        flgr.debug('Cloudify was not initialized. '
+                   'Creating a new context in {0}'.format(get_cwd()))
+        _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings())
 
     try:
         response = _get_rest_client(
@@ -1321,7 +1328,7 @@ def _use_management_server(args):
                     args.management_ip, args.alias))
         else:
             lgr.info('Using management server {0}'.format(
-                     args.management_ip))
+                args.management_ip))
 
 
 def _list_blueprints(args):
@@ -1775,30 +1782,75 @@ def _set_cli_except_hook():
     sys.excepthook = new_excepthook
 
 
+def _get_init_path():
+
+    flgr.debug('Looking up {0}'.format(CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME))
+    current_lookup_dir = get_cwd()
+
+    found = False
+    while not found:
+
+        path = os.path.join(current_lookup_dir,
+                            CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+
+        if os.path.exists(path):
+            return path
+        else:
+            flgr.debug('{0} not found in {1}'
+                       .format(CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+                               current_lookup_dir))
+            if os.path.dirname(current_lookup_dir) == current_lookup_dir:
+                raise CosmoCliError(
+                    'Cannot find {0} in {1}, or in any of its parent directories'
+                    .format(CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+                            get_cwd()))
+            current_lookup_dir = os.path.dirname(current_lookup_dir)
+
+
+def _get_context_path():
+    return os.path.join(_get_init_path(),
+                        CLOUDIFY_WD_SETTINGS_FILE_NAME)
+
+
 def _load_cosmo_working_dir_settings(suppress_error=False):
     try:
-        path = os.path.join(get_cwd(),
-                            CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-                            CLOUDIFY_WD_SETTINGS_FILE_NAME)
+        path = _get_context_path()
         with open(path, 'r') as f:
             return yaml.load(f.read())
-    except IOError:
+    except CosmoCliError as e:
         if suppress_error:
             return None
         msg = ('You must first initialize by running the '
                'command "cfy init", or choose to work with '
                'an existing management server by running the '
                'command "cfy use".')
-        flgr.error(msg)
-        raise CosmoCliError(msg)
+        full_message = '{0}. {1}'.format(e.message, msg)
+        flgr.error(full_message)
+        raise CosmoCliError(full_message)
 
 
-def _dump_cosmo_working_dir_settings(cosmo_wd_settings):
-    _create_local_cloudify_folder()
-    target_file_path = os.path.join(get_cwd(),
-                                    CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-                                    CLOUDIFY_WD_SETTINGS_FILE_NAME)
+def _dump_cosmo_working_dir_settings(cosmo_wd_settings, update=False):
+
+    if update:
+        # locate existing file
+        # this will raise an error if the file doesnt exist.
+        target_file_path = _get_context_path()
+    else:
+
+        # create a new file
+        path = os.path.join(get_cwd(),
+                            CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+        flgr.debug('Creating {0} in {1}'
+                   .format(CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+                           get_cwd()))
+        os.mkdir(path)
+        target_file_path = os.path.join(get_cwd(),
+                                        CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+                                        CLOUDIFY_WD_SETTINGS_FILE_NAME)
+
     with open(target_file_path, 'w') as f:
+        flgr.debug('Writing context to {0}'
+                   .format(target_file_path))
         f.write(yaml.dump(cosmo_wd_settings))
 
 
@@ -1836,7 +1888,7 @@ def _get_rest_client(management_ip):
 def _update_wd_settings():
     cosmo_wd_settings = _load_cosmo_working_dir_settings()
     yield cosmo_wd_settings
-    _dump_cosmo_working_dir_settings(cosmo_wd_settings)
+    _dump_cosmo_working_dir_settings(cosmo_wd_settings, update=True)
 
 
 @contextmanager

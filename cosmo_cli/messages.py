@@ -16,7 +16,7 @@
 
 __author__ = 'barakme'
 
-FILE_NOT_FOUND = "Could not file file: {0}"
+FILE_NOT_FOUND = "Could not find file: {0}"
 
 VALIDATING_BLUEPRINT = "Validating {0}"
 VALIDATING_BLUEPRINT_FAILED = "Failed to validate blueprint {0}: {1}"
