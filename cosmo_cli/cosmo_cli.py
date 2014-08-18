@@ -859,18 +859,6 @@ def _read_config(config_file_path, provider_dir):
     return ProviderConfig(merged_config)
 
 
-def _create_local_cloudify_folder():
-
-    path = os.path.join(get_cwd(),
-                        CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
-
-    if not os.path.exists(path):
-        flgr.debug('Creating {0} in {1}'
-                   .format(CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-                           get_cwd()))
-        os.mkdir(path)
-
-
 def _init_cosmo(args):
     provider = args.provider
 
