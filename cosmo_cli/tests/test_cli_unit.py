@@ -67,7 +67,8 @@ class CliUnitTests(unittest.TestCase):
         from cosmo_cli.cosmo_cli import _get_init_path
 
         # first create the init
-        init_path = os.path.join(cli.get_cwd(), cli.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+        init_path = os.path.join(cli.get_cwd(),
+                                 cli.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
         os.mkdir(init_path)
 
         # switch working directory to inner one
@@ -82,7 +83,8 @@ class CliUnitTests(unittest.TestCase):
         from cosmo_cli.cosmo_cli import _get_init_path
 
         # first create the init
-        init_path = os.path.join(cli.get_cwd(), cli.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+        init_path = os.path.join(cli.get_cwd(),
+                                 cli.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
         os.mkdir(init_path)
 
         self.assertEqual(_get_init_path(), init_path)
@@ -92,7 +94,8 @@ class CliUnitTests(unittest.TestCase):
         from cosmo_cli.cosmo_cli import _get_init_path
 
         # first create the init
-        init_path = os.path.join(cli.get_cwd(), cli.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+        init_path = os.path.join(cli.get_cwd(),
+                                 cli.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
         os.mkdir(init_path)
 
         # switch working directory to outer one
@@ -121,4 +124,3 @@ class CliUnitTests(unittest.TestCase):
         from cosmo_cli.cosmo_cli import _load_cosmo_working_dir_settings
 
         _load_cosmo_working_dir_settings()
-

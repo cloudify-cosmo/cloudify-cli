@@ -900,7 +900,6 @@ def _init_cosmo(args):
                                 args.install,
                                 args.creds)
 
-
     settings = CosmoWorkingDirectorySettings()
     settings.set_provider(provider_module_name)
 
@@ -1801,7 +1800,8 @@ def _get_init_path():
                                current_lookup_dir))
             if os.path.dirname(current_lookup_dir) == current_lookup_dir:
                 raise CosmoCliError(
-                    'Cannot find {0} in {1}, or in any of its parent directories'
+                    'Cannot find {0} in {1}, '
+                    'or in any of its parent directories'
                     .format(CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
                             get_cwd()))
             current_lookup_dir = os.path.dirname(current_lookup_dir)
