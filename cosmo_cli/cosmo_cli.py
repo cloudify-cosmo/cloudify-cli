@@ -1795,9 +1795,11 @@ def _get_init_path():
 
 
 def _get_context_path():
-    context_path = os.path.join(_get_init_path(), CLOUDIFY_WD_SETTINGS_FILE_NAME)
+    context_path = os.path.join(_get_init_path(),
+                                CLOUDIFY_WD_SETTINGS_FILE_NAME)
     if not os.path.exists(context_path):
-        raise CosmoCliError('File {0} does not exist'.format(context_path))
+        raise CosmoCliError('File {0} does not exist'
+                            .format(context_path))
     return context_path
 
 
