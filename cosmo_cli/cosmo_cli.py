@@ -896,9 +896,6 @@ def _init_cosmo(args):
                                 args.install,
                                 args.creds)
 
-    # creating the local folder
-    _create_local_cloudify_folder()
-
     # creating the context file inside the local folder
     _dump_cosmo_working_dir_settings(CosmoWorkingDirectorySettings())
 

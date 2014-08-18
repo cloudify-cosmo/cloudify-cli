@@ -115,7 +115,6 @@ class CliTest(unittest.TestCase):
         cli.main()
 
     def _create_cosmo_wd_settings(self, settings=None):
-        cli._create_local_cloudify_folder()
         cli._dump_cosmo_working_dir_settings(
             settings or cli.CosmoWorkingDirectorySettings())
 
