@@ -882,7 +882,6 @@ def _init_cosmo(args):
             return
 
     lgr.info("Initializing Cloudify")
-
     provider_module_name = init(provider,
                                 args.reset_config,
                                 args.install,
