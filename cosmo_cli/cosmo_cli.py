@@ -813,6 +813,34 @@ class ProviderConfig(dict):
         return self.get('cloudify', {}).get('resources_prefix', '')
 
 
+def _decode_list(data):
+    rv = []
+    for item in data:
+        if isinstance(item, unicode):
+            item = item.encode('utf-8')
+        elif isinstance(item, list):
+            item = _decode_list(item)
+        elif isinstance(item, dict):
+            item = _decode_dict(item)
+        rv.append(item)
+    return rv
+
+
+def _decode_dict(data):
+    rv = {}
+    for key, value in data.iteritems():
+        if isinstance(key, unicode):
+            key = key.encode('utf-8')
+        if isinstance(value, unicode):
+            value = value.encode('utf-8')
+        elif isinstance(value, list):
+            value = _decode_list(value)
+        elif isinstance(value, dict):
+            value = _decode_dict(value)
+        rv[key] = value
+    return rv
+
+
 def _read_config(config_file_path, provider_dir):
 
     def _deep_merge_dictionaries(overriding_dict, overridden_dict):
@@ -1610,7 +1638,7 @@ def _get_workflow(args):
     # print workflow parameters
     mandatory_params = dict()
     optional_params = dict()
-    for param_name, param in workflow.parameters.iteritems():
+    for param_name, param in _decode_dict(workflow.parameters).iteritems():
         params_group = optional_params if 'default' in param else \
             mandatory_params
         params_group[param_name] = param
@@ -1656,7 +1684,8 @@ def _get_execution(args):
 
     # print execution parameters
     lgr.info('Execution Parameters:')
-    for param_name, param_value in execution.parameters.iteritems():
+    for param_name, param_value in _decode_dict(
+            execution.parameters).iteritems():
         lgr.info('\t{0}: \t{1}'.format(param_name, param_value))
     lgr.info('')
 
