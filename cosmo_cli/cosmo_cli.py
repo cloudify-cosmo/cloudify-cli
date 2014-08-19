@@ -71,6 +71,8 @@ REMOTE_EXECUTION_PORT = 22
 WORKFLOW_TASK_RETRIES = -1
 WORKFLOW_TASK_RETRY_INTERVAL = 30
 
+POLICY_ENGINE_START_TIMEOUT = 30
+
 REST_PORT = 80
 
 # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
@@ -1128,6 +1130,10 @@ def _update_provider_context(provider_config, provider_context):
     workflow_task_retry_interval = workflows.get('retry_interval',
                                                  WORKFLOW_TASK_RETRY_INTERVAL)
 
+    policy_engine = cloudify.get('policy_engine', {})
+    policy_engine_start_timeout = policy_engine.get(
+        'start_timeout', POLICY_ENGINE_START_TIMEOUT)
+
     provider_context['cloudify'] = {
         'resources_prefix': provider_config.resources_prefix,
         'cloudify_agent': {
@@ -1139,6 +1145,9 @@ def _update_provider_context(provider_config, provider_context):
         'workflows': {
             'task_retries': workflow_task_retries,
             'task_retry_interval': workflow_task_retry_interval
+        },
+        'policy_engine': {
+            'start_timeout': policy_engine_start_timeout
         }
     }
 
