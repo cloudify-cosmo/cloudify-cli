@@ -14,11 +14,6 @@
 # limitations under the License.
 ############
 
-import messages
-
-__author__ = 'ran'
-
-
 import argparse
 import imp
 import sys
@@ -47,7 +42,10 @@ from dsl_parser.parser import parse_from_path, DSLParsingException
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import CreateDeploymentInProgressError
+from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
+from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 
+import messages
 import config
 import dev
 from executions import wait_for_execution
@@ -462,6 +460,13 @@ def _parse_args(args):
     parser_deployments_create = deployments_subparsers.add_parser(
         'create',
         help='command for creating a deployment of a blueprint'
+    )
+    parser_deployments_create.add_argument(
+        '-i', '--inputs',
+        metavar='INPUTS',
+        type=str,
+        required=False,
+        help='Inputs file/string for the deployment creation (in JSON format)'
     )
     parser_deployments_delete = deployments_subparsers.add_parser(
         'delete',
@@ -1411,15 +1416,51 @@ def _upload_blueprint(args):
         "Uploaded blueprint, blueprint's id is: {0}".format(blueprint.id))
 
 
+def _print_deployment_inputs(client, blueprint_id):
+    blueprint = client.blueprints.get(blueprint_id)
+    lgr.info('Deployment inputs:')
+    for input_name, input_def in blueprint.plan['inputs'].iteritems():
+        lgr.info('\t{0}:'.format(input_name))
+        for k, v in input_def.iteritems():
+            lgr.info('\t\t{0}: {1}'.format(k, v))
+    lgr.info('')
+
+
 def _create_deployment(args):
     blueprint_id = args.blueprint_id
     deployment_id = args.deployment_id
     management_ip = _get_management_server_ip(args)
+    try:
+        if args.inputs and os.path.exists(args.inputs):
+            with open(args.inputs, 'r') as f:
+                inputs = json.loads(f.read())
+        else:
+            inputs = json.loads(args.inputs or '{}')
+    except ValueError, e:
+        msg = "'inputs' must be a valid JSON. {}".format(str(e))
+        flgr.error(msg)
+        raise CosmoCliError(msg)
 
     lgr.info('Creating new deployment from blueprint {0} at '
              'management server {1}'.format(blueprint_id, management_ip))
     client = _get_rest_client(management_ip)
-    deployment = client.deployments.create(blueprint_id, deployment_id)
+
+    try:
+        deployment = client.deployments.create(blueprint_id,
+                                               deployment_id,
+                                               inputs=inputs)
+    except MissingRequiredDeploymentInputError, e:
+        lgr.info(
+            'Unable to create deployment, not all required inputs have been '
+            'specified...')
+        _print_deployment_inputs(client, blueprint_id)
+        raise SuppressedCosmoCliError(str(e))
+    except UnknownDeploymentInputError, e:
+        lgr.info(
+            'Unable to create deployment, an unknown input was specified...')
+        _print_deployment_inputs(client, blueprint_id)
+        raise SuppressedCosmoCliError(str(e))
+
     lgr.info(
         "Deployment created, deployment's id is: {0}".format(deployment.id))
 
@@ -1910,7 +1951,7 @@ def _validate_blueprint(target_file):
 
 
 def _get_rest_client(management_ip):
-    return CloudifyClient(management_ip)
+    return CloudifyClient(management_ip, REST_PORT)
 
 
 @contextmanager
