@@ -1430,12 +1430,14 @@ def _create_deployment(args):
     blueprint_id = args.blueprint_id
     deployment_id = args.deployment_id
     management_ip = _get_management_server_ip(args)
+    inputs = args.inputs if args.inputs else None
     try:
-        if args.inputs and os.path.exists(args.inputs):
-            with open(args.inputs, 'r') as f:
-                inputs = json.loads(f.read())
-        else:
-            inputs = json.loads(args.inputs or '{}')
+        if inputs:
+            if os.path.exists(inputs):
+                with open(inputs, 'r') as f:
+                    inputs = json.loads(f.read())
+            else:
+                inputs = json.loads(inputs)
     except ValueError, e:
         msg = "'inputs' must be a valid JSON. {}".format(str(e))
         flgr.error(msg)
