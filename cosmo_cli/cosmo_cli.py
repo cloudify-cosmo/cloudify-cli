@@ -1787,10 +1787,12 @@ def _set_cli_except_hook():
 
     def new_excepthook(tpe, value, tb):
         prefix = ''
+        server_traceback = None
         output_message = True
         output_traceback = output_level <= logging.DEBUG
         if issubclass(tpe, CloudifyClientError):
             prefix = 'Failed making a call to REST service: '
+            server_traceback = value.server_traceback
         elif tpe in [CosmoCliError, CosmoValidationError]:
             pass
         elif tpe in [SuppressedCosmoCliError, CosmoBootstrapError]:
@@ -1800,6 +1802,11 @@ def _set_cli_except_hook():
         if output_traceback:
             print("Traceback (most recent call last):")
             traceback.print_tb(tb)
+            if server_traceback:
+                print("Server Traceback (most recent call last):")
+                # No need for print_tb since this exception
+                # is already formatted by the server
+                print server_traceback
         if output_message:
             lgr.error('{}{}'.format(prefix, value))
 
