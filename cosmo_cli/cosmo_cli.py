@@ -1419,23 +1419,27 @@ def _upload_blueprint(args):
 def _print_deployment_inputs(client, blueprint_id):
     blueprint = client.blueprints.get(blueprint_id)
     lgr.info('Deployment inputs:')
+    inputs_output = StringIO()
     for input_name, input_def in blueprint.plan['inputs'].iteritems():
-        lgr.info('\t{0}:'.format(input_name))
+        inputs_output.write('\t{0}:{1}'.format(input_name, os.linesep))
         for k, v in input_def.iteritems():
-            lgr.info('\t\t{0}: {1}'.format(k, v))
-    lgr.info('')
+            inputs_output.write('\t\t{0}: {1}{2}'.format(k, v, os.linesep))
+    inputs_output.write(os.linesep)
+    lgr.info(inputs_output.getvalue())
 
 
 def _create_deployment(args):
     blueprint_id = args.blueprint_id
     deployment_id = args.deployment_id
     management_ip = _get_management_server_ip(args)
+    inputs = args.inputs if args.inputs else None
     try:
-        if args.inputs and os.path.exists(args.inputs):
-            with open(args.inputs, 'r') as f:
-                inputs = json.loads(f.read())
-        else:
-            inputs = json.loads(args.inputs or '{}')
+        if inputs:
+            if os.path.exists(inputs):
+                with open(inputs, 'r') as f:
+                    inputs = json.loads(f.read())
+            else:
+                inputs = json.loads(inputs)
     except ValueError, e:
         msg = "'inputs' must be a valid JSON. {}".format(str(e))
         flgr.error(msg)
