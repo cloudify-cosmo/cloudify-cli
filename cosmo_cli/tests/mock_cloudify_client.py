@@ -14,8 +14,6 @@
 # limitations under the License.
 ############
 
-__author__ = 'ran'
-
 from cloudify_rest_client.exceptions import CloudifyClientError
 import datetime
 
@@ -54,7 +52,7 @@ class MicroMock(object):
         self.status = 'terminated'
         self.error = None
 
-    def create(self, blueprint_id, deployment_id):
+    def create(self, blueprint_id, deployment_id, inputs=None):
         return MicroMock(id='a-deployment-id')
 
     def list(self, *args):
@@ -155,7 +153,8 @@ class DeploymentsMock(MicroMock):
     def get(self, id):
         if id == 'nonexistent-dep':
             raise CloudifyClientError("deployment {0} doesn't exist"
-                                      .format('nonexistent-dep'), 404)
+                                      .format('nonexistent-dep'),
+                                      status_code=404)
         return self
 
 
