@@ -41,7 +41,8 @@ from fabric.api import local
 from dsl_parser.parser import parse_from_path, DSLParsingException
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify_rest_client.exceptions import CreateDeploymentInProgressError
+from cloudify_rest_client.exceptions import \
+    DeploymentEnvironmentCreationInProgressError
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 
@@ -49,7 +50,7 @@ import messages
 import config
 import dev
 from executions import wait_for_execution
-from executions import get_deployment_creation_execution
+from executions import get_deployment_environment_creation_execution
 from executions import get_all_execution_events
 from executions import ExecutionTimeoutError
 from . import get_version_data
@@ -1544,15 +1545,15 @@ def _execute_deployment_workflow(args):
                 parameters=parameters,
                 allow_custom_parameters=allow_custom_parameters,
                 force=force)
-        except CreateDeploymentInProgressError:
-            # wait for deployment creation workflow to end
-            lgr.info('Deployment creation is in progress!')
-            lgr.info('Waiting for deployment '
-                     'creation workflow execution to finish...')
+        except DeploymentEnvironmentCreationInProgressError:
+            # wait for deployment environment creation workflow to end
+            lgr.info('Deployment environment creation is in progress!')
+            lgr.info('Waiting for create_deployment_environment '
+                     'workflow execution to finish...')
             now = time.time()
             wait_for_execution(client,
                                deployment_id,
-                               get_deployment_creation_execution(
+                               get_deployment_environment_creation_execution(
                                    client, deployment_id),
                                events_handler=events_logger,
                                include_logs=include_logs,
