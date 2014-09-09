@@ -482,6 +482,10 @@ def _parse_args(args):
         help='command for listing all deployments or all deployments'
              'of a blueprint'
     )
+    parser_deployments_outputs = deployments_subparsers.add_parser(
+        'outputs',
+        help='command for getting a specific deployment outputs'
+    )
     _add_blueprint_id_argument_to_parser(
         parser_deployments_create,
         "The id of the blueprint meant for deployment")
@@ -556,6 +560,13 @@ def _parse_args(args):
     _add_management_ip_optional_argument_to_parser(parser_deployments_list)
     _set_handler_for_command(parser_deployments_list,
                              _list_blueprint_deployments)
+
+    _add_management_ip_optional_argument_to_parser(parser_deployments_outputs)
+    _add_deployment_id_argument_to_parser(
+        parser_deployments_outputs,
+        'The id of the deployment to get outputs for')
+    _set_handler_for_command(parser_deployments_outputs,
+                             _get_deployment_outputs)
 
     # workflows subparser
     workflows_subparsers = parser_workflows.add_subparsers()
@@ -1630,6 +1641,26 @@ def _list_deployment_workflows(args):
     deployment = client.deployments.get(deployment_id)
     workflows = deployment.workflows
     _print_workflows(workflows, deployment)
+
+
+def _get_deployment_outputs(args):
+    management_ip = _get_management_server_ip(args)
+    deployment_id = args.deployment_id
+    client = _get_rest_client(management_ip)
+
+    lgr.info("Getting outputs for deployment: {0} [manager={1}]".format(
+        deployment_id, management_ip))
+
+    response = client.deployments.outputs.get(deployment_id)
+
+    outputs = StringIO()
+    for output_name, output in response.outputs.iteritems():
+        outputs.write('\t{0}:{1}'.format(output_name, os.linesep))
+        for k, v in output.iteritems():
+            outputs.write(
+                '\t\t{0}: {1}{2}'.format(k, v, os.linesep))
+    outputs.write(os.linesep)
+    lgr.info(outputs.getvalue())
 
 
 def _print_workflows(workflows, deployment):
