@@ -462,6 +462,12 @@ class CliTest(unittest.TestCase):
         # test with --blueprint-id
         self._run_cli('cfy deployments list --blueprint-id b1')
 
+    def test_deployments_outputs(self):
+        self._set_mock_rest_client()
+        self._create_cosmo_wd_settings()
+        self._run_cli('cfy use 127.0.0.1')
+        self._run_cli('cfy deployments outputs -d dep1')
+
     def test_deployments_execute_nonexistent_operation(self):
         # verifying that the CLI allows for arbitrary operation names,
         # while also ensuring correct error-handling of nonexistent
