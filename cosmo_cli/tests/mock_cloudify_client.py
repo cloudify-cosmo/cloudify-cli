@@ -14,8 +14,10 @@
 # limitations under the License.
 ############
 
-from cloudify_rest_client.exceptions import CloudifyClientError
 import datetime
+
+from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify_rest_client.deployments import DeploymentOutputs
 
 _provider_context = {}
 _provider_name = 'mock_provider'
@@ -127,11 +129,29 @@ class ExecutionsMock(object):
         return []
 
 
+class DeploymentsOutputsMock(MicroMock):
+
+    def __init__(self, **kwargs):
+        super(DeploymentsOutputsMock, self).__init__(**kwargs)
+
+    def get(self, deployment_id):
+        return DeploymentOutputs({
+            'deployment_id': deployment_id,
+            'outputs': {
+                'port': {
+                    'description': 'Web server port.',
+                    'value': [8080]
+                }
+            }
+        })
+
+
 class DeploymentsMock(MicroMock):
 
     def __init__(self, **kwargs):
         super(DeploymentsMock, self).__init__(**kwargs)
         self.blueprint_id = 'mock_blueprint_id'
+        self.outputs = DeploymentsOutputsMock()
         self.workflows = [
             DictWithProperties({
                 'created_at': None,
