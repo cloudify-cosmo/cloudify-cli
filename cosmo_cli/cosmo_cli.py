@@ -1654,7 +1654,10 @@ def _get_deployment_outputs(args):
     response = client.deployments.outputs.get(deployment_id)
 
     outputs = StringIO()
-    for output_name, output in response.outputs.iteritems():
+
+    decoded_outputs = _decode_dict(response.outputs)
+
+    for output_name, output in decoded_outputs.iteritems():
         outputs.write('\t{0}:{1}'.format(output_name, os.linesep))
         for k, v in output.iteritems():
             outputs.write(
