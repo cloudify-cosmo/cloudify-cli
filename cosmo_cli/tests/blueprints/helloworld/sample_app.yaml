@@ -28,9 +28,8 @@ node_types:
 
 plugins:
     plugin:
-        derived_from: cloudify.plugins.remote_plugin
-        properties:
-            url: plugin_url.zip
+        executor: central_deployment_agent
+        source: dummy
 
 relationships:
     relationship_type1: {}
