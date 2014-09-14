@@ -36,7 +36,7 @@ from cloudify_cli.utils import get_cwd
 from cloudify_cli.utils import dump_cloudify_working_dir_settings
 
 
-def _init(provider, reset_config, install=False,
+def _init(provider, reset_config,
           creds=None):
 
     """
@@ -69,13 +69,7 @@ def _init(provider, reset_config, install=False,
             return (provider_module_name,
                     get_provider_module(provider_module_name))
 
-    try:
-        provider_module_name, provider = _get_provider_by_name()
-    except:
-        if install:
-            local('pip install {0} --process-dependency-links'
-                  .format(install))
-        provider_module_name, provider = _get_provider_by_name()
+    provider_module_name, provider = _get_provider_by_name()
 
     target_file = os.path.join(utils.get_cwd(), CONFIG_FILE_NAME)
     if not reset_config and os.path.exists(target_file):
@@ -124,7 +118,7 @@ def _init(provider, reset_config, install=False,
     return provider_module_name
 
 
-def init(provider, reset_config, creds, install):
+def init(provider, reset_config, creds):
 
     if os.path.exists(os.path.join(get_cwd(),
                                    CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
@@ -147,7 +141,6 @@ def init(provider, reset_config, creds, install):
     lgr.info("Initializing Cloudify")
     provider_module_name = _init(provider,
                                  reset_config,
-                                 install,
                                  creds)
 
     settings = CloudifyWorkingDirectorySettings()

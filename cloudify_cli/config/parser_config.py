@@ -476,12 +476,6 @@ def parser_config():
                         'action': 'store_true',
                         'help': 'A flag indicating overwriting existing configuration is allowed'
                     },
-                    '--install': {
-                        'dest': 'install',
-                        'metavar': 'PROVIDER_MODULE_URL',
-                        'type': str,
-                        'help': 'url to provider module'
-                    },
                     '--creds': {
                         'dest': 'creds',
                         'metavar': 'PROVIDER_CREDENTIALS',
