@@ -86,7 +86,7 @@ def parser_config():
                     },
                     'list': {
                         'help': 'command for listing all uploaded blueprints',
-                        'handler': cfy.blueprints.list
+                        'handler': cfy.blueprints.ls
                     },
                     'delete': {
                         'arguments': {
@@ -153,7 +153,7 @@ def parser_config():
                         },
                         'help': 'command for listing all deployments or all deployments'
                                 'of a blueprint',
-                        'handler': cfy.deployments.list
+                        'handler': cfy.deployments.ls
                     },
                     'execute': {
                         'arguments': {
@@ -246,7 +246,7 @@ def parser_config():
                             }
                         },
                         'help': 'Displays Events for different executions',
-                        'handler': cfy.events.list
+                        'handler': cfy.events.ls
                     }
                 }
             },
@@ -277,7 +277,7 @@ def parser_config():
                             }
                         },
                         'help': 'command for listing all executions of a deployment',
-                        'handler': cfy.executions.list
+                        'handler': cfy.executions.ls
                     },
                     'cancel': {
                         'arguments': {
@@ -335,7 +335,7 @@ def parser_config():
                             }
                         },
                         'help': 'command for listing workflows for a deployment',
-                        'handler': cfy.workflows.list
+                        'handler': cfy.workflows.ls
                     }
                 }
             },

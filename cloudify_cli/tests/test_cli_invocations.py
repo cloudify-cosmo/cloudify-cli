@@ -104,18 +104,18 @@ def get_all_commands():
 
 class CliInvocationTest(unittest.TestCase):
 
-    original_events_list = None
-    original_workflows_list = None
+    original_events_ls = None
+    original_workflows_ls = None
     original_workflows_get = None
-    original_executions_list = None
+    original_executions_ls = None
     original_executions_cancel = None
     original_executions_get = None
     original_deployments_outputs = None
     original_deployments_execute = None
-    original_deployments_list = None
+    original_deployments_ls = None
     original_deployments_create = None
     original_deployments_delete = None
-    original_blueprints_list = None
+    original_blueprints_ls = None
     original_blueprints_download = None
     original_blueprints_validate = None
     original_blueprints_upload = None
@@ -142,22 +142,22 @@ class CliInvocationTest(unittest.TestCase):
         commands.blueprints.upload = cls.original_blueprints_upload
         commands.blueprints.validate = cls.original_blueprints_validate
         commands.blueprints.download = cls.original_blueprints_download
-        commands.blueprints.list = cls.original_blueprints_list
+        commands.blueprints.ls = cls.original_blueprints_ls
 
         commands.deployments.delete = cls.original_deployments_delete
         commands.deployments.create = cls.original_deployments_create
-        commands.deployments.list = cls.original_deployments_list
+        commands.deployments.ls = cls.original_deployments_ls
         commands.deployments.execute = cls.original_deployments_execute
         commands.deployments.outputs = cls.original_deployments_outputs
 
         commands.executions.get = cls.original_executions_get
         commands.executions.cancel = cls.original_executions_cancel
-        commands.executions.list = cls.original_executions_list
+        commands.executions.ls = cls.original_executions_ls
 
-        commands.events.list = cls.original_events_list
+        commands.events.ls = cls.original_events_ls
 
         commands.workflows.get = cls.original_workflows_get
-        commands.workflows.list = cls.original_workflows_list
+        commands.workflows.ls = cls.original_workflows_ls
 
     @classmethod
     def setUpClass(cls):
@@ -208,13 +208,13 @@ class CliInvocationTest(unittest.TestCase):
         commands.blueprints.validate = create_autospec(
             commands.blueprints.validate, return_value=None
         )
-        cls.origina_blueprints_download = commands.blueprints.download
+        cls.original_blueprints_download = commands.blueprints.download
         commands.blueprints.download = create_autospec(
             commands.blueprints.download, return_value=None
         )
-        cls.origina_blueprints_list = commands.blueprints.list
-        commands.blueprints.list = create_autospec(
-            commands.blueprints.download, return_value=None
+        cls.original_blueprints_ls = commands.blueprints.ls
+        commands.blueprints.ls = create_autospec(
+            commands.blueprints.ls, return_value=None
         )
 
         # deployment commands
@@ -226,9 +226,9 @@ class CliInvocationTest(unittest.TestCase):
         commands.deployments.create = create_autospec(
             commands.deployments.create, return_value=None
         )
-        cls.original_deployments_list = commands.deployments.list
-        commands.deployments.list = create_autospec(
-            commands.deployments.list, return_value=None
+        cls.original_deployments_ls = commands.deployments.ls
+        commands.deployments.ls = create_autospec(
+            commands.deployments.ls, return_value=None
         )
         cls.original_deployments_execute = commands.deployments.execute
         commands.deployments.execute = create_autospec(
@@ -248,15 +248,15 @@ class CliInvocationTest(unittest.TestCase):
         commands.executions.cancel = create_autospec(
             commands.executions.cancel, return_value=None
         )
-        cls.original_executions_list = commands.executions.list
-        commands.executions.list = create_autospec(
-            commands.executions.list, return_value=None
+        cls.original_executions_ls = commands.executions.ls
+        commands.executions.ls = create_autospec(
+            commands.executions.ls, return_value=None
         )
 
-        cls.original_events_list = commands.events.list
+        cls.original_events_ls = commands.events.ls
         # events commands
-        commands.events.list = create_autospec(
-            commands.events.list, return_value=None
+        commands.events.ls = create_autospec(
+            commands.events.ls, return_value=None
         )
 
         # workflows commands
@@ -264,9 +264,9 @@ class CliInvocationTest(unittest.TestCase):
         commands.workflows.get = create_autospec(
             commands.workflows.get, return_value=None
         )
-        cls.original_workflows_list = commands.workflows.list
-        commands.workflows.list = create_autospec(
-            commands.workflows.list, return_value=None
+        cls.original_workflows_ls = commands.workflows.ls
+        commands.workflows.ls = create_autospec(
+            commands.workflows.ls, return_value=None
         )
 
     def _test_all_combinations(self, command_path):

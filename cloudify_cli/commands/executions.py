@@ -51,7 +51,7 @@ def get(execution_id):
     lgr.info('')
 
 
-def list(deployment_id):
+def ls(deployment_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
     try:
