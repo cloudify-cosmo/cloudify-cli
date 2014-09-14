@@ -73,6 +73,36 @@ def execution_id_argument(help):
     }
 
 
+def workflow_id_argument(help):
+    def _workflow_id_completer(prefix, parsed_args, **kwargs):
+        # TODO: refactor this into '_objects_args_completer_maker' method once
+        #       workflows get their own module in rest-client
+        if not parsed_args.deployment_id:
+            return []
+
+        cosmo_wd_settings = utils.load_cloudify_working_dir_settings(
+            suppress_error=True)
+        if not cosmo_wd_settings:
+            return []
+
+        mgmt_ip = cosmo_wd_settings.get_management_server()
+        rest_client = utils.get_rest_client(mgmt_ip)
+
+        deployment_id = parsed_args.deployment_id
+        workflows = rest_client.deployments.get(
+            deployment_id, _include=['workflows']).workflows
+        return (wf.id for wf in workflows if wf.id.startswith(prefix))
+
+    return {
+        'dest': 'workflow_id',
+        'metavar': 'WORKFLOW_ID',
+        'type': str,
+        'required': True,
+        'help': help,
+        'completer': _workflow_id_completer
+    }
+
+
 def remove_completer(argument):
     argument_copy = copy.copy(argument)
     del argument_copy['completer']
@@ -202,13 +232,8 @@ PARSER = {
                 },
                 'execute': {
                     'arguments': {
-                        '-w,--workflow': {
-                            'metavar': 'WORKFLOW',
-                            'dest': 'workflow',
-                            'type': str,
-                            'required': True,
-                            'help': 'The workflow to execute'
-                        },
+                        '-w,--workflow': workflow_id_argument(
+                            help='The workflow to execute'),
                         '-p,--parameters': {
                             'metavar': 'PARAMETERS',
                             'dest': 'parameters',
@@ -325,13 +350,8 @@ PARSER = {
                         '-d,--deployment-id': deployment_id_argument(
                             help='The id of the deployment for which the '
                                  'workflow belongs'),
-                        '-w,--workflow': {
-                            'dest': 'workflow_id',
-                            'metavar': 'WORKFLOW_ID',
-                            'type': str,
-                            'required': True,
-                            'help': 'The id of the workflow to get'
-                        }
+                        '-w,--workflow': workflow_id_argument(
+                            help='The id of the workflow to get')
                     },
                     'help': 'command for getting a workflow by its name and deployment',
                     'handler': cfy.workflows.get
