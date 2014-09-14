@@ -1,4 +1,4 @@
--e git+https://github.com/cloudify-cosmo/cloudify-rest-client@CFY-1163-flatten-rest-api#egg=cloudify-rest-client==3.1
--e git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@CFY-1163-flatten-rest-api#egg=cloudify-dsl-parser==3.1
+-e git+https://github.com/cloudify-cosmo/cloudify-rest-client@CFY-1163-flatten-rest-api#egg=cloudify-rest-client==3.1a4
+-e git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@CFY-1163-flatten-rest-api#egg=cloudify-dsl-parser==3.1a4
 mock
 
