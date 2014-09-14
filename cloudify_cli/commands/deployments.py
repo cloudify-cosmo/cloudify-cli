@@ -121,12 +121,12 @@ def delete(deployment_id, ignore_live_nodes):
     lgr.info("Deleted deployment successfully")
 
 
-def execute(workflow, deployment_id, timeout, force,
+def execute(workflow_id, deployment_id, timeout, force,
             allow_custom_parameters, include_logs, parameters):
     management_ip = utils.get_management_server_ip()
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
              " management server {2} [timeout={3} seconds]"
-             .format(workflow,
+             .format(workflow_id,
                      deployment_id,
                      management_ip,
                      timeout))
@@ -141,7 +141,7 @@ def execute(workflow, deployment_id, timeout, force,
         try:
             execution = client.deployments.execute(
                 deployment_id,
-                workflow,
+                workflow_id,
                 parameters=parameters,
                 allow_custom_parameters=allow_custom_parameters,
                 force=force)
@@ -163,7 +163,7 @@ def execute(workflow, deployment_id, timeout, force,
             # try to execute user specified workflow
             execution = client.deployments.execute(
                 deployment_id,
-                workflow,
+                workflow_id,
                 parameters=parameters,
                 allow_custom_parameters=allow_custom_parameters,
                 force=force)
@@ -177,19 +177,19 @@ def execute(workflow, deployment_id, timeout, force,
         if execution.error:
             lgr.info("Execution of workflow '{0}' for deployment "
                      "'{1}' failed. [error={2}]"
-                     .format(workflow,
+                     .format(workflow_id,
                              deployment_id,
                              execution.error))
             lgr.info(events_message.format(execution.id))
             raise SuppressedCloudifyCliError()
         else:
             lgr.info("Finished executing workflow '{0}' on deployment"
-                     "'{1}'".format(workflow, deployment_id))
+                     "'{1}'".format(workflow_id, deployment_id))
             lgr.info(events_message.format(execution.id))
     except ExecutionTimeoutError, e:
         lgr.info("Execution of workflow '{0}' for deployment '{1}' timed out. "
                  "* Run 'cfy executions cancel --execution-id {2}' to cancel"
-                 " the running workflow.".format(workflow,
+                 " the running workflow.".format(workflow_id,
                                                  deployment_id,
                                                  e.execution_id))
         lgr.info(events_message.format(e.execution_id))
