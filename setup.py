@@ -21,7 +21,9 @@ setup(
     version='3.1a3',
     author='Gigaspaces',
     author_email='cosmo-admin@gigaspaces.com',
-    packages=['cloudify_cli', 'cloudify_simple_provider'],
+    packages=['cloudify_cli',
+              'cloudify_simple_provider',
+              'cloudify_cli.commands', 'cloudify_cli.config'],
     package_data={
         'cloudify_cli.resources': ['VERSION'],
         'cloudify_simple_provider.resources': ['cloudify-config.yaml',
