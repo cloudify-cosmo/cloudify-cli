@@ -17,7 +17,6 @@
 Tests 'cfy teardown'
 """
 
-from nose.tools import nottest
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.tests.commands.test_blueprints import MagicMock
 from cloudify_cli.tests import cli_runner
