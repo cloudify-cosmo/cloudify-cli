@@ -50,7 +50,7 @@ def _print_deployment_inputs(client, blueprint_id):
     lgr.info(inputs_output.getvalue())
 
 
-def list(blueprint_id):
+def ls(blueprint_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
     if blueprint_id:

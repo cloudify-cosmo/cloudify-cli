@@ -25,7 +25,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_cli import utils
 
 
-def list(execution_id, include_logs):
+def ls(execution_id, include_logs):
     management_ip = utils.get_management_server_ip()
     lgr.info("Getting events from management server {0} for "
              "execution id '{1}' "
