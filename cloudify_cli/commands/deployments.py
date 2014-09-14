@@ -190,6 +190,24 @@ def execute(workflow, deployment_id, timeout, force, allow_custom_parameters, in
         raise SuppressedCloudifyCliError()
 
 
+def outputs(deployment_id):
+
+    management_ip = utils.get_management_server_ip()
+    client = utils.get_rest_client(management_ip)
+
+    lgr.info("Getting outputs for deployment: {0} [manager={1}]".format(
+        deployment_id, management_ip))
+
+    response = client.deployments.outputs.get(deployment_id)
+    outputs_ = StringIO()
+    for output_name, output in response.outputs.iteritems():
+        outputs_.write('\t{0}:{1}'.format(output_name, os.linesep))
+        for k, v in output.iteritems():
+            outputs_.write('\t\t{0}: {1}{2}'.format(k, v, os.linesep))
+    outputs_.write(os.linesep)
+    lgr.info(outputs_.getvalue())
+
+
 def get_deployment_environment_creation_execution(client, deployment_id):
     executions = client.deployments.list_executions(deployment_id)
     for e in executions:

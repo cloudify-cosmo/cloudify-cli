@@ -22,7 +22,7 @@ import datetime
 from mock import MagicMock
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
-from cloudify_rest_client.deployments import Deployment
+from cloudify_rest_client.deployments import Deployment, DeploymentOutputs
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.executions import Execution
 
@@ -108,3 +108,17 @@ class DeploymentsTest(CliCommandTest):
 
         command = 'cfy deployments execute -w nonexistent-operation -d a-deployment-id'
         self._assert_ex(command, expected_error)
+
+    def test_deployments_outputs(self):
+
+        outputs = DeploymentOutputs({
+            'deployment_id': 'dep1',
+            'outputs': {
+                'port': {
+                    'description': 'Web server port.',
+                    'value': [8080]
+                }
+            }
+        })
+        self.client.deployments.outputs.get = MagicMock(return_value=outputs)
+        cli_runner.run_cli('cfy deployments outputs -d dep1')

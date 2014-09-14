@@ -208,6 +208,19 @@ PARSER = {
                     },
                     'help': 'command for executing a workflow on a deployment',
                     'handler': cfy.deployments.execute
+                },
+                'outputs': {
+                    'arguments': {
+                        '-d,--deployment-id': {
+                            'dest': 'deployment_id',
+                            'metavar': 'DEPLOYMENT_ID',
+                            'type': str,
+                            'required': True,
+                            'help': 'The id of the deployment to get outputs for'
+                        }
+                    },
+                    'help': 'command for getting a specific deployment outputs',
+                    'handler': cfy.deployments.outputs
                 }
             }
         },
