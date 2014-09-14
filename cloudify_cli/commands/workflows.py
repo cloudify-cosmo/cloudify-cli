@@ -1,0 +1,98 @@
+########
+# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#    * See the License for the specific language governing permissions and
+#    * limitations under the License.
+
+"""
+Handles all commands that start with 'cfy workflows'
+"""
+
+from cloudify_cli.logger import lgr
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify_cli import utils
+
+
+def get(deployment_id, workflow_id):
+    management_ip = utils.get_management_server_ip()
+    client = utils.get_rest_client(management_ip)
+    try:
+        lgr.info('Getting workflow '
+                 '\'{0}\' of deployment \'{1}\' [manager={2}]'
+                 .format(workflow_id, deployment_id, management_ip))
+        deployment = client.deployments.get(deployment_id)
+        workflow = next((wf for wf in deployment.workflows if
+                         wf.name == workflow_id), None)
+        if not workflow:
+            msg = ("Workflow '{0}' not found on management server for "
+                   "deployment {1}".format(workflow_id, deployment_id))
+            raise CloudifyCliError(msg)
+    except CloudifyClientError, e:
+        if e.status_code != 404:
+            raise
+        msg = ("Deployment '{0}' not found on management server"
+               .format(deployment_id))
+        raise CloudifyCliError(msg)
+
+    pt = utils.table(['blueprint_id', 'deployment_id',
+                      'name', 'created_at'],
+                     data=[workflow],
+                     defaults={'blueprint_id': deployment.blueprint_id,
+                               'deployment_id': deployment.id})
+
+    utils.print_table('Workflows:', pt)
+
+    # print workflow parameters
+    mandatory_params = dict()
+    optional_params = dict()
+    for param_name, param in utils.decode_dict(workflow.parameters).iteritems():
+        params_group = optional_params if 'default' in param else \
+            mandatory_params
+        params_group[param_name] = param
+
+    lgr.info('Workflow Parameters:')
+    lgr.info('\tMandatory Parameters:')
+    for param_name, param in mandatory_params.iteritems():
+        if 'description' in param:
+            lgr.info('\t\t{0}\t({1})'.format(param_name,
+                                             param['description']))
+        else:
+            lgr.info('\t\t{0}'.format(param_name))
+
+    lgr.info('\tOptional Parameters:')
+    for param_name, param in optional_params.iteritems():
+        if 'description' in param:
+            lgr.info('\t\t{0}: \t{1}\t({2})'.format(
+                param_name, param['default'], param['description']))
+        else:
+            lgr.info('\t\t{0}: \t{1}'.format(param_name,
+                                             param['default']))
+    lgr.info('')
+
+
+def list(deployment_id):
+    management_ip = utils.get_management_server_ip()
+    client = utils.get_rest_client(management_ip)
+
+    lgr.info('Getting workflows list for deployment: '
+             '\'{0}\'... [manager={1}]'.format(deployment_id, management_ip))
+
+    deployment = client.deployments.get(deployment_id)
+    workflows = deployment.workflows
+
+    pt = utils.table(['blueprint_id', 'deployment_id',
+                      'name', 'created_at'],
+                     data=workflows,
+                     defaults={'blueprint_id': deployment.blueprint_id,
+                               'deployment_id': deployment.id})
+    utils.print_table('Workflows:', pt)

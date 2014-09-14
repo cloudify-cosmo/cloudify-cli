@@ -14,6 +14,7 @@
 # limitations under the License.
 ############
 
+__author__ = 'ran'
 
 from cloudify_cli.provider_common import BaseProviderClass
 
@@ -21,22 +22,17 @@ from cloudify_cli.provider_common import BaseProviderClass
 class ProviderManager(BaseProviderClass):
 
     def provision(self):
-        properties = ['public_ip',
-                      'private_ip',
-                      'ssh_key_path',
-                      'ssh_username',
-                      'context']
-        return tuple([self._get_property(prop) for prop in properties])
+        return '10.0.0.2', '10.10.10.10', 'key_path', 'user', {'key': 'value'}
 
-    def _get_property(self, name):
-        value = self.provider_config.get(name)
-        if value is None:
-            raise ValueError('Missing value for property: "{}" in '
-                             'configuration '.format(name))
-        return value
-
-    def teardown(self, provider_context, ignore_validation=False):
-        pass
+    def bootstrap(self, mgmt_ip, private_ip, mgmt_ssh_key, mgmt_ssh_user):
+        return True
 
     def validate(self):
-        pass
+        return {}
+
+    def teardown(self, provider_context, ignore_validation=False):
+        raise RuntimeError('cloudify_mock_provider_with_cloudify_prefix teardown exception')
+
+    def ensure_connectivity_with_management_server(self, mgmt_ip, mgmt_ssh_key,
+                                                   mgmt_ssh_user):
+        return True
