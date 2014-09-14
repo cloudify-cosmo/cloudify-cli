@@ -20,7 +20,6 @@ Handles 'cfy init'
 import shutil
 import yaml
 
-from fabric.operations import local
 from fabric.operations import os
 from cloudify_cli import utils
 from os.path import dirname
