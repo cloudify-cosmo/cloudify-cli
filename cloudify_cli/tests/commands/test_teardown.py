@@ -84,17 +84,3 @@ class TeardownTest(CliCommandTest):
             self.assertIn('cloudify_mock_provider_with_cloudify_prefix'
                           ' teardown exception',
                           e.message)
-
-    @nottest
-    def test_teardown_force_explicit_management_server(self):
-        self.client.manager.get_status = MagicMock()
-        self.client.manager.get_context = MagicMock(
-            return_value={'name': 'mock_provider', 'context': {'key': 'value'}}
-        )
-        self.client.deployments.list = MagicMock(return_value=[])
-        cli_runner.run_cli('cfy init -p mock_provider')
-        cli_runner.run_cli('cfy use -t 10.0.0.1')
-        cli_runner.run_cli('cfy teardown -t 10.0.0.2 -f')
-        self.assertEquals(
-            '10.0.0.1',
-            self._read_cosmo_wd_settings().get_management_server())
