@@ -312,7 +312,7 @@ PARSER = {
                             'required': True,
                             'help': 'The id of the deployment for which the workflow belongs'
                         },
-                        '-w,--workflow-id': {
+                        '-w,--workflow': {
                             'dest': 'workflow_id',
                             'metavar': 'WORKFLOW_ID',
                             'type': str,
@@ -345,7 +345,7 @@ PARSER = {
         'dev': {
             'help': 'Executes fabric tasks on the management machine',
             'arguments': {
-                '--task': {
+                '-t,--task': {
                     'metavar': 'TASK',
                     'type': str,
                     'dest': 'task',
