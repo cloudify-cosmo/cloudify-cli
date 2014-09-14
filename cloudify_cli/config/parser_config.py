@@ -16,10 +16,10 @@
 # flake8: noqa
 
 import argparse
-import copy
 import json
 
-from cloudify_cli.config import parser_config_utils as conf_utils
+from cloudify_cli.config import completion_utils
+from cloudify_cli.config import argument_utils
 from cloudify_cli import commands as cfy
 
 
@@ -31,7 +31,8 @@ def blueprint_id_argument():
         'dest': 'blueprint_id',
         'default': None,
         'required': True,
-        'completer': conf_utils.objects_args_completer_maker('blueprints')
+        'completer': completion_utils.objects_args_completer_maker(
+            'blueprints')
     }
 
 
@@ -42,7 +43,8 @@ def deployment_id_argument(help):
         'type': str,
         'required': True,
         'help': help,
-        'completer': conf_utils.objects_args_completer_maker('deployments')
+        'completer': completion_utils.objects_args_completer_maker(
+            'deployments')
     }
 
 
@@ -53,7 +55,8 @@ def execution_id_argument(help):
         'type': str,
         'required': True,
         'help': help,
-        'completer': conf_utils.objects_args_completer_maker('executions')
+        'completer': completion_utils.objects_args_completer_maker(
+            'executions')
     }
 
 
@@ -64,26 +67,8 @@ def workflow_id_argument(help):
         'type': str,
         'required': True,
         'help': help,
-        'completer': conf_utils.workflow_id_completer
+        'completer': completion_utils.workflow_id_completer
     }
-
-
-def remove_completer(argument):
-    argument_copy = copy.copy(argument)
-    del argument_copy['completer']
-    return argument_copy
-
-
-def make_optional(argument):
-    argument_copy = copy.copy(argument)
-    argument_copy['required'] = False
-    return argument_copy
-
-
-def make_required(argument):
-    argument_copy = copy.copy(argument)
-    argument_copy['required'] = True
-    return argument_copy
 
 
 PARSER = {
@@ -106,9 +91,9 @@ PARSER = {
                             'type': argparse.FileType(),
                             'required': True,
                             'help': "Path to the application's blueprint file",
-                            'completer': conf_utils.yaml_files_completer
+                            'completer': completion_utils.yaml_files_completer
                         },
-                        '-b,--blueprint-id': remove_completer(
+                        '-b,--blueprint-id': argument_utils.remove_completer(
                             blueprint_id_argument())
                     },
                     'help': 'command for uploading a blueprint to the management server',
@@ -147,7 +132,7 @@ PARSER = {
                             'dest': 'blueprint_path',
                             'required': True,
                             'help': "Path to the application's blueprint file",
-                            'completer': conf_utils.yaml_files_completer
+                            'completer': completion_utils.yaml_files_completer
                         }
                     },
                     'help': 'command for validating a blueprint',
@@ -160,7 +145,7 @@ PARSER = {
             'sub_commands': {
                 'create': {
                     'arguments': {
-                        '-d,--deployment-id': remove_completer(
+                        '-d,--deployment-id': argument_utils.remove_completer(
                             deployment_id_argument(
                                 help='A unique id that will be assigned to '
                                      'the created deployment'))
@@ -188,7 +173,7 @@ PARSER = {
                 },
                 'list': {
                     'arguments': {
-                        '-b,--blueprint-id': make_optional(
+                        '-b,--blueprint-id': argument_utils.make_optional(
                             blueprint_id_argument())
                     },
                     'help': 'command for listing all deployments or all deployments'
