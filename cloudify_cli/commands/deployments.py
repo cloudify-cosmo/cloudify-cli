@@ -23,15 +23,19 @@ import time
 
 from StringIO import StringIO
 from cloudify_cli import utils
-from cloudify_cli.execution_events_fetcher import wait_for_execution
+from cloudify_cli.execution_events_fetcher import \
+    wait_for_execution
 from cloudify_cli.logger import lgr
 from cloudify_cli.logger import get_events_logger
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.exceptions import ExecutionTimeoutError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
-from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
-from cloudify_rest_client.exceptions import UnknownDeploymentInputError
-from cloudify_rest_client.exceptions import DeploymentEnvironmentCreationInProgressError
+from cloudify_rest_client.exceptions import \
+    MissingRequiredDeploymentInputError
+from cloudify_rest_client.exceptions import \
+    UnknownDeploymentInputError
+from cloudify_rest_client.exceptions import \
+    DeploymentEnvironmentCreationInProgressError
 
 
 def _print_deployment_inputs(client, blueprint_id):
@@ -50,7 +54,8 @@ def list(blueprint_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
     if blueprint_id:
-        lgr.info("Getting deployments list for blueprint: '{0}'... [manager={1}]"
+        lgr.info("Getting deployments list for blueprint: "
+                 "'{0}'... [manager={1}]"
                  .format(blueprint_id, management_ip))
     else:
         lgr.info('Getting deployments list...[manager={0}]'
@@ -116,7 +121,8 @@ def delete(deployment_id, ignore_live_nodes):
     lgr.info("Deleted deployment successfully")
 
 
-def execute(workflow, deployment_id, timeout, force, allow_custom_parameters, include_logs, parameters):
+def execute(workflow, deployment_id, timeout, force,
+            allow_custom_parameters, include_logs, parameters):
     management_ip = utils.get_management_server_ip()
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
              " management server {2} [timeout={3} seconds]"
@@ -213,5 +219,6 @@ def get_deployment_environment_creation_execution(client, deployment_id):
     for e in executions:
         if e.workflow_id == 'create_deployment_environment':
             return e
-    raise RuntimeError('Failed to get create_deployment_environment workflow execution'
+    raise RuntimeError('Failed to get create_deployment_environment '
+                       'workflow execution'
                        '. Available executions: {0}'.format(executions))

@@ -32,21 +32,27 @@ class SshTest(CliCommandTest):
     def test_ssh_with_empty_config(self):
         settings = utils.CloudifyWorkingDirectorySettings()
         self._create_cosmo_wd_settings(settings)
-        self._assert_ex('cfy ssh', 'Management User is not set in working directory settings')
+        self._assert_ex('cfy ssh',
+                        'Management User is not set '
+                        'in working directory settings')
 
     def test_ssh_with_no_key(self):
         settings = utils.CloudifyWorkingDirectorySettings()
         settings.set_management_user('test')
         settings.set_management_server('127.0.0.1')
         self._create_cosmo_wd_settings(settings)
-        self._assert_ex('cfy ssh', 'Management Key is not set in working directory settings')
+        self._assert_ex('cfy ssh',
+                        'Management Key is not set '
+                        'in working directory settings')
 
     def test_ssh_with_no_user(self):
         settings = utils.CloudifyWorkingDirectorySettings()
         settings.set_management_server('127.0.0.1')
         settings.set_management_key('/tmp/test.pem')
         self._create_cosmo_wd_settings(settings)
-        self._assert_ex('cfy ssh', 'Management User is not set in working directory settings')
+        self._assert_ex('cfy ssh',
+                        'Management User is not set '
+                        'in working directory settings')
 
     def test_ssh_with_no_server(self):
         settings = utils.CloudifyWorkingDirectorySettings()

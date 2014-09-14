@@ -45,11 +45,14 @@ class BootstrapTest(CliCommandTest):
         self.client.manager.create_context = mock_create_context
         self.client.manager.get_context = mock_get_context
 
-        cli_runner.run_cli('cfy init -p cloudify_mock_provider_with_cloudify_prefix')
+        cli_runner.run_cli(
+            'cfy init -p cloudify_mock_provider_with_cloudify_prefix'
+        )
         cli_runner.run_cli('cfy bootstrap')
 
         context = self.client.manager.get_context()
 
         # see provision @cloudify_mock_provider_with_cloudify_prefix.py
-        self.assertEquals('cloudify_mock_provider_with_cloudify_prefix', context['name'])
+        self.assertEquals('cloudify_mock_provider_with_cloudify_prefix',
+                          context['name'])
         self.assertEquals('value', context['context']['key'])

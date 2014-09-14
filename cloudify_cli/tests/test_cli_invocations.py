@@ -111,39 +111,85 @@ class CliInvocationTest(unittest.TestCase):
         utils.get_management_server_ip = lambda x: 'localhost'
 
         # direct commands
-        commands.status = create_autospec(commands.status, return_value=None)
-        commands.ssh = create_autospec(commands.ssh, return_value=None)
-        commands.bootstrap = create_autospec(commands.bootstrap, return_value=None)
-        commands.teardown = create_autospec(commands.teardown, return_value=None)
-        commands.dev = create_autospec(commands.dev, return_value=None)
-        commands.init = create_autospec(commands.init, return_value=None)
-        commands.use = create_autospec(commands.use, return_value=None)
+        commands.status = create_autospec(
+            commands.status, return_value=None
+        )
+        commands.ssh = create_autospec(
+            commands.ssh, return_value=None
+        )
+        commands.bootstrap = create_autospec(
+            commands.bootstrap, return_value=None
+        )
+        commands.teardown = create_autospec(
+            commands.teardown, return_value=None
+        )
+        commands.dev = create_autospec(
+            commands.dev, return_value=None
+        )
+        commands.init = create_autospec(
+            commands.init, return_value=None
+        )
+        commands.use = create_autospec(
+            commands.use, return_value=None
+        )
 
         # blueprint commands
-        commands.blueprints.delete = create_autospec(commands.blueprints.delete, return_value=None)
-        commands.blueprints.upload = create_autospec(commands.blueprints.upload, return_value=None)
-        commands.blueprints.validate = create_autospec(commands.blueprints.validate, return_value=None)
-        commands.blueprints.download = create_autospec(commands.blueprints.download, return_value=None)
-        commands.blueprints.list = create_autospec(commands.blueprints.download, return_value=None)
+        commands.blueprints.delete = create_autospec(
+            commands.blueprints.delete, return_value=None
+        )
+        commands.blueprints.upload = create_autospec(
+            commands.blueprints.upload, return_value=None
+        )
+        commands.blueprints.validate = create_autospec(
+            commands.blueprints.validate, return_value=None
+        )
+        commands.blueprints.download = create_autospec(
+            commands.blueprints.download, return_value=None
+        )
+        commands.blueprints.list = create_autospec(
+            commands.blueprints.download, return_value=None
+        )
 
         # deployment commands
-        commands.deployments.delete = create_autospec(commands.deployments.delete, return_value=None)
-        commands.deployments.create = create_autospec(commands.deployments.create, return_value=None)
-        commands.deployments.list = create_autospec(commands.deployments.list, return_value=None)
-        commands.deployments.execute = create_autospec(commands.deployments.execute, return_value=None)
-        commands.deployments.outputs = create_autospec(commands.deployments.outputs, return_value=None)
+        commands.deployments.delete = create_autospec(
+            commands.deployments.delete, return_value=None
+        )
+        commands.deployments.create = create_autospec(
+            commands.deployments.create, return_value=None
+        )
+        commands.deployments.list = create_autospec(
+            commands.deployments.list, return_value=None
+        )
+        commands.deployments.execute = create_autospec(
+            commands.deployments.execute, return_value=None
+        )
+        commands.deployments.outputs = create_autospec(
+            commands.deployments.outputs, return_value=None
+        )
 
         # executions commands
-        commands.executions.get = create_autospec(commands.executions.get, return_value=None)
-        commands.executions.cancel = create_autospec(commands.executions.cancel, return_value=None)
-        commands.executions.list = create_autospec(commands.executions.list, return_value=None)
+        commands.executions.get = create_autospec(
+            commands.executions.get, return_value=None
+        )
+        commands.executions.cancel = create_autospec(
+            commands.executions.cancel, return_value=None
+        )
+        commands.executions.list = create_autospec(
+            commands.executions.list, return_value=None
+        )
 
         # events commands
-        commands.events.list = create_autospec(commands.events.list, return_value=None)
+        commands.events.list = create_autospec(
+            commands.events.list, return_value=None
+        )
 
         # workflows commands
-        commands.workflows.get = create_autospec(commands.workflows.get, return_value=None)
-        commands.workflows.list = create_autospec(commands.workflows.list, return_value=None)
+        commands.workflows.get = create_autospec(
+            commands.workflows.get, return_value=None
+        )
+        commands.workflows.list = create_autospec(
+            commands.workflows.list, return_value=None
+        )
 
     def _test_all_combinations(self, command_path):
         possible_commands = get_combinations(command_path)
@@ -160,7 +206,8 @@ class CliInvocationTest(unittest.TestCase):
         for command in all_commands:
             possible_commands = get_combinations(command)
             for possible_command in possible_commands:
-                cli_runner.run_cli('cfy {0}'.format(possible_command))
+                cli_runner.run_cli('cfy {0}'
+                                   .format(possible_command))
 
     def test_all_commands_help(self):
 
@@ -170,8 +217,12 @@ class CliInvocationTest(unittest.TestCase):
 
         all_commands = get_all_commands()
         for command in all_commands:
-            cli_runner.run_cli_expect_system_exit_0('cfy {0} -h'.format(command))
-            cli_runner.run_cli_expect_system_exit_0('cfy {0} --help'.format(command))
+            cli_runner.run_cli_expect_system_exit_0(
+                'cfy {0} -h'.format(command)
+            )
+            cli_runner.run_cli_expect_system_exit_0(
+                'cfy {0} --help'.format(command)
+            )
 
     def test_all_commands_verbose(self):
 
@@ -183,6 +234,12 @@ class CliInvocationTest(unittest.TestCase):
         for command in all_commands:
             possible_commands = get_combinations(command)
             for possible_command in possible_commands:
-                cli_runner.run_cli('cfy {0}'.format(possible_command))
-                cli_runner.run_cli('cfy {0} -v'.format(possible_command))
-                cli_runner.run_cli('cfy {0} --verbose'.format(possible_command))
+                cli_runner.run_cli(
+                    'cfy {0}'.format(possible_command)
+                )
+                cli_runner.run_cli(
+                    'cfy {0} -v'.format(possible_command)
+                )
+                cli_runner.run_cli(
+                    'cfy {0} --verbose'.format(possible_command)
+                )

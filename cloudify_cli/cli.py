@@ -25,7 +25,6 @@ from cloudify_cli.exceptions import CloudifyValidationError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.exceptions import CloudifyBootstrapError
 from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify_cli import utils
 
 
 output_level = logging.INFO
@@ -71,7 +70,8 @@ def register_commands():
 
         if 'sub_commands' in command:
 
-            # Add sub commands. Such as 'cfy blueprints list', 'cfy deployments create' ...
+            # Add sub commands. Such as 'cfy blueprints list',
+            # 'cfy deployments create' ...
             controller_help = command['help']
             controller_parser = subparsers.add_parser(
                 command_name, help=controller_help

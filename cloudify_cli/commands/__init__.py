@@ -13,6 +13,12 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+# ignore flake because its not happy
+# we are importing stuff and not using them.
+# but we actually are using them from other files
+
+# flake8: noqa
+
 # import cfy actions
 from cloudify_cli.commands.version import VersionAction as version
 

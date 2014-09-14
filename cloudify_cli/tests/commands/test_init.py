@@ -35,7 +35,8 @@ class InitTest(CliCommandTest):
             self._read_cosmo_wd_settings().get_provider())
 
     def test_init_implicit_provider_name(self):
-        # the actual provider name is 'cloudify_mock_provider_with_cloudify_prefix'
+        # the actual provider name
+        # is 'cloudify_mock_provider_with_cloudify_prefix'
         cli_runner.run_cli('cfy init -p mock_provider_with_cloudify_prefix -v')
         self.assertEquals(
             'cloudify_mock_provider_with_cloudify_prefix',

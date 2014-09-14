@@ -89,7 +89,8 @@ class CliUtilsUnitTests(unittest.TestCase):
 
     def test_dump_cosmo_working_dir_settings_update(self):
 
-        self.assertRaises(CloudifyCliError, utils.dump_cloudify_working_dir_settings,
+        self.assertRaises(CloudifyCliError,
+                          utils.dump_cloudify_working_dir_settings,
                           cosmo_wd_settings=CloudifyWorkingDirectorySettings(),
                           update=True)
 

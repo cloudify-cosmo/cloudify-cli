@@ -26,15 +26,24 @@ class UseTest(CliCommandTest):
 
     def test_use_command(self):
         self.client.manager.get_status = MagicMock()
-        self.client.manager.get_context = MagicMock(return_value={'name': 'name', 'context': {}})
+        self.client.manager.get_context = MagicMock(
+            return_value={
+                'name': 'name',
+                'context': {}}
+        )
         self._create_cosmo_wd_settings()
         cli_runner.run_cli('cfy use -t 127.0.0.1')
         cwds = self._read_cosmo_wd_settings()
-        self.assertEquals("127.0.0.1", cwds.get_management_server())
+        self.assertEquals("127.0.0.1",
+                          cwds.get_management_server())
 
     def test_use_command_no_prior_init(self):
         self.client.manager.get_status = MagicMock()
-        self.client.manager.get_context = MagicMock(return_value={'name': 'name', 'context': {}})
+        self.client.manager.get_context = MagicMock(
+            return_value={
+                'name': 'name', 'context': {}
+            }
+        )
         cli_runner.run_cli('cfy use -t 127.0.0.1')
         cwds = self._read_cosmo_wd_settings()
         self.assertEquals('127.0.0.1', cwds.get_management_server())

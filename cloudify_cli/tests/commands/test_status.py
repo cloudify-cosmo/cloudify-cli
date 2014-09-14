@@ -36,7 +36,8 @@ class StatusTest(CliCommandTest):
         # running a command which requires a target management server without
         # first calling "cfy use" or providing a target server explicitly
         cli_runner.run_cli('cfy init -p mock_provider')
-        self._assert_ex('cfy status', "Must either first run 'cfy use' command")
+        self._assert_ex('cfy status',
+                        "Must either first run 'cfy use' command")
 
     def test_status_command_from_inner_dir(self):
         self.client.manager.get_status = MagicMock()

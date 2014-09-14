@@ -113,6 +113,8 @@ class WorkflowsTest(CliCommandTest):
         expected_message = ("Deployment 'nonexistent-dep' "
                             "not found on management server")
 
-        self.client.deployments.get = MagicMock(side_effect=CloudifyClientError(expected_message))
+        self.client.deployments.get = MagicMock(
+            side_effect=CloudifyClientError(expected_message)
+        )
         self._assert_ex("cfy workflows get -w wf -d nonexistent-dep -v",
                         expected_message)

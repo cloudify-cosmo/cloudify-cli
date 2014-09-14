@@ -196,7 +196,8 @@ class BaseProviderClass(object):
         def _run(command):
             return _run_with_retries(command)
 
-        lgr.info('initializing manager on the machine at {0}'.format(public_ip))
+        lgr.info('initializing manager on the machine at {0}'
+                 .format(public_ip))
         cloudify_config = self.provider_config['cloudify']
 
         server_packages = cloudify_config['server']['packages']

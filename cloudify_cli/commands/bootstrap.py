@@ -41,7 +41,7 @@ def bootstrap(config_file_path, keep_up, validate_only, skip_validations):
     except:
         provider_dir = os.path.dirname(provider.__file__)
     provider_config = utils.read_config(config_file_path,
-                                  provider_dir)
+                                        provider_dir)
     lgr.info("Prefix for all resources: '{0}'"
              .format(provider_config.resources_prefix))
     pm = provider.ProviderManager(provider_config, cli.get_global_verbosity())
@@ -57,7 +57,8 @@ def bootstrap(config_file_path, keep_up, validate_only, skip_validations):
         lgr.info('Validating provider resources and configuration')
         pm.augment_schema_with_common()
         if pm.validate_schema():
-            raise CloudifyValidationError('Provider schema validations failed!')
+            raise CloudifyValidationError('Provider schema '
+                                          'validations failed!')
         pm.update_names_in_config()  # Prefixes
         if pm.validate():
             raise CloudifyValidationError('Provider validations failed!')
@@ -115,9 +116,10 @@ def bootstrap(config_file_path, keep_up, validate_only, skip_validations):
 
         # storing provider context on management server
         utils.get_rest_client(mgmt_ip).manager.create_context(provider_name,
-                                                        provider_context)
+                                                              provider_context)
 
-        lgr.info('management server is up at {0} (is now set as the default management server)'
+        lgr.info('management server is up at {0} '
+                 '(is now set as the default management server)'
                  .format(mgmt_ip))
     else:
         keep_up_or_teardown()
@@ -130,18 +132,23 @@ def _update_provider_context(provider_config, provider_context):
     min_workers = agent.get('min_workers', AGENT_MIN_WORKERS)
     max_workers = agent.get('max_workers', AGENT_MAX_WORKERS)
     user = agent.get('user')
-    remote_execution_port = agent.get('remote_execution_port', REMOTE_EXECUTION_PORT)
+    remote_execution_port = agent.get('remote_execution_port',
+                                      REMOTE_EXECUTION_PORT)
     compute = provider_config.get('compute', {})
     agent_servers = compute.get('agent_servers', {})
     agents_keypair = agent_servers.get('agents_keypair', {})
     agent_key_path = agents_keypair.get('private_key_path', AGENT_KEY_PATH)
 
     workflows = cloudify.get('workflows', {})
-    workflow_task_retries = workflows.get('task_retries', WORKFLOW_TASK_RETRIES)
-    workflow_task_retry_interval = workflows.get('retry_interval', WORKFLOW_TASK_RETRY_INTERVAL)
+    workflow_task_retries = workflows.get('task_retries',
+                                          WORKFLOW_TASK_RETRIES)
+    workflow_task_retry_interval = workflows.get('retry_interval',
+                                                 WORKFLOW_TASK_RETRY_INTERVAL)
 
     policy_engine = cloudify.get('policy_engine', {})
-    policy_engine_start_timeout = policy_engine.get('start_timeout', POLICY_ENGINE_START_TIMEOUT)
+    policy_engine_start_timeout = policy_engine.get(
+        'start_timeout',
+        POLICY_ENGINE_START_TIMEOUT)
 
     provider_context['cloudify'] = {
         'resources_prefix': provider_config.resources_prefix,

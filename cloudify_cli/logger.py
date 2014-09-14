@@ -25,7 +25,8 @@ def _init_logger():
 
         # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
         logging.getLogger('paramiko').setLevel(logging.WARNING)
-        logging.getLogger('requests.packages.urllib3.connectionpool').setLevel(logging.ERROR)
+        logging.getLogger('requests.packages.urllib3'
+                          '.connectionpool').setLevel(logging.ERROR)
 
         logfile = logger_config.LOGGER['handlers']['file']['filename']
         d = os.path.dirname(logfile)

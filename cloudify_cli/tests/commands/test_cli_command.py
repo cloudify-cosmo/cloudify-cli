@@ -41,10 +41,13 @@ class CliCommandTest(unittest.TestCase):
     def setUpClass(cls):
         # copy provider to provider directory
         # this creates the directory as well
-        shutil.copytree('{0}/resources/providers/mock_provider/'.format(THIS_DIR), TEST_PROVIDERS_DIR)
-        shutil.copy('{0}/resources/providers/mock_provider_with_cloudify_prefix'
-                    '/cloudify_mock_provider_with_cloudify_prefix.py'
-                    .format(THIS_DIR), TEST_PROVIDERS_DIR)
+        shutil.copytree('{0}/resources/providers/mock_provider/'
+                        .format(THIS_DIR), TEST_PROVIDERS_DIR)
+        shutil.copy(
+            '{0}/resources/providers/mock_provider_with_cloudify_prefix'
+            '/cloudify_mock_provider_with_cloudify_prefix.py'
+            .format(THIS_DIR), TEST_PROVIDERS_DIR
+        )
 
         # append providers to path
         # so that its importable

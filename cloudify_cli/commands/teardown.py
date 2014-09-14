@@ -80,7 +80,7 @@ def teardown(force, ignore_deployments, config_file_path, ignore_validation):
     except:
         provider_dir = os.path.dirname(provider.__file__)
     provider_config = utils.read_config(config_file_path,
-                                   provider_dir)
+                                        provider_dir)
     pm = provider.ProviderManager(provider_config, get_global_verbosity())
 
     lgr.info("tearing down {0}".format(management_ip))

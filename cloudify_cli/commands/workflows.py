@@ -55,7 +55,8 @@ def get(deployment_id, workflow_id):
     # print workflow parameters
     mandatory_params = dict()
     optional_params = dict()
-    for param_name, param in utils.decode_dict(workflow.parameters).iteritems():
+    for param_name, param in utils.decode_dict(
+            workflow.parameters).iteritems():
         params_group = optional_params if 'default' in param else \
             mandatory_params
         params_group[param_name] = param
