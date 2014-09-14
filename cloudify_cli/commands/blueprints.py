@@ -71,7 +71,7 @@ def delete(blueprint_id):
     lgr.info('Deleted blueprint successfully')
 
 
-def list():
+def ls():
 
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)

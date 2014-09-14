@@ -20,11 +20,12 @@ import sys
 import traceback
 import argcomplete
 
+from cloudify_rest_client.exceptions import CloudifyClientError
+
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.exceptions import CloudifyValidationError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.exceptions import CloudifyBootstrapError
-from cloudify_rest_client.exceptions import CloudifyClientError
 
 
 output_level = logging.INFO
@@ -56,17 +57,18 @@ def _parse_args(args):
 
 def register_commands():
 
-    from cloudify_cli.config.parser_config import PARSER
+    from cloudify_cli.config.parser_config import parser_config
+    parser_conf = parser_config()
 
-    parser = argparse.ArgumentParser(description=PARSER['description'])
+    parser = argparse.ArgumentParser(description=parser_conf['description'])
 
     # Direct arguments for the 'cfy' command (like -v)
-    for argument_name, argument in PARSER['arguments'].iteritems():
+    for argument_name, argument in parser_conf['arguments'].iteritems():
         parser.add_argument(argument_name, **argument)
 
     subparsers = parser.add_subparsers()
 
-    for command_name, command in PARSER['commands'].iteritems():
+    for command_name, command in parser_conf['commands'].iteritems():
 
         if 'sub_commands' in command:
 
@@ -99,10 +101,17 @@ def register_command(subparsers, command_name, command):
     command_arg_names = []
     if 'arguments' in command:
         for argument_name, argument in command['arguments'].iteritems():
-            command_parser.add_argument(
+            completer = argument.get('completer')
+            if completer:
+                del argument['completer']
+
+            arg = command_parser.add_argument(
                 *argument_name.split(','),
                 **argument
             )
+
+            if completer:
+                arg.completer = completer
 
             command_arg_names.append(argument['dest'])
 

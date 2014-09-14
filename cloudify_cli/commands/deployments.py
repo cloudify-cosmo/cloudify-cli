@@ -21,12 +21,13 @@ import json
 import os
 from StringIO import StringIO
 
+from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
+from cloudify_rest_client.exceptions import UnknownDeploymentInputError
+
 from cloudify_cli import utils
 from cloudify_cli.logger import lgr
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
-from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
-from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 
 
 def _print_deployment_inputs(client, blueprint_id):
@@ -41,7 +42,7 @@ def _print_deployment_inputs(client, blueprint_id):
     lgr.info(inputs_output.getvalue())
 
 
-def list(blueprint_id):
+def ls(blueprint_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
     if blueprint_id:

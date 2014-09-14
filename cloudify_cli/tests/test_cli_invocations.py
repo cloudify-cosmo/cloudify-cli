@@ -54,10 +54,9 @@ def get_combinations(command_path):
             if arg['type'] == json.loads:
                 return dict
         return arg['type']
-
-    from cloudify_cli.config.parser_config import PARSER
-
-    reduced = reduce(traverse, command_path.split(), PARSER['commands'])
+    from cloudify_cli.config.parser_config import parser_config
+    parser_conf = parser_config()
+    reduced = reduce(traverse, command_path.split(), parser_conf['commands'])
     if 'arguments' not in reduced:
         return []
 
@@ -91,8 +90,9 @@ def get_combinations(command_path):
 def get_all_commands():
 
     all_commands = []
-    from cloudify_cli.config.parser_config import PARSER
-    for command_name, command in PARSER['commands'].iteritems():
+    from cloudify_cli.config.parser_config import parser_config
+    parser_conf = parser_config()
+    for command_name, command in parser_conf['commands'].iteritems():
         if 'sub_commands' in command:
             for sub_command_name in command['sub_commands'].keys():
                 command_path = '{0} {1}'.format(command_name, sub_command_name)
@@ -104,6 +104,61 @@ def get_all_commands():
 
 class CliInvocationTest(unittest.TestCase):
 
+    original_events_ls = None
+    original_workflows_ls = None
+    original_workflows_get = None
+    original_executions_ls = None
+    original_executions_cancel = None
+    original_executions_get = None
+    original_deployments_outputs = None
+    original_deployments_execute = None
+    original_deployments_ls = None
+    original_deployments_create = None
+    original_deployments_delete = None
+    original_blueprints_ls = None
+    original_blueprints_download = None
+    original_blueprints_validate = None
+    original_blueprints_upload = None
+    original_blueprints_delete = None
+    original_use = None
+    original_init = None
+    original_dev = None
+    original_teardown = None
+    original_bootstrap = None
+    original_ssh = None
+    original_status = None
+
+    @classmethod
+    def tearDownClass(cls):
+        commands.status = cls.original_status
+        commands.ssh = cls.original_ssh
+        commands.bootstrap = cls.original_bootstrap
+        commands.teardown = cls.original_teardown
+        commands.dev = cls.original_dev
+        commands.init = cls.original_init
+        commands.use = cls.original_use
+
+        commands.blueprints.delete = cls.original_blueprints_delete
+        commands.blueprints.upload = cls.original_blueprints_upload
+        commands.blueprints.validate = cls.original_blueprints_validate
+        commands.blueprints.download = cls.original_blueprints_download
+        commands.blueprints.ls = cls.original_blueprints_ls
+
+        commands.deployments.delete = cls.original_deployments_delete
+        commands.deployments.create = cls.original_deployments_create
+        commands.deployments.ls = cls.original_deployments_ls
+        commands.deployments.outputs = cls.original_deployments_outputs
+
+        commands.executions.get = cls.original_executions_get
+        commands.executions.start = cls.original_executions_start
+        commands.executions.cancel = cls.original_executions_cancel
+        commands.executions.ls = cls.original_executions_ls
+
+        commands.events.ls = cls.original_events_ls
+
+        commands.workflows.get = cls.original_workflows_get
+        commands.workflows.ls = cls.original_workflows_ls
+
     @classmethod
     def setUpClass(cls):
 
@@ -111,84 +166,106 @@ class CliInvocationTest(unittest.TestCase):
         utils.get_management_server_ip = lambda x: 'localhost'
 
         # direct commands
+        cls.original_status = commands.status
         commands.status = create_autospec(
             commands.status, return_value=None
         )
+        cls.original_ssh = commands.ssh
         commands.ssh = create_autospec(
             commands.ssh, return_value=None
         )
+        cls.original_bootstrap = commands.bootstrap
         commands.bootstrap = create_autospec(
             commands.bootstrap, return_value=None
         )
+        cls.original_teardown = commands.teardown
         commands.teardown = create_autospec(
             commands.teardown, return_value=None
         )
+        cls.original_dev = commands.dev
         commands.dev = create_autospec(
             commands.dev, return_value=None
         )
+        cls.original_init = commands.init
         commands.init = create_autospec(
             commands.init, return_value=None
         )
+        cls.original_use = commands.use
         commands.use = create_autospec(
             commands.use, return_value=None
         )
 
         # blueprint commands
+        cls.original_blueprints_delete = commands.blueprints.delete
         commands.blueprints.delete = create_autospec(
             commands.blueprints.delete, return_value=None
         )
+        cls.original_blueprints_upload = commands.blueprints.upload
         commands.blueprints.upload = create_autospec(
             commands.blueprints.upload, return_value=None
         )
+        cls.original_blueprints_validate = commands.blueprints.validate
         commands.blueprints.validate = create_autospec(
             commands.blueprints.validate, return_value=None
         )
+        cls.original_blueprints_download = commands.blueprints.download
         commands.blueprints.download = create_autospec(
             commands.blueprints.download, return_value=None
         )
-        commands.blueprints.list = create_autospec(
-            commands.blueprints.download, return_value=None
+        cls.original_blueprints_ls = commands.blueprints.ls
+        commands.blueprints.ls = create_autospec(
+            commands.blueprints.ls, return_value=None
         )
 
         # deployment commands
+        cls.origina_deployments_delete = commands.deployments.delete
         commands.deployments.delete = create_autospec(
             commands.deployments.delete, return_value=None
         )
+        cls.original_deployments_create = commands.deployments.create
         commands.deployments.create = create_autospec(
             commands.deployments.create, return_value=None
         )
-        commands.deployments.list = create_autospec(
-            commands.deployments.list, return_value=None
+        cls.original_deployments_ls = commands.deployments.ls
+        commands.deployments.ls = create_autospec(
+            commands.deployments.ls, return_value=None
         )
         commands.deployments.outputs = create_autospec(
             commands.deployments.outputs, return_value=None
         )
 
         # executions commands
+        cls.original_executions_get = commands.executions.get
         commands.executions.get = create_autospec(
             commands.executions.get, return_value=None
         )
+        cls.original_executions_start = commands.executions.start
         commands.executions.start = create_autospec(
             commands.executions.start, return_value=None
         )
+        cls.original_executions_cancel = commands.executions.cancel
         commands.executions.cancel = create_autospec(
             commands.executions.cancel, return_value=None
         )
-        commands.executions.list = create_autospec(
-            commands.executions.list, return_value=None
+        cls.original_executions_ls = commands.executions.ls
+        commands.executions.ls = create_autospec(
+            commands.executions.ls, return_value=None
         )
 
+        cls.original_events_ls = commands.events.ls
         # events commands
-        commands.events.list = create_autospec(
-            commands.events.list, return_value=None
+        commands.events.ls = create_autospec(
+            commands.events.ls, return_value=None
         )
 
         # workflows commands
+        cls.original_workflows_get = commands.workflows.get
         commands.workflows.get = create_autospec(
             commands.workflows.get, return_value=None
         )
-        commands.workflows.list = create_autospec(
-            commands.workflows.list, return_value=None
+        cls.original_workflows_ls = commands.workflows.ls
+        commands.workflows.ls = create_autospec(
+            commands.workflows.ls, return_value=None
         )
 
     def _test_all_combinations(self, command_path):
