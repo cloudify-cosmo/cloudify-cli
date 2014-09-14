@@ -21,18 +21,18 @@ setup(
     version='3.1a3',
     author='Gigaspaces',
     author_email='cosmo-admin@gigaspaces.com',
-    packages=['cosmo_cli', 'cloudify_simple_provider'],
+    packages=['cloudify_cli', 'cloudify_simple_provider'],
     package_data={
-        'cosmo_cli': ['VERSION'],
-        'cloudify_simple_provider': ['cloudify-config.yaml',
-                                     'cloudify-config.defaults.yaml']
+        'cloudify_cli.resources': ['VERSION'],
+        'cloudify_simple_provider.resources': ['cloudify-config.yaml',
+                                               'cloudify-config.defaults.yaml']
     },
     license='LICENSE',
     description='Cloudify CLI',
     entry_points={
         'console_scripts': [
-            'cfy = cosmo_cli.cosmo_cli:main',
-            'activate_cfy_bash_completion = cosmo_cli.activate_bash_completion:main'  # NOQA
+            'cfy = cloudify_cli.cli:main',
+            'activate_cfy_bash_completion = cloudify_cli.activate_bash_completion:main'  # NOQA
         ]
     },
     install_requires=[

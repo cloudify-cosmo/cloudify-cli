@@ -24,7 +24,7 @@ if not on_rtd:  # only import and set the theme if we're building docs locally
 
 # General information about the project.
 project = 'cloudify'
-package = 'cosmo_cli'
+package = 'cloudify_cli'
 author = 'Gigaspaces'
 copyright = '2014, Gigaspaces'
 
