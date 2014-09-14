@@ -14,7 +14,6 @@
 # limitations under the License.
 ############
 
-__author__ = 'barakme'
 
 FILE_NOT_FOUND = "Could not find file: {0}"
 
