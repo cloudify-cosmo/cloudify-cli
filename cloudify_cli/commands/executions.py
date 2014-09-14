@@ -123,7 +123,7 @@ def start(workflow, deployment_id, timeout, force,
             remaining_timeout = time.time() - now
             timeout -= remaining_timeout
             # try to execute user specified workflow
-            execution = client.deployments.execute(
+            execution = client.executions.start(
                 deployment_id,
                 workflow,
                 parameters=parameters,
