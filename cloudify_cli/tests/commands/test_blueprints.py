@@ -39,17 +39,17 @@ class BlueprintsTest(CliCommandTest):
 
     def test_blueprints_upload(self):
         self.client.blueprints.upload = MagicMock()
-        cli_runner.run_cli('cfy blueprints upload -bp '
+        cli_runner.run_cli('cfy blueprints upload -p '
                            '{0}/helloworld/blueprint.yaml '
                            '-b my_blueprint_id'.format(BLUEPRINTS_DIR))
 
     def test_blueprint_validate(self):
         cli_runner.run_cli('cfy blueprints validate '
-                           '-bp {0}/helloworld/blueprint.yaml'
+                           '-p {0}/helloworld/blueprint.yaml'
                            .format(BLUEPRINTS_DIR))
 
     def test_validate_bad_blueprint(self):
         self._assert_ex('cfy blueprints validate '
-                        '-bp {0}/bad_blueprint/blueprint.yaml'
+                        '-p {0}/bad_blueprint/blueprint.yaml'
                         .format(BLUEPRINTS_DIR),
                         'Failed to validate blueprint')
