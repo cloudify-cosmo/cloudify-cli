@@ -60,7 +60,7 @@ class DeploymentsTest(CliCommandTest):
             'parameters': {}
         })
 
-        self.client.deployments.execute = MagicMock(
+        self.client.executions.start = MagicMock(
             return_value=execute_response
         )
         self.client.executions.get = MagicMock(
@@ -109,7 +109,7 @@ class DeploymentsTest(CliCommandTest):
 
         expected_error = "operation nonexistent-operation doesn't exist"
 
-        self.client.deployments.execute = MagicMock(
+        self.client.executions.start = MagicMock(
             side_effect=CloudifyClientError(expected_error))
 
         command = 'cfy executions start ' \
