@@ -99,10 +99,14 @@ def register_command(subparsers, command_name, command):
     command_arg_names = []
     if 'arguments' in command:
         for argument_name, argument in command['arguments'].iteritems():
+            completer = argument.get('completer')
+            if completer:
+                del argument['completer']
+
             command_parser.add_argument(
                 *argument_name.split(','),
                 **argument
-            )
+            ).completer(completer)
 
             command_arg_names.append(argument['dest'])
 

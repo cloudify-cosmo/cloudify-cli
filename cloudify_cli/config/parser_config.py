@@ -18,17 +18,65 @@
 import argparse
 import copy
 import json
+from argcomplete.completers import EnvironCompleter
+from argcomplete.completers import FilesCompleter
 
+from cloudify_cli import utils
 from cloudify_cli import commands as cfy
 
-blueprint_id_argument = {
-    'metavar': 'BLUEPRINT_ID',
-    'type': str,
-    'help': 'The id of the blueprint',
-    'dest': 'blueprint_id',
-    'default': None,
-    'required': True
-}
+
+def _objects_args_completer_maker(objects_type, **kw):
+    def _objects_args_completer(prefix, **kwargs):
+        cosmo_wd_settings = utils.load_cloudify_working_dir_settings(
+            suppress_error=True)
+        if not cosmo_wd_settings:
+            return []
+
+        mgmt_ip = cosmo_wd_settings.get_management_server()
+        rest_client = utils.get_rest_client(mgmt_ip)
+        objs_ids_list = getattr(rest_client, objects_type).list(_include='id')
+        return (obj for obj in objs_ids_list if obj.id.starts_with(prefix))
+    return _objects_args_completer
+
+
+def blueprint_id_argument():
+    return {
+        'metavar': 'BLUEPRINT_ID',
+        'type': str,
+        'help': 'The id of the blueprint',
+        'dest': 'blueprint_id',
+        'default': None,
+        'required': True,
+        'completer': _objects_args_completer_maker('blueprints')
+    }
+
+
+def deployment_id_argument(help):
+    return {
+        'dest': 'deployment_id',
+        'metavar': 'DEPLOYMENT_ID',
+        'type': str,
+        'required': True,
+        'help': help,
+        'completer': _objects_args_completer_maker('deployments')
+    }
+
+
+def execution_id_argument(help):
+    return {
+        'dest': 'execution_id',
+        'metavar': 'EXECUTION_ID',
+        'type': str,
+        'required': True,
+        'help': help,
+        'completer': _objects_args_completer_maker('executions')
+    }
+
+
+def remove_completer(argument):
+    argument_copy = copy.copy(argument)
+    del argument_copy['completer']
+    return argument_copy
 
 
 def make_optional(argument):
@@ -62,16 +110,20 @@ PARSER = {
                             'dest': 'blueprint_path',
                             'type': argparse.FileType(),
                             'required': True,
-                            'help': "Path to the application's blueprint file"
+                            'help': "Path to the application's blueprint file",
+                            'completer': EnvironCompleter
+                            # 'completer': FilesCompleter(['*.yml',
+                            #                              '*.yaml'])
                         },
-                        '-b,--blueprint-id': blueprint_id_argument
+                        '-b,--blueprint-id': remove_completer(
+                            blueprint_id_argument())
                     },
                     'help': 'command for uploading a blueprint to the management server',
                     'handler': cfy.blueprints.upload
                 },
                 'download': {
                     'arguments': {
-                        '-b,--blueprint-id': blueprint_id_argument,
+                        '-b,--blueprint-id': blueprint_id_argument(),
                         '-o,--output': {
                             'metavar': 'OUTPUT',
                             'type': str,
@@ -89,7 +141,7 @@ PARSER = {
                 },
                 'delete': {
                     'arguments': {
-                        '-b,--blueprint-id': blueprint_id_argument
+                        '-b,--blueprint-id': blueprint_id_argument()
                     },
                     'help': 'command for deleting an uploaded blueprint',
                     'handler': cfy.blueprints.delete
@@ -114,27 +166,21 @@ PARSER = {
             'sub_commands': {
                 'create': {
                     'arguments': {
-                        '-d,--deployment-id': {
-                            'dest': 'deployment_id',
-                            'metavar': 'DEPLOYMENT_ID',
-                            'type': str,
-                            'required': True,
-                            'help': 'A unique id that will be assigned to the created deployment'
-                        },
-                        '-b,--blueprint-id': blueprint_id_argument
+                        '-d,--deployment-id': remove_completer(
+                            deployment_id_argument(
+                                help='A unique id that will be assigned to '
+                                     'the created deployment'))
+                        ,
+                        '-b,--blueprint-id': blueprint_id_argument()
                     },
                     'help': 'command for creating a deployment of a blueprint',
                     'handler': cfy.deployments.create
                 },
                 'delete': {
                     'arguments': {
-                        '-d,--deployment-id': {
-                            'dest': 'deployment_id',
-                            'metavar': 'DEPLOYMENT_ID',
-                            'type': str,
-                            'required': True,
-                            'help': 'A unique id that will be assigned to the created deployment'
-                        },
+                        '-d,--deployment-id': deployment_id_argument(
+                            help='the id of the deployment to delete')
+                        ,
                         '-f,--ignore-live-nodes': {
                             'dest': 'ignore_live_nodes',
                             'action': 'store_true',
@@ -148,7 +194,8 @@ PARSER = {
                 },
                 'list': {
                     'arguments': {
-                        '-b,--blueprint-id': make_optional(blueprint_id_argument)
+                        '-b,--blueprint-id': make_optional(
+                            blueprint_id_argument())
                     },
                     'help': 'command for listing all deployments or all deployments'
                             'of a blueprint',
@@ -200,26 +247,16 @@ PARSER = {
                             'action': 'store_true',
                             'help': 'A flag whether to include logs in returned events'
                         },
-                        '-d,--deployment-id': {
-                            'dest': 'deployment_id',
-                            'metavar': 'DEPLOYMENT_ID',
-                            'type': str,
-                            'required': True,
-                            'help': 'The deployment id'
-                        }
+                        '-d,--deployment-id': deployment_id_argument(
+                            help='the deployment id')
                     },
                     'help': 'command for executing a workflow on a deployment',
                     'handler': cfy.deployments.execute
                 },
                 'outputs': {
                     'arguments': {
-                        '-d,--deployment-id': {
-                            'dest': 'deployment_id',
-                            'metavar': 'DEPLOYMENT_ID',
-                            'type': str,
-                            'required': True,
-                            'help': 'The id of the deployment to get outputs for'
-                        }
+                        '-d,--deployment-id': deployment_id_argument(
+                            help='The id of the deployment to get outputs for')
                     },
                     'help': 'command for getting a specific deployment outputs',
                     'handler': cfy.deployments.outputs
@@ -236,13 +273,8 @@ PARSER = {
                             'action': 'store_true',
                             'help': 'A flag whether to include logs in returned events'
                         },
-                        '-e,--execution-id': {
-                            'dest': 'execution_id',
-                            'metavar': 'EXECUTION_ID',
-                            'type': str,
-                            'required': True,
-                            'help': 'The id of the execution to get events for'
-                        }
+                        '-e,--execution-id': execution_id_argument(
+                            help='The id of the execution to list events for')
                     },
                     'help': 'Displays Events for different executions',
                     'handler': cfy.events.list
@@ -254,39 +286,25 @@ PARSER = {
             'sub_commands': {
                 'get': {
                     'arguments': {
-                        '-e,--execution-id': {
-                            'dest': 'execution_id',
-                            'metavar': 'EXECUTION_ID',
-                            'type': str,
-                            'required': True,
-                            'help': 'The id of the execution to get events for'
-                        }
+                        '-e,--execution-id': execution_id_argument(
+                            help='The id of the execution to get')
                     },
                     'help': 'command for getting an execution by its id',
                     'handler': cfy.executions.get
                 },
                 'list': {
                     'arguments': {
-                        '-d,--deployment-id': {
-                            'dest': 'deployment_id',
-                            'metavar': 'DEPLOYMENT_ID',
-                            'type': str,
-                            'required': True,
-                            'help': 'A unique id that will be assigned to the created deployment'
-                        }
+                        '-d,--deployment-id': deployment_id_argument(
+                            help="filter executions for a given "
+                                 "deployment by the deployment's id")
                     },
                     'help': 'command for listing all executions of a deployment',
                     'handler': cfy.executions.list
                 },
                 'cancel': {
                     'arguments': {
-                        '-e,--execution-id': {
-                            'dest': 'execution_id',
-                            'metavar': 'EXECUTION_ID',
-                            'type': str,
-                            'required': True,
-                            'help': 'The id of the execution to cancel'
-                        },
+                        '-e,--execution-id': execution_id_argument(
+                            help='The id of the execution to cancel'),
                         '-f,--force': {
                             'dest': 'force',
                             'action': 'store_true',
@@ -305,13 +323,9 @@ PARSER = {
             'sub_commands': {
                 'get': {
                     'arguments': {
-                        '-d,--deployment-id': {
-                            'dest': 'deployment_id',
-                            'metavar': 'DEPLOYMENT_ID',
-                            'type': str,
-                            'required': True,
-                            'help': 'The id of the deployment for which the workflow belongs'
-                        },
+                        '-d,--deployment-id': deployment_id_argument(
+                            help='The id of the deployment for which the '
+                                 'workflow belongs'),
                         '-w,--workflow': {
                             'dest': 'workflow_id',
                             'metavar': 'WORKFLOW_ID',
@@ -325,13 +339,9 @@ PARSER = {
                 },
                 'list': {
                     'arguments': {
-                        '-d,--deployment-id': {
-                            'dest': 'deployment_id',
-                            'metavar': 'DEPLOYMENT_ID',
-                            'type': str,
-                            'required': True,
-                            'help': 'The id of the deployment whose workflows to list'
-                        }
+                        '-d,--deployment-id': deployment_id_argument(
+                            help='The id of the deployment whose workflows '
+                                 'to list')
                     },
                     'help': 'command for listing workflows for a deployment',
                     'handler': cfy.workflows.list
