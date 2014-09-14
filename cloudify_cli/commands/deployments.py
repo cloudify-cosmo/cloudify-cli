@@ -147,7 +147,7 @@ def execute(workflow, deployment_id, timeout, force, allow_custom_parameters, in
             now = time.time()
             wait_for_execution(client,
                                deployment_id,
-                               get_deployment_creation_execution(
+                               get_deployment_environment_creation_execution(
                                    client, deployment_id),
                                events_handler=events_logger,
                                include_logs=include_logs,
@@ -190,10 +190,10 @@ def execute(workflow, deployment_id, timeout, force, allow_custom_parameters, in
         raise SuppressedCloudifyCliError()
 
 
-def get_deployment_creation_execution(client, deployment_id):
+def get_deployment_environment_creation_execution(client, deployment_id):
     executions = client.deployments.list_executions(deployment_id)
     for e in executions:
-        if e.workflow_id == 'workers_installation':
+        if e.workflow_id == 'create_deployment_environment':
             return e
-    raise RuntimeError('Failed to get workers_installation workflow execution'
+    raise RuntimeError('Failed to get create_deployment_environment workflow execution'
                        '. Available executions: {0}'.format(executions))
