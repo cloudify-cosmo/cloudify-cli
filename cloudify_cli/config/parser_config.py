@@ -18,7 +18,6 @@
 import argparse
 import copy
 import json
-from argcomplete.completers import EnvironCompleter
 from argcomplete.completers import FilesCompleter
 
 from cloudify_cli import utils
@@ -111,9 +110,8 @@ PARSER = {
                             'type': argparse.FileType(),
                             'required': True,
                             'help': "Path to the application's blueprint file",
-                            'completer': EnvironCompleter
-                            # 'completer': FilesCompleter(['*.yml',
-                            #                              '*.yaml'])
+                            'completer': FilesCompleter(['*.yml',
+                                                         '*.yaml'])
                         },
                         '-b,--blueprint-id': remove_completer(
                             blueprint_id_argument())
