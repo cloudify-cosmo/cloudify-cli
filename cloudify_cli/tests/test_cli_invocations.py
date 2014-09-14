@@ -131,6 +131,7 @@ class CliInvocationTest(unittest.TestCase):
         commands.deployments.create = create_autospec(commands.deployments.create, return_value=None)
         commands.deployments.list = create_autospec(commands.deployments.list, return_value=None)
         commands.deployments.execute = create_autospec(commands.deployments.execute, return_value=None)
+        commands.deployments.outputs = create_autospec(commands.deployments.outputs, return_value=None)
 
         # executions commands
         commands.executions.get = create_autospec(commands.executions.get, return_value=None)
