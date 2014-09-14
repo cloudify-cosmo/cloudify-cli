@@ -23,13 +23,13 @@
 from cloudify_cli.commands.version import VersionAction as version
 
 # import cfy direct commands
-from cloudify_cli.commands.dev import dev as dev
-from cloudify_cli.commands.bootstrap import bootstrap as bootstrap
-from cloudify_cli.commands.teardown import teardown as teardown
-from cloudify_cli.commands.status import status as status
-from cloudify_cli.commands.use import use as use
-from cloudify_cli.commands.ssh import ssh as ssh
-from cloudify_cli.commands.init import init as init
+from cloudify_cli.commands.dev import dev
+from cloudify_cli.commands.bootstrap import bootstrap
+from cloudify_cli.commands.teardown import teardown
+from cloudify_cli.commands.status import status
+from cloudify_cli.commands.use import use
+from cloudify_cli.commands.ssh import ssh
+from cloudify_cli.commands.init import init
 
 # import cfy sub commands
 from cloudify_cli.commands import blueprints
