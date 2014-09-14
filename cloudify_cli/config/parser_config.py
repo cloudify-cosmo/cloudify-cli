@@ -182,7 +182,9 @@ PARSER = {
                             'type': argparse.FileType(),
                             'dest': 'blueprint_path',
                             'required': True,
-                            'help': "Path to the application's blueprint file"
+                            'help': "Path to the application's blueprint file",
+                            'completer': FilesCompleter(['*.yml',
+                                                         '*.yaml'])
                         }
                     },
                     'help': 'command for validating a blueprint',
