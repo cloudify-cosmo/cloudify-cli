@@ -57,7 +57,7 @@ PARSER = {
             'sub_commands': {
                 'upload': {
                     'arguments': {
-                        '-bp,--blueprint-path': {
+                        '-p,--blueprint-path': {
                             'metavar': 'BLUEPRINT_FILE',
                             'dest': 'blueprint_path',
                             'type': argparse.FileType(),
@@ -96,7 +96,7 @@ PARSER = {
                 },
                 'validate': {
                     'arguments': {
-                        '-bp,--blueprint-path': {
+                        '-p,--blueprint-path': {
                             'metavar': 'BLUEPRINT_FILE',
                             'type': argparse.FileType(),
                             'dest': 'blueprint_path',
