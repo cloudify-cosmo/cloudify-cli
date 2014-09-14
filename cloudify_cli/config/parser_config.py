@@ -33,8 +33,9 @@ def _objects_args_completer_maker(objects_type, **kw):
 
         mgmt_ip = cosmo_wd_settings.get_management_server()
         rest_client = utils.get_rest_client(mgmt_ip)
-        objs_ids_list = getattr(rest_client, objects_type).list(_include='id')
-        return (obj for obj in objs_ids_list if obj.id.starts_with(prefix))
+        objs_ids_list = getattr(rest_client, objects_type).list(
+            _include=['id'])
+        return (obj.id for obj in objs_ids_list if obj.id.startswith(prefix))
     return _objects_args_completer
 
 
