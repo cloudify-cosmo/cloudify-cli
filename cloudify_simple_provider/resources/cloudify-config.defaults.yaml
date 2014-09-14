@@ -7,14 +7,14 @@ context: {} # Optional provider context
 cloudify:
     server:
         packages:
-            components_package_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.1.0/m2-RELEASE/cloudify-components_3.1.0-m2-b8_amd64.deb
-            core_package_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.1.0/m2-RELEASE/cloudify-core_3.1.0-m2-b8_amd64.deb
-            ui_package_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.1.0/m2-RELEASE/cloudify-ui_3.1.0-m2-b8_amd64.deb
+            components_package_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.1.0/m3-RELEASE/cloudify-components_3.1.0-m3-b80_amd64.deb
+            core_package_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.1.0/m3-RELEASE/cloudify-core_3.1.0-m3-b80_amd64.deb
+            ui_package_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.1.0/m3-RELEASE/cloudify-ui_3.1.0-m3-b80_amd64.deb
     agents:
         packages:
-            ubuntu_agent_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.1.0/m2-RELEASE/cloudify-ubuntu-agent_3.1.0-m2-b8_amd64.deb
-            centos_agent_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.1.0/m2-RELEASE/cloudify-centos-agent_3.1.0-m2-b8_amd64.deb
-            windows_agent_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.1.0/m2-RELEASE/cloudify-windows-agent_3.1.0-m2-b8_amd64.deb
+            ubuntu_agent_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.1.0/m3-RELEASE/cloudify-ubuntu-agent_3.1.0-m3-b80_amd64.deb
+            centos_agent_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.1.0/m3-RELEASE/cloudify-centos-agent_3.1.0-m3-b80_amd64.deb
+            windows_agent_url: http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.1.0/m3-RELEASE/cloudify-windows-agent_3.1.0-m3-b80_amd64.deb
         config:
             min_workers: 2
             max_workers: 5

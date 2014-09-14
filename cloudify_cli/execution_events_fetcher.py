@@ -83,6 +83,16 @@ def get_all_execution_events(client, execution_id, include_logs=False):
     return execution_events.fetch_all()
 
 
+def get_deployment_environment_creation_execution(client, deployment_id):
+    executions = client.deployments.list_executions(deployment_id)
+    for e in executions:
+        if e.workflow_id == 'create_deployment_environment':
+            return e
+    raise RuntimeError('Failed to get create_deployment_environment workflow '
+                       'execution. Available executions: {0}'.format(
+                           executions))
+
+
 def wait_for_execution(client,
                        deployment_id,
                        execution,
