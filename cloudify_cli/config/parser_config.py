@@ -18,25 +18,9 @@
 import argparse
 import copy
 import json
-from argcomplete.completers import FilesCompleter
 
-from cloudify_cli import utils
+from cloudify_cli.config import parser_config_utils as conf_utils
 from cloudify_cli import commands as cfy
-
-
-def _objects_args_completer_maker(objects_type, **kw):
-    def _objects_args_completer(prefix, **kwargs):
-        cosmo_wd_settings = utils.load_cloudify_working_dir_settings(
-            suppress_error=True)
-        if not cosmo_wd_settings:
-            return []
-
-        mgmt_ip = cosmo_wd_settings.get_management_server()
-        rest_client = utils.get_rest_client(mgmt_ip)
-        objs_ids_list = getattr(rest_client, objects_type).list(
-            _include=['id'])
-        return (obj.id for obj in objs_ids_list if obj.id.startswith(prefix))
-    return _objects_args_completer
 
 
 def blueprint_id_argument():
@@ -47,7 +31,7 @@ def blueprint_id_argument():
         'dest': 'blueprint_id',
         'default': None,
         'required': True,
-        'completer': _objects_args_completer_maker('blueprints')
+        'completer': conf_utils.objects_args_completer_maker('blueprints')
     }
 
 
@@ -58,7 +42,7 @@ def deployment_id_argument(help):
         'type': str,
         'required': True,
         'help': help,
-        'completer': _objects_args_completer_maker('deployments')
+        'completer': conf_utils.objects_args_completer_maker('deployments')
     }
 
 
@@ -69,37 +53,18 @@ def execution_id_argument(help):
         'type': str,
         'required': True,
         'help': help,
-        'completer': _objects_args_completer_maker('executions')
+        'completer': conf_utils.objects_args_completer_maker('executions')
     }
 
 
 def workflow_id_argument(help):
-    def _workflow_id_completer(prefix, parsed_args, **kwargs):
-        # TODO: refactor this into '_objects_args_completer_maker' method once
-        #       workflows get their own module in rest-client
-        if not parsed_args.deployment_id:
-            return []
-
-        cosmo_wd_settings = utils.load_cloudify_working_dir_settings(
-            suppress_error=True)
-        if not cosmo_wd_settings:
-            return []
-
-        mgmt_ip = cosmo_wd_settings.get_management_server()
-        rest_client = utils.get_rest_client(mgmt_ip)
-
-        deployment_id = parsed_args.deployment_id
-        workflows = rest_client.deployments.get(
-            deployment_id, _include=['workflows']).workflows
-        return (wf.id for wf in workflows if wf.id.startswith(prefix))
-
     return {
         'dest': 'workflow_id',
         'metavar': 'WORKFLOW_ID',
         'type': str,
         'required': True,
         'help': help,
-        'completer': _workflow_id_completer
+        'completer': conf_utils.workflow_id_completer
     }
 
 
@@ -141,8 +106,7 @@ PARSER = {
                             'type': argparse.FileType(),
                             'required': True,
                             'help': "Path to the application's blueprint file",
-                            'completer': FilesCompleter(['*.yml',
-                                                         '*.yaml'])
+                            'completer': conf_utils.yaml_files_completer
                         },
                         '-b,--blueprint-id': remove_completer(
                             blueprint_id_argument())
@@ -183,8 +147,7 @@ PARSER = {
                             'dest': 'blueprint_path',
                             'required': True,
                             'help': "Path to the application's blueprint file",
-                            'completer': FilesCompleter(['*.yml',
-                                                         '*.yaml'])
+                            'completer': conf_utils.yaml_files_completer
                         }
                     },
                     'help': 'command for validating a blueprint',
