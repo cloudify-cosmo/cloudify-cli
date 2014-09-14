@@ -160,9 +160,6 @@ class CliInvocationTest(unittest.TestCase):
         commands.deployments.list = create_autospec(
             commands.deployments.list, return_value=None
         )
-        commands.deployments.execute = create_autospec(
-            commands.deployments.execute, return_value=None
-        )
         commands.deployments.outputs = create_autospec(
             commands.deployments.outputs, return_value=None
         )
@@ -170,6 +167,9 @@ class CliInvocationTest(unittest.TestCase):
         # executions commands
         commands.executions.get = create_autospec(
             commands.executions.get, return_value=None
+        )
+        commands.executions.start = create_autospec(
+            commands.executions.start, return_value=None
         )
         commands.executions.cancel = create_autospec(
             commands.executions.cancel, return_value=None
