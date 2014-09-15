@@ -26,18 +26,18 @@ def bootstrap(config_file_path,
               keep_up,
               validate_only,
               skip_validations,
-              blueprint_path):
+              blueprint_path,
+              inputs):
     settings = utils.load_cloudify_working_dir_settings()
     if settings.get_is_provider_config():
         provider_common.provider_bootstrap(config_file_path,
                                            keep_up,
                                            validate_only,
                                            skip_validations)
-
     details = bs.bootstrap(
         blueprint_path,
         name='manager',
-        inputs={},
+        inputs=utils.load_inputs(inputs),
         task_retries=5,
         task_retry_interval=30,
         task_thread_pool_size=1)

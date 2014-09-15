@@ -398,3 +398,17 @@ def delete_cloudify_working_dir_settings():
                                     CLOUDIFY_WD_SETTINGS_FILE_NAME)
     if os.path.exists(target_file_path):
         os.remove(target_file_path)
+
+
+def load_inputs(inputs):
+    if inputs is not None:
+        try:
+            if os.path.exists(inputs):
+                with open(inputs, 'r') as f:
+                    inputs = json.loads(f.read())
+            else:
+                inputs = json.loads(inputs)
+        except ValueError, e:
+            msg = "'inputs' must be a valid JSON. {}".format(str(e))
+            raise CloudifyCliError(msg)
+    return inputs

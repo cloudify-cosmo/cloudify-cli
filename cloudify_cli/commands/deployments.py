@@ -69,17 +69,7 @@ def ls(blueprint_id):
 
 def create(blueprint_id, deployment_id, inputs=None):
     management_ip = utils.get_management_server_ip()
-    try:
-        if inputs:
-            if os.path.exists(inputs):
-                with open(inputs, 'r') as f:
-                    inputs = json.loads(f.read())
-            else:
-                inputs = json.loads(inputs)
-    except ValueError, e:
-        msg = "'inputs' must be a valid JSON. {}".format(str(e))
-        raise CloudifyCliError(msg)
-
+    inputs = utils.load_inputs(inputs)
     lgr.info('Creating new deployment from blueprint {0} at '
              'management server {1}'
              .format(blueprint_id, management_ip))
