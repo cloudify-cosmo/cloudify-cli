@@ -643,5 +643,173 @@ def _update_provider_context(provider_config, provider_context):
         provider_context['cloudify']['cloudify_agent']['user'] = user
 
 
-def provider_bootstrap():
-    pass
+def provider_bootstrap(config_file_path,
+                       keep_up,
+                       validate_only, skip_validations):
+    provider_name = utils.get_provider()
+    provider = utils.get_provider_module(provider_name)
+    try:
+        provider_dir = provider.__path__[0]
+    except:
+        provider_dir = os.path.dirname(provider.__file__)
+    provider_config = utils.read_config(config_file_path,
+                                        provider_dir)
+    lgr.info("Prefix for all resources: '{0}'"
+             .format(provider_config.resources_prefix))
+    pm = provider.ProviderManager(provider_config, cli.get_global_verbosity())
+    pm.keep_up_on_failure = keep_up
+
+    if skip_validations and validate_only:
+        raise exceptions.CloudifyCliError(
+            'Please choose one of skip-validations or '
+            'validate-only flags, not both.')
+    lgr.info('Bootstrapping using {0}'.format(provider_name))
+    if skip_validations:
+        pm.update_names_in_config()  # Prefixes
+    else:
+        lgr.info('Validating provider resources and configuration')
+        pm.augment_schema_with_common()
+        if pm.validate_schema():
+            raise exceptions.CloudifyValidationError('Provider schema '
+                                                     'validations failed!')
+        pm.update_names_in_config()  # Prefixes
+        if pm.validate():
+            raise exceptions.CloudifyValidationError(
+                'Provider validations failed!')
+        lgr.info('Provider validations completed successfully')
+
+    if validate_only:
+        return
+    with utils.protected_provider_call():
+        lgr.info('Provisioning resources for management server...')
+        params = pm.provision()
+
+    installed = False
+    provider_context = {}
+
+    def keep_up_or_teardown():
+        if keep_up:
+            lgr.info('topology will remain up')
+        else:
+            lgr.info('tearing down topology'
+                     ' due to bootstrap failure')
+            pm.teardown(provider_context)
+
+    if params:
+        mgmt_ip, private_ip, ssh_key, ssh_user, provider_context = params
+        lgr.info('provisioning complete')
+        lgr.info('ensuring connectivity with the management server...')
+        if pm.ensure_connectivity_with_management_server(
+                mgmt_ip, ssh_key, ssh_user):
+            lgr.info('connected with the management server successfully')
+            lgr.info('bootstrapping the management server...')
+            try:
+                installed = pm.bootstrap(mgmt_ip, private_ip, ssh_key,
+                                         ssh_user)
+            except BaseException:
+                lgr.error('bootstrapping failed!')
+                keep_up_or_teardown()
+                raise
+            lgr.info('bootstrapping complete') if installed else \
+                lgr.error('bootstrapping failed!')
+        else:
+            lgr.error('failed connecting to the management server!')
+    else:
+        lgr.error('provisioning failed!')
+
+    if installed:
+        _update_provider_context(provider_config,
+                                 provider_context)
+
+        mgmt_ip = mgmt_ip.encode('utf-8')
+
+        with utils.update_wd_settings() as wd_settings:
+            wd_settings.set_management_server(mgmt_ip)
+            wd_settings.set_management_key(ssh_key)
+            wd_settings.set_management_user(ssh_user)
+            wd_settings.set_provider_context(provider_context)
+
+        # storing provider context on management server
+        utils.get_rest_client(mgmt_ip).manager.create_context(provider_name,
+                                                              provider_context)
+
+        lgr.info('management server is up at {0} '
+                 '(is now set as the default management server)'
+                 .format(mgmt_ip))
+    else:
+        keep_up_or_teardown()
+        raise exceptions.CloudifyBootstrapError()
+
+
+## Teardown related
+
+def _get_provider_name_and_context(mgmt_ip):
+    # trying to retrieve provider context from server
+    try:
+        response = utils.get_rest_client(mgmt_ip).manager.get_context()
+        return response['name'], response['context']
+    except exceptions.CloudifyClientError as e:
+        lgr.warn('Failed to get provider context from server: {0}'.format(
+            str(e)))
+
+    # using the local provider context instead (if it's relevant for the
+    # target server)
+    cosmo_wd_settings = utils.load_cloudify_working_dir_settings()
+    if cosmo_wd_settings.get_provider_context():
+        default_mgmt_server_ip = cosmo_wd_settings.get_management_server()
+        if default_mgmt_server_ip == mgmt_ip:
+            provider_name = utils.get_provider()
+            return provider_name, cosmo_wd_settings.get_provider_context()
+        else:
+            # the local provider context data is for a different server
+            msg = "Failed to get provider context from target server"
+    else:
+        msg = "Provider context is not set in working directory settings (" \
+              "The provider is used during the bootstrap and teardown " \
+              "process. This probably means that the manager was started " \
+              "manually, without the bootstrap command therefore calling " \
+              "teardown is not supported)."
+    raise RuntimeError(msg)
+
+
+def provider_teardown(force,
+                      ignore_deployments,
+                      config_file_path,
+                      ignore_validation):
+    management_ip = utils.get_management_server_ip()
+    if not force:
+        msg = ("This action requires additional "
+               "confirmation. Add the '-f' or '--force' "
+               "flags to your command if you are certain "
+               "this command should be executed.")
+        raise exceptions.CloudifyCliError(msg)
+
+    client = utils.get_rest_client(management_ip)
+    if not ignore_deployments and len(client.deployments.list()) > 0:
+        msg = ("Management server {0} has active deployments. Add the "
+               "'--ignore-deployments' flag to your command to ignore "
+               "these deployments and execute topology teardown."
+               .format(management_ip))
+        raise exceptions.CloudifyCliError(msg)
+
+    provider_name, provider_context = \
+        _get_provider_name_and_context(management_ip)
+    provider = utils.get_provider_module(provider_name)
+    try:
+        provider_dir = provider.__path__[0]
+    except:
+        provider_dir = os.path.dirname(provider.__file__)
+    provider_config = utils.read_config(config_file_path,
+                                        provider_dir)
+    pm = provider.ProviderManager(provider_config, cli.get_global_verbosity())
+
+    lgr.info("tearing down {0}".format(management_ip))
+    with utils.protected_provider_call():
+        pm.teardown(provider_context, ignore_validation)
+
+    # cleaning relevant data from working directory settings
+    with utils.update_wd_settings() as wd_settings:
+        # wd_settings.set_provider_context(provider_context)
+        wd_settings.remove_management_server_context()
+
+    lgr.info("teardown complete")
