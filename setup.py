@@ -23,7 +23,8 @@ setup(
     author_email='cosmo-admin@gigaspaces.com',
     packages=['cloudify_cli',
               'cloudify_simple_provider',
-              'cloudify_cli.commands', 'cloudify_cli.config'],
+              'cloudify_cli.commands',
+              'cloudify_cli.config'],
     package_data={
         'cloudify_cli.resources': ['VERSION'],
         'cloudify_simple_provider.resources': ['cloudify-config.yaml',
@@ -38,6 +39,7 @@ setup(
         ]
     },
     install_requires=[
+        'cloudify-plugins-common==3.1a4',
         'cloudify-rest-client==3.1a4',
         'cloudify-dsl-parser==3.1a4',
         'pyyaml==3.10',

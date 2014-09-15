@@ -19,18 +19,12 @@ Handles 'cfy bootstrap'
 
 import os
 
-from cloudify_cli.constants import AGENT_MIN_WORKERS
-from cloudify_cli.constants import AGENT_MAX_WORKERS
-from cloudify_cli.constants import REMOTE_EXECUTION_PORT
-from cloudify_cli.constants import AGENT_KEY_PATH
-from cloudify_cli.constants import WORKFLOW_TASK_RETRIES
-from cloudify_cli.constants import WORKFLOW_TASK_RETRY_INTERVAL
-from cloudify_cli.constants import POLICY_ENGINE_START_TIMEOUT
 from cloudify_cli.exceptions import CloudifyCliError, CloudifyValidationError
 from cloudify_cli.exceptions import CloudifyBootstrapError
 from cloudify_cli.logger import lgr
 from cloudify_cli import cli
 from cloudify_cli import utils
+from cloudify_cli import provider_common
 
 
 def bootstrap(config_file_path, keep_up, validate_only, skip_validations):
@@ -104,7 +98,8 @@ def bootstrap(config_file_path, keep_up, validate_only, skip_validations):
         lgr.error('provisioning failed!')
 
     if installed:
-        _update_provider_context(provider_config, provider_context)
+        provider_common._update_provider_context(provider_config,
+                                                 provider_context)
 
         mgmt_ip = mgmt_ip.encode('utf-8')
 
@@ -126,46 +121,3 @@ def bootstrap(config_file_path, keep_up, validate_only, skip_validations):
         raise CloudifyBootstrapError()
 
 
-def _update_provider_context(provider_config, provider_context):
-    cloudify = provider_config['cloudify']
-    agent = cloudify['agents']['config']
-    min_workers = agent.get('min_workers', AGENT_MIN_WORKERS)
-    max_workers = agent.get('max_workers', AGENT_MAX_WORKERS)
-    user = agent.get('user')
-    remote_execution_port = agent.get('remote_execution_port',
-                                      REMOTE_EXECUTION_PORT)
-    compute = provider_config.get('compute', {})
-    agent_servers = compute.get('agent_servers', {})
-    agents_keypair = agent_servers.get('agents_keypair', {})
-    agent_key_path = agents_keypair.get('private_key_path', AGENT_KEY_PATH)
-
-    workflows = cloudify.get('workflows', {})
-    workflow_task_retries = workflows.get('task_retries',
-                                          WORKFLOW_TASK_RETRIES)
-    workflow_task_retry_interval = workflows.get('retry_interval',
-                                                 WORKFLOW_TASK_RETRY_INTERVAL)
-
-    policy_engine = cloudify.get('policy_engine', {})
-    policy_engine_start_timeout = policy_engine.get(
-        'start_timeout',
-        POLICY_ENGINE_START_TIMEOUT)
-
-    provider_context['cloudify'] = {
-        'resources_prefix': provider_config.resources_prefix,
-        'cloudify_agent': {
-            'min_workers': min_workers,
-            'max_workers': max_workers,
-            'agent_key_path': agent_key_path,
-            'remote_execution_port': remote_execution_port
-        },
-        'workflows': {
-            'task_retries': workflow_task_retries,
-            'task_retry_interval': workflow_task_retry_interval
-        },
-        'policy_engine': {
-            'start_timeout': policy_engine_start_timeout
-        }
-    }
-
-    if user:
-        provider_context['cloudify']['cloudify_agent']['user'] = user

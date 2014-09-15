@@ -469,12 +469,6 @@ def parser_config():
                         'action': 'store_true',
                         'help': 'A flag indicating overwriting existing configuration is allowed'
                     },
-                    '--creds': {
-                        'dest': 'creds',
-                        'metavar': 'PROVIDER_CREDENTIALS',
-                        'type': str,
-                        'help': 'a comma separated list of key=value credentials'
-                    }
                 },
                 'handler': cfy.init
             }
