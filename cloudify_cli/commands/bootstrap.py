@@ -30,10 +30,10 @@ def bootstrap(config_file_path,
               inputs=None):
     settings = utils.load_cloudify_working_dir_settings()
     if settings.get_is_provider_config():
-        provider_common.provider_bootstrap(config_file_path,
-                                           keep_up,
-                                           validate_only,
-                                           skip_validations)
+        return provider_common.provider_bootstrap(config_file_path,
+                                                  keep_up,
+                                                  validate_only,
+                                                  skip_validations)
     details = bs.bootstrap(
         blueprint_path,
         name='manager',

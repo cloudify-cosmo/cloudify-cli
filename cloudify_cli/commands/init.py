@@ -29,7 +29,7 @@ from cloudify_cli import exceptions
 def init(provider, reset_config):
 
     if provider is not None:
-        provider_common.provider_init(provider, reset_config)
+        return provider_common.provider_init(provider, reset_config)
 
     if os.path.exists(os.path.join(
             utils.get_cwd(),

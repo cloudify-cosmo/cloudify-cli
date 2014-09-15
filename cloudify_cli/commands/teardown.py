@@ -25,10 +25,10 @@ from cloudify_cli.bootstrap import bootstrap as bs
 def teardown(force, ignore_deployments, config_file_path, ignore_validation):
     settings = utils.load_cloudify_working_dir_settings()
     if settings.get_is_provider_config():
-        provider_common.provider_teardown(force,
-                                          ignore_deployments,
-                                          config_file_path,
-                                          ignore_validation)
+        return provider_common.provider_teardown(force,
+                                                 ignore_deployments,
+                                                 config_file_path,
+                                                 ignore_validation)
 
     bs.teardown(name='manager',
                 task_retries=0,
