@@ -385,6 +385,8 @@ def parser_config():
                     '-p,--blueprint-path': {
                         'dest': 'blueprint_path',
                         'metavar': 'BLUEPRINT_PATH',
+                        'default': None,
+                        'type': str,
                         'help': 'Path to a manager blueprint'
                     },
                     '-c,--config-file': {
