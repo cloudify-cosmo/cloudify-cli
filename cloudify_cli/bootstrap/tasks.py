@@ -127,8 +127,8 @@ def bootstrap(ctx, cloudify_packages, private_ip):
         return False
 
     lgr.info('installing cloudify on {0}...'.format(manager_ip))
-    success = _run_with_retries('sudo {0}/cloudify-components-bootstrap.sh'.format(
-        PACKAGES_PATH['components']))
+    success = _run_with_retries('sudo {0}/cloudify-components-bootstrap.sh'
+                                .format(PACKAGES_PATH['components']))
     if not success:
         lgr.error('failed to install cloudify-components package.')
         return False
@@ -136,8 +136,9 @@ def bootstrap(ctx, cloudify_packages, private_ip):
     # declare user to run celery. this is passed to the core package's
     # bootstrap script for installation.
     celery_user = fabric.api.env.user
-    success = _run_with_retries('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'.format(
-        PACKAGES_PATH['core'], celery_user, private_ip))
+    success = _run_with_retries('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'
+                                .format(PACKAGES_PATH['core'],
+                                        celery_user, private_ip))
     if not success:
         lgr.error('failed to install cloudify-core package.')
         return False
@@ -189,7 +190,7 @@ def _copy_agent_key(ctx):
         'remote_agent_key_path', '~/.ssh/agent_key.pem')
     local_agent_key_path = os.path.expanduser(local_agent_key_path)
     fabric.api.put(local_agent_key_path, remote_agent_key_path)
-    ctx.runtime_properties['agent_key_path']  = remote_agent_key_path
+    ctx.runtime_properties['agent_key_path'] = remote_agent_key_path
 
 
 def _run_with_retries(command):

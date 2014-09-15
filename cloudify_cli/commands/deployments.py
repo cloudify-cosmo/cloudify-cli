@@ -17,7 +17,6 @@
 Handles all commands that start with 'cfy deployments'
 """
 
-import json
 import os
 from StringIO import StringIO
 
@@ -26,7 +25,6 @@ from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 
 from cloudify_cli import utils
 from cloudify_cli.logger import lgr
-from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 
 

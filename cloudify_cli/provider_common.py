@@ -507,7 +507,7 @@ class BaseProviderClass(object):
             return api.run(command)
 
 
-## Init related commands
+# Init related commands
 
 
 def get_provider_by_name(provider):
@@ -595,7 +595,7 @@ def _provider_init(provider, reset_config):
     return provider_module_name
 
 
-## Bootstrap related commands
+# Bootstrap related commands
 
 def _update_provider_context(provider_config, provider_context):
     cloudify = provider_config['cloudify']
@@ -744,7 +744,7 @@ def provider_bootstrap(config_file_path,
         raise exceptions.CloudifyBootstrapError()
 
 
-## Teardown related
+# Teardown related
 
 def _get_provider_name_and_context(mgmt_ip):
     # trying to retrieve provider context from server
