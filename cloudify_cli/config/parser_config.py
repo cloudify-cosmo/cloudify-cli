@@ -382,6 +382,11 @@ def parser_config():
             'bootstrap': {
                 'help': 'Bootstrap Cloudify on the currently active provider',
                 'arguments': {
+                    '-p,--blueprint-path': {
+                        'dest': 'blueprint_path',
+                        'metavar': 'BLUEPRINT_PATH',
+                        'help': 'Path to a manager blueprint'
+                    },
                     '-c,--config-file': {
                         'dest': 'config_file_path',
                         'metavar': 'CONFIG_FILE',

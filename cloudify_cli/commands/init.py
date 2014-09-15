@@ -17,10 +17,34 @@
 Handles 'cfy init'
 """
 
-from cloudify_cli.provider_common import provider_init
+import os
+import shutil
+
+from cloudify_cli import utils
+from cloudify_cli import provider_common
+from cloudify_cli import constants
+from cloudify_cli import exceptions
 
 
 def init(provider, reset_config):
 
     if provider is not None:
-        provider_init(provider, reset_config)
+        provider_common.provider_init(provider, reset_config)
+
+    if os.path.exists(os.path.join(
+            utils.get_cwd(),
+            constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+            constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)):
+        if not reset_config:
+            msg = ('Current directory is already initialized. '
+                   'Use the "-r" flag to force '
+                   'reinitialization (might overwrite '
+                   'existing configuration files if exist).')
+            raise exceptions.CloudifyCliError(msg)
+        else:
+            shutil.rmtree(os.path.join(
+                utils.get_cwd(),
+                constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME))
+
+    settings = utils.CloudifyWorkingDirectorySettings()
+    utils.dump_cloudify_working_dir_settings(settings)

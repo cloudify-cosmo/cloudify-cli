@@ -527,6 +527,7 @@ def get_provider_by_name(provider):
 
 
 def provider_init(provider, reset_config):
+    provider_deprecation_notice()
     if os.path.exists(os.path.join(
             utils.get_cwd(),
             constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
@@ -549,6 +550,7 @@ def provider_init(provider, reset_config):
 
     settings = utils.CloudifyWorkingDirectorySettings()
     settings.set_provider(provider_module_name)
+    settings.set_is_provider_config(True)
 
     utils.dump_cloudify_working_dir_settings(settings)
 
@@ -646,6 +648,7 @@ def _update_provider_context(provider_config, provider_context):
 def provider_bootstrap(config_file_path,
                        keep_up,
                        validate_only, skip_validations):
+    provider_deprecation_notice()
     provider_name = utils.get_provider()
     provider = utils.get_provider_module(provider_name)
     try:
@@ -776,6 +779,7 @@ def provider_teardown(force,
                       ignore_deployments,
                       config_file_path,
                       ignore_validation):
+    provider_deprecation_notice()
     management_ip = utils.get_management_server_ip()
     if not force:
         msg = ("This action requires additional "
@@ -813,3 +817,15 @@ def provider_teardown(force,
         wd_settings.remove_management_server_context()
 
     lgr.info("teardown complete")
+
+
+def provider_deprecation_notice():
+    message = ('Notice! Provider API is deprecated and is due to be removed in'
+               ' Cloudify 3.2. This API is replaced by blueprints based '
+               'bootstrapping.')
+
+    if os.name != 'nt':
+        import colors
+        message = colors.bold(colors.red(message))
+
+    lgr.warn(message)

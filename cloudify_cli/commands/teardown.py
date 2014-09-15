@@ -18,11 +18,19 @@ Handles 'cfy teardown'
 """
 
 from cloudify_cli import provider_common
+from cloudify_cli import utils
+from cloudify_cli.bootstrap import bootstrap as bs
 
 
 def teardown(force, ignore_deployments, config_file_path, ignore_validation):
-    if True:
+    settings = utils.load_cloudify_working_dir_settings()
+    if settings.get_is_provider_config():
         provider_common.provider_teardown(force,
                                           ignore_deployments,
                                           config_file_path,
                                           ignore_validation)
+
+    bs.teardown(name='manager',
+                task_retries=0,
+                task_retry_interval=0,
+                task_thread_pool_size=1)
