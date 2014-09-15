@@ -27,7 +27,7 @@ def bootstrap(config_file_path,
               validate_only,
               skip_validations,
               blueprint_path,
-              inputs):
+              inputs=None):
     settings = utils.load_cloudify_working_dir_settings()
     if settings.get_is_provider_config():
         provider_common.provider_bootstrap(config_file_path,
