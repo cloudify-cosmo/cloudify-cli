@@ -99,6 +99,8 @@ def _execute_task(ip, task, tasks_module, task_args):
 
 
 def _parse_task_args(task_args):
+    if not task_args:
+        task_args = []
     args = []
     kwargs = {}
     for task_arg in task_args:
