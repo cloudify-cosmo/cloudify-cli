@@ -62,23 +62,12 @@ def bootstrap(blueprint_path,
 
     outputs = env.outputs()
 
-    # uncomment when outputs api is cleaned up
-    # provider = outputs['provider']
-    # provider_name = provider['name']
-    # provider_context = provider['context'] or {}
-    # provider_context['cloudify'] = outputs['cloudify']
-    #
-    # management_endpoint = outputs['management_endpoint']
-    # manager_ip = management_endpoint['manager_ip']
-    # manager_user = management_endpoint['manager_user']
-    # manager_key_path = management_endpoint['manager_key_path']
-
-    provider = outputs['provider']['value']
+    provider = outputs['provider']
     provider_name = provider['name']
-    provider_context = provider['context'][0] or {}
-    provider_context['cloudify'] = outputs['cloudify']['value']
+    provider_context = provider['context'] or {}
+    provider_context['cloudify'] = outputs['cloudify']
 
-    management_endpoint = outputs['management_endpoint']['value'][0]
+    management_endpoint = outputs['management_endpoint']
     manager_ip = management_endpoint['manager_ip']
     manager_user = management_endpoint['manager_user']
     manager_key_path = management_endpoint['manager_key_path']

@@ -37,7 +37,7 @@ def bootstrap(config_file_path,
     details = bs.bootstrap(
         blueprint_path,
         name='manager',
-        inputs=utils.load_inputs(inputs),
+        inputs=utils.json_to_dict(inputs, 'inputs'),
         task_retries=5,
         task_retry_interval=30,
         task_thread_pool_size=1)
