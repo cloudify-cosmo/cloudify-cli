@@ -151,7 +151,6 @@ def parser_config():
                             '-i,--inputs': {
                                 'metavar': 'INPUTS',
                                 'dest': 'inputs',
-                                'type': str,
                                 'required': False,
                                 'help': 'Inputs file/string for the deployment creation (in JSON format)'
                             }
