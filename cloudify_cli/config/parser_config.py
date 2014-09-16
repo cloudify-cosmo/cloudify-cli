@@ -184,55 +184,8 @@ def parser_config():
                             )
                         },
                         'help': 'command for listing all deployments or all deployments'
-                                'of a blueprint',
+                                ' of a blueprint',
                         'handler': cfy.deployments.ls
-                    },
-                    'execute': {
-                        'arguments': {
-                            '-w,--workflow': workflow_id_argument(
-                                hlp='The workflow to execute'
-                            ),
-                            '-p,--parameters': {
-                                'metavar': 'PARAMETERS',
-                                'dest': 'parameters',
-                                'required': False,
-                                'help': 'Parameters for the workflow execution (in JSON format)'
-                            },
-                            '--allow-custom-parameters': {
-                                'dest': 'allow_custom_parameters',
-                                'action': 'store_true',
-                                'default': False,
-                                'help': 'A flag for allowing the passing of custom parameters ('
-                                        "parameters which were not defined in the workflow's schema in "
-                                        'the blueprint) to the execution'
-                            },
-                            '--timeout': {
-                                'dest': 'timeout',
-                                'metavar': 'TIMEOUT',
-                                'type': int,
-                                'required': False,
-                                'default': 900,
-                                'help': 'Operation timeout in seconds (The execution itself will keep '
-                                        'going, it is the CLI that will stop waiting for it to terminate)'
-                            },
-                            '-f,--force': {
-                                'dest': 'force',
-                                'action': 'store_true',
-                                'default': False,
-                                'help': 'Whether the workflow should execute even if there is an ongoing'
-                                        ' execution for the provided deployment'
-                            },
-                            '-l,--include-logs': {
-                                'dest': 'include_logs',
-                                'action': 'store_true',
-                                'help': 'A flag whether to include logs in returned events'
-                            },
-                            '-d,--deployment-id': deployment_id_argument(
-                                hlp='the deployment id'
-                            )
-                        },
-                        'help': 'command for executing a workflow on a deployment',
-                        'handler': cfy.deployments.execute
                     },
                     'outputs': {
                         'arguments': {
@@ -284,6 +237,63 @@ def parser_config():
                         },
                         'help': 'command for listing all executions of a deployment',
                         'handler': cfy.executions.ls
+                    },
+                    'start': {
+                        'arguments': {
+                            '-w,--workflow': {
+                                'metavar': 'WORKFLOW',
+                                'dest': 'workflow',
+                                'type': str,
+                                'required': True,
+                                'help': 'The workflow to execute'
+                            },
+                            '-p,--parameters': {
+                                'metavar': 'PARAMETERS',
+                                'dest': 'parameters',
+                                'default': {},
+                                'type': json.loads,
+                                'required': False,
+                                'help': 'Parameters for the workflow execution (in JSON format)'
+                            },
+                            '--allow-custom-parameters': {
+                                'dest': 'allow_custom_parameters',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'A flag for allowing the passing of custom parameters ('
+                                        "parameters which were not defined in the workflow's schema in "
+                                        'the blueprint) to the execution'
+                            },
+                            '--timeout': {
+                                'dest': 'timeout',
+                                'metavar': 'TIMEOUT',
+                                'type': int,
+                                'required': False,
+                                'default': 900,
+                                'help': 'Operation timeout in seconds (The execution itself will keep '
+                                        'going, it is the CLI that will stop waiting for it to terminate)'
+                            },
+                            '-f,--force': {
+                                'dest': 'force',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Whether the workflow should execute even if there is an ongoing'
+                                        ' execution for the provided deployment'
+                            },
+                            '-l,--include-logs': {
+                                'dest': 'include_logs',
+                                'action': 'store_true',
+                                'help': 'A flag whether to include logs in returned events'
+                            },
+                            '-d,--deployment-id': {
+                                'dest': 'deployment_id',
+                                'metavar': 'DEPLOYMENT_ID',
+                                'type': str,
+                                'required': True,
+                                'help': 'The deployment id'
+                            }
+                        },
+                        'help': 'Command for starting a workflow execution on a deployment',
+                        'handler': cfy.executions.start
                     },
                     'cancel': {
                         'arguments': {

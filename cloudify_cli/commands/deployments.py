@@ -18,23 +18,14 @@ Handles all commands that start with 'cfy deployments'
 """
 
 import os
-import time
 
 from StringIO import StringIO
-from cloudify_cli import utils
-from cloudify_cli.execution_events_fetcher import \
-    wait_for_execution
-from cloudify_cli.logger import lgr
-from cloudify_cli.logger import get_events_logger
-from cloudify_cli.exceptions import ExecutionTimeoutError
-from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.utils import json_to_dict
-from cloudify_rest_client.exceptions import \
-    MissingRequiredDeploymentInputError
-from cloudify_rest_client.exceptions import \
-    UnknownDeploymentInputError
-from cloudify_rest_client.exceptions import \
-    DeploymentEnvironmentCreationInProgressError
+from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
+from cloudify_rest_client.exceptions import UnknownDeploymentInputError
+from cloudify_cli import utils
+from cloudify_cli.logger import lgr
+from cloudify_cli.exceptions import SuppressedCloudifyCliError
 
 
 def _print_deployment_inputs(client, blueprint_id):
@@ -111,84 +102,6 @@ def delete(deployment_id, ignore_live_nodes):
     lgr.info("Deleted deployment successfully")
 
 
-def execute(workflow_id, deployment_id, timeout, force,
-            allow_custom_parameters, include_logs, parameters):
-
-    parameters = json_to_dict(parameters, 'parameters')
-
-    management_ip = utils.get_management_server_ip()
-    lgr.info("Executing workflow '{0}' on deployment '{1}' at"
-             " management server {2} [timeout={3} seconds]"
-             .format(workflow_id,
-                     deployment_id,
-                     management_ip,
-                     timeout))
-
-    events_logger = get_events_logger()
-
-    events_message = "* Run 'cfy events list --include-logs " \
-                     "--execution-id {0}' for retrieving the " \
-                     "execution's events/logs"
-    try:
-        client = utils.get_rest_client(management_ip)
-        try:
-            execution = client.deployments.execute(
-                deployment_id,
-                workflow_id,
-                parameters=parameters,
-                allow_custom_parameters=allow_custom_parameters,
-                force=force)
-        except DeploymentEnvironmentCreationInProgressError:
-            # wait for deployment environment creation workflow to end
-            lgr.info('Deployment environment creation is in progress!')
-            lgr.info('Waiting for create_deployment_environment '
-                     'workflow execution to finish...')
-            now = time.time()
-            wait_for_execution(client,
-                               deployment_id,
-                               get_deployment_environment_creation_execution(
-                                   client, deployment_id),
-                               events_handler=events_logger,
-                               include_logs=include_logs,
-                               timeout=timeout)
-            remaining_timeout = time.time() - now
-            timeout -= remaining_timeout
-            # try to execute user specified workflow
-            execution = client.deployments.execute(
-                deployment_id,
-                workflow_id,
-                parameters=parameters,
-                allow_custom_parameters=allow_custom_parameters,
-                force=force)
-
-        execution = wait_for_execution(client,
-                                       deployment_id,
-                                       execution,
-                                       events_handler=events_logger,
-                                       include_logs=include_logs,
-                                       timeout=timeout)
-        if execution.error:
-            lgr.info("Execution of workflow '{0}' for deployment "
-                     "'{1}' failed. [error={2}]"
-                     .format(workflow_id,
-                             deployment_id,
-                             execution.error))
-            lgr.info(events_message.format(execution.id))
-            raise SuppressedCloudifyCliError()
-        else:
-            lgr.info("Finished executing workflow '{0}' on deployment"
-                     "'{1}'".format(workflow_id, deployment_id))
-            lgr.info(events_message.format(execution.id))
-    except ExecutionTimeoutError, e:
-        lgr.info("Execution of workflow '{0}' for deployment '{1}' timed out. "
-                 "* Run 'cfy executions cancel --execution-id {2}' to cancel"
-                 " the running workflow.".format(workflow_id,
-                                                 deployment_id,
-                                                 e.execution_id))
-        lgr.info(events_message.format(e.execution_id))
-        raise SuppressedCloudifyCliError()
-
-
 def outputs(deployment_id):
 
     management_ip = utils.get_management_server_ip()
@@ -205,13 +118,3 @@ def outputs(deployment_id):
             outputs_.write('\t\t{0}: {1}{2}'.format(k, v, os.linesep))
     outputs_.write(os.linesep)
     lgr.info(outputs_.getvalue())
-
-
-def get_deployment_environment_creation_execution(client, deployment_id):
-    executions = client.deployments.list_executions(deployment_id)
-    for e in executions:
-        if e.workflow_id == 'create_deployment_environment':
-            return e
-    raise RuntimeError('Failed to get create_deployment_environment '
-                       'workflow execution'
-                       '. Available executions: {0}'.format(executions))
