@@ -53,7 +53,10 @@ def get_combinations(command_path):
                 return file
             if arg['type'] == json.loads:
                 return dict
+        if 'type' not in arg:
+            return str
         return arg['type']
+
     from cloudify_cli.config.parser_config import parser_config
     parser_conf = parser_config()
     reduced = reduce(traverse, command_path.split(), parser_conf['commands'])
