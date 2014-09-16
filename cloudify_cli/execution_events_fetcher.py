@@ -84,7 +84,7 @@ def get_all_execution_events(client, execution_id, include_logs=False):
 
 
 def get_deployment_environment_creation_execution(client, deployment_id):
-    executions = client.deployments.list_executions(deployment_id)
+    executions = client.executions.list(deployment_id=deployment_id)
     for e in executions:
         if e.workflow_id == 'create_deployment_environment':
             return e

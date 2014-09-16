@@ -83,6 +83,21 @@ def get_context_path():
     return context_path
 
 
+def json_to_dict(json_resource, json_resource_name):
+    if not json_resource:
+        return None
+    try:
+        if os.path.exists(json_resource):
+            with open(json_resource, 'r') as f:
+                return json.loads(f.read())
+        else:
+            return json.loads(json_resource)
+    except ValueError, e:
+        msg = ("'{0}' must be a valid JSON. {1}"
+               .format(json_resource_name, str(e)))
+        raise CloudifyCliError(msg)
+
+
 def get_init_path():
 
     flgr.debug('Looking up {0}'.format(CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME))

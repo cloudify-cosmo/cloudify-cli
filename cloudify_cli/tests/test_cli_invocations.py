@@ -53,7 +53,10 @@ def get_combinations(command_path):
                 return file
             if arg['type'] == json.loads:
                 return dict
+        if 'type' not in arg:
+            return str
         return arg['type']
+
     from cloudify_cli.config.parser_config import parser_config
     parser_conf = parser_config()
     reduced = reduce(traverse, command_path.split(), parser_conf['commands'])
@@ -147,10 +150,10 @@ class CliInvocationTest(unittest.TestCase):
         commands.deployments.delete = cls.original_deployments_delete
         commands.deployments.create = cls.original_deployments_create
         commands.deployments.ls = cls.original_deployments_ls
-        commands.deployments.execute = cls.original_deployments_execute
         commands.deployments.outputs = cls.original_deployments_outputs
 
         commands.executions.get = cls.original_executions_get
+        commands.executions.start = cls.original_executions_start
         commands.executions.cancel = cls.original_executions_cancel
         commands.executions.ls = cls.original_executions_ls
 
@@ -230,11 +233,6 @@ class CliInvocationTest(unittest.TestCase):
         commands.deployments.ls = create_autospec(
             commands.deployments.ls, return_value=None
         )
-        cls.original_deployments_execute = commands.deployments.execute
-        commands.deployments.execute = create_autospec(
-            commands.deployments.execute, return_value=None
-        )
-        cls.original_deployments_outputs = commands.deployments.outputs
         commands.deployments.outputs = create_autospec(
             commands.deployments.outputs, return_value=None
         )
@@ -243,6 +241,10 @@ class CliInvocationTest(unittest.TestCase):
         cls.original_executions_get = commands.executions.get
         commands.executions.get = create_autospec(
             commands.executions.get, return_value=None
+        )
+        cls.original_executions_start = commands.executions.start
+        commands.executions.start = create_autospec(
+            commands.executions.start, return_value=None
         )
         cls.original_executions_cancel = commands.executions.cancel
         commands.executions.cancel = create_autospec(
