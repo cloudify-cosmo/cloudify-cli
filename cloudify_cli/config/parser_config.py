@@ -147,7 +147,14 @@ def parser_config():
                                     hlp='A unique id that will be assigned to the created deployment'
                                 )
                             ),
-                            '-b,--blueprint-id': blueprint_id_argument()
+                            '-b,--blueprint-id': blueprint_id_argument(),
+                            '-i,--inputs': {
+                                'metavar': 'INPUTS',
+                                'dest': 'inputs',
+                                'type': str,
+                                'required': False,
+                                'help': 'Inputs file/string for the deployment creation (in JSON format)'
+                            }
                         },
                         'help': 'command for creating a deployment of a blueprint',
                         'handler': cfy.deployments.create
@@ -188,8 +195,6 @@ def parser_config():
                             '-p,--parameters': {
                                 'metavar': 'PARAMETERS',
                                 'dest': 'parameters',
-                                'default': {},
-                                'type': json.loads,
                                 'required': False,
                                 'help': 'Parameters for the workflow execution (in JSON format)'
                             },
