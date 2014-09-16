@@ -17,7 +17,6 @@
 Handles all commands that start with 'cfy deployments'
 """
 
-import json
 import os
 import time
 
@@ -27,9 +26,9 @@ from cloudify_cli.execution_events_fetcher import \
     wait_for_execution
 from cloudify_cli.logger import lgr
 from cloudify_cli.logger import get_events_logger
-from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.exceptions import ExecutionTimeoutError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
+from cloudify_cli.utils import json_to_dict
 from cloudify_rest_client.exceptions import \
     MissingRequiredDeploymentInputError
 from cloudify_rest_client.exceptions import \
@@ -75,18 +74,9 @@ def ls(blueprint_id):
     utils.print_table('Deployments:', pt)
 
 
-def create(blueprint_id, deployment_id, inputs=None):
+def create(blueprint_id, deployment_id, inputs):
     management_ip = utils.get_management_server_ip()
-    try:
-        if inputs:
-            if os.path.exists(inputs):
-                with open(inputs, 'r') as f:
-                    inputs = json.loads(f.read())
-            else:
-                inputs = json.loads(inputs)
-    except ValueError, e:
-        msg = "'inputs' must be a valid JSON. {}".format(str(e))
-        raise CloudifyCliError(msg)
+    inputs = json_to_dict(inputs, 'inputs')
 
     lgr.info('Creating new deployment from blueprint {0} at '
              'management server {1}'
@@ -123,6 +113,9 @@ def delete(deployment_id, ignore_live_nodes):
 
 def execute(workflow_id, deployment_id, timeout, force,
             allow_custom_parameters, include_logs, parameters):
+
+    parameters = json_to_dict(parameters, 'parameters')
+
     management_ip = utils.get_management_server_ip()
     lgr.info("Executing workflow '{0}' on deployment '{1}' at"
              " management server {2} [timeout={3} seconds]"
