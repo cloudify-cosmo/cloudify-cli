@@ -20,11 +20,13 @@ Tests all commands that start with 'cfy deployments'
 import datetime
 
 from mock import MagicMock
-from cloudify_cli.tests import cli_runner
-from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
-from cloudify_rest_client.deployments import Deployment, DeploymentOutputs
+
+from cloudify_rest_client import deployments
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.executions import Execution
+
+from cloudify_cli.tests import cli_runner
+from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
 
 class DeploymentsTest(CliCommandTest):
@@ -35,7 +37,7 @@ class DeploymentsTest(CliCommandTest):
 
     def test_deployment_create(self):
 
-        deployment = Deployment({
+        deployment = deployments.Deployment({
             'deployment_id': 'deployment_id'
         })
 
@@ -118,14 +120,20 @@ class DeploymentsTest(CliCommandTest):
 
     def test_deployments_outputs(self):
 
-        outputs = DeploymentOutputs({
+        outputs = deployments.DeploymentOutputs({
             'deployment_id': 'dep1',
             'outputs': {
+                'port': 8080
+            }
+        })
+        deployment = deployments.Deployment({
+            'outputs': {
                 'port': {
-                    'description': 'Web server port.',
-                    'value': [8080]
+                    'description': 'Webserver port.',
+                    'value': '...'
                 }
             }
         })
+        self.client.deployments.get = MagicMock(return_value=deployment)
         self.client.deployments.outputs.get = MagicMock(return_value=outputs)
         cli_runner.run_cli('cfy deployments outputs -d dep1')
