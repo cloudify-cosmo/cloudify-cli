@@ -160,11 +160,8 @@ def parser_config():
                     },
                     'delete': {
                         'arguments': {
-                            '-d,--deployment-id': argument_utils.remove_completer(
-                                deployment_id_argument(
-                                    hlp='the id of the deployment to delete'
-                                )
-                            ),
+                            '-d,--deployment-id': deployment_id_argument(
+                                    hlp='the id of the deployment to delete'),
                             '-f,--ignore-live-nodes': {
                                 'dest': 'ignore_live_nodes',
                                 'action': 'store_true',
