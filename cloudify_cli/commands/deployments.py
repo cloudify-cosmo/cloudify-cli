@@ -22,7 +22,6 @@ from StringIO import StringIO
 
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 from cloudify_rest_client.exceptions import UnknownDeploymentInputError
-
 from cloudify_cli import utils
 from cloudify_cli.logger import lgr
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
@@ -65,9 +64,10 @@ def ls(blueprint_id):
     utils.print_table('Deployments:', pt)
 
 
-def create(blueprint_id, deployment_id, inputs=None):
+def create(blueprint_id, deployment_id, inputs):
     management_ip = utils.get_management_server_ip()
     inputs = utils.json_to_dict(inputs, 'inputs')
+
     lgr.info('Creating new deployment from blueprint {0} at '
              'management server {1}'
              .format(blueprint_id, management_ip))
@@ -102,18 +102,20 @@ def delete(deployment_id, ignore_live_nodes):
 
 
 def outputs(deployment_id):
-
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
     lgr.info("Getting outputs for deployment: {0} [manager={1}]".format(
         deployment_id, management_ip))
 
+    dep = client.deployments.get(deployment_id, _include=['outputs'])
+    outputs_def = dep.outputs
     response = client.deployments.outputs.get(deployment_id)
     outputs_ = StringIO()
     for output_name, output in response.outputs.iteritems():
-        outputs_.write('\t{0}:{1}'.format(output_name, os.linesep))
-        for k, v in output.iteritems():
-            outputs_.write('\t\t{0}: {1}{2}'.format(k, v, os.linesep))
-    outputs_.write(os.linesep)
+        outputs_.write(' - "{0}":{1}'.format(output_name, os.linesep))
+        description = outputs_def[output_name]['description']
+        outputs_.write('     Description: {0}{1}'.format(description,
+                                                         os.linesep))
+        outputs_.write('     Value: {0}{1}'.format(output, os.linesep))
     lgr.info(outputs_.getvalue())
