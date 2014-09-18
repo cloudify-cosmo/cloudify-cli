@@ -346,20 +346,21 @@ def parser_config():
                         'metavar': 'TASK',
                         'type': str,
                         'dest': 'task',
-                        'help': 'name of fabric task to run'
+                        'help': 'name of fabric task to run',
+                        'completer': completion_utils.dev_task_name_completer
                     },
                     '-a,--args': {
                         'nargs': argparse.REMAINDER,
                         'metavar': 'ARGS',
                         'dest': 'args',
-                        'type': bytearray,
+                        'type': str,
                         'help': 'arguments for the fabric task'
                     },
-                    '--tasks-file': {
+                    '-p,--tasks-file': {
                         'dest': 'tasks_file',
                         'metavar': 'TASKS_FILE',
                         'type': str,
-                        'help': 'Path to a tasks file'
+                        'help': 'Path to a tasks file',
                     }
                 },
                 'handler': cfy.dev
