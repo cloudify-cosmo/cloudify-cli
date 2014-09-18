@@ -14,9 +14,10 @@
 #    * limitations under the License.
 
 
-from cloudify_cli import utils
 from argcomplete.completers import FilesCompleter
 
+from cloudify_cli import utils
+from cloudify_cli.commands import dev_module
 
 yaml_files_completer = FilesCompleter(['*.yml', '*.yaml'])
 
@@ -54,3 +55,12 @@ def workflow_id_completer(prefix, parsed_args, **kwargs):
     workflows = rest_client.deployments.get(
         deployment_id, _include=['workflows']).workflows
     return (wf.id for wf in workflows if wf.id.startswith(prefix))
+
+
+def dev_task_name_completer(prefix, parsed_args, **kwargs):
+    tasks_file = parsed_args.tasks_file or 'tasks.py'
+    try:
+        tasks = dev_module.exec_tasks_file(tasks_file)
+    except Exception:
+        return []
+    return (task_name.replace('_', '-') for task_name in tasks.keys())

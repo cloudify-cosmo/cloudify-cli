@@ -19,6 +19,8 @@
 
 # flake8: noqa
 
+from cloudify_cli.commands import dev as dev_module
+
 # import cfy actions
 from cloudify_cli.commands.version import VersionAction as version
 

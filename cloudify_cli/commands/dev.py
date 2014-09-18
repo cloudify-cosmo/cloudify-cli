@@ -17,15 +17,12 @@
 Handles 'cfy dev'
 """
 
-import os
-import sys
-
 from fabric.api import env
 from fabric.context_managers import settings
+from cloudify_cli import exec_env
 from cloudify_cli import utils
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.utils import get_management_user
-from cloudify_cli.utils import get_cwd
 from cloudify_cli.utils import get_management_key
 
 
@@ -42,10 +39,10 @@ def dev(args, task, tasks_file):
 def _execute(username, key, ip, task, tasks_file, args):
     _setup_fabric_env(username=username,
                       key=key)
-    tasks_module = _import_tasks_module(tasks_file=tasks_file)
+    tasks = exec_tasks_file(tasks_file=tasks_file)
     _execute_task(ip=ip,
                   task=task,
-                  tasks_module=tasks_module,
+                  tasks=tasks,
                   task_args=args)
 
 
@@ -65,30 +62,24 @@ def _setup_fabric_env(username, key):
     env.disable_known_hosts = False
 
 
-def _import_tasks_module(tasks_file=None):
-    if tasks_file:
-        sys.path.append(os.path.dirname(tasks_file))
-        tasks_module = __import__(os.path.basename(os.path.splitext(
-            tasks_file)[0]))
-        return tasks_module
-    else:
-        sys.path.append(get_cwd())
-        try:
-            import tasks as tasks_module
-            return tasks_module
-        except ImportError:
-            raise CloudifyCliError('could not find a tasks file to import.'
-                                   ' either create a tasks.py file in your '
-                                   'cwd or use the --tasks-file flag to '
-                                   'point to one.')
+def exec_tasks_file(tasks_file):
+    tasks_file = tasks_file or 'tasks.py'
+    exec_globals = exec_env.exec_globals(tasks_file)
+    try:
+        execfile(tasks_file, exec_globals)
+    except Exception, e:
+        raise CloudifyCliError('Failed evaluating {0} ({1}:{2}'
+                               .format(tasks_file, type(e).__name__, e))
+
+    return dict([(task_name, task) for task_name, task in exec_globals.items()
+                 if callable(task) and not task_name.startswith('_')])
 
 
-def _execute_task(ip, task, tasks_module, task_args):
+def _execute_task(ip, task, tasks, task_args):
     task = task.replace('-', '_')
     args, kwargs = _parse_task_args(task_args)
-    try:
-        task_function = getattr(tasks_module, task)
-    except AttributeError:
+    task_function = tasks.get(task)
+    if not task_function:
         raise CloudifyCliError('task: "{0}" not found'.format(task))
     try:
         with settings(host_string=ip):
