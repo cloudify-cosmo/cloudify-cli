@@ -115,7 +115,7 @@ def outputs(deployment_id):
     outputs_ = StringIO()
     for output_name, output in response.outputs.iteritems():
         outputs_.write(' - "{0}":{1}'.format(output_name, os.linesep))
-        description = outputs_def[output_name]['description']
+        description = outputs_def[output_name].get('description', '')
         outputs_.write('     Description: {0}{1}'.format(description,
                                                          os.linesep))
         outputs_.write('     Value: {0}{1}'.format(output, os.linesep))
