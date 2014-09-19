@@ -62,7 +62,7 @@ def _setup_fabric_env(username, key):
     env.disable_known_hosts = False
 
 
-def exec_tasks_file(tasks_file):
+def exec_tasks_file(tasks_file=None):
     tasks_file = tasks_file or 'tasks.py'
     exec_globals = exec_env.exec_globals(tasks_file)
     try:
