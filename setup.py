@@ -25,9 +25,9 @@ setup(
               'cloudify_simple_provider',
               'cloudify_cli.commands', 'cloudify_cli.config'],
     package_data={
-        'cloudify_cli.resources': ['VERSION'],
-        'cloudify_simple_provider.resources': ['cloudify-config.yaml',
-                                               'cloudify-config.defaults.yaml']
+        'cloudify_cli': ['VERSION'],
+        'cloudify_simple_provider': ['cloudify-config.yaml',
+                                     'cloudify-config.defaults.yaml']
     },
     license='LICENSE',
     description='Cloudify CLI',
