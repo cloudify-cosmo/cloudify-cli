@@ -236,13 +236,8 @@ def parser_config():
                     },
                     'start': {
                         'arguments': {
-                            '-w,--workflow': {
-                                'metavar': 'WORKFLOW',
-                                'dest': 'workflow',
-                                'type': str,
-                                'required': True,
-                                'help': 'The workflow to execute'
-                            },
+                            '-w,--workflow': workflow_id_argument(
+                                hlp='The workflow to start'),
                             '-p,--parameters': {
                                 'metavar': 'PARAMETERS',
                                 'dest': 'parameters',
@@ -280,13 +275,8 @@ def parser_config():
                                 'action': 'store_true',
                                 'help': 'A flag whether to include logs in returned events'
                             },
-                            '-d,--deployment-id': {
-                                'dest': 'deployment_id',
-                                'metavar': 'DEPLOYMENT_ID',
-                                'type': str,
-                                'required': True,
-                                'help': 'The deployment id'
-                            }
+                            '-d,--deployment-id': deployment_id_argument(
+                                hlp='The deployment id')
                         },
                         'help': 'Command for starting a workflow execution on a deployment',
                         'handler': cfy.executions.start
