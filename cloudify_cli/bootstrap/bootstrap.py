@@ -21,6 +21,12 @@ from cloudify.workflows import local
 from cloudify_cli import utils
 
 
+IGNORED_MODULES = (
+    'worker_installer.tasks',
+    'plugin_installer.tasks'
+)
+
+
 def _workdir():
     cloudify_dir = utils.get_init_path()
     workdir = os.path.join(cloudify_dir, 'bootstrap')
@@ -36,7 +42,8 @@ def _init_env(blueprint_path,
     return local.init_env(blueprint_path,
                           name=name,
                           inputs=inputs,
-                          storage=storage)
+                          storage=storage,
+                          ignored_modules=IGNORED_MODULES)
 
 
 def _load_env(name):
