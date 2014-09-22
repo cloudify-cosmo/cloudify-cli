@@ -38,7 +38,7 @@ DISTRO_EXT = {
 lgr = None
 
 
-def bootstrap(ctx, cloudify_packages, private_ip):
+def bootstrap(ctx, cloudify_packages):
 
     global lgr
     lgr = ctx.logger
@@ -138,7 +138,8 @@ def bootstrap(ctx, cloudify_packages, private_ip):
     celery_user = fabric.api.env.user
     success = _run_with_retries('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'
                                 .format(PACKAGES_PATH['core'],
-                                        celery_user, private_ip))
+                                        celery_user,
+                                        _get_endpoint_private_ip(ctx)))
     if not success:
         lgr.error('failed to install cloudify-core package.')
         return False
@@ -163,22 +164,26 @@ def bootstrap(ctx, cloudify_packages, private_ip):
     lgr.info('cloudify agents installation successful.')
     lgr.info('management ip is {0}'.format(manager_ip))
 
-    _set_endpoint_data(ctx)
+    # _set_endpoint_data(ctx)
     _copy_agent_key(ctx)
 
     return True
 
 
-def _set_endpoint_data(ctx):
-    manager_ip = fabric.api.env.host_string
-    manager_user = fabric.api.env.user
-    manager_key_path = fabric.api.env.key_filename
+def _get_endpoint_private_ip(ctx):
+    return ctx.runtime_properties['private_ip']
 
-    ctx.runtime_properties['management_endpoint'] = {
-        'manager_ip': manager_ip,
-        'manager_user': manager_user,
-        'manager_key_path': manager_key_path
-    }
+
+# def _set_endpoint_data(ctx):
+#     manager_ip = fabric.api.env.host_string
+#     manager_user = fabric.api.env.user
+#     manager_key_path = fabric.api.env.key_filename
+#
+#     ctx.runtime_properties['management_endpoint'] = {
+#         'manager_ip': manager_ip,
+#         'manager_user': manager_user,
+#         'manager_key_path': manager_key_path
+#     }
 
 
 def _copy_agent_key(ctx):
