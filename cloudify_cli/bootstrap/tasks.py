@@ -20,6 +20,7 @@ import urllib2
 import fabric
 import fabric.api
 from fabric.context_managers import cd
+from fabric.context_managers import settings
 
 PACKAGES_PATH = {
     'cloudify': '/cloudify',
@@ -39,6 +40,15 @@ lgr = None
 
 
 def bootstrap(ctx, cloudify_packages):
+
+    if 'public_ip' in ctx.runtime_properties:
+        with settings(host_string=ctx.runtime_properties['public_ip']):
+            _bootstrap(ctx, cloudify_packages)
+    else:
+        _bootstrap(ctx, cloudify_packages)
+
+
+def _bootstrap(ctx, cloudify_packages):
 
     global lgr
     lgr = ctx.logger
