@@ -25,7 +25,7 @@ setup(
               'cloudify_cli.commands',
               'cloudify_cli.config'],
     package_data={
-        'cloudify_cli.resources': ['VERSION'],
+        'cloudify_cli': ['VERSION'],
     },
     license='LICENSE',
     description='Cloudify CLI',

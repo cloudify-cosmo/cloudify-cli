@@ -317,7 +317,7 @@ def get_version():
 
 
 def get_version_data():
-    data = pkgutil.get_data('cloudify_cli.resources', 'VERSION')
+    data = pkgutil.get_data('cloudify_cli', 'VERSION')
     return json.loads(data)
 
 
