@@ -390,6 +390,12 @@ def parser_config():
                         'type': str,
                         'help': 'Path to a provider configuration file'
                     },
+                    '-i,--inputs': {
+                        'metavar': 'INPUTS',
+                        'dest': 'inputs',
+                        'required': False,
+                        'help': 'Inputs file/string for a manager blueprint (in JSON format)'
+                    },
                     '--keep-up-on-failure': {
                         'dest': 'keep_up',
                         'action': 'store_true',

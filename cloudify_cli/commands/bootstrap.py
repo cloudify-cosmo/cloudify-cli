@@ -30,6 +30,10 @@ def bootstrap(config_file_path,
               inputs=None):
     settings = utils.load_cloudify_working_dir_settings()
     if settings.get_is_provider_config():
+        if blueprint_path or inputs:
+            raise ValueError(
+                'the "blueprint_path" and "inputs" parameters '
+                'are not to be used with the deprecated provider API')
         return provider_common.provider_bootstrap(config_file_path,
                                                   keep_up,
                                                   validate_only,
