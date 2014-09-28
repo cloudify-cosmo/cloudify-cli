@@ -22,6 +22,8 @@ import fabric.api
 from fabric.context_managers import cd
 from fabric.context_managers import settings
 
+from cloudify import ctx
+
 PACKAGES_PATH = {
     'cloudify': '/cloudify',
     'core': '/cloudify-core',
@@ -39,16 +41,16 @@ DISTRO_EXT = {
 lgr = None
 
 
-def bootstrap(ctx, cloudify_packages):
+def bootstrap(cloudify_packages):
 
     if 'public_ip' in ctx.runtime_properties:
         with settings(host_string=ctx.runtime_properties['public_ip']):
-            _bootstrap(ctx, cloudify_packages)
+            _bootstrap(cloudify_packages)
     else:
-        _bootstrap(ctx, cloudify_packages)
+        _bootstrap(cloudify_packages)
 
 
-def _bootstrap(ctx, cloudify_packages):
+def _bootstrap(cloudify_packages):
 
     global lgr
     lgr = ctx.logger
@@ -149,7 +151,7 @@ def _bootstrap(ctx, cloudify_packages):
     success = _run_with_retries('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'
                                 .format(PACKAGES_PATH['core'],
                                         celery_user,
-                                        _get_endpoint_private_ip(ctx)))
+                                        _get_endpoint_private_ip()))
     if not success:
         lgr.error('failed to install cloudify-core package.')
         return False
@@ -174,29 +176,16 @@ def _bootstrap(ctx, cloudify_packages):
     lgr.info('cloudify agents installation successful.')
     lgr.info('management ip is {0}'.format(manager_ip))
 
-    # _set_endpoint_data(ctx)
-    _copy_agent_key(ctx)
+    _copy_agent_key()
 
     return True
 
 
-def _get_endpoint_private_ip(ctx):
+def _get_endpoint_private_ip():
     return ctx.runtime_properties['private_ip']
 
 
-# def _set_endpoint_data(ctx):
-#     manager_ip = fabric.api.env.host_string
-#     manager_user = fabric.api.env.user
-#     manager_key_path = fabric.api.env.key_filename
-#
-#     ctx.runtime_properties['management_endpoint'] = {
-#         'manager_ip': manager_ip,
-#         'manager_user': manager_user,
-#         'manager_key_path': manager_key_path
-#     }
-
-
-def _copy_agent_key(ctx):
+def _copy_agent_key():
     ctx.logger.info('Copying agent key to management machine')
     local_agent_key_path = ctx.runtime_properties.get('local_agent_key_path')
     if not local_agent_key_path:
