@@ -15,10 +15,12 @@
 ############
 
 import argparse
+import httplib
 import logging
 import sys
 import traceback
 import argcomplete
+import requests
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
@@ -37,6 +39,13 @@ def main():
     args = _parse_args(sys.argv[1:])
     args.handler(args)
 
+def _set_logger(logger_name, level):
+    lgr = logging.getLogger(logger_name)
+    lgr.setLevel(level)
+    lgr.disabled = False
+    lgr_handlers = logging.getLogger('main').handlers
+    for handler in lgr_handlers:
+        lgr.addHandler(handler)
 
 def _parse_args(args):
     """
@@ -153,6 +162,9 @@ def set_global_verbosity_level(is_verbose_output):
 
     verbose_output = is_verbose_output
     if verbose_output:
+        _set_logger('requests.packages.urllib3.connectionpool', logging.DEBUG)
+        httplib.HTTPConnection.debuglevel = 1
+        r = requests.get('http://httpbin.org/get?foo=bar&baz=python')
         output_level = logging.DEBUG
         lgr.setLevel(logging.DEBUG)
     else:

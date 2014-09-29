@@ -5,7 +5,7 @@ import os
 import sys
 
 from cloudify_cli.config import logger_config
-
+from cloudify_cli.cli import get_global_verbosity
 
 def _init_logger():
 
@@ -24,9 +24,9 @@ def _init_logger():
     try:
 
         # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
-        logging.getLogger('paramiko').setLevel(logging.WARNING)
-        logging.getLogger('requests.packages.urllib3'
-                          '.connectionpool').setLevel(logging.ERROR)
+        # logging.getLogger('paramiko').setLevel(logging.WARNING)
+        # logging.getLogger('requests.packages.urllib3'
+        #                   '.connectionpool').setLevel(logging.ERROR)
 
         logfile = logger_config.LOGGER['handlers']['file']['filename']
         d = os.path.dirname(logfile)
@@ -39,6 +39,8 @@ def _init_logger():
         logger.setLevel(logging.INFO)
         file_logger = logging.getLogger('file')
         file_logger.setLevel(logging.DEBUG)
+        logger.info('setting main and file loggers')
+
         return logger, file_logger
     except ValueError:
         sys.exit('could not initialize logger.'
@@ -95,7 +97,6 @@ def get_events_logger():
 
     # Currently needs to be imported dynamically since
     # otherwise it creates a circular import.
-    from cloudify_cli.cli import get_global_verbosity
     if get_global_verbosity():
         return verbose_events_logger
     else:
