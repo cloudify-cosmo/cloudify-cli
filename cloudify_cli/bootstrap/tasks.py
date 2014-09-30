@@ -217,7 +217,7 @@ def _copy_agent_key(agent_local_key_path=None,
     ctx.logger.info('Copying agent key to management machine')
     if not agent_local_key_path:
         return
-    agent_remote_key_path =  agent_remote_key_path or '~/.ssh/agent_key.pem'
+    agent_remote_key_path = agent_remote_key_path or '~/.ssh/agent_key.pem'
     agent_local_key_path = os.path.expanduser(agent_local_key_path)
     fabric.api.put(agent_local_key_path, agent_remote_key_path)
     return agent_remote_key_path
