@@ -27,6 +27,16 @@ from cloudify_rest_client import CloudifyClient
 
 REST_PORT = 80
 
+# runtime properties manager blueprints may set to affect the behavior of
+# the bootstrap task
+PUBLIC_IP_RUNTIME_PROPERTY = 'public_ip'
+PRIVATE_IP_RUNTIME_PROPERTY = 'private_ip'
+PROVIDER_RUNTIME_PROPERTY = 'provider'
+
+# internal runtime properties
+MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
+MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
+
 PACKAGES_PATH = {
     'cloudify': '/cloudify',
     'core': '/cloudify-core',
@@ -44,16 +54,21 @@ DISTRO_EXT = {
 lgr = None
 
 
-def bootstrap(cloudify_packages):
+def bootstrap(cloudify_packages, agent_local_key_path=None,
+              agent_remote_key_path=None):
 
-    if 'public_ip' in ctx.runtime_properties:
-        with settings(host_string=ctx.runtime_properties['public_ip']):
-            _bootstrap(cloudify_packages)
+    if PUBLIC_IP_RUNTIME_PROPERTY in ctx.runtime_properties:
+        manager_host_public_ip = \
+            ctx.runtime_properties[PUBLIC_IP_RUNTIME_PROPERTY]
+        with settings(host_string=manager_host_public_ip):
+            _bootstrap(cloudify_packages, agent_local_key_path,
+                       agent_remote_key_path)
     else:
-        _bootstrap(cloudify_packages)
+        _bootstrap(cloudify_packages, agent_local_key_path,
+                   agent_remote_key_path)
 
 
-def _bootstrap(cloudify_packages):
+def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
 
     global lgr
     lgr = ctx.logger
@@ -179,35 +194,44 @@ def _bootstrap(cloudify_packages):
     lgr.info('cloudify agents installation successful.')
     lgr.info('management ip is {0}'.format(manager_ip))
 
-    remote_agent_key_path = _copy_agent_key()
-    _upload_provider_context(remote_agent_key_path)
+    agent_remote_key_path = _copy_agent_key(agent_local_key_path,
+                                            agent_remote_key_path)
+    _upload_provider_context(agent_remote_key_path)
+    _set_manager_endpoint_data()
 
     return True
 
 
+def _set_manager_endpoint_data():
+    ctx.runtime_properties[MANAGER_USER_RUNTIME_PROPERTY] = fabric.api.env.user
+    ctx.runtime_properties[MANAGER_KEY_PATH_RUNTIME_PROPERTY] = \
+        fabric.api.env.key_filename
+
+
 def _get_endpoint_private_ip():
-    return ctx.runtime_properties['private_ip']
+    return ctx.runtime_properties.get(PRIVATE_IP_RUNTIME_PROPERTY, ctx.host_ip)
 
 
-def _copy_agent_key():
+def _copy_agent_key(agent_local_key_path=None,
+                    agent_remote_key_path=None):
     ctx.logger.info('Copying agent key to management machine')
-    local_agent_key_path = ctx.runtime_properties.get('local_agent_key_path')
-    if not local_agent_key_path:
+    if not agent_local_key_path:
         return
-    remote_agent_key_path = ctx.runtime_properties.get(
-        'remote_agent_key_path', '~/.ssh/agent_key.pem')
-    local_agent_key_path = os.path.expanduser(local_agent_key_path)
-    fabric.api.put(local_agent_key_path, remote_agent_key_path)
-    return remote_agent_key_path
+    agent_remote_key_path =  agent_remote_key_path or '~/.ssh/agent_key.pem'
+    agent_local_key_path = os.path.expanduser(agent_local_key_path)
+    fabric.api.put(agent_local_key_path, agent_remote_key_path)
+    return agent_remote_key_path
 
 
-def _upload_provider_context(remote_agent_key_path):
-    provider_context = ctx.runtime_properties['provider'] or {}
+def _upload_provider_context(remote_agents_private_key_path):
+    provider_context = \
+        ctx.runtime_properties[PROVIDER_RUNTIME_PROPERTY] or {}
     cloudify_configuration = ctx.properties['cloudify']
     cloudify_configuration['cloudify_agent']['agent_key_path'] = \
-        remote_agent_key_path
+        remote_agents_private_key_path
     provider_context['cloudify'] = cloudify_configuration
-    ctx.runtime_properties['provider'] = provider_context
+    ctx.runtime_properties[PROVIDER_RUNTIME_PROPERTY] = \
+        provider_context
     provider_name = provider_context.get('name', 'None')
 
     manager_ip = fabric.api.env.host_string

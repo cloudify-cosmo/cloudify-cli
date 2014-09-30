@@ -19,6 +19,11 @@ import os
 from cloudify.workflows import local
 
 from cloudify_cli import utils
+from cloudify_cli.bootstrap.tasks import (
+    PROVIDER_RUNTIME_PROPERTY,
+    MANAGER_USER_RUNTIME_PROPERTY,
+    MANAGER_KEY_PATH_RUNTIME_PROPERTY
+)
 
 
 IGNORED_MODULES = (
@@ -68,17 +73,18 @@ def bootstrap(blueprint_path,
                 task_thread_pool_size=task_thread_pool_size)
 
     outputs = env.outputs()
-
-    management_endpoint = outputs['management_endpoint']
-    manager_ip = management_endpoint['manager_ip']
-    manager_user = management_endpoint['manager_user']
-    manager_key_path = management_endpoint['manager_key_path']
+    manager_ip = outputs['manager_ip']
 
     node_instances = env.storage.get_node_instances()
     manager_node_instance = \
         next(node_instance for node_instance in node_instances if
              node_instance.node_id == 'manager')
-    provider_context = manager_node_instance.runtime_properties['provider']
+    provider_context = \
+        manager_node_instance.runtime_properties[PROVIDER_RUNTIME_PROPERTY]
+    manager_user = \
+        manager_node_instance.runtime_properties[MANAGER_USER_RUNTIME_PROPERTY]
+    manager_key_path = manager_node_instance.runtime_properties[
+        MANAGER_KEY_PATH_RUNTIME_PROPERTY]
 
     return {
         'provider_name': provider_context.get('name', 'None'),
