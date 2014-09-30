@@ -23,6 +23,9 @@ from fabric.context_managers import cd
 from fabric.context_managers import settings
 
 from cloudify import ctx
+from cloudify_rest_client import CloudifyClient
+
+REST_PORT = 80
 
 PACKAGES_PATH = {
     'cloudify': '/cloudify',
@@ -176,7 +179,8 @@ def _bootstrap(cloudify_packages):
     lgr.info('cloudify agents installation successful.')
     lgr.info('management ip is {0}'.format(manager_ip))
 
-    _copy_agent_key()
+    remote_agent_key_path = _copy_agent_key()
+    _upload_provider_context(remote_agent_key_path)
 
     return True
 
@@ -194,7 +198,21 @@ def _copy_agent_key():
         'remote_agent_key_path', '~/.ssh/agent_key.pem')
     local_agent_key_path = os.path.expanduser(local_agent_key_path)
     fabric.api.put(local_agent_key_path, remote_agent_key_path)
-    ctx.runtime_properties['agent_key_path'] = remote_agent_key_path
+    return remote_agent_key_path
+
+
+def _upload_provider_context(remote_agent_key_path):
+    provider_context = ctx.runtime_properties['provider'] or {}
+    cloudify_configuration = ctx.properties['cloudify']
+    cloudify_configuration['cloudify_agent']['agent_key_path'] = \
+        remote_agent_key_path
+    provider_context['cloudify'] = cloudify_configuration
+    ctx.runtime_properties['provider'] = provider_context
+    provider_name = provider_context.get('name', 'None')
+
+    manager_ip = fabric.api.env.host_string
+    rest_client = CloudifyClient(manager_ip, REST_PORT)
+    rest_client.manager.create_context(provider_name, provider_context)
 
 
 def _run_with_retries(command):

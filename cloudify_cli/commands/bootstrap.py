@@ -55,6 +55,3 @@ def bootstrap(config_file_path,
         ws_settings.set_management_user(details['manager_user'])
         ws_settings.set_provider(provider_name)
         ws_settings.set_provider_context(provider_context)
-
-    rest = utils.get_rest_client(manager_ip)
-    rest.manager.create_context(provider_name, provider_context)

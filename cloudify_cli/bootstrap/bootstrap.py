@@ -69,18 +69,19 @@ def bootstrap(blueprint_path,
 
     outputs = env.outputs()
 
-    provider = outputs['provider']
-    provider_name = provider['name']
-    provider_context = provider['context'] or {}
-    provider_context['cloudify'] = outputs['cloudify']
-
     management_endpoint = outputs['management_endpoint']
     manager_ip = management_endpoint['manager_ip']
     manager_user = management_endpoint['manager_user']
     manager_key_path = management_endpoint['manager_key_path']
 
+    node_instances = env.storage.get_node_instances()
+    manager_node_instance = \
+        next(node_instance for node_instance in node_instances if
+             node_instance.node_id == 'manager')
+    provider_context = manager_node_instance.runtime_properties['provider']
+
     return {
-        'provider_name': provider_name,
+        'provider_name': provider_context.get('name', 'None'),
         'provider_context': provider_context,
         'manager_ip': manager_ip,
         'manager_user': manager_user,
