@@ -775,26 +775,10 @@ def _get_provider_name_and_context(mgmt_ip):
     raise RuntimeError(msg)
 
 
-def provider_teardown(force,
-                      ignore_deployments,
-                      config_file_path,
+def provider_teardown(config_file_path,
                       ignore_validation):
     provider_deprecation_notice()
     management_ip = utils.get_management_server_ip()
-    if not force:
-        msg = ("This action requires additional "
-               "confirmation. Add the '-f' or '--force' "
-               "flags to your command if you are certain "
-               "this command should be executed.")
-        raise exceptions.CloudifyCliError(msg)
-
-    client = utils.get_rest_client(management_ip)
-    if not ignore_deployments and len(client.deployments.list()) > 0:
-        msg = ("Management server {0} has active deployments. Add the "
-               "'--ignore-deployments' flag to your command to ignore "
-               "these deployments and execute topology teardown."
-               .format(management_ip))
-        raise exceptions.CloudifyCliError(msg)
 
     provider_name, provider_context = \
         _get_provider_name_and_context(management_ip)

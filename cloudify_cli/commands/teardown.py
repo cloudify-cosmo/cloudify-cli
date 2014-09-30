@@ -19,15 +19,30 @@ Handles 'cfy teardown'
 
 from cloudify_cli import provider_common
 from cloudify_cli import utils
+from cloudify_cli import exceptions
 from cloudify_cli.bootstrap import bootstrap as bs
 
 
 def teardown(force, ignore_deployments, config_file_path, ignore_validation):
+    management_ip = utils.get_management_server_ip()
+    if not force:
+        msg = ("This action requires additional "
+               "confirmation. Add the '-f' or '--force' "
+               "flags to your command if you are certain "
+               "this command should be executed.")
+        raise exceptions.CloudifyCliError(msg)
+
+    client = utils.get_rest_client(management_ip)
+    if not ignore_deployments and len(client.deployments.list()) > 0:
+        msg = ("Management server {0} has active deployments. Add the "
+               "'--ignore-deployments' flag to your command to ignore "
+               "these deployments and execute topology teardown."
+               .format(management_ip))
+        raise exceptions.CloudifyCliError(msg)
+
     settings = utils.load_cloudify_working_dir_settings()
     if settings.get_is_provider_config():
-        return provider_common.provider_teardown(force,
-                                                 ignore_deployments,
-                                                 config_file_path,
+        return provider_common.provider_teardown(config_file_path,
                                                  ignore_validation)
 
     bs.teardown(name='manager',
