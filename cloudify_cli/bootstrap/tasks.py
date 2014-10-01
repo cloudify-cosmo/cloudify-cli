@@ -230,14 +230,12 @@ def _upload_provider_context(remote_agents_private_key_path):
     cloudify_configuration['cloudify_agent']['agent_key_path'] = \
         remote_agents_private_key_path
     provider_context['cloudify'] = cloudify_configuration
-    if 'name' not in provider_context:
-        provider_context['name'] = 'None'
     ctx.runtime_properties[PROVIDER_RUNTIME_PROPERTY] = \
         provider_context
 
     manager_ip = fabric.api.env.host_string
     rest_client = CloudifyClient(manager_ip, REST_PORT)
-    rest_client.manager.create_context(provider_context['name'],
+    rest_client.manager.create_context('provider',
                                        provider_context)
 
 

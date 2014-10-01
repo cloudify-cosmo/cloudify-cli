@@ -88,7 +88,7 @@ def bootstrap(blueprint_path,
         MANAGER_KEY_PATH_RUNTIME_PROPERTY]
 
     return {
-        'provider_name': provider_context['name'],
+        'provider_name': 'provider',
         'provider_context': provider_context,
         'manager_ip': manager_ip,
         'manager_user': manager_user,
