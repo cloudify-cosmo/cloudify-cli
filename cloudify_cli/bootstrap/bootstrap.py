@@ -78,7 +78,7 @@ def bootstrap(blueprint_path,
     nodes_by_id = {node.id: node for node in env.storage.get_nodes()}
     manager_node_instance = \
         next(node_instance for node_instance in node_instances if
-             'cloudify_manager' in
+             'cloudify.types.cloudify_manager' in
              nodes_by_id[node_instance.node_id].type_hierarchy)
     provider_context = \
         manager_node_instance.runtime_properties[PROVIDER_RUNTIME_PROPERTY]

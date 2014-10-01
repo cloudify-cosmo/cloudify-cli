@@ -20,6 +20,7 @@ Handles 'cfy bootstrap'
 from cloudify_cli import provider_common
 from cloudify_cli import utils
 from cloudify_cli.bootstrap import bootstrap as bs
+from cloudify_cli.logger import lgr
 
 
 def bootstrap(config_file_path,
@@ -55,3 +56,6 @@ def bootstrap(config_file_path,
         ws_settings.set_management_user(details['manager_user'])
         ws_settings.set_provider(provider_name)
         ws_settings.set_provider_context(provider_context)
+
+    lgr.info('bootstrapping complete')
+    lgr.info('management server is up at {0}'.format(manager_ip))
