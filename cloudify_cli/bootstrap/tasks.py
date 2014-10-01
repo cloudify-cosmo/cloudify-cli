@@ -225,18 +225,20 @@ def _copy_agent_key(agent_local_key_path=None,
 
 def _upload_provider_context(remote_agents_private_key_path):
     provider_context = \
-        ctx.runtime_properties[PROVIDER_RUNTIME_PROPERTY] or {}
+        ctx.runtime_properties.get(PROVIDER_RUNTIME_PROPERTY, dict())
     cloudify_configuration = ctx.properties['cloudify']
     cloudify_configuration['cloudify_agent']['agent_key_path'] = \
         remote_agents_private_key_path
     provider_context['cloudify'] = cloudify_configuration
+    if 'name' not in provider_context:
+        provider_context['name'] = 'None'
     ctx.runtime_properties[PROVIDER_RUNTIME_PROPERTY] = \
         provider_context
-    provider_name = provider_context.get('name', 'None')
 
     manager_ip = fabric.api.env.host_string
     rest_client = CloudifyClient(manager_ip, REST_PORT)
-    rest_client.manager.create_context(provider_name, provider_context)
+    rest_client.manager.create_context(provider_context['name'],
+                                       provider_context)
 
 
 def _run_with_retries(command):
