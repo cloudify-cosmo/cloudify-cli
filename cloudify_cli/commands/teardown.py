@@ -17,10 +17,13 @@
 Handles 'cfy teardown'
 """
 
+import shutil
+
 from cloudify_cli import provider_common
 from cloudify_cli import utils
 from cloudify_cli import exceptions
 from cloudify_cli.bootstrap import bootstrap as bs
+from cloudify_cli.logger import lgr
 
 
 def teardown(force, ignore_deployments, config_file_path, ignore_validation):
@@ -42,10 +45,20 @@ def teardown(force, ignore_deployments, config_file_path, ignore_validation):
 
     settings = utils.load_cloudify_working_dir_settings()
     if settings.get_is_provider_config():
-        return provider_common.provider_teardown(config_file_path,
-                                                 ignore_validation)
+        provider_common.provider_teardown(config_file_path, ignore_validation)
+    else:
+        bs.teardown(name='manager',
+                    task_retries=0,
+                    task_retry_interval=0,
+                    task_thread_pool_size=1)
 
-    bs.teardown(name='manager',
-                task_retries=0,
-                task_retry_interval=0,
-                task_thread_pool_size=1)
+        # deleting local environment data
+        workdir = utils.get_bootstrap_dir_path()
+        shutil.rmtree(workdir)
+
+    # cleaning relevant data from working directory settings
+    with utils.update_wd_settings() as wd_settings:
+        # wd_settings.set_provider_context(provider_context)
+        wd_settings.remove_management_server_context()
+
+    lgr.info("teardown complete")

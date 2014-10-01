@@ -124,6 +124,12 @@ def get_init_path():
             current_lookup_dir = os.path.dirname(current_lookup_dir)
 
 
+def get_bootstrap_dir_path():
+    cloudify_dir = get_init_path()
+    workdir = os.path.join(cloudify_dir, 'bootstrap')
+    return workdir
+
+
 def dump_cloudify_working_dir_settings(cosmo_wd_settings, update=False):
 
     if update:

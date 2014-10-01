@@ -33,8 +33,7 @@ IGNORED_MODULES = (
 
 
 def _workdir():
-    cloudify_dir = utils.get_init_path()
-    workdir = os.path.join(cloudify_dir, 'bootstrap')
+    workdir = utils.get_bootstrap_dir_path()
     if not os.path.isdir(workdir):
         os.mkdir(workdir)
     return workdir

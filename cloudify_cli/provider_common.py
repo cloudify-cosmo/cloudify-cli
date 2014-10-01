@@ -795,13 +795,6 @@ def provider_teardown(config_file_path,
     with utils.protected_provider_call():
         pm.teardown(provider_context, ignore_validation)
 
-    # cleaning relevant data from working directory settings
-    with utils.update_wd_settings() as wd_settings:
-        # wd_settings.set_provider_context(provider_context)
-        wd_settings.remove_management_server_context()
-
-    lgr.info("teardown complete")
-
 
 def provider_deprecation_notice():
     message = ('Notice! Provider API is deprecated and is due to be removed in'
