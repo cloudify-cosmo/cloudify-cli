@@ -76,9 +76,11 @@ def bootstrap(blueprint_path,
     manager_ip = outputs['manager_ip']
 
     node_instances = env.storage.get_node_instances()
+    nodes_by_id = {node.id: node for node in env.storage.get_nodes()}
     manager_node_instance = \
         next(node_instance for node_instance in node_instances if
-             node_instance.node_id == 'manager')
+             'cloudify_manager' in
+             nodes_by_id[node_instance.node_id].type_hierarchy)
     provider_context = \
         manager_node_instance.runtime_properties[PROVIDER_RUNTIME_PROPERTY]
     manager_user = \
