@@ -14,28 +14,25 @@
 # limitations under the License.
 ############
 
+import shutil
 import socket
 import os
 import sys
 import time
 import urllib2
+import abc
 
-from abc import abstractmethod, ABCMeta
-from os import path
-from jsonschema import ValidationError
-from jsonschema import Draft4Validator
-from fabric.api import run
-from fabric.api import env
+import jsonschema
+from fabric import api
 from fabric.context_managers import settings
 from fabric.context_managers import hide
 from fabric.context_managers import cd
-from cloudify_cli.constants import CLOUDIFY_PACKAGES_PATH
-from cloudify_cli.constants import CLOUDIFY_CORE_PACKAGE_PATH
-from cloudify_cli.constants import CLOUDIFY_COMPONENTS_PACKAGE_PATH
-from cloudify_cli.constants import CLOUDIFY_AGENT_PACKAGE_PATH
-from cloudify_cli.constants import CLOUDIFY_UI_PACKAGE_PATH
+
+from cloudify_cli import constants
+from cloudify_cli import exceptions
+from cloudify_cli import utils
+from cloudify_cli import cli
 from cloudify_cli.logger import lgr
-from cloudify_cli.cli import set_global_verbosity_level
 
 
 def update_config_at_paths(struct, paths, f):
@@ -67,7 +64,7 @@ class BaseProviderClass(object):
     into the ProviderManager class.
     Each of the below methods can be overridden in favor of a different impl.
     """
-    __metaclass__ = ABCMeta
+    __metaclass__ = abc.ABCMeta
 
     schema = {}
     CONFIG_NAMES_TO_MODIFY = ()  # No default (empty tuple)
@@ -75,19 +72,19 @@ class BaseProviderClass(object):
 
     def __init__(self, provider_config, is_verbose_output):
 
-        set_global_verbosity_level(is_verbose_output)
+        cli.set_global_verbosity_level(is_verbose_output)
         self.provider_config = provider_config
         self.is_verbose_output = is_verbose_output
         self.keep_up_on_failure = False
 
-    @abstractmethod
+    @abc.abstractmethod
     def provision(self):
         """
         provisions resources for the management server
         """
         return
 
-    @abstractmethod
+    @abc.abstractmethod
     def validate(self):
         """
         validations to be performed before provisioning and bootstrapping
@@ -99,7 +96,7 @@ class BaseProviderClass(object):
         lgr.debug("no resource validation methods defined!")
         return {}
 
-    @abstractmethod
+    @abc.abstractmethod
     def teardown(self, provider_context, ignore_validation=False):
         """
         tears down the management server and its accompanied provisioned
@@ -191,7 +188,7 @@ class BaseProviderClass(object):
         def get_ext(url):
             lgr.debug('extracting file extension from url')
             file = urllib2.unquote(url).decode('utf8').split('/')[-1]
-            return path.splitext(file)[1]
+            return os.path.splitext(file)[1]
 
         def _run(command):
             return _run_with_retries(command)
@@ -225,7 +222,7 @@ class BaseProviderClass(object):
         # TODO: consolidate server package downloading
         lgr.info('downloading cloudify-components package...')
         success = _download_package(
-            CLOUDIFY_PACKAGES_PATH,
+            constants.CLOUDIFY_PACKAGES_PATH,
             server_packages['components_package_url'],
             dist)
         if not success:
@@ -236,7 +233,7 @@ class BaseProviderClass(object):
 
         lgr.info('downloading cloudify-core package...')
         success = _download_package(
-            CLOUDIFY_PACKAGES_PATH,
+            constants.CLOUDIFY_PACKAGES_PATH,
             server_packages['core_package_url'],
             dist)
         if not success:
@@ -248,7 +245,7 @@ class BaseProviderClass(object):
         if ui_included:
             lgr.info('downloading cloudify-ui...')
             success = _download_package(
-                CLOUDIFY_UI_PACKAGE_PATH,
+                constants.CLOUDIFY_UI_PACKAGE_PATH,
                 server_packages['ui_package_url'],
                 dist)
             if not success:
@@ -263,7 +260,7 @@ class BaseProviderClass(object):
         for agent, agent_url in \
                 agent_packages.items():
             success = _download_package(
-                CLOUDIFY_AGENT_PACKAGE_PATH,
+                constants.CLOUDIFY_AGENT_PACKAGE_PATH,
                 agent_packages[agent],
                 dist)
             if not success:
@@ -275,7 +272,7 @@ class BaseProviderClass(object):
 
         lgr.info('unpacking cloudify-core packages...')
         success = _unpack(
-            CLOUDIFY_PACKAGES_PATH,
+            constants.CLOUDIFY_PACKAGES_PATH,
             dist)
         if not success:
             lgr.error('failed to unpack cloudify-core package.')
@@ -287,7 +284,7 @@ class BaseProviderClass(object):
 
         lgr.info('installing cloudify on {0}...'.format(public_ip))
         success = _run('sudo {0}/cloudify-components-bootstrap.sh'.format(
-            CLOUDIFY_COMPONENTS_PACKAGE_PATH))
+            constants.CLOUDIFY_COMPONENTS_PACKAGE_PATH))
         if not success:
             lgr.error('failed to install cloudify-components package.')
             return False
@@ -296,7 +293,7 @@ class BaseProviderClass(object):
         # bootstrap script for installation.
         celery_user = ssh_user
         success = _run('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'.format(
-            CLOUDIFY_CORE_PACKAGE_PATH, celery_user, private_ip))
+            constants.CLOUDIFY_CORE_PACKAGE_PATH, celery_user, private_ip))
         if not success:
             lgr.error('failed to install cloudify-core package.')
             return False
@@ -305,7 +302,7 @@ class BaseProviderClass(object):
             lgr.info('installing cloudify-ui...')
             self.is_verbose_output = False
             success = _unpack(
-                CLOUDIFY_UI_PACKAGE_PATH,
+                constants.CLOUDIFY_UI_PACKAGE_PATH,
                 dist)
             if not success:
                 lgr.error('failed to install cloudify-ui.')
@@ -315,7 +312,7 @@ class BaseProviderClass(object):
         lgr.info('deploying cloudify agents')
         self.is_verbose_output = False
         success = _unpack(
-            CLOUDIFY_AGENT_PACKAGE_PATH,
+            constants.CLOUDIFY_AGENT_PACKAGE_PATH,
             dist)
         if not success:
             lgr.error('failed to install cloudify agents.')
@@ -415,9 +412,10 @@ class BaseProviderClass(object):
         validation_errors = {}
         lgr.debug('validating config file against provided schema...')
         try:
-            v = Draft4Validator(self.schema)
+            v = jsonschema.Draft4Validator(self.schema)
         except AttributeError as e:
-            raise ValidationError('schema is invalid. error: {}'.format(e)) \
+            raise jsonschema.ValidationError(
+                'schema is invalid. error: {}'.format(e)) \
                 if self.is_verbose_output else sys.exit(1)
 
         for e in v.iter_errors(self.provider_config):
@@ -488,22 +486,323 @@ class BaseProviderClass(object):
                              mgmt_ssh_key):
         ssh_config = self.provider_config['cloudify']['bootstrap']['ssh']
 
-        env.user = mgmt_ssh_user
-        env.key_filename = mgmt_ssh_key
-        env.warn_only = True
-        env.abort_on_prompts = True
-        env.connection_attempts = ssh_config['connection_attempts']
-        env.keepalive = 0
-        env.linewise = False
-        env.pool_size = 0
-        env.skip_bad_hosts = False
-        env.timeout = ssh_config['socket_timeout']
-        env.forward_agent = True
-        env.status = False
-        env.disable_known_hosts = False
+        api.env.user = mgmt_ssh_user
+        api.env.key_filename = mgmt_ssh_key
+        api.env.warn_only = True
+        api.env.abort_on_prompts = True
+        api.env.connection_attempts = ssh_config['connection_attempts']
+        api.env.keepalive = 0
+        api.env.linewise = False
+        api.env.pool_size = 0
+        api.env.skip_bad_hosts = False
+        api.env.timeout = ssh_config['socket_timeout']
+        api.env.forward_agent = True
+        api.env.status = False
+        api.env.disable_known_hosts = False
 
         with settings(host_string=mgmt_ip), hide('running',
                                                  'stderr',
                                                  'aborts',
                                                  'warnings'):
-            return run(command)
+            return api.run(command)
+
+
+# Init related commands
+
+
+def get_provider_by_name(provider):
+    try:
+        # searching first for the standard name for providers
+        # (i.e. cloudify_XXX)
+        provider_module_name = 'cloudify_{0}'.format(provider)
+        # print provider_module_name
+        return (provider_module_name,
+                utils.get_provider_module(provider_module_name))
+    except exceptions.CloudifyCliError:
+        # if provider was not found, search for the exact literal the
+        # user requested instead
+        provider_module_name = provider
+        return (provider_module_name,
+                utils.get_provider_module(provider_module_name))
+
+
+def provider_init(provider, reset_config):
+    provider_deprecation_notice()
+    if os.path.exists(os.path.join(
+            utils.get_cwd(),
+            constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+            constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)):
+        if not reset_config:
+            msg = ('Current directory is already initialized. '
+                   'Use the "-r" flag to force '
+                   'reinitialization (might overwrite '
+                   'provider configuration files if exist).')
+            raise exceptions.CloudifyCliError(msg)
+        else:
+            # resetting provider configuration
+            lgr.debug('resetting configuration...')
+            _provider_init(provider, reset_config)
+            lgr.info("Configuration reset complete")
+            return
+
+    lgr.info("Initializing Cloudify")
+    provider_module_name = _provider_init(provider, reset_config)
+
+    settings = utils.CloudifyWorkingDirectorySettings()
+    settings.set_provider(provider_module_name)
+    settings.set_is_provider_config(True)
+
+    utils.dump_cloudify_working_dir_settings(settings)
+
+    lgr.info("Initialization complete")
+
+
+def _provider_init(provider, reset_config):
+    """
+    initializes a provider by copying its config files to the cwd.
+    First, will look for a module named cloudify_#provider#.
+    If not found, will look for #provider#.
+    If install is True, will install the supplied provider and perform
+    the search again.
+
+    :param string provider: the provider's name
+    :param bool reset_config: if True, overrides the current config.
+    :rtype: `string` representing the provider's module name
+    """
+
+    provider_module_name, provider = get_provider_by_name(provider)
+
+    target_file = os.path.join(utils.get_cwd(), constants.CONFIG_FILE_NAME)
+    if not reset_config and os.path.exists(target_file):
+        msg = ('Target directory {0} already contains a '
+               'provider configuration file; '
+               'use the "-r" flag to '
+               'reset it back to its default values.'
+               .format(os.path.dirname(target_file)))
+        raise exceptions.CloudifyCliError(msg)
+    else:
+        # try to get the path if the provider is a module
+        try:
+            provider_dir = provider.__path__[0]
+        # if not, assume it's in the package's dir
+        except:
+            provider_dir = os.path.dirname(provider.__file__)
+        files_path = os.path.join(provider_dir, constants.CONFIG_FILE_NAME)
+        lgr.debug('Copying provider files from {0} to {1}'
+                  .format(files_path, utils.get_cwd()))
+        shutil.copy(files_path, utils.get_cwd())
+
+    return provider_module_name
+
+
+# Bootstrap related commands
+
+def _update_provider_context(provider_config, provider_context):
+    cloudify = provider_config['cloudify']
+    agent = cloudify['agents']['config']
+    min_workers = agent.get('min_workers', constants.AGENT_MIN_WORKERS)
+    max_workers = agent.get('max_workers', constants.AGENT_MAX_WORKERS)
+    user = agent.get('user')
+    remote_execution_port = agent.get('remote_execution_port',
+                                      constants.REMOTE_EXECUTION_PORT)
+    compute = provider_config.get('compute', {})
+    agent_servers = compute.get('agent_servers', {})
+    agents_keypair = agent_servers.get('agents_keypair', {})
+    agent_key_path = agents_keypair.get('private_key_path',
+                                        constants.AGENT_KEY_PATH)
+
+    workflows = cloudify.get('workflows', {})
+    workflow_task_retries = workflows.get(
+        'task_retries',
+        constants.WORKFLOW_TASK_RETRIES)
+    workflow_task_retry_interval = workflows.get(
+        'retry_interval',
+        constants.WORKFLOW_TASK_RETRY_INTERVAL)
+
+    policy_engine = cloudify.get('policy_engine', {})
+    policy_engine_start_timeout = policy_engine.get(
+        'start_timeout',
+        constants.POLICY_ENGINE_START_TIMEOUT)
+
+    provider_context['cloudify'] = {
+        'resources_prefix': provider_config.resources_prefix,
+        'cloudify_agent': {
+            'min_workers': min_workers,
+            'max_workers': max_workers,
+            'agent_key_path': agent_key_path,
+            'remote_execution_port': remote_execution_port
+        },
+        'workflows': {
+            'task_retries': workflow_task_retries,
+            'task_retry_interval': workflow_task_retry_interval
+        },
+        'policy_engine': {
+            'start_timeout': policy_engine_start_timeout
+        }
+    }
+
+    if user:
+        provider_context['cloudify']['cloudify_agent']['user'] = user
+
+
+def provider_bootstrap(config_file_path,
+                       keep_up,
+                       validate_only, skip_validations):
+    provider_deprecation_notice()
+    provider_name = utils.get_provider()
+    provider = utils.get_provider_module(provider_name)
+    try:
+        provider_dir = provider.__path__[0]
+    except:
+        provider_dir = os.path.dirname(provider.__file__)
+    provider_config = utils.read_config(config_file_path,
+                                        provider_dir)
+    lgr.info("Prefix for all resources: '{0}'"
+             .format(provider_config.resources_prefix))
+    pm = provider.ProviderManager(provider_config, cli.get_global_verbosity())
+    pm.keep_up_on_failure = keep_up
+
+    if skip_validations and validate_only:
+        raise exceptions.CloudifyCliError(
+            'Please choose one of skip-validations or '
+            'validate-only flags, not both.')
+    lgr.info('Bootstrapping using {0}'.format(provider_name))
+    if skip_validations:
+        pm.update_names_in_config()  # Prefixes
+    else:
+        lgr.info('Validating provider resources and configuration')
+        pm.augment_schema_with_common()
+        if pm.validate_schema():
+            raise exceptions.CloudifyValidationError('Provider schema '
+                                                     'validations failed!')
+        pm.update_names_in_config()  # Prefixes
+        if pm.validate():
+            raise exceptions.CloudifyValidationError(
+                'Provider validations failed!')
+        lgr.info('Provider validations completed successfully')
+
+    if validate_only:
+        return
+    with utils.protected_provider_call():
+        lgr.info('Provisioning resources for management server...')
+        params = pm.provision()
+
+    installed = False
+    provider_context = {}
+
+    def keep_up_or_teardown():
+        if keep_up:
+            lgr.info('topology will remain up')
+        else:
+            lgr.info('tearing down topology'
+                     ' due to bootstrap failure')
+            pm.teardown(provider_context)
+
+    if params:
+        mgmt_ip, private_ip, ssh_key, ssh_user, provider_context = params
+        lgr.info('provisioning complete')
+        lgr.info('ensuring connectivity with the management server...')
+        if pm.ensure_connectivity_with_management_server(
+                mgmt_ip, ssh_key, ssh_user):
+            lgr.info('connected with the management server successfully')
+            lgr.info('bootstrapping the management server...')
+            try:
+                installed = pm.bootstrap(mgmt_ip, private_ip, ssh_key,
+                                         ssh_user)
+            except BaseException:
+                lgr.error('bootstrapping failed!')
+                keep_up_or_teardown()
+                raise
+            lgr.info('bootstrapping complete') if installed else \
+                lgr.error('bootstrapping failed!')
+        else:
+            lgr.error('failed connecting to the management server!')
+    else:
+        lgr.error('provisioning failed!')
+
+    if installed:
+        _update_provider_context(provider_config,
+                                 provider_context)
+
+        mgmt_ip = mgmt_ip.encode('utf-8')
+
+        with utils.update_wd_settings() as wd_settings:
+            wd_settings.set_management_server(mgmt_ip)
+            wd_settings.set_management_key(ssh_key)
+            wd_settings.set_management_user(ssh_user)
+            wd_settings.set_provider_context(provider_context)
+
+        # storing provider context on management server
+        utils.get_rest_client(mgmt_ip).manager.create_context(provider_name,
+                                                              provider_context)
+
+        lgr.info('management server is up at {0} '
+                 '(is now set as the default management server)'
+                 .format(mgmt_ip))
+    else:
+        keep_up_or_teardown()
+        raise exceptions.CloudifyBootstrapError()
+
+
+# Teardown related
+
+def _get_provider_name_and_context(mgmt_ip):
+    # trying to retrieve provider context from server
+    try:
+        response = utils.get_rest_client(mgmt_ip).manager.get_context()
+        return response['name'], response['context']
+    except exceptions.CloudifyClientError as e:
+        lgr.warn('Failed to get provider context from server: {0}'.format(
+            str(e)))
+
+    # using the local provider context instead (if it's relevant for the
+    # target server)
+    cosmo_wd_settings = utils.load_cloudify_working_dir_settings()
+    if cosmo_wd_settings.get_provider_context():
+        default_mgmt_server_ip = cosmo_wd_settings.get_management_server()
+        if default_mgmt_server_ip == mgmt_ip:
+            provider_name = utils.get_provider()
+            return provider_name, cosmo_wd_settings.get_provider_context()
+        else:
+            # the local provider context data is for a different server
+            msg = "Failed to get provider context from target server"
+    else:
+        msg = "Provider context is not set in working directory settings (" \
+              "The provider is used during the bootstrap and teardown " \
+              "process. This probably means that the manager was started " \
+              "manually, without the bootstrap command therefore calling " \
+              "teardown is not supported)."
+    raise RuntimeError(msg)
+
+
+def provider_teardown(config_file_path,
+                      ignore_validation):
+    provider_deprecation_notice()
+    management_ip = utils.get_management_server_ip()
+
+    provider_name, provider_context = \
+        _get_provider_name_and_context(management_ip)
+    provider = utils.get_provider_module(provider_name)
+    try:
+        provider_dir = provider.__path__[0]
+    except:
+        provider_dir = os.path.dirname(provider.__file__)
+    provider_config = utils.read_config(config_file_path,
+                                        provider_dir)
+    pm = provider.ProviderManager(provider_config, cli.get_global_verbosity())
+
+    lgr.info("tearing down {0}".format(management_ip))
+    with utils.protected_provider_call():
+        pm.teardown(provider_context, ignore_validation)
+
+
+def provider_deprecation_notice():
+    message = ('Notice! Provider API is deprecated and is due to be removed in'
+               ' Cloudify 3.2. This API is replaced by blueprints based '
+               'bootstrapping.')
+
+    if os.name != 'nt':
+        import colors
+        message = colors.bold(colors.red(message))
+
+    lgr.warn(message)

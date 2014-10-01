@@ -18,9 +18,8 @@ Handles all commands that start with 'cfy deployments'
 """
 
 import os
-
 from StringIO import StringIO
-from cloudify_cli.utils import json_to_dict
+
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_cli import utils
@@ -67,7 +66,7 @@ def ls(blueprint_id):
 
 def create(blueprint_id, deployment_id, inputs):
     management_ip = utils.get_management_server_ip()
-    inputs = json_to_dict(inputs, 'inputs')
+    inputs = utils.json_to_dict(inputs, 'inputs')
 
     lgr.info('Creating new deployment from blueprint {0} at '
              'management server {1}'

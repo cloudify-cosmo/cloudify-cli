@@ -376,12 +376,25 @@ def parser_config():
             'bootstrap': {
                 'help': 'Bootstrap Cloudify on the currently active provider',
                 'arguments': {
+                    '-p,--blueprint-path': {
+                        'dest': 'blueprint_path',
+                        'metavar': 'BLUEPRINT_PATH',
+                        'default': None,
+                        'type': str,
+                        'help': 'Path to a manager blueprint'
+                    },
                     '-c,--config-file': {
                         'dest': 'config_file_path',
                         'metavar': 'CONFIG_FILE',
                         'default': None,
                         'type': str,
                         'help': 'Path to a provider configuration file'
+                    },
+                    '-i,--inputs': {
+                        'metavar': 'INPUTS',
+                        'dest': 'inputs',
+                        'required': False,
+                        'help': 'Inputs file/string for a manager blueprint (in JSON format)'
                     },
                     '--keep-up-on-failure': {
                         'dest': 'keep_up',
@@ -463,12 +476,6 @@ def parser_config():
                         'action': 'store_true',
                         'help': 'A flag indicating overwriting existing configuration is allowed'
                     },
-                    '--creds': {
-                        'dest': 'creds',
-                        'metavar': 'PROVIDER_CREDENTIALS',
-                        'type': str,
-                        'help': 'a comma separated list of key=value credentials'
-                    }
                 },
                 'handler': cfy.init
             }

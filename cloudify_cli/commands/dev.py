@@ -90,8 +90,7 @@ def _execute_task(ip, task, tasks, task_args):
 
 
 def _parse_task_args(task_args):
-    if not task_args:
-        task_args = []
+    task_args = task_args or []
     args = []
     kwargs = {}
     for task_arg in task_args:

@@ -124,6 +124,12 @@ def get_init_path():
             current_lookup_dir = os.path.dirname(current_lookup_dir)
 
 
+def get_bootstrap_dir_path():
+    cloudify_dir = get_init_path()
+    workdir = os.path.join(cloudify_dir, 'bootstrap')
+    return workdir
+
+
 def dump_cloudify_working_dir_settings(cosmo_wd_settings, update=False):
 
     if update:
@@ -365,6 +371,7 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
         self._provider = None
         self._provider_context = None
         self._mgmt_aliases = {}
+        self._is_provider_config = False
 
     def get_management_server(self):
         return self._management_ip
@@ -398,6 +405,12 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
 
     def set_provider(self, provider):
         self._provider = provider
+
+    def get_is_provider_config(self):
+        return self._is_provider_config
+
+    def set_is_provider_config(self, is_provider_config):
+        self._is_provider_config = is_provider_config
 
 
 def delete_cloudify_working_dir_settings():

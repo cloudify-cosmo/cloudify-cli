@@ -22,12 +22,10 @@ setup(
     author='Gigaspaces',
     author_email='cosmo-admin@gigaspaces.com',
     packages=['cloudify_cli',
-              'cloudify_simple_provider',
-              'cloudify_cli.commands', 'cloudify_cli.config'],
+              'cloudify_cli.commands',
+              'cloudify_cli.config'],
     package_data={
         'cloudify_cli': ['VERSION'],
-        'cloudify_simple_provider': ['cloudify-config.yaml',
-                                     'cloudify-config.defaults.yaml']
     },
     license='LICENSE',
     description='Cloudify CLI',
@@ -38,12 +36,14 @@ setup(
         ]
     },
     install_requires=[
+        'cloudify-plugins-common==3.1a4',
         'cloudify-rest-client==3.1a4',
         'cloudify-dsl-parser==3.1a4',
         'pyyaml==3.10',
         'argcomplete==0.7.1',
         'fabric==1.8.3',
         'jsonschema==2.3.0',
-        'PrettyTable>=0.7,<0.8'
+        'PrettyTable>=0.7,<0.8',
+        'ansicolors==1.0.2'
     ]
 )
