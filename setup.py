@@ -23,6 +23,7 @@ setup(
     author_email='cosmo-admin@gigaspaces.com',
     packages=['cloudify_cli',
               'cloudify_cli.commands',
+              'cloudify_cli.bootstrap',
               'cloudify_cli.config'],
     package_data={
         'cloudify_cli': ['VERSION'],
