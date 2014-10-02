@@ -388,7 +388,7 @@ def parser_config():
                         'metavar': 'CONFIG_FILE',
                         'default': None,
                         'type': str,
-                        'help': 'Path to a provider configuration file'
+                        'help': 'Path to a provider configuration file (DEPRECATED: provider api)'
                     },
                     '-i,--inputs': {
                         'metavar': 'INPUTS',
@@ -425,7 +425,7 @@ def parser_config():
                         'metavar': 'CONFIG_FILE',
                         'default': None,
                         'type': str,
-                        'help': 'Path to a provider configuration file'
+                        'help': 'Path to a provider configuration file (DEPRECATED: provider api)'
                     },
                     '--ignore-deployments': {
                         'dest': 'ignore_deployments',
@@ -457,6 +457,12 @@ def parser_config():
                         'help': 'The cloudify management server ip address',
                         'dest': 'management_ip',
                         'required': True
+                    },
+                    '--provider': {
+                        'help': 'Use deprecated provider api',
+                        'default': False,
+                        'dest': 'provider',
+                        'action': 'store_true'
                     }
                 },
                 'handler': cfy.use

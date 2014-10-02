@@ -32,7 +32,7 @@ class TeardownTest(CliCommandTest):
         )
         self.client.deployments.list = MagicMock(return_value=[])
         cli_runner.run_cli('cfy init -p mock_provider')
-        cli_runner.run_cli('cfy use -t 10.0.0.1')
+        cli_runner.run_cli('cfy use -t 10.0.0.1 --provider')
         self._assert_ex('cfy teardown',
                         "This action requires additional confirmation.")
 
@@ -43,7 +43,7 @@ class TeardownTest(CliCommandTest):
             return_value={'name': 'mock_provider', 'context': {'key': 'value'}}
         )
         cli_runner.run_cli('cfy init -p mock_provider')
-        cli_runner.run_cli('cfy use -t 10.0.0.1')
+        cli_runner.run_cli('cfy use -t 10.0.0.1 --provider')
         self._assert_ex('cfy teardown -f --ignore-validation '
                         '-c cloudify-config.yaml',
                         'has active deployments')
@@ -55,7 +55,7 @@ class TeardownTest(CliCommandTest):
         )
         self.client.deployments.list = MagicMock(return_value=[])
         cli_runner.run_cli('cfy init -p mock_provider -v')
-        cli_runner.run_cli('cfy use -t 10.0.0.1')
+        cli_runner.run_cli('cfy use -t 10.0.0.1 --provider')
         cli_runner.run_cli('cfy teardown -f')
         # the teardown should have cleared the current target management server
         self.assertEquals(
@@ -76,7 +76,7 @@ class TeardownTest(CliCommandTest):
                 }
             )
             self.client.deployments.list = MagicMock(return_value=[])
-            cli_runner.run_cli('cfy use -t 10.0.0.1')
+            cli_runner.run_cli('cfy use -t 10.0.0.1 --provider')
             cli_runner.run_cli('cfy teardown -f')
             self.fail('Expected CloudifyCliError')
         except CloudifyCliError as e:
