@@ -41,6 +41,9 @@ def init(blueprint_path, inputs):
                    inputs=inputs,
                    storage=_storage(),
                    ignored_modules=constants.IGNORED_LOCAL_WORKFLOW_MODULES)
+    lgr.info("Initiated {0}\nIf you make changes to the "
+             "blueprint, run 'cfy local init -p {0}' again to apply them"
+             .format(blueprint_path))
 
 
 def execute(workflow_id,
