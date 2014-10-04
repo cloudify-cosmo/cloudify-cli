@@ -150,13 +150,13 @@ class LocalTest(CliCommandTest):
 
 
 @operation
-def test_op(param, custom_param=None, **kwargs):
+def mock_op(param, custom_param=None, **kwargs):
     op_ctx.runtime_properties['param'] = param
     op_ctx.runtime_properties['custom_param'] = custom_param
 
 
 @workflow
-def test_workflow(param, custom_param=None, **kwargs):
+def mock_workflow(param, custom_param=None, **kwargs):
     for node in workflow_ctx.nodes:
         for instance in node.instances:
             instance.execute_operation('test.op', kwargs={

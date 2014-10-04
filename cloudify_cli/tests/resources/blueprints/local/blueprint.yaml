@@ -17,7 +17,7 @@ node_templates:
         type: test_type
         interfaces:
             test:
-                - op: p.cloudify_cli.tests.commands.test_local.test_op
+                - op: p.cloudify_cli.tests.commands.test_local.mock_op
 
 outputs:
     input1:
@@ -29,7 +29,7 @@ outputs:
 
 workflows:
     run_test_op_on_nodes:
-        mapping: p.cloudify_cli.tests.commands.test_local.test_workflow
+        mapping: p.cloudify_cli.tests.commands.test_local.mock_workflow
         parameters:
             param:
                 default: default_param
