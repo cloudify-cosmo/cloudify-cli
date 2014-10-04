@@ -29,13 +29,13 @@ from cloudify_cli import utils
 from cloudify_cli.logger import lgr
 
 
-_storage_dir = os.path.join(utils.get_cwd(), '.storage')
+_storage_dir = lambda: os.path.join(utils.get_cwd(), '.storage')
 _name = 'local'
 
 
 def init(blueprint_path, inputs):
-    if os.path.isdir(_storage_dir):
-        shutil.rmtree(_storage_dir)
+    if os.path.isdir(_storage_dir()):
+        shutil.rmtree(_storage_dir())
     inputs = utils.json_to_dict(inputs, 'inputs')
     local.init_env(blueprint_path,
                    name=_name,
@@ -86,11 +86,11 @@ def instances(node_id):
 
 
 def _storage():
-    return local.FileStorage(storage_dir=_storage_dir)
+    return local.FileStorage(storage_dir=_storage_dir())
 
 
 def _load_env():
-    if not os.path.isdir(_storage_dir):
+    if not os.path.isdir(_storage_dir()):
         raise exceptions.CloudifyCliError(
             '{0} has not been initialized with a blueprint. Have you called'
             ' "cfy local init" in this directory?'.format(utils.get_cwd()))
