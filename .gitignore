@@ -58,3 +58,5 @@ docs/_build/
 
 # QuickBuild
 .qbcache/
+
+.noseids
