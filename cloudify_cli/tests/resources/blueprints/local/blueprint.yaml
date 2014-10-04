@@ -1,0 +1,35 @@
+tosca_definitions_version: cloudify_dsl_1_0
+
+plugins:
+    p:
+        executor: central_deployment_agent
+        install: false
+
+inputs:
+    input1:
+        default: default_input1
+
+node_types:
+    test_type: {}
+
+node_templates:
+    node:
+        type: test_type
+        interfaces:
+            test:
+                - op: p.cloudify_cli.tests.commands.test_local.test_op
+
+outputs:
+    input1:
+        value: { get_input: input1 }
+    param:
+        value: { get_attribute: [node, param] }
+    custom_param:
+        value: { get_attribute: [node, custom_param] }
+
+workflows:
+    run_test_op_on_nodes:
+        mapping: p.cloudify_cli.tests.commands.test_local.test_workflow
+        parameters:
+            param:
+                default: default_param

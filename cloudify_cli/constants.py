@@ -35,3 +35,8 @@ CLOUDIFY_COMPONENTS_PACKAGE_PATH = '/cloudify-components'
 CLOUDIFY_CORE_PACKAGE_PATH = '/cloudify-core'
 CLOUDIFY_UI_PACKAGE_PATH = '/cloudify-ui'
 CLOUDIFY_AGENT_PACKAGE_PATH = '/cloudify-agents'
+
+IGNORED_LOCAL_WORKFLOW_MODULES = (
+    'worker_installer.tasks',
+    'plugin_installer.tasks'
+)

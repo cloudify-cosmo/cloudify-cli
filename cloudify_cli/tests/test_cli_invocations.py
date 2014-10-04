@@ -113,8 +113,8 @@ class CliInvocationTest(unittest.TestCase):
     original_executions_ls = None
     original_executions_cancel = None
     original_executions_get = None
+    original_executions_start = None
     original_deployments_outputs = None
-    original_deployments_execute = None
     original_deployments_ls = None
     original_deployments_create = None
     original_deployments_delete = None
@@ -123,6 +123,10 @@ class CliInvocationTest(unittest.TestCase):
     original_blueprints_validate = None
     original_blueprints_upload = None
     original_blueprints_delete = None
+    original_local_init = None
+    original_local_execute = None
+    original_local_outputs = None
+    original_local_instances = None
     original_use = None
     original_init = None
     original_dev = None
@@ -161,6 +165,11 @@ class CliInvocationTest(unittest.TestCase):
 
         commands.workflows.get = cls.original_workflows_get
         commands.workflows.ls = cls.original_workflows_ls
+
+        commands.local.execute = cls.original_local_execute
+        commands.local.init = cls.original_local_init
+        commands.local.outputs = cls.original_local_outputs
+        commands.local.instances = cls.original_local_instances
 
     @classmethod
     def setUpClass(cls):
@@ -221,7 +230,7 @@ class CliInvocationTest(unittest.TestCase):
         )
 
         # deployment commands
-        cls.origina_deployments_delete = commands.deployments.delete
+        cls.original_deployments_delete = commands.deployments.delete
         commands.deployments.delete = create_autospec(
             commands.deployments.delete, return_value=None
         )
@@ -255,8 +264,8 @@ class CliInvocationTest(unittest.TestCase):
             commands.executions.ls, return_value=None
         )
 
-        cls.original_events_ls = commands.events.ls
         # events commands
+        cls.original_events_ls = commands.events.ls
         commands.events.ls = create_autospec(
             commands.events.ls, return_value=None
         )
@@ -269,6 +278,24 @@ class CliInvocationTest(unittest.TestCase):
         cls.original_workflows_ls = commands.workflows.ls
         commands.workflows.ls = create_autospec(
             commands.workflows.ls, return_value=None
+        )
+
+        # local commands
+        cls.original_local_init = commands.local.init
+        commands.local.init = create_autospec(
+            commands.local.init, return_value=None
+        )
+        cls.original_local_execute = commands.local.execute
+        commands.local.execute = create_autospec(
+            commands.local.execute, return_value=None
+        )
+        cls.original_local_outputs = commands.local.outputs
+        commands.local.outputs = create_autospec(
+            commands.local.outputs, return_value=None
+        )
+        cls.original_local_instances = commands.local.instances
+        commands.local.instances = create_autospec(
+            commands.local.instances, return_value=None
         )
 
     def _test_all_combinations(self, command_path):
