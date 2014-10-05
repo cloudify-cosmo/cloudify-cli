@@ -162,9 +162,7 @@ def set_global_verbosity_level(is_verbose_output):
 
     verbose_output = is_verbose_output
     if verbose_output:
-        _set_logger('requests.packages.urllib3.connectionpool', logging.DEBUG)
-        httplib.HTTPConnection.debuglevel = 1
-        r = requests.get('http://httpbin.org/get?foo=bar&baz=python')
+        _set_logger('cloudify_rest_client.client', logging.DEBUG)
         output_level = logging.DEBUG
         lgr.setLevel(logging.DEBUG)
     else:
