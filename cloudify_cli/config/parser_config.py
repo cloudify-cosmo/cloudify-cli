@@ -242,7 +242,7 @@ def parser_config():
                                 'metavar': 'PARAMETERS',
                                 'dest': 'parameters',
                                 'default': {},
-                                'type': json.loads,
+                                'type': str,
                                 'required': False,
                                 'help': 'Parameters for the workflow execution (in JSON format)'
                             },
@@ -322,6 +322,99 @@ def parser_config():
                         },
                         'help': 'command for listing workflows for a deployment',
                         'handler': cfy.workflows.ls
+                    }
+                }
+            },
+            'local': {
+                'help': 'Execute workflows locally',
+                'sub_commands': {
+                    'init': {
+                        'help': 'Init a local workflow execution environment in '
+                                'in the current working directory',
+                        'arguments': {
+                            '-p,--blueprint-path': {
+                                'dest': 'blueprint_path',
+                                'metavar': 'BLUEPRINT_PATH',
+                                'type': str,
+                                'required': True,
+                                'help': 'Path to a blueprint'
+                            },
+                            '-i,--inputs': {
+                                'metavar': 'INPUTS',
+                                'dest': 'inputs',
+                                'required': False,
+                                'help': 'Inputs file/string for the local workflow creation (in JSON format)'
+                            }
+                        },
+                        'handler': cfy.local.init
+                    },
+                    'execute': {
+                        'help': 'Execute a workflow locally',
+                        'arguments': {
+                            '-w,--workflow':
+                                argument_utils.remove_completer(
+                                    workflow_id_argument(
+                                        hlp='The workflow to execute locally'))
+                            ,
+                            '-p,--parameters': {
+                                'metavar': 'PARAMETERS',
+                                'dest': 'parameters',
+                                'default': {},
+                                'type': str,
+                                'required': False,
+                                'help': 'Parameters for the workflow execution (in JSON format)'
+                            },
+                            '--allow-custom-parameters': {
+                                'dest': 'allow_custom_parameters',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'A flag for allowing the passing of custom parameters ('
+                                        "parameters which were not defined in the workflow's schema in "
+                                        'the blueprint) to the execution'
+                            },
+                            '--task-retries': {
+                                'metavar': 'TASK_RETRIES',
+                                'dest': 'task_retries',
+                                'default': 0,
+                                'type': int,
+                                'help': 'How many times should a task be retried in case '
+                                        'it fails'
+                            },
+                            '--task-retry-interval': {
+                                'metavar': 'TASK_RETRY_INTERVAL',
+                                'dest': 'task_retry_interval',
+                                'default': 1,
+                                'type': int,
+                                'help': 'How many seconds to wait before each task is retried'
+                            },
+                            '--task-thread-pool-size': {
+                                'metavar': 'TASK_THREAD_POOL_SIZE',
+                                'dest': 'task_thread_pool_size',
+                                'default': 1,
+                                'type': int,
+                                'help': 'The size of the thread pool size to execute tasks in'
+                            }
+                        },
+                        'handler': cfy.local.execute
+                    },
+                    'outputs': {
+                        'help': 'Display outputs',
+                        'arguments': {},
+                        'handler': cfy.local.outputs
+                    },
+                    'instances': {
+                        'help': 'Display node instances',
+                        'arguments': {
+                            '--node-id': {
+                                'metavar': 'NODE_ID',
+                                'dest': 'node_id',
+                                'default': None,
+                                'type': str,
+                                'required': False,
+                                'help': 'Only display node instances of this node id'
+                            }
+                        },
+                        'handler': cfy.local.instances
                     }
                 }
             },

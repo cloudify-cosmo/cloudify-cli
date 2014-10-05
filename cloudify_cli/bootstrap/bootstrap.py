@@ -18,17 +18,12 @@ import os
 
 from cloudify.workflows import local
 
+from cloudify_cli import constants
 from cloudify_cli import utils
 from cloudify_cli.bootstrap.tasks import (
     PROVIDER_RUNTIME_PROPERTY,
     MANAGER_USER_RUNTIME_PROPERTY,
     MANAGER_KEY_PATH_RUNTIME_PROPERTY
-)
-
-
-IGNORED_MODULES = (
-    'worker_installer.tasks',
-    'plugin_installer.tasks'
 )
 
 
@@ -43,11 +38,12 @@ def _init_env(blueprint_path,
               name,
               inputs=None):
     storage = local.FileStorage(storage_dir=_workdir())
-    return local.init_env(blueprint_path,
-                          name=name,
-                          inputs=inputs,
-                          storage=storage,
-                          ignored_modules=IGNORED_MODULES)
+    return local.init_env(
+        blueprint_path,
+        name=name,
+        inputs=inputs,
+        storage=storage,
+        ignored_modules=constants.IGNORED_LOCAL_WORKFLOW_MODULES)
 
 
 def _load_env(name):

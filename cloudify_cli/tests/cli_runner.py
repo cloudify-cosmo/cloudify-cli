@@ -21,21 +21,21 @@ from cloudify_cli import cli
 
 
 def run_cli_expect_system_exit_0(command):
-    try:
-        run_cli(command)
-    except SystemExit as e:
-        assert e.code == 0
-    else:
-        raise RuntimeError("Expected SystemExit with 0 return code")
+    run_cli_expect_system_exit_code(command, expected_code=0)
 
 
 def run_cli_expect_system_exit_1(command):
+    run_cli_expect_system_exit_code(command, expected_code=1)
+
+
+def run_cli_expect_system_exit_code(command, expected_code):
     try:
         run_cli(command)
     except SystemExit as e:
-        assert e.code == 1
+        assert e.code == expected_code
     else:
-        raise RuntimeError("Expected SystemExit with 1 return code")
+        raise RuntimeError("Expected SystemExit with {0} return code"
+                           .format(expected_code))
 
 
 def run_cli(command):

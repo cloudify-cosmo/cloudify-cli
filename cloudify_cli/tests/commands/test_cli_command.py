@@ -96,6 +96,10 @@ class CliCommandTest(unittest.TestCase):
             self.assertIn(err_str_segment, str(ex))
         except CloudifyClientError, ex:
             self.assertIn(err_str_segment, str(ex))
+        except ValueError, ex:
+            self.assertIn(err_str_segment, str(ex))
+        except IOError, ex:
+            self.assertIn(err_str_segment, str(ex))
 
     def _create_cosmo_wd_settings(self, settings=None):
         directory_settings = utils.CloudifyWorkingDirectorySettings()
