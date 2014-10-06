@@ -22,12 +22,6 @@ def _init_logger():
                  .format(logger_config.LOG_DIR))
     logfile = None
     try:
-
-        # http://stackoverflow.com/questions/8144545/turning-off-logging-in-paramiko
-        logging.getLogger('paramiko').setLevel(logging.WARNING)
-        logging.getLogger('requests.packages.urllib3'
-                          '.connectionpool').setLevel(logging.ERROR)
-
         logfile = logger_config.LOGGER['handlers']['file']['filename']
         d = os.path.dirname(logfile)
         if not os.path.exists(d):
@@ -39,6 +33,7 @@ def _init_logger():
         logger.setLevel(logging.INFO)
         file_logger = logging.getLogger('file')
         file_logger.setLevel(logging.DEBUG)
+
         return logger, file_logger
     except ValueError:
         sys.exit('could not initialize logger.'
@@ -100,5 +95,14 @@ def get_events_logger():
         return verbose_events_logger
     else:
         return default_events_logger
+
+
+def set_logger_handlers(logger_name, level):
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(level)
+    logger.disabled = False
+    lgr_handlers = logging.getLogger('main').handlers
+    for handler in lgr_handlers:
+        logger.addHandler(handler)
 
 lgr, flgr = _init_logger()
