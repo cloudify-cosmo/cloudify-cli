@@ -162,7 +162,7 @@ def set_global_verbosity_level(is_verbose_output):
 
     verbose_output = is_verbose_output
     if verbose_output:
-        _set_logger('cloudify_rest_client.client', logging.DEBUG)
+        _set_logger('cloudify.rest_client.http', logging.DEBUG)
         output_level = logging.DEBUG
         lgr.setLevel(logging.DEBUG)
     else:
