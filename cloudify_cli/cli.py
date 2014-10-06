@@ -22,11 +22,12 @@ import argcomplete
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
+from cloudify_cli.constants import CLOUDIFY_REST_CLIENT_LOGGER_NAME
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.exceptions import CloudifyValidationError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.exceptions import CloudifyBootstrapError
-from cloudify_cli.constants import CLOUDIFY_REST_CLIENT_LOGGER_NAME
+from cloudify_cli.logger import set_logger_handlers
 
 output_level = logging.INFO
 verbose_output = False
@@ -137,15 +138,6 @@ def register_command(subparsers, command_name, command):
     command_parser.set_defaults(handler=command_cmd_handler)
 
 
-def _set_logger_handlers(logger_name, level):
-    lgr = logging.getLogger(logger_name)
-    lgr.setLevel(level)
-    lgr.disabled = False
-    lgr_handlers = logging.getLogger('main').handlers
-    for handler in lgr_handlers:
-        lgr.addHandler(handler)
-
-
 def set_global_verbosity_level(is_verbose_output):
     """
     sets the global verbosity level for console and the lgr logger.
@@ -162,7 +154,7 @@ def set_global_verbosity_level(is_verbose_output):
 
     verbose_output = is_verbose_output
     if verbose_output:
-        _set_logger_handlers(CLOUDIFY_REST_CLIENT_LOGGER_NAME, logging.DEBUG)
+        set_logger_handlers(CLOUDIFY_REST_CLIENT_LOGGER_NAME, logging.DEBUG)
         output_level = logging.DEBUG
         lgr.setLevel(logging.DEBUG)
     else:

@@ -5,7 +5,6 @@ import os
 import sys
 
 from cloudify_cli.config import logger_config
-from cloudify_cli.cli import get_global_verbosity
 
 
 def _init_logger():
@@ -91,10 +90,19 @@ def get_events_logger():
 
     # Currently needs to be imported dynamically since
     # otherwise it creates a circular import.
+    from cloudify_cli.cli import get_global_verbosity
     if get_global_verbosity():
         return verbose_events_logger
     else:
         return default_events_logger
 
+
+def set_logger_handlers(logger_name, level):
+    logger = logging.getLogger(logger_name)
+    logger.setLevel(level)
+    logger.disabled = False
+    lgr_handlers = logging.getLogger('main').handlers
+    for handler in lgr_handlers:
+        logger.addHandler(handler)
 
 lgr, flgr = _init_logger()
