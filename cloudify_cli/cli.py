@@ -15,12 +15,10 @@
 ############
 
 import argparse
-import httplib
 import logging
 import sys
 import traceback
 import argcomplete
-import requests
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
@@ -39,6 +37,7 @@ def main():
     args = _parse_args(sys.argv[1:])
     args.handler(args)
 
+
 def _set_logger(logger_name, level):
     lgr = logging.getLogger(logger_name)
     lgr.setLevel(level)
@@ -46,6 +45,7 @@ def _set_logger(logger_name, level):
     lgr_handlers = logging.getLogger('main').handlers
     for handler in lgr_handlers:
         lgr.addHandler(handler)
+
 
 def _parse_args(args):
     """

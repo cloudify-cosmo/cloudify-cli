@@ -7,6 +7,7 @@ import sys
 from cloudify_cli.config import logger_config
 from cloudify_cli.cli import get_global_verbosity
 
+
 def _init_logger():
 
     """
