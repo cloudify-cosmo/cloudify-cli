@@ -36,6 +36,8 @@ CLOUDIFY_CORE_PACKAGE_PATH = '/cloudify-core'
 CLOUDIFY_UI_PACKAGE_PATH = '/cloudify-ui'
 CLOUDIFY_AGENT_PACKAGE_PATH = '/cloudify-agents'
 
+CLOUDIFY_REST_CLIENT_LOGGER_NAME = 'cloudify.rest_client.http'
+
 IGNORED_LOCAL_WORKFLOW_MODULES = (
     'worker_installer.tasks',
     'plugin_installer.tasks'
