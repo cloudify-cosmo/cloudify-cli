@@ -40,7 +40,6 @@ def _init_logger():
         logger.setLevel(logging.INFO)
         file_logger = logging.getLogger('file')
         file_logger.setLevel(logging.DEBUG)
-        logger.info('setting main and file loggers')
 
         return logger, file_logger
     except ValueError:
