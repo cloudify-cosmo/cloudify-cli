@@ -27,8 +27,8 @@ from cloudify_rest_client import CloudifyClient
 
 REST_PORT = 80
 
-# runtime properties manager blueprints may set to affect the behavior of
-# the bootstrap task
+# runtime properties keys, whose values may be set by manager blueprints in
+# order to affect the behavior of the bootstrap task
 PUBLIC_IP_RUNTIME_PROPERTY = 'public_ip'
 PRIVATE_IP_RUNTIME_PROPERTY = 'private_ip'
 PROVIDER_RUNTIME_PROPERTY = 'provider'
