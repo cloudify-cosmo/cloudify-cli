@@ -151,8 +151,8 @@ class LocalTest(CliCommandTest):
 
 @operation
 def mock_op(param, custom_param=None, **kwargs):
-    op_ctx.runtime_properties['param'] = param
-    op_ctx.runtime_properties['custom_param'] = custom_param
+    op_ctx.instance.runtime_properties['param'] = param
+    op_ctx.instance.runtime_properties['custom_param'] = custom_param
 
 
 @workflow

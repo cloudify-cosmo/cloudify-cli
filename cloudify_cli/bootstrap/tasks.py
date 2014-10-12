@@ -57,9 +57,9 @@ lgr = None
 def bootstrap(cloudify_packages, agent_local_key_path=None,
               agent_remote_key_path=None):
 
-    if PUBLIC_IP_RUNTIME_PROPERTY in ctx.runtime_properties:
+    if PUBLIC_IP_RUNTIME_PROPERTY in ctx.instance.runtime_properties:
         manager_host_public_ip = \
-            ctx.runtime_properties[PUBLIC_IP_RUNTIME_PROPERTY]
+            ctx.instance.runtime_properties[PUBLIC_IP_RUNTIME_PROPERTY]
         with settings(host_string=manager_host_public_ip):
             _bootstrap(cloudify_packages, agent_local_key_path,
                        agent_remote_key_path)
@@ -203,13 +203,15 @@ def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
 
 
 def _set_manager_endpoint_data():
-    ctx.runtime_properties[MANAGER_USER_RUNTIME_PROPERTY] = fabric.api.env.user
-    ctx.runtime_properties[MANAGER_KEY_PATH_RUNTIME_PROPERTY] = \
+    ctx.instance.runtime_properties[MANAGER_USER_RUNTIME_PROPERTY] = \
+        fabric.api.env.user
+    ctx.instance.runtime_properties[MANAGER_KEY_PATH_RUNTIME_PROPERTY] = \
         fabric.api.env.key_filename
 
 
 def _get_endpoint_private_ip():
-    return ctx.runtime_properties.get(PRIVATE_IP_RUNTIME_PROPERTY, ctx.host_ip)
+    return ctx.instance.runtime_properties.get(PRIVATE_IP_RUNTIME_PROPERTY,
+                                               ctx.host_ip)
 
 
 def _copy_agent_key(agent_local_key_path=None,
@@ -225,12 +227,12 @@ def _copy_agent_key(agent_local_key_path=None,
 
 def _upload_provider_context(remote_agents_private_key_path):
     provider_context = \
-        ctx.runtime_properties.get(PROVIDER_RUNTIME_PROPERTY, dict())
-    cloudify_configuration = ctx.properties['cloudify']
+        ctx.instance.runtime_properties.get(PROVIDER_RUNTIME_PROPERTY, dict())
+    cloudify_configuration = ctx.node.properties['cloudify']
     cloudify_configuration['cloudify_agent']['agent_key_path'] = \
         remote_agents_private_key_path
     provider_context['cloudify'] = cloudify_configuration
-    ctx.runtime_properties[PROVIDER_RUNTIME_PROPERTY] = \
+    ctx.instance.runtime_properties[PROVIDER_RUNTIME_PROPERTY] = \
         provider_context
 
     manager_ip = fabric.api.env.host_string
