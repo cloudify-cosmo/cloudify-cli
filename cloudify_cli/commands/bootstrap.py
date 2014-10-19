@@ -39,23 +39,52 @@ def bootstrap(config_file_path,
                                                   keep_up,
                                                   validate_only,
                                                   skip_validations)
-    details = bs.bootstrap(
-        blueprint_path,
-        name='manager',
-        inputs=utils.json_to_dict(inputs, 'inputs'),
-        task_retries=5,
-        task_retry_interval=30,
-        task_thread_pool_size=1)
 
-    manager_ip = details['manager_ip']
-    provider_name = details['provider_name']
-    provider_context = details['provider_context']
-    with utils.update_wd_settings() as ws_settings:
-        ws_settings.set_management_server(manager_ip)
-        ws_settings.set_management_key(details['manager_key_path'])
-        ws_settings.set_management_user(details['manager_user'])
-        ws_settings.set_provider(provider_name)
-        ws_settings.set_provider_context(provider_context)
+    if not skip_validations:
+        inputs = utils.json_to_dict(inputs, 'inputs')
+        bs.bootstrap_validation(
+            blueprint_path,
+            name='manager',
+            inputs=inputs,
+            task_retries=5,
+            task_retry_interval=30,
+            task_thread_pool_size=1)
 
-    lgr.info('bootstrapping complete')
-    lgr.info('management server is up at {0}'.format(manager_ip))
+    if not validate_only:
+        try:
+            details = bs.bootstrap(
+                blueprint_path,
+                name='manager',
+                inputs=utils.json_to_dict(inputs, 'inputs'),
+                task_retries=5,
+                task_retry_interval=30,
+                task_thread_pool_size=1)
+
+            manager_ip = details['manager_ip']
+            provider_name = details['provider_name']
+            provider_context = details['provider_context']
+            with utils.update_wd_settings() as ws_settings:
+                ws_settings.set_management_server(manager_ip)
+                ws_settings.set_management_key(details['manager_key_path'])
+                ws_settings.set_management_user(details['manager_user'])
+                ws_settings.set_provider(provider_name)
+                ws_settings.set_provider_context(provider_context)
+
+            lgr.info('bootstrapping complete')
+            lgr.info('management server is up at {0}'.format(manager_ip))
+        except Exception:
+            lgr.error('bootstrap failed!')
+            if not keep_up:
+                try:
+                    bs.load_env('manager')
+                except IOError:
+                    # the bootstrap exception occurred before environment was
+                    # even initialized - nothing to teardown.
+                    pass
+                else:
+                    lgr.info('executing teardown due to failed bootstrap')
+                    bs.teardown(name='manager',
+                                task_retries=5,
+                                task_retry_interval=30,
+                                task_thread_pool_size=1)
+            raise
