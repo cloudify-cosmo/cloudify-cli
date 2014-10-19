@@ -37,8 +37,10 @@ def _workdir():
 
 def _init_env(blueprint_path,
               name,
-              inputs=None):
-    storage = local.FileStorage(storage_dir=_workdir())
+              inputs=None,
+              use_file_storage=True):
+    storage = local.FileStorage(storage_dir=_workdir()) if use_file_storage \
+        else None
     return local.init_env(
         blueprint_path,
         name=name,
@@ -62,17 +64,15 @@ def bootstrap_validation(blueprint_path,
     inputs = inputs or {}
     env = _init_env(blueprint_path,
                     name=name,
-                    inputs=inputs)
+                    inputs=inputs,
+                    use_file_storage=False)
 
-    try:
-        env.execute(workflow='execute_operation',
-                    parameters={'operation':
-                                'cloudify.interfaces.validation.creation'},
-                    task_retries=task_retries,
-                    task_retry_interval=task_retry_interval,
-                    task_thread_pool_size=task_thread_pool_size)
-    finally:
-        shutil.rmtree(_workdir())
+    env.execute(workflow='execute_operation',
+                parameters={'operation':
+                            'cloudify.interfaces.validation.creation'},
+                task_retries=task_retries,
+                task_retry_interval=task_retry_interval,
+                task_thread_pool_size=task_thread_pool_size)
 
 
 def bootstrap(blueprint_path,
@@ -125,3 +125,6 @@ def teardown(name='manager',
                 task_retries=task_retries,
                 task_retry_interval=task_retry_interval,
                 task_thread_pool_size=task_thread_pool_size)
+
+    # deleting local environment data
+    shutil.rmtree(_workdir())

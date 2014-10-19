@@ -40,11 +40,25 @@ def bootstrap(config_file_path,
                                                   validate_only,
                                                   skip_validations)
 
+    env_name = 'manager'
+    inputs = utils.json_to_dict(inputs, 'inputs')
+
+    # verifying no environment exists from a previous bootstrap
+    try:
+        bs.load_env(env_name)
+    except IOError:
+        # Environment is clean
+        pass
+    else:
+        raise RuntimeError(
+            "Can't bootstrap because the environment is not clean. Clean the "
+            'environment by calling teardown or reset it using the "cfy init '
+            '-r" command')
+
     if not skip_validations:
-        inputs = utils.json_to_dict(inputs, 'inputs')
         bs.bootstrap_validation(
             blueprint_path,
-            name='manager',
+            name=env_name,
             inputs=inputs,
             task_retries=5,
             task_retry_interval=30,
@@ -54,8 +68,8 @@ def bootstrap(config_file_path,
         try:
             details = bs.bootstrap(
                 blueprint_path,
-                name='manager',
-                inputs=utils.json_to_dict(inputs, 'inputs'),
+                name=env_name,
+                inputs=inputs,
                 task_retries=5,
                 task_retry_interval=30,
                 task_thread_pool_size=1)
@@ -76,14 +90,14 @@ def bootstrap(config_file_path,
             lgr.error('bootstrap failed!')
             if not keep_up:
                 try:
-                    bs.load_env('manager')
+                    bs.load_env(env_name)
                 except IOError:
                     # the bootstrap exception occurred before environment was
                     # even initialized - nothing to teardown.
                     pass
                 else:
                     lgr.info('executing teardown due to failed bootstrap')
-                    bs.teardown(name='manager',
+                    bs.teardown(name=env_name,
                                 task_retries=5,
                                 task_retry_interval=30,
                                 task_thread_pool_size=1)
