@@ -56,6 +56,7 @@ def bootstrap(config_file_path,
             '-r" command')
 
     if not skip_validations:
+        lgr.info('executing bootstrap validation')
         bs.bootstrap_validation(
             blueprint_path,
             name=env_name,
@@ -63,9 +64,11 @@ def bootstrap(config_file_path,
             task_retries=5,
             task_retry_interval=30,
             task_thread_pool_size=1)
+        lgr.info('bootstrap validation completed successfully')
 
     if not validate_only:
         try:
+            lgr.info('executing bootstrap')
             details = bs.bootstrap(
                 blueprint_path,
                 name=env_name,
