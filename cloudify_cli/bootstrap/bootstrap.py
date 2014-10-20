@@ -15,6 +15,7 @@
 ############
 
 import os
+import shutil
 
 from cloudify.workflows import local
 
@@ -28,7 +29,8 @@ from cloudify_cli.bootstrap.tasks import (
 
 
 def _workdir():
-    workdir = utils.get_bootstrap_dir_path()
+    cloudify_dir = utils.get_init_path()
+    workdir = os.path.join(cloudify_dir, 'bootstrap')
     if not os.path.isdir(workdir):
         os.mkdir(workdir)
     return workdir
@@ -36,8 +38,10 @@ def _workdir():
 
 def _init_env(blueprint_path,
               name,
-              inputs=None):
-    storage = local.FileStorage(storage_dir=_workdir())
+              inputs=None,
+              use_file_storage=True):
+    storage = local.FileStorage(storage_dir=_workdir()) if use_file_storage \
+        else None
     return local.init_env(
         blueprint_path,
         name=name,
@@ -46,10 +50,30 @@ def _init_env(blueprint_path,
         ignored_modules=constants.IGNORED_LOCAL_WORKFLOW_MODULES)
 
 
-def _load_env(name):
+def load_env(name):
     storage = local.FileStorage(storage_dir=_workdir())
     return local.load_env(name=name,
                           storage=storage)
+
+
+def bootstrap_validation(blueprint_path,
+                         name='manager',
+                         inputs=None,
+                         task_retries=5,
+                         task_retry_interval=30,
+                         task_thread_pool_size=1):
+    inputs = inputs or {}
+    env = _init_env(blueprint_path,
+                    name=name,
+                    inputs=inputs,
+                    use_file_storage=False)
+
+    env.execute(workflow='execute_operation',
+                parameters={'operation':
+                            'cloudify.interfaces.validation.creation'},
+                task_retries=task_retries,
+                task_retry_interval=task_retry_interval,
+                task_thread_pool_size=task_thread_pool_size)
 
 
 def bootstrap(blueprint_path,
@@ -62,6 +86,7 @@ def bootstrap(blueprint_path,
     env = _init_env(blueprint_path,
                     name=name,
                     inputs=inputs)
+
     env.execute(workflow='install',
                 task_retries=task_retries,
                 task_retry_interval=task_retry_interval,
@@ -96,8 +121,11 @@ def teardown(name='manager',
              task_retries=5,
              task_retry_interval=30,
              task_thread_pool_size=1):
-    env = _load_env(name)
+    env = load_env(name)
     env.execute('uninstall',
                 task_retries=task_retries,
                 task_retry_interval=task_retry_interval,
                 task_thread_pool_size=task_thread_pool_size)
+
+    # deleting local environment data
+    shutil.rmtree(_workdir())

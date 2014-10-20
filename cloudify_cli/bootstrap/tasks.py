@@ -15,6 +15,7 @@
 
 
 import os
+import urllib
 import urllib2
 
 import fabric
@@ -23,6 +24,8 @@ from fabric.context_managers import cd
 from fabric.context_managers import settings
 
 from cloudify import ctx
+from cloudify.decorators import operation
+from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client import CloudifyClient
 
 REST_PORT = 80
@@ -52,6 +55,25 @@ DISTRO_EXT = {
 }
 
 lgr = None
+
+
+@operation
+def creation_validation(cloudify_packages, **kwargs):
+    if not cloudify_packages.get('server') or not isinstance(
+            cloudify_packages['server'], dict):
+        raise NonRecoverableError(
+            'must have a non-empty "server" dictionary property under '
+            '"cloudify_packages"')
+
+    packages_urls = cloudify_packages['server'].values()
+    agent_packages = cloudify_packages.get('agents', {})
+    if not isinstance(agent_packages, dict):
+        raise NonRecoverableError('"cloudify_packages.agents" must be a '
+                                  'dictionary property')
+
+    packages_urls.extend(agent_packages.values())
+    for package_url in packages_urls:
+        _validate_package_url_accessible(package_url)
 
 
 def bootstrap(cloudify_packages, agent_local_key_path=None,
@@ -211,7 +233,7 @@ def _set_manager_endpoint_data():
 
 def _get_endpoint_private_ip():
     return ctx.instance.runtime_properties.get(PRIVATE_IP_RUNTIME_PROPERTY,
-                                               ctx.host_ip)
+                                               ctx.instance.host_ip)
 
 
 def _copy_agent_key(agent_local_key_path=None,
@@ -282,3 +304,14 @@ def _get_ext(url):
     lgr.debug('extracting file extension from url')
     filename = urllib2.unquote(url).decode('utf8').split('/')[-1]
     return os.path.splitext(filename)[1]
+
+
+def _validate_package_url_accessible(package_url):
+    ctx.logger.debug('checking whether url {0} is accessible'.format(
+        package_url))
+    status = urllib.urlopen(package_url).getcode()
+    if not status == 200:
+        err = ('url {0} is not accessible'.format(package_url))
+        ctx.logger.error('VALIDATION ERROR: ' + err)
+        raise NonRecoverableError(err)
+    ctx.logger.debug('OK: url {0} is accessible'.format(package_url))

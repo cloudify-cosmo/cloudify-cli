@@ -17,8 +17,6 @@
 Handles 'cfy teardown'
 """
 
-import shutil
-
 from cloudify_cli import provider_common
 from cloudify_cli import utils
 from cloudify_cli import exceptions
@@ -47,14 +45,11 @@ def teardown(force, ignore_deployments, config_file_path, ignore_validation):
     if settings.get_is_provider_config():
         provider_common.provider_teardown(config_file_path, ignore_validation)
     else:
+        lgr.info("tearing down {0}".format(management_ip))
         bs.teardown(name='manager',
                     task_retries=0,
                     task_retry_interval=0,
                     task_thread_pool_size=1)
-
-        # deleting local environment data
-        workdir = utils.get_bootstrap_dir_path()
-        shutil.rmtree(workdir)
 
     # cleaning relevant data from working directory settings
     with utils.update_wd_settings() as wd_settings:
