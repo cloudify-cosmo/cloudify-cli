@@ -233,7 +233,7 @@ def _set_manager_endpoint_data():
 
 def _get_endpoint_private_ip():
     return ctx.instance.runtime_properties.get(PRIVATE_IP_RUNTIME_PROPERTY,
-                                               ctx.host_ip)
+                                               ctx.instance.host_ip)
 
 
 def _copy_agent_key(agent_local_key_path=None,

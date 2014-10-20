@@ -29,7 +29,8 @@ from cloudify_cli.bootstrap.tasks import (
 
 
 def _workdir():
-    workdir = utils.get_bootstrap_dir_path()
+    cloudify_dir = utils.get_init_path()
+    workdir = os.path.join(cloudify_dir, 'bootstrap')
     if not os.path.isdir(workdir):
         os.mkdir(workdir)
     return workdir
