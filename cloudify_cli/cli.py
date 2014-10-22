@@ -34,7 +34,7 @@ verbose_output = False
 
 
 def main():
-    # _set_cli_except_hook()
+    _set_cli_except_hook()
     args = _parse_args(sys.argv[1:])
     args.handler(args)
 
