@@ -23,7 +23,7 @@ from cloudify_cli import messages
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.utils import print_table
 from dsl_parser.parser import parse_from_path
-from dsl_parser.parser import DSLParsingException
+from dsl_parser.exceptions import DSLParsingException
 
 
 def validate(blueprint_path):
