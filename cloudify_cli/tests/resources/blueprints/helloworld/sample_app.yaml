@@ -3,8 +3,12 @@ node_types:
     type1:
         interfaces:
             interface1:
-                - install: plugin.tasks.install
-                - start: plugin.tasks.start
+                install:
+                    implementation: plugin.tasks.install
+                    inputs: {}
+                start:
+                    implementation: plugin.tasks.start
+                    inputs: {}
 
         properties:
             prop1:

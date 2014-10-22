@@ -17,7 +17,7 @@ node_templates:
         type: test_type
         interfaces:
             test:
-                - op: p.cloudify_cli.tests.commands.test_local.mock_op
+                op: p.cloudify_cli.tests.commands.test_local.mock_op
 
 outputs:
     input1:
