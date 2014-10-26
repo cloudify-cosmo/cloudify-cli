@@ -23,9 +23,11 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_cli import utils
 
 
-def use(management_ip, provider):
+def use(management_ip, provider, rest_port):
     # first check this server is available.
-    client = utils.get_rest_client(management_ip)
+    client = utils.get_rest_client(
+        manager_ip=management_ip,
+        rest_port=rest_port)
     try:
         status_result = client.manager.get_status()
     except CloudifyClientError:
@@ -62,6 +64,7 @@ def use(management_ip, provider):
         wd_settings.set_management_server(management_ip)
         wd_settings.set_provider_context(provider_context)
         wd_settings.set_provider(provider_name)
+        wd_settings.set_rest_port(rest_port)
         wd_settings.set_is_provider_config(provider)
-        lgr.info('Using management server {0}'
-                 .format(management_ip))
+        lgr.info('Using management server {0} with port {1}'
+                 .format(management_ip, rest_port))

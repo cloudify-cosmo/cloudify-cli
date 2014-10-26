@@ -27,7 +27,7 @@ from prettytable import PrettyTable
 from cloudify_cli.logger import lgr
 from cloudify_cli.logger import flgr
 from cloudify_rest_client import CloudifyClient
-from cloudify_cli.constants import REST_PORT
+from cloudify_cli.constants import DEFAULT_REST_PORT
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_FILE_NAME
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME
 from cloudify_cli.constants import CONFIG_FILE_NAME
@@ -161,8 +161,20 @@ def get_cwd():
     return os.getcwd()
 
 
-def get_rest_client(manager_ip, rest_port=REST_PORT):
+def get_rest_client(manager_ip=None, rest_port=None):
+
+    if not manager_ip:
+        manager_ip = get_management_server_ip()
+
+    if not rest_port:
+        rest_port = get_rest_port()
+
     return CloudifyClient(manager_ip, rest_port)
+
+
+def get_rest_port():
+    cosmo_wd_settings = load_cloudify_working_dir_settings()
+    return cosmo_wd_settings.get_rest_port()
 
 
 def get_management_server_ip():
@@ -355,6 +367,7 @@ def table(cols, data, defaults=None):
 
 
 class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
+
     yaml_tag = u'!WD_Settings'
     yaml_loader = yaml.Loader
 
@@ -364,8 +377,8 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
         self._management_user = None
         self._provider = None
         self._provider_context = None
-        self._mgmt_aliases = {}
         self._is_provider_config = False
+        self._rest_port = DEFAULT_REST_PORT
 
     def get_management_server(self):
         return self._management_ip
@@ -405,6 +418,12 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
 
     def set_is_provider_config(self, is_provider_config):
         self._is_provider_config = is_provider_config
+
+    def get_rest_port(self):
+        return self._rest_port
+
+    def set_rest_port(self, rest_port):
+        self._rest_port = rest_port
 
 
 def delete_cloudify_working_dir_settings():
