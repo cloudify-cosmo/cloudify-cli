@@ -16,11 +16,11 @@
 # flake8: noqa
 
 import argparse
-import json
 
 from cloudify_cli import commands as cfy
 from cloudify_cli.config import completion_utils
 from cloudify_cli.config import argument_utils
+from cloudify_cli.constants import DEFAULT_REST_PORT
 
 
 def blueprint_id_argument():
@@ -556,6 +556,12 @@ def parser_config():
                         'default': False,
                         'dest': 'provider',
                         'action': 'store_true'
+                    },
+                    '--port': {
+                        'help': 'Specify the rest server port',
+                        'default': DEFAULT_REST_PORT,
+                        'type': int,
+                        'dest': 'rest_port'
                     }
                 },
                 'handler': cfy.use

@@ -21,7 +21,7 @@ import argparse
 import socket
 
 from StringIO import StringIO
-from cloudify_cli.constants import REST_PORT
+from cloudify_cli import utils
 from cloudify_cli.utils import load_cloudify_working_dir_settings
 from cloudify_cli.utils import get_version_data
 from cloudify_cli.utils import get_rest_client
@@ -63,7 +63,7 @@ class VersionAction(argparse.Action):
         management_ip = dir_settings.get_management_server()
         if not self._connected_to_manager(management_ip):
             return None
-        client = get_rest_client(management_ip, REST_PORT)
+        client = get_rest_client(management_ip)
         try:
             version_data = client.manager.get_version()
         except CloudifyClientError:
@@ -73,8 +73,9 @@ class VersionAction(argparse.Action):
 
     @staticmethod
     def _connected_to_manager(management_ip):
+        port = utils.get_rest_port()
         try:
-            sock = socket.create_connection((management_ip, REST_PORT), 5)
+            sock = socket.create_connection((management_ip, port), 5)
             sock.close()
             return True
         except socket.error:
