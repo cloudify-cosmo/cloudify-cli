@@ -7,6 +7,9 @@ plugins:
     my_local_plugin:
         executor: central_deployment_agent
         source: local_plugin
+    no_install_plugin:
+        executor: central_deployment_agent
+        install: false
 
 node_types:
     test_type: {}
@@ -18,3 +21,4 @@ node_templates:
             test:
                 op: my_plugin.tasks.op
                 op2: my_local_plugin.tasks.op2
+                op3: no_install_plugin.tasks.op3
