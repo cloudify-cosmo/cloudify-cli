@@ -50,6 +50,18 @@ def get_management_user():
     raise CloudifyCliError(msg)
 
 
+def dump_to_file(collection, file_path):
+    with open(file_path, 'a') as f:
+        for item in collection:
+            f.write(str(item))
+            f.write(os.linesep)
+
+
+def validate_virtual_env():
+    if not hasattr(sys, 'real_prefix'):
+        raise RuntimeError('You must be running inside a virtualenv.')
+
+
 def load_cloudify_working_dir_settings(suppress_error=False):
     try:
         path = get_context_path()

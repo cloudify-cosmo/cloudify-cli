@@ -20,8 +20,12 @@ Handles 'cfy local'
 import json
 import shutil
 import os
+from cloudify.utils import LocalCommandRunner
 
 from cloudify.workflows import local
+from dsl_parser.constants import DEPLOYMENT_PLUGINS_TO_INSTALL, PLUGIN_SOURCE_KEY
+from dsl_parser.parser import parse_from_path
+
 
 from cloudify_cli import exceptions
 from cloudify_cli import constants
@@ -85,6 +89,42 @@ def instances(node_id):
     lgr.info(json.dumps(node_instances,
                         sort_keys=True,
                         indent=2))
+
+
+def install_plugins(blueprint_path, output):
+
+    requirements = _create_requirements(
+        blueprint_path=blueprint_path
+    )
+
+    if output:
+        utils.dump_to_file(requirements, output)
+        lgr.info('requirements created successfully --> {0}'
+                 .format(output))
+    else:
+        utils.validate_virtual_env()
+        runner = LocalCommandRunner()
+        for requirement in requirements:
+            runner.run('pip install {0}'.format(requirement))
+
+
+def _create_requirements(blueprint_path):
+
+    parsed_dsl = parse_from_path(dsl_file_path=blueprint_path)
+    sources = []
+    for deployment_plugin in parsed_dsl[DEPLOYMENT_PLUGINS_TO_INSTALL]:
+        source = deployment_plugin[PLUGIN_SOURCE_KEY]
+        if '://' in source:
+            # URL
+            sources.append(source)
+        else:
+            # Local plugin (should reside under the 'plugins' dir)
+            plugin_path = os.path.join(
+                os.path.dirname(blueprint_path),
+                'plugins',
+                source)
+            sources.append(plugin_path)
+    return sources
 
 
 def _storage_dir():

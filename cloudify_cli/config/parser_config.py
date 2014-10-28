@@ -348,6 +348,26 @@ def parser_config():
                         },
                         'handler': cfy.local.init
                     },
+                    'install-plugins': {
+                        'help': 'Installs the necessary plugins for a given blueprint',
+                        'arguments': {
+                            '-p,--blueprint-path': {
+                                'dest': 'blueprint_path',
+                                'metavar': 'BLUEPRINT_PATH',
+                                'type': str,
+                                'required': True,
+                                'help': 'Path to a blueprint'
+                            },
+                            '-o,--output': {
+                                'metavar': 'PLUGINS_OUTPUT',
+                                'dest': 'output',
+                                'required': False,
+                                'help': 'Path to a file that will hold the '
+                                        'requirements of the blueprint'
+                            }
+                        },
+                        'handler': cfy.local.install_plugins
+                    },
                     'execute': {
                         'help': 'Execute a workflow locally',
                         'arguments': {

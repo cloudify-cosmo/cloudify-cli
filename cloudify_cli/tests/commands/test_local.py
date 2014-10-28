@@ -24,6 +24,7 @@ import nose
 
 from cloudify.decorators import operation, workflow
 from cloudify import ctx as op_ctx
+from cloudify.exceptions import CommandExecutionException
 from cloudify.workflows import ctx as workflow_ctx
 
 from cloudify_cli.tests import cli_runner
@@ -112,6 +113,41 @@ class LocalTest(CliCommandTest):
     def test_instances_with_no_init(self):
         self._assert_ex('cfy local instances',
                         'has not been initialized')
+
+    def test_create_requirements_file(self):
+
+        from cloudify_cli.tests.resources.blueprints import local
+
+        expected_requirements = [
+            'http://plugin_source.zip',
+            os.path.join(os.path.dirname(local.__file__),
+                         'plugins',
+                         'local_plugin'),
+            # for the extra \n at the end
+            ''
+        ]
+        requirements_file_path = os.path.join(TEST_WORK_DIR,
+                                              'requirements.txt')
+
+        cli_runner.run_cli('cfy local install-plugins -p '
+                           '{0}/local/blueprint_with_plugins.yaml -o {1}'
+                           .format(BLUEPRINTS_DIR, requirements_file_path))
+
+        with open(requirements_file_path, 'r') as f:
+            actual_requirements = f.read()
+            self.assertEqual(actual_requirements, '\n'.join(expected_requirements))
+
+    def test_install_plugin(self):
+        try:
+            cli_runner.run_cli('cfy local install-plugins -p '
+                               '{0}/local/blueprint_with_plugins.yaml'
+                               .format(BLUEPRINTS_DIR))
+        except CommandExecutionException as e:
+            # Expected pip error since we are using mock
+            # URL's
+            self.assertIn('Downloading/unpacking http://plugin_source.zip',
+                          e.message)
+
 
     @nose.tools.nottest
     def test_local_outputs(self):

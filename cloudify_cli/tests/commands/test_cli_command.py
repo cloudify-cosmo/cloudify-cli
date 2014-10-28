@@ -19,6 +19,8 @@ import shutil
 import unittest
 import sys
 
+from cloudify.constants import LOCAL_IP_KEY
+
 from cloudify_cli.config.logger_config import LOG_DIR
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.tests import cli_runner
