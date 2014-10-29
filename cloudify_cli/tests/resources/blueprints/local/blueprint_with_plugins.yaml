@@ -15,12 +15,12 @@ plugins:
         source: http://host_plugin.zip
 
 node_types:
-    cloudify.types.host: {}
+    cloudify.nodes.Compute: {}
 
 
 node_templates:
     node:
-        type: cloudify.types.host
+        type: cloudify.nodes.Compute
         interfaces:
             test:
                 op: plugin.tasks.op
