@@ -103,9 +103,13 @@ def install_plugins(blueprint_path, output):
                  .format(output))
     else:
         utils.validate_virtual_env()
-        runner = LocalCommandRunner()
+        runner = LocalCommandRunner(lgr)
         for requirement in requirements:
-            runner.run('pip install {0}'.format(requirement))
+            runner.run('pip install {0}'.format(requirement),
+
+                       # log installation output
+                       # in real time
+                       stdout_pipe=False)
 
 
 def _create_requirements(blueprint_path):

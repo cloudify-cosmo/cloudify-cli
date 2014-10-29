@@ -122,9 +122,7 @@ class LocalTest(CliCommandTest):
             'http://plugin_source.zip',
             os.path.join(os.path.dirname(local.__file__),
                          'plugins',
-                         'local_plugin'),
-            # for the extra \n at the end
-            ''
+                         'local_plugin')
         ]
         requirements_file_path = os.path.join(TEST_WORK_DIR,
                                               'requirements.txt')
@@ -135,7 +133,7 @@ class LocalTest(CliCommandTest):
 
         with open(requirements_file_path, 'r') as f:
             actual_requirements = f.read()
-            self.assertEqual(actual_requirements, '\n'.join(expected_requirements))
+            self.assertEqual(actual_requirements, os.linesep.join(expected_requirements))
 
     def test_install_plugin(self):
         try:
@@ -145,7 +143,7 @@ class LocalTest(CliCommandTest):
         except CommandExecutionException as e:
             # Expected pip error since we are using mock
             # URL's
-            self.assertIn('Downloading/unpacking http://plugin_source.zip',
+            self.assertIn('http://plugin_source.zip',
                           e.message)
 
 
