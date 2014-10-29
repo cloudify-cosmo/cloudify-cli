@@ -173,6 +173,11 @@ def get_global_verbosity():
 
 def _set_cli_except_hook():
 
+    def recommend(possible_solutions):
+        print('Possible solutions:')
+        for solution in possible_solutions:
+            print('  - {0}'.format(solution))
+
     def new_excepthook(tpe, value, tb):
         prefix = ''
         server_traceback = None
@@ -186,7 +191,7 @@ def _set_cli_except_hook():
         elif tpe in [SuppressedCloudifyCliError, CloudifyBootstrapError]:
             output_message = False
         else:
-            prefix = '{}: '.format(tpe.__name__)
+            prefix = '{0}: '.format(tpe.__name__)
         if output_traceback:
             print("Traceback (most recent call last):")
             traceback.print_tb(tb)
@@ -198,8 +203,10 @@ def _set_cli_except_hook():
         if output_message:
             from cloudify_cli.logger import lgr
             from cloudify_cli.logger import flgr
-            lgr.error('{}{}'.format(prefix, value))
-            flgr.error('{}{}'.format(prefix, value))
+            lgr.error('{0}{1}'.format(prefix, value))
+            flgr.error('{0}{1}'.format(prefix, value))
+        if hasattr(value, 'possible_solutions'):
+            recommend(getattr(value, 'possible_solutions'))
 
     sys.excepthook = new_excepthook
 
