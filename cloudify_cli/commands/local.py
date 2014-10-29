@@ -24,7 +24,7 @@ import os
 from cloudify.utils import LocalCommandRunner
 
 from cloudify.workflows import local
-from dsl_parser.constants import DEPLOYMENT_PLUGINS_TO_INSTALL, PLUGIN_SOURCE_KEY, PLUGIN_INSTALL_KEY
+from dsl_parser import dsl_constants
 from dsl_parser.parser import parse_from_path
 
 
@@ -119,7 +119,9 @@ def _create_requirements(blueprint_path):
 
     sources = _plugins_to_requirements(
         blueprint_path=blueprint_path,
-        plugins=parsed_dsl[DEPLOYMENT_PLUGINS_TO_INSTALL]
+        plugins=parsed_dsl[
+            dsl_constants.DEPLOYMENT_PLUGINS_TO_INSTALL
+        ]
     )
 
     for node in parsed_dsl['nodes']:
@@ -136,8 +138,10 @@ def _plugins_to_requirements(blueprint_path, plugins):
 
     sources = Set()
     for plugin in plugins:
-        if plugin[PLUGIN_INSTALL_KEY]:
-            source = plugin[PLUGIN_SOURCE_KEY]
+        if plugin[dsl_constants.PLUGIN_INSTALL_KEY]:
+            source = plugin[
+                dsl_constants.PLUGIN_SOURCE_KEY
+            ]
             if '://' in source:
                 # URL
                 sources.add(source)

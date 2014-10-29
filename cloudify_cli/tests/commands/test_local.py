@@ -160,7 +160,6 @@ class LocalTest(CliCommandTest):
             self.assertIn('pip install',
                           e.message)
 
-
     @nose.tools.nottest
     def test_local_outputs(self):
         # tested extensively by the other tests
@@ -200,7 +199,8 @@ class LocalTest(CliCommandTest):
             else:
                 cli_runner.run_cli(command)
         else:
-            cli_runner.run_cli('cfy local execute -w {0}'.format(workflow_name))
+            cli_runner.run_cli('cfy local execute -w {0}'
+                               .format(workflow_name))
 
 
 @operation
