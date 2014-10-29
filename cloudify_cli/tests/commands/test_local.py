@@ -67,6 +67,19 @@ class LocalTest(CliCommandTest):
         output = cli_runner.run_cli('cfy local outputs')
         self.assertIn('"param": "default_param"', output)
 
+    def test_local_execute_missing_plugin(self):
+        expected_possible_solutions = [
+            "Run 'cfy local execute --install-plugins'",
+            "Run 'cfy local install-plugins'"
+        ]
+        try:
+            self._local_init(blueprint='missing_plugin')
+            self.fail('Excepted ImportError')
+        except ImportError as e:
+            actual_possible_solutions = e.possible_solutions
+            self.assertEqual(actual_possible_solutions,
+                             expected_possible_solutions)
+
     def test_local_execute_with_params(self):
         self._local_init()
         self._local_execute(parameters={'param': 'new_param'})
@@ -153,26 +166,32 @@ class LocalTest(CliCommandTest):
         # tested extensively by the other tests
         self.fail()
 
-    def _local_init(self, inputs=None):
+    def _local_init(self, inputs=None, blueprint='blueprint'):
         if inputs:
             inputs_path = os.path.join(TEST_WORK_DIR, 'temp_inputs.json')
             with open(inputs_path, 'w') as f:
                 f.write(json.dumps(inputs))
-            cli_runner.run_cli('cfy local init -p {0}/local/blueprint.yaml '
-                               '-i {1}'
-                               .format(BLUEPRINTS_DIR, inputs_path))
+            cli_runner.run_cli('cfy local init -p {0}/local/{1}.yaml '
+                               '-i {2}'
+                               .format(BLUEPRINTS_DIR,
+                                       blueprint,
+                                       inputs_path))
         else:
-            cli_runner.run_cli('cfy local init -p {0}/local/blueprint.yaml'
-                               .format(BLUEPRINTS_DIR))
+            command = 'cfy local init -p {0}/local/{1}.yaml'\
+                .format(BLUEPRINTS_DIR, blueprint)
+            cli_runner.run_cli(command)
 
-    def _local_execute(self, parameters=None, allow_custom=None):
+    def _local_execute(self, parameters=None,
+                       allow_custom=None,
+                       workflow_name='run_test_op_on_nodes'):
         if parameters:
             parameters_path = os.path.join(TEST_WORK_DIR,
                                            'temp_parameters.json')
             with open(parameters_path, 'w') as f:
                 f.write(json.dumps(parameters))
-            command = 'cfy local execute -w run_test_op_on_nodes -p {0}'\
-                      .format(parameters_path)
+            command = 'cfy local execute -w {0} -p {1}'\
+                      .format(workflow_name,
+                              parameters_path)
             if allow_custom is True:
                 cli_runner.run_cli('{0} --allow-custom-parameters'
                                    .format(command))
@@ -181,7 +200,7 @@ class LocalTest(CliCommandTest):
             else:
                 cli_runner.run_cli(command)
         else:
-            cli_runner.run_cli('cfy local execute -w run_test_op_on_nodes')
+            cli_runner.run_cli('cfy local execute -w {0}'.format(workflow_name))
 
 
 @operation
