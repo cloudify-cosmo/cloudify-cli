@@ -127,6 +127,7 @@ class CliInvocationTest(unittest.TestCase):
     original_local_execute = None
     original_local_outputs = None
     original_local_instances = None
+    original_local_install_plugins = None
     original_use = None
     original_init = None
     original_dev = None
@@ -170,6 +171,7 @@ class CliInvocationTest(unittest.TestCase):
         commands.local.init = cls.original_local_init
         commands.local.outputs = cls.original_local_outputs
         commands.local.instances = cls.original_local_instances
+        commands.local.install_plugins = cls.original_local_install_plugins
 
     @classmethod
     def setUpClass(cls):
@@ -296,6 +298,10 @@ class CliInvocationTest(unittest.TestCase):
         cls.original_local_instances = commands.local.instances
         commands.local.instances = create_autospec(
             commands.local.instances, return_value=None
+        )
+        cls.original_local_install_plugins = commands.local.install_plugins
+        commands.local.install_plugins = create_autospec(
+            commands.local.install_plugins, return_value=None
         )
 
     def _test_all_combinations(self, command_path):

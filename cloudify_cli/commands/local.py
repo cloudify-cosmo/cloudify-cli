@@ -24,7 +24,7 @@ import os
 from cloudify.utils import LocalCommandRunner
 
 from cloudify.workflows import local
-from dsl_parser import dsl_constants
+from dsl_parser import constants as dsl_constants
 from dsl_parser.parser import parse_from_path
 
 
