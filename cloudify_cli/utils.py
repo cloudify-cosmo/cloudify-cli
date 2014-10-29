@@ -52,9 +52,7 @@ def get_management_user():
 
 def dump_to_file(collection, file_path):
     with open(file_path, 'a') as f:
-        for item in collection:
-            f.write(str(item))
-            f.write(os.linesep)
+        f.write(os.linesep.join(collection))
 
 
 def validate_virtual_env():
