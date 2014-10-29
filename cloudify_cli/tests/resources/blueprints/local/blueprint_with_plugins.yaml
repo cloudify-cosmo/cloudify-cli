@@ -1,24 +1,29 @@
 tosca_definitions_version: cloudify_dsl_1_0
 
 plugins:
-    my_plugin:
+    plugin:
         executor: central_deployment_agent
-        source: http://plugin_source.zip
-    my_local_plugin:
+        source: http://plugin.zip
+    local_plugin:
         executor: central_deployment_agent
         source: local_plugin
     no_install_plugin:
         executor: central_deployment_agent
         install: false
+    host_plugin:
+        executor: host_agent
+        source: http://host_plugin.zip
 
 node_types:
-    test_type: {}
+    cloudify.types.host: {}
+
 
 node_templates:
     node:
-        type: test_type
+        type: cloudify.types.host
         interfaces:
             test:
-                op: my_plugin.tasks.op
-                op2: my_local_plugin.tasks.op2
+                op: plugin.tasks.op
+                op2: local_plugin.tasks.op2
                 op3: no_install_plugin.tasks.op3
+                op4: host_plugin.tasks.op4

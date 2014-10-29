@@ -18,6 +18,7 @@ Handles 'cfy local'
 """
 
 import json
+from sets import Set
 import shutil
 import os
 from cloudify.utils import LocalCommandRunner
@@ -115,20 +116,38 @@ def install_plugins(blueprint_path, output):
 def _create_requirements(blueprint_path):
 
     parsed_dsl = parse_from_path(dsl_file_path=blueprint_path)
-    sources = []
-    for deployment_plugin in parsed_dsl[DEPLOYMENT_PLUGINS_TO_INSTALL]:
-        if deployment_plugin[PLUGIN_INSTALL_KEY]:
-            source = deployment_plugin[PLUGIN_SOURCE_KEY]
+
+    sources = _plugins_to_requirements(
+        blueprint_path=blueprint_path,
+        plugins=parsed_dsl[DEPLOYMENT_PLUGINS_TO_INSTALL]
+    )
+
+    for node in parsed_dsl['nodes']:
+        sources.update(
+            _plugins_to_requirements(
+                blueprint_path=blueprint_path,
+                plugins=node['plugins'].values()
+            )
+        )
+    return sources
+
+
+def _plugins_to_requirements(blueprint_path, plugins):
+
+    sources = Set()
+    for plugin in plugins:
+        if plugin[PLUGIN_INSTALL_KEY]:
+            source = plugin[PLUGIN_SOURCE_KEY]
             if '://' in source:
                 # URL
-                sources.append(source)
+                sources.add(source)
             else:
                 # Local plugin (should reside under the 'plugins' dir)
                 plugin_path = os.path.join(
                     os.path.dirname(blueprint_path),
                     'plugins',
                     source)
-                sources.append(plugin_path)
+                sources.add(plugin_path)
     return sources
 
 

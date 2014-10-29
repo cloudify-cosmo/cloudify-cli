@@ -19,6 +19,7 @@ Tests all commands that start with 'cfy blueprints'
 
 import os
 import json
+from sets import Set
 
 import nose
 
@@ -118,12 +119,13 @@ class LocalTest(CliCommandTest):
 
         from cloudify_cli.tests.resources.blueprints import local
 
-        expected_requirements = [
-            'http://plugin_source.zip',
+        expected_requirements = Set([
+            'http://plugin.zip',
             os.path.join(os.path.dirname(local.__file__),
                          'plugins',
-                         'local_plugin')
-        ]
+                         'local_plugin'),
+            'http://host_plugin.zip'
+        ])
         requirements_file_path = os.path.join(TEST_WORK_DIR,
                                               'requirements.txt')
 
@@ -132,8 +134,8 @@ class LocalTest(CliCommandTest):
                            .format(BLUEPRINTS_DIR, requirements_file_path))
 
         with open(requirements_file_path, 'r') as f:
-            actual_requirements = f.read()
-            self.assertEqual(actual_requirements, os.linesep.join(expected_requirements))
+            actual_requirements = Set(f.read().split())
+            self.assertEqual(actual_requirements, expected_requirements)
 
     def test_install_plugin(self):
         try:
@@ -141,9 +143,8 @@ class LocalTest(CliCommandTest):
                                '{0}/local/blueprint_with_plugins.yaml'
                                .format(BLUEPRINTS_DIR))
         except CommandExecutionException as e:
-            # Expected pip error since we are using mock
-            # URL's
-            self.assertIn('http://plugin_source.zip',
+            # Expected pip install to start
+            self.assertIn('pip install',
                           e.message)
 
 
