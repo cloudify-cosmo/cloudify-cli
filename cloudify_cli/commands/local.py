@@ -21,12 +21,11 @@ import json
 from sets import Set
 import shutil
 import os
-from cloudify.utils import LocalCommandRunner
 
+from cloudify.utils import LocalCommandRunner
 from cloudify.workflows import local
 from dsl_parser import constants as dsl_constants
 from dsl_parser.parser import parse_from_path
-
 
 from cloudify_cli import exceptions
 from cloudify_cli import constants
