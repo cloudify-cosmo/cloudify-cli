@@ -18,14 +18,16 @@ import os
 import shutil
 import unittest
 import sys
+from mock import patch
 
+from cloudify_rest_client import CloudifyClient
+from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify.utils import setup_default_logger
 
 from cloudify_cli.config.logger_config import LOG_DIR
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.tests import cli_runner
 from cloudify_cli import utils
-from cloudify_rest_client import CloudifyClient
-from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_cli.utils import os as utils_os
 
 
@@ -53,6 +55,8 @@ class CliCommandTest(unittest.TestCase):
         # append providers to path
         # so that its importable
         sys.path.append(TEST_PROVIDERS_DIR)
+
+        cls.logger = setup_default_logger('CliCommandTest')
 
     @classmethod
     def tearDownClass(cls):
@@ -90,21 +94,49 @@ class CliCommandTest(unittest.TestCase):
         if os.path.exists(TEST_WORK_DIR):
             shutil.rmtree(TEST_WORK_DIR)
 
-    def _assert_ex(self, cli_cmd, err_str_segment):
+    def _assert_ex(self,
+                   cli_cmd,
+                   err_str_segment,
+                   possible_solutions=None):
+
+        def _assert():
+            self.assertIn(err_str_segment, str(ex))
+            if possible_solutions:
+                if hasattr(ex, 'possible_solutions'):
+                    self.assertEqual(ex.possible_solutions,
+                                     possible_solutions)
+                else:
+                    self.fail('Exception should have '
+                              'declared possible solutions')
+
         try:
             cli_runner.run_cli(cli_cmd)
             self.fail('Expected error {0} was not raised for command {1}'
                       .format(err_str_segment, cli_cmd))
         except SystemExit, ex:
-            self.assertIn(err_str_segment, str(ex))
+            _assert()
         except CloudifyCliError, ex:
-            self.assertIn(err_str_segment, str(ex))
+            _assert()
         except CloudifyClientError, ex:
-            self.assertIn(err_str_segment, str(ex))
+            _assert()
         except ValueError, ex:
-            self.assertIn(err_str_segment, str(ex))
+            _assert()
         except IOError, ex:
-            self.assertIn(err_str_segment, str(ex))
+            _assert()
+        except ImportError as ex:
+            _assert()
+
+    def assert_method_called(self,
+                             cli_command,
+                             module,
+                             function_name,
+                             kwargs):
+        with patch.object(module, function_name) as mock:
+            try:
+                cli_runner.run_cli(cli_command)
+            except BaseException as e:
+                self.logger.info(e.message)
+            mock.assert_called_with(**kwargs)
 
     def _create_cosmo_wd_settings(self, settings=None):
         directory_settings = utils.CloudifyWorkingDirectorySettings()

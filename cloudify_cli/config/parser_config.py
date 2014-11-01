@@ -344,6 +344,12 @@ def parser_config():
                                 'dest': 'inputs',
                                 'required': False,
                                 'help': 'Inputs file/string for the local workflow creation (in JSON format)'
+                            },
+                            '--install-plugins': {
+                                'dest': 'install_plugins_',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Install necessary plugins of the given blueprint.'
                             }
                         },
                         'handler': cfy.local.init
@@ -526,6 +532,12 @@ def parser_config():
                         'action': 'store_true',
                         'help': 'A flag indicating that validations will run without,'
                                 ' actually performing the bootstrap process.'
+                    },
+                    '--install-plugins': {
+                        'dest': 'install_plugins',
+                        'action': 'store_true',
+                        'default': False,
+                        'help': 'Install necessary plugins of the given blueprint.'
                     }
                 },
                 'handler': cfy.bootstrap

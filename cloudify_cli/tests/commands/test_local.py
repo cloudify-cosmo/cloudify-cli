@@ -19,15 +19,16 @@ Tests all commands that start with 'cfy blueprints'
 
 import os
 import json
+import nose
 from sets import Set
 
-import nose
 
 from cloudify.decorators import operation, workflow
 from cloudify import ctx as op_ctx
 from cloudify.exceptions import CommandExecutionException
 from cloudify.workflows import ctx as workflow_ctx
 
+from cloudify_cli import common
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 from cloudify_cli.tests.commands.test_cli_command import \
@@ -67,13 +68,27 @@ class LocalTest(CliCommandTest):
         output = cli_runner.run_cli('cfy local outputs')
         self.assertIn('"param": "default_param"', output)
 
-    def test_local_execute_missing_plugin(self):
+    def test_local_init_install_plugins(self):
+
+        blueprint_path = '{0}/local/{1}.yaml' \
+            .format(BLUEPRINTS_DIR,
+                    'blueprint_with_plugins')
+
+        self.assert_method_called(
+            cli_command='cfy local init --install-plugins -p {0}'
+                        .format(blueprint_path),
+            module=common,
+            function_name='install_blueprint_plugins',
+            kwargs={'blueprint_path': blueprint_path}
+        )
+
+    def test_local_init_missing_plugin(self):
         expected_possible_solutions = [
-            "Run 'cfy local execute --install-plugins'",
+            "Run 'cfy local init --install-plugins'",
             "Run 'cfy local install-plugins'"
         ]
         try:
-            self._local_init(blueprint='missing_plugin')
+            self._local_init(blueprint='blueprint_with_plugins')
             self.fail('Excepted ImportError')
         except ImportError as e:
             actual_possible_solutions = e.possible_solutions
@@ -118,17 +133,26 @@ class LocalTest(CliCommandTest):
 
     def test_execute_with_no_init(self):
         self._assert_ex('cfy local execute -w run_test_op_on_nodes',
-                        'has not been initialized')
+                        'has not been initialized',
+                        possible_solutions=[
+                            "Run 'cfy local init' in this directory"
+                        ])
 
     def test_outputs_with_no_init(self):
         self._assert_ex('cfy local outputs',
-                        'has not been initialized')
+                        'has not been initialized',
+                        possible_solutions=[
+                            "Run 'cfy local init' in this directory"
+                        ])
 
     def test_instances_with_no_init(self):
         self._assert_ex('cfy local instances',
-                        'has not been initialized')
+                        'has not been initialized',
+                        possible_solutions=[
+                            "Run 'cfy local init' in this directory"
+                        ])
 
-    def test_create_requirements_file(self):
+    def test_install_plugins_output(self):
 
         from cloudify_cli.tests.resources.blueprints import local
 
@@ -150,7 +174,7 @@ class LocalTest(CliCommandTest):
             actual_requirements = Set(f.read().split())
             self.assertEqual(actual_requirements, expected_requirements)
 
-    def test_install_plugin(self):
+    def test_install_plugins(self):
         try:
             cli_runner.run_cli('cfy local install-plugins -p '
                                '{0}/local/blueprint_with_plugins.yaml'
@@ -165,20 +189,20 @@ class LocalTest(CliCommandTest):
         # tested extensively by the other tests
         self.fail()
 
-    def _local_init(self, inputs=None, blueprint='blueprint'):
+    def _local_init(self,
+                    inputs=None,
+                    blueprint='blueprint',
+                    install_plugins=False):
+
+        flags = '--install-plugins' if install_plugins else ''
+        command = 'cfy local init {0} -p {1}/local/{2}.yaml '\
+                  .format(flags, BLUEPRINTS_DIR, blueprint)
         if inputs:
             inputs_path = os.path.join(TEST_WORK_DIR, 'temp_inputs.json')
             with open(inputs_path, 'w') as f:
                 f.write(json.dumps(inputs))
-            cli_runner.run_cli('cfy local init -p {0}/local/{1}.yaml '
-                               '-i {2}'
-                               .format(BLUEPRINTS_DIR,
-                                       blueprint,
-                                       inputs_path))
-        else:
-            command = 'cfy local init -p {0}/local/{1}.yaml'\
-                .format(BLUEPRINTS_DIR, blueprint)
-            cli_runner.run_cli(command)
+            command = '{0} -i {1}'.format(command, inputs_path)
+        cli_runner.run_cli(command)
 
     def _local_execute(self, parameters=None,
                        allow_custom=None,
