@@ -17,11 +17,10 @@
 Tests 'cfy bootstrap'
 """
 
-from mock import patch
-
 from cloudify_cli import common
 from cloudify_cli.tests import cli_runner
-from cloudify_cli.tests.commands.test_cli_command import CliCommandTest, BLUEPRINTS_DIR
+from cloudify_cli.tests.commands.test_cli_command import \
+    CliCommandTest, BLUEPRINTS_DIR
 
 
 class BootstrapTest(CliCommandTest):

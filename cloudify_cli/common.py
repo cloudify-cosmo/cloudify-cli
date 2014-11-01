@@ -37,11 +37,12 @@ def initialize_blueprint(blueprint_path,
         )
 
     inputs = utils.json_to_dict(inputs, 'inputs')
-    return local.init_env(blueprint_path,
-                          name=name,
-                          inputs=inputs,
-                          storage=storage,
-                          ignored_modules=constants.IGNORED_LOCAL_WORKFLOW_MODULES)
+    return local.init_env(
+        blueprint_path=blueprint_path,
+        name=name,
+        inputs=inputs,
+        storage=storage,
+        ignored_modules=constants.IGNORED_LOCAL_WORKFLOW_MODULES)
 
 
 def install_blueprint_plugins(blueprint_path,
