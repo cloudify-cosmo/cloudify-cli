@@ -363,16 +363,29 @@ def parser_config():
                                 'type': str,
                                 'required': True,
                                 'help': 'Path to a blueprint'
+                            }
+                        },
+                        'handler': cfy.local.install_plugins
+                    },
+                    'create-requirements': {
+                        'help': 'Creates a PIP compliant requirements file for the given blueprint',
+                        'arguments': {
+                            '-p,--blueprint-path': {
+                                'dest': 'blueprint_path',
+                                'metavar': 'BLUEPRINT_PATH',
+                                'type': str,
+                                'required': True,
+                                'help': 'Path to a blueprint'
                             },
                             '-o,--output': {
-                                'metavar': 'PLUGINS_OUTPUT',
+                                'metavar': 'REQUIREMENTS_OUTPUT',
                                 'dest': 'output',
                                 'required': False,
                                 'help': 'Path to a file that will hold the '
                                         'requirements of the blueprint'
                             }
                         },
-                        'handler': cfy.local.install_plugins
+                        'handler': cfy.local.create_requirements
                     },
                     'execute': {
                         'help': 'Execute a workflow locally',

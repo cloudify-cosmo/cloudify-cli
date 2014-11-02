@@ -152,7 +152,7 @@ class LocalTest(CliCommandTest):
                             "Run 'cfy local init' in this directory"
                         ])
 
-    def test_install_plugins_output(self):
+    def test_create_requirements(self):
 
         from cloudify_cli.tests.resources.blueprints import local
 
@@ -166,7 +166,7 @@ class LocalTest(CliCommandTest):
         requirements_file_path = os.path.join(TEST_WORK_DIR,
                                               'requirements.txt')
 
-        cli_runner.run_cli('cfy local install-plugins -p '
+        cli_runner.run_cli('cfy local create-requirements -p '
                            '{0}/local/blueprint_with_plugins.yaml -o {1}'
                            .format(BLUEPRINTS_DIR, requirements_file_path))
 

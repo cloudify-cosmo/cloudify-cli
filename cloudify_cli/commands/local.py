@@ -106,10 +106,16 @@ def instances(node_id):
                         indent=2))
 
 
-def install_plugins(blueprint_path, output):
+def install_plugins(blueprint_path):
     common.install_blueprint_plugins(
+        blueprint_path=blueprint_path)
+
+
+def create_requirements(blueprint_path, output):
+    common.create_requirements(
         blueprint_path=blueprint_path,
-        output=output)
+        output=output
+    )
 
 
 def _storage_dir():

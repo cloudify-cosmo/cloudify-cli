@@ -45,33 +45,28 @@ def initialize_blueprint(blueprint_path,
         ignored_modules=constants.IGNORED_LOCAL_WORKFLOW_MODULES)
 
 
-def install_blueprint_plugins(blueprint_path,
-                              output=None):
+def install_blueprint_plugins(blueprint_path):
 
-    requirements = _create_requirements(
+    requirements = create_requirements(
         blueprint_path=blueprint_path
     )
 
-    if output:
-        utils.dump_to_file(requirements, output)
-        lgr.info('requirements created successfully --> {0}'
-                 .format(output))
-    else:
-        utils.validate_virtual_env()
-        runner = LocalCommandRunner(lgr)
-        for requirement in requirements:
-            runner.run('pip install {0}'.format(requirement),
+    utils.validate_virtual_env()
+    runner = LocalCommandRunner(lgr)
+    for requirement in requirements:
+        runner.run('pip install {0}'.format(requirement),
 
-                       # log installation output
-                       # in real time
-                       stdout_pipe=False)
+                   # log installation output
+                   # in real time
+                   stdout_pipe=False)
 
 
-def _create_requirements(blueprint_path):
+def create_requirements(blueprint_path,
+                        output=None):
 
     parsed_dsl = parse_from_path(dsl_file_path=blueprint_path)
 
-    sources = _plugins_to_requirements(
+    requirements = _plugins_to_requirements(
         blueprint_path=blueprint_path,
         plugins=parsed_dsl[
             dsl_constants.DEPLOYMENT_PLUGINS_TO_INSTALL
@@ -79,13 +74,18 @@ def _create_requirements(blueprint_path):
     )
 
     for node in parsed_dsl['nodes']:
-        sources.update(
+        requirements.update(
             _plugins_to_requirements(
                 blueprint_path=blueprint_path,
                 plugins=node['plugins'].values()
             )
         )
-    return sources
+
+    if output:
+        utils.dump_to_file(requirements, output)
+        lgr.info('Requirements created successfully --> {0}'
+                 .format(output))
+    return requirements
 
 
 def _plugins_to_requirements(blueprint_path, plugins):

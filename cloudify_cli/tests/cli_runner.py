@@ -18,6 +18,7 @@ import os
 import sys
 
 from cloudify_cli import cli
+from cloudify_cli.logger import lgr
 
 
 def run_cli_expect_system_exit_0(command):
@@ -39,6 +40,7 @@ def run_cli_expect_system_exit_code(command, expected_code):
 
 
 def run_cli(command):
+    lgr.info(command)
     sys.argv = command.split()
     cli.main()
 
