@@ -53,6 +53,7 @@ def get_management_user():
 def dump_to_file(collection, file_path):
     with open(file_path, 'a') as f:
         f.write(os.linesep.join(collection))
+        f.write(os.linesep)
 
 
 def validate_virtual_env():
