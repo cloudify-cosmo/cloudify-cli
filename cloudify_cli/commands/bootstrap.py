@@ -17,6 +17,8 @@
 Handles 'cfy bootstrap'
 """
 
+import sys
+
 from cloudify_cli import provider_common
 from cloudify_cli import utils
 from cloudify_cli.bootstrap import bootstrap as bs
@@ -93,6 +95,7 @@ def bootstrap(config_file_path,
             lgr.info('bootstrapping complete')
             lgr.info('management server is up at {0}'.format(manager_ip))
         except Exception:
+            type, value, traceback = sys.exc_info()
             lgr.error('bootstrap failed!')
             if not keep_up:
                 try:
@@ -107,4 +110,4 @@ def bootstrap(config_file_path,
                                 task_retries=5,
                                 task_retry_interval=30,
                                 task_thread_pool_size=1)
-            raise
+            raise type, value, traceback

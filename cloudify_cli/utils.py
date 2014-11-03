@@ -58,6 +58,7 @@ def dump_to_file(collection, file_path):
 
 def validate_virtual_env():
     if not hasattr(sys, 'real_prefix'):
+        # TODO - make sure this actually works
         raise RuntimeError('You must be running inside a virtualenv.')
 
 

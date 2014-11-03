@@ -3,7 +3,7 @@ tosca_definitions_version: cloudify_dsl_1_0
 plugins:
     plugin:
         executor: central_deployment_agent
-        source: http://plugin.zip
+        source: http://localhost/plugin.zip
     local_plugin:
         executor: central_deployment_agent
         source: local_plugin
@@ -12,7 +12,7 @@ plugins:
         install: false
     host_plugin:
         executor: host_agent
-        source: http://host_plugin.zip
+        source: http://localhost/host_plugin.zip
 
 node_types:
     cloudify.nodes.Compute: {}

@@ -49,13 +49,22 @@ def bootstrap_validation(blueprint_path,
                          task_retry_interval=30,
                          task_thread_pool_size=1,
                          install_plugins=False):
-    env = common.initialize_blueprint(
-        blueprint_path,
-        name=name,
-        inputs=inputs,
-        storage=None,
-        install_plugins=install_plugins
-    )
+    try:
+        env = common.initialize_blueprint(
+            blueprint_path,
+            name=name,
+            inputs=inputs,
+            storage=None,
+            install_plugins=install_plugins
+        )
+    except ImportError as e:
+        e.possible_solutions = [
+            "Run 'cfy local install-plugins -p {0}'"
+            .format(blueprint_path),
+            "Run 'cfy bootstrap --install-plugins -p {0}'"
+            .format(blueprint_path)
+        ]
+        raise
 
     env.execute(workflow='execute_operation',
                 parameters={'operation':
@@ -74,13 +83,22 @@ def bootstrap(blueprint_path,
               install_plugins=False):
 
     storage = local.FileStorage(storage_dir=_workdir())
-    env = common.initialize_blueprint(
-        blueprint_path,
-        name=name,
-        inputs=inputs,
-        storage=storage,
-        install_plugins=install_plugins
-    )
+    try:
+        env = common.initialize_blueprint(
+            blueprint_path,
+            name=name,
+            inputs=inputs,
+            storage=storage,
+            install_plugins=install_plugins
+        )
+    except ImportError as e:
+        e.possible_solutions = [
+            "Run 'cfy local install-plugins -p {0}'"
+            .format(blueprint_path),
+            "Run 'cfy bootstrap --install-plugins -p {0}'"
+            .format(blueprint_path)
+        ]
+        raise
 
     env.execute(workflow='install',
                 task_retries=task_retries,

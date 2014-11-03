@@ -55,10 +55,12 @@ def init(blueprint_path,
         # TODO - all of our exceptions. so that we
         # TODO - easily identify them here
         e.possible_solutions = [
-            "Run 'cfy local init --install-plugins'",
-            "Run 'cfy local install-plugins'"
+            "Run 'cfy local init --install-plugins -p {0}'"
+            .format(blueprint_path),
+            "Run 'cfy local install-plugins -p {0}'"
+            .format(blueprint_path)
         ]
-        raise e
+        raise
 
     lgr.info("Initiated {0}\nIf you make changes to the "
              "blueprint, run 'cfy local init -p {0}' again to apply them"
@@ -112,10 +114,25 @@ def install_plugins(blueprint_path):
 
 
 def create_requirements(blueprint_path, output):
-    common.create_requirements(
-        blueprint_path=blueprint_path,
-        output=output
+
+    if output and os.path.exists(output):
+        raise exceptions.CloudifyCliError('output path already exists : {0}'
+                                          .format(output))
+
+    requirements = common.create_requirements(
+        blueprint_path=blueprint_path
     )
+
+    if output:
+        utils.dump_to_file(requirements, output)
+        lgr.info('Requirements created successfully --> {0}'
+                 .format(output))
+    else:
+        # we don't use lgr here to
+        # ensure that the output can be
+        # piped
+        print(os.linesep.join(requirements))
+        print(os.linesep)
 
 
 def _storage_dir():

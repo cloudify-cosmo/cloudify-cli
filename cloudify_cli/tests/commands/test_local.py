@@ -83,12 +83,19 @@ class LocalTest(CliCommandTest):
         )
 
     def test_local_init_missing_plugin(self):
+
+        blueprint = 'blueprint_with_plugins'
+        blueprint_path = '{0}/local/{1}.yaml'.format(BLUEPRINTS_DIR,
+                                                     blueprint)
+
         expected_possible_solutions = [
-            "Run 'cfy local init --install-plugins'",
-            "Run 'cfy local install-plugins'"
+            "Run 'cfy local init --install-plugins -p {0}'"
+            .format(blueprint_path),
+            "Run 'cfy local install-plugins -p {0}'"
+            .format(blueprint_path)
         ]
         try:
-            self._local_init(blueprint='blueprint_with_plugins')
+            self._local_init(blueprint=blueprint)
             self.fail('Excepted ImportError')
         except ImportError as e:
             actual_possible_solutions = e.possible_solutions
@@ -157,11 +164,11 @@ class LocalTest(CliCommandTest):
         from cloudify_cli.tests.resources.blueprints import local
 
         expected_requirements = Set([
-            'http://plugin.zip',
+            'http://localhost/plugin.zip',
             os.path.join(os.path.dirname(local.__file__),
                          'plugins',
                          'local_plugin'),
-            'http://host_plugin.zip'
+            'http://localhost/host_plugin.zip'
         ])
         requirements_file_path = os.path.join(TEST_WORK_DIR,
                                               'requirements.txt')
@@ -174,6 +181,9 @@ class LocalTest(CliCommandTest):
             actual_requirements = Set(f.read().split())
             self.assertEqual(actual_requirements, expected_requirements)
 
+    def test_create_requirements_no_output(self):
+        self.fail("TODO")
+
     def test_install_plugins(self):
         try:
             cli_runner.run_cli('cfy local install-plugins -p '
@@ -181,6 +191,8 @@ class LocalTest(CliCommandTest):
                                .format(BLUEPRINTS_DIR))
         except CommandExecutionException as e:
             # Expected pip install to start
+            # TODO - assert pip installs the correct
+            # TODO - sources
             self.assertIn('pip install',
                           e.message)
 
@@ -194,11 +206,14 @@ class LocalTest(CliCommandTest):
                     blueprint='blueprint',
                     install_plugins=False):
 
+        blueprint_path = '{0}/local/{1}.yaml'.format(BLUEPRINTS_DIR,
+                                                     blueprint)
         flags = '--install-plugins' if install_plugins else ''
-        command = 'cfy local init {0} -p {1}/local/{2}.yaml '\
-                  .format(flags, BLUEPRINTS_DIR, blueprint)
+        command = 'cfy local init {0} -p {1}'.format(flags,
+                                                     blueprint_path)
         if inputs:
-            inputs_path = os.path.join(TEST_WORK_DIR, 'temp_inputs.json')
+            inputs_path = os.path.join(TEST_WORK_DIR,
+                                       'temp_inputs.json')
             with open(inputs_path, 'w') as f:
                 f.write(json.dumps(inputs))
             command = '{0} -i {1}'.format(command, inputs_path)

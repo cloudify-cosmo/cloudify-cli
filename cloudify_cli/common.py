@@ -15,7 +15,6 @@
 ############
 
 import os
-from sets import Set
 from cloudify.utils import LocalCommandRunner
 from cloudify.workflows import local
 from dsl_parser import constants as dsl_constants
@@ -35,7 +34,6 @@ def initialize_blueprint(blueprint_path,
         install_blueprint_plugins(
             blueprint_path=blueprint_path
         )
-
     inputs = utils.json_to_dict(inputs, 'inputs')
     return local.init_env(
         blueprint_path=blueprint_path,
@@ -61,8 +59,7 @@ def install_blueprint_plugins(blueprint_path):
                    stdout_pipe=False)
 
 
-def create_requirements(blueprint_path,
-                        output=None):
+def create_requirements(blueprint_path):
 
     parsed_dsl = parse_from_path(dsl_file_path=blueprint_path)
 
@@ -81,16 +78,12 @@ def create_requirements(blueprint_path,
             )
         )
 
-    if output:
-        utils.dump_to_file(requirements, output)
-        lgr.info('Requirements created successfully --> {0}'
-                 .format(output))
     return requirements
 
 
 def _plugins_to_requirements(blueprint_path, plugins):
 
-    sources = Set()
+    sources = set()
     for plugin in plugins:
         if plugin[dsl_constants.PLUGIN_INSTALL_KEY]:
             source = plugin[
@@ -102,7 +95,7 @@ def _plugins_to_requirements(blueprint_path, plugins):
             else:
                 # Local plugin (should reside under the 'plugins' dir)
                 plugin_path = os.path.join(
-                    os.path.dirname(blueprint_path),
+                    os.path.abspath(os.path.dirname(blueprint_path)),
                     'plugins',
                     source)
                 sources.add(plugin_path)
