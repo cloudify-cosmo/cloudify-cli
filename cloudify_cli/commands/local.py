@@ -26,6 +26,7 @@ from cloudify_cli import exceptions
 from cloudify_cli import common
 from cloudify_cli import utils
 from cloudify_cli.logger import lgr
+from cloudify_cli.logger import flgr
 
 
 _NAME = 'local'
@@ -133,8 +134,8 @@ def create_requirements(blueprint_path, output):
         # this will make it possible to pipe the
         # output directly to pip
         for requirement in requirements:
-            utils.cli_print(requirement)
-
+            print(requirement)
+            flgr.info(requirement)
 
 
 def _storage_dir():

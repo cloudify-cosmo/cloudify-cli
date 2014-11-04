@@ -19,6 +19,7 @@ Tests all commands that start with 'cfy blueprints'
 
 import os
 import json
+import tempfile
 import nose
 
 
@@ -179,6 +180,17 @@ class LocalTest(CliCommandTest):
         with open(requirements_file_path, 'r') as f:
             actual_requirements = set(f.read().split())
             self.assertEqual(actual_requirements, expected_requirements)
+
+    def test_create_requirements_existing_output_file(self):
+        blueprint_path = '{0}/local/blueprint_with_plugins.yaml'.format(BLUEPRINTS_DIR)
+        file_path = tempfile.mktemp()
+        with open(file_path, 'w') as f:
+            f.write('')
+        self._assert_ex(
+            cli_cmd='cfy local create-requirements -p {0} -o {1}'
+                    .format(blueprint_path, file_path),
+            err_str_segment='output path already exists : {0}'.format(file_path)
+        )
 
     def test_create_requirements_no_output(self):
 

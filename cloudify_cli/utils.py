@@ -57,19 +57,6 @@ def dump_to_file(collection, file_path):
         f.write(os.linesep)
 
 
-def cli_print(message, level=logging.INFO):
-
-    """
-    Prints the given message to stdout (using print)
-    and to the cli log file with the given level.
-
-    :param message: The message to print.
-    """
-    flgr.log(level=level,
-             msg=message)
-    print(message)
-
-
 def is_virtual_env():
     return hasattr(sys, 'real_prefix')
 

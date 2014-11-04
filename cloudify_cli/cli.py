@@ -175,10 +175,12 @@ def get_global_verbosity():
 
 def _set_cli_except_hook():
 
+    from cloudify_cli.logger import lgr
+
     def recommend(possible_solutions):
-        utils.cli_print('Possible solutions:')
+        lgr.info('Possible solutions:')
         for solution in possible_solutions:
-            utils.cli_print('  - {0}'.format(solution))
+            lgr.info('  - {0}'.format(solution))
 
     def new_excepthook(tpe, value, tb):
         prefix = tpe.__name__
@@ -189,7 +191,7 @@ def _set_cli_except_hook():
             server_traceback = value.server_traceback
             # this means we made a server call and it failed.
             # we should include this information in the error
-            prefix = 'Server call failed'.format(prefix)
+            prefix = 'An error occurred on the server'.format(prefix)
         if issubclass(tpe, SuppressedCloudifyCliError):
             output_message = False
         if issubclass(tpe, CloudifyBootstrapError):
@@ -201,23 +203,19 @@ def _set_cli_except_hook():
                 value=value,
                 tb=tb,
                 file=s_traceback)
-            utils.cli_print(message=s_traceback.getvalue(),
-                            level=logging.ERROR)
+            lgr.error(s_traceback.getvalue())
             if server_traceback:
-                utils.cli_print(message='Server Traceback (most recent call last):',
-                                level=logging.ERROR)
+                lgr.error('Server Traceback (most recent call last):')
 
                 # No need for print_tb since this exception
                 # is already formatted by the server
-                utils.cli_print(message=server_traceback,
-                                level=logging.ERROR)
+                lgr.error(server_traceback)
         if output_message and not output_traceback:
             # if we output the traceback
             # we output the message too.
             # print_exception does that.
             # here we just want the message (non verbose)
-            utils.cli_print(message='{0}: {1}'.format(prefix, value),
-                            level=logging.ERROR)
+            lgr.error('{0}: {1}'.format(prefix, value))
         if hasattr(value, 'possible_solutions'):
             recommend(getattr(value, 'possible_solutions'))
 
