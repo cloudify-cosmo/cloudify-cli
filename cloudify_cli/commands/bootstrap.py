@@ -95,7 +95,7 @@ def bootstrap(config_file_path,
             lgr.info('bootstrapping complete')
             lgr.info('management server is up at {0}'.format(manager_ip))
         except Exception:
-            type, value, traceback = sys.exc_info()
+            tpe, value, traceback = sys.exc_info()
             lgr.error('bootstrap failed!')
             if not keep_up:
                 try:
@@ -110,4 +110,4 @@ def bootstrap(config_file_path,
                                 task_retries=5,
                                 task_retry_interval=30,
                                 task_thread_pool_size=1)
-            raise type, value, traceback
+            raise tpe, value, traceback

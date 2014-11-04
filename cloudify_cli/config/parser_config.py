@@ -380,7 +380,7 @@ def parser_config():
                             '-o,--output': {
                                 'metavar': 'REQUIREMENTS_OUTPUT',
                                 'dest': 'output',
-                                'required': True,
+                                'required': False,
                                 'help': 'Path to a file that will hold the '
                                         'requirements of the blueprint'
                             }

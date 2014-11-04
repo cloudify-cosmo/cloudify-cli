@@ -128,11 +128,13 @@ def create_requirements(blueprint_path, output):
         lgr.info('Requirements created successfully --> {0}'
                  .format(output))
     else:
-        # we don't use lgr here to
-        # ensure that the output can be
-        # piped
-        print(os.linesep.join(requirements))
-        print(os.linesep)
+        # we don't want to use just lgr
+        # since we want this output to be prefix free.
+        # this will make it possible to pipe the
+        # output directly to pip
+        for requirement in requirements:
+            utils.cli_print(requirement)
+
 
 
 def _storage_dir():

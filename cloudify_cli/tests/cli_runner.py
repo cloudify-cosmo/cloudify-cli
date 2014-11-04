@@ -20,7 +20,6 @@ import sys
 from cloudify_cli import cli
 from cloudify_cli.logger import lgr
 
-
 def run_cli_expect_system_exit_0(command):
     run_cli_expect_system_exit_code(command, expected_code=0)
 

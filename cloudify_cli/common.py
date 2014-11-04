@@ -15,6 +15,9 @@
 ############
 
 import os
+import tempfile
+import sys
+
 from cloudify.utils import LocalCommandRunner
 from cloudify.workflows import local
 from dsl_parser import constants as dsl_constants
@@ -23,6 +26,7 @@ from dsl_parser.parser import parse_from_path
 from cloudify_cli import utils
 from cloudify_cli import constants
 from cloudify_cli.logger import lgr
+from cloudify_cli import exceptions
 
 
 def initialize_blueprint(blueprint_path,
@@ -49,14 +53,26 @@ def install_blueprint_plugins(blueprint_path):
         blueprint_path=blueprint_path
     )
 
-    utils.validate_virtual_env()
-    runner = LocalCommandRunner(lgr)
-    for requirement in requirements:
-        runner.run('pip install {0}'.format(requirement),
+    # validate we are inside a virtual env
+    if not utils.is_virtual_env():
+        raise exceptions.CloudifyCliError(
+            'You must be running inside a '
+            'virtualenv to install blueprint plugins')
 
-                   # log installation output
-                   # in real time
-                   stdout_pipe=False)
+    runner = LocalCommandRunner(lgr)
+
+    # dump the requirements to a file
+    # and let pip install it.
+    # this will utilize pip's mechanism
+    # of cleanup in case an installation fails.
+    output = tempfile.NamedTemporaryFile(mode='w',
+                                         delete=True,
+                                         suffix='.txt',
+                                         prefix='requirements_')
+    utils.dump_to_file(collection=requirements,
+                       file_path=output.name)
+    runner.run(command='pip install -r {0}'.format(output.name),
+               stdout_pipe=False)
 
 
 def create_requirements(blueprint_path):

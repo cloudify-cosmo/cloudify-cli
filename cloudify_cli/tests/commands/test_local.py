@@ -20,7 +20,6 @@ Tests all commands that start with 'cfy blueprints'
 import os
 import json
 import nose
-from sets import Set
 
 
 from cloudify.decorators import operation, workflow
@@ -163,13 +162,13 @@ class LocalTest(CliCommandTest):
 
         from cloudify_cli.tests.resources.blueprints import local
 
-        expected_requirements = Set([
+        expected_requirements = {
             'http://localhost/plugin.zip',
-            os.path.join(os.path.dirname(local.__file__),
-                         'plugins',
-                         'local_plugin'),
-            'http://localhost/host_plugin.zip'
-        ])
+            os.path.join(
+                os.path.dirname(local.__file__),
+                'plugins',
+                'local_plugin'),
+            'http://localhost/host_plugin.zip'}
         requirements_file_path = os.path.join(TEST_WORK_DIR,
                                               'requirements.txt')
 
@@ -178,23 +177,39 @@ class LocalTest(CliCommandTest):
                            .format(BLUEPRINTS_DIR, requirements_file_path))
 
         with open(requirements_file_path, 'r') as f:
-            actual_requirements = Set(f.read().split())
+            actual_requirements = set(f.read().split())
             self.assertEqual(actual_requirements, expected_requirements)
 
     def test_create_requirements_no_output(self):
-        self.fail("TODO")
+
+        from cloudify_cli.tests.resources.blueprints import local
+
+        expected_requirements = {
+            'http://localhost/plugin.zip',
+            os.path.join(
+                os.path.dirname(local.__file__),
+                'plugins',
+                'local_plugin'),
+            'http://localhost/host_plugin.zip'}
+        output = cli_runner.run_cli(
+            'cfy local create-requirements -p '
+            '{0}/local/blueprint_with_plugins.yaml'
+            .format(BLUEPRINTS_DIR))
+        for requirement in expected_requirements:
+            self.assertIn(requirement, output)
 
     def test_install_plugins(self):
+
+        blueprint_path = '{0}/local/blueprint_with_plugins.yaml'\
+            .format(BLUEPRINTS_DIR)
         try:
-            cli_runner.run_cli('cfy local install-plugins -p '
-                               '{0}/local/blueprint_with_plugins.yaml'
-                               .format(BLUEPRINTS_DIR))
+            cli_runner.run_cli('cfy local install-plugins -p {0}'
+                               .format(blueprint_path))
         except CommandExecutionException as e:
             # Expected pip install to start
-            # TODO - assert pip installs the correct
-            # TODO - sources
-            self.assertIn('pip install',
+            self.assertIn('pip install -r /tmp/requirements_',
                           e.message)
+
 
     @nose.tools.nottest
     def test_local_outputs(self):

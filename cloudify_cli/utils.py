@@ -15,6 +15,7 @@
 ############
 
 import json
+import logging
 import os
 import imp
 import pkgutil
@@ -56,10 +57,21 @@ def dump_to_file(collection, file_path):
         f.write(os.linesep)
 
 
-def validate_virtual_env():
-    if not hasattr(sys, 'real_prefix'):
-        # TODO - make sure this actually works
-        raise RuntimeError('You must be running inside a virtualenv.')
+def cli_print(message, level=logging.INFO):
+
+    """
+    Prints the given message to stdout (using print)
+    and to the cli log file with the given level.
+
+    :param message: The message to print.
+    """
+    flgr.log(level=level,
+             msg=message)
+    print(message)
+
+
+def is_virtual_env():
+    return hasattr(sys, 'real_prefix')
 
 
 def load_cloudify_working_dir_settings(suppress_error=False):
