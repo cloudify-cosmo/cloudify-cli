@@ -19,7 +19,7 @@ import shutil
 
 from cloudify.workflows import local
 
-from cloudify_cli import constants
+from cloudify_cli import common
 from cloudify_cli import utils
 from cloudify_cli.bootstrap.tasks import (
     PROVIDER_RUNTIME_PROPERTY,
@@ -36,20 +36,6 @@ def _workdir():
     return workdir
 
 
-def _init_env(blueprint_path,
-              name,
-              inputs=None,
-              use_file_storage=True):
-    storage = local.FileStorage(storage_dir=_workdir()) if use_file_storage \
-        else None
-    return local.init_env(
-        blueprint_path,
-        name=name,
-        inputs=inputs,
-        storage=storage,
-        ignored_modules=constants.IGNORED_LOCAL_WORKFLOW_MODULES)
-
-
 def load_env(name):
     storage = local.FileStorage(storage_dir=_workdir())
     return local.load_env(name=name,
@@ -61,12 +47,24 @@ def bootstrap_validation(blueprint_path,
                          inputs=None,
                          task_retries=5,
                          task_retry_interval=30,
-                         task_thread_pool_size=1):
-    inputs = inputs or {}
-    env = _init_env(blueprint_path,
-                    name=name,
-                    inputs=inputs,
-                    use_file_storage=False)
+                         task_thread_pool_size=1,
+                         install_plugins=False):
+    try:
+        env = common.initialize_blueprint(
+            blueprint_path,
+            name=name,
+            inputs=inputs,
+            storage=None,
+            install_plugins=install_plugins
+        )
+    except ImportError as e:
+        e.possible_solutions = [
+            "Run 'cfy local install-plugins -p {0}'"
+            .format(blueprint_path),
+            "Run 'cfy bootstrap --install-plugins -p {0}'"
+            .format(blueprint_path)
+        ]
+        raise
 
     env.execute(workflow='execute_operation',
                 parameters={'operation':
@@ -81,11 +79,26 @@ def bootstrap(blueprint_path,
               inputs=None,
               task_retries=5,
               task_retry_interval=30,
-              task_thread_pool_size=1):
-    inputs = inputs or {}
-    env = _init_env(blueprint_path,
-                    name=name,
-                    inputs=inputs)
+              task_thread_pool_size=1,
+              install_plugins=False):
+
+    storage = local.FileStorage(storage_dir=_workdir())
+    try:
+        env = common.initialize_blueprint(
+            blueprint_path,
+            name=name,
+            inputs=inputs,
+            storage=storage,
+            install_plugins=install_plugins
+        )
+    except ImportError as e:
+        e.possible_solutions = [
+            "Run 'cfy local install-plugins -p {0}'"
+            .format(blueprint_path),
+            "Run 'cfy bootstrap --install-plugins -p {0}'"
+            .format(blueprint_path)
+        ]
+        raise
 
     env.execute(workflow='install',
                 task_retries=task_retries,

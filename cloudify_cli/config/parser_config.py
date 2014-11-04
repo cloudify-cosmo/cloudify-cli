@@ -344,9 +344,48 @@ def parser_config():
                                 'dest': 'inputs',
                                 'required': False,
                                 'help': 'Inputs file/string for the local workflow creation (in JSON format)'
+                            },
+                            '--install-plugins': {
+                                'dest': 'install_plugins_',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Install necessary plugins of the given blueprint.'
                             }
                         },
                         'handler': cfy.local.init
+                    },
+                    'install-plugins': {
+                        'help': 'Installs the necessary plugins for a given blueprint',
+                        'arguments': {
+                            '-p,--blueprint-path': {
+                                'dest': 'blueprint_path',
+                                'metavar': 'BLUEPRINT_PATH',
+                                'type': str,
+                                'required': True,
+                                'help': 'Path to a blueprint'
+                            }
+                        },
+                        'handler': cfy.local.install_plugins
+                    },
+                    'create-requirements': {
+                        'help': 'Creates a PIP compliant requirements file for the given blueprint',
+                        'arguments': {
+                            '-p,--blueprint-path': {
+                                'dest': 'blueprint_path',
+                                'metavar': 'BLUEPRINT_PATH',
+                                'type': str,
+                                'required': True,
+                                'help': 'Path to a blueprint'
+                            },
+                            '-o,--output': {
+                                'metavar': 'REQUIREMENTS_OUTPUT',
+                                'dest': 'output',
+                                'required': False,
+                                'help': 'Path to a file that will hold the '
+                                        'requirements of the blueprint'
+                            }
+                        },
+                        'handler': cfy.local.create_requirements
                     },
                     'execute': {
                         'help': 'Execute a workflow locally',
@@ -506,6 +545,12 @@ def parser_config():
                         'action': 'store_true',
                         'help': 'A flag indicating that validations will run without,'
                                 ' actually performing the bootstrap process.'
+                    },
+                    '--install-plugins': {
+                        'dest': 'install_plugins',
+                        'action': 'store_true',
+                        'default': False,
+                        'help': 'Install necessary plugins of the given blueprint.'
                     }
                 },
                 'handler': cfy.bootstrap

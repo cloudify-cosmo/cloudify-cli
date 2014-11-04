@@ -17,6 +17,8 @@
 Handles 'cfy bootstrap'
 """
 
+import sys
+
 from cloudify_cli import provider_common
 from cloudify_cli import utils
 from cloudify_cli.bootstrap import bootstrap as bs
@@ -28,7 +30,8 @@ def bootstrap(config_file_path,
               validate_only,
               skip_validations,
               blueprint_path,
-              inputs=None):
+              inputs,
+              install_plugins):
     settings = utils.load_cloudify_working_dir_settings()
     if settings.get_is_provider_config():
         if blueprint_path or inputs:
@@ -63,7 +66,8 @@ def bootstrap(config_file_path,
             inputs=inputs,
             task_retries=5,
             task_retry_interval=30,
-            task_thread_pool_size=1)
+            task_thread_pool_size=1,
+            install_plugins=install_plugins)
         lgr.info('bootstrap validation completed successfully')
 
     if not validate_only:
@@ -75,7 +79,8 @@ def bootstrap(config_file_path,
                 inputs=inputs,
                 task_retries=5,
                 task_retry_interval=30,
-                task_thread_pool_size=1)
+                task_thread_pool_size=1,
+                install_plugins=install_plugins)
 
             manager_ip = details['manager_ip']
             provider_name = details['provider_name']
@@ -90,6 +95,7 @@ def bootstrap(config_file_path,
             lgr.info('bootstrapping complete')
             lgr.info('management server is up at {0}'.format(manager_ip))
         except Exception:
+            tpe, value, traceback = sys.exc_info()
             lgr.error('bootstrap failed!')
             if not keep_up:
                 try:
@@ -104,4 +110,4 @@ def bootstrap(config_file_path,
                                 task_retries=5,
                                 task_retry_interval=30,
                                 task_thread_pool_size=1)
-            raise
+            raise tpe, value, traceback

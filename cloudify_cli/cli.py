@@ -14,6 +14,7 @@
 # limitations under the License.
 ############
 
+import StringIO
 import argparse
 import logging
 import sys
@@ -23,8 +24,6 @@ import argcomplete
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from cloudify_cli.constants import CLOUDIFY_REST_CLIENT_LOGGER_NAME
-from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.exceptions import CloudifyValidationError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.exceptions import CloudifyBootstrapError
 from cloudify_cli.logger import set_logger_handlers
@@ -173,33 +172,49 @@ def get_global_verbosity():
 
 def _set_cli_except_hook():
 
+    from cloudify_cli.logger import lgr
+
+    def recommend(possible_solutions):
+        lgr.info('Possible solutions:')
+        for solution in possible_solutions:
+            lgr.info('  - {0}'.format(solution))
+
     def new_excepthook(tpe, value, tb):
-        prefix = ''
+        prefix = tpe.__name__
         server_traceback = None
         output_message = True
         output_traceback = output_level <= logging.DEBUG
         if issubclass(tpe, CloudifyClientError):
-            prefix = 'Failed making a call to REST service: '
             server_traceback = value.server_traceback
-        elif tpe in [CloudifyCliError, CloudifyValidationError]:
-            pass
-        elif tpe in [SuppressedCloudifyCliError, CloudifyBootstrapError]:
+            # this means we made a server call and it failed.
+            # we should include this information in the error
+            prefix = 'An error occurred on the server'.format(prefix)
+        if issubclass(tpe, SuppressedCloudifyCliError):
             output_message = False
-        else:
-            prefix = '{}: '.format(tpe.__name__)
+        if issubclass(tpe, CloudifyBootstrapError):
+            output_message = False
         if output_traceback:
-            print("Traceback (most recent call last):")
-            traceback.print_tb(tb)
+            s_traceback = StringIO.StringIO()
+            traceback.print_exception(
+                etype=tpe,
+                value=value,
+                tb=tb,
+                file=s_traceback)
+            lgr.error(s_traceback.getvalue())
             if server_traceback:
-                print("Server Traceback (most recent call last):")
+                lgr.error('Server Traceback (most recent call last):')
+
                 # No need for print_tb since this exception
                 # is already formatted by the server
-                print server_traceback
-        if output_message:
-            from cloudify_cli.logger import lgr
-            from cloudify_cli.logger import flgr
-            lgr.error('{}{}'.format(prefix, value))
-            flgr.error('{}{}'.format(prefix, value))
+                lgr.error(server_traceback)
+        if output_message and not output_traceback:
+            # if we output the traceback
+            # we output the message too.
+            # print_exception does that.
+            # here we just want the message (non verbose)
+            lgr.error('{0}: {1}'.format(prefix, value))
+        if hasattr(value, 'possible_solutions'):
+            recommend(getattr(value, 'possible_solutions'))
 
     sys.excepthook = new_excepthook
 
