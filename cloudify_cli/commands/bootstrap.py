@@ -44,7 +44,6 @@ def bootstrap(config_file_path,
                                                   skip_validations)
 
     env_name = 'manager'
-    inputs = utils.json_to_dict(inputs, 'inputs')
 
     # verifying no environment exists from a previous bootstrap
     try:
