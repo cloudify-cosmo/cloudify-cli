@@ -24,12 +24,9 @@ import argcomplete
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from cloudify_cli.constants import CLOUDIFY_REST_CLIENT_LOGGER_NAME
-from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.exceptions import CloudifyValidationError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.exceptions import CloudifyBootstrapError
 from cloudify_cli.logger import set_logger_handlers
-from cloudify_cli import utils
 
 output_level = logging.INFO
 verbose_output = False

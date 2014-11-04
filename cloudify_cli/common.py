@@ -16,7 +16,6 @@
 
 import os
 import tempfile
-import sys
 
 from cloudify.utils import LocalCommandRunner
 from cloudify.workflows import local

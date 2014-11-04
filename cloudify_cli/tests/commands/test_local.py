@@ -182,14 +182,16 @@ class LocalTest(CliCommandTest):
             self.assertEqual(actual_requirements, expected_requirements)
 
     def test_create_requirements_existing_output_file(self):
-        blueprint_path = '{0}/local/blueprint_with_plugins.yaml'.format(BLUEPRINTS_DIR)
+        blueprint_path = '{0}/local/blueprint_with_plugins.yaml'\
+            .format(BLUEPRINTS_DIR)
         file_path = tempfile.mktemp()
         with open(file_path, 'w') as f:
             f.write('')
         self._assert_ex(
             cli_cmd='cfy local create-requirements -p {0} -o {1}'
                     .format(blueprint_path, file_path),
-            err_str_segment='output path already exists : {0}'.format(file_path)
+            err_str_segment='output path already exists : '
+                            '{0}'.format(file_path)
         )
 
     def test_create_requirements_no_output(self):
@@ -221,7 +223,6 @@ class LocalTest(CliCommandTest):
             # Expected pip install to start
             self.assertIn('pip install -r /tmp/requirements_',
                           e.message)
-
 
     @nose.tools.nottest
     def test_local_outputs(self):

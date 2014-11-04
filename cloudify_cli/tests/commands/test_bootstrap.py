@@ -80,7 +80,8 @@ class BootstrapTest(CliCommandTest):
             .format(BLUEPRINTS_DIR,
                     'blueprint_with_plugins')
         self.assert_method_called(
-            cli_command='cfy bootstrap --skip-validations --install-plugins -p {0}'
+            cli_command='cfy bootstrap --skip-validations '
+                        '--install-plugins -p {0}'
             .format(blueprint_path),
             module=common,
             function_name='install_blueprint_plugins',
