@@ -22,6 +22,7 @@ import fabric
 import fabric.api
 from fabric.context_managers import cd
 from fabric.context_managers import settings
+from fabric_plugin.tasks import FabricTaskError
 
 from cloudify import ctx
 from cloudify.decorators import operation
@@ -87,6 +88,20 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
                        agent_remote_key_path)
     else:
         _bootstrap(cloudify_packages, agent_local_key_path,
+                   agent_remote_key_path)
+
+
+def bootstrap_docker(cloudify_packages, agent_local_key_path=None,
+              agent_remote_key_path=None):
+
+    if PUBLIC_IP_RUNTIME_PROPERTY in ctx.instance.runtime_properties:
+        manager_host_public_ip = \
+            ctx.instance.runtime_properties[PUBLIC_IP_RUNTIME_PROPERTY]
+        with settings(host_string=manager_host_public_ip):
+            _bootstrap_docker(cloudify_packages, agent_local_key_path,
+                       agent_remote_key_path)
+    else:
+        _bootstrap_docker(cloudify_packages, agent_local_key_path,
                    agent_remote_key_path)
 
 
@@ -223,6 +238,98 @@ def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
 
     return True
 
+
+def _bootstrap_docker(cloudify_packages, agent_local_key_path,
+                      agent_remote_key_path):
+
+    global lgr
+    lgr = ctx.logger
+
+    manager_ip = fabric.api.env.host_string
+    lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
+
+    lgr.info('cloudify agents installation successful.')
+    lgr.info('management ip is {0}'.format(manager_ip))
+
+    docker_installed = _command_exists('docker') or \
+                       _command_exists('lxc-docker')
+    if not docker_installed:
+        _run_with_retries('curl -sSL https://get.docker.com/ubuntu/ | sudo sh')
+    else:
+        lgr.info('\"docker\" or \"docker-lxc\" is already installed.')
+
+    lgr.info('downloading Docker management image')
+    _run_with_retries('sudo docker pull adamlavie/phusion')
+
+    lgr.info('starting a new Docker container from Docker image')
+    success = _run_with_retries('sudo docker run -t '
+                                '-v ~/:/root '
+                                '-p 80:80 '
+                                '-p 5555:5555 '
+                                '-p 5672:5672 '
+                                '-p 53229:53229 '
+                                '-p 8100:8100 '
+                                '-p 9200:9200 '
+                                '-e MANAGEMENT_IP=' + _get_endpoint_private_ip()
+                                + ' '
+                                '-d adamlavie/phusion '
+                                '/sbin/my_init')
+
+    _wait_for_port(manager_ip, 8100)
+    agent_remote_key_path = _copy_agent_key(agent_local_key_path,
+                                            agent_remote_key_path)
+    _upload_provider_context(agent_remote_key_path)
+    _set_manager_endpoint_data()
+
+    return True
+
+
+def _command_exists(command):
+    try:
+        return fabric.api.run(command + ' -v \"$@\"')
+    except FabricTaskError:
+        return False
+
+
+def _wait_for_port(server, port, timeout=None):
+    """ Wait for port to become available
+        @param timeout: in seconds, None or 0 wait forever
+        @return: True of False, if timeout is None may return only True or
+                 throw unhandled network exception
+    """
+    import socket
+    import errno
+
+    s = socket.socket()
+    if timeout:
+        from time import time as now
+        # time module is needed to calc timeout shared between two exceptions
+        end = now() + timeout
+
+    while True:
+        try:
+            if timeout:
+                next_timeout = end - now()
+                if next_timeout < 0:
+                    return False
+                else:
+                    s.settimeout(next_timeout)
+
+            s.connect((server, port))
+
+        except socket.timeout, err:
+            # this exception occurs only if timeout is set
+            if timeout:
+                return False
+
+        except err:
+            # catch timeout exception from underlying network library
+            # this one is different from socket.timeout
+            if type(err.args) != tuple or err[0] != errno.ETIMEDOUT:
+                raise
+        else:
+            s.close()
+            return True
 
 def _set_manager_endpoint_data():
     ctx.instance.runtime_properties[MANAGER_USER_RUNTIME_PROPERTY] = \
