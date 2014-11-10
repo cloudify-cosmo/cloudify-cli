@@ -92,17 +92,17 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
 
 
 def bootstrap_docker(cloudify_packages, agent_local_key_path=None,
-              agent_remote_key_path=None):
+                     agent_remote_key_path=None):
 
     if PUBLIC_IP_RUNTIME_PROPERTY in ctx.instance.runtime_properties:
         manager_host_public_ip = \
             ctx.instance.runtime_properties[PUBLIC_IP_RUNTIME_PROPERTY]
         with settings(host_string=manager_host_public_ip):
             _bootstrap_docker(cloudify_packages, agent_local_key_path,
-                       agent_remote_key_path)
+                              agent_remote_key_path)
     else:
         _bootstrap_docker(cloudify_packages, agent_local_key_path,
-                   agent_remote_key_path)
+                          agent_remote_key_path)
 
 
 def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
@@ -251,31 +251,62 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
     lgr.info('cloudify agents installation successful.')
     lgr.info('management ip is {0}'.format(manager_ip))
 
-    docker_installed = _command_exists('docker') or \
-                       _command_exists('lxc-docker')
+    docker_installed = _command_exists('docker')
+
     if not docker_installed:
-        _run_with_retries('curl -sSL https://get.docker.com/ubuntu/ | sudo sh')
+        if _get_distro(index='2') != 'trusty':
+            err = ('Bootstrap using the Docker Cloudify image requires either '
+                   'running on \'Ubuntu 14.04 trusty\' or having Docker '
+                   'pre-installed on the remote machine.')
+            lgr.error(err)
+            raise NonRecoverableError(err)
+
+        lgr.info('installing Docker on {0}.'.format(manager_ip))
+        res = _run_with_retries(
+            'curl -sSL https://get.docker.com/ubuntu/ | sudo sh')
+        if not res:
+            err = 'failed installing Docker on remote host.'
+            lgr.error(err)
+            raise err
     else:
-        lgr.info('\"docker\" or \"docker-lxc\" is already installed.')
+        lgr.debug('\"Docker\" is already installed.')
 
-    lgr.info('downloading Docker management image')
-    _run_with_retries('sudo docker pull adamlavie/phusion')
+    docker_image_url = cloudify_packages.get('docker').get('docker_url')
+    lgr.info('importing Cloudify Docker management image from {0}'
+             .format(docker_image_url))
+    res = _run_with_retries('sudo docker import ' + docker_image_url +
+                            ' cloudify:latest')
+    if not res:
+        err = 'failed importing Cloudify Docker image from {0}'
+        lgr.error(err)
+        raise NonRecoverableError(err)
 
-    lgr.info('starting a new Docker container from Docker image')
-    success = _run_with_retries('sudo docker run -t '
-                                '-v ~/:/root '
-                                '-p 80:80 '
-                                '-p 5555:5555 '
-                                '-p 5672:5672 '
-                                '-p 53229:53229 '
-                                '-p 8100:8100 '
-                                '-p 9200:9200 '
-                                '-e MANAGEMENT_IP=' + _get_endpoint_private_ip()
-                                + ' '
-                                '-d adamlavie/phusion '
-                                '/sbin/my_init')
+    lgr.info('starting a new Cloudify Docker container.')
+    run_cmd = 'sudo docker run -t ' \
+              '-v ~/:/root ' \
+              '-p 80:80 ' \
+              '-p 5555:5555 ' \
+              '-p 5672:5672 ' \
+              '-p 53229:53229 ' \
+              '-p 8100:8100 ' \
+              '-p 9200:9200 ' \
+              '-e MANAGEMENT_IP=' + _get_endpoint_private_ip() + \
+              ' ' \
+              '-d cloudify:latest ' \
+              '/sbin/my_init'
+    res = _run_with_retries(run_cmd)
+    if not res:
+        err = 'failed starting docker container'
+        lgr.error(err)
+        raise NonRecoverableError(err)
 
-    _wait_for_port(manager_ip, 8100)
+    lgr.info('waiting for Cloudify-Management to start')
+    res = _wait_for_management(manager_ip, timeout=120)
+    if not res:
+        err = 'failed waiting for cloudify manager to start.'
+        lgr.info(err)
+        raise NonRecoverableError(err)
+
     agent_remote_key_path = _copy_agent_key(agent_local_key_path,
                                             agent_remote_key_path)
     _upload_provider_context(agent_remote_key_path)
@@ -285,51 +316,46 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
 
 
 def _command_exists(command):
+    """
+    Returns True if command exists
+    :param command: command to validate
+    :return: True of False
+    """
     try:
         return fabric.api.run(command + ' -v \"$@\"')
     except FabricTaskError:
         return False
 
 
-def _wait_for_port(server, port, timeout=None):
-    """ Wait for port to become available
-        @param timeout: in seconds, None or 0 wait forever
-        @return: True of False, if timeout is None may return only True or
-                 throw unhandled network exception
+def _wait_for_management(ip, port='80', timeout=None):
+    """ Wait for url to become available
+        :param timeout: in seconds, None or 0 wait forever
+        :return: True of False
     """
-    import socket
-    import errno
+    from time import sleep
 
-    s = socket.socket()
+    validation_url = 'http://' + ip + ':' + port + '/blueprints'
     if timeout:
         from time import time as now
-        # time module is needed to calc timeout shared between two exceptions
         end = now() + timeout
 
     while True:
         try:
             if timeout:
-                next_timeout = end - now()
-                if next_timeout < 0:
+                expired = end - now() < 0
+                if expired:
                     return False
-                else:
-                    s.settimeout(next_timeout)
 
-            s.connect((server, port))
+            status = urllib.urlopen(validation_url).getcode()
+            if status == 200:
+                return True
+            sleep(5)
 
-        except socket.timeout, err:
-            # this exception occurs only if timeout is set
-            if timeout:
-                return False
+        except IOError as e:
+            lgr.debug('error waiting for {0}. reason: {1}'
+                      .format(validation_url, e.message))
+            sleep(5)
 
-        except err:
-            # catch timeout exception from underlying network library
-            # this one is different from socket.timeout
-            if type(err.args) != tuple or err[0] != errno.ETIMEDOUT:
-                raise
-        else:
-            s.close()
-            return True
 
 def _set_manager_endpoint_data():
     ctx.instance.runtime_properties[MANAGER_USER_RUNTIME_PROPERTY] = \
@@ -401,10 +427,10 @@ def _check_distro_type_match(url, distro):
     return True
 
 
-def _get_distro():
+def _get_distro(index='0'):
     lgr.debug('identifying instance distribution...')
     return _run_with_retries(
-        'python -c "import platform; print platform.dist()[0]"')
+        'python -c "import platform; print platform.dist()[' + index + ']"')
 
 
 def _get_ext(url):
