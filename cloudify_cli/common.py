@@ -89,7 +89,7 @@ def create_requirements(blueprint_path):
         requirements.update(
             _plugins_to_requirements(
                 blueprint_path=blueprint_path,
-                plugins=node['plugins'].values()
+                plugins=node['plugins']
             )
         )
 
