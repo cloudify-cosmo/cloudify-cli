@@ -31,7 +31,10 @@ def bootstrap(config_file_path,
               skip_validations,
               blueprint_path,
               inputs,
-              install_plugins):
+              install_plugins,
+              task_retries,
+              task_retry_interval,
+              task_thread_pool_size):
     settings = utils.load_cloudify_working_dir_settings()
     if settings.get_is_provider_config():
         if blueprint_path or inputs:
@@ -63,9 +66,9 @@ def bootstrap(config_file_path,
             blueprint_path,
             name=env_name,
             inputs=inputs,
-            task_retries=5,
-            task_retry_interval=30,
-            task_thread_pool_size=1,
+            task_retries=task_retries,
+            task_retry_interval=task_retry_interval,
+            task_thread_pool_size=task_thread_pool_size,
             install_plugins=install_plugins)
         lgr.info('bootstrap validation completed successfully')
 
@@ -76,9 +79,9 @@ def bootstrap(config_file_path,
                 blueprint_path,
                 name=env_name,
                 inputs=inputs,
-                task_retries=5,
-                task_retry_interval=30,
-                task_thread_pool_size=1,
+                task_retries=task_retries,
+                task_retry_interval=task_retry_interval,
+                task_thread_pool_size=task_thread_pool_size,
                 install_plugins=install_plugins)
 
             manager_ip = details['manager_ip']
