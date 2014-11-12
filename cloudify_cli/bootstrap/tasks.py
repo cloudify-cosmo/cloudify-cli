@@ -118,7 +118,8 @@ def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
 
     # get linux distribution to install and download
     # packages accordingly
-    dist = json.loads(get_machine_distro())[0]  # dist is either the dist name or False
+    # dist is either the dist name or False
+    dist = json.loads(get_machine_distro())[0]
     if dist:
         lgr.debug('distribution is: {0}'.format(dist))
     else:
@@ -283,7 +284,7 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
     agent_mount_cmd = ''
     if agent_packages:
         lgr.info('replacing existing agent packages with custom agents {0}'
-                .format(agent_packages.keys()))
+                 .format(agent_packages.keys()))
         _install_agent_packages(agent_packages, distro_info)
         agent_mount_cmd = '-v /opt/manager/resources/packages/agents:' \
                           '/opt/manager/resources/packages/agents '
@@ -472,8 +473,8 @@ def _check_distro_type_match(url, distro):
 
 def get_machine_distro():
     return _run_with_retries('python -c "import platform, json, sys; '
-                      'sys.stdout.write(\'{0}\\n\''
-                      '.format(json.dumps(platform.dist())))"')
+                             'sys.stdout.write(\'{0}\\n\''
+                             '.format(json.dumps(platform.dist())))"')
 
 # def _get_distro():
 #     return json.dumps(_run_with_retries('python -c "import platform; '
