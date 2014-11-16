@@ -309,8 +309,8 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
         except FabricTaskError as e:
             err = 'failed installing custom agent packages. error is {0}' \
                   .format(str(e))
-        agent_mount_cmd = '-v /opt/manager/resources/packages:' \
-                          '/opt/manager/resources/packages '
+        agent_mount_cmd = '-v /opt/manager/resources:' \
+                          '/opt/manager/resources '
 
     if use_sudo:
         docker_exec_command = '{0} {1}'.format('sudo', docker_path)
