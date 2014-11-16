@@ -284,7 +284,7 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
     else:
         lgr.debug('\"docker\" is already installed.')
 
-    docker_image_url = cloudify_packages.get('docker').get('docker_url')
+    docker_image_url = cloudify_packages.get('docker', {}).get('docker_url')
     if not docker_image_url:
         raise NonRecoverableError('no docker URL found in packages')
 
@@ -309,8 +309,8 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
         except FabricTaskError as e:
             err = 'failed installing custom agent packages. error is {0}' \
                   .format(str(e))
-        agent_mount_cmd = '-v /opt/manager/resources/packages/agents:' \
-                          '/opt/manager/resources/packages/agents '
+        agent_mount_cmd = '-v /opt/manager/resources/packages:' \
+                          '/opt/manager/resources/packages '
 
     if use_sudo:
         docker_exec_command = '{0} {1}'.format('sudo', docker_path)
@@ -403,7 +403,7 @@ def _is_docker_installed(docker_path, use_sudo):
     from fabric_plugin.tasks import FabricTaskError
     try:
         if use_sudo:
-            out = fabric.api.run('{0} which {1}'.format('sudo', docker_path))
+            out = fabric.api.run('sudo which {0}'.format(docker_path))
         else:
             out = fabric.api.run('which {0}'.format(docker_path))
         if not out:
@@ -420,7 +420,7 @@ def _wait_for_management(ip, timeout, port=80):
         :param port: port used by the rest service.
         :return: True of False
     """
-    validation_url = 'http://{0}:{1}/{2}'.format(ip, str(port), 'blueprints')
+    validation_url = 'http://{0}:{1}/blueprints'.format(ip, port)
 
     end = time() + timeout
 
