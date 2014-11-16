@@ -22,25 +22,47 @@ import shutil
 import os
 
 from cloudify.workflows import local
-
 from cloudify_cli import exceptions
-from cloudify_cli import constants
+from cloudify_cli import common
 from cloudify_cli import utils
 from cloudify_cli.logger import lgr
+from cloudify_cli.logger import flgr
+
 
 _NAME = 'local'
 _STORAGE_DIR_NAME = 'local-storage'
 
 
-def init(blueprint_path, inputs):
+def init(blueprint_path,
+         inputs,
+         install_plugins_):
+
     if os.path.isdir(_storage_dir()):
         shutil.rmtree(_storage_dir())
-    inputs = utils.json_to_dict(inputs, 'inputs')
-    local.init_env(blueprint_path,
-                   name=_NAME,
-                   inputs=inputs,
-                   storage=_storage(),
-                   ignored_modules=constants.IGNORED_LOCAL_WORKFLOW_MODULES)
+
+    try:
+        common.initialize_blueprint(
+            blueprint_path=blueprint_path,
+            name=_NAME,
+            inputs=inputs,
+            storage=_storage(),
+            install_plugins=install_plugins_
+        )
+    except ImportError as e:
+
+        # import error indicates
+        # some plugin modules are missing
+        # TODO - consider adding an error code to
+        # TODO - all of our exceptions. so that we
+        # TODO - easily identify them here
+        e.possible_solutions = [
+            "Run 'cfy local init --install-plugins -p {0}'"
+            .format(blueprint_path),
+            "Run 'cfy local install-plugins -p {0}'"
+            .format(blueprint_path)
+        ]
+        raise
+
     lgr.info("Initiated {0}\nIf you make changes to the "
              "blueprint, run 'cfy local init -p {0}' again to apply them"
              .format(blueprint_path))
@@ -87,6 +109,35 @@ def instances(node_id):
                         indent=2))
 
 
+def install_plugins(blueprint_path):
+    common.install_blueprint_plugins(
+        blueprint_path=blueprint_path)
+
+
+def create_requirements(blueprint_path, output):
+
+    if output and os.path.exists(output):
+        raise exceptions.CloudifyCliError('output path already exists : {0}'
+                                          .format(output))
+
+    requirements = common.create_requirements(
+        blueprint_path=blueprint_path
+    )
+
+    if output:
+        utils.dump_to_file(requirements, output)
+        lgr.info('Requirements created successfully --> {0}'
+                 .format(output))
+    else:
+        # we don't want to use just lgr
+        # since we want this output to be prefix free.
+        # this will make it possible to pipe the
+        # output directly to pip
+        for requirement in requirements:
+            print(requirement)
+            flgr.info(requirement)
+
+
 def _storage_dir():
     return os.path.join(utils.get_cwd(), _STORAGE_DIR_NAME)
 
@@ -97,8 +148,17 @@ def _storage():
 
 def _load_env():
     if not os.path.isdir(_storage_dir()):
-        raise exceptions.CloudifyCliError(
-            '{0} has not been initialized with a blueprint. Have you called'
-            ' "cfy local init" in this directory?'.format(utils.get_cwd()))
+
+        error = exceptions.CloudifyCliError(
+            '{0} has not been initialized with a blueprint.'
+            .format(utils.get_cwd()))
+
+        # init was probably not executed.
+        # suggest solution.
+
+        error.possible_solutions = [
+            "Run 'cfy local init' in this directory"
+        ]
+        raise error
     return local.load_env(name=_NAME,
                           storage=_storage())

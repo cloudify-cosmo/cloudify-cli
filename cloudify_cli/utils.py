@@ -50,6 +50,16 @@ def get_management_user():
     raise CloudifyCliError(msg)
 
 
+def dump_to_file(collection, file_path):
+    with open(file_path, 'a') as f:
+        f.write(os.linesep.join(collection))
+        f.write(os.linesep)
+
+
+def is_virtual_env():
+    return hasattr(sys, 'real_prefix')
+
+
 def load_cloudify_working_dir_settings(suppress_error=False):
     try:
         path = get_context_path()
