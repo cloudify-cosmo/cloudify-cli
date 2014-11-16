@@ -382,6 +382,11 @@ def _install_agent_packages(agent_packages, distro_info):
 
 
 def _is_docker_installed(docker_run_command):
+    """
+    Returns true if docker run command exists
+    :param docker_run_command: docker command to run
+    :return: True if docker run command exists, False otherwise
+    """
     try:
         out = fabric.api.run('which {0}'.format(docker_run_command))
         if not out:
