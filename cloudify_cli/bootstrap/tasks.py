@@ -24,7 +24,6 @@ import fabric
 import fabric.api
 from fabric.context_managers import cd
 from fabric.context_managers import settings
-from fabric_plugin.tasks import FabricTaskError
 
 from cloudify import ctx
 from cloudify.decorators import operation
@@ -242,6 +241,8 @@ def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
 
 def _bootstrap_docker(cloudify_packages, agent_local_key_path,
                       agent_remote_key_path, docker_run_command):
+    # CFY-1627 - plugin dependency should be removed.
+    from fabric_plugin.tasks import FabricTaskError
     global lgr
     lgr = ctx.logger
 
@@ -347,6 +348,8 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
 
 
 def _install_agent_packages(agent_packages, distro_info):
+    # CFY-1627 - plugin dependency should be removed.
+    from fabric_plugin.tasks import FabricTaskError
     agents_path = '/tmp/agents'
     try:
         _run_command('sudo mkdir -p {0}/'.format(agents_path))
@@ -387,6 +390,8 @@ def _is_docker_installed(docker_run_command):
     :param docker_run_command: docker command to run
     :return: True if docker run command exists, False otherwise
     """
+    # CFY-1627 - plugin dependency should be removed.
+    from fabric_plugin.tasks import FabricTaskError
     try:
         out = fabric.api.run('which {0}'.format(docker_run_command))
         if not out:
