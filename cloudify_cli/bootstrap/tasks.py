@@ -18,6 +18,7 @@ import os
 import urllib
 import urllib2
 import json
+from time import sleep, time
 
 import fabric
 import fabric.api
@@ -78,30 +79,31 @@ def creation_validation(cloudify_packages, **kwargs):
         _validate_package_url_accessible(package_url)
 
 
-def bootstrap(cloudify_packages, agent_local_key_path=None,
-              agent_remote_key_path=None):
+def _run_bootstrap(bootstrap_func, cloudify_packages,
+                   agent_local_key_path=None,
+                   agent_remote_key_path=None,
+                   docker_run_command=None):
     if PUBLIC_IP_RUNTIME_PROPERTY in ctx.instance.runtime_properties:
         manager_host_public_ip = \
             ctx.instance.runtime_properties[PUBLIC_IP_RUNTIME_PROPERTY]
         with settings(host_string=manager_host_public_ip):
-            _bootstrap(cloudify_packages, agent_local_key_path,
-                       agent_remote_key_path)
+            bootstrap_func(cloudify_packages, agent_local_key_path,
+                           agent_remote_key_path, docker_run_command)
     else:
-        _bootstrap(cloudify_packages, agent_local_key_path,
+        bootstrap_func(cloudify_packages, agent_local_key_path,
+                       agent_remote_key_path, docker_run_command)
+
+
+def bootstrap(cloudify_packages, agent_local_key_path=None,
+              agent_remote_key_path=None):
+    _run_bootstrap(_bootstrap, cloudify_packages, agent_local_key_path,
                    agent_remote_key_path)
 
 
 def bootstrap_docker(cloudify_packages, agent_local_key_path=None,
-                     agent_remote_key_path=None):
-    if PUBLIC_IP_RUNTIME_PROPERTY in ctx.instance.runtime_properties:
-        manager_host_public_ip = \
-            ctx.instance.runtime_properties[PUBLIC_IP_RUNTIME_PROPERTY]
-        with settings(host_string=manager_host_public_ip):
-            _bootstrap_docker(cloudify_packages, agent_local_key_path,
-                              agent_remote_key_path)
-    else:
-        _bootstrap_docker(cloudify_packages, agent_local_key_path,
-                          agent_remote_key_path)
+                     agent_remote_key_path=None, docker_run_command=None):
+    _run_bootstrap(_bootstrap_docker, cloudify_packages, agent_local_key_path,
+                   agent_remote_key_path, docker_run_command)
 
 
 def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
@@ -193,8 +195,8 @@ def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
         return False
 
     lgr.info('installing cloudify on {0}...'.format(manager_ip))
-    success = _run_with_retries('sudo {0}/cloudify-components-bootstrap.sh'
-                                .format(PACKAGES_PATH['components']))
+    success = _run_command('sudo {0}/cloudify-components-bootstrap.sh'
+                           .format(PACKAGES_PATH['components']))
     if not success:
         lgr.error('failed to install cloudify-components package.')
         return False
@@ -202,10 +204,10 @@ def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
     # declare user to run celery. this is passed to the core package's
     # bootstrap script for installation.
     celery_user = fabric.api.env.user
-    success = _run_with_retries('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'
-                                .format(PACKAGES_PATH['core'],
-                                        celery_user,
-                                        _get_endpoint_private_ip()))
+    success = _run_command('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'
+                           .format(PACKAGES_PATH['core'],
+                                   celery_user,
+                                   _get_endpoint_private_ip()))
     if not success:
         lgr.error('failed to install cloudify-core package.')
         return False
@@ -239,19 +241,25 @@ def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
 
 
 def _bootstrap_docker(cloudify_packages, agent_local_key_path,
-                      agent_remote_key_path):
+                      agent_remote_key_path, docker_run_command):
     global lgr
     lgr = ctx.logger
 
     manager_ip = fabric.api.env.host_string
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
     agent_packages = cloudify_packages.get('agents')
-    distro_info = get_machine_distro()
+    try:
+        distro_info = get_machine_distro()
+    except FabricTaskError as e:
+        err = 'failed getting platform distro. error is: {0}'.format(str(e))
+        lgr.error(err)
+        raise
 
-    lgr.info('cloudify agents installation successful.')
     lgr.info('management ip is {0}'.format(manager_ip))
 
-    docker_installed = _command_exists('docker')
+    if not docker_run_command:
+        docker_run_command = 'sudo docker'
+    docker_installed = _is_docker_installed(docker_run_command)
 
     if not docker_installed:
         if 'trusty' not in distro_info:
@@ -261,36 +269,47 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
             lgr.error(err)
             raise NonRecoverableError(err)
 
-        lgr.info('installing Docker on {0}.'.format(manager_ip))
-        res = _run_with_retries(
-            'curl -sSL https://get.docker.com/ubuntu/ | sudo sh')
-        if not res:
-            err = 'failed installing Docker on remote host.'
+        try:
+            lgr.info('installing Docker on {0}.'.format(manager_ip))
+            _run_command(
+                'curl -sSL https://get.docker.com/ubuntu/ | sudo sh')
+        except FabricTaskError:
+            err = 'failed installing docker on remote host.'
             lgr.error(err)
-            raise err
+            raise
     else:
-        lgr.debug('\"Docker\" is already installed.')
+        lgr.debug('\"docker\" is already installed.')
 
     docker_image_url = cloudify_packages.get('docker').get('docker_url')
-    lgr.info('importing cloudify-manager docker image from {0}'
-             .format(docker_image_url))
-    res = _run_with_retries('sudo docker import ' + docker_image_url +
-                            ' cloudify:latest')
-    if not res:
-        err = 'failed importing cloudify docker image from {0}'
+    if not docker_image_url:
+        raise NonRecoverableError('no docker URL found in packages')
+
+    try:
+        lgr.info('importing cloudify-manager docker image from {0}'
+                 .format(docker_image_url))
+        _run_command('sudo docker import ' + docker_image_url +
+                     ' cloudify:latest')
+        lgr.info('cloudify agents installation successful.')
+    except FabricTaskError as e:
+        err = 'failed importing cloudify docker image from {0}. reason: {1}' \
+              .format(docker_image_url, str(e))
         lgr.error(err)
-        raise NonRecoverableError(err)
+        raise NonRecoverableError(err, e)
 
     agent_mount_cmd = ''
     if agent_packages:
         lgr.info('replacing existing agent packages with custom agents {0}'
                  .format(agent_packages.keys()))
-        _install_agent_packages(agent_packages, distro_info)
+        try:
+            _install_agent_packages(agent_packages, distro_info)
+        except FabricTaskError as e:
+            err = 'failed installing custom agent packages. error is {0}' \
+                  .format(str(e))
         agent_mount_cmd = '-v /opt/manager/resources/packages/agents:' \
                           '/opt/manager/resources/packages/agents '
 
     lgr.info('starting a new cloudify docker container.')
-    run_cmd = 'sudo docker run -t ' \
+    run_cmd = '{0} run -t ' \
               '-v ~/:/root ' \
               + agent_mount_cmd + \
               '-p 80:80 ' \
@@ -299,14 +318,16 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
               '-p 53229:53229 ' \
               '-p 8100:8100 ' \
               '-p 9200:9200 ' \
-              '-e MANAGEMENT_IP=' + _get_endpoint_private_ip() + \
-              ' ' \
+              '-e MANAGEMENT_IP={1} ' \
               '-d cloudify:latest ' \
-              '/sbin/my_init'
-    res = _run_with_retries(run_cmd)
-    if not res:
-        err = 'failed running cloudify docker container. cmd failed: {0}' \
-            .format(run_cmd)
+              '/sbin/my_init'\
+              .format(docker_run_command, _get_endpoint_private_ip())
+
+    try:
+        _run_command(run_cmd)
+    except FabricTaskError as e:
+        err = 'failed running cloudify docker container. cmd {0} failed. ' \
+              'error is {1}'.format(run_cmd, str(e))
         lgr.error(err)
         raise NonRecoverableError(err)
 
@@ -326,71 +347,63 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
 
 
 def _install_agent_packages(agent_packages, distro_info):
-    agents_path = '/tmp/agents/'
-    res = _run_with_retries('sudo mkdir -p {0}'.format(agents_path))
-    if not res:
-        err = 'failed creating agent packages temp dir: {}' \
-            .format(agents_path)
+    agents_path = '/tmp/agents'
+    try:
+        _run_command('sudo mkdir -p {0}/'.format(agents_path))
+    except FabricTaskError as e:
+        err = 'failed creating agent packages temp dir {0}. error was {1}' \
+              .format(agents_path, str(e))
         lgr.error(err)
-        return False
+        raise
 
     for agent_name, agent_url in agent_packages.items():
-        if 'Ubuntu' in distro_info:
-            res = _run_with_retries('sudo wget -P {0} {1}'.format(
-                agents_path, agent_url))
-        elif 'centos' in distro_info:
-            res = _run_with_retries('cd {0}; sudo curl -O {1}'.format(
-                agents_path, agent_url))
-        if not res:
+        try:
+            if 'Ubuntu' in distro_info:
+                _run_command('sudo wget -P {0}/ {1}'.format(
+                    agents_path, agent_url))
+            elif 'centos' in distro_info:
+                _run_command('cd {0}/; sudo curl -O {1}'.format(
+                    agents_path, agent_url))
+        except FabricTaskError:
             err = 'failed downloading agent package from {0}'.format(agent_url)
             lgr.error(err)
-            return False
-
-    if 'Ubuntu' in distro_info:
-        res = _run_with_retries('sudo dpkg -i {0}*.deb'.format(agents_path))
-    elif 'centos' in distro_info:
-        res = _run_with_retries('sudo rpm -i {0}*.rpm'.format(agents_path))
-    if not res:
-        err = 'failed installing agent packages.'
+            raise
+    try:
+        if 'Ubuntu' in distro_info:
+            _run_command('sudo dpkg -i {0}/*.deb'.format(agents_path))
+        elif 'centos' in distro_info:
+            _run_command('sudo rpm -i {0}/*.rpm'.format(agents_path))
+    except FabricTaskError as e:
+        err = 'failed installing agent packages. error is: {0}'.format(str(e))
         lgr.error(err)
-        return False
+        raise
 
     return True
 
 
-def _command_exists(command):
-    """
-    Returns True if command exists
-    :param command: command to validate
-    :return: True of False
-    """
+def _is_docker_installed(docker_run_command):
     try:
-        return fabric.api.run(command + ' -v \"$@\"')
+        out = fabric.api.run('which {0}'.format(docker_run_command))
+        if not out:
+            return False
+        return True
     except FabricTaskError:
         return False
 
 
-def _wait_for_management(ip, port='80', timeout=None):
+def _wait_for_management(ip, timeout, port=80):
     """ Wait for url to become available
-        :param timeout: in seconds, None or 0 wait forever
+        :param ip: the manager IP
+        :param timeout: in seconds
+        :param port: port used by the rest service.
         :return: True of False
     """
-    from time import sleep
+    validation_url = 'http://{0}:{1}/{2}'.format(ip, str(port), 'blueprints')
 
-    validation_url = 'http://' + ip + ':' + port + '/blueprints'
+    end = time() + timeout
 
-    if timeout:
-        from time import time as now
-
-        end = now() + timeout
-
-    while True:
+    while end - time() >= 0:
         try:
-            if timeout:
-                expired = end - now() < 0
-                if expired:
-                    return False
-
             status = urllib.urlopen(validation_url).getcode()
             if status == 200:
                 return True
@@ -399,6 +412,8 @@ def _wait_for_management(ip, port='80', timeout=None):
             lgr.debug('error waiting for {0}. reason: {1}'
                       .format(validation_url, e.message))
         sleep(5)
+
+    return False
 
 
 def _set_manager_endpoint_data():
@@ -440,24 +455,24 @@ def _upload_provider_context(remote_agents_private_key_path):
                                        provider_context)
 
 
-def _run_with_retries(command):
+def _run_command(command):
     return fabric.api.run(command)
 
 
 def _download_package(url, path, distro):
     if 'Ubuntu' in distro:
-        return _run_with_retries('sudo wget {0} -P {1}'.format(
+        return _run_command('sudo wget {0} -P {1}'.format(
             path, url))
     elif 'centos' in distro:
         with cd(path):
-            return _run_with_retries('sudo curl -O {0}')
+            return _run_command('sudo curl -O {0}')
 
 
 def _unpack(path, distro):
     if 'Ubuntu' in distro:
-        return _run_with_retries('sudo dpkg -i {0}/*.deb'.format(path))
+        return _run_command('sudo dpkg -i {0}/*.deb'.format(path))
     elif 'centos' in distro:
-        return _run_with_retries('sudo rpm -i {0}/*.rpm'.format(path))
+        return _run_command('sudo rpm -i {0}/*.rpm'.format(path))
 
 
 def _check_distro_type_match(url, distro):
@@ -472,13 +487,9 @@ def _check_distro_type_match(url, distro):
 
 
 def get_machine_distro():
-    return _run_with_retries('python -c "import platform, json, sys; '
-                             'sys.stdout.write(\'{0}\\n\''
-                             '.format(json.dumps(platform.dist())))"')
-
-# def _get_distro():
-#     return json.dumps(_run_with_retries('python -c "import platform; '
-#                                         'print platform.dist()"'))
+    return _run_command('python -c "import platform, json, sys; '
+                        'sys.stdout.write(\'{0}\\n\''
+                        '.format(json.dumps(platform.dist())))"')
 
 
 def _get_ext(url):
