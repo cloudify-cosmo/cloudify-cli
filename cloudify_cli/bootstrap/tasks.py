@@ -81,16 +81,17 @@ def creation_validation(cloudify_packages, **kwargs):
 def _run_bootstrap(bootstrap_func, cloudify_packages,
                    agent_local_key_path=None,
                    agent_remote_key_path=None,
-                   docker_run_command=None):
+                   docker_path=None,
+                   use_sudo=None):
     if PUBLIC_IP_RUNTIME_PROPERTY in ctx.instance.runtime_properties:
         manager_host_public_ip = \
             ctx.instance.runtime_properties[PUBLIC_IP_RUNTIME_PROPERTY]
         with settings(host_string=manager_host_public_ip):
             bootstrap_func(cloudify_packages, agent_local_key_path,
-                           agent_remote_key_path, docker_run_command)
+                           agent_remote_key_path, docker_path)
     else:
         bootstrap_func(cloudify_packages, agent_local_key_path,
-                       agent_remote_key_path, docker_run_command)
+                       agent_remote_key_path, docker_path, use_sudo)
 
 
 def bootstrap(cloudify_packages, agent_local_key_path=None,
@@ -100,9 +101,10 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
 
 
 def bootstrap_docker(cloudify_packages, agent_local_key_path=None,
-                     agent_remote_key_path=None, docker_run_command=None):
+                     agent_remote_key_path=None, docker_path=None,
+                     use_sudo=None):
     _run_bootstrap(_bootstrap_docker, cloudify_packages, agent_local_key_path,
-                   agent_remote_key_path, docker_run_command)
+                   agent_remote_key_path, docker_path, use_sudo)
 
 
 def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
@@ -240,7 +242,7 @@ def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
 
 
 def _bootstrap_docker(cloudify_packages, agent_local_key_path,
-                      agent_remote_key_path, docker_run_command):
+                      agent_remote_key_path, docker_path, use_sudo):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     global lgr
@@ -258,9 +260,10 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
 
     lgr.info('management ip is {0}'.format(manager_ip))
 
-    if not docker_run_command:
-        docker_run_command = 'sudo docker'
-    docker_installed = _is_docker_installed(docker_run_command)
+    if not docker_path:
+        docker_path = 'docker'
+
+    docker_installed = _is_docker_installed(docker_path, use_sudo)
 
     if not docker_installed:
         if 'trusty' not in distro_info:
@@ -309,20 +312,25 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
         agent_mount_cmd = '-v /opt/manager/resources/packages/agents:' \
                           '/opt/manager/resources/packages/agents '
 
+    if use_sudo:
+        docker_exec_command = '{0} {1}'.format('sudo', docker_path)
+    else:
+        docker_exec_command = docker_path
+
     lgr.info('starting a new cloudify docker container.')
-    run_cmd = '{0} run -t ' \
-              '-v ~/:/root ' \
-              + agent_mount_cmd + \
-              '-p 80:80 ' \
-              '-p 5555:5555 ' \
-              '-p 5672:5672 ' \
-              '-p 53229:53229 ' \
-              '-p 8100:8100 ' \
-              '-p 9200:9200 ' \
-              '-e MANAGEMENT_IP={1} ' \
-              '-d cloudify:latest ' \
-              '/sbin/my_init'\
-              .format(docker_run_command, _get_endpoint_private_ip())
+    run_cmd = ('{0} run -t '
+               '-v ~/:/root '
+               + agent_mount_cmd +
+               '-p 80:80 '
+               '-p 5555:5555 '
+               '-p 5672:5672 '
+               '-p 53229:53229 '
+               '-p 8100:8100 '
+               '-p 9200:9200 '
+               '-e MANAGEMENT_IP={1} '
+               '-d cloudify:latest '
+               '/sbin/my_init') \
+        .format(docker_exec_command, _get_endpoint_private_ip())
 
     try:
         _run_command(run_cmd)
@@ -384,16 +392,20 @@ def _install_agent_packages(agent_packages, distro_info):
     return True
 
 
-def _is_docker_installed(docker_run_command):
+def _is_docker_installed(docker_path, use_sudo):
     """
     Returns true if docker run command exists
     :param docker_run_command: docker command to run
+    :param use_sudo: use sudo to run docker
     :return: True if docker run command exists, False otherwise
     """
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     try:
-        out = fabric.api.run('which {0}'.format(docker_run_command))
+        if use_sudo:
+            out = fabric.api.run('{0} which {1}'.format('sudo', docker_path))
+        else:
+            out = fabric.api.run('which {0}'.format(docker_path))
         if not out:
             return False
         return True
