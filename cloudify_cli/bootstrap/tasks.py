@@ -239,9 +239,8 @@ def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
 
     agent_remote_key_path = _copy_agent_key(agent_local_key_path,
                                             agent_remote_key_path)
-    _upload_provider_context(agent_remote_key_path)
     _set_manager_endpoint_data()
-
+    _upload_provider_context(agent_remote_key_path)
     return True
 
 
@@ -353,9 +352,8 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
 
     agent_remote_key_path = _copy_agent_key(agent_local_key_path,
                                             agent_remote_key_path)
-    _upload_provider_context(agent_remote_key_path)
     _set_manager_endpoint_data()
-
+    _upload_provider_context(agent_remote_key_path)
     return True
 
 
@@ -471,11 +469,15 @@ def _upload_provider_context(remote_agents_private_key_path):
     cloudify_configuration = ctx.node.properties['cloudify']
     cloudify_configuration['cloudify_agent']['agent_key_path'] = \
         remote_agents_private_key_path
-    ctx.instance.update()
-    cloudify_configuration['manager_deployment'] = _dump_manager_deployment()
     provider_context['cloudify'] = cloudify_configuration
     ctx.instance.runtime_properties[PROVIDER_RUNTIME_PROPERTY] = \
         provider_context
+
+    # 'manager_deployment' is used when running 'cfy use ...'
+    # and then calling teardown. Anyway, this code will only live until we
+    # implement the fuller feature of uploading manager blueprint deployments
+    # to the manager.
+    cloudify_configuration['manager_deployment'] = _dump_manager_deployment()
 
     manager_ip = fabric.api.env.host_string
     rest_client = CloudifyClient(manager_ip, REST_PORT)
@@ -540,4 +542,6 @@ def _validate_package_url_accessible(package_url):
 # temp workaround to enable teardown from different machines
 def _dump_manager_deployment():
     from cloudify_cli.bootstrap.bootstrap import dump_manager_deployment
+    # explicitly flush runtime properties to local storage
+    ctx.instance.update()
     return dump_manager_deployment()
