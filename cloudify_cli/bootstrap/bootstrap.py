@@ -16,10 +16,10 @@
 
 import os
 import shutil
-import tarfile
-from StringIO import StringIO
-from io import BytesIO
 import base64
+import tarfile
+from io import BytesIO
+from StringIO import StringIO
 
 from cloudify.workflows import local
 

@@ -47,7 +47,6 @@ def teardown(force, ignore_deployments, config_file_path, ignore_validation):
     else:
         lgr.info("tearing down {0}".format(management_ip))
         provider_context = settings.get_provider_context()
-        print provider_context
         bs.read_manager_deployment_dump_if_needed(
             provider_context.get('cloudify').get('manager_deployment'))
         bs.teardown(name='manager',
