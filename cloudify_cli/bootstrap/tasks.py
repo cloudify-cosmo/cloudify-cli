@@ -471,6 +471,7 @@ def _upload_provider_context(remote_agents_private_key_path):
     cloudify_configuration = ctx.node.properties['cloudify']
     cloudify_configuration['cloudify_agent']['agent_key_path'] = \
         remote_agents_private_key_path
+    ctx.instance.update()
     cloudify_configuration['manager_deployment'] = _dump_manager_deployment()
     provider_context['cloudify'] = cloudify_configuration
     ctx.instance.runtime_properties[PROVIDER_RUNTIME_PROPERTY] = \
