@@ -78,33 +78,37 @@ def creation_validation(cloudify_packages, **kwargs):
         _validate_package_url_accessible(package_url)
 
 
-def _run_bootstrap(bootstrap_func, cloudify_packages,
-                   agent_local_key_path=None,
-                   agent_remote_key_path=None,
-                   docker_path=None,
-                   use_sudo=None):
+def _run_bootstrap(bootstrap_func, bootstrap_func_params):
     if PUBLIC_IP_RUNTIME_PROPERTY in ctx.instance.runtime_properties:
         manager_host_public_ip = \
             ctx.instance.runtime_properties[PUBLIC_IP_RUNTIME_PROPERTY]
         with settings(host_string=manager_host_public_ip):
-            bootstrap_func(cloudify_packages, agent_local_key_path,
-                           agent_remote_key_path, docker_path)
+            bootstrap_func(**bootstrap_func_params)
     else:
-        bootstrap_func(cloudify_packages, agent_local_key_path,
-                       agent_remote_key_path, docker_path, use_sudo)
+        bootstrap_func(**bootstrap_func_params)
 
 
 def bootstrap(cloudify_packages, agent_local_key_path=None,
               agent_remote_key_path=None):
-    _run_bootstrap(_bootstrap, cloudify_packages, agent_local_key_path,
-                   agent_remote_key_path)
+    bootstrap_func_params = {
+        'cloudify_packages': cloudify_packages,
+        'agent_local_key_path': agent_local_key_path,
+        'agent_remote_key_path': agent_remote_key_path,
+    }
+    _run_bootstrap(_bootstrap, bootstrap_func_params)
 
 
 def bootstrap_docker(cloudify_packages, agent_local_key_path=None,
                      agent_remote_key_path=None, docker_path=None,
                      use_sudo=None):
-    _run_bootstrap(_bootstrap_docker, cloudify_packages, agent_local_key_path,
-                   agent_remote_key_path, docker_path, use_sudo)
+    bootstrap_func_params = {
+        'cloudify_packages': cloudify_packages,
+        'agent_local_key_path': agent_local_key_path,
+        'agent_remote_key_path': agent_remote_key_path,
+        'docker_path': docker_path,
+        'use_sudo': use_sudo,
+        }
+    _run_bootstrap(_bootstrap_docker, bootstrap_func_params)
 
 
 def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
