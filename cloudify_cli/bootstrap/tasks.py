@@ -471,6 +471,9 @@ def _upload_provider_context(remote_agents_private_key_path):
     cloudify_configuration = ctx.node.properties['cloudify']
     cloudify_configuration['cloudify_agent']['agent_key_path'] = \
         remote_agents_private_key_path
+
+    cloudify_configuration['manager_deployment'] = _dump_manager_deployment()
+
     provider_context['cloudify'] = cloudify_configuration
     ctx.instance.runtime_properties[PROVIDER_RUNTIME_PROPERTY] = \
         provider_context
@@ -533,3 +536,9 @@ def _validate_package_url_accessible(package_url):
         ctx.logger.error('VALIDATION ERROR: ' + err)
         raise NonRecoverableError(err)
     ctx.logger.debug('OK: url {0} is accessible'.format(package_url))
+
+
+# temp workaround to enable teardown from different machines
+def _dump_manager_deployment():
+    from cloudify_cli.bootstrap.bootstrap import dump_manager_deployment
+    return dump_manager_deployment()
