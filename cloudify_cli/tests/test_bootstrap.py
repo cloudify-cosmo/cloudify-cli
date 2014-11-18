@@ -43,13 +43,15 @@ class CliBootstrapUnitTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(TEST_DIR)
 
-    def test_manager_deployment_dump(self):
+    def test_manager_deployment_dump(self, remove_deployment=True):
         manager1_original_dir = os.path.join(
             os.path.dirname(__file__),
             'resources', 'storage', 'manager1')
-        shutil.copytree(manager1_original_dir, self.manager_dir)
+        if not os.path.exists(self.manager_dir):
+            shutil.copytree(manager1_original_dir, self.manager_dir)
         result = bootstrap.dump_manager_deployment()
-        shutil.rmtree(self.manager_dir)
+        if remove_deployment:
+            shutil.rmtree(self.manager_dir)
         self.assertTrue(
             bootstrap.read_manager_deployment_dump_if_needed(result))
         comparison = filecmp.dircmp(manager1_original_dir, self.manager_dir)
@@ -69,6 +71,4 @@ class CliBootstrapUnitTests(unittest.TestCase):
         self.assertFalse(os.path.exists(self.manager_dir))
 
     def test_manager_deployment_dump_read_already_exists(self):
-        os.mkdir(self.manager_dir)
-        self.assertFalse(
-            bootstrap.read_manager_deployment_dump_if_needed('11'))
+        self.test_manager_deployment_dump(remove_deployment=False)

@@ -167,7 +167,7 @@ def read_manager_deployment_dump_if_needed(manager_deployment_dump):
     if not manager_deployment_dump:
         return False
     if os.path.exists(os.path.join(_workdir(), name)):
-        return False
+        shutil.rmtree(os.path.join(_workdir(), name))
     dump_input = StringIO(manager_deployment_dump)
     dump_input.seek(0)
     file_obj = BytesIO()
