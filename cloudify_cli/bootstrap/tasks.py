@@ -324,6 +324,8 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
         except FabricTaskError as e:
             err = 'failed installing custom agent packages. error is {0}' \
                   .format(str(e))
+            lgr.error(err)
+            raise NonRecoverableError(err)
         agent_mount_cmd = '-v /opt/manager/resources/packages:' \
                           '/opt/manager/resources/packages '
 
