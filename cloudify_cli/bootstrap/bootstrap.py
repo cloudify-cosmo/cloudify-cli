@@ -16,6 +16,10 @@
 
 import os
 import shutil
+import base64
+import tarfile
+from io import BytesIO
+from StringIO import StringIO
 
 from cloudify.workflows import local
 
@@ -142,3 +146,33 @@ def teardown(name='manager',
 
     # deleting local environment data
     shutil.rmtree(_workdir())
+
+
+# Temp workaround to allow teardown on different clients
+# assumes deployment name is manager
+def dump_manager_deployment():
+    name = 'manager'
+    file_obj = BytesIO()
+    output = StringIO()
+    with tarfile.open(fileobj=file_obj, mode='w:gz') as tar:
+        tar.add(os.path.join(_workdir(), name),
+                arcname=name)
+    file_obj.seek(0)
+    base64.encode(file_obj, output)
+    return output.getvalue()
+
+
+def read_manager_deployment_dump_if_needed(manager_deployment_dump):
+    name = 'manager'
+    if not manager_deployment_dump:
+        return False
+    if os.path.exists(os.path.join(_workdir(), name)):
+        shutil.rmtree(os.path.join(_workdir(), name))
+    dump_input = StringIO(manager_deployment_dump)
+    dump_input.seek(0)
+    file_obj = BytesIO()
+    base64.decode(dump_input, file_obj)
+    file_obj.seek(0)
+    with tarfile.open(fileobj=file_obj, mode='r:gz') as tar:
+        tar.extractall(_workdir())
+    return True
