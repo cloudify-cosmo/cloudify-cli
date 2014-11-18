@@ -309,8 +309,8 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
         _run_command('{0} import {1} data:latest'
                      .format(docker_exec_command, docker_data_url))
     except FabricTaskError as e:
-        err = 'failed importing cloudify docker images from {0}/{1}. reason:' \
-              '{1}'.format(docker_image_url, str(e))
+        err = 'failed importing cloudify docker images from {0} {1}. reason:' \
+              '{2}'.format(docker_image_url, docker_data_url, str(e))
         lgr.error(err)
         raise NonRecoverableError(err)
 
