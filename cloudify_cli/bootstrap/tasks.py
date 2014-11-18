@@ -100,7 +100,7 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
 
 def bootstrap_docker(cloudify_packages, agent_local_key_path=None,
                      agent_remote_key_path=None, docker_path=None,
-                     use_sudo=None):
+                     use_sudo=True):
     bootstrap_func_params = {
         'cloudify_packages': cloudify_packages,
         'agent_local_key_path': agent_local_key_path,
@@ -245,7 +245,7 @@ def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
 
 
 def _bootstrap_docker(cloudify_packages, agent_local_key_path,
-                      agent_remote_key_path, docker_path, use_sudo=True):
+                      agent_remote_key_path, docker_path, use_sudo):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     global lgr
