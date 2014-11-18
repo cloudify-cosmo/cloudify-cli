@@ -246,7 +246,7 @@ def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
 
 
 def _bootstrap_docker(cloudify_packages, agent_local_key_path,
-                      agent_remote_key_path, docker_path, use_sudo):
+                      agent_remote_key_path, docker_path, use_sudo=True):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     global lgr
@@ -288,21 +288,32 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
     else:
         lgr.debug('\"docker\" is already installed.')
 
+    if use_sudo:
+        docker_exec_command = '{0} {1}'.format('sudo', docker_path)
+    else:
+        docker_exec_command = docker_path
+
     docker_image_url = cloudify_packages.get('docker', {}).get('docker_url')
+    docker_data_url = \
+        cloudify_packages.get('docker', {}).get('docker_data_url')
     if not docker_image_url:
         raise NonRecoverableError('no docker URL found in packages')
-
+    if not docker_data_url:
+        raise NonRecoverableError('no docker data image URL found in packages')
     try:
         lgr.info('importing cloudify-manager docker image from {0}'
                  .format(docker_image_url))
-        _run_command('sudo docker import ' + docker_image_url +
-                     ' cloudify:latest')
-        lgr.info('cloudify agents installation successful.')
+        _run_command('{0} import {1} cloudify:latest'
+                     .format(docker_exec_command, docker_image_url))
+        lgr.info('importing cloudify-data docker image from {0}'
+                 .format(docker_data_url))
+        _run_command('{0} import {1} data:latest'
+                     .format(docker_exec_command, docker_data_url))
     except FabricTaskError as e:
-        err = 'failed importing cloudify docker image from {0}. reason: {1}' \
-              .format(docker_image_url, str(e))
+        err = 'failed importing cloudify docker images from {0}/{1}. reason:' \
+              '{1}'.format(docker_image_url, str(e))
         lgr.error(err)
-        raise NonRecoverableError(err, e)
+        raise NonRecoverableError(err)
 
     agent_mount_cmd = ''
     if agent_packages:
@@ -310,43 +321,45 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
                  .format(agent_packages.keys()))
         try:
             _install_agent_packages(agent_packages, distro_info)
+            lgr.info('cloudify agents installation successful.')
         except FabricTaskError as e:
             err = 'failed installing custom agent packages. error is {0}' \
                   .format(str(e))
         agent_mount_cmd = '-v /opt/manager/resources/packages:' \
                           '/opt/manager/resources/packages '
 
-    if use_sudo:
-        docker_exec_command = '{0} {1}'.format('sudo', docker_path)
-    else:
-        docker_exec_command = docker_path
-
-    lgr.info('starting a new cloudify docker container.')
-    run_cmd = ('{0} run -t '
-               '-v ~/:/root '
-               + agent_mount_cmd +
-               '-p 80:80 '
-               '-p 5555:5555 '
-               '-p 5672:5672 '
-               '-p 53229:53229 '
-               '-p 8100:8100 '
-               '-p 9200:9200 '
-               '-e MANAGEMENT_IP={1} '
-               '-d cloudify:latest '
-               '/sbin/my_init') \
+    run_cfy_management_cmd = ('{0} run -t '
+                              '-v ~/:/root '
+                              + agent_mount_cmd +
+                              '--volumes-from data '
+                              '-p 80:80 '
+                              '-p 5555:5555 '
+                              '-p 5672:5672 '
+                              '-p 53229:53229 '
+                              '-p 8100:8100 '
+                              '-p 9200:9200 '
+                              '-e MANAGEMENT_IP={1} '
+                              '-d cloudify:latest '
+                              '/sbin/my_init') \
         .format(docker_exec_command, _get_endpoint_private_ip())
 
+    run_data_container_cmd = '{0} run -t -d --name data data /bin/bash' \
+                             .format(docker_exec_command)
+
     try:
-        _run_command(run_cmd)
+        lgr.info('starting a new cloudify data container')
+        _run_command(run_data_container_cmd)
+        lgr.info('starting a new cloudify mgmt docker container')
+        _run_command(run_cfy_management_cmd)
     except FabricTaskError as e:
-        err = 'failed running cloudify docker container. cmd {0} failed. ' \
-              'error is {1}'.format(run_cmd, str(e))
+        err = 'failed running cloudify docker container. ' \
+              'error is {0}'.format(str(e))
         lgr.error(err)
         raise NonRecoverableError(err)
 
     lgr.info('waiting for cloudify management services to start')
-    res = _wait_for_management(manager_ip, timeout=120)
-    if not res:
+    started = _wait_for_management(manager_ip, timeout=120)
+    if not started:
         err = 'failed waiting for cloudify management services to start.'
         lgr.info(err)
         raise NonRecoverableError(err)
