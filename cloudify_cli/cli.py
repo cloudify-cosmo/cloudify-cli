@@ -52,7 +52,9 @@ def _parse_args(args):
     argcomplete.autocomplete(parser)
     parsed = parser.parse_args(args)
     set_global_verbosity_level(parsed.verbosity)
-    set_debug(parsed.debug)
+    if parsed.debug:
+        set_debug()
+        set_global_verbosity_level(True)
     return parsed
 
 
@@ -150,27 +152,33 @@ def set_global_verbosity_level(verbose):
     Sets the global verbosity level.
 
     :param bool verbose: verbose output or not.
-    :rtype: `None`
     """
 
     global verbose_output
     verbose_output = verbose
 
 
-def set_debug(debug):
+def set_debug():
 
-    if debug:
-        from cloudify_cli.logger import all_loggers
-        for logger_name in all_loggers():
-            logging.getLogger(logger_name)\
-                .setLevel(logging.DEBUG)
+    """
+    Sets all previously configured
+    loggers to debug level
+
+    """
+
+    from cloudify_cli.logger import all_loggers
+    for logger_name in all_loggers():
+        logging.getLogger(logger_name)\
+            .setLevel(logging.DEBUG)
 
 
 def get_global_verbosity():
 
     """
     Returns the globally set verbosity
-    :return:
+
+    :return: verbose or not
+    :rtype: bool
     """
     global verbose_output
     return verbose_output
