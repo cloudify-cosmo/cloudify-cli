@@ -17,7 +17,7 @@
 Handles 'cfy use'
 """
 
-from cloudify_cli.logger import flgr, lgr
+from cloudify_cli.logger import logger
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_cli import utils
@@ -37,19 +37,10 @@ def use(management_ip, provider, rest_port):
                .format(management_ip))
         raise CloudifyCliError(msg)
 
-    try:
-        # check if cloudify was initialized.
-        path = utils.get_context_path()
-        flgr.debug('Cloudify was initialized in {0}. '
-                   'Will use existing context.'
-                   .format(path))
-    except CloudifyCliError:
-        # even if "init" wasn't called prior to this.
-        # Allowing the user to work with an existing management server
-        flgr.debug('Cloudify was not initialized. '
-                   'Creating a new context in {0}'.format(utils.get_cwd()))
-        utils.dump_cloudify_working_dir_settings(
-            utils.CloudifyWorkingDirectorySettings())
+    # check if cloudify was initialized.
+    if not utils.is_initialized():
+        utils.dump_cloudify_working_dir_settings()
+        utils.dump_configuration_file()
 
     try:
         response = utils.get_rest_client(
@@ -66,5 +57,5 @@ def use(management_ip, provider, rest_port):
         wd_settings.set_provider(provider_name)
         wd_settings.set_rest_port(rest_port)
         wd_settings.set_is_provider_config(provider)
-        lgr.info('Using management server {0} with port {1}'
-                 .format(management_ip, rest_port))
+        logger().info('Using management server {0} with port {1}'
+                      .format(management_ip, rest_port))

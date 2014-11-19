@@ -24,11 +24,12 @@ from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify.utils import setup_default_logger
 
-from cloudify_cli.config.logger_config import LOG_DIR
+
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.tests import cli_runner
 from cloudify_cli import utils
 from cloudify_cli.utils import os as utils_os
+from cloudify_cli.utils import DEFAULT_LOG_FILE
 
 
 TEST_DIR = '/tmp/cloudify-cli-component-tests'
@@ -64,9 +65,11 @@ class CliCommandTest(unittest.TestCase):
 
     def setUp(self):
 
+        logdir = os.path.dirname(DEFAULT_LOG_FILE)
+
         # create log folder
-        if not os.path.exists(LOG_DIR):
-            os.makedirs(LOG_DIR)
+        if not os.path.exists(logdir):
+            os.makedirs(logdir)
 
         # create test working directory
         if not os.path.exists(TEST_WORK_DIR):
@@ -84,10 +87,8 @@ class CliCommandTest(unittest.TestCase):
     def tearDown(self):
 
         # empty log file
-        from cloudify_cli.config.logger_config import LOGGER
-        logfile = LOGGER['handlers']['file']['filename']
-        if os.path.exists(logfile):
-            with open(logfile, 'w') as f:
+        if os.path.exists(DEFAULT_LOG_FILE):
+            with open(DEFAULT_LOG_FILE, 'w') as f:
                 f.write('')
 
         # delete test working directory
@@ -144,6 +145,7 @@ class CliCommandTest(unittest.TestCase):
         utils.delete_cloudify_working_dir_settings()
         utils.dump_cloudify_working_dir_settings(
             settings or directory_settings, update=False)
+        utils.dump_configuration_file()
 
     def _read_cosmo_wd_settings(self):
         return utils.load_cloudify_working_dir_settings()

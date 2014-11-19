@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#        http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,15 +17,15 @@
 Handles 'cfy status'
 """
 
-from cloudify_cli.logger import lgr
+from cloudify_cli.logger import logger
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_cli import utils
 
 
 def status():
     management_ip = utils.get_management_server_ip()
-    lgr.info('Getting management services status... [ip={0}]'
-             .format(management_ip))
+    logger().info('Getting management services status... [ip={0}]'
+                  .format(management_ip))
 
     client = utils.get_rest_client(management_ip)
     try:
@@ -46,6 +46,7 @@ def status():
         utils.print_table('Services:', pt)
         return True
     else:
-        lgr.info('REST service at management server {0} is not responding!'
-                 .format(management_ip))
+        logger().info('REST service at management server '
+                      '{0} is not responding!'
+                      .format(management_ip))
         return False

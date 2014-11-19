@@ -14,15 +14,19 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import getpass
-import tempfile
 
-from os import path
+"""
+Logging configuration (formatters, handlers..)
 
-LOG_DIR = path.expanduser('{0}/cloudify-{1}'
-                          .format(tempfile.gettempdir(),
-                                  getpass.getuser()))
-MODULE = 'cli'
+Note:
+-----
+
+This file doe's not include the actual loggers.
+The loggers are configured in the config.yaml file
+in order to expose them to cli users.
+
+"""
+
 LOGGER = {
     "version": 1,
     "formatters": {
@@ -37,8 +41,6 @@ LOGGER = {
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "file",
-            "level": "DEBUG",
-            "filename": "{0}/cloudify-{1}.log".format(LOG_DIR, MODULE),
             "maxBytes": "5000000",
             "backupCount": "20"
         },
@@ -46,19 +48,6 @@ LOGGER = {
             "class": "logging.StreamHandler",
             "stream": "ext://sys.stdout",
             "formatter": "console"
-        }
-    },
-    "loggers": {
-        "main": {
-            "handlers": [
-                "console",
-                "file"
-            ]
-        },
-        "file": {
-            "handlers": [
-                "file"
-            ]
         }
     }
 }

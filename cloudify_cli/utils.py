@@ -20,19 +20,30 @@ import imp
 import pkgutil
 import sys
 import yaml
-
+import pkg_resources
+import cloudify_cli
+import tempfile
+import getpass
+from jinja2.environment import Template
 from contextlib import contextmanager
 from copy import deepcopy
 from prettytable import PrettyTable
-from cloudify_cli.logger import lgr
-from cloudify_cli.logger import flgr
+
 from cloudify_rest_client import CloudifyClient
+
 from cloudify_cli.constants import DEFAULT_REST_PORT
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_FILE_NAME
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME
 from cloudify_cli.constants import CONFIG_FILE_NAME
 from cloudify_cli.constants import DEFAULTS_CONFIG_FILE_NAME
 from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import logger
+
+
+DEFAULT_LOG_FILE = os.path.expanduser(
+    '{0}/cloudify-{1}/cloudify-cli.log'
+    .format(tempfile.gettempdir(),
+            getpass.getuser()))
 
 
 class ProviderConfig(dict):
@@ -65,15 +76,10 @@ def load_cloudify_working_dir_settings(suppress_error=False):
         path = get_context_path()
         with open(path, 'r') as f:
             return yaml.load(f.read())
-    except CloudifyCliError as e:
+    except CloudifyCliError:
         if suppress_error:
             return None
-        msg = ('You must first initialize by running the '
-               'command "cfy init", or choose to work with '
-               'an existing management server by running the '
-               'command "cfy use".')
-        full_message = '{0}. {1}'.format(e.message, msg)
-        raise CloudifyCliError(full_message)
+        raise
 
 
 def get_management_key():
@@ -84,12 +90,31 @@ def get_management_key():
     raise CloudifyCliError(msg)
 
 
+def raise_uninitialized():
+    error = CloudifyCliError(
+        'Not initialized: Cannot find {0} in {1}, '
+        'or in any of its parent directories'
+        .format(CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+                get_cwd()))
+    error.possible_solutions = [
+        "Run 'cfy init' in this directory"
+    ]
+    raise error
+
+
 def get_context_path():
-    context_path = os.path.join(get_init_path(),
-                                CLOUDIFY_WD_SETTINGS_FILE_NAME)
+    init_path = get_init_path()
+    if init_path is None:
+        raise_uninitialized()
+    context_path = os.path.join(
+        init_path,
+        CLOUDIFY_WD_SETTINGS_FILE_NAME
+    )
     if not os.path.exists(context_path):
-        raise CloudifyCliError('File {0} does not exist'
-                               .format(context_path))
+        raise CloudifyCliError(
+            'File {0} does not exist'
+            .format(context_path)
+        )
     return context_path
 
 
@@ -108,13 +133,13 @@ def json_to_dict(json_resource, json_resource_name):
         raise CloudifyCliError(msg)
 
 
+def is_initialized():
+    return get_init_path() is not None
+
+
 def get_init_path():
-
-    flgr.debug('Looking up {0}'.format(CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME))
     current_lookup_dir = get_cwd()
-
-    found = False
-    while not found:
+    while True:
 
         path = os.path.join(current_lookup_dir,
                             CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
@@ -122,20 +147,37 @@ def get_init_path():
         if os.path.exists(path):
             return path
         else:
-            flgr.debug('{0} not found in {1}'
-                       .format(CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-                               current_lookup_dir))
             if os.path.dirname(current_lookup_dir) == current_lookup_dir:
-                raise CloudifyCliError(
-                    'Cannot find {0} in {1}, '
-                    'or in any of its parent directories'
-                    .format(CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-                            get_cwd()))
+                return None
             current_lookup_dir = os.path.dirname(current_lookup_dir)
 
 
-def dump_cloudify_working_dir_settings(cosmo_wd_settings, update=False):
+def get_configuration_path():
+    dot_cloudify = get_init_path()
+    return os.path.join(
+        dot_cloudify,
+        'config.yaml'
+    )
 
+
+def dump_configuration_file():
+
+    config = pkg_resources.resource_string(
+        cloudify_cli.__name__,
+        'resources/config.yaml')
+
+    template = Template(config)
+    rendered = template.render(log_path=DEFAULT_LOG_FILE)
+    target_config_path = get_configuration_path()
+    with open(os.path.join(target_config_path), 'w') as f:
+        f.write(rendered)
+        f.write(os.linesep)
+
+
+def dump_cloudify_working_dir_settings(cosmo_wd_settings=None, update=False):
+
+    if cosmo_wd_settings is None:
+        cosmo_wd_settings = CloudifyWorkingDirectorySettings()
     if update:
         # locate existing file
         # this will raise an error if the file doesnt exist.
@@ -145,9 +187,6 @@ def dump_cloudify_working_dir_settings(cosmo_wd_settings, update=False):
         # create a new file
         path = os.path.join(get_cwd(),
                             CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
-        flgr.debug('Creating {0} in {1}'
-                   .format(CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-                           get_cwd()))
         if not os.path.exists(path):
             os.mkdir(path)
         target_file_path = os.path.join(get_cwd(),
@@ -155,8 +194,6 @@ def dump_cloudify_working_dir_settings(cosmo_wd_settings, update=False):
                                         CLOUDIFY_WD_SETTINGS_FILE_NAME)
 
     with open(target_file_path, 'w') as f:
-        flgr.debug('Writing context to {0}'
-                   .format(target_file_path))
         f.write(yaml.dump(cosmo_wd_settings))
 
 
@@ -201,7 +238,7 @@ def get_management_server_ip():
 
 
 def print_table(title, tb):
-    lgr.info('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
+    logger().info('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
 
 
 def decode_list(data):
@@ -307,17 +344,17 @@ def read_config(config_file_path, provider_dir):
         raise ValueError('Configuration file missing; expected to find '
                          'it at {0}'.format(config_file_path))
 
-    lgr.debug('reading provider config files')
+    logger().debug('reading provider config files')
     with open(config_file_path, 'r') as config_file, \
             open(defaults_config_file_path, 'r') as defaults_config_file:
 
-        lgr.debug('safe loading user config')
+        logger().debug('safe loading user config')
         user_config = yaml.safe_load(config_file.read())
 
-        lgr.debug('safe loading default config')
+        logger().debug('safe loading default config')
         defaults_config = yaml.safe_load(defaults_config_file.read())
 
-    lgr.debug('merging configs')
+    logger().debug('merging configs')
     merged_config = _deep_merge_dictionaries(user_config, defaults_config) \
         if user_config else defaults_config
     return ProviderConfig(merged_config)

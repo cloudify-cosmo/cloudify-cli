@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#        http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -23,32 +23,32 @@ from StringIO import StringIO
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_cli import utils
-from cloudify_cli.logger import lgr
+from cloudify_cli.logger import logger
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 
 
 def _print_deployment_inputs(client, blueprint_id):
     blueprint = client.blueprints.get(blueprint_id)
-    lgr.info('Deployment inputs:')
+    logger().info('Deployment inputs:')
     inputs_output = StringIO()
     for input_name, input_def in blueprint.plan['inputs'].iteritems():
         inputs_output.write('\t{0}:{1}'.format(input_name, os.linesep))
         for k, v in input_def.iteritems():
             inputs_output.write('\t\t{0}: {1}{2}'.format(k, v, os.linesep))
     inputs_output.write(os.linesep)
-    lgr.info(inputs_output.getvalue())
+    logger().info(inputs_output.getvalue())
 
 
 def ls(blueprint_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
     if blueprint_id:
-        lgr.info("Getting deployments list for blueprint: "
-                 "'{0}'... [manager={1}]"
-                 .format(blueprint_id, management_ip))
+        logger().info("Getting deployments list for blueprint: "
+                      "'{0}'... [manager={1}]"
+                      .format(blueprint_id, management_ip))
     else:
-        lgr.info('Getting deployments list...[manager={0}]'
-                 .format(management_ip))
+        logger().info('Getting deployments list...[manager={0}]'
+                      .format(management_ip))
     deployments = client.deployments.list()
     if blueprint_id:
         deployments = filter(lambda deployment:
@@ -68,9 +68,9 @@ def create(blueprint_id, deployment_id, inputs):
     management_ip = utils.get_management_server_ip()
     inputs = utils.json_to_dict(inputs, 'inputs')
 
-    lgr.info('Creating new deployment from blueprint {0} at '
-             'management server {1}'
-             .format(blueprint_id, management_ip))
+    logger().info('Creating new deployment from blueprint {0} at '
+                  'management server {1}'
+                  .format(blueprint_id, management_ip))
     client = utils.get_rest_client(management_ip)
 
     try:
@@ -78,34 +78,34 @@ def create(blueprint_id, deployment_id, inputs):
                                                deployment_id,
                                                inputs=inputs)
     except MissingRequiredDeploymentInputError, e:
-        lgr.info('Unable to create deployment, not all '
-                 'required inputs have been specified...')
+        logger().info('Unable to create deployment, not all '
+                      'required inputs have been specified...')
         _print_deployment_inputs(client, blueprint_id)
         raise SuppressedCloudifyCliError(str(e))
     except UnknownDeploymentInputError, e:
-        lgr.info(
+        logger().info(
             'Unable to create deployment, an unknown input was specified...')
         _print_deployment_inputs(client, blueprint_id)
         raise SuppressedCloudifyCliError(str(e))
 
-    lgr.info("Deployment created, deployment's id is: {0}"
-             .format(deployment.id))
+    logger().info("Deployment created, deployment's id is: {0}"
+                  .format(deployment.id))
 
 
 def delete(deployment_id, ignore_live_nodes):
     management_ip = utils.get_management_server_ip()
-    lgr.info('Deleting deployment {0} from management server {1}'
-             .format(deployment_id, management_ip))
+    logger().info('Deleting deployment {0} from management server {1}'
+                  .format(deployment_id, management_ip))
     client = utils.get_rest_client(management_ip)
     client.deployments.delete(deployment_id, ignore_live_nodes)
-    lgr.info("Deleted deployment successfully")
+    logger().info("Deleted deployment successfully")
 
 
 def outputs(deployment_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
-    lgr.info("Getting outputs for deployment: {0} [manager={1}]".format(
+    logger().info("Getting outputs for deployment: {0} [manager={1}]".format(
         deployment_id, management_ip))
 
     dep = client.deployments.get(deployment_id, _include=['outputs'])
@@ -118,4 +118,4 @@ def outputs(deployment_id):
         outputs_.write('     Description: {0}{1}'.format(description,
                                                          os.linesep))
         outputs_.write('     Value: {0}{1}'.format(output, os.linesep))
-    lgr.info(outputs_.getvalue())
+    logger().info(outputs_.getvalue())

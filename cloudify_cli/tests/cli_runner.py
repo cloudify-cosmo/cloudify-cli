@@ -17,8 +17,12 @@
 import os
 import sys
 
+from cloudify.utils import setup_default_logger
+
 from cloudify_cli import cli
-from cloudify_cli.logger import lgr
+from cloudify_cli.utils import DEFAULT_LOG_FILE
+
+runner_lgr = setup_default_logger('cli_runner')
 
 
 def run_cli_expect_system_exit_0(command):
@@ -40,15 +44,13 @@ def run_cli_expect_system_exit_code(command, expected_code):
 
 
 def run_cli(command):
-    lgr.info(command)
+    runner_lgr.info(command)
     sys.argv = command.split()
     cli.main()
 
     # Return the content of the log file
     # this enables making assertions on the output
-    from cloudify_cli.config.logger_config import LOGGER
-    log_file_path = LOGGER['handlers']['file']['filename']
-    if os.path.exists(log_file_path):
-        with open(log_file_path, 'r') as f:
+    if os.path.exists(DEFAULT_LOG_FILE):
+        with open(DEFAULT_LOG_FILE, 'r') as f:
             return f.read()
     return ''
