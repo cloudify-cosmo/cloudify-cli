@@ -26,7 +26,7 @@ setup(
               'cloudify_cli.bootstrap',
               'cloudify_cli.config'],
     package_data={
-        'cloudify_cli': ['VERSION'],
+        'cloudify_cli': ['VERSION', 'resources/config.yaml'],
     },
     license='LICENSE',
     description='Cloudify CLI',
@@ -46,6 +46,7 @@ setup(
         'fabric==1.8.3',
         'jsonschema==2.3.0',
         'PrettyTable>=0.7,<0.8',
-        'ansicolors==1.0.2'
+        'ansicolors==1.0.2',
+        'jinja2==2.7.2'
     ]
 )

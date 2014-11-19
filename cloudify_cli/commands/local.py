@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#        http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -25,8 +25,7 @@ from cloudify.workflows import local
 from cloudify_cli import exceptions
 from cloudify_cli import common
 from cloudify_cli import utils
-from cloudify_cli.logger import lgr
-from cloudify_cli.logger import flgr
+from cloudify_cli.logger import logger
 
 
 _NAME = 'local'
@@ -36,7 +35,6 @@ _STORAGE_DIR_NAME = 'local-storage'
 def init(blueprint_path,
          inputs,
          install_plugins_):
-
     if os.path.isdir(_storage_dir()):
         shutil.rmtree(_storage_dir())
 
@@ -63,9 +61,9 @@ def init(blueprint_path,
         ]
         raise
 
-    lgr.info("Initiated {0}\nIf you make changes to the "
-             "blueprint, run 'cfy local init -p {0}' again to apply them"
-             .format(blueprint_path))
+    logger().info("Initiated {0}\nIf you make changes to the "
+                  "blueprint, run 'cfy local init -p {0}' again to apply them"
+                  .format(blueprint_path))
 
 
 def execute(workflow_id,
@@ -83,16 +81,16 @@ def execute(workflow_id,
                          task_retry_interval=task_retry_interval,
                          task_thread_pool_size=task_thread_pool_size)
     if result is not None:
-        lgr.info(json.dumps(result,
-                            sort_keys=True,
-                            indent=2))
+        logger().info(json.dumps(result,
+                                 sort_keys=True,
+                                 indent=2))
 
 
 def outputs():
     env = _load_env()
-    lgr.info(json.dumps(env.outputs() or {},
-                        sort_keys=True,
-                        indent=2))
+    logger().info(json.dumps(env.outputs() or {},
+                             sort_keys=True,
+                             indent=2))
 
 
 def instances(node_id):
@@ -104,9 +102,9 @@ def instances(node_id):
         if not node_instances:
             raise exceptions.CloudifyCliError('No node with id: {0}'
                                               .format(node_id))
-    lgr.info(json.dumps(node_instances,
-                        sort_keys=True,
-                        indent=2))
+    logger().info(json.dumps(node_instances,
+                             sort_keys=True,
+                             indent=2))
 
 
 def install_plugins(blueprint_path):
@@ -115,7 +113,6 @@ def install_plugins(blueprint_path):
 
 
 def create_requirements(blueprint_path, output):
-
     if output and os.path.exists(output):
         raise exceptions.CloudifyCliError('output path already exists : {0}'
                                           .format(output))
@@ -126,8 +123,8 @@ def create_requirements(blueprint_path, output):
 
     if output:
         utils.dump_to_file(requirements, output)
-        lgr.info('Requirements created successfully --> {0}'
-                 .format(output))
+        logger().info('Requirements created successfully --> {0}'
+                      .format(output))
     else:
         # we don't want to use just lgr
         # since we want this output to be prefix free.
@@ -135,7 +132,7 @@ def create_requirements(blueprint_path, output):
         # output directly to pip
         for requirement in requirements:
             print(requirement)
-            flgr.info(requirement)
+            logger().info(requirement)
 
 
 def _storage_dir():
@@ -148,7 +145,6 @@ def _storage():
 
 def _load_env():
     if not os.path.isdir(_storage_dir()):
-
         error = exceptions.CloudifyCliError(
             '{0} has not been initialized with a blueprint.'
             .format(utils.get_cwd()))
