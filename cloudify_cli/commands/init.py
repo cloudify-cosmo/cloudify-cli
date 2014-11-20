@@ -24,7 +24,7 @@ from cloudify_cli import utils
 from cloudify_cli import provider_common
 from cloudify_cli import constants
 from cloudify_cli import exceptions
-from cloudify_cli.logger import logger
+from cloudify_cli.logger import get_logger
 from cloudify_cli.logger import configure_loggers
 
 
@@ -55,4 +55,4 @@ def init(provider, reset_config):
     utils.dump_cloudify_working_dir_settings(settings)
     utils.dump_configuration_file()
     configure_loggers()
-    logger().info('Initialization completed successfully')
+    get_logger().info('Initialization completed successfully')

@@ -9,8 +9,8 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
+# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
 """
@@ -25,7 +25,7 @@ from cloudify.workflows import local
 from cloudify_cli import exceptions
 from cloudify_cli import common
 from cloudify_cli import utils
-from cloudify_cli.logger import logger
+from cloudify_cli.logger import get_logger
 
 
 _NAME = 'local'
@@ -61,9 +61,11 @@ def init(blueprint_path,
         ]
         raise
 
-    logger().info("Initiated {0}\nIf you make changes to the "
-                  "blueprint, run 'cfy local init -p {0}' again to apply them"
-                  .format(blueprint_path))
+    get_logger().info("Initiated {0}\nIf you make changes to the "
+                      "blueprint, "
+                      "run 'cfy local init -p {0}' "
+                      "again to apply them"
+                      .format(blueprint_path))
 
 
 def execute(workflow_id,
@@ -72,6 +74,7 @@ def execute(workflow_id,
             task_retries,
             task_retry_interval,
             task_thread_pool_size):
+    logger = get_logger()
     parameters = utils.json_to_dict(parameters, 'parameters')
     env = _load_env()
     result = env.execute(workflow=workflow_id,
@@ -81,19 +84,21 @@ def execute(workflow_id,
                          task_retry_interval=task_retry_interval,
                          task_thread_pool_size=task_thread_pool_size)
     if result is not None:
-        logger().info(json.dumps(result,
-                                 sort_keys=True,
-                                 indent=2))
+        logger.info(json.dumps(result,
+                               sort_keys=True,
+                               indent=2))
 
 
 def outputs():
+    logger = get_logger()
     env = _load_env()
-    logger().info(json.dumps(env.outputs() or {},
-                             sort_keys=True,
-                             indent=2))
+    logger.info(json.dumps(env.outputs() or {},
+                           sort_keys=True,
+                           indent=2))
 
 
 def instances(node_id):
+    logger = get_logger()
     env = _load_env()
     node_instances = env.storage.get_node_instances()
     if node_id:
@@ -102,9 +107,9 @@ def instances(node_id):
         if not node_instances:
             raise exceptions.CloudifyCliError('No node with id: {0}'
                                               .format(node_id))
-    logger().info(json.dumps(node_instances,
-                             sort_keys=True,
-                             indent=2))
+    logger.info(json.dumps(node_instances,
+                           sort_keys=True,
+                           indent=2))
 
 
 def install_plugins(blueprint_path):
@@ -113,6 +118,7 @@ def install_plugins(blueprint_path):
 
 
 def create_requirements(blueprint_path, output):
+    logger = get_logger()
     if output and os.path.exists(output):
         raise exceptions.CloudifyCliError('output path already exists : {0}'
                                           .format(output))
@@ -123,8 +129,8 @@ def create_requirements(blueprint_path, output):
 
     if output:
         utils.dump_to_file(requirements, output)
-        logger().info('Requirements created successfully --> {0}'
-                      .format(output))
+        logger.info('Requirements created successfully --> {0}'
+                    .format(output))
     else:
         # we don't want to use just lgr
         # since we want this output to be prefix free.
@@ -132,7 +138,7 @@ def create_requirements(blueprint_path, output):
         # output directly to pip
         for requirement in requirements:
             print(requirement)
-            logger().info(requirement)
+            logger.info(requirement)
 
 
 def _storage_dir():

@@ -21,18 +21,19 @@ import sys
 import time
 import urllib2
 import abc
-
 import jsonschema
 from fabric import api
 from fabric.context_managers import settings
 from fabric.context_managers import hide
 from fabric.context_managers import cd
 
+from cloudify_rest_client import exceptions as rest_exception
+
 from cloudify_cli import constants
 from cloudify_cli import exceptions
 from cloudify_cli import utils
 from cloudify_cli import cli
-from cloudify_cli.logger import logger
+from cloudify_cli.logger import get_logger
 
 
 def update_config_at_paths(struct, paths, f):
@@ -75,6 +76,7 @@ class BaseProviderClass(object):
         self.provider_config = provider_config
         self.is_verbose_output = is_verbose_output
         self.keep_up_on_failure = False
+        self.logger = get_logger()
 
     @abc.abstractmethod
     def provision(self):
@@ -92,7 +94,7 @@ class BaseProviderClass(object):
         :param dict validation_errors: dict to hold all validation errors.
         :rtype: `dict` of validaiton_errors.
         """
-        logger().debug("no resource validation methods defined!")
+        self.logger.debug("no resource validation methods defined!")
         return {}
 
     @abc.abstractmethod
@@ -128,7 +130,7 @@ class BaseProviderClass(object):
             r = None
             error_message = None
             for execution in range(retries):
-                logger().debug('running command: {0}'.format(command))
+                self.logger.debug('running command: {0}'.format(command))
                 try:
                     if not self.is_verbose_output:
                         with hide('running', 'stdout'):
@@ -140,19 +142,21 @@ class BaseProviderClass(object):
                                                       ssh_user,
                                                       ssh_key)
                 except BaseException as e:
-                    logger().warning('Error occurred while running command: '
-                                     '{0}'.format(str(e)))
+                    self.logger.warning(
+                        'Error occurred while running command: '
+                        '{0}'
+                        .format(str(e)))
                     error_message = str(e)
                 if r and r.succeeded:
-                    logger().debug('successfully ran command: {0}'
-                                   .format(command))
+                    self.logger.debug('successfully ran command: {0}'
+                                      .format(command))
                     return r.stdout if return_output_on_success else True
                 elif r:
                     error_message = r.stderr
-                logger().warning('retrying command: {0}'.format(command))
+                self.logger.warning('retrying command: {0}'.format(command))
                 time.sleep(sleeper)
-            logger().error('failed to run: {0}, {1}'
-                           .format(command, error_message))
+            self.logger.error('failed to run: {0}, {1}'
+                              .format(command, error_message))
             return False
 
         def _download_package(url, path, distro):
@@ -170,32 +174,32 @@ class BaseProviderClass(object):
                 return _run_with_retries('sudo rpm -i {0}/*.rpm'.format(path))
 
         def check_distro_type_match(url, distro):
-            logger().debug('checking distro-type match for url: {0}'
-                           .format(url))
+            self.logger.debug('checking distro-type match for url: {0}'
+                              .format(url))
             ext = get_ext(url)
             if not DISTRO_EXT[distro] == ext:
-                logger().error('wrong package type: '
-                               '{0} required. {1} supplied. in url: {2}'
-                               .format(DISTRO_EXT[distro], ext, url))
+                self.logger.error('wrong package type: '
+                                  '{0} required. {1} supplied. in url: {2}'
+                                  .format(DISTRO_EXT[distro], ext, url))
                 return False
             return True
 
         def get_distro():
-            logger().debug('identifying instance distribution...')
+            self.logger.debug('identifying instance distribution...')
             return _run_with_retries(
                 'python -c "import platform; print platform.dist()[0]"',
                 return_output_on_success=True)
 
         def get_ext(url):
-            logger().debug('extracting file extension from url')
+            self.logger.debug('extracting file extension from url')
             file = urllib2.unquote(url).decode('utf8').split('/')[-1]
             return os.path.splitext(file)[1]
 
         def _run(command):
             return _run_with_retries(command)
 
-        logger().info('initializing manager on the machine at {0}'
-                      .format(public_ip))
+        self.logger.info('initializing manager on the machine at {0}'
+                         .format(public_ip))
         cloudify_config = self.provider_config['cloudify']
 
         server_packages = cloudify_config['server']['packages']
@@ -206,13 +210,13 @@ class BaseProviderClass(object):
         # packages accordingly
         dist = get_distro()  # dist is either the dist name or False
         if dist:
-            logger().debug('distribution is: {0}'.format(dist))
+            self.logger.debug('distribution is: {0}'.format(dist))
         else:
-            logger().error('could not identify distribution.')
+            self.logger.error('could not identify distribution.')
             return False
 
         # check package compatibility with current distro
-        logger().debug('checking package-distro compatibility')
+        self.logger.debug('checking package-distro compatibility')
         for package, package_url in server_packages.items():
             if not check_distro_type_match(package_url, dist):
                 raise RuntimeError('wrong package type')
@@ -221,42 +225,42 @@ class BaseProviderClass(object):
                 raise RuntimeError('wrong agent package type')
 
         # TODO: consolidate server package downloading
-        logger().info('downloading cloudify-components package...')
+        self.logger.info('downloading cloudify-components package...')
         success = _download_package(
             constants.CLOUDIFY_PACKAGES_PATH,
             server_packages['components_package_url'],
             dist)
         if not success:
-            logger().error('failed to download components package. '
-                           'please ensure package exists in its '
-                           'configured location in the config file')
+            self.logger.error('failed to download components package. '
+                              'please ensure package exists in its '
+                              'configured location in the config file')
             return False
 
-        logger().info('downloading cloudify-core package...')
+        self.logger.info('downloading cloudify-core package...')
         success = _download_package(
             constants.CLOUDIFY_PACKAGES_PATH,
             server_packages['core_package_url'],
             dist)
         if not success:
-            logger().error('failed to download core package. '
-                           'please ensure package exists in its '
-                           'configured location in the config file')
+            self.logger.error('failed to download core package. '
+                              'please ensure package exists in its '
+                              'configured location in the config file')
             return False
 
         if ui_included:
-            logger().info('downloading cloudify-ui...')
+            self.logger.info('downloading cloudify-ui...')
             success = _download_package(
                 constants.CLOUDIFY_UI_PACKAGE_PATH,
                 server_packages['ui_package_url'],
                 dist)
             if not success:
-                logger().error('failed to download ui package. '
-                               'please ensure package exists in its '
-                               'configured location in the config file')
+                self.logger.error('failed to download ui package. '
+                                  'please ensure package exists in its '
+                                  'configured location in the config file')
                 return False
         else:
-            logger().debug('ui url not configured in provider config. '
-                           'skipping ui installation.')
+            self.logger.debug('ui url not configured in provider config. '
+                              'skipping ui installation.')
 
         for agent, agent_url in \
                 agent_packages.items():
@@ -265,29 +269,29 @@ class BaseProviderClass(object):
                 agent_packages[agent],
                 dist)
             if not success:
-                logger().error('failed to download {}. '
-                               'please ensure package exists in its '
-                               'configured location in the config file'
-                               .format(agent_url))
+                self.logger.error('failed to download {}. '
+                                  'please ensure package exists in its '
+                                  'configured location in the config file'
+                                  .format(agent_url))
                 return False
 
-        logger().info('unpacking cloudify-core packages...')
+        self.logger.info('unpacking cloudify-core packages...')
         success = _unpack(
             constants.CLOUDIFY_PACKAGES_PATH,
             dist)
         if not success:
-            logger().error('failed to unpack cloudify-core package.')
+            self.logger.error('failed to unpack cloudify-core package.')
             return False
 
-        logger().debug('verifying verbosity for installation process.')
+        self.logger.debug('verifying verbosity for installation process.')
         v = self.is_verbose_output
         self.is_verbose_output = True
 
-        logger().info('installing cloudify on {0}...'.format(public_ip))
+        self.logger.info('installing cloudify on {0}...'.format(public_ip))
         success = _run('sudo {0}/cloudify-components-bootstrap.sh'.format(
             constants.CLOUDIFY_COMPONENTS_PACKAGE_PATH))
         if not success:
-            logger().error('failed to install cloudify-components package.')
+            self.logger.error('failed to install cloudify-components package.')
             return False
 
         # declare user to run celery. this is passed to the core package's
@@ -296,32 +300,32 @@ class BaseProviderClass(object):
         success = _run('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'.format(
             constants.CLOUDIFY_CORE_PACKAGE_PATH, celery_user, private_ip))
         if not success:
-            logger().error('failed to install cloudify-core package.')
+            self.logger.error('failed to install cloudify-core package.')
             return False
 
         if ui_included:
-            logger().info('installing cloudify-ui...')
+            self.logger.info('installing cloudify-ui...')
             self.is_verbose_output = False
             success = _unpack(
                 constants.CLOUDIFY_UI_PACKAGE_PATH,
                 dist)
             if not success:
-                logger().error('failed to install cloudify-ui.')
+                self.logger.error('failed to install cloudify-ui.')
                 return False
-            logger().info('cloudify-ui installation successful.')
+            self.logger.info('cloudify-ui installation successful.')
 
-        logger().info('deploying cloudify agents')
+        self.logger.info('deploying cloudify agents')
         self.is_verbose_output = False
         success = _unpack(
             constants.CLOUDIFY_AGENT_PACKAGE_PATH,
             dist)
         if not success:
-            logger().error('failed to install cloudify agents.')
+            self.logger.error('failed to install cloudify agents.')
             return False
-        logger().info('cloudify agents installation successful.')
+        self.logger.info('cloudify agents installation successful.')
 
         self.is_verbose_output = True
-        logger().debug('setting verbosity to previous state')
+        self.logger.debug('setting verbosity to previous state')
         self.is_verbose_output = v
         return True
 
@@ -350,9 +354,9 @@ class BaseProviderClass(object):
 
         for retry in range(retries):
             try:
-                log_func = logger().info if \
+                log_func = self.logger.info if \
                     retry >= num_of_retries_without_log_message \
-                    else logger().debug
+                    else self.logger.debug
                 log_func('Trying to open an SSH socket to management machine '
                          '(attempt {0} of {1})'.format(retry + 1, retries))
 
@@ -363,16 +367,16 @@ class BaseProviderClass(object):
                 # note: This could possibly be a '[Errno 110] Connection timed
                 # out' error caused by the network stack, which has a different
                 # timeout setting than the one used for the python socket.
-                logger().debug('Error occurred in initial '
-                               'connectivity check with '
-                               'management server: {0}'
-                               .format(str(e)))
+                self.logger.debug('Error occurred in initial '
+                                  'connectivity check with '
+                                  'management server: {0}'
+                                  .format(str(e)))
             time.sleep(retries_interval)
         else:
-            logger().error('Failed to open an SSH socket '
-                           'to management machine '
-                           '(tried {0} times)'
-                           .format(retries))
+            self.logger.error('Failed to open an SSH socket '
+                              'to management machine '
+                              '(tried {0} times)'
+                              .format(retries))
             return False
 
         test_ssh_cmd = ''
@@ -381,8 +385,8 @@ class BaseProviderClass(object):
                                       mgmt_ssh_user, mgmt_ssh_key)
             return True
         except BaseException as e:
-            logger().error('Error occurred while trying to SSH connect to '
-                           'management machine: {}'.format(str(e)))
+            self.logger.error('Error occurred while trying to SSH connect to '
+                              'management machine: {}'.format(str(e)))
             return False
 
     def augment_schema_with_common(self):
@@ -411,14 +415,14 @@ class BaseProviderClass(object):
         :rtype: `dict` of validation_errors.
         """
         if not self.schema:
-            logger().warn('schema is not provided in '
-                          'class "{0}", skipping schema '
-                          'validation'
-                          .format(self.__class__))
+            self.logger.warn('schema is not provided in '
+                             'class "{0}", skipping schema '
+                             'validation'
+                             .format(self.__class__))
             return {}
 
         validation_errors = {}
-        logger().debug('validating config file against provided schema...')
+        self.logger.debug('validating config file against provided schema...')
         try:
             v = jsonschema.Draft4Validator(self.schema)
         except AttributeError as e:
@@ -433,11 +437,11 @@ class BaseProviderClass(object):
         errors = ';\n'.join(map(str, v.iter_errors(self.provider_config)))
 
         if errors:
-            logger().error('VALIDATION ERROR: {0}'.format(errors))
-        logger().error('schema validation failed!') if validation_errors \
-            else logger().info('schema validated successfully')
+            self.logger.error('VALIDATION ERROR: {0}'.format(errors))
+        self.logger.error('schema validation failed!') if validation_errors \
+            else self.logger.info('schema validated successfully')
         # print json.dumps(validation_errors, sort_keys=True,
-        #                  indent=4, separators=(',', ': '))
+        # indent=4, separators=(',', ': '))
         return validation_errors
 
     def get_names_updater(self):
@@ -536,6 +540,8 @@ def get_provider_by_name(provider):
 
 
 def provider_init(provider, reset_config):
+    logger = get_logger()
+
     provider_deprecation_notice()
     if os.path.exists(os.path.join(
             utils.get_cwd(),
@@ -549,12 +555,12 @@ def provider_init(provider, reset_config):
             raise exceptions.CloudifyCliError(msg)
         else:
             # resetting provider configuration
-            logger().debug('resetting configuration...')
+            logger.debug('resetting configuration...')
             _provider_init(provider, reset_config)
-            logger().info("Configuration reset complete")
+            logger.info("Configuration reset complete")
             return
 
-    logger().info("Initializing Cloudify")
+    logger.info("Initializing Cloudify")
     provider_module_name = _provider_init(provider, reset_config)
     settings = utils.CloudifyWorkingDirectorySettings()
     settings.set_provider(provider_module_name)
@@ -563,7 +569,7 @@ def provider_init(provider, reset_config):
     utils.dump_cloudify_working_dir_settings(settings)
     utils.dump_configuration_file()
 
-    logger().info("Initialization complete")
+    logger.info("Initialization complete")
 
 
 def _provider_init(provider, reset_config):
@@ -578,6 +584,8 @@ def _provider_init(provider, reset_config):
     :param bool reset_config: if True, overrides the current config.
     :rtype: `string` representing the provider's module name
     """
+
+    logger = get_logger()
 
     provider_module_name, provider = get_provider_by_name(provider)
 
@@ -597,8 +605,8 @@ def _provider_init(provider, reset_config):
         except:
             provider_dir = os.path.dirname(provider.__file__)
         files_path = os.path.join(provider_dir, constants.CONFIG_FILE_NAME)
-        logger().debug('Copying provider files from {0} to {1}'
-                       .format(files_path, utils.get_cwd()))
+        logger.debug('Copying provider files from {0} to {1}'
+                     .format(files_path, utils.get_cwd()))
         shutil.copy(files_path, utils.get_cwd())
 
     return provider_module_name
@@ -657,6 +665,8 @@ def _update_provider_context(provider_config, provider_context):
 def provider_bootstrap(config_file_path,
                        keep_up,
                        validate_only, skip_validations):
+    logger = get_logger()
+
     provider_deprecation_notice()
     provider_name = utils.get_provider()
     provider = utils.get_provider_module(provider_name)
@@ -666,8 +676,8 @@ def provider_bootstrap(config_file_path,
         provider_dir = os.path.dirname(provider.__file__)
     provider_config = utils.read_config(config_file_path,
                                         provider_dir)
-    logger().info("Prefix for all resources: '{0}'"
-                  .format(provider_config.resources_prefix))
+    logger.info("Prefix for all resources: '{0}'"
+                .format(provider_config.resources_prefix))
     pm = provider.ProviderManager(provider_config, cli.get_global_verbosity())
     pm.keep_up_on_failure = keep_up
 
@@ -675,11 +685,11 @@ def provider_bootstrap(config_file_path,
         raise exceptions.CloudifyCliError(
             'Please choose one of skip-validations or '
             'validate-only flags, not both.')
-    logger().info('Bootstrapping using {0}'.format(provider_name))
+    logger.info('Bootstrapping using {0}'.format(provider_name))
     if skip_validations:
         pm.update_names_in_config()  # Prefixes
     else:
-        logger().info('Validating provider resources and configuration')
+        logger.info('Validating provider resources and configuration')
         pm.augment_schema_with_common()
         if pm.validate_schema():
             raise exceptions.CloudifyValidationError('Provider schema '
@@ -688,12 +698,12 @@ def provider_bootstrap(config_file_path,
         if pm.validate():
             raise exceptions.CloudifyValidationError(
                 'Provider validations failed!')
-        logger().info('Provider validations completed successfully')
+        logger.info('Provider validations completed successfully')
 
     if validate_only:
         return
     with utils.protected_provider_call():
-        logger().info('Provisioning resources for management server...')
+        logger.info('Provisioning resources for management server...')
         params = pm.provision()
 
     installed = False
@@ -701,33 +711,33 @@ def provider_bootstrap(config_file_path,
 
     def keep_up_or_teardown():
         if keep_up:
-            logger().info('topology will remain up')
+            logger.info('topology will remain up')
         else:
-            logger().info('tearing down topology'
-                          ' due to bootstrap failure')
+            logger.info('tearing down topology'
+                        ' due to bootstrap failure')
             pm.teardown(provider_context)
 
     if params:
         mgmt_ip, private_ip, ssh_key, ssh_user, provider_context = params
-        logger().info('provisioning complete')
-        logger().info('ensuring connectivity with the management server...')
+        logger.info('provisioning complete')
+        logger.info('ensuring connectivity with the management server...')
         if pm.ensure_connectivity_with_management_server(
                 mgmt_ip, ssh_key, ssh_user):
-            logger().info('connected with the management server successfully')
-            logger().info('bootstrapping the management server...')
+            logger.info('connected with the management server successfully')
+            logger.info('bootstrapping the management server...')
             try:
                 installed = pm.bootstrap(mgmt_ip, private_ip, ssh_key,
                                          ssh_user)
             except BaseException:
-                logger().error('bootstrapping failed!')
+                logger.error('bootstrapping failed!')
                 keep_up_or_teardown()
                 raise
-            logger().info('bootstrapping complete') if installed else \
-                logger().error('bootstrapping failed!')
+            logger.info('bootstrapping complete') if installed else \
+                logger.error('bootstrapping failed!')
         else:
-            logger().error('failed connecting to the management server!')
+            logger.error('failed connecting to the management server!')
     else:
-        logger().error('provisioning failed!')
+        logger.error('provisioning failed!')
 
     if installed:
         _update_provider_context(provider_config,
@@ -745,9 +755,9 @@ def provider_bootstrap(config_file_path,
         utils.get_rest_client(mgmt_ip).manager.create_context(provider_name,
                                                               provider_context)
 
-        logger().info('management server is up at {0} '
-                      '(is now set as the default management server)'
-                      .format(mgmt_ip))
+        logger.info('management server is up at {0} '
+                    '(is now set as the default management server)'
+                    .format(mgmt_ip))
     else:
         keep_up_or_teardown()
         raise exceptions.CloudifyBootstrapError()
@@ -756,12 +766,14 @@ def provider_bootstrap(config_file_path,
 # Teardown related
 
 def _get_provider_name_and_context(mgmt_ip):
+    logger = get_logger()
+
     # trying to retrieve provider context from server
     try:
         response = utils.get_rest_client(mgmt_ip).manager.get_context()
         return response['name'], response['context']
-    except exceptions.CloudifyClientError as e:
-        logger().warn('Failed to get provider context from server: {0}'.format(
+    except rest_exception.CloudifyClientError as e:
+        logger.warn('Failed to get provider context from server: {0}'.format(
             str(e)))
 
     # using the local provider context instead (if it's relevant for the
@@ -786,6 +798,8 @@ def _get_provider_name_and_context(mgmt_ip):
 
 def provider_teardown(config_file_path,
                       ignore_validation):
+    logger = get_logger()
+
     provider_deprecation_notice()
     management_ip = utils.get_management_server_ip()
 
@@ -800,12 +814,14 @@ def provider_teardown(config_file_path,
                                         provider_dir)
     pm = provider.ProviderManager(provider_config, cli.get_global_verbosity())
 
-    logger().info("tearing down {0}".format(management_ip))
+    logger.info("tearing down {0}".format(management_ip))
     with utils.protected_provider_call():
         pm.teardown(provider_context, ignore_validation)
 
 
 def provider_deprecation_notice():
+    logger = get_logger()
+
     message = ('Notice! Provider API is deprecated and is due to be removed in'
                ' Cloudify 3.2. This API is replaced by blueprints based '
                'bootstrapping.')
@@ -815,4 +831,4 @@ def provider_deprecation_notice():
 
         message = colors.bold(colors.red(message))
 
-    logger().warn(message)
+    logger.warn(message)

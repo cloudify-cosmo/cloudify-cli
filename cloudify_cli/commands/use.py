@@ -17,13 +17,14 @@
 Handles 'cfy use'
 """
 
-from cloudify_cli.logger import logger
+from cloudify_cli.logger import get_logger
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_cli import utils
 
 
 def use(management_ip, provider, rest_port):
+    logger = get_logger()
     # first check this server is available.
     client = utils.get_rest_client(
         manager_ip=management_ip,
@@ -57,5 +58,5 @@ def use(management_ip, provider, rest_port):
         wd_settings.set_provider(provider_name)
         wd_settings.set_rest_port(rest_port)
         wd_settings.set_is_provider_config(provider)
-        logger().info('Using management server {0} with port {1}'
-                      .format(management_ip, rest_port))
+        logger.info('Using management server {0} with port {1}'
+                    .format(management_ip, rest_port))

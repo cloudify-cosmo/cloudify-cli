@@ -25,7 +25,6 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.exceptions import CloudifyBootstrapError
-from cloudify_cli import logger
 
 
 verbose_output = False
@@ -185,6 +184,7 @@ def get_global_verbosity():
 
 
 def _configure_loggers():
+    from cloudify_cli import logger
     logger.configure_loggers()
 
 
@@ -192,15 +192,17 @@ def _set_cli_except_hook():
 
     def recommend(possible_solutions):
 
-        from cloudify_cli.logger import logger
+        from cloudify_cli.logger import get_logger
+        logger = get_logger()
 
-        logger().info('Possible solutions:')
+        logger.info('Possible solutions:')
         for solution in possible_solutions:
-            logger().info('  - {0}'.format(solution))
+            logger.info('  - {0}'.format(solution))
 
     def new_excepthook(tpe, value, tb):
 
-        from cloudify_cli.logger import logger
+        from cloudify_cli.logger import get_logger
+        logger = get_logger()
 
         prefix = None
         server_traceback = None
@@ -222,13 +224,13 @@ def _set_cli_except_hook():
                 value=value,
                 tb=tb,
                 file=s_traceback)
-            logger().error(s_traceback.getvalue())
+            logger.error(s_traceback.getvalue())
             if server_traceback:
-                logger().error('Server Traceback (most recent call last):')
+                logger.error('Server Traceback (most recent call last):')
 
                 # No need for print_tb since this exception
                 # is already formatted by the server
-                logger().error(server_traceback)
+                logger.error(server_traceback)
         if output_message and not verbose_output:
 
             # if we output the traceback
@@ -236,9 +238,9 @@ def _set_cli_except_hook():
             # print_exception does that.
             # here we just want the message (non verbose)
             if prefix:
-                logger().error('{0}: {1}'.format(prefix, value))
+                logger.error('{0}: {1}'.format(prefix, value))
             else:
-                logger().error(value)
+                logger.error(value)
         if hasattr(value, 'possible_solutions'):
             recommend(getattr(value, 'possible_solutions'))
 
