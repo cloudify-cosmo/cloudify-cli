@@ -21,12 +21,13 @@ import sys
 import time
 import urllib2
 import abc
-
 import jsonschema
 from fabric import api
 from fabric.context_managers import settings
 from fabric.context_managers import hide
 from fabric.context_managers import cd
+
+from cloudify_rest_client import exceptions as rest_exception
 
 from cloudify_cli import constants
 from cloudify_cli import exceptions
@@ -771,7 +772,7 @@ def _get_provider_name_and_context(mgmt_ip):
     try:
         response = utils.get_rest_client(mgmt_ip).manager.get_context()
         return response['name'], response['context']
-    except exceptions.CloudifyCliError as e:
+    except rest_exception.CloudifyClientError as e:
         logger.warn('Failed to get provider context from server: {0}'.format(
             str(e)))
 
