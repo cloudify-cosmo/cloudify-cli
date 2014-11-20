@@ -29,7 +29,7 @@ _lgr = None
 _all_loggers = set()
 
 
-def logger():
+def get_logger():
     return _lgr
 
 

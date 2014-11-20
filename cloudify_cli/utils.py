@@ -37,7 +37,7 @@ from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME
 from cloudify_cli.constants import CONFIG_FILE_NAME
 from cloudify_cli.constants import DEFAULTS_CONFIG_FILE_NAME
 from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.logger import logger
+from cloudify_cli.logger import get_logger
 
 
 DEFAULT_LOG_FILE = os.path.expanduser(
@@ -238,7 +238,7 @@ def get_management_server_ip():
 
 
 def print_table(title, tb):
-    logger().info('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
+    get_logger().info('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
 
 
 def decode_list(data):
@@ -315,6 +315,8 @@ def get_provider_module(provider_name):
 
 def read_config(config_file_path, provider_dir):
 
+    logger = get_logger()
+
     def _deep_merge_dictionaries(overriding_dict, overridden_dict):
         merged_dict = deepcopy(overridden_dict)
         for k, v in overriding_dict.iteritems():
@@ -344,17 +346,17 @@ def read_config(config_file_path, provider_dir):
         raise ValueError('Configuration file missing; expected to find '
                          'it at {0}'.format(config_file_path))
 
-    logger().debug('reading provider config files')
+    logger.debug('reading provider config files')
     with open(config_file_path, 'r') as config_file, \
             open(defaults_config_file_path, 'r') as defaults_config_file:
 
-        logger().debug('safe loading user config')
+        logger.debug('safe loading user config')
         user_config = yaml.safe_load(config_file.read())
 
-        logger().debug('safe loading default config')
+        logger.debug('safe loading default config')
         defaults_config = yaml.safe_load(defaults_config_file.read())
 
-    logger().debug('merging configs')
+    logger.debug('merging configs')
     merged_config = _deep_merge_dictionaries(user_config, defaults_config) \
         if user_config else defaults_config
     return ProviderConfig(merged_config)

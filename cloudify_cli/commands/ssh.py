@@ -22,7 +22,7 @@ import platform
 
 from distutils import spawn
 from cloudify_cli import messages
-from cloudify_cli.logger import logger
+from cloudify_cli.logger import get_logger
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.cli import get_global_verbosity
 from cloudify_cli.utils import get_management_user
@@ -31,8 +31,9 @@ from cloudify_cli.utils import get_management_key
 
 
 def ssh(ssh_plain_mode, ssh_command):
+    logger = get_logger()
     ssh_path = spawn.find_executable('ssh')
-    logger().debug('SSH executable path: {0}'.format(ssh_path or 'Not found'))
+    logger.debug('SSH executable path: {0}'.format(ssh_path or 'Not found'))
     if not ssh_path and platform.system() == 'Windows':
         msg = messages.SSH_WIN_NOT_FOUND
         raise CloudifyCliError(msg)
@@ -48,7 +49,7 @@ def ssh(ssh_plain_mode, ssh_command):
             command.extend(['-i', os.path.expanduser(get_management_key())])
         if ssh_command:
             command.extend(['--', ssh_command])
-        logger().debug('executing command: {0}'.format(' '.join(command)))
-        logger().info('Trying to connect...')
+        logger.debug('executing command: {0}'.format(' '.join(command)))
+        logger.info('Trying to connect...')
         from subprocess import call
         call(command)

@@ -9,7 +9,7 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
@@ -17,15 +17,16 @@
 Handles 'cfy status'
 """
 
-from cloudify_cli.logger import logger
+from cloudify_cli.logger import get_logger
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_cli import utils
 
 
 def status():
+    logger = get_logger()
     management_ip = utils.get_management_server_ip()
-    logger().info('Getting management services status... [ip={0}]'
-                  .format(management_ip))
+    logger.info('Getting management services status... [ip={0}]'
+                .format(management_ip))
 
     client = utils.get_rest_client(management_ip)
     try:
@@ -46,7 +47,7 @@ def status():
         utils.print_table('Services:', pt)
         return True
     else:
-        logger().info('REST service at management server '
-                      '{0} is not responding!'
-                      .format(management_ip))
+        logger.info('REST service at management server '
+                    '{0} is not responding!'
+                    .format(management_ip))
         return False

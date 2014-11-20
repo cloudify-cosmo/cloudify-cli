@@ -21,10 +21,11 @@ from cloudify_cli import provider_common
 from cloudify_cli import utils
 from cloudify_cli import exceptions
 from cloudify_cli.bootstrap import bootstrap as bs
-from cloudify_cli.logger import logger
+from cloudify_cli.logger import get_logger
 
 
 def teardown(force, ignore_deployments, config_file_path, ignore_validation):
+    logger = get_logger()
     management_ip = utils.get_management_server_ip()
     if not force:
         msg = ("This action requires additional "
@@ -45,7 +46,7 @@ def teardown(force, ignore_deployments, config_file_path, ignore_validation):
     if settings.get_is_provider_config():
         provider_common.provider_teardown(config_file_path, ignore_validation)
     else:
-        logger().info("tearing down {0}".format(management_ip))
+        logger.info("tearing down {0}".format(management_ip))
         provider_context = settings.get_provider_context()
         bs.read_manager_deployment_dump_if_needed(
             provider_context.get('cloudify', {}).get('manager_deployment'))
@@ -59,4 +60,4 @@ def teardown(force, ignore_deployments, config_file_path, ignore_validation):
         # wd_settings.set_provider_context(provider_context)
         wd_settings.remove_management_server_context()
 
-    logger().info("teardown complete")
+    logger.info("teardown complete")

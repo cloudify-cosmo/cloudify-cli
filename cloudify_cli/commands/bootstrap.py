@@ -22,7 +22,7 @@ import sys
 from cloudify_cli import provider_common
 from cloudify_cli import utils
 from cloudify_cli.bootstrap import bootstrap as bs
-from cloudify_cli.logger import logger
+from cloudify_cli.logger import get_logger
 
 
 def bootstrap(config_file_path,
@@ -35,6 +35,7 @@ def bootstrap(config_file_path,
               task_retries,
               task_retry_interval,
               task_thread_pool_size):
+    logger = get_logger()
     settings = utils.load_cloudify_working_dir_settings()
     if settings.get_is_provider_config():
         if blueprint_path or inputs:
@@ -61,7 +62,7 @@ def bootstrap(config_file_path,
             '-r" command')
 
     if not skip_validations:
-        logger().info('executing bootstrap validation')
+        logger.info('executing bootstrap validation')
         bs.bootstrap_validation(
             blueprint_path,
             name=env_name,
@@ -70,11 +71,11 @@ def bootstrap(config_file_path,
             task_retry_interval=task_retry_interval,
             task_thread_pool_size=task_thread_pool_size,
             install_plugins=install_plugins)
-        logger().info('bootstrap validation completed successfully')
+        logger.info('bootstrap validation completed successfully')
 
     if not validate_only:
         try:
-            logger().info('executing bootstrap')
+            logger.info('executing bootstrap')
             details = bs.bootstrap(
                 blueprint_path,
                 name=env_name,
@@ -94,11 +95,11 @@ def bootstrap(config_file_path,
                 ws_settings.set_provider(provider_name)
                 ws_settings.set_provider_context(provider_context)
 
-            logger().info('bootstrapping complete')
-            logger().info('management server is up at {0}'.format(manager_ip))
+            logger.info('bootstrapping complete')
+            logger.info('management server is up at {0}'.format(manager_ip))
         except Exception:
             tpe, value, traceback = sys.exc_info()
-            logger().error('bootstrap failed!')
+            logger.error('bootstrap failed!')
             if not keep_up:
                 try:
                     bs.load_env(env_name)
@@ -107,7 +108,7 @@ def bootstrap(config_file_path,
                     # even initialized - nothing to teardown.
                     pass
                 else:
-                    logger().info('executing teardown due to failed bootstrap')
+                    logger.info('executing teardown due to failed bootstrap')
                     bs.teardown(name=env_name,
                                 task_retries=5,
                                 task_retry_interval=30,
