@@ -27,6 +27,7 @@ from cloudify_cli import common
 from cloudify_cli import utils
 from cloudify_cli.bootstrap.tasks import (
     PROVIDER_RUNTIME_PROPERTY,
+    MANAGER_IP_RUNTIME_PROPERTY,
     MANAGER_USER_RUNTIME_PROPERTY,
     MANAGER_KEY_PATH_RUNTIME_PROPERTY
 )
@@ -109,9 +110,6 @@ def bootstrap(blueprint_path,
                 task_retry_interval=task_retry_interval,
                 task_thread_pool_size=task_thread_pool_size)
 
-    outputs = env.outputs()
-    manager_ip = outputs['manager_ip']
-
     node_instances = env.storage.get_node_instances()
     nodes_by_id = {node.id: node for node in env.storage.get_nodes()}
     manager_node_instance = \
@@ -120,6 +118,8 @@ def bootstrap(blueprint_path,
              nodes_by_id[node_instance.node_id].type_hierarchy)
     provider_context = \
         manager_node_instance.runtime_properties[PROVIDER_RUNTIME_PROPERTY]
+    manager_ip = \
+        manager_node_instance.runtime_properties[MANAGER_IP_RUNTIME_PROPERTY]
     manager_user = \
         manager_node_instance.runtime_properties[MANAGER_USER_RUNTIME_PROPERTY]
     manager_key_path = manager_node_instance.runtime_properties[
