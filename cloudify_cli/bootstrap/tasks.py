@@ -23,7 +23,6 @@ from time import sleep, time
 import fabric
 import fabric.api
 from fabric.context_managers import cd
-from fabric.context_managers import settings
 
 from cloudify import ctx
 from cloudify.decorators import operation
@@ -32,13 +31,9 @@ from cloudify_rest_client import CloudifyClient
 
 REST_PORT = 80
 
-# runtime properties keys, whose values may be set by manager blueprints in
-# order to affect the behavior of the bootstrap task
-PUBLIC_IP_RUNTIME_PROPERTY = 'public_ip'
-PRIVATE_IP_RUNTIME_PROPERTY = 'private_ip'
+# internal runtime properties - used by the CLI to store local context
 PROVIDER_RUNTIME_PROPERTY = 'provider'
-
-# internal runtime properties
+MANAGER_IP_RUNTIME_PROPERTY = 'manager_ip'
 MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
 MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
 
@@ -78,40 +73,9 @@ def creation_validation(cloudify_packages, **kwargs):
         _validate_package_url_accessible(package_url)
 
 
-def _run_bootstrap(bootstrap_func, bootstrap_func_params):
-    if PUBLIC_IP_RUNTIME_PROPERTY in ctx.instance.runtime_properties:
-        manager_host_public_ip = \
-            ctx.instance.runtime_properties[PUBLIC_IP_RUNTIME_PROPERTY]
-        with settings(host_string=manager_host_public_ip):
-            bootstrap_func(**bootstrap_func_params)
-    else:
-        bootstrap_func(**bootstrap_func_params)
-
-
 def bootstrap(cloudify_packages, agent_local_key_path=None,
-              agent_remote_key_path=None):
-    bootstrap_func_params = {
-        'cloudify_packages': cloudify_packages,
-        'agent_local_key_path': agent_local_key_path,
-        'agent_remote_key_path': agent_remote_key_path,
-    }
-    _run_bootstrap(_bootstrap, bootstrap_func_params)
-
-
-def bootstrap_docker(cloudify_packages, agent_local_key_path=None,
-                     agent_remote_key_path=None, docker_path=None,
-                     use_sudo=True):
-    bootstrap_func_params = {
-        'cloudify_packages': cloudify_packages,
-        'agent_local_key_path': agent_local_key_path,
-        'agent_remote_key_path': agent_remote_key_path,
-        'docker_path': docker_path,
-        'use_sudo': use_sudo,
-        }
-    _run_bootstrap(_bootstrap_docker, bootstrap_func_params)
-
-
-def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
+              agent_remote_key_path=None, manager_private_ip=None,
+              provider_context=None):
     global lgr
     lgr = ctx.logger
 
@@ -212,7 +176,7 @@ def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
     success = _run_command('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'
                            .format(PACKAGES_PATH['core'],
                                    celery_user,
-                                   _get_endpoint_private_ip()))
+                                   manager_private_ip or ctx.instance.host_ip))
     if not success:
         lgr.error('failed to install cloudify-core package.')
         return False
@@ -240,12 +204,13 @@ def _bootstrap(cloudify_packages, agent_local_key_path, agent_remote_key_path):
     agent_remote_key_path = _copy_agent_key(agent_local_key_path,
                                             agent_remote_key_path)
     _set_manager_endpoint_data()
-    _upload_provider_context(agent_remote_key_path)
+    _upload_provider_context(agent_remote_key_path, provider_context)
     return True
 
 
-def _bootstrap_docker(cloudify_packages, agent_local_key_path,
-                      agent_remote_key_path, docker_path, use_sudo):
+def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
+                     agent_local_key_path=None, agent_remote_key_path=None,
+                     manager_private_ip=None, provider_context=None):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     global lgr
@@ -344,7 +309,8 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
                               '--name=cfy '
                               '-d cloudify:latest '
                               '/sbin/my_init') \
-        .format(docker_exec_command, _get_endpoint_private_ip())
+        .format(docker_exec_command,
+                manager_private_ip or ctx.instance.host_ip)
 
     run_data_container_cmd = '{0} run -t -d --name data data /bin/bash' \
                              .format(docker_exec_command)
@@ -370,7 +336,7 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
     agent_remote_key_path = _copy_agent_key(agent_local_key_path,
                                             agent_remote_key_path)
     _set_manager_endpoint_data()
-    _upload_provider_context(agent_remote_key_path)
+    _upload_provider_context(agent_remote_key_path, provider_context)
     return True
 
 
@@ -458,15 +424,12 @@ def _wait_for_management(ip, timeout, port=80):
 
 
 def _set_manager_endpoint_data():
+    ctx.instance.runtime_properties[MANAGER_IP_RUNTIME_PROPERTY] = \
+        fabric.api.env.host_string
     ctx.instance.runtime_properties[MANAGER_USER_RUNTIME_PROPERTY] = \
         fabric.api.env.user
     ctx.instance.runtime_properties[MANAGER_KEY_PATH_RUNTIME_PROPERTY] = \
         fabric.api.env.key_filename
-
-
-def _get_endpoint_private_ip():
-    return ctx.instance.runtime_properties.get(PRIVATE_IP_RUNTIME_PROPERTY,
-                                               ctx.instance.host_ip)
 
 
 def _copy_agent_key(agent_local_key_path=None,
@@ -480,9 +443,9 @@ def _copy_agent_key(agent_local_key_path=None,
     return agent_remote_key_path
 
 
-def _upload_provider_context(remote_agents_private_key_path):
-    provider_context = \
-        ctx.instance.runtime_properties.get(PROVIDER_RUNTIME_PROPERTY, dict())
+def _upload_provider_context(remote_agents_private_key_path,
+                             provider_context=None):
+    provider_context = provider_context or dict()
     cloudify_configuration = ctx.node.properties['cloudify']
     cloudify_configuration['cloudify_agent']['agent_key_path'] = \
         remote_agents_private_key_path
