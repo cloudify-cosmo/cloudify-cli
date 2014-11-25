@@ -23,7 +23,6 @@ from time import sleep, time
 import fabric
 import fabric.api
 from fabric.context_managers import cd
-from fabric.context_managers import settings
 
 from cloudify import ctx
 from cloudify.decorators import operation
@@ -74,47 +73,9 @@ def creation_validation(cloudify_packages, **kwargs):
         _validate_package_url_accessible(package_url)
 
 
-def _run_bootstrap(bootstrap_func, bootstrap_func_params,
-                   manager_public_ip=None):
-    if manager_public_ip:
-        with settings(host_string=manager_public_ip):
-            bootstrap_func(**bootstrap_func_params)
-    else:
-        bootstrap_func(**bootstrap_func_params)
-
-
 def bootstrap(cloudify_packages, agent_local_key_path=None,
-              agent_remote_key_path=None, manager_public_ip=None,
-              manager_private_ip=None, provider_context=None):
-    bootstrap_func_params = {
-        'cloudify_packages': cloudify_packages,
-        'agent_local_key_path': agent_local_key_path,
-        'agent_remote_key_path': agent_remote_key_path,
-        'manager_private_ip': manager_private_ip,
-        'provider_context': provider_context,
-    }
-    _run_bootstrap(_bootstrap, bootstrap_func_params, manager_public_ip)
-
-
-def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
-                     agent_local_key_path=None, agent_remote_key_path=None,
-                     manager_public_ip=None, manager_private_ip=None,
-                     provider_context=None):
-    bootstrap_func_params = {
-        'cloudify_packages': cloudify_packages,
-        'agent_local_key_path': agent_local_key_path,
-        'agent_remote_key_path': agent_remote_key_path,
-        'manager_private_ip': manager_private_ip,
-        'provider_context': provider_context,
-        'docker_path': docker_path,
-        'use_sudo': use_sudo,
-    }
-    _run_bootstrap(_bootstrap_docker, bootstrap_func_params, manager_public_ip)
-
-
-def _bootstrap(cloudify_packages, agent_local_key_path=None,
-               agent_remote_key_path=None, manager_private_ip=None,
-               provider_context=None):
+              agent_remote_key_path=None, manager_private_ip=None,
+              provider_context=None):
     global lgr
     lgr = ctx.logger
 
@@ -247,9 +208,9 @@ def _bootstrap(cloudify_packages, agent_local_key_path=None,
     return True
 
 
-def _bootstrap_docker(cloudify_packages, docker_path, use_sudo,
-                      agent_local_key_path=None, agent_remote_key_path=None,
-                      manager_private_ip=None, provider_context=None):
+def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
+                     agent_local_key_path=None, agent_remote_key_path=None,
+                     manager_private_ip=None, provider_context=None):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     global lgr
