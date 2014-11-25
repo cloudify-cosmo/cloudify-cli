@@ -21,6 +21,8 @@ import os
 import yaml
 import copy
 
+from cloudify.logs import create_event_message_prefix
+
 from cloudify_cli.config import logger_config
 
 
@@ -108,30 +110,6 @@ def _configure_from_file():
     logging.config.dictConfig(logger_dict)
 
 
-def _create_event_message(event):
-    context = event['context']
-    deployment_id = context['deployment_id']
-    node_info = ''
-    operation = ''
-    if 'node_id' in context and context['node_id'] is not None:
-        node_id = context['node_id']
-        if 'operation' in context and context['operation'] is not None:
-            operation = '.{0}'.format(context['operation'].split('.')[-1])
-        node_info = '[{0}{1}] '.format(node_id, operation)
-    level = 'CFY'
-    message = event['message']['text'].encode('utf-8')
-    if 'cloudify_log' in event['type']:
-        level = 'LOG'
-        message = '{0}: {1}'.format(event['level'].upper(), message)
-    timestamp = event['@timestamp'].split('.')[0]
-
-    return '{0} {1} <{2}> {3}{4}'.format(timestamp,
-                                         level,
-                                         deployment_id,
-                                         node_info,
-                                         message)
-
-
 def get_events_logger():
 
     def verbose_events_logger(events):
@@ -152,7 +130,7 @@ def get_events_logger():
         :return:
         """
         for event in events:
-            _lgr.info(_create_event_message(event))
+            _lgr.info(create_event_message_prefix(event))
 
     # currently needs to be imported dynamically since
     # otherwise it creates a circular import.
