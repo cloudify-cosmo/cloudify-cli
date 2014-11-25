@@ -85,7 +85,7 @@ class CliUtilsUnitTests(unittest.TestCase):
         new_cwd = os.path.dirname(os.path.dirname(init_path))
         utils.get_cwd = lambda: new_cwd
 
-        self.assertRaises(CloudifyCliError, utils.get_init_path)
+        self.assertRaises(CloudifyCliError, utils.get_context_path)
 
     def test_dump_cosmo_working_dir_settings_update(self):
 

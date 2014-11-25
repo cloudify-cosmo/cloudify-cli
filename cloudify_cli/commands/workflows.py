@@ -9,27 +9,28 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
+# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
 """
 Handles all commands that start with 'cfy workflows'
 """
 
-from cloudify_cli.logger import lgr
+from cloudify_cli.logger import get_logger
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_cli import utils
 
 
 def get(deployment_id, workflow_id):
+    logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
     try:
-        lgr.info('Getting workflow '
-                 '\'{0}\' of deployment \'{1}\' [manager={2}]'
-                 .format(workflow_id, deployment_id, management_ip))
+        logger.info('Getting workflow '
+                    '\'{0}\' of deployment \'{1}\' [manager={2}]'
+                    .format(workflow_id, deployment_id, management_ip))
         deployment = client.deployments.get(deployment_id)
         workflow = next((wf for wf in deployment.workflows if
                          wf.name == workflow_id), None)
@@ -61,32 +62,34 @@ def get(deployment_id, workflow_id):
             mandatory_params
         params_group[param_name] = param
 
-    lgr.info('Workflow Parameters:')
-    lgr.info('\tMandatory Parameters:')
+    logger.info('Workflow Parameters:')
+    logger.info('\tMandatory Parameters:')
     for param_name, param in mandatory_params.iteritems():
         if 'description' in param:
-            lgr.info('\t\t{0}\t({1})'.format(param_name,
-                                             param['description']))
+            logger.info('\t\t{0}\t({1})'.format(param_name,
+                                                param['description']))
         else:
-            lgr.info('\t\t{0}'.format(param_name))
+            logger.info('\t\t{0}'.format(param_name))
 
-    lgr.info('\tOptional Parameters:')
+    logger.info('\tOptional Parameters:')
     for param_name, param in optional_params.iteritems():
         if 'description' in param:
-            lgr.info('\t\t{0}: \t{1}\t({2})'.format(
+            logger.info('\t\t{0}: \t{1}\t({2})'.format(
                 param_name, param['default'], param['description']))
         else:
-            lgr.info('\t\t{0}: \t{1}'.format(param_name,
-                                             param['default']))
-    lgr.info('')
+            logger.info('\t\t{0}: \t{1}'.format(param_name,
+                                                param['default']))
+    logger.info('')
 
 
 def ls(deployment_id):
+    logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
-    lgr.info('Getting workflows list for deployment: '
-             '\'{0}\'... [manager={1}]'.format(deployment_id, management_ip))
+    logger.info('Getting workflows list for deployment: '
+                '\'{0}\'... [manager={1}]'
+                .format(deployment_id, management_ip))
 
     deployment = client.deployments.get(deployment_id)
     workflows = deployment.workflows

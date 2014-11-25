@@ -78,5 +78,7 @@ class InitTest(CliCommandTest):
 
     def test_no_init(self):
         self._assert_ex('cfy bootstrap',
-                        'You must first initialize by running the command '
-                        '"cfy init"')
+                        'Not initialized',
+                        possible_solutions=[
+                            "Run 'cfy init' in this directory"
+                        ])

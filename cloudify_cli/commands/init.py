@@ -24,6 +24,8 @@ from cloudify_cli import utils
 from cloudify_cli import provider_common
 from cloudify_cli import constants
 from cloudify_cli import exceptions
+from cloudify_cli.logger import get_logger
+from cloudify_cli.logger import configure_loggers
 
 
 def init(provider, reset_config):
@@ -36,11 +38,14 @@ def init(provider, reset_config):
             constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
             constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)):
         if not reset_config:
-            msg = ('Current directory is already initialized. '
-                   'Use the "-r" flag to force '
-                   'reinitialization (might overwrite '
-                   'existing configuration files if exist).')
-            raise exceptions.CloudifyCliError(msg)
+            msg = 'Current directory is already initialized'
+            error = exceptions.CloudifyCliError(msg)
+            error.possible_solutions = [
+                "Run 'cfy init -r' to force re-initialization "
+                "(might overwrite existing "
+                "configuration files if exist) "
+            ]
+            raise error
         else:
             shutil.rmtree(os.path.join(
                 utils.get_cwd(),
@@ -48,3 +53,6 @@ def init(provider, reset_config):
 
     settings = utils.CloudifyWorkingDirectorySettings()
     utils.dump_cloudify_working_dir_settings(settings)
+    utils.dump_configuration_file()
+    configure_loggers()
+    get_logger().info('Initialization completed successfully')

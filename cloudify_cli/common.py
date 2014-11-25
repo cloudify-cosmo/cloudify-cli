@@ -24,7 +24,7 @@ from dsl_parser.parser import parse_from_path
 
 from cloudify_cli import utils
 from cloudify_cli import constants
-from cloudify_cli.logger import lgr
+from cloudify_cli.logger import get_logger
 from cloudify_cli import exceptions
 
 
@@ -58,7 +58,7 @@ def install_blueprint_plugins(blueprint_path):
             'You must be running inside a '
             'virtualenv to install blueprint plugins')
 
-    runner = LocalCommandRunner(lgr)
+    runner = LocalCommandRunner(get_logger())
 
     # dump the requirements to a file
     # and let pip install it.
