@@ -340,6 +340,8 @@ def _bootstrap_docker(cloudify_packages, agent_local_key_path,
                               '-p 8100:8100 '
                               '-p 9200:9200 '
                               '-e MANAGEMENT_IP={1} '
+                              '--restart=always '
+                              '--name=cfy '
                               '-d cloudify:latest '
                               '/sbin/my_init') \
         .format(docker_exec_command, _get_endpoint_private_ip())
