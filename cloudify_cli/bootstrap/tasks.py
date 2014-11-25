@@ -305,6 +305,8 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-p 8100:8100 '
                               '-p 9200:9200 '
                               '-e MANAGEMENT_IP={1} '
+                              '--restart=always '
+                              '--name=cfy '
                               '-d cloudify:latest '
                               '/sbin/my_init') \
         .format(docker_exec_command,
