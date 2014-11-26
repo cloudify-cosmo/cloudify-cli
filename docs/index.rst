@@ -11,15 +11,7 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-.. automodule:: cosmo_cli.cosmo_cli
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-.. automodule:: cosmo_cli.provider_common
-   :members:
-   :undoc-members:
-   :show-inheritance:
+   commands
 
 Indices and tables
 ==================
@@ -27,4 +19,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
