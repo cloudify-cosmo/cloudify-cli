@@ -5,6 +5,8 @@
 
 Welcome to cloudify-cli's documentation!
 ========================================
+The documention here includes reference for the various `cfy` subcommands. For general usage, please refer
+to the documentation located at `getcloudify.org <http://getcloudify.org/guide/3.1/quickstart.html>`_.
 
 Contents:
 
