@@ -267,11 +267,11 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     try:
         lgr.info('importing cloudify-manager docker image from {0}'
                  .format(docker_image_url))
-        _run_command('{0} import {1} cloudify:latest'
+        _run_command('{0} import {1} cloudify'
                      .format(docker_exec_command, docker_image_url))
         lgr.info('importing cloudify-data docker image from {0}'
                  .format(docker_data_url))
-        _run_command('{0} import {1} data:latest'
+        _run_command('{0} import {1} data'
                      .format(docker_exec_command, docker_data_url))
     except FabricTaskError as e:
         err = 'failed importing cloudify docker images from {0} {1}. reason:' \
