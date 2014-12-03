@@ -77,7 +77,7 @@ class CliBootstrapUnitTests(unittest.TestCase):
 
     def test_creation_validation_empty_server_dict(self):
         packages = {
-            "server": ""
+            "server": "x"
         }
         try:
             tasks.creation_validation(packages)
@@ -86,7 +86,7 @@ class CliBootstrapUnitTests(unittest.TestCase):
 
     def test_creation_validation_empty_docker_dict(self):
         packages = {
-            "docker": ""
+            "docker": "x"
         }
         try:
             tasks.creation_validation(packages)
