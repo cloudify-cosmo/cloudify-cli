@@ -56,13 +56,24 @@ lgr = None
 
 @operation
 def creation_validation(cloudify_packages, **kwargs):
-    if not cloudify_packages.get('server') or not isinstance(
-            cloudify_packages['server'], dict):
+    server_packages = cloudify_packages.get('server')
+    docker_packages = cloudify_packages.get('docker')
+
+    if not ((server_packages is None) ^ (docker_packages is None)):
         raise NonRecoverableError(
-            'must have a non-empty "server" dictionary property under '
+            'must have exactly one of "server" and "docker" properties under '
             '"cloudify_packages"')
 
-    packages_urls = cloudify_packages['server'].values()
+    manager_packages = docker_packages if server_packages is None else \
+        server_packages
+
+    if not manager_packages or not isinstance(manager_packages, dict):
+        raise NonRecoverableError(
+            '"{0}" must be a non-empty dictionary property under '
+            '"cloudify_packages"'.format(
+                'docker' if server_packages is None else 'server'))
+
+    packages_urls = manager_packages.values()
     agent_packages = cloudify_packages.get('agents', {})
     if not isinstance(agent_packages, dict):
         raise NonRecoverableError('"cloudify_packages.agents" must be a '
