@@ -22,6 +22,8 @@ import filecmp
 
 from cloudify_cli import utils
 from cloudify_cli.bootstrap import bootstrap
+from cloudify_cli.tasks import creation_validation
+from cloudify.exceptions import NonRecoverableError
 
 TEST_DIR = '/tmp/cloudify-cli-unit-tests'
 
@@ -72,3 +74,41 @@ class CliBootstrapUnitTests(unittest.TestCase):
 
     def test_manager_deployment_dump_read_already_exists(self):
         self.test_manager_deployment_dump(remove_deployment=False)
+
+    def test_creation_validation_empty_server_dict(self):
+        packages = {
+            "server": {}
+        }
+        try:
+            creation_validation(packages)
+        except NonRecoverableError as ex:
+            self.assertIn('must have a non-empty "server"', ex.message)
+
+    def test_creation_validation_empty_docker_dict(self):
+        packages = {
+            "docker": {}
+        }
+        try:
+            creation_validation(packages)
+        except NonRecoverableError as ex:
+            self.assertIn('must have a non-empty "docker"', ex.message)
+
+    def test_creation_validation_no_docker_and_no_server(self):
+        packages = {
+        }
+        try:
+            creation_validation(packages)
+        except NonRecoverableError as ex:
+            self.assertIn(
+                'must have at least "server" or "docker"', ex.message)
+
+    def test_creation_validation_docker_and_server(self):
+        packages = {
+            "docker": {"packages": "http://www.x.com/x.tar"},
+            "server": {"packages": "http://www.x.com/x.deb"}
+        }
+        try:
+            creation_validation(packages)
+        except NonRecoverableError as ex:
+            self.assertIn(
+                'must not have both "server" and "docker"', ex.message)
