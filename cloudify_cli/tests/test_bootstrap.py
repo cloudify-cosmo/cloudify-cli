@@ -82,16 +82,18 @@ class CliBootstrapUnitTests(unittest.TestCase):
         try:
             tasks.creation_validation(packages)
         except NonRecoverableError as ex:
-            self.assertIn('must have a non-empty "server"', ex.message)
+            self.assertIn(
+                'must be a non-empty dictionary property under', ex.message)
 
     def test_creation_validation_empty_docker_dict(self):
         packages = {
-            "docker": "x"
+            "docker": {}
         }
         try:
             tasks.creation_validation(packages)
         except NonRecoverableError as ex:
-            self.assertIn('must have a non-empty "docker"', ex.message)
+            self.assertIn(
+                'must be a non-empty dictionary property under', ex.message)
 
     def test_creation_validation_no_docker_and_no_server(self):
         packages = {
@@ -100,7 +102,7 @@ class CliBootstrapUnitTests(unittest.TestCase):
             tasks.creation_validation(packages)
         except NonRecoverableError as ex:
             self.assertIn(
-                'must have at least "server" or "docker"', ex.message)
+                'must have exactly one of "server" and "docker"', ex.message)
 
     def test_creation_validation_docker_and_server(self):
         packages = {
@@ -111,4 +113,4 @@ class CliBootstrapUnitTests(unittest.TestCase):
             tasks.creation_validation(packages)
         except NonRecoverableError as ex:
             self.assertIn(
-                'must not have both "server" and "docker"', ex.message)
+                'must have exactly one of "server" and "docker"', ex.message)
