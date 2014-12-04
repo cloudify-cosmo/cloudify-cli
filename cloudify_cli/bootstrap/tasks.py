@@ -323,7 +323,14 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         .format(docker_exec_command,
                 manager_private_ip or ctx.instance.host_ip)
 
-    run_data_container_cmd = '{0} run -t -d --name data data /bin/bash' \
+    run_data_container_cmd = '{0} run -t -d ' \
+                             '-v /etc/service/riemann ' \
+                             '-v /etc/service/elasticsearch/data ' \
+                             '-v /etc/service/elasticsearch/logs ' \
+                             '-v /opt/influxdb/shared/data ' \
+                             '-v /var/log/cloudify ' \
+                             '--name data data ' \
+                             'echo Data-only container' \
                              .format(docker_exec_command)
 
     try:
