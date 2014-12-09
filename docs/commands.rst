@@ -15,7 +15,7 @@ cfy
    :prog: cfy
 
    init
-      Initializing a configuration for a specific provider is a depracated feature and will be removed in a future version.
+      Initializing a configuration for a specific provider is a deprecated feature and will be removed in a future version.
 
    bootstrap
       The command takes care of provisioning the resources and installing the packages required for the Cloudify Manager to function.
