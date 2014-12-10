@@ -25,9 +25,6 @@ cfy
    status
       The command prints out the currently active manager's IP address and a status of the active manager's running services.
 
-   ssh
-      The command saves you the time from having to provide the ssh key and IP by connecting to the already `use`d manager.
-
    dev
       Cloudify's CLI provides an interface to running premade [fabric](http://www.fabfile.org/) tasks on the management server.
 
