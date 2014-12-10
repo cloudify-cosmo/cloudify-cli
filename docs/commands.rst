@@ -18,7 +18,7 @@ cfy
       Initializing a configuration for a specific provider is a deprecated feature and will be removed in a future version.
 
    bootstrap
-      The command takes care of provisioning the resources and installing the packages required for the Cloudify Manager to function.
+      The command takes care of creating the topology and installing the Cloudify Manager to function.
 
       .. note:: The command also allows you to run validations without actually bootstrapping to verify that the resources required are available for the bootstrap process.
 
