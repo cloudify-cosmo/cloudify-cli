@@ -34,6 +34,7 @@ from cloudify_rest_client import CloudifyClient
 from cloudify_cli.constants import DEFAULT_REST_PORT
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_FILE_NAME
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME
+from cloudify_cli.constants import CLOUDIFY_WD_CONFIG_FILE_NAME
 from cloudify_cli.constants import CONFIG_FILE_NAME
 from cloudify_cli.constants import DEFAULTS_CONFIG_FILE_NAME
 from cloudify_cli.exceptions import CloudifyCliError
@@ -134,7 +135,8 @@ def json_to_dict(json_resource, json_resource_name):
 
 
 def is_initialized():
-    return get_init_path() is not None
+    config_path = get_configuration_path()
+    return config_path is not None and os.path.exists(config_path)
 
 
 def get_init_path():
@@ -154,17 +156,19 @@ def get_init_path():
 
 def get_configuration_path():
     dot_cloudify = get_init_path()
-    return os.path.join(
-        dot_cloudify,
-        'config.yaml'
-    )
+    if dot_cloudify is not None:
+        return os.path.join(
+            dot_cloudify,
+            CLOUDIFY_WD_CONFIG_FILE_NAME
+        )
+    return None
 
 
 def dump_configuration_file():
 
     config = pkg_resources.resource_string(
         cloudify_cli.__name__,
-        'resources/config.yaml')
+        'resources/%s' % CLOUDIFY_WD_CONFIG_FILE_NAME)
 
     template = Template(config)
     rendered = template.render(log_path=DEFAULT_LOG_FILE)

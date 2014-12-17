@@ -33,10 +33,7 @@ def init(provider, reset_config):
     if provider is not None:
         return provider_common.provider_init(provider, reset_config)
 
-    if os.path.exists(os.path.join(
-            utils.get_cwd(),
-            constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-            constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)):
+    if utils.is_initialized():
         if not reset_config:
             msg = 'Current directory is already initialized'
             error = exceptions.CloudifyCliError(msg)
