@@ -19,6 +19,7 @@ import argparse
 import sys
 import traceback
 import argcomplete
+import utils
 import logging
 
 from cloudify_rest_client.exceptions import CloudifyClientError
@@ -31,7 +32,8 @@ verbose_output = False
 
 
 def main():
-    _configure_loggers()
+    if utils.is_initialized():
+        _configure_loggers()
     _set_cli_except_hook()
     args = _parse_args(sys.argv[1:])
     args.handler(args)

@@ -15,6 +15,7 @@
 
 CLOUDIFY_WD_SETTINGS_FILE_NAME = 'context'
 CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME = '.cloudify'
+CLOUDIFY_WD_CONFIG_FILE_NAME = 'config.yaml'
 CONFIG_FILE_NAME = 'cloudify-config.yaml'
 DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 
