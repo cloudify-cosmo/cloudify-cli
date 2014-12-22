@@ -275,20 +275,20 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         raise NonRecoverableError('no docker URL found in packages')
     if not docker_data_url:
         raise NonRecoverableError('no docker data image URL found in packages')
-    # try:
-    #     lgr.info('importing cloudify-manager docker image from {0}'
-    #              .format(docker_image_url))
-    #     _run_command('{0} import {1} cloudify'
-    #                  .format(docker_exec_command, docker_image_url))
-    #     lgr.info('importing cloudify-data docker image from {0}'
-    #              .format(docker_data_url))
-    #     _run_command('{0} import {1} data'
-    #                  .format(docker_exec_command, docker_data_url))
-    # except FabricTaskError as e:
-    #     err = 'failed importing cloudify docker images from {0} {1}. reason:' \
-    #           '{2}'.format(docker_image_url, docker_data_url, str(e))
-    #     lgr.error(err)
-    #     raise NonRecoverableError(err)
+    try:
+        lgr.info('importing cloudify-manager docker image from {0}'
+                 .format(docker_image_url))
+        _run_command('{0} import {1} cloudify'
+                     .format(docker_exec_command, docker_image_url))
+        lgr.info('importing cloudify-data docker image from {0}'
+                 .format(docker_data_url))
+        _run_command('{0} import {1} data'
+                     .format(docker_exec_command, docker_data_url))
+    except FabricTaskError as e:
+        err = 'failed importing cloudify docker images from {0} {1}. reason:' \
+              '{2}'.format(docker_image_url, docker_data_url, str(e))
+        lgr.error(err)
+        raise NonRecoverableError(err)
 
     run_cfy_management_cmd = ('{0} run -t '
                               '--volumes-from data '
@@ -304,14 +304,15 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-d cloudify:latest '
                               '/sbin/my_init'
                               .format(docker_exec_command,
-                              manager_private_ip or ctx.instance.host_ip))
+                                      manager_private_ip or
+                                      ctx.instance.host_ip))
 
     agent_mount_cmd = ''
     data_container_start_cmd = 'echo Data-only container'
     if agent_packages:
         container_work_dir = '/tmp'
         lgr.info('replacing existing agent packages with custom agents {0}'
-            .format(agent_packages.keys()))
+                 .format(agent_packages.keys()))
         data_container_start_cmd = \
             _get_install_agent_pkgs_cmd(agent_packages,
                                         container_work_dir)
