@@ -275,39 +275,22 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         raise NonRecoverableError('no docker URL found in packages')
     if not docker_data_url:
         raise NonRecoverableError('no docker data image URL found in packages')
-    try:
-        lgr.info('importing cloudify-manager docker image from {0}'
-                 .format(docker_image_url))
-        _run_command('{0} import {1} cloudify'
-                     .format(docker_exec_command, docker_image_url))
-        lgr.info('importing cloudify-data docker image from {0}'
-                 .format(docker_data_url))
-        _run_command('{0} import {1} data'
-                     .format(docker_exec_command, docker_data_url))
-    except FabricTaskError as e:
-        err = 'failed importing cloudify docker images from {0} {1}. reason:' \
-              '{2}'.format(docker_image_url, docker_data_url, str(e))
-        lgr.error(err)
-        raise NonRecoverableError(err)
-
-    agent_mount_cmd = ''
-    if agent_packages:
-        lgr.info('replacing existing agent packages with custom agents {0}'
-                 .format(agent_packages.keys()))
-        try:
-            _install_agent_packages(agent_packages, distro_info)
-            lgr.info('cloudify agents installation successful.')
-        except FabricTaskError as e:
-            err = 'failed installing custom agent packages. error is {0}' \
-                  .format(str(e))
-            lgr.error(err)
-            raise NonRecoverableError(err)
-        agent_mount_cmd = '-v /opt/manager/resources/packages:' \
-                          '/opt/manager/resources/packages '
+    # try:
+    #     lgr.info('importing cloudify-manager docker image from {0}'
+    #              .format(docker_image_url))
+    #     _run_command('{0} import {1} cloudify'
+    #                  .format(docker_exec_command, docker_image_url))
+    #     lgr.info('importing cloudify-data docker image from {0}'
+    #              .format(docker_data_url))
+    #     _run_command('{0} import {1} data'
+    #                  .format(docker_exec_command, docker_data_url))
+    # except FabricTaskError as e:
+    #     err = 'failed importing cloudify docker images from {0} {1}. reason:' \
+    #           '{2}'.format(docker_image_url, docker_data_url, str(e))
+    #     lgr.error(err)
+    #     raise NonRecoverableError(err)
 
     run_cfy_management_cmd = ('{0} run -t '
-                              '-v ~/:/root '
-                              + agent_mount_cmd +
                               '--volumes-from data '
                               '-p 80:80 '
                               '-p 5555:5555 '
@@ -319,19 +302,33 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '--restart=always '
                               '--name=cfy '
                               '-d cloudify:latest '
-                              '/sbin/my_init') \
-        .format(docker_exec_command,
-                manager_private_ip or ctx.instance.host_ip)
+                              '/sbin/my_init'
+                              .format(docker_exec_command,
+                              manager_private_ip or ctx.instance.host_ip))
 
-    run_data_container_cmd = '{0} run -t -d ' \
-                             '-v /etc/service/riemann ' \
-                             '-v /etc/service/elasticsearch/data ' \
-                             '-v /etc/service/elasticsearch/logs ' \
-                             '-v /opt/influxdb/shared/data ' \
-                             '-v /var/log/cloudify ' \
-                             '--name data data ' \
-                             'echo Data-only container' \
-                             .format(docker_exec_command)
+    agent_mount_cmd = ''
+    data_container_start_cmd = 'echo Data-only container'
+    if agent_packages:
+        container_work_dir = '/tmp'
+        lgr.info('replacing existing agent packages with custom agents {0}'
+            .format(agent_packages.keys()))
+        data_container_start_cmd = \
+            _get_install_agent_pkgs_cmd(agent_packages,
+                                        container_work_dir)
+        agent_mount_cmd = '-v /opt/manager/resources/packages ' \
+                          '-w {0} '.format(container_work_dir)
+
+    run_data_container_cmd = ('{0} run -t {1}'
+                              '-v /tmp/cloudify:/root '
+                              '-v /etc/service/riemann '
+                              '-v /etc/service/elasticsearch/data '
+                              '-v /etc/service/elasticsearch/logs '
+                              '-v /opt/influxdb/shared/data '
+                              '-v /var/log/cloudify '
+                              '--name data data {2}'
+                              .format(docker_exec_command,
+                                      agent_mount_cmd,
+                                      data_container_start_cmd))
 
     try:
         lgr.info('starting a new cloudify data container')
@@ -355,44 +352,25 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                             agent_remote_key_path)
     _set_manager_endpoint_data()
     _upload_provider_context(agent_remote_key_path, provider_context)
+
+    lgr.info('storing home dir files in data container')
+    copy_homedir_cmd = 'cp -R -u ~/* /tmp/cloudify'
+    if use_sudo:
+        copy_homedir_cmd = 'sudo ' + copy_homedir_cmd
+    _run_command(copy_homedir_cmd)
     return True
 
 
-def _install_agent_packages(agent_packages, distro_info):
-    # CFY-1627 - plugin dependency should be removed.
-    from fabric_plugin.tasks import FabricTaskError
-    agents_path = '/tmp/agents'
-    try:
-        _run_command('sudo mkdir -p {0}/'.format(agents_path))
-    except FabricTaskError as e:
-        err = 'failed creating agent packages temp dir {0}. error was {1}' \
-              .format(agents_path, str(e))
-        lgr.error(err)
-        raise
-
+def _get_install_agent_pkgs_cmd(agent_packages, agents_pkg_path):
+    install_agents_cmd = ''
     for agent_name, agent_url in agent_packages.items():
-        try:
-            if 'Ubuntu' in distro_info:
-                _run_command('sudo wget -P {0}/ {1}'.format(
-                    agents_path, agent_url))
-            elif 'centos' in distro_info:
-                _run_command('cd {0}/; sudo curl -O {1}'.format(
-                    agents_path, agent_url))
-        except FabricTaskError:
-            err = 'failed downloading agent package from {0}'.format(agent_url)
-            lgr.error(err)
-            raise
-    try:
-        if 'Ubuntu' in distro_info:
-            _run_command('sudo dpkg -i {0}/*.deb'.format(agents_path))
-        elif 'centos' in distro_info:
-            _run_command('sudo rpm -i {0}/*.rpm'.format(agents_path))
-    except FabricTaskError as e:
-        err = 'failed installing agent packages. error is: {0}'.format(str(e))
-        lgr.error(err)
-        raise
+        install_agents_cmd += 'curl -O {0}{1} '\
+                              .format(agent_url, ';')
 
-    return True
+    install_agents_cmd += 'dpkg -i {0}/*.deb'\
+                          .format(agents_pkg_path)
+
+    return install_agents_cmd
 
 
 def _is_docker_installed(docker_path, use_sudo):
@@ -408,7 +386,7 @@ def _is_docker_installed(docker_path, use_sudo):
         if use_sudo:
             out = fabric.api.run('sudo which {0}'.format(docker_path))
         else:
-            out = fabric.api.run('which {0}'.format(docker_path))
+            out = fabric.ai.run('which {0}'.format(docker_path))
         if not out:
             return False
         return True
