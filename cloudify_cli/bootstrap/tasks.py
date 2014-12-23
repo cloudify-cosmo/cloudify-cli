@@ -319,14 +319,19 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         agent_mount_cmd = '-v /opt/manager/resources/packages ' \
                           '-w {0} '.format(container_work_dir)
 
+    backup_vm_homedir_cmd = 'cp -rf /root/tmp/* /root'
+    data_container_start_cmd += backup_vm_homedir_cmd
+
     run_data_container_cmd = ('{0} run -t {1}'
-                              '-v /tmp/cloudify:/root '
+                              '-v ~/:/root/tmp '
+                              '-v /root '
+                              '-v ~/.ssh:/root/.ssh '
                               '-v /etc/service/riemann '
                               '-v /etc/service/elasticsearch/data '
                               '-v /etc/service/elasticsearch/logs '
                               '-v /opt/influxdb/shared/data '
                               '-v /var/log/cloudify '
-                              '--name data data {2}'
+                              '--name data data sh -c \'{2}\''
                               .format(docker_exec_command,
                                       agent_mount_cmd,
                                       data_container_start_cmd))
@@ -353,12 +358,6 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                             agent_remote_key_path)
     _set_manager_endpoint_data()
     _upload_provider_context(agent_remote_key_path, provider_context)
-
-    lgr.info('storing home dir files in data container')
-    copy_homedir_cmd = 'cp -R -u ~/* /tmp/cloudify'
-    if use_sudo:
-        copy_homedir_cmd = 'sudo ' + copy_homedir_cmd
-    _run_command(copy_homedir_cmd)
     return True
 
 
@@ -368,7 +367,7 @@ def _get_install_agent_pkgs_cmd(agent_packages, agents_pkg_path):
         install_agents_cmd += 'curl -O {0}{1} '\
                               .format(agent_url, ';')
 
-    install_agents_cmd += 'dpkg -i {0}/*.deb'\
+    install_agents_cmd += 'dpkg -i {0}/*.deb;'\
                           .format(agents_pkg_path)
 
     return install_agents_cmd
