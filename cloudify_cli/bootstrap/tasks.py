@@ -317,14 +317,15 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
             _get_install_agent_pkgs_cmd(agent_packages,
                                         container_work_dir)
         agent_mount_cmd = '-v /opt/manager/resources/packages ' \
-                          '-w {0} '.format(container_work_dir)
+                          '-w {0}'.format(container_work_dir)
 
+    # copy all locally saved files into the data container.
     backup_vm_homedir_cmd = 'cp -rf /root/tmp/* /root'
     data_container_start_cmd += backup_vm_homedir_cmd
 
-    run_data_container_cmd = ('{0} run -t {1}'
-                              '-v ~/:/root/tmp '
+    run_data_container_cmd = ('{0} run -t {1} '
                               '-v /root '
+                              '-v ~/:/root/tmp '
                               '-v ~/.ssh:/root/.ssh '
                               '-v /etc/service/riemann '
                               '-v /etc/service/elasticsearch/data '
@@ -336,6 +337,8 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                       agent_mount_cmd,
                                       data_container_start_cmd))
 
+    agent_remote_key_path = _copy_agent_key(agent_local_key_path,
+                                            agent_remote_key_path)
     try:
         lgr.info('starting a new cloudify data container')
         _run_command(run_data_container_cmd)
@@ -354,8 +357,6 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         lgr.info(err)
         raise NonRecoverableError(err)
 
-    agent_remote_key_path = _copy_agent_key(agent_local_key_path,
-                                            agent_remote_key_path)
     _set_manager_endpoint_data()
     _upload_provider_context(agent_remote_key_path, provider_context)
     return True
