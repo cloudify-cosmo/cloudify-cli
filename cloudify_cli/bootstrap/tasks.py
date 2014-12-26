@@ -221,7 +221,8 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
 
 def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      agent_local_key_path=None, agent_remote_key_path=None,
-                     manager_private_ip=None, provider_context=None):
+                     manager_private_ip=None, provider_context=None,
+                     is_recovery=False):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     global lgr
@@ -262,6 +263,16 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
             raise
     else:
         lgr.debug('\"docker\" is already installed.')
+
+    if is_recovery:
+        lgr.info('waiting for cloudify management services to start')
+        started = _wait_for_management(manager_ip, timeout=180)
+        if not started:
+            err = 'failed waiting for cloudify management services to start.'
+            lgr.info(err)
+            raise NonRecoverableError(err)
+        _set_manager_endpoint_data()
+        return True
 
     if use_sudo:
         docker_exec_command = '{0} {1}'.format('sudo', docker_path)
@@ -320,13 +331,18 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                           '-w {0}'.format(container_work_dir)
 
     # copy all locally saved files into the data container.
-    backup_vm_homedir_cmd = 'cp -rf /root/tmp/* /root'
+    backup_vm_homedir_cmd = 'cp -rf /root/tmp/. /root'
     data_container_start_cmd += backup_vm_homedir_cmd
 
+    # TODO: agent remote keypath should be taken into consideration
+    # copy agent to host VM. the data container will mount the host VM's
+    # home-dir and all files will be backed up inside the data container.
+    agent_remote_key_path = _copy_agent_key(agent_local_key_path,
+                                            agent_remote_key_path)
+
     run_data_container_cmd = ('{0} run -t {1} '
-                              '-v /root '
                               '-v ~/:/root/tmp '
-                              '-v ~/.ssh:/root/.ssh '
+                              '-v /root '
                               '-v /etc/service/riemann '
                               '-v /etc/service/elasticsearch/data '
                               '-v /etc/service/elasticsearch/logs '
@@ -337,8 +353,6 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                       agent_mount_cmd,
                                       data_container_start_cmd))
 
-    agent_remote_key_path = _copy_agent_key(agent_local_key_path,
-                                            agent_remote_key_path)
     try:
         lgr.info('starting a new cloudify data container')
         _run_command(run_data_container_cmd)
@@ -351,7 +365,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         raise NonRecoverableError(err)
 
     lgr.info('waiting for cloudify management services to start')
-    started = _wait_for_management(manager_ip, timeout=120)
+    started = _wait_for_management(manager_ip, timeout=180)
     if not started:
         err = 'failed waiting for cloudify management services to start.'
         lgr.info(err)
