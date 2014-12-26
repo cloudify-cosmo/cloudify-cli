@@ -277,17 +277,11 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         cloudify_packages.get('docker', {}).get('docker_data_url')
     if not docker_image_url:
         raise NonRecoverableError('no docker URL found in packages')
-    if not docker_data_url:
-        raise NonRecoverableError('no docker data image URL found in packages')
     try:
         lgr.info('importing cloudify-manager docker image from {0}'
                  .format(docker_image_url))
         _run_command('{0} import {1} cloudify'
                      .format(docker_exec_command, docker_image_url))
-        lgr.info('importing cloudify-data docker image from {0}'
-                 .format(docker_data_url))
-        _run_command('{0} import {1} data'
-                     .format(docker_exec_command, docker_data_url))
     except FabricTaskError as e:
         err = 'failed importing cloudify docker images from {0} {1}. reason:' \
               '{2}'.format(docker_image_url, docker_data_url, str(e))
@@ -348,7 +342,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-v /etc/service/elasticsearch/logs '
                               '-v /opt/influxdb/shared/data '
                               '-v /var/log/cloudify '
-                              '--name data data sh -c \'{3}\''
+                              '--name data cloudify sh -c \'{3}\''
                               .format(docker_exec_command,
                                       agent_packages_mount_cmd,
                                       home_dir_mount_path,
