@@ -312,8 +312,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                       ctx.instance.host_ip))
 
     agent_packages_mount_cmd = ''
-    agent_packages_install_cmd = ''
-    data_container_start_cmd = '{0} {1} {2} {1} echo Data-only container'
+    agent_packages_install_cmd = 'echo no custom agent packages provided'
     agent_packages = cloudify_packages.get('agents')
     if agent_packages:
         lgr.info('replacing existing agent packages with custom agents {0}'
