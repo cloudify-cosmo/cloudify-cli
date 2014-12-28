@@ -219,8 +219,7 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
     return True
 
 
-def _install_docker_if_required(docker_install_command, docker_path, lgr,
-                                use_sudo):
+def _install_docker_if_required(docker_install_command, docker_path, use_sudo):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     try:
@@ -269,12 +268,9 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     manager_ip = fabric.api.env.host_string
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
     docker_exec_command = _install_docker_if_required(docker_install_command,
-                                                      docker_path, lgr,
-                                                      use_sudo)
+                                                      docker_path, use_sudo)
 
     docker_image_url = cloudify_packages.get('docker', {}).get('docker_url')
-    docker_data_url = \
-        cloudify_packages.get('docker', {}).get('docker_data_url')
     if not docker_image_url:
         raise NonRecoverableError('no docker URL found in packages')
     try:
@@ -283,8 +279,8 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         _run_command('{0} import {1} cloudify'
                      .format(docker_exec_command, docker_image_url))
     except FabricTaskError as e:
-        err = 'failed importing cloudify docker image from {0} {1}. reason:' \
-              '{2}'.format(docker_image_url, docker_data_url, str(e))
+        err = 'failed importing cloudify docker image from {0}. reason:{2}' \
+              .format(docker_image_url, str(e))
         lgr.error(err)
         raise NonRecoverableError(err)
 
@@ -322,11 +318,11 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                            data_container_work_dir)
 
     # copy agent to host VM. the data container will mount the host VM's
-    # home-dir and all files will be backed up inside the data container.
+    # home-dir so that all files will be backed up inside the data container.
     agent_remote_key_path = _copy_agent_key(agent_local_key_path,
                                             agent_remote_key_path)
 
-    # copy all locally saved host VM files into the data container.
+    # command to copy host VM home dir files into the data container's home.
     backup_vm_files_cmd, home_dir_mount_path = \
         _get_backup_files_cmd(use_sudo, agent_remote_key_path)
 
@@ -385,8 +381,7 @@ def recover_docker(cloudify_packages, docker_path=None, use_sudo=True,
     manager_ip = fabric.api.env.host_string
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
     docker_exec_command = _install_docker_if_required(docker_install_command,
-                                                      docker_path, lgr,
-                                                      use_sudo)
+                                                      docker_path, use_sudo)
     lgr.info('stopping cloudify services container')
     _run_command('{0} rm -f {1}'.format(docker_exec_command, 'cfy'))
 
