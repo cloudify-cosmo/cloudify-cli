@@ -220,7 +220,7 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
 
 
 def _install_docker_if_required(docker_install_command, docker_path, lgr,
-                               use_sudo):
+                                use_sudo):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     try:
@@ -385,8 +385,8 @@ def recover_docker(cloudify_packages, docker_path=None, use_sudo=True,
     manager_ip = fabric.api.env.host_string
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
     docker_exec_command = _install_docker_if_required(docker_install_command,
-                                                     docker_path, lgr,
-                                                     use_sudo)
+                                                      docker_path, lgr,
+                                                      use_sudo)
     lgr.info('stopping cloudify services container')
     _run_command('{0} rm -f {1}'.format(docker_exec_command, 'cfy'))
 
