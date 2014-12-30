@@ -421,7 +421,7 @@ def _is_docker_installed(docker_path, use_sudo):
         if use_sudo:
             out = fabric.api.run('sudo which {0}'.format(docker_path))
         else:
-            out = fabric.ai.run('which {0}'.format(docker_path))
+            out = fabric.api.run('which {0}'.format(docker_path))
         if not out:
             return False
         return True
