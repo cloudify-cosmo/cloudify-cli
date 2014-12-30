@@ -398,7 +398,7 @@ def _get_install_agent_pkgs_cmd(agent_packages,
         download_agents_cmd += 'curl -O {0}{1} ' \
                                .format(agent_url, ' && ')
 
-    install_agents_cmd += 'rm -rf {0} && dpkg -i {1}/*.deb' \
+    install_agents_cmd += 'rm -rf {0}/* && dpkg -i {1}/*.deb' \
                           .format(agents_dest_dir,
                                   agents_pkg_path)
 
