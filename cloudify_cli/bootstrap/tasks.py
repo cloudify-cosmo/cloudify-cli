@@ -278,7 +278,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         _run_command('{0} import {1} cloudify'
                      .format(docker_exec_command, docker_image_url))
     except FabricTaskError as e:
-        err = 'failed importing cloudify docker image from {0}. reason:{2}' \
+        err = 'failed importing cloudify docker image from {0}. reason:{1}' \
               .format(docker_image_url, str(e))
         lgr.error(err)
         raise NonRecoverableError(err)
@@ -323,10 +323,11 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     agent_remote_key_path = _copy_agent_key(agent_local_key_path,
                                             agent_remote_key_path)
 
-    data_container_start_cmd = '{0}{1} {2}{1} echo Data-only container' \
-                               .format(agent_packages_install_cmd, ';',
+    data_container_start_cmd = '{0} && {1} && echo Data-only container' \
+                               .format(agent_packages_install_cmd,
                                        backup_vm_files_cmd)
-    run_data_container_cmd = ('{0} run -t {1} '
+    run_data_container_cmd = ('{0} run -t '
+                              '{1} '
                               '-v ~/:{2} '
                               '-v /root '
                               '-v /opt/manager/resources/blueprints '
@@ -380,9 +381,6 @@ def recover_docker(docker_path=None, use_sudo=True):
         lgr.info(err)
         raise NonRecoverableError(err)
 
-    _set_manager_endpoint_data()
-    return True
-
 
 def _get_backup_files_cmd():
     container_tmp_homedir_path = '/tmp/home'
@@ -398,9 +396,9 @@ def _get_install_agent_pkgs_cmd(agent_packages,
     install_agents_cmd = ''
     for agent_name, agent_url in agent_packages.items():
         download_agents_cmd += 'curl -O {0}{1} ' \
-                               .format(agent_url, ';')
+                               .format(agent_url, ' && ')
 
-    install_agents_cmd += 'rm -rf {0}; dpkg -i {1}/*.deb' \
+    install_agents_cmd += 'rm -rf {0} && dpkg -i {1}/*.deb' \
                           .format(agents_dest_dir,
                                   agents_pkg_path)
 
