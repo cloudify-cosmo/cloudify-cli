@@ -219,20 +219,22 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
     return True
 
 
-def _install_docker_if_required(docker_install_command, docker_path, use_sudo):
+def _install_docker_if_required(docker_path, use_sudo):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
-    try:
-        distro_info = get_machine_distro()
-    except FabricTaskError as e:
-        err = 'failed getting platform distro. error is: {0}'.format(str(e))
-        lgr.error(err)
-        raise
+
     if not docker_path:
         docker_path = 'docker'
     docker_installed = _is_docker_installed(docker_path, use_sudo)
     if not docker_installed:
-        if 'trusty' not in distro_info and not docker_install_command:
+        try:
+            distro_info = get_machine_distro()
+        except FabricTaskError as e:
+            err = 'failed getting platform distro. error is: {0}'\
+                  .format(str(e))
+            lgr.error(err)
+            raise
+        if 'trusty' not in distro_info:
             err = ('bootstrap using the Docker Cloudify image requires either '
                    'running on \'Ubuntu 14.04 trusty\' or having Docker '
                    'pre-installed on the remote machine.')
@@ -241,8 +243,7 @@ def _install_docker_if_required(docker_install_command, docker_path, use_sudo):
 
         try:
             lgr.info('installing Docker')
-            _run_command(docker_install_command or
-                         'curl -sSL https://get.docker.com/ubuntu/ | sudo sh')
+            _run_command('curl -sSL https://get.docker.com/ubuntu/ | sudo sh')
         except FabricTaskError:
             err = 'failed installing docker on remote host.'
             lgr.error(err)
@@ -257,9 +258,8 @@ def _install_docker_if_required(docker_install_command, docker_path, use_sudo):
 
 
 def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
-                     docker_install_command=None, agent_local_key_path=None,
-                     agent_remote_key_path=None, manager_private_ip=None,
-                     provider_context=None):
+                     agent_local_key_path=None, agent_remote_key_path=None,
+                     manager_private_ip=None, provider_context=None):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     global lgr
@@ -267,8 +267,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
 
     manager_ip = fabric.api.env.host_string
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
-    docker_exec_command = _install_docker_if_required(docker_install_command,
-                                                      docker_path, use_sudo)
+    docker_exec_command = _install_docker_if_required(docker_path, use_sudo)
 
     docker_image_url = cloudify_packages.get('docker', {}).get('docker_url')
     if not docker_image_url:
@@ -295,7 +294,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-e MANAGEMENT_IP={1} '
                               '--restart=always '
                               '--name=cfy '
-                              '-d cloudify:latest '
+                              '-d cloudify '
                               '/sbin/my_init'
                               .format(docker_exec_command,
                                       manager_private_ip or
@@ -317,19 +316,17 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                    .format(agents_dest_dir,
                                            data_container_work_dir)
 
+
+    # command to copy host VM home dir files into the data container's home.
+    backup_vm_files_cmd, home_dir_mount_path = _get_backup_files_cmd()
     # copy agent to host VM. the data container will mount the host VM's
     # home-dir so that all files will be backed up inside the data container.
     agent_remote_key_path = _copy_agent_key(agent_local_key_path,
                                             agent_remote_key_path)
 
-    # command to copy host VM home dir files into the data container's home.
-    backup_vm_files_cmd, home_dir_mount_path = \
-        _get_backup_files_cmd(use_sudo, agent_remote_key_path)
-
     data_container_start_cmd = '{0}{1} {2}{1} echo Data-only container' \
                                .format(agent_packages_install_cmd, ';',
                                        backup_vm_files_cmd)
-    # TODO: why are there two blueprint folders?
     run_data_container_cmd = ('{0} run -t {1} '
                               '-v ~/:{2} '
                               '-v /root '
@@ -369,51 +366,18 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     return True
 
 
-def recover_docker(cloudify_packages, docker_path=None, use_sudo=True,
-                   docker_install_command=None, agent_local_key_path=None,
-                   agent_remote_key_path=None, manager_private_ip=None,
-                   provider_context=None):
-    # CFY-1627 - plugin dependency should be removed.
-    from fabric_plugin.tasks import FabricTaskError
+def recover_docker(docker_path=None, use_sudo=True):
     global lgr
     lgr = ctx.logger
 
     manager_ip = fabric.api.env.host_string
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
-    docker_exec_command = _install_docker_if_required(docker_install_command,
-                                                      docker_path, use_sudo)
-    lgr.info('stopping cloudify services container')
-    _run_command('{0} rm -f {1}'.format(docker_exec_command, 'cfy'))
+    _install_docker_if_required(docker_path, use_sudo)
 
-    run_cfy_management_cmd = ('{0} run -t '
-                              '--volumes-from data '
-                              '-p 80:80 '
-                              '-p 5555:5555 '
-                              '-p 5672:5672 '
-                              '-p 53229:53229 '
-                              '-p 8100:8100 '
-                              '-p 9200:9200 '
-                              '-e MANAGEMENT_IP={1} '
-                              '--restart=always '
-                              '--name=cfy '
-                              '-d cloudify:latest '
-                              '/sbin/my_init'
-                              .format(docker_exec_command,
-                                      manager_private_ip or
-                                      ctx.instance.host_ip))
-
-    try:
-        lgr.info('starting a new cloudify mgmt docker container')
-        _run_command(run_cfy_management_cmd)
-    except FabricTaskError as e:
-        err = 'failed running cloudify docker container. ' \
-              'error is {0}'.format(str(e))
-        lgr.error(err)
-        raise NonRecoverableError(err)
-        lgr.info('waiting for cloudify management services to start')
+    lgr.info('waiting for cloudify management services to restart')
     started = _wait_for_management(manager_ip, timeout=180)
     if not started:
-        err = 'failed waiting for cloudify management services to start.'
+        err = 'failed waiting for cloudify management services to restart.'
         lgr.info(err)
         raise NonRecoverableError(err)
 
@@ -421,14 +385,10 @@ def recover_docker(cloudify_packages, docker_path=None, use_sudo=True,
     return True
 
 
-def _get_backup_files_cmd(use_sudo):
+def _get_backup_files_cmd():
     container_tmp_homedir_path = '/tmp/home'
-    if use_sudo:
-        backup_homedir_cmd = '{0} cp -rf {1}/. /root' \
-                             .format('sudo', container_tmp_homedir_path)
-    else:
-        backup_homedir_cmd = 'cp -rf {0}/. /root' \
-                             .format(container_tmp_homedir_path)
+    backup_homedir_cmd = 'cp -rf {0}/. /root' \
+                         .format(container_tmp_homedir_path)
     return backup_homedir_cmd, container_tmp_homedir_path
 
 
