@@ -590,8 +590,8 @@ def parser_config():
                     '--ignore-deployments': {
                         'dest': 'ignore_deployments',
                         'action': 'store_true',
-                        'help': 'A flag indicating confirmation for teardown even if there '
-                                'exist active deployments'
+                        'help': 'A flag indicating confirmation for teardown even if deployments'
+                                'exist on the manager'
                     },
                     '--ignore-validation': {
                         'dest': 'ignore_validation',
