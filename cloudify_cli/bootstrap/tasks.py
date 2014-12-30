@@ -316,7 +316,6 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                    .format(agents_dest_dir,
                                            data_container_work_dir)
 
-
     # command to copy host VM home dir files into the data container's home.
     backup_vm_files_cmd, home_dir_mount_path = _get_backup_files_cmd()
     # copy agent to host VM. the data container will mount the host VM's
