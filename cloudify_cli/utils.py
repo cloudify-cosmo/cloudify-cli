@@ -122,15 +122,51 @@ def inputs_to_dict(resource, resource_name):
     if not resource:
         return None
     try:
-        if os.path.exists(resource):
-            with open(resource, 'r') as f:
-                return yaml.load(f.read())
-        else:
-            return yaml.load(resource)
-    except yaml.error.YAMLError as e:
-        msg = ("'{0}' must be a valid YAML. {1}"
-               .format(resource_name, str(e)))
+        # parse resource as string representation of a dictionary
+        parsed_dict = plain_string_to_dict(resource)
+    except CloudifyCliError:
+        try:
+            # if resource is a path - parse as a yaml file
+            if os.path.exists(resource):
+                with open(resource, 'r') as f:
+                    return yaml.load(f.read())
+            else:
+                # parse resource content as yaml
+                parsed_dict = yaml.load(resource)
+        except yaml.error.YAMLError as e:
+            msg = ("'{0}' is not a valid YAML. {1}"
+                   .format(resource_name, str(e)))
+            raise CloudifyCliError(msg)
+
+    if isinstance(parsed_dict, dict):
+        return parsed_dict
+    else:
+        msg = "Invalid input: {0}. {1} must be either be a path to a valid " \
+              "YAML file, a string formatted as a valid YAML or a string " \
+              "formatted as a dictionary (key1=value1;key2=value2)"\
+            .format(resource, resource_name)
         raise CloudifyCliError(msg)
+
+
+def plain_string_to_dict(input_string):
+    input_string = str(input_string).strip()
+    input_dict = {}
+    mapped_inputs = input_string.split(';')
+    for mapped_input in mapped_inputs:
+        mapped_input = str(mapped_input).strip()
+        if len(mapped_input) == 0:
+            continue
+        split_mapping = mapped_input.split('=')
+        if len(split_mapping) == 2:
+            key = str(split_mapping[0]).strip()
+            value = str(split_mapping[1]).strip()
+            input_dict[key] = value
+        else:
+            msg = "Invalid input format: {0}, the expected format is: " \
+                  "key1=value1;key2=value2".format(input_string)
+            raise CloudifyCliError(msg)
+
+    return input_dict
 
 
 def is_initialized():
