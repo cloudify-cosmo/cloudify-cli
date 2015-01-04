@@ -137,7 +137,8 @@ class CliUtilsUnitTests(unittest.TestCase):
         parsed_dict = utils.plain_string_to_dict(" my_key1=;")
         self.assertEqual(parsed_dict, expected_dict)
 
-        expected_dict = dict(my_key1="my_value1", my_key2="my_value2,my_other_value2")
+        expected_dict = dict(my_key1="my_value1",
+                             my_key2="my_value2,my_other_value2")
         parsed_dict = utils.plain_string_to_dict(
             " my_key1 = my_value1 ;my_key2=my_value2,my_other_value2; ")
         self.assertEqual(parsed_dict, expected_dict)
