@@ -7,13 +7,13 @@ environment:
 
   matrix:
     - PYTHON: "C:\\Python27"
-      PYTHON_VERSION: "2.7.9"
+      PYTHON_VERSION: "2.7.8"
       PYTHON_ARCH: "32"
       TOX_ENV: "py27"
 
-    # - PYTHON: "C:\\Python27-x64"
-    #   PYTHON_VERSION: "2.7.8"
-    #   PYTHON_ARCH: "64"
+    - PYTHON: "C:\\Python27-x64"
+      PYTHON_VERSION: "2.7.8"
+      PYTHON_ARCH: "64"
 
 install:
   - ECHO "Filesystem root:"
@@ -25,8 +25,6 @@ install:
   # Download
   - ps: "wget https://github.com/cloudify-cosmo/appveyor-utils/archive/master.zip -OutFile ./master.zip"
   - "7z e master.zip */appveyor/* -oappveyor"
-  - ps: "ls ."
-  - ps: "ls ./appveyor"
   # Install Python (from the official .msi of http://python.org) and pip when
   # not already installed.
   - "powershell ./appveyor/install.ps1"
