@@ -75,7 +75,7 @@ def execute(workflow_id,
             task_retry_interval,
             task_thread_pool_size):
     logger = get_logger()
-    parameters = utils.json_to_dict(parameters, 'parameters')
+    parameters = utils.inputs_to_dict(parameters, 'parameters')
     env = _load_env()
     result = env.execute(workflow=workflow_id,
                          parameters=parameters,
