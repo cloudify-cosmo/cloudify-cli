@@ -127,7 +127,7 @@ def inputs_to_dict(json_resource, json_resource_name):
                 return yaml.load(f.read())
         else:
             return yaml.load(json_resource)
-    except ValueError, e:
+    except yaml.error.YAMLError as e:
         msg = ("'{0}' must be a valid YAML. {1}"
                .format(json_resource_name, str(e)))
         raise CloudifyCliError(msg)
