@@ -24,8 +24,6 @@ install:
 
   # Download
   - ps: "wget https://github.com/cloudify-cosmo/appveyor-utils/archive/master.zip -OutFile ./master.zip"
-  - ps: "ls ."
-  # Extract
   - "7z e master.zip -o appveyor\ appveyor\* -r"
   # Install Python (from the official .msi of http://python.org) and pip when
   # not already installed.
