@@ -43,6 +43,3 @@ before_test:
 test_script:
   # Build the compiled extension and run the project tests
   - "%CMD_IN_ENV% tox -e %TOX_ENV%"
-
-after_test:
-  - ps: $wc = New-Object 'System.Net.WebClient'; $wc.UploadFile("https://ci.appveyor.com/api/testresults/xunit/$($env:APPVEYOR_JOB_ID)", (Resolve-Path .\nosetests.xml))
