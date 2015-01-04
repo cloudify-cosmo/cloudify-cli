@@ -23,7 +23,7 @@ install:
   - ps: "ls \"C:/Program Files/Microsoft SDKs/Windows\""
 
   # Download
-  - "wget https://github.com/cloudify-cosmo/appveyor-utils/archive/master.zip -OutFile master.zip"
+  - "powershell -Command 'wget https://github.com/cloudify-cosmo/appveyor-utils/archive/master.zip -OutFile master.zip'"
   # Extract
   - "7z e master.zip"
   # Install Python (from the official .msi of http://python.org) and pip when
