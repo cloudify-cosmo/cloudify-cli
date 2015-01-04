@@ -19,7 +19,6 @@ Handles all commands that start with 'cfy executions'
 
 import time
 
-from cloudify_cli.utils import json_to_dict
 from cloudify_rest_client import exceptions
 from cloudify_cli import utils
 from cloudify_cli.exceptions import CloudifyCliError
@@ -89,7 +88,7 @@ def ls(deployment_id):
 def start(workflow_id, deployment_id, timeout, force,
           allow_custom_parameters, include_logs, parameters):
     logger = get_logger()
-    parameters = json_to_dict(parameters, 'parameters')
+    parameters = utils.inputs_to_dict(parameters, 'parameters')
     management_ip = utils.get_management_server_ip()
     logger.info("Executing workflow '{0}' on deployment '{1}' at"
                 " management server {2} [timeout={3} seconds]"

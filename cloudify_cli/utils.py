@@ -118,17 +118,17 @@ def get_context_path():
     return context_path
 
 
-def json_to_dict(json_resource, json_resource_name):
+def inputs_to_dict(json_resource, json_resource_name):
     if not json_resource:
         return None
     try:
         if os.path.exists(json_resource):
             with open(json_resource, 'r') as f:
-                return json.loads(f.read())
+                return yaml.load(f.read())
         else:
-            return json.loads(json_resource)
+            return yaml.load(json_resource)
     except ValueError, e:
-        msg = ("'{0}' must be a valid JSON. {1}"
+        msg = ("'{0}' must be a valid YAML. {1}"
                .format(json_resource_name, str(e)))
         raise CloudifyCliError(msg)
 
