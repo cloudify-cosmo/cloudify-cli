@@ -152,7 +152,7 @@ def parser_config():
                                 'metavar': 'INPUTS',
                                 'dest': 'inputs',
                                 'required': False,
-                                'help': 'Inputs file/string for the deployment creation (in JSON format)'
+                                'help': 'Inputs file/string for the deployment creation (in YAML format)'
                             }
                         },
                         'help': 'command for creating a deployment of a blueprint',
@@ -244,7 +244,7 @@ def parser_config():
                                 'default': {},
                                 'type': str,
                                 'required': False,
-                                'help': 'Parameters for the workflow execution (in JSON format)'
+                                'help': 'Parameters for the workflow execution (in YAML format)'
                             },
                             '--allow-custom-parameters': {
                                 'dest': 'allow_custom_parameters',
@@ -343,7 +343,7 @@ def parser_config():
                                 'metavar': 'INPUTS',
                                 'dest': 'inputs',
                                 'required': False,
-                                'help': 'Inputs file/string for the local workflow creation (in JSON format)'
+                                'help': 'Inputs file/string for the local workflow creation (in YAML format)'
                             },
                             '--install-plugins': {
                                 'dest': 'install_plugins_',
@@ -401,7 +401,7 @@ def parser_config():
                                 'default': {},
                                 'type': str,
                                 'required': False,
-                                'help': 'Parameters for the workflow execution (in JSON format)'
+                                'help': 'Parameters for the workflow execution (in YAML format)'
                             },
                             '--allow-custom-parameters': {
                                 'dest': 'allow_custom_parameters',
@@ -526,7 +526,7 @@ def parser_config():
                         'metavar': 'INPUTS',
                         'dest': 'inputs',
                         'required': False,
-                        'help': 'Inputs file/string for a manager blueprint (in JSON format)'
+                        'help': 'Inputs file/string for a manager blueprint (in YAML format)'
                     },
                     '--keep-up-on-failure': {
                         'dest': 'keep_up',
@@ -590,8 +590,8 @@ def parser_config():
                     '--ignore-deployments': {
                         'dest': 'ignore_deployments',
                         'action': 'store_true',
-                        'help': 'A flag indicating confirmation for teardown even if there '
-                                'exist active deployments'
+                        'help': 'A flag indicating confirmation for teardown even if deployments'
+                                'exist on the manager'
                     },
                     '--ignore-validation': {
                         'dest': 'ignore_validation',

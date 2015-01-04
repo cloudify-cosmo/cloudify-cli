@@ -36,9 +36,9 @@ def teardown(force, ignore_deployments, config_file_path, ignore_validation):
 
     client = utils.get_rest_client(management_ip)
     if not ignore_deployments and len(client.deployments.list()) > 0:
-        msg = ("Management server {0} has active deployments. Add the "
-               "'--ignore-deployments' flag to your command to ignore "
-               "these deployments and execute topology teardown."
+        msg = ("Management server {0} has existing deployments. Delete all "
+               "deployments first or add the '--ignore-deployments' flag to "
+               "your command to ignore these deployments and execute teardown."
                .format(management_ip))
         raise exceptions.CloudifyCliError(msg)
 

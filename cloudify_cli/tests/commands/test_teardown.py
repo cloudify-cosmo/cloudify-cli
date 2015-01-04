@@ -46,7 +46,7 @@ class TeardownTest(CliCommandTest):
         cli_runner.run_cli('cfy use -t 10.0.0.1 --provider')
         self._assert_ex('cfy teardown -f --ignore-validation '
                         '-c cloudify-config.yaml',
-                        'has active deployments')
+                        'has existing deployments')
 
     def test_teardown(self):
         self.client.manager.get_status = MagicMock()
