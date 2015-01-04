@@ -23,9 +23,6 @@ install:
   - ECHO "Installed SDKs:"
   - ps: "ls \"C:/Program Files/Microsoft SDKs/Windows\""
 
-  # ECHO %PATH%
-  - cmd: "echo %path%"
-
   # Download
   - ps: "wget https://github.com/cloudify-cosmo/appveyor-utils/archive/master.zip -OutFile ./master.zip"
   - "7z e master.zip */appveyor/* -oappveyor"
@@ -33,10 +30,15 @@ install:
   # not already installed.
   - "powershell ./appveyor/install.ps1"
 
+  # Remove Pre installed Python from Path (this confuses linker on x64)
+  - "SET PATH=%PATH:C:\\Python27;=%"
   # Prepend newly installed Python to the PATH of this build (this cannot be
   # done from inside the powershell script as it would require to restart
   # the parent CMD process).
   - "SET PATH=%PYTHON%;%PYTHON%\\Scripts;%PATH%"
+
+  # ECHO %PATH%
+  - cmd: "echo %path%"
 
   # Check that we have the expected version and architecture for Python
   - "python --version"
