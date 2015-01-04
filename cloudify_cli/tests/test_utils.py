@@ -184,7 +184,7 @@ class CliUtilsUnitTests(unittest.TestCase):
         input_str = "my_key1=my_value1;my_key2"
         resource_name = "my_resource_name"
 
-        expected_err_msg = "Invalid input: {0}. {1} can be either be a path " \
+        expected_err_msg = "Invalid input: {0}. {1} must be either be a path " \
                            "to a valid YAML file, a string formatted as a " \
                            "valid YAML or a string formatted as a dictionary" \
                            " \(key1=value1;key2=value2\)"
