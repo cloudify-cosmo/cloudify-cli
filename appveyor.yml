@@ -14,6 +14,7 @@ environment:
     - PYTHON: "C:\\Python27-x64"
       PYTHON_VERSION: "2.7.8"
       PYTHON_ARCH: "64"
+      TOX_ENV: "py27"
 
 install:
   - ECHO "Filesystem root:"
