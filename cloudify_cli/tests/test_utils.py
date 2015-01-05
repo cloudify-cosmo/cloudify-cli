@@ -143,6 +143,8 @@ class CliUtilsUnitTests(unittest.TestCase):
             " my_key1 = my_value1 ;my_key2=my_value2,my_other_value2; ")
         self.assertEqual(parsed_dict, expected_dict)
 
+    def test_string_to_dict_error_handling(self):
+
         expected_err_msg = "Invalid input format: {0}, the expected " \
                            "format is: key1=value1;key2=value2"
 
@@ -180,14 +182,14 @@ class CliUtilsUnitTests(unittest.TestCase):
                                 utils.plain_string_to_dict,
                                 input_str)
 
-    def test_inputs_to_dict(self):
+    def test_inputs_to_dict_error_handling(self):
         input_str = "my_key1=my_value1;my_key2"
         resource_name = "my_resource_name"
 
-        expected_err_msg = "Invalid input: {0}. {1} must be either be a path " \
-                           "to a valid YAML file, a string formatted as a " \
-                           "valid YAML or a string formatted as a dictionary" \
-                           " \(key1=value1;key2=value2\)"
+        expected_err_msg = "Invalid input: {0}. {1} must represent a " \
+                           "dictionary. Valid values can either be a path" \
+                           " to a YAML file, a string formatted as YAML or" \
+                           " a string formatted as key1=value1;key2=value2"
         self.assertRaisesRegexp(
             CloudifyCliError,
             expected_err_msg.format(input_str, resource_name),

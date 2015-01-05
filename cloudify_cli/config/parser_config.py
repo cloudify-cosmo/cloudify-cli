@@ -22,6 +22,8 @@ from cloudify_cli.config import completion_utils
 from cloudify_cli.config import argument_utils
 from cloudify_cli.constants import DEFAULT_REST_PORT
 
+FORMAT_INPUT_AS_YAML_OR_DICT = 'formatted as YAML or as "key1=value1;key2=value2"'
+
 
 def blueprint_id_argument():
     return {
@@ -152,7 +154,8 @@ def parser_config():
                                 'metavar': 'INPUTS',
                                 'dest': 'inputs',
                                 'required': False,
-                                'help': 'Inputs file/string for the deployment creation (in JSON format)'
+                                'help': 'Inputs file/string for the deployment creation ({0})'
+                                        .format(FORMAT_INPUT_AS_YAML_OR_DICT)
                             }
                         },
                         'help': 'command for creating a deployment of a blueprint',
@@ -244,7 +247,8 @@ def parser_config():
                                 'default': {},
                                 'type': str,
                                 'required': False,
-                                'help': 'Parameters for the workflow execution (in JSON format)'
+                                'help': 'Parameters for the workflow execution ({0})'
+                                        .format(FORMAT_INPUT_AS_YAML_OR_DICT)
                             },
                             '--allow-custom-parameters': {
                                 'dest': 'allow_custom_parameters',
@@ -343,7 +347,8 @@ def parser_config():
                                 'metavar': 'INPUTS',
                                 'dest': 'inputs',
                                 'required': False,
-                                'help': 'Inputs file/string for the local workflow creation (in JSON format)'
+                                'help': 'Inputs file/string for the local workflow creation ({0})'
+                                        .format(FORMAT_INPUT_AS_YAML_OR_DICT)
                             },
                             '--install-plugins': {
                                 'dest': 'install_plugins_',
@@ -401,7 +406,8 @@ def parser_config():
                                 'default': {},
                                 'type': str,
                                 'required': False,
-                                'help': 'Parameters for the workflow execution (in JSON format)'
+                                'help': 'Parameters for the workflow execution ({0})'
+                                        .format(FORMAT_INPUT_AS_YAML_OR_DICT)
                             },
                             '--allow-custom-parameters': {
                                 'dest': 'allow_custom_parameters',
@@ -526,7 +532,8 @@ def parser_config():
                         'metavar': 'INPUTS',
                         'dest': 'inputs',
                         'required': False,
-                        'help': 'Inputs file/string for a manager blueprint (in JSON format)'
+                        'help': 'Inputs file/string for a manager blueprint ({0})'
+                                .format(FORMAT_INPUT_AS_YAML_OR_DICT)
                     },
                     '--keep-up-on-failure': {
                         'dest': 'keep_up',

@@ -129,7 +129,7 @@ def inputs_to_dict(resource, resource_name):
             # if resource is a path - parse as a yaml file
             if os.path.exists(resource):
                 with open(resource, 'r') as f:
-                    return yaml.load(f.read())
+                    parsed_dict = yaml.load(f.read())
             else:
                 # parse resource content as yaml
                 parsed_dict = yaml.load(resource)
@@ -141,25 +141,26 @@ def inputs_to_dict(resource, resource_name):
     if isinstance(parsed_dict, dict):
         return parsed_dict
     else:
-        msg = "Invalid input: {0}. {1} must be either be a path to a valid " \
-              "YAML file, a string formatted as a valid YAML or a string " \
-              "formatted as a dictionary (key1=value1;key2=value2)"\
+        msg = "Invalid input: {0}. {1} must represent a dictionary. Valid " \
+              "values can either be a path to a YAML file, a string " \
+              "formatted as YAML or a string formatted as " \
+              "key1=value1;key2=value2"\
             .format(resource, resource_name)
         raise CloudifyCliError(msg)
 
 
 def plain_string_to_dict(input_string):
-    input_string = str(input_string).strip()
+    input_string = input_string.strip()
     input_dict = {}
     mapped_inputs = input_string.split(';')
     for mapped_input in mapped_inputs:
-        mapped_input = str(mapped_input).strip()
-        if len(mapped_input) == 0:
+        mapped_input = mapped_input.strip()
+        if not mapped_input:
             continue
         split_mapping = mapped_input.split('=')
         if len(split_mapping) == 2:
-            key = str(split_mapping[0]).strip()
-            value = str(split_mapping[1]).strip()
+            key = split_mapping[0].strip()
+            value = split_mapping[1].strip()
             input_dict[key] = value
         else:
             msg = "Invalid input format: {0}, the expected format is: " \
