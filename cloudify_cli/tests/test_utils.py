@@ -36,6 +36,9 @@ class CliUtilsUnitTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        if os.path.exists(TEST_DIR):
+            shutil.rmtree(TEST_DIR)
+
         os.mkdir(TEST_DIR)
 
     @classmethod
@@ -102,3 +105,94 @@ class CliUtilsUnitTests(unittest.TestCase):
             update=False)
 
         utils.load_cloudify_working_dir_settings()
+
+    def test_parsing_input_as_string(self):
+
+        self.assertEqual(utils.plain_string_to_dict(""), {})
+
+        self.assertEqual(utils.plain_string_to_dict(" "), {})
+
+        self.assertEqual(utils.plain_string_to_dict(";"), {})
+
+        self.assertEqual(utils.plain_string_to_dict(" ; "), {})
+
+        expected_dict = dict(my_key1="my_value1", my_key2="my_value2")
+
+        parsed_dict = utils.plain_string_to_dict(
+            "my_key1=my_value1;my_key2=my_value2")
+        self.assertEqual(parsed_dict, expected_dict)
+
+        parsed_dict = utils.plain_string_to_dict(
+            " my_key1 = my_value1 ;my_key2=my_value2; ")
+        self.assertEqual(parsed_dict, expected_dict)
+
+        parsed_dict = utils.plain_string_to_dict(
+            " my_key1 = my_value1 ;my_key2=my_value2; ")
+        self.assertEqual(parsed_dict, expected_dict)
+
+        expected_dict = dict(my_key1="")
+        parsed_dict = utils.plain_string_to_dict(" my_key1=")
+        self.assertEqual(parsed_dict, expected_dict)
+
+        parsed_dict = utils.plain_string_to_dict(" my_key1=;")
+        self.assertEqual(parsed_dict, expected_dict)
+
+        expected_dict = dict(my_key1="my_value1",
+                             my_key2="my_value2,my_other_value2")
+        parsed_dict = utils.plain_string_to_dict(
+            " my_key1 = my_value1 ;my_key2=my_value2,my_other_value2; ")
+        self.assertEqual(parsed_dict, expected_dict)
+
+    def test_string_to_dict_error_handling(self):
+
+        expected_err_msg = "Invalid input format: {0}, the expected " \
+                           "format is: key1=value1;key2=value2"
+
+        input_str = "my_key1"
+        self.assertRaisesRegexp(CloudifyCliError,
+                                expected_err_msg.format(input_str),
+                                utils.plain_string_to_dict, input_str)
+
+        input_str = "my_key1;"
+        self.assertRaisesRegexp(CloudifyCliError,
+                                expected_err_msg.format(input_str),
+                                utils.plain_string_to_dict, input_str)
+
+        input_str = "my_key1=my_value1;myvalue2;"
+        self.assertRaisesRegexp(CloudifyCliError,
+                                expected_err_msg.format(input_str),
+                                utils.plain_string_to_dict,
+                                input_str)
+
+        input_str = "my_key1=my_value1;my_key2=myvalue2;my_other_value2;"
+        self.assertRaisesRegexp(CloudifyCliError,
+                                expected_err_msg.format(input_str),
+                                utils.plain_string_to_dict,
+                                input_str)
+
+        input_str = "my_key1=my_value1;my_key2=myvalue2;my_other_value2;"
+        self.assertRaisesRegexp(CloudifyCliError,
+                                expected_err_msg.format(input_str),
+                                utils.plain_string_to_dict,
+                                input_str)
+
+        input_str = "my_key1:my_value1;my_key2:my_value2"
+        self.assertRaisesRegexp(CloudifyCliError,
+                                expected_err_msg.format(input_str),
+                                utils.plain_string_to_dict,
+                                input_str)
+
+    def test_inputs_to_dict_error_handling(self):
+        input_str = "my_key1=my_value1;my_key2"
+        resource_name = "my_resource_name"
+
+        expected_err_msg = "Invalid input: {0}. {1} must represent a " \
+                           "dictionary. Valid values can either be a path" \
+                           " to a YAML file, a string formatted as YAML or" \
+                           " a string formatted as key1=value1;key2=value2"
+        self.assertRaisesRegexp(
+            CloudifyCliError,
+            expected_err_msg.format(input_str, resource_name),
+            utils.inputs_to_dict,
+            input_str,
+            resource_name)
