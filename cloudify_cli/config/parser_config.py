@@ -96,6 +96,32 @@ def parser_config():
                         'help': 'command for uploading a blueprint to the management server',
                         'handler': cfy.blueprints.upload
                     },
+                    'publish-archive': {
+                        'arguments': {
+                            '-l,--archive-location': {
+                                'metavar': 'ARCHIVE_LOCATION',
+                                'dest': 'archive_location',
+                                'type': str,
+                                'required': True,
+                                'help': "Path or URL to the application's "
+                                        "blueprint archive file",
+                                'completer': completion_utils.archive_files_completer
+                            },
+                            '-n,--blueprint-filename': {
+                                'metavar': 'BLUEPRINT_FILENAME',
+                                'dest': 'blueprint_filename',
+                                'type': str,
+                                'required': False,
+                                'help': "Name of the archive's main blueprint "
+                                        "file",
+                            },
+                            '-b,--blueprint-id': argument_utils.remove_completer(blueprint_id_argument())
+                        },
+                        'help': 'command for publishing a blueprint '
+                                'archive from a path or URL to the '
+                                'management server',
+                        'handler': cfy.blueprints.publish_archive
+                    },
                     'download': {
                         'arguments': {
                             '-b,--blueprint-id': blueprint_id_argument(),
@@ -111,14 +137,15 @@ def parser_config():
                         'handler': cfy.blueprints.download
                     },
                     'list': {
-                        'help': 'command for listing all uploaded blueprints',
+                        'help': 'command for listing all blueprints on the '
+                                'Manager',
                         'handler': cfy.blueprints.ls
                     },
                     'delete': {
                         'arguments': {
                             '-b,--blueprint-id': blueprint_id_argument()
                         },
-                        'help': 'command for deleting an uploaded blueprint',
+                        'help': 'command for deleting a blueprint',
                         'handler': cfy.blueprints.delete
                     },
                     'validate': {
