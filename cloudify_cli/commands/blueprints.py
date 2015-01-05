@@ -88,7 +88,7 @@ def publish_archive(archive_location, blueprint_filename, blueprint_id):
 
     client = utils.get_rest_client(management_ip)
     blueprint = client.blueprints.publish_archive(
-        archive_location, blueprint_filename, blueprint_id)
+        archive_location, blueprint_id, blueprint_filename)
     logger.info("Published blueprint archive, blueprint's id is: {0}"
                 .format(blueprint.id))
 
