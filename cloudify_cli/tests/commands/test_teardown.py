@@ -48,6 +48,22 @@ class TeardownTest(CliCommandTest):
                         '-c cloudify-config.yaml',
                         'has existing deployments')
 
+    def test_teardown_no_manager(self):
+        self.client.manager.get_status = MagicMock()
+
+        def raise_ioerror():
+            raise IOError('this is an IOError')
+
+        self.client.deployments.list = raise_ioerror
+        self.client.manager.get_context = MagicMock(
+            return_value={'name': 'mock_provider', 'context': {'key': 'value'}}
+        )
+        cli_runner.run_cli('cfy init -p mock_provider')
+        cli_runner.run_cli('cfy use -t 10.0.0.1 --provider')
+        self._assert_ex('cfy teardown -f --ignore-validation '
+                        '-c cloudify-config.yaml',
+                        'The Manager may be down')
+
     def test_teardown(self):
         self.client.manager.get_status = MagicMock()
         self.client.manager.get_context = MagicMock(

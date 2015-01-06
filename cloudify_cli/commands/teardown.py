@@ -35,11 +35,21 @@ def teardown(force, ignore_deployments, config_file_path, ignore_validation):
         raise exceptions.CloudifyCliError(msg)
 
     client = utils.get_rest_client(management_ip)
-    if not ignore_deployments and len(client.deployments.list()) > 0:
-        msg = ("Management server {0} has existing deployments. Delete all "
-               "deployments first or add the '--ignore-deployments' flag to "
-               "your command to ignore these deployments and execute teardown."
-               .format(management_ip))
+    try:
+        if not ignore_deployments and len(client.deployments.list()) > 0:
+            msg = \
+                ("Manager server {0} has existing deployments. Delete all "
+                 "deployments first or add the '--ignore-deployments' flag to "
+                 "your command to ignore these deployments and execute "
+                 "teardown.".format(management_ip))
+            raise exceptions.CloudifyCliError(msg)
+    except IOError:
+        msg = \
+            "Failed querying manager server {0} about existing " \
+            "deployments; The Manager server may be down. If you wish to " \
+            'skip this check, you may use the "--ignore-deployments" flag, ' \
+            'in which case teardown will occur regardless of the Manager ' \
+            "server's status."
         raise exceptions.CloudifyCliError(msg)
 
     settings = utils.load_cloudify_working_dir_settings()
