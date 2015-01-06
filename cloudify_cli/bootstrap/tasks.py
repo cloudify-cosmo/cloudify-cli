@@ -300,12 +300,9 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                       manager_private_ip or
                                       ctx.instance.host_ip))
 
-    agent_pkgs_mount_options = ''
-    agent_packages_install_cmd = 'echo no custom agent packages provided'
     agent_packages = cloudify_packages.get('agents')
     if agent_packages:
-        lgr.info('replacing existing agent packages with custom agents {0}'
-                 .format(agent_packages.keys()))
+        # compose agent installation command.
         data_container_work_dir = '/tmp/work_dir'
         agents_dest_dir = '/opt/manager/resources/packages'
         agent_packages_install_cmd = \
@@ -315,6 +312,10 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         agent_pkgs_mount_options = '-v {0} -w {1} ' \
                                    .format(agents_dest_dir,
                                            data_container_work_dir)
+    else:
+        lgr.info('no agent packages were provided')
+        agent_packages_install_cmd = 'echo no agent packages provided'
+        agent_pkgs_mount_options = ''
 
     # command to copy host VM home dir files into the data container's home.
     backup_vm_files_cmd, home_dir_mount_path = _get_backup_files_cmd()
@@ -408,7 +409,7 @@ def _get_install_agent_pkgs_cmd(agent_packages,
 def _is_docker_installed(docker_path, use_sudo):
     """
     Returns true if docker run command exists
-    :param docker_run_command: docker command to run
+    :param docker_path: the docker path
     :param use_sudo: use sudo to run docker
     :return: True if docker run command exists, False otherwise
     """
