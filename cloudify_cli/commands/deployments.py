@@ -69,7 +69,7 @@ def ls(blueprint_id):
 def create(blueprint_id, deployment_id, inputs):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
-    inputs = utils.json_to_dict(inputs, 'inputs')
+    inputs = utils.inputs_to_dict(inputs, 'inputs')
 
     logger.info('Creating new deployment from blueprint {0} at '
                 'management server {1}'

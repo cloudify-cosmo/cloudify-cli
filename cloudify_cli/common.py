@@ -37,7 +37,7 @@ def initialize_blueprint(blueprint_path,
         install_blueprint_plugins(
             blueprint_path=blueprint_path
         )
-    inputs = utils.json_to_dict(inputs, 'inputs')
+    inputs = utils.inputs_to_dict(inputs, 'inputs')
     return local.init_env(
         blueprint_path=blueprint_path,
         name=name,

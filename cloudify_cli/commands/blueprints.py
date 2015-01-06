@@ -17,6 +17,9 @@
 Handles all commands that start with 'cfy blueprints'
 """
 
+import os
+import urlparse
+
 from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
 from cloudify_cli import messages
@@ -24,6 +27,8 @@ from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.utils import print_table
 from dsl_parser.parser import parse_from_path
 from dsl_parser.exceptions import DSLParsingException
+
+SUPPORTED_ARCHIVE_TYPES = ['zip', 'tar', 'tar.gz', 'tar.bz2']
 
 
 def validate(blueprint_path):
@@ -50,6 +55,42 @@ def upload(blueprint_path, blueprint_id):
     client = utils.get_rest_client(management_ip)
     blueprint = client.blueprints.upload(blueprint_path.name, blueprint_id)
     logger.info("Uploaded blueprint, blueprint's id is: {0}"
+                .format(blueprint.id))
+
+
+def publish_archive(archive_location, blueprint_filename, blueprint_id):
+    logger = get_logger()
+    management_ip = utils.get_management_server_ip()
+
+    for archive_type in SUPPORTED_ARCHIVE_TYPES:
+        if archive_location.endswith('.{0}'.format(archive_type)):
+            break
+    else:
+        raise CloudifyCliError(
+            "Can't publish archive {0} - it's of an unsupported archive type. "
+            "Supported archive types: {1}".format(archive_location,
+                                                  SUPPORTED_ARCHIVE_TYPES))
+
+    archive_location_type = 'URL'
+    if not urlparse.urlparse(archive_location).scheme:
+        # archive_location is not a URL - validate it's a file path
+        if not os.path.isfile(archive_location):
+            raise CloudifyCliError(
+                "Can't publish archive {0} - it's not a valid URL nor a path "
+                "to an archive file".format(archive_location))
+        archive_location_type = 'path'
+        archive_location = os.path.expanduser(archive_location)
+
+    logger.info('Publishing blueprint archive from {0} {1} to management '
+                'server {2}'
+                .format(archive_location_type,
+                        archive_location,
+                        management_ip))
+
+    client = utils.get_rest_client(management_ip)
+    blueprint = client.blueprints.publish_archive(
+        archive_location, blueprint_id, blueprint_filename)
+    logger.info("Published blueprint archive, blueprint's id is: {0}"
                 .format(blueprint.id))
 
 
