@@ -49,7 +49,7 @@ def teardown(force, ignore_deployments, config_file_path, ignore_validation):
             "deployments; The Manager server may be down. If you wish to " \
             'skip this check, you may use the "--ignore-deployments" flag, ' \
             'in which case teardown will occur regardless of the Manager ' \
-            "server's status."
+            "server's status.".format(management_ip)
         raise exceptions.CloudifyCliError(msg)
 
     settings = utils.load_cloudify_working_dir_settings()
