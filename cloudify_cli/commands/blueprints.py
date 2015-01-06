@@ -79,6 +79,7 @@ def publish_archive(archive_location, blueprint_filename, blueprint_id):
                 "Can't publish archive {0} - it's not a valid URL nor a path "
                 "to an archive file".format(archive_location))
         archive_location_type = 'path'
+        archive_location = os.path.expanduser(archive_location)
 
     logger.info('Publishing blueprint archive from {0} {1} to management '
                 'server {2}'
