@@ -269,6 +269,14 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
     docker_exec_command = _install_docker_if_required(docker_path, use_sudo)
 
+    data_container_name = 'data'
+    cfy_container_name = 'cfy'
+    if _container_exists(docker_exec_command, data_container_name) or \
+            _container_exists(docker_exec_command, cfy_container_name):
+        err = 'a container instance with name {0}/{1} already exists.'\
+              .format(data_container_name, cfy_container_name)
+        raise NonRecoverableError(err)
+
     docker_image_url = cloudify_packages.get('docker', {}).get('docker_url')
     if not docker_image_url:
         raise NonRecoverableError('no docker URL found in packages')
@@ -283,7 +291,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         lgr.error(err)
         raise NonRecoverableError(err)
 
-    run_cfy_management_cmd = ('{0} run -t '
+    cfy_management_options = ('-t '
                               '--volumes-from data '
                               '-p 80:80 '
                               '-p 5555:5555 '
@@ -291,13 +299,12 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-p 53229:53229 '
                               '-p 8100:8100 '
                               '-p 9200:9200 '
-                              '-e MANAGEMENT_IP={1} '
+                              '-e MANAGEMENT_IP={0} '
                               '--restart=always '
-                              '--name=cfy '
-                              '-d cloudify '
+                              '-d '
+                              'cloudify '
                               '/sbin/my_init'
-                              .format(docker_exec_command,
-                                      manager_private_ip or
+                              .format(manager_private_ip or
                                       ctx.instance.host_ip))
 
     agent_packages = cloudify_packages.get('agents')
@@ -327,9 +334,9 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     data_container_start_cmd = '{0} && {1} && echo Data-only container' \
                                .format(agent_packages_install_cmd,
                                        backup_vm_files_cmd)
-    run_data_container_cmd = ('{0} run -t '
-                              '{1} '
-                              '-v ~/:{2} '
+    data_container_options = ('-t '
+                              '{0} '
+                              '-v ~/:{1} '
                               '-v /root '
                               '-v /opt/manager/resources/blueprints '
                               '-v /opt/manager/resources/uploaded-blueprints '
@@ -338,17 +345,18 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-v /etc/service/elasticsearch/logs '
                               '-v /opt/influxdb/shared/data '
                               '-v /var/log/cloudify '
-                              '--name data cloudify sh -c \'{3}\''
-                              .format(docker_exec_command,
-                                      agent_pkgs_mount_options,
+                              'cloudify sh -c \'{2}\''
+                              .format(agent_pkgs_mount_options,
                                       home_dir_mount_path,
                                       data_container_start_cmd))
 
     try:
         lgr.info('starting a new cloudify data container')
-        _run_command(run_data_container_cmd)
-        lgr.info('starting a new cloudify mgmt docker container')
-        _run_command(run_cfy_management_cmd)
+        _run_docker_container(docker_exec_command, data_container_options,
+                              data_container_name)
+        lgr.info('starting a new cloudify mgmt docker services container')
+        _run_docker_container(docker_exec_command, cfy_management_options,
+                              cfy_container_name, retries=5)
     except FabricTaskError as e:
         err = 'failed running cloudify docker container. ' \
               'error is {0}'.format(str(e))
@@ -496,6 +504,41 @@ def _upload_provider_context(remote_agents_private_key_path,
 
 def _run_command(command):
     return fabric.api.run(command)
+
+
+def _container_exists(docker_exec_command, container_name):
+    # CFY-1627 - plugin dependency should be removed.
+    from fabric_plugin.tasks import FabricTaskError
+    try:
+        inspect_command = '{0} inspect {1}'.format(docker_exec_command,
+                                                   container_name)
+        _run_command(inspect_command)
+        return True
+    except FabricTaskError:
+        return False
+
+
+def _run_docker_container(docker_exec_command, container_options,
+                          container_name, retries=1):
+    # CFY-1627 - plugin dependency should be removed.
+    from fabric_plugin.tasks import FabricTaskError
+    run_cmd = '{0} run --name {1} {2}'\
+              .format(docker_exec_command, container_name, container_options)
+    for i in range(0, retries):
+        try:
+            lgr.debug('starting docker container {0}'.format(container_name))
+            return _run_command(run_cmd)
+        except FabricTaskError:
+            lgr.debug('container execution failed on attempt {0}/{1}'
+                      .format(i + 1, retries))
+            if _container_exists(docker_exec_command, container_name):
+                rm_container_cmd = '{0} rm -f {1}'.format(docker_exec_command,
+                                                          container_name)
+                _run_command(rm_container_cmd)
+            if i == retries:
+                lgr.error('failed executing command: {0}'.format(run_cmd))
+                raise
+            sleep(2)
 
 
 def _download_package(url, path, distro):
