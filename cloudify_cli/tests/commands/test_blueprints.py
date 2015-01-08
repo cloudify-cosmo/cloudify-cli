@@ -43,6 +43,27 @@ class BlueprintsTest(CliCommandTest):
                            '{0}/helloworld/blueprint.yaml '
                            '-b my_blueprint_id'.format(BLUEPRINTS_DIR))
 
+    def test_blueprints_publish_archive(self):
+        self.client.blueprints.publish_archive = MagicMock()
+        cli_runner.run_cli('cfy blueprints publish-archive -l '
+                           '{0}/helloworld.zip '
+                           '-b my_blueprint_id'.format(BLUEPRINTS_DIR))
+
+    def test_blueprints_publish_unsupported_archive_type(self):
+        self.client.blueprints.publish_archive = MagicMock()
+        # passing in a directory instead of a valid archive type
+        self._assert_ex('cfy blueprints publish-archive -l '
+                        '{0}/helloworld '
+                        '-b my_blueprint_id'.format(BLUEPRINTS_DIR),
+                        "unsupported archive type")
+
+    def test_blueprints_publish_archive_bad_file_path(self):
+        self.client.blueprints.publish_archive = MagicMock()
+        self._assert_ex('cfy blueprints publish-archive -l '
+                        '{0}/helloworld.tar.gz '
+                        '-b my_blueprint_id'.format(BLUEPRINTS_DIR),
+                        "not a valid URL nor a path")
+
     def test_blueprint_validate(self):
         cli_runner.run_cli('cfy blueprints validate '
                            '-p {0}/helloworld/blueprint.yaml'

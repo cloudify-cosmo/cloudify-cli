@@ -20,6 +20,8 @@ from cloudify_cli import utils
 from cloudify_cli.commands import dev_module
 
 yaml_files_completer = FilesCompleter(['*.yml', '*.yaml'])
+archive_files_completer = FilesCompleter(
+    ['*.zip', '*.tar', '*.tar.gz', '*.tar.bz2'])
 
 
 def objects_args_completer_maker(objects_type, **kw):
