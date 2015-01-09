@@ -45,7 +45,8 @@ def use(management_ip, provider, rest_port):
 
     try:
         response = utils.get_rest_client(
-            management_ip).manager.get_context()
+        manager_ip=management_ip,
+        rest_port=rest_port).manager.get_context()
         provider_name = response['name']
         provider_context = response['context']
     except CloudifyClientError:
