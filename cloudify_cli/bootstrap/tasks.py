@@ -519,23 +519,29 @@ def _container_exists(docker_exec_command, container_name):
 
 
 def _run_docker_container(docker_exec_command, container_options,
-                          container_name, retries=1):
+                          container_name, retries_on_corrupt=1):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     run_cmd = '{0} run --name {1} {2}'\
               .format(docker_exec_command, container_name, container_options)
-    for i in range(0, retries):
+    for i in range(0, retries_on_corrupt):
         try:
             lgr.debug('starting docker container {0}'.format(container_name))
             return _run_command(run_cmd)
         except FabricTaskError:
             lgr.debug('container execution failed on attempt {0}/{1}'
-                      .format(i + 1, retries))
+                      .format(i + 1, retries_on_corrupt))
             if _container_exists(docker_exec_command, container_name):
+                lgr.debug('container {0} started in a corrupt state. '
+                          'removing container.'.format(container_name))
                 rm_container_cmd = '{0} rm -f {1}'.format(docker_exec_command,
                                                           container_name)
                 _run_command(rm_container_cmd)
-            if i == retries:
+            else:
+                lgr.error('failed running container {0}'
+                          .format(container_name))
+                raise
+            if i == retries_on_corrupt:
                 lgr.error('failed executing command: {0}'.format(run_cmd))
                 raise
             sleep(2)
