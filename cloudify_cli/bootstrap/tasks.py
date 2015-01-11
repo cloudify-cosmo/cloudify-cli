@@ -531,17 +531,15 @@ def _run_docker_container(docker_exec_command, container_options,
         except FabricTaskError:
             lgr.debug('container execution failed on attempt {0}/{1}'
                       .format(i + 1, attempts_on_corrupt))
-            if _container_exists(docker_exec_command, container_name):
+            container_exists = _container_exists(docker_exec_command,
+                                                 container_name)
+            if container_exists:
                 lgr.debug('container {0} started in a corrupt state. '
                           'removing container.'.format(container_name))
                 rm_container_cmd = '{0} rm -f {1}'.format(docker_exec_command,
                                                           container_name)
                 _run_command(rm_container_cmd)
-            else:
-                lgr.error('failed running container {0}'
-                          .format(container_name))
-                raise
-            if i + 1 == attempts_on_corrupt:
+            if i + 1 == attempts_on_corrupt or not container_exists:
                 lgr.error('failed executing command: {0}'.format(run_cmd))
                 raise
             sleep(2)
