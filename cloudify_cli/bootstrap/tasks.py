@@ -539,7 +539,7 @@ def _run_docker_container(docker_exec_command, container_options,
                 rm_container_cmd = '{0} rm -f {1}'.format(docker_exec_command,
                                                           container_name)
                 _run_command(rm_container_cmd)
-            if i + 1 == attempts_on_corrupt or not container_exists:
+            if not container_exists or i + 1 == attempts_on_corrupt:
                 lgr.error('failed executing command: {0}'.format(run_cmd))
                 raise
             sleep(2)
