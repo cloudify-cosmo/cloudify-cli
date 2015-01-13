@@ -84,6 +84,29 @@ def creation_validation(cloudify_packages, **kwargs):
         _validate_package_url_accessible(package_url)
 
 
+def stop_manager_container(docker_path=None, use_sudo=True):
+    if not docker_path:
+        docker_path = 'docker'
+    command = '{0} stop cfy'.format(docker_path)
+    if use_sudo:
+        command = 'sudo {0}'.format(command)
+    _run_command(command)
+
+
+def stop_docker_service(docker_service_stop_command=None, use_sudo=True):
+
+    if not docker_service_stop_command:
+        docker_service_stop_command = 'service docker stop'
+    if use_sudo:
+        docker_service_stop_command = 'sudo {0}'\
+            .format(docker_service_stop_command)
+
+    # this is needed so that docker will stop using the
+    # /var/lib/docker directory, which might be mounted on a
+    # volume.
+    _run_command(docker_service_stop_command)
+
+
 def bootstrap(cloudify_packages, agent_local_key_path=None,
               agent_remote_key_path=None, manager_private_ip=None,
               provider_context=None):
@@ -219,7 +242,8 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
     return True
 
 
-def _install_docker_if_required(docker_path, use_sudo):
+def _install_docker_if_required(docker_path, use_sudo,
+                                docker_service_start_command):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
 
@@ -250,6 +274,21 @@ def _install_docker_if_required(docker_path, use_sudo):
             raise
     else:
         lgr.debug('\"docker\" is already installed.')
+        try:
+            info_command = '{0} info'.format(docker_path)
+            if use_sudo:
+                info_command = 'sudo {0}'.format(info_command)
+            _run_command(info_command)
+        except BaseException as e:
+            lgr.debug('Failed retrieving docker info: {0}'.format(str(e)))
+            lgr.debug('Trying to start docker service')
+            if not docker_service_start_command:
+                docker_service_start_command = 'service docker start'
+            if use_sudo:
+                docker_service_start_command = 'sudo {0}'\
+                    .format(docker_service_start_command)
+            _run_command(docker_service_start_command)
+
     if use_sudo:
         docker_exec_command = '{0} {1}'.format('sudo', docker_path)
     else:
@@ -259,7 +298,8 @@ def _install_docker_if_required(docker_path, use_sudo):
 
 def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      agent_local_key_path=None, agent_remote_key_path=None,
-                     manager_private_ip=None, provider_context=None):
+                     manager_private_ip=None, provider_context=None,
+                     docker_service_start_command=None):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     global lgr
@@ -267,7 +307,10 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
 
     manager_ip = fabric.api.env.host_string
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
-    docker_exec_command = _install_docker_if_required(docker_path, use_sudo)
+    docker_exec_command = _install_docker_if_required(
+        docker_path,
+        use_sudo,
+        docker_service_start_command)
 
     data_container_name = 'data'
     cfy_container_name = 'cfy'
@@ -375,13 +418,15 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     return True
 
 
-def recover_docker(docker_path=None, use_sudo=True):
+def recover_docker(docker_path=None, use_sudo=True,
+                   docker_service_start_command=None):
     global lgr
     lgr = ctx.logger
 
     manager_ip = fabric.api.env.host_string
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
-    _install_docker_if_required(docker_path, use_sudo)
+    _install_docker_if_required(docker_path, use_sudo,
+                                docker_service_start_command)
 
     lgr.info('waiting for cloudify management services to restart')
     started = _wait_for_management(manager_ip, timeout=180)
