@@ -263,7 +263,13 @@ def _install_docker_if_required(docker_path, use_sudo):
             raise
     else:
         lgr.debug('\"docker\" is already installed.')
-        _run_command('sudo service docker start')
+        try:
+            _run_command('sudo docker info')
+        except BaseException as e:
+            lgr.debug('Failed retrieving docker info: {0}'.format(str(e)))
+            lgr.debug('Trying to start docker service')
+            _run_command('sudo service docker start')
+
     if use_sudo:
         docker_exec_command = '{0} {1}'.format('sudo', docker_path)
     else:
