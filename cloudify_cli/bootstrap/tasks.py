@@ -84,6 +84,19 @@ def creation_validation(cloudify_packages, **kwargs):
         _validate_package_url_accessible(package_url)
 
 
+def stop_docker():
+    _run_command('sudo docker stop cfy')
+
+
+def delete_docker():
+    _run_command('sudo docker rm cfy')
+
+    # this is needed so that docker will stop using the
+    # /var/lib/docker directory, which might be mounted on a
+    # volume.
+    _run_command('sudo service docker stop')
+
+
 def bootstrap(cloudify_packages, agent_local_key_path=None,
               agent_remote_key_path=None, manager_private_ip=None,
               provider_context=None):
@@ -250,6 +263,7 @@ def _install_docker_if_required(docker_path, use_sudo):
             raise
     else:
         lgr.debug('\"docker\" is already installed.')
+        _run_command('sudo service docker start')
     if use_sudo:
         docker_exec_command = '{0} {1}'.format('sudo', docker_path)
     else:
