@@ -342,6 +342,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-p 53229:53229 '
                               '-p 8100:8100 '
                               '-p 9200:9200 '
+                              '-p 8086:8086 '
                               '-e MANAGEMENT_IP={0} '
                               '--restart=always '
                               '-d '
