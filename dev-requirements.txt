@@ -1,7 +1,7 @@
-git+https://github.com/cloudify-cosmo/cloudify-rest-client@master#egg=cloudify-rest-client==3.2a3
-git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@master#egg=cloudify-dsl-parser==3.2a3
-git+https://github.com/cloudify-cosmo/cloudify-plugins-common@master#egg=cloudify-plugins-common==3.2a3
-git+https://github.com/cloudify-cosmo/cloudify-script-plugin@master#egg=cloudify-script-plugin==1.2a3
+git+https://github.com/cloudify-cosmo/cloudify-rest-client@master#egg=cloudify-rest-client==3.2a4
+git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@master#egg=cloudify-dsl-parser==3.2a4
+git+https://github.com/cloudify-cosmo/cloudify-plugins-common@master#egg=cloudify-plugins-common==3.2a4
+git+https://github.com/cloudify-cosmo/cloudify-script-plugin@master#egg=cloudify-script-plugin==1.2a4
 mock
 # adding this requirement for readthedocs until we perhaps
 # decide on a better way of doing this
