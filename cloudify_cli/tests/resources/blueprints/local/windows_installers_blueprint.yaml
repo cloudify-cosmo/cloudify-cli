@@ -3,9 +3,13 @@ tosca_definitions_version: cloudify_dsl_1_0
 imports:
   - https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/master/resources/rest-service/cloudify/types/types.yaml
 
+
 node_types:
   cloudify.test.nodes.WindowsHost:
     derived_from: cloudify.nodes.Compute
+    properties:
+      install_agent:
+        default: false
     interfaces:
       cloudify.interfaces.worker_installer:
         install:
@@ -27,4 +31,5 @@ node_types:
 node_templates:
   win_host:
     type: cloudify.test.nodes.WindowsHost
+
 
