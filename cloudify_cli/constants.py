@@ -40,5 +40,7 @@ CLOUDIFY_REST_CLIENT_LOGGER_NAME = 'cloudify.rest_client.http'
 
 IGNORED_LOCAL_WORKFLOW_MODULES = (
     'worker_installer.tasks',
-    'plugin_installer.tasks'
+    'plugin_installer.tasks',
+    'windows_agent_installer.tasks',
+    'windows_plugin_installer.tasks'
 )
