@@ -112,9 +112,18 @@ def start(workflow_id, deployment_id, timeout, force,
                 parameters=parameters,
                 allow_custom_parameters=allow_custom_parameters,
                 force=force)
-        except exceptions.DeploymentEnvironmentCreationInProgressError:
-            # wait for deployment environment creation workflow to end
-            logger.info('Deployment environment creation is in progress!')
+        except (exceptions.DeploymentEnvironmentCreationInProgressError,
+                exceptions.DeploymentEnvironmentCreationPendingError) as e:
+            # wait for deployment environment creation workflow
+            if isinstance(
+                    e,
+                    exceptions.DeploymentEnvironmentCreationPendingError):
+                status = 'pending'
+            else:
+                status = 'in progress'
+
+            logger.info('Deployment environment creation is {0}!'.format(
+                status))
             logger.info('Waiting for create_deployment_environment '
                         'workflow execution to finish...')
             now = time.time()

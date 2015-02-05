@@ -115,8 +115,9 @@ def wait_for_execution(client,
         time.sleep(3)
 
         execution = client.executions.get(execution.id)
-        execution_events.fetch_and_process_events(
-            events_handler=events_handler)
+        if execution.status != Execution.PENDING:
+            execution_events.fetch_and_process_events(
+                events_handler=events_handler)
 
     # Process remaining events
     execution_events.fetch_and_process_events(
