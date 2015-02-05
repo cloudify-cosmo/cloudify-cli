@@ -21,9 +21,14 @@ import datetime
 from uuid import uuid4
 
 from mock import MagicMock
+
+from cloudify_rest_client import exceptions
+from cloudify_rest_client.executions import Execution
+
+from cloudify_cli import execution_events_fetcher
+
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
-from cloudify_rest_client.executions import Execution
 
 
 class ExecutionsTest(CliCommandTest):
@@ -33,18 +38,7 @@ class ExecutionsTest(CliCommandTest):
         self._create_cosmo_wd_settings()
 
     def test_executions_get(self):
-
-        execution = Execution({
-            'status': 'terminated',
-            'workflow_id': 'mock_wf',
-            'deployment_id': 'deployment-id',
-            'blueprint_id': 'blueprint-id',
-            'error': '',
-            'id': uuid4(),
-            'created_at': datetime.datetime.now(),
-            'parameters': {}
-        })
-
+        execution = execution_mock('terminated')
         self.client.executions.get = MagicMock(return_value=execution)
         cli_runner.run_cli('cfy executions get -e execution-id')
 
@@ -55,3 +49,46 @@ class ExecutionsTest(CliCommandTest):
     def test_executions_cancel(self):
         self.client.executions.cancel = MagicMock()
         cli_runner.run_cli('cfy executions cancel -e e_id')
+
+    def test_executions_start_dep_env_pending(self):
+        self._test_executions_start_dep_env(
+            ex=exceptions.DeploymentEnvironmentCreationPendingError('m'))
+
+    def test_executions_start_dep_env_in_progress(self):
+        self._test_executions_start_dep_env(
+            ex=exceptions.DeploymentEnvironmentCreationInProgressError('m'))
+
+    def test_executions_start_other_ex_sanity(self):
+        self.assertRaises(RuntimeError, self._test_executions_start_dep_env,
+                          ex=RuntimeError)
+
+    def _test_executions_start_dep_env(self, ex):
+        start_mock = MagicMock(side_effect=[ex, execution_mock('started')])
+        self.client.executions.start = start_mock
+
+        list_mock = MagicMock(return_value=[
+            execution_mock('terminated', 'create_deployment_environment')])
+        self.client.executions.list = list_mock
+
+        wait_for_mock = MagicMock(return_value=execution_mock('terminated'))
+        execution_events_fetcher.wait_for_execution = wait_for_mock
+
+        cli_runner.run_cli('cfy executions start -w mock_wf -d dep')
+
+        self.assertEqual(wait_for_mock.mock_calls[0][1][2].workflow_id,
+                         'create_deployment_environment')
+        self.assertEqual(wait_for_mock.mock_calls[1][1][2].workflow_id,
+                         'mock_wf')
+
+
+def execution_mock(status, wf_id='mock_wf'):
+    return Execution({
+        'status': status,
+        'workflow_id': wf_id,
+        'deployment_id': 'deployment-id',
+        'blueprint_id': 'blueprint-id',
+        'error': '',
+        'id': uuid4(),
+        'created_at': datetime.datetime.now(),
+        'parameters': {}
+    })
