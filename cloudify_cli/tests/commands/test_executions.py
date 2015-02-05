@@ -25,7 +25,7 @@ from mock import MagicMock
 from cloudify_rest_client import exceptions
 from cloudify_rest_client.executions import Execution
 
-from cloudify_cli import execution_events_fetcher
+from cloudify_cli.commands import executions
 
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
@@ -58,7 +58,7 @@ class ExecutionsTest(CliCommandTest):
         self._test_executions_start_dep_env(
             ex=exceptions.DeploymentEnvironmentCreationInProgressError('m'))
 
-    def test_executions_start_other_ex_sanity(self):
+    def test_executions_start_dep_other_ex_sanity(self):
         self.assertRaises(RuntimeError, self._test_executions_start_dep_env,
                           ex=RuntimeError)
 
@@ -71,14 +71,17 @@ class ExecutionsTest(CliCommandTest):
         self.client.executions.list = list_mock
 
         wait_for_mock = MagicMock(return_value=execution_mock('terminated'))
-        execution_events_fetcher.wait_for_execution = wait_for_mock
+        original_wait_for = executions.wait_for_execution
+        try:
+            executions.wait_for_execution = wait_for_mock
+            cli_runner.run_cli('cfy executions start -w mock_wf -d dep')
 
-        cli_runner.run_cli('cfy executions start -w mock_wf -d dep')
-
-        self.assertEqual(wait_for_mock.mock_calls[0][1][2].workflow_id,
-                         'create_deployment_environment')
-        self.assertEqual(wait_for_mock.mock_calls[1][1][2].workflow_id,
-                         'mock_wf')
+            self.assertEqual(wait_for_mock.mock_calls[0][1][2].workflow_id,
+                             'create_deployment_environment')
+            self.assertEqual(wait_for_mock.mock_calls[1][1][2].workflow_id,
+                             'mock_wf')
+        finally:
+            executions.wait_for_execution = original_wait_for
 
 
 def execution_mock(status, wf_id='mock_wf'):
