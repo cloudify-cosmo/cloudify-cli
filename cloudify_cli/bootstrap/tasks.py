@@ -448,8 +448,12 @@ def recover_docker(docker_path=None, use_sudo=True,
 
 def _recover_deployments(docker_path=None, use_sudo=True):
 
+    lgr.info('Retrieving deployments...')
     rest = utils.get_rest_client()
     deployments = rest.deployments.list()
+    if not deployments:
+        lgr.info('No deployments found.')
+        return
 
     for deployment in deployments:
         _run_command_in_cfy(
