@@ -357,8 +357,8 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                     --restart="always" \
                     docker_rabbitmq'
 
-    logstash_opts = '--add-host=elasticsearch:${HOSTING_VM_IP} \
-                     --add-host=rabbitmq:${HOSTING_VM_IP} \
+    logstash_opts = '--add-host=elasticsearch:{0} \
+                     --add-host=rabbitmq:{0} \
                      -d \
                      --hostname="logstash" \
                      --name="logstash" \
@@ -366,7 +366,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      --restart="always" \
                      --volume=/var/log/cloudify/logstash: \
                      /etc/service/logstash/logs \
-                     docker_logstash'
+                     docker_logstash'.format(ctx.instance.host_ip)
 
     influxdb_data_opts = '--name="influxdbdata" \
                           docker_influxdb \
@@ -381,28 +381,28 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      --volumes-from influxdbdata \
                      docker_influxdb'
 
-    kibana_opts = '--add-host=elasticsearch:${HOSTING_VM_IP} \
+    kibana_opts = '--add-host=elasticsearch:{0} \
                   --hostname="kibana" \
                   -d \
                   --name="kibana" \
                   --publish=5601:5601 \
                   --restart="always" \
-                  docker_kibana'
+                  docker_kibana'.format(ctx.instance.host_ip)
 
-    amqp_influxdb = '--add-host=influxdb:${HOSTING_VM_IP} \
-                     --add-host=rabbitmq:${HOSTING_VM_IP} \
+    amqp_influxdb = '--add-host=influxdb:{0} \
+                     --add-host=rabbitmq:{0} \
                      -d \
                      --hostname="amqpinflux" \
                      --name="amqpinflux" \
                      --restart="always" \
-                     docker_amqpinflux'
+                     docker_amqpinflux'.format(ctx.instance.host_ip)
 
     frontend_data_opts = '--name="frontenddata" \
                           docker_frontend \
                           echo frontend data container'
 
-    frontend_opts = '--add-host=rabbitmq:${HOSTING_VM_IP} \
-                     --add-host=elasticsearch:${HOSTING_VM_IP} \
+    frontend_opts = '--add-host=rabbitmq:{0} \
+                     --add-host=elasticsearch:{0} \
                      --hostname="frontend" \
                      -d \
                      --name="frontend" \
@@ -412,14 +412,14 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      --publish=8100:8100 \
                      --restart="always" \
                      --volumes-from frontenddata \
-                     docker_frontend'
+                     docker_frontend'.format(ctx.instance.host_ip)
 
     riemann_data_opts = '--name="riemanndata" \
                          docker_riemann \
                          echo riemann data container'
 
-    riemann_opts = '--add-host=rabbitmq:${HOSTING_VM_IP} \
-                    --add-host=frontend:${HOSTING_VM_IP} \
+    riemann_opts = '--add-host=rabbitmq:{0} \
+                    --add-host=frontend:{0} \
                     --hostname="riemann" \
                     -d \
                     --name="riemann" \
@@ -427,16 +427,15 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                     --volume=/var/log/cloudify/riemann:\
                     /etc/service/riemann/logs \
                     --volumes-from riemannhdata \
-                    docker_riemann'
+                    docker_riemann'.format(ctx.instance.host_ip)
 
-    mgmt_worker_opts = '--add-host=rabbitmq:${HOSTING_VM_IP} \
-                        --add-host=frontend:${HOSTING_VM_IP} \
+    mgmt_worker_opts = '--add-host=rabbitmq:{0} \
+                        --add-host=frontend:{0} \
                         --volumes-from mgmtdata \ \
                         --hostname="mgmtworker" \
                         --name="mgmtworker" \
                         --restart="always" \
-                        docker_mgmtworker \
-                        {0}'
+                        docker_mgmtworker'.format(ctx.instance.host_ip)
 
     agent_packages = cloudify_packages.get('agents')
     if agent_packages:
