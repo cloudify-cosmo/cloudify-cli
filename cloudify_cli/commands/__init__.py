@@ -32,6 +32,7 @@ from cloudify_cli.commands.status import status
 from cloudify_cli.commands.use import use
 from cloudify_cli.commands.ssh import ssh
 from cloudify_cli.commands.init import init
+from cloudify_cli.commands.recover import recover
 
 # import cfy sub commands
 from cloudify_cli.commands import blueprints
