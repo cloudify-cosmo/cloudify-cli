@@ -34,4 +34,3 @@ class RecoverTest(CliCommandTest):
         cli_runner.run_cli('cfy use -t 10.0.0.1')
         self._assert_ex('cfy recover',
                         'This action requires additional confirmation.')
-

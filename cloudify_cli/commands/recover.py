@@ -40,7 +40,3 @@ def recover(force,
                task_retry_interval=task_retry_interval,
                task_thread_pool_size=task_thread_pool_size)
     logger.info('Successfully recovered manager deployment')
-
-
-
-
