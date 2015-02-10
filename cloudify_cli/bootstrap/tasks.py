@@ -312,44 +312,131 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         use_sudo,
         docker_service_start_command)
 
-    data_container_name = 'data'
-    cfy_container_name = 'cfy'
-    if _container_exists(docker_exec_command, data_container_name) or \
-            _container_exists(docker_exec_command, cfy_container_name):
-        err = 'a container instance with name {0}/{1} already exists.'\
-              .format(data_container_name, cfy_container_name)
-        raise NonRecoverableError(err)
+    # todo: add verification for all containers.
+    # data_container_name = 'data'
+    # cfy_container_name = 'cfy'
+    # if _container_exists(docker_exec_command, data_container_name) or \
+    #         _container_exists(docker_exec_command, cfy_container_name):
+    #     err = 'a container instance with name {0}/{1} already exists.'\
+    #           .format(data_container_name, cfy_container_name)
+    #     raise NonRecoverableError(err)
 
     docker_image_url = cloudify_packages.get('docker', {}).get('docker_url')
     if not docker_image_url:
         raise NonRecoverableError('no docker URL found in packages')
-    try:
-        lgr.info('importing cloudify-manager docker image from {0}'
-                 .format(docker_image_url))
-        _run_command('{0} import {1} cloudify'
-                     .format(docker_exec_command, docker_image_url))
-    except FabricTaskError as e:
-        err = 'failed importing cloudify docker image from {0}. reason:{1}' \
-              .format(docker_image_url, str(e))
-        lgr.error(err)
-        raise NonRecoverableError(err)
+    # todo(adaml): download the tar using curl/wget and load it using docker.
+    # try:
+    #     lgr.info('importing cloudify-manager docker image from {0}'
+    #              .format(docker_image_url))
+    #     _run_command('{0} import {1} cloudify'
+    #                  .format(docker_exec_command, docker_image_url))
+    # except FabricTaskError as e:
+    #     err = 'failed loading cloudify docker images from {0}. reason:{1}' \
+    #           .format(docker_image_url, str(e))
+    #     lgr.error(err)
+    #     raise NonRecoverableError(err)
 
-    cfy_management_options = ('-t '
-                              '--volumes-from data '
-                              '-p 80:80 '
-                              '-p 5555:5555 '
-                              '-p 5672:5672 '
-                              '-p 53229:53229 '
-                              '-p 8100:8100 '
-                              '-p 9200:9200 '
-                              '-p 8086:8086 '
-                              '-e MANAGEMENT_IP={0} '
-                              '--restart=always '
-                              '-d '
-                              'cloudify '
-                              '/sbin/my_init'
-                              .format(manager_private_ip or
-                                      ctx.instance.host_ip))
+    elasticsearch_data_opts = '--name="elasticsearchdata" \
+                               docker_elasticsearch \
+                               echo elasticsearch data container'
+
+    elasticsearch_opts = '--hostname="elasticsearch" \
+                          --name="elasticsearch" \
+                          -d \
+                          --publish=9200:9200 \
+                          --restart="always" \
+                          --volume=/var/log/cloudify/elasticsearch:\
+                          /etc/service/elasticsearch/logs \
+                          --volumes-from elasticsearchdata \
+                          docker_elasticsearch'
+
+    rabbitmq_opts = '--hostname="rabbitmq" \
+                    -d \
+                    --name="rabbitmq" \
+                    --publish=5672:5672 \
+                    --restart="always" \
+                    docker_rabbitmq'
+
+    logstash_opts = '--add-host=elasticsearch:${HOSTING_VM_IP} \
+                     --add-host=rabbitmq:${HOSTING_VM_IP} \
+                     -d \
+                     --hostname="logstash" \
+                     --name="logstash" \
+                     --publish=9999:9999 \
+                     --restart="always" \
+                     --volume=/var/log/cloudify/logstash: \
+                     /etc/service/logstash/logs \
+                     docker_logstash'
+
+    influxdb_data_opts = '--name="influxdbdata" \
+                          docker_influxdb \
+                          echo influxdb data container'
+
+    influxdb_opts = '--hostname="influxdb" \
+                     -d \
+                     --name="influxdb" \
+                     --publish=8083:8083 \
+                     --publish=8086:8086 \
+                     --restart="always" \
+                     --volumes-from influxdbdata \
+                     docker_influxdb'
+
+    kibana_opts = '--add-host=elasticsearch:${HOSTING_VM_IP} \
+                  --hostname="kibana" \
+                  -d \
+                  --name="kibana" \
+                  --publish=5601:5601 \
+                  --restart="always" \
+                  docker_kibana'
+
+    amqp_influxdb = '--add-host=influxdb:${HOSTING_VM_IP} \
+                     --add-host=rabbitmq:${HOSTING_VM_IP} \
+                     -d \
+                     --hostname="amqpinflux" \
+                     --name="amqpinflux" \
+                     --restart="always" \
+                     docker_amqpinflux'
+
+    frontend_data_opts = '--name="frontenddata" \
+                          docker_frontend \
+                          echo frontend data container'
+
+    frontend_opts = '--add-host=rabbitmq:${HOSTING_VM_IP} \
+                     --add-host=elasticsearch:${HOSTING_VM_IP} \
+                     --hostname="frontend" \
+                     -d \
+                     --name="frontend" \
+                     --publish=80:80 \
+                     --publish=53229:53229 \
+                     --publish=9001:9001 \
+                     --publish=8100:8100 \
+                     --restart="always" \
+                     --volumes-from frontenddata \
+                     docker_frontend'
+
+    riemann_data_opts = '--name="riemanndata" \
+                         docker_riemann \
+                         echo riemann data container'
+
+    riemann_opts = '--add-host=rabbitmq:${HOSTING_VM_IP} \
+                    --add-host=frontend:${HOSTING_VM_IP} \
+                    --hostname="riemann" \
+                    -d \
+                    --name="riemann" \
+                    --restart="always" \
+                    --volume=/var/log/cloudify/riemann:\
+                    /etc/service/riemann/logs \
+                    --volumes-from riemannhdata \
+                    docker_riemann'
+
+    mgmt_worker_opts = '--add-host=rabbitmq:${HOSTING_VM_IP} \
+                        --add-host=frontend:${HOSTING_VM_IP} \
+                        --volumes-from mgmtdata \ \
+                        --hostname="mgmtworker" \
+                        --name="mgmtworker" \
+                        --restart="always" \
+                        docker_mgmtworker \
+                        {0}'
 
     agent_packages = cloudify_packages.get('agents')
     if agent_packages:
@@ -378,30 +465,50 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     data_container_start_cmd = '{0} && {1} && echo Data-only container' \
                                .format(agent_packages_install_cmd,
                                        backup_vm_files_cmd)
-    data_container_options = ('-t '
-                              '{0} '
-                              '-v ~/:{1} '
-                              '-v /root '
-                              '-v /opt/manager/resources '
-                              '-v /etc/service/riemann '
-                              '-v /etc/service/elasticsearch/data '
-                              '-v /etc/service/elasticsearch/logs '
-                              '-v /opt/influxdb/shared/data '
-                              '-v /var/log/cloudify '
-                              'cloudify sh -c \'{2}\''
-                              .format(agent_pkgs_mount_options,
-                                      home_dir_mount_path,
-                                      data_container_start_cmd))
 
+    mgmt_worker_data_opts = '--name="mgmtdata" \
+                            {0} \
+                            -v ~/:{1} \
+                            -v /root \
+                            docker_mgmtworker \
+                            echo mgmt data container'\
+                            .format(agent_pkgs_mount_options,
+                                    home_dir_mount_path,
+                                    data_container_start_cmd)
     try:
-        lgr.info('starting a new cloudify data container')
-        _run_docker_container(docker_exec_command, data_container_options,
-                              data_container_name)
-        lgr.info('starting a new cloudify mgmt docker services container')
-        _run_docker_container(docker_exec_command, cfy_management_options,
-                              cfy_container_name, attempts_on_corrupt=5)
+        lgr.info('starting cloudify data containers')
+        _run_docker_container(docker_exec_command, mgmt_worker_data_opts,
+                              'mgmtdata')
+        _run_docker_container(docker_exec_command, frontend_data_opts,
+                              'frontenddata')
+        _run_docker_container(docker_exec_command, riemann_data_opts,
+                              'riemanndata')
+        _run_docker_container(docker_exec_command, elasticsearch_data_opts,
+                              'elasticsearchdata')
+        _run_docker_container(docker_exec_command, influxdb_data_opts,
+                              'influxdbdata')
+
+        lgr.info('starting  cloudify mgmt services containers')
+        _run_docker_container(docker_exec_command, elasticsearch_opts,
+                              'elasticsearch', attempts_on_corrupt=5)
+        _run_docker_container(docker_exec_command, rabbitmq_opts,
+                              'rabbitmq', attempts_on_corrupt=5)
+        _run_docker_container(docker_exec_command, influxdb_opts,
+                              'influxdb', attempts_on_corrupt=5)
+        _run_docker_container(docker_exec_command, logstash_opts,
+                              'logstash', attempts_on_corrupt=5)
+        _run_docker_container(docker_exec_command, kibana_opts,
+                              'kibana', attempts_on_corrupt=5)
+        _run_docker_container(docker_exec_command, amqp_influxdb,
+                              'amqpinflux', attempts_on_corrupt=5)
+        _run_docker_container(docker_exec_command, frontend_opts,
+                              'frontend', attempts_on_corrupt=5)
+        _run_docker_container(docker_exec_command, riemann_opts,
+                              'riemann', attempts_on_corrupt=5)
+        _run_docker_container(docker_exec_command, mgmt_worker_opts,
+                              'mgmtworker', attempts_on_corrupt=5)
     except FabricTaskError as e:
-        err = 'failed running cloudify docker container. ' \
+        err = 'failed running cloudify service containers. ' \
               'error is {0}'.format(str(e))
         lgr.error(err)
         raise NonRecoverableError(err)
