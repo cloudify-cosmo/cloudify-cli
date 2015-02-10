@@ -46,9 +46,10 @@ def get(execution_id):
                .format(execution_id))
         raise CloudifyCliError(msg)
 
-    pt = utils.table(['id', 'workflow_id', 'status',
+    pt = utils.table(['id', 'workflow_id', 'status', 'deployment_id',
                       'created_at', 'error'],
                      [execution])
+    pt.max_width = 50
     utils.print_table('Executions:', pt)
 
     # print execution parameters
@@ -80,7 +81,7 @@ def ls(deployment_id):
         raise CloudifyCliError(msg)
 
     columns = ['id', 'workflow_id', 'deployment_id',
-               'status', 'created_at', 'error']
+               'status', 'created_at']
     pt = utils.table(columns, executions)
     utils.print_table('Executions:', pt)
 
@@ -111,9 +112,18 @@ def start(workflow_id, deployment_id, timeout, force,
                 parameters=parameters,
                 allow_custom_parameters=allow_custom_parameters,
                 force=force)
-        except exceptions.DeploymentEnvironmentCreationInProgressError:
-            # wait for deployment environment creation workflow to end
-            logger.info('Deployment environment creation is in progress!')
+        except (exceptions.DeploymentEnvironmentCreationInProgressError,
+                exceptions.DeploymentEnvironmentCreationPendingError) as e:
+            # wait for deployment environment creation workflow
+            if isinstance(
+                    e,
+                    exceptions.DeploymentEnvironmentCreationPendingError):
+                status = 'pending'
+            else:
+                status = 'in progress'
+
+            logger.info('Deployment environment creation is {0}!'.format(
+                status))
             logger.info('Waiting for create_deployment_environment '
                         'workflow execution to finish...')
             now = time.time()

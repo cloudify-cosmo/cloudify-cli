@@ -14,8 +14,6 @@
 # limitations under the License.
 ############
 
-__author__ = 'ran'
-
 from cloudify_cli.provider_common import BaseProviderClass
 
 

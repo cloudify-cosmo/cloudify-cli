@@ -1,0 +1,38 @@
+tosca_definitions_version: cloudify_dsl_1_0
+
+plugins:
+
+  windows_agent_installer:
+    executor: central_deployment_agent
+    install: false
+
+  windows_plugin_installer:
+    executor: host_agent
+    install: false
+
+
+node_types:
+  cloudify.nodes.Compute:
+    interfaces:
+      cloudify.interfaces.worker_installer:
+        install:
+          implementation: windows_agent_installer.windows_agent_installer.tasks.install
+          inputs:
+            cloudify_agent:
+              default:
+                user: { get_attribute: [SELF, username] }
+                password: { get_attribute: [SELF, password] }
+      cloudify.interfaces.plugin_installer:
+        install:
+          implementation: windows_plugin_installer.windows_plugin_installer.tasks.install
+          inputs:
+            cloudify_agent:
+              default:
+                user: { get_attribute: [SELF, username] }
+                password: { get_attribute: [SELF, password] }
+
+node_templates:
+  win_host:
+    type: cloudify.nodes.Compute
+
+

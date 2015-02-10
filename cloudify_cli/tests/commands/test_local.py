@@ -224,6 +224,11 @@ class LocalTest(CliCommandTest):
             self.assertIn('pip install -r /tmp/requirements_',
                           e.message)
 
+    def test_install_plugins_missing_windows_agent_installer(self):
+        blueprint_path = '{0}/local/windows_installers_blueprint.yaml'\
+            .format(BLUEPRINTS_DIR)
+        cli_runner.run_cli('cfy local init -p {0}'.format(blueprint_path))
+
     @nose.tools.nottest
     def test_local_outputs(self):
         # tested extensively by the other tests
