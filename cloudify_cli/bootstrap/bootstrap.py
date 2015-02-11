@@ -148,7 +148,22 @@ def teardown(name='manager',
     shutil.rmtree(_workdir())
 
 
-# Temp workaround to allow teardown on different clients
+def recover(name='manager',
+            task_retries=5,
+            task_retry_interval=30,
+            task_thread_pool_size=1):
+    env = load_env(name)
+    with env.storage.payload() as payload:
+        manager_node_instance_id = payload['manager_node_instance_id']
+
+    env.execute('heal',
+                parameters={'node_id': manager_node_instance_id},
+                task_retries=task_retries,
+                task_retry_interval=task_retry_interval,
+                task_thread_pool_size=task_thread_pool_size)
+
+
+# Temp workaround to allow teardown and recovery on different clients
 # assumes deployment name is manager
 def dump_manager_deployment():
     name = 'manager'

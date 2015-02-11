@@ -29,6 +29,9 @@ from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client import CloudifyClient
 
+from cloudify_cli import utils
+
+
 REST_PORT = 80
 
 # internal runtime properties - used by the CLI to store local context
@@ -300,6 +303,9 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      agent_local_key_path=None, agent_remote_key_path=None,
                      manager_private_ip=None, provider_context=None,
                      docker_service_start_command=None):
+    if 'containers_started' in ctx.instance.runtime_properties:
+        recover_docker(docker_path, use_sudo, docker_service_start_command)
+        return
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     global lgr
@@ -324,7 +330,6 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     docker_images_url = cloudify_packages.get('docker', {}).get('docker_url')
     if not docker_images_url:
         raise NonRecoverableError('no docker URL found in packages')
-
     distro_info = get_machine_distro()
     tmp_image_location = '/tmp/cloudify.tar'
     try:
@@ -458,8 +463,8 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                         data_container_work_dir,
                                         agents_dest_dir)
         agent_pkgs_mount_options = '-v {0} -w {1} ' \
-            .format(agents_dest_dir,
-                    data_container_work_dir)
+                                   .format(agents_dest_dir,
+                                   data_container_work_dir)
     else:
         lgr.info('no agent packages were provided')
         agent_packages_install_cmd = 'echo no agent packages provided'
@@ -525,6 +530,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
 
     lgr.info('waiting for cloudify management services to start')
     started = _wait_for_management(manager_ip, timeout=180)
+    ctx.instance.runtime_properties['containers_started'] = 'True'
     if not started:
         err = 'failed waiting for cloudify management services to start.'
         lgr.info(err)
@@ -547,10 +553,31 @@ def recover_docker(docker_path=None, use_sudo=True,
 
     lgr.info('waiting for cloudify management services to restart')
     started = _wait_for_management(manager_ip, timeout=180)
+    _recover_deployments(docker_path, use_sudo)
     if not started:
         err = 'failed waiting for cloudify management services to restart.'
         lgr.info(err)
         raise NonRecoverableError(err)
+
+
+def _recover_deployments(docker_path=None, use_sudo=True):
+
+    lgr.info('Retrieving deployments...')
+    rest = utils.get_rest_client()
+    deployments = rest.deployments.list()
+    if not deployments:
+        lgr.info('No deployments found.')
+        return
+
+    for deployment in deployments:
+        _run_command_in_cfy(
+            'sudo service celeryd-{0} start'
+            .format(deployment.id),
+            docker_path, use_sudo)
+        _run_command_in_cfy(
+            'sudo service celeryd-{0}_workflows start'
+            .format(deployment.id),
+            docker_path, use_sudo)
 
 
 def _get_backup_files_cmd():
@@ -653,9 +680,9 @@ def _upload_provider_context(remote_agents_private_key_path,
         provider_context
 
     # 'manager_deployment' is used when running 'cfy use ...'
-    # and then calling teardown. Anyway, this code will only live until we
-    # implement the fuller feature of uploading manager blueprint deployments
-    # to the manager.
+    # and then calling teardown or recover. Anyway, this code will only live
+    # until we implement the fuller feature of uploading manager blueprint
+    # deployments to the manager.
     cloudify_configuration['manager_deployment'] = _dump_manager_deployment()
 
     manager_ip = fabric.api.env.host_string
@@ -666,6 +693,16 @@ def _upload_provider_context(remote_agents_private_key_path,
 
 def _run_command(command):
     return fabric.api.run(command)
+
+
+def _run_command_in_cfy(command, docker_path=None, use_sudo=True):
+    if not docker_path:
+        docker_path = 'docker'
+    full_command = '{0} exec cfy {1}'.format(
+        docker_path, command)
+    if use_sudo:
+        full_command = 'sudo {0}'.format(full_command)
+    _run_command(full_command)
 
 
 def _container_exists(docker_exec_command, container_name):
@@ -757,9 +794,16 @@ def _validate_package_url_accessible(package_url):
     ctx.logger.debug('OK: url {0} is accessible'.format(package_url))
 
 
-# temp workaround to enable teardown from different machines
+# temp workaround to enable teardown and recovery from different machines
 def _dump_manager_deployment():
     from cloudify_cli.bootstrap.bootstrap import dump_manager_deployment
+    from cloudify_cli.bootstrap.bootstrap import load_env
+
+    # explicitly write the manager node instance id to local storage
+    env = load_env('manager')
+    with env.storage.payload() as payload:
+        payload['manager_node_instance_id'] = ctx.instance.id
+
     # explicitly flush runtime properties to local storage
     ctx.instance.update()
     return dump_manager_deployment()

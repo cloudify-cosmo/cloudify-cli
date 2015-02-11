@@ -642,6 +642,42 @@ def parser_config():
                 },
                 'handler': cfy.teardown
             },
+            'recover': {
+                'help': 'Performs recovery of the management machine '
+                        'and all its contained nodes.',
+                'arguments': {
+                    '-f,--force': {
+                        'dest': 'force',
+                        'action': 'store_true',
+                        'default': False,
+                        'help': 'A flag indicating confirmation for '
+                                'the recovery request'
+                    },
+                    '--task-retries': {
+                        'metavar': 'TASK_RETRIES',
+                        'dest': 'task_retries',
+                        'default': 5,
+                        'type': int,
+                        'help': 'How many times should a task be retried '
+                                'in case it fails.'
+                    },
+                    '--task-retry-interval': {
+                        'metavar': 'TASK_RETRY_INTERVAL',
+                        'dest': 'task_retry_interval',
+                        'default': 30,
+                        'type': int,
+                        'help': 'How many seconds to wait before each task is retried.'
+                    },
+                    '--task-thread-pool-size': {
+                        'metavar': 'TASK_THREAD_POOL_SIZE',
+                        'dest': 'task_thread_pool_size',
+                        'default': 1,
+                        'type': int,
+                        'help': 'The size of the thread pool size to execute tasks in'
+                    }
+                },
+                'handler': cfy.recover
+            },
             'use': {
                 'help': 'Use/switch to the specified management server',
                 'arguments': {
