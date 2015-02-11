@@ -336,7 +336,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         lgr.info('downloading docker images from {0} to {1}'
                  .format(docker_images_url, tmp_image_location))
         _download_file(docker_images_url, tmp_image_location,
-                       distro_info)
+                       distro_info, use_sudo)
     except FabricTaskError as e:
         err = 'failed downloading cloudify docker images from {0}. reason:{1}'\
             .format(docker_images_url, str(e))
@@ -464,7 +464,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                         agents_dest_dir)
         agent_pkgs_mount_options = '-v {0} -w {1} ' \
                                    .format(agents_dest_dir,
-                                   data_container_work_dir)
+                                           data_container_work_dir)
     else:
         lgr.info('no agent packages were provided')
         agent_packages_install_cmd = 'echo no agent packages provided'
@@ -744,13 +744,17 @@ def _run_docker_container(docker_exec_command, container_options,
             sleep(2)
 
 
-def _download_file(url, path, distro):
+def _download_file(url, path, distro, use_sudo=True):
+    if use_sudo:
+        sudo = 'sudo'
+    else:
+        sudo = ''
+
     if 'Ubuntu' in distro:
-        return _run_command('sudo wget {0} -P {1}'.format(
-            path, url))
+        return _run_command('{0} wget -O {1} {2}'.format(sudo, path, url))
     elif 'centos' in distro:
         with cd(path):
-            return _run_command('sudo curl -O {0}')
+            return _run_command('{0} curl -O {1}').format(sudo, url)
 
 
 def _unpack(path, distro):
