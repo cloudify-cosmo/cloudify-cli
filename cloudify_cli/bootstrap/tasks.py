@@ -339,7 +339,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         raise NonRecoverableError(err)
     try:
         lgr.info('loading cloudify images from {0}'.format(tmp_image_location))
-        _run_command('{0} load {1}'
+        _run_command('{0} load --input {1}'
                      .format(docker_exec_command, tmp_image_location))
     except FabricTaskError as e:
         err = 'failed loading cloudify docker images from {0}. reason:{1}' \
