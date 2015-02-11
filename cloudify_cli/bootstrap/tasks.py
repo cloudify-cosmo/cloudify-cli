@@ -331,7 +331,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     if not docker_images_url:
         raise NonRecoverableError('no docker URL found in packages')
     distro_info = get_machine_distro()
-    tmp_image_location = '/tmp/cloudify.tar'
+    tmp_image_location = '/tmp/cloudify_all.tar'
     try:
         lgr.info('downloading docker images from {0} to {1}'
                  .format(docker_images_url, tmp_image_location))
@@ -486,7 +486,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                             -v ~/:{1} \
                             -v /root \
                             docker_mgmtworker \
-                            echo mgmt data container' \
+                            /bin/bash -c \'{2}\'' \
                             .format(agent_pkgs_mount_options,
                                     home_dir_mount_path,
                                     mgmt_worker_data_cmd)
@@ -590,8 +590,9 @@ def _get_backup_files_cmd():
 def _get_install_agent_pkgs_cmd(agent_packages,
                                 agents_pkg_path,
                                 agents_dest_dir):
-    download_agents_cmd = ''
     install_agents_cmd = ''
+    download_agents_cmd = 'mkdir -p {0} && cd {0} {1}'.format(agents_pkg_path,
+                                                              ' && ')
     for agent_name, agent_url in agent_packages.items():
         download_agents_cmd += 'curl -O {0}{1} ' \
                                .format(agent_url, ' && ')
@@ -753,6 +754,7 @@ def _download_file(url, path, distro, use_sudo=True):
     if 'Ubuntu' in distro:
         return _run_command('{0} wget -O {1} {2}'.format(sudo, path, url))
     elif 'centos' in distro:
+        # todo(adaml): fix this.
         with cd(path):
             return _run_command('{0} curl -O {1}').format(sudo, url)
 
