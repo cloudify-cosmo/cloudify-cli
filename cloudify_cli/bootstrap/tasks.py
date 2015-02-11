@@ -375,7 +375,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      --name="logstash" \
                      --publish=9999:9999 \
                      --restart="always" \
-                     --volume=/var/log/cloudify/logstash: \
+                     --volume=/var/log/cloudify/logstash:\
                      /etc/service/logstash/logs \
                      docker_logstash'.format(ctx.instance.host_ip)
 
