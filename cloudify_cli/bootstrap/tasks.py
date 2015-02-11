@@ -141,7 +141,7 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
             raise RuntimeError('wrong agent package type')
 
     lgr.info('downloading cloudify-components package...')
-    success = _download_package(
+    success = _download_file(
         PACKAGES_PATH['cloudify'],
         server_packages['components_package_url'],
         dist)
@@ -152,7 +152,7 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
         return False
 
     lgr.info('downloading cloudify-core package...')
-    success = _download_package(
+    success = _download_file(
         PACKAGES_PATH['cloudify'],
         server_packages['core_package_url'],
         dist)
@@ -164,7 +164,7 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
 
     if ui_included:
         lgr.info('downloading cloudify-ui...')
-        success = _download_package(
+        success = _download_file(
             PACKAGES_PATH['ui'],
             server_packages['ui_package_url'],
             dist)
@@ -178,7 +178,7 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
                   'skipping ui installation.')
 
     for agent, agent_url in agent_packages.items():
-        success = _download_package(
+        success = _download_file(
             PACKAGES_PATH['agents'],
             agent_packages[agent],
             dist)
@@ -321,20 +321,31 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     #           .format(data_container_name, cfy_container_name)
     #     raise NonRecoverableError(err)
 
-    docker_image_url = cloudify_packages.get('docker', {}).get('docker_url')
-    if not docker_image_url:
+    docker_images_url = cloudify_packages.get('docker', {}).get('docker_url')
+    if not docker_images_url:
         raise NonRecoverableError('no docker URL found in packages')
-    # todo(adaml): download the tar using curl/wget and load it using docker.
-    # try:
-    #     lgr.info('importing cloudify-manager docker image from {0}'
-    #              .format(docker_image_url))
-    #     _run_command('{0} import {1} cloudify'
-    #                  .format(docker_exec_command, docker_image_url))
-    # except FabricTaskError as e:
-    #     err = 'failed loading cloudify docker images from {0}. reason:{1}' \
-    #           .format(docker_image_url, str(e))
-    #     lgr.error(err)
-    #     raise NonRecoverableError(err)
+
+    distro_info = get_machine_distro()
+    tmp_image_location = '/tmp/cloudify.tar'
+    try:
+        lgr.info('downloading docker images from {0} to {1}'
+                 .format(docker_images_url, tmp_image_location))
+        _download_file(docker_images_url, tmp_image_location,
+                       distro_info)
+    except FabricTaskError as e:
+        err = 'failed downloading cloudify docker images from {0}. reason:{1}'\
+            .format(docker_images_url, str(e))
+        lgr.error(err)
+        raise NonRecoverableError(err)
+    try:
+        lgr.info('loading cloudify images from {0}'.format(tmp_image_location))
+        _run_command('{0} load {1}'
+                     .format(docker_exec_command, tmp_image_location))
+    except FabricTaskError as e:
+        err = 'failed loading cloudify docker images from {0}. reason:{1}' \
+              .format(tmp_image_location, str(e))
+        lgr.error(err)
+        raise NonRecoverableError(err)
 
     elasticsearch_data_opts = '--name="elasticsearchdata" \
                                docker_elasticsearch \
@@ -447,8 +458,8 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                         data_container_work_dir,
                                         agents_dest_dir)
         agent_pkgs_mount_options = '-v {0} -w {1} ' \
-                                   .format(agents_dest_dir,
-                                           data_container_work_dir)
+            .format(agents_dest_dir,
+                    data_container_work_dir)
     else:
         lgr.info('no agent packages were provided')
         agent_packages_install_cmd = 'echo no agent packages provided'
@@ -461,19 +472,19 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     agent_remote_key_path = _copy_agent_key(agent_local_key_path,
                                             agent_remote_key_path)
 
-    data_container_start_cmd = '{0} && {1} && echo Data-only container' \
-                               .format(agent_packages_install_cmd,
-                                       backup_vm_files_cmd)
+    mgmt_worker_data_cmd = '{0} && {1} && echo Data-only container' \
+                           .format(agent_packages_install_cmd,
+                                   backup_vm_files_cmd)
 
     mgmt_worker_data_opts = '--name="mgmtdata" \
                             {0} \
                             -v ~/:{1} \
                             -v /root \
                             docker_mgmtworker \
-                            echo mgmt data container'\
+                            echo mgmt data container' \
                             .format(agent_pkgs_mount_options,
                                     home_dir_mount_path,
-                                    data_container_start_cmd)
+                                    mgmt_worker_data_cmd)
     try:
         lgr.info('starting cloudify data containers')
         _run_docker_container(docker_exec_command, mgmt_worker_data_opts,
@@ -696,7 +707,7 @@ def _run_docker_container(docker_exec_command, container_options,
             sleep(2)
 
 
-def _download_package(url, path, distro):
+def _download_file(url, path, distro):
     if 'Ubuntu' in distro:
         return _run_command('sudo wget {0} -P {1}'.format(
             path, url))
