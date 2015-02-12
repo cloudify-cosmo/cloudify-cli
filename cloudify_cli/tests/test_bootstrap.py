@@ -54,18 +54,22 @@ class CliBootstrapUnitTests(unittest.TestCase):
         result = bootstrap.dump_manager_deployment()
         if remove_deployment:
             shutil.rmtree(self.manager_dir)
-        self.assertTrue(
-            bootstrap.read_manager_deployment_dump_if_needed(result))
-        comparison = filecmp.dircmp(manager1_original_dir, self.manager_dir)
-        self.assertIn('dir1', comparison.common)
-        self.assertIn('dir2', comparison.common)
-        self.assertIn('file1', comparison.common)
-        self.assertIn('file2', comparison.common)
-        self.assertEqual(comparison.common_funny, [])
-        self.assertEqual(comparison.diff_files, [])
-        self.assertEqual(comparison.funny_files, [])
-        self.assertEqual(comparison.left_only, [])
-        self.assertEqual(comparison.right_only, [])
+            self.assertTrue(
+                bootstrap.read_manager_deployment_dump_if_needed(result))
+            comparison = filecmp.dircmp(manager1_original_dir,
+                                        self.manager_dir)
+            self.assertIn('dir1', comparison.common)
+            self.assertIn('dir2', comparison.common)
+            self.assertIn('file1', comparison.common)
+            self.assertIn('file2', comparison.common)
+            self.assertEqual(comparison.common_funny, [])
+            self.assertEqual(comparison.diff_files, [])
+            self.assertEqual(comparison.funny_files, [])
+            self.assertEqual(comparison.left_only, [])
+            self.assertEqual(comparison.right_only, [])
+        else:
+            self.assertFalse(
+                bootstrap.read_manager_deployment_dump_if_needed(result))
 
     def test_manager_deployment_dump_read_empty(self):
         self.assertFalse(
@@ -73,14 +77,7 @@ class CliBootstrapUnitTests(unittest.TestCase):
         self.assertFalse(os.path.exists(self.manager_dir))
 
     def test_manager_deployment_dump_read_already_exists(self):
-        manager1_original_dir = os.path.join(
-            os.path.dirname(__file__),
-            'resources', 'storage', 'manager1')
-        if not os.path.exists(self.manager_dir):
-            shutil.copytree(manager1_original_dir, self.manager_dir)
-        result = bootstrap.dump_manager_deployment()
-        self.assertFalse(
-            bootstrap.read_manager_deployment_dump_if_needed(result))
+        self.test_manager_deployment_dump(remove_deployment=False)
 
     def test_creation_validation_empty_server_dict(self):
         packages = {
