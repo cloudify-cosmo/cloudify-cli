@@ -29,8 +29,6 @@ from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client import CloudifyClient
 
-from cloudify_cli import utils
-
 
 REST_PORT = 80
 
@@ -448,22 +446,19 @@ def recover_docker(docker_path=None, use_sudo=True,
 
 def _recover_deployments(docker_path=None, use_sudo=True):
 
-    lgr.info('Retrieving deployments...')
-    rest = utils.get_rest_client()
-    deployments = rest.deployments.list()
-    if not deployments:
-        lgr.info('No deployments found.')
-        return
-
-    for deployment in deployments:
-        _run_command_in_cfy(
-            'sudo service celeryd-{0} start'
-            .format(deployment.id),
-            docker_path, use_sudo)
-        _run_command_in_cfy(
-            'sudo service celeryd-{0}_workflows start'
-            .format(deployment.id),
-            docker_path, use_sudo)
+    ctx.logger.info('Recovering deployments...')
+    script_relpath = ctx.instance.runtime_properties.get(
+        'recovery_script_relpath')
+    if not script_relpath:
+        raise NonRecoverableError('Cannot recover deployments. No recovery '
+                                  'script specified.')
+    script = ctx.download_resource(
+        script_relpath)
+    fabric.api.put(script, '~/recover_deployments.sh')
+    _run_command('chmod +x ~/recover_deployments.sh')
+    _run_command_in_cfy('/tmp/home/recover_deployments.sh',
+                        docker_path=docker_path,
+                        use_sudo=use_sudo)
 
 
 def _get_backup_files_cmd():
