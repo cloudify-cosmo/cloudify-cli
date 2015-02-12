@@ -56,20 +56,20 @@ class CliBootstrapUnitTests(unittest.TestCase):
             shutil.rmtree(self.manager_dir)
             self.assertTrue(
                 bootstrap.read_manager_deployment_dump_if_needed(result))
-            comparison = filecmp.dircmp(manager1_original_dir,
-                                        self.manager_dir)
-            self.assertIn('dir1', comparison.common)
-            self.assertIn('dir2', comparison.common)
-            self.assertIn('file1', comparison.common)
-            self.assertIn('file2', comparison.common)
-            self.assertEqual(comparison.common_funny, [])
-            self.assertEqual(comparison.diff_files, [])
-            self.assertEqual(comparison.funny_files, [])
-            self.assertEqual(comparison.left_only, [])
-            self.assertEqual(comparison.right_only, [])
         else:
             self.assertFalse(
                 bootstrap.read_manager_deployment_dump_if_needed(result))
+        comparison = filecmp.dircmp(manager1_original_dir,
+                                    self.manager_dir)
+        self.assertIn('dir1', comparison.common)
+        self.assertIn('dir2', comparison.common)
+        self.assertIn('file1', comparison.common)
+        self.assertIn('file2', comparison.common)
+        self.assertEqual(comparison.common_funny, [])
+        self.assertEqual(comparison.diff_files, [])
+        self.assertEqual(comparison.funny_files, [])
+        self.assertEqual(comparison.left_only, [])
+        self.assertEqual(comparison.right_only, [])
 
     def test_manager_deployment_dump_read_empty(self):
         self.assertFalse(
