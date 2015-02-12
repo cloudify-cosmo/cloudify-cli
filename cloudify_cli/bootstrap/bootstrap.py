@@ -42,8 +42,10 @@ def _workdir():
 
 
 def delete_workdir():
-    if os.path.exists(_workdir()):
-        shutil.rmtree(_workdir())
+    cloudify_dir = utils.get_init_path()
+    workdir = os.path.join(cloudify_dir, 'bootstrap')
+    if os.path.exists(workdir):
+        shutil.rmtree(workdir)
 
 
 def load_env(name):
