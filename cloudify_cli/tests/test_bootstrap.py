@@ -73,7 +73,14 @@ class CliBootstrapUnitTests(unittest.TestCase):
         self.assertFalse(os.path.exists(self.manager_dir))
 
     def test_manager_deployment_dump_read_already_exists(self):
-        self.test_manager_deployment_dump(remove_deployment=False)
+        manager1_original_dir = os.path.join(
+            os.path.dirname(__file__),
+            'resources', 'storage', 'manager1')
+        if not os.path.exists(self.manager_dir):
+            shutil.copytree(manager1_original_dir, self.manager_dir)
+        result = bootstrap.dump_manager_deployment()
+        self.assertFalse(
+            bootstrap.read_manager_deployment_dump_if_needed(result))
 
     def test_creation_validation_empty_server_dict(self):
         packages = {
