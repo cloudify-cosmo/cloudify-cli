@@ -21,7 +21,6 @@ import datetime
 from uuid import uuid4
 
 from mock import MagicMock
-from nose.tools import nottest
 from cloudify_rest_client import exceptions
 from cloudify_rest_client.executions import Execution
 
@@ -50,7 +49,6 @@ class ExecutionsTest(CliCommandTest):
         self.client.executions.cancel = MagicMock()
         cli_runner.run_cli('cfy executions cancel -e e_id')
 
-    @nottest
     def test_executions_start_dep_env_pending(self):
         self._test_executions_start_dep_env(
             ex=exceptions.DeploymentEnvironmentCreationPendingError('m'))
@@ -76,11 +74,9 @@ class ExecutionsTest(CliCommandTest):
         try:
             executions.wait_for_execution = wait_for_mock
             cli_runner.run_cli('cfy executions start -w mock_wf -d dep')
-            client = wait_for_mock.mock_calls[1][1][0]
-            execution_id = wait_for_mock.mock_calls[1][1][1]
-            self.assertEqual(wait_for_mock.mock_calls[0][1][2].workflow_id,
+            self.assertEqual(wait_for_mock.mock_calls[0][1][1].workflow_id,
                              'create_deployment_environment')
-            self.assertEqual(wait_for_mock.mock_calls[1][1][2].workflow_id,
+            self.assertEqual(wait_for_mock.mock_calls[1][1][1].workflow_id,
                              'mock_wf')
         finally:
             executions.wait_for_execution = original_wait_for

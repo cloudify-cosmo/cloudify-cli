@@ -42,9 +42,10 @@ def ls(execution_id, include_logs, tail):
             include_logs=include_logs)
 
         events_logger = get_events_logger()
+
         if tail:
             execution = wait_for_execution(client,
-                                           execution_id,
+                                           client.executions.get(execution_id),
                                            events_handler=events_logger,
                                            include_logs=include_logs,
                                            timeout=0)   # don't timeout ever
@@ -56,7 +57,7 @@ def ls(execution_id, include_logs, tail):
                                     execution.error))
                 raise SuppressedCloudifyCliError()
             else:
-                logger.info("Finished executing workflow '{0}' on deployment"
+                logger.info("Finished executing workflow '{0}' on deployment "
                             "'{1}'".format(execution.workflow_id,
                                            execution.deployment_id))
         else:

@@ -127,11 +127,9 @@ def start(workflow_id, deployment_id, timeout, force,
             logger.info('Waiting for create_deployment_environment '
                         'workflow execution to finish...')
             now = time.time()
-            deployment_environment_creation_execution = \
-                _get_deployment_environment_creation_execution(client,
-                                                               deployment_id)
             wait_for_execution(client,
-                               deployment_environment_creation_execution.id,
+                               _get_deployment_environment_creation_execution(
+                                   client, deployment_id),
                                events_handler=events_logger,
                                include_logs=include_logs,
                                timeout=timeout)
@@ -146,7 +144,7 @@ def start(workflow_id, deployment_id, timeout, force,
                 force=force)
 
         execution = wait_for_execution(client,
-                                       execution.id,
+                                       execution,
                                        events_handler=events_logger,
                                        include_logs=include_logs,
                                        timeout=timeout)
