@@ -232,11 +232,17 @@ def parser_config():
                             '-l,--include-logs': {
                                 'dest': 'include_logs',
                                 'action': 'store_true',
-                                'help': 'A flag whether to include logs in returned events'
+                                'help': 'Includes logs in the returned events'
                             },
                             '-e,--execution-id': execution_id_argument(
                                 hlp='The id of the execution to list events for'
-                            )
+                            ),
+                            '--tail': {
+                                'dest': 'tail',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'tail the events of the specified execution until it ends'
+                            }
                         },
                         'help': 'Displays Events for different executions',
                         'handler': cfy.events.ls

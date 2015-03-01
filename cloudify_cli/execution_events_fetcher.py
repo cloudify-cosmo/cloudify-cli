@@ -94,23 +94,28 @@ def get_deployment_environment_creation_execution(client, deployment_id):
 
 
 def wait_for_execution(client,
-                       deployment_id,
-                       execution,
+                       execution_id,
                        events_handler=None,
                        include_logs=False,
                        timeout=900):
 
-    deadline = time.time() + timeout
-    execution_events = ExecutionEventsFetcher(client, execution.id,
+    if timeout:
+        deadline = time.time() + timeout
+
+    execution_events = ExecutionEventsFetcher(client, execution_id,
                                               include_logs=include_logs)
+
+    execution = client.executions.get(execution_id)
 
     # Poll for execution status until execution ends
     while execution.status not in Execution.END_STATES:
-        if time.time() > deadline:
-            raise ExecutionTimeoutError(
-                execution.id,
-                'execution of operation {0} for deployment {1} '
-                'timed out'.format(execution.workflow_id, deployment_id))
+        if timeout:
+            if time.time() > deadline:
+                raise ExecutionTimeoutError(
+                    execution.id,
+                    'execution of operation {0} for deployment {1} '
+                    'timed out'.format(execution.workflow_id,
+                                       execution.deployment_id))
 
         time.sleep(3)
 

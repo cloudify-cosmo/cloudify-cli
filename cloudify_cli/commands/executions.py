@@ -101,7 +101,7 @@ def start(workflow_id, deployment_id, timeout, force,
     events_logger = get_events_logger()
 
     events_message = "* Run 'cfy events list --include-logs " \
-                     "--execution-id {0}' for retrieving the " \
+                     "--execution-id {0}' to retrieve the " \
                      "execution's events/logs"
     try:
         client = utils.get_rest_client(management_ip)
@@ -127,10 +127,11 @@ def start(workflow_id, deployment_id, timeout, force,
             logger.info('Waiting for create_deployment_environment '
                         'workflow execution to finish...')
             now = time.time()
+            deployment_environment_creation_execution = \
+                _get_deployment_environment_creation_execution(client,
+                                                               deployment_id)
             wait_for_execution(client,
-                               deployment_id,
-                               _get_deployment_environment_creation_execution(
-                                   client, deployment_id),
+                               deployment_environment_creation_execution.id,
                                events_handler=events_logger,
                                include_logs=include_logs,
                                timeout=timeout)
@@ -145,8 +146,7 @@ def start(workflow_id, deployment_id, timeout, force,
                 force=force)
 
         execution = wait_for_execution(client,
-                                       deployment_id,
-                                       execution,
+                                       execution.id,
                                        events_handler=events_logger,
                                        include_logs=include_logs,
                                        timeout=timeout)

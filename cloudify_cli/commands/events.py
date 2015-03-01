@@ -17,15 +17,14 @@
 Handles all commands that start with 'cfy events'
 """
 
-from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.execution_events_fetcher import ExecutionEventsFetcher
-from cloudify_cli.logger import get_logger
-from cloudify_cli.logger import get_events_logger
+from cloudify_cli.exceptions import CloudifyCliError, SuppressedCloudifyCliError
+from cloudify_cli.execution_events_fetcher import ExecutionEventsFetcher, wait_for_execution
+from cloudify_cli.logger import get_logger, get_events_logger
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_cli import utils
 
 
-def ls(execution_id, include_logs):
+def ls(execution_id, include_logs, tail):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     logger.info("Getting events from management server {0} for "
@@ -35,15 +34,34 @@ def ls(execution_id, include_logs):
                                             include_logs))
     client = utils.get_rest_client(management_ip)
     try:
-
         execution_events = ExecutionEventsFetcher(
             client,
             execution_id,
             include_logs=include_logs)
-        events = execution_events.fetch_all()
+
         events_logger = get_events_logger()
-        events_logger(events)
-        logger.info('\nTotal events: {0}'.format(len(events)))
+        if tail:
+            execution = wait_for_execution(client,
+                                           execution_id,
+                                           events_handler=events_logger,
+                                           include_logs=include_logs,
+                                           timeout=0)   # don't timeout ever, let the user abort the operation
+            if execution.error:
+                logger.info("Execution of workflow '{0}' for deployment "
+                            "'{1}' failed. [error={2}]"
+                            .format(execution.workflow_id,
+                                    execution.deployment_id,
+                                    execution.error))
+                raise SuppressedCloudifyCliError()
+            else:
+                logger.info("Finished executing workflow '{0}' on deployment"
+                            "'{1}'".format(execution.workflow_id,
+                                           execution.deployment_id))
+        else:
+            # don't tail, get only the events created until now and return
+            events = execution_events.fetch_all()
+            events_logger(events)
+            logger.info('\nTotal events: {0}'.format(len(events)))
     except CloudifyClientError, e:
         if e.status_code != 404:
             raise
