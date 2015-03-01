@@ -38,7 +38,10 @@ class ExecutionEventsFetcher(object):
         if events_handler is None:
             return
         events = self.fetch_events(get_remaining_events=get_remaining_events)
-        events_handler(events)
+        if events:
+            events_handler(events)
+
+        return events
 
     def fetch_events(self, get_remaining_events=False):
         if get_remaining_events:
@@ -72,8 +75,25 @@ class ExecutionEventsFetcher(object):
             raise
         return events
 
-    def fetch_all(self):
-        return self.fetch_events(get_remaining_events=True)
+    def process_all_events(self, events_handler=None):
+        all_events = []
+        timeout = time.time() + self._timeout
+        
+        read_more_events = True
+        while read_more_events:
+            if time.time() > timeout:
+                raise RuntimeError('events/log fetching timed out')
+
+            events_batch = self.fetch_and_process_events(
+                events_handler=events_handler)
+            if len(events_batch) > 0:
+                all_events.extend(events_batch)
+            else:
+                read_more_events = False
+
+            time.sleep(1)
+
+        return all_events
 
 
 def get_all_execution_events(client, execution_id, include_logs=False):
