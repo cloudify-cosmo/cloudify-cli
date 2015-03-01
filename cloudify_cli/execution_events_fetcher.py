@@ -78,7 +78,7 @@ class ExecutionEventsFetcher(object):
     def process_all_events(self, events_handler=None):
         all_events = []
         timeout = time.time() + self._timeout
-        
+
         read_more_events = True
         while read_more_events:
             if time.time() > timeout:
