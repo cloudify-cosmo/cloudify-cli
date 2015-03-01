@@ -17,8 +17,10 @@
 Handles all commands that start with 'cfy events'
 """
 
-from cloudify_cli.exceptions import CloudifyCliError, SuppressedCloudifyCliError
-from cloudify_cli.execution_events_fetcher import ExecutionEventsFetcher, wait_for_execution
+from cloudify_cli.exceptions import CloudifyCliError, \
+    SuppressedCloudifyCliError
+from cloudify_cli.execution_events_fetcher import ExecutionEventsFetcher, \
+    wait_for_execution
 from cloudify_cli.logger import get_logger, get_events_logger
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_cli import utils
@@ -45,7 +47,7 @@ def ls(execution_id, include_logs, tail):
                                            execution_id,
                                            events_handler=events_logger,
                                            include_logs=include_logs,
-                                           timeout=0)   # don't timeout ever, let the user abort the operation
+                                           timeout=0)   # don't timeout ever
             if execution.error:
                 logger.info("Execution of workflow '{0}' for deployment "
                             "'{1}' failed. [error={2}]"
