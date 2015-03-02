@@ -69,8 +69,8 @@ def teardown(force, ignore_deployments, config_file_path, ignore_validation):
             use(management_ip, False, utils.get_rest_port())
         except BaseException as e:
             logger.warning('Failed retrieving provider context: {0}. This '
-                           'may cause the teardown process to fail in case '
-                           'the management server has gone through a '
+                           'may cause a leaking management server '
+                           'in case it has gone through a '
                            'recovery process'.format(str(e)))
 
         # reload settings since the provider context maybe changed
