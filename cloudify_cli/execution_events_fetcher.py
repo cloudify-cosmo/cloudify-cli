@@ -116,7 +116,7 @@ def wait_for_execution(client,
     # we must make sure the execution and event fetching loops can run at
     # least once (taking into account the 3-sec sleep here and possible
     # 1-sec sleep on event fetching)
-    if timeout < 10:
+    if timeout and timeout < 10:
         raise ValueError('execution timeout must be 10 seconds or longer')
 
     deadline = time.time() + timeout

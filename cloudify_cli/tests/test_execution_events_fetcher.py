@@ -178,7 +178,7 @@ class ExecutionEventsFetcherTest(unittest.TestCase):
         mock_execution = self.client.executions.get('deployment_id')
         try:
             wait_for_execution(self.client, 'deployment_id', mock_execution,
-                               timeout=3)
+                               timeout=1)
             self.fail('Exception not raised; wait_for_execution was expected '
                       'to raise ValueError but completed.')
         except ValueError:
