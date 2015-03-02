@@ -13,12 +13,21 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 import time
-from cloudify_cli.exceptions import ExecutionTimeoutError
+from cloudify_cli.exceptions import ExecutionTimeoutError, \
+    EventProcessingTimeoutError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.executions import Execution
 
 
 class ExecutionEventsFetcher(object):
+
+    @property
+    def timeout(self):
+        return self._timeout
+
+    @timeout.setter
+    def timeout(self, value):
+        self._timeout = value
 
     def __init__(self, client, execution_id, batch_size=100,
                  timeout=60, include_logs=False):
@@ -57,11 +66,13 @@ class ExecutionEventsFetcher(object):
 
     def fetch_and_process_events(self, events_handler=None):
         total_events_count = 0
-        timeout = time.time() + self._timeout
+        deadline = time.time() + self._timeout
 
         while True:
-            if time.time() > timeout:
-                raise RuntimeError('events/log fetching timed out')
+            if time.time() > deadline:
+                raise EventProcessingTimeoutError(
+                    self._execution_id,
+                    'events/log fetching timed out for execution timed out')
 
             events_batch_count = self._fetch_and_process_events_batch(
                 events_handler=events_handler)
@@ -102,9 +113,21 @@ def wait_for_execution(client,
                        include_logs=False,
                        timeout=900):
 
+    # we must make sure the execution and event fetching loops can run at
+    # least once (taking into account the 3-sec sleep here and possible
+    # 1-sec sleep on event fetching)
+    if timeout < 10:
+        raise ValueError('execution timeout must be 10 seconds or longer')
+
     deadline = time.time() + timeout
-    execution_events = ExecutionEventsFetcher(client, execution.id,
-                                              include_logs=include_logs)
+    events_fetcher = ExecutionEventsFetcher(client, execution.id,
+                                            include_logs=include_logs)
+    # enforce a shorter timeout on event fetching if it's longer than the
+    # execution timeout (taking into account the 3 sec sleep as well).
+    # This is required because the user can set the execution timeout but not
+    # the inner event fetcher timeout (defaults to 60 seconds)
+    if events_fetcher.timeout-5 > timeout:
+        events_fetcher.timeout = timeout-5
 
     # Poll for execution status until execution ends
     while execution.status not in Execution.END_STATES:
@@ -115,10 +138,9 @@ def wait_for_execution(client,
                 'timed out'.format(execution.workflow_id, deployment_id))
 
         time.sleep(3)
-
         execution = client.executions.get(execution.id)
         if execution.status != Execution.PENDING:
-            execution_events.fetch_and_process_events(
+            events_fetcher.fetch_and_process_events(
                 events_handler=events_handler)
 
     return execution
