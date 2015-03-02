@@ -30,6 +30,9 @@ from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client import CloudifyClient
 
 
+from cloudify_cli import utils
+
+
 REST_PORT = 80
 
 # internal runtime properties - used by the CLI to store local context
@@ -302,7 +305,18 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      manager_private_ip=None, provider_context=None,
                      docker_service_start_command=None):
     if 'containers_started' in ctx.instance.runtime_properties:
-        recover_docker(docker_path, use_sudo, docker_service_start_command)
+        try:
+            recover_docker(docker_path, use_sudo, docker_service_start_command)
+            # the runtime property specifying the manager openstack instance id
+            # has changed, so we need to update the manager deployment in the
+            # provider context.
+            _update_manager_deployment()
+        except Exception:
+            # recovery failed, however runtime properties may have still
+            # changed. update the local manager deployment only
+            _update_manager_deployment(local_only=True)
+            raise
+
         return
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
@@ -548,6 +562,28 @@ def _copy_agent_key(agent_local_key_path=None,
     agent_local_key_path = os.path.expanduser(agent_local_key_path)
     fabric.api.put(agent_local_key_path, agent_remote_key_path)
     return agent_remote_key_path
+
+
+def _update_manager_deployment(local_only=False):
+
+    # get the current provider from the runtime property set on bootstrap
+    provider_context = ctx.instance.runtime_properties[
+        PROVIDER_RUNTIME_PROPERTY]
+
+    # construct new manager deployment
+    provider_context['cloudify'][
+        'manager_deployment'] = _dump_manager_deployment()
+
+    # update locally
+    ctx.instance.runtime_properties[
+        PROVIDER_RUNTIME_PROPERTY] = provider_context
+    with utils.update_wd_settings() as wd_settings:
+        wd_settings.set_provider_context(provider_context)
+
+    if not local_only:
+        # update on server
+        rest_client = utils.get_rest_client()
+        rest_client.manager.update_context('provider', provider_context)
 
 
 def _upload_provider_context(remote_agents_private_key_path,
