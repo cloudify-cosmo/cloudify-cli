@@ -34,7 +34,14 @@ class SuppressedCloudifyCliError(Exception):
     pass
 
 
-class ExecutionTimeoutError(Exception):
+class ExecutionTimeoutError(RuntimeError):
+
+    def __init__(self, execution_id, message):
+        self.execution_id = execution_id
+        self.message = message
+
+
+class EventProcessingTimeoutError(RuntimeError):
 
     def __init__(self, execution_id, message):
         self.execution_id = execution_id
