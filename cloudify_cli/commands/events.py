@@ -42,8 +42,8 @@ def ls(execution_id, include_logs):
             include_logs=include_logs)
 
         events_logger = get_events_logger()
-        events = execution_events.process_all_events(events_logger)
-        logger.info('\nTotal events: {0}'.format(len(events)))
+        events_count = execution_events.process_all_events(events_logger)
+        logger.info('\nTotal events: {0}'.format(events_count))
     except CloudifyClientError, e:
         if e.status_code != 404:
             raise

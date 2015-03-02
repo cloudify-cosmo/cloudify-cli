@@ -33,31 +33,29 @@ class ExecutionEventsFetcher(object):
         self._client.executions.get(execution_id)
 
     def fetch_and_process_events(self,
-                                 get_remaining_events=False,
-                                 events_handler=None):
-        if events_handler is None:
-            return
-        events = self.fetch_events(get_remaining_events=get_remaining_events)
-        if events:
+                                 get_all_remaining_events=False,
+                                 events_handler=None,):
+        if get_all_remaining_events:
+            events = self.get_all_remaining_events()
+        else:
+            events = self._fetch_events()   # gets a bulk of events, not all
+
+        if events and events_handler:
             events_handler(events)
 
         return events
 
-    def fetch_events(self, get_remaining_events=False):
-        if get_remaining_events:
-            events = []
-            timeout = time.time() + self._timeout
-            while time.time() < timeout:
-                result = self._fetch_events()
-                if len(result) > 0:
-                    events.extend(result)
-                else:
-                    return events
-                time.sleep(1)
-            raise RuntimeError('events/log fetching timed out')
-
-        else:
-            return self._fetch_events()
+    def get_all_remaining_events(self):
+        events = []
+        timeout = time.time() + self._timeout
+        while time.time() < timeout:
+            result = self._fetch_events()
+            if len(result) > 0:
+                events.extend(result)
+            else:
+                return events
+            time.sleep(1)
+        raise RuntimeError('events/log fetching timed out')
 
     def _fetch_events(self):
         try:
@@ -76,24 +74,23 @@ class ExecutionEventsFetcher(object):
         return events
 
     def process_all_events(self, events_handler=None):
-        all_events = []
+        total_events_count = 0
         timeout = time.time() + self._timeout
 
-        read_more_events = True
-        while read_more_events:
+        while True:
             if time.time() > timeout:
                 raise RuntimeError('events/log fetching timed out')
 
             events_batch = self.fetch_and_process_events(
                 events_handler=events_handler)
-            if len(events_batch) > 0:
-                all_events.extend(events_batch)
-            else:
-                read_more_events = False
+
+            total_events_count += len(events_batch)
+            if len(events_batch) == 0:
+                break
 
             time.sleep(1)
 
-        return all_events
+        return total_events_count
 
 
 def get_all_execution_events(client, execution_id, include_logs=False):
