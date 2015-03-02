@@ -32,32 +32,14 @@ class ExecutionEventsFetcher(object):
         # a 404 will be raised otherwise
         self._client.executions.get(execution_id)
 
-    def fetch_and_process_events(self,
-                                 get_all_remaining_events=False,
-                                 events_handler=None,):
-        if get_all_remaining_events:
-            events = self.get_all_remaining_events()
-        else:
-            events = self._fetch_events()   # gets a bulk of events, not all
-
+    def _fetch_and_process_events_batch(self, events_handler=None):
+        events = self._fetch_events_batch()
         if events and events_handler:
             events_handler(events)
 
-        return events
+        return len(events)
 
-    def get_all_remaining_events(self):
-        events = []
-        timeout = time.time() + self._timeout
-        while time.time() < timeout:
-            result = self._fetch_events()
-            if len(result) > 0:
-                events.extend(result)
-            else:
-                return events
-            time.sleep(1)
-        raise RuntimeError('events/log fetching timed out')
-
-    def _fetch_events(self):
+    def _fetch_events_batch(self):
         try:
             events, total = self._client.events.get(
                 self._execution_id,
@@ -73,7 +55,7 @@ class ExecutionEventsFetcher(object):
             raise
         return events
 
-    def process_all_events(self, events_handler=None):
+    def fetch_and_process_events(self, events_handler=None):
         total_events_count = 0
         timeout = time.time() + self._timeout
 
@@ -81,11 +63,14 @@ class ExecutionEventsFetcher(object):
             if time.time() > timeout:
                 raise RuntimeError('events/log fetching timed out')
 
-            events_batch = self.fetch_and_process_events(
+            events_batch_count = self._fetch_and_process_events_batch(
                 events_handler=events_handler)
 
-            total_events_count += len(events_batch)
-            if len(events_batch) == 0:
+            total_events_count += events_batch_count
+
+            if events_batch_count < self._batch_size:
+                # returned less events than allowed by _batch_size,
+                # this means these are the last events
                 break
 
             time.sleep(1)
@@ -135,10 +120,5 @@ def wait_for_execution(client,
         if execution.status != Execution.PENDING:
             execution_events.fetch_and_process_events(
                 events_handler=events_handler)
-
-    # Process remaining events
-    execution_events.fetch_and_process_events(
-        get_remaining_events=True,
-        events_handler=events_handler)
 
     return execution
