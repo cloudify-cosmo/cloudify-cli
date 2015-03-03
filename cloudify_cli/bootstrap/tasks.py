@@ -493,6 +493,16 @@ def _start_mgmt_worker(docker_exec_command, private_ip):
                           detached=True, attempts_on_corrupt=5)
 
 
+def _setup_logs_dir(use_sudo):
+    if use_sudo:
+        sudo = 'sudo'
+    else:
+        sudo = ''
+    change_creds_cmd = '{0} chmod -R 755 {1}'.format(sudo,
+                                                     '/var/log/cloudify')
+    _run_command(change_creds_cmd)
+
+
 def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      agent_local_key_path=None, agent_remote_key_path=None,
                      manager_private_ip=None, provider_context=None,
@@ -567,6 +577,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
 
         _start_riemann(docker_exec_command, private_ip)
 
+        _setup_logs_dir(use_sudo)
     except FabricTaskError as e:
         err = 'failed running cloudify service containers. ' \
               'error is {0}'.format(str(e))
