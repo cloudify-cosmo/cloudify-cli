@@ -54,9 +54,13 @@ class CliBootstrapUnitTests(unittest.TestCase):
         result = bootstrap.dump_manager_deployment()
         if remove_deployment:
             shutil.rmtree(self.manager_dir)
-        self.assertTrue(
-            bootstrap.read_manager_deployment_dump_if_needed(result))
-        comparison = filecmp.dircmp(manager1_original_dir, self.manager_dir)
+            self.assertTrue(
+                bootstrap.read_manager_deployment_dump_if_needed(result))
+        else:
+            self.assertFalse(
+                bootstrap.read_manager_deployment_dump_if_needed(result))
+        comparison = filecmp.dircmp(manager1_original_dir,
+                                    self.manager_dir)
         self.assertIn('dir1', comparison.common)
         self.assertIn('dir2', comparison.common)
         self.assertIn('file1', comparison.common)

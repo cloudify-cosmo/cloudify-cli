@@ -22,6 +22,7 @@ from cloudify_cli import utils
 from cloudify_cli import exceptions
 from cloudify_cli.bootstrap import bootstrap as bs
 from cloudify_cli.logger import get_logger
+from cloudify_cli.commands.use import use
 
 
 def teardown(force, ignore_deployments, config_file_path, ignore_validation):
@@ -56,7 +57,24 @@ def teardown(force, ignore_deployments, config_file_path, ignore_validation):
     if settings.get_is_provider_config():
         provider_common.provider_teardown(config_file_path, ignore_validation)
     else:
+
         logger.info("tearing down {0}".format(management_ip))
+
+        # runtime properties might have changed since the last time we
+        # executed 'use', because of recovery. so we need to retrieve
+        # the provider context again
+        try:
+            logger.info('Retrieving provider context')
+            management_ip = utils.get_management_server_ip()
+            use(management_ip, False, utils.get_rest_port())
+        except BaseException as e:
+            logger.warning('Failed retrieving provider context: {0}. This '
+                           'may cause a leaking management server '
+                           'in case it has gone through a '
+                           'recovery process'.format(str(e)))
+
+        # reload settings since the provider context maybe changed
+        settings = utils.load_cloudify_working_dir_settings()
         provider_context = settings.get_provider_context()
         bs.read_manager_deployment_dump_if_needed(
             provider_context.get('cloudify', {}).get('manager_deployment'))

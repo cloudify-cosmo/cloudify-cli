@@ -29,6 +29,7 @@ from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client import CloudifyClient
 
+
 from cloudify_cli import utils
 
 
@@ -508,7 +509,18 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      manager_private_ip=None, provider_context=None,
                      docker_service_start_command=None):
     if 'containers_started' in ctx.instance.runtime_properties:
-        recover_docker(docker_path, use_sudo, docker_service_start_command)
+        try:
+            recover_docker(docker_path, use_sudo, docker_service_start_command)
+            # the runtime property specifying the manager openstack instance id
+            # has changed, so we need to update the manager deployment in the
+            # provider context.
+            _update_manager_deployment()
+        except Exception:
+            # recovery failed, however runtime properties may have still
+            # changed. update the local manager deployment only
+            _update_manager_deployment(local_only=True)
+            raise
+
         return
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
@@ -618,22 +630,19 @@ def recover_docker(docker_path=None, use_sudo=True,
 
 def _recover_deployments(docker_path=None, use_sudo=True):
 
-    lgr.info('Retrieving deployments...')
-    rest = utils.get_rest_client()
-    deployments = rest.deployments.list()
-    if not deployments:
-        lgr.info('No deployments found.')
-        return
-
-    for deployment in deployments:
-        _run_command_in_cfy(
-            'sudo service celeryd-{0} start'
-            .format(deployment.id),
-            docker_path, use_sudo)
-        _run_command_in_cfy(
-            'sudo service celeryd-{0}_workflows start'
-            .format(deployment.id),
-            docker_path, use_sudo)
+    ctx.logger.info('Recovering deployments...')
+    script_relpath = ctx.instance.runtime_properties.get(
+        'recovery_script_relpath')
+    if not script_relpath:
+        raise NonRecoverableError('Cannot recover deployments. No recovery '
+                                  'script specified.')
+    script = ctx.download_resource(
+        script_relpath)
+    fabric.api.put(script, '~/recover_deployments.sh')
+    _run_command('chmod +x ~/recover_deployments.sh')
+    _run_command_in_cfy('/tmp/home/recover_deployments.sh',
+                        docker_path=docker_path,
+                        use_sudo=use_sudo)
 
 
 def _get_backup_files_cmd():
@@ -724,6 +733,28 @@ def _copy_agent_key(agent_local_key_path=None,
     agent_local_key_path = os.path.expanduser(agent_local_key_path)
     fabric.api.put(agent_local_key_path, agent_remote_key_path)
     return agent_remote_key_path
+
+
+def _update_manager_deployment(local_only=False):
+
+    # get the current provider from the runtime property set on bootstrap
+    provider_context = ctx.instance.runtime_properties[
+        PROVIDER_RUNTIME_PROPERTY]
+
+    # construct new manager deployment
+    provider_context['cloudify'][
+        'manager_deployment'] = _dump_manager_deployment()
+
+    # update locally
+    ctx.instance.runtime_properties[
+        PROVIDER_RUNTIME_PROPERTY] = provider_context
+    with utils.update_wd_settings() as wd_settings:
+        wd_settings.set_provider_context(provider_context)
+
+    if not local_only:
+        # update on server
+        rest_client = utils.get_rest_client()
+        rest_client.manager.update_context('provider', provider_context)
 
 
 def _upload_provider_context(remote_agents_private_key_path,

@@ -41,6 +41,13 @@ def _workdir():
     return workdir
 
 
+def delete_workdir():
+    cloudify_dir = utils.get_init_path()
+    workdir = os.path.join(cloudify_dir, 'bootstrap')
+    if os.path.exists(workdir):
+        shutil.rmtree(workdir)
+
+
 def load_env(name):
     storage = local.FileStorage(storage_dir=_workdir())
     return local.load_env(name=name,
@@ -182,7 +189,7 @@ def read_manager_deployment_dump_if_needed(manager_deployment_dump):
     if not manager_deployment_dump:
         return False
     if os.path.exists(os.path.join(_workdir(), name)):
-        shutil.rmtree(os.path.join(_workdir(), name))
+        return False
     dump_input = StringIO(manager_deployment_dump)
     dump_input.seek(0)
     file_obj = BytesIO()
