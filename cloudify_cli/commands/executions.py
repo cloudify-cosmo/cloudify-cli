@@ -100,7 +100,7 @@ def start(workflow_id, deployment_id, timeout, force,
 
     events_logger = get_events_logger()
 
-    events_message = "* Run 'cfy events list --tail --include-logs " \
+    events_message = "* Run 'cfy events list --include-logs " \
                      "--execution-id {0}' for retrieving the " \
                      "execution's events/logs"
     try:
