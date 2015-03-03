@@ -139,18 +139,9 @@ class ExecutionEventsFetcherTest(unittest.TestCase):
         self.events = range(0, 20)
         events_fetcher = ExecutionEventsFetcher(self.client,
                                                 'execution_id',
-                                                batch_size=1,
-                                                timeout=3)
-        try:
-            events_fetcher.fetch_and_process_events()
-            self.fail('Exception not raised; fetch_and_process_events was '
-                      'expected to raise EventProcessingTimeoutError but '
-                      'completed.')
-        except EventProcessingTimeoutError:
-            pass
-        except Exception as e:
-            self.fail('Wrong exception raised; expected "{0}" but got "{1}"'
-                      .format('EventProcessingTimeoutError', type(e).__name__))
+                                                batch_size=1)
+        self.assertRaises(EventProcessingTimeoutError,
+                          events_fetcher.fetch_and_process_events, timeout=2)
 
     def test_events_processing_progress(self):
         events_bulk1 = range(0, 5)
@@ -158,59 +149,28 @@ class ExecutionEventsFetcherTest(unittest.TestCase):
         events_fetcher = ExecutionEventsFetcher(self.client,
                                                 'execution_id',
                                                 batch_size=100)
-        import datetime
-        print '**** start time: ', datetime.datetime.now()
         events_count = events_fetcher.fetch_and_process_events()
         self.assertEqual(len(events_bulk1), events_count)
-        print '**** time after bulk1: ', datetime.datetime.now()
         events_bulk2 = range(0, 10)
         self.events.extend(events_bulk2)
         events_count = events_fetcher.fetch_and_process_events()
         self.assertEqual(len(events_bulk2), events_count)
-        print '**** time after bulk2: ', datetime.datetime.now()
         events_bulk3 = range(0, 7)
         self.events.extend(events_bulk3)
         events_count = events_fetcher.fetch_and_process_events()
         self.assertEqual(len(events_bulk3), events_count)
-        print '**** time after bulk3: ', datetime.datetime.now()
-
-    def test_wait_for_execution_invalid_timeout(self):
-        mock_execution = self.client.executions.get('deployment_id')
-        try:
-            wait_for_execution(self.client, 'deployment_id', mock_execution,
-                               timeout=1)
-            self.fail('Exception not raised; wait_for_execution was expected '
-                      'to raise ValueError but completed.')
-        except ValueError:
-            pass
-        except Exception as e:
-            self.fail('Wrong exception raised; expected "{0}" but got "{1}"'
-                      .format('ValueError', type(e).__name__))
 
     def test_wait_for_execution_timeout(self):
         self.events = range(0, 5)
         mock_execution = self.client.executions.get('deployment_id')
-        try:
-            wait_for_execution(self.client, 'deployment_id', mock_execution,
-                               timeout=10)
-            self.fail('Exception not raised; wait_for_execution was expected '
-                      'to raise ExecutionTimeoutError but completed.')
-        except ExecutionTimeoutError:
-            pass
-        except Exception as e:
-            self.fail('Wrong exception raised; expected "{0}" but got "{1}"'
-                      .format('ExecutionTimeoutError', type(e).__name__))
+        self.assertRaises(ExecutionTimeoutError, wait_for_execution,
+                          self.client, 'deployment_id', mock_execution,
+                          timeout=2)
 
     def test_wait_for_execution_expect_event_processing_timeout(self):
         self.events = range(0, 1000)
         mock_execution = self.client.executions.get('deployment_id')
-        try:
-            wait_for_execution(self.client, 'deployment_id', mock_execution,
-                               timeout=10)
-            self.fail('Exception not raised; wait_for_execution was expected '
-                      'to raise EventProcessingTimeoutError but completed.')
-        except EventProcessingTimeoutError:
-            pass
-        except Exception as e:
-            self.fail('Wrong exception raised; expected "{0}" but got "{1}"'
-                      .format('EventProcessingTimeoutError', type(e).__name__))
+        self.assertRaises(EventProcessingTimeoutError,
+                          wait_for_execution,
+                          self.client, 'deployment_id', mock_execution,
+                          timeout=3)
