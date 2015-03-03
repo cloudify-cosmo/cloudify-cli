@@ -167,7 +167,10 @@ def start(workflow_id, deployment_id, timeout, force,
                     "--execution-id {2}' to cancel"
                     " the running workflow."
                     .format(workflow_id, deployment_id, e.execution_id))
-        logger.info(events_message.format(e.execution_id))
+        events_tail_message = "* Run 'cfy events list --tail --include-logs " \
+                              "--execution-id {0}' to retrieve the " \
+                              "execution's events/logs"
+        logger.info(events_tail_message.format(e.execution_id))
         raise SuppressedCloudifyCliError()
 
 
