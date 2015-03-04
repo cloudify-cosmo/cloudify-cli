@@ -849,7 +849,8 @@ def _download_file(url, path, distro, use_sudo=True):
         sudo = ''
 
     if 'Ubuntu' in distro:
-        return _run_command('{0} wget -O {1} {2}'.format(sudo, path, url))
+        # todo: remove silent -q0- wget.
+        return _run_command('{0} wget -qO- -O {1} {2}'.format(sudo, path, url))
     elif 'centos' in distro:
         # todo(adaml): fix this.
         with cd(path):
