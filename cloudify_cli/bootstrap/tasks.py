@@ -492,7 +492,7 @@ def _setup_logs_dir(use_sudo, logs_folder_name):
     else:
         sudo = ''
 
-    setup_logs_dir_cmd = '{0} mkdir /var/log/cloudify/{1} ' \
+    setup_logs_dir_cmd = '{0} mkdir -p /var/log/cloudify/{1} ' \
                          '&& chmod -R 755 /var/log/cloudify/{1}'\
                          .format(sudo, logs_folder_name)
     _run_command(setup_logs_dir_cmd)
