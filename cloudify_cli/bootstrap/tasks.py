@@ -391,13 +391,6 @@ def _start_rest_service(docker_exec_command, private_ip):
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_fileserver(docker_exec_command):
-    fileserver_opts = '--volume=/opt/manager/resources ' \
-                      'docker_fileserver'
-    _run_docker_container(docker_exec_command, fileserver_opts, 'fileserver',
-                          detached=True, attempts_on_corrupt=5)
-
-
 def _start_riemann(docker_exec_command, private_ip):
     riemann_data_opts = 'docker_riemann ' \
                         'echo riemann data container'
@@ -433,7 +426,6 @@ def _start_fileserver(docker_exec_command, cloudify_packages):
         lgr.info('no agent packages were provided')
         agent_packages_install_cmd = 'echo no agent packages provided'
         agent_pkgs_mount_options = ''
-
     fileserver_data_opts = '{0} ' \
                            'docker_fileserver ' \
                            '/bin/bash -c \'{1}\'' \
@@ -494,14 +486,16 @@ def _start_mgmt_worker(docker_exec_command, private_ip):
                           detached=True, attempts_on_corrupt=5)
 
 
-def _setup_logs_dir(use_sudo):
+def _setup_logs_dir(use_sudo, logs_folder_name):
     if use_sudo:
         sudo = 'sudo'
     else:
         sudo = ''
-    change_creds_cmd = '{0} chmod -R 755 {1}'.format(sudo,
-                                                     '/var/log/cloudify')
-    _run_command(change_creds_cmd)
+
+    setup_logs_dir_cmd = '{0} mkdir /var/log/cloudify/{1} ' \
+                         '&& chmod -R 755 /var/log/cloudify/{1}'\
+                         .format(sudo, logs_folder_name)
+    _run_command(setup_logs_dir_cmd)
 
 
 def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
@@ -547,7 +541,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         _download_file(docker_images_url, tmp_image_location,
                        distro_info, use_sudo)
     except FabricTaskError as e:
-        err = 'failed downloading cloudify docker images from {0}. reason:{1}' \
+        err = 'failed downloading cloudify docker images from {0}. reason:{1}'\
               .format(docker_images_url, str(e))
         lgr.error(err)
         raise NonRecoverableError(err)
@@ -567,29 +561,38 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                             agent_remote_key_path)
     lgr.info('starting cloudify management services')
     try:
+        _setup_logs_dir(use_sudo, 'fileserver')
         _start_fileserver(docker_exec_command, cloudify_packages)
 
+        _setup_logs_dir(use_sudo, 'restservice')
         _start_rest_service(docker_exec_command, private_ip)
 
+        _setup_logs_dir(use_sudo, 'webui')
         _start_webui(docker_exec_command, private_ip)
 
+        _setup_logs_dir(use_sudo, 'mgmtworker')
         _start_mgmt_worker(docker_exec_command, private_ip)
 
+        _setup_logs_dir(use_sudo, 'elasticsearch')
         _start_elasticsearch(docker_exec_command)
 
+        _setup_logs_dir(use_sudo, 'rabbitmq')
         _start_rabbitmq(docker_exec_command)
 
+        _setup_logs_dir(use_sudo, 'influxdb')
         _start_influxdb(docker_exec_command)
 
+        _setup_logs_dir(use_sudo, 'logstash')
         _start_logstash(docker_exec_command, private_ip)
 
+        _setup_logs_dir(use_sudo, 'amqpinflux')
         _start_amqp_influx(docker_exec_command, private_ip)
 
+        _setup_logs_dir(use_sudo, 'frontend')
         _start_frontend(docker_exec_command, private_ip)
 
+        _setup_logs_dir(use_sudo, 'riemann')
         _start_riemann(docker_exec_command, private_ip)
-
-        _setup_logs_dir(use_sudo)
     except FabricTaskError as e:
         err = 'failed running cloudify service containers. ' \
               'error is {0}'.format(str(e))
