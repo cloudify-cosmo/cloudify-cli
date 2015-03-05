@@ -105,7 +105,7 @@ def wait_for_execution(client,
 
     # if execution already ended - return without waiting
     if execution.status in Execution.END_STATES:
-        return
+        return execution
 
     deadline = time.time() + timeout
     events_fetcher = ExecutionEventsFetcher(client, execution.id,
