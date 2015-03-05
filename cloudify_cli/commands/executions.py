@@ -160,7 +160,7 @@ def start(workflow_id, deployment_id, timeout, force,
             raise SuppressedCloudifyCliError()
         else:
             logger.info("Finished executing workflow '{0}' on deployment"
-                        "'{1}'".format(workflow_id, deployment_id))
+                        " '{1}'".format(workflow_id, deployment_id))
             logger.info(events_message.format(execution.id))
     except ExecutionTimeoutError, e:
         logger.info("Execution of workflow '{0}' "
