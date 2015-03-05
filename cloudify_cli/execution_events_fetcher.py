@@ -60,11 +60,13 @@ class ExecutionEventsFetcher(object):
 
     def fetch_and_process_events(self, events_handler=None, timeout=60):
         total_events_count = 0
+        has_timeout = True if timeout is not None else False
 
-        if timeout:
+        if has_timeout:
             deadline = time.time() + timeout
+
         while True:
-            if timeout and time.time() > deadline:
+            if has_timeout and time.time() > deadline:
                 raise EventProcessingTimeoutError(
                     self._execution_id,
                     'events/log fetching timed out')
@@ -101,12 +103,16 @@ def wait_for_execution(client,
                        include_logs=False,
                        timeout=900):
 
+    # if execution already ended - return without waiting
+    if execution.status in Execution.END_STATES:
+        return
+
     deadline = time.time() + timeout
     events_fetcher = ExecutionEventsFetcher(client, execution.id,
                                             include_logs=include_logs)
 
     # Poll for execution status until execution ends
-    while execution.status not in Execution.END_STATES:
+    while True:
         if time.time() > deadline:
             raise ExecutionTimeoutError(
                 execution.id,
@@ -117,6 +123,8 @@ def wait_for_execution(client,
             events_fetcher.fetch_and_process_events(
                 events_handler=events_handler, timeout=deadline-time.time())
         execution = client.executions.get(execution.id)
+        if execution.status in Execution.END_STATES:
+            break
         time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
 
     return execution
