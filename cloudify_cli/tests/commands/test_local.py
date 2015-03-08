@@ -82,6 +82,13 @@ class LocalTest(CliCommandTest):
             kwargs={'blueprint_path': blueprint_path}
         )
 
+    def test_empty_requirements(self):
+        blueprint = 'blueprint_without_plugins'
+        blueprint_path = '{0}/local/{1}.yaml'.format(BLUEPRINTS_DIR,
+                                                     blueprint)
+        cli_runner.run_cli('cfy local init --install-plugins -p {0}'
+                           .format(blueprint_path))
+
     def test_local_init_missing_plugin(self):
 
         blueprint = 'blueprint_with_plugins'

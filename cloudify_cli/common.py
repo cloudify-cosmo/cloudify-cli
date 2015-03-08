@@ -60,18 +60,21 @@ def install_blueprint_plugins(blueprint_path):
 
     runner = LocalCommandRunner(get_logger())
 
-    # dump the requirements to a file
-    # and let pip install it.
-    # this will utilize pip's mechanism
-    # of cleanup in case an installation fails.
-    output = tempfile.NamedTemporaryFile(mode='w',
-                                         delete=True,
-                                         suffix='.txt',
-                                         prefix='requirements_')
-    utils.dump_to_file(collection=requirements,
-                       file_path=output.name)
-    runner.run(command='pip install -r {0}'.format(output.name),
-               stdout_pipe=False)
+    if requirements:
+        # dump the requirements to a file
+        # and let pip install it.
+        # this will utilize pip's mechanism
+        # of cleanup in case an installation fails.
+        output = tempfile.NamedTemporaryFile(mode='w',
+                                             delete=True,
+                                             suffix='.txt',
+                                             prefix='requirements_')
+        utils.dump_to_file(collection=requirements,
+                           file_path=output.name)
+        runner.run(command='pip install -r {0}'.format(output.name),
+                   stdout_pipe=False)
+    else:
+        get_logger().debug('There is no plugins to install..')
 
 
 def create_requirements(blueprint_path):

@@ -1,0 +1,12 @@
+tosca_definitions_version: cloudify_dsl_1_0
+
+node_types:
+    test_type: {}
+
+node_templates:
+    node:
+        type: test_type
+
+
+
+
