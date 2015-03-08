@@ -73,7 +73,7 @@ def install_blueprint_plugins(blueprint_path):
         runner.run(command='pip install -r {0}'.format(output.name),
                    stdout_pipe=False)
     else:
-        get_logger().debug('There is no plugins to install..')
+        get_logger().debug('There are no plugins to install..')
 
 
 def create_requirements(blueprint_path):
