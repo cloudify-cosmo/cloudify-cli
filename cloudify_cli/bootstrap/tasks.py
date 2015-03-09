@@ -301,7 +301,8 @@ def _install_docker_if_required(docker_path, use_sudo,
 
 
 def _start_elasticsearch(docker_exec_command):
-    elasticsearch_data_opts = 'docker_elasticsearch ' \
+    elasticsearch_data_opts = '--volume=/opt/elasticsearch/data ' \
+                              'docker_elasticsearch ' \
                               'echo elasticsearch data container'
     _run_docker_container(docker_exec_command, elasticsearch_data_opts,
                           'elasticsearchdata', detached=False,
@@ -535,25 +536,25 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
 
     distro_info = get_machine_distro()
     tmp_image_location = '/tmp/cloudify_images.tar'
-    try:
-        lgr.info('downloading docker images from {0} to {1}'
-                 .format(docker_images_url, tmp_image_location))
-        _download_file(docker_images_url, tmp_image_location,
-                       distro_info, use_sudo)
-    except FabricTaskError as e:
-        err = 'failed downloading cloudify docker images from {0}. reason:{1}'\
-              .format(docker_images_url, str(e))
-        lgr.error(err)
-        raise NonRecoverableError(err)
-    try:
-        lgr.info('loading cloudify images from {0}'.format(tmp_image_location))
-        _run_command('{0} load --input {1}'
-                     .format(docker_exec_command, tmp_image_location))
-    except FabricTaskError as e:
-        err = 'failed loading cloudify docker images from {0}. reason:{1}' \
-              .format(tmp_image_location, str(e))
-        lgr.error(err)
-        raise NonRecoverableError(err)
+    # try:
+    #     lgr.info('downloading docker images from {0} to {1}'
+    #              .format(docker_images_url, tmp_image_location))
+    #     _download_file(docker_images_url, tmp_image_location,
+    #                    distro_info, use_sudo)
+    # except FabricTaskError as e:
+    #     err = 'failed downloading cloudify docker images from {0}. reason:{1}'\
+    #           .format(docker_images_url, str(e))
+    #     lgr.error(err)
+    #     raise NonRecoverableError(err)
+    # try:
+    #     lgr.info('loading cloudify images from {0}'.format(tmp_image_location))
+    #     _run_command('{0} load --input {1}'
+    #                  .format(docker_exec_command, tmp_image_location))
+    # except FabricTaskError as e:
+    #     err = 'failed loading cloudify docker images from {0}. reason:{1}' \
+    #           .format(tmp_image_location, str(e))
+    #     lgr.error(err)
+    #     raise NonRecoverableError(err)
 
     # copy agent key to host VM. This file, along with all files on the
     # host VMs home-dir will be stored in the mgmt_worker_data container
@@ -818,7 +819,7 @@ def _run_docker_container(docker_exec_command, container_options,
         raise NonRecoverableError('container with name {0} already exists'
                                   .format(container_name))
 
-    run_cmd = '{0} run --name {1} --hostname={1} --detach={2} {3}' \
+    run_cmd = '{0} run --name cloudify_{1} --hostname={1} --detach={2} {3}' \
         .format(docker_exec_command, container_name,
                 detached, container_options)
     for i in range(0, attempts_on_corrupt):
