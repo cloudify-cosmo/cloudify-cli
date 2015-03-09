@@ -819,7 +819,7 @@ def _run_docker_container(docker_exec_command, container_options,
         raise NonRecoverableError('container with name {0} already exists'
                                   .format(container_name))
 
-    run_cmd = '{0} run --name cloudify_{1} --hostname={1} --detach={2} {3}' \
+    run_cmd = '{0} run --name {1} --hostname={1} --detach={2} {3}' \
         .format(docker_exec_command, container_name,
                 detached, container_options)
     for i in range(0, attempts_on_corrupt):
