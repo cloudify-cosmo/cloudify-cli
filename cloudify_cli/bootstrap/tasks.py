@@ -440,6 +440,7 @@ def _start_fileserver(docker_exec_command, cloudify_packages):
 
     fileserver_opts = '--volume=/opt/manager/resources ' \
                       '--volumes-from fileserverdata ' \
+                      '--restart="always" ' \
                       'docker_fileserver'
     _run_docker_container(docker_exec_command, fileserver_opts, 'fileserver',
                           detached=True, attempts_on_corrupt=5)
@@ -469,7 +470,6 @@ def _start_mgmt_worker(docker_exec_command, private_ip):
     mgmt_worker_data_opts = '-v ~/:{0} ' \
                             '-v /root ' \
                             '--volume /opt/riemann ' \
-                            '/opt/riemann ' \
                             'docker_mgmtworker ' \
                             '/bin/bash -c \'{1} && echo mgmt data container\''\
                             .format(home_dir_mount_path, backup_vm_files_cmd)
@@ -822,7 +822,7 @@ def _run_docker_container(docker_exec_command, container_options,
         raise NonRecoverableError('container with name {0} already exists'
                                   .format(container_name))
 
-    run_cmd = '{0} run --name {1} --hostname={1} --detach={2} {3}' \
+    run_cmd = '{0} run --name={1} --hostname={1} --detach={2} {3}' \
         .format(docker_exec_command, container_name,
                 detached, container_options)
     for i in range(0, attempts_on_corrupt):
