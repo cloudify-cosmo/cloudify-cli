@@ -219,6 +219,18 @@ class LocalTest(CliCommandTest):
         for requirement in expected_requirements:
             self.assertIn(requirement, output)
 
+    def test_install_agent(self):
+        blueprint_path = '{0}/local/install-agent-blueprint.yaml' \
+            .format(BLUEPRINTS_DIR)
+        try:
+            cli_runner.run_cli('cfy local init -p {0} --install-plugins'
+                               .format(blueprint_path))
+            self.fail('local workflow with install_agent=True should raise a ValueError')
+        except ValueError as e:
+            self.assertIn("'install_agent' set to True is not supported on local workflows. "
+                          "The 'install_agent' property must be set to False.",
+                          e.message)
+
     def test_install_plugins(self):
 
         blueprint_path = '{0}/local/blueprint_with_plugins.yaml'\
