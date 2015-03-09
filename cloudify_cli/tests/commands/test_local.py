@@ -20,6 +20,7 @@ Tests all commands that start with 'cfy blueprints'
 import os
 import json
 import tempfile
+from dsl_parser.parser import HOST_TYPE
 import nose
 
 
@@ -227,8 +228,11 @@ class LocalTest(CliCommandTest):
                                .format(blueprint_path))
             self.fail('local workflow with install_agent=True should raise a ValueError')
         except ValueError as e:
-            self.assertIn("'install_agent' set to True is not supported on local workflows. "
-                          "The 'install_agent' property must be set to False.",
+            self.assertIn("'install_agent'=True is not supported "
+                          "(it is True by default) "
+                          "when executing local workflows. "
+                          "The 'install_agent' property must be set to False "
+                          "for each node of type {0}.".format(HOST_TYPE),
                           e.message)
 
     def test_install_plugins(self):
