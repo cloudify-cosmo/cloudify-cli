@@ -228,10 +228,10 @@ class LocalTest(CliCommandTest):
                                .format(blueprint_path))
             self.fail('local workflow with install_agent=True should raise a ValueError')
         except ValueError as e:
-            self.assertIn("'install_agent'=True is not supported "
+            self.assertIn("'install_agent': true is not supported "
                           "(it is True by default) "
                           "when executing local workflows. "
-                          "The 'install_agent' property must be set to False "
+                          "The 'install_agent' property must be set to false "
                           "for each node of type {0}.".format(HOST_TYPE),
                           e.message)
 

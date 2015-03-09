@@ -1,11 +1,12 @@
 tosca_definitions_version: cloudify_dsl_1_1
 
-imports:
-    - http://www.getcloudify.org/spec/cloudify/3.2m6/types.yaml
+node_types:
+  cloudify.nodes.Compute:
+    properties:
+      install_agent:
+        default: true
 
 node_templates:
-  testhost:
+  node:
     type: cloudify.nodes.Compute
-    properties:
-      install_agent: true
 
