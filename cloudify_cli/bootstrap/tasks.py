@@ -331,7 +331,8 @@ def _start_rabbitmq(docker_exec_command):
 
 
 def _start_influxdb(docker_exec_command):
-    influxdb_data_opts = 'docker_influxdb ' \
+    influxdb_data_opts = '--volume /opt/influxdb/shared/data ' \
+                         'docker_influxdb ' \
                          'echo influxdb data container'
     _run_docker_container(docker_exec_command, influxdb_data_opts,
                           'influxdbdata', detached=False,
@@ -428,6 +429,7 @@ def _start_fileserver(docker_exec_command, cloudify_packages):
         agent_packages_install_cmd = 'echo no agent packages provided'
         agent_pkgs_mount_options = ''
     fileserver_data_opts = '{0} ' \
+                           '--volume /opt/manager/resources ' \
                            'docker_fileserver ' \
                            '/bin/bash -c \'{1}\'' \
                            .format(agent_pkgs_mount_options,
@@ -467,6 +469,7 @@ def _start_mgmt_worker(docker_exec_command, private_ip):
     mgmt_worker_data_opts = '-v ~/:{0} ' \
                             '-v /root ' \
                             '--volume /opt/riemann ' \
+                            '/opt/riemann ' \
                             'docker_mgmtworker ' \
                             '/bin/bash -c \'{1} && echo mgmt data container\''\
                             .format(home_dir_mount_path, backup_vm_files_cmd)
