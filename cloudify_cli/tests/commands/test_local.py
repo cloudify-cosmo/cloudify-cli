@@ -225,8 +225,7 @@ class LocalTest(CliCommandTest):
         blueprint_path = '{0}/local/install-agent-blueprint.yaml' \
             .format(BLUEPRINTS_DIR)
         try:
-            cli_runner.run_cli('cfy local init -p {0} --install-plugins'
-                               .format(blueprint_path))
+            cli_runner.run_cli('cfy local init -p {0}'.format(blueprint_path))
             self.fail('ValueError was expected')
         except ValueError as e:
             self.assertIn("'install_agent': true is not supported "
