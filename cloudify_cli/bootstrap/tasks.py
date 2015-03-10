@@ -353,7 +353,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         raise NonRecoverableError(err)
 
     cloudify_configuration = ctx.node.properties['cloudify']
-    is_cfy_secured = cloudify_configuration['secured']
+    is_cfy_secured = cloudify_configuration.get('secured', False)
 
     cfy_management_options = ('-t '
                               '--volumes-from data '
