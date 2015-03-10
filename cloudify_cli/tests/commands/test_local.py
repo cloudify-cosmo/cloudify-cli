@@ -20,20 +20,22 @@ Tests all commands that start with 'cfy blueprints'
 import os
 import json
 import tempfile
+
 import nose
 
 from cloudify.decorators import operation, workflow
 from cloudify import ctx as op_ctx
 from cloudify.exceptions import CommandExecutionException
 from cloudify.workflows import ctx as workflow_ctx
+from dsl_parser.parser import HOST_TYPE
 
 from cloudify_cli import common
+
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 from cloudify_cli.tests.commands.test_cli_command import \
     (BLUEPRINTS_DIR,
      TEST_WORK_DIR)
-from dsl_parser.parser import HOST_TYPE
 
 
 class LocalTest(CliCommandTest):
