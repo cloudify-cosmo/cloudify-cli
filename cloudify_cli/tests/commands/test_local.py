@@ -20,15 +20,17 @@ Tests all commands that start with 'cfy blueprints'
 import os
 import json
 import tempfile
-import nose
 
+import nose
 
 from cloudify.decorators import operation, workflow
 from cloudify import ctx as op_ctx
 from cloudify.exceptions import CommandExecutionException
 from cloudify.workflows import ctx as workflow_ctx
+from dsl_parser.parser import HOST_TYPE
 
 from cloudify_cli import common
+
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 from cloudify_cli.tests.commands.test_cli_command import \
@@ -218,6 +220,20 @@ class LocalTest(CliCommandTest):
             .format(BLUEPRINTS_DIR))
         for requirement in expected_requirements:
             self.assertIn(requirement, output)
+
+    def test_install_agent(self):
+        blueprint_path = '{0}/local/install-agent-blueprint.yaml' \
+            .format(BLUEPRINTS_DIR)
+        try:
+            cli_runner.run_cli('cfy local init -p {0}'.format(blueprint_path))
+            self.fail('ValueError was expected')
+        except ValueError as e:
+            self.assertIn("'install_agent': true is not supported "
+                          "(it is True by default) "
+                          "when executing local workflows. "
+                          "The 'install_agent' property must be set to false "
+                          "for each node of type {0}.".format(HOST_TYPE),
+                          e.message)
 
     def test_install_plugins(self):
 
