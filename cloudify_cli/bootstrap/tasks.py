@@ -352,6 +352,9 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         lgr.error(err)
         raise NonRecoverableError(err)
 
+    cloudify_configuration = ctx.node.properties['cloudify']
+    is_cfy_secured = cloudify_configuration['secured']
+
     cfy_management_options = ('-t '
                               '--volumes-from data '
                               '-p 80:80 '
@@ -362,12 +365,13 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-p 9200:9200 '
                               '-p 8086:8086 '
                               '-e MANAGEMENT_IP={0} '
+                              '-e IS_CFY_SECURED={1} '
                               '--restart=always '
                               '-d '
                               'cloudify '
                               '/sbin/my_init'
                               .format(manager_private_ip or
-                                      ctx.instance.host_ip))
+                                      ctx.instance.host_ip, is_cfy_secured))
 
     agent_packages = cloudify_packages.get('agents')
     if agent_packages:
