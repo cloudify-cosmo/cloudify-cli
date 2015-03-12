@@ -300,39 +300,42 @@ def _install_docker_if_required(docker_path, use_sudo,
     return docker_exec_command
 
 
-def _start_elasticsearch(docker_exec_command):
+def _start_elasticsearch(docker_exec_command, use_sudo):
+    lgr.debug('starting elasticsearch data container')
     elasticsearch_data_opts = '--volume=/opt/elasticsearch/data ' \
-                              'docker_elasticsearch ' \
+                              'cloudify_elasticsearch ' \
                               'echo elasticsearch data container'
     _run_docker_container(docker_exec_command, elasticsearch_data_opts,
                           'elasticsearchdata', detached=False,
                           attempts_on_corrupt=5)
 
+    lgr.debug('starting elasticsearch service container')
     elasticsearch_opts = '--publish=9200:9200 ' \
                          '--restart="always" ' \
                          '--volume=/var/log/cloudify/elasticsearch:' \
                          '/etc/service/elasticsearch/logs ' \
                          '--volumes-from elasticsearchdata ' \
-                         'docker_elasticsearch'
+                         'cloudify_elasticsearch'
+    _setup_logs_dir(use_sudo, 'elasticsearch')
     _run_docker_container(docker_exec_command, elasticsearch_opts,
                           'elasticsearch', detached=True,
                           attempts_on_corrupt=5)
 
 
-def _start_rabbitmq(docker_exec_command):
+def _start_rabbitmq(docker_exec_command, use_sudo):
 
     rabbitmq_opts = '--publish=5672:5672 ' \
                     '--restart="always" ' \
                     '--volume=/var/log/cloudify/rabbitmq:/var/log/rabbitmq ' \
-                    'docker_rabbitmq'
-
+                    'cloudify_rabbitmq'
+    _setup_logs_dir(use_sudo, 'rabbitmq')
     _run_docker_container(docker_exec_command, rabbitmq_opts, 'rabbitmq',
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_influxdb(docker_exec_command):
+def _start_influxdb(docker_exec_command, use_sudo):
     influxdb_data_opts = '--volume /opt/influxdb/shared/data ' \
-                         'docker_influxdb ' \
+                         'cloudify_influxdb ' \
                          'echo influxdb data container'
     _run_docker_container(docker_exec_command, influxdb_data_opts,
                           'influxdbdata', detached=False,
@@ -342,59 +345,63 @@ def _start_influxdb(docker_exec_command):
                     '--publish=8086:8086 ' \
                     '--restart="always" ' \
                     '--volumes-from influxdbdata ' \
-                    'docker_influxdb'
+                    'cloudify_influxdb'
+    _setup_logs_dir(use_sudo, 'influxdb')
     _run_docker_container(docker_exec_command, influxdb_opts, 'influxdb',
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_logstash(docker_exec_command, private_ip):
+def _start_logstash(docker_exec_command, private_ip, use_sudo):
     logstash_opts = '--add-host=elasticsearch:{0} ' \
                     '--add-host=rabbitmq:{0} ' \
                     '--publish=9999:9999 ' \
                     '--restart="always" ' \
                     '--volume=/var/log/cloudify/logstash:' \
                     '/etc/service/logstash/logs ' \
-                    'docker_logstash'.format(private_ip)
+                    'cloudify_logstash'.format(private_ip)
+    _setup_logs_dir(use_sudo, 'logstash')
     _run_docker_container(docker_exec_command, logstash_opts, 'logstash',
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_amqp_influx(docker_exec_command, private_ip):
+def _start_amqp_influx(docker_exec_command, private_ip, use_sudo):
     amqp_influxdb = '--add-host=influxdb:{0} ' \
                     '--add-host=rabbitmq:{0} ' \
                     '--restart="always" ' \
-                    'docker_amqpinflux'.format(private_ip)
+                    'cloudify_amqpinflux'.format(private_ip)
+    _setup_logs_dir(use_sudo, 'amqpinflux')
     _run_docker_container(docker_exec_command, amqp_influxdb, 'amqpinflux',
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_webui(docker_exec_command, private_ip):
+def _start_webui(docker_exec_command, private_ip, use_sudo):
     webui_opts = '--publish=9001:9001 ' \
                  '--add-host=frontend:{0} ' \
                  '--add-host=influxdb:{0} ' \
                  '--restart="always" ' \
                  '--volume=/opt/cloudify-ui ' \
-                 'docker_webui'.format(private_ip)
+                 'cloudify_webui'.format(private_ip)
+    _setup_logs_dir(use_sudo, 'webui')
     _run_docker_container(docker_exec_command, webui_opts, 'webui',
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_rest_service(docker_exec_command, private_ip):
-    webui_opts = '--name="restservice" '\
-                 '--hostname="restservice" '\
+def _start_rest_service(docker_exec_command, private_ip, use_sudo):
+    webui_opts = '--hostname="restservice" '\
                  '--add-host=rabbitmq:{0} '\
                  '--add-host=elasticsearch:{0} '\
                  '--add-host=fileserver:{0} '\
                  '--publish=8100:8100 '\
                  '--restart="always" '\
                  '--volumes-from fileserver '\
-                 'docker_restservice'.format(private_ip)
+                 'cloudify_restservice'.format(private_ip)
+    _setup_logs_dir(use_sudo, 'restservice')
     _run_docker_container(docker_exec_command, webui_opts, 'restservice',
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_riemann(docker_exec_command, private_ip):
-    riemann_data_opts = 'docker_riemann ' \
+def _start_riemann(docker_exec_command, private_ip, use_sudo):
+    riemann_data_opts = 'cloudify_riemann ' \
                         'echo riemann data container'
     _run_docker_container(docker_exec_command, riemann_data_opts,
                           'riemanndata', attempts_on_corrupt=5)
@@ -406,12 +413,13 @@ def _start_riemann(docker_exec_command, private_ip):
                    '/etc/service/riemann/logs ' \
                    '--volumes-from riemanndata ' \
                    '--volumes-from mgmtdata ' \
-                   'docker_riemann'.format(private_ip)
+                   'cloudify_riemann'.format(private_ip)
+    _setup_logs_dir(use_sudo, 'riemann')
     _run_docker_container(docker_exec_command, riemann_opts, 'riemann',
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_fileserver(docker_exec_command, cloudify_packages):
+def _start_fileserver(docker_exec_command, cloudify_packages, use_sudo):
     agent_packages = cloudify_packages.get('agents')
     if agent_packages:
         # compose agent installation command.
@@ -430,7 +438,7 @@ def _start_fileserver(docker_exec_command, cloudify_packages):
         agent_pkgs_mount_options = ''
     fileserver_data_opts = '{0} ' \
                            '--volume /opt/manager/resources ' \
-                           'docker_fileserver ' \
+                           'cloudify_fileserver ' \
                            '/bin/bash -c \'{1}\'' \
                            .format(agent_pkgs_mount_options,
                                    agent_packages_install_cmd)
@@ -441,12 +449,13 @@ def _start_fileserver(docker_exec_command, cloudify_packages):
     fileserver_opts = '--volume=/opt/manager/resources ' \
                       '--volumes-from fileserverdata ' \
                       '--restart="always" ' \
-                      'docker_fileserver'
+                      'cloudify_fileserver'
+    _setup_logs_dir(use_sudo, 'fileserver')
     _run_docker_container(docker_exec_command, fileserver_opts, 'fileserver',
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_frontend(docker_exec_command, private_ip):
+def _start_frontend(docker_exec_command, private_ip, use_sudo):
     frontend_opts = '--add-host=rabbitmq:{0} ' \
                     '--add-host=restservice:{0} ' \
                     '--add-host=webui:{0} ' \
@@ -457,20 +466,21 @@ def _start_frontend(docker_exec_command, private_ip):
                     '--volume=/var/log/cloudify/nginx:/var/log/nginx ' \
                     '--volumes-from fileserver ' \
                     '--volumes-from webui '\
-                    'docker_frontend'.format(private_ip)
+                    'cloudify_frontend'.format(private_ip)
+    _setup_logs_dir(use_sudo, 'frontend')
     _run_docker_container(docker_exec_command, frontend_opts,
                           'frontend', detached=True,
                           attempts_on_corrupt=5)
 
 
-def _start_mgmt_worker(docker_exec_command, private_ip):
+def _start_mgmt_worker(docker_exec_command, private_ip, use_sudo):
     # compose command to copy host VM home dir files into the data
     # containers' home dir.
     backup_vm_files_cmd, home_dir_mount_path = _get_backup_files_cmd()
     mgmt_worker_data_opts = '-v ~/:{0} ' \
                             '-v /root ' \
                             '--volume /opt/riemann ' \
-                            'docker_mgmtworker ' \
+                            'cloudify_mgmtworker ' \
                             '/bin/bash -c \'{1} && echo mgmt data container\''\
                             .format(home_dir_mount_path, backup_vm_files_cmd)
     _run_docker_container(docker_exec_command, mgmt_worker_data_opts,
@@ -485,7 +495,8 @@ def _start_mgmt_worker(docker_exec_command, private_ip):
                        '--restart="always" ' \
                        '--volume=/var/log/cloudify/mgmtworker:' \
                        '/opt/mgmtworker/logs ' \
-                       'docker_mgmtworker'.format(private_ip)
+                       'cloudify_mgmtworker'.format(private_ip)
+    _setup_logs_dir(use_sudo, 'mgmtworker')
     _run_docker_container(docker_exec_command, mgmt_worker_opts, 'mgmtworker',
                           detached=True, attempts_on_corrupt=5)
 
@@ -565,38 +576,27 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                             agent_remote_key_path)
     lgr.info('starting cloudify management services')
     try:
-        _setup_logs_dir(use_sudo, 'fileserver')
-        _start_fileserver(docker_exec_command, cloudify_packages)
+        _start_fileserver(docker_exec_command, cloudify_packages, use_sudo)
 
-        _setup_logs_dir(use_sudo, 'restservice')
-        _start_rest_service(docker_exec_command, private_ip)
+        _start_rest_service(docker_exec_command, private_ip, use_sudo)
 
-        _setup_logs_dir(use_sudo, 'webui')
-        _start_webui(docker_exec_command, private_ip)
+        _start_webui(docker_exec_command, private_ip, use_sudo)
 
-        _setup_logs_dir(use_sudo, 'mgmtworker')
-        _start_mgmt_worker(docker_exec_command, private_ip)
+        _start_mgmt_worker(docker_exec_command, private_ip, use_sudo)
 
-        _setup_logs_dir(use_sudo, 'elasticsearch')
-        _start_elasticsearch(docker_exec_command)
+        _start_elasticsearch(docker_exec_command, use_sudo)
 
-        _setup_logs_dir(use_sudo, 'rabbitmq')
-        _start_rabbitmq(docker_exec_command)
+        _start_rabbitmq(docker_exec_command, use_sudo)
 
-        _setup_logs_dir(use_sudo, 'influxdb')
-        _start_influxdb(docker_exec_command)
+        _start_influxdb(docker_exec_command, use_sudo)
 
-        _setup_logs_dir(use_sudo, 'logstash')
-        _start_logstash(docker_exec_command, private_ip)
+        _start_logstash(docker_exec_command, private_ip, use_sudo)
 
-        _setup_logs_dir(use_sudo, 'amqpinflux')
-        _start_amqp_influx(docker_exec_command, private_ip)
+        _start_amqp_influx(docker_exec_command, private_ip, use_sudo)
 
-        _setup_logs_dir(use_sudo, 'frontend')
-        _start_frontend(docker_exec_command, private_ip)
+        _start_frontend(docker_exec_command, private_ip, use_sudo)
 
-        _setup_logs_dir(use_sudo, 'riemann')
-        _start_riemann(docker_exec_command, private_ip)
+        _start_riemann(docker_exec_command, private_ip, use_sudo)
     except FabricTaskError as e:
         err = 'failed running cloudify service containers. ' \
               'error is {0}'.format(str(e))
@@ -857,8 +857,11 @@ def _download_file(url, path, distro, use_sudo=True):
         return _run_command('{0} wget -qO- -O {1} {2}'.format(sudo, path, url))
     elif 'centos' in distro:
         # todo(adaml): fix this.
-        with cd(path):
-            return _run_command('{0} curl -O {1}').format(sudo, url)
+        download_path = os.path.dirname(path)
+        file_name = os.path.basename(path)
+        with cd(download_path):
+            return _run_command('{0} curl {1} > {2}'
+                                .format(sudo, url, file_name))
 
 
 def _unpack(path, distro):
