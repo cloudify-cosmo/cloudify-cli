@@ -667,11 +667,11 @@ def _run_docker_container(docker_exec_command, container_options,
 
 def _download_package(url, path, distro):
     if 'Ubuntu' in distro:
-        return _run_command('sudo wget {0} -P {1}'.format(
+        return _run_command('sudo wget {0} -P {1}  -c'.format(
             path, url))
     elif 'centos' in distro:
         with cd(path):
-            return _run_command('sudo curl -O {0}')
+            return _run_command('sudo curl -O {0} -C')
 
 
 def _unpack(path, distro):

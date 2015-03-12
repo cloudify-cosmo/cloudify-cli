@@ -161,11 +161,11 @@ class BaseProviderClass(object):
 
         def _download_package(url, path, distro):
             if 'Ubuntu' in distro:
-                return _run_with_retries('sudo wget {0} -P {1}'.format(
+                return _run_with_retries('sudo wget {0} -P {1} -c'.format(
                     path, url))
             elif 'centos' in distro:
                 with cd(path):
-                    return _run_with_retries('sudo curl -O {0}')
+                    return _run_with_retries('sudo curl -O {0} -C')
 
         def _unpack(path, distro):
             if 'Ubuntu' in distro:
