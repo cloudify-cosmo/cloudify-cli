@@ -387,14 +387,18 @@ def _start_webui(docker_exec_command, private_ip, use_sudo):
 
 
 def _start_rest_service(docker_exec_command, private_ip, use_sudo):
+    cloudify_configuration = ctx.node.properties['cloudify']
+    is_cfy_secured = cloudify_configuration.get('secured', False)
+
     webui_opts = '--hostname="restservice" '\
                  '--add-host=rabbitmq:{0} '\
                  '--add-host=elasticsearch:{0} '\
-                 '--add-host=fileserver:{0} '\
+                 '--add-host=fileserver:{0} ' \
+                 '-e IS_CFY_SECURED={1} ' \
                  '--publish=8100:8100 '\
                  '--restart="always" '\
                  '--volumes-from fileserver '\
-                 'cloudify_restservice'.format(private_ip)
+                 'cloudify_restservice'.format(private_ip, is_cfy_secured)
     _setup_logs_dir(use_sudo, 'restservice')
     _run_docker_container(docker_exec_command, webui_opts, 'restservice',
                           detached=True, attempts_on_corrupt=5)
