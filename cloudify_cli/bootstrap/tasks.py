@@ -323,7 +323,7 @@ def _start_elasticsearch(docker_exec_command, use_sudo):
 
 
 def _start_rabbitmq(docker_exec_command, use_sudo):
-
+    lgr.debug('starting rabbitmq service container')
     rabbitmq_opts = '--publish=5672:5672 ' \
                     '--restart="always" ' \
                     '--volume=/var/log/cloudify/rabbitmq:/var/log/rabbitmq ' \
@@ -334,6 +334,7 @@ def _start_rabbitmq(docker_exec_command, use_sudo):
 
 
 def _start_influxdb(docker_exec_command, use_sudo):
+    lgr.debug('starting influxdb service container')
     influxdb_data_opts = '--volume /opt/influxdb/shared/data ' \
                          'cloudify_influxdb ' \
                          'echo influxdb data container'
@@ -341,6 +342,7 @@ def _start_influxdb(docker_exec_command, use_sudo):
                           'influxdbdata', detached=False,
                           attempts_on_corrupt=5)
 
+    lgr.debug('starting influxdb data container')
     influxdb_opts = '--publish=8083:8083 ' \
                     '--publish=8086:8086 ' \
                     '--restart="always" ' \
@@ -352,6 +354,7 @@ def _start_influxdb(docker_exec_command, use_sudo):
 
 
 def _start_logstash(docker_exec_command, private_ip, use_sudo):
+    lgr.debug('starting logstash service container')
     logstash_opts = '--add-host=elasticsearch:{0} ' \
                     '--add-host=rabbitmq:{0} ' \
                     '--publish=9999:9999 ' \
@@ -365,6 +368,7 @@ def _start_logstash(docker_exec_command, private_ip, use_sudo):
 
 
 def _start_amqp_influx(docker_exec_command, private_ip, use_sudo):
+    lgr.debug('starting amqp-influx service container')
     amqp_influxdb = '--add-host=influxdb:{0} ' \
                     '--add-host=rabbitmq:{0} ' \
                     '--restart="always" ' \
@@ -375,6 +379,7 @@ def _start_amqp_influx(docker_exec_command, private_ip, use_sudo):
 
 
 def _start_webui(docker_exec_command, private_ip, use_sudo):
+    lgr.debug('starting web-ui service container')
     webui_opts = '--publish=9001:9001 ' \
                  '--add-host=frontend:{0} ' \
                  '--add-host=influxdb:{0} ' \
@@ -390,6 +395,7 @@ def _start_rest_service(docker_exec_command, private_ip, use_sudo):
     cloudify_configuration = ctx.node.properties['cloudify']
     is_cfy_secured = cloudify_configuration.get('secured', False)
 
+    lgr.debug('starting rest-service container')
     webui_opts = '--hostname="restservice" '\
                  '--add-host=rabbitmq:{0} '\
                  '--add-host=elasticsearch:{0} '\
@@ -405,11 +411,13 @@ def _start_rest_service(docker_exec_command, private_ip, use_sudo):
 
 
 def _start_riemann(docker_exec_command, private_ip, use_sudo):
+    lgr.debug('starting riemann data container')
     riemann_data_opts = 'cloudify_riemann ' \
                         'echo riemann data container'
     _run_docker_container(docker_exec_command, riemann_data_opts,
                           'riemanndata', attempts_on_corrupt=5)
 
+    lgr.debug('starting riemann service container')
     riemann_opts = '--add-host=rabbitmq:{0} ' \
                    '--add-host=frontend:{0} ' \
                    '--restart="always" ' \
@@ -440,6 +448,7 @@ def _start_fileserver(docker_exec_command, cloudify_packages, use_sudo):
         lgr.info('no agent packages were provided')
         agent_packages_install_cmd = 'echo no agent packages provided'
         agent_pkgs_mount_options = ''
+    lgr.debug('starting file-server data container')
     fileserver_data_opts = '{0} ' \
                            '--volume /opt/manager/resources ' \
                            'cloudify_fileserver ' \
@@ -450,6 +459,7 @@ def _start_fileserver(docker_exec_command, cloudify_packages, use_sudo):
                           'fileserverdata', detached=False,
                           attempts_on_corrupt=5)
 
+    lgr.debug('starting file-server service container')
     fileserver_opts = '--volume=/opt/manager/resources ' \
                       '--volumes-from fileserverdata ' \
                       '--restart="always" ' \
@@ -460,6 +470,7 @@ def _start_fileserver(docker_exec_command, cloudify_packages, use_sudo):
 
 
 def _start_frontend(docker_exec_command, private_ip, use_sudo):
+    lgr.debug('starting frontend nginx service container')
     frontend_opts = '--add-host=rabbitmq:{0} ' \
                     '--add-host=restservice:{0} ' \
                     '--add-host=webui:{0} ' \
@@ -481,6 +492,7 @@ def _start_mgmt_worker(docker_exec_command, private_ip, use_sudo):
     # compose command to copy host VM home dir files into the data
     # containers' home dir.
     backup_vm_files_cmd, home_dir_mount_path = _get_backup_files_cmd()
+    lgr.debug('starting management worker data container')
     mgmt_worker_data_opts = '-v ~/:{0} ' \
                             '-v /root ' \
                             '--volume /opt/riemann ' \
@@ -491,6 +503,7 @@ def _start_mgmt_worker(docker_exec_command, private_ip, use_sudo):
                           'mgmtdata', detached=False,
                           attempts_on_corrupt=5)
 
+    lgr.debug('starting management worker service container')
     mgmt_worker_opts = '--add-host=rabbitmq:{0} ' \
                        '--add-host=frontend:{0} ' \
                        '--add-host=fileserver:{0} ' \
