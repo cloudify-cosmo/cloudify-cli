@@ -856,7 +856,6 @@ def _download_file(url, path, distro, use_sudo=True):
         # todo: remove silent -q0- wget.
         return _run_command('{0} wget -qO- -O {1} {2}'.format(sudo, path, url))
     elif 'centos' in distro:
-        # todo(adaml): fix this.
         download_path = os.path.dirname(path)
         file_name = os.path.basename(path)
         with cd(download_path):
