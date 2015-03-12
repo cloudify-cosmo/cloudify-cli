@@ -333,7 +333,7 @@ def _start_rabbitmq(docker_exec_command, use_sudo):
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_influxdb(docker_exec_command, use_sudo):
+def _start_influxdb(docker_exec_command):
     lgr.debug('starting influxdb service container')
     influxdb_data_opts = '--volume /opt/influxdb/shared/data ' \
                          'cloudify_influxdb ' \
@@ -348,7 +348,6 @@ def _start_influxdb(docker_exec_command, use_sudo):
                     '--restart="always" ' \
                     '--volumes-from influxdbdata ' \
                     'cloudify_influxdb'
-    _setup_logs_dir(use_sudo, 'influxdb')
     _run_docker_container(docker_exec_command, influxdb_opts, 'influxdb',
                           detached=True, attempts_on_corrupt=5)
 
@@ -367,18 +366,17 @@ def _start_logstash(docker_exec_command, private_ip, use_sudo):
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_amqp_influx(docker_exec_command, private_ip, use_sudo):
+def _start_amqp_influx(docker_exec_command, private_ip):
     lgr.debug('starting amqp-influx service container')
     amqp_influxdb = '--add-host=influxdb:{0} ' \
                     '--add-host=rabbitmq:{0} ' \
                     '--restart="always" ' \
                     'cloudify_amqpinflux'.format(private_ip)
-    _setup_logs_dir(use_sudo, 'amqpinflux')
     _run_docker_container(docker_exec_command, amqp_influxdb, 'amqpinflux',
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_webui(docker_exec_command, private_ip, use_sudo):
+def _start_webui(docker_exec_command, private_ip):
     lgr.debug('starting web-ui service container')
     webui_opts = '--publish=9001:9001 ' \
                  '--add-host=frontend:{0} ' \
@@ -386,12 +384,11 @@ def _start_webui(docker_exec_command, private_ip, use_sudo):
                  '--restart="always" ' \
                  '--volume=/opt/cloudify-ui ' \
                  'cloudify_webui'.format(private_ip)
-    _setup_logs_dir(use_sudo, 'webui')
     _run_docker_container(docker_exec_command, webui_opts, 'webui',
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_rest_service(docker_exec_command, private_ip, use_sudo):
+def _start_rest_service(docker_exec_command, private_ip):
     cloudify_configuration = ctx.node.properties['cloudify']
     is_cfy_secured = cloudify_configuration.get('secured', False)
 
@@ -405,7 +402,6 @@ def _start_rest_service(docker_exec_command, private_ip, use_sudo):
                  '--restart="always" '\
                  '--volumes-from fileserver '\
                  'cloudify_restservice'.format(private_ip, is_cfy_secured)
-    _setup_logs_dir(use_sudo, 'restservice')
     _run_docker_container(docker_exec_command, webui_opts, 'restservice',
                           detached=True, attempts_on_corrupt=5)
 
@@ -431,7 +427,7 @@ def _start_riemann(docker_exec_command, private_ip, use_sudo):
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_fileserver(docker_exec_command, cloudify_packages, use_sudo):
+def _start_fileserver(docker_exec_command, cloudify_packages):
     agent_packages = cloudify_packages.get('agents')
     if agent_packages:
         # compose agent installation command.
@@ -464,7 +460,6 @@ def _start_fileserver(docker_exec_command, cloudify_packages, use_sudo):
                       '--volumes-from fileserverdata ' \
                       '--restart="always" ' \
                       'cloudify_fileserver'
-    _setup_logs_dir(use_sudo, 'fileserver')
     _run_docker_container(docker_exec_command, fileserver_opts, 'fileserver',
                           detached=True, attempts_on_corrupt=5)
 
@@ -593,11 +588,11 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                             agent_remote_key_path)
     lgr.info('starting cloudify management services')
     try:
-        _start_fileserver(docker_exec_command, cloudify_packages, use_sudo)
+        _start_fileserver(docker_exec_command, cloudify_packages)
 
-        _start_rest_service(docker_exec_command, private_ip, use_sudo)
+        _start_rest_service(docker_exec_command, private_ip)
 
-        _start_webui(docker_exec_command, private_ip, use_sudo)
+        _start_webui(docker_exec_command, private_ip)
 
         _start_mgmt_worker(docker_exec_command, private_ip, use_sudo)
 
@@ -605,11 +600,11 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
 
         _start_rabbitmq(docker_exec_command, use_sudo)
 
-        _start_influxdb(docker_exec_command, use_sudo)
+        _start_influxdb(docker_exec_command)
 
         _start_logstash(docker_exec_command, private_ip, use_sudo)
 
-        _start_amqp_influx(docker_exec_command, private_ip, use_sudo)
+        _start_amqp_influx(docker_exec_command, private_ip)
 
         _start_frontend(docker_exec_command, private_ip, use_sudo)
 
