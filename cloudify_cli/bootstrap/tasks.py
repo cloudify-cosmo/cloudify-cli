@@ -390,20 +390,21 @@ def _start_webui(docker_exec_command, private_ip):
 
 def _start_rest_service(docker_exec_command, private_ip):
     cloudify_configuration = ctx.node.properties['cloudify']
-    is_cfy_secured = cloudify_configuration.get('secured', False)
+    is_cfy_secured = cloudify_configuration.get('secured', 'False')
 
     lgr.debug('starting rest-service container')
-    webui_opts = '--hostname="restservice" '\
-                 '--add-host=rabbitmq:{0} '\
-                 '--add-host=elasticsearch:{0} '\
-                 '--add-host=fileserver:{0} ' \
-                 '-e IS_CFY_SECURED={1} ' \
-                 '--publish=8100:8100 '\
-                 '--restart="always" '\
-                 '--volumes-from fileserver '\
-                 'cloudify_restservice'.format(private_ip, is_cfy_secured)
-    _run_docker_container(docker_exec_command, webui_opts, 'restservice',
-                          detached=True, attempts_on_corrupt=5)
+    rest_service_opts = '--hostname="restservice" '\
+                        '--add-host=rabbitmq:{0} '\
+                        '--add-host=elasticsearch:{0} '\
+                        '--add-host=fileserver:{0} ' \
+                        '-e="IS_CFY_SECURED={1}" ' \
+                        '--publish=8100:8100 '\
+                        '--restart="always" '\
+                        '--volumes-from fileserver '\
+                        'cloudify_restservice'\
+                        .format(private_ip, is_cfy_secured)
+    _run_docker_container(docker_exec_command, rest_service_opts,
+                          'restservice', detached=True, attempts_on_corrupt=5)
 
 
 def _start_riemann(docker_exec_command, private_ip, use_sudo):
@@ -427,7 +428,7 @@ def _start_riemann(docker_exec_command, private_ip, use_sudo):
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_fileserver(docker_exec_command, cloudify_packages):
+def _start_fileserver_container(docker_exec_command, cloudify_packages):
     agent_packages = cloudify_packages.get('agents')
     if agent_packages:
         # compose agent installation command.
@@ -444,6 +445,7 @@ def _start_fileserver(docker_exec_command, cloudify_packages):
         lgr.info('no agent packages were provided')
         agent_packages_install_cmd = 'echo no agent packages provided'
         agent_pkgs_mount_options = ''
+
     lgr.debug('starting file-server data container')
     fileserver_data_opts = '{0} ' \
                            '--volume /opt/manager/resources ' \
@@ -452,16 +454,8 @@ def _start_fileserver(docker_exec_command, cloudify_packages):
                            .format(agent_pkgs_mount_options,
                                    agent_packages_install_cmd)
     _run_docker_container(docker_exec_command, fileserver_data_opts,
-                          'fileserverdata', detached=False,
+                          'fileserver', detached=False,
                           attempts_on_corrupt=5)
-
-    lgr.debug('starting file-server service container')
-    fileserver_opts = '--volume=/opt/manager/resources ' \
-                      '--volumes-from fileserverdata ' \
-                      '--restart="always" ' \
-                      'cloudify_fileserver'
-    _run_docker_container(docker_exec_command, fileserver_opts, 'fileserver',
-                          detached=True, attempts_on_corrupt=5)
 
 
 def _start_frontend(docker_exec_command, private_ip, use_sudo):
@@ -477,7 +471,8 @@ def _start_frontend(docker_exec_command, private_ip, use_sudo):
                     '--volumes-from fileserver ' \
                     '--volumes-from webui '\
                     'cloudify_frontend'.format(private_ip)
-    _setup_logs_dir(use_sudo, 'frontend')
+    _setup_logs_dir(use_sudo, 'rest')
+    _setup_logs_dir(use_sudo, 'nginx')
     _run_docker_container(docker_exec_command, frontend_opts,
                           'frontend', detached=True,
                           attempts_on_corrupt=5)
@@ -588,7 +583,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                             agent_remote_key_path)
     lgr.info('starting cloudify management services')
     try:
-        _start_fileserver(docker_exec_command, cloudify_packages)
+        _start_fileserver_container(docker_exec_command, cloudify_packages)
 
         _start_rest_service(docker_exec_command, private_ip)
 
@@ -699,9 +694,11 @@ def _is_docker_installed(docker_path, use_sudo):
     from fabric_plugin.tasks import FabricTaskError
     try:
         if use_sudo:
-            out = fabric.api.run('sudo which {0}'.format(docker_path))
+            out = fabric.api.run('sudo which {0} > /dev/null 2>&1'
+                                 .format(docker_path))
         else:
-            out = fabric.api.run('which {0}'.format(docker_path))
+            out = fabric.api.run('which {0} > /dev/null 2>&1'
+                                 .format(docker_path))
         if not out:
             return False
         return True
@@ -816,8 +813,8 @@ def _container_exists(docker_exec_command, container_name):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     try:
-        inspect_command = '{0} inspect {1}'.format(docker_exec_command,
-                                                   container_name)
+        inspect_command = '{0} inspect {1}  > /dev/null 2>&1'\
+                          .format(docker_exec_command, container_name)
         _run_command(inspect_command)
         return True
     except FabricTaskError:
