@@ -309,7 +309,7 @@ def _start_elasticsearch(docker_exec_command, use_sudo):
                           'elasticsearchdata', detached=False,
                           attempts_on_corrupt=5)
 
-    lgr.debug('starting elasticsearch service container')
+    lgr.debug('starting elasticsearch container')
     elasticsearch_opts = '--publish=9200:9200 ' \
                          '--restart="always" ' \
                          '--volume=/var/log/cloudify/elasticsearch:' \
@@ -323,7 +323,7 @@ def _start_elasticsearch(docker_exec_command, use_sudo):
 
 
 def _start_rabbitmq(docker_exec_command, use_sudo):
-    lgr.debug('starting rabbitmq service container')
+    lgr.debug('starting rabbitmq container')
     rabbitmq_opts = '--publish=5672:5672 ' \
                     '--restart="always" ' \
                     '--volume=/var/log/cloudify/rabbitmq:/var/log/rabbitmq ' \
@@ -334,15 +334,15 @@ def _start_rabbitmq(docker_exec_command, use_sudo):
 
 
 def _start_influxdb(docker_exec_command):
-    lgr.debug('starting influxdb service container')
-    influxdb_data_opts = '--volume /opt/influxdb/shared/data ' \
+    lgr.debug('starting influxdb data container')
+    influxdb_data_opts = '--volume /opt/influxdb ' \
                          'cloudify_influxdb ' \
                          'echo influxdb data container'
     _run_docker_container(docker_exec_command, influxdb_data_opts,
                           'influxdbdata', detached=False,
                           attempts_on_corrupt=5)
 
-    lgr.debug('starting influxdb data container')
+    lgr.debug('starting influxdb container')
     influxdb_opts = '--publish=8083:8083 ' \
                     '--publish=8086:8086 ' \
                     '--restart="always" ' \
@@ -353,7 +353,7 @@ def _start_influxdb(docker_exec_command):
 
 
 def _start_logstash(docker_exec_command, private_ip, use_sudo):
-    lgr.debug('starting logstash service container')
+    lgr.debug('starting logstash container')
     logstash_opts = '--add-host=elasticsearch:{0} ' \
                     '--add-host=rabbitmq:{0} ' \
                     '--publish=9999:9999 ' \
@@ -367,7 +367,7 @@ def _start_logstash(docker_exec_command, private_ip, use_sudo):
 
 
 def _start_amqp_influx(docker_exec_command, private_ip):
-    lgr.debug('starting amqp-influx service container')
+    lgr.debug('starting amqp-influx container')
     amqp_influxdb = '--add-host=influxdb:{0} ' \
                     '--add-host=rabbitmq:{0} ' \
                     '--restart="always" ' \
@@ -377,7 +377,7 @@ def _start_amqp_influx(docker_exec_command, private_ip):
 
 
 def _start_webui(docker_exec_command, private_ip):
-    lgr.debug('starting web-ui service container')
+    lgr.debug('starting web-ui container')
     webui_opts = '--publish=9001:9001 ' \
                  '--add-host=frontend:{0} ' \
                  '--add-host=influxdb:{0} ' \
@@ -414,7 +414,7 @@ def _start_riemann(docker_exec_command, private_ip, use_sudo):
     _run_docker_container(docker_exec_command, riemann_data_opts,
                           'riemanndata', attempts_on_corrupt=5)
 
-    lgr.debug('starting riemann service container')
+    lgr.debug('starting riemann container')
     riemann_opts = '--add-host=rabbitmq:{0} ' \
                    '--add-host=frontend:{0} ' \
                    '--restart="always" ' \
@@ -459,7 +459,7 @@ def _start_fileserver_container(docker_exec_command, cloudify_packages):
 
 
 def _start_frontend(docker_exec_command, private_ip, use_sudo):
-    lgr.debug('starting frontend nginx service container')
+    lgr.debug('starting frontend nginx container')
     frontend_opts = '--add-host=rabbitmq:{0} ' \
                     '--add-host=restservice:{0} ' \
                     '--add-host=webui:{0} ' \
@@ -493,7 +493,7 @@ def _start_mgmt_worker(docker_exec_command, private_ip, use_sudo):
                           'mgmtdata', detached=False,
                           attempts_on_corrupt=5)
 
-    lgr.debug('starting management worker service container')
+    lgr.debug('starting management worker container')
     mgmt_worker_opts = '--add-host=rabbitmq:{0} ' \
                        '--add-host=frontend:{0} ' \
                        '--add-host=fileserver:{0} ' \
