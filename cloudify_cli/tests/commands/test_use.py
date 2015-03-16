@@ -22,6 +22,16 @@ from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
 
+def run_use_command(manager_ip, username=None, password=None, clear=False):
+    command = 'cfy use -t {0}'.format(manager_ip)
+    if username and password:
+        command = '{0} --username {1} --password {2} --secured'\
+            .format(command, username, password)
+    elif clear:
+        command = '{0} --clear'.format(command)
+    cli_runner.run_cli(command)
+
+
 class UseTest(CliCommandTest):
 
     def test_use_command(self):
@@ -32,7 +42,7 @@ class UseTest(CliCommandTest):
                 'context': {}}
         )
         self._create_cosmo_wd_settings()
-        cli_runner.run_cli('cfy use -t 127.0.0.1')
+        run_use_command('127.0.0.1')
         cwds = self._read_cosmo_wd_settings()
         self.assertEquals("127.0.0.1",
                           cwds.get_management_server())
@@ -44,6 +54,31 @@ class UseTest(CliCommandTest):
                 'name': 'name', 'context': {}
             }
         )
-        cli_runner.run_cli('cfy use -t 127.0.0.1')
+        run_use_command('127.0.0.1')
         cwds = self._read_cosmo_wd_settings()
         self.assertEquals('127.0.0.1', cwds.get_management_server())
+
+    def test_use_secured(self):
+        self.client.manager.get_status = MagicMock()
+        self.client.manager.get_context = MagicMock(
+            return_value={
+                'name': 'name',
+                'context': {}
+            }
+        )
+        run_use_command('127.0.0.1', 'test_username', 'test_password')
+        cwds = self._read_cosmo_wd_settings()
+        self.assertEquals('127.0.0.1', cwds.get_management_server())
+        self.assertEquals('test_username', cwds.get_username())
+        self.assertEquals('test_password', cwds.get_password())
+
+    def test_use_clear(self):
+        run_use_command('127.0.0.1', 'test_username', 'test_password')
+        cwds = self._read_cosmo_wd_settings()
+        self.assertEquals('test_username', cwds.get_username())
+        self.assertEquals('test_password', cwds.get_password())
+        run_use_command('127.0.0.1', clear=True)
+        cwds = self._read_cosmo_wd_settings()
+        self.assertEquals('127.0.0.1', cwds.get_management_server())
+        self.assertIsNone(cwds.get_username())
+        self.assertIsNone(cwds.get_password())

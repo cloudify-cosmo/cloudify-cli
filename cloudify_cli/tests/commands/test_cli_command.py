@@ -77,7 +77,8 @@ class CliCommandTest(unittest.TestCase):
 
         self.client = CloudifyClient()
 
-        def get_mock_rest_client(manager_ip=None, rest_port=None):
+        def get_mock_rest_client(manager_ip=None, rest_port=None,
+                                 username=None, password=None):
             return self.client
 
         utils.get_rest_client = get_mock_rest_client
