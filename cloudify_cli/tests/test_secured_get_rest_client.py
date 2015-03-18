@@ -28,6 +28,9 @@ class TestGetRestClient(unittest.TestCase):
         os.environ[CLOUDIFY_PASSWORD_ENV] = 'test_password'
 
     def test_get_rest_client(self):
+        self.assertIsNotNone(os.environ[CLOUDIFY_USERNAME_ENV],
+                             'expected {0} to be test_username but it is None'
+                             .format(CLOUDIFY_USERNAME_ENV))
         client = utils.get_rest_client(
             manager_ip='localhost', rest_port=80)
         self.assertIsNotNone(client._client.encoded_credentials)
