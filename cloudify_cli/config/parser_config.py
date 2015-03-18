@@ -699,24 +699,6 @@ def parser_config():
                         'default': DEFAULT_REST_PORT,
                         'type': int,
                         'dest': 'rest_port'
-                    },
-                    '--secured': {
-                        'help': 'Use secured REST',
-                        'default': False,
-                        'dest': 'secured',
-                        'action': 'store_true'
-                    },
-                    '--username': {
-                        'help': 'The username for authentication',
-                        'default': '',
-                        'type': str,
-                        'dest': 'username'
-                    },
-                    '--password': {
-                        'help': 'The password for authentication',
-                        'default': '',
-                        'type': str,
-                        'dest': 'password'
                     }
                 },
                 'handler': cfy.use

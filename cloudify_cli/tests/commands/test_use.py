@@ -16,20 +16,17 @@
 """
 Tests 'cfy use'
 """
+import os
+import unittest
 
-from mock import MagicMock
+from mock import MagicMock, patch
+import mock
+
+from cloudify_cli import utils
+from cloudify_cli.constants import CLOUDIFY_USERNAME_ENV, CLOUDIFY_PASSWORD_ENV
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
-
-
-def run_use_command(manager_ip, username=None, password=None, clear=False):
-    command = 'cfy use -t {0}'.format(manager_ip)
-    if username and password:
-        command = '{0} --username {1} --password {2} --secured'\
-            .format(command, username, password)
-    elif clear:
-        command = '{0} --clear'.format(command)
-    cli_runner.run_cli(command)
+from cloudify_rest_client import CloudifyClient
 
 
 class UseTest(CliCommandTest):
@@ -42,7 +39,7 @@ class UseTest(CliCommandTest):
                 'context': {}}
         )
         self._create_cosmo_wd_settings()
-        run_use_command('127.0.0.1')
+        cli_runner.run_cli('cfy use -t 127.0.0.1')
         cwds = self._read_cosmo_wd_settings()
         self.assertEquals("127.0.0.1",
                           cwds.get_management_server())
@@ -54,31 +51,44 @@ class UseTest(CliCommandTest):
                 'name': 'name', 'context': {}
             }
         )
-        run_use_command('127.0.0.1')
+        cli_runner.run_cli('cfy use -t 127.0.0.1')
         cwds = self._read_cosmo_wd_settings()
         self.assertEquals('127.0.0.1', cwds.get_management_server())
 
     def test_use_secured(self):
-        self.client.manager.get_status = MagicMock()
+        host = '127.0.0.1'
+        username = 'test_username'
+        password = 'test_password'
+        self.client = CloudifyClient(
+            host=host, user=username, password=password)
+        # self.client.manager.get_status = MagicMock()
         self.client.manager.get_context = MagicMock(
             return_value={
                 'name': 'name',
                 'context': {}
             }
         )
-        run_use_command('127.0.0.1', 'test_username', 'test_password')
-        cwds = self._read_cosmo_wd_settings()
-        self.assertEquals('127.0.0.1', cwds.get_management_server())
-        self.assertEquals('test_username', cwds.get_username())
-        self.assertEquals('test_password', cwds.get_password())
+        with patch('cloudify_rest_client.client.HTTPClient._do_request') \
+                as mock_do_request:
+            cli_runner.run_cli('cfy use -t {0}'.format(host))
 
-    def test_use_clear(self):
-        run_use_command('127.0.0.1', 'test_username', 'test_password')
-        cwds = self._read_cosmo_wd_settings()
-        self.assertEquals('test_username', cwds.get_username())
-        self.assertEquals('test_password', cwds.get_password())
-        run_use_command('127.0.0.1', clear=True)
-        cwds = self._read_cosmo_wd_settings()
-        self.assertEquals('127.0.0.1', cwds.get_management_server())
-        self.assertIsNone(cwds.get_username())
-        self.assertIsNone(cwds.get_password())
+        # assert headers
+        call_args_list = mock_do_request.call_args_list[0][0]
+        self.assertIn('http://{0}:80/status'.format(host), call_args_list)
+        headers = {
+            'Content-type': 'application/json',
+            'Authorization': self.client._client.encoded_credentials
+        }
+        self.assertIn(headers, call_args_list)
+
+
+class TestGetRestClient(unittest.TestCase):
+    def test_get_rest_client(self):
+        os.environ[CLOUDIFY_USERNAME_ENV] = 'test_username'
+        os.environ[CLOUDIFY_PASSWORD_ENV] = 'test_password'
+        try:
+            client = utils.get_rest_client(manager_ip='localhost', rest_port=80)
+            self.assertIsNotNone(client._client.encoded_credentials)
+        finally:
+            del os.environ[CLOUDIFY_USERNAME_ENV]
+            del os.environ[CLOUDIFY_PASSWORD_ENV]

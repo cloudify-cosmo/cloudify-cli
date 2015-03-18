@@ -32,6 +32,8 @@ from prettytable import PrettyTable
 from cloudify_rest_client import CloudifyClient
 
 from cloudify_cli.constants import DEFAULT_REST_PORT
+from cloudify_cli.constants import CLOUDIFY_PASSWORD_ENV
+from cloudify_cli.constants import CLOUDIFY_USERNAME_ENV
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_FILE_NAME
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME
 from cloudify_cli.constants import CONFIG_FILE_NAME
@@ -245,7 +247,7 @@ def get_cwd():
     return os.getcwd()
 
 
-def get_rest_client(manager_ip=None, rest_port=None, username=None, password=None):
+def get_rest_client(manager_ip=None, rest_port=None):
 
     if not manager_ip:
         manager_ip = get_management_server_ip()
@@ -253,11 +255,9 @@ def get_rest_client(manager_ip=None, rest_port=None, username=None, password=Non
     if not rest_port:
         rest_port = get_rest_port()
 
-    if not username:
-        username = get_username()
+    username = get_username()
 
-    if not password:
-        password = get_password()
+    password = get_password()
 
     return CloudifyClient(host=manager_ip, port=rest_port,
                           user=username, password=password)
@@ -282,13 +282,11 @@ def get_management_server_ip():
 
 
 def get_username():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
-    return cosmo_wd_settings.get_username()
+    return os.environ.get(CLOUDIFY_USERNAME_ENV)
 
 
 def get_password():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
-    return cosmo_wd_settings.get_password()
+    return os.environ.get(CLOUDIFY_PASSWORD_ENV)
 
 
 def print_table(title, tb):
@@ -482,8 +480,6 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
         self._provider_context = None
         self._is_provider_config = False
         self._rest_port = DEFAULT_REST_PORT
-        self._username = None
-        self._password = None
 
     def get_management_server(self):
         return self._management_ip
@@ -530,17 +526,6 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
     def set_rest_port(self, rest_port):
         self._rest_port = rest_port
 
-    def get_username(self):
-        return self._username
-
-    def set_username(self, username):
-        self._username = username
-
-    def get_password(self):
-        return self._password
-
-    def set_password(self, password):
-        self._password = password
 
 def delete_cloudify_working_dir_settings():
     target_file_path = os.path.join(get_cwd(),
