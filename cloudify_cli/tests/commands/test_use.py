@@ -19,14 +19,16 @@ Tests 'cfy use'
 import os
 import unittest
 
-from mock import MagicMock, patch
-import mock
+from mock import MagicMock
+from mock import patch
+
+from cloudify_rest_client import CloudifyClient
 
 from cloudify_cli import utils
 from cloudify_cli.constants import CLOUDIFY_USERNAME_ENV, CLOUDIFY_PASSWORD_ENV
+
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
-from cloudify_rest_client import CloudifyClient
 
 
 class UseTest(CliCommandTest):
@@ -87,7 +89,8 @@ class TestGetRestClient(unittest.TestCase):
         os.environ[CLOUDIFY_USERNAME_ENV] = 'test_username'
         os.environ[CLOUDIFY_PASSWORD_ENV] = 'test_password'
         try:
-            client = utils.get_rest_client(manager_ip='localhost', rest_port=80)
+            client = utils.get_rest_client(
+                manager_ip='localhost', rest_port=80)
             self.assertIsNotNone(client._client.encoded_credentials)
         finally:
             del os.environ[CLOUDIFY_USERNAME_ENV]
