@@ -561,6 +561,7 @@ def _set_manager_endpoint_data():
 
 def _create_and_copy_security_config(manager_blueprint_security_config):
     remote_security_config_path = '~/rest-security-config.json'
+    container_security_config_path = '/root/rest-security-config.json'
     secured_server = manager_blueprint_security_config.get('enabled', False)
     securest_userstore_driver = manager_blueprint_security_config.get(
         'userstore_driver', {})
@@ -573,7 +574,7 @@ def _create_and_copy_security_config(manager_blueprint_security_config):
     security_config_file_obj = StringIO()
     json.dump(security_config, security_config_file_obj)
     fabric.api.put(security_config_file_obj, remote_security_config_path)
-    return remote_security_config_path
+    return container_security_config_path
 
 
 def _copy_agent_key(agent_local_key_path=None,
