@@ -362,6 +362,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-p 5672:5672 '
                               '-p 53229:53229 '
                               '-p 8100:8100 '
+                              '-p 8101:8101 '
                               '-p 9200:9200 '
                               '-p 8086:8086 '
                               '-e MANAGEMENT_IP={0} '
@@ -523,7 +524,7 @@ def _is_docker_installed(docker_path, use_sudo):
         return False
 
 
-def _wait_for_management(ip, timeout, port=80):
+def _wait_for_management(ip, timeout, port=REST_PORT):
     """ Wait for url to become available
         :param ip: the manager IP
         :param timeout: in seconds
