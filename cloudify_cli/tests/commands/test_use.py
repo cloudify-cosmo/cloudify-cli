@@ -16,16 +16,11 @@
 """
 Tests 'cfy use'
 """
-import os
-import unittest
 
 from mock import MagicMock
 from mock import patch
 
 from cloudify_rest_client import CloudifyClient
-
-from cloudify_cli import utils
-from cloudify_cli.constants import CLOUDIFY_USERNAME_ENV, CLOUDIFY_PASSWORD_ENV
 
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
@@ -57,41 +52,28 @@ class UseTest(CliCommandTest):
         cwds = self._read_cosmo_wd_settings()
         self.assertEquals('127.0.0.1', cwds.get_management_server())
 
-    def test_use_secured(self):
+    def test_secured_use(self):
         host = '127.0.0.1'
         username = 'test_username'
         password = 'test_password'
         self.client = CloudifyClient(
             host=host, user=username, password=password)
-        # self.client.manager.get_status = MagicMock()
         self.client.manager.get_context = MagicMock(
             return_value={
                 'name': 'name',
                 'context': {}
             }
         )
+
+        # run cli use command
         with patch('cloudify_rest_client.client.HTTPClient._do_request') \
                 as mock_do_request:
             cli_runner.run_cli('cfy use -t {0}'.format(host))
 
-        # assert headers
+        # assert Authorization in headers
         call_args_list = mock_do_request.call_args_list[0][0]
-        self.assertIn('http://{0}:80/status'.format(host), call_args_list)
         headers = {
             'Content-type': 'application/json',
             'Authorization': self.client._client.encoded_credentials
         }
         self.assertIn(headers, call_args_list)
-
-
-class TestGetRestClient(unittest.TestCase):
-    def test_get_rest_client(self):
-        os.environ[CLOUDIFY_USERNAME_ENV] = 'test_username'
-        os.environ[CLOUDIFY_PASSWORD_ENV] = 'test_password'
-        try:
-            client = utils.get_rest_client(
-                manager_ip='localhost', rest_port=80)
-            self.assertIsNotNone(client._client.encoded_credentials)
-        finally:
-            del os.environ[CLOUDIFY_USERNAME_ENV]
-            del os.environ[CLOUDIFY_PASSWORD_ENV]
