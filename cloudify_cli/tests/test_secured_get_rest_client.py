@@ -23,11 +23,10 @@ from cloudify_cli.constants import CLOUDIFY_PASSWORD_ENV
 
 
 class TestGetRestClient(unittest.TestCase):
-    def setUp(self):
-        os.environ[CLOUDIFY_USERNAME_ENV] = 'test_username'
-        os.environ[CLOUDIFY_PASSWORD_ENV] = 'test_password'
 
     def test_get_rest_client(self):
+        os.environ[CLOUDIFY_USERNAME_ENV] = 'test_username'
+        os.environ[CLOUDIFY_PASSWORD_ENV] = 'test_password'
         self.assertIsNotNone(os.environ[CLOUDIFY_USERNAME_ENV],
                              'expected {0} to be test_username but it is None'
                              .format(CLOUDIFY_USERNAME_ENV))

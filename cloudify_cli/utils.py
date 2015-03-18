@@ -282,8 +282,7 @@ def get_management_server_ip():
 
 
 def get_username():
-    get_logger().info('get_username: getting env: {0}'
-                      .format(CLOUDIFY_USERNAME_ENV))
+    print 'get_username: getting env: {0}'.format(CLOUDIFY_USERNAME_ENV)
     print 'os.environ.get(CLOUDIFY_USERNAME_ENV) = {0}'\
         .format(os.environ.get(CLOUDIFY_USERNAME_ENV))
     return os.environ.get(CLOUDIFY_USERNAME_ENV)
