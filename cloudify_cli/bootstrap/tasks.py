@@ -19,6 +19,7 @@ import urllib
 import urllib2
 import json
 from time import sleep, time
+from StringIO import StringIO
 
 import fabric
 import fabric.api
@@ -352,8 +353,8 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         lgr.error(err)
         raise NonRecoverableError(err)
 
-    cloudify_configuration = ctx.node.properties['cloudify']
-    is_cfy_secured = cloudify_configuration.get('secured', False)
+    security_config = ctx.node.properties['cloudify'].get('security', {})
+    security_config_path = _create_and_copy_security_config(security_config)
 
     cfy_management_options = ('-t '
                               '--volumes-from data '
@@ -365,13 +366,14 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-p 9200:9200 '
                               '-p 8086:8086 '
                               '-e MANAGEMENT_IP={0} '
-                              '-e IS_CFY_SECURED={1} '
+                              '-e MANAGER_REST_SECURITY_CONFIG_PATH={1} '
                               '--restart=always '
                               '-d '
                               'cloudify '
                               '/sbin/my_init'
                               .format(manager_private_ip or
-                                      ctx.instance.host_ip, is_cfy_secured))
+                                      ctx.instance.host_ip,
+                                      security_config_path))
 
     agent_packages = cloudify_packages.get('agents')
     if agent_packages:
@@ -555,6 +557,23 @@ def _set_manager_endpoint_data():
         fabric.api.env.user
     ctx.instance.runtime_properties[MANAGER_KEY_PATH_RUNTIME_PROPERTY] = \
         fabric.api.env.key_filename
+
+
+def _create_and_copy_security_config(manager_blueprint_security_config):
+    remote_security_config_path = '~/rest-security-config.json'
+    secured_server = manager_blueprint_security_config.get('enabled', False)
+    securest_userstore_driver = manager_blueprint_security_config.get(
+        'userstore_driver', {})
+    securest_authentication_methods = manager_blueprint_security_config.get(
+        'authentication_methods', [])
+    security_config = dict(
+        secured_server=secured_server,
+        securest_userstore_driver=securest_userstore_driver,
+        securest_authentication_methods=securest_authentication_methods)
+    security_config_file_obj = StringIO()
+    json.dump(security_config, security_config_file_obj)
+    fabric.api.put(security_config_file_obj, remote_security_config_path)
+    return remote_security_config_path
 
 
 def _copy_agent_key(agent_local_key_path=None,
