@@ -32,6 +32,8 @@ from prettytable import PrettyTable
 from cloudify_rest_client import CloudifyClient
 
 from cloudify_cli.constants import DEFAULT_REST_PORT
+from cloudify_cli.constants import CLOUDIFY_PASSWORD_ENV
+from cloudify_cli.constants import CLOUDIFY_USERNAME_ENV
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_FILE_NAME
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME
 from cloudify_cli.constants import CONFIG_FILE_NAME
@@ -253,7 +255,12 @@ def get_rest_client(manager_ip=None, rest_port=None):
     if not rest_port:
         rest_port = get_rest_port()
 
-    return CloudifyClient(manager_ip, rest_port)
+    username = get_username()
+
+    password = get_password()
+
+    return CloudifyClient(host=manager_ip, port=rest_port,
+                          user=username, password=password)
 
 
 def get_rest_port():
@@ -272,6 +279,14 @@ def get_management_server_ip():
            "management server or provide a management "
            "server ip explicitly")
     raise CloudifyCliError(msg)
+
+
+def get_username():
+    return os.environ.get(CLOUDIFY_USERNAME_ENV)
+
+
+def get_password():
+    return os.environ.get(CLOUDIFY_PASSWORD_ENV)
 
 
 def print_table(title, tb):

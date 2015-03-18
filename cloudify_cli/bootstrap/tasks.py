@@ -530,7 +530,7 @@ def _wait_for_management(ip, timeout, port=80):
         :param port: port used by the rest service.
         :return: True of False
     """
-    validation_url = 'http://{0}:{1}/blueprints'.format(ip, port)
+    validation_url = 'http://{0}:{1}/version'.format(ip, port)
 
     end = time() + timeout
 
