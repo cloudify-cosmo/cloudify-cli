@@ -354,7 +354,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         raise NonRecoverableError(err)
 
     security_config = ctx.node.properties['cloudify'].get('security', {})
-    security_config_path = _create_and_copy_security_config(security_config)
+    security_config_path = _handle_security_configuration(security_config)
 
     cfy_management_options = ('-t '
                               '--volumes-from data '
@@ -559,14 +559,16 @@ def _set_manager_endpoint_data():
         fabric.api.env.key_filename
 
 
-def _create_and_copy_security_config(manager_blueprint_security_config):
+def _handle_security_configuration(blueprint_security_config):
     remote_security_config_path = '~/rest-security-config.json'
     container_security_config_path = '/root/rest-security-config.json'
-    secured_server = manager_blueprint_security_config.get('enabled', False)
-    securest_userstore_driver = manager_blueprint_security_config.get(
+    secured_server = blueprint_security_config.get('enabled', False)
+    securest_userstore_driver = blueprint_security_config.get(
         'userstore_driver', {})
-    securest_authentication_methods = manager_blueprint_security_config.get(
+    securest_authentication_methods = blueprint_security_config.get(
         'authentication_methods', [])
+    # TODO: this is the place to provide initial validation for the security
+    # related configuration parts.
     security_config = dict(
         secured_server=secured_server,
         securest_userstore_driver=securest_userstore_driver,
