@@ -27,8 +27,6 @@ from fabric.context_managers import cd
 from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
-from cloudify_rest_client import CloudifyClient
-
 
 from cloudify_cli import utils
 
@@ -607,7 +605,8 @@ def _upload_provider_context(remote_agents_private_key_path,
     cloudify_configuration['manager_deployment'] = _dump_manager_deployment()
 
     manager_ip = fabric.api.env.host_string
-    rest_client = CloudifyClient(manager_ip, REST_PORT)
+    rest_client = utils.get_rest_client(
+        manager_ip=manager_ip, rest_port=REST_PORT)
     rest_client.manager.create_context('provider',
                                        provider_context)
 
