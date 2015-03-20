@@ -700,11 +700,11 @@ def _is_docker_installed(docker_path, use_sudo):
     from fabric_plugin.tasks import FabricTaskError
     try:
         if use_sudo:
-            out = fabric.api.run('sudo which {0} > /dev/null 2>&1'
-                                 .format(docker_path))
+            out = _run_command('sudo which {0} > /dev/null 2>&1'
+                               .format(docker_path))
         else:
-            out = fabric.api.run('which {0} > /dev/null 2>&1'
-                                 .format(docker_path))
+            out = _run_command('which {0} > /dev/null 2>&1'
+                               .format(docker_path))
         if not out:
             return False
         return True
@@ -719,19 +719,26 @@ def _wait_for_management(ip, timeout, port=80):
         :param port: port used by the rest service.
         :return: True of False
     """
-    validation_url = 'http://{0}:{1}/blueprints'.format(ip, port)
+    status_url = 'http://{0}:{1}/status'.format(ip, port)
 
     end = time() + timeout
 
     while end - time() >= 0:
         try:
-            status = urllib.urlopen(validation_url).getcode()
-            if status == 200:
-                return True
-
+            response = urllib.urlopen(status_url)
+            if response.getcode() == 200:
+                body = json.loads(response.readlines()[0])
+                status = 'up'
+                for service in body['services']:
+                    service_instance = service['instances'][0]
+                    instance_state = service_instance['state']
+                    if instance_state != 'up':
+                        status = 'down'
+                if status == 'up':
+                    return True
         except IOError as e:
             lgr.debug('error waiting for {0}. reason: {1}'
-                      .format(validation_url, e.message))
+                      .format(status_url, e.message))
         sleep(5)
 
     return False
