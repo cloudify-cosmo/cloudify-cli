@@ -91,12 +91,12 @@ def creation_validation(cloudify_packages, **kwargs):
 def stop_manager_container(docker_path=None, use_sudo=True):
     containers = ['riemann', 'frontend', 'amqpinflux', 'logstash', 'influxdb',
                   'rabbitmq', 'elasticsearch', 'mgmtworker', 'webui',
-                  'restservice', 'riemanndata', 'influxdbdata', 'mgmtdata'
+                  'restservice', 'riemanndata', 'influxdbdata', 'mgmtdata',
                   'elasticsearchdata', 'fileserver']
     containers_names = " ".join(str(x) for x in containers)
     if not docker_path:
         docker_path = 'docker'
-    command = '{0} stop {1}'.format(docker_path, containers_names)
+    command = '{0} rm -f {1}'.format(docker_path, containers_names)
     if use_sudo:
         command = 'sudo {0}'.format(command)
     _run_command(command)
