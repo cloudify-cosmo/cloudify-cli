@@ -19,6 +19,7 @@ import urllib
 import urllib2
 import json
 from time import sleep, time
+from StringIO import StringIO
 
 import fabric
 import fabric.api
