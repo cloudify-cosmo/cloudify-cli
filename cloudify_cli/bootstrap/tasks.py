@@ -394,10 +394,8 @@ def _start_webui(docker_exec_command, private_ip):
                           detached=True, attempts_on_corrupt=5)
 
 
-def _start_rest_service(docker_exec_command, private_ip):
+def _start_rest_service(docker_exec_command, private_ip, security_config_path):
     lgr.debug('starting rest-service container')
-    security_config = ctx.node.properties['cloudify'].get('security', {})
-    security_config_path = _handle_security_configuration(security_config)
     rest_service_opts = '--hostname="restservice" '\
                         '--add-host=rabbitmq:{0} '\
                         '--add-host=elasticsearch:{0} '\
@@ -407,6 +405,7 @@ def _start_rest_service(docker_exec_command, private_ip):
                         '--publish=8100:8100 ' \
                         '--restart="always" ' \
                         '--volumes-from fileserver ' \
+                        '--volumes-from mgmtdata ' \
                         'cloudify_restservice' \
                         .format(private_ip, security_config_path)
     _run_docker_container(docker_exec_command, rest_service_opts,
@@ -587,15 +586,19 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     # host VMs home-dir will be stored in the mgmt_worker_data container
     agent_remote_key_path = _copy_agent_key(agent_local_key_path,
                                             agent_remote_key_path)
+    security_config = ctx.node.properties['cloudify'].get('security', {})
+    # copy security config file to host VM.
+    security_config_path = _handle_security_configuration(security_config)
     lgr.info('starting cloudify management services')
     try:
         _start_fileserver_container(docker_exec_command, cloudify_packages)
 
-        _start_rest_service(docker_exec_command, private_ip)
+        _start_mgmt_worker(docker_exec_command, private_ip, use_sudo)
+
+        _start_rest_service(docker_exec_command, private_ip,
+                            security_config_path)
 
         _start_webui(docker_exec_command, private_ip)
-
-        _start_mgmt_worker(docker_exec_command, private_ip, use_sudo)
 
         _start_elasticsearch(docker_exec_command, use_sudo)
 
