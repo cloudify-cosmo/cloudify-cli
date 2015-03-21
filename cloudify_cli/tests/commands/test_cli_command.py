@@ -80,11 +80,19 @@ class CliCommandTest(unittest.TestCase):
         def get_mock_rest_client(manager_ip=None, rest_port=None):
             return self.client
 
+        self.original_utils_get_rest_client = utils.get_rest_client
         utils.get_rest_client = get_mock_rest_client
+        self.original_utils_get_cwd = utils.get_cwd
         utils.get_cwd = lambda: TEST_WORK_DIR
+        self.original_utils_os_getcwd = utils_os.getcwd
         utils_os.getcwd = lambda: TEST_WORK_DIR
 
     def tearDown(self):
+
+        # remove mocks
+        utils.get_rest_client = self.original_utils_get_rest_client
+        utils.get_cwd = self.original_utils_get_cwd = utils.get_cwd
+        utils_os.getcwd = self.original_utils_os_getcwd = utils_os.getcwd
 
         # empty log file
         if os.path.exists(DEFAULT_LOG_FILE):

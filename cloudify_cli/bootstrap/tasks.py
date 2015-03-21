@@ -394,21 +394,20 @@ def _start_webui(docker_exec_command, private_ip):
 
 
 def _start_rest_service(docker_exec_command, private_ip):
-    cloudify_configuration = ctx.node.properties['cloudify']
-    is_cfy_secured = cloudify_configuration.get('secured', 'False')
-
     lgr.debug('starting rest-service container')
+    security_config = ctx.node.properties['cloudify'].get('security', {})
+    security_config_path = _handle_security_configuration(security_config)
     rest_service_opts = '--hostname="restservice" '\
                         '--add-host=rabbitmq:{0} '\
                         '--add-host=elasticsearch:{0} '\
                         '--add-host=fileserver:{0} ' \
                         '--add-host=hostingvm:{0} ' \
-                        '-e="IS_CFY_SECURED={1}" ' \
+                        '-e="MANAGER_REST_SECURITY_CONFIG_PATH={1}" ' \
                         '--publish=8100:8100 ' \
                         '--restart="always" ' \
                         '--volumes-from fileserver ' \
                         'cloudify_restservice' \
-                        .format(private_ip, is_cfy_secured)
+                        .format(private_ip, security_config_path)
     _run_docker_container(docker_exec_command, rest_service_opts,
                           'restservice', detached=True, attempts_on_corrupt=5)
 
@@ -751,6 +750,26 @@ def _set_manager_endpoint_data():
         fabric.api.env.user
     ctx.instance.runtime_properties[MANAGER_KEY_PATH_RUNTIME_PROPERTY] = \
         fabric.api.env.key_filename
+
+
+def _handle_security_configuration(blueprint_security_config):
+    remote_security_config_path = '~/rest-security-config.json'
+    container_security_config_path = '/root/rest-security-config.json'
+    secured_server = blueprint_security_config.get('enabled', False)
+    securest_userstore_driver = blueprint_security_config.get(
+        'userstore_driver', {})
+    securest_authentication_methods = blueprint_security_config.get(
+        'authentication_methods', [])
+    # TODO: this is the place to provide initial validation for the security
+    # related configuration parts.
+    security_config = dict(
+        secured_server=secured_server,
+        securest_userstore_driver=securest_userstore_driver,
+        securest_authentication_methods=securest_authentication_methods)
+    security_config_file_obj = StringIO()
+    json.dump(security_config, security_config_file_obj)
+    fabric.api.put(security_config_file_obj, remote_security_config_path)
+    return container_security_config_path
 
 
 def _copy_agent_key(agent_local_key_path=None,

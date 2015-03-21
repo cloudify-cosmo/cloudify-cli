@@ -28,8 +28,7 @@ def use(management_ip, provider, rest_port):
     logger = get_logger()
     # first check this server is available.
     client = utils.get_rest_client(
-        manager_ip=management_ip,
-        rest_port=rest_port)
+        manager_ip=management_ip, rest_port=rest_port)
     try:
         status_result = client.manager.get_status()
     except CloudifyClientError:
