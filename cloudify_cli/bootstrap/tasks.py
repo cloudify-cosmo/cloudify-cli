@@ -90,9 +90,14 @@ def creation_validation(cloudify_packages, **kwargs):
 
 
 def stop_manager_container(docker_path=None, use_sudo=True):
+    containers = ['riemann', 'frontend', 'amqpinflux', 'logstash', 'influxdb',
+                  'rabbitmq', 'elasticsearch', 'mgmtworker', 'webui',
+                  'restservice', 'riemanndata', 'influxdbdata', 'mgmtdata',
+                  'elasticsearchdata', 'fileserver']
+    containers_names = " ".join(str(x) for x in containers)
     if not docker_path:
         docker_path = 'docker'
-    command = '{0} stop cfy'.format(docker_path)
+    command = '{0} rm -f {1}'.format(docker_path, containers_names)
     if use_sudo:
         command = 'sudo {0}'.format(command)
     _run_command(command)
@@ -146,7 +151,7 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
             raise RuntimeError('wrong agent package type')
 
     lgr.info('downloading cloudify-components package...')
-    success = _download_package(
+    success = _download_file(
         PACKAGES_PATH['cloudify'],
         server_packages['components_package_url'],
         dist)
@@ -157,7 +162,7 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
         return False
 
     lgr.info('downloading cloudify-core package...')
-    success = _download_package(
+    success = _download_file(
         PACKAGES_PATH['cloudify'],
         server_packages['core_package_url'],
         dist)
@@ -169,7 +174,7 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
 
     if ui_included:
         lgr.info('downloading cloudify-ui...')
-        success = _download_package(
+        success = _download_file(
             PACKAGES_PATH['ui'],
             server_packages['ui_package_url'],
             dist)
@@ -183,7 +188,7 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
                   'skipping ui installation.')
 
     for agent, agent_url in agent_packages.items():
-        success = _download_package(
+        success = _download_file(
             PACKAGES_PATH['agents'],
             agent_packages[agent],
             dist)
@@ -301,6 +306,225 @@ def _install_docker_if_required(docker_path, use_sudo,
     return docker_exec_command
 
 
+def _start_elasticsearch(docker_exec_command, use_sudo):
+    lgr.debug('starting elasticsearch data container')
+    elasticsearch_data_opts = '--volume=/opt/elasticsearch/data ' \
+                              'cloudify_elasticsearch ' \
+                              'echo elasticsearch data container'
+    _run_docker_container(docker_exec_command, elasticsearch_data_opts,
+                          'elasticsearchdata', detached=False,
+                          attempts_on_corrupt=5)
+
+    lgr.debug('starting elasticsearch container')
+    elasticsearch_opts = '--publish=9200:9200 ' \
+                         '--restart="always" ' \
+                         '--volume=/var/log/cloudify/elasticsearch:' \
+                         '/etc/service/elasticsearch/logs ' \
+                         '--volumes-from elasticsearchdata ' \
+                         'cloudify_elasticsearch'
+    _setup_logs_dir(use_sudo, 'elasticsearch')
+    _run_docker_container(docker_exec_command, elasticsearch_opts,
+                          'elasticsearch', detached=True,
+                          attempts_on_corrupt=5)
+
+
+def _start_rabbitmq(docker_exec_command, use_sudo):
+    lgr.debug('starting rabbitmq container')
+    rabbitmq_opts = '--publish=5672:5672 ' \
+                    '--restart="always" ' \
+                    '--volume=/var/log/cloudify/rabbitmq:/var/log/rabbitmq ' \
+                    'cloudify_rabbitmq'
+    _setup_logs_dir(use_sudo, 'rabbitmq')
+    _run_docker_container(docker_exec_command, rabbitmq_opts, 'rabbitmq',
+                          detached=True, attempts_on_corrupt=5)
+
+
+def _start_influxdb(docker_exec_command):
+    lgr.debug('starting influxdb data container')
+    influxdb_data_opts = '--volume /opt/influxdb ' \
+                         'cloudify_influxdb ' \
+                         'echo influxdb data container'
+    _run_docker_container(docker_exec_command, influxdb_data_opts,
+                          'influxdbdata', detached=False,
+                          attempts_on_corrupt=5)
+
+    lgr.debug('starting influxdb container')
+    influxdb_opts = '--publish=8083:8083 ' \
+                    '--publish=8086:8086 ' \
+                    '--restart="always" ' \
+                    '--volumes-from influxdbdata ' \
+                    'cloudify_influxdb'
+    _run_docker_container(docker_exec_command, influxdb_opts, 'influxdb',
+                          detached=True, attempts_on_corrupt=5)
+
+
+def _start_logstash(docker_exec_command, private_ip, use_sudo):
+    lgr.debug('starting logstash container')
+    logstash_opts = '--add-host=elasticsearch:{0} ' \
+                    '--add-host=rabbitmq:{0} ' \
+                    '--publish=9999:9999 ' \
+                    '--restart="always" ' \
+                    '--volume=/var/log/cloudify/logstash:' \
+                    '/etc/service/logstash/logs ' \
+                    'cloudify_logstash'.format(private_ip)
+    _setup_logs_dir(use_sudo, 'logstash')
+    _run_docker_container(docker_exec_command, logstash_opts, 'logstash',
+                          detached=True, attempts_on_corrupt=5)
+
+
+def _start_amqp_influx(docker_exec_command, private_ip):
+    lgr.debug('starting amqp-influx container')
+    amqp_influxdb = '--add-host=influxdb:{0} ' \
+                    '--add-host=rabbitmq:{0} ' \
+                    '--restart="always" ' \
+                    'cloudify_amqpinflux'.format(private_ip)
+    _run_docker_container(docker_exec_command, amqp_influxdb, 'amqpinflux',
+                          detached=True, attempts_on_corrupt=5)
+
+
+def _start_webui(docker_exec_command, private_ip):
+    lgr.debug('starting web-ui container')
+    webui_opts = '--publish=9001:9001 ' \
+                 '--add-host=frontend:{0} ' \
+                 '--add-host=influxdb:{0} ' \
+                 '--restart="always" ' \
+                 '--volume=/opt/cloudify-ui ' \
+                 'cloudify_webui'.format(private_ip)
+    _run_docker_container(docker_exec_command, webui_opts, 'webui',
+                          detached=True, attempts_on_corrupt=5)
+
+
+def _start_rest_service(docker_exec_command, private_ip, security_config_path):
+    lgr.debug('starting rest-service container')
+    rest_service_opts = '--hostname="restservice" '\
+                        '--add-host=rabbitmq:{0} '\
+                        '--add-host=elasticsearch:{0} '\
+                        '--add-host=fileserver:{0} ' \
+                        '--add-host=hostingvm:{0} ' \
+                        '-e="MANAGER_REST_SECURITY_CONFIG_PATH={1}" ' \
+                        '--publish=8100:8100 ' \
+                        '--restart="always" ' \
+                        '--volumes-from fileserver ' \
+                        '--volumes-from mgmtdata ' \
+                        'cloudify_restservice' \
+                        .format(private_ip, security_config_path)
+    _run_docker_container(docker_exec_command, rest_service_opts,
+                          'restservice', detached=True, attempts_on_corrupt=5)
+
+
+def _start_riemann(docker_exec_command, private_ip, use_sudo):
+    lgr.debug('starting riemann data container')
+    riemann_data_opts = 'cloudify_riemann ' \
+                        'echo riemann data container'
+    _run_docker_container(docker_exec_command, riemann_data_opts,
+                          'riemanndata', attempts_on_corrupt=5)
+
+    lgr.debug('starting riemann container')
+    riemann_opts = '--add-host=rabbitmq:{0} ' \
+                   '--add-host=frontend:{0} ' \
+                   '--restart="always" ' \
+                   '--volume=/var/log/cloudify/riemann:' \
+                   '/etc/service/riemann/logs ' \
+                   '--volumes-from riemanndata ' \
+                   '--volumes-from mgmtdata ' \
+                   'cloudify_riemann'.format(private_ip)
+    _setup_logs_dir(use_sudo, 'riemann')
+    _run_docker_container(docker_exec_command, riemann_opts, 'riemann',
+                          detached=True, attempts_on_corrupt=5)
+
+
+def _start_fileserver_container(docker_exec_command, cloudify_packages):
+    agent_packages = cloudify_packages.get('agents')
+    if agent_packages:
+        # compose agent installation command.
+        data_container_work_dir = '/tmp/work_dir'
+        agents_dest_dir = '/opt/manager/resources/packages'
+        agent_packages_install_cmd = \
+            _get_install_agent_pkgs_cmd(agent_packages,
+                                        data_container_work_dir,
+                                        agents_dest_dir)
+        agent_pkgs_mount_options = '-v {0} -w {1} ' \
+            .format(agents_dest_dir,
+                    data_container_work_dir)
+    else:
+        lgr.info('no agent packages were provided')
+        agent_packages_install_cmd = 'echo no agent packages provided'
+        agent_pkgs_mount_options = ''
+
+    lgr.debug('starting file-server data container')
+    fileserver_data_opts = '{0} ' \
+                           '--volume /opt/manager/resources ' \
+                           'cloudify_fileserver ' \
+                           '/bin/bash -c \'{1}\'' \
+                           .format(agent_pkgs_mount_options,
+                                   agent_packages_install_cmd)
+    _run_docker_container(docker_exec_command, fileserver_data_opts,
+                          'fileserver', detached=False,
+                          attempts_on_corrupt=5)
+
+
+def _start_frontend(docker_exec_command, private_ip, use_sudo):
+    lgr.debug('starting frontend nginx container')
+    frontend_opts = '--add-host=rabbitmq:{0} ' \
+                    '--add-host=restservice:{0} ' \
+                    '--add-host=webui:{0} ' \
+                    '--publish=80:80 ' \
+                    '--publish=53229:53229 ' \
+                    '--restart="always" ' \
+                    '--volume=/var/log/cloudify/rest:/var/log/cloudify ' \
+                    '--volume=/var/log/cloudify/nginx:/var/log/nginx ' \
+                    '--volumes-from fileserver ' \
+                    '--volumes-from webui '\
+                    'cloudify_frontend'.format(private_ip)
+    _setup_logs_dir(use_sudo, 'rest')
+    _setup_logs_dir(use_sudo, 'nginx')
+    _run_docker_container(docker_exec_command, frontend_opts,
+                          'frontend', detached=True,
+                          attempts_on_corrupt=5)
+
+
+def _start_mgmt_worker(docker_exec_command, private_ip, use_sudo):
+    # compose command to copy host VM home dir files into the data
+    # containers' home dir.
+    backup_vm_files_cmd, home_dir_mount_path = _get_backup_files_cmd()
+    lgr.debug('starting management worker data container')
+    mgmt_worker_data_opts = '-v ~/:{0} ' \
+                            '-v /root ' \
+                            '--volume /opt/riemann ' \
+                            'cloudify_mgmtworker ' \
+                            '/bin/bash -c \'{1} && echo mgmt data container\''\
+                            .format(home_dir_mount_path, backup_vm_files_cmd)
+    _run_docker_container(docker_exec_command, mgmt_worker_data_opts,
+                          'mgmtdata', detached=False,
+                          attempts_on_corrupt=5)
+
+    lgr.debug('starting management worker container')
+    mgmt_worker_opts = '--add-host=rabbitmq:{0} ' \
+                       '--add-host=frontend:{0} ' \
+                       '--add-host=fileserver:{0} ' \
+                       '--env="MANAGEMENT_IP={0}" ' \
+                       '--volumes-from mgmtdata ' \
+                       '--restart="always" ' \
+                       '--volume=/var/log/cloudify/mgmtworker:' \
+                       '/opt/mgmtworker/logs ' \
+                       'cloudify_mgmtworker'.format(private_ip)
+    _setup_logs_dir(use_sudo, 'mgmtworker')
+    _run_docker_container(docker_exec_command, mgmt_worker_opts, 'mgmtworker',
+                          detached=True, attempts_on_corrupt=5)
+
+
+def _setup_logs_dir(use_sudo, logs_folder_name):
+    if use_sudo:
+        sudo = 'sudo'
+    else:
+        sudo = ''
+
+    setup_logs_dir_cmd = '{0} mkdir -p /var/log/cloudify/{1} ' \
+                         '&& {0} chmod -R 777 /var/log/cloudify/{1}'\
+                         .format(sudo, logs_folder_name)
+    _run_command(setup_logs_dir_cmd)
+
+
 def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      agent_local_key_path=None, agent_remote_key_path=None,
                      manager_private_ip=None, provider_context=None,
@@ -325,109 +549,72 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     lgr = ctx.logger
 
     manager_ip = fabric.api.env.host_string
+    private_ip = manager_private_ip or ctx.instance.host_ip
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
     docker_exec_command = _install_docker_if_required(
         docker_path,
         use_sudo,
         docker_service_start_command)
 
-    data_container_name = 'data'
-    cfy_container_name = 'cfy'
-    if _container_exists(docker_exec_command, data_container_name) or \
-            _container_exists(docker_exec_command, cfy_container_name):
-        err = 'a container instance with name {0}/{1} already exists.'\
-              .format(data_container_name, cfy_container_name)
-        raise NonRecoverableError(err)
-
-    docker_image_url = cloudify_packages.get('docker', {}).get('docker_url')
-    if not docker_image_url:
+    docker_images_url = cloudify_packages.get('docker', {}).get('docker_url')
+    if not docker_images_url:
         raise NonRecoverableError('no docker URL found in packages')
+
+    distro_info = get_machine_distro()
+    tmp_image_location = '/tmp/cloudify_images.tar'
     try:
-        lgr.info('importing cloudify-manager docker image from {0}'
-                 .format(docker_image_url))
-        _run_command('{0} import {1} cloudify'
-                     .format(docker_exec_command, docker_image_url))
+        lgr.info('downloading docker images from {0} to {1}'
+                 .format(docker_images_url, tmp_image_location))
+        _download_file(docker_images_url, tmp_image_location,
+                       distro_info, use_sudo)
     except FabricTaskError as e:
-        err = 'failed importing cloudify docker image from {0}. reason:{1}' \
-              .format(docker_image_url, str(e))
+        err = 'failed downloading cloudify docker images from {0}. reason:{1}'\
+              .format(docker_images_url, str(e))
+        lgr.error(err)
+        raise NonRecoverableError(err)
+    try:
+        lgr.info('loading cloudify images from {0}'.format(tmp_image_location))
+        _run_command('{0} load --input {1}'
+                     .format(docker_exec_command, tmp_image_location))
+    except FabricTaskError as e:
+        err = 'failed loading cloudify docker images from {0}. reason:{1}' \
+              .format(tmp_image_location, str(e))
         lgr.error(err)
         raise NonRecoverableError(err)
 
-    security_config = ctx.node.properties['cloudify'].get('security', {})
-    security_config_path = _handle_security_configuration(security_config)
-
-    cfy_management_options = ('-t '
-                              '--volumes-from data '
-                              '-p 80:80 '
-                              '-p 5555:5555 '
-                              '-p 5672:5672 '
-                              '-p 53229:53229 '
-                              '-p 8100:8100 '
-                              '-p 9200:9200 '
-                              '-p 8086:8086 '
-                              '-e MANAGEMENT_IP={0} '
-                              '-e MANAGER_REST_SECURITY_CONFIG_PATH={1} '
-                              '--restart=always '
-                              '-d '
-                              'cloudify '
-                              '/sbin/my_init'
-                              .format(manager_private_ip or
-                                      ctx.instance.host_ip,
-                                      security_config_path))
-
-    agent_packages = cloudify_packages.get('agents')
-    if agent_packages:
-        # compose agent installation command.
-        data_container_work_dir = '/tmp/work_dir'
-        agents_dest_dir = '/opt/manager/resources/packages'
-        agent_packages_install_cmd = \
-            _get_install_agent_pkgs_cmd(agent_packages,
-                                        data_container_work_dir,
-                                        agents_dest_dir)
-        agent_pkgs_mount_options = '-v {0} -w {1} ' \
-                                   .format(agents_dest_dir,
-                                           data_container_work_dir)
-    else:
-        lgr.info('no agent packages were provided')
-        agent_packages_install_cmd = 'echo no agent packages provided'
-        agent_pkgs_mount_options = ''
-
-    # command to copy host VM home dir files into the data container's home.
-    backup_vm_files_cmd, home_dir_mount_path = _get_backup_files_cmd()
-    # copy agent to host VM. the data container will mount the host VM's
-    # home-dir so that all files will be backed up inside the data container.
+    # copy agent key to host VM. This file, along with all files on the
+    # host VMs home-dir will be stored in the mgmt_worker_data container
     agent_remote_key_path = _copy_agent_key(agent_local_key_path,
                                             agent_remote_key_path)
-
-    data_container_start_cmd = '{0} && {1} && echo Data-only container' \
-                               .format(agent_packages_install_cmd,
-                                       backup_vm_files_cmd)
-    data_container_options = ('-t '
-                              '{0} '
-                              '-v ~/:{1} '
-                              '-v /root '
-                              '-v /etc/init.d '
-                              '-v /etc/default '
-                              '-v /opt/manager/resources '
-                              '-v /etc/service/riemann '
-                              '-v /etc/service/elasticsearch/data '
-                              '-v /etc/service/elasticsearch/logs '
-                              '-v /opt/influxdb/shared/data '
-                              '-v /var/log/cloudify '
-                              'cloudify sh -c \'{2}\''
-                              .format(agent_pkgs_mount_options,
-                                      home_dir_mount_path,
-                                      data_container_start_cmd))
-
+    security_config = ctx.node.properties['cloudify'].get('security', {})
+    # copy security config file to host VM.
+    security_config_path = _handle_security_configuration(security_config)
+    lgr.info('starting cloudify management services')
     try:
-        lgr.info('starting a new cloudify data container')
-        _run_docker_container(docker_exec_command, data_container_options,
-                              data_container_name)
-        lgr.info('starting a new cloudify mgmt docker services container')
-        _run_docker_container(docker_exec_command, cfy_management_options,
-                              cfy_container_name, attempts_on_corrupt=5)
+        _start_fileserver_container(docker_exec_command, cloudify_packages)
+
+        _start_mgmt_worker(docker_exec_command, private_ip, use_sudo)
+
+        _start_rest_service(docker_exec_command, private_ip,
+                            security_config_path)
+
+        _start_webui(docker_exec_command, private_ip)
+
+        _start_elasticsearch(docker_exec_command, use_sudo)
+
+        _start_rabbitmq(docker_exec_command, use_sudo)
+
+        _start_influxdb(docker_exec_command)
+
+        _start_logstash(docker_exec_command, private_ip, use_sudo)
+
+        _start_amqp_influx(docker_exec_command, private_ip)
+
+        _start_frontend(docker_exec_command, private_ip, use_sudo)
+
+        _start_riemann(docker_exec_command, private_ip, use_sudo)
     except FabricTaskError as e:
-        err = 'failed running cloudify docker container. ' \
+        err = 'failed running cloudify service containers. ' \
               'error is {0}'.format(str(e))
         lgr.error(err)
         raise NonRecoverableError(err)
@@ -491,8 +678,9 @@ def _get_backup_files_cmd():
 def _get_install_agent_pkgs_cmd(agent_packages,
                                 agents_pkg_path,
                                 agents_dest_dir):
-    download_agents_cmd = ''
     install_agents_cmd = ''
+    download_agents_cmd = 'mkdir -p {0} && cd {0} {1}'.format(agents_pkg_path,
+                                                              ' && ')
     for agent_name, agent_url in agent_packages.items():
         download_agents_cmd += 'curl -O {0}{1} ' \
                                .format(agent_url, ' && ')
@@ -515,9 +703,11 @@ def _is_docker_installed(docker_path, use_sudo):
     from fabric_plugin.tasks import FabricTaskError
     try:
         if use_sudo:
-            out = fabric.api.run('sudo which {0}'.format(docker_path))
+            out = _run_command('sudo which {0} > /dev/null 2>&1'
+                               .format(docker_path))
         else:
-            out = fabric.api.run('which {0}'.format(docker_path))
+            out = _run_command('which {0} > /dev/null 2>&1'
+                               .format(docker_path))
         if not out:
             return False
         return True
@@ -532,19 +722,26 @@ def _wait_for_management(ip, timeout, port=80):
         :param port: port used by the rest service.
         :return: True of False
     """
-    validation_url = 'http://{0}:{1}/version'.format(ip, port)
+    status_url = 'http://{0}:{1}/status'.format(ip, port)
 
     end = time() + timeout
 
     while end - time() >= 0:
         try:
-            status = urllib.urlopen(validation_url).getcode()
-            if status == 200:
-                return True
-
+            response = urllib.urlopen(status_url)
+            if response.getcode() == 200:
+                body = json.loads(response.readlines()[0])
+                status = 'up'
+                for service in body['services']:
+                    service_instance = service['instances'][0]
+                    instance_state = service_instance['state']
+                    if instance_state != 'up':
+                        status = 'down'
+                if status == 'up':
+                    return True
         except IOError as e:
             lgr.debug('error waiting for {0}. reason: {1}'
-                      .format(validation_url, e.message))
+                      .format(status_url, e.message))
         sleep(5)
 
     return False
@@ -652,8 +849,8 @@ def _container_exists(docker_exec_command, container_name):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     try:
-        inspect_command = '{0} inspect {1}'.format(docker_exec_command,
-                                                   container_name)
+        inspect_command = '{0} inspect {1}  > /dev/null 2>&1'\
+                          .format(docker_exec_command, container_name)
         _run_command(inspect_command)
         return True
     except FabricTaskError:
@@ -661,11 +858,18 @@ def _container_exists(docker_exec_command, container_name):
 
 
 def _run_docker_container(docker_exec_command, container_options,
-                          container_name, attempts_on_corrupt=1):
+                          container_name, detached=False,
+                          attempts_on_corrupt=1):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
-    run_cmd = '{0} run --name {1} {2}'\
-              .format(docker_exec_command, container_name, container_options)
+
+    if _container_exists(docker_exec_command, container_name):
+        raise NonRecoverableError('container with name {0} already exists'
+                                  .format(container_name))
+
+    run_cmd = '{0} run --name={1} --hostname={1} --detach={2} {3}' \
+        .format(docker_exec_command, container_name,
+                detached, container_options)
     for i in range(0, attempts_on_corrupt):
         try:
             lgr.debug('starting docker container {0}'.format(container_name))
@@ -687,13 +891,21 @@ def _run_docker_container(docker_exec_command, container_options,
             sleep(2)
 
 
-def _download_package(url, path, distro):
+def _download_file(url, path, distro, use_sudo=True):
+    if use_sudo:
+        sudo = 'sudo'
+    else:
+        sudo = ''
+
     if 'Ubuntu' in distro:
-        return _run_command('sudo wget {0} -P {1}'.format(
-            path, url))
+        # todo: remove silent -q0- wget.
+        return _run_command('{0} wget -qO- -O {1} {2}'.format(sudo, path, url))
     elif 'centos' in distro:
-        with cd(path):
-            return _run_command('sudo curl -O {0}')
+        download_path = os.path.dirname(path)
+        file_name = os.path.basename(path)
+        with cd(download_path):
+            return _run_command('{0} curl {1} > {2}'
+                                .format(sudo, url, file_name))
 
 
 def _unpack(path, distro):
