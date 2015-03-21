@@ -326,6 +326,23 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
 
     manager_ip = fabric.api.env.host_string
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
+
+    def post_bootstrap_actions(wait_for_services_timeout=180):
+        lgr.info('waiting for cloudify management services to start')
+        started = _wait_for_management(manager_ip,
+                                       timeout=wait_for_services_timeout)
+        if not started:
+            err = 'failed waiting for cloudify management services to start.'
+            lgr.info(err)
+            raise NonRecoverableError(err)
+        _set_manager_endpoint_data()
+        _upload_provider_context(agent_remote_key_path, provider_context)
+        ctx.instance.runtime_properties['containers_started'] = 'True'
+        return True
+
+    if ctx.operation.retry_number > 0:
+        return post_bootstrap_actions(wait_for_services_timeout=15)
+
     docker_exec_command = _install_docker_if_required(
         docker_path,
         use_sudo,
@@ -432,17 +449,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         lgr.error(err)
         raise NonRecoverableError(err)
 
-    lgr.info('waiting for cloudify management services to start')
-    started = _wait_for_management(manager_ip, timeout=180)
-    ctx.instance.runtime_properties['containers_started'] = 'True'
-    if not started:
-        err = 'failed waiting for cloudify management services to start.'
-        lgr.info(err)
-        raise NonRecoverableError(err)
-
-    _set_manager_endpoint_data()
-    _upload_provider_context(agent_remote_key_path, provider_context)
-    return True
+    return post_bootstrap_actions()
 
 
 def recover_docker(docker_path=None, use_sudo=True,
@@ -614,6 +621,7 @@ def _update_manager_deployment(local_only=False):
 
 def _upload_provider_context(remote_agents_private_key_path,
                              provider_context=None):
+    ctx.logger.info('updating provider context on management server...')
     provider_context = provider_context or dict()
     cloudify_configuration = ctx.node.properties['cloudify']
     cloudify_configuration['cloudify_agent']['agent_key_path'] = \
