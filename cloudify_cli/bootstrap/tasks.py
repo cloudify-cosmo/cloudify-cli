@@ -41,6 +41,7 @@ PROVIDER_RUNTIME_PROPERTY = 'provider'
 MANAGER_IP_RUNTIME_PROPERTY = 'manager_ip'
 MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
 MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
+DEFAULT_REMOTE_AGENT_KEY_PATH = '~/.ssh/agent_key.pem'
 
 PACKAGES_PATH = {
     'cloudify': '/cloudify',
@@ -115,6 +116,9 @@ def stop_docker_service(docker_service_stop_command=None, use_sudo=True):
 def bootstrap(cloudify_packages, agent_local_key_path=None,
               agent_remote_key_path=None, manager_private_ip=None,
               provider_context=None):
+    if agent_remote_key_path is None:
+        agent_remote_key_path = DEFAULT_REMOTE_AGENT_KEY_PATH
+
     global lgr
     lgr = ctx.logger
 
@@ -240,8 +244,7 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
     lgr.info('cloudify agents installation successful.')
     lgr.info('management ip is {0}'.format(manager_ip))
 
-    agent_remote_key_path = _copy_agent_key(agent_local_key_path,
-                                            agent_remote_key_path)
+    _copy_agent_key(agent_local_key_path, agent_remote_key_path)
     _set_manager_endpoint_data()
     _upload_provider_context(agent_remote_key_path, provider_context)
     return True
@@ -305,6 +308,9 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      agent_local_key_path=None, agent_remote_key_path=None,
                      manager_private_ip=None, provider_context=None,
                      docker_service_start_command=None):
+    if agent_remote_key_path is None:
+        agent_remote_key_path = DEFAULT_REMOTE_AGENT_KEY_PATH
+
     if 'containers_started' in ctx.instance.runtime_properties:
         try:
             recover_docker(docker_path, use_sudo, docker_service_start_command)
@@ -413,8 +419,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     backup_vm_files_cmd, home_dir_mount_path = _get_backup_files_cmd()
     # copy agent to host VM. the data container will mount the host VM's
     # home-dir so that all files will be backed up inside the data container.
-    agent_remote_key_path = _copy_agent_key(agent_local_key_path,
-                                            agent_remote_key_path)
+    _copy_agent_key(agent_local_key_path, agent_remote_key_path)
 
     data_container_start_cmd = '{0} && {1} && echo Data-only container' \
                                .format(agent_packages_install_cmd,
@@ -586,15 +591,14 @@ def _handle_security_configuration(blueprint_security_config):
     return container_security_config_path
 
 
-def _copy_agent_key(agent_local_key_path=None,
-                    agent_remote_key_path=None):
-    ctx.logger.info('Copying agent key to management machine')
+def _copy_agent_key(agent_local_key_path, agent_remote_key_path):
     if not agent_local_key_path:
         return
-    agent_remote_key_path = agent_remote_key_path or '~/.ssh/agent_key.pem'
     agent_local_key_path = os.path.expanduser(agent_local_key_path)
+    ctx.logger.info(
+        'Copying agent key to management machine: {0} -> {1}'.format(
+            agent_local_key_path, agent_remote_key_path))
     fabric.api.put(agent_local_key_path, agent_remote_key_path)
-    return agent_remote_key_path
 
 
 def _update_manager_deployment(local_only=False):
