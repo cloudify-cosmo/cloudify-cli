@@ -19,6 +19,7 @@ import urllib
 import urllib2
 import json
 from time import sleep, time
+from StringIO import StringIO
 
 import fabric
 import fabric.api
@@ -40,6 +41,7 @@ PROVIDER_RUNTIME_PROPERTY = 'provider'
 MANAGER_IP_RUNTIME_PROPERTY = 'manager_ip'
 MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
 MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
+DEFAULT_REMOTE_AGENT_KEY_PATH = '~/.ssh/agent_key.pem'
 
 PACKAGES_PATH = {
     'cloudify': '/cloudify',
@@ -114,6 +116,9 @@ def stop_docker_service(docker_service_stop_command=None, use_sudo=True):
 def bootstrap(cloudify_packages, agent_local_key_path=None,
               agent_remote_key_path=None, manager_private_ip=None,
               provider_context=None):
+    if agent_remote_key_path is None:
+        agent_remote_key_path = DEFAULT_REMOTE_AGENT_KEY_PATH
+
     global lgr
     lgr = ctx.logger
 
@@ -239,8 +244,7 @@ def bootstrap(cloudify_packages, agent_local_key_path=None,
     lgr.info('cloudify agents installation successful.')
     lgr.info('management ip is {0}'.format(manager_ip))
 
-    agent_remote_key_path = _copy_agent_key(agent_local_key_path,
-                                            agent_remote_key_path)
+    _copy_agent_key(agent_local_key_path, agent_remote_key_path)
     _set_manager_endpoint_data()
     _upload_provider_context(agent_remote_key_path, provider_context)
     return True
@@ -304,6 +308,9 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      agent_local_key_path=None, agent_remote_key_path=None,
                      manager_private_ip=None, provider_context=None,
                      docker_service_start_command=None):
+    if agent_remote_key_path is None:
+        agent_remote_key_path = DEFAULT_REMOTE_AGENT_KEY_PATH
+
     if 'containers_started' in ctx.instance.runtime_properties:
         try:
             recover_docker(docker_path, use_sudo, docker_service_start_command)
@@ -325,6 +332,23 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
 
     manager_ip = fabric.api.env.host_string
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
+
+    def post_bootstrap_actions(wait_for_services_timeout=180):
+        lgr.info('waiting for cloudify management services to start')
+        started = _wait_for_management(manager_ip,
+                                       timeout=wait_for_services_timeout)
+        if not started:
+            err = 'failed waiting for cloudify management services to start.'
+            lgr.info(err)
+            raise NonRecoverableError(err)
+        _set_manager_endpoint_data()
+        _upload_provider_context(agent_remote_key_path, provider_context)
+        ctx.instance.runtime_properties['containers_started'] = 'True'
+        return True
+
+    if ctx.operation.retry_number > 0:
+        return post_bootstrap_actions(wait_for_services_timeout=15)
+
     docker_exec_command = _install_docker_if_required(
         docker_path,
         use_sudo,
@@ -352,8 +376,8 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         lgr.error(err)
         raise NonRecoverableError(err)
 
-    cloudify_configuration = ctx.node.properties['cloudify']
-    is_cfy_secured = cloudify_configuration.get('secured', False)
+    security_config = ctx.node.properties['cloudify'].get('security', {})
+    security_config_path = _handle_security_configuration(security_config)
 
     cfy_management_options = ('-t '
                               '--volumes-from data '
@@ -366,13 +390,14 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-p 9200:9200 '
                               '-p 8086:8086 '
                               '-e MANAGEMENT_IP={0} '
-                              '-e IS_CFY_SECURED={1} '
+                              '-e MANAGER_REST_SECURITY_CONFIG_PATH={1} '
                               '--restart=always '
                               '-d '
                               'cloudify '
                               '/sbin/my_init'
                               .format(manager_private_ip or
-                                      ctx.instance.host_ip, is_cfy_secured))
+                                      ctx.instance.host_ip,
+                                      security_config_path))
 
     agent_packages = cloudify_packages.get('agents')
     if agent_packages:
@@ -395,8 +420,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     backup_vm_files_cmd, home_dir_mount_path = _get_backup_files_cmd()
     # copy agent to host VM. the data container will mount the host VM's
     # home-dir so that all files will be backed up inside the data container.
-    agent_remote_key_path = _copy_agent_key(agent_local_key_path,
-                                            agent_remote_key_path)
+    _copy_agent_key(agent_local_key_path, agent_remote_key_path)
 
     data_container_start_cmd = '{0} && {1} && echo Data-only container' \
                                .format(agent_packages_install_cmd,
@@ -431,17 +455,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         lgr.error(err)
         raise NonRecoverableError(err)
 
-    lgr.info('waiting for cloudify management services to start')
-    started = _wait_for_management(manager_ip, timeout=180)
-    ctx.instance.runtime_properties['containers_started'] = 'True'
-    if not started:
-        err = 'failed waiting for cloudify management services to start.'
-        lgr.info(err)
-        raise NonRecoverableError(err)
-
-    _set_manager_endpoint_data()
-    _upload_provider_context(agent_remote_key_path, provider_context)
-    return True
+    return post_bootstrap_actions()
 
 
 def recover_docker(docker_path=None, use_sudo=True,
@@ -531,7 +545,7 @@ def _wait_for_management(ip, timeout, port=REST_PORT):
         :param port: port used by the rest service.
         :return: True of False
     """
-    validation_url = 'http://{0}:{1}/blueprints'.format(ip, port)
+    validation_url = 'http://{0}:{1}/version'.format(ip, port)
 
     end = time() + timeout
 
@@ -558,15 +572,34 @@ def _set_manager_endpoint_data():
         fabric.api.env.key_filename
 
 
-def _copy_agent_key(agent_local_key_path=None,
-                    agent_remote_key_path=None):
-    ctx.logger.info('Copying agent key to management machine')
+def _handle_security_configuration(blueprint_security_config):
+    remote_security_config_path = '~/rest-security-config.json'
+    container_security_config_path = '/root/rest-security-config.json'
+    secured_server = blueprint_security_config.get('enabled', False)
+    securest_userstore_driver = blueprint_security_config.get(
+        'userstore_driver', {})
+    securest_authentication_methods = blueprint_security_config.get(
+        'authentication_methods', [])
+    # TODO: this is the place to provide initial validation for the security
+    # related configuration parts.
+    security_config = dict(
+        secured_server=secured_server,
+        securest_userstore_driver=securest_userstore_driver,
+        securest_authentication_methods=securest_authentication_methods)
+    security_config_file_obj = StringIO()
+    json.dump(security_config, security_config_file_obj)
+    fabric.api.put(security_config_file_obj, remote_security_config_path)
+    return container_security_config_path
+
+
+def _copy_agent_key(agent_local_key_path, agent_remote_key_path):
     if not agent_local_key_path:
         return
-    agent_remote_key_path = agent_remote_key_path or '~/.ssh/agent_key.pem'
     agent_local_key_path = os.path.expanduser(agent_local_key_path)
+    ctx.logger.info(
+        'Copying agent key to management machine: {0} -> {1}'.format(
+            agent_local_key_path, agent_remote_key_path))
     fabric.api.put(agent_local_key_path, agent_remote_key_path)
-    return agent_remote_key_path
 
 
 def _update_manager_deployment(local_only=False):
@@ -593,6 +626,7 @@ def _update_manager_deployment(local_only=False):
 
 def _upload_provider_context(remote_agents_private_key_path,
                              provider_context=None):
+    ctx.logger.info('updating provider context on management server...')
     provider_context = provider_context or dict()
     cloudify_configuration = ctx.node.properties['cloudify']
     cloudify_configuration['cloudify_agent']['agent_key_path'] = \

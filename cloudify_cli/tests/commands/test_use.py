@@ -18,6 +18,10 @@ Tests 'cfy use'
 """
 
 from mock import MagicMock
+from mock import patch
+
+from cloudify_rest_client import CloudifyClient
+
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
@@ -47,3 +51,29 @@ class UseTest(CliCommandTest):
         cli_runner.run_cli('cfy use -t 127.0.0.1')
         cwds = self._read_cosmo_wd_settings()
         self.assertEquals('127.0.0.1', cwds.get_management_server())
+
+    def test_secured_use(self):
+        host = '127.0.0.1'
+        username = 'test_username'
+        password = 'test_password'
+        self.client = CloudifyClient(
+            host=host, user=username, password=password)
+        self.client.manager.get_context = MagicMock(
+            return_value={
+                'name': 'name',
+                'context': {}
+            }
+        )
+
+        # run cli use command
+        with patch('cloudify_rest_client.client.HTTPClient._do_request') \
+                as mock_do_request:
+            cli_runner.run_cli('cfy use -t {0}'.format(host))
+
+        # assert Authorization in headers
+        call_args_list = mock_do_request.call_args_list[0][0]
+        headers = {
+            'Content-type': 'application/json',
+            'Authorization': self.client._client.encoded_credentials
+        }
+        self.assertIn(headers, call_args_list)
