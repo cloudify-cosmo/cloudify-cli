@@ -164,7 +164,7 @@ def recover(name='manager',
         manager_node_instance_id = payload['manager_node_instance_id']
 
     env.execute('heal',
-                parameters={'node_id': manager_node_instance_id},
+                parameters={'node_instance_id': manager_node_instance_id},
                 task_retries=task_retries,
                 task_retry_interval=task_retry_interval,
                 task_thread_pool_size=task_thread_pool_size)
