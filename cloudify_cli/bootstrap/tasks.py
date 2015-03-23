@@ -28,7 +28,6 @@ from fabric.context_managers import cd
 from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
-from cloudify_rest_client import CloudifyClient
 
 
 from cloudify_cli import utils
