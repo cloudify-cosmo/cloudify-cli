@@ -18,9 +18,13 @@ import os
 import urllib
 import urllib2
 import json
+import pkgutil
+import tarfile
 from time import sleep, time
 from StringIO import StringIO
+from io import BytesIO
 
+import jinja2
 import fabric
 import fabric.api
 from fabric.context_managers import cd
@@ -375,7 +379,8 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         lgr.error(err)
         raise NonRecoverableError(err)
 
-    security_config = ctx.node.properties['cloudify'].get('security', {})
+    cloudify_config = ctx.node.properties['cloudify']
+    security_config = cloudify_config.get('security', {})
     security_config_path = _handle_security_configuration(security_config)
 
     cfy_management_options = ('-t '
@@ -421,9 +426,14 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     # home-dir so that all files will be backed up inside the data container.
     _copy_agent_key(agent_local_key_path, agent_remote_key_path)
 
-    data_container_start_cmd = '{0} && {1} && echo Data-only container' \
+    plugins_config = cloudify_config.get('plugins', {})
+    install_plugins_cmd = _handle_plugins_and_create_install_cmd(
+        plugins_config)
+
+    data_container_start_cmd = '{0} && {1} && {2} && echo Data-only container'\
                                .format(agent_packages_install_cmd,
-                                       backup_vm_files_cmd)
+                                       backup_vm_files_cmd,
+                                       install_plugins_cmd)
     data_container_options = ('-t '
                               '{0} '
                               '-v ~/:{1} '
@@ -431,6 +441,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-v /etc/init.d '
                               '-v /etc/default '
                               '-v /opt/manager/resources '
+                              '-v /opt/manager/env '
                               '-v /etc/service/riemann '
                               '-v /etc/service/elasticsearch/data '
                               '-v /etc/service/elasticsearch/logs '
@@ -514,6 +525,49 @@ def _get_install_agent_pkgs_cmd(agent_packages,
                                   agents_pkg_path)
 
     return '{0} {1}'.format(download_agents_cmd, install_agents_cmd)
+
+
+def _handle_plugins_and_create_install_cmd(plugins_config):
+    # no plugins configured, run a stub 'true' command
+    if not plugins_config:
+        return 'true'
+
+    cloudify_plugins = 'cloudify/plugins'
+    install_plugins = 'install_plugins.sh'
+
+    # create location to place tar-gzipped plugins in
+    _run_command('mkdir -p ~/{0}'.format(cloudify_plugins))
+
+    # for each plugin tha is included in the blueprint, tar-gzip it
+    # and place it in the plugins dir on the host
+    for name, plugin in plugins_config.get('rest_service', {}).items():
+        source = plugin['source']
+        if source.split('://')[0] in ['http', 'https']:
+            continue
+
+        # temporary workaround to resolve absolute file path
+        # to installed plugin using internal local workflows storage
+        # information
+        plugin_path = os.path.join(ctx._endpoint.storage.resources_root,
+                                   source)
+        file_obj = BytesIO()
+        with tarfile.open(fileobj=file_obj, mode='w:gz') as tar:
+            tar.add(plugin_path, arcname=name)
+        file_obj.seek(0)
+        tar_remote_path = '{0}/{1}.tar.gz'.format(cloudify_plugins, name)
+        fabric.api.put(file_obj, '~/{0}'.format(tar_remote_path))
+        plugin['source'] = '/root/{0}'.format(tar_remote_path)
+
+    # render script template and copy it to host's home dir
+    script_template = pkgutil.get_data('cloudify_cli.bootstrap.resources',
+                                       'install_plugins.sh.template')
+    script = jinja2.Template(script_template).render(plugins=plugins_config)
+    script_content = StringIO(script)
+    fabric.api.put(script_content, '~/{0}'.format(install_plugins))
+    _run_command('chmod +x ~/{0}'.format(install_plugins))
+    # path to script on container after host's home has been copied to
+    # container's home
+    return '/root/{0}'.format(install_plugins)
 
 
 def _is_docker_installed(docker_path, use_sudo):

@@ -1,0 +1,10 @@
+#!/bin/bash -e
+
+echo "Installing rest service plugins"
+source /opt/manager/env/bin/activate
+{% for name, plugin in plugins.rest_service.iteritems() %}
+
+echo "Installing {{ name }} plugin in rest service virtual environment"
+pip install {{ plugin.source }}
+
+{% endfor %}

@@ -27,6 +27,7 @@ setup(
               'cloudify_cli.config'],
     package_data={
         'cloudify_cli': ['VERSION', 'resources/config.yaml'],
+        'cloudify_cli.bootstrap.resources': ['install_plugins.sh.template']
     },
     license='LICENSE',
     description='Cloudify CLI',
