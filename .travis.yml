@@ -7,7 +7,7 @@ env:
   - TOX_ENV=flake8
   - TOX_ENV=py27
 install:
-  - pip install tox
+  - pip install tox==1.9.0
 script:
   - tox -e $TOX_ENV
 deploy:
