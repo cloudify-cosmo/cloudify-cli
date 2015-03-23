@@ -642,7 +642,7 @@ def _upload_provider_context(remote_agents_private_key_path,
     cloudify_configuration['manager_deployment'] = _dump_manager_deployment()
 
     manager_ip = fabric.api.env.host_string
-    rest_client = CloudifyClient(manager_ip, REST_PORT)
+    rest_client = utils.get_rest_client(manager_ip, REST_PORT)
     rest_client.manager.create_context('provider',
                                        provider_context)
 
