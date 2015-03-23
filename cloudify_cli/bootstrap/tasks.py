@@ -20,9 +20,9 @@ import urllib2
 import json
 import pkgutil
 import tarfile
+import tempfile
 from time import sleep, time
 from StringIO import StringIO
-from io import BytesIO
 
 import jinja2
 import fabric
@@ -550,13 +550,14 @@ def _handle_plugins_and_create_install_cmd(plugins_config):
         # information
         plugin_path = os.path.join(ctx._endpoint.storage.resources_root,
                                    source)
-        file_obj = BytesIO()
-        with tarfile.open(fileobj=file_obj, mode='w:gz') as tar:
-            tar.add(plugin_path, arcname=name)
-        file_obj.seek(0)
-        tar_remote_path = '{0}/{1}.tar.gz'.format(cloudify_plugins, name)
-        fabric.api.put(file_obj, '~/{0}'.format(tar_remote_path))
-        plugin['source'] = '/root/{0}'.format(tar_remote_path)
+
+        with tempfile.TemporaryFile() as fileobj:
+            with tarfile.open(fileobj=fileobj, mode='w:gz') as tar:
+                tar.add(plugin_path, arcname=name)
+            fileobj.seek(0)
+            tar_remote_path = '{0}/{1}.tar.gz'.format(cloudify_plugins, name)
+            fabric.api.put(fileobj, '~/{0}'.format(tar_remote_path))
+            plugin['source'] = '/root/{0}'.format(tar_remote_path)
 
     # render script template and copy it to host's home dir
     script_template = pkgutil.get_data('cloudify_cli.bootstrap.resources',
