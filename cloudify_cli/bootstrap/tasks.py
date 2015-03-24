@@ -28,8 +28,6 @@ from fabric.context_managers import cd
 from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
-
-
 from cloudify_cli import utils
 
 
@@ -640,14 +638,34 @@ def _upload_provider_context(remote_agents_private_key_path,
     # deployments to the manager.
     cloudify_configuration['manager_deployment'] = _dump_manager_deployment()
 
-    manager_ip = fabric.api.env.host_string
-    rest_client = utils.get_rest_client(manager_ip, REST_PORT)
-    rest_client.manager.create_context('provider',
-                                       provider_context)
+    remote_provider_context_file = 'provider-context.json'
+    provider_context_json_file = StringIO()
+    full_provider_context = {
+        'name': 'provider',
+        'context': provider_context
+    }
+    json.dump(full_provider_context, provider_context_json_file)
+
+    remote_home_path = _run_command("echo $HOME", shell_escape=False)
+    remote_provider_context_file_full_path = '{0}/{1}'.format(
+        remote_home_path, remote_provider_context_file)
+
+    # placing provider context file in the manager's host
+    fabric.api.put(provider_context_json_file,
+                   remote_provider_context_file_full_path)
+
+    upload_provider_context_cmd = \
+        'curl --fail -XPOST localhost:8101/provider/context -H "Content-Type:'\
+        ' application/json" -d @{0}'.format(
+            remote_provider_context_file_full_path)
+
+    # uploading the provider context to the manager from
+    # within the manager's host
+    _run_command(upload_provider_context_cmd)
 
 
-def _run_command(command):
-    return fabric.api.run(command)
+def _run_command(command, shell_escape=None):
+    return fabric.api.run(command, shell_escape=shell_escape)
 
 
 def _run_command_in_cfy(command, docker_path=None, use_sudo=True):
