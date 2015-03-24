@@ -557,7 +557,7 @@ def _handle_plugins_and_create_install_cmd(plugins_config):
             fileobj.seek(0)
             tar_remote_path = '{0}/{1}.tar.gz'.format(cloudify_plugins, name)
             fabric.api.put(fileobj, '~/{0}'.format(tar_remote_path))
-            plugin['source'] = '/root/{0}'.format(tar_remote_path)
+            plugin['source'] = 'file:///root/{0}'.format(tar_remote_path)
 
     # render script template and copy it to host's home dir
     script_template = pkgutil.get_data('cloudify_cli.bootstrap.resources',

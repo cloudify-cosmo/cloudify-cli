@@ -2,9 +2,25 @@
 
 echo "Installing rest service plugins"
 source /opt/manager/env/bin/activate
+
+# Temporary until it is packaged
+plugin_installer_dir='/opt/manager/cloudify-manager/plugins/plugin-installer'
+pip install ${plugin_installer_dir} -r ${plugin_installer_dir}/dev-requirements.txt
+
 {% for name, plugin in plugins.rest_service.iteritems() %}
 
 echo "Installing {{ name }} plugin in rest service virtual environment"
-pip install {{ plugin.source }}
+
+extract_plugin_script="\
+import sys;
+from plugin_installer.tasks import extract_plugin_dir;\
+sys.stdout.write(extract_plugin_dir('{{ plugin.source }}'));\
+"
+
+plugin_dir=$(python -c "${extract_plugin_script}")
+
+pushd ${plugin_dir}
+pip install . {{ plugin.install_args }}
+popd
 
 {% endfor %}
