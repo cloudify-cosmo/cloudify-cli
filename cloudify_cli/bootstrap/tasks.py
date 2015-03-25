@@ -638,7 +638,8 @@ def _upload_provider_context(remote_agents_private_key_path,
     # deployments to the manager.
     cloudify_configuration['manager_deployment'] = _dump_manager_deployment()
 
-    remote_provider_context_file = 'provider-context.json'
+    remote_provider_context_file = '~/provider-context.json'
+    container_provider_context_file = '/tmp/home/provider-context.json'
     provider_context_json_file = StringIO()
     full_provider_context = {
         'name': 'provider',
@@ -646,21 +647,16 @@ def _upload_provider_context(remote_agents_private_key_path,
     }
     json.dump(full_provider_context, provider_context_json_file)
 
-    remote_home_path = _run_command("echo $HOME", shell_escape=False)
-    remote_provider_context_file_full_path = '{0}/{1}'.format(
-        remote_home_path, remote_provider_context_file)
-
     # placing provider context file in the manager's host
     fabric.api.put(provider_context_json_file,
-                   remote_provider_context_file_full_path)
+                   remote_provider_context_file)
 
     upload_provider_context_cmd = \
-        'curl --fail -XPOST localhost:8101/provider/context -H "Content-Type:'\
-        ' application/json" -d @{0}'.format(
-            remote_provider_context_file_full_path)
+        'sudo docker exec -t cfy curl --fail -XPOST ' \
+        'localhost:8101/provider/context -H "Content-Type: application/json" '\
+        '-d @{0}'.format(container_provider_context_file)
 
-    # uploading the provider context to the manager from
-    # within the manager's host
+    # uploading the provider context to the REST service
     _run_command(upload_provider_context_cmd)
 
 
