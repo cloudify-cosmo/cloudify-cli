@@ -652,23 +652,25 @@ def _upload_provider_context(remote_agents_private_key_path,
                    remote_provider_context_file)
 
     upload_provider_context_cmd = \
-        'sudo docker exec -t cfy curl --fail -XPOST ' \
-        'localhost:8101/provider/context -H "Content-Type: application/json" '\
-        '-d @{0}'.format(container_provider_context_file)
+        'curl --fail -XPOST localhost:8101/provider/context -H ' \
+        '"Content-Type: application/json" -d @{0}'.format(
+            container_provider_context_file)
 
     # uploading the provider context to the REST service
-    _run_command(upload_provider_context_cmd)
+    _run_command_in_cfy(upload_provider_context_cmd, terminal=True)
 
 
 def _run_command(command, shell_escape=None):
     return fabric.api.run(command, shell_escape=shell_escape)
 
 
-def _run_command_in_cfy(command, docker_path=None, use_sudo=True):
+def _run_command_in_cfy(command, docker_path=None, use_sudo=True,
+                        terminal=False):
     if not docker_path:
         docker_path = 'docker'
-    full_command = '{0} exec cfy {1}'.format(
-        docker_path, command)
+    exec_command = 'exec -t' if terminal else 'exec'
+    full_command = '{0} {1} cfy {2}'.format(
+        docker_path, exec_command, command)
     if use_sudo:
         full_command = 'sudo {0}'.format(full_command)
     _run_command(full_command)
