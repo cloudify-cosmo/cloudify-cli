@@ -339,8 +339,12 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
             lgr.info(err)
             raise NonRecoverableError(err)
         _set_manager_endpoint_data()
-        _upload_provider_context(agent_remote_key_path, provider_context)
         ctx.instance.runtime_properties['containers_started'] = 'True'
+        try:
+            _upload_provider_context(agent_remote_key_path, provider_context)
+        except:
+            del ctx.instance.runtime_properties['containers_started']
+            raise
         return True
 
     if ctx.operation.retry_number > 0:
