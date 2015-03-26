@@ -430,6 +430,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '{0} '
                               '-v ~/:{1} '
                               '-v /root '
+                              '--privileged=true '
                               '-v /etc/init.d '
                               '-v /etc/default '
                               '-v /opt/manager/resources '
