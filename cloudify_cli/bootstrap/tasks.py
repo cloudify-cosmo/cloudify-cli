@@ -32,8 +32,6 @@ from fabric.context_managers import cd
 from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
-
-
 from cloudify_cli import utils
 
 
@@ -345,8 +343,12 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
             lgr.info(err)
             raise NonRecoverableError(err)
         _set_manager_endpoint_data()
-        _upload_provider_context(agent_remote_key_path, provider_context)
         ctx.instance.runtime_properties['containers_started'] = 'True'
+        try:
+            _upload_provider_context(agent_remote_key_path, provider_context)
+        except:
+            del ctx.instance.runtime_properties['containers_started']
+            raise
         return True
 
     if ctx.operation.retry_number > 0:
@@ -695,21 +697,39 @@ def _upload_provider_context(remote_agents_private_key_path,
     # deployments to the manager.
     cloudify_configuration['manager_deployment'] = _dump_manager_deployment()
 
-    manager_ip = fabric.api.env.host_string
-    rest_client = utils.get_rest_client(manager_ip, REST_PORT)
-    rest_client.manager.create_context('provider',
-                                       provider_context)
+    remote_provider_context_file = '~/provider-context.json'
+    container_provider_context_file = '/tmp/home/provider-context.json'
+    provider_context_json_file = StringIO()
+    full_provider_context = {
+        'name': 'provider',
+        'context': provider_context
+    }
+    json.dump(full_provider_context, provider_context_json_file)
+
+    # placing provider context file in the manager's host
+    fabric.api.put(provider_context_json_file,
+                   remote_provider_context_file)
+
+    upload_provider_context_cmd = \
+        'curl --fail -XPOST localhost:8101/provider/context -H ' \
+        '"Content-Type: application/json" -d @{0}'.format(
+            container_provider_context_file)
+
+    # uploading the provider context to the REST service
+    _run_command_in_cfy(upload_provider_context_cmd, terminal=True)
 
 
-def _run_command(command):
-    return fabric.api.run(command)
+def _run_command(command, shell_escape=None):
+    return fabric.api.run(command, shell_escape=shell_escape)
 
 
-def _run_command_in_cfy(command, docker_path=None, use_sudo=True):
+def _run_command_in_cfy(command, docker_path=None, use_sudo=True,
+                        terminal=False):
     if not docker_path:
         docker_path = 'docker'
-    full_command = '{0} exec cfy {1}'.format(
-        docker_path, command)
+    exec_command = 'exec -t' if terminal else 'exec'
+    full_command = '{0} {1} cfy {2}'.format(
+        docker_path, exec_command, command)
     if use_sudo:
         full_command = 'sudo {0}'.format(full_command)
     _run_command(full_command)
