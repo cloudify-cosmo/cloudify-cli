@@ -3,7 +3,7 @@
 echo "Installing rest service plugins"
 source /opt/manager/env/bin/activate
 
-{% for name, plugin in plugins.rest_service.iteritems() %}
+{% for name, plugin in plugins.iteritems() %}
 
 echo "Installing {{ name }} plugin in rest service virtual environment"
 
