@@ -304,7 +304,7 @@ def _install_docker_if_required(docker_path, use_sudo,
 def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      agent_local_key_path=None, agent_remote_key_path=None,
                      manager_private_ip=None, provider_context=None,
-                     docker_service_start_command=None):
+                     docker_service_start_command=None, privileged=False):
     if agent_remote_key_path is None:
         agent_remote_key_path = DEFAULT_REMOTE_AGENT_KEY_PATH
 
@@ -382,6 +382,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
 
     cfy_management_options = ('-t '
                               '--volumes-from data '
+                              '--privileged={0} '
                               '-p 80:80 '
                               '-p 5555:5555 '
                               '-p 5672:5672 '
@@ -390,13 +391,14 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-p 8101:8101 '
                               '-p 9200:9200 '
                               '-p 8086:8086 '
-                              '-e MANAGEMENT_IP={0} '
-                              '-e MANAGER_REST_SECURITY_CONFIG_PATH={1} '
+                              '-e MANAGEMENT_IP={1} '
+                              '-e MANAGER_REST_SECURITY_CONFIG_PATH={2} '
                               '--restart=always '
                               '-d '
                               'cloudify '
                               '/sbin/my_init'
-                              .format(manager_private_ip or
+                              .format(privileged,
+                                      manager_private_ip or
                                       ctx.instance.host_ip,
                                       security_config_path))
 
@@ -430,7 +432,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '{0} '
                               '-v ~/:{1} '
                               '-v /root '
-                              '--privileged=true '
+                              '--privileged={2} '
                               '-v /etc/init.d '
                               '-v /etc/default '
                               '-v /opt/manager/resources '
@@ -439,9 +441,10 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-v /etc/service/elasticsearch/logs '
                               '-v /opt/influxdb/shared/data '
                               '-v /var/log/cloudify '
-                              'cloudify sh -c \'{2}\''
+                              'cloudify sh -c \'{3}\''
                               .format(agent_pkgs_mount_options,
                                       home_dir_mount_path,
+                                      privileged,
                                       data_container_start_cmd))
 
     try:
