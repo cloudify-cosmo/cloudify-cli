@@ -543,33 +543,26 @@ def _is_docker_installed(docker_path, use_sudo):
         return False
 
 
-def _wait_for_management(ip, timeout, port=80):
+def _wait_for_management(ip, timeout, port=REST_PORT):
     """ Wait for url to become available
         :param ip: the manager IP
         :param timeout: in seconds
         :param port: port used by the rest service.
         :return: True of False
     """
-    status_url = 'http://{0}:{1}/status'.format(ip, port)
+    validation_url = 'http://{0}:{1}/version'.format(ip, port)
 
     end = time() + timeout
 
     while end - time() >= 0:
         try:
-            response = urllib.urlopen(status_url)
-            if response.getcode() == 200:
-                body = json.loads(response.readlines()[0])
-                status = 'up'
-                for service in body['services']:
-                    service_instance = service['instances'][0]
-                    instance_state = service_instance['state']
-                    if instance_state != 'up':
-                        status = 'down'
-                if status == 'up':
-                    return True
+            status = urllib.urlopen(validation_url).getcode()
+            if status == 200:
+                return True
+
         except IOError as e:
             lgr.debug('error waiting for {0}. reason: {1}'
-                      .format(status_url, e.message))
+                      .format(validation_url, e.message))
         sleep(5)
 
     return False
