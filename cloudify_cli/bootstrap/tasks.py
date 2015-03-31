@@ -47,6 +47,9 @@ lgr = None
 
 @operation
 def creation_validation(cloudify_packages, **kwargs):
+    if not isinstance(cloudify_packages, dict):
+        raise NonRecoverableError('"cloudify_packages" must be a '
+                                  'dictionary property')
     docker_packages = cloudify_packages.get('docker')
 
     if not docker_packages or not isinstance(docker_packages, dict):
