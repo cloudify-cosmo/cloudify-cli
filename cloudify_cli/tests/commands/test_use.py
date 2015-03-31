@@ -65,15 +65,20 @@ class UseTest(CliCommandTest):
             }
         )
 
+        self.headers = None
+
+        def mock_do_request(*_, **kwargs):
+            self.headers = kwargs.get('headers')
+            return 'success'
+
         # run cli use command
-        with patch('cloudify_rest_client.client.HTTPClient._do_request') \
-                as mock_do_request:
+        with patch('cloudify_rest_client.client.HTTPClient._do_request',
+                   new=mock_do_request):
             cli_runner.run_cli('cfy use -t {0}'.format(host))
 
         # assert Authorization in headers
-        call_args_list = mock_do_request.call_args_list[0][0]
-        headers = {
+        expected_headers = {
             'Content-type': 'application/json',
             'Authorization': self.client._client.encoded_credentials
         }
-        self.assertIn(headers, call_args_list)
+        self.assertEqual(expected_headers, self.headers)
