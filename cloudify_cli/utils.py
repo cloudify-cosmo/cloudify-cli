@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#        http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,7 +31,8 @@ from prettytable import PrettyTable
 
 from cloudify_rest_client import CloudifyClient
 
-from cloudify_cli.constants import DEFAULT_REST_PORT
+from cloudify_cli.constants import \
+    DEFAULT_REST_PORT, CLOUDIFY_SSL_CERT, CLOUDIFY_SSL_TRUST_ALL
 from cloudify_cli.constants import CLOUDIFY_PASSWORD_ENV
 from cloudify_cli.constants import CLOUDIFY_USERNAME_ENV
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_FILE_NAME
@@ -49,7 +50,6 @@ DEFAULT_LOG_FILE = os.path.expanduser(
 
 
 class ProviderConfig(dict):
-
     @property
     def resources_prefix(self):
         return self.get('cloudify', {}).get('resources_prefix', '')
@@ -146,7 +146,7 @@ def inputs_to_dict(resource, resource_name):
         msg = "Invalid input: {0}. {1} must represent a dictionary. Valid " \
               "values can either be a path to a YAML file, a string " \
               "formatted as YAML or a string formatted as " \
-              "key1=value1;key2=value2"\
+              "key1=value1;key2=value2" \
             .format(resource, resource_name)
         raise CloudifyCliError(msg)
 
@@ -200,7 +200,6 @@ def get_configuration_path():
 
 
 def dump_configuration_file():
-
     config = pkg_resources.resource_string(
         cloudify_cli.__name__,
         'resources/config.yaml')
@@ -214,7 +213,6 @@ def dump_configuration_file():
 
 
 def dump_cloudify_working_dir_settings(cosmo_wd_settings=None, update=False):
-
     if cosmo_wd_settings is None:
         cosmo_wd_settings = CloudifyWorkingDirectorySettings()
     if update:
@@ -248,7 +246,6 @@ def get_cwd():
 
 
 def get_rest_client(manager_ip=None, rest_port=None):
-
     if not manager_ip:
         manager_ip = get_management_server_ip()
 
@@ -259,8 +256,14 @@ def get_rest_client(manager_ip=None, rest_port=None):
 
     password = get_password()
 
-    return CloudifyClient(host=manager_ip, port=rest_port,
-                          user=username, password=password)
+    cert = get_ssl_cert()
+
+    trust_all = get_ssl_trust_all()
+
+    return CloudifyClient(
+        host=manager_ip, port=rest_port,
+        user=username, password=password,
+        cert=cert, trust_all=trust_all)
 
 
 def get_rest_port():
@@ -269,7 +272,6 @@ def get_rest_port():
 
 
 def get_management_server_ip():
-
     cosmo_wd_settings = load_cloudify_working_dir_settings()
     management_ip = cosmo_wd_settings.get_management_server()
     if management_ip:
@@ -287,6 +289,18 @@ def get_username():
 
 def get_password():
     return os.environ.get(CLOUDIFY_PASSWORD_ENV)
+
+
+def get_ssl_cert():
+    return os.environ.get(CLOUDIFY_SSL_CERT)
+
+
+def get_ssl_trust_all():
+    trust_all = os.environ.get(CLOUDIFY_SSL_TRUST_ALL)
+    if not trust_all or trust_all.lower() == 'false':
+        return False
+    # CLOUDIFY_SSL_TRUST_ALL env declared with some value and it is not false
+    return True
 
 
 def print_table(title, tb):
@@ -366,7 +380,6 @@ def get_provider_module(provider_name):
 
 
 def read_config(config_file_path, provider_dir):
-
     logger = get_logger()
 
     def _deep_merge_dictionaries(overriding_dict, overridden_dict):
@@ -435,7 +448,6 @@ def get_version_data():
 
 
 def table(cols, data, defaults=None):
-
     """
     Return a new PrettyTable instance representing the list.
 
@@ -468,7 +480,6 @@ def table(cols, data, defaults=None):
 
 
 class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
-
     yaml_tag = u'!WD_Settings'
     yaml_loader = yaml.Loader
 
