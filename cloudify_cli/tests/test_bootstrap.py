@@ -99,14 +99,3 @@ class CliBootstrapUnitTests(unittest.TestCase):
             self.assertIn(
                 '"docker" must be a non-empty dictionary property under '
                 '"cloudify_packages"', ex.message)
-
-    def test_creation_validation_docker_and_server(self):
-        packages = {
-            "docker": {"packages": "http://www.x.com/x.tar"},
-            "server": {"packages": "http://www.x.com/x.deb"}
-        }
-        try:
-            tasks.creation_validation(packages)
-        except NonRecoverableError as ex:
-            self.assertIn(
-                'must have exactly one of "server" and "docker"', ex.message)
