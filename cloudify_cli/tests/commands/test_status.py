@@ -35,7 +35,7 @@ class StatusTest(CliCommandTest):
     def test_status_no_management_server_defined(self):
         # running a command which requires a target management server without
         # first calling "cfy use" or providing a target server explicitly
-        cli_runner.run_cli('cfy init -p mock_provider')
+        cli_runner.run_cli('cfy init')
         self._assert_ex('cfy status',
                         "Must either first run 'cfy use' command")
 

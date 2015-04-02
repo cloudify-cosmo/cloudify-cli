@@ -28,53 +28,20 @@ from cloudify_cli import utils
 
 class InitTest(CliCommandTest):
 
-    def test_init_explicit_provider_name(self):
-        cli_runner.run_cli('cfy init -p mock_provider')
-        self.assertEquals(
-            'mock_provider',
-            self._read_cosmo_wd_settings().get_provider())
-
-    def test_init_implicit_provider_name(self):
-        # the actual provider name
-        # is 'cloudify_mock_provider_with_cloudify_prefix'
-        cli_runner.run_cli('cfy init -p mock_provider_with_cloudify_prefix -v')
-        self.assertEquals(
-            'cloudify_mock_provider_with_cloudify_prefix',
-            self._read_cosmo_wd_settings().get_provider())
-
-    def test_init_nonexistent_provider(self):
-        self._assert_ex('cfy init -p mock_provider3',
-                        'Could not import module mock_provider3')
-
     def test_init_initialized_directory(self):
         self._create_cosmo_wd_settings()
-        self._assert_ex('cfy init -p mock_provider',
+        self._assert_ex('cfy init',
                         'Current directory is already initialized')
 
-    def test_init_existing_provider_config_no_overwrite(self):
-        cli_runner.run_cli('cfy init -p mock_provider -v')
-        os.remove(os.path.join(utils.get_cwd(),
-                               CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-                               CLOUDIFY_WD_SETTINGS_FILE_NAME))
-        self._assert_ex(
-            'cfy init -p mock_provider',
-            'already contains a provider configuration file')
-
-    def test_init_overwrite_existing_provider_config(self):
-        cli_runner.run_cli('cfy init -p mock_provider')
-        shutil.rmtree(os.path.join(utils.get_cwd(),
-                                   CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME))
-        cli_runner.run_cli('cfy init -p mock_provider -r')
-
-    def test_init_overwrite_existing_provider_config_with_cloudify_file(self):
+    def test_init_overwrite(self):
         # ensuring the init with overwrite command also works when the
         # directory already contains a ".cloudify" file
-        cli_runner.run_cli('cfy init -p mock_provider')
-        cli_runner.run_cli('cfy init -p mock_provider -r')
+        cli_runner.run_cli('cfy init')
+        cli_runner.run_cli('cfy init -r')
 
     def test_init_overwrite_on_initial_init(self):
         # simply verifying the overwrite flag doesn't break the first init
-        cli_runner.run_cli('cfy init -p mock_provider -r')
+        cli_runner.run_cli('cfy init -r')
 
     def test_no_init(self):
         self._assert_ex('cfy bootstrap',
