@@ -16,14 +16,8 @@
 """
 Tests 'cfy init'
 """
-import os
-import shutil
-
-from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME
-from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_FILE_NAME
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
-from cloudify_cli import utils
 
 
 class InitTest(CliCommandTest):
