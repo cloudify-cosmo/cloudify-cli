@@ -26,12 +26,14 @@ import tempfile
 import getpass
 from jinja2.environment import Template
 from contextlib import contextmanager
+from itsdangerous import base64_encode
 from copy import deepcopy
 from prettytable import PrettyTable
 
 from cloudify_rest_client import CloudifyClient
 
 from cloudify_cli.constants import DEFAULT_REST_PORT
+from cloudify_cli.constants import CLOUDIFY_AUTHENTICATION_HEADER
 from cloudify_cli.constants import CLOUDIFY_PASSWORD_ENV
 from cloudify_cli.constants import CLOUDIFY_USERNAME_ENV
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_FILE_NAME
@@ -249,6 +251,8 @@ def get_cwd():
 
 def get_rest_client(manager_ip=None, rest_port=None):
 
+    headers = None
+
     if not manager_ip:
         manager_ip = get_management_server_ip()
 
@@ -256,11 +260,12 @@ def get_rest_client(manager_ip=None, rest_port=None):
         rest_port = get_rest_port()
 
     username = get_username()
-
     password = get_password()
+    if username and password:
+        credentials = '{0}:{1}'.format(username, password)
+        headers = {CLOUDIFY_AUTHENTICATION_HEADER: base64_encode(credentials)}
 
-    return CloudifyClient(host=manager_ip, port=rest_port,
-                          user=username, password=password)
+    return CloudifyClient(host=manager_ip, port=rest_port, headers=headers)
 
 
 def get_rest_port():

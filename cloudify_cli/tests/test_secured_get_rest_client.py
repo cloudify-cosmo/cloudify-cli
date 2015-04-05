@@ -20,6 +20,7 @@ import unittest
 from cloudify_cli import utils
 from cloudify_cli.constants import CLOUDIFY_USERNAME_ENV
 from cloudify_cli.constants import CLOUDIFY_PASSWORD_ENV
+from cloudify_cli.constants import CLOUDIFY_AUTHENTICATION_HEADER
 
 
 class TestGetRestClient(unittest.TestCase):
@@ -35,4 +36,5 @@ class TestGetRestClient(unittest.TestCase):
     def test_get_rest_client(self):
         client = utils.get_rest_client(
             manager_ip='localhost', rest_port=80)
-        self.assertIsNotNone(client._client.encoded_credentials)
+        self.assertIsNotNone(
+            client._client.headers[CLOUDIFY_AUTHENTICATION_HEADER])

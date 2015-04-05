@@ -51,6 +51,7 @@ setup(
         'jsonschema==2.3.0',
         'PrettyTable>=0.7,<0.8',
         'ansicolors==1.0.2',
-        'jinja2==2.7.2'
+        'jinja2==2.7.2',
+        'itsdangerous==0.24',
     ]
 )
