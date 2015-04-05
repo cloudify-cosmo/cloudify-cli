@@ -539,7 +539,7 @@ def parser_config():
                 'handler': cfy.ssh
             },
             'bootstrap': {
-                'help': 'Bootstrap Cloudify on the currently active provider',
+                'help': 'Bootstrap a Cloudify management environment',
                 'arguments': {
                     '-p,--blueprint-path': {
                         'dest': 'blueprint_path',
@@ -547,13 +547,6 @@ def parser_config():
                         'default': None,
                         'type': str,
                         'help': 'Path to a manager blueprint'
-                    },
-                    '-c,--config-file': {
-                        'dest': 'config_file_path',
-                        'metavar': 'CONFIG_FILE',
-                        'default': None,
-                        'type': str,
-                        'help': 'Path to a provider configuration file (DEPRECATED: provider api)'
                     },
                     '-i,--inputs': {
                         'metavar': 'INPUTS',
@@ -614,13 +607,6 @@ def parser_config():
             'teardown': {
                 'help': 'Teardown Cloudify',
                 'arguments': {
-                    '-c,--config-file': {
-                        'dest': 'config_file_path',
-                        'metavar': 'CONFIG_FILE',
-                        'default': None,
-                        'type': str,
-                        'help': 'Path to a provider configuration file (DEPRECATED: provider api)'
-                    },
                     '--ignore-deployments': {
                         'dest': 'ignore_deployments',
                         'action': 'store_true',
@@ -688,12 +674,6 @@ def parser_config():
                         'dest': 'management_ip',
                         'required': True
                     },
-                    '--provider': {
-                        'help': 'Use deprecated provider api',
-                        'default': False,
-                        'dest': 'provider',
-                        'action': 'store_true'
-                    },
                     '--port': {
                         'help': 'Specify the rest server port',
                         'default': DEFAULT_REST_PORT,
@@ -704,15 +684,8 @@ def parser_config():
                 'handler': cfy.use
             },
             'init': {
-                'help': 'Initialize configuration files for a specific cloud provider',
+                'help': 'Initialize cfy work environment',
                 'arguments': {
-                    '-p,--provider': {
-                        'metavar': 'PROVIDER',
-                        'type': str,
-                        'dest': 'provider',
-                        'help': 'Command for initializing configuration files for a'
-                                ' specific provider'
-                    },
                     '-r,--reset-config': {
                         'dest': 'reset_config',
                         'action': 'store_true',

@@ -19,14 +19,12 @@ Handles 'cfy bootstrap'
 
 import sys
 
-from cloudify_cli import provider_common
 from cloudify_cli import utils
 from cloudify_cli.bootstrap import bootstrap as bs
 from cloudify_cli.logger import get_logger
 
 
-def bootstrap(config_file_path,
-              keep_up,
+def bootstrap(keep_up,
               validate_only,
               skip_validations,
               blueprint_path,
@@ -36,17 +34,6 @@ def bootstrap(config_file_path,
               task_retry_interval,
               task_thread_pool_size):
     logger = get_logger()
-    settings = utils.load_cloudify_working_dir_settings()
-    if settings.get_is_provider_config():
-        if blueprint_path or inputs:
-            raise ValueError(
-                'the "blueprint_path" and "inputs" parameters '
-                'are not to be used with the deprecated provider API')
-        return provider_common.provider_bootstrap(config_file_path,
-                                                  keep_up,
-                                                  validate_only,
-                                                  skip_validations)
-
     env_name = 'manager'
 
     # verifying no environment exists from a previous bootstrap
