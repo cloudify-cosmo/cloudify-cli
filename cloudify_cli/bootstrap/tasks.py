@@ -16,7 +16,6 @@
 
 import os
 import urllib
-import urllib2
 import json
 import pkgutil
 import tarfile
@@ -27,7 +26,6 @@ from StringIO import StringIO
 import jinja2
 import fabric
 import fabric.api
-from fabric.context_managers import cd
 
 from cloudify import ctx
 from cloudify.decorators import operation
@@ -44,43 +42,22 @@ MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
 MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
 DEFAULT_REMOTE_AGENT_KEY_PATH = '~/.ssh/agent_key.pem'
 
-PACKAGES_PATH = {
-    'cloudify': '/cloudify',
-    'core': '/cloudify-core',
-    'components': '/cloudify-components',
-    'ui': '/cloudify-ui',
-    'agents': '/cloudify-agents'
-}
-
-DISTRO_EXT = {
-    'Ubuntu': '.deb',
-    'centos': '.rpm',
-    'xitUbuntu': '.deb'
-}
-
 lgr = None
 
 
 @operation
 def creation_validation(cloudify_packages, **kwargs):
-    server_packages = cloudify_packages.get('server')
+    if not isinstance(cloudify_packages, dict):
+        raise NonRecoverableError('"cloudify_packages" must be a '
+                                  'dictionary property')
     docker_packages = cloudify_packages.get('docker')
 
-    if not ((server_packages is None) ^ (docker_packages is None)):
+    if not docker_packages or not isinstance(docker_packages, dict):
         raise NonRecoverableError(
-            'must have exactly one of "server" and "docker" properties under '
+            '"docker" must be a non-empty dictionary property under '
             '"cloudify_packages"')
 
-    manager_packages = docker_packages if server_packages is None else \
-        server_packages
-
-    if not manager_packages or not isinstance(manager_packages, dict):
-        raise NonRecoverableError(
-            '"{0}" must be a non-empty dictionary property under '
-            '"cloudify_packages"'.format(
-                'docker' if server_packages is None else 'server'))
-
-    packages_urls = manager_packages.values()
+    packages_urls = docker_packages.values()
     agent_packages = cloudify_packages.get('agents', {})
     if not isinstance(agent_packages, dict):
         raise NonRecoverableError('"cloudify_packages.agents" must be a '
@@ -112,143 +89,6 @@ def stop_docker_service(docker_service_stop_command=None, use_sudo=True):
     # /var/lib/docker directory, which might be mounted on a
     # volume.
     _run_command(docker_service_stop_command)
-
-
-def bootstrap(cloudify_packages, agent_local_key_path=None,
-              agent_remote_key_path=None, manager_private_ip=None,
-              provider_context=None):
-    if agent_remote_key_path is None:
-        agent_remote_key_path = DEFAULT_REMOTE_AGENT_KEY_PATH
-
-    global lgr
-    lgr = ctx.logger
-
-    manager_ip = fabric.api.env.host_string
-
-    server_packages = cloudify_packages['server']
-    agent_packages = cloudify_packages['agents']
-    ui_included = 'ui_package_url' in server_packages
-
-    lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
-
-    # get linux distribution to install and download
-    # packages accordingly
-    # dist is either the dist name or False
-    dist = json.loads(get_machine_distro())[0]
-    if dist:
-        lgr.debug('distribution is: {0}'.format(dist))
-    else:
-        lgr.error('could not identify distribution {0}.'.format(dist))
-        return False
-
-    # check package compatibility with current distro
-    lgr.debug('checking package-distro compatibility')
-    for package, package_url in server_packages.items():
-        if not _check_distro_type_match(package_url, dist):
-            raise RuntimeError('wrong package type')
-    for package, package_url in agent_packages.items():
-        if not _check_distro_type_match(package_url, dist):
-            raise RuntimeError('wrong agent package type')
-
-    lgr.info('downloading cloudify-components package...')
-    success = _download_package(
-        PACKAGES_PATH['cloudify'],
-        server_packages['components_package_url'],
-        dist)
-    if not success:
-        lgr.error('failed to download components package. '
-                  'please ensure package exists in its '
-                  'configured location in the config file')
-        return False
-
-    lgr.info('downloading cloudify-core package...')
-    success = _download_package(
-        PACKAGES_PATH['cloudify'],
-        server_packages['core_package_url'],
-        dist)
-    if not success:
-        lgr.error('failed to download core package. '
-                  'please ensure package exists in its '
-                  'configured location in the config file')
-        return False
-
-    if ui_included:
-        lgr.info('downloading cloudify-ui...')
-        success = _download_package(
-            PACKAGES_PATH['ui'],
-            server_packages['ui_package_url'],
-            dist)
-        if not success:
-            lgr.error('failed to download ui package. '
-                      'please ensure package exists in its '
-                      'configured location in the config file')
-            return False
-    else:
-        lgr.debug('ui url not configured in provider config. '
-                  'skipping ui installation.')
-
-    for agent, agent_url in agent_packages.items():
-        success = _download_package(
-            PACKAGES_PATH['agents'],
-            agent_packages[agent],
-            dist)
-        if not success:
-            lgr.error('failed to download {}. '
-                      'please ensure package exists in its '
-                      'configured location in the config file'
-                      .format(agent_url))
-            return False
-
-    lgr.info('unpacking cloudify-core packages...')
-    success = _unpack(
-        PACKAGES_PATH['cloudify'],
-        dist)
-    if not success:
-        lgr.error('failed to unpack cloudify-core package.')
-        return False
-
-    lgr.info('installing cloudify on {0}...'.format(manager_ip))
-    success = _run_command('sudo {0}/cloudify-components-bootstrap.sh'
-                           .format(PACKAGES_PATH['components']))
-    if not success:
-        lgr.error('failed to install cloudify-components package.')
-        return False
-
-    # declare user to run celery. this is passed to the core package's
-    # bootstrap script for installation.
-    celery_user = fabric.api.env.user
-    success = _run_command('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'
-                           .format(PACKAGES_PATH['core'],
-                                   celery_user,
-                                   manager_private_ip or ctx.instance.host_ip))
-    if not success:
-        lgr.error('failed to install cloudify-core package.')
-        return False
-
-    if ui_included:
-        lgr.info('installing cloudify-ui...')
-        success = _unpack(
-            PACKAGES_PATH['ui'],
-            dist)
-        if not success:
-            lgr.error('failed to install cloudify-ui.')
-            return False
-        lgr.info('cloudify-ui installation successful.')
-
-    lgr.info('deploying cloudify agents')
-    success = _unpack(
-        PACKAGES_PATH['agents'],
-        dist)
-    if not success:
-        lgr.error('failed to install cloudify agents.')
-        return False
-    lgr.info('cloudify agents installation successful.')
-    lgr.info('management ip is {0}'.format(manager_ip))
-
-    _copy_agent_key(agent_local_key_path, agent_remote_key_path)
-    _set_manager_endpoint_data()
-    _upload_provider_context(agent_remote_key_path, provider_context)
-    return True
 
 
 def _install_docker_if_required(docker_path, use_sudo,
@@ -636,14 +476,14 @@ def _handle_security_configuration(blueprint_security_config):
     secured_server = blueprint_security_config.get('enabled', False)
     securest_userstore_driver = blueprint_security_config.get(
         'userstore_driver', {})
-    securest_authentication_methods = blueprint_security_config.get(
-        'authentication_methods', [])
+    securest_authentication_providers = blueprint_security_config.get(
+        'authentication_providers', [])
     # TODO: this is the place to provide initial validation for the security
     # related configuration parts.
     security_config = dict(
         secured_server=secured_server,
         securest_userstore_driver=securest_userstore_driver,
-        securest_authentication_methods=securest_authentication_methods)
+        securest_authentication_providers=securest_authentication_providers)
     security_config_file_obj = StringIO()
     json.dump(security_config, security_config_file_obj)
     fabric.api.put(security_config_file_obj, remote_security_config_path)
@@ -776,43 +616,10 @@ def _run_docker_container(docker_exec_command, container_options,
             sleep(2)
 
 
-def _download_package(url, path, distro):
-    if 'Ubuntu' in distro:
-        return _run_command('sudo wget {0} -P {1}'.format(
-            path, url))
-    elif 'centos' in distro:
-        with cd(path):
-            return _run_command('sudo curl -O {0}')
-
-
-def _unpack(path, distro):
-    if 'Ubuntu' in distro:
-        return _run_command('sudo dpkg -i {0}/*.deb'.format(path))
-    elif 'centos' in distro:
-        return _run_command('sudo rpm -i {0}/*.rpm'.format(path))
-
-
-def _check_distro_type_match(url, distro):
-    lgr.debug('checking distro-type match for url: {}'.format(url))
-    ext = _get_ext(url)
-    if not DISTRO_EXT[distro] == ext:
-        lgr.error('wrong package type: '
-                  '{} required. {} supplied. in url: {}'
-                  .format(DISTRO_EXT[distro], ext, url))
-        return False
-    return True
-
-
 def get_machine_distro():
     return _run_command('python -c "import platform, json, sys; '
                         'sys.stdout.write(\'{0}\\n\''
                         '.format(json.dumps(platform.dist())))"')
-
-
-def _get_ext(url):
-    lgr.debug('extracting file extension from url')
-    filename = urllib2.unquote(url).decode('utf8').split('/')[-1]
-    return os.path.splitext(filename)[1]
 
 
 def _validate_package_url_accessible(package_url):
