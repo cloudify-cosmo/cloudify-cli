@@ -22,7 +22,7 @@ from mock import patch
 
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify.utils import setup_default_logger
+from cloudify.utils import setup_logger
 
 
 from cloudify_cli.exceptions import CloudifyCliError
@@ -57,7 +57,7 @@ class CliCommandTest(unittest.TestCase):
         # so that its importable
         sys.path.append(TEST_PROVIDERS_DIR)
 
-        cls.logger = setup_default_logger('CliCommandTest')
+        cls.logger = setup_logger('CliCommandTest')
 
     @classmethod
     def tearDownClass(cls):
