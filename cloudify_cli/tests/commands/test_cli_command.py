@@ -34,7 +34,6 @@ from cloudify_cli.utils import DEFAULT_LOG_FILE
 
 TEST_DIR = '/tmp/cloudify-cli-component-tests'
 TEST_WORK_DIR = TEST_DIR + "/cloudify"
-TEST_PROVIDERS_DIR = TEST_DIR + "/mock-providers"
 THIS_DIR = os.path.dirname(os.path.dirname(__file__))
 BLUEPRINTS_DIR = os.path.join(THIS_DIR, 'resources', 'blueprints')
 
@@ -43,20 +42,6 @@ class CliCommandTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # copy provider to provider directory
-        # this creates the directory as well
-        shutil.copytree('{0}/resources/providers/mock_provider/'
-                        .format(THIS_DIR), TEST_PROVIDERS_DIR)
-        shutil.copy(
-            '{0}/resources/providers/mock_provider_with_cloudify_prefix'
-            '/cloudify_mock_provider_with_cloudify_prefix.py'
-            .format(THIS_DIR), TEST_PROVIDERS_DIR
-        )
-
-        # append providers to path
-        # so that its importable
-        sys.path.append(TEST_PROVIDERS_DIR)
-
         cls.logger = setup_logger('CliCommandTest')
 
     @classmethod
@@ -64,7 +49,6 @@ class CliCommandTest(unittest.TestCase):
         shutil.rmtree(TEST_DIR)
 
     def setUp(self):
-
         logdir = os.path.dirname(DEFAULT_LOG_FILE)
 
         # create log folder

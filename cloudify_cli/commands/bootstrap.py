@@ -36,6 +36,9 @@ def bootstrap(keep_up,
     logger = get_logger()
     env_name = 'manager'
 
+    # Verify directory is initialized
+    utils.get_context_path()
+
     # verifying no environment exists from a previous bootstrap
     try:
         bs.load_env(env_name)
@@ -73,13 +76,11 @@ def bootstrap(keep_up,
                 install_plugins=install_plugins)
 
             manager_ip = details['manager_ip']
-            provider_name = details['provider_name']
             provider_context = details['provider_context']
             with utils.update_wd_settings() as ws_settings:
                 ws_settings.set_management_server(manager_ip)
                 ws_settings.set_management_key(details['manager_key_path'])
                 ws_settings.set_management_user(details['manager_user'])
-                ws_settings.set_provider(provider_name)
                 ws_settings.set_provider_context(provider_context)
 
             logger.info('bootstrapping complete')

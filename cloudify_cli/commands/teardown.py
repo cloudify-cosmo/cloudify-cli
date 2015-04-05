@@ -60,7 +60,7 @@ def teardown(force, ignore_deployments):
     try:
         logger.info('Retrieving provider context')
         management_ip = utils.get_management_server_ip()
-        use(management_ip, False, utils.get_rest_port())
+        use(management_ip, utils.get_rest_port())
     except BaseException as e:
         logger.warning('Failed retrieving provider context: {0}. This '
                        'may cause a leaking management server '

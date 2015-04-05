@@ -38,7 +38,7 @@ class InitTest(CliCommandTest):
         cli_runner.run_cli('cfy init -r')
 
     def test_no_init(self):
-        self._assert_ex('cfy bootstrap',
+        self._assert_ex('cfy bootstrap -p stub',
                         'Not initialized',
                         possible_solutions=[
                             "Run 'cfy init' in this directory"

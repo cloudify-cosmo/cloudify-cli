@@ -544,7 +544,7 @@ def parser_config():
                     '-p,--blueprint-path': {
                         'dest': 'blueprint_path',
                         'metavar': 'BLUEPRINT_PATH',
-                        'default': None,
+                        'required': True,
                         'type': str,
                         'help': 'Path to a manager blueprint'
                     },
@@ -612,12 +612,6 @@ def parser_config():
                         'action': 'store_true',
                         'help': 'A flag indicating confirmation for teardown even if deployments'
                                 'exist on the manager'
-                    },
-                    '--ignore-validation': {
-                        'dest': 'ignore_validation',
-                        'action': 'store_true',
-                        'help': 'A flag indicating confirmation for teardown even if there '
-                                'are validation conflicts'
                     },
                     '-f,--force': {
                         'dest': 'force',
