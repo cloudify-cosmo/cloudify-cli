@@ -17,7 +17,6 @@
 import os
 import shutil
 import unittest
-import sys
 from mock import patch
 
 from cloudify_rest_client import CloudifyClient
