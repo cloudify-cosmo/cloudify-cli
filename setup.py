@@ -49,9 +49,7 @@ setup(
         'pyyaml==3.10',
         'argcomplete==0.7.1',
         'fabric==1.8.3',
-        'jsonschema==2.3.0',
         'PrettyTable>=0.7,<0.8',
-        'ansicolors==1.0.2',
         'jinja2==2.7.2'
     ]
 )
