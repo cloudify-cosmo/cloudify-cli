@@ -48,7 +48,7 @@ def delete_workdir():
         shutil.rmtree(workdir)
 
 
-def load_env(name):
+def load_env(name='manager'):
     storage = local.FileStorage(storage_dir=_workdir())
     return local.load_env(name=name,
                           storage=storage)
