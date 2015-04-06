@@ -261,11 +261,13 @@ def get_rest_client(manager_ip=None, rest_port=None):
 
     username = get_username()
     password = get_password()
-    if username and password:
-        credentials = '{0}:{1}'.format(username, password)
-        headers = {CLOUDIFY_AUTHENTICATION_HEADER: base64_encode(credentials)}
-
+    headers = get_auth_header(username, password)
     return CloudifyClient(host=manager_ip, port=rest_port, headers=headers)
+
+
+def get_auth_header(username, password):
+    credentials = '{0}:{1}'.format(username, password)
+    return {CLOUDIFY_AUTHENTICATION_HEADER: base64_encode(credentials)}
 
 
 def get_rest_port():

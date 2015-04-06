@@ -21,6 +21,7 @@ from mock import MagicMock
 from mock import patch
 
 from cloudify_rest_client import CloudifyClient
+from cloudify_cli import utils
 
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
@@ -54,10 +55,8 @@ class UseTest(CliCommandTest):
 
     def test_secured_use(self):
         host = '127.0.0.1'
-        username = 'test_username'
-        password = 'test_password'
-        self.client = CloudifyClient(
-            host=host, user=username, password=password)
+        headers = utils.get_auth_header('test_username', 'test_password')
+        self.client = CloudifyClient(host=host, headers=headers)
         self.client.manager.get_context = MagicMock(
             return_value={
                 'name': 'name',
