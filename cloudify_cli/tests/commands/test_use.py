@@ -55,8 +55,8 @@ class UseTest(CliCommandTest):
 
     def test_secured_use(self):
         host = '127.0.0.1'
-        headers = utils.get_auth_header('test_username', 'test_password')
-        self.client = CloudifyClient(host=host, headers=headers)
+        auth_header = utils.get_auth_header('test_username', 'test_password')
+        self.client = CloudifyClient(host=host, headers=auth_header)
         self.client.manager.get_context = MagicMock(
             return_value={
                 'name': 'name',

@@ -21,25 +21,24 @@ import sys
 import tempfile
 import getpass
 from contextlib import contextmanager
-from itsdangerous import base64_encode
-from copy import deepcopy
 
 import yaml
 import pkg_resources
 from jinja2.environment import Template
 from prettytable import PrettyTable
+from itsdangerous import base64_encode
 
 from cloudify_rest_client import CloudifyClient
 
 import cloudify_cli
 from cloudify_cli.constants import DEFAULT_REST_PORT
+from cloudify_cli.constants import CLOUDIFY_AUTHENTICATION_HEADER
 from cloudify_cli.constants import CLOUDIFY_PASSWORD_ENV
 from cloudify_cli.constants import CLOUDIFY_USERNAME_ENV
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_FILE_NAME
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.logger import get_logger
-from cloudify_cli import utils
 
 
 DEFAULT_LOG_FILE = os.path.expanduser(
@@ -251,9 +250,21 @@ def get_rest_client(manager_ip=None, rest_port=None):
     username = get_username()
 
     password = get_password()
+    headers = get_auth_header(username, password)
+    return CloudifyClient(host=manager_ip, port=rest_port, headers=headers)
 
     return CloudifyClient(host=manager_ip, port=rest_port,
-                          headers=utils.get_auth_header(username, password))
+                          headers=get_auth_header(username, password))
+
+
+def get_auth_header(username, password):
+    header = None
+
+    if username and password:
+        credentials = '{0}:{1}'.format(username, password)
+        header = {CLOUDIFY_AUTHENTICATION_HEADER: base64_encode(credentials)}
+
+    return header
 
 
 def get_rest_port():
