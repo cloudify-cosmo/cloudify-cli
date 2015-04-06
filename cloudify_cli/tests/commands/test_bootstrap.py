@@ -25,40 +25,6 @@ from cloudify_cli.tests.commands.test_cli_command import \
 
 class BootstrapTest(CliCommandTest):
 
-    def test_bootstrap(self):
-
-        provider_context = {}
-        provider_name = None
-
-        def mock_create_context(_name, _context):
-            global provider_context
-            provider_context = _context
-            global provider_name
-            provider_name = _name
-
-        def mock_get_context(_include=None):
-            global provider_name
-            global provider_context
-            return {
-                'name': provider_name,
-                'context': provider_context
-            }
-
-        self.client.manager.create_context = mock_create_context
-        self.client.manager.get_context = mock_get_context
-
-        cli_runner.run_cli(
-            'cfy init -p cloudify_mock_provider_with_cloudify_prefix'
-        )
-        cli_runner.run_cli('cfy bootstrap')
-
-        context = self.client.manager.get_context()
-
-        # see provision @cloudify_mock_provider_with_cloudify_prefix.py
-        self.assertEquals('cloudify_mock_provider_with_cloudify_prefix',
-                          context['name'])
-        self.assertEquals('value', context['context']['key'])
-
     def test_bootstrap_install_plugins(self):
 
         cli_runner.run_cli('cfy init')

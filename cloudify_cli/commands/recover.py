@@ -13,10 +13,15 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+import os
+
 from cloudify_cli import utils
 from cloudify_cli import exceptions
 from cloudify_cli.bootstrap import bootstrap as bs
 from cloudify_cli.logger import get_logger
+
+
+CLOUDIFY_MANAGER_PK_PATH_ENVAR = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
 
 
 def recover(force,
@@ -30,6 +35,12 @@ def recover(force,
                "flags to your command if you are certain "
                "this command should be executed.")
         raise exceptions.CloudifyCliError(msg)
+
+    if CLOUDIFY_MANAGER_PK_PATH_ENVAR not in os.environ:
+        if not os.path.isfile(utils.get_management_key()):
+            raise RuntimeError("Can't find manager private key file. Set the "
+                               "path to it using the {0} environment variable"
+                               .format(CLOUDIFY_MANAGER_PK_PATH_ENVAR))
 
     logger.info('Recovering manager deployment')
     settings = utils.load_cloudify_working_dir_settings()
