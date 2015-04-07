@@ -301,10 +301,9 @@ def get_ssl_cert():
 
 def get_ssl_trust_all():
     trust_all = os.environ.get(CLOUDIFY_SSL_TRUST_ALL)
-    if not trust_all or trust_all.lower() == 'false':
-        return False
-    # CLOUDIFY_SSL_TRUST_ALL env declared with some value and it is not false
-    return True
+    if trust_all is not None and len(trust_all) > 0:
+        return True
+    return False
 
 
 def print_table(title, tb):

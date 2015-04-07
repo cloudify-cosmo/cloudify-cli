@@ -181,8 +181,9 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
 
     def post_bootstrap_actions(wait_for_services_timeout=180):
         port = ctx.instance.runtime_properties['rest_port']
-        lgr.info('waiting for cloudify management services to start on port {0}'
-                 .format(port))
+        lgr.info(
+            'waiting for cloudify management services to start on port {0}'
+            .format(port))
         started = _wait_for_management(
             ip=manager_ip, timeout=wait_for_services_timeout, port=port)
         if not started:
@@ -236,12 +237,9 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     ssl_enabled = security_config.get('ssl_enabled', False)
     if ssl_enabled:
         # get cert and key file paths
-        cert_path = security_config.get('ssl_certificate_path', DEFAULT_SSL_CERTIFICATE_PATH)
+        cert_path = security_config.get(
+            'ssl_certificate_path', DEFAULT_SSL_CERTIFICATE_PATH)
         key_path = security_config.get('ssl_key_path', DEFAULT_SSL_KEY_PATH)
-        # if not cert_path:
-            # raise NonRecoverableError('SSL enabled => a certificate path must be specified.')
-        # if not key_path:
-            # raise NonRecoverableError('SSL enabled => a key path must be specified.')
         os.environ[CLOUDIFY_SSL_CERT] = cert_path
         rest_port = SSL_PORT
     else:
@@ -250,9 +248,12 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         rest_port = REST_PORT
 
     ctx.instance.runtime_properties['rest_port'] = rest_port
-    # copy cert and key files from local path to the host, use defaults if ssl is not enabled
-    _copy_ssl_files(local_cert_path=cert_path, remote_cert_path=DEFAULT_SSL_CERTIFICATE_PATH,
-                    local_key_path=key_path, remote_key_path=DEFAULT_SSL_KEY_PATH)
+    # copy cert and key files from local path to the host,
+    # use defaults if ssl is not enabled
+    _copy_ssl_files(local_cert_path=cert_path,
+                    remote_cert_path=DEFAULT_SSL_CERTIFICATE_PATH,
+                    local_key_path=key_path,
+                    remote_key_path=DEFAULT_SSL_KEY_PATH)
 
     lgr.info('exposing port {0}'.format(rest_port))
     cfy_management_options = ('-t '

@@ -17,18 +17,26 @@
 Handles 'cfy use'
 """
 
-from cloudify_cli.logger import get_logger
-from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.bootstrap import bootstrap as bs
+from cloudify_rest_client.client import SECURED_PORT
+from cloudify_rest_client.client import SECURED_PROTOCOL
+from cloudify_rest_client.client import DEFAULT_PROTOCOL
 from cloudify_rest_client.exceptions import CloudifyClientError
+
 from cloudify_cli import utils
+from cloudify_cli.bootstrap import bootstrap as bs
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import get_logger
 
 
 def use(management_ip, rest_port):
     logger = get_logger()
     # first check this server is available.
+    if rest_port == SECURED_PORT:
+        protocol = SECURED_PROTOCOL
+    else:
+        protocol = DEFAULT_PROTOCOL
     client = utils.get_rest_client(
-        manager_ip=management_ip, rest_port=rest_port)
+        manager_ip=management_ip, rest_port=rest_port, protocol=protocol)
     try:
         status_result = client.manager.get_status()
     except CloudifyClientError:
@@ -44,8 +52,7 @@ def use(management_ip, rest_port):
         utils.dump_configuration_file()
 
     try:
-        response = utils.get_rest_client(
-            management_ip, rest_port).manager.get_context()
+        response = client.manager.get_context()
         provider_context = response['context']
     except CloudifyClientError:
         provider_context = None
