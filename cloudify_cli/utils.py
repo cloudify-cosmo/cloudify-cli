@@ -16,29 +16,27 @@
 
 import json
 import os
-import imp
 import pkgutil
 import sys
-import yaml
-import pkg_resources
-import cloudify_cli
 import tempfile
 import getpass
-from jinja2.environment import Template
 from contextlib import contextmanager
-from copy import deepcopy
+
+import yaml
+import pkg_resources
+from jinja2.environment import Template
 from prettytable import PrettyTable
 
 from cloudify_rest_client import CloudifyClient
 
-from cloudify_cli.constants import \
-    DEFAULT_REST_PORT, CLOUDIFY_SSL_CERT, CLOUDIFY_SSL_TRUST_ALL
+import cloudify_cli
+from cloudify_cli.constants import CLOUDIFY_SSL_CERT
+from cloudify_cli.constants import CLOUDIFY_SSL_TRUST_ALL
 from cloudify_cli.constants import CLOUDIFY_PASSWORD_ENV
+from cloudify_cli.constants import DEFAULT_REST_PORT
 from cloudify_cli.constants import CLOUDIFY_USERNAME_ENV
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_FILE_NAME
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME
-from cloudify_cli.constants import CONFIG_FILE_NAME
-from cloudify_cli.constants import DEFAULTS_CONFIG_FILE_NAME
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.logger import get_logger
 
@@ -47,12 +45,6 @@ DEFAULT_LOG_FILE = os.path.expanduser(
     '{0}/cloudify-{1}/cloudify-cli.log'
     .format(tempfile.gettempdir(),
             getpass.getuser()))
-
-
-class ProviderConfig(dict):
-    @property
-    def resources_prefix(self):
-        return self.get('cloudify', {}).get('resources_prefix', '')
 
 
 def get_management_user():
@@ -344,99 +336,6 @@ def print_workflows(workflows, deployment):
     print_table('Workflows:', pt)
 
 
-def get_provider():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
-    if cosmo_wd_settings.get_provider():
-        return cosmo_wd_settings.get_provider()
-    msg = 'Provider is not set in working directory settings'
-    raise RuntimeError(msg)
-
-
-def get_provider_module(provider_name):
-    try:
-        module_or_pkg_desc = imp.find_module(provider_name)
-        if not module_or_pkg_desc[1]:
-            # module_or_pkg_desc[1] is the pathname of found module/package,
-            # if it's empty none were found
-            msg = ('Provider {0} not found.'.format(provider_name))
-            raise CloudifyCliError(msg)
-
-        module = imp.load_module(provider_name, *module_or_pkg_desc)
-
-        if not module_or_pkg_desc[0]:
-            # module_or_pkg_desc[0] is None and module_or_pkg_desc[1] is not
-            # empty only when we've loaded a package rather than a module.
-            # Re-searching for the module inside the now-loaded package
-            # with the same name.
-            module = imp.load_module(
-                provider_name,
-                *imp.find_module(provider_name, module.__path__))
-        return module
-    except ImportError:
-        msg = ('Could not import module {0}. '
-               'maybe {0} provider module was not installed?'
-               .format(provider_name))
-        raise CloudifyCliError(msg)
-
-
-def read_config(config_file_path, provider_dir):
-    logger = get_logger()
-
-    def _deep_merge_dictionaries(overriding_dict, overridden_dict):
-        merged_dict = deepcopy(overridden_dict)
-        for k, v in overriding_dict.iteritems():
-            if k in merged_dict and isinstance(v, dict):
-                if isinstance(merged_dict[k], dict):
-                    merged_dict[k] = \
-                        _deep_merge_dictionaries(v, merged_dict[k])
-                else:
-                    raise RuntimeError('type conflict at key {0}'.format(k))
-            else:
-                merged_dict[k] = deepcopy(v)
-        return merged_dict
-
-    if not config_file_path:
-        config_file_path = CONFIG_FILE_NAME
-    defaults_config_file_path = os.path.join(
-        provider_dir,
-        DEFAULTS_CONFIG_FILE_NAME)
-
-    config_file_path = os.path.join(get_cwd(), config_file_path)
-    if not os.path.exists(config_file_path) or not os.path.exists(
-            defaults_config_file_path):
-        if not os.path.exists(defaults_config_file_path):
-            raise ValueError('Defaults configuration file missing; '
-                             'expected to find it at {0}'
-                             .format(defaults_config_file_path))
-        raise ValueError('Configuration file missing; expected to find '
-                         'it at {0}'.format(config_file_path))
-
-    logger.debug('reading provider config files')
-    with open(config_file_path, 'r') as config_file, \
-            open(defaults_config_file_path, 'r') as defaults_config_file:
-
-        logger.debug('safe loading user config')
-        user_config = yaml.safe_load(config_file.read())
-
-        logger.debug('safe loading default config')
-        defaults_config = yaml.safe_load(defaults_config_file.read())
-
-    logger.debug('merging configs')
-    merged_config = _deep_merge_dictionaries(user_config, defaults_config) \
-        if user_config else defaults_config
-    return ProviderConfig(merged_config)
-
-
-@contextmanager
-def protected_provider_call():
-    try:
-        yield
-    except Exception, ex:
-        trace = sys.exc_info()[2]
-        msg = 'Exception occurred in provider: {0}'.format(str(ex))
-        raise CloudifyCliError(msg), None, trace
-
-
 def get_version():
     version_data = get_version_data()
     return version_data['version']
@@ -487,9 +386,7 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
         self._management_ip = None
         self._management_key = None
         self._management_user = None
-        self._provider = None
         self._provider_context = None
-        self._is_provider_config = False
         self._rest_port = DEFAULT_REST_PORT
 
     def get_management_server(self):
@@ -518,18 +415,6 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
 
     def remove_management_server_context(self):
         self._management_ip = None
-
-    def get_provider(self):
-        return self._provider
-
-    def set_provider(self, provider):
-        self._provider = provider
-
-    def get_is_provider_config(self):
-        return self._is_provider_config
-
-    def set_is_provider_config(self, is_provider_config):
-        self._is_provider_config = is_provider_config
 
     def get_rest_port(self):
         return self._rest_port
