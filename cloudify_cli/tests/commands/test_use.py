@@ -67,7 +67,7 @@ class UseTest(CliCommandTest):
         self.headers = None
 
         def mock_do_request(*_, **kwargs):
-            self.headers = kwargs.get('headers')
+            self.do_request_headers = kwargs.get('headers')
             return 'success'
 
         # run cli use command
@@ -76,8 +76,5 @@ class UseTest(CliCommandTest):
             cli_runner.run_cli('cfy use -t {0}'.format(host))
 
         # assert Authorization in headers
-        expected_headers = {
-            'Content-type': 'application/json',
-            'Authorization': self.client._client.encoded_credentials
-        }
-        self.assertEqual(expected_headers, self.headers)
+        eventual_request_headers = self.client._client.headers
+        self.assertEqual(self.do_request_headers, eventual_request_headers)
