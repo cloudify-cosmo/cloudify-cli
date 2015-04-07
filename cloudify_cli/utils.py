@@ -26,12 +26,14 @@ import yaml
 import pkg_resources
 from jinja2.environment import Template
 from prettytable import PrettyTable
+from itsdangerous import base64_encode
 
 from cloudify_rest_client import CloudifyClient
 
 import cloudify_cli
 from cloudify_cli.constants import CLOUDIFY_SSL_CERT
 from cloudify_cli.constants import CLOUDIFY_SSL_TRUST_ALL
+from cloudify_cli.constants import CLOUDIFY_AUTHENTICATION_HEADER
 from cloudify_cli.constants import CLOUDIFY_PASSWORD_ENV
 from cloudify_cli.constants import DEFAULT_REST_PORT
 from cloudify_cli.constants import CLOUDIFY_USERNAME_ENV
@@ -237,7 +239,7 @@ def get_cwd():
     return os.getcwd()
 
 
-def get_rest_client(manager_ip=None, rest_port=None):
+def get_rest_client(manager_ip=None, rest_port=None, protocol=None):
     if not manager_ip:
         manager_ip = get_management_server_ip()
 
@@ -248,14 +250,24 @@ def get_rest_client(manager_ip=None, rest_port=None):
 
     password = get_password()
 
+    headers = get_auth_header(username, password)
+
     cert = get_ssl_cert()
 
     trust_all = get_ssl_trust_all()
 
-    return CloudifyClient(
-        host=manager_ip, port=rest_port,
-        user=username, password=password,
-        cert=cert, trust_all=trust_all)
+    return CloudifyClient(host=manager_ip, port=rest_port, protocol=protocol,
+                          headers=headers, cert=cert, trust_all=trust_all)
+
+
+def get_auth_header(username, password):
+    header = None
+
+    if username and password:
+        credentials = '{0}:{1}'.format(username, password)
+        header = {CLOUDIFY_AUTHENTICATION_HEADER: base64_encode(credentials)}
+
+    return header
 
 
 def get_rest_port():

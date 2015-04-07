@@ -21,6 +21,7 @@ from mock import MagicMock
 from mock import patch
 
 from cloudify_rest_client import CloudifyClient
+from cloudify_cli import utils
 
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
@@ -54,10 +55,8 @@ class UseTest(CliCommandTest):
 
     def test_secured_use(self):
         host = '127.0.0.1'
-        username = 'test_username'
-        password = 'test_password'
-        self.client = CloudifyClient(
-            host=host, user=username, password=password)
+        auth_header = utils.get_auth_header('test_username', 'test_password')
+        self.client = CloudifyClient(host=host, headers=auth_header)
         self.client.manager.get_context = MagicMock(
             return_value={
                 'name': 'name',
@@ -68,7 +67,7 @@ class UseTest(CliCommandTest):
         self.headers = None
 
         def mock_do_request(*_, **kwargs):
-            self.headers = kwargs.get('headers')
+            self.do_request_headers = kwargs.get('headers')
             return 'success'
 
         # run cli use command
@@ -77,8 +76,5 @@ class UseTest(CliCommandTest):
             cli_runner.run_cli('cfy use -t {0}'.format(host))
 
         # assert Authorization in headers
-        expected_headers = {
-            'Content-type': 'application/json',
-            'Authorization': self.client._client.encoded_credentials
-        }
-        self.assertEqual(expected_headers, self.headers)
+        eventual_request_headers = self.client._client.headers
+        self.assertEqual(self.do_request_headers, eventual_request_headers)
