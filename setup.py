@@ -18,15 +18,20 @@ from setuptools import setup
 
 setup(
     name='cloudify',
-    version='3.2a6',
+    version='3.2rc',
     author='Gigaspaces',
     author_email='cosmo-admin@gigaspaces.com',
     packages=['cloudify_cli',
               'cloudify_cli.commands',
               'cloudify_cli.bootstrap',
+              'cloudify_cli.bootstrap.resources',
               'cloudify_cli.config'],
     package_data={
-        'cloudify_cli': ['VERSION', 'resources/config.yaml'],
+        'cloudify_cli': [
+            'VERSION',
+            'resources/config.yaml',
+            'bootstrap/resources/install_plugins.sh.template'
+        ],
     },
     license='LICENSE',
     description='Cloudify CLI',
@@ -37,16 +42,16 @@ setup(
         ]
     },
     install_requires=[
-        'cloudify-plugins-common==3.2a6',
-        'cloudify-rest-client==3.2a6',
-        'cloudify-dsl-parser==3.2a6',
-        'cloudify-script-plugin==1.2a6',
+        'cloudify-plugins-common==3.2rc',
+        'cloudify-rest-client==3.2rc',
+        'cloudify-dsl-parser==3.2rc',
+        'cloudify-script-plugin==3.2rc',
         'pyyaml==3.10',
         'argcomplete==0.7.1',
         'fabric==1.8.3',
-        'jsonschema==2.3.0',
         'PrettyTable>=0.7,<0.8',
         'ansicolors==1.0.2',
-        'jinja2==2.7.2'
+        'jinja2==2.7.2',
+        'itsdangerous==0.24',
     ]
 )

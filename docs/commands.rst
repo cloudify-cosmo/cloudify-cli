@@ -21,7 +21,7 @@ cfy
    :prog: cfy
 
    init
-      Initializing a configuration for a specific provider is a deprecated feature and will be removed in a future version.
+      Initializes CLI configuration files and work environment in the current working directory.
 
    bootstrap
       The command takes care of creating the topology and installing the Cloudify Manager to function.
