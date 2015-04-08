@@ -67,4 +67,3 @@ class TestGetRestClient(unittest.TestCase):
         self.assertTrue(client._client.trust_all)
         self.assertEqual('{0}://{1}:{2}'.format(protocol, host, port),
                          client._client.url)
-
