@@ -17,7 +17,6 @@
 import os
 import tempfile
 import unittest
-import requests
 import shutil
 from cloudify_cli import utils
 
