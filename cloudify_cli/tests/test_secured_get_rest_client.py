@@ -20,8 +20,8 @@ import unittest
 import shutil
 
 from cloudify_cli import utils
-
 from cloudify_cli import constants
+
 from cloudify_cli.tests import cli_runner
 
 TEST_DIR = '/tmp/cloudify-cli-unit-tests'
