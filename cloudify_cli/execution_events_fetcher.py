@@ -61,10 +61,12 @@ class ExecutionEventsFetcher(object):
     def fetch_and_process_events(self, events_handler=None, timeout=60):
         total_events_count = 0
 
-        deadline = time.time() + timeout
+        # timeout can be None (never time out), for example when tail is used
+        if timeout:
+            deadline = time.time() + timeout
 
         while True:
-            if time.time() > deadline:
+            if timeout and time.time() > deadline:
                 raise EventProcessingTimeoutError(
                     self._execution_id,
                     'events/log fetching timed out')
@@ -121,8 +123,12 @@ def wait_for_execution(client,
                                        execution.deployment_id))
 
         if execution.status != Execution.PENDING:
+            # update the remaining timeout, if set
+            if timeout:
+                timeout = deadline-time.time()
             events_fetcher.fetch_and_process_events(
-                events_handler=events_handler, timeout=deadline-time.time())
+                events_handler=events_handler, timeout=timeout)
+
         execution = client.executions.get(execution.id)
         if execution.status in Execution.END_STATES:
             break
