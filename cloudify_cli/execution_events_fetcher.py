@@ -61,10 +61,12 @@ class ExecutionEventsFetcher(object):
     def fetch_and_process_events(self, events_handler=None, timeout=60):
         total_events_count = 0
 
-        deadline = time.time() + timeout
+        # timeout can be None (never time out), for example when tail is used
+        if timeout is not None:
+            deadline = time.time() + timeout
 
         while True:
-            if time.time() > deadline:
+            if timeout is not None and time.time() > deadline:
                 raise EventProcessingTimeoutError(
                     self._execution_id,
                     'events/log fetching timed out')
@@ -95,7 +97,6 @@ def get_deployment_environment_creation_execution(client, deployment_id):
 
 
 def wait_for_execution(client,
-                       deployment_id,
                        execution,
                        events_handler=None,
                        include_logs=False,
@@ -105,21 +106,29 @@ def wait_for_execution(client,
     if execution.status in Execution.END_STATES:
         return execution
 
-    deadline = time.time() + timeout
+    if timeout is not None:
+        deadline = time.time() + timeout
+
     events_fetcher = ExecutionEventsFetcher(client, execution.id,
                                             include_logs=include_logs)
 
     # Poll for execution status until execution ends
     while True:
-        if time.time() > deadline:
-            raise ExecutionTimeoutError(
-                execution.id,
-                'execution of operation {0} for deployment {1} '
-                'timed out'.format(execution.workflow_id, deployment_id))
+        if timeout is not None:
+            if time.time() > deadline:
+                raise ExecutionTimeoutError(
+                    execution.id,
+                    'execution of operation {0} for deployment {1} '
+                    'timed out'.format(execution.workflow_id,
+                                       execution.deployment_id))
+            else:
+                # update the remaining timeout
+                timeout = deadline-time.time()
 
         if execution.status != Execution.PENDING:
             events_fetcher.fetch_and_process_events(
-                events_handler=events_handler, timeout=deadline-time.time())
+                events_handler=events_handler, timeout=timeout)
+
         execution = client.executions.get(execution.id)
         if execution.status in Execution.END_STATES:
             break

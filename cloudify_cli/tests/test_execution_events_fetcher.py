@@ -164,7 +164,7 @@ class ExecutionEventsFetcherTest(unittest.TestCase):
         self.events = range(0, 5)
         mock_execution = self.client.executions.get('deployment_id')
         self.assertRaises(ExecutionTimeoutError, wait_for_execution,
-                          self.client, 'deployment_id', mock_execution,
+                          self.client, mock_execution,
                           timeout=2)
 
     def test_wait_for_execution_expect_event_processing_timeout(self):
@@ -172,5 +172,4 @@ class ExecutionEventsFetcherTest(unittest.TestCase):
         mock_execution = self.client.executions.get('deployment_id')
         self.assertRaises(EventProcessingTimeoutError,
                           wait_for_execution,
-                          self.client, 'deployment_id', mock_execution,
-                          timeout=3)
+                          self.client, mock_execution, timeout=3)
