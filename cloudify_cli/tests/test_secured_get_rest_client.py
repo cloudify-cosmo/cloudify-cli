@@ -18,13 +18,10 @@ import os
 import tempfile
 import unittest
 import shutil
+
 from cloudify_cli import utils
 
-from cloudify_cli.constants import CLOUDIFY_USERNAME_ENV
-from cloudify_cli.constants import CLOUDIFY_PASSWORD_ENV
-from cloudify_cli.constants import CLOUDIFY_AUTHENTICATION_HEADER
-from cloudify_cli.constants import CLOUDIFY_SSL_CERT
-from cloudify_cli.constants import CLOUDIFY_SSL_TRUST_ALL
+from cloudify_cli import constants
 from cloudify_cli.tests import cli_runner
 
 TEST_DIR = '/tmp/cloudify-cli-unit-tests'
@@ -41,22 +38,22 @@ class TestGetRestClient(unittest.TestCase):
 
         cli_runner.run_cli('cfy init -r')
 
-        os.environ[CLOUDIFY_USERNAME_ENV] = 'test_username'
-        os.environ[CLOUDIFY_PASSWORD_ENV] = 'test_password'
-        os.environ[CLOUDIFY_SSL_TRUST_ALL] = TRUST_ALL
-        os.environ[CLOUDIFY_SSL_CERT] = CERT_PATH
+        os.environ[constants.CLOUDIFY_USERNAME_ENV] = 'test_username'
+        os.environ[constants.CLOUDIFY_PASSWORD_ENV] = 'test_password'
+        os.environ[constants.CLOUDIFY_SSL_TRUST_ALL] = TRUST_ALL
+        os.environ[constants.CLOUDIFY_SSL_CERT] = CERT_PATH
 
     def tearDown(self):
-        del os.environ[CLOUDIFY_USERNAME_ENV]
-        del os.environ[CLOUDIFY_PASSWORD_ENV]
-        del os.environ[CLOUDIFY_SSL_TRUST_ALL]
-        del os.environ[CLOUDIFY_SSL_CERT]
+        del os.environ[constants.CLOUDIFY_USERNAME_ENV]
+        del os.environ[constants.CLOUDIFY_PASSWORD_ENV]
+        del os.environ[constants.CLOUDIFY_SSL_TRUST_ALL]
+        del os.environ[constants.CLOUDIFY_SSL_CERT]
         shutil.rmtree(TEST_DIR)
 
     def test_get_rest_client(self):
         client = utils.get_rest_client(manager_ip='localhost')
         self.assertIsNotNone(
-            client._client.headers[CLOUDIFY_AUTHENTICATION_HEADER])
+            client._client.headers[constants.CLOUDIFY_AUTHENTICATION_HEADER])
 
     def test_get_secured_rest_client(self):
         protocol = 'https'
@@ -70,3 +67,4 @@ class TestGetRestClient(unittest.TestCase):
         self.assertTrue(client._client.trust_all)
         self.assertEqual('{0}://{1}:{2}'.format(protocol, host, port),
                          client._client.url)
+
