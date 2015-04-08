@@ -16,18 +16,21 @@
 
 import os
 import urllib
-import urllib2
 import json
+import pkgutil
+import tarfile
+import tempfile
 from time import sleep, time
+from StringIO import StringIO
 
+import jinja2
 import fabric
 import fabric.api
-from fabric.context_managers import cd
 
 from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
-from cloudify_rest_client import CloudifyClient
+from cloudify_cli import utils
 
 
 REST_PORT = 80
@@ -37,44 +40,24 @@ PROVIDER_RUNTIME_PROPERTY = 'provider'
 MANAGER_IP_RUNTIME_PROPERTY = 'manager_ip'
 MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
 MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
-
-PACKAGES_PATH = {
-    'cloudify': '/cloudify',
-    'core': '/cloudify-core',
-    'components': '/cloudify-components',
-    'ui': '/cloudify-ui',
-    'agents': '/cloudify-agents'
-}
-
-DISTRO_EXT = {
-    'Ubuntu': '.deb',
-    'centos': '.rpm',
-    'xitUbuntu': '.deb'
-}
+DEFAULT_REMOTE_AGENT_KEY_PATH = '~/.ssh/agent_key.pem'
 
 lgr = None
 
 
 @operation
 def creation_validation(cloudify_packages, **kwargs):
-    server_packages = cloudify_packages.get('server')
+    if not isinstance(cloudify_packages, dict):
+        raise NonRecoverableError('"cloudify_packages" must be a '
+                                  'dictionary property')
     docker_packages = cloudify_packages.get('docker')
 
-    if not ((server_packages is None) ^ (docker_packages is None)):
+    if not docker_packages or not isinstance(docker_packages, dict):
         raise NonRecoverableError(
-            'must have exactly one of "server" and "docker" properties under '
+            '"docker" must be a non-empty dictionary property under '
             '"cloudify_packages"')
 
-    manager_packages = docker_packages if server_packages is None else \
-        server_packages
-
-    if not manager_packages or not isinstance(manager_packages, dict):
-        raise NonRecoverableError(
-            '"{0}" must be a non-empty dictionary property under '
-            '"cloudify_packages"'.format(
-                'docker' if server_packages is None else 'server'))
-
-    packages_urls = manager_packages.values()
+    packages_urls = docker_packages.values()
     agent_packages = cloudify_packages.get('agents', {})
     if not isinstance(agent_packages, dict):
         raise NonRecoverableError('"cloudify_packages.agents" must be a '
@@ -106,141 +89,6 @@ def stop_docker_service(docker_service_stop_command=None, use_sudo=True):
     # /var/lib/docker directory, which might be mounted on a
     # volume.
     _run_command(docker_service_stop_command)
-
-
-def bootstrap(cloudify_packages, agent_local_key_path=None,
-              agent_remote_key_path=None, manager_private_ip=None,
-              provider_context=None):
-    global lgr
-    lgr = ctx.logger
-
-    manager_ip = fabric.api.env.host_string
-
-    server_packages = cloudify_packages['server']
-    agent_packages = cloudify_packages['agents']
-    ui_included = 'ui_package_url' in server_packages
-
-    lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
-
-    # get linux distribution to install and download
-    # packages accordingly
-    # dist is either the dist name or False
-    dist = json.loads(get_machine_distro())[0]
-    if dist:
-        lgr.debug('distribution is: {0}'.format(dist))
-    else:
-        lgr.error('could not identify distribution {0}.'.format(dist))
-        return False
-
-    # check package compatibility with current distro
-    lgr.debug('checking package-distro compatibility')
-    for package, package_url in server_packages.items():
-        if not _check_distro_type_match(package_url, dist):
-            raise RuntimeError('wrong package type')
-    for package, package_url in agent_packages.items():
-        if not _check_distro_type_match(package_url, dist):
-            raise RuntimeError('wrong agent package type')
-
-    lgr.info('downloading cloudify-components package...')
-    success = _download_package(
-        PACKAGES_PATH['cloudify'],
-        server_packages['components_package_url'],
-        dist)
-    if not success:
-        lgr.error('failed to download components package. '
-                  'please ensure package exists in its '
-                  'configured location in the config file')
-        return False
-
-    lgr.info('downloading cloudify-core package...')
-    success = _download_package(
-        PACKAGES_PATH['cloudify'],
-        server_packages['core_package_url'],
-        dist)
-    if not success:
-        lgr.error('failed to download core package. '
-                  'please ensure package exists in its '
-                  'configured location in the config file')
-        return False
-
-    if ui_included:
-        lgr.info('downloading cloudify-ui...')
-        success = _download_package(
-            PACKAGES_PATH['ui'],
-            server_packages['ui_package_url'],
-            dist)
-        if not success:
-            lgr.error('failed to download ui package. '
-                      'please ensure package exists in its '
-                      'configured location in the config file')
-            return False
-    else:
-        lgr.debug('ui url not configured in provider config. '
-                  'skipping ui installation.')
-
-    for agent, agent_url in agent_packages.items():
-        success = _download_package(
-            PACKAGES_PATH['agents'],
-            agent_packages[agent],
-            dist)
-        if not success:
-            lgr.error('failed to download {}. '
-                      'please ensure package exists in its '
-                      'configured location in the config file'
-                      .format(agent_url))
-            return False
-
-    lgr.info('unpacking cloudify-core packages...')
-    success = _unpack(
-        PACKAGES_PATH['cloudify'],
-        dist)
-    if not success:
-        lgr.error('failed to unpack cloudify-core package.')
-        return False
-
-    lgr.info('installing cloudify on {0}...'.format(manager_ip))
-    success = _run_command('sudo {0}/cloudify-components-bootstrap.sh'
-                           .format(PACKAGES_PATH['components']))
-    if not success:
-        lgr.error('failed to install cloudify-components package.')
-        return False
-
-    # declare user to run celery. this is passed to the core package's
-    # bootstrap script for installation.
-    celery_user = fabric.api.env.user
-    success = _run_command('sudo {0}/cloudify-core-bootstrap.sh {1} {2}'
-                           .format(PACKAGES_PATH['core'],
-                                   celery_user,
-                                   manager_private_ip or ctx.instance.host_ip))
-    if not success:
-        lgr.error('failed to install cloudify-core package.')
-        return False
-
-    if ui_included:
-        lgr.info('installing cloudify-ui...')
-        success = _unpack(
-            PACKAGES_PATH['ui'],
-            dist)
-        if not success:
-            lgr.error('failed to install cloudify-ui.')
-            return False
-        lgr.info('cloudify-ui installation successful.')
-
-    lgr.info('deploying cloudify agents')
-    success = _unpack(
-        PACKAGES_PATH['agents'],
-        dist)
-    if not success:
-        lgr.error('failed to install cloudify agents.')
-        return False
-    lgr.info('cloudify agents installation successful.')
-    lgr.info('management ip is {0}'.format(manager_ip))
-
-    agent_remote_key_path = _copy_agent_key(agent_local_key_path,
-                                            agent_remote_key_path)
-    _set_manager_endpoint_data()
-    _upload_provider_context(agent_remote_key_path, provider_context)
-    return True
 
 
 def _install_docker_if_required(docker_path, use_sudo,
@@ -300,9 +148,23 @@ def _install_docker_if_required(docker_path, use_sudo,
 def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      agent_local_key_path=None, agent_remote_key_path=None,
                      manager_private_ip=None, provider_context=None,
-                     docker_service_start_command=None):
+                     docker_service_start_command=None, privileged=False):
+    if agent_remote_key_path is None:
+        agent_remote_key_path = DEFAULT_REMOTE_AGENT_KEY_PATH
+
     if 'containers_started' in ctx.instance.runtime_properties:
-        recover_docker(docker_path, use_sudo, docker_service_start_command)
+        try:
+            recover_docker(docker_path, use_sudo, docker_service_start_command)
+            # the runtime property specifying the manager openstack instance id
+            # has changed, so we need to update the manager deployment in the
+            # provider context.
+            _update_manager_deployment()
+        except Exception:
+            # recovery failed, however runtime properties may have still
+            # changed. update the local manager deployment only
+            _update_manager_deployment(local_only=True)
+            raise
+
         return
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
@@ -311,6 +173,27 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
 
     manager_ip = fabric.api.env.host_string
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
+
+    def post_bootstrap_actions(wait_for_services_timeout=180):
+        lgr.info('waiting for cloudify management services to start')
+        started = _wait_for_management(manager_ip,
+                                       timeout=wait_for_services_timeout)
+        if not started:
+            err = 'failed waiting for cloudify management services to start.'
+            lgr.info(err)
+            raise NonRecoverableError(err)
+        _set_manager_endpoint_data()
+        ctx.instance.runtime_properties['containers_started'] = 'True'
+        try:
+            _upload_provider_context(agent_remote_key_path, provider_context)
+        except:
+            del ctx.instance.runtime_properties['containers_started']
+            raise
+        return True
+
+    if ctx.operation.retry_number > 0:
+        return post_bootstrap_actions(wait_for_services_timeout=15)
+
     docker_exec_command = _install_docker_if_required(
         docker_path,
         use_sudo,
@@ -338,22 +221,31 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         lgr.error(err)
         raise NonRecoverableError(err)
 
+    cloudify_config = ctx.node.properties['cloudify']
+    security_config = cloudify_config.get('security', {})
+    security_config_path = _handle_security_configuration(security_config)
+
     cfy_management_options = ('-t '
                               '--volumes-from data '
+                              '--privileged={0} '
                               '-p 80:80 '
                               '-p 5555:5555 '
                               '-p 5672:5672 '
                               '-p 53229:53229 '
                               '-p 8100:8100 '
+                              '-p 8101:8101 '
                               '-p 9200:9200 '
                               '-p 8086:8086 '
-                              '-e MANAGEMENT_IP={0} '
+                              '-e MANAGEMENT_IP={1} '
+                              '-e MANAGER_REST_SECURITY_CONFIG_PATH={2} '
                               '--restart=always '
                               '-d '
                               'cloudify '
                               '/sbin/my_init'
-                              .format(manager_private_ip or
-                                      ctx.instance.host_ip))
+                              .format(privileged,
+                                      manager_private_ip or
+                                      ctx.instance.host_ip,
+                                      security_config_path))
 
     agent_packages = cloudify_packages.get('agents')
     if agent_packages:
@@ -376,27 +268,33 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     backup_vm_files_cmd, home_dir_mount_path = _get_backup_files_cmd()
     # copy agent to host VM. the data container will mount the host VM's
     # home-dir so that all files will be backed up inside the data container.
-    agent_remote_key_path = _copy_agent_key(agent_local_key_path,
-                                            agent_remote_key_path)
+    _copy_agent_key(agent_local_key_path, agent_remote_key_path)
 
-    data_container_start_cmd = '{0} && {1} && echo Data-only container' \
+    install_plugins_cmd = _handle_plugins_and_create_install_cmd(
+        cloudify_config.get('plugins', {}))
+
+    data_container_start_cmd = '{0} && {1} && {2} && echo Data-only container'\
                                .format(agent_packages_install_cmd,
-                                       backup_vm_files_cmd)
+                                       backup_vm_files_cmd,
+                                       install_plugins_cmd)
     data_container_options = ('-t '
                               '{0} '
                               '-v ~/:{1} '
                               '-v /root '
+                              '--privileged={2} '
                               '-v /etc/init.d '
                               '-v /etc/default '
                               '-v /opt/manager/resources '
+                              '-v /opt/manager/env '
                               '-v /etc/service/riemann '
                               '-v /etc/service/elasticsearch/data '
                               '-v /etc/service/elasticsearch/logs '
                               '-v /opt/influxdb/shared/data '
                               '-v /var/log/cloudify '
-                              'cloudify sh -c \'{2}\''
+                              'cloudify sh -c \'{3}\''
                               .format(agent_pkgs_mount_options,
                                       home_dir_mount_path,
+                                      privileged,
                                       data_container_start_cmd))
 
     try:
@@ -412,17 +310,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         lgr.error(err)
         raise NonRecoverableError(err)
 
-    lgr.info('waiting for cloudify management services to start')
-    started = _wait_for_management(manager_ip, timeout=180)
-    ctx.instance.runtime_properties['containers_started'] = 'True'
-    if not started:
-        err = 'failed waiting for cloudify management services to start.'
-        lgr.info(err)
-        raise NonRecoverableError(err)
-
-    _set_manager_endpoint_data()
-    _upload_provider_context(agent_remote_key_path, provider_context)
-    return True
+    return post_bootstrap_actions()
 
 
 def recover_docker(docker_path=None, use_sudo=True,
@@ -484,6 +372,49 @@ def _get_install_agent_pkgs_cmd(agent_packages,
     return '{0} {1}'.format(download_agents_cmd, install_agents_cmd)
 
 
+def _handle_plugins_and_create_install_cmd(plugins):
+    # no plugins configured, run a stub 'true' command
+    if not plugins:
+        return 'true'
+
+    cloudify_plugins = 'cloudify/plugins'
+    install_plugins = 'install_plugins.sh'
+
+    # create location to place tar-gzipped plugins in
+    _run_command('mkdir -p ~/{0}'.format(cloudify_plugins))
+
+    # for each plugin tha is included in the blueprint, tar-gzip it
+    # and place it in the plugins dir on the host
+    for name, plugin in plugins.items():
+        source = plugin['source']
+        if source.split('://')[0] in ['http', 'https']:
+            continue
+
+        # temporary workaround to resolve absolute file path
+        # to installed plugin using internal local workflows storage
+        # information
+        plugin_path = os.path.join(ctx._endpoint.storage.resources_root,
+                                   source)
+
+        with tempfile.TemporaryFile() as fileobj:
+            with tarfile.open(fileobj=fileobj, mode='w:gz') as tar:
+                tar.add(plugin_path, arcname=name)
+            fileobj.seek(0)
+            tar_remote_path = '{0}/{1}.tar.gz'.format(cloudify_plugins, name)
+            fabric.api.put(fileobj, '~/{0}'.format(tar_remote_path))
+            plugin['source'] = 'file:///root/{0}'.format(tar_remote_path)
+
+    # render script template and copy it to host's home dir
+    script_template = pkgutil.get_data('cloudify_cli.bootstrap.resources',
+                                       'install_plugins.sh.template')
+    script = jinja2.Template(script_template).render(plugins=plugins)
+    fabric.api.put(StringIO(script), '~/{0}'.format(install_plugins))
+    _run_command('chmod +x ~/{0}'.format(install_plugins))
+    # path to script on container after host's home has been copied to
+    # container's home
+    return '/root/{0}'.format(install_plugins)
+
+
 def _is_docker_installed(docker_path, use_sudo):
     """
     Returns true if docker run command exists
@@ -505,14 +436,14 @@ def _is_docker_installed(docker_path, use_sudo):
         return False
 
 
-def _wait_for_management(ip, timeout, port=80):
+def _wait_for_management(ip, timeout, port=REST_PORT):
     """ Wait for url to become available
         :param ip: the manager IP
         :param timeout: in seconds
         :param port: port used by the rest service.
         :return: True of False
     """
-    validation_url = 'http://{0}:{1}/blueprints'.format(ip, port)
+    validation_url = 'http://{0}:{1}/version'.format(ip, port)
 
     end = time() + timeout
 
@@ -539,19 +470,61 @@ def _set_manager_endpoint_data():
         fabric.api.env.key_filename
 
 
-def _copy_agent_key(agent_local_key_path=None,
-                    agent_remote_key_path=None):
-    ctx.logger.info('Copying agent key to management machine')
+def _handle_security_configuration(blueprint_security_config):
+    remote_security_config_path = '~/rest-security-config.json'
+    container_security_config_path = '/root/rest-security-config.json'
+    secured_server = blueprint_security_config.get('enabled', False)
+    securest_userstore_driver = blueprint_security_config.get(
+        'userstore_driver', {})
+    securest_authentication_providers = blueprint_security_config.get(
+        'authentication_providers', [])
+    # TODO: this is the place to provide initial validation for the security
+    # related configuration parts.
+    security_config = dict(
+        secured_server=secured_server,
+        securest_userstore_driver=securest_userstore_driver,
+        securest_authentication_providers=securest_authentication_providers)
+    security_config_file_obj = StringIO()
+    json.dump(security_config, security_config_file_obj)
+    fabric.api.put(security_config_file_obj, remote_security_config_path)
+    return container_security_config_path
+
+
+def _copy_agent_key(agent_local_key_path, agent_remote_key_path):
     if not agent_local_key_path:
         return
-    agent_remote_key_path = agent_remote_key_path or '~/.ssh/agent_key.pem'
     agent_local_key_path = os.path.expanduser(agent_local_key_path)
+    ctx.logger.info(
+        'Copying agent key to management machine: {0} -> {1}'.format(
+            agent_local_key_path, agent_remote_key_path))
     fabric.api.put(agent_local_key_path, agent_remote_key_path)
-    return agent_remote_key_path
+
+
+def _update_manager_deployment(local_only=False):
+
+    # get the current provider from the runtime property set on bootstrap
+    provider_context = ctx.instance.runtime_properties[
+        PROVIDER_RUNTIME_PROPERTY]
+
+    # construct new manager deployment
+    provider_context['cloudify'][
+        'manager_deployment'] = _dump_manager_deployment()
+
+    # update locally
+    ctx.instance.runtime_properties[
+        PROVIDER_RUNTIME_PROPERTY] = provider_context
+    with utils.update_wd_settings() as wd_settings:
+        wd_settings.set_provider_context(provider_context)
+
+    if not local_only:
+        # update on server
+        rest_client = utils.get_rest_client()
+        rest_client.manager.update_context('provider', provider_context)
 
 
 def _upload_provider_context(remote_agents_private_key_path,
                              provider_context=None):
+    ctx.logger.info('updating provider context on management server...')
     provider_context = provider_context or dict()
     cloudify_configuration = ctx.node.properties['cloudify']
     cloudify_configuration['cloudify_agent']['agent_key_path'] = \
@@ -566,21 +539,39 @@ def _upload_provider_context(remote_agents_private_key_path,
     # deployments to the manager.
     cloudify_configuration['manager_deployment'] = _dump_manager_deployment()
 
-    manager_ip = fabric.api.env.host_string
-    rest_client = CloudifyClient(manager_ip, REST_PORT)
-    rest_client.manager.create_context('provider',
-                                       provider_context)
+    remote_provider_context_file = '~/provider-context.json'
+    container_provider_context_file = '/tmp/home/provider-context.json'
+    provider_context_json_file = StringIO()
+    full_provider_context = {
+        'name': 'provider',
+        'context': provider_context
+    }
+    json.dump(full_provider_context, provider_context_json_file)
+
+    # placing provider context file in the manager's host
+    fabric.api.put(provider_context_json_file,
+                   remote_provider_context_file)
+
+    upload_provider_context_cmd = \
+        'curl --fail -XPOST localhost:8101/provider/context -H ' \
+        '"Content-Type: application/json" -d @{0}'.format(
+            container_provider_context_file)
+
+    # uploading the provider context to the REST service
+    _run_command_in_cfy(upload_provider_context_cmd, terminal=True)
 
 
-def _run_command(command):
-    return fabric.api.run(command)
+def _run_command(command, shell_escape=None):
+    return fabric.api.run(command, shell_escape=shell_escape)
 
 
-def _run_command_in_cfy(command, docker_path=None, use_sudo=True):
+def _run_command_in_cfy(command, docker_path=None, use_sudo=True,
+                        terminal=False):
     if not docker_path:
         docker_path = 'docker'
-    full_command = '{0} exec cfy {1}'.format(
-        docker_path, command)
+    exec_command = 'exec -t' if terminal else 'exec'
+    full_command = '{0} {1} cfy {2}'.format(
+        docker_path, exec_command, command)
     if use_sudo:
         full_command = 'sudo {0}'.format(full_command)
     _run_command(full_command)
@@ -625,43 +616,10 @@ def _run_docker_container(docker_exec_command, container_options,
             sleep(2)
 
 
-def _download_package(url, path, distro):
-    if 'Ubuntu' in distro:
-        return _run_command('sudo wget {0} -P {1}'.format(
-            path, url))
-    elif 'centos' in distro:
-        with cd(path):
-            return _run_command('sudo curl -O {0}')
-
-
-def _unpack(path, distro):
-    if 'Ubuntu' in distro:
-        return _run_command('sudo dpkg -i {0}/*.deb'.format(path))
-    elif 'centos' in distro:
-        return _run_command('sudo rpm -i {0}/*.rpm'.format(path))
-
-
-def _check_distro_type_match(url, distro):
-    lgr.debug('checking distro-type match for url: {}'.format(url))
-    ext = _get_ext(url)
-    if not DISTRO_EXT[distro] == ext:
-        lgr.error('wrong package type: '
-                  '{} required. {} supplied. in url: {}'
-                  .format(DISTRO_EXT[distro], ext, url))
-        return False
-    return True
-
-
 def get_machine_distro():
     return _run_command('python -c "import platform, json, sys; '
                         'sys.stdout.write(\'{0}\\n\''
                         '.format(json.dumps(platform.dist())))"')
-
-
-def _get_ext(url):
-    lgr.debug('extracting file extension from url')
-    filename = urllib2.unquote(url).decode('utf8').split('/')[-1]
-    return os.path.splitext(filename)[1]
 
 
 def _validate_package_url_accessible(package_url):

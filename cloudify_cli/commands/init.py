@@ -21,18 +21,13 @@ import os
 import shutil
 
 from cloudify_cli import utils
-from cloudify_cli import provider_common
 from cloudify_cli import constants
 from cloudify_cli import exceptions
 from cloudify_cli.logger import get_logger
 from cloudify_cli.logger import configure_loggers
 
 
-def init(provider, reset_config):
-
-    if provider is not None:
-        return provider_common.provider_init(provider, reset_config)
-
+def init(reset_config):
     if os.path.exists(os.path.join(
             utils.get_cwd(),
             constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,

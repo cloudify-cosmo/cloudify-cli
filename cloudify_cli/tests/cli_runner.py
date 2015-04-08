@@ -17,12 +17,12 @@
 import os
 import sys
 
-from cloudify.utils import setup_default_logger
+from cloudify.utils import setup_logger
 
 from cloudify_cli import cli
 from cloudify_cli.utils import DEFAULT_LOG_FILE
 
-runner_lgr = setup_default_logger('cli_runner')
+runner_lgr = setup_logger('cli_runner')
 
 
 def run_cli_expect_system_exit_0(command):

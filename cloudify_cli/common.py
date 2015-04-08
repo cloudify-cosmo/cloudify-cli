@@ -52,26 +52,28 @@ def install_blueprint_plugins(blueprint_path):
         blueprint_path=blueprint_path
     )
 
-    # validate we are inside a virtual env
-    if not utils.is_virtual_env():
-        raise exceptions.CloudifyCliError(
-            'You must be running inside a '
-            'virtualenv to install blueprint plugins')
+    if requirements:
+        # validate we are inside a virtual env
+        if not utils.is_virtual_env():
+            raise exceptions.CloudifyCliError(
+                'You must be running inside a '
+                'virtualenv to install blueprint plugins')
 
-    runner = LocalCommandRunner(get_logger())
-
-    # dump the requirements to a file
-    # and let pip install it.
-    # this will utilize pip's mechanism
-    # of cleanup in case an installation fails.
-    output = tempfile.NamedTemporaryFile(mode='w',
-                                         delete=True,
-                                         suffix='.txt',
-                                         prefix='requirements_')
-    utils.dump_to_file(collection=requirements,
-                       file_path=output.name)
-    runner.run(command='pip install -r {0}'.format(output.name),
-               stdout_pipe=False)
+        runner = LocalCommandRunner(get_logger())
+        # dump the requirements to a file
+        # and let pip install it.
+        # this will utilize pip's mechanism
+        # of cleanup in case an installation fails.
+        output = tempfile.NamedTemporaryFile(mode='w',
+                                             delete=True,
+                                             suffix='.txt',
+                                             prefix='requirements_')
+        utils.dump_to_file(collection=requirements,
+                           file_path=output.name)
+        runner.run(command='pip install -r {0}'.format(output.name),
+                   stdout_pipe=False)
+    else:
+        get_logger().debug('There are no plugins to install..')
 
 
 def create_requirements(blueprint_path):

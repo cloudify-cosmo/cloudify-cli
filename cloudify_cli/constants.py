@@ -44,3 +44,7 @@ IGNORED_LOCAL_WORKFLOW_MODULES = (
     'windows_agent_installer.tasks',
     'windows_plugin_installer.tasks'
 )
+
+CLOUDIFY_AUTHENTICATION_HEADER = 'Authorization'
+CLOUDIFY_USERNAME_ENV = 'CLOUDIFY_USERNAME'
+CLOUDIFY_PASSWORD_ENV = 'CLOUDIFY_PASSWORD'
