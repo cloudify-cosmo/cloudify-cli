@@ -31,11 +31,7 @@ from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 from cloudify_cli import utils
-from cloudify_cli.constants import CLOUDIFY_SSL_CERT
-
-
-REST_PORT = 80
-SSL_PORT = 443
+from cloudify_cli import constants
 
 # internal runtime properties - used by the CLI to store local context
 PROVIDER_RUNTIME_PROPERTY = 'provider'
@@ -44,8 +40,9 @@ MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
 MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
 DEFAULT_REMOTE_AGENT_KEY_PATH = '~/.ssh/agent_key.pem'
 
-DEFAULT_SSL_CERTIFICATE_PATH = '~/server.crt'
-DEFAULT_SSL_KEY_PATH = '~/server.key'
+HOST_CLOUDIFY_HOME_DIR = '~/cloudify'
+HOST_SSL_CERTIFICATE_PATH = '~/cloudify/server.crt'
+HOST_SSL_PRIVATE_KEY_PATH = '~/cloudify/server.key'
 
 lgr = None
 
@@ -150,6 +147,32 @@ def _install_docker_if_required(docker_path, use_sudo,
     return docker_exec_command
 
 
+def _handle_ssl_configuration(ssl_configuration):
+    enabled = ssl_configuration.get('enabled', False)
+    if enabled is True:
+        # get cert and key file paths
+        cert_path = ssl_configuration.get('certificate_path')
+        if not cert_path:
+            raise NonRecoverableError(
+                'SSL is enabled => certificate path must be provided')
+        key_path = ssl_configuration.get('private_key_path')
+        if not key_path:
+            raise NonRecoverableError(
+                'SSL is enabled => private key path must be provided')
+        os.environ[constants.CLOUDIFY_SSL_CERT] = cert_path
+        rest_port = constants.SECURED_REST_PORT
+
+        # copy cert and key files to the host,
+        _copy_ssl_files(local_cert_path=cert_path,
+                        remote_cert_path=HOST_SSL_CERTIFICATE_PATH,
+                        local_key_path=key_path,
+                        remote_key_path=HOST_SSL_PRIVATE_KEY_PATH)
+    else:
+        rest_port = constants.DEFAULT_REST_PORT
+
+    ctx.instance.runtime_properties['rest_port'] = rest_port
+
+
 def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      agent_local_key_path=None, agent_remote_key_path=None,
                      manager_private_ip=None, provider_context=None,
@@ -203,6 +226,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     if ctx.operation.retry_number > 0:
         return post_bootstrap_actions(wait_for_services_timeout=15)
 
+    _run_command('mkdir -p ~/{0}'.format(HOST_CLOUDIFY_HOME_DIR))
     docker_exec_command = _install_docker_if_required(
         docker_path,
         use_sudo,
@@ -234,27 +258,10 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     security_config = cloudify_config.get('security', {})
     security_config_path = _handle_security_configuration(security_config)
 
-    ssl_enabled = security_config.get('ssl_enabled', False)
-    if ssl_enabled:
-        # get cert and key file paths
-        cert_path = security_config.get(
-            'ssl_certificate_path', DEFAULT_SSL_CERTIFICATE_PATH)
-        key_path = security_config.get('ssl_key_path', DEFAULT_SSL_KEY_PATH)
-        os.environ[CLOUDIFY_SSL_CERT] = cert_path
-        rest_port = SSL_PORT
-    else:
-        cert_path = DEFAULT_SSL_CERTIFICATE_PATH
-        key_path = DEFAULT_SSL_KEY_PATH
-        rest_port = REST_PORT
+    ssl_configuration = security_config.get('ssl', dict())
+    _handle_ssl_configuration(ssl_configuration)
 
-    ctx.instance.runtime_properties['rest_port'] = rest_port
-    # copy cert and key files from local path to the host,
-    # use defaults if ssl is not enabled
-    _copy_ssl_files(local_cert_path=cert_path,
-                    remote_cert_path=DEFAULT_SSL_CERTIFICATE_PATH,
-                    local_key_path=key_path,
-                    remote_key_path=DEFAULT_SSL_KEY_PATH)
-
+    rest_port = ctx.instance.runtime_properties['rest_port']
     lgr.info('exposing port {0}'.format(rest_port))
     cfy_management_options = ('-t '
                               '--volumes-from data '
@@ -469,14 +476,14 @@ def _is_docker_installed(docker_path, use_sudo):
         return False
 
 
-def _wait_for_management(ip, timeout, port=REST_PORT):
+def _wait_for_management(ip, timeout, port=constants.DEFAULT_REST_PORT):
     """ Wait for url to become available
         :param ip: the manager IP
         :param timeout: in seconds
         :param port: port used by the rest service.
         :return: True of False
     """
-    protocol = 'http' if port == REST_PORT else 'https'
+    protocol = 'http' if port == constants.DEFAULT_REST_PORT else 'https'
     validation_url = '{0}://{1}:{2}/version'.format(protocol, ip, port)
     lgr.info('waiting for url {0} to become available'.format(validation_url))
 
