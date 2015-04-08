@@ -62,7 +62,7 @@ def use(management_ip, rest_port):
         wd_settings.set_management_server(management_ip)
         wd_settings.set_provider_context(provider_context)
         wd_settings.set_rest_port(rest_port)
-        wd_settings.set_rest_port(protocol)
+        wd_settings.set_protocol(protocol)
         logger.info('Using management server {0} with port {1}'
                     .format(management_ip, rest_port))
 

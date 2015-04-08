@@ -226,7 +226,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     if ctx.operation.retry_number > 0:
         return post_bootstrap_actions(wait_for_services_timeout=15)
 
-    _run_command('mkdir -p ~/{0}'.format(HOST_CLOUDIFY_HOME_DIR))
+    _run_command('test ! -d {0} && mkdir {0}'.format(HOST_CLOUDIFY_HOME_DIR))
     docker_exec_command = _install_docker_if_required(
         docker_path,
         use_sudo,
@@ -258,7 +258,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     security_config = cloudify_config.get('security', {})
     security_config_path = _handle_security_configuration(security_config)
 
-    ssl_configuration = security_config.get('ssl', dict())
+    ssl_configuration = security_config.get('ssl', {})
     _handle_ssl_configuration(ssl_configuration)
 
     rest_port = ctx.instance.runtime_properties['rest_port']
