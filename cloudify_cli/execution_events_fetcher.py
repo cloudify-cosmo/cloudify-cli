@@ -62,11 +62,11 @@ class ExecutionEventsFetcher(object):
         total_events_count = 0
 
         # timeout can be None (never time out), for example when tail is used
-        if timeout:
+        if timeout is not None:
             deadline = time.time() + timeout
 
         while True:
-            if timeout and time.time() > deadline:
+            if timeout is not None and time.time() > deadline:
                 raise EventProcessingTimeoutError(
                     self._execution_id,
                     'events/log fetching timed out')
@@ -106,7 +106,7 @@ def wait_for_execution(client,
     if execution.status in Execution.END_STATES:
         return execution
 
-    if timeout:
+    if timeout is not None:
         deadline = time.time() + timeout
 
     events_fetcher = ExecutionEventsFetcher(client, execution.id,
@@ -114,18 +114,18 @@ def wait_for_execution(client,
 
     # Poll for execution status until execution ends
     while True:
-        if timeout:
+        if timeout is not None:
             if time.time() > deadline:
                 raise ExecutionTimeoutError(
                     execution.id,
                     'execution of operation {0} for deployment {1} '
                     'timed out'.format(execution.workflow_id,
                                        execution.deployment_id))
+            else:
+                # update the remaining timeout
+                timeout = deadline-time.time()
 
         if execution.status != Execution.PENDING:
-            # update the remaining timeout, if set
-            if timeout:
-                timeout = deadline-time.time()
             events_fetcher.fetch_and_process_events(
                 events_handler=events_handler, timeout=timeout)
 
