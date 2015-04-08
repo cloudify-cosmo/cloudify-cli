@@ -13,50 +13,36 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 import time
-from cloudify_cli.exceptions import ExecutionTimeoutError
+from cloudify_cli.exceptions import ExecutionTimeoutError, \
+    EventProcessingTimeoutError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.executions import Execution
+
+
+WAIT_FOR_EXECUTION_SLEEP_INTERVAL = 3
 
 
 class ExecutionEventsFetcher(object):
 
     def __init__(self, client, execution_id, batch_size=100,
-                 timeout=60, include_logs=False):
+                 include_logs=False):
         self._client = client
         self._execution_id = execution_id
         self._batch_size = batch_size
         self._from_event = 0
-        self._timeout = timeout
         self._include_logs = include_logs
         # make sure execution exists before proceeding
         # a 404 will be raised otherwise
         self._client.executions.get(execution_id)
 
-    def fetch_and_process_events(self,
-                                 get_remaining_events=False,
-                                 events_handler=None):
-        if events_handler is None:
-            return
-        events = self.fetch_events(get_remaining_events=get_remaining_events)
-        events_handler(events)
+    def _fetch_and_process_events_batch(self, events_handler=None):
+        events = self._fetch_events_batch()
+        if events and events_handler:
+            events_handler(events)
 
-    def fetch_events(self, get_remaining_events=False):
-        if get_remaining_events:
-            events = []
-            timeout = time.time() + self._timeout
-            while time.time() < timeout:
-                result = self._fetch_events()
-                if len(result) > 0:
-                    events.extend(result)
-                else:
-                    return events
-                time.sleep(1)
-            raise RuntimeError('events/log fetching timed out')
+        return len(events)
 
-        else:
-            return self._fetch_events()
-
-    def _fetch_events(self):
+    def _fetch_events_batch(self):
         try:
             events, total = self._client.events.get(
                 self._execution_id,
@@ -72,15 +58,30 @@ class ExecutionEventsFetcher(object):
             raise
         return events
 
-    def fetch_all(self):
-        return self.fetch_events(get_remaining_events=True)
+    def fetch_and_process_events(self, events_handler=None, timeout=60):
+        total_events_count = 0
 
+        deadline = time.time() + timeout
 
-def get_all_execution_events(client, execution_id, include_logs=False):
-    execution_events = ExecutionEventsFetcher(client,
-                                              execution_id,
-                                              include_logs=include_logs)
-    return execution_events.fetch_all()
+        while True:
+            if time.time() > deadline:
+                raise EventProcessingTimeoutError(
+                    self._execution_id,
+                    'events/log fetching timed out')
+
+            events_batch_count = self._fetch_and_process_events_batch(
+                events_handler=events_handler)
+
+            total_events_count += events_batch_count
+
+            if events_batch_count < self._batch_size:
+                # returned less events than allowed by _batch_size,
+                # this means these are the last events found so far
+                break
+
+            time.sleep(1)
+
+        return total_events_count
 
 
 def get_deployment_environment_creation_execution(client, deployment_id):
@@ -100,28 +101,28 @@ def wait_for_execution(client,
                        include_logs=False,
                        timeout=900):
 
+    # if execution already ended - return without waiting
+    if execution.status in Execution.END_STATES:
+        return execution
+
     deadline = time.time() + timeout
-    execution_events = ExecutionEventsFetcher(client, execution.id,
-                                              include_logs=include_logs)
+    events_fetcher = ExecutionEventsFetcher(client, execution.id,
+                                            include_logs=include_logs)
 
     # Poll for execution status until execution ends
-    while execution.status not in Execution.END_STATES:
+    while True:
         if time.time() > deadline:
             raise ExecutionTimeoutError(
                 execution.id,
                 'execution of operation {0} for deployment {1} '
                 'timed out'.format(execution.workflow_id, deployment_id))
 
-        time.sleep(3)
-
-        execution = client.executions.get(execution.id)
         if execution.status != Execution.PENDING:
-            execution_events.fetch_and_process_events(
-                events_handler=events_handler)
-
-    # Process remaining events
-    execution_events.fetch_and_process_events(
-        get_remaining_events=True,
-        events_handler=events_handler)
+            events_fetcher.fetch_and_process_events(
+                events_handler=events_handler, timeout=deadline-time.time())
+        execution = client.executions.get(execution.id)
+        if execution.status in Execution.END_STATES:
+            break
+        time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
 
     return execution
