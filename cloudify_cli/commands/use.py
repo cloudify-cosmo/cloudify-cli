@@ -30,7 +30,7 @@ from cloudify_cli.logger import get_logger
 
 def use(management_ip, rest_port):
     logger = get_logger()
-    # first check this server is available.
+    # determine SSL mode by port
     if rest_port == SECURED_PORT:
         protocol = SECURED_PROTOCOL
     else:
@@ -38,6 +38,7 @@ def use(management_ip, rest_port):
     client = utils.get_rest_client(
         manager_ip=management_ip, rest_port=rest_port, protocol=protocol)
     try:
+        # first check this server is available.
         status_result = client.manager.get_status()
     except CloudifyClientError:
         status_result = None
@@ -61,6 +62,7 @@ def use(management_ip, rest_port):
         wd_settings.set_management_server(management_ip)
         wd_settings.set_provider_context(provider_context)
         wd_settings.set_rest_port(rest_port)
+        wd_settings.set_rest_port(protocol)
         logger.info('Using management server {0} with port {1}'
                     .format(management_ip, rest_port))
 
