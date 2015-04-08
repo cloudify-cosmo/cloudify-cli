@@ -48,7 +48,7 @@ def ls(execution_id, include_logs, tail):
                                            client.executions.get(execution_id),
                                            events_handler=events_logger,
                                            include_logs=include_logs,
-                                           timeout=0)   # don't timeout ever
+                                           timeout=None)   # don't timeout ever
             if execution.error:
                 logger.info("Execution of workflow '{0}' for deployment "
                             "'{1}' failed. [error={2}]"
