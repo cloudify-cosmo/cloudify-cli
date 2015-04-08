@@ -574,6 +574,10 @@ def _update_manager_deployment(local_only=False):
     with utils.update_wd_settings() as wd_settings:
         wd_settings.set_provider_context(provider_context)
         wd_settings.set_rest_port(rest_port)
+        protocol = constants.DEFAULT_PROTOCOL \
+            if rest_port == constants.DEFAULT_REST_PORT \
+            else constants.SECURED_PROTOCOL
+        wd_settings.set_protocol(protocol)
 
     if not local_only:
         # update on server
