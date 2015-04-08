@@ -60,13 +60,11 @@ class ExecutionEventsFetcher(object):
 
     def fetch_and_process_events(self, events_handler=None, timeout=60):
         total_events_count = 0
-        has_timeout = True if timeout is not None else False
 
-        if has_timeout:
-            deadline = time.time() + timeout
+        deadline = time.time() + timeout
 
         while True:
-            if has_timeout and time.time() > deadline:
+            if time.time() > deadline:
                 raise EventProcessingTimeoutError(
                     self._execution_id,
                     'events/log fetching timed out')
