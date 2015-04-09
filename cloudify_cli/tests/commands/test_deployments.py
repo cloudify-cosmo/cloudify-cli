@@ -50,7 +50,7 @@ class DeploymentsTest(CliCommandTest):
         cli_runner.run_cli('cfy deployments delete -d my-dep')
 
     def test_deployments_execute(self):
-        execute_response = Execution({'status': 'terminated'})
+        execute_response = Execution({'status': 'started'})
         get_execution_response = Execution({
             'status': 'terminated',
             'workflow_id': 'mock_wf',

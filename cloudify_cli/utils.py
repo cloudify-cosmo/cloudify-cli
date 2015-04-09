@@ -248,16 +248,12 @@ def get_rest_client(manager_ip=None, rest_port=None):
         rest_port = get_rest_port()
 
     username = get_username()
-
     password = get_password()
-    headers = get_auth_header(username, password)
+    headers = create_auth_header(username, password)
     return CloudifyClient(host=manager_ip, port=rest_port, headers=headers)
 
-    return CloudifyClient(host=manager_ip, port=rest_port,
-                          headers=get_auth_header(username, password))
 
-
-def get_auth_header(username, password):
+def create_auth_header(username, password):
     header = None
 
     if username and password:
