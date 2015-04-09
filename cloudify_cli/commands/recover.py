@@ -37,7 +37,7 @@ def recover(force,
         raise exceptions.CloudifyCliError(msg)
 
     if CLOUDIFY_MANAGER_PK_PATH_ENVAR not in os.environ:
-        if not os.path.isfile(utils.get_management_key()):
+        if not os.path.isfile(os.path.expanduser(utils.get_management_key())):
             raise RuntimeError("Can't find manager private key file. Set the "
                                "path to it using the {0} environment variable"
                                .format(CLOUDIFY_MANAGER_PK_PATH_ENVAR))
