@@ -15,16 +15,11 @@
 ############
 
 import os
-import tempfile
 import unittest
-import shutil
 
 from cloudify_cli import utils
 from cloudify_cli import constants
 
-from cloudify_cli.tests import cli_runner
-
-TEST_DIR = '/tmp/cloudify-cli-unit-tests'
 TRUST_ALL = 'non-empty-value'
 CERT_PATH = 'path-to-certificate'
 
@@ -32,12 +27,6 @@ CERT_PATH = 'path-to-certificate'
 class TestGetRestClient(unittest.TestCase):
 
     def setUp(self):
-        os.makedirs(TEST_DIR)
-        test_workdir = tempfile.mkdtemp(dir=TEST_DIR)
-        os.chdir(test_workdir)
-
-        cli_runner.run_cli('cfy init -r')
-
         os.environ[constants.CLOUDIFY_USERNAME_ENV] = 'test_username'
         os.environ[constants.CLOUDIFY_PASSWORD_ENV] = 'test_password'
         os.environ[constants.CLOUDIFY_SSL_TRUST_ALL] = TRUST_ALL
@@ -48,7 +37,6 @@ class TestGetRestClient(unittest.TestCase):
         del os.environ[constants.CLOUDIFY_PASSWORD_ENV]
         del os.environ[constants.CLOUDIFY_SSL_TRUST_ALL]
         del os.environ[constants.CLOUDIFY_SSL_CERT]
-        shutil.rmtree(TEST_DIR)
 
     def test_get_rest_client(self):
         client = utils.get_rest_client(manager_ip='localhost')
