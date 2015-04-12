@@ -17,9 +17,9 @@
 Handles 'cfy use'
 """
 
-from cloudify import constants
 from cloudify_rest_client.exceptions import CloudifyClientError
 
+from cloudify_cli import constants
 from cloudify_cli import utils
 from cloudify_cli.bootstrap import bootstrap as bs
 from cloudify_cli.exceptions import CloudifyCliError
@@ -29,7 +29,7 @@ from cloudify_cli.logger import get_logger
 def use(management_ip, rest_port):
     logger = get_logger()
     # determine SSL mode by port
-    if rest_port == constants.SECURED_PORT:
+    if rest_port == constants.SECURED_REST_PORT:
         protocol = constants.SECURED_PROTOCOL
     else:
         protocol = constants.DEFAULT_PROTOCOL
