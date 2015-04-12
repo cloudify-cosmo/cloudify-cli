@@ -22,9 +22,6 @@ import shutil
 from cloudify_cli import utils
 from cloudify_cli import constants
 
-from cloudify_cli.tests import cli_runner
-
-TEST_DIR = '/tmp/cloudify-cli-unit-tests'
 TRUST_ALL = 'non-empty-value'
 CERT_PATH = 'path-to-certificate'
 
@@ -45,9 +42,10 @@ class TestGetRestClient(unittest.TestCase):
 
     def test_get_rest_client(self):
         cwd = os.getcwd()
+        test_dir = os.path.join('tmp', 'cloudify-cli-unit-tests')
         try:
-            os.makedirs(TEST_DIR)
-            test_workdir = tempfile.mkdtemp(dir=TEST_DIR)
+            os.makedirs(test_dir)
+            test_workdir = tempfile.mkdtemp(dir=test_dir)
             os.chdir(test_workdir)
             utils.dump_cloudify_working_dir_settings()
 
@@ -57,7 +55,7 @@ class TestGetRestClient(unittest.TestCase):
                     constants.CLOUDIFY_AUTHENTICATION_HEADER])
         finally:
             os.chdir(cwd)
-            shutil.rmtree(TEST_DIR)
+            shutil.rmtree(test_dir)
 
     def test_get_secured_rest_client(self):
         protocol = 'https'
