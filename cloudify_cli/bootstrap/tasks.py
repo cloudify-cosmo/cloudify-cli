@@ -155,10 +155,18 @@ def _handle_ssl_configuration(ssl_configuration):
         if not cert_path:
             raise NonRecoverableError(
                 'SSL is enabled => certificate path must be provided')
+        if not os.path.exists(cert_path):
+            raise NonRecoverableError(
+                'The certificate path [{0}] does not exist'
+                .format(cert_path))
         key_path = ssl_configuration.get('private_key_path')
         if not key_path:
             raise NonRecoverableError(
                 'SSL is enabled => private key path must be provided')
+        if not os.path.exists(key_path):
+            raise NonRecoverableError(
+                'The private key path [{0}] does not exist'
+                .format(key_path))
         os.environ[constants.CLOUDIFY_SSL_CERT] = cert_path
         rest_port = constants.SECURED_REST_PORT
 
