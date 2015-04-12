@@ -15,11 +15,16 @@
 ############
 
 import os
+import tempfile
 import unittest
+import shutil
 
 from cloudify_cli import utils
 from cloudify_cli import constants
 
+from cloudify_cli.tests import cli_runner
+
+TEST_DIR = '/tmp/cloudify-cli-unit-tests'
 TRUST_ALL = 'non-empty-value'
 CERT_PATH = 'path-to-certificate'
 
@@ -39,9 +44,17 @@ class TestGetRestClient(unittest.TestCase):
         del os.environ[constants.CLOUDIFY_SSL_CERT]
 
     def test_get_rest_client(self):
-        client = utils.get_rest_client(manager_ip='localhost')
-        self.assertIsNotNone(
-            client._client.headers[constants.CLOUDIFY_AUTHENTICATION_HEADER])
+        try:
+            os.makedirs(TEST_DIR)
+            test_workdir = tempfile.mkdtemp(dir=TEST_DIR)
+            os.chdir(test_workdir)
+            cli_runner.run_cli('cfy init -r')
+
+            client = utils.get_rest_client(manager_ip='localhost')
+            self.assertIsNotNone(
+                client._client.headers[constants.CLOUDIFY_AUTHENTICATION_HEADER])
+        finally:
+            shutil.rmtree(TEST_DIR)
 
     def test_get_secured_rest_client(self):
         protocol = 'https'
