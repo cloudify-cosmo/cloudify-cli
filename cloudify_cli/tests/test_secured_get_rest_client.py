@@ -54,7 +54,6 @@ class TestGetRestClient(unittest.TestCase):
                 client._client.headers[
                     constants.CLOUDIFY_AUTHENTICATION_HEADER])
         finally:
-            os.chdir(cwd)
             shutil.rmtree(test_dir)
 
     def test_get_secured_rest_client(self):
