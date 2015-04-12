@@ -155,6 +155,7 @@ def _handle_ssl_configuration(ssl_configuration):
         if not cert_path:
             raise NonRecoverableError(
                 'SSL is enabled => certificate path must be provided')
+        cert_path = os.path.expanduser(cert_path)
         if not os.path.exists(cert_path):
             raise NonRecoverableError(
                 'The certificate path [{0}] does not exist'
@@ -163,6 +164,7 @@ def _handle_ssl_configuration(ssl_configuration):
         if not key_path:
             raise NonRecoverableError(
                 'SSL is enabled => private key path must be provided')
+        key_path = os.path.expanduser(key_path)
         if not os.path.exists(key_path):
             raise NonRecoverableError(
                 'The private key path [{0}] does not exist'
@@ -234,7 +236,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     if ctx.operation.retry_number > 0:
         return post_bootstrap_actions(wait_for_services_timeout=15)
 
-    _run_command('test ! -d {0} && mkdir {0}'.format(HOST_CLOUDIFY_HOME_DIR))
+    _run_command('mkdir -p {0}'.format(HOST_CLOUDIFY_HOME_DIR))
     docker_exec_command = _install_docker_if_required(
         docker_path,
         use_sudo,
@@ -542,16 +544,14 @@ def _handle_security_configuration(blueprint_security_config):
 
 def _copy_ssl_files(
         local_cert_path, remote_cert_path, local_key_path, remote_key_path):
-    local_cert = os.path.expanduser(local_cert_path)
     ctx.logger.info(
         'Copying SSL certificate to management machine: {0} -> {1}'.format(
-            local_cert, remote_cert_path))
-    fabric.api.put(local_cert, remote_cert_path)
+            local_cert_path, remote_cert_path))
+    fabric.api.put(local_cert_path, remote_cert_path)
 
-    local_key = os.path.expanduser(local_key_path)
     ctx.logger.info(
         'Copying SSL key to management machine: {0} -> {1}'.format(
-            local_key, remote_key_path))
+            local_key_path, remote_key_path))
     fabric.api.put(local_key_path, remote_key_path)
 
 
