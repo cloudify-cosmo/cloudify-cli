@@ -44,16 +44,19 @@ class TestGetRestClient(unittest.TestCase):
         del os.environ[constants.CLOUDIFY_SSL_CERT]
 
     def test_get_rest_client(self):
+        cwd = os.getcwd()
         try:
             os.makedirs(TEST_DIR)
             test_workdir = tempfile.mkdtemp(dir=TEST_DIR)
             os.chdir(test_workdir)
-            cli_runner.run_cli('cfy init -r')
+            utils.dump_cloudify_working_dir_settings()
 
             client = utils.get_rest_client(manager_ip='localhost')
             self.assertIsNotNone(
-                client._client.headers[constants.CLOUDIFY_AUTHENTICATION_HEADER])
+                client._client.headers[
+                    constants.CLOUDIFY_AUTHENTICATION_HEADER])
         finally:
+            os.chdir(cwd)
             shutil.rmtree(TEST_DIR)
 
     def test_get_secured_rest_client(self):
