@@ -53,11 +53,37 @@ class UseTest(CliCommandTest):
         cwds = self._read_cosmo_wd_settings()
         self.assertEquals('127.0.0.1', cwds.get_management_server())
 
-    def test_secured_use(self):
+    def test_use_with_authorization(self):
         host = '127.0.0.1'
         auth_header = utils.create_auth_header(username='test_username',
                                                password='test_password')
         self.client = CloudifyClient(host=host, headers=auth_header)
+
+        self._test_use()
+
+        # assert Authorization in headers
+        eventual_request_headers = self.client._client.headers
+        self.assertEqual(self.do_request_headers, eventual_request_headers)
+
+    def test_use_with_verify(self):
+        host = 'localhost'
+        self.client = CloudifyClient(host=host, protocol='https')
+        self._test_use()
+        self.assertEqual(self.request_url,
+                         'https://{0}:443/status'.format(host))
+        self.assertTrue(self.verify)
+
+    def test_use_trust_all(self):
+        host = 'localhost'
+        self.client = CloudifyClient(host=host,
+                                     protocol='https', trust_all=True)
+        self._test_use()
+        self.assertEqual(self.request_url,
+                         'https://{0}:443/status'.format(host))
+        self.assertFalse(self.verify)
+
+    def _test_use(self):
+        host = 'localhost'
         self.client.manager.get_context = MagicMock(
             return_value={
                 'name': 'name',
@@ -66,16 +92,17 @@ class UseTest(CliCommandTest):
         )
 
         self.headers = None
+        self.request_url = None
+        self.verify = None
 
         def mock_do_request(*_, **kwargs):
             self.do_request_headers = kwargs.get('headers')
+            self.request_url = kwargs.get('request_url')
+            self.verify = kwargs.get('verify')
             return 'success'
 
         # run cli use command
         with patch('cloudify_rest_client.client.HTTPClient._do_request',
                    new=mock_do_request):
-            cli_runner.run_cli('cfy use -t {0}'.format(host))
-
-        # assert Authorization in headers
-        eventual_request_headers = self.client._client.headers
-        self.assertEqual(self.do_request_headers, eventual_request_headers)
+            cli_runner.run_cli('cfy use -t {0} --port {1}'
+                               .format(host, self.client._client.port))
