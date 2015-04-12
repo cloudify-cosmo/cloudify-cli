@@ -75,10 +75,9 @@ class ExecutionsTest(CliCommandTest):
         try:
             executions.wait_for_execution = wait_for_mock
             cli_runner.run_cli('cfy executions start -w mock_wf -d dep')
-
-            self.assertEqual(wait_for_mock.mock_calls[0][1][2].workflow_id,
+            self.assertEqual(wait_for_mock.mock_calls[0][1][1].workflow_id,
                              'create_deployment_environment')
-            self.assertEqual(wait_for_mock.mock_calls[1][1][2].workflow_id,
+            self.assertEqual(wait_for_mock.mock_calls[1][1][1].workflow_id,
                              'mock_wf')
         finally:
             executions.wait_for_execution = original_wait_for

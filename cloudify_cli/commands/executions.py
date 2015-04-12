@@ -101,7 +101,7 @@ def start(workflow_id, deployment_id, timeout, force,
     events_logger = get_events_logger()
 
     events_message = "* Run 'cfy events list --include-logs " \
-                     "--execution-id {0}' for retrieving the " \
+                     "--execution-id {0}' to retrieve the " \
                      "execution's events/logs"
     try:
         client = utils.get_rest_client(management_ip)
@@ -128,7 +128,6 @@ def start(workflow_id, deployment_id, timeout, force,
                         'workflow execution to finish...')
             now = time.time()
             wait_for_execution(client,
-                               deployment_id,
                                _get_deployment_environment_creation_execution(
                                    client, deployment_id),
                                events_handler=events_logger,
@@ -145,7 +144,6 @@ def start(workflow_id, deployment_id, timeout, force,
                 force=force)
 
         execution = wait_for_execution(client,
-                                       deployment_id,
                                        execution,
                                        events_handler=events_logger,
                                        include_logs=include_logs,
@@ -169,7 +167,10 @@ def start(workflow_id, deployment_id, timeout, force,
                     "--execution-id {2}' to cancel"
                     " the running workflow."
                     .format(workflow_id, deployment_id, e.execution_id))
-        logger.info(events_message.format(e.execution_id))
+        events_tail_message = "* Run 'cfy events list --tail --include-logs " \
+                              "--execution-id {0}' to retrieve the " \
+                              "execution's events/logs"
+        logger.info(events_tail_message.format(e.execution_id))
         raise SuppressedCloudifyCliError()
 
 
