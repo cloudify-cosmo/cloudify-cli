@@ -21,6 +21,7 @@ import shutil
 
 from cloudify_cli import utils
 from cloudify_cli import constants
+from cloudify_cli.tests import cli_runner
 
 TRUST_ALL = 'non-empty-value'
 CERT_PATH = 'path-to-certificate'
@@ -29,32 +30,33 @@ CERT_PATH = 'path-to-certificate'
 class TestGetRestClient(unittest.TestCase):
 
     def setUp(self):
+
+        self.test_dir = os.path.join('/tmp', 'cloudify-cli-unit-tests')
+        res = os.makedirs(self.test_dir)
+        test_workdir = tempfile.mkdtemp(dir=self.test_dir)
+        utils.get_cwd = lambda: test_workdir
+        os.chdir(test_workdir)
+
+        cli_runner.run_cli('cfy init -r')
+
         os.environ[constants.CLOUDIFY_USERNAME_ENV] = 'test_username'
         os.environ[constants.CLOUDIFY_PASSWORD_ENV] = 'test_password'
         os.environ[constants.CLOUDIFY_SSL_TRUST_ALL] = TRUST_ALL
         os.environ[constants.CLOUDIFY_SSL_CERT] = CERT_PATH
 
     def tearDown(self):
+
         del os.environ[constants.CLOUDIFY_USERNAME_ENV]
         del os.environ[constants.CLOUDIFY_PASSWORD_ENV]
         del os.environ[constants.CLOUDIFY_SSL_TRUST_ALL]
         del os.environ[constants.CLOUDIFY_SSL_CERT]
 
-    def test_get_rest_client(self):
-        cwd = os.getcwd()
-        test_dir = os.path.join('tmp', 'cloudify-cli-unit-tests')
-        try:
-            os.makedirs(test_dir)
-            test_workdir = tempfile.mkdtemp(dir=test_dir)
-            os.chdir(test_workdir)
-            utils.dump_cloudify_working_dir_settings()
+        shutil.rmtree(self.test_dir)
 
-            client = utils.get_rest_client(manager_ip='localhost')
-            self.assertIsNotNone(
-                client._client.headers[
-                    constants.CLOUDIFY_AUTHENTICATION_HEADER])
-        finally:
-            shutil.rmtree(test_dir)
+    def test_get_rest_client(self):
+        client = utils.get_rest_client(manager_ip='localhost')
+        self.assertIsNotNone(client._client.headers[
+            constants.CLOUDIFY_AUTHENTICATION_HEADER])
 
     def test_get_secured_rest_client(self):
         protocol = 'https'
