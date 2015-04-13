@@ -32,7 +32,7 @@ class TestGetRestClient(unittest.TestCase):
     def setUp(self):
 
         self.test_dir = os.path.join('/tmp', 'cloudify-cli-unit-tests')
-        res = os.makedirs(self.test_dir)
+        os.makedirs(self.test_dir)
         test_workdir = tempfile.mkdtemp(dir=self.test_dir)
         utils.get_cwd = lambda: test_workdir
         os.chdir(test_workdir)
