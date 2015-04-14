@@ -478,12 +478,15 @@ def _handle_security_configuration(blueprint_security_config):
         'userstore_driver', {})
     securest_authentication_providers = blueprint_security_config.get(
         'authentication_providers', [])
+    auth_token_generator = blueprint_security_config.get(
+        'auth_token_generator', {})
     # TODO: this is the place to provide initial validation for the security
     # related configuration parts.
     security_config = dict(
         secured_server=secured_server,
         securest_userstore_driver=securest_userstore_driver,
-        securest_authentication_providers=securest_authentication_providers)
+        securest_authentication_providers=securest_authentication_providers,
+        auth_token_generator=auth_token_generator)
     security_config_file_obj = StringIO()
     json.dump(security_config, security_config_file_obj)
     fabric.api.put(security_config_file_obj, remote_security_config_path)
