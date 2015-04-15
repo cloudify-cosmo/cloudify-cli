@@ -483,6 +483,8 @@ def _handle_security_configuration(blueprint_security_config):
 
     secured_server = blueprint_security_config.get(
         'enabled', DEFAULT_SECURITY_MODE)
+    auth_token_generator = blueprint_security_config.get(
+        'auth_token_generator', {})
     securest_userstore_driver = blueprint_security_config.get(
         'userstore_driver', {})
     securest_authentication_providers = blueprint_security_config.get(
@@ -498,13 +500,14 @@ def _handle_security_configuration(blueprint_security_config):
 
     security_config = dict(
         secured_server=secured_server,
+        auth_token_generator=auth_token_generator,
         securest_userstore_driver=securest_userstore_driver,
         securest_authentication_providers=securest_authentication_providers,
         securest_log_level=securest_log_level,
         securest_log_file=securest_log_file,
         securest_log_file_size_MB=securest_log_file_size_MB,
-        securest_log_files_backup_count=securest_log_files_backup_count)
-
+        securest_log_files_backup_count=securest_log_files_backup_count
+    )
     security_config_file_obj = StringIO()
     json.dump(security_config, security_config_file_obj)
     fabric.api.put(security_config_file_obj, remote_security_config_path)
