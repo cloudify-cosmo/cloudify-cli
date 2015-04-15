@@ -83,4 +83,3 @@ def recover(force,
                 "the manager private key path via the {0} environment "
                 "variable".format(CLOUDIFY_MANAGER_PK_PATH_ENVAR)
             )
-

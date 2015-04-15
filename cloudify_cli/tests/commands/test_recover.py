@@ -111,4 +111,3 @@ class RecoverTest(CliCommandTest):
             cli_runner.run_cli('cfy recover -f')
         finally:
             del os.environ['CLOUDIFY_MANAGER_PRIVATE_KEY_PATH']
-
