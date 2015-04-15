@@ -42,6 +42,13 @@ MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
 MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
 DEFAULT_REMOTE_AGENT_KEY_PATH = '~/.ssh/agent_key.pem'
 
+DEFAULT_LOG_FOLDER = '/var/log/cloudify'
+DEFAULT_SECURITY_LOG_FILE = DEFAULT_LOG_FOLDER + "/rest-security-audit.log"
+DEFAULT_LOG_LEVEL = 'INFO'
+DEFAULT_LOG_FILE_SIZE = 1024 * 1024 * 100
+DEFAULT_LOG_FILES_BACKUP_COUNT = 20
+DEFAULT_SECURITY_MODE = False
+
 lgr = None
 
 
@@ -473,17 +480,31 @@ def _set_manager_endpoint_data():
 def _handle_security_configuration(blueprint_security_config):
     remote_security_config_path = '~/rest-security-config.json'
     container_security_config_path = '/root/rest-security-config.json'
-    secured_server = blueprint_security_config.get('enabled', False)
+
+    secured_server = blueprint_security_config.get(
+        'enabled', DEFAULT_SECURITY_MODE)
     securest_userstore_driver = blueprint_security_config.get(
         'userstore_driver', {})
     securest_authentication_providers = blueprint_security_config.get(
         'authentication_providers', [])
-    # TODO: this is the place to provide initial validation for the security
-    # related configuration parts.
+    securest_log_level = blueprint_security_config.get(
+        'log_level', DEFAULT_LOG_LEVEL)
+    securest_log_file = blueprint_security_config.get(
+        'log_file', DEFAULT_SECURITY_LOG_FILE)
+    securest_log_file_size_MB = blueprint_security_config.get(
+        'log_file_size_MB', DEFAULT_LOG_FILE_SIZE)
+    securest_log_files_backup_count = blueprint_security_config.get(
+        'log_files_backup_count', DEFAULT_LOG_FILES_BACKUP_COUNT)
+
     security_config = dict(
         secured_server=secured_server,
         securest_userstore_driver=securest_userstore_driver,
-        securest_authentication_providers=securest_authentication_providers)
+        securest_authentication_providers=securest_authentication_providers,
+        securest_log_level=securest_log_level,
+        securest_log_file=securest_log_file,
+        securest_log_file_size_MB=securest_log_file_size_MB,
+        securest_log_files_backup_count=securest_log_files_backup_count)
+
     security_config_file_obj = StringIO()
     json.dump(security_config, security_config_file_obj)
     fabric.api.put(security_config_file_obj, remote_security_config_path)
