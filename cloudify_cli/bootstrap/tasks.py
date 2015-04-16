@@ -571,7 +571,6 @@ def _update_manager_deployment(local_only=False):
     # get the current provider from the runtime property set on bootstrap
     provider_context = ctx.instance.runtime_properties[
         PROVIDER_RUNTIME_PROPERTY]
-    rest_port = ctx.instance.runtime_properties[REST_PORT]
 
     # construct new manager deployment
     provider_context['cloudify'][
@@ -582,11 +581,6 @@ def _update_manager_deployment(local_only=False):
         PROVIDER_RUNTIME_PROPERTY] = provider_context
     with utils.update_wd_settings() as wd_settings:
         wd_settings.set_provider_context(provider_context)
-        wd_settings.set_rest_port(rest_port)
-        protocol = constants.DEFAULT_PROTOCOL \
-            if rest_port == constants.DEFAULT_REST_PORT \
-            else constants.SECURED_PROTOCOL
-        wd_settings.set_protocol(protocol)
 
     if not local_only:
         # update on server
