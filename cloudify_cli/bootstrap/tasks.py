@@ -39,6 +39,7 @@ MANAGER_IP_RUNTIME_PROPERTY = 'manager_ip'
 MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
 MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
 DEFAULT_REMOTE_AGENT_KEY_PATH = '~/.ssh/agent_key.pem'
+REST_PORT = 'rest_port'
 
 HOST_CLOUDIFY_HOME_DIR = '~/cloudify'
 HOST_SSL_CERTIFICATE_PATH = '~/cloudify/server.crt'
@@ -180,7 +181,7 @@ def _handle_ssl_configuration(ssl_configuration):
     else:
         rest_port = constants.DEFAULT_REST_PORT
 
-    ctx.instance.runtime_properties['rest_port'] = rest_port
+    ctx.instance.runtime_properties[REST_PORT] = rest_port
 
 
 def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
@@ -213,7 +214,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
 
     def post_bootstrap_actions(wait_for_services_timeout=180):
-        port = ctx.instance.runtime_properties['rest_port']
+        port = ctx.instance.runtime_properties[REST_PORT]
         lgr.info(
             'waiting for cloudify management services to start on port {0}'
             .format(port))
@@ -271,7 +272,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     ssl_configuration = security_config.get('ssl', {})
     _handle_ssl_configuration(ssl_configuration)
 
-    rest_port = ctx.instance.runtime_properties['rest_port']
+    rest_port = ctx.instance.runtime_properties[REST_PORT]
     lgr.info('exposing port {0}'.format(rest_port))
     cfy_management_options = ('-t '
                               '--volumes-from data '
@@ -373,7 +374,7 @@ def recover_docker(docker_path=None, use_sudo=True,
                                 docker_service_start_command)
 
     lgr.info('waiting for cloudify management services to restart')
-    port = ctx.instance.runtime_properties['rest_port']
+    port = ctx.instance.runtime_properties[REST_PORT]
     started = _wait_for_management(manager_ip, timeout=180, port=port)
     _recover_deployments(docker_path, use_sudo)
     if not started:
@@ -570,7 +571,6 @@ def _update_manager_deployment(local_only=False):
     # get the current provider from the runtime property set on bootstrap
     provider_context = ctx.instance.runtime_properties[
         PROVIDER_RUNTIME_PROPERTY]
-    rest_port = ctx.instance.runtime_properties['rest_port']
 
     # construct new manager deployment
     provider_context['cloudify'][
@@ -581,11 +581,6 @@ def _update_manager_deployment(local_only=False):
         PROVIDER_RUNTIME_PROPERTY] = provider_context
     with utils.update_wd_settings() as wd_settings:
         wd_settings.set_provider_context(provider_context)
-        wd_settings.set_rest_port(rest_port)
-        protocol = constants.DEFAULT_PROTOCOL \
-            if rest_port == constants.DEFAULT_REST_PORT \
-            else constants.SECURED_PROTOCOL
-        wd_settings.set_protocol(protocol)
 
     if not local_only:
         # update on server
