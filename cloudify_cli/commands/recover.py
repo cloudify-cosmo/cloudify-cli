@@ -40,7 +40,8 @@ def recover(force,
         # user defined the key file path inside an env variable.
         # validate the existence of the keyfile because it will later be
         # used in a fabric task to ssh to the manager
-        key_path = os.environ[CLOUDIFY_MANAGER_PK_PATH_ENVAR]
+        key_path = os.path.expanduser(os.environ[
+            CLOUDIFY_MANAGER_PK_PATH_ENVAR])
         if not os.path.isfile(key_path):
             raise exceptions.CloudifyValidationError(
                 "Cannot perform recovery. manager private key file "
@@ -50,7 +51,7 @@ def recover(force,
     else:
         # try retrieving the key file from the local context
         try:
-            key_path = utils.get_management_key()
+            key_path = os.path.expanduser(utils.get_management_key())
             if not os.path.isfile(key_path):
                 # manager key file path exists in context but does not exist
                 # in the file system. fail now.
