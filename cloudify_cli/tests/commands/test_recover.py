@@ -89,16 +89,16 @@ class RecoverTest(CliCommandTest):
         try:
             os.environ['CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'] = key_path
 
-            # recovery command should not fail because the key file specified in
-            # the context file does not exist
+            # recovery command should not fail because the key file
+            # specified in the context file does not exist
             self._assert_ex('cfy recover -f',
-                            'Cannot perform recovery. manager private key file '
-                            'defined in CLOUDIFY_MANAGER_PRIVATE_KEY_PATH '
+                            'Cannot perform recovery. manager private '
+                            'key file defined in '
+                            'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH '
                             'environment variable does not exist: '
                             '{0}'.format(key_path))
         finally:
             del os.environ['CLOUDIFY_MANAGER_PRIVATE_KEY_PATH']
-
 
     @patch('cloudify_cli.bootstrap.bootstrap'
            '.read_manager_deployment_dump_if_needed')
