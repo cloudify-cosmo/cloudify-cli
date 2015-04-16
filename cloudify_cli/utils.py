@@ -33,6 +33,7 @@ from cloudify_rest_client import CloudifyClient
 import cloudify_cli
 from cloudify_cli.constants import DEFAULT_REST_PORT
 from cloudify_cli.constants import CLOUDIFY_AUTHENTICATION_HEADER
+from cloudify_cli.constants import BASIC_AUTH_PREFIX
 from cloudify_cli.constants import CLOUDIFY_PASSWORD_ENV
 from cloudify_cli.constants import CLOUDIFY_USERNAME_ENV
 from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_FILE_NAME
@@ -258,7 +259,8 @@ def create_auth_header(username, password):
 
     if username and password:
         credentials = '{0}:{1}'.format(username, password)
-        header = {CLOUDIFY_AUTHENTICATION_HEADER: base64_encode(credentials)}
+        header = {CLOUDIFY_AUTHENTICATION_HEADER:
+                  BASIC_AUTH_PREFIX + base64_encode(credentials)}
 
     return header
 
