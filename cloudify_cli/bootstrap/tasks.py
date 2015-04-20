@@ -31,9 +31,7 @@ from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
 from cloudify_cli import utils
-
-
-REST_PORT = 80
+from cloudify_cli import constants
 
 # internal runtime properties - used by the CLI to store local context
 PROVIDER_RUNTIME_PROPERTY = 'provider'
@@ -41,6 +39,11 @@ MANAGER_IP_RUNTIME_PROPERTY = 'manager_ip'
 MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
 MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
 DEFAULT_REMOTE_AGENT_KEY_PATH = '~/.ssh/agent_key.pem'
+REST_PORT = 'rest_port'
+
+HOST_CLOUDIFY_HOME_DIR = '~/cloudify'
+HOST_SSL_CERTIFICATE_PATH = '~/cloudify/server.crt'
+HOST_SSL_PRIVATE_KEY_PATH = '~/cloudify/server.key'
 
 DEFAULT_SECURITY_LOG_FOLDER = '/var/log/cloudify'
 DEFAULT_SECURITY_LOG_FILE = DEFAULT_SECURITY_LOG_FOLDER \
@@ -153,6 +156,42 @@ def _install_docker_if_required(docker_path, use_sudo,
     return docker_exec_command
 
 
+def _handle_ssl_configuration(ssl_configuration):
+    enabled = ssl_configuration.get('enabled', False)
+    if enabled is True:
+        # get cert and key file paths
+        cert_path = ssl_configuration.get('certificate_path')
+        if not cert_path:
+            raise NonRecoverableError(
+                'SSL is enabled => certificate path must be provided')
+        cert_path = os.path.expanduser(cert_path)
+        if not os.path.exists(cert_path):
+            raise NonRecoverableError(
+                'The certificate path [{0}] does not exist'
+                .format(cert_path))
+        key_path = ssl_configuration.get('private_key_path')
+        if not key_path:
+            raise NonRecoverableError(
+                'SSL is enabled => private key path must be provided')
+        key_path = os.path.expanduser(key_path)
+        if not os.path.exists(key_path):
+            raise NonRecoverableError(
+                'The private key path [{0}] does not exist'
+                .format(key_path))
+        os.environ[constants.CLOUDIFY_SSL_CERT] = cert_path
+        rest_port = constants.SECURED_REST_PORT
+
+        # copy cert and key files to the host,
+        _copy_ssl_files(local_cert_path=cert_path,
+                        remote_cert_path=HOST_SSL_CERTIFICATE_PATH,
+                        local_key_path=key_path,
+                        remote_key_path=HOST_SSL_PRIVATE_KEY_PATH)
+    else:
+        rest_port = constants.DEFAULT_REST_PORT
+
+    ctx.instance.runtime_properties[REST_PORT] = rest_port
+
+
 def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                      agent_local_key_path=None, agent_remote_key_path=None,
                      manager_private_ip=None, provider_context=None,
@@ -183,14 +222,18 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     lgr.info('initializing manager on the machine at {0}'.format(manager_ip))
 
     def post_bootstrap_actions(wait_for_services_timeout=180):
-        lgr.info('waiting for cloudify management services to start')
-        started = _wait_for_management(manager_ip,
-                                       timeout=wait_for_services_timeout)
+        port = ctx.instance.runtime_properties[REST_PORT]
+        lgr.info(
+            'waiting for cloudify management services to start on port {0}'
+            .format(port))
+        started = _wait_for_management(
+            ip=manager_ip, timeout=wait_for_services_timeout, port=port)
         if not started:
             err = 'failed waiting for cloudify management services to start.'
             lgr.info(err)
             raise NonRecoverableError(err)
         _set_manager_endpoint_data()
+
         ctx.instance.runtime_properties['containers_started'] = 'True'
         try:
             _upload_provider_context(agent_remote_key_path, provider_context)
@@ -202,6 +245,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     if ctx.operation.retry_number > 0:
         return post_bootstrap_actions(wait_for_services_timeout=15)
 
+    _run_command('mkdir -p {0}'.format(HOST_CLOUDIFY_HOME_DIR))
     docker_exec_command = _install_docker_if_required(
         docker_path,
         use_sudo,
@@ -233,10 +277,15 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
     security_config = cloudify_config.get('security', {})
     security_config_path = _handle_security_configuration(security_config)
 
+    ssl_configuration = security_config.get('ssl', {})
+    _handle_ssl_configuration(ssl_configuration)
+
+    rest_port = ctx.instance.runtime_properties[REST_PORT]
+    lgr.info('exposing port {0}'.format(rest_port))
     cfy_management_options = ('-t '
                               '--volumes-from data '
                               '--privileged={0} '
-                              '-p 80:80 '
+                              '-p {1}:{1} '
                               '-p 5555:5555 '
                               '-p 5672:5672 '
                               '-p 53229:53229 '
@@ -244,13 +293,14 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-p 8101:8101 '
                               '-p 9200:9200 '
                               '-p 8086:8086 '
-                              '-e MANAGEMENT_IP={1} '
-                              '-e MANAGER_REST_SECURITY_CONFIG_PATH={2} '
+                              '-e MANAGEMENT_IP={2} '
+                              '-e MANAGER_REST_SECURITY_CONFIG_PATH={3} '
                               '--restart=always '
                               '-d '
                               'cloudify '
                               '/sbin/my_init'
                               .format(privileged,
+                                      rest_port,
                                       manager_private_ip or
                                       ctx.instance.host_ip,
                                       security_config_path))
@@ -332,7 +382,8 @@ def recover_docker(docker_path=None, use_sudo=True,
                                 docker_service_start_command)
 
     lgr.info('waiting for cloudify management services to restart')
-    started = _wait_for_management(manager_ip, timeout=180)
+    port = ctx.instance.runtime_properties[REST_PORT]
+    started = _wait_for_management(manager_ip, timeout=180, port=port)
     _recover_deployments(docker_path, use_sudo)
     if not started:
         err = 'failed waiting for cloudify management services to restart.'
@@ -444,14 +495,16 @@ def _is_docker_installed(docker_path, use_sudo):
         return False
 
 
-def _wait_for_management(ip, timeout, port=REST_PORT):
+def _wait_for_management(ip, timeout, port=constants.DEFAULT_REST_PORT):
     """ Wait for url to become available
         :param ip: the manager IP
         :param timeout: in seconds
         :param port: port used by the rest service.
         :return: True of False
     """
-    validation_url = 'http://{0}:{1}/version'.format(ip, port)
+    protocol = 'http' if port == constants.DEFAULT_REST_PORT else 'https'
+    validation_url = '{0}://{1}:{2}/version'.format(protocol, ip, port)
+    lgr.info('waiting for url {0} to become available'.format(validation_url))
 
     end = time() + timeout
 
@@ -513,6 +566,19 @@ def _handle_security_configuration(blueprint_security_config):
     json.dump(security_config, security_config_file_obj)
     fabric.api.put(security_config_file_obj, remote_security_config_path)
     return container_security_config_path
+
+
+def _copy_ssl_files(
+        local_cert_path, remote_cert_path, local_key_path, remote_key_path):
+    ctx.logger.info(
+        'Copying SSL certificate to management machine: {0} -> {1}'.format(
+            local_cert_path, remote_cert_path))
+    fabric.api.put(local_cert_path, remote_cert_path)
+
+    ctx.logger.info(
+        'Copying SSL key to management machine: {0} -> {1}'.format(
+            local_key_path, remote_key_path))
+    fabric.api.put(local_key_path, remote_key_path)
 
 
 def _copy_agent_key(agent_local_key_path, agent_remote_key_path):

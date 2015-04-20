@@ -5,7 +5,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#        http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,15 +31,9 @@ from itsdangerous import base64_encode
 from cloudify_rest_client import CloudifyClient
 
 import cloudify_cli
-from cloudify_cli.constants import DEFAULT_REST_PORT
-from cloudify_cli.constants import CLOUDIFY_AUTHENTICATION_HEADER
-from cloudify_cli.constants import CLOUDIFY_PASSWORD_ENV
-from cloudify_cli.constants import CLOUDIFY_USERNAME_ENV
-from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_FILE_NAME
-from cloudify_cli.constants import CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME
+from cloudify_cli import constants
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.logger import get_logger
-
 
 DEFAULT_LOG_FILE = os.path.expanduser(
     '{0}/cloudify-{1}/cloudify-cli.log'
@@ -88,7 +82,7 @@ def raise_uninitialized():
     error = CloudifyCliError(
         'Not initialized: Cannot find {0} in {1}, '
         'or in any of its parent directories'
-        .format(CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+        .format(constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
                 get_cwd()))
     error.possible_solutions = [
         "Run 'cfy init' in this directory"
@@ -102,7 +96,7 @@ def get_context_path():
         raise_uninitialized()
     context_path = os.path.join(
         init_path,
-        CLOUDIFY_WD_SETTINGS_FILE_NAME
+        constants.CLOUDIFY_WD_SETTINGS_FILE_NAME
     )
     if not os.path.exists(context_path):
         raise CloudifyCliError(
@@ -138,7 +132,7 @@ def inputs_to_dict(resource, resource_name):
         msg = "Invalid input: {0}. {1} must represent a dictionary. Valid " \
               "values can either be a path to a YAML file, a string " \
               "formatted as YAML or a string formatted as " \
-              "key1=value1;key2=value2"\
+              "key1=value1;key2=value2" \
             .format(resource, resource_name)
         raise CloudifyCliError(msg)
 
@@ -173,7 +167,7 @@ def get_init_path():
     while True:
 
         path = os.path.join(current_lookup_dir,
-                            CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+                            constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
 
         if os.path.exists(path):
             return path
@@ -192,7 +186,6 @@ def get_configuration_path():
 
 
 def dump_configuration_file():
-
     config = pkg_resources.resource_string(
         cloudify_cli.__name__,
         'resources/config.yaml')
@@ -206,7 +199,6 @@ def dump_configuration_file():
 
 
 def dump_cloudify_working_dir_settings(cosmo_wd_settings=None, update=False):
-
     if cosmo_wd_settings is None:
         cosmo_wd_settings = CloudifyWorkingDirectorySettings()
     if update:
@@ -217,12 +209,12 @@ def dump_cloudify_working_dir_settings(cosmo_wd_settings=None, update=False):
 
         # create a new file
         path = os.path.join(get_cwd(),
-                            CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+                            constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
         if not os.path.exists(path):
             os.mkdir(path)
-        target_file_path = os.path.join(get_cwd(),
-                                        CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-                                        CLOUDIFY_WD_SETTINGS_FILE_NAME)
+        target_file_path = os.path.join(
+            get_cwd(), constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+            constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
 
     with open(target_file_path, 'w') as f:
         f.write(yaml.dump(cosmo_wd_settings))
@@ -239,26 +231,38 @@ def get_cwd():
     return os.getcwd()
 
 
-def get_rest_client(manager_ip=None, rest_port=None):
-
+def get_rest_client(manager_ip=None, rest_port=None, protocol=None):
     if not manager_ip:
         manager_ip = get_management_server_ip()
 
     if not rest_port:
         rest_port = get_rest_port()
 
+    if not protocol:
+        protocol = get_protocol()
+
     username = get_username()
+
     password = get_password()
-    headers = create_auth_header(username, password)
-    return CloudifyClient(host=manager_ip, port=rest_port, headers=headers)
+
+    headers = get_auth_header(username, password)
+
+    cert = get_ssl_cert()
+
+    trust_all = get_ssl_trust_all()
+
+    return CloudifyClient(host=manager_ip, port=rest_port, protocol=protocol,
+                          headers=headers, cert=cert, trust_all=trust_all)
 
 
-def create_auth_header(username, password):
+def get_auth_header(username, password):
     header = None
 
     if username and password:
         credentials = '{0}:{1}'.format(username, password)
-        header = {CLOUDIFY_AUTHENTICATION_HEADER: base64_encode(credentials)}
+        header = {
+            constants.CLOUDIFY_AUTHENTICATION_HEADER:
+                base64_encode(credentials)}
 
     return header
 
@@ -268,8 +272,12 @@ def get_rest_port():
     return cosmo_wd_settings.get_rest_port()
 
 
-def get_management_server_ip():
+def get_protocol():
+    cosmo_wd_settings = load_cloudify_working_dir_settings()
+    return cosmo_wd_settings.get_protocol()
 
+
+def get_management_server_ip():
     cosmo_wd_settings = load_cloudify_working_dir_settings()
     management_ip = cosmo_wd_settings.get_management_server()
     if management_ip:
@@ -282,11 +290,22 @@ def get_management_server_ip():
 
 
 def get_username():
-    return os.environ.get(CLOUDIFY_USERNAME_ENV)
+    return os.environ.get(constants.CLOUDIFY_USERNAME_ENV)
 
 
 def get_password():
-    return os.environ.get(CLOUDIFY_PASSWORD_ENV)
+    return os.environ.get(constants.CLOUDIFY_PASSWORD_ENV)
+
+
+def get_ssl_cert():
+    return os.environ.get(constants.CLOUDIFY_SSL_CERT)
+
+
+def get_ssl_trust_all():
+    trust_all = os.environ.get(constants.CLOUDIFY_SSL_TRUST_ALL)
+    if trust_all is not None and len(trust_all) > 0:
+        return True
+    return False
 
 
 def print_table(title, tb):
@@ -341,7 +360,6 @@ def get_version_data():
 
 
 def table(cols, data, defaults=None):
-
     """
     Return a new PrettyTable instance representing the list.
 
@@ -374,7 +392,6 @@ def table(cols, data, defaults=None):
 
 
 class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
-
     yaml_tag = u'!WD_Settings'
     yaml_loader = yaml.Loader
 
@@ -383,7 +400,8 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
         self._management_key = None
         self._management_user = None
         self._provider_context = None
-        self._rest_port = DEFAULT_REST_PORT
+        self._rest_port = constants.DEFAULT_REST_PORT
+        self._protocol = constants.DEFAULT_PROTOCOL
 
     def get_management_server(self):
         return self._management_ip
@@ -418,10 +436,16 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
     def set_rest_port(self, rest_port):
         self._rest_port = rest_port
 
+    def get_protocol(self):
+        return self._protocol
+
+    def set_protocol(self, protocol):
+        self._protocol = protocol
+
 
 def delete_cloudify_working_dir_settings():
-    target_file_path = os.path.join(get_cwd(),
-                                    CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-                                    CLOUDIFY_WD_SETTINGS_FILE_NAME)
+    target_file_path = os.path.join(
+        get_cwd(), constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+        constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
     if os.path.exists(target_file_path):
         os.remove(target_file_path)
