@@ -260,7 +260,7 @@ def create_auth_header(username, password):
     if username and password:
         credentials = '{0}:{1}'.format(username, password)
         header = {CLOUDIFY_AUTHENTICATION_HEADER:
-                  BASIC_AUTH_PREFIX + base64_encode(credentials)}
+                  BASIC_AUTH_PREFIX + ' ' + base64_encode(credentials)}
 
     return header
 
