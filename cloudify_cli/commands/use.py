@@ -17,7 +17,10 @@
 Handles 'cfy use'
 """
 
-from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify_rest_client.exceptions import (
+    CloudifyClientError,
+    UserUnauthorizedError
+)
 
 from cloudify_cli import constants
 from cloudify_cli import utils
@@ -37,12 +40,14 @@ def use(management_ip, rest_port):
         manager_ip=management_ip, rest_port=rest_port, protocol=protocol)
     try:
         # first check this server is available.
-        status_result = client.manager.get_status()
+        client.manager.get_status()
+    except UserUnauthorizedError:
+        msg = "Can't use management server {0}: User is unauthorized.".format(
+            management_ip)
+        raise CloudifyCliError(msg)
     except CloudifyClientError:
-        status_result = None
-    if not status_result:
-        msg = ("Can't use management server {0}: No response."
-               .format(management_ip))
+        msg = "Can't use management server {0}: No response.".format(
+            management_ip)
         raise CloudifyCliError(msg)
 
     # check if cloudify was initialized.

@@ -18,7 +18,10 @@ Handles 'cfy status'
 """
 
 from cloudify_cli.logger import get_logger
-from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify_rest_client.exceptions import (
+    CloudifyClientError,
+    UserUnauthorizedError
+)
 from cloudify_cli import utils
 
 
@@ -31,23 +34,25 @@ def status():
     client = utils.get_rest_client(management_ip)
     try:
         status_result = client.manager.get_status()
+    except UserUnauthorizedError:
+        logger.info("Can't query management server status: user is "
+                    "unauthorized")
+        return False
     except CloudifyClientError:
-        status_result = None
-    if status_result:
-        services = []
-        for service in status_result['services']:
-            state = service['instances'][0]['state'] \
-                if 'instances' in service and \
-                   len(service['instances']) > 0 else 'unknown'
-            services.append({
-                'service': service['display_name'].ljust(30),
-                'status': state
-            })
-        pt = utils.table(['service', 'status'], data=services)
-        utils.print_table('Services:', pt)
-        return True
-    else:
         logger.info('REST service at management server '
                     '{0} is not responding!'
                     .format(management_ip))
         return False
+
+    services = []
+    for service in status_result['services']:
+        state = service['instances'][0]['state'] \
+            if 'instances' in service and \
+               len(service['instances']) > 0 else 'unknown'
+        services.append({
+            'service': service['display_name'].ljust(30),
+            'status': state
+        })
+    pt = utils.table(['service', 'status'], data=services)
+    utils.print_table('Services:', pt)
+    return True
