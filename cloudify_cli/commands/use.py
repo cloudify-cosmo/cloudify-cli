@@ -17,19 +17,26 @@
 Handles 'cfy use'
 """
 
-from cloudify_cli.logger import get_logger
-from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.bootstrap import bootstrap as bs
 from cloudify_rest_client.exceptions import CloudifyClientError
+
+from cloudify_cli import constants
 from cloudify_cli import utils
+from cloudify_cli.bootstrap import bootstrap as bs
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import get_logger
 
 
 def use(management_ip, rest_port):
     logger = get_logger()
-    # first check this server is available.
+    # determine SSL mode by port
+    if rest_port == constants.SECURED_REST_PORT:
+        protocol = constants.SECURED_PROTOCOL
+    else:
+        protocol = constants.DEFAULT_PROTOCOL
     client = utils.get_rest_client(
-        manager_ip=management_ip, rest_port=rest_port)
+        manager_ip=management_ip, rest_port=rest_port, protocol=protocol)
     try:
+        # first check this server is available.
         status_result = client.manager.get_status()
     except CloudifyClientError:
         status_result = None
@@ -44,8 +51,7 @@ def use(management_ip, rest_port):
         utils.dump_configuration_file()
 
     try:
-        response = utils.get_rest_client(
-            management_ip).manager.get_context()
+        response = client.manager.get_context()
         provider_context = response['context']
     except CloudifyClientError:
         provider_context = None
@@ -54,6 +60,7 @@ def use(management_ip, rest_port):
         wd_settings.set_management_server(management_ip)
         wd_settings.set_provider_context(provider_context)
         wd_settings.set_rest_port(rest_port)
+        wd_settings.set_protocol(protocol)
         logger.info('Using management server {0} with port {1}'
                     .format(management_ip, rest_port))
 

@@ -24,7 +24,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify.utils import setup_logger
 
 
-from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli import exceptions
 from cloudify_cli.tests import cli_runner
 from cloudify_cli import utils
 from cloudify_cli.utils import os as utils_os
@@ -60,7 +60,8 @@ class CliCommandTest(unittest.TestCase):
 
         self.client = CloudifyClient()
 
-        def get_mock_rest_client(manager_ip=None, rest_port=None):
+        def get_mock_rest_client(
+                manager_ip=None, rest_port=None, protocol=None):
             return self.client
 
         self.original_utils_get_rest_client = utils.get_rest_client
@@ -107,7 +108,9 @@ class CliCommandTest(unittest.TestCase):
                       .format(err_str_segment, cli_cmd))
         except SystemExit, ex:
             _assert()
-        except CloudifyCliError, ex:
+        except exceptions.CloudifyCliError, ex:
+            _assert()
+        except exceptions.CloudifyValidationError, ex:
             _assert()
         except CloudifyClientError, ex:
             _assert()
