@@ -35,7 +35,7 @@ def status():
     try:
         status_result = client.manager.get_status()
     except UserUnauthorizedError:
-        logger.info("Can't query management server status: user is "
+        logger.info("Can't query management server status: User is "
                     "unauthorized")
         return False
     except CloudifyClientError:
