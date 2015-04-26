@@ -21,6 +21,7 @@ from mock import MagicMock
 from mock import patch
 
 from cloudify_rest_client import CloudifyClient
+from cloudify_rest_client.exceptions import UserUnauthorizedError
 from cloudify_cli import utils
 
 from cloudify_cli.tests import cli_runner
@@ -41,6 +42,12 @@ class UseTest(CliCommandTest):
         cwds = self._read_cosmo_wd_settings()
         self.assertEquals("127.0.0.1",
                           cwds.get_management_server())
+
+    def test_use_attempt_by_unauthorized_user(self):
+        with patch.object(self.client.manager, 'get_status') as mock:
+            mock.side_effect = UserUnauthorizedError('Unauthorized user')
+            self._assert_ex('cfy use -t 127.0.0.1',
+                            err_str_segment='User is unauthorized')
 
     def test_use_command_no_prior_init(self):
         self.client.manager.get_status = MagicMock()
