@@ -119,14 +119,14 @@ class RecoverTest(CliCommandTest):
     @patch('cloudify_cli.bootstrap.bootstrap.recover')
     def test_recover_from_different_directory_than_bootstrap_with_env_variable(self, *_):  # NOQA
         cli_runner.run_cli('cfy init')
-        # recovery command should not fail because we do not have a manager
-        # key path in the local context, and the environment variable is not
-        # set
 
-        # mock bootstrap behavior by setting the management key path
-        # in the local context
         key_path = os.path.join(TEST_WORK_DIR, 'key.pem')
         open(key_path, 'w').close()
+
+        # mock provider context
+        with update_wd_settings() as wd:
+            wd.set_provider_context({})
+
         try:
             os.environ['CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'] = key_path
             cli_runner.run_cli('cfy recover -f')
