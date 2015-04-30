@@ -64,16 +64,6 @@ def recover(force,
             # in this case, the recovery is executed from the same directory
             # that the bootstrap was executed from. we should not have
             # problems
-            logger.info('Recovering manager deployment')
-            settings = utils.load_cloudify_working_dir_settings()
-            provider_context = settings.get_provider_context()
-            bs.read_manager_deployment_dump_if_needed(
-                provider_context.get('cloudify', {}).get('manager_deployment'))
-            bs.recover(task_retries=task_retries,
-                       task_retry_interval=task_retry_interval,
-                       task_thread_pool_size=task_thread_pool_size)
-            logger.info('Successfully recovered manager deployment')
-
         except exceptions.CloudifyCliError:
             # manager key file path does not exist in the context. this
             # means the recovery is executed from a different directory than
@@ -84,3 +74,13 @@ def recover(force,
                 "the manager private key path via the {0} environment "
                 "variable".format(CLOUDIFY_MANAGER_PK_PATH_ENVAR)
             )
+
+    logger.info('Recovering manager deployment')
+    settings = utils.load_cloudify_working_dir_settings()
+    provider_context = settings.get_provider_context()
+    bs.read_manager_deployment_dump_if_needed(
+        provider_context.get('cloudify', {}).get('manager_deployment'))
+    bs.recover(task_retries=task_retries,
+               task_retry_interval=task_retry_interval,
+               task_thread_pool_size=task_thread_pool_size)
+    logger.info('Successfully recovered manager deployment')
