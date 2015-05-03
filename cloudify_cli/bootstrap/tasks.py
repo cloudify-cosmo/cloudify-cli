@@ -544,13 +544,14 @@ def _handle_security_configuration(blueprint_security_config):
     securest_authentication_providers = blueprint_security_config.get(
         'authentication_providers', [])
     securest_log_level = blueprint_security_config.get(
-        'log_level', DEFAULT_SECURITY_LOG_LEVEL)
+        'audit_log_level', DEFAULT_SECURITY_LOG_LEVEL)
     securest_log_file = blueprint_security_config.get(
-        'log_file', DEFAULT_SECURITY_LOG_FILE)
+        'audit_log_file', DEFAULT_SECURITY_LOG_FILE)
     securest_log_file_size_MB = blueprint_security_config.get(
-        'log_file_size_MB', DEFAULT_SECURITY_LOG_FILE_SIZE_MB)
+        'audit_log_file_size_MB', DEFAULT_SECURITY_LOG_FILE_SIZE_MB)
     securest_log_files_backup_count = blueprint_security_config.get(
-        'log_files_backup_count', DEFAULT_SECURITY_LOG_FILES_BACKUP_COUNT)
+        'audit_log_files_backup_count',
+        DEFAULT_SECURITY_LOG_FILES_BACKUP_COUNT)
 
     security_config = dict(
         secured_server=secured_server,
