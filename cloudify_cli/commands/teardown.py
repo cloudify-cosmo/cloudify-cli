@@ -127,5 +127,3 @@ def _do_teardown():
     with utils.update_wd_settings() as wd_settings:
         # wd_settings.set_provider_context(provider_context)
         wd_settings.remove_management_server_context()
-
-
