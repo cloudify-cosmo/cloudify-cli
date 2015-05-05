@@ -103,67 +103,60 @@ class CliBootstrapUnitTests(unittest.TestCase):
 
     def test_ssl_configuration_without_cert_path(self):
         configurations = {
-            constants.SLL_ENABLED_PROPERTY_NAME: True,
-            constants.CERTIFICATE_PATH_PROPERTY_NAME: '',
-            constants.PRIVATE_KEY_PROPERTY_NAME: ''
+            constants.SSL_ENABLED_PROPERTY_NAME: True,
+            constants.SSL_CERTIFICATE_PATH_PROPERTY_NAME: '',
+            constants.SSL_PRIVATE_KEY_PROPERTY_NAME: ''
         }
-        try:
-            tasks._handle_ssl_configuration(ssl_configuration=configurations)
-            self.fail('NonRecoverableError expected.')
-        except NonRecoverableError as e:
-            self.assertIn(
-                'SSL is enabled => certificate path must be provided',
-                e.message)
+        self.assertRaisesRegexp(
+            NonRecoverableError,
+            'SSL is enabled => certificate path must be provided',
+            tasks._handle_ssl_configuration,
+            configurations)
 
     def test_ssl_configuration_wrong_cert_path(self):
         configurations = {
-            constants.SLL_ENABLED_PROPERTY_NAME: True,
-            constants.CERTIFICATE_PATH_PROPERTY_NAME: 'wrong-path',
-            constants.PRIVATE_KEY_PROPERTY_NAME: ''
+            constants.SSL_ENABLED_PROPERTY_NAME: True,
+            constants.SSL_CERTIFICATE_PATH_PROPERTY_NAME: 'wrong-path',
+            constants.SSL_PRIVATE_KEY_PROPERTY_NAME: ''
         }
-        try:
-            tasks._handle_ssl_configuration(ssl_configuration=configurations)
-            self.fail('NonRecoverableError expected.')
-        except NonRecoverableError as e:
-            self.assertIn('The certificate path [wrong-path] does not exist',
-                          e.message)
+        self.assertRaisesRegexp(
+            NonRecoverableError,
+            'The certificate path \[wrong-path\] does not exist',
+            tasks._handle_ssl_configuration,
+            configurations)
 
     def test_ssl_configuration_without_key_path(self):
         this_dir = os.path.dirname(os.path.dirname(__file__))
         cert_path = os.path.join(this_dir, 'cert.file')
-        with open(cert_path, 'a+'):
-            configurations = {
-                constants.SLL_ENABLED_PROPERTY_NAME: True,
-                constants.CERTIFICATE_PATH_PROPERTY_NAME: cert_path,
-                constants.PRIVATE_KEY_PROPERTY_NAME: ''
-            }
-            try:
-                tasks._handle_ssl_configuration(
-                    ssl_configuration=configurations)
-                self.fail('NonRecoverableError expected.')
-            except NonRecoverableError as e:
-                self.assertIn(
-                    'SSL is enabled => private key path must be provided',
-                    e.message)
-            finally:
-                os.remove(cert_path)
+        open(cert_path, 'a+').close()
+        configurations = {
+            constants.SSL_ENABLED_PROPERTY_NAME: True,
+            constants.SSL_CERTIFICATE_PATH_PROPERTY_NAME: cert_path,
+            constants.SSL_PRIVATE_KEY_PROPERTY_NAME: ''
+        }
+        try:
+            self.assertRaisesRegexp(
+                NonRecoverableError,
+                'SSL is enabled => private key path must be provided',
+                tasks._handle_ssl_configuration,
+                configurations)
+        finally:
+            os.remove(cert_path)
 
     def test_ssl_configuration_wrong_key_path(self):
         this_dir = os.path.dirname(os.path.dirname(__file__))
         cert_path = os.path.join(this_dir, 'cert.file')
-        with open(cert_path, 'a+'):
-            configurations = {
-                constants.SLL_ENABLED_PROPERTY_NAME: True,
-                constants.CERTIFICATE_PATH_PROPERTY_NAME: cert_path,
-                constants.PRIVATE_KEY_PROPERTY_NAME: 'wrong-path'
-            }
-            try:
-                tasks._handle_ssl_configuration(
-                    ssl_configuration=configurations)
-                self.fail('NonRecoverableError expected.')
-            except NonRecoverableError as e:
-                self.assertIn(
-                    'The private key path [wrong-path] does not exist',
-                    e.message)
-            finally:
-                os.remove(cert_path)
+        open(cert_path, 'a+').close()
+        configurations = {
+            constants.SSL_ENABLED_PROPERTY_NAME: True,
+            constants.SSL_CERTIFICATE_PATH_PROPERTY_NAME: cert_path,
+            constants.SSL_PRIVATE_KEY_PROPERTY_NAME: 'wrong-path'
+        }
+        try:
+            self.assertRaisesRegexp(
+                NonRecoverableError,
+                'The private key path \[wrong-path\] does not exist',
+                tasks._handle_ssl_configuration,
+                configurations)
+        finally:
+            os.remove(cert_path)
