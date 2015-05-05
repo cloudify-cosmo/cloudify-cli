@@ -46,9 +46,6 @@ class CliBootstrapUnitTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(TEST_DIR)
 
-    def addCleanup(self, function, *args, **kwargs):
-        shutil.rmtree(TEST_DIR)
-
     def test_manager_deployment_dump(self, remove_deployment=True):
         manager1_original_dir = os.path.join(
             os.path.dirname(__file__),
@@ -114,7 +111,9 @@ class CliBootstrapUnitTests(unittest.TestCase):
             tasks._handle_ssl_configuration(ssl_configuration=configurations)
             self.fail('NonRecoverableError expected.')
         except NonRecoverableError as e:
-            self.assertIn('SSL is enabled => certificate path must be provided', e.message)
+            self.assertIn(
+                'SSL is enabled => certificate path must be provided',
+                e.message)
 
     def test_ssl_configuration_wrong_cert_path(self):
         configurations = {
@@ -126,7 +125,8 @@ class CliBootstrapUnitTests(unittest.TestCase):
             tasks._handle_ssl_configuration(ssl_configuration=configurations)
             self.fail('NonRecoverableError expected.')
         except NonRecoverableError as e:
-            self.assertIn('The certificate path [wrong-path] does not exist', e.message)
+            self.assertIn('The certificate path [wrong-path] does not exist',
+                          e.message)
 
     def test_ssl_configuration_without_key_path(self):
         this_dir = os.path.dirname(os.path.dirname(__file__))
@@ -138,14 +138,17 @@ class CliBootstrapUnitTests(unittest.TestCase):
                 constants.PRIVATE_KEY_PROPERTY_NAME: ''
             }
             try:
-                tasks._handle_ssl_configuration(ssl_configuration=configurations)
+                tasks._handle_ssl_configuration(
+                    ssl_configuration=configurations)
                 self.fail('NonRecoverableError expected.')
             except NonRecoverableError as e:
-                self.assertIn('SSL is enabled => private key path must be provided', e.message)
+                self.assertIn(
+                    'SSL is enabled => private key path must be provided',
+                    e.message)
             finally:
                 os.remove(cert_path)
 
-    def test_ssl_configuration_wrong_cert_path(self):
+    def test_ssl_configuration_wrong_key_path(self):
         this_dir = os.path.dirname(os.path.dirname(__file__))
         cert_path = os.path.join(this_dir, 'cert.file')
         with open(cert_path, 'a+'):
@@ -155,9 +158,12 @@ class CliBootstrapUnitTests(unittest.TestCase):
                 constants.PRIVATE_KEY_PROPERTY_NAME: 'wrong-path'
             }
             try:
-                tasks._handle_ssl_configuration(ssl_configuration=configurations)
+                tasks._handle_ssl_configuration(
+                    ssl_configuration=configurations)
                 self.fail('NonRecoverableError expected.')
             except NonRecoverableError as e:
-                self.assertIn('The private key path [wrong-path] does not exist', e.message)
+                self.assertIn(
+                    'The private key path [wrong-path] does not exist',
+                    e.message)
             finally:
                 os.remove(cert_path)
