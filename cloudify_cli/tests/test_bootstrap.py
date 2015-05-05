@@ -20,6 +20,7 @@ import unittest
 import tempfile
 import filecmp
 
+from cloudify_cli import constants
 from cloudify_cli import utils
 from cloudify_cli.bootstrap import bootstrap
 from cloudify_cli.bootstrap import tasks
@@ -43,6 +44,9 @@ class CliBootstrapUnitTests(unittest.TestCase):
         os.chdir(test_workdir)
 
     def tearDown(self):
+        shutil.rmtree(TEST_DIR)
+
+    def addCleanup(self, function, *args, **kwargs):
         shutil.rmtree(TEST_DIR)
 
     def test_manager_deployment_dump(self, remove_deployment=True):
@@ -99,3 +103,61 @@ class CliBootstrapUnitTests(unittest.TestCase):
             self.assertIn(
                 '"docker" must be a non-empty dictionary property under '
                 '"cloudify_packages"', ex.message)
+
+    def test_ssl_configuration_without_cert_path(self):
+        configurations = {
+            constants.SLL_ENABLED_PROPERTY_NAME: True,
+            constants.CERTIFICATE_PATH_PROPERTY_NAME: '',
+            constants.PRIVATE_KEY_PROPERTY_NAME: ''
+        }
+        try:
+            tasks._handle_ssl_configuration(ssl_configuration=configurations)
+            self.fail('NonRecoverableError expected.')
+        except NonRecoverableError as e:
+            self.assertIn('SSL is enabled => certificate path must be provided', e.message)
+
+    def test_ssl_configuration_wrong_cert_path(self):
+        configurations = {
+            constants.SLL_ENABLED_PROPERTY_NAME: True,
+            constants.CERTIFICATE_PATH_PROPERTY_NAME: 'wrong-path',
+            constants.PRIVATE_KEY_PROPERTY_NAME: ''
+        }
+        try:
+            tasks._handle_ssl_configuration(ssl_configuration=configurations)
+            self.fail('NonRecoverableError expected.')
+        except NonRecoverableError as e:
+            self.assertIn('The certificate path [wrong-path] does not exist', e.message)
+
+    def test_ssl_configuration_without_key_path(self):
+        this_dir = os.path.dirname(os.path.dirname(__file__))
+        cert_path = os.path.join(this_dir, 'cert.file')
+        with open(cert_path, 'a+'):
+            configurations = {
+                constants.SLL_ENABLED_PROPERTY_NAME: True,
+                constants.CERTIFICATE_PATH_PROPERTY_NAME: cert_path,
+                constants.PRIVATE_KEY_PROPERTY_NAME: ''
+            }
+            try:
+                tasks._handle_ssl_configuration(ssl_configuration=configurations)
+                self.fail('NonRecoverableError expected.')
+            except NonRecoverableError as e:
+                self.assertIn('SSL is enabled => private key path must be provided', e.message)
+            finally:
+                os.remove(cert_path)
+
+    def test_ssl_configuration_wrong_cert_path(self):
+        this_dir = os.path.dirname(os.path.dirname(__file__))
+        cert_path = os.path.join(this_dir, 'cert.file')
+        with open(cert_path, 'a+'):
+            configurations = {
+                constants.SLL_ENABLED_PROPERTY_NAME: True,
+                constants.CERTIFICATE_PATH_PROPERTY_NAME: cert_path,
+                constants.PRIVATE_KEY_PROPERTY_NAME: 'wrong-path'
+            }
+            try:
+                tasks._handle_ssl_configuration(ssl_configuration=configurations)
+                self.fail('NonRecoverableError expected.')
+            except NonRecoverableError as e:
+                self.assertIn('The private key path [wrong-path] does not exist', e.message)
+            finally:
+                os.remove(cert_path)
