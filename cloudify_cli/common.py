@@ -64,13 +64,9 @@ def install_blueprint_plugins(blueprint_path):
         # and let pip install it.
         # this will utilize pip's mechanism
         # of cleanup in case an installation fails.
-        output = tempfile.NamedTemporaryFile(mode='w',
-                                             delete=True,
-                                             suffix='.txt',
-                                             prefix='requirements_')
-        utils.dump_to_file(collection=requirements,
-                           file_path=output.name)
-        runner.run(command='pip install -r {0}'.format(output.name),
+        tmp_path = tempfile.mkstemp(suffix='.txt', prefix='requirements_')[1]
+        utils.dump_to_file(collection=requirements, file_path=tmp_path)
+        runner.run(command='pip install -r {0}'.format(tmp_path),
                    stdout_pipe=False)
     else:
         get_logger().debug('There are no plugins to install..')
