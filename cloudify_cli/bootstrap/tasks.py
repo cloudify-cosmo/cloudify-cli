@@ -157,10 +157,12 @@ def _install_docker_if_required(docker_path, use_sudo,
 
 
 def _handle_ssl_configuration(ssl_configuration):
-    enabled = ssl_configuration.get('enabled', False)
+    enabled = ssl_configuration.get(
+        constants.SSL_ENABLED_PROPERTY_NAME, False)
     if enabled is True:
         # get cert and key file paths
-        cert_path = ssl_configuration.get('certificate_path')
+        cert_path = ssl_configuration.get(
+            constants.SSL_CERTIFICATE_PATH_PROPERTY_NAME)
         if not cert_path:
             raise NonRecoverableError(
                 'SSL is enabled => certificate path must be provided')
@@ -169,7 +171,8 @@ def _handle_ssl_configuration(ssl_configuration):
             raise NonRecoverableError(
                 'The certificate path [{0}] does not exist'
                 .format(cert_path))
-        key_path = ssl_configuration.get('private_key_path')
+        key_path = ssl_configuration.get(
+            constants.SSL_PRIVATE_KEY_PROPERTY_NAME)
         if not key_path:
             raise NonRecoverableError(
                 'SSL is enabled => private key path must be provided')

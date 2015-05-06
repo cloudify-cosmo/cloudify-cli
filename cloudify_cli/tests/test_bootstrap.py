@@ -20,6 +20,7 @@ import unittest
 import tempfile
 import filecmp
 
+from cloudify_cli import constants
 from cloudify_cli import utils
 from cloudify_cli.bootstrap import bootstrap
 from cloudify_cli.bootstrap import tasks
@@ -99,3 +100,63 @@ class CliBootstrapUnitTests(unittest.TestCase):
             self.assertIn(
                 '"docker" must be a non-empty dictionary property under '
                 '"cloudify_packages"', ex.message)
+
+    def test_ssl_configuration_without_cert_path(self):
+        configurations = {
+            constants.SSL_ENABLED_PROPERTY_NAME: True,
+            constants.SSL_CERTIFICATE_PATH_PROPERTY_NAME: '',
+            constants.SSL_PRIVATE_KEY_PROPERTY_NAME: ''
+        }
+        self.assertRaisesRegexp(
+            NonRecoverableError,
+            'SSL is enabled => certificate path must be provided',
+            tasks._handle_ssl_configuration,
+            configurations)
+
+    def test_ssl_configuration_wrong_cert_path(self):
+        configurations = {
+            constants.SSL_ENABLED_PROPERTY_NAME: True,
+            constants.SSL_CERTIFICATE_PATH_PROPERTY_NAME: 'wrong-path',
+            constants.SSL_PRIVATE_KEY_PROPERTY_NAME: ''
+        }
+        self.assertRaisesRegexp(
+            NonRecoverableError,
+            'The certificate path \[wrong-path\] does not exist',
+            tasks._handle_ssl_configuration,
+            configurations)
+
+    def test_ssl_configuration_without_key_path(self):
+        this_dir = os.path.dirname(os.path.dirname(__file__))
+        cert_path = os.path.join(this_dir, 'cert.file')
+        open(cert_path, 'a+').close()
+        configurations = {
+            constants.SSL_ENABLED_PROPERTY_NAME: True,
+            constants.SSL_CERTIFICATE_PATH_PROPERTY_NAME: cert_path,
+            constants.SSL_PRIVATE_KEY_PROPERTY_NAME: ''
+        }
+        try:
+            self.assertRaisesRegexp(
+                NonRecoverableError,
+                'SSL is enabled => private key path must be provided',
+                tasks._handle_ssl_configuration,
+                configurations)
+        finally:
+            os.remove(cert_path)
+
+    def test_ssl_configuration_wrong_key_path(self):
+        this_dir = os.path.dirname(os.path.dirname(__file__))
+        cert_path = os.path.join(this_dir, 'cert.file')
+        open(cert_path, 'a+').close()
+        configurations = {
+            constants.SSL_ENABLED_PROPERTY_NAME: True,
+            constants.SSL_CERTIFICATE_PATH_PROPERTY_NAME: cert_path,
+            constants.SSL_PRIVATE_KEY_PROPERTY_NAME: 'wrong-path'
+        }
+        try:
+            self.assertRaisesRegexp(
+                NonRecoverableError,
+                'The private key path \[wrong-path\] does not exist',
+                tasks._handle_ssl_configuration,
+                configurations)
+        finally:
+            os.remove(cert_path)
