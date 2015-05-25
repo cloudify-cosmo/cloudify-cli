@@ -33,7 +33,8 @@ verbose_output = False
 def main():
     _configure_loggers()
     _set_cli_except_hook()
-    args = _parse_args(sys.argv[1:])
+    # Provide help message if there isn't command
+    args = _parse_args(sys.argv[1:] or ['-h'])
     args.handler(args)
 
 
