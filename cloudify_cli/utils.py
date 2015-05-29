@@ -17,6 +17,7 @@
 import json
 import os
 import pkgutil
+import StringIO
 import sys
 import tempfile
 import getpass
@@ -449,3 +450,61 @@ def delete_cloudify_working_dir_settings():
         constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
     if os.path.exists(target_file_path):
         os.remove(target_file_path)
+
+
+# Version
+def _format_version_data(version_data, prefix=None, suffix=None,
+                         infix=None):
+    all_data = version_data.copy()
+    all_data['prefix'] = prefix or ''
+    all_data['suffix'] = suffix or ''
+    all_data['infix'] = infix or ''
+    output = StringIO.StringIO()
+    output.write('{prefix}{version}'.format(**all_data))
+    if version_data['build']:
+        output.write('{infix}(build: {build}, date: {date})'.format(
+            **all_data))
+    output.write('{suffix}'.format(**all_data))
+    return output.getvalue()
+
+def _get_manager_version_data():
+    dir_settings = load_cloudify_working_dir_settings(suppress_error=True)
+    if not (dir_settings and dir_settings.get_management_server()):
+        return None
+    management_ip = dir_settings.get_management_server()
+    if not _connected_to_manager(management_ip):
+        return None
+    client = get_rest_client(management_ip)
+    try:
+        version_data = client.manager.get_version()
+    except CloudifyClientError:
+        return None
+    version_data['ip'] = management_ip
+    return version_data
+
+def _connected_to_manager(management_ip):
+    port = utils.get_rest_port()
+    try:
+        sock = socket.create_connection((management_ip, port), 5)
+        sock.close()
+        return True
+    except socket.error:
+        return False
+
+def get_version():
+    cli_version_data = get_version_data()
+    rest_version_data = _get_manager_version_data()
+    cli_version = _format_version_data(
+        cli_version_data,
+        prefix='Cloudify CLI ',
+        infix=' ' * 5,
+        suffix='\n')
+    rest_version = ''
+    if rest_version_data:
+        rest_version = _format_version_data(
+            rest_version_data,
+            prefix='Cloudify Manager ',
+            infix=' ',
+            suffix=' [ip={ip}]\n'.format(**rest_version_data))
+
+    sys.stdout.write('{0}{1}'.format(cli_version, rest_version))

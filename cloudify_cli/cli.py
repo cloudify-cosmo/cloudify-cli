@@ -25,6 +25,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.exceptions import CloudifyBootstrapError
+from cloudify_cli import utils
 
 
 verbose_output = False
@@ -63,10 +64,12 @@ def register_commands():
     parser_conf = parser_config()
     parser = argparse.ArgumentParser(description=parser_conf['description'])
 
-    # Direct arguments for the 'cfy' command (like -v)
-    for argument_name, argument in parser_conf['arguments'].iteritems():
-        parser.add_argument(argument_name, **argument)
-
+    # Register version directly. `argparse` has standard version definition
+    # format using "version" action. Other version definitions could break
+    # `help` behaviour.
+    parser.add_argument("--version",
+                        action="version",
+                        version=utils.get_version())
     subparsers = parser.add_subparsers()
     for command_name, command in parser_conf['commands'].iteritems():
 

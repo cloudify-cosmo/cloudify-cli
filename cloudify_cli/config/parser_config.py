@@ -73,12 +73,6 @@ def workflow_id_argument(hlp):
 def parser_config():
     return {
         'description': 'Manages Cloudify in different Cloud Environments',
-        'arguments': {
-            '--version': {
-                'help': 'show version information and exit',
-                'action': cfy.version
-            }
-        },
         'commands': {
             'blueprints': {
                 'help': "Manages Cloudify's Blueprints",
