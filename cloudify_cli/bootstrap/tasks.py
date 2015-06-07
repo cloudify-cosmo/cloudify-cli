@@ -109,7 +109,7 @@ def _install_docker_if_required(docker_path, use_sudo,
 
     if not docker_path:
         docker_path = 'docker'
-    docker_installed = _is_docker_installed(docker_path, use_sudo)
+    docker_installed = _is_installed(docker_path, use_sudo)
     if not docker_installed:
         try:
             distro_info = get_machine_distro()
@@ -118,16 +118,19 @@ def _install_docker_if_required(docker_path, use_sudo,
                   .format(str(e))
             lgr.error(err)
             raise
-        if 'trusty' not in distro_info:
-            err = ('bootstrap using the Docker Cloudify image requires either '
-                   'running on \'Ubuntu 14.04 trusty\' or having Docker '
-                   'pre-installed on the remote machine.')
+        if 'trusty' not in distro_info \
+                and 'centos' not in distro_info \
+                    and 'rhel' not in distro_info:
+            err = ('bootstrapping requires either having Docker pre-installed '
+                   'on the host or using the following OS distros: '
+                   'Ubuntu 14.04 trusty, Centos 6.5/7.x, RHEL 6.5/7.x')
             lgr.error(err)
             raise NonRecoverableError(err)
 
         try:
             lgr.info('installing Docker')
-            _run_command('curl -sSL https://get.docker.com/ubuntu/ | sudo sh')
+            _run_command('curl -sSL https://get.docker.com/ | sudo sh')
+            _run_command('sudo service docker restart')
         except FabricTaskError:
             err = 'failed installing docker on remote host.'
             lgr.error(err)
@@ -154,6 +157,22 @@ def _install_docker_if_required(docker_path, use_sudo,
     else:
         docker_exec_command = docker_path
     return docker_exec_command
+
+
+def is_selinux(use_sudo):
+    return _is_installed('sestatus', use_sudo)
+
+
+def _prepare_docker_env(use_sudo):
+    if (is_selinux(use_sudo)):
+        lgr.info('running on an SELINUX distribution')
+        selinux_status = \
+            _run_command('sestatus |grep \'SELinux status\'| '
+                         'awk \'{print $3}\'')
+
+        if (selinux_status == 'enabled'):
+            lgr.info('changing security context of user home dir')
+            _run_command('chcon -Rt svirt_sandbox_file_t ~/')
 
 
 def _handle_ssl_configuration(ssl_configuration):
@@ -253,6 +272,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         docker_path,
         use_sudo,
         docker_service_start_command)
+    _prepare_docker_env(use_sudo)
 
     data_container_name = 'data'
     cfy_container_name = 'cfy'
@@ -477,10 +497,10 @@ def _handle_plugins_and_create_install_cmd(plugins):
     return '/root/{0}'.format(install_plugins)
 
 
-def _is_docker_installed(docker_path, use_sudo):
+def _is_installed(package_name, use_sudo):
     """
     Returns true if docker run command exists
-    :param docker_path: the docker path
+    :param package_name: the name of the package
     :param use_sudo: use sudo to run docker
     :return: True if docker run command exists, False otherwise
     """
@@ -488,9 +508,9 @@ def _is_docker_installed(docker_path, use_sudo):
     from fabric_plugin.tasks import FabricTaskError
     try:
         if use_sudo:
-            out = fabric.api.run('sudo which {0}'.format(docker_path))
+            out = fabric.api.run('sudo which {0}'.format(package_name))
         else:
-            out = fabric.api.run('which {0}'.format(docker_path))
+            out = fabric.api.run('which {0}'.format(package_name))
         if not out:
             return False
         return True
