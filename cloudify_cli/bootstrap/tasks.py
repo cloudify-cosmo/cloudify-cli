@@ -107,6 +107,7 @@ def _install_docker_if_required(docker_path, use_sudo,
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
 
+    sudo = 'sudo' if use_sudo else ''
     if not docker_path:
         docker_path = 'docker'
     docker_installed = _is_installed(docker_path, use_sudo)
@@ -120,17 +121,23 @@ def _install_docker_if_required(docker_path, use_sudo,
             raise
         if 'trusty' not in distro_info \
                 and 'centos' not in distro_info \
-                    and 'rhel' not in distro_info:
+                    and 'redhat' not in distro_info:
             err = ('bootstrapping requires either having Docker pre-installed '
-                   'on the host or using the following OS distros: '
+                   'on the host or using the following OS distributions: '
                    'Ubuntu 14.04 trusty, Centos 6.5/7.x, RHEL 6.5/7.x')
             lgr.error(err)
             raise NonRecoverableError(err)
-
+        lgr.info('installing Docker')
         try:
-            lgr.info('installing Docker')
-            _run_command('curl -sSL https://get.docker.com/ | sudo sh')
-            _run_command('sudo service docker restart')
+            # https://github.com/docker/docker/issues/11910
+            if 'redhat' in distro_info and 'Maipo' in distro_info:
+                _run_command('{0} yum-config-manager --enable '
+                             'rhui-REGION-rhel-server-extras'.format(sudo))
+                _run_command('{0} yum install docker'.format(sudo))
+            else:
+                _run_command('curl -sSL https://get.docker.com/ | {0} sh'
+                             .format(sudo))
+            _run_command('{0} service docker restart'.format(sudo))
         except FabricTaskError:
             err = 'failed installing docker on remote host.'
             lgr.error(err)
@@ -138,18 +145,14 @@ def _install_docker_if_required(docker_path, use_sudo,
     else:
         lgr.debug('\"docker\" is already installed.')
         try:
-            info_command = '{0} info'.format(docker_path)
-            if use_sudo:
-                info_command = 'sudo {0}'.format(info_command)
+            info_command = '{0} {1} info'.format(sudo, docker_path)
             _run_command(info_command)
         except BaseException as e:
             lgr.debug('Failed retrieving docker info: {0}'.format(str(e)))
             lgr.debug('Trying to start docker service')
             if not docker_service_start_command:
-                docker_service_start_command = 'service docker start'
-            if use_sudo:
-                docker_service_start_command = 'sudo {0}'\
-                    .format(docker_service_start_command)
+                docker_service_start_command = '{0} service docker start'\
+                                               .format(sudo)
             _run_command(docker_service_start_command)
 
     if use_sudo:
