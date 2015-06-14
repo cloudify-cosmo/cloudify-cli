@@ -525,7 +525,7 @@ def _handle_plugins_and_create_install_cmd(plugins):
 
 def _is_installed(binary, use_sudo):
     """
-    Returns true if docker run command exists
+    Returns true if binary is installed
     :param binary: the binary name or path
     :param use_sudo: use sudo
     :return: True if binary is installed, False otherwise
