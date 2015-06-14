@@ -523,20 +523,20 @@ def _handle_plugins_and_create_install_cmd(plugins):
     return '/root/{0}'.format(install_plugins)
 
 
-def _is_installed(package_name, use_sudo):
+def _is_installed(binary, use_sudo):
     """
     Returns true if docker run command exists
-    :param package_name: the name of the package
-    :param use_sudo: use sudo to run docker
-    :return: True if docker run command exists, False otherwise
+    :param binary: the binary name or path
+    :param use_sudo: use sudo
+    :return: True if binary is installed, False otherwise
     """
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     try:
         if use_sudo:
-            out = fabric.api.run('sudo which {0}'.format(package_name))
+            out = fabric.api.run('sudo which {0}'.format(binary))
         else:
-            out = fabric.api.run('which {0}'.format(package_name))
+            out = fabric.api.run('which {0}'.format(binary))
         if not out:
             return False
         return True
