@@ -192,7 +192,6 @@ def is_selinux(use_sudo):
     return _is_installed('sestatus', use_sudo)
 
 
-# TODO(adaml): Not required in RHEL 6.5
 def _add_selinux_rule(use_sudo):
     if (is_selinux(use_sudo)):
         lgr.info('running on an SELINUX distribution')
