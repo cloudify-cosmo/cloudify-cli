@@ -119,7 +119,7 @@ def _install_docker_if_required(docker_path, use_sudo,
                   .format(str(e))
             lgr.error(err)
             raise
-        if 'trusty' not in distro_info \
+        if 'ubuntu' not in distro_info \
                 and 'centos' not in distro_info \
                     and 'redhat' not in distro_info:
             err = ('bootstrapping requires either having Docker pre-installed '
@@ -130,16 +130,42 @@ def _install_docker_if_required(docker_path, use_sudo,
         lgr.info('installing Docker')
         try:
             # https://github.com/docker/docker/issues/11910
-            if 'redhat' in distro_info and 'Maipo' in distro_info:
+            if 'Maipo' in distro_info:
+                # RHEL 7.x
                 _run_command('{0} yum-config-manager --enable '
                              'rhui-REGION-rhel-server-extras'.format(sudo))
-                _run_command('{0} yum install docker'.format(sudo))
+                _run_command('{0} yum install -y docker'.format(sudo))
+            elif 'Santiago' in distro_info or 'Final' in distro_info:
+                _run_command('{0} curl -o /tmp/epel-release-6-8.noarch.rpm'
+                             ' http://mirror.nonstop.co.il/epel/6/i386/'
+                             'epel-release-6-8.noarch.rpm'.format(sudo))
+                _run_command('{0} rpm -Uvh /tmp/epel-release-6-8.noarch'
+                             '.rpm'.format(sudo))
+                _run_command('{0} yum install -y docker-io'.format(sudo))
+                _run_command('{0} curl -o /usr/bin/docker https://get.docker'
+                             '.com/builds/Linux/x86_64/docker-latest'
+                             .format(sudo))
             else:
+                # Centos 7.x, Ubuntu 14.04
                 _run_command('curl -sSL https://get.docker.com/ | {0} sh'
                              .format(sudo))
-            _run_command('{0} service docker restart'.format(sudo))
-        except FabricTaskError:
-            err = 'failed installing docker on remote host.'
+
+            if 'Santiago' in distro_info or 'Final' in distro_info:
+                # required on Centos6.5 in order to be able to run pty=False
+                _run_command('{0} sed -i "s/^.*requiretty/#Defaults '
+                             'requiretty/" /etc/sudoers'.format(sudo))
+                _run_command('{0} service docker restart'.format(sudo),
+                             pty=False)
+            else:
+                _run_command('{0} service docker restart'.format(sudo))
+
+            # selinux security
+            if 'Maipo' in distro_info or 'Core' in distro_info:
+                _add_selinux_rule(use_sudo)
+
+        except FabricTaskError as e:
+            err = 'failed installing docker on remote host. reason: {0}'\
+                  .format(e.message)
             lgr.error(err)
             raise
     else:
@@ -166,14 +192,15 @@ def is_selinux(use_sudo):
     return _is_installed('sestatus', use_sudo)
 
 
-def _prepare_docker_env(use_sudo):
+# TODO(adaml): Not required in RHEL 6.5
+def _add_selinux_rule(use_sudo):
     if (is_selinux(use_sudo)):
         lgr.info('running on an SELINUX distribution')
         selinux_status = \
             _run_command('sestatus |grep \'SELinux status\'| '
                          'awk \'{print $3}\'')
 
-        if (selinux_status == 'enabled'):
+        if selinux_status == 'enabled':
             lgr.info('changing security context of user home dir')
             _run_command('chcon -Rt svirt_sandbox_file_t ~/')
 
@@ -275,7 +302,6 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
         docker_path,
         use_sudo,
         docker_service_start_command)
-    _prepare_docker_env(use_sudo)
 
     data_container_name = 'data'
     cfy_container_name = 'cfy'
@@ -679,8 +705,8 @@ def _upload_provider_context(remote_agents_private_key_path,
     _run_command_in_cfy(upload_provider_context_cmd, terminal=True)
 
 
-def _run_command(command, shell_escape=None):
-    return fabric.api.run(command, shell_escape=shell_escape)
+def _run_command(command, shell_escape=None, pty=True):
+    return fabric.api.run(command, shell_escape=shell_escape, pty=pty)
 
 
 def _run_command_in_cfy(command, docker_path=None, use_sudo=True,
