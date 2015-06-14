@@ -27,7 +27,7 @@ from cloudify.decorators import operation, workflow
 from cloudify import ctx as op_ctx
 from cloudify.exceptions import CommandExecutionException
 from cloudify.workflows import ctx as workflow_ctx
-from dsl_parser.parser import HOST_TYPE
+from dsl_parser.constants import HOST_TYPE
 
 from cloudify_cli import common
 
