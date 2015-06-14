@@ -182,10 +182,7 @@ def _install_docker_if_required(docker_path, use_sudo,
                                                .format(sudo)
             _run_command(docker_service_start_command)
 
-    if use_sudo:
-        docker_exec_command = '{0} {1}'.format('sudo', docker_path)
-    else:
-        docker_exec_command = docker_path
+    docker_exec_command = '{0} {1}'.format(sudo, docker_path)
     return docker_exec_command
 
 
