@@ -119,7 +119,7 @@ def _install_docker_if_required(docker_path, use_sudo,
                   .format(str(e))
             lgr.error(err)
             raise
-        if 'ubuntu' not in distro_info \
+        if 'Ubuntu' not in distro_info \
                 and 'centos' not in distro_info \
                     and 'redhat' not in distro_info:
             err = ('bootstrapping requires either having Docker pre-installed '
@@ -136,6 +136,7 @@ def _install_docker_if_required(docker_path, use_sudo,
                              'rhui-REGION-rhel-server-extras'.format(sudo))
                 _run_command('{0} yum install -y docker'.format(sudo))
             elif 'Santiago' in distro_info or 'Final' in distro_info:
+                # RHEL 6.5/ Centos 6.5
                 _run_command('{0} curl -o /tmp/epel-release-6-8.noarch.rpm'
                              ' http://mirror.nonstop.co.il/epel/6/i386/'
                              'epel-release-6-8.noarch.rpm'.format(sudo))
