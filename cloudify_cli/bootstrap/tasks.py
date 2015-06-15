@@ -166,9 +166,13 @@ def _install_docker_if_required(docker_path, use_sudo,
                 _run_command('{0} curl -o /usr/bin/docker https://get.docker'
                              '.com/builds/Linux/x86_64/docker-latest'
                              .format(sudo))
+            elif 'trusty' == distro_name:
+                # install docker on ubuntu 14.x
+                _run_command('curl -sSL https://get.docker.com/ubuntu | {0} sh'
+                             .format(sudo))
             else:
-                # This is the Docker easy install script that applies to
-                # multiple distributions including centos 7.x and ubuntu 14.04
+                # use the Docker easy install script that applies to multiple
+                # distributions including centos 7.x
                 _run_command('curl -sSL https://get.docker.com/ | {0} sh'
                              .format(sudo))
 
