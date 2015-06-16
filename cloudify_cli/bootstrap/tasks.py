@@ -20,7 +20,6 @@ import json
 import pkgutil
 import tarfile
 import tempfile
-import ast
 from time import sleep, time
 from StringIO import StringIO
 
@@ -53,6 +52,12 @@ DEFAULT_SECURITY_LOG_LEVEL = 'INFO'
 DEFAULT_SECURITY_LOG_FILE_SIZE_MB = 100
 DEFAULT_SECURITY_LOG_FILES_BACKUP_COUNT = 20
 DEFAULT_SECURITY_MODE = False
+
+RHEL7X = ('redhat', 'Maipo')
+RHEL6X = ('redhat', 'Santiago')
+CENTOS7X = ('centos', 'Core')
+CENTOS6X = ('centos', 'Final')
+UBUNTU14X = ('Ubuntu', 'trusty')
 
 lgr = None
 
@@ -103,12 +108,12 @@ def stop_docker_service(docker_service_stop_command=None, use_sudo=True):
     _run_command(docker_service_stop_command)
 
 
-def _restart_docker(distro_name, sudo, start_cmd=None):
+def _restart_docker(current_distro, sudo, start_cmd=None):
     if start_cmd:
         docker_start_cmd = start_cmd
     else:
         docker_start_cmd = '{0} service docker restart'.format(sudo)
-    if distro_name in ['Santiago', 'Final']:
+    if current_distro == RHEL6X or current_distro == CENTOS6X:
         # required on centos6.5 in order to be able to run pty=False
         _run_command('{0} sed -i "s/^.*requiretty/#Defaults '
                      'requiretty/" /etc/sudoers'.format(sudo))
@@ -127,13 +132,12 @@ def _install_docker_if_required(docker_path, use_sudo,
     if not docker_path:
         docker_path = 'docker'
     try:
-        distro_info = get_machine_distro()
+        distro, version, distro_name = get_machine_distro()
     except FabricTaskError as e:
         err = 'Failed getting platform distro. Error is: {0}'.format(e)
         lgr.error(err)
         raise
-    distro = distro_info[0]
-    distro_name = distro_info[2]
+    current_distro = (distro, distro_name)
     docker_installed = _is_installed(docker_path, use_sudo)
     if not docker_installed:
         lgr.info('The Docker service is not installed. Attempting to install '
@@ -145,13 +149,13 @@ def _install_docker_if_required(docker_path, use_sudo,
             lgr.error(err)
             raise NonRecoverableError(err)
         try:
-            if 'Maipo' == distro_name:
+            if current_distro == RHEL7X:
                 # install docker on RHEL 7.x.
                 # https://github.com/docker/docker/issues/11910
                 _run_command('{0} yum-config-manager --enable '
                              'rhui-REGION-rhel-server-extras'.format(sudo))
                 _run_command('{0} yum install -y docker'.format(sudo))
-            elif distro_name in ['Santiago', 'Final']:
+            elif current_distro == CENTOS6X or current_distro == RHEL6X:
                 # install Docker on RHEL 6.5/Centos 6.5, according to the
                 # Docker documentation.
                 _run_command('{0} curl -o /tmp/epel-release-6-8.noarch.rpm'
@@ -166,7 +170,7 @@ def _install_docker_if_required(docker_path, use_sudo,
                 _run_command('{0} curl -o /usr/bin/docker https://get.docker'
                              '.com/builds/Linux/x86_64/docker-latest'
                              .format(sudo))
-            elif 'trusty' == distro_name:
+            elif current_distro == UBUNTU14X:
                 # install docker on ubuntu 14.x
                 _run_command('curl -sSL https://get.docker.com/ubuntu | {0} sh'
                              .format(sudo))
@@ -177,7 +181,7 @@ def _install_docker_if_required(docker_path, use_sudo,
                              .format(sudo))
 
             lgr.debug('Restarting the Docker daemon')
-            _restart_docker(distro_name, sudo)
+            _restart_docker(current_distro, sudo)
         except FabricTaskError as e:
             err = 'Failed installing docker on remote host. reason: {0}'\
                   .format(e)
@@ -187,19 +191,19 @@ def _install_docker_if_required(docker_path, use_sudo,
         lgr.debug('\"docker\" is already installed.')
     try:
         # selinux security rule relevant only to centos 7.x and rhel 7.x
-        if distro_name in ['Maipo', 'Core']:
+        if current_distro == RHEL7X or current_distro == CENTOS7X:
             # Add permissions to r/w content under the host's home dir.
             # used to allow mounting of '/home' using Docker.
             _add_selinux_rule(use_sudo)
     except BaseException:
-        lgr.debug('Failed adding r/w permissions to the host\'s home dir.')
+        lgr.error('Failed adding r/w permissions to the host\'s home dir.')
     try:
         info_command = '{0} {1} info'.format(sudo, docker_path)
         _run_command(info_command)
     except BaseException as e:
         lgr.debug('Failed retrieving docker info: {0}'.format(str(e)))
         lgr.debug('Trying to start docker service')
-        _restart_docker(distro_name, sudo,
+        _restart_docker(current_distro, sudo,
                         start_cmd=docker_service_start_command)
 
     docker_exec_command = '{0} {1}'.format(sudo, docker_path)
@@ -782,7 +786,7 @@ def get_machine_distro():
     distro_info = _run_command('python -c "import platform, json, sys; '
                                'sys.stdout.write(\'{0}\\n\''
                                '.format(json.dumps(platform.dist())))"')
-    return ast.literal_eval(unicode(distro_info))
+    return json.loads(distro_info)
 
 
 def _validate_package_url_accessible(package_url):
