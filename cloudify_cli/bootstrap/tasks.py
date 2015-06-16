@@ -155,7 +155,7 @@ def _install_docker_if_required(docker_path, use_sudo,
                 _run_command('{0} yum-config-manager --enable '
                              'rhui-REGION-rhel-server-extras'.format(sudo))
                 _run_command('{0} yum install -y docker'.format(sudo))
-            elif current_distro == CENTOS6X or current_distro == RHEL6X:
+            elif current_distro in [CENTOS6X, RHEL6X]:
                 # install Docker on RHEL 6.5/Centos 6.5, according to the
                 # Docker documentation.
                 _run_command('{0} curl -o /tmp/epel-release-6-8.noarch.rpm'
@@ -191,12 +191,12 @@ def _install_docker_if_required(docker_path, use_sudo,
         lgr.debug('\"docker\" is already installed.')
     try:
         # selinux security rule relevant only to centos 7.x and rhel 7.x
-        if current_distro == RHEL7X or current_distro == CENTOS7X:
+        if current_distro in [RHEL7X, CENTOS7X]:
             # Add permissions to r/w content under the host's home dir.
             # used to allow mounting of '/home' using Docker.
             _add_selinux_rule(use_sudo)
     except BaseException:
-        lgr.error('Failed adding r/w permissions to the host\'s home dir.')
+        lgr.warning('Failed adding r/w permissions to the host\'s home dir.')
     try:
         info_command = '{0} {1} info'.format(sudo, docker_path)
         _run_command(info_command)
