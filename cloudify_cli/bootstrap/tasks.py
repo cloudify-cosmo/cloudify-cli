@@ -113,7 +113,7 @@ def _restart_docker(current_distro, sudo, start_cmd=None):
         docker_start_cmd = start_cmd
     else:
         docker_start_cmd = '{0} service docker restart'.format(sudo)
-    if current_distro == RHEL6X or current_distro == CENTOS6X:
+    if current_distro in [RHEL6X, CENTOS6X]:
         # required on centos6.5 in order to be able to run pty=False
         _run_command('{0} sed -i "s/^.*requiretty/#Defaults '
                      'requiretty/" /etc/sudoers'.format(sudo))
