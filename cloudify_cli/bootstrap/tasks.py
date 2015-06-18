@@ -53,6 +53,12 @@ DEFAULT_SECURITY_LOG_FILE_SIZE_MB = 100
 DEFAULT_SECURITY_LOG_FILES_BACKUP_COUNT = 20
 DEFAULT_SECURITY_MODE = False
 
+RHEL7X = ('redhat', 'Maipo')
+RHEL6X = ('redhat', 'Santiago')
+CENTOS7X = ('centos', 'Core')
+CENTOS6X = ('centos', 'Final')
+UBUNTU14X = ('Ubuntu', 'trusty')
+
 lgr = None
 
 
@@ -102,58 +108,123 @@ def stop_docker_service(docker_service_stop_command=None, use_sudo=True):
     _run_command(docker_service_stop_command)
 
 
+def _restart_docker(current_distro, sudo, start_cmd=None):
+    if start_cmd:
+        docker_start_cmd = start_cmd
+    else:
+        docker_start_cmd = '{0} service docker restart'.format(sudo)
+    if current_distro in [RHEL6X, CENTOS6X]:
+        # required on centos6.5 in order to be able to run pty=False
+        _run_command('{0} sed -i "s/^.*requiretty/#Defaults '
+                     'requiretty/" /etc/sudoers'.format(sudo))
+        _run_command(docker_start_cmd,
+                     pty=False)
+    else:
+        _run_command(docker_start_cmd)
+
+
 def _install_docker_if_required(docker_path, use_sudo,
                                 docker_service_start_command):
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
 
+    sudo = 'sudo' if use_sudo else ''
     if not docker_path:
         docker_path = 'docker'
-    docker_installed = _is_docker_installed(docker_path, use_sudo)
+    try:
+        distro, version, distro_name = get_machine_distro()
+    except FabricTaskError as e:
+        err = 'Failed getting platform distro. Error is: {0}'.format(e)
+        lgr.error(err)
+        raise
+    current_distro = (distro, distro_name)
+    docker_installed = _is_installed(docker_path, use_sudo)
     if not docker_installed:
-        try:
-            distro_info = get_machine_distro()
-        except FabricTaskError as e:
-            err = 'failed getting platform distro. error is: {0}'\
-                  .format(str(e))
-            lgr.error(err)
-            raise
-        if 'trusty' not in distro_info:
-            err = ('bootstrap using the Docker Cloudify image requires either '
-                   'running on \'Ubuntu 14.04 trusty\' or having Docker '
-                   'pre-installed on the remote machine.')
+        lgr.info('The Docker service is not installed. Attempting to install '
+                 'Docker.')
+        if distro not in ['Ubuntu', 'centos', 'redhat']:
+            err = 'Docker installation is currently supported only for the ' \
+                  'following distributions: Ubuntu 14.04 trusty, Centos 6.5 ' \
+                  'Final/7.x Core and RHEL 6.5 Santiago/7.x Maipo.'
             lgr.error(err)
             raise NonRecoverableError(err)
-
         try:
-            lgr.info('installing Docker')
-            _run_command('curl -sSL https://get.docker.com/ubuntu/ | sudo sh')
-        except FabricTaskError:
-            err = 'failed installing docker on remote host.'
+            if current_distro == RHEL7X:
+                # install docker on RHEL 7.x.
+                # https://github.com/docker/docker/issues/11910
+                _run_command('{0} yum-config-manager --enable '
+                             'rhui-REGION-rhel-server-extras'.format(sudo))
+                _run_command('{0} yum install -y docker'.format(sudo))
+            elif current_distro in [CENTOS6X, RHEL6X]:
+                # install Docker on RHEL 6.5/Centos 6.5, according to the
+                # Docker documentation.
+                _run_command('{0} curl -o /tmp/epel-release-6-8.noarch.rpm'
+                             ' http://mirror.nonstop.co.il/epel/6/i386/'
+                             'epel-release-6-8.noarch.rpm'.format(sudo))
+                _run_command('{0} rpm -Uvh /tmp/epel-release-6-8.noarch'
+                             '.rpm'.format(sudo))
+                _run_command('{0} yum install -y docker-io'.format(sudo))
+                # Docker will fail to start unless we update Docker to run
+                # using the latest version. This does not apply to the rest of
+                # the distros and will corrupt the Docker installation if used.
+                _run_command('{0} curl -o /usr/bin/docker https://get.docker'
+                             '.com/builds/Linux/x86_64/docker-latest'
+                             .format(sudo))
+            elif current_distro == UBUNTU14X:
+                # install docker on ubuntu 14.x
+                _run_command('curl -sSL https://get.docker.com/ubuntu | {0} sh'
+                             .format(sudo))
+            else:
+                # use the Docker easy install script that applies to multiple
+                # distributions including centos 7.x
+                _run_command('curl -sSL https://get.docker.com/ | {0} sh'
+                             .format(sudo))
+
+            lgr.debug('Restarting the Docker daemon')
+            _restart_docker(current_distro, sudo)
+        except FabricTaskError as e:
+            err = 'Failed installing docker on remote host. reason: {0}'\
+                  .format(e)
             lgr.error(err)
             raise
     else:
         lgr.debug('\"docker\" is already installed.')
-        try:
-            info_command = '{0} info'.format(docker_path)
-            if use_sudo:
-                info_command = 'sudo {0}'.format(info_command)
-            _run_command(info_command)
-        except BaseException as e:
-            lgr.debug('Failed retrieving docker info: {0}'.format(str(e)))
-            lgr.debug('Trying to start docker service')
-            if not docker_service_start_command:
-                docker_service_start_command = 'service docker start'
-            if use_sudo:
-                docker_service_start_command = 'sudo {0}'\
-                    .format(docker_service_start_command)
-            _run_command(docker_service_start_command)
+    try:
+        # selinux security rule relevant only to centos 7.x and rhel 7.x
+        if current_distro in [RHEL7X, CENTOS7X]:
+            # Add permissions to r/w content under the host's home dir.
+            # used to allow mounting of '/home' using Docker.
+            _add_selinux_rule(use_sudo)
+    except BaseException:
+        lgr.warning('Failed adding r/w permissions to the host\'s home dir.')
+    try:
+        info_command = '{0} {1} info'.format(sudo, docker_path)
+        _run_command(info_command)
+    except BaseException as e:
+        lgr.debug('Failed retrieving docker info: {0}'.format(str(e)))
+        lgr.debug('Trying to start docker service')
+        _restart_docker(current_distro, sudo,
+                        start_cmd=docker_service_start_command)
 
-    if use_sudo:
-        docker_exec_command = '{0} {1}'.format('sudo', docker_path)
-    else:
-        docker_exec_command = docker_path
+    docker_exec_command = '{0} {1}'.format(sudo, docker_path)
     return docker_exec_command
+
+
+def is_selinux(use_sudo):
+    return _is_installed('sestatus', use_sudo)
+
+
+def _add_selinux_rule(use_sudo):
+    sudo = 'sudo' if use_sudo else ''
+    if (is_selinux(use_sudo)):
+        lgr.info('running on an SELINUX distribution')
+        selinux_status = \
+            _run_command('sestatus |grep \'SELinux status\'| '
+                         'awk \'{print $3}\'')
+
+        if selinux_status == 'enabled':
+            lgr.debug('Changing security context of user home dir')
+            _run_command('{0} chcon -Rt svirt_sandbox_file_t ~/'.format(sudo))
 
 
 def _handle_ssl_configuration(ssl_configuration):
@@ -477,20 +548,20 @@ def _handle_plugins_and_create_install_cmd(plugins):
     return '/root/{0}'.format(install_plugins)
 
 
-def _is_docker_installed(docker_path, use_sudo):
+def _is_installed(binary, use_sudo):
     """
-    Returns true if docker run command exists
-    :param docker_path: the docker path
-    :param use_sudo: use sudo to run docker
-    :return: True if docker run command exists, False otherwise
+    Returns true if binary is installed
+    :param binary: the binary name or path
+    :param use_sudo: use sudo
+    :return: True if binary is installed, False otherwise
     """
     # CFY-1627 - plugin dependency should be removed.
     from fabric_plugin.tasks import FabricTaskError
     try:
         if use_sudo:
-            out = fabric.api.run('sudo which {0}'.format(docker_path))
+            out = fabric.api.run('sudo which {0}'.format(binary))
         else:
-            out = fabric.api.run('which {0}'.format(docker_path))
+            out = fabric.api.run('which {0}'.format(binary))
         if not out:
             return False
         return True
@@ -656,8 +727,8 @@ def _upload_provider_context(remote_agents_private_key_path,
     _run_command_in_cfy(upload_provider_context_cmd, terminal=True)
 
 
-def _run_command(command, shell_escape=None):
-    return fabric.api.run(command, shell_escape=shell_escape)
+def _run_command(command, shell_escape=None, pty=True):
+    return fabric.api.run(command, shell_escape=shell_escape, pty=pty)
 
 
 def _run_command_in_cfy(command, docker_path=None, use_sudo=True,
@@ -712,9 +783,10 @@ def _run_docker_container(docker_exec_command, container_options,
 
 
 def get_machine_distro():
-    return _run_command('python -c "import platform, json, sys; '
-                        'sys.stdout.write(\'{0}\\n\''
-                        '.format(json.dumps(platform.dist())))"')
+    distro_info = _run_command('python -c "import platform, json, sys; '
+                               'sys.stdout.write(\'{0}\\n\''
+                               '.format(json.dumps(platform.dist())))"')
+    return json.loads(distro_info)
 
 
 def _validate_package_url_accessible(package_url):
