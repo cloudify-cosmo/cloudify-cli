@@ -369,6 +369,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                               '-p 8086:8086 '
                               '-e MANAGEMENT_IP={2} '
                               '-e MANAGER_REST_SECURITY_CONFIG_PATH={3} '
+                              '-e TRANSIENT_DEPLOYMENT_WORKERS={4} '
                               '--restart=always '
                               '-d '
                               'cloudify '
@@ -377,7 +378,10 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
                                       rest_port,
                                       manager_private_ip or
                                       ctx.instance.host_ip,
-                                      security_config_path))
+                                      security_config_path,
+                                      cloudify_config.get(
+                                          'transient_deployment_workers',
+                                          False)))
 
     agent_packages = cloudify_packages.get('agents')
     if agent_packages:
@@ -458,7 +462,11 @@ def recover_docker(docker_path=None, use_sudo=True,
     lgr.info('waiting for cloudify management services to restart')
     port = ctx.instance.runtime_properties[REST_PORT]
     started = _wait_for_management(manager_ip, timeout=180, port=port)
-    _recover_deployments(docker_path, use_sudo)
+
+    cloudify_config = ctx.node.properties['cloudify']
+    if not cloudify_config.get('transient_deployment_workers'):
+        _recover_deployments(docker_path, use_sudo)
+
     if not started:
         err = 'failed waiting for cloudify management services to restart.'
         lgr.info(err)
