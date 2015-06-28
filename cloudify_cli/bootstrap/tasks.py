@@ -499,12 +499,15 @@ def _get_install_agent_pkgs_cmd(agent_packages,
     download_agents_cmd = ''
     install_agents_cmd = ''
     for agent_name, agent_url in agent_packages.items():
-        download_agents_cmd += 'curl -O {0}{1} ' \
-                               .format(agent_url, ' && ')
-
-    install_agents_cmd += 'rm -rf {0}/* && dpkg -i {1}/*.deb' \
-                          .format(agents_dest_dir,
-                                  agents_pkg_path)
+        if agent_url.endswith('tar.gz'):
+            download_agents_cmd += 'curl -O {0} -o {1} && ' \
+                                   .format(agent_url, agents_dest_dir)
+        elif agent_url.endswith('deb'):
+            download_agents_cmd += 'curl -O {0}{1} && ' \
+                                   .format(agent_url)
+            install_agents_cmd += 'rm -rf {0}/*' \
+                                  .format(agents_dest_dir,
+                                          agents_pkg_path)
 
     return '{0} {1}'.format(download_agents_cmd, install_agents_cmd)
 
