@@ -509,7 +509,7 @@ def _get_install_agent_pkgs_cmd(agent_packages,
             debs = True
 
     if debs:
-        install_agents_cmd += 'rm -rf {0}/* && dpkg -i {1}/*.deb' \
+        install_agents_cmd += 'dpkg -i {1}/*.deb' \
                               .format(agents_dest_dir,
                                       agents_pkg_path)
     if tars and debs:

@@ -174,7 +174,7 @@ class CliBootstrapUnitTests(unittest.TestCase):
 
         self.assertIn('curl -O agent.tar.gz', command)
         self.assertIn('curl -O agent.deb', command)
-        self.assertIn('rm -rf {0}/* && dpkg -i {1}/*.deb && '
+        self.assertIn('dpkg -i {1}/*.deb && '
                       'mv {1}/*.tar.gz {0}'.format(
                           agents_dest_dir, agents_pkg_path), command)
 
@@ -207,5 +207,5 @@ class CliBootstrapUnitTests(unittest.TestCase):
 
         self.assertIn('curl -O agent1.deb', command)
         self.assertIn('curl -O agent2.deb', command)
-        self.assertIn('rm -rf {0}/* && dpkg -i {1}/*.deb'.format(
+        self.assertIn('dpkg -i {1}/*.deb'.format(
             agents_dest_dir, agents_pkg_path), command)
