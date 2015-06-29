@@ -160,3 +160,52 @@ class CliBootstrapUnitTests(unittest.TestCase):
                 configurations)
         finally:
             os.remove(cert_path)
+
+    def test_get_install_agent_pkgs_cmd(self):
+        agent_packages = {
+            'agent_tar': 'agent.tar.gz',
+            'agent_deb': 'agent.deb'
+        }
+        agents_pkg_path = '/tmp/work_dir'
+        agents_dest_dir = '/opt/manager/resources/packages'
+
+        command = tasks._get_install_agent_pkgs_cmd(
+            agent_packages, agents_pkg_path, agents_dest_dir)
+
+        self.assertIn('curl -O agent.tar.gz', command)
+        self.assertIn('curl -O agent.deb', command)
+        self.assertIn('dpkg -i {1}/*.deb && '
+                      'mv {1}/*.tar.gz {0}'.format(
+                          agents_dest_dir, agents_pkg_path), command)
+
+    def test_get_install_agent_pkgs_cmd_tars_only(self):
+        agent_packages = {
+            'agent_tar1': 'agent1.tar.gz',
+            'agent_tar2': 'agent2.tar.gz',
+        }
+        agents_pkg_path = '/tmp/work_dir'
+        agents_dest_dir = '/opt/manager/resources/packages'
+
+        command = tasks._get_install_agent_pkgs_cmd(
+            agent_packages, agents_pkg_path, agents_dest_dir)
+
+        self.assertIn('curl -O agent1.tar.gz', command)
+        self.assertIn('curl -O agent2.tar.gz', command)
+        self.assertIn('mv {1}/*.tar.gz {0}'.format(
+            agents_dest_dir, agents_pkg_path), command)
+
+    def test_get_install_agent_pkgs_cmd_debs_only(self):
+        agent_packages = {
+            'agent_deb1': 'agent1.deb',
+            'agent_deb2': 'agent2.deb',
+        }
+        agents_pkg_path = '/tmp/work_dir'
+        agents_dest_dir = '/opt/manager/resources/packages'
+
+        command = tasks._get_install_agent_pkgs_cmd(
+            agent_packages, agents_pkg_path, agents_dest_dir)
+
+        self.assertIn('curl -O agent1.deb', command)
+        self.assertIn('curl -O agent2.deb', command)
+        self.assertIn('dpkg -i {1}/*.deb'.format(
+            agents_dest_dir, agents_pkg_path), command)
