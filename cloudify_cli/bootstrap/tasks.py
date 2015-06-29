@@ -40,6 +40,7 @@ MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
 MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
 DEFAULT_REMOTE_AGENT_KEY_PATH = '~/.ssh/agent_key.pem'
 REST_PORT = 'rest_port'
+API_VERSION = 'v2'
 
 HOST_CLOUDIFY_HOME_DIR = '~/cloudify'
 HOST_SSL_CERTIFICATE_PATH = '~/cloudify/server.crt'
@@ -577,7 +578,8 @@ def _wait_for_management(ip, timeout, port=constants.DEFAULT_REST_PORT):
         :return: True of False
     """
     protocol = 'http' if port == constants.DEFAULT_REST_PORT else 'https'
-    validation_url = '{0}://{1}:{2}/version'.format(protocol, ip, port)
+    validation_url = '{0}://{1}:{2}/{3}/version'.format(protocol, ip, port,
+                                                        API_VERSION)
     lgr.info('waiting for url {0} to become available'.format(validation_url))
 
     end = time() + timeout
@@ -719,9 +721,9 @@ def _upload_provider_context(remote_agents_private_key_path,
                    remote_provider_context_file)
 
     upload_provider_context_cmd = \
-        'curl --fail -XPOST localhost:8101/provider/context -H ' \
-        '"Content-Type: application/json" -d @{0}'.format(
-            container_provider_context_file)
+        'curl --fail -XPOST localhost:8101/{0}/provider/context -H ' \
+        '"Content-Type: application/json" -d @{1}'.format(
+            API_VERSION, container_provider_context_file)
 
     # uploading the provider context to the REST service
     _run_command_in_cfy(upload_provider_context_cmd, terminal=True)
