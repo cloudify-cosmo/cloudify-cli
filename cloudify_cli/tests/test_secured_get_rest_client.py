@@ -25,6 +25,7 @@ from cloudify_cli.tests import cli_runner
 
 TRUST_ALL = 'non-empty-value'
 CERT_PATH = 'path-to-certificate'
+API_VERSION = 'v2'
 
 
 class TestGetRestClient(unittest.TestCase):
@@ -68,5 +69,6 @@ class TestGetRestClient(unittest.TestCase):
 
         self.assertEqual(CERT_PATH, client._client.cert)
         self.assertTrue(client._client.trust_all)
-        self.assertEqual('{0}://{1}:{2}'.format(protocol, host, port),
-                         client._client.url)
+        self.assertEqual('{0}://{1}:{2}/{3}'.format(
+            protocol, host, port, API_VERSION),
+            client._client.url)
