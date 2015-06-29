@@ -80,7 +80,8 @@ class UseTest(CliCommandTest):
         self.client = CloudifyClient(host=host, protocol='https')
         self._test_use()
         self.assertEqual(self.request_url,
-                         'https://{0}:{1}/{2}/status'.format(host, SSL_PORT, API_VERSION))
+                         'https://{0}:{1}/{2}/status'.format(host, SSL_PORT,
+                                                             API_VERSION))
         self.assertTrue(self.verify)
 
     def test_use_trust_all(self):
@@ -89,7 +90,8 @@ class UseTest(CliCommandTest):
                                      protocol='https', trust_all=True)
         self._test_use()
         self.assertEqual(self.request_url,
-                         'https://{0}:{1}/{2}/status'.format(host, SSL_PORT, API_VERSION))
+                         'https://{0}:{1}/{2}/status'.format(host, SSL_PORT,
+                                                             API_VERSION))
         self.assertFalse(self.verify)
 
     def _test_use(self):
