@@ -37,6 +37,18 @@ def blueprint_id_argument():
     }
 
 
+def snapshot_id_argument(hlp = 'The id of the snapshot'):
+    return {
+        'metavar': 'SNAPSHOT_ID',
+        'type': str,
+        'help': hlp,
+        'dest': 'snapshot_id',
+        'default': None,
+        'required': True,
+        'completer': completion_utils.objects_args_completer_maker('snapshots')
+    }
+
+
 def deployment_id_argument(hlp):
     return {
         'dest': 'deployment_id',
@@ -163,6 +175,70 @@ def parser_config():
                         },
                         'help': 'command for validating a blueprint',
                         'handler': cfy.blueprints.validate
+                    }
+                }
+            },
+            'snapshots': {
+                'help': "Manages Cloudify's Snapshots",
+                'sub_commands': {
+                    'create': {
+                        'arguments': {
+                            '-s,--snapshot-id': argument_utils.remove_completer(
+                                snapshot_id_argument(
+                                    hlp='A unique id that will be assigned to the created snapshot'
+                                )
+                            ),
+                        },
+                        'help': 'command for creating a new snapshots',
+                        'handler': cfy.snapshots.create
+                    },
+                    'upload': {
+                        'arguments': {
+                            '-p,--snapshot-path': {
+                                'metavar': 'SNAPSHOT_FILE',
+                                'dest': 'snapshot_path',
+                                'type': argparse.FileType(),
+                                'required': True,
+                                'help': "Path to the manager's snapshot file",
+                                'completer': completion_utils.yaml_files_completer
+                            },
+                            '-s,--snapshot-id': argument_utils.remove_completer(snapshot_id_argument())
+                        },
+                        'help': 'command for uploading a snapshot to the management server',
+                        'handler': cfy.snapshots.upload
+                    },
+                    'download': {
+                        'arguments': {
+                            '-s,--snapshot-id': snapshot_id_argument(),
+                            '-o,--output': {
+                                'metavar': 'OUTPUT',
+                                'type': str,
+                                'help': 'The output file path of the snapshot to be downloaded',
+                                'dest': 'output',
+                                'required': False
+                            }
+                        },
+                        'help': 'command for downloading a snapshot from the management server',
+                        'handler': cfy.snapshots.download
+                    },
+                    'list': {
+                        'help': 'command for listing all snapshots on the '
+                                'Manager',
+                        'handler': cfy.snapshots.ls
+                    },
+                    'delete': {
+                        'arguments': {
+                            '-s,--snapshot-id': snapshot_id_argument()
+                        },
+                        'help': 'command for deleting a snapshot',
+                        'handler': cfy.snapshots.delete
+                    },
+                    'restore': {
+                        'arguments': {
+                            '-s,--snapshot-id': snapshot_id_argument()
+                        },
+                        'help': 'command for restoring manager to specific snapshot',
+                        'handler': cfy.snapshots.restore
                     }
                 }
             },
