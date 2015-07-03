@@ -87,9 +87,9 @@ def bootstrap(keep_up,
 
             logger.info('bootstrapping complete')
             logger.info('management server is up at {0}'.format(manager_ip))
-        except Exception:
+        except Exception as ex:
             tpe, value, traceback = sys.exc_info()
-            logger.error('bootstrap failed!')
+            logger.error('bootstrap failed!'.format(ex.message))
             if not keep_up:
                 try:
                     bs.load_env(env_name)
