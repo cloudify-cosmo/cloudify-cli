@@ -336,6 +336,35 @@ def parser_config():
                     }
                 }
             },
+            'nodes': {
+                'help': 'Manage nodes',
+                'sub_commands': {
+                    'get': {
+                        'arguments': {
+                            '--node-id': {
+                                'dest': 'node_id',
+                                'help': 'The ID of the node to get'
+                            },
+                            '-d,--deployment-id': {
+                                'dest': 'deployment_id',
+                                'help': 'Filter nodes for a given deployment by the deployment ID'
+                            }
+                        },
+                        'help': 'command for getting a node by its ID',
+                        'handler': cfy.nodes.get
+                    },
+                    'list': {
+                        'arguments': {
+                            '-d,--deployment-id': {
+                                'dest': 'deployment_id',
+                                'help': 'Filter nodes for a given deployment by the deployment ID'
+                            }
+                        },
+                        'help': 'Command for getting all deployment nodes according to the deployment ID',
+                        'handler': cfy.nodes.ls
+                    }
+                }
+            },
             'workflows': {
                 'help': 'Manages Deployment Workflows',
                 'sub_commands': {
