@@ -14,7 +14,7 @@
 #    * limitations under the License.
 
 """
-Handles all commands that start with 'cfy nodes'
+Handles all commands that start with 'cfy instances'
 """
 
 from cloudify_rest_client.exceptions import CloudifyClientError
@@ -23,30 +23,30 @@ from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.logger import get_logger
 
 
-def get(deployment_id, node_id):
+def get(node_instance_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
     try:
-        logger.info('Getting node: '
-                    '\'{0}\' for deployment with ID \'{1}\' [manager={2}]'
-                    .format(node_id, deployment_id, management_ip))
-        node = client.nodes.get(deployment_id, node_id)
+        logger.info('Getting node instance with ID: '
+                    '\'{0}\' [manager={1}]'
+                    .format(node_instance_id, management_ip))
+        node_instance = client.node_instances.get(node_instance_id)
     except CloudifyClientError, e:
         if e.status_code != 404:
             raise
-        msg = ("Node with ID '{0}' was not found on the management server"
-               .format(node_id))
+        msg = ("Node instance with ID '{0}' was not found on the management "
+               "server".format(node_instance_id))
         raise CloudifyCliError(msg)
-    columns = ['id', 'type', 'number_of_instances',
-               'planned_number_of_instances']
-    pt = utils.table(columns, [node])
+
+    columns = ['id', 'host_id', 'node_id', 'state']
+    pt = utils.table(columns, [node_instance])
     pt.max_width = 50
-    utils.print_table('Node:', pt)
+    utils.print_table('Instance:', pt)
 
 
-def ls(deployment_id):
+def ls(deployment_id, node_name=None):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -56,9 +56,10 @@ def ls(deployment_id):
                         '[manager={1}]'.format(deployment_id, management_ip))
         else:
             logger.info(
-                'Getting a list of all executions: [manager={0}]'.format(
+                'Getting a list of all instances: [manager={0}]'.format(
                     management_ip))
-        nodes = client.nodes.list(deployment_id=deployment_id)
+        instances = client.node_instances.list(deployment_id=deployment_id,
+                                               node_name=node_name)
     except CloudifyClientError, e:
         if not e.status_code != 404:
             raise
@@ -66,7 +67,6 @@ def ls(deployment_id):
                .format(deployment_id))
         raise CloudifyCliError(msg)
 
-    columns = ['id', 'type', 'number_of_instances',
-               'planned_number_of_instances']
-    pt = utils.table(columns, nodes)
-    utils.print_table('Nodes:', pt)
+    columns = ['id', 'host_id', 'node_id', 'state']
+    pt = utils.table(columns, instances)
+    utils.print_table('Instances:', pt)

@@ -357,11 +357,40 @@ def parser_config():
                         'arguments': {
                             '-d,--deployment-id': {
                                 'dest': 'deployment_id',
-                                'help': 'Filter nodes for a given deployment by the deployment ID'
+                                'help': 'Filter nodes for a given deployment by deployment ID'
                             }
                         },
                         'help': 'Command for getting all deployment nodes according to the deployment ID',
                         'handler': cfy.nodes.ls
+                    }
+                }
+            },
+            'instances': {
+                'help': 'Manage node instances',
+                'sub_commands': {
+                    'get': {
+                        'arguments': {
+                            '--node-instance-id': {
+                                'dest': 'node_instance_id',
+                                'help': 'The ID of the node instance to get'
+                            }
+                        },
+                        'help': 'command for getting a node by its ID',
+                        'handler': cfy.instances.get
+                    },
+                    'list': {
+                        'arguments': {
+                            '-d,--deployment-id': {
+                                'dest': 'deployment_id',
+                                'help': 'Filter node instances for a given deployment by deployment ID'
+                            },
+                            '--node-name': {
+                                'dest': 'node_name',
+                                'help': 'Filter nodes for a given deployment according to the node name'
+                            }
+                        },
+                        'help': 'Command for getting all deployment nodes according to the deployment ID',
+                        'handler': cfy.instances.ls
                     }
                 }
             },
