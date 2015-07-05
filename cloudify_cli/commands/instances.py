@@ -28,10 +28,9 @@ def get(node_instance_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
+    logger.info('Getting node instance with ID: \'{0}\' [manager={1}]'
+                .format(node_instance_id, management_ip))
     try:
-        logger.info('Getting node instance with ID: '
-                    '\'{0}\' [manager={1}]'
-                    .format(node_instance_id, management_ip))
         node_instance = client.node_instances.get(node_instance_id)
     except CloudifyClientError, e:
         if e.status_code != 404:
@@ -40,10 +39,17 @@ def get(node_instance_id):
                "server".format(node_instance_id))
         raise CloudifyCliError(msg)
 
-    columns = ['id', 'host_id', 'node_id', 'state']
+    columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
     pt = utils.table(columns, [node_instance])
     pt.max_width = 50
     utils.print_table('Instance:', pt)
+
+    # print node instance runtime properties
+    logger.info('Instance runtime properties:')
+    for prop_name, prop_value in utils.decode_dict(
+            node_instance.runtime_properties).iteritems():
+        logger.info('\t{0}: {1}'.format(prop_name, prop_value))
+    logger.info('')
 
 
 def ls(deployment_id, node_name=None):
@@ -67,6 +73,6 @@ def ls(deployment_id, node_name=None):
                .format(deployment_id))
         raise CloudifyCliError(msg)
 
-    columns = ['id', 'host_id', 'node_id', 'state']
+    columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
     pt = utils.table(columns, instances)
     utils.print_table('Instances:', pt)

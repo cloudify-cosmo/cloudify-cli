@@ -28,10 +28,9 @@ def get(deployment_id, node_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
+    logger.info('Getting node: \'{0}\' for deployment with ID \'{1}\' '
+                '[manager={2}]'.format(node_id, deployment_id, management_ip))
     try:
-        logger.info('Getting node: '
-                    '\'{0}\' for deployment with ID \'{1}\' [manager={2}]'
-                    .format(node_id, deployment_id, management_ip))
         node = client.nodes.get(deployment_id, node_id)
     except CloudifyClientError, e:
         if e.status_code != 404:
@@ -39,11 +38,36 @@ def get(deployment_id, node_id):
         msg = ("Node with ID '{0}' was not found on the management server"
                .format(node_id))
         raise CloudifyCliError(msg)
-    columns = ['id', 'type', 'number_of_instances',
+
+    logger.debug('Getting node instances for node with ID \'{0}\''
+                 .format(node_id))
+    try:
+        instances = client.node_instances.list(deployment_id, node_id)
+    except CloudifyClientError, e:
+        if e.status_code != 404:
+            raise
+
+    # print node parameters
+    columns = ['id', 'deployment_id', 'type', 'number_of_instances',
                'planned_number_of_instances']
     pt = utils.table(columns, [node])
     pt.max_width = 50
     utils.print_table('Node:', pt)
+
+    # print node properties
+    logger.info('Node properties:')
+    for property_name, property_value in utils.decode_dict(
+            node.properties).iteritems():
+        logger.info('\t{0}: {1}'.format(property_name, property_value))
+    logger.info('')
+
+    # print node instances IDs
+    logger.info('Node instance IDs:')
+    if instances:
+        for instance in instances:
+            logger.info('\t{0}'.format(instance['id']))
+    else:
+        logger.info('\tNo node instances')
 
 
 def ls(deployment_id):
@@ -66,7 +90,7 @@ def ls(deployment_id):
                .format(deployment_id))
         raise CloudifyCliError(msg)
 
-    columns = ['id', 'type', 'number_of_instances',
+    columns = ['id', 'deployment_id', 'type', 'number_of_instances',
                'planned_number_of_instances']
     pt = utils.table(columns, nodes)
     utils.print_table('Nodes:', pt)
