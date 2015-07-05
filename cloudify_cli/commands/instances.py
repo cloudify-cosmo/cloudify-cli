@@ -58,7 +58,7 @@ def ls(deployment_id, node_name=None):
     client = utils.get_rest_client(management_ip)
     try:
         if deployment_id:
-            logger.info('Getting executions list for deployment: \'{0}\' '
+            logger.info('Getting instances list for deployment: \'{0}\' '
                         '[manager={1}]'.format(deployment_id, management_ip))
         else:
             logger.info(

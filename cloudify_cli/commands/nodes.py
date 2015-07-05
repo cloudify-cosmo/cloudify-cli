@@ -76,11 +76,11 @@ def ls(deployment_id):
     client = utils.get_rest_client(management_ip)
     try:
         if deployment_id:
-            logger.info('Getting executions list for deployment: \'{0}\' '
+            logger.info('Getting nodes list for deployment: \'{0}\' '
                         '[manager={1}]'.format(deployment_id, management_ip))
         else:
             logger.info(
-                'Getting a list of all executions: [manager={0}]'.format(
+                'Getting a list of all nodes: [manager={0}]'.format(
                     management_ip))
         nodes = client.nodes.list(deployment_id=deployment_id)
     except CloudifyClientError, e:
