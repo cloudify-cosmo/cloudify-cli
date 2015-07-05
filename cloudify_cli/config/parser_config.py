@@ -343,10 +343,12 @@ def parser_config():
                         'arguments': {
                             '--node-id': {
                                 'dest': 'node_id',
+                                'required': True,
                                 'help': 'The ID of the node to get'
                             },
                             '-d,--deployment-id': {
                                 'dest': 'deployment_id',
+                                'required': True,
                                 'help': 'Filter nodes for a given deployment by the deployment ID'
                             }
                         },
@@ -357,6 +359,7 @@ def parser_config():
                         'arguments': {
                             '-d,--deployment-id': {
                                 'dest': 'deployment_id',
+                                'required': False,
                                 'help': 'Filter nodes for a given deployment by deployment ID'
                             }
                         },
@@ -372,6 +375,7 @@ def parser_config():
                         'arguments': {
                             '--node-instance-id': {
                                 'dest': 'node_instance_id',
+                                'required': True,
                                 'help': 'The ID of the node instance to get'
                             }
                         },
@@ -382,10 +386,12 @@ def parser_config():
                         'arguments': {
                             '-d,--deployment-id': {
                                 'dest': 'deployment_id',
+                                'required': False,
                                 'help': 'Filter node instances for a given deployment by deployment ID'
                             },
                             '--node-name': {
                                 'dest': 'node_name',
+                                'required': False,
                                 'help': 'Filter nodes for a given deployment according to the node name'
                             }
                         },

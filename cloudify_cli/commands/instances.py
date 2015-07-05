@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2015 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -69,8 +69,8 @@ def ls(deployment_id, node_name=None):
     except CloudifyClientError, e:
         if not e.status_code != 404:
             raise
-        msg = ('Deployment {0} does not exist on management server'
-               .format(deployment_id))
+        msg = 'Deployment {0} does not exist on management server'\
+              .format(deployment_id)
         raise CloudifyCliError(msg)
 
     columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
