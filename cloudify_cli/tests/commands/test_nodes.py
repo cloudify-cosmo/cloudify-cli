@@ -51,6 +51,7 @@ class NodesTest(CliCommandTest):
         self.client.nodes.list = MagicMock(return_value=[node_get_mock(),
                                                          node_get_mock()])
         cli_runner.run_cli('cfy nodes list')
+        cli_runner.run_cli('cfy nodes list -d nodecellar')
 
 
 def node_get_mock():

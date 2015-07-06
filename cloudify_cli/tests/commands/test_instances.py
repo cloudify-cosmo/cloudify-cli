@@ -45,6 +45,7 @@ class InstancesTest(CliCommandTest):
         self.client.node_instances.list = MagicMock(
             return_value=[node_instance_get_mock(), node_instance_get_mock()])
         cli_runner.run_cli('cfy instances list')
+        cli_runner.run_cli('cfy instances list -d nodecellar')
 
 
 def node_instance_get_mock():
