@@ -48,8 +48,8 @@ def get(deployment_id, node_id):
             raise
 
     # print node parameters
-    columns = ['id', 'deployment_id', 'type', 'number_of_instances',
-               'planned_number_of_instances']
+    columns = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
+               'number_of_instances', 'planned_number_of_instances']
     pt = utils.table(columns, [node])
     pt.max_width = 50
     utils.print_table('Node:', pt)
@@ -90,7 +90,7 @@ def ls(deployment_id):
                .format(deployment_id))
         raise CloudifyCliError(msg)
 
-    columns = ['id', 'deployment_id', 'type', 'number_of_instances',
-               'planned_number_of_instances']
+    columns = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
+               'number_of_instances', 'planned_number_of_instances']
     pt = utils.table(columns, nodes)
     utils.print_table('Nodes:', pt)
