@@ -58,6 +58,8 @@ def node_get_mock():
     return Node({
         'id': uuid4(),
         'deployment_id': 'deployment-id',
+        'blueprint_id': 'blueprint_id',
+        'host_id': 'host_id',
         'type': 'Compute',
         'number_of_instances': '1',
         'planned_number_of_instances': '2',
