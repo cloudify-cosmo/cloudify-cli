@@ -349,7 +349,7 @@ def parser_config():
                             '-d,--deployment-id': {
                                 'dest': 'deployment_id',
                                 'required': True,
-                                'help': 'Filter nodes for a given deployment by the deployment ID'
+                                'help': 'Filter nodes for a given deployment according to the deployment ID'
                             }
                         },
                         'help': 'command for getting a node by its ID',
@@ -360,10 +360,10 @@ def parser_config():
                             '-d,--deployment-id': {
                                 'dest': 'deployment_id',
                                 'required': False,
-                                'help': 'Filter nodes for a given deployment by deployment ID'
+                                'help': 'Filter nodes for a given deployment according to the deployment ID'
                             }
                         },
-                        'help': 'Command for getting all deployment nodes according to the deployment ID',
+                        'help': 'Command for getting all nodes',
                         'handler': cfy.nodes.ls
                     }
                 }
@@ -379,7 +379,7 @@ def parser_config():
                                 'help': 'The ID of the node instance to get'
                             }
                         },
-                        'help': 'command for getting a node by its ID',
+                        'help': 'Command for getting a node instance according to it\'s ID',
                         'handler': cfy.instances.get
                     },
                     'list': {
@@ -387,15 +387,15 @@ def parser_config():
                             '-d,--deployment-id': {
                                 'dest': 'deployment_id',
                                 'required': False,
-                                'help': 'Filter node instances for a given deployment by deployment ID'
+                                'help': 'Filter node instances for a given deployment according to the deployment ID'
                             },
                             '--node-name': {
                                 'dest': 'node_name',
                                 'required': False,
-                                'help': 'Filter nodes for a given deployment according to the node name'
+                                'help': 'Filter node instances according to the node name'
                             }
                         },
-                        'help': 'Command for getting all deployment nodes according to the deployment ID',
+                        'help': 'Command for getting node instances',
                         'handler': cfy.instances.ls
                     }
                 }
