@@ -21,9 +21,11 @@ import os
 import yaml
 import copy
 
-from cloudify.logs import create_event_message_prefix
+import colorama
 
+from cloudify import logs
 from cloudify_cli.config import logger_config
+from cloudify_cli.colored_event import ColorfulEvent
 
 
 _lgr = None
@@ -54,6 +56,14 @@ def configure_loggers():
 
     global _lgr
     _lgr = logging.getLogger('cloudify.cli.main')
+
+    # configuring events/logs loggers
+    # (this will also affect local workflow loggers, which don't use
+    # the get_events_logger method of this module)
+    if utils.is_use_colors():
+        logs.EVENT_CLASS = ColorfulEvent
+        # refactor this elsewhere if colorama is further used in CLI
+        colorama.init(autoreset=True)
 
 
 def _configure_defaults():
@@ -130,7 +140,7 @@ def get_events_logger():
         :return:
         """
         for event in events:
-            _lgr.info(create_event_message_prefix(event))
+            _lgr.info(logs.create_event_message_prefix(event))
 
     # currently needs to be imported dynamically since
     # otherwise it creates a circular import.

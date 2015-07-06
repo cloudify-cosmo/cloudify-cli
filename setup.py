@@ -50,7 +50,7 @@ setup(
         'argcomplete==0.7.1',
         'fabric==1.8.3',
         'PrettyTable>=0.7,<0.8',
-        'ansicolors==1.0.2',
+        'colorama==0.3.3',
         'jinja2==2.7.2',
         'itsdangerous==0.24',
     ]
