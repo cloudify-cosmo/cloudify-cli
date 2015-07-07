@@ -1,3 +1,5 @@
+colors: false
+
 logging:
 
   # path to a file where cli logs will be saved.
