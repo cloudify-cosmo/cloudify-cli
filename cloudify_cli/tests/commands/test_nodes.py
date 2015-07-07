@@ -20,9 +20,9 @@ Tests all commands that start with 'cfy nodes'
 from uuid import uuid4
 
 from mock import MagicMock
+
 from cloudify_rest_client.nodes import Node
 from cloudify_rest_client.node_instances import NodeInstance
-
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
@@ -39,12 +39,14 @@ class NodesTest(CliCommandTest):
             MagicMock(return_value=[node_instance_get_mock()])
         cli_runner.run_cli('cfy nodes get --node-id mongod -d nodecellar')
 
-        with self.assertRaises(SystemExit) as sys_exit:
-            cli_runner.run_cli('cfy nodes get --node-id mongod')
-        self.assertNotEquals(sys_exit.exception.code, 0)
-
+    def test_node_get_no_node_id(self):
         with self.assertRaises(SystemExit) as sys_exit:
             cli_runner.run_cli('cfy nodes get -d nodecellar')
+        self.assertNotEquals(sys_exit.exception.code, 0)
+
+    def test_node_get_no_deployment_id(self):
+        with self.assertRaises(SystemExit) as sys_exit:
+            cli_runner.run_cli('cfy nodes get --node-id mongod')
         self.assertNotEquals(sys_exit.exception.code, 0)
 
     def test_nodes_list(self):

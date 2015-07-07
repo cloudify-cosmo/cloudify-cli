@@ -20,8 +20,8 @@ Tests all commands that start with 'cfy instances'
 from uuid import uuid4
 
 from mock import MagicMock
-from cloudify_rest_client.node_instances import NodeInstance
 
+from cloudify_rest_client.node_instances import NodeInstance
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
@@ -35,17 +35,18 @@ class InstancesTest(CliCommandTest):
     def test_instances_get(self):
         self.client.node_instances.get = \
             MagicMock(return_value=node_instance_get_mock())
-        cli_runner.run_cli('cfy instances get --node-instance-id instance_id')
+        cli_runner.run_cli('cfy node-instances get --node-instance-id instance_id')
 
+    def test_instance_get_no_instance_id(self):
         with self.assertRaises(SystemExit) as sys_exit:
-            cli_runner.run_cli('cfy nodes get')
+            cli_runner.run_cli('cfy node-instances get')
         self.assertNotEquals(sys_exit.exception.code, 0)
 
     def test_instances_list(self):
         self.client.node_instances.list = MagicMock(
             return_value=[node_instance_get_mock(), node_instance_get_mock()])
-        cli_runner.run_cli('cfy instances list')
-        cli_runner.run_cli('cfy instances list -d nodecellar')
+        cli_runner.run_cli('cfy node-instances list')
+        cli_runner.run_cli('cfy node-instances list -d nodecellar')
 
 
 def node_instance_get_mock():

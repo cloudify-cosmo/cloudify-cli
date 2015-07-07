@@ -368,7 +368,7 @@ def parser_config():
                     }
                 }
             },
-            'instances': {
+            'node-instances': {
                 'help': 'Manage node instances',
                 'sub_commands': {
                     'get': {
@@ -380,7 +380,7 @@ def parser_config():
                             }
                         },
                         'help': 'Command for getting a node instance according to it\'s ID',
-                        'handler': cfy.instances.get
+                        'handler': cfy.node_instances.get
                     },
                     'list': {
                         'arguments': {
@@ -396,7 +396,7 @@ def parser_config():
                             }
                         },
                         'help': 'Command for getting node instances',
-                        'handler': cfy.instances.ls
+                        'handler': cfy.node_instances.ls
                     }
                 }
             },
