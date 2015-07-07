@@ -81,7 +81,7 @@ class EventsTest(CliCommandTest):
         if time.time() > self.execution_termination_time:
             self.executions_status = Execution.TERMINATED
 
-    @patch('cloudify_cli.logger.create_event_message_prefix',
+    @patch('cloudify_cli.logger.logs.create_event_message_prefix',
            new=mock_log_message_prefix)
     def test_events_tail(self):
         self.client.executions.get = self._mock_executions_get
@@ -104,7 +104,7 @@ class EventsTest(CliCommandTest):
                             for event_log in expected_event_logs),
                         missing_events_error_message)
 
-    @patch('cloudify_cli.logger.create_event_message_prefix',
+    @patch('cloudify_cli.logger.logs.create_event_message_prefix',
            new=mock_log_message_prefix)
     def test_events(self):
         self.client.executions.get = self._mock_executions_get
