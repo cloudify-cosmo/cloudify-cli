@@ -25,7 +25,7 @@ import colorama
 
 from cloudify import logs
 from cloudify_cli.config import logger_config
-from cloudify_cli.colored_event import ColorfulEvent
+from cloudify_cli.colorful_event import ColorfulEvent
 
 
 _lgr = None

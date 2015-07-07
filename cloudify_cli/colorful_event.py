@@ -20,13 +20,32 @@ from colorama import Fore, Style
 from cloudify.event import Event
 
 
+def colorful_property(prop):
+    """
+    A decorator for coloring values of the parent event type properties
+    :param prop: the property to color (should be a method returning a color)
+    :return: a property which colors the value of the parent event type's
+             property with the same name
+    """
+    def _decorator(self):
+        # getting value of property from parent event type
+        val = getattr(super(ColorfulEvent, self), prop.__name__)
+        # getting the desired color
+        color = prop(self)
+        # coloring the value
+        return self._color_message(val, color)
+    return property(_decorator)
+
+
 class ColorfulEvent(Event):
 
-    TIMESTAMP_COLOR = Fore.BLUE
+    RESET_COLOR = Fore.RESET + Style.RESET_ALL
+
+    TIMESTAMP_COLOR = Fore.RESET
     LOG_TYPE_COLOR = Fore.YELLOW
     EVENT_TYPE_COLOR = Fore.MAGENTA
     DEPLOYMENT_ID_COLOR = Fore.CYAN
-    OPERATION_INFO_COLOR = Fore.GREEN
+    OPERATION_INFO_COLOR = Fore.RESET
     NODE_ID_COLOR = Fore.BLUE
     SOURCE_ID_COLOR = Fore.BLUE
     TARGET_ID_COLOR = Fore.BLUE
@@ -39,8 +58,8 @@ class ColorfulEvent(Event):
         'workflow_failed': Style.BRIGHT + Fore.RED,
         'workflow_cancelled': Style.BRIGHT + Fore.YELLOW,
 
-        'sending_task': Fore.MAGENTA,
-        'task_started': Fore.MAGENTA,
+        'sending_task': Fore.RESET,
+        'task_started': Fore.RESET,
         'task_succeeded': Fore.GREEN,
         'task_rescheduled': Fore.YELLOW,
         'task_failed': Fore.RED
@@ -57,13 +76,14 @@ class ColorfulEvent(Event):
 
     def __init__(self, event):
         super(ColorfulEvent, self).__init__(event)
-        self._color_context = Fore.RESET + Style.RESET_ALL
+        self._color_context = self.RESET_COLOR
 
-    def get_operation_info(self):
+    @property
+    def operation_info(self):
         color = self.OPERATION_INFO_COLOR
 
         with self._nest_colors(color):
-            op_info = super(ColorfulEvent, self).get_operation_info()
+            op_info = super(ColorfulEvent, self).operation_info
 
         return self._color_message(op_info, color)
 
@@ -78,47 +98,39 @@ class ColorfulEvent(Event):
         return self._color_message(msg, color)
 
     @property
-    def timestamp(self):
-        return self._color_message(super(ColorfulEvent, self).timestamp,
-                                   self.TIMESTAMP_COLOR)
-
-    @property
     def log_level(self):
         lvl = super(ColorfulEvent, self).log_level
         color = self._log_level_to_color.get(lvl)
         return self._color_message(lvl, color)
 
-    @property
+    @colorful_property
+    def timestamp(self):
+        return self.TIMESTAMP_COLOR
+
+    @colorful_property
     def event_type_indicator(self):
-        indicator = super(ColorfulEvent, self).event_type_indicator
-        color = self.LOG_TYPE_COLOR if self.is_log_message else \
+        return self.LOG_TYPE_COLOR if self.is_log_message else \
             self.EVENT_TYPE_COLOR
-        return self._color_message(indicator, color)
 
-    @property
+    @colorful_property
     def operation(self):
-        return self._color_message(super(ColorfulEvent, self).operation,
-                                   self.OPERATION_COLOR)
+        return self.OPERATION_COLOR
 
-    @property
+    @colorful_property
     def node_id(self):
-        return self._color_message(super(ColorfulEvent, self).node_id,
-                                   self.NODE_ID_COLOR)
+        return self.NODE_ID_COLOR
 
-    @property
+    @colorful_property
     def source_id(self):
-        return self._color_message(super(ColorfulEvent, self).source_id,
-                                   self.SOURCE_ID_COLOR)
+        return self.SOURCE_ID_COLOR
 
-    @property
+    @colorful_property
     def target_id(self):
-        return self._color_message(super(ColorfulEvent, self).target_id,
-                                   self.TARGET_ID_COLOR)
+        return self.TARGET_ID_COLOR
 
-    @property
+    @colorful_property
     def deployment_id(self):
-        return self._color_message(super(ColorfulEvent, self).deployment_id,
-                                   self.DEPLOYMENT_ID_COLOR)
+        return self.DEPLOYMENT_ID_COLOR
 
     @contextmanager
     def _nest_colors(self, nesting_color):
@@ -129,7 +141,7 @@ class ColorfulEvent(Event):
         self._color_context = prev_color_context
 
     def _color_message(self, val, color):
-        if val is None or color is None:
+        if not val or not color:
             return val
 
         return "{0}{1}{2}".format(
