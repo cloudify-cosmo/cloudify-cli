@@ -35,7 +35,8 @@ class InstancesTest(CliCommandTest):
     def test_instances_get(self):
         self.client.node_instances.get = \
             MagicMock(return_value=node_instance_get_mock())
-        cli_runner.run_cli('cfy node-instances get --node-instance-id instance_id')
+        cli_runner.run_cli('cfy node-instances get '
+                           '--node-instance-id instance_id')
 
     def test_instance_get_no_instance_id(self):
         with self.assertRaises(SystemExit) as sys_exit:
