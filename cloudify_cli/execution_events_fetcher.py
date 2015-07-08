@@ -80,6 +80,8 @@ class ExecutionEventsFetcher(object):
                 # this means these are the last events found so far
                 break
 
+            time.sleep(1)
+
         return total_events_count
 
 
