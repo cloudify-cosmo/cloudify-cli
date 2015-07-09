@@ -493,28 +493,34 @@ def _get_install_agent_pkgs_cmd(agent_packages,
                                 agents_pkg_path,
                                 agents_dest_dir):
     download_agents_cmd = ''
-    install_agents_cmd = ''
-    debs = False
-    tars = False
     for agent_name, agent_url in agent_packages.items():
-        download_agents_cmd += 'curl -O {0} && ' \
-                               .format(agent_url)
-        if agent_url.endswith('tar.gz'):
-            tars = True
-        elif agent_url.endswith('deb'):
-            debs = True
+        download_agents_cmd += 'curl -O {0} && '.format(agent_url)
 
-    if debs:
-        install_agents_cmd += 'dpkg -i {1}/*.deb' \
-                              .format(agents_dest_dir,
-                                      agents_pkg_path)
-    if tars and debs:
+    debian_agent_packages = dict(
+        (agent_name, agent_url)
+        for agent_name, agent_url in agent_packages.items()
+        if agent_url.endswith('deb'))
+    tar_agent_packages = dict(
+        (agent_name, agent_url)
+        for agent_name, agent_url in agent_packages.items()
+        if agent_url.endswith('tar.gz'))
+    install_agents_cmd = ''
+    if debian_agent_packages:
+        install_agents_cmd += 'dpkg -i {1}/*.deb'.format(agents_dest_dir,
+                                                         agents_pkg_path)
+    if tar_agent_packages and debian_agent_packages:
         install_agents_cmd += ' && '
-    if tars:
-        install_agents_cmd += 'mv {0}/*.tar.gz {1}' \
-                              .format(agents_pkg_path,
-                                      agents_dest_dir)
-
+    if tar_agent_packages:
+        tar_agent_mv_commands = []
+        for tar_name, tar_url in tar_agent_packages.items():
+            original_name = tar_url.split('/')[-1]
+            final_name = '{0}.tar.gz'.format(tar_name)
+            tar_agent_mv_commands.append(
+                'mv {0}/{1} {2}/{3}'.format(agents_pkg_path,
+                                            original_name,
+                                            agents_dest_dir,
+                                            final_name))
+        install_agents_cmd += ' && '.join(tar_agent_mv_commands)
     return '{0} {1}'.format(download_agents_cmd, install_agents_cmd)
 
 
@@ -739,6 +745,22 @@ def _upload_provider_context(remote_agents_private_key_path,
 
     # uploading the provider context to the REST service
     _run_command_in_cfy(upload_provider_context_cmd, terminal=True)
+
+    # Temp manager patching
+    def run(_commands):
+        for cmd in _commands.split('\n'):
+            cmd = cmd.strip()
+            _run_command_in_cfy(cmd, terminal=True)
+    fabric.api.put('/home/dan/work/cloudify-agent-integration/ubuntu-trusty-agent.tar.gz', '~/custom-agent-package.tar.gz')
+    run('''
+        /etc/service/celeryd-cloudify-management/env/bin/pip uninstall cloudify-plugins-common --yes
+        /etc/service/celeryd-cloudify-management/env/bin/pip install -r https://raw.githubusercontent.com/cloudify-cosmo/cloudify-agent/CFY-2649-integration/dev-requirements.txt
+        /etc/service/celeryd-cloudify-management/env/bin/pip install https://github.com/cloudify-cosmo/cloudify-agent/archive/CFY-2649-integration.zip
+        wget https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/CFY-2649-cloudify-agent/workflows/cloudify_system_workflows/deployment_environment.py -O /etc/service/celeryd-cloudify-management/env/lib/python2.7/site-packages/cloudify_system_workflows/deployment_environment.py
+        pkill -f celeryd-cloudify-management/env
+        mkdir -p /opt/manager/resources/packages/agents
+        cp /tmp/home/custom-agent-package.tar.gz /opt/manager/resources/packages/agents/ubuntu-trusty-agent.tar.gz
+    ''')
 
 
 def _run_command(command, shell_escape=None, pty=True):
