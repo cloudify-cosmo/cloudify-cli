@@ -20,6 +20,9 @@ import logging.config
 import os
 import yaml
 import copy
+# import urllib3
+from urllib3.exceptions import InsecurePlatformWarning
+import warnings
 
 import colorama
 
@@ -42,6 +45,9 @@ def all_loggers():
 
 
 def configure_loggers():
+
+    warnings.simplefilter(action='once', category=InsecurePlatformWarning)
+    # warnings.simplefilter(action='once', append=True)
 
     # first off, configure defaults
     # to enable the use of the logger
