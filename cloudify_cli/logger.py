@@ -20,7 +20,7 @@ import logging.config
 import os
 import yaml
 import copy
-from urllib3.exceptions import InsecurePlatformWarning
+from requests.packages.urllib3.exceptions import InsecurePlatformWarning
 import warnings
 
 import colorama
