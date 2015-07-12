@@ -53,5 +53,6 @@ setup(
         'colorama==0.3.3',
         'jinja2==2.7.2',
         'itsdangerous==0.24',
+        'urllib3==1.10.4',
     ]
 )
