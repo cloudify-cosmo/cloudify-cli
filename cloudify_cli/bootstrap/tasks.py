@@ -751,15 +751,26 @@ def _upload_provider_context(remote_agents_private_key_path,
         for cmd in _commands.split('\n'):
             cmd = cmd.strip()
             _run_command_in_cfy(cmd, terminal=True)
-    fabric.api.put('/home/dan/work/cloudify-agent-integration/ubuntu-trusty-agent.tar.gz', '~/custom-agent-package.tar.gz')
+    fabric.api.put('/home/dan/work/cloudify-agent-integration/ubuntu-trusty-agent.tar.gz', '~/custom-agent-package.tar.gz')  # noqa
     run('''
-        /etc/service/celeryd-cloudify-management/env/bin/pip uninstall cloudify-plugins-common --yes
-        /etc/service/celeryd-cloudify-management/env/bin/pip install -r https://raw.githubusercontent.com/cloudify-cosmo/cloudify-agent/CFY-2649-integration/dev-requirements.txt
-        /etc/service/celeryd-cloudify-management/env/bin/pip install https://github.com/cloudify-cosmo/cloudify-agent/archive/CFY-2649-integration.zip
-        wget https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/CFY-2649-cloudify-agent/workflows/cloudify_system_workflows/deployment_environment.py -O /etc/service/celeryd-cloudify-management/env/lib/python2.7/site-packages/cloudify_system_workflows/deployment_environment.py
+        /etc/service/celeryd-cloudify-management/env/bin/pip \
+            uninstall cloudify-plugins-common --yes
+        /etc/service/celeryd-cloudify-management/env/bin/pip \
+            install -r https://raw.githubusercontent.com/cloudify-cosmo/\
+            cloudify-agent/CFY-2649-integration/dev-requirements.txt
+        /etc/service/celeryd-cloudify-management/env/bin/pip \
+            install https://github.com/cloudify-cosmo/\
+            cloudify-agent/archive/CFY-2649-integration.zip
+        wget https://raw.githubusercontent.com/cloudify-cosmo/\
+            cloudify-manager/CFY-2649-cloudify-agent/workflows/\
+            cloudify_system_workflows/deployment_environment.py \
+            -O /etc/service/celeryd-cloudify-management/env/lib/\
+            python2.7/site-packages/cloudify_system_workflows/\
+            deployment_environment.py
         pkill -f celeryd-cloudify-management/env
         mkdir -p /opt/manager/resources/packages/agents
-        cp /tmp/home/custom-agent-package.tar.gz /opt/manager/resources/packages/agents/ubuntu-trusty-agent.tar.gz
+        cp /tmp/home/custom-agent-package.tar.gz \
+            /opt/manager/resources/packages/agents/ubuntu-trusty-agent.tar.gz
     ''')
 
 
