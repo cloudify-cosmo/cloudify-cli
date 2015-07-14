@@ -80,6 +80,24 @@ def parser_config():
             }
         },
         'commands': {
+            'test-environment': {
+                'help': 'Test environment compatibility with plugin.',
+                'handler': cfy.test_environment,
+                'arguments': {
+                    '-p,--plugin-name': {
+                        'metavar': 'PLUGIN_NAME',
+                        'dest': 'plugin_name',
+                        'required': True,
+                        'help': 'Name of the plugin to test with.',
+                    },
+                    '-i,--inputs': {
+                        'metavar': 'INPUTS',
+                        'dest': 'inputs',
+                        'required': False,
+                        'help': 'Inputs file/string for environment testing.',
+                    },
+                },
+            },
             'blueprints': {
                 'help': "Manages Cloudify's Blueprints",
                 'sub_commands': {
