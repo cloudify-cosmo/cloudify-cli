@@ -175,7 +175,8 @@ class CliBootstrapUnitTests(unittest.TestCase):
         self.assertIn('curl -O agent.tar.gz', command)
         self.assertIn('curl -O agent.deb', command)
         self.assertIn('dpkg -i {1}/*.deb && '
-                      'mv {1}/agent.tar.gz {0}/agent_tar.tar.gz'.format(
+                      'mkdir -p {0}/agents && '
+                      'mv {1}/agent.tar.gz {0}/agents/agent_tar.tar.gz'.format(
                           agents_dest_dir, agents_pkg_path), command)
 
     def test_get_install_agent_pkgs_cmd_tars_only(self):
@@ -191,10 +192,10 @@ class CliBootstrapUnitTests(unittest.TestCase):
 
         self.assertIn('curl -O agent1.tar.gz', command)
         self.assertIn('curl -O agent2.tar.gz', command)
-        self.assertIn('mv {1}/agent1.tar.gz {0}/agent_tar1.tar.gz'.format(
-            agents_dest_dir, agents_pkg_path), command)
-        self.assertIn('mv {1}/agent2.tar.gz {0}/agent_tar2.tar.gz'.format(
-            agents_dest_dir, agents_pkg_path), command)
+        self.assertIn('mv {1}/agent1.tar.gz {0}/agents/agent_tar1.tar.gz'
+                      .format(agents_dest_dir, agents_pkg_path), command)
+        self.assertIn('mv {1}/agent2.tar.gz {0}/agents/agent_tar2.tar.gz'
+                      .format(agents_dest_dir, agents_pkg_path), command)
 
     def test_get_install_agent_pkgs_cmd_debs_only(self):
         agent_packages = {

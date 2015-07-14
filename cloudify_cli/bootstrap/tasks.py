@@ -511,15 +511,16 @@ def _get_install_agent_pkgs_cmd(agent_packages,
     if tar_agent_packages and debian_agent_packages:
         install_agents_cmd += ' && '
     if tar_agent_packages:
+        install_agents_cmd += 'mkdir -p {0}/agents && '.format(agents_dest_dir)
         tar_agent_mv_commands = []
         for tar_name, tar_url in tar_agent_packages.items():
             original_name = tar_url.split('/')[-1]
             final_name = '{0}.tar.gz'.format(tar_name)
             tar_agent_mv_commands.append(
-                'mv {0}/{1} {2}/{3}'.format(agents_pkg_path,
-                                            original_name,
-                                            agents_dest_dir,
-                                            final_name))
+                'mv {0}/{1} {2}/agents/{3}'.format(agents_pkg_path,
+                                                   original_name,
+                                                   agents_dest_dir,
+                                                   final_name))
         install_agents_cmd += ' && '.join(tar_agent_mv_commands)
     return '{0} {1}'.format(download_agents_cmd, install_agents_cmd)
 
