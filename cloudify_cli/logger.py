@@ -20,11 +20,13 @@ import logging.config
 import os
 import yaml
 import copy
+import warnings
 
 from cloudify.logs import create_event_message_prefix
 
 from cloudify_cli.config import logger_config
 
+from requests.packages.urllib3.exceptions import InsecurePlatformWarning
 
 _lgr = None
 
@@ -57,6 +59,8 @@ def configure_loggers():
 
 
 def _configure_defaults():
+
+    warnings.simplefilter(action='once', category=InsecurePlatformWarning)
 
     # add handlers to the main logger
     logger_dict = copy.deepcopy(logger_config.LOGGER)
