@@ -153,11 +153,6 @@ def _install_docker_if_required(docker_path, use_sudo,
             raise NonRecoverableError(err)
         try:
             if current_distro in [RHEL7X, CENTOS7X]:
-                if current_distro == RHEL7X:
-                    # install docker on RHEL 7.x.
-                    # https://github.com/docker/docker/issues/11910
-                    _run_command('{0} yum-config-manager --enable '
-                                 'rhui-REGION-rhel-server-extras'.format(sudo))
                 _run_command('{0} yum install -y docker-1.6.2'.format(sudo))
             elif current_distro in [CENTOS6X, RHEL6X]:
                 # install EPEL & device-mapper (must for docker)
