@@ -156,9 +156,8 @@ def _install_docker_if_required(docker_path, use_sudo,
                 _run_command('{0} yum install -y docker-1.6.2'.format(sudo))
             elif current_distro in [CENTOS6X, RHEL6X]:
                 # install EPEL & device-mapper (must for docker)
-                _run_command('{0} rpm -i {1}'.format(sudo, EPEL_RPM))
-                _run_command('{0} yum install -y device-mapper-devel'
-                             .format(sudo))
+                _run_command('{0} yum install -y device-mapper-devel {1}'
+                             .format(sudo, EPEL_RPM))
                 # install docker 1.5 (latest docker in epel)
                 _run_command('{0} yum install -y docker-io-1.5.0'.format(sudo))
             else:
