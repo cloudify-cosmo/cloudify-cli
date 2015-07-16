@@ -495,15 +495,35 @@ def _get_install_agent_pkgs_cmd(agent_packages,
                                 agents_pkg_path,
                                 agents_dest_dir):
     download_agents_cmd = ''
-    install_agents_cmd = ''
     for agent_name, agent_url in agent_packages.items():
-        download_agents_cmd += 'curl -O {0}{1} ' \
-                               .format(agent_url, ' && ')
+        download_agents_cmd += 'curl -O {0} && '.format(agent_url)
 
-    install_agents_cmd += 'rm -rf {0}/* && dpkg -i {1}/*.deb' \
-                          .format(agents_dest_dir,
-                                  agents_pkg_path)
-
+    debian_agent_packages = dict(
+        (agent_name, agent_url)
+        for agent_name, agent_url in agent_packages.items()
+        if agent_url.endswith('deb'))
+    tar_agent_packages = dict(
+        (agent_name, agent_url)
+        for agent_name, agent_url in agent_packages.items()
+        if agent_url.endswith('tar.gz'))
+    install_agents_cmd = ''
+    if debian_agent_packages:
+        install_agents_cmd += 'dpkg -i {1}/*.deb'.format(agents_dest_dir,
+                                                         agents_pkg_path)
+    if tar_agent_packages and debian_agent_packages:
+        install_agents_cmd += ' && '
+    if tar_agent_packages:
+        install_agents_cmd += 'mkdir -p {0}/agents && '.format(agents_dest_dir)
+        tar_agent_mv_commands = []
+        for tar_name, tar_url in tar_agent_packages.items():
+            original_name = tar_url.split('/')[-1]
+            final_name = '{0}.tar.gz'.format(tar_name)
+            tar_agent_mv_commands.append(
+                'mv {0}/{1} {2}/agents/{3}'.format(agents_pkg_path,
+                                                   original_name,
+                                                   agents_dest_dir,
+                                                   final_name))
+        install_agents_cmd += ' && '.join(tar_agent_mv_commands)
     return '{0} {1}'.format(download_agents_cmd, install_agents_cmd)
 
 

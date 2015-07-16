@@ -52,6 +52,6 @@ setup(
         'PrettyTable>=0.7,<0.8',
         'colorama==0.3.3',
         'jinja2==2.7.2',
-        'itsdangerous==0.24',
+        'itsdangerous==0.24'
     ]
 )
