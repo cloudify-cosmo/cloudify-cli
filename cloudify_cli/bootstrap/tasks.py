@@ -20,6 +20,7 @@ import json
 import pkgutil
 import tarfile
 import tempfile
+import pkg_resources
 from time import sleep, time
 from StringIO import StringIO
 
@@ -57,6 +58,9 @@ RHEL7X = ('redhat', 'Maipo')
 RHEL6X = ('redhat', 'Santiago')
 CENTOS7X = ('centos', 'Core')
 CENTOS6X = ('centos', 'Final')
+
+EPEL_RPM = 'https://dl.fedoraproject.org/pub/epel/' \
+           'epel-release-latest-6.noarch.rpm'
 
 lgr = None
 
@@ -148,32 +152,22 @@ def _install_docker_if_required(docker_path, use_sudo,
             lgr.error(err)
             raise NonRecoverableError(err)
         try:
-            if current_distro == RHEL7X:
-                # install docker on RHEL 7.x.
-                # https://github.com/docker/docker/issues/11910
-                _run_command('{0} yum-config-manager --enable '
-                             'rhui-REGION-rhel-server-extras'.format(sudo))
-                _run_command('{0} yum install -y docker'.format(sudo))
+            if current_distro in [RHEL7X, CENTOS7X]:
+                _run_command('{0} yum install -y docker-1.6.2'.format(sudo))
             elif current_distro in [CENTOS6X, RHEL6X]:
-                # install Docker on RHEL 6.5/Centos 6.5, according to the
-                # Docker documentation.
-                _run_command('{0} curl -o /tmp/epel-release-6-8.noarch.rpm'
-                             ' http://mirror.nonstop.co.il/epel/6/i386/'
-                             'epel-release-6-8.noarch.rpm'.format(sudo))
-                _run_command('{0} rpm -Uvh /tmp/epel-release-6-8.noarch'
-                             '.rpm'.format(sudo))
-                _run_command('{0} yum install -y docker-io'.format(sudo))
-                # Docker will fail to start unless we update Docker to run
-                # using the latest version. This does not apply to the rest of
-                # the distros and will corrupt the Docker installation if used.
-                _run_command('{0} curl -o /usr/bin/docker https://get.docker'
-                             '.com/builds/Linux/x86_64/docker-latest'
-                             .format(sudo))
+                # install EPEL & device-mapper (must for docker)
+                _run_command('{0} yum install -y device-mapper-devel {1}'
+                             .format(sudo, EPEL_RPM))
+                # install docker 1.5 (latest docker in epel)
+                _run_command('{0} yum install -y docker-io-1.5.0'.format(sudo))
             else:
                 # use the Docker easy install script that applies to multiple
                 # distributions including centos 7.x and ubuntu 14.04
-                _run_command('curl -sSL https://get.docker.com/ | {0} sh'
-                             .format(sudo))
+                docker_script = pkg_resources.\
+                    resource_filename('cloudify_cli',
+                                      'resources/getdocker.sh')
+                _run_command('{0} sh {1}'
+                             .format(sudo, docker_script))
 
             lgr.debug('Restarting the Docker daemon')
             _restart_docker(current_distro, sudo)
