@@ -163,11 +163,12 @@ def _install_docker_if_required(docker_path, use_sudo,
             else:
                 # use the Docker easy install script that applies to multiple
                 # distributions including centos 7.x and ubuntu 14.04
-                docker_script = pkg_resources.\
+                local_script_path = pkg_resources.\
                     resource_filename('cloudify_cli',
                                       'resources/getdocker.sh')
-                _run_command('{0} sh {1}'
-                             .format(sudo, docker_script))
+                remote_script_path = '~/getdocker.sh'
+                fabric.api.put(local_script_path, remote_script_path)
+                _run_command('{0} sh {1}'.format(sudo, remote_script_path))
 
             lgr.debug('Restarting the Docker daemon')
             _restart_docker(current_distro, sudo)
