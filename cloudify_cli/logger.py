@@ -18,12 +18,16 @@ import json
 import logging
 import logging.config
 import os
-import yaml
 import copy
+import warnings
 
-from cloudify.logs import create_event_message_prefix
+import yaml
+import colorama
+from requests.packages.urllib3.exceptions import InsecurePlatformWarning
 
+from cloudify import logs
 from cloudify_cli.config import logger_config
+from cloudify_cli.colorful_event import ColorfulEvent
 
 
 _lgr = None
@@ -41,6 +45,8 @@ def all_loggers():
 
 def configure_loggers():
 
+    warnings.simplefilter(action='once', category=InsecurePlatformWarning)
+
     # first off, configure defaults
     # to enable the use of the logger
     # even before the init was executed.
@@ -54,6 +60,14 @@ def configure_loggers():
 
     global _lgr
     _lgr = logging.getLogger('cloudify.cli.main')
+
+    # configuring events/logs loggers
+    # (this will also affect local workflow loggers, which don't use
+    # the get_events_logger method of this module)
+    if utils.is_use_colors():
+        logs.EVENT_CLASS = ColorfulEvent
+        # refactor this elsewhere if colorama is further used in CLI
+        colorama.init(autoreset=True)
 
 
 def _configure_defaults():
@@ -130,7 +144,7 @@ def get_events_logger():
         :return:
         """
         for event in events:
-            _lgr.info(create_event_message_prefix(event))
+            _lgr.info(logs.create_event_message_prefix(event))
 
     # currently needs to be imported dynamically since
     # otherwise it creates a circular import.

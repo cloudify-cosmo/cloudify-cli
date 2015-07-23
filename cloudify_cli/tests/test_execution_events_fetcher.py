@@ -136,7 +136,7 @@ class ExecutionEventsFetcherTest(unittest.TestCase):
         self.assertEqual(self.events, all_fetched_events)
 
     def test_fetch_and_process_events_timeout(self):
-        self.events = range(0, 20)
+        self.events = range(0, 2000000)
         events_fetcher = ExecutionEventsFetcher(self.client,
                                                 'execution_id',
                                                 batch_size=1)
@@ -166,10 +166,3 @@ class ExecutionEventsFetcherTest(unittest.TestCase):
         self.assertRaises(ExecutionTimeoutError, wait_for_execution,
                           self.client, mock_execution,
                           timeout=2)
-
-    def test_wait_for_execution_expect_event_processing_timeout(self):
-        self.events = range(0, 1000)
-        mock_execution = self.client.executions.get('deployment_id')
-        self.assertRaises(EventProcessingTimeoutError,
-                          wait_for_execution,
-                          self.client, mock_execution, timeout=3)

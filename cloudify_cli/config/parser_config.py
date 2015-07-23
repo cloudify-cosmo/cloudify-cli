@@ -336,6 +336,70 @@ def parser_config():
                     }
                 }
             },
+            'nodes': {
+                'help': 'Manage nodes',
+                'sub_commands': {
+                    'get': {
+                        'arguments': {
+                            '--node-id': {
+                                'dest': 'node_id',
+                                'required': True,
+                                'help': 'The ID of the node to get'
+                            },
+                            '-d,--deployment-id': {
+                                'dest': 'deployment_id',
+                                'required': True,
+                                'help': 'Filter nodes for a given deployment according to the deployment ID'
+                            }
+                        },
+                        'help': 'command for getting a node by its ID',
+                        'handler': cfy.nodes.get
+                    },
+                    'list': {
+                        'arguments': {
+                            '-d,--deployment-id': {
+                                'dest': 'deployment_id',
+                                'required': False,
+                                'help': 'Filter nodes for a given deployment according to the deployment ID'
+                            }
+                        },
+                        'help': 'Command for getting all nodes',
+                        'handler': cfy.nodes.ls
+                    }
+                }
+            },
+            'node-instances': {
+                'help': 'Manage node instances',
+                'sub_commands': {
+                    'get': {
+                        'arguments': {
+                            '--node-instance-id': {
+                                'dest': 'node_instance_id',
+                                'required': True,
+                                'help': 'The ID of the node instance to get'
+                            }
+                        },
+                        'help': 'Command for getting a node instance according to it\'s ID',
+                        'handler': cfy.node_instances.get
+                    },
+                    'list': {
+                        'arguments': {
+                            '-d,--deployment-id': {
+                                'dest': 'deployment_id',
+                                'required': False,
+                                'help': 'Filter node instances for a given deployment according to the deployment ID'
+                            },
+                            '--node-name': {
+                                'dest': 'node_name',
+                                'required': False,
+                                'help': 'Filter node instances according to the node name'
+                            }
+                        },
+                        'help': 'Command for getting node instances',
+                        'handler': cfy.node_instances.ls
+                    }
+                }
+            },
             'workflows': {
                 'help': 'Manages Deployment Workflows',
                 'sub_commands': {
