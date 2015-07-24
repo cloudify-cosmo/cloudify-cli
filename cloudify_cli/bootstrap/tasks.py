@@ -20,6 +20,7 @@ import json
 import pkgutil
 import tarfile
 import tempfile
+import pkg_resources
 from time import sleep, time
 from StringIO import StringIO
 
@@ -149,32 +150,28 @@ def _install_docker_if_required(docker_path, use_sudo,
             lgr.error(err)
             raise NonRecoverableError(err)
         try:
-            if current_distro == RHEL7X:
-                # install docker on RHEL 7.x.
-                # https://github.com/docker/docker/issues/11910
-                _run_command('{0} yum-config-manager --enable '
-                             'rhui-REGION-rhel-server-extras'.format(sudo))
-                _run_command('{0} yum install -y docker'.format(sudo))
+            if current_distro in [RHEL7X, CENTOS7X]:
+                if current_distro == RHEL7X:
+                    # install docker on RHEL 7.x.
+                    # https://github.com/docker/docker/issues/11910
+                    _run_command('{0} yum-config-manager --enable '
+                                 'rhui-REGION-rhel-server-extras'.format(sudo))
+                _run_command('{0} yum install -y docker-1.6.2'.format(sudo))
             elif current_distro in [CENTOS6X, RHEL6X]:
-                # install Docker on RHEL 6.5/Centos 6.5, according to the
-                # Docker documentation.
-                _run_command('{0} curl -o /tmp/epel-release-6-8.noarch.rpm'
-                             ' http://mirror.nonstop.co.il/epel/6/i386/'
-                             'epel-release-6-8.noarch.rpm'.format(sudo))
-                _run_command('{0} rpm -Uvh /tmp/epel-release-6-8.noarch'
-                             '.rpm'.format(sudo))
-                _run_command('{0} yum install -y docker-io'.format(sudo))
-                # Docker will fail to start unless we update Docker to run
-                # using the latest version. This does not apply to the rest of
-                # the distros and will corrupt the Docker installation if used.
-                _run_command('{0} curl -o /usr/bin/docker https://get.docker'
-                             '.com/builds/Linux/x86_64/docker-latest'
-                             .format(sudo))
+                # install EPEL & device-mapper (must for docker)
+                _run_command('{0} yum install -y epel-release '
+                             'device-mapper-devel'.format(sudo))
+                # install docker 1.5 (latest docker in epel)
+                _run_command('{0} yum install -y docker-io-1.5.0'.format(sudo))
             else:
                 # use the Docker easy install script that applies to multiple
                 # distributions including centos 7.x and ubuntu 14.04
-                _run_command('curl -sSL https://get.docker.com/ | {0} sh'
-                             .format(sudo))
+                local_script_path = pkg_resources.\
+                    resource_filename('cloudify_cli',
+                                      'resources/getdocker.sh')
+                remote_script_path = '~/getdocker.sh'
+                fabric.api.put(local_script_path, remote_script_path)
+                _run_command('{0} sh {1}'.format(sudo, remote_script_path))
 
             lgr.debug('Restarting the Docker daemon')
             _restart_docker(current_distro, sudo)
@@ -456,7 +453,9 @@ def recover_docker(docker_path=None, use_sudo=True,
     started = _wait_for_management(manager_ip, timeout=180, port=port)
 
     cloudify_config = ctx.node.properties['cloudify']
-    if not cloudify_config.get('transient_deployment_workers'):
+    transient_deployment_workers_mode_enabled = cloudify_config.get(
+        'transient_deployment_workers_mode', {}).get('enabled', False)
+    if not transient_deployment_workers_mode_enabled:
         _recover_deployments(docker_path, use_sudo)
 
     if not started:
@@ -493,15 +492,35 @@ def _get_install_agent_pkgs_cmd(agent_packages,
                                 agents_pkg_path,
                                 agents_dest_dir):
     download_agents_cmd = ''
-    install_agents_cmd = ''
     for agent_name, agent_url in agent_packages.items():
-        download_agents_cmd += 'curl -O {0}{1} ' \
-                               .format(agent_url, ' && ')
+        download_agents_cmd += 'curl -O {0} && '.format(agent_url)
 
-    install_agents_cmd += 'rm -rf {0}/* && dpkg -i {1}/*.deb' \
-                          .format(agents_dest_dir,
-                                  agents_pkg_path)
-
+    debian_agent_packages = dict(
+        (agent_name, agent_url)
+        for agent_name, agent_url in agent_packages.items()
+        if agent_url.endswith('deb'))
+    tar_agent_packages = dict(
+        (agent_name, agent_url)
+        for agent_name, agent_url in agent_packages.items()
+        if agent_url.endswith('tar.gz'))
+    install_agents_cmd = ''
+    if debian_agent_packages:
+        install_agents_cmd += 'dpkg -i {1}/*.deb'.format(agents_dest_dir,
+                                                         agents_pkg_path)
+    if tar_agent_packages and debian_agent_packages:
+        install_agents_cmd += ' && '
+    if tar_agent_packages:
+        install_agents_cmd += 'mkdir -p {0}/agents && '.format(agents_dest_dir)
+        tar_agent_mv_commands = []
+        for tar_name, tar_url in tar_agent_packages.items():
+            original_name = tar_url.split('/')[-1]
+            final_name = '{0}.tar.gz'.format(tar_name)
+            tar_agent_mv_commands.append(
+                'mv {0}/{1} {2}/agents/{3}'.format(agents_pkg_path,
+                                                   original_name,
+                                                   agents_dest_dir,
+                                                   final_name))
+        install_agents_cmd += ' && '.join(tar_agent_mv_commands)
     return '{0} {1}'.format(download_agents_cmd, install_agents_cmd)
 
 

@@ -75,13 +75,10 @@ class ExecutionEventsFetcher(object):
                 events_handler=events_handler)
 
             total_events_count += events_batch_count
-
             if events_batch_count < self._batch_size:
                 # returned less events than allowed by _batch_size,
                 # this means these are the last events found so far
                 break
-
-            time.sleep(1)
 
         return total_events_count
 
@@ -131,6 +128,9 @@ def wait_for_execution(client,
 
         execution = client.executions.get(execution.id)
         if execution.status in Execution.END_STATES:
+            # fetching any last events the execution might have
+            events_fetcher.fetch_and_process_events(
+                events_handler=events_handler, timeout=timeout)
             break
         time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
 

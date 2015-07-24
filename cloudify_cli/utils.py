@@ -220,6 +220,14 @@ def dump_cloudify_working_dir_settings(cosmo_wd_settings=None, update=False):
         f.write(yaml.dump(cosmo_wd_settings))
 
 
+def is_use_colors():
+    if not is_initialized():
+        return False
+
+    config_path = get_configuration_path()
+    return yaml.safe_load(file(config_path, 'r')).get('colors', False)
+
+
 @contextmanager
 def update_wd_settings():
     cosmo_wd_settings = load_cloudify_working_dir_settings()

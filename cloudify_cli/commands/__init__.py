@@ -40,5 +40,7 @@ from cloudify_cli.commands import snapshots
 from cloudify_cli.commands import deployments
 from cloudify_cli.commands import events
 from cloudify_cli.commands import executions
+from cloudify_cli.commands import nodes
+from cloudify_cli.commands import node_instances
 from cloudify_cli.commands import workflows
 from cloudify_cli.commands import local
