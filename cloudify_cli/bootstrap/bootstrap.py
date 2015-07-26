@@ -122,7 +122,8 @@ def bootstrap(blueprint_path,
              nodes_by_id[node_instance.node_id].type_hierarchy)
     provider_context = \
         manager_node_instance.runtime_properties['manager_provider_context']
-    manager_ip = manager_node_instance.runtime_properties['manager_host_ip']
+    manager_ip = \
+        manager_node_instance.runtime_properties['manager_host_public_ip']
     manager_user = nodes_by_id['manager_configuration'].properties[
         'ssh_user']
     manager_key_path = nodes_by_id['manager_configuration'].properties[
