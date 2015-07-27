@@ -30,6 +30,7 @@ setup(
         'cloudify_cli': [
             'VERSION',
             'resources/config.yaml',
+            'resources/getdocker.sh',
             'bootstrap/resources/install_plugins.sh.template'
         ],
     },
