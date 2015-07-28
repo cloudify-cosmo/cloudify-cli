@@ -438,9 +438,7 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
 
 
 def recover_docker(docker_path=None, use_sudo=True,
-                   docker_service_start_command=None,
-                   agent_remote_key_path=None,
-                   provider_context=None):
+                   docker_service_start_command=None):
     global lgr
     lgr = ctx.logger
 
