@@ -269,7 +269,9 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
             # the runtime property specifying the manager openstack instance id
             # has changed, so we need to update the manager deployment in the
             # provider context.
-            _update_manager_deployment()
+            _update_manager_deployment(
+                local_only=False,
+                agent_remote_key_path=agent_remote_key_path)
         except Exception:
             # recovery failed, however runtime properties may have still
             # changed. update the local manager deployment only
@@ -436,7 +438,9 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
 
 
 def recover_docker(docker_path=None, use_sudo=True,
-                   docker_service_start_command=None):
+                   docker_service_start_command=None,
+                   agent_remote_key_path=None,
+                   provider_context=None):
     global lgr
     lgr = ctx.logger
 
@@ -662,7 +666,7 @@ def _copy_agent_key(agent_local_key_path, agent_remote_key_path):
     fabric.api.put(agent_local_key_path, agent_remote_key_path)
 
 
-def _update_manager_deployment(local_only=False):
+def _update_manager_deployment(local_only=False, agent_remote_key_path=None):
 
     # get the current provider from the runtime property set on bootstrap
     provider_context = ctx.instance.runtime_properties[
@@ -680,13 +684,17 @@ def _update_manager_deployment(local_only=False):
 
     if not local_only:
         # update on server
-        rest_client = utils.get_rest_client()
-        rest_client.manager.update_context('provider', provider_context)
+        _upload_provider_context(
+            remote_agents_private_key_path=agent_remote_key_path,
+            provider_context=provider_context, update_context=True)
 
 
 def _upload_provider_context(remote_agents_private_key_path,
-                             provider_context=None):
-    ctx.logger.info('updating provider context on management server...')
+                             provider_context=None, update_context=False):
+    if update_context:
+        ctx.logger.info('updating provider context on management server...')
+    else:
+        ctx.logger.info('setting provider context on management server...')
     provider_context = provider_context or dict()
     cloudify_configuration = ctx.node.properties['cloudify']
     cloudify_configuration['cloudify_agent']['agent_key_path'] = \
@@ -714,10 +722,11 @@ def _upload_provider_context(remote_agents_private_key_path,
     fabric.api.put(provider_context_json_file,
                    remote_provider_context_file)
 
+    request_params = '?update={0}'.format(update_context)
     upload_provider_context_cmd = \
-        'curl --fail -XPOST localhost:8101/provider/context -H ' \
-        '"Content-Type: application/json" -d @{0}'.format(
-            container_provider_context_file)
+        'curl --fail -XPOST localhost:8101/provider/context{0} -H ' \
+        '"Content-Type: application/json" -d @{1}'.format(
+            request_params, container_provider_context_file)
 
     # uploading the provider context to the REST service
     _run_command_in_cfy(upload_provider_context_cmd, terminal=True)
