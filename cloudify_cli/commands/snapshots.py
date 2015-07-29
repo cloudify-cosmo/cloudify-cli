@@ -14,7 +14,7 @@
 #    * limitations under the License.
 
 """
-Handles all commands that start with 'cfy blueprints'
+Handles all commands that start with 'cfy snapshots'
 """
 
 from cloudify_cli import utils
