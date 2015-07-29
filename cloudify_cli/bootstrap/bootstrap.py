@@ -26,6 +26,12 @@ from cloudify.workflows import local
 from cloudify_cli import common
 from cloudify_cli import constants
 from cloudify_cli import utils
+from cloudify_cli.bootstrap.tasks import (
+    PROVIDER_RUNTIME_PROPERTY,
+    MANAGER_IP_RUNTIME_PROPERTY,
+    MANAGER_USER_RUNTIME_PROPERTY,
+    MANAGER_KEY_PATH_RUNTIME_PROPERTY,
+    REST_PORT)
 
 
 def _workdir():
@@ -116,19 +122,43 @@ def bootstrap(blueprint_path,
     node_instances = env.storage.get_node_instances()
     nodes_by_id = {node.id: node for node in nodes}
 
-    manager_node_instance = \
-        next(node_instance for node_instance in node_instances if
-             'cloudify.nodes.CloudifyManager' in
-             nodes_by_id[node_instance.node_id].type_hierarchy)
-    provider_context = \
-        manager_node_instance.runtime_properties['manager_provider_context']
-    manager_ip = \
-        manager_node_instance.runtime_properties['manager_host_public_ip']
-    manager_user = nodes_by_id['manager_configuration'].properties[
-        'ssh_user']
-    manager_key_path = nodes_by_id['manager_configuration'].properties[
-        'ssh_key_filename']
-    rest_port = 80
+    try:
+        manager_node_instance = \
+            next(node_instance for node_instance in node_instances if
+                 'cloudify.nodes.CloudifyManager' in
+                 nodes_by_id[node_instance.node_id].type_hierarchy)
+    except Exception as ex:
+        print '*************** EXCEPTION:', str(ex)
+        manager_node_instance = \
+            next(node_instance for node_instance in node_instances if
+                 'cloudify.nodes.MyCloudifyManager' in
+                 nodes_by_id[node_instance.node_id].type_hierarchy)
+
+    if manager_node_instance.runtime_properties.get('provider'):
+        provider_context = \
+            manager_node_instance.runtime_properties[
+                PROVIDER_RUNTIME_PROPERTY]
+        manager_ip = \
+            manager_node_instance.runtime_properties[
+                MANAGER_IP_RUNTIME_PROPERTY]
+        manager_user = \
+            manager_node_instance.runtime_properties[
+                MANAGER_USER_RUNTIME_PROPERTY]
+        manager_key_path = manager_node_instance.runtime_properties[
+            MANAGER_KEY_PATH_RUNTIME_PROPERTY]
+        rest_port = \
+            manager_node_instance.runtime_properties[REST_PORT]
+    else:
+        provider_context = \
+            manager_node_instance.runtime_properties[
+                'manager_provider_context']
+        manager_ip = \
+            manager_node_instance.runtime_properties['manager_host_public_ip']
+        manager_user = nodes_by_id['manager_configuration'].properties[
+            'ssh_user']
+        manager_key_path = nodes_by_id['manager_configuration'].properties[
+            'ssh_key_filename']
+        rest_port = 80
 
     protocol = constants.SECURED_PROTOCOL \
         if rest_port == constants.SECURED_REST_PORT \
