@@ -270,7 +270,6 @@ def bootstrap_docker(cloudify_packages, docker_path=None, use_sudo=True,
             # has changed, so we need to update the manager deployment in the
             # provider context.
             _update_manager_deployment(
-                local_only=False,
                 agent_remote_key_path=agent_remote_key_path)
         except Exception:
             # recovery failed, however runtime properties may have still
@@ -690,9 +689,9 @@ def _update_manager_deployment(local_only=False, agent_remote_key_path=None):
 def _upload_provider_context(remote_agents_private_key_path,
                              provider_context=None, update_context=False):
     if update_context:
-        ctx.logger.info('updating provider context on management server...')
+        ctx.logger.info('Updating provider context on management server...')
     else:
-        ctx.logger.info('setting provider context on management server...')
+        ctx.logger.info('Setting provider context on management server...')
     provider_context = provider_context or dict()
     cloudify_configuration = ctx.node.properties['cloudify']
     cloudify_configuration['cloudify_agent']['agent_key_path'] = \
