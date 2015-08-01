@@ -127,8 +127,7 @@ def bootstrap(blueprint_path,
             next(node_instance for node_instance in node_instances if
                  'cloudify.nodes.CloudifyManager' in
                  nodes_by_id[node_instance.node_id].type_hierarchy)
-    except Exception as ex:
-        print '*************** EXCEPTION:', str(ex)
+    except Exception:
         manager_node_instance = \
             next(node_instance for node_instance in node_instances if
                  'cloudify.nodes.MyCloudifyManager' in
