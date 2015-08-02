@@ -12,31 +12,8 @@ function install_prereqs
     elif which yum; then
         echo "UPDATING LOCAL REPO"
         sudo yum -y --exclude=kernel\* update &&
-        sudo yum install -y yum-downloadonly wget mlocate yum-utils &&
-        echo "INSTALLING python-devel"
-        sudo yum install -y python-devel
-        echo "INSTALLING libyaml-devel"
-        sudo yum install -y libyaml-devel
-        echo "INSTALLING ruby"
-        sudo yum install -y ruby
-        echo "INSTALLING rubygems"
-        sudo yum install -y rubygems
-        echo "INSTALLING ruby-devel"
-        sudo yum install -y ruby-devel
-        echo "INSTALLING make"
-        sudo yum install -y make
-        echo "INSTALLING gcc"
-        sudo yum install -y gcc
-        echo "INSTALLING g++"
-        sudo yum install -y g++
-        echo "INSTALLING git"
-        sudo yum install -y git
-        echo "INSTALLING rpm-build"
-        sudo yum install -y rpm-build
-        echo "INSTALLING libxml2-devel"
-        sudo yum install -y libxml2-devel
-        echo "INSTALLING libxslt-devel"
-        sudo yum install -y libxslt-devel
+        sudo yum install -y yum-downloadonly wget mlocate yum-utils s3cmd
+        sudo yum install -y python-devel libyaml-devel ruby rubygems ruby-devel make gcc g++ git rpm-build libxml2-devel libxslt-devel
     else
         echo 'unsupported package manager, exiting'
         exit 1
@@ -147,25 +124,15 @@ function get_wheels
     # if which yum; then
     #   pip wheel argparse==#SOME_VERSION#
     # fi
-    echo 'installing cloudify-rest-plugin wheel'
     sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-rest-client@${CORE_TAG_NAME} --find-links=wheelhouse &&
-    echo 'installing cloudify-dsl-parser wheel' &&
     sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@${CORE_TAG_NAME} --find-links=wheelhouse &&
-    echo 'installing cloudify-plugins-common wheel' &&
     sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-plugins-common@${CORE_TAG_NAME} --find-links=wheelhouse &&
-    echo 'installing cloudify-script-plugin wheel' &&
     sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-script-plugin@${PLUGINS_TAG_NAME} --find-links=wheelhouse &&
-    echo 'installing cloudify-fabric-plugin wheel' &&
     sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-fabric-plugin@${PLUGINS_TAG_NAME} --find-links=wheelhouse &&
-    echo 'installing cloudify-openstack-plugin wheel' &&
     sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-openstack-plugin@${PLUGINS_TAG_NAME} --find-links=wheelhouse &&
-    echo 'installing cloudify-aws-plugin wheel' &&
     sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-aws-plugin@${PLUGINS_TAG_NAME} --find-links=wheelhouse &&
-    echo 'installing cloudify-vsphere-plugin wheel' &&
     sudo pip wheel git+https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@github.com/cloudify-cosmo/cloudify-vsphere-plugin@${PLUGINS_TAG_NAME} --find-links=wheelhouse &&
-    echo 'installing cloudify-softlayer-plugin wheel' &&
     sudo pip wheel git+https://${GITHUB_USERNAME}:${GITHUB_PASSWORD}@github.com/cloudify-cosmo/cloudify-softlayer-plugin@${PLUGINS_TAG_NAME} --find-links=wheelhouse &&
-    echo 'installing cloudify-cli wheel' &&
     sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-cli@${CORE_TAG_NAME} --find-links=wheelhouse
     copy_version_file
 }
@@ -190,6 +157,10 @@ CORE_TAG_NAME="master"
 PLUGINS_TAG_NAME="master"
 GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
+AWS_SECRET_KEY=$3
+AWS_SECRET_KEY=$4
+AWS_S3_BUCKET=$5
+AWS_S3_BUCKET_PREFIX=$6
 
 install_prereqs &&
 if which apt-get; then
@@ -216,3 +187,5 @@ get_wheels &&
 get_manager_blueprints &&
 
 cd /cloudify-cli/ && sudo pkm pack -c cloudify-linux-cli -v
+
+s3cmd -d --access_key=${AWS_ACCESS_KEY} --secret_key=${AWS_SECRET_KEY} --progress -H -p --check-md5 --continue-put put /cloudify/* s3://${AWS_S3_BUCKET}/${AWS_S3_BUCKET_PREFIX}
