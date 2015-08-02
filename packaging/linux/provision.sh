@@ -157,7 +157,7 @@ CORE_TAG_NAME="master"
 PLUGINS_TAG_NAME="master"
 GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
-AWS_SECRET_KEY=$3
+AWS_ACCESS_KEY=$3
 AWS_SECRET_KEY=$4
 AWS_S3_BUCKET=$5
 AWS_S3_BUCKET_PREFIX=$6
@@ -188,4 +188,6 @@ get_manager_blueprints &&
 
 cd /cloudify-cli/ && sudo pkm pack -c cloudify-linux-cli -v
 
-s3cmd -d --access_key=${AWS_ACCESS_KEY} --secret_key=${AWS_SECRET_KEY} --progress -H -p --check-md5 --continue-put put /cloudify/* s3://${AWS_S3_BUCKET}/${AWS_S3_BUCKET_PREFIX}
+if [ ! -z ${AWS_ACCESS_KEY} ]; then
+    s3cmd -d --access_key=${AWS_ACCESS_KEY_ID} --secret_key=${AWS_SECRET_KEY} --progress -H -p --check-md5 --continue-put put /cloudify/* s3://${AWS_S3_BUCKET}/${AWS_S3_BUCKET_PREFIX}
+fi
