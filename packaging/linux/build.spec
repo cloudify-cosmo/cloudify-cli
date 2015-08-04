@@ -35,14 +35,16 @@ sudo pip install setuptools==18.1
 
 sudo curl http://cloudify-public-repositories.s3.amazonaws.com/cloudify-manager-blueprints/%{core_version}/cloudify-manager-blueprints.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz &&
 
+alias python=python2.7
+
 
 %build
 %install
 
 # Download or create wheels of all dependencies
 
-sudo pip wheel pip==7.1.0 --wheel-dir %{buildroot}/var/wheels/%{name} &&
-sudo pip wheel setuptools==18.1 --wheel-dir %{buildroot}/var/wheels/%{name} &&
+# sudo pip wheel pip==7.1.0 --wheel-dir %{buildroot}/var/wheels/%{name} &&
+# sudo pip wheel setuptools==18.1 --wheel-dir %{buildroot}/var/wheels/%{name} &&
 sudo pip wheel virtualenv==13.1.0 --wheel-dir %{buildroot}/var/wheels/%{name} &&
 sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-rest-client@%{core_version} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
 sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@%{core_version} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
@@ -61,7 +63,7 @@ sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-cli@%{core_version
 
 # Copy get-pip.py
 
-sudo cp /vagrant/linux/source/get-pip.py %{buildroot}/var/wheels/%{name} &&
+# sudo cp /vagrant/linux/source/get-pip.py %{buildroot}/var/wheels/%{name} &&
 
 # Copy LICENSE file
 
@@ -80,7 +82,8 @@ sudo tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1 -C %
 %post
 
 if ! which virtualenv >> /dev/null; then
-    python /var/wheels/%{name}/get-pip.py --use-wheel --no-index --find-links=/var/wheels/%{name} virtualenv
+    pip install --use-wheel --no-index --find-links=/var/wheels/%{name} virtualenv
+    # python /var/wheels/%{name}/get-pip.py --use-wheel --no-index --find-links=/var/wheels/%{name} virtualenv
 fi
 virtualenv /cfy/env &&
 /cfy/env/bin/pip install --use-wheel --no-index --find-links=/var/wheels/%{name} cloudify --pre &&
@@ -110,6 +113,6 @@ rm -rf /var/wheels/${name}
 
 %defattr(-,root,root)
 /var/wheels/%{name}/*.whl
-/var/wheels/%{name}/get-pip.*
+# /var/wheels/%{name}/get-pip.*
 /cfy/LICENSE
 /cfy/cloudify-manager-blueprints
