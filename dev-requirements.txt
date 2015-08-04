@@ -1,4 +1,4 @@
-git+https://github.com/cloudify-cosmo/cloudify-rest-client@CFY-2976-add-api-prefix-to-rest-api#egg=cloudify-rest-client==3.3a3
+git+https://github.com/cloudify-cosmo/cloudify-rest-client@master#egg=cloudify-rest-client==3.3a3
 git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@master#egg=cloudify-dsl-parser==3.3a3
 git+https://github.com/cloudify-cosmo/cloudify-plugins-common@master#egg=cloudify-plugins-common==3.3a3
 git+https://github.com/cloudify-cosmo/cloudify-script-plugin@master#egg=cloudify-script-plugin==1.3a3
