@@ -4,8 +4,8 @@ function install_prereqs
 {
     if which yum; then
         sudo yum -y --exclude=kernel\* update &&
-        sudo yum install -y yum-downloadonly wget mlocate yum-utils s3cmd
-        sudo yum install -y python-devel libyaml-devel make gcc g++ git rpm-build libxml2-devel libxslt-devel
+        sudo yum install -y yum-downloadonly wget mlocate yum-utils
+        sudo yum install -y python-devel libyaml-devel make gcc g++ libxml2-devel libxslt-devel
     else
         echo 'unsupported package manager, exiting'
         exit 1
@@ -40,6 +40,7 @@ function build() {
 }
 
 function upload_to_s3() {
+    sudo yum install -y s3cmd
     s3cmd -d --access_key=${AWS_ACCESS_KEY_ID} --secret_key=${AWS_SECRET_KEY} --progress -H -p --check-md5 --continue-put put /cloudify/* s3://${AWS_S3_BUCKET}/${AWS_S3_BUCKET_PREFIX}
 }
 
