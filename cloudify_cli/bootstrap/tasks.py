@@ -597,8 +597,8 @@ def _wait_for_management(ip, timeout, port=constants.DEFAULT_REST_PORT):
         :return: True of False
     """
     protocol = 'http' if port == constants.DEFAULT_REST_PORT else 'https'
-    validation_url = '{0}://{1}:{2}/{3}/version'.format(protocol, ip, port,
-                                                        API_VERSION)
+    validation_url = '{0}://{1}:{2}/api/{3}/version'.format(protocol, ip, port,
+                                                            API_VERSION)
     lgr.info('waiting for url {0} to become available'.format(validation_url))
 
     end = time() + timeout
@@ -745,7 +745,7 @@ def _upload_provider_context(remote_agents_private_key_path,
 
     request_params = '?update={0}'.format(update_context)
     upload_provider_context_cmd = \
-        'curl --fail -XPOST localhost:8101/{0}/provider/context{1} -H ' \
+        'curl --fail -XPOST localhost:8101/api/{0}/provider/context{1} -H ' \
         '"Content-Type: application/json" -d @{2}'.format(
             API_VERSION, request_params, container_provider_context_file)
 

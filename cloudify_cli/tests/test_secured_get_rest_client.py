@@ -69,6 +69,6 @@ class TestGetRestClient(unittest.TestCase):
 
         self.assertEqual(CERT_PATH, client._client.cert)
         self.assertTrue(client._client.trust_all)
-        self.assertEqual('{0}://{1}:{2}/{3}'.format(
+        self.assertEqual('{0}://{1}:{2}/api/{3}'.format(
             protocol, host, port, API_VERSION),
             client._client.url)
