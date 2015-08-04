@@ -14,7 +14,7 @@ https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/$PLUGINS_TAG_NA
 
 export VERSION_FILE=$(cat packaging/VERSION)
 
-python packaging/update_wheel.py --path packaging/source/wheels/cloudify-*.whl --name cloudify_cli/VERSION --data "$VERSION_FILE"
-mv packaging/source/wheels/cloudify-*.whl-new packaging/source/wheels/cloudify-*.whl
+# python packaging/update_wheel.py --path packaging/source/wheels/cloudify-*.whl --name cloudify_cli/VERSION --data "$VERSION_FILE"
+# mv packaging/source/wheels/cloudify-*.whl-new packaging/source/wheels/cloudify-*.whl
 
 iscc packaging/create_install_wizard.iss
