@@ -39,9 +39,16 @@ function build() {
     sudo rpmbuild -ba /root/rpmbuild/SPECS/build.spec --define "GITHUB_USERNAME $GITHUB_USERNAME" --define "GITHUB_PASSWORD $GITHUB_PASSWORD"
 }
 
+function upload_to_s3() {
+    s3cmd -d --access_key=${AWS_ACCESS_KEY_ID} --secret_key=${AWS_SECRET_KEY} --progress -H -p --check-md5 --continue-put put /cloudify/* s3://${AWS_S3_BUCKET}/${AWS_S3_BUCKET_PREFIX}
+}
 
-export GITHUB_USERNAME=$1
-export GITHUB_PASSWORD=$2
+GITHUB_USERNAME=$1
+GITHUB_PASSWORD=$2
+AWS_ACCESS_KEY_ID=$3
+AWS_ACCESS_KEY=$4
+AWS_S3_BUCKET = 'gigaspaces-repository-eu'
+AWS_S3_BUCKET_PREFIX = 'org/cloudify3/'
 
 
 if which yum; then
@@ -53,3 +60,7 @@ if which yum; then
 fi
 
 build
+
+if [ ! -z ${AWS_ACCESS_KEY} ]; then
+    upload_to_s3
+fi
