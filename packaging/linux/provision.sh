@@ -163,21 +163,20 @@ AWS_S3_BUCKET=$5
 AWS_S3_BUCKET_PREFIX=$6
 
 install_prereqs &&
-if which apt-get; then
-    install_ruby
-fi
+# if which apt-get; then
+#     install_ruby
+# fi
 if which yum; then
     if ! which python2.7 >> /dev/null; then
         install_py27
     else
         alias python=python2.7
     fi
-
 fi
-install_fpm &&
-install_pip &&
-install_module "packman==0.5.0" &&
-install_module "wheel==0.24.0" &&
+# install_fpm &&
+# install_pip &&
+# install_module "packman==0.5.0" &&
+# install_module "wheel==0.24.0" &&
 
 sudo mkdir -p /cfy && cd /cfy &&
 
