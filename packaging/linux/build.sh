@@ -41,7 +41,7 @@ function build() {
 
 function upload_to_s3() {
     sudo yum install -y s3cmd
-    s3cmd -d --access_key=${AWS_ACCESS_KEY_ID} --secret_key=${AWS_SECRET_KEY} --progress -H -p --check-md5 --continue-put put /cloudify/* s3://${AWS_S3_BUCKET}/${AWS_S3_BUCKET_PREFIX}
+    s3cmd -d --access_key=${AWS_ACCESS_KEY_ID} --secret_key=${AWS_ACCESS_KEY} --progress -H -p --check-md5 --continue-put put /cloudify/* s3://${AWS_S3_BUCKET}/${AWS_S3_BUCKET_PREFIX}
 }
 
 GITHUB_USERNAME=$1
