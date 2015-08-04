@@ -745,7 +745,7 @@ def _upload_provider_context(remote_agents_private_key_path,
 
     request_params = '?update={0}'.format(update_context)
     upload_provider_context_cmd = \
-        'curl --fail -XPOST localhost:8101/{0}/provider/context{1} -H ' \
+        'curl --fail -XPOST localhost:8101/api/{0}/provider/context{1} -H ' \
         '"Content-Type: application/json" -d @{2}'.format(
             API_VERSION, request_params, container_provider_context_file)
 
