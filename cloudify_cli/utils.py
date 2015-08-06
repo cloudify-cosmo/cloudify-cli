@@ -224,8 +224,8 @@ def is_use_colors():
     if not is_initialized():
         return False
 
-    config_path = get_configuration_path()
-    return yaml.safe_load(file(config_path, 'r')).get('colors', False)
+    config = CloudifyConfig()
+    return config.colors
 
 
 @contextmanager
@@ -457,3 +457,35 @@ def delete_cloudify_working_dir_settings():
         constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
     if os.path.exists(target_file_path):
         os.remove(target_file_path)
+
+
+class CloudifyConfig(object):
+
+    class Logging(object):
+
+        def __init__(self, logging):
+            self._logging = logging or {}
+
+        @property
+        def filename(self):
+            return self._logging.get('filename')
+
+        @property
+        def loggers(self):
+            return self._logging.get('loggers', {})
+
+    def __init__(self):
+        with open(get_configuration_path()) as f:
+            self._config = yaml.safe_load(f.read())
+
+    @property
+    def colors(self):
+        return self._config.get('colors', False)
+
+    @property
+    def logging(self):
+        return self.Logging(self._config.get('logging', {}))
+
+    @property
+    def local_provider_context(self):
+        return self._config.get('local_provider_context', {})
