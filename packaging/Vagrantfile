@@ -40,7 +40,7 @@ Vagrant.configure('2') do |config|
 
       aws.keypair_name = "vagrant_build"
       override.ssh.username = "ec2-user"
-      override.ssh.private_key_path = "/home/.ssh/aws/vagrant_build.pem"
+      override.ssh.private_key_path = "~/.ssh/aws/vagrant_build.pem"
 
       aws.tags = {
           "Name" => "vagrant agent centos 7.0 build",
@@ -72,7 +72,7 @@ Vagrant.configure('2') do |config|
 
       aws.keypair_name = "vagrant_build"
       override.ssh.username = "root"
-      override.ssh.private_key_path = "/home/.ssh/aws/vagrant_build.pem"
+      override.ssh.private_key_path = "~/.ssh/aws/vagrant_build.pem"
 
       aws.tags = {
           "Name" => "vagrant agent centos 6.5 build",
@@ -104,7 +104,7 @@ Vagrant.configure('2') do |config|
 
       aws.keypair_name = "vagrant_build"
       override.ssh.username = "Administrator"
-      override.ssh.private_key_path = "/home/.ssh/aws/vagrant_build.pem"
+      override.ssh.private_key_path = "~/.ssh/aws/vagrant_build.pem"
 
       aws.tags = {
           "Name" => "vagrant windows cli build",
