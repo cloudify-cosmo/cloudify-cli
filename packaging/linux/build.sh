@@ -32,10 +32,11 @@ function install_py27
     fi
 }
 
-function build() {
+function build_rpm() {
     sudo yum install -y rpm-build redhat-rpm-config
+    sudo yum install -y python-devel gcc
     sudo mkdir -p /root/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-    sudo cp /vagrant/linux/build.spec /root/rpmbuild/SPECS
+    sudo cp /home/vagrant/sync/linux/build.spec /root/rpmbuild/SPECS
     sudo rpmbuild -ba /root/rpmbuild/SPECS/build.spec --define "GITHUB_USERNAME $GITHUB_USERNAME" --define "GITHUB_PASSWORD $GITHUB_PASSWORD"
 }
 
@@ -50,8 +51,8 @@ GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
-AWS_S3_BUCKET = 'gigaspaces-repository-eu'
-AWS_S3_BUCKET_PREFIX = 'org/cloudify3/'
+AWS_S3_BUCKET='gigaspaces-repository-eu'
+AWS_S3_BUCKET_PREFIX='org/cloudify3/'
 
 
 if which yum; then
@@ -60,9 +61,8 @@ if which yum; then
     else
         alias python=python2.7
     fi
+    build_rpm
 fi
-
-build
 
 if [ ! -z ${AWS_ACCESS_KEY} ]; then
     upload_to_s3 /root/rpmbuild/RPMS/*.rpm

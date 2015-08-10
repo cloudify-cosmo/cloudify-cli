@@ -22,6 +22,7 @@ AWS_ACCESS_KEY_ID = ENV['AWS_ACCESS_KEY_ID']
 AWS_ACCESS_KEY = ENV['AWS_ACCESS_KEY']
 
 CENTOS_FINAL_BOX_NAME = 'chef/centos-6.5'
+CENTOS7_OFFICIAL_BOX_URL = 'http://cloud.centos.org/centos/7/vagrant/x86_64/images/CentOS-7.box'
 
 Vagrant.configure('2') do |config|
   config.vm.define "centos_core_cli_aws" do |centos_final|
@@ -127,6 +128,21 @@ Vagrant.configure('2') do |config|
       vb.customize ['modifyvm', :id, '--memory', '1024']
     end
     local.vm.box = CENTOS_FINAL_BOX_NAME
+    local.vm.hostname = 'local'
+    local.vm.synced_folder "../", "/cloudify-cli", create: true
+    local.vm.provision "shell" do |s|
+      s.path = "linux/build.sh"
+      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD}"
+      s.privileged = false
+    end
+  end
+  config.vm.define :centos_core_cli do |local|
+    local.vm.provider :virtualbox do |vb|
+      vb.customize ['modifyvm', :id, '--memory', '1024']
+    end
+    # local.vm.box = CENTOS7_BOX_NAME
+    local.vm.box = "dummy"
+    local.vm.box_url = CENTOS7_OFFICIAL_BOX_URL
     local.vm.hostname = 'local'
     local.vm.synced_folder "../", "/cloudify-cli", create: true
     local.vm.provision "shell" do |s|
