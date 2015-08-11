@@ -36,8 +36,12 @@ function build_rpm() {
     sudo yum install -y rpm-build redhat-rpm-config
     sudo yum install -y python-devel gcc
     sudo mkdir -p /root/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
-    sudo cp /home/vagrant/sync/linux/build.spec /root/rpmbuild/SPECS
-    sudo rpmbuild -ba /root/rpmbuild/SPECS/build.spec --define "GITHUB_USERNAME $GITHUB_USERNAME" --define "GITHUB_PASSWORD $GITHUB_PASSWORD"
+    sudo cp /vagrant/linux/build.spec /root/rpmbuild/SPECS
+    sudo rpmbuild -ba /root/rpmbuild/SPECS/build.spec \
+        --define "GITHUB_USERNAME $GITHUB_USERNAME" \
+        --define "GITHUB_PASSWORD $GITHUB_PASSWORD" \
+        --define "DISTRO $DISTRO" \
+        --define "RELEASE $RELEASE"
 }
 
 function upload_to_s3() {
@@ -63,6 +67,9 @@ if which yum; then
     fi
     build_rpm
 fi
+
+DISTRO=$(python -c "import platform; print platform.linux_distribution(full_distribution_name=False)[0]")
+RELEASE=$(python -c "import platform; print platform.linux_distribution(full_distribution_name=False)[2]")
 
 if [ ! -z ${AWS_ACCESS_KEY} ]; then
     upload_to_s3 /root/rpmbuild/RPMS/*.rpm

@@ -5,7 +5,7 @@
 %define setuptools_version 18.1
 %define virtualenv_version 13.1.0
 
-Name:           cloudify-cli
+Name:           cloudify-%{DISTRO}-%{RELEASE}-cli
 Version:        3.3.0
 Release:        m4
 Summary:        Cloudify's CLI
@@ -69,7 +69,7 @@ sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-cli@%{core_version
 # Copy LICENSE file
 
 mkdir -p %{buildroot}/cfy &&
-sudo cp /home/vagrant/sync/LICENSE %{buildroot}/cfy/ &&
+sudo cp /vagrant/LICENSE %{buildroot}/cfy/ &&
 
 
 # Download manager-blueprints
