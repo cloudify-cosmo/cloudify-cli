@@ -1,4 +1,4 @@
-#/bin/bash
+#/bin/bash -e
 
 function install_prereqs
 {
@@ -46,17 +46,24 @@ function build_rpm() {
 
 function upload_to_s3() {
     path=$1
+    files=$2
 
-    sudo yum install -y s3cmd
-    s3cmd -d --access_key=${AWS_ACCESS_KEY_ID} --secret_key=${AWS_ACCESS_KEY} --progress -H -p --check-md5 --continue-put put $path s3://${AWS_S3_BUCKET}/${AWS_S3_BUCKET_PREFIX}
+    sudo pip install s3cmd==1.5.2
+    cd /tmp/x86_64
+    sudo s3cmd put --force --acl-public --access_key=${AWS_ACCESS_KEY_ID} --secret_key=${AWS_ACCESS_KEY} \
+        --no-preserve --progress --human-readable-sizes --check-md5 *.rpm s3://${AWS_S3_BUCKET}/${VERSION}/
 }
 
 GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
-AWS_S3_BUCKET='gigaspaces-repository-eu'
-AWS_S3_BUCKET_PREFIX='org/cloudify3/'
+AWS_S3_BUCKET='gigaspaces-repository-eu/org/cloudify3'
+
+VERSION='2.2.0'
+# these are propagated and used in the build.spec file to name the package.
+DISTRO=$(python -c "import platform; print platform.linux_distribution(full_distribution_name=False)[0]")
+RELEASE=$(python -c "import platform; print platform.linux_distribution(full_distribution_name=False)[2]")
 
 
 if which yum; then
@@ -68,9 +75,6 @@ if which yum; then
     build_rpm
 fi
 
-DISTRO=$(python -c "import platform; print platform.linux_distribution(full_distribution_name=False)[0]")
-RELEASE=$(python -c "import platform; print platform.linux_distribution(full_distribution_name=False)[2]")
-
 if [ ! -z ${AWS_ACCESS_KEY} ]; then
-    upload_to_s3 /root/rpmbuild/RPMS/*.rpm
+    upload_to_s3
 fi

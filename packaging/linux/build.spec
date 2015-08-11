@@ -5,6 +5,8 @@
 %define setuptools_version 18.1
 %define virtualenv_version 13.1.0
 
+%define _rpmdir /tmp
+
 Name:           cloudify-%{DISTRO}-%{RELEASE}-cli
 Version:        3.3.0
 Release:        m4
@@ -33,7 +35,7 @@ set -e
 [ ! -z $pip ] || sudo curl --show-error --silent --retry 5 https://bootstrap.pypa.io/get-pip.py | sudo python2.7 &&
 sudo pip install setuptools==18.1
 sudo pip install wheel==0.24.0
-sudo yum -y install git
+sudo yum -y install git python-devel gcc
 sudo curl http://cloudify-public-repositories.s3.amazonaws.com/cloudify-manager-blueprints/%{core_version}/cloudify-manager-blueprints.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz &&
 
 alias python=python2.7
