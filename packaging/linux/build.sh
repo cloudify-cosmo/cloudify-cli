@@ -51,7 +51,7 @@ function upload_to_s3() {
     sudo pip install s3cmd==1.5.2
     cd /tmp/x86_64
     sudo s3cmd put --force --acl-public --access_key=${AWS_ACCESS_KEY_ID} --secret_key=${AWS_ACCESS_KEY} \
-        --no-preserve --progress --human-readable-sizes --check-md5 *.rpm s3://${AWS_S3_BUCKET}/${VERSION}/
+        --no-preserve --progress --human-readable-sizes --check-md5 *.rpm* s3://${AWS_S3_BUCKET}/${VERSION}/
 }
 
 GITHUB_USERNAME=$1
@@ -74,6 +74,11 @@ if which yum; then
     fi
     build_rpm
 fi
+
+# this should be used AFTER renaming the cli packages to contain versions.
+# generate md5 file.
+md5sum=$(md5sum *.tar.gz)
+echo $md5sum | sudo tee ${md5sum##* }_${VERSION}.md5
 
 if [ ! -z ${AWS_ACCESS_KEY} ]; then
     upload_to_s3
