@@ -26,6 +26,8 @@ outputs:
         value: { get_attribute: [node, param] }
     custom_param:
         value: { get_attribute: [node, custom_param] }
+    provider_context:
+        value: { get_attribute: [node, provider_context] }
 
 workflows:
     run_test_op_on_nodes:

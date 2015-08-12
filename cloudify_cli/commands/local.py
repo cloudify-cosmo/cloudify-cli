@@ -26,6 +26,7 @@ from cloudify_cli import exceptions
 from cloudify_cli import common
 from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
+from cloudify_cli.commands import init as cfy_init
 
 
 _NAME = 'local'
@@ -38,6 +39,8 @@ def init(blueprint_path,
     if os.path.isdir(_storage_dir()):
         shutil.rmtree(_storage_dir())
 
+    if not utils.is_initialized():
+        cfy_init(reset_config=False, skip_logging=True)
     try:
         common.initialize_blueprint(
             blueprint_path=blueprint_path,

@@ -21,6 +21,7 @@ import os
 import json
 import tempfile
 
+import yaml
 import nose
 
 from cloudify.decorators import operation, workflow
@@ -29,6 +30,7 @@ from cloudify.exceptions import CommandExecutionException
 from cloudify.workflows import ctx as workflow_ctx
 from dsl_parser.constants import HOST_TYPE
 
+from cloudify_cli import utils
 from cloudify_cli import common
 
 from cloudify_cli.tests import cli_runner
@@ -69,6 +71,22 @@ class LocalTest(CliCommandTest):
         self._local_execute()
         output = cli_runner.run_cli('cfy local outputs')
         self.assertIn('"param": "default_param"', output)
+
+    def test_local_provider_context(self):
+        self._init()
+        with open(utils.get_configuration_path()) as f:
+            config = yaml.safe_load(f.read())
+        with open(utils.get_configuration_path(), 'w') as f:
+            config['local_provider_context'] = {
+                'stub1': 'value1'
+            }
+            f.write(yaml.safe_dump(config))
+        self._local_init()
+        self._local_execute()
+        output = cli_runner.run_cli('cfy local outputs')
+        self.assertIn('"provider_context":', output)
+        self.assertIn('stub1', output)
+        self.assertIn('value1', output)
 
     def test_local_init_install_plugins(self):
 
@@ -257,6 +275,9 @@ class LocalTest(CliCommandTest):
         # tested extensively by the other tests
         self.fail()
 
+    def _init(self):
+        cli_runner.run_cli('cfy init')
+
     def _local_init(self,
                     inputs=None,
                     blueprint='blueprint',
@@ -300,8 +321,10 @@ class LocalTest(CliCommandTest):
 
 @operation
 def mock_op(param, custom_param=None, **kwargs):
-    op_ctx.instance.runtime_properties['param'] = param
-    op_ctx.instance.runtime_properties['custom_param'] = custom_param
+    props = op_ctx.instance.runtime_properties
+    props['param'] = param
+    props['custom_param'] = custom_param
+    props['provider_context'] = op_ctx.provider_context
 
 
 @workflow
