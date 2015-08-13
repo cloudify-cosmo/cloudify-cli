@@ -63,14 +63,16 @@ def bootstrap_validation(blueprint_path,
                          task_retries=5,
                          task_retry_interval=30,
                          task_thread_pool_size=1,
-                         install_plugins=False):
+                         install_plugins=False,
+                         resolver=None):
     try:
         env = common.initialize_blueprint(
             blueprint_path,
             name=name,
             inputs=inputs,
             storage=None,
-            install_plugins=install_plugins
+            install_plugins=install_plugins,
+            resolver=resolver
         )
     except ImportError as e:
         e.possible_solutions = [
@@ -104,7 +106,8 @@ def bootstrap(blueprint_path,
             name=name,
             inputs=inputs,
             storage=storage,
-            install_plugins=install_plugins
+            install_plugins=install_plugins,
+            resolver=utils.get_import_resolver()
         )
     except ImportError as e:
         e.possible_solutions = [

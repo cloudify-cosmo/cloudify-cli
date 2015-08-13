@@ -32,7 +32,8 @@ def initialize_blueprint(blueprint_path,
                          name,
                          storage,
                          install_plugins=False,
-                         inputs=None):
+                         inputs=None,
+                         resolver=None):
     if install_plugins:
         install_blueprint_plugins(
             blueprint_path=blueprint_path
@@ -45,7 +46,8 @@ def initialize_blueprint(blueprint_path,
         inputs=inputs,
         storage=storage,
         ignored_modules=constants.IGNORED_LOCAL_WORKFLOW_MODULES,
-        provider_context=provider_context)
+        provider_context=provider_context,
+        resolver=resolver)
 
 
 def install_blueprint_plugins(blueprint_path):

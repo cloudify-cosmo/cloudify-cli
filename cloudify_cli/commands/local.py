@@ -47,7 +47,8 @@ def init(blueprint_path,
             name=_NAME,
             inputs=inputs,
             storage=_storage(),
-            install_plugins=install_plugins_
+            install_plugins=install_plugins_,
+            resolver=utils.get_import_resolver()
         )
     except ImportError as e:
 
