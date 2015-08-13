@@ -2,12 +2,11 @@
 
 AWS_ACCESS_KEY_ID=$1
 AWS_ACCESS_KEY=$2
-AWS_S3_BUCKET='gigaspaces-repository-eu/org/cloudify3'
 
-export VERSION="3.3.0-m4"
-
-export CORE_TAG_NAME="master"
-export PLUGINS_TAG_NAME="master"
+VERSION="3.3.0/m4-TEST/"
+AWS_S3_BUCKET='gigaspaces-repository-eu/org/cloudify3/$VERSION'
+CORE_TAG_NAME="master"
+PLUGINS_TAG_NAME="master"
 
 pip install wheel==0.24.0
 pip install s3cmd==1.5.2
