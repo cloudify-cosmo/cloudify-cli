@@ -27,7 +27,7 @@ from cloudify_cli.logger import get_logger
 from cloudify_cli.logger import configure_loggers
 
 
-def init(reset_config):
+def init(reset_config, skip_logging=False):
     if os.path.exists(os.path.join(
             utils.get_cwd(),
             constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
@@ -50,4 +50,5 @@ def init(reset_config):
     utils.dump_cloudify_working_dir_settings(settings)
     utils.dump_configuration_file()
     configure_loggers()
-    get_logger().info('Initialization completed successfully')
+    if not skip_logging:
+        get_logger().info('Initialization completed successfully')

@@ -16,109 +16,89 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
 
-GITHUB_USERNAME = ENV['GITHUB_USERNAME']
-GITHUB_PASSWORD = ENV['GITHUB_PASSWORD']
 AWS_ACCESS_KEY_ID = ENV['AWS_ACCESS_KEY_ID']
 AWS_ACCESS_KEY = ENV['AWS_ACCESS_KEY']
+AWS_ACCESS_KEY_ID_UPLOAD_TEMP = ENV['AWS_ACCESS_KEY_ID_UPLOAD_TEMP']
+AWS_ACCESS_KEY_UPLOAD_TEMP = ENV['AWS_ACCESS_KEY_UPLOAD_TEMP']
+
+GITHUB_USERNAME = ENV['GITHUB_USERNAME']
+GITHUB_PASSWORD = ENV['GITHUB_PASSWORD']
 
 CENTOS_FINAL_BOX_NAME = 'chef/centos-6.5'
 CENTOS7_OFFICIAL_BOX_URL = 'http://cloud.centos.org/centos/7/vagrant/x86_64/images/CentOS-7.box'
+
 
 Vagrant.configure('2') do |config|
   config.vm.define "centos_core_cli_aws" do |centos_final|
     #dummy box, will be overriden
     centos_final.vm.box = "dummy"
     centos_final.vm.box_url = "https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
-
     centos_final.vm.provider :aws do |aws, override|
       aws.access_key_id = AWS_ACCESS_KEY_ID
       aws.secret_access_key = AWS_ACCESS_KEY
-
       # unofficial centos6.4 64bit box
       aws.ami = "ami-fd69068a"
       aws.region = "eu-west-1"
       aws.instance_type = "m3.medium"
-
       aws.keypair_name = "vagrant_build"
       override.ssh.username = "ec2-user"
       override.ssh.private_key_path = "~/.ssh/aws/vagrant_build.pem"
       override.nfs.functional = false
-
-      aws.tags = {
-          "Name" => "vagrant agent centos 7.0 build",
-      }
-        aws.security_groups = "vagrant_linux_build"
+      aws.tags = { "Name" => "vagrant agent centos 7.0 build" }
+      aws.security_groups = "vagrant_linux_build"
     end
-
-    #need to sync folders
-    # centos_final.vm.synced_folder "../", "/cloudify-cli", create: true, type: "rsync", rsync__exclude: ".git/"
     centos_final.vm.provision "shell" do |s|
       s.path = "linux/build.sh"
-      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID} #{AWS_ACCESS_KEY}"
+      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID_UPLOAD_TEMP} #{AWS_ACCESS_KEY_UPLOAD_TEMP}"
       s.privileged = false
     end
   end
+
   config.vm.define "centos_final_cli_aws" do |centos_final|
     #dummy box, will be overriden
     centos_final.vm.box = "dummy"
     centos_final.vm.box_url = "https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
-
     centos_final.vm.provider :aws do |aws, override|
       aws.access_key_id = AWS_ACCESS_KEY_ID
       aws.secret_access_key = AWS_ACCESS_KEY
-
       # unofficial centos6.5 64bit
       aws.ami = "ami-77385400"
       aws.region = "eu-west-1"
       aws.instance_type = "m3.medium"
-
       aws.keypair_name = "vagrant_build"
       override.ssh.username = "root"
       override.ssh.private_key_path = "~/.ssh/aws/vagrant_build.pem"
       override.nfs.functional = false
-
-      aws.tags = {
-          "Name" => "vagrant agent centos 6.5 build",
-      }
-        aws.security_groups = "vagrant_linux_build"
+      aws.tags = { "Name" => "vagrant agent centos 6.5 build" }
+      aws.security_groups = "vagrant_linux_build"
     end
-
-    #need to sync folders
-    # centos_final.vm.synced_folder "../", "/cloudify-cli", create: true, type: "rsync", rsync__exclude: ".git/"
     centos_final.vm.provision "shell" do |s|
       s.path = "linux/build.sh"
-      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID} #{AWS_ACCESS_KEY}"
+      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID_UPLOAD_TEMP} #{AWS_ACCESS_KEY_UPLOAD_TEMP}"
       s.privileged = false
     end
   end
+
   config.vm.define "windows_cli_aws" do |windows|
     windows.vm.box = "dummy"
     windows.vm.box_url = "https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box"
     windows.vm.guest = :windows
-
     windows.vm.provider :aws do |aws, override|
       aws.access_key_id = AWS_ACCESS_KEY_ID
       aws.secret_access_key = AWS_ACCESS_KEY
-
       # this a pre-baked AMI, not pure base image
       aws.ami = "ami-118ee566"
       aws.region = "eu-west-1"
       aws.instance_type = "m3.medium"
-
       aws.keypair_name = "vagrant_build"
       override.ssh.username = "Administrator"
       override.ssh.private_key_path = "~/.ssh/aws/vagrant_build.pem"
       override.nfs.functional = false
-
-      aws.tags = {
-          "Name" => "vagrant windows cli build",
-      }
+      aws.tags = { "Name" => "vagrant windows cli build" }
       aws.security_groups = "vagrant_windows"
     end
-
     windows.vm.synced_folder ".", "/vagrant", disabled: true
     windows.vm.synced_folder "./windows/packaging", "/home/Administrator/packaging"
-
     # shell provisioning uses bash, so use cmd to run batch script
     windows.vm.provision "shell" do |shell|
       shell.path = 'windows/provision.sh'
@@ -126,6 +106,7 @@ Vagrant.configure('2') do |config|
       shell.privileged = false
     end
   end
+
 
   config.vm.define :centos_final_cli do |local|
     local.vm.provider :virtualbox do |vb|
