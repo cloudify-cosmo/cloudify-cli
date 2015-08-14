@@ -1,4 +1,4 @@
-#/bin/bash
+#/bin/bash -e
 
 function install_prereqs
 {
@@ -32,26 +32,38 @@ function install_py27
     fi
 }
 
-function build() {
+function build_rpm() {
     sudo yum install -y rpm-build redhat-rpm-config
+    sudo yum install -y python-devel gcc
     sudo mkdir -p /root/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
     sudo cp /vagrant/linux/build.spec /root/rpmbuild/SPECS
-    sudo rpmbuild -ba /root/rpmbuild/SPECS/build.spec --define "GITHUB_USERNAME $GITHUB_USERNAME" --define "GITHUB_PASSWORD $GITHUB_PASSWORD"
+    sudo rpmbuild -ba /root/rpmbuild/SPECS/build.spec \
+        --define "GITHUB_USERNAME $GITHUB_USERNAME" \
+        --define "GITHUB_PASSWORD $GITHUB_PASSWORD" \
+        --define "DISTRO $DISTRO" \
+        --define "RELEASE $RELEASE"
 }
 
 function upload_to_s3() {
     path=$1
+    files=$2
 
-    sudo yum install -y s3cmd
-    s3cmd -d --access_key=${AWS_ACCESS_KEY_ID} --secret_key=${AWS_ACCESS_KEY} --progress -H -p --check-md5 --continue-put put $path s3://${AWS_S3_BUCKET}/${AWS_S3_BUCKET_PREFIX}
+    sudo pip install s3cmd==1.5.2
+    cd /tmp/x86_64
+    sudo s3cmd put --force --acl-public --access_key=${AWS_ACCESS_KEY_ID} --secret_key=${AWS_ACCESS_KEY} \
+        --no-preserve --progress --human-readable-sizes --check-md5 *.rpm s3://${AWS_S3_BUCKET}/${VERSION}/
 }
 
 GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
-AWS_S3_BUCKET = 'gigaspaces-repository-eu'
-AWS_S3_BUCKET_PREFIX = 'org/cloudify3/'
+AWS_S3_BUCKET='gigaspaces-repository-eu/org/cloudify3'
+
+VERSION='2.2.0'
+# these are propagated and used in the build.spec file to name the package.
+DISTRO=$(python -c "import platform; print platform.linux_distribution(full_distribution_name=False)[0]")
+RELEASE=$(python -c "import platform; print platform.linux_distribution(full_distribution_name=False)[2]")
 
 
 if which yum; then
@@ -60,10 +72,9 @@ if which yum; then
     else
         alias python=python2.7
     fi
+    build_rpm
 fi
 
-build
-
 if [ ! -z ${AWS_ACCESS_KEY} ]; then
-    upload_to_s3 /root/rpmbuild/RPMS/*.rpm
+    upload_to_s3
 fi
