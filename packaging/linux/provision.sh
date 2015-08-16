@@ -73,8 +73,8 @@ function upload_to_s3() {
 export VERSION="3.3.0"
 export PRERELEASE="m4"
 export BUILD="274"
-CORE_TAG_NAME="master"
-PLUGINS_TAG_NAME="master"
+CORE_TAG_NAME="3.3m4"
+PLUGINS_TAG_NAME="1.3m4"
 
 GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
