@@ -40,9 +40,10 @@ function upload_to_s3() {
 }
 
 
-# VERSION must be exported as it is being read as an env var by the install wizard
+# VERSION/PRERELEASE/BUILD must be exported as they is being read as an env var by the install wizard
 export VERSION="3.3.0"
-PRERELEASE="m4"
+export PRERELEASE="m4"
+export BUILD="274"
 CORE_TAG_NAME="master"
 PLUGINS_TAG_NAME="master"
 
@@ -52,6 +53,7 @@ AWS_S3_BUCKET_PATH="gigaspaces-repository-eu/org/cloudify3/${VERSION}/${PRERELEA
 
 echo "VERSION: ${VERSION}"
 echo "PRERELEASE: ${PRERELEASE}"
+echo "BUILD: ${BUILD}"
 echo "CORE_TAG_NAME: ${CORE_TAG_NAME}"
 echo "PLUGINS_TAG_NAME: ${PLUGINS_TAG_NAME}"
 echo "AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}"

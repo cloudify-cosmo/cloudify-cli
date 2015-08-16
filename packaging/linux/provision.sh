@@ -48,8 +48,14 @@ function build_rpm() {
         --define "RELEASE $RELEASE" \
         --define "VERSION $VERSION" \
         --define "PRERELEASE $PRERELEASE" \
+        --define "BUILD $BUILD" \
         --define "CORE_TAG_NAME $CORE_TAG_NAME" \
         --define "PLUGINS_TAG_NAME $PLUGINS_TAG_NAME"
+    # This is the UGLIEST HACK EVER!
+    # Since rpmbuild spec files cannot receive a '-' in their version,
+    # we do this... thing and replace an underscore with a dash.
+    cd /tmp/x86_64 &&
+    sudo mv *.rpm $(ls *.rpm | sed 's|_|-|g')
 }
 
 function upload_to_s3() {
@@ -63,9 +69,10 @@ function upload_to_s3() {
 }
 
 
-# VERSION must be exported as it is being read as an env var by the install wizard
+# VERSION/PRERELEASE/BUILD must be exported as they is being read as an env var by the install wizard
 export VERSION="3.3.0"
-PRERELEASE="m4"
+export PRERELEASE="m4"
+export BUILD="274"
 CORE_TAG_NAME="master"
 PLUGINS_TAG_NAME="master"
 
@@ -78,6 +85,7 @@ AWS_S3_BUCKET_PATH="gigaspaces-repository-eu/org/cloudify3/${VERSION}/${PRERELEA
 
 echo "VERSION: ${VERSION}"
 echo "PRERELEASE: ${PRERELEASE}"
+echo "BUILD: ${BUILD}"
 echo "CORE_TAG_NAME: ${CORE_TAG_NAME}"
 echo "PLUGINS_TAG_NAME: ${PLUGINS_TAG_NAME}"
 echo "AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}"
@@ -98,5 +106,5 @@ fi
 
 # this should be used AFTER renaming the cli packages to contain versions.
 # cd /tmp/x86_64 && md5sum=$(md5sum *.rpm) && echo $md5sum | sudo tee ${md5sum##* }.md5 &&
-cd /tmp/x86_64 && md5sum=$(md5sum *.rpm) && echo $md5sum > ${md5sum##* }.md5 &&
+cd /tmp/x86_64 && md5sum=$(md5sum *.rpm) && echo $md5sum | sudo tee ${md5sum##* }.md5 &&
 [ -z ${AWS_ACCESS_KEY} ] || upload_to_s3

@@ -1,11 +1,8 @@
-# %define core_version 3.3m4
-# %define plugins_version 1.3m4
-
 %define _rpmdir /tmp
 
 Name:           cloudify-%{DISTRO}-%{RELEASE}-cli
 Version:        %{VERSION}
-Release:        %{PRERELEASE}
+Release:        %{PRERELEASE}_b%{BUILD}
 Summary:        Cloudify's CLI
 Group:          Applications/Multimedia
 License:        Apache 2.0
@@ -42,8 +39,6 @@ alias python=python2.7
 
 # Download or create wheels of all dependencies
 
-# sudo pip wheel pip==7.1.0 --wheel-dir %{buildroot}/var/wheels/%{name} &&
-# sudo pip wheel setuptools==18.1 --wheel-dir %{buildroot}/var/wheels/%{name} &&
 sudo pip wheel virtualenv==13.1.0 --wheel-dir %{buildroot}/var/wheels/%{name} &&
 sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-rest-client@%{CORE_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
 sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@%{CORE_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
@@ -55,14 +50,6 @@ sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-aws-plugin@%{PLUGI
 sudo pip wheel git+https://%{GITHUB_USERNAME}:%{GITHUB_PASSWORD}@github.com/cloudify-cosmo/cloudify-vsphere-plugin@%{PLUGINS_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
 sudo pip wheel git+https://%{GITHUB_USERNAME}:%{GITHUB_PASSWORD}@github.com/cloudify-cosmo/cloudify-softlayer-plugin@%{PLUGINS_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
 sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-cli@%{CORE_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
-# when the cli is built for py2.6, unless argparse is put within `install_requires`, we'll have to enable this:
-# if which yum; then
-#   sudo pip wheel argparse=#SOME_VERSION# --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name}
-# fi
-
-# Copy get-pip.py
-
-# sudo cp /vagrant/linux/source/get-pip.py %{buildroot}/var/wheels/%{name} &&
 
 # Copy LICENSE file
 
@@ -82,7 +69,6 @@ sudo tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1 -C %
 
 if ! which virtualenv >> /dev/null; then
     pip install --use-wheel --no-index --find-links=/var/wheels/%{name} virtualenv
-    # python /var/wheels/%{name}/get-pip.py --use-wheel --no-index --find-links=/var/wheels/%{name} virtualenv
 fi
 virtualenv /cfy/env &&
 /cfy/env/bin/pip install --use-wheel --no-index --find-links=/var/wheels/%{name} cloudify --pre &&
@@ -91,10 +77,6 @@ virtualenv /cfy/env &&
 /cfy/env/bin/pip install --use-wheel --no-index --find-links=/var/wheels/%{name} cloudify-fabric-plugin --pre &&
 /cfy/env/bin/pip install --use-wheel --no-index --find-links=/var/wheels/%{name} cloudify-openstack-plugin --pre &&
 /cfy/env/bin/pip install --use-wheel --no-index --find-links=/var/wheels/%{name} cloudify-aws-plugin --pre &&
-# when the cli is built for py2.6, unless argparse is put within `install_requires`, we'll have to enable this:
-# if which yum; then
-#   /cfy/env/bin/pip install --use-wheel --no-index --find-links=${PKG_DIR}/wheelhouse argparse=#SOME_VERSION#
-# fi
 
 echo "You can now source /cfy/env/bin/activate to start using Cloudify."
 
@@ -112,6 +94,5 @@ rm -rf /var/wheels/${name}
 
 %defattr(-,root,root)
 /var/wheels/%{name}/*.whl
-# /var/wheels/%{name}/get-pip.*
 /cfy/LICENSE
 /cfy/cloudify-manager-blueprints
