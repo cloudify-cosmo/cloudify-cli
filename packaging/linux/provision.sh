@@ -54,8 +54,8 @@ function build_rpm() {
     # This is the UGLIEST HACK EVER!
     # Since rpmbuild spec files cannot receive a '-' in their version,
     # we do this... thing and replace an underscore with a dash.
-    cd /tmp/x86_64 &&
-    sudo mv *.rpm $(ls *.rpm | sed 's|_|-|g')
+    # cd /tmp/x86_64 &&
+    # sudo mv *.rpm $(ls *.rpm | sed 's|_|-|g')
 }
 
 function upload_to_s3() {
