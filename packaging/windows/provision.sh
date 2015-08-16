@@ -36,18 +36,27 @@ function upload_to_s3() {
     ###
     # no preserve is set to false only because preserving file attributes is not yet supported on Windows.
     python c:/Python27/Scripts/s3cmd put --force --acl-public --access_key=${AWS_ACCESS_KEY_ID} --secret_key=${AWS_ACCESS_KEY} \
-        --no-preserve --progress --human-readable-sizes --check-md5 *.exe* s3://${AWS_S3_BUCKET}/
+        --no-preserve --progress --human-readable-sizes --check-md5 *.exe* s3://${AWS_S3_BUCKET_PATH}/
 }
 
 
 # VERSION must be exported as it is being read as an env var by the install wizard
-export VERSION="2.2.0"
+export VERSION="3.3.0"
+PRERELEASE="m4"
 CORE_TAG_NAME="master"
 PLUGINS_TAG_NAME="master"
 
 AWS_ACCESS_KEY_ID=$1
 AWS_ACCESS_KEY=$2
-AWS_S3_BUCKET="gigaspaces-repository-eu/org/cloudify3/$VERSION"
+AWS_S3_BUCKET_PATH="gigaspaces-repository-eu/org/cloudify3/${VERSION}/${PRERELEASE}-RELEASE"
+
+echo "VERSION: ${VERSION}"
+echo "PRERELEASE: ${PRERELEASE}"
+echo "CORE_TAG_NAME: ${CORE_TAG_NAME}"
+echo "PLUGINS_TAG_NAME: ${PLUGINS_TAG_NAME}"
+echo "AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}"
+echo "AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}"
+echo "AWS_S3_BUCKET_PATH: ${AWS_S3_BUCKET_PATH}"
 
 
 install_requirements &&

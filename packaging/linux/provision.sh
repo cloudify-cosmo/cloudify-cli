@@ -33,6 +33,10 @@ function install_py27
 }
 
 function build_rpm() {
+    # these are propagated and used in the build.spec file to name the package.
+    DISTRO=$(python -c "import platform; print platform.linux_distribution(full_distribution_name=False)[0]")
+    RELEASE=$(python -c "import platform; print platform.linux_distribution(full_distribution_name=False)[2]")
+
     sudo yum install -y rpm-build redhat-rpm-config
     sudo yum install -y python-devel gcc
     sudo mkdir -p /root/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS}
@@ -41,7 +45,11 @@ function build_rpm() {
         --define "GITHUB_USERNAME $GITHUB_USERNAME" \
         --define "GITHUB_PASSWORD $GITHUB_PASSWORD" \
         --define "DISTRO $DISTRO" \
-        --define "RELEASE $RELEASE"
+        --define "RELEASE $RELEASE" \
+        --define "VERSION $VERSION" \
+        --define "PRERELEASE $PRERELEASE" \
+        --define "CORE_TAG_NAME $CORE_TAG_NAME" \
+        --define "PLUGINS_TAG_NAME $PLUGINS_TAG_NAME"
 }
 
 function upload_to_s3() {
@@ -51,22 +59,32 @@ function upload_to_s3() {
     ###
     sudo pip install s3cmd==1.5.2
     sudo s3cmd put --force --acl-public --access_key=${AWS_ACCESS_KEY_ID} --secret_key=${AWS_ACCESS_KEY} \
-        --no-preserve --progress --human-readable-sizes --check-md5 *.rpm* s3://${AWS_S3_BUCKET}/
+        --no-preserve --progress --human-readable-sizes --check-md5 *.rpm* s3://${AWS_S3_BUCKET_PATH}/
 }
 
 
-VERSION="2.2.0"
+# VERSION must be exported as it is being read as an env var by the install wizard
+export VERSION="3.3.0"
+PRERELEASE="m4"
+CORE_TAG_NAME="master"
+PLUGINS_TAG_NAME="master"
 
 GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
 
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
-AWS_S3_BUCKET="gigaspaces-repository-eu/org/cloudify3/${VERSION}"
+AWS_S3_BUCKET_PATH="gigaspaces-repository-eu/org/cloudify3/${VERSION}/${PRERELEASE}-RELEASE"
 
-# these are propagated and used in the build.spec file to name the package.
-DISTRO=$(python -c "import platform; print platform.linux_distribution(full_distribution_name=False)[0]")
-RELEASE=$(python -c "import platform; print platform.linux_distribution(full_distribution_name=False)[2]")
+echo "VERSION: ${VERSION}"
+echo "PRERELEASE: ${PRERELEASE}"
+echo "CORE_TAG_NAME: ${CORE_TAG_NAME}"
+echo "PLUGINS_TAG_NAME: ${PLUGINS_TAG_NAME}"
+echo "AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}"
+echo "AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}"
+echo "AWS_S3_BUCKET_PATH: ${AWS_S3_BUCKET_PATH}"
+echo "GITHUB_USERNAME: ${GITHUB_USERNAME}"
+echo "GITHUB_PASSWORD: ${GITHUB_PASSWORD}"
 
 
 if which yum; then
@@ -79,5 +97,6 @@ if which yum; then
 fi
 
 # this should be used AFTER renaming the cli packages to contain versions.
-cd /tmp/x86_64 && md5sum=$(md5sum *.rpm) && echo $md5sum | sudo tee ${md5sum##* }.md5 &&
+# cd /tmp/x86_64 && md5sum=$(md5sum *.rpm) && echo $md5sum | sudo tee ${md5sum##* }.md5 &&
+cd /tmp/x86_64 && md5sum=$(md5sum *.rpm) && echo $md5sum > ${md5sum##* }.md5 &&
 [ -z ${AWS_ACCESS_KEY} ] || upload_to_s3

@@ -1,15 +1,11 @@
-%define core_version 3.3m4
-%define plugins_version 1.3m4
-
-%define pip_version 7.1.0
-%define setuptools_version 18.1
-%define virtualenv_version 13.1.0
+# %define core_version 3.3m4
+# %define plugins_version 1.3m4
 
 %define _rpmdir /tmp
 
 Name:           cloudify-%{DISTRO}-%{RELEASE}-cli
-Version:        3.3.0
-Release:        m4
+Version:        %{VERSION}
+Release:        %{PRERELEASE}
 Summary:        Cloudify's CLI
 Group:          Applications/Multimedia
 License:        Apache 2.0
@@ -36,7 +32,7 @@ set -e
 sudo pip install setuptools==18.1
 sudo pip install wheel==0.24.0
 sudo yum -y install git python-devel gcc
-sudo curl http://cloudify-public-repositories.s3.amazonaws.com/cloudify-manager-blueprints/%{core_version}/cloudify-manager-blueprints.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz &&
+sudo curl http://cloudify-public-repositories.s3.amazonaws.com/cloudify-manager-blueprints/%{CORE_TAG_NAME}/cloudify-manager-blueprints.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz &&
 
 alias python=python2.7
 
@@ -49,16 +45,16 @@ alias python=python2.7
 # sudo pip wheel pip==7.1.0 --wheel-dir %{buildroot}/var/wheels/%{name} &&
 # sudo pip wheel setuptools==18.1 --wheel-dir %{buildroot}/var/wheels/%{name} &&
 sudo pip wheel virtualenv==13.1.0 --wheel-dir %{buildroot}/var/wheels/%{name} &&
-sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-rest-client@%{core_version} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
-sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@%{core_version} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
-sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-plugins-common@%{core_version} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
-sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-script-plugin@%{plugins_version} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
-sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-fabric-plugin@%{plugins_version} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
-sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-openstack-plugin@%{plugins_version} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
-sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-aws-plugin@%{plugins_version} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
-sudo pip wheel git+https://%{GITHUB_USERNAME}:%{GITHUB_PASSWORD}@github.com/cloudify-cosmo/cloudify-vsphere-plugin@%{plugins_version} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
-sudo pip wheel git+https://%{GITHUB_USERNAME}:%{GITHUB_PASSWORD}@github.com/cloudify-cosmo/cloudify-softlayer-plugin@%{plugins_version} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
-sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-cli@%{core_version} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
+sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-rest-client@%{CORE_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
+sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@%{CORE_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
+sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-plugins-common@%{CORE_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
+sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-script-plugin@%{PLUGINS_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
+sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-fabric-plugin@%{PLUGINS_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
+sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-openstack-plugin@%{PLUGINS_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
+sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-aws-plugin@%{PLUGINS_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
+sudo pip wheel git+https://%{GITHUB_USERNAME}:%{GITHUB_PASSWORD}@github.com/cloudify-cosmo/cloudify-vsphere-plugin@%{PLUGINS_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
+sudo pip wheel git+https://%{GITHUB_USERNAME}:%{GITHUB_PASSWORD}@github.com/cloudify-cosmo/cloudify-softlayer-plugin@%{PLUGINS_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
+sudo pip wheel git+https://github.com/cloudify-cosmo/cloudify-cli@%{CORE_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
 # when the cli is built for py2.6, unless argparse is put within `install_requires`, we'll have to enable this:
 # if which yum; then
 #   sudo pip wheel argparse=#SOME_VERSION# --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name}
