@@ -1,5 +1,7 @@
 #define AppName "Cloudify CLI"
 #define AppVersion GetEnv('VERSION')
+#define AppMilestone GetEnv('PRERELEASE')
+#define AppBuild GetEnv('BUILD')
 #define AppPublisher "GigaSpaces Technologies"
 #define AppURL "http://getcloudify.org/"
 
@@ -16,7 +18,7 @@ AppSupportURL={#AppURL}
 AppUpdatesURL={#AppURL}
 DefaultDirName={pf}\Cloudify
 DisableProgramGroupPage=yes
-OutputBaseFilename=cloudify_cli_{#AppVersion}
+OutputBaseFilename=cloudify-windows-cli_{#AppVersion}-{#AppMilestone}-b{#AppBuild}
 Compression=lzma
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=
