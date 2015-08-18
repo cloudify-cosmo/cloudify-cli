@@ -271,7 +271,6 @@ def _upload_provider_context(remote_agents_private_key_path, fabric_env,
         _dump_manager_deployment(manager_node_instance)
 
     remote_provider_context_file = '/tmp/provider-context.json'
-    # local_provider_context_file = '/tmp/home/provider-context.json'
     provider_context_json_file = StringIO()
     full_provider_context = {
         'name': 'provider',
