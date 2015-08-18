@@ -664,16 +664,15 @@ def _handle_security_configuration(blueprint_security_config):
     return container_security_config_path
 
 
-def _copy_ssl_files(
-        local_cert_path, remote_cert_path, local_key_path, remote_key_path):
+def _copy_ssl_files(local_cert_path, remote_cert_path, local_key_path,
+                    remote_key_path):
     ctx.logger.info(
         'Copying SSL certificate to management machine: {0} -> {1}'.format(
             local_cert_path, remote_cert_path))
     fabric.api.put(local_cert_path, remote_cert_path)
 
-    ctx.logger.info(
-        'Copying SSL key to management machine: {0} -> {1}'.format(
-            local_key_path, remote_key_path))
+    ctx.logger.info('Copying SSL key to management machine: {0} -> {1}'.format(
+        local_key_path, remote_key_path))
     fabric.api.put(local_key_path, remote_key_path)
 
 
