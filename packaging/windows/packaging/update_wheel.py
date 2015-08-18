@@ -6,7 +6,7 @@ from wheel.util import urlsafe_b64encode
 from collections import namedtuple
 
 
-def get_sha(data): 
+def get_sha(data):
     return urlsafe_b64encode(sha256(data).digest())
 
 
