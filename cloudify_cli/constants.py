@@ -22,7 +22,6 @@ AGENT_MIN_WORKERS = 2
 AGENT_MAX_WORKERS = 5
 AGENT_KEY_PATH = '~/.ssh/cloudify-agents-kp.pem'
 AGENT_REMOTE_KEY_PATH = '~/.ssh/agent_key.pem'
-AGENT_LOCAL_KEY_PATH = '~/.ssh/agent_key.pem'
 REMOTE_EXECUTION_PORT = 22
 
 WORKFLOW_TASK_RETRIES = -1
