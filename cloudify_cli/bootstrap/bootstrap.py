@@ -162,14 +162,15 @@ def bootstrap(blueprint_path,
         agent_remote_key_path = manager_node.properties.get(
             'agent_remote_key_path', constants.AGENT_REMOTE_KEY_PATH)
         agent_local_key_path = manager_node.properties.get(
-            'agent_local_key_path', constants.AGENT_LOCAL_KEY_PATH)
+            'agent_local_key_path')
         fabric_env = {
             "host_string": manager_ip,
             "user": manager_user,
             "key_filename": manager_key_path
         }
-        agent_remote_key_path = _copy_agent_key(
-            agent_local_key_path, agent_remote_key_path, fabric_env)
+        agent_remote_key_path = _copy_agent_key(agent_local_key_path,
+                                                agent_remote_key_path,
+                                                fabric_env)
         _upload_provider_context(
             agent_remote_key_path, fabric_env, manager_node,
             manager_node_instance, provider_context=False)
@@ -307,7 +308,8 @@ def _dump_manager_deployment(manager_node_instance):
 def _copy_agent_key(agent_local_key_path, agent_remote_key_path,
                     fabric_env):
     if not agent_local_key_path:
-        return
+        return None
     agent_local_key_path = os.path.expanduser(agent_local_key_path)
     with fabric.settings(**fabric_env):
         fabric.put(agent_local_key_path, agent_remote_key_path)
+    return agent_remote_key_path
