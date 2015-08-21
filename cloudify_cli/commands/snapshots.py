@@ -80,6 +80,6 @@ def ls():
     client = utils.get_rest_client(management_ip)
     logger.info('Getting snapshots list... [manager={0}]'
                 .format(management_ip))
-    pt = utils.table(['id', 'created_at'],
+    pt = utils.table(['id', 'created_at', 'status', 'error'],
                      data=client.snapshots.list())
     print_table('Snapshots:', pt)
