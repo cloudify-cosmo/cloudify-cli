@@ -37,7 +37,8 @@ def validate(blueprint_path):
     logger.info(
         messages.VALIDATING_BLUEPRINT.format(blueprint_path.name))
     try:
-        parse_from_path(blueprint_path.name)
+        resolver = utils.get_import_resolver()
+        parse_from_path(dsl_file_path=blueprint_path.name, resolver=resolver)
     except DSLParsingException as ex:
         msg = (messages.VALIDATING_BLUEPRINT_FAILED
                .format(blueprint_path.name, str(ex)))

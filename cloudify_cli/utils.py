@@ -34,6 +34,8 @@ import cloudify_cli
 from cloudify_cli import constants
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.logger import get_logger
+from dsl_parser import utils as dsl_parser_utils
+from dsl_parser.constants import IMPORT_RESOLVER_KEY
 
 DEFAULT_LOG_FILE = os.path.expanduser(
     '{0}/cloudify-{1}/cloudify-cli.log'
@@ -226,6 +228,16 @@ def is_use_colors():
 
     config = CloudifyConfig()
     return config.colors
+
+
+def get_import_resolver():
+    if not is_initialized():
+        return None
+
+    config = CloudifyConfig()
+    # get the resolver configuration from the config file
+    local_import_resolver = config.local_import_resolver
+    return dsl_parser_utils.create_import_resolver(local_import_resolver)
 
 
 @contextmanager
@@ -489,3 +501,7 @@ class CloudifyConfig(object):
     @property
     def local_provider_context(self):
         return self._config.get('local_provider_context', {})
+
+    @property
+    def local_import_resolver(self):
+        return self._config.get(IMPORT_RESOLVER_KEY, {})

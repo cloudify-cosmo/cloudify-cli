@@ -60,7 +60,8 @@ def bootstrap(keep_up,
             task_retries=task_retries,
             task_retry_interval=task_retry_interval,
             task_thread_pool_size=task_thread_pool_size,
-            install_plugins=install_plugins)
+            install_plugins=install_plugins,
+            resolver=utils.get_import_resolver())
         logger.info('bootstrap validation completed successfully')
 
     if not validate_only:
