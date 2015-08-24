@@ -54,7 +54,7 @@ def deployment_id_argument(hlp):
         'dest': 'deployment_id',
         'metavar': 'DEPLOYMENT_ID',
         'type': str,
-        'required': True,
+        'required': False,
         'help': hlp,
         'completer': completion_utils.objects_args_completer_maker('deployments')
     }
@@ -341,7 +341,13 @@ def parser_config():
                         'arguments': {
                             '-d,--deployment-id': deployment_id_argument(
                                 hlp="filter executions for a given deployment by the deployment's id"
-                            )
+                            ),
+                            '--system-workflows': {
+                                'dest': 'include_system_workflows',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Include executions of system workflows.'
+                            },
                         },
                         'help': 'command for listing all executions of a deployment',
                         'handler': cfy.executions.ls
