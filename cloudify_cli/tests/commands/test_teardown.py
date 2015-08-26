@@ -43,7 +43,7 @@ class TeardownTest(CliCommandTest):
         cli_runner.run_cli('cfy init')
         cli_runner.run_cli('cfy use -t 10.0.0.1')
         cli_runner.run_cli('cfy teardown -f --ignore-deployments')
-        mock_teardown.assert_called_once()
+        mock_teardown.assert_called_once_with()
 
     def test_teardown_has_existing_deployments_dont_ignore_deployments(self):
         self.client.manager.get_status = MagicMock()
@@ -88,7 +88,7 @@ class TeardownTest(CliCommandTest):
             wd.set_provider_context({})
 
         cli_runner.run_cli('cfy teardown -f --ignore-deployments')
-        mock_teardown.assert_called_once()
+        mock_teardown.assert_called_once_with()
 
     def test_teardown_no_management_ip_in_context_wrong_directory(self):
         cli_runner.run_cli('cfy init')
@@ -106,5 +106,5 @@ class TeardownTest(CliCommandTest):
             wd.set_provider_context({})
 
         cli_runner.run_cli('cfy teardown -f')
-        mock_teardown.assert_called_once()
-        mock_load_env.assert_called_once()
+        mock_teardown.assert_called_once_with()
+        mock_load_env.assert_called_once_with()
