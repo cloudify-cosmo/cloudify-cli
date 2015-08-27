@@ -59,7 +59,7 @@ sudo cp /vagrant/LICENSE %{buildroot}/cfy/ &&
 
 # Download manager-blueprints
 
-mkdir -p %{buildroot}/cfy/cloudify-manager-blueprints &&
+mkdir -p %{buildroot}/cfy/cloudify-manager-blueprints-commercial &&
 sudo tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1 -C %{buildroot}/cfy/cloudify-manager-blueprints-commercial &&
 
 
