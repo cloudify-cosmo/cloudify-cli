@@ -188,6 +188,20 @@ def parser_config():
                                     hlp='A unique id that will be assigned to the created snapshot'
                                 )
                             ),
+                            '--include-metrics': {
+                                'dest': 'include_metrics',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Specify this flag to include metrics data'
+                                        'in the snapshot'
+                            },
+                            '--exclude-credentials': {
+                                'dest': 'exclude_credentials',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Specify this flag to prevent storing credentials'
+                                        'in the snapshot'
+                            }
                         },
                         'help': 'command for creating a new snapshots',
                         'handler': cfy.snapshots.create
