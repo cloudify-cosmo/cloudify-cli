@@ -95,4 +95,4 @@ rm -rf /var/wheels/${name}
 %defattr(-,root,root)
 /var/wheels/%{name}/*.whl
 /cfy/LICENSE
-/cfy/cloudify-manager-blueprints
+/cfy/cloudify-manager-blueprints-commercial
