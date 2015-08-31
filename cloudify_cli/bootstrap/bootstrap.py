@@ -154,8 +154,7 @@ def bootstrap(blueprint_path,
         rest_port = \
             manager_node_instance.runtime_properties[REST_PORT]
     else:
-        manager_ip = \
-            manager_node_instance.runtime_properties['manager_host_public_ip']
+        manager_ip = env.outputs()['manager_ip']
         manager_user = manager_node.properties['ssh_user']
         manager_key_path = manager_node.properties['ssh_key_filename']
         rest_port = 80
@@ -174,9 +173,16 @@ def bootstrap(blueprint_path,
         agent_remote_key_path = _copy_agent_key(agent_local_key_path,
                                                 agent_remote_key_path,
                                                 fabric_env)
+
+        if 'provider_context' in manager_node_instance.runtime_properties:
+            provider_context = manager_node_instance.runtime_properties[
+                'provider_context']
+        else:
+            provider_context = None
+
         _upload_provider_context(
             agent_remote_key_path, fabric_env, manager_node,
-            manager_node_instance, provider_context=False)
+            manager_node_instance, provider_context=provider_context)
 
         provider_context = \
             manager_node_instance.runtime_properties[
@@ -314,5 +320,5 @@ def _copy_agent_key(agent_local_key_path, agent_remote_key_path,
         return None
     agent_local_key_path = os.path.expanduser(agent_local_key_path)
     with fabric.settings(**fabric_env):
-        fabric.put(agent_local_key_path, agent_remote_key_path)
+        fabric.put(agent_local_key_path, agent_remote_key_path, use_sudo=True)
     return agent_remote_key_path
