@@ -32,13 +32,15 @@ def restore(snapshot_id):
     logger.info('Restored snapshot successfully')
 
 
-def create(snapshot_id):
+def create(snapshot_id, include_metrics, exclude_credentials):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     logger.info("Creating snapshot '{0}' at management server {1}"
                 .format(snapshot_id, management_ip))
     client = utils.get_rest_client(management_ip)
-    snapshot = client.snapshots.create(snapshot_id)
+    snapshot = client.snapshots.create(snapshot_id,
+                                       include_metrics,
+                                       not(exclude_credentials))
     logger.info("Snapshot created, snapshot's id is: {0}"
                 .format(snapshot.id))
 
