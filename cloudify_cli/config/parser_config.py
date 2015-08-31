@@ -250,6 +250,13 @@ def parser_config():
                         'help': 'command for getting a blueprint by its id',
                         'handler': cfy.blueprints.get
                     },
+                    'inputs': {
+                        'arguments': {
+                            '-b,--blueprint-id': blueprint_id_argument()
+                        },
+                        'help': 'command for listing all available blueprint inputs',
+                        'handler': cfy.blueprints.inputs
+                    }
                 }
             },
             'snapshots': {
