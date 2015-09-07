@@ -60,7 +60,8 @@ def bootstrap(keep_up,
             task_retries=task_retries,
             task_retry_interval=task_retry_interval,
             task_thread_pool_size=task_thread_pool_size,
-            install_plugins=install_plugins)
+            install_plugins=install_plugins,
+            resolver=utils.get_import_resolver())
         logger.info('bootstrap validation completed successfully')
 
     if not validate_only:
@@ -87,9 +88,9 @@ def bootstrap(keep_up,
 
             logger.info('bootstrapping complete')
             logger.info('management server is up at {0}'.format(manager_ip))
-        except Exception:
+        except Exception as ex:
             tpe, value, traceback = sys.exc_info()
-            logger.error('bootstrap failed!')
+            logger.error('bootstrap failed! ({0})'.format(str(ex)))
             if not keep_up:
                 try:
                     bs.load_env(env_name)

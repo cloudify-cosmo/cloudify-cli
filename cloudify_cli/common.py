@@ -32,18 +32,22 @@ def initialize_blueprint(blueprint_path,
                          name,
                          storage,
                          install_plugins=False,
-                         inputs=None):
+                         inputs=None,
+                         resolver=None):
     if install_plugins:
         install_blueprint_plugins(
             blueprint_path=blueprint_path
         )
+    provider_context = utils.CloudifyConfig().local_provider_context
     inputs = utils.inputs_to_dict(inputs, 'inputs')
     return local.init_env(
         blueprint_path=blueprint_path,
         name=name,
         inputs=inputs,
         storage=storage,
-        ignored_modules=constants.IGNORED_LOCAL_WORKFLOW_MODULES)
+        ignored_modules=constants.IGNORED_LOCAL_WORKFLOW_MODULES,
+        provider_context=provider_context,
+        resolver=resolver)
 
 
 def install_blueprint_plugins(blueprint_path):

@@ -1,5 +1,7 @@
 #define AppName "Cloudify CLI"
 #define AppVersion GetEnv('VERSION')
+#define AppMilestone GetEnv('PRERELEASE')
+#define AppBuild GetEnv('BUILD')
 #define AppPublisher "GigaSpaces Technologies"
 #define AppURL "http://getcloudify.org/"
 
@@ -16,7 +18,7 @@ AppSupportURL={#AppURL}
 AppUpdatesURL={#AppURL}
 DefaultDirName={pf}\Cloudify
 DisableProgramGroupPage=yes
-OutputBaseFilename=cloudify_cli_{#AppVersion}
+OutputBaseFilename=cloudify-windows-cli_{#AppVersion}-{#AppMilestone}-b{#AppBuild}
 Compression=lzma
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=
@@ -34,7 +36,7 @@ Source: "source\python\python.msi"; Flags: dontcopy nocompression
 Source: "source\wheels\*.whl"; Flags: dontcopy
 Source: "source\pip\*"; Flags: dontcopy
 Source: "source\virtualenv\*"; Flags: dontcopy
-Source: "source\icons\Cloudify.ico"; DestDir: "{app}" 
+Source: "source\icons\Cloudify.ico"; DestDir: "{app}"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop icon";
@@ -42,7 +44,7 @@ Name: "desktopicon"; Description: "Create a desktop icon";
 [Icons]
 Name: "{userdesktop}\Cloudify CLI"; Filename: "{cmd}"; Parameters: "/k ""{app}\Scripts\activate.bat"""; WorkingDir: "{app}"; IconFilename: "{app}\Cloudify.ico"; Tasks: "desktopicon";
 
-[UninstallDelete]                  
+[UninstallDelete]
 ;this is NOT recommended but in our case, no user data here
 Type: "filesandordirs"; Name: "{app}"
 
@@ -177,7 +179,7 @@ var
   ErrorCode: Integer;
 begin
   if isPythonInstalled then begin
-    ExtractTemporaryFiles('*.whl');  
+    ExtractTemporaryFiles('*.whl');
     GetPipArgs := 'install --use-wheel --no-index --find-links . virtualenv';
     ShellExec('', getPipPath, GetPipArgs, Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
 
@@ -266,7 +268,7 @@ begin
     if UserResponse <> IDOK then begin
       Result := 'Installation cannot continue without Pip installed';
       exit;
-    end 
+    end
     else if not runPipSetup then begin
       Result := 'Pip installation failed';
       Exit;
@@ -278,7 +280,7 @@ begin
     if UserResponse <> IDOK then begin
       Result := 'Installation cannot continue without Virtualenv installed';
       Exit;
-    end 
+    end
     else if not runVenvSetup then begin
       Result := 'Virtualenv installation failed';
       Exit;
@@ -291,5 +293,5 @@ end;
 procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
 begin
   if (CurUninstallStep = usPostUninstall) and (not UninstallSilent) then
-    MsgBox(infoPythonUninstall, mbInformation, MB_OK);  
+    MsgBox(infoPythonUninstall, mbInformation, MB_OK);
 end;

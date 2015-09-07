@@ -34,6 +34,8 @@ import cloudify_cli
 from cloudify_cli import constants
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.logger import get_logger
+from dsl_parser import utils as dsl_parser_utils
+from dsl_parser.constants import IMPORT_RESOLVER_KEY
 
 DEFAULT_LOG_FILE = os.path.expanduser(
     '{0}/cloudify-{1}/cloudify-cli.log'
@@ -224,8 +226,18 @@ def is_use_colors():
     if not is_initialized():
         return False
 
-    config_path = get_configuration_path()
-    return yaml.safe_load(file(config_path, 'r')).get('colors', False)
+    config = CloudifyConfig()
+    return config.colors
+
+
+def get_import_resolver():
+    if not is_initialized():
+        return None
+
+    config = CloudifyConfig()
+    # get the resolver configuration from the config file
+    local_import_resolver = config.local_import_resolver
+    return dsl_parser_utils.create_import_resolver(local_import_resolver)
 
 
 @contextmanager
@@ -457,3 +469,39 @@ def delete_cloudify_working_dir_settings():
         constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
     if os.path.exists(target_file_path):
         os.remove(target_file_path)
+
+
+class CloudifyConfig(object):
+
+    class Logging(object):
+
+        def __init__(self, logging):
+            self._logging = logging or {}
+
+        @property
+        def filename(self):
+            return self._logging.get('filename')
+
+        @property
+        def loggers(self):
+            return self._logging.get('loggers', {})
+
+    def __init__(self):
+        with open(get_configuration_path()) as f:
+            self._config = yaml.safe_load(f.read())
+
+    @property
+    def colors(self):
+        return self._config.get('colors', False)
+
+    @property
+    def logging(self):
+        return self.Logging(self._config.get('logging', {}))
+
+    @property
+    def local_provider_context(self):
+        return self._config.get('local_provider_context', {})
+
+    @property
+    def local_import_resolver(self):
+        return self._config.get(IMPORT_RESOLVER_KEY, {})

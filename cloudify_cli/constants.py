@@ -21,6 +21,7 @@ DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 AGENT_MIN_WORKERS = 2
 AGENT_MAX_WORKERS = 5
 AGENT_KEY_PATH = '~/.ssh/cloudify-agents-kp.pem'
+AGENT_REMOTE_KEY_PATH = '~/.ssh/agent_key.pem'
 REMOTE_EXECUTION_PORT = 22
 
 WORKFLOW_TASK_RETRIES = -1
@@ -64,3 +65,5 @@ SSL_CERTIFICATE_PATH_PROPERTY_NAME = 'certificate_path'
 SSL_PRIVATE_KEY_PROPERTY_NAME = 'private_key_path'
 
 BASIC_AUTH_PREFIX = 'Basic'
+
+API_VERSION = 'v2'

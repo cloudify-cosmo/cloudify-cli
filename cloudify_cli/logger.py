@@ -21,7 +21,6 @@ import os
 import copy
 import warnings
 
-import yaml
 import colorama
 from requests.packages.urllib3.exceptions import InsecurePlatformWarning
 
@@ -93,10 +92,10 @@ def _configure_defaults():
 def _configure_from_file():
 
     from cloudify_cli import utils
-    config_path = utils.get_configuration_path()
-    logging_config = yaml.safe_load(file(config_path, 'r'))['logging']
-    loggers_config = logging_config['loggers']
-    logfile = logging_config['filename']
+    config = utils.CloudifyConfig()
+    logging_config = config.logging
+    loggers_config = logging_config.loggers
+    logfile = logging_config.filename
 
     # set filename on file handler
     logger_dict = copy.deepcopy(logger_config.LOGGER)

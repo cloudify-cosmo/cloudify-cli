@@ -504,14 +504,24 @@ def _get_install_agent_pkgs_cmd(agent_packages,
         (agent_name, agent_url)
         for agent_name, agent_url in agent_packages.items()
         if agent_url.endswith('tar.gz'))
+    exe_agent_packages = dict(
+        (agent_name, agent_url)
+        for agent_name, agent_url in agent_packages.items()
+        if agent_url.endswith('exe'))
+    if len(exe_agent_packages) > 1:
+        raise NonRecoverableError('At most 1 windows agent package can be '
+                                  'configured, but found: {0}'
+                                  .format(exe_agent_packages))
+
     install_agents_cmd = ''
     if debian_agent_packages:
         install_agents_cmd += 'dpkg -i {1}/*.deb'.format(agents_dest_dir,
                                                          agents_pkg_path)
-    if tar_agent_packages and debian_agent_packages:
+    if (tar_agent_packages or exe_agent_packages) and debian_agent_packages:
         install_agents_cmd += ' && '
-    if tar_agent_packages:
+    if tar_agent_packages or exe_agent_packages:
         install_agents_cmd += 'mkdir -p {0}/agents && '.format(agents_dest_dir)
+    if tar_agent_packages:
         tar_agent_mv_commands = []
         for tar_name, tar_url in tar_agent_packages.items():
             original_name = tar_url.split('/')[-1]
@@ -522,6 +532,20 @@ def _get_install_agent_pkgs_cmd(agent_packages,
                                                    agents_dest_dir,
                                                    final_name))
         install_agents_cmd += ' && '.join(tar_agent_mv_commands)
+        if exe_agent_packages:
+            install_agents_cmd += ' && '
+
+    if exe_agent_packages:
+        exe_agent_package_url = exe_agent_packages.values()[0]
+        original_name = exe_agent_package_url.split('/')[-1]
+        final_name = 'cloudify-windows-agent.exe'
+        exe_agent_mv_command = 'mv {0}/{1} {2}/agents/{3}'.format(
+            agents_pkg_path,
+            original_name,
+            agents_dest_dir,
+            final_name)
+        install_agents_cmd += exe_agent_mv_command
+
     return '{0} {1}'.format(download_agents_cmd, install_agents_cmd)
 
 
@@ -664,16 +688,15 @@ def _handle_security_configuration(blueprint_security_config):
     return container_security_config_path
 
 
-def _copy_ssl_files(
-        local_cert_path, remote_cert_path, local_key_path, remote_key_path):
+def _copy_ssl_files(local_cert_path, remote_cert_path, local_key_path,
+                    remote_key_path):
     ctx.logger.info(
         'Copying SSL certificate to management machine: {0} -> {1}'.format(
             local_cert_path, remote_cert_path))
     fabric.api.put(local_cert_path, remote_cert_path)
 
-    ctx.logger.info(
-        'Copying SSL key to management machine: {0} -> {1}'.format(
-            local_key_path, remote_key_path))
+    ctx.logger.info('Copying SSL key to management machine: {0} -> {1}'.format(
+        local_key_path, remote_key_path))
     fabric.api.put(local_key_path, remote_key_path)
 
 
