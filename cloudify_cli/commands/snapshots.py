@@ -28,8 +28,8 @@ def restore(snapshot_id):
     logger.info("Restoring snapshot '{0}' at management server {1}"
                 .format(snapshot_id, management_ip))
     client = utils.get_rest_client(management_ip)
-    client.snapshots.restore(snapshot_id)
-    logger.info('Restored snapshot successfully')
+    execution = client.snapshots.restore(snapshot_id)
+    logger.info('Started workflow\'s execution id: {0}'.format(execution.id))
 
 
 def create(snapshot_id, include_metrics, exclude_credentials):
