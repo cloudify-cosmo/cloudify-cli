@@ -1,7 +1,7 @@
 git+https://github.com/codilime/cloudify-rest-client@m5-snapshots-master#egg=cloudify-rest-client==3.3a5
-git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@3.3m4#egg=cloudify-dsl-parser==3.3a5
+git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@3.3m5#egg=cloudify-dsl-parser==3.3a5
 git+https://github.com/codilime/cloudify-plugins-common@m5-snapshots-master#egg=cloudify-plugins-common==3.3a5
-git+https://github.com/cloudify-cosmo/cloudify-script-plugin@1.3m4#egg=cloudify-script-plugin==1.3a5
+git+https://github.com/cloudify-cosmo/cloudify-script-plugin@1.3m5#egg=cloudify-script-plugin==1.3a5
 
 mock
 # adding this requirement for readthedocs until we perhaps
