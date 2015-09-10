@@ -38,11 +38,10 @@ def create(snapshot_id, include_metrics, exclude_credentials):
     logger.info("Creating snapshot '{0}' at management server {1}"
                 .format(snapshot_id, management_ip))
     client = utils.get_rest_client(management_ip)
-    snapshot = client.snapshots.create(snapshot_id,
+    execution = client.snapshots.create(snapshot_id,
                                        include_metrics,
                                        not(exclude_credentials))
-    logger.info("Snapshot created, snapshot's id is: {0}"
-                .format(snapshot.id))
+    logger.info('Started workflow\'s execution id: {0}'.format(execution.id))
 
 
 def delete(snapshot_id):
