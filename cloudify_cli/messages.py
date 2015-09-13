@@ -25,6 +25,24 @@ DOWNLOADING_BLUEPRINT = "Downloading blueprint '{0}' ..."
 DOWNLOADING_BLUEPRINT_SUCCEEDED = \
     "Blueprint '{0}' has been downloaded successfully as '{1}'"
 
+VALIDATING_PLUGIN = "Validating {0}"
+VALIDATING_PLUGIN_FAILED = "Failed to validate plugin {0}: {1}"
+VALIDATING_PLUGIN_FIELDS_FAILED = "Failed to validate plugin field: " \
+                                  "module.json must contain '{0}' field"
+VALIDATING_PLUGIN_SUCCEEDED = "Plugin validated successfully"
+
+DOWNLOADING_PLUGIN = "Downloading plugin '{0}' ..."
+DOWNLOADING_PLUGIN_SUCCEEDED = \
+    "Plugin '{0}' has been downloaded successfully as '{1}'"
+
+UPLOADING_PLUGIN = "Uploading plugin '{0}' to management server {1}"
+UPLOADING_PLUGIN_SUCCEEDED = "Uploaded plugin successfully, plugin's id is: " \
+                             "{0}"
+PLUGINS_LIST = 'Getting plugins list... [manager={0}]'
+PLUGINS_GET = 'Getting plugin {0}... [manager={1}]'
+PLUGIN_DELETE = "Deleting plugin '{0}' from management server {1}"
+PLUGIN_DELETE_SUCCEEDED = 'Plugin {0} deleted successfully'
+
 SSH_LINUX_NOT_FOUND = """ssh not found. Possible reasons:
 1) You don't have ssh installed (try installing OpenSSH)
 2) Your PATH variable is not configured correctly
