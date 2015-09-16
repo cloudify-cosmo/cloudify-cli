@@ -157,7 +157,7 @@ def bootstrap(blueprint_path,
         manager_ip = env.outputs()['manager_ip']
         manager_user = manager_node.properties['ssh_user']
         manager_key_path = manager_node.properties['ssh_key_filename']
-        rest_port = 80
+        rest_port = manager_node_instance.runtime_properties[REST_PORT]
 
         # these should be changed to allow receiving the
         # paths from the blueprint.

@@ -657,7 +657,7 @@ def _handle_security_configuration(blueprint_security_config):
     secured_server = blueprint_security_config.get(
         'enabled', DEFAULT_SECURITY_MODE)
     auth_token_generator = blueprint_security_config.get(
-        'auth_token_generator', {})
+        'security_auth_token_generator', {})
     securest_userstore_driver = blueprint_security_config.get(
         'userstore_driver', {})
     securest_authentication_providers = blueprint_security_config.get(
