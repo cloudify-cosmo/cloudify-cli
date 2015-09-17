@@ -122,7 +122,7 @@ def ls():
     logger.info('Getting blueprints list... [manager={0}]'
                 .format(management_ip))
 
-    pt = utils.table(['id', 'created_at', 'updated_at'],
+    pt = utils.table(['id', 'description', 'created_at', 'updated_at'],
                      data=client.blueprints.list())
 
     print_table('Blueprints:', pt)
