@@ -189,7 +189,7 @@ def bootstrap(blueprint_path,
                 'manager_provider_context']
 
     protocol = constants.SECURED_PROTOCOL \
-        if rest_port == constants.SECURED_REST_PORT \
+        if str(rest_port) == str(constants.SECURED_REST_PORT) \
         else constants.DEFAULT_PROTOCOL
 
     return {
