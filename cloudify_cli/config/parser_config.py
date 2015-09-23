@@ -37,12 +37,24 @@ def blueprint_id_argument():
     }
 
 
+def snapshot_id_argument(hlp = 'The id of the snapshot'):
+    return {
+        'metavar': 'SNAPSHOT_ID',
+        'type': str,
+        'help': hlp,
+        'dest': 'snapshot_id',
+        'default': None,
+        'required': True,
+        'completer': completion_utils.objects_args_completer_maker('snapshots')
+    }
+
+
 def deployment_id_argument(hlp):
     return {
         'dest': 'deployment_id',
         'metavar': 'DEPLOYMENT_ID',
         'type': str,
-        'required': True,
+        'required': False,
         'help': hlp,
         'completer': completion_utils.objects_args_completer_maker('deployments')
     }
@@ -166,6 +178,91 @@ def parser_config():
                     }
                 }
             },
+            'snapshots': {
+                'help': "Manages Cloudify's Snapshots",
+                'sub_commands': {
+                    'create': {
+                        'arguments': {
+                            '-s,--snapshot-id': argument_utils.remove_completer(
+                                snapshot_id_argument(
+                                    hlp='A unique id that will be assigned to the created snapshot'
+                                )
+                            ),
+                            '--include-metrics': {
+                                'dest': 'include_metrics',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Specify this flag to include metrics data'
+                                        'in the snapshot'
+                            },
+                            '--exclude-credentials': {
+                                'dest': 'exclude_credentials',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Specify this flag to prevent storing credentials'
+                                        'in the snapshot'
+                            }
+                        },
+                        'help': 'command for creating a new snapshots',
+                        'handler': cfy.snapshots.create
+                    },
+                    'upload': {
+                        'arguments': {
+                            '-p,--snapshot-path': {
+                                'metavar': 'SNAPSHOT_FILE',
+                                'dest': 'snapshot_path',
+                                'type': argparse.FileType(),
+                                'required': True,
+                                'help': "Path to the manager's snapshot file",
+                                'completer': completion_utils.yaml_files_completer
+                            },
+                            '-s,--snapshot-id': argument_utils.remove_completer(snapshot_id_argument())
+                        },
+                        'help': 'command for uploading a snapshot to the management server',
+                        'handler': cfy.snapshots.upload
+                    },
+                    'download': {
+                        'arguments': {
+                            '-s,--snapshot-id': snapshot_id_argument(),
+                            '-o,--output': {
+                                'metavar': 'OUTPUT',
+                                'type': str,
+                                'help': 'The output file path of the snapshot to be downloaded',
+                                'dest': 'output',
+                                'required': False
+                            }
+                        },
+                        'help': 'command for downloading a snapshot from the management server',
+                        'handler': cfy.snapshots.download
+                    },
+                    'list': {
+                        'help': 'command for listing all snapshots on the '
+                                'Manager',
+                        'handler': cfy.snapshots.ls
+                    },
+                    'delete': {
+                        'arguments': {
+                            '-s,--snapshot-id': snapshot_id_argument()
+                        },
+                        'help': 'command for deleting a snapshot',
+                        'handler': cfy.snapshots.delete
+                    },
+                    'restore': {
+                        'arguments': {
+                            '-s,--snapshot-id': snapshot_id_argument(),
+                            '--without-deployments-envs': {
+                                'dest': 'without_deployments_envs',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Specify this flag to restore snapshot '
+                                        'without deployments environments'
+                            }
+                        },
+                        'help': 'command for restoring manager to specific snapshot',
+                        'handler': cfy.snapshots.restore
+                    }
+                }
+            },
             'deployments': {
                 'help': "Manages and Executes Cloudify's Deployments",
                 'sub_commands': {
@@ -265,7 +362,13 @@ def parser_config():
                         'arguments': {
                             '-d,--deployment-id': deployment_id_argument(
                                 hlp="filter executions for a given deployment by the deployment's id"
-                            )
+                            ),
+                            '--system-workflows': {
+                                'dest': 'include_system_workflows',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Include executions of system workflows.'
+                            },
                         },
                         'help': 'command for listing all executions of a deployment',
                         'handler': cfy.executions.ls
