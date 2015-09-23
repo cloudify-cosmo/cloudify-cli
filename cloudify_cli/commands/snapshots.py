@@ -22,13 +22,14 @@ from cloudify_cli.logger import get_logger
 from cloudify_cli.utils import print_table
 
 
-def restore(snapshot_id):
+def restore(snapshot_id, without_deployments_envs):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     logger.info("Restoring snapshot '{0}' at management server {1}"
                 .format(snapshot_id, management_ip))
     client = utils.get_rest_client(management_ip)
-    execution = client.snapshots.restore(snapshot_id)
+    execution = client.snapshots.restore(snapshot_id,
+                                         not(without_deployments_envs))
     logger.info('Started workflow\'s execution id: {0}'.format(execution.id))
 
 
@@ -39,8 +40,8 @@ def create(snapshot_id, include_metrics, exclude_credentials):
                 .format(snapshot_id, management_ip))
     client = utils.get_rest_client(management_ip)
     execution = client.snapshots.create(snapshot_id,
-                                       include_metrics,
-                                       not(exclude_credentials))
+                                        include_metrics,
+                                        not(exclude_credentials))
     logger.info('Started workflow\'s execution id: {0}'.format(execution.id))
 
 

@@ -249,7 +249,14 @@ def parser_config():
                     },
                     'restore': {
                         'arguments': {
-                            '-s,--snapshot-id': snapshot_id_argument()
+                            '-s,--snapshot-id': snapshot_id_argument(),
+                            '--without-deployments-envs': {
+                                'dest': 'without_deployments_envs',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Specify this flag to restore snapshot '
+                                        'without deployments environments'
+                            }
                         },
                         'help': 'command for restoring manager to specific snapshot',
                         'handler': cfy.snapshots.restore
