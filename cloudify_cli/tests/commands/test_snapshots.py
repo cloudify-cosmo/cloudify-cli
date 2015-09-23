@@ -35,24 +35,26 @@ class SnapshotsTest(CliCommandTest):
 
     def test_snapshots_delete(self):
         self.client.snapshots.delete = MagicMock()
-        cli_runner.run_cli('cfy snapshots delete -b a-snapshot-id')
+        cli_runner.run_cli('cfy snapshots delete -s a-snapshot-id')
 
     def test_snapshots_upload(self):
         self.client.snapshots.upload = MagicMock(
             return_value={'id': 'some_id'})
         cli_runner.run_cli('cfy snapshots upload -p '
                            '{0}/snapshot.tar.gz '
-                           '-b my_snapshot_id'.format(SNAPSHOTS_DIR))
+                           '-s my_snapshot_id'.format(SNAPSHOTS_DIR))
 
     def test_snapshots_create(self):
         self.client.snapshots.create = MagicMock(
             return_value={'id': 'some_id'})
-        cli_runner.run_cli('cfy snapshots create -b a-snapshot-id')
+        cli_runner.run_cli('cfy snapshots create -s a-snapshot-id')
 
     def test_snapshots_restore(self):
         self.client.snapshots.restore = MagicMock()
-        cli_runner.run_cli('cfy snapshots restore -b a-snapshot-id')
+        cli_runner.run_cli('cfy snapshots restore -s a-snapshot-id')
+        cli_runner.run_cli('cfy snapshots restore -s a-snapshot-id'
+                           '--without-deployments-workers')
 
     def test_snapshots_download(self):
         self.client.snapshots.download = MagicMock(return_value='some_file')
-        cli_runner.run_cli('cfy snapshots download -b a-snapshot-id')
+        cli_runner.run_cli('cfy snapshots download -s a-snapshot-id')
