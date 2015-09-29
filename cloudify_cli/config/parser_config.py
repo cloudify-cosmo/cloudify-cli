@@ -263,6 +263,26 @@ def parser_config():
                     }
                 }
             },
+            'agents': {
+                'help': "Manages Cloudify's Agents",
+                'sub_commands': {
+                    'install': {
+                        'arguments': {
+                            '-d,--deployment-id': deployment_id_argument(
+                                hlp='The id of the deployment to install agents for, if not provided '
+                                'then command will install agents for all deployments'
+                            ),
+                            '-l,--include-logs': {
+                                'dest': 'include_logs',
+                                'action': 'store_true',
+                                'help': 'A flag whether to include logs in returned events'
+                            }
+                        },
+                        'help':'command for installing agents on deployments',
+                        'handler': cfy.agents.install
+                    }
+                }
+            },
             'deployments': {
                 'help': "Manages and Executes Cloudify's Deployments",
                 'sub_commands': {
