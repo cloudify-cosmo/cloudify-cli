@@ -35,6 +35,7 @@ TEST_DIR = '/tmp/cloudify-cli-component-tests'
 TEST_WORK_DIR = TEST_DIR + "/cloudify"
 THIS_DIR = os.path.dirname(os.path.dirname(__file__))
 BLUEPRINTS_DIR = os.path.join(THIS_DIR, 'resources', 'blueprints')
+SNAPSHOTS_DIR = os.path.join(THIS_DIR, 'resources', 'snapshots')
 
 
 class CliCommandTest(unittest.TestCase):
