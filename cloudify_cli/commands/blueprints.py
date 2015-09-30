@@ -29,6 +29,7 @@ from dsl_parser.parser import parse_from_path
 from dsl_parser.exceptions import DSLParsingException
 
 SUPPORTED_ARCHIVE_TYPES = ['zip', 'tar', 'tar.gz', 'tar.bz2']
+DESCRIPTION_LIMIT = 20
 
 
 def validate(blueprint_path):
@@ -122,7 +123,17 @@ def ls():
     logger.info('Getting blueprints list... [manager={0}]'
                 .format(management_ip))
 
-    pt = utils.table(['id', 'description', 'created_at', 'updated_at'],
-                     data=client.blueprints.list())
+    def trim_description(blueprint):
+        if 'description' in blueprint and \
+                len(blueprint['description']) >= DESCRIPTION_LIMIT:
+            blueprint['description'] = '{0}..'.format(
+                blueprint['description'][:DESCRIPTION_LIMIT - 2])
+        return blueprint
+
+    blueprints = [trim_description(b) for b in client.blueprints.list()]
+
+    pt = utils.table(['id', 'description', 'main_file_name',
+                      'created_at', 'updated_at'],
+                     data=blueprints)
 
     print_table('Blueprints:', pt)
