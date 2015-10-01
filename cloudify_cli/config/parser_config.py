@@ -163,7 +163,14 @@ def parser_config():
                         },
                         'help': 'command for validating a blueprint',
                         'handler': cfy.blueprints.validate
-                    }
+                    },
+                    'get': {
+                        'arguments': {
+                            '-b,--blueprint-id': blueprint_id_argument()
+                        },
+                        'help': 'command for getting a blueprint by its id',
+                        'handler': cfy.blueprints.get
+                    },
                 }
             },
             'deployments': {

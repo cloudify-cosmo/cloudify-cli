@@ -16,6 +16,7 @@
 """
 Handles all commands that start with 'cfy blueprints'
 """
+import json
 
 import os
 import urlparse
@@ -124,10 +125,12 @@ def ls():
                 .format(management_ip))
 
     def trim_description(blueprint):
-        description = blueprint.get('description')
-        if description and len(description) >= DESCRIPTION_LIMIT:
-            blueprint['description'] = '{0}..'.format(
-                blueprint['description'][:DESCRIPTION_LIMIT - 2])
+        if blueprint['description'] is not None:
+            if len(blueprint['description']) >= DESCRIPTION_LIMIT:
+                blueprint['description'] = '{0}..'.format(
+                    blueprint['description'][:DESCRIPTION_LIMIT - 2])
+        else:
+            blueprint['description'] = ''
         return blueprint
 
     blueprints = [trim_description(b) for b in client.blueprints.list()]
@@ -137,3 +140,32 @@ def ls():
                      data=blueprints)
 
     print_table('Blueprints:', pt)
+
+
+def get(blueprint_id):
+
+    logger = get_logger()
+    management_ip = utils.get_management_server_ip()
+    client = utils.get_rest_client(management_ip)
+
+    logger.info('Getting blueprint: '
+                '\'{0}\' [manager={1}]'
+                .format(blueprint_id, management_ip))
+    blueprint = client.blueprints.get(blueprint_id)
+
+    deployments = client.deployments.list(_include=['id'],
+                                          blueprint_id=blueprint_id)
+
+    blueprint['#deployments'] = len(deployments)
+
+    pt = utils.table(['id', 'main_file_name', 'created_at', 'updated_at',
+                      '#deployments'], [blueprint])
+    pt.max_width = 50
+    utils.print_table('Blueprint:', pt)
+
+    logger.info('Description:')
+    logger.info('{0}\n'.format(blueprint['description'] if
+                               blueprint['description'] is not None else ''))
+
+    logger.info('Existing deployments:')
+    logger.info('{0}\n'.format(json.dumps([d['id'] for d in deployments])))
