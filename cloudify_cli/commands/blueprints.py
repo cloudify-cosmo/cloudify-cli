@@ -124,8 +124,8 @@ def ls():
                 .format(management_ip))
 
     def trim_description(blueprint):
-        if 'description' in blueprint and \
-                len(blueprint['description']) >= DESCRIPTION_LIMIT:
+        description = blueprint.get('description')
+        if description and len(description) >= DESCRIPTION_LIMIT:
             blueprint['description'] = '{0}..'.format(
                 blueprint['description'][:DESCRIPTION_LIMIT - 2])
         return blueprint
