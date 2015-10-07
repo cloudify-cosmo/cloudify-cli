@@ -335,6 +335,12 @@ def parser_config():
                                 'action': 'store_true',
                                 'default': False,
                                 'help': 'Restore snapshot without deployment environments'
+                            },
+                            '-f,--force': {
+                                'dest': 'force',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Force restoring the snapshot on a dirty manager'
                             }
                         },
                         'help': 'command for restoring manager to specific snapshot',
