@@ -47,6 +47,11 @@ def deployment_id_argument(hlp):
         'completer': completion_utils.objects_args_completer_maker('deployments')
     }
 
+def deployment_id_argument_optional(hlp):
+    res = deployment_id_argument(hlp)
+    res['required'] = False
+    res['default'] = None
+    return res
 
 def execution_id_argument(hlp):
     return {
@@ -58,6 +63,11 @@ def execution_id_argument(hlp):
         'completer': completion_utils.objects_args_completer_maker('executions')
     }
 
+def execution_id_argument_optional(hlp):
+    res = execution_id_argument(hlp)
+    res['required'] = False
+    res['default'] = None
+    return res
 
 def workflow_id_argument(hlp):
     return {
@@ -327,8 +337,11 @@ def parser_config():
                     },
                     'cancel': {
                         'arguments': {
-                            '-e,--execution-id': execution_id_argument(
+                            '-e,--execution-id': execution_id_argument_optional(
                                 hlp='The id of the execution to cancel'
+                            ),
+                            '-d,--deployment-id': deployment_id_argument_optional(
+                                hlp='The id of the deployment to cancel executions for'
                             ),
                             '-f,--force': {
                                 'dest': 'force',
@@ -338,7 +351,7 @@ def parser_config():
                                         'rather than request an orderly termination'
                             }
                         },
-                        'help': 'Cancel an execution by its id',
+                        'help': 'Cancel an execution by its execution ID or deployment ID',
                         'handler': cfy.executions.cancel
                     }
                 }

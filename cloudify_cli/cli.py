@@ -26,7 +26,6 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.exceptions import CloudifyBootstrapError
 
-
 verbose_output = False
 
 

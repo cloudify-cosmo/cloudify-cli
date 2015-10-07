@@ -174,7 +174,73 @@ def start(workflow_id, deployment_id, timeout, force,
         raise SuppressedCloudifyCliError()
 
 
-def cancel(execution_id, force):
+def cancelByDeploymentId(deployment_id, force):
+    executions = []
+
+    logger = get_logger()
+    management_ip = utils.get_management_server_ip()
+    client = utils.get_rest_client(management_ip)
+
+# Retrieve all executions for the provided deployment
+    executionsRaw = client.executions.list(
+        deployment_id=deployment_id,
+        _include=[
+            'id',
+            'status',
+            'created_at'
+        ]
+    )
+
+# Find only executions that aren't complete
+    for execution in executionsRaw:
+        logger.info('{0} is {1}' . format(
+            execution['id'],
+            execution['status']
+        ))
+        if execution['status'] == 'started':
+            executions.append(execution)
+
+    if len(executions) > 0:
+        logger.info(
+            '{0}Cancelling {1} execution(s) '
+            'on management server {2}'
+            . format(
+                'Force-' if force else '',
+                len(executions),
+                management_ip))
+    else:
+        logger.info(
+            'There are no active executions '
+            'for the specified deployment ID')
+        return
+
+# Cancel each non-terminated execution one-by-one
+    for execution in executions:
+        logger.info(
+            '{0}Cancelling execution {1} on '
+            'management server {2}'
+            . format(
+                'Force-' if force else '',
+                execution['id'],
+                management_ip))
+
+        client.executions.cancel(execution['id'], force)
+
+        logger.info(
+            'A cancel request for execution {0} has been '
+            'sent to the management server {1}'
+            . format(
+                execution['id'],
+                management_ip))
+
+        logger.info(
+            'To track the execution\'s status, '
+            'use:\n  cfy executions get -e {0}'
+            . format(
+                execution['id']))
+
+
+def cancelByExecutionId(execution_id, force):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -187,6 +253,21 @@ def cancel(execution_id, force):
         "server {1}. To track the execution's status, use:\n"
         "cfy executions get -e {0}"
         .format(execution_id, management_ip))
+
+
+def cancel(execution_id, deployment_id, force):
+    logger = get_logger()
+
+    if ((not execution_id) and (not deployment_id) or
+            (execution_id) and (deployment_id)):
+        logger.info('You must specify either an '
+                    'execution ID or a deployment ID')
+        raise SuppressedCloudifyCliError()
+
+    if execution_id:
+        cancelByExecutionId(execution_id, force)
+    elif deployment_id:
+        cancelByDeploymentId(deployment_id, force)
 
 
 def _get_deployment_environment_creation_execution(client, deployment_id):
