@@ -118,7 +118,8 @@ class ImportResolverLocalUseTests(CliCommandTest):
         cli_command = 'cfy {0} -p {1}'.format(command, blueprint_path)
         kwargs = {
             'dsl_file_path': blueprint_path,
-            'resolver': resolver
+            'resolver': resolver,
+            'validate_version': True
         }
         self.assert_method_called(
             cli_command, mocked_module, 'parse_from_path', kwargs)

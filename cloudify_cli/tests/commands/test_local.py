@@ -24,6 +24,8 @@ import tempfile
 import yaml
 import nose
 
+from dsl_parser import exceptions as parser_exceptions
+
 from cloudify.decorators import operation, workflow
 from cloudify import ctx as op_ctx
 from cloudify.exceptions import CommandExecutionException
@@ -87,6 +89,20 @@ class LocalTest(CliCommandTest):
         self.assertIn('"provider_context":', output)
         self.assertIn('stub1', output)
         self.assertIn('value1', output)
+
+    def test_validate_definitions_version(self):
+        blueprint = 'blueprint_validate_definitions_version'
+        self._init()
+        self.assertRaises(
+            parser_exceptions.DSLParsingLogicException,
+            self._local_init, blueprint=blueprint)
+        with open(utils.get_configuration_path()) as f:
+            config = yaml.safe_load(f.read())
+        with open(utils.get_configuration_path(), 'w') as f:
+            config['validate_definitions_version'] = False
+            f.write(yaml.safe_dump(config))
+        # Parsing occurs during init
+        self._local_init(blueprint=blueprint)
 
     def test_local_init_install_plugins(self):
 

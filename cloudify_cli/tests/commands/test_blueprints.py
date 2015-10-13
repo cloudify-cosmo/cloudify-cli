@@ -17,7 +17,10 @@
 Tests all commands that start with 'cfy blueprints'
 """
 
+import yaml
 from mock import MagicMock
+
+from cloudify_cli import utils
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 from cloudify_cli.tests.commands.test_cli_command import BLUEPRINTS_DIR
@@ -68,6 +71,17 @@ class BlueprintsTest(CliCommandTest):
         cli_runner.run_cli('cfy blueprints validate '
                            '-p {0}/helloworld/blueprint.yaml'
                            .format(BLUEPRINTS_DIR))
+
+    def test_blueprint_validate_definitions_version_false(self):
+        with open(utils.get_configuration_path()) as f:
+            config = yaml.safe_load(f.read())
+        with open(utils.get_configuration_path(), 'w') as f:
+            config['validate_definitions_version'] = False
+            f.write(yaml.safe_dump(config))
+        cli_runner.run_cli(
+            'cfy blueprints validate '
+            '-p {0}/local/blueprint_validate_definitions_version.yaml'
+            .format(BLUEPRINTS_DIR))
 
     def test_validate_bad_blueprint(self):
         self._assert_ex('cfy blueprints validate '

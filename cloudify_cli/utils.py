@@ -240,6 +240,13 @@ def get_import_resolver():
     return dsl_parser_utils.create_import_resolver(local_import_resolver)
 
 
+def is_validate_definitions_version():
+    if not is_initialized():
+        return True
+    config = CloudifyConfig()
+    return config.validate_definitions_version
+
+
 @contextmanager
 def update_wd_settings():
     cosmo_wd_settings = load_cloudify_working_dir_settings()
@@ -505,3 +512,7 @@ class CloudifyConfig(object):
     @property
     def local_import_resolver(self):
         return self._config.get(IMPORT_RESOLVER_KEY, {})
+
+    @property
+    def validate_definitions_version(self):
+        return self._config.get('validate_definitions_version', True)
