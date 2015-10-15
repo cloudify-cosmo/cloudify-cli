@@ -25,7 +25,9 @@ from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.exceptions import ExecutionTimeoutError
 from cloudify_cli.logger import get_logger
-from cloudify_cli.execution_events_fetcher import wait_for_execution
+from cloudify_cli.execution_events_fetcher import (
+    wait_for_execution,
+    wait_for_cancel)
 from cloudify_cli.logger import get_events_logger
 
 
@@ -174,7 +176,7 @@ def start(workflow_id, deployment_id, timeout, force,
         raise SuppressedCloudifyCliError()
 
 
-def cancelByDeploymentId(deployment_id, force):
+def cancelByDeploymentId(deployment_id, force, wait, timeout=900):
     executions = []
 
     logger = get_logger()
@@ -239,8 +241,30 @@ def cancelByDeploymentId(deployment_id, force):
             . format(
                 execution['id']))
 
+        if wait:
+            try:
+                logger.info('Waiting for execution {0} to finish being cancelled'
+                            .format(execution['id']))
+                execution = wait_for_cancel(client,
+                                            execution,
+                                            timeout=timeout)
+    
+                if execution.error:
+                    logger.info("Cancellation of execution '{0}' "
+                                "failed. [error={2}]"
+                                .format(execution['id'],
+                                        execution['error']))
+                    raise SuppressedCloudifyCliError()
+                else:
+                    logger.info("Finished cancelling execution '{0}'"
+                                .format(execution['id']))
+            except ExecutionTimeoutError, e:
+                logger.info("Cancellation of execution '{0}' timed out. "
+                            .format(e.execution_id))
+                raise SuppressedCloudifyCliError()
 
-def cancelByExecutionId(execution_id, force):
+
+def cancelByExecutionId(execution_id, force, wait, timeout=900):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -254,8 +278,30 @@ def cancelByExecutionId(execution_id, force):
         "cfy executions get -e {0}"
         .format(execution_id, management_ip))
 
+    if wait:
+        try:
+            logger.info('Waiting for execution {0} to finish being cancelled'
+                        .format(execution_id))
+            execution = wait_for_cancel(client,
+                                        execution,
+                                        timeout=timeout)
 
-def cancel(execution_id, deployment_id, force):
+            if execution.error:
+                logger.info("Cancellation of execution '{0}' "
+                            "failed. [error={2}]"
+                            .format(execution_id,
+                                    execution.error))
+                raise SuppressedCloudifyCliError()
+            else:
+                logger.info("Finished cancelling execution '{0}'"
+                            .format(execution_id))
+        except ExecutionTimeoutError, e:
+            logger.info("Cancellation of execution '{0}' timed out. "
+                        .format(e.execution_id))
+            raise SuppressedCloudifyCliError()
+
+
+def cancel(execution_id, deployment_id, force, wait, timeout=900):
     logger = get_logger()
 
     if ((not execution_id) and (not deployment_id) or
@@ -265,9 +311,9 @@ def cancel(execution_id, deployment_id, force):
         raise SuppressedCloudifyCliError()
 
     if execution_id:
-        cancelByExecutionId(execution_id, force)
+        cancelByExecutionId(execution_id, force, wait, timeout=timeout)
     elif deployment_id:
-        cancelByDeploymentId(deployment_id, force)
+        cancelByDeploymentId(deployment_id, force, wait, timeout=timeout)
 
 
 def _get_deployment_environment_creation_execution(client, deployment_id):

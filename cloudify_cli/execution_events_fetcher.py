@@ -93,6 +93,37 @@ def get_deployment_environment_creation_execution(client, deployment_id):
                            executions))
 
 
+def wait_for_cancel(client,
+                    execution,
+                    timeout=900):
+    # if execution already ended - return without waiting
+    if execution.status in Execution.END_STATES:
+        return execution
+
+    if timeout is not None:
+        deadline = time.time() + timeout
+
+    # Poll for execution status until execution ends
+    while True:
+        if timeout is not None:
+            if time.time() > deadline:
+                raise ExecutionTimeoutError(
+                    execution.id,
+                    'cancelling operation {0} for deployment {1} '
+                    'timed out'.format(execution.workflow_id,
+                                       execution.deployment_id))
+            else:
+                # update the remaining timeout
+                timeout = deadline-time.time()
+
+        execution = client.executions.get(execution.id)
+        if execution.status in Execution.END_STATES:
+            break
+        time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
+
+    return execution
+
+
 def wait_for_execution(client,
                        execution,
                        events_handler=None,

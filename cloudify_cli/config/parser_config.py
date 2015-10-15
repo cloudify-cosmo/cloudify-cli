@@ -349,6 +349,22 @@ def parser_config():
                                 'default': False,
                                 'help': 'A flag indicating authorization to terminate the execution abruptly '
                                         'rather than request an orderly termination'
+                            },
+                            '--wait': {
+                                'dest': 'wait',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'A flag indicating to wait for the execution cancellation '
+                                        'to finish before continuing'
+                            },
+                            '--timeout': {
+                                'dest': 'timeout',
+                                'metavar': 'TIMEOUT',
+                                'type': int,
+                                'required': False,
+                                'default': 900,
+                                'help': 'Wait timeout in seconds (The execution itself will keep '
+                                        'going, it is the CLI that will stop waiting for it to terminate)'
                             }
                         },
                         'help': 'Cancel an execution by its execution ID or deployment ID',
