@@ -243,12 +243,13 @@ def cancelByDeploymentId(deployment_id, force, wait, timeout=900):
 
         if wait:
             try:
-                logger.info('Waiting for execution {0} to finish being cancelled'
+                logger.info('Waiting for execution {0} to '
+                            'finish being cancelled'
                             .format(execution['id']))
                 execution = wait_for_cancel(client,
                                             execution,
                                             timeout=timeout)
-    
+
                 if execution.error:
                     logger.info("Cancellation of execution '{0}' "
                                 "failed. [error={2}]"
@@ -271,7 +272,7 @@ def cancelByExecutionId(execution_id, force, wait, timeout=900):
     logger.info(
         '{0}Cancelling execution {1} on management server {2}'
         .format('Force-' if force else '', execution_id, management_ip))
-    client.executions.cancel(execution_id, force)
+    execution = client.executions.cancel(execution_id, force)
     logger.info(
         'A cancel request for execution {0} has been sent to management '
         "server {1}. To track the execution's status, use:\n"
