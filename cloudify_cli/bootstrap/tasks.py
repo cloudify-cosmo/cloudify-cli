@@ -455,7 +455,7 @@ def recover_docker(docker_path=None, use_sudo=True,
 
     cloudify_config = ctx.node.properties['cloudify']
     transient_deployment_workers_mode_enabled = cloudify_config.get(
-        'transient_deployment_workers_mode', {}).get('enabled', False)
+        'transient_deployment_workers_mode', {}).get('enabled', True)
     if not transient_deployment_workers_mode_enabled:
         _recover_deployments(docker_path, use_sudo)
 
