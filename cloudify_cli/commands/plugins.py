@@ -66,14 +66,9 @@ def delete(plugin_id):
 
 
 def upload(plugin_path):
-    logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    validate(plugin_path)
-    logger.info(messages.UPLOADING_PLUGIN
-                .format(plugin_path.name, management_ip))
-    client = utils.get_rest_client(management_ip)
-    plugin = client.plugins.upload(plugin_path.name)
-    logger.info(messages.UPLOADING_PLUGIN_SUCCEEDED.format(plugin.id))
+    server_ip = utils.get_management_server_ip()
+    utils.upload_plugin(plugin_path, server_ip,
+                        utils.get_rest_client(server_ip), validate)
 
 
 def download(plugin_id,

@@ -22,6 +22,7 @@ import tempfile
 import getpass
 from contextlib import contextmanager
 
+
 import yaml
 import pkg_resources
 from jinja2.environment import Template
@@ -36,6 +37,7 @@ from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.logger import get_logger
 from dsl_parser import utils as dsl_parser_utils
 from dsl_parser.constants import IMPORT_RESOLVER_KEY
+from cloudify_cli import messages
 
 DEFAULT_LOG_FILE = os.path.expanduser(
     '{0}/cloudify-{1}/cloudify-cli.log'
@@ -416,6 +418,15 @@ def table(cols, data, defaults=None):
         pt.add_row(map(lambda c: d[c] if c in d else defaults[c], cols))
 
     return pt
+
+
+def upload_plugin(plugin_path, management_ip, rest_client, validate):
+    logger = get_logger()
+    validate(plugin_path)
+    logger.info(messages.UPLOADING_PLUGIN
+                .format(plugin_path.name, management_ip))
+    plugin = rest_client.plugins.upload(plugin_path.name)
+    logger.info(messages.UPLOADING_PLUGIN_SUCCEEDED.format(plugin.id))
 
 
 class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
