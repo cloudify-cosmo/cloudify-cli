@@ -18,7 +18,7 @@ Tests all commands that start with 'cfy blueprints'
 """
 
 import yaml
-from mock import MagicMock
+from mock import MagicMock, patch
 
 from cloudify_cli import utils
 from cloudify_cli.tests import cli_runner
@@ -39,6 +39,14 @@ class BlueprintsTest(CliCommandTest):
     def test_blueprints_delete(self):
         self.client.blueprints.delete = MagicMock()
         cli_runner.run_cli('cfy blueprints delete -b a-blueprint-id')
+
+    @patch('cloudify_cli.utils.table', autospec=True)
+    @patch('cloudify_cli.utils.print_table', autospec=True)
+    def test_blueprints_get(self, *args):
+        self.client.blueprints.get = MagicMock()
+        self.client.deployments.list = MagicMock()
+
+        cli_runner.run_cli('cfy blueprints get -b a-blueprint-id')
 
     def test_blueprints_upload(self):
         self.client.blueprints.upload = MagicMock()
