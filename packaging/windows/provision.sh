@@ -15,7 +15,7 @@ function download_wheels() {
 }
 
 function download_resources() {
-    mkdir -p packaging/source/{pip,python,virtualenv}
+    mkdir -p packaging/source/{pip,python,virtualenv,blueprints}
     pushd packaging/source/pip
     curl -O https://dl.dropboxusercontent.com/u/407576/cfy-win-cli-package-resources/pip/get-pip.py
     curl -O https://dl.dropboxusercontent.com/u/407576/cfy-win-cli-package-resources/pip/pip-6.1.1-py2.py3-none-any.whl
@@ -26,6 +26,10 @@ function download_resources() {
     popd
     pushd packaging/source/virtualenv
     curl -O https://dl.dropboxusercontent.com/u/407576/cfy-win-cli-package-resources/virtualenv/virtualenv-12.1.1-py2.py3-none-any.whl
+    popd
+    pushd packaging/source/blueprints
+    curl --fail http://cloudify-public-repositories.s3.amazonaws.com/cloudify-manager-blueprints/$CORE_TAG_NAME/cloudify-manager-blueprints.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
+    tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1
     popd
 }
 
