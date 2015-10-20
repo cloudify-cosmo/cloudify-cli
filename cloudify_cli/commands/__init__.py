@@ -35,6 +35,7 @@ from cloudify_cli.commands.init import init
 from cloudify_cli.commands.recover import recover
 
 # import cfy sub commands
+from cloudify_cli.commands import plugins
 from cloudify_cli.commands import blueprints
 from cloudify_cli.commands import deployments
 from cloudify_cli.commands import events
