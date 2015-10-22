@@ -50,9 +50,6 @@ class VersionAction(argparse.Action):
         all_data['infix'] = infix or ''
         output = StringIO()
         output.write('{prefix}{version}'.format(**all_data))
-        if version_data['build']:
-            output.write('{infix}(build: {build}, date: {date})'.format(
-                **all_data))
         output.write('{suffix}'.format(**all_data))
         return output.getvalue()
 
