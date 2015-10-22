@@ -37,6 +37,7 @@ Source: "source\wheels\*.whl"; Flags: dontcopy
 Source: "source\pip\*"; Flags: dontcopy
 Source: "source\virtualenv\*"; Flags: dontcopy
 Source: "source\icons\Cloudify.ico"; DestDir: "{app}"
+Source: "source\blueprints\*"; DestDir: "{app}\cloudify-manager-blueprints-commercial"; Flags: recursesubdirs
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop icon";
