@@ -62,7 +62,7 @@ def delete(plugin_id):
     logger.info(messages.PLUGIN_DELETE.format(plugin_id, management_ip))
     client.plugins.delete(plugin_id)
 
-    logger.info(messages.PLUGIN_DELETE_SUCCEEDED)
+    logger.info(messages.PLUGIN_DELETE_SUCCEEDED.format(plugin_id))
 
 
 def upload(plugin_path):
