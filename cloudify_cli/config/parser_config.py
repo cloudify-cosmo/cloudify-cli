@@ -37,12 +37,24 @@ def blueprint_id_argument():
     }
 
 
+def snapshot_id_argument(hlp):
+    return {
+        'metavar': 'SNAPSHOT_ID',
+        'type': str,
+        'help': hlp,
+        'dest': 'snapshot_id',
+        'default': None,
+        'required': True,
+        'completer': completion_utils.objects_args_completer_maker('snapshots')
+    }
+
+
 def deployment_id_argument(hlp):
     return {
         'dest': 'deployment_id',
         'metavar': 'DEPLOYMENT_ID',
         'type': str,
-        'required': True,
+        'required': False,
         'help': hlp,
         'completer': completion_utils.objects_args_completer_maker('deployments')
     }
@@ -240,6 +252,109 @@ def parser_config():
                     },
                 }
             },
+            'snapshots': {
+                'help': "Manages Cloudify's Snapshots",
+                'sub_commands': {
+                    'create': {
+                        'arguments': {
+                            '-s,--snapshot-id': argument_utils.remove_completer(
+                                snapshot_id_argument(
+                                    hlp='A unique id that will be assigned to the created snapshot'
+                                )
+                            ),
+                            '--include-metrics': {
+                                'dest': 'include_metrics',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Specify this flag to include metrics data'
+                                        'in the snapshot'
+                            },
+                            '--exclude-credentials': {
+                                'dest': 'exclude_credentials',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Do not store credentials in snapshot'
+                            }
+                        },
+                        'help': 'command for creating a new snapshots',
+                        'handler': cfy.snapshots.create
+                    },
+                    'upload': {
+                        'arguments': {
+                            '-p,--snapshot-path': {
+                                'metavar': 'SNAPSHOT_FILE',
+                                'dest': 'snapshot_path',
+                                'type': argparse.FileType(),
+                                'required': True,
+                                'help': "Path to the manager's snapshot file",
+                                'completer': completion_utils.yaml_files_completer
+                            },
+                            '-s,--snapshot-id': argument_utils.remove_completer(snapshot_id_argument('The id of the snapshot'))
+                        },
+                        'help': 'command for uploading a snapshot to the management server',
+                        'handler': cfy.snapshots.upload
+                    },
+                    'download': {
+                        'arguments': {
+                            '-s,--snapshot-id': snapshot_id_argument('The id of the snapshot'),
+                            '-o,--output': {
+                                'metavar': 'OUTPUT',
+                                'type': str,
+                                'help': 'The output file path of the snapshot to be downloaded',
+                                'dest': 'output',
+                                'required': False
+                            }
+                        },
+                        'help': 'command for downloading a snapshot from the management server',
+                        'handler': cfy.snapshots.download
+                    },
+                    'list': {
+                        'help': 'command for listing all snapshots on the '
+                                'Manager',
+                        'handler': cfy.snapshots.ls
+                    },
+                    'delete': {
+                        'arguments': {
+                            '-s,--snapshot-id': snapshot_id_argument('The id of the snapshot')
+                        },
+                        'help': 'command for deleting a snapshot',
+                        'handler': cfy.snapshots.delete
+                    },
+                    'restore': {
+                        'arguments': {
+                            '-s,--snapshot-id': snapshot_id_argument('The id of the snapshot'),
+                            '--without-deployments-envs': {
+                                'dest': 'without_deployments_envs',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Restore snapshot without deployment environments'
+                            }
+                        },
+                        'help': 'command for restoring manager to specific snapshot',
+                        'handler': cfy.snapshots.restore
+                    }
+                }
+            },
+            'agents': {
+                'help': "Manages Cloudify's Agents",
+                'sub_commands': {
+                    'install': {
+                        'arguments': {
+                            '-d,--deployment-id': deployment_id_argument(
+                                hlp='The id of the deployment to install agents for. If ommited, this '
+                                'will install agents for all deployments'
+                            ),
+                            '-l,--include-logs': {
+                                'dest': 'include_logs',
+                                'action': 'store_true',
+                                'help': 'A flag whether to include logs in returned events or not'
+                            }
+                        },
+                        'help':'command for installing agents on deployments',
+                        'handler': cfy.agents.install
+                    }
+                }
+            },
             'deployments': {
                 'help': "Manages and Executes Cloudify's Deployments",
                 'sub_commands': {
@@ -339,7 +454,13 @@ def parser_config():
                         'arguments': {
                             '-d,--deployment-id': deployment_id_argument(
                                 hlp="filter executions for a given deployment by the deployment's id"
-                            )
+                            ),
+                            '--system-workflows': {
+                                'dest': 'include_system_workflows',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Include executions of system workflows.'
+                            },
                         },
                         'help': 'command for listing all executions of a deployment',
                         'handler': cfy.executions.ls
