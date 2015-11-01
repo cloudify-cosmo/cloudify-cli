@@ -58,10 +58,10 @@ function upload_to_s3() {
 
 # VERSION/PRERELEASE/BUILD must be exported as they are being read as an env var by the install wizard
 export VERSION="3.3.0"
-export PRERELEASE="m7"
-export BUILD="277"
-CORE_TAG_NAME="3.3m7"
-PLUGINS_TAG_NAME="1.3m7"
+export PRERELEASE="rc1"
+export BUILD="278"
+CORE_TAG_NAME="3.3rc1"
+PLUGINS_TAG_NAME="1.3rc1"
 
 AWS_ACCESS_KEY_ID=$1
 AWS_ACCESS_KEY=$2
