@@ -37,7 +37,7 @@ def use(management_ip, rest_port):
     else:
         protocol = constants.DEFAULT_PROTOCOL
     client = utils.get_rest_client(
-        manager_ip=management_ip, rest_port=rest_port, protocol=protocol,
+        rest_host=management_ip, rest_port=rest_port, rest_protocol=protocol,
         skip_version_check=True)
     try:
         # first check this server is available.
@@ -65,9 +65,9 @@ def use(management_ip, rest_port):
         wd_settings.set_management_server(management_ip)
         wd_settings.set_provider_context(provider_context)
         wd_settings.set_rest_port(rest_port)
-        wd_settings.set_protocol(protocol)
-        logger.info('Using manager {0} with port {1}'.format(
-            management_ip, rest_port))
+        wd_settings.set_rest_protocol(protocol)
+        logger.info('Using management server {0} with port {1}'
+                    .format(management_ip, rest_port))
 
     # delete the previous manager deployment if exists.
     bs.delete_workdir()

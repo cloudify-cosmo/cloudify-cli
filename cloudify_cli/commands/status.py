@@ -28,21 +28,22 @@ from cloudify_cli.logger import get_logger
 
 def status():
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    logger.info('Retrieving manager services status... [ip={0}]'.format(
-        management_ip))
+    rest_host = utils.get_rest_host()
+    logger.info('Retrieving management services status... [ip={0}]'
+                .format(rest_host))
 
-    client = utils.get_rest_client(management_ip)
+    client = utils.get_rest_client(rest_host)
     try:
         status_result = client.manager.get_status()
         maintenance_response = client.maintenance_mode.status()
     except UserUnauthorizedError:
         logger.info(
-            "Failed to query manager servicetatus: User is unauthorized")
+            "Failed to query manager services status: User is unauthorized")
         return False
-    except CloudifyClientError:
-        logger.info('REST service at manager {0} is not responding!'.format(
-            management_ip))
+    except CloudifyClientError as e:
+        logger.info('REST service at management server '
+                    '{0} is not responding! error: {1}'
+                    .format(rest_host, e))
         return False
 
     services = []

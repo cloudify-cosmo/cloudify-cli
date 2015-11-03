@@ -31,7 +31,7 @@ def teardown(force, ignore_deployments):
     _validate_force(force)
 
     try:
-        management_ip = utils.get_management_server_ip()
+        management_ip = utils.get_rest_host()
     except exceptions.CloudifyCliError:
         # management ip does not exist in the local context
         # this can mean one of two things:
@@ -62,7 +62,7 @@ def teardown(force, ignore_deployments):
         # deployments, unless the user explicitly specified it.
         _validate_deployments(ignore_deployments, management_ip)
 
-        # update local provider context since the server id might have
+        # update local provider context since the server ip might have
         # changed in case it has gone through a recovery process.
         _update_local_provider_context(management_ip)
 
