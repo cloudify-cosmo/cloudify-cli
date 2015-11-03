@@ -262,6 +262,37 @@ def read_manager_deployment_dump_if_needed(manager_deployment_dump):
     return True
 
 
+def _build_upload_provider_context_cmd(manager_node, update_context,
+                                       remote_provider_context_file):
+    security_config = manager_node.properties['security']
+    security_enabled = security_config.get('enabled', False)
+    protocol = constants.DEFAULT_REST_PORT
+    verify_cert = ''
+    credentials_arg = ''
+    if security_enabled:
+        username = security_config['admin_username']
+        password = security_config['admin_password']
+        credentials_arg = '-u {0}:{1}'.format(username, password)
+        ssl_config = security_config.get('ssl', {})
+        if ssl_config.get('enabled', False):
+            rest_port = constants.SECURED_REST_PORT
+            protocol = constants.SECURED_PROTOCOL
+            if not ssl_config.get('verify_certificate', True):
+                verify_cert = '-k'
+
+    # TODO: No need to use the curl workaround anymore
+    request_params = '?update={0}'.format(update_context)
+    upload_provider_context_cmd = \
+        'curl --fail {0} {1} -XPOST {2}://localhost:{3}/api/{4}/provider/context{5} -H ' \
+        '"Content-Type: application/json" -d @{6}'.format(
+            verify_cert, credentials_arg, protocol, rest_port,
+            constants.API_VERSION, request_params,
+            remote_provider_context_file)
+    return upload_provider_context_cmd
+
+
+# TODO: This whole thing can be treated as a standard remote call from now on.
+# TODO: No need to use curl
 def _upload_provider_context(remote_agents_private_key_path, fabric_env,
                              manager_node, manager_node_instance,
                              provider_context=None, update_context=False):
@@ -287,15 +318,11 @@ def _upload_provider_context(remote_agents_private_key_path, fabric_env,
         'context': provider_context
     }
     json.dump(full_provider_context, provider_context_json_file)
-
-    request_params = '?update={0}'.format(update_context)
-    upload_provider_context_cmd = \
-        'curl --fail -XPOST localhost:8101/api/{0}/provider/context{1} -H ' \
-        '"Content-Type: application/json" -d @{2}'.format(
-            constants.API_VERSION, request_params,
-            remote_provider_context_file)
+    upload_provider_context_cmd = _build_upload_provider_context_cmd(
+        manager_node, update_context, remote_provider_context_file)
 
     # placing provider context file in the manager's host
+    # TODO remove the printout of this command, the credentials are displayed!
     with fabric.settings(**fabric_env):
         fabric.put(provider_context_json_file, remote_provider_context_file)
         # might need always_use_pty=True
