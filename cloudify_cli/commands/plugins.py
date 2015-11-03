@@ -19,6 +19,7 @@ Handles all commands that start with 'cfy plugins'
 import tarfile
 
 from cloudify_cli import utils
+from cloudify_cli import messages
 from cloudify_cli.logger import get_logger
 from cloudify_cli.utils import print_table
 from cloudify_cli.exceptions import CloudifyCliError
@@ -53,27 +54,28 @@ def validate(plugin_path):
 
 def delete(plugin_id, force):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    rest_host = utils.get_rest_host()
+    client = utils.get_rest_client(rest_host)
 
-    logger.info('Deleting plugin {0}...'.format(plugin_id))
-    client.plugins.delete(plugin_id=plugin_id, force=force)
+    logger.info(messages.PLUGIN_DELETE.format(plugin_id, rest_host))
+    client.plugins.delete(plugin_id=plugin_id,
+                          force=force)
 
     logger.info('Plugin deleted')
 
 
 def upload(plugin_path):
-    server_ip = utils.get_management_server_ip()
-    utils.upload_plugin(plugin_path, server_ip,
-                        utils.get_rest_client(server_ip), validate)
+    rest_host = utils.get_rest_host()
+    utils.upload_plugin(plugin_path, utils.get_rest_client(rest_host),
+                        validate)
 
 
 def download(plugin_id,
              output):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    logger.info('Downloading plugin {0}...'.format(plugin_id))
-    client = utils.get_rest_client(management_ip)
+    rest_host = utils.get_rest_host()
+    logger.info(messages.DOWNLOADING_PLUGIN.format(plugin_id))
+    client = utils.get_rest_client(rest_host)
     target_file = client.plugins.download(plugin_id, output)
     logger.info('Plugin downloaded as {0}'.format(target_file))
 
@@ -84,10 +86,10 @@ fields = ['id', 'package_name', 'package_version', 'supported_platform',
 
 def get(plugin_id):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    rest_host = utils.get_rest_host()
+    client = utils.get_rest_client(rest_host)
 
-    logger.info('Retrieving plugin {0}...'.format(plugin_id))
+    logger.info(messages.PLUGINS_GET.format(plugin_id, rest_host))
     plugin = client.plugins.get(plugin_id, _include=fields)
 
     pt = utils.table(fields, data=[plugin])
@@ -96,12 +98,11 @@ def get(plugin_id):
 
 def ls(sort_by=None, descending=False):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    rest_host = utils.get_rest_host()
+    client = utils.get_rest_client(rest_host)
 
-    logger.info('Listing all plugins...')
-    plugins = client.plugins.list(
-        _include=fields, sort=sort_by, is_descending=descending)
+    logger.info(messages.PLUGINS_LIST.format(rest_host))
+    plugins = client.plugins.list(_include=fields)
 
     pt = utils.table(fields, data=plugins)
     print_table('Plugins:', pt)
