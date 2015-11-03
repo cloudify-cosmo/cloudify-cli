@@ -82,6 +82,7 @@ def bootstrap(keep_up,
                 install_plugins=install_plugins)
 
             manager_ip = details['manager_ip']
+
             provider_context = details['provider_context']
             with utils.update_wd_settings() as ws_settings:
                 ws_settings.set_management_server(manager_ip)
@@ -90,7 +91,7 @@ def bootstrap(keep_up,
                 ws_settings.set_management_port(details['manager_port'])
                 ws_settings.set_provider_context(provider_context)
                 ws_settings.set_rest_port(details['rest_port'])
-                ws_settings.set_protocol(details['protocol'])
+                ws_settings.set_rest_protocol(details['rest_protocol'])
 
             logger.info('Bootstrap complete')
             logger.info('Manager is up at {0}'.format(manager_ip))

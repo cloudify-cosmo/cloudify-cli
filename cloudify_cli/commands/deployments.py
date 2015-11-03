@@ -43,13 +43,15 @@ def _print_deployment_inputs(client, blueprint_id):
 
 def ls(blueprint_id, sort_by=None, descending=False):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    rest_host = utils.get_rest_host()
+    client = utils.get_rest_client(rest_host)
     if blueprint_id:
-        logger.info('Listing deployments for blueprint {0}...'.format(
-            blueprint_id))
+        logger.info("Listing deployments for blueprint: "
+                    "'{0}'... [manager={1}]"
+                    .format(blueprint_id, rest_host))
     else:
-        logger.info('Listing all deployments...')
+        logger.info('Listing all deployments...[manager={0}]'
+                    .format(rest_host))
     deployments = client.deployments.list(
         sort=sort_by, is_descending=descending)
     if blueprint_id:
@@ -131,12 +133,13 @@ def update(deployment_id,
 
 def create(blueprint_id, deployment_id, inputs):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
+    rest_host = utils.get_rest_host()
     inputs = utils.inputs_to_dict(inputs, 'inputs')
 
-    logger.info('Creating new deployment from blueprint {0}...'.format(
-        blueprint_id))
-    client = utils.get_rest_client(management_ip)
+    logger.info('Creating new deployment from blueprint {0} at '
+                'management server {1}'
+                .format(blueprint_id, rest_host))
+    client = utils.get_rest_client(rest_host)
 
     try:
         deployment = client.deployments.create(blueprint_id,
@@ -159,20 +162,22 @@ def create(blueprint_id, deployment_id, inputs):
 
 def delete(deployment_id, ignore_live_nodes):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    logger.info('Deleting deployment {0}...'.format(deployment_id))
-    client = utils.get_rest_client(management_ip)
+    rest_host = utils.get_rest_host()
+    logger.info('Deleting deployment {0} from management server {1}'
+                .format(deployment_id, rest_host))
+    client = utils.get_rest_client(rest_host)
     client.deployments.delete(deployment_id, ignore_live_nodes)
     logger.info("Deployment deleted")
 
 
 def outputs(deployment_id):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    rest_host = utils.get_rest_host()
+    client = utils.get_rest_client(rest_host)
 
-    logger.info('Retrieving outputs for deployment {0}...'.format(
-        deployment_id))
+    logger.info("Getting outputs for deployment: {0} [manager={1}]".format(
+        deployment_id, rest_host))
+
     dep = client.deployments.get(deployment_id, _include=['outputs'])
     outputs_def = dep.outputs
     response = client.deployments.outputs.get(deployment_id)
