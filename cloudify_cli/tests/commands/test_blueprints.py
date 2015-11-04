@@ -96,3 +96,60 @@ class BlueprintsTest(CliCommandTest):
                         '-p {0}/bad_blueprint/blueprint.yaml'
                         .format(BLUEPRINTS_DIR),
                         'Failed to validate blueprint')
+
+    def test_blueprint_inputs(self):
+
+        BLUEPRINT_ID = 'a-blueprint-id'
+        NAME = 'test_input'
+        TYPE = 'string'
+        DESCRIPTION = 'Test input.'
+
+        BLUEPRINT = {
+            'plan': {
+                'inputs': {
+                    NAME: {
+                        'type': TYPE,
+                        'description': DESCRIPTION
+                        # field 'default' intentionally omitted
+                    }
+                }
+            }
+        }
+
+        assertEqual = self.assertEqual
+
+        class RestClientMock(object):
+            class BlueprintsClientMock(object):
+                def __init__(self, blueprint_id, blueprint):
+                    self.blueprint_id = blueprint_id
+                    self.blueprint = blueprint
+
+                def get(self, blueprint_id):
+                    assertEqual(blueprint_id, self.blueprint_id)
+                    return self.blueprint
+
+            def __init__(self, blueprint_id, blueprint):
+                self.blueprints = self.BlueprintsClientMock(blueprint_id,
+                                                            blueprint)
+
+        def get_rest_client_mock(*args, **kwargs):
+            return RestClientMock(BLUEPRINT_ID, BLUEPRINT)
+
+        def table_mock(fields, data, *args, **kwargs):
+            self.assertEqual(len(data), 1)
+            input = data[0]
+            self.assertIn('name', input)
+            self.assertIn('type', input)
+            self.assertIn('default', input)
+            self.assertIn('description', input)
+
+            self.assertEqual(input['name'], NAME)
+            self.assertEqual(input['type'], TYPE)
+            self.assertEqual(input['default'], '-')
+            self.assertEqual(input['description'], DESCRIPTION)
+
+        with patch('cloudify_cli.utils.get_rest_client',
+                   get_rest_client_mock),\
+                patch('cloudify_cli.utils.table', table_mock):
+            cli_runner.run_cli('cfy blueprints inputs -b {0}'
+                               .format(BLUEPRINT_ID))

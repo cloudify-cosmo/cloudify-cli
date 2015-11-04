@@ -172,3 +172,24 @@ def get(blueprint_id):
 
     logger.info('Existing deployments:')
     logger.info('{0}\n'.format(json.dumps([d['id'] for d in deployments])))
+
+
+def inputs(blueprint_id):
+    logger = get_logger()
+    management_ip = utils.get_management_server_ip()
+    client = utils.get_rest_client(management_ip)
+    logger.info('Getting inputs for blueprint {0}... [manager={1}]'
+                .format(blueprint_id, management_ip))
+
+    blueprint = client.blueprints.get(blueprint_id)
+    inputs = blueprint['plan']['inputs']
+    data = [{'name': name,
+             'type': input.get('type', '-'),
+             'default': input.get('default', '-'),
+             'description': input.get('description', '-')}
+            for name, input in inputs.iteritems()]
+
+    pt = utils.table(['name', 'type', 'default', 'description'],
+                     data=data)
+
+    print_table('Inputs:', pt)
