@@ -27,13 +27,20 @@ CLOUDIFY_MANAGER_PK_PATH_ENVAR = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
 def recover(force,
             task_retries,
             task_retry_interval,
-            task_thread_pool_size):
+            task_thread_pool_size,
+            snapshot_path):
     logger = get_logger()
     if not force:
         msg = ("This action requires additional "
                "confirmation. Add the '-f' or '--force' "
                "flags to your command if you are certain "
                "this command should be executed.")
+        raise exceptions.CloudifyCliError(msg)
+
+    if not snapshot_path:
+        msg = ("This action requires a valid "
+               "snapshot path. Add the '-s' or '--snapshot-path' "
+               "flag to your command")
         raise exceptions.CloudifyCliError(msg)
 
     if CLOUDIFY_MANAGER_PK_PATH_ENVAR in os.environ:
@@ -82,5 +89,6 @@ def recover(force,
         provider_context.get('cloudify', {}).get('manager_deployment'))
     bs.recover(task_retries=task_retries,
                task_retry_interval=task_retry_interval,
-               task_thread_pool_size=task_thread_pool_size)
+               task_thread_pool_size=task_thread_pool_size,
+               snapshot_path=snapshot_path)
     logger.info('Successfully recovered manager deployment')

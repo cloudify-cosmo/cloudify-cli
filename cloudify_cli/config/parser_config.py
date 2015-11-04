@@ -926,6 +926,13 @@ def parser_config():
                         'default': 1,
                         'type': int,
                         'help': 'The size of the thread pool size to execute tasks in'
+                    },
+                    '-s,--snapshot-path': {
+                        'metavar': 'SNAPSHOT_PATH',
+                        'dest': 'snapshot_path',
+                        'default': None,
+                        'type': argparse.FileType(),
+                        'help': 'Path to the snapshot that will be restored'
                     }
                 },
                 'handler': cfy.recover
