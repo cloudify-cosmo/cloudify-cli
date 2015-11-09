@@ -18,13 +18,17 @@ import os
 import shutil
 import base64
 import tarfile
+import tempfile
+import urlparse
+import json
 from io import BytesIO
 from StringIO import StringIO
+
 import fabric.api as fabric
-import json
+import requests
 
 from cloudify.workflows import local
-
+from cloudify_cli.logger import get_logger
 from cloudify_cli import common
 from cloudify_cli import constants
 from cloudify_cli import utils
@@ -34,6 +38,7 @@ from cloudify_cli.bootstrap.tasks import (
     MANAGER_USER_RUNTIME_PROPERTY,
     MANAGER_KEY_PATH_RUNTIME_PROPERTY,
     REST_PORT)
+from cloudify_cli.exceptions import CloudifyBootstrapError
 
 
 def _workdir():
@@ -98,6 +103,11 @@ def bootstrap(blueprint_path,
               task_retry_interval=30,
               task_thread_pool_size=1,
               install_plugins=False):
+
+    def get_protocol(rest_port):
+        return constants.SECURED_PROTOCOL \
+            if str(rest_port) == str(constants.SECURED_REST_PORT) \
+            else constants.DEFAULT_PROTOCOL
 
     storage = local.FileStorage(storage_dir=_workdir())
     try:
@@ -188,9 +198,10 @@ def bootstrap(blueprint_path,
             manager_node_instance.runtime_properties[
                 'manager_provider_context']
 
-    protocol = constants.SECURED_PROTOCOL \
-        if str(rest_port) == str(constants.SECURED_REST_PORT) \
-        else constants.DEFAULT_PROTOCOL
+        _upload_resources(manager_node, fabric_env, manager_ip, rest_port,
+                          get_protocol(rest_port))
+
+    protocol = get_protocol(rest_port)
 
     return {
         'provider_name': 'provider',
@@ -322,3 +333,125 @@ def _copy_agent_key(agent_local_key_path, agent_remote_key_path,
     with fabric.settings(**fabric_env):
         fabric.put(agent_local_key_path, agent_remote_key_path, use_sudo=True)
     return agent_remote_key_path
+
+
+def _upload_resources(manager_node, fabric_env, management_ip, rest_port,
+                      protocol):
+    """
+    Uploads resources supplied in the manager blueprint. uses both fabric for
+    the dsl_resources, and the upload plugins mechanism for plugin_resources.
+
+    :param manager_node: The manager node from which to retrieve the
+    properties from.
+    :param fabric_env: fabric env in order to upload the dsl_resources.
+    :param management_ip: used to retrieve rest client for the the manager.
+    :param rest_port: used to retrieve rest client for the the manager.
+    :param protocol: used to retrieve rest client for the the manager.
+    """
+
+    upload_resources = \
+        manager_node.properties['cloudify'].get('upload_resources', {})
+
+    # upload the plugin using CLI upload command
+    rest_client = utils.get_rest_client(management_ip, rest_port, protocol)
+
+    # This import is necessary to prevent from utils importing plugins, which
+    # will cause a cyclic import. Another way is to forgo the validate part
+    from cloudify_cli.commands import plugins
+    temp_dir = tempfile.mkdtemp()
+    try:
+        for plugin_archive_source in \
+                upload_resources.get('plugin_resources', ()):
+            plugin_archive_path = \
+                _get_resource_into_dir(temp_dir, plugin_archive_source)
+            utils.upload_plugin(file(plugin_archive_path), management_ip,
+                                rest_client, plugins.validate)
+
+        # uploading dsl resources
+        remote_plugins_folder = '/opt/manager/resources/spec/'
+
+        for dsl_resource in upload_resources.get('dsl_resources', ()):
+
+            plugin_local_yaml_path = dsl_resource.get('source_path')
+            plugin_remote_yaml_path = dsl_resource.get('destination_path')
+
+            if not plugin_local_yaml_path or not plugin_remote_yaml_path:
+                missing_fields = []
+                if plugin_local_yaml_path is None:
+                    missing_fields.append('source_path')
+                if plugin_remote_yaml_path is None:
+                    missing_fields.append('destination_path')
+
+                raise \
+                    CloudifyBootstrapError('The following fields are missing: '
+                                           '{0}.'
+                                           .format(','.join(missing_fields)))
+
+            if plugin_remote_yaml_path.startswith('/'):
+                plugin_remote_yaml_path = plugin_remote_yaml_path[1:]
+
+            plugin_local_yaml_path = \
+                _get_resource_into_dir(temp_dir, plugin_local_yaml_path)
+
+            # copy plugin's yaml file to the manager's fileserver
+            remote_paths = plugin_remote_yaml_path.split('/')
+            with fabric.settings(**fabric_env):
+
+                # Creating a remote folder
+                if len(remote_paths) > 1:
+                    remote_plugin_folder_path = \
+                        os.path.join(remote_plugins_folder, *remote_paths[:-1])
+                    fabric.run('sudo mkdir -p {0}'.format(
+                        remote_plugin_folder_path))
+
+                # Uploading the plugin file
+                remote_plugin_path = os.path.join(remote_plugins_folder,
+                                                  *remote_paths)
+                fabric.put(plugin_local_yaml_path,
+                           remote_plugin_path, use_sudo=True)
+    finally:
+        shutil.rmtree(temp_dir)
+
+
+def _get_resource_into_dir(destination_dir, resource_source_path):
+    """
+    Copies a given path into the destination dir. The path could refer to
+    a local file or a remote url. NOTE: If two files shares the same name,
+    the old file would be overwritten.
+    :param destination_dir: The dir to write the resource into.
+    :param resource_source_path: A path to the resource.
+    :return: the path to the newly copied resource.
+    """
+    logger = get_logger()
+    temp_file_path = os.path.join(destination_dir,
+                                  resource_source_path.split('/')[-1])
+
+    parts = urlparse.urlsplit(resource_source_path)
+
+    if not parts.scheme or not parts.netloc:
+        if not os.path.isabs(resource_source_path):
+            resource_source_path = os.path.abspath(resource_source_path)
+        logger.info('Copying from {0} to {1}'
+                    .format(resource_source_path, temp_file_path))
+        shutil.copyfile(resource_source_path, temp_file_path)
+        logger.info('Done copying')
+    else:
+        try:
+            logger.info('Downloading from {0} to {1}'
+                        .format(resource_source_path, temp_file_path))
+            resource_request = requests.get(resource_source_path, stream=True)
+        except requests.exceptions.RequestException:
+            msg = '{0} is neither a valid local path nor a valid url' \
+                .format(resource_source_path)
+            raise CloudifyBootstrapError(msg)
+        if resource_request.status_code == 200:
+            with open(temp_file_path, 'wb') as f:
+                resource_request.raw.decode_content = True
+                shutil.copyfileobj(resource_request.raw, f)
+            resource_request.close()
+        else:
+            msg = "The url {0} doesn't exists".format(resource_source_path)
+            raise CloudifyBootstrapError(msg)
+        logger.info('Download complete')
+
+    return temp_file_path
