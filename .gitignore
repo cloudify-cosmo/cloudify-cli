@@ -60,3 +60,6 @@ docs/_build/
 .qbcache/
 
 .noseids
+
+# OS X
+.DS_Store

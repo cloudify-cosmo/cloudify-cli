@@ -4,6 +4,8 @@
 #define AppBuild GetEnv('BUILD')
 #define AppPublisher "GigaSpaces Technologies"
 #define AppURL "http://getcloudify.org/"
+#define PluginsTagName GetEnv('PLUGINS_TAG_NAME')
+#define CoreTagName GetEnv('CORE_TAG_NAME')
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -39,6 +41,12 @@ Source: "source\virtualenv\*"; Flags: dontcopy
 Source: "source\icons\Cloudify.ico"; DestDir: "{app}"
 Source: "source\blueprints\*"; DestDir: "{app}\cloudify-manager-blueprints-commercial"; Flags: recursesubdirs
 
+Source: "source\types\*"; DestDir: "{app}\cloudify\types"; Flags: recursesubdirs
+Source: "source\scripts\*"; DestDir: "{app}\cloudify\scripts"; Flags: recursesubdirs
+Source: "source\plugins\*"; DestDir: "{app}\cloudify\plugins"; Flags: recursesubdirs
+Source: "source\import_resolver.yaml"; DestDir: "{app}"; Flags: dontcopy
+
+
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop icon";
 
@@ -51,7 +59,7 @@ Type: "filesandordirs"; Name: "{app}"
 
 [Code]
 const
-  mainPackageName = 'cloudify';
+  mainPackagesName = 'cloudify cloudify-openstack-plugin cloudify-aws-plugin cloudify-softlayer-plugin cloudify-vsphere-plugin tosca-vcloud-plugin';
   //Registry key path
   RegPythonPath = 'SOFTWARE\Python\PythonCore\2.7\InstallPath';
   //Error messages
@@ -60,7 +68,9 @@ const
   errVenvMissing = 'Virtualenv was not found. Virtualenv is a python environment managment tool that is required to successfully install {#AppName}. Would you like to install it?';
   errUnexpected = 'Unexpected error. Check install logs';
   infoPythonUninstall = 'Cloudify uninstaller will not remove Python as a safety precaution. Uninstalling Python should be done independently by the user';
-
+  LF = #10;
+  CR = #13;
+  CRLF = CR + LF;
 
 function getPythonDir(): String;
 var
@@ -209,6 +219,7 @@ function runWheelsInstall(): Boolean;
 var
   PipArgs: String;
   ErrorCode: Integer;
+  PackagesToInstall: String;
 begin
   ExtractTemporaryFiles('*.whl');
 
@@ -217,13 +228,44 @@ begin
     Exit;
   end;
 
-  PipArgs := Expandconstant('/c set "VIRTUAL_ENV={app}" && set "PATH={app}\Scripts;%PATH%" && pip install --pre --use-wheel --no-index --find-links . --force-reinstall --ignore-installed ' + mainPackageName);
+  PipArgs := Expandconstant('/c set "VIRTUAL_ENV={app}" && set "PATH={app}\Scripts;%PATH%" && pip install --pre --use-wheel --no-index --find-links . --force-reinstall --ignore-installed ' + mainPackagesName);
   Exec(Expandconstant('{sys}\cmd.exe'), PipArgs, Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
 
   if Errorcode <> 0 then
     Result := False
   else
     Result := True;
+end;
+
+function updateConfigYaml(): Boolean;
+var
+  MappingStrings: TArrayOfString;
+  ConfigYamlPath: String;
+  Status: Boolean;
+  Index: Integer;
+begin
+  ConfigYamlPath := Expandconstant('{app}\Lib\site-packages\cloudify_cli\resources\config.yaml')
+  ExtractTemporaryFile('import_resolver.yaml');
+  Status := LoadStringsFromFile(ExpandConstant('{tmp}\import_resolver.yaml'), MappingStrings);
+
+  if not Status then
+  begin
+    Result := False;
+    Exit;
+  end;
+
+  for Index := 0 to GetArrayLength(MappingStrings) - 1 do
+  begin
+    // setting the path to cloudify dir path
+    StringChangeEx(MappingStrings[Index], 'CLOUDIFY_PATH', Expandconstant('{app}'), True);
+    // replacing the tags to a current one
+    StringChangeEx(MappingStrings[Index], 'CORE_TAG_NAME', ExpandConstant('{#CoreTagName}'), True);
+    StringChangeEx(MappingStrings[Index], 'PLUGINS_TAG_NAME', ExpandConstant('{#PluginsTagName}'), True);
+    // replacing the end line from linux to both windows and linux
+    StringChangeEx(MappingStrings[Index], LF, CRLF, False);
+  end;
+  Result := SaveStringsToFile(ConfigYamlPath, MappingStrings, True);
+
 end;
 
 
@@ -242,6 +284,11 @@ procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssInstall then begin
     if not runWheelsInstall then
+      RaiseException(errUnexpected);
+  end;
+
+  if CurStep = ssPostInstall then begin
+    if not updateConfigYaml then
       RaiseException(errUnexpected);
   end;
 end;
