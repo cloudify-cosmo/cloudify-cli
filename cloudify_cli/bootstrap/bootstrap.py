@@ -444,7 +444,7 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_port,
                                 rest_client, plugins.validate)
 
         # uploading dsl resources
-        remote_plugins_folder = '/opt/manager/resources/spec/'
+        remote_plugins_folder = '/opt/manager/resources/'
 
         for dsl_resource in upload_resources.get('dsl_resources', ()):
 
