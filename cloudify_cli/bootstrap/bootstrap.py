@@ -21,6 +21,7 @@ import tarfile
 import tempfile
 import urlparse
 import json
+import time
 from io import BytesIO
 from StringIO import StringIO
 
@@ -56,7 +57,7 @@ def delete_workdir():
         shutil.rmtree(workdir)
 
 
-def load_env(name='manager_configuration'):
+def load_env(name='manager'):
     storage = local.FileStorage(storage_dir=_workdir())
     return local.load_env(name=name,
                           storage=storage)
@@ -94,6 +95,37 @@ def bootstrap_validation(blueprint_path,
                 task_retries=task_retries,
                 task_retry_interval=task_retry_interval,
                 task_thread_pool_size=task_thread_pool_size)
+
+
+def _handle_provider_context(agent_remote_key_path,
+                             fabric_env,
+                             manager_node,
+                             manager_node_instance):
+    if 'provider_context' in manager_node_instance.runtime_properties:
+        provider_context = manager_node_instance.runtime_properties[
+            'provider_context']
+    else:
+        provider_context = None
+    _upload_provider_context(
+        agent_remote_key_path, fabric_env, manager_node,
+        manager_node_instance, provider_context=provider_context)
+    provider_context = \
+        manager_node_instance.runtime_properties[
+            'manager_provider_context']
+    return provider_context
+
+
+def _handle_agent_key_file(fabric_env, manager_node):
+    # these should be changed to allow receiving the
+    # paths from the blueprint.
+    agent_remote_key_path = manager_node.properties.get(
+        'agent_remote_key_path', constants.AGENT_REMOTE_KEY_PATH)
+    agent_local_key_path = manager_node.properties.get(
+        'agent_local_key_path')
+    agent_remote_key_path = _copy_agent_key(agent_local_key_path,
+                                            agent_remote_key_path,
+                                            fabric_env)
+    return agent_remote_key_path
 
 
 def bootstrap(blueprint_path,
@@ -169,34 +201,20 @@ def bootstrap(blueprint_path,
         manager_key_path = manager_node.properties['ssh_key_filename']
         rest_port = manager_node_instance.runtime_properties[REST_PORT]
 
-        # these should be changed to allow receiving the
-        # paths from the blueprint.
-        agent_remote_key_path = manager_node.properties.get(
-            'agent_remote_key_path', constants.AGENT_REMOTE_KEY_PATH)
-        agent_local_key_path = manager_node.properties.get(
-            'agent_local_key_path')
         fabric_env = {
             "host_string": manager_ip,
             "user": manager_user,
             "key_filename": manager_key_path
         }
-        agent_remote_key_path = _copy_agent_key(agent_local_key_path,
-                                                agent_remote_key_path,
-                                                fabric_env)
 
-        if 'provider_context' in manager_node_instance.runtime_properties:
-            provider_context = manager_node_instance.runtime_properties[
-                'provider_context']
-        else:
-            provider_context = None
+        agent_remote_key_path = _handle_agent_key_file(fabric_env,
+                                                       manager_node)
 
-        _upload_provider_context(
-            agent_remote_key_path, fabric_env, manager_node,
-            manager_node_instance, provider_context=provider_context)
-
-        provider_context = \
-            manager_node_instance.runtime_properties[
-                'manager_provider_context']
+        provider_context = _handle_provider_context(
+            agent_remote_key_path=agent_remote_key_path,
+            fabric_env=fabric_env,
+            manager_node=manager_node,
+            manager_node_instance=manager_node_instance)
 
         _upload_resources(manager_node, fabric_env, manager_ip, rest_port,
                           get_protocol(rest_port))
@@ -228,7 +246,8 @@ def teardown(name='manager',
     shutil.rmtree(_workdir())
 
 
-def recover(name='manager',
+def recover(snapshot_path,
+            name='manager',
             task_retries=5,
             task_retry_interval=30,
             task_thread_pool_size=1):
@@ -241,6 +260,63 @@ def recover(name='manager',
                 task_retries=task_retries,
                 task_retry_interval=task_retry_interval,
                 task_thread_pool_size=task_thread_pool_size)
+
+    manager_ip = env.outputs()['manager_ip']
+    manager_node = env.storage.get_node('manager_configuration')
+    manager_node_instance = env.storage.get_node_instance(
+        manager_node_instance_id)
+    manager_user = manager_node.properties['ssh_user']
+    manager_key_path = manager_node.properties['ssh_key_filename']
+
+    fabric_env = {
+        "host_string": manager_ip,
+        "user": manager_user,
+        "key_filename": manager_key_path
+    }
+
+    agent_remote_key_path = _handle_agent_key_file(fabric_env,
+                                                   manager_node)
+
+    _handle_provider_context(
+        agent_remote_key_path=agent_remote_key_path,
+        fabric_env=fabric_env,
+        manager_node=manager_node,
+        manager_node_instance=manager_node_instance)
+
+    logger = get_logger()
+    client = utils.get_rest_client(manager_ip)
+    snapshot_id = 'restored-snapshot'
+    logger.info("Uploading snapshot '{0}' to "
+                "management server {1} as {2}"
+                .format(snapshot_path.name, manager_ip, snapshot_id))
+    client.snapshots.upload(snapshot_path.name, snapshot_id)
+
+    logger.info("Restoring snapshot '{0}'..."
+                .format(snapshot_id))
+    execution = client.snapshots.restore(snapshot_id, True)
+
+    # waiting for snapshot restoration
+    attempts = 5
+    start_time = time.time()
+    wait_time = 60 * 1
+    while client.executions.get(
+            execution.id).status not in execution.END_STATES:
+        if time.time() > start_time + wait_time:
+            if attempts == 0:
+                raise RuntimeError('Failed to restore snapshot '
+                                   'after {0} attempts'.format(attempts))
+            attempts -= 1
+            start_time = time.time()
+            wait_time *= 2
+            logger.info('Waiting {0} seconds for '
+                        'snapshot restoration'.format(wait_time))
+        time.sleep(5)
+    if execution.status == execution.FAILED:
+        raise RuntimeError('Failed to restore '
+                           'snapshot {0}'.format(snapshot_id))
+    if execution.status == execution.TERMINATED:
+        logger.info('Successfully restored snapshot {0}'.format(snapshot_id))
+    client.snapshots.delete(snapshot_id)
 
 
 # Temp workaround to allow teardown and recovery on different clients
