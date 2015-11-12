@@ -29,7 +29,7 @@ set -e
 [ ! -z $pip ] || curl --show-error --silent --retry 5 https://bootstrap.pypa.io/get-pip.py | python2.7 &&
 pip install setuptools==18.1
 pip install wheel==0.24.0
-yum -y install git python-devel gcc
+yum -y install git python-devel gcc libxslt-devel libxml2-devel
 curl http://cloudify-public-repositories.s3.amazonaws.com/cloudify-manager-blueprints/%{CORE_TAG_NAME}/cloudify-manager-blueprints.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz &&
 
 alias python=python2.7
@@ -47,6 +47,7 @@ pip wheel git+https://github.com/cloudify-cosmo/cloudify-script-plugin@%{PLUGINS
 pip wheel git+https://github.com/cloudify-cosmo/cloudify-fabric-plugin@%{PLUGINS_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
 pip wheel git+https://github.com/cloudify-cosmo/cloudify-openstack-plugin@%{PLUGINS_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
 pip wheel git+https://github.com/cloudify-cosmo/cloudify-aws-plugin@%{PLUGINS_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
+pip wheel git+https://github.com/cloudify-cosmo/tosca-vcloud-plugin@%{PLUGINS_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
 pip wheel git+https://%{GITHUB_USERNAME}:%{GITHUB_PASSWORD}@github.com/cloudify-cosmo/cloudify-vsphere-plugin@%{PLUGINS_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
 pip wheel git+https://%{GITHUB_USERNAME}:%{GITHUB_PASSWORD}@github.com/cloudify-cosmo/cloudify-softlayer-plugin@%{PLUGINS_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
 pip wheel git+https://github.com/cloudify-cosmo/cloudify-cli@%{CORE_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
@@ -63,6 +64,7 @@ mkdir -p %{buildroot}/cfy/cloudify/plugins/openstack-plugin &&
 mkdir -p %{buildroot}/cfy/cloudify/plugins/aws-plugin &&
 mkdir -p %{buildroot}/cfy/cloudify/plugins/vsphere-plugin &&
 mkdir -p %{buildroot}/cfy/cloudify/plugins/softlayer-plugin &&
+mkdir -p %{buildroot}/cfy/cloudify/plugins/tosca-vcloud-plugin &&
 
 # Copy LICENSE file
 cp /vagrant/LICENSE %{buildroot}/cfy/ &&
@@ -77,28 +79,27 @@ curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-script-plugin/%{P
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-diamond-plugin/%{PLUGINS_TAG_NAME}/plugin.yaml -o %{buildroot}/cfy/cloudify/plugins/diamond-plugin/plugin.yaml &&
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/%{PLUGINS_TAG_NAME}/plugin.yaml -o %{buildroot}/cfy/cloudify/plugins/openstack-plugin/plugin.yaml &&
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/%{PLUGINS_TAG_NAME}/plugin.yaml -o %{buildroot}/cfy/cloudify/plugins/aws-plugin/plugin.yaml &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/tosca-vcloud-plugin/%{PLUGINS_TAG_NAME}/plugin.yaml -o %{buildroot}/cfy/cloudify/plugins/tosca-vcloud-plugin/plugin.yaml &&
 
 
 # Clone and copy commercial plugin.yaml files to local plugins folder
 
-git clone https://%{GITHUB_USERNAME}:%{GITHUB_PASSWORD}@github.com/cloudify-cosmo/cloudify-vsphere-plugin.git /tmp/cloudify-vsphere-plugin
-cp /tmp/cloudify-vsphere-plugin/plugin.yaml %{buildroot}/cfy/cloudify/plugins/vsphere-plugin &&
-git clone https://%{GITHUB_USERNAME}:%{GITHUB_PASSWORD}@github.com/cloudify-cosmo/cloudify-softlayer-plugin.git /tmp/cloudify-softlayer-plugin
-cp /tmp/cloudify-softlayer-plugin/plugin.yaml %{buildroot}/cfy/cloudify/plugins/softlayer-plugin &&
+curl -L --user %{GITHUB_USERNAME}:%{GITHUB_PASSWORD} https://raw.githubusercontent.com/cloudify-cosmo/cloudify-vsphere-plugin/%{PLUGINS_TAG_NAME}/plugin.yaml -o %{buildroot}/cfy/cloudify/plugins/vsphere-plugin/plugin.yaml &&
+curl -L --user %{GITHUB_USERNAME}:%{GITHUB_PASSWORD} https://raw.githubusercontent.com/cloudify-cosmo/cloudify-softlayer-plugin/%{PLUGINS_TAG_NAME}/plugin.yaml -o %{buildroot}/cfy/cloudify/plugins/softlayer-plugin/plugin.yaml &&
 
 # Download types.yaml
 curl http://getcloudify.org.s3.amazonaws.com/spec/cloudify/%{CORE_TAG_NAME}/types.yaml -o %{buildroot}/cfy/cloudify/types/types.yaml &&
 
 # Download scripts to local scripts folder
 
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}//resources/rest-service/cloudify/fs/mkfs.sh -o %{buildroot}/cfy/cloudify/scripts/mkfs.sh
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}//resources/rest-service/cloudify/fs/fdisk.sh -o %{buildroot}/cfy/cloudify/scripts/fdisk.sh
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}//resources/rest-service/cloudify/fs/mount.sh -o %{buildroot}/cfy/cloudify/scripts/mount.sh
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}//resources/rest-service/cloudify/fs/unmount.sh -o %{buildroot}/cfy/cloudify/scripts/unmount.sh
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}//resources/rest-service/cloudify/policies/host_failure.clj -o %{buildroot}/cfy/cloudify/scripts/host_failure.clj
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}//resources/rest-service/cloudify/policies/threshold.clj -o %{buildroot}/cfy/cloudify/scripts/threshold.clj
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}//resources/rest-service/cloudify/policies/ewma_stabilized.clj -o %{buildroot}/cfy/cloudify/scripts/ewma_stabilized.clj
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}//resources/rest-service/cloudify/triggers/execute_workflow.clj -o %{buildroot}/cfy/cloudify/scripts/execute_workflow.clj
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}/resources/rest-service/cloudify/fs/mkfs.sh -o %{buildroot}/cfy/cloudify/scripts/mkfs.sh
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}/resources/rest-service/cloudify/fs/fdisk.sh -o %{buildroot}/cfy/cloudify/scripts/fdisk.sh
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}/resources/rest-service/cloudify/fs/mount.sh -o %{buildroot}/cfy/cloudify/scripts/mount.sh
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}/resources/rest-service/cloudify/fs/unmount.sh -o %{buildroot}/cfy/cloudify/scripts/unmount.sh
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}/resources/rest-service/cloudify/policies/host_failure.clj -o %{buildroot}/cfy/cloudify/scripts/host_failure.clj
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}/resources/rest-service/cloudify/policies/threshold.clj -o %{buildroot}/cfy/cloudify/scripts/threshold.clj
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}/resources/rest-service/cloudify/policies/ewma_stabilized.clj -o %{buildroot}/cfy/cloudify/scripts/ewma_stabilized.clj
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/%{CORE_TAG_NAME}/resources/rest-service/cloudify/triggers/execute_workflow.clj -o %{buildroot}/cfy/cloudify/scripts/execute_workflow.clj
 
 %pre
 %post
@@ -113,6 +114,7 @@ virtualenv /cfy/env &&
 /cfy/env/bin/pip install --use-wheel --no-index --find-links=/var/wheels/%{name} cloudify-fabric-plugin --pre &&
 /cfy/env/bin/pip install --use-wheel --no-index --find-links=/var/wheels/%{name} cloudify-openstack-plugin --pre &&
 /cfy/env/bin/pip install --use-wheel --no-index --find-links=/var/wheels/%{name} cloudify-aws-plugin --pre &&
+/cfy/env/bin/pip install --use-wheel --no-index --find-links=/var/wheels/%{name} cloudify-vcloud-plugin --pre &&
 
 # replace all https links at types.yaml to local paths for offline usage
 sed -i -e 's/https:\/\/raw\.githubusercontent\.com\/cloudify-cosmo\/cloudify-manager\/.*\/resources\/rest-service\/cloudify\/.*\//file:\/cfy\/cloudify\/scripts\//g' /cfy/cloudify/types/types.yaml &&
