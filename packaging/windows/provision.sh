@@ -58,7 +58,7 @@ function upload_to_s3() {
 
 # VERSION/PRERELEASE/BUILD must be exported as they are being read as an env var by the install wizard
 export VERSION="3.3.0"
-export PRERELEASE="None"
+export PRERELEASE="None" && [ "$PRERELEASE" == "None" ] && export PRERELEASE="ga"
 export BUILD="300"
 CORE_TAG_NAME="3.3"
 PLUGINS_TAG_NAME="1.3"
