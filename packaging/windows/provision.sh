@@ -21,7 +21,7 @@ function download_wheels() {
     https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=cloudify-fabric-plugin \
     https://github.com/cloudify-cosmo/cloudify-openstack-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=cloudify-openstack-plugin \
     https://github.com/cloudify-cosmo/cloudify-aws-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=cloudify-aws-plugin \
-    https://github.com/cloudify-cosmo/tosca-vcloud-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=tosca-vcloud-plugin \
+    https://github.com/cloudify-cosmo/tosca-vcloud-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=cloudify-vcloud-plugin \
     https://$GITHUB_USERNAME:$GITHUB_PASSWORD@github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=cloudify-vsphere-plugin \
     https://$GITHUB_USERNAME:$GITHUB_PASSWORD@github.com/cloudify-cosmo/cloudify-softlayer-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=cloudify-softlayer-plugin
 }
