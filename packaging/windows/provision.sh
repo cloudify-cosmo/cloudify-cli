@@ -9,9 +9,9 @@ function download_wheels() {
     GITHUB_USERNAME=$1
     GITHUB_PASSWORD=$2
 
+    mkdir -p packaging/source/wheels
     curl -LO https://pypi.python.org/packages/2.7/l/lxml/lxml-3.5.0.win32-py2.7.exe
     wheel convert lxml-3.5.0.win32-py2.7.exe --dest-dir packaging/source/wheels
-    pip install packaging/source/wheels/lxml*.whl
 
     pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels https://github.com/cloudify-cosmo/cloudify-cli/archive/$CORE_TAG_NAME.zip#egg=cloudify-cli \
     https://github.com/cloudify-cosmo/cloudify-rest-client/archive/$CORE_TAG_NAME.zip#egg=cloudify-rest-client \
