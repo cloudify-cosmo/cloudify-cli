@@ -16,7 +16,6 @@
 """
 Handles all commands that start with 'cfy plugins'
 """
-import os
 import tarfile
 
 from cloudify_cli import utils
@@ -37,7 +36,7 @@ def validate(plugin_path):
                                .format(plugin_path.name))
     with tarfile.open(plugin_path.name, 'r') as tar:
         tar_members = tar.getmembers()
-        package_json_path = os.path.join(tar_members[0].name, 'package.json')
+        package_json_path = '{0}/package.json'.format(tar_members[0].name)
         try:
             package_member = tar.getmember(package_json_path)
         except KeyError:

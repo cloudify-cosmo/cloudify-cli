@@ -486,7 +486,7 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_port,
                 fabric.put(plugin_local_yaml_path,
                            remote_plugin_path, use_sudo=True)
     finally:
-        shutil.rmtree(temp_dir)
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 def _get_resource_into_dir(destination_dir, resource_source_path):
