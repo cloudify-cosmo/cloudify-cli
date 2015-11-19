@@ -1,8 +1,4 @@
 machine:
-  environment: 
-    TOX_ENV: docs
-    TOX_ENV: flake8
-    TOX_ENV: py27
   python:
     version: 2.7.9
 
@@ -11,7 +7,8 @@ dependencies:
     - pip install tox
 test:
   override:
-    - tox -e $TOX_ENV
-
+    - tox -e docs
+    - tox -e flake8
+    - tox -e py27
 # notify:
 #   flowdock: 1f4ec6febcf1ac9b35ae6c1f0049471f
