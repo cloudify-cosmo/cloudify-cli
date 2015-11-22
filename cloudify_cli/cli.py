@@ -120,7 +120,7 @@ def register_command(subparsers, command_name, command):
         '-v', '--verbose',
         dest='verbosity',
         action='store_true',
-        help='A flag for setting verbose output'
+        help='Set verbose output'
     )
 
     # Add debug flag for each command
@@ -128,7 +128,7 @@ def register_command(subparsers, command_name, command):
         '--debug',
         dest='debug',
         action='store_true',
-        help='A flag for setting debug output'
+        help='Set debug output'
     )
 
     def command_cmd_handler(args):

@@ -273,7 +273,7 @@ def parser_config():
                                 'dest': 'include_metrics',
                                 'action': 'store_true',
                                 'default': False,
-                                'help': 'Specify this flag to include metrics data'
+                                'help': 'Include metrics data'
                                         'in the snapshot'
                             },
                             '--exclude-credentials': {
@@ -283,7 +283,7 @@ def parser_config():
                                 'help': 'Do not store credentials in snapshot'
                             }
                         },
-                        'help': 'command for creating a new snapshots',
+                        'help': 'Create a new snapshot',
                         'handler': cfy.snapshots.create
                     },
                     'upload': {
@@ -298,7 +298,7 @@ def parser_config():
                             },
                             '-s,--snapshot-id': argument_utils.remove_completer(snapshot_id_argument('The id of the snapshot'))
                         },
-                        'help': 'command for uploading a snapshot to the management server',
+                        'help': 'Upload a snapshot to the management server',
                         'handler': cfy.snapshots.upload
                     },
                     'download': {
@@ -312,19 +312,18 @@ def parser_config():
                                 'required': False
                             }
                         },
-                        'help': 'command for downloading a snapshot from the management server',
+                        'help': 'Download a snapshot from the management server',
                         'handler': cfy.snapshots.download
                     },
                     'list': {
-                        'help': 'command for listing all snapshots on the '
-                                'Manager',
+                        'help': 'List all snapshots on the manager',
                         'handler': cfy.snapshots.ls
                     },
                     'delete': {
                         'arguments': {
                             '-s,--snapshot-id': snapshot_id_argument('The id of the snapshot')
                         },
-                        'help': 'command for deleting a snapshot',
+                        'help': 'Delete a snapshot from the manager',
                         'handler': cfy.snapshots.delete
                     },
                     'restore': {
@@ -343,7 +342,7 @@ def parser_config():
                                 'help': 'Force restoring the snapshot on a dirty manager'
                             }
                         },
-                        'help': 'command for restoring manager to specific snapshot',
+                        'help': 'Restore manager state to a specific snapshot',
                         'handler': cfy.snapshots.restore
                     }
                 }
@@ -360,7 +359,7 @@ def parser_config():
                             '-l,--include-logs': {
                                 'dest': 'include_logs',
                                 'action': 'store_true',
-                                'help': 'A flag whether to include logs in returned events or not'
+                                'help': 'Include logs in returned events'
                             }
                         },
                         'help':'command for installing agents on deployments',
@@ -398,8 +397,8 @@ def parser_config():
                                 'dest': 'ignore_live_nodes',
                                 'action': 'store_true',
                                 'default': False,
-                                'help': 'A flag indicating whether or not to delete the deployment even '
-                                        'if there exist live nodes for it'
+                                'help': 'Delete the deployment even '
+                                        'if there are existing live nodes for it'
                             }
                         },
                         'help': 'command for deleting a deployment',
@@ -495,7 +494,7 @@ def parser_config():
                                 'dest': 'allow_custom_parameters',
                                 'action': 'store_true',
                                 'default': False,
-                                'help': 'A flag for allowing the passing of custom parameters ('
+                                'help': 'Allow the passing of custom parameters ('
                                         "parameters which were not defined in the workflow's schema in "
                                         'the blueprint) to the execution'
                             },
@@ -518,7 +517,7 @@ def parser_config():
                             '-l,--include-logs': {
                                 'dest': 'include_logs',
                                 'action': 'store_true',
-                                'help': 'A flag whether to include logs in returned events'
+                                'help': 'Include logs in returned events'
                             },
                             '-d,--deployment-id': deployment_id_argument(
                                 hlp='The deployment id')
@@ -535,7 +534,7 @@ def parser_config():
                                 'dest': 'force',
                                 'action': 'store_true',
                                 'default': False,
-                                'help': 'A flag indicating authorization to terminate the execution abruptly '
+                                'help': 'Terminate the execution abruptly, '
                                         'rather than request an orderly termination'
                             }
                         },
@@ -718,7 +717,7 @@ def parser_config():
                                 'dest': 'allow_custom_parameters',
                                 'action': 'store_true',
                                 'default': False,
-                                'help': 'A flag for allowing the passing of custom parameters ('
+                                'help': 'Allow the passing of custom parameters ('
                                         "parameters which were not defined in the workflow's schema in "
                                         'the blueprint) to the execution'
                             },
@@ -836,19 +835,19 @@ def parser_config():
                     '--keep-up-on-failure': {
                         'dest': 'keep_up',
                         'action': 'store_true',
-                        'help': 'A flag indicating that even if bootstrap fails,'
-                                ' the instance will remain running'
+                        'help': 'If the bootstrap fails,'
+                                ' the management server will remain running'
                     },
                     '--skip-validations': {
                         'dest': 'skip_validations',
                         'action': 'store_true',
-                        'help': 'A flag indicating that bootstrap will be run without,'
+                        'help': 'Run bootstrap without,'
                                 ' validating resources prior to bootstrapping the manager'
                     },
                     '--validate-only': {
                         'dest': 'validate_only',
                         'action': 'store_true',
-                        'help': 'A flag indicating that validations will run without,'
+                        'help': 'Run validations without'
                                 ' actually performing the bootstrap process.'
                     },
                     '--install-plugins': {
@@ -888,14 +887,14 @@ def parser_config():
                     '--ignore-deployments': {
                         'dest': 'ignore_deployments',
                         'action': 'store_true',
-                        'help': 'A flag indicating confirmation for teardown even if deployments'
+                        'help': 'Perform teardown even if deployments'
                                 'exist on the manager'
                     },
                     '-f,--force': {
                         'dest': 'force',
                         'action': 'store_true',
                         'default': False,
-                        'help': 'A flag indicating confirmation for the teardown request'
+                        'help': 'Confirmation for the teardown request'
                     }
                 },
                 'handler': cfy.teardown
@@ -908,8 +907,7 @@ def parser_config():
                         'dest': 'force',
                         'action': 'store_true',
                         'default': False,
-                        'help': 'A flag indicating confirmation for '
-                                'the recovery request'
+                        'help': 'Confirmation for the recovery request'
                     },
                     '--task-retries': {
                         'metavar': 'TASK_RETRIES',
@@ -968,7 +966,7 @@ def parser_config():
                     '-r,--reset-config': {
                         'dest': 'reset_config',
                         'action': 'store_true',
-                        'help': 'A flag indicating overwriting existing configuration is allowed'
+                        'help': 'Overwriting existing configuration is allowed'
                     },
                 },
                 'handler': cfy.init
