@@ -110,6 +110,7 @@ virtualenv /opt/cfy/env &&
 /opt/cfy/env/bin/pip install --use-wheel --no-index --find-links=/var/wheels/%{name} cloudify-openstack-plugin --pre &&
 /opt/cfy/env/bin/pip install --use-wheel --no-index --find-links=/var/wheels/%{name} cloudify-aws-plugin --pre &&
 /opt/cfy/env/bin/pip install --use-wheel --no-index --find-links=/var/wheels/%{name} cloudify-vcloud-plugin --pre &&
+/opt/cfy/env/bin/pip install --use-wheel --no-index --find-links=/var/wheels/%{name} cloudify-vsphere-plugin --pre &&
 
 # replace all https links at types.yaml to local paths for offline usage
 sed -i -e 's/https:\/\/raw\.githubusercontent\.com\/cloudify-cosmo\/cloudify-manager\/.*\/resources\/rest-service\/cloudify\/.*\//file:\/opt\/cfy\/cloudify\/scripts\//g' /opt/cfy/cloudify/types/types.yaml &&
