@@ -59,7 +59,7 @@ Type: "filesandordirs"; Name: "{app}"
 
 [Code]
 const
-  mainPackagesName = 'cloudify cloudify-openstack-plugin cloudify-aws-plugin cloudify-softlayer-plugin cloudify-vsphere-plugin cloudify-vcloud-plugin';
+  mainPackagesName = 'cloudify cloudify-fabric-plugin cloudify-openstack-plugin cloudify-aws-plugin cloudify-softlayer-plugin cloudify-vsphere-plugin cloudify-vcloud-plugin';
   //Registry key path
   RegPythonPath = 'SOFTWARE\Python\PythonCore\2.7\InstallPath';
   //Error messages
