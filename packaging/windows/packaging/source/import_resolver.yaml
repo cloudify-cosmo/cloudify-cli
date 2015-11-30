@@ -2,11 +2,11 @@
 import_resolver:
   parameters:
     rules:
-    - {'http://www.getcloudify.org/spec/cloudify/CORE_TAG_NAME/types.yaml': 'file:/CLOUDIFY_PATH/types/types.yaml'}
-    - {'http://www.getcloudify.org/spec/fabric-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/plugins/fabric-plugin'}
-    - {'http://www.getcloudify.org/spec/script-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/plugins/script-plugin'}
-    - {'http://www.getcloudify.org/spec/diamond-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/plugins/diamond-plugin'}
-    - {'http://www.getcloudify.org/spec/openstack-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/plugins/openstack-plugin'}
-    - {'http://www.getcloudify.org/spec/aws-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/plugins/aws-plugin'}
-    - {'http://www.getcloudify.org/spec/vsphere-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/plugins/vsphere-plugin'}
-    - {'http://www.getcloudify.org/spec/softlayer-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/plugins/softlayer-plugin'}
+    - {'http://www.getcloudify.org/spec/cloudify/CORE_TAG_NAME/types.yaml': 'file:/CLOUDIFY_PATH/cloudify/types/types.yaml'}
+    - {'http://www.getcloudify.org/spec/fabric-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/cloudify/plugins/fabric-plugin'}
+    - {'http://www.getcloudify.org/spec/script-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/cloudify/plugins/script-plugin'}
+    - {'http://www.getcloudify.org/spec/diamond-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/cloudify/plugins/diamond-plugin'}
+    - {'http://www.getcloudify.org/spec/openstack-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/cloudify/plugins/openstack-plugin'}
+    - {'http://www.getcloudify.org/spec/aws-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/cloudify/plugins/aws-plugin'}
+    - {'http://www.getcloudify.org/spec/vsphere-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/cloudify/plugins/vsphere-plugin'}
+    - {'http://www.getcloudify.org/spec/softlayer-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/cloudify/plugins/softlayer-plugin'}
