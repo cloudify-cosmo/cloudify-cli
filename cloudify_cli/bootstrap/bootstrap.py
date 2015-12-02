@@ -470,24 +470,19 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_port,
                 _get_resource_into_dir(temp_dir, plugin_local_yaml_path)
 
             # copy plugin's yaml file to the manager's fileserver
-            remote_paths = plugin_remote_yaml_path.split('/')
             with fabric.settings(**fabric_env):
 
-                # Creating a remote folder
-                if len(remote_paths) > 1:
-                    remote_plugin_folder_path = \
-                        os.path.normpath("{0}{1}".format(remote_plugins_folder,
-                                         os.path.dirname(
-                                             plugin_remote_yaml_path)))
-                    fabric.run('sudo mkdir -p {0}'.format(
-                        remote_plugin_folder_path))
+                remote_plugin_folder_path = \
+                    "{0}{1}".format(remote_plugins_folder,
+                                    os.path.dirname(plugin_remote_yaml_path))
+                fabric.run('sudo mkdir -p {0}'.format(
+                    remote_plugin_folder_path))
 
                 # Uploading the plugin file
-                remote_plugin_path = \
-                    os.path.normpath("{0}{1}".format(remote_plugins_folder,
-                                                     remote_paths))
-                fabric.put(plugin_local_yaml_path,
-                           remote_plugin_path, use_sudo=True)
+                remote_plugin_path = "{0}{1}".format(remote_plugins_folder,
+                                                     plugin_remote_yaml_path)
+                fabric.put(plugin_local_yaml_path, remote_plugin_path,
+                           use_sudo=True)
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
