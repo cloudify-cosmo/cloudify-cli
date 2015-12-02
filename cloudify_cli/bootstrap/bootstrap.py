@@ -476,13 +476,16 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_port,
                 # Creating a remote folder
                 if len(remote_paths) > 1:
                     remote_plugin_folder_path = \
-                        os.path.join(remote_plugins_folder, *remote_paths[:-1])
+                        os.path.normpath("{0}{1}".format(remote_plugins_folder,
+                                         os.path.dirname(
+                                             plugin_remote_yaml_path)))
                     fabric.run('sudo mkdir -p {0}'.format(
                         remote_plugin_folder_path))
 
                 # Uploading the plugin file
-                remote_plugin_path = os.path.join(remote_plugins_folder,
-                                                  *remote_paths)
+                remote_plugin_path = \
+                    os.path.normpath("{0}{1}".format(remote_plugins_folder,
+                                                     remote_paths))
                 fabric.put(plugin_local_yaml_path,
                            remote_plugin_path, use_sudo=True)
     finally:
