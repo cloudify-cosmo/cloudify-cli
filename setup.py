@@ -18,7 +18,7 @@ from setuptools import setup
 
 setup(
     name='cloudify',
-    version='3.3',
+    version='3.3.1',
     author='Gigaspaces',
     author_email='cosmo-admin@gigaspaces.com',
     packages=['cloudify_cli',
@@ -43,10 +43,10 @@ setup(
         ]
     },
     install_requires=[
-        'cloudify-plugins-common==3.3',
-        'cloudify-rest-client==3.3',
-        'cloudify-dsl-parser==3.3',
-        'cloudify-script-plugin==1.3',
+        'cloudify-plugins-common==3.3.1',
+        'cloudify-rest-client==3.3.1',
+        'cloudify-dsl-parser==3.3.1',
+        'cloudify-script-plugin==1.3.1',
         'pyyaml==3.10',
         'argcomplete==0.7.1',
         'fabric==1.8.3',
