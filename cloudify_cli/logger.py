@@ -19,10 +19,8 @@ import logging
 import logging.config
 import os
 import copy
-import warnings
 
 import colorama
-from requests.packages.urllib3.exceptions import InsecurePlatformWarning
 
 from cloudify import logs
 from cloudify_cli.config import logger_config
@@ -43,9 +41,6 @@ def all_loggers():
 
 
 def configure_loggers():
-
-    warnings.simplefilter(action='once', category=InsecurePlatformWarning)
-
     # first off, configure defaults
     # to enable the use of the logger
     # even before the init was executed.
