@@ -15,7 +15,6 @@
 import time
 from cloudify_cli.exceptions import ExecutionTimeoutError, \
     EventProcessingTimeoutError
-from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.executions import Execution
 
 
@@ -43,19 +42,12 @@ class ExecutionEventsFetcher(object):
         return len(events)
 
     def _fetch_events_batch(self):
-        try:
-            events, total = self._client.events.get(
-                self._execution_id,
-                from_event=self._from_event,
-                batch_size=self._batch_size,
-                include_logs=self._include_logs)
-            self._from_event += len(events)
-        except CloudifyClientError, e:
-            # A workaround in a case where events index was not yet created.
-            # This can happen if there were no events sent to logstash.
-            if e.status_code == 500 and 'IndexMissingException' in e.message:
-                return []
-            raise
+        events, _ = self._client.events.get(
+            self._execution_id,
+            from_event=self._from_event,
+            batch_size=self._batch_size,
+            include_logs=self._include_logs)
+        self._from_event += len(events)
         return events
 
     def fetch_and_process_events(self, events_handler=None, timeout=60):
