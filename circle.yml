@@ -16,13 +16,7 @@ test:
          cd cloudify-cosmo/$CIRCLE_PROJECT_REPONAME
          git checkout -qf $CIRCLE_SHA1
       fi    
-    - if [ -n "$CI_PULL_REQUEST" ]; then 
-         tox -e docs
-      fi 
-    - if [ -n "$CI_PULL_REQUEST" ]; then
-         tox -e flake8
-      fi 
-    - if [ -n "$CI_PULL_REQUEST" ]; then
-         tox -e py27
-      fi 
+    - if [ -n "$CI_PULL_REQUEST" ]; then tox -e docs fi 
+    - if [ -n "$CI_PULL_REQUEST" ]; then tox -e flake8 fi 
+    - if [ -n "$CI_PULL_REQUEST" ]; then tox -e py27 fi 
 
