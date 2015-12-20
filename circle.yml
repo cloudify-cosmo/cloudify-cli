@@ -10,5 +10,5 @@ test:
     - tox -e docs
     - tox -e flake8
     - tox -e py27
-# notify:
-#   flowdock: 1f4ec6febcf1ac9b35ae6c1f0049471f
+    - ./generate_pr.sh
+
