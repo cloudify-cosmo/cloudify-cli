@@ -22,8 +22,11 @@ import tempfile
 import urlparse
 import json
 import time
+import copy
+from functools import partial
 from io import BytesIO
 from StringIO import StringIO
+from retrying import retry
 
 import fabric.api as fabric
 import requests
@@ -40,6 +43,8 @@ from cloudify_cli.bootstrap.tasks import (
     MANAGER_KEY_PATH_RUNTIME_PROPERTY,
     REST_PORT)
 from cloudify_cli.exceptions import CloudifyBootstrapError
+from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify.exceptions import RecoverableError
 
 
 def _workdir():
@@ -217,7 +222,8 @@ def bootstrap(blueprint_path,
             manager_node_instance=manager_node_instance)
 
         _upload_resources(manager_node, fabric_env, manager_ip, rest_port,
-                          get_protocol(rest_port))
+                          get_protocol(rest_port), task_retries,
+                          task_retry_interval)
 
     protocol = get_protocol(rest_port)
 
@@ -412,7 +418,7 @@ def _copy_agent_key(agent_local_key_path, agent_remote_key_path,
 
 
 def _upload_resources(manager_node, fabric_env, management_ip, rest_port,
-                      protocol):
+                      protocol, retries, wait_interval):
     """
     Uploads resources supplied in the manager blueprint. uses both fabric for
     the dsl_resources, and the upload plugins mechanism for plugin_resources.
@@ -428,66 +434,119 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_port,
     upload_resources = \
         manager_node.properties['cloudify'].get('upload_resources', {})
 
-    # upload the plugin using CLI upload command
     rest_client = utils.get_rest_client(management_ip, rest_port, protocol)
-
-    # This import is necessary to prevent from utils importing plugins, which
-    # will cause a cyclic import. Another way is to forgo the validate part
-    from cloudify_cli.commands import plugins
     temp_dir = tempfile.mkdtemp()
     try:
-        for plugin_archive_source in \
-                upload_resources.get('plugin_resources', ()):
-            plugin_archive_path = \
-                _get_resource_into_dir(temp_dir, plugin_archive_source)
-            utils.upload_plugin(file(plugin_archive_path), management_ip,
-                                rest_client, plugins.validate)
-
-        # uploading dsl resources
-        remote_plugins_folder = '/opt/manager/resources/'
-
-        for dsl_resource in upload_resources.get('dsl_resources', ()):
-
-            plugin_local_yaml_path = dsl_resource.get('source_path')
-            plugin_remote_yaml_path = dsl_resource.get('destination_path')
-
-            if not plugin_local_yaml_path or not plugin_remote_yaml_path:
-                missing_fields = []
-                if plugin_local_yaml_path is None:
-                    missing_fields.append('source_path')
-                if plugin_remote_yaml_path is None:
-                    missing_fields.append('destination_path')
-
-                raise \
-                    CloudifyBootstrapError('The following fields are missing: '
-                                           '{0}.'
-                                           .format(','.join(missing_fields)))
-
-            if plugin_remote_yaml_path.startswith('/'):
-                plugin_remote_yaml_path = plugin_remote_yaml_path[1:]
-
-            plugin_local_yaml_path = \
-                _get_resource_into_dir(temp_dir, plugin_local_yaml_path)
-
-            # copy plugin's yaml file to the manager's fileserver
-            with fabric.settings(**fabric_env):
-
-                remote_plugin_folder_path = \
-                    "{0}{1}".format(remote_plugins_folder,
-                                    os.path.dirname(plugin_remote_yaml_path))
-                fabric.run('sudo mkdir -p {0}'.format(
-                    remote_plugin_folder_path))
-
-                # Uploading the plugin file
-                remote_plugin_path = "{0}{1}".format(remote_plugins_folder,
-                                                     plugin_remote_yaml_path)
-                fabric.put(plugin_local_yaml_path, remote_plugin_path,
-                           use_sudo=True)
+        _upload_plugins(upload_resources.get('plugin_resources', ()), temp_dir,
+                        management_ip, rest_client, retries, wait_interval)
+        _upload_dsl_resources(upload_resources.get('dsl_resources', ()),
+                              temp_dir, fabric_env, retries, wait_interval)
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-def _get_resource_into_dir(destination_dir, resource_source_path):
+def _upload_plugins(plugin_resources, temp_dir, management_ip, rest_client,
+                    retries, wait_interval):
+    """
+    Uploads plugins to the manager.
+
+    :param temp_dir:
+    :param management_ip: used to retrieve rest client for the the manager.
+    :param rest_client: The rest client to the manager.
+    :param retries: number of retries per resource download (and upload to
+    mgr).
+    :param wait_interval: interval between download (and upload
+    to manager) retries.
+    :return:
+    """
+    # This import is necessary to prevent from utils importing plugins, which
+    # will cause a cyclic import. Another way is to forgo the validate part
+    from cloudify_cli.commands import plugins
+
+    internal_error_msg = 'internal_server_error'
+
+    def is_internal_error_error(exception):
+        return all([isinstance(exception, CloudifyClientError),
+                    exception.status_code == 500,
+                    internal_error_msg in exception.error_code])
+
+    @retry(wait_fixed=wait_interval*1000,
+           stop_func=partial(_stop_retries, retries, wait_interval),
+           retry_on_exception=is_internal_error_error)
+    def upload_plugin(plugin_path):
+        utils.upload_plugin(file(plugin_path), management_ip, rest_client,
+                            plugins.validate)
+
+    for plugin_source_path in plugin_resources:
+        plugin_local_path = \
+            _get_resource_into_dir(temp_dir, plugin_source_path,
+                                   retries)
+
+        upload_plugin(plugin_local_path)
+
+
+def _upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
+                          wait_interval):
+    """
+    Uploads dsl resources to the manager.
+
+    :param dsl_resources: all of the dsl_resources.
+    :param temp_dir: the dir to push the resources to.
+    :param fabric_env: fabric env in order to upload the dsl_resources.
+    :param retries: number of retries per resource download.
+    :param wait_interval: interval between download retries.
+    :return:
+    """
+    logger = get_logger()
+    remote_plugins_folder = '/opt/manager/resources/'
+
+    @retry(wait_fixed=wait_interval*1000,
+           stop_func=partial(_stop_retries, retries, wait_interval),
+           retry_on_exception=lambda e: isinstance(e, RecoverableError))
+    def upload_dsl_resource(local_path, remote_path):
+        remote_dir = os.path.dirname(remote_path)
+        logger.info('Uploading resources from {0} to {1}'
+                    .format(local_path, remote_dir))
+        fabric.run('sudo mkdir -p {0}'.format(remote_dir))
+
+        fabric.put(local_path, remote_path, use_sudo=True)
+
+    for dsl_resource in dsl_resources:
+        source_plugin_yaml_path = dsl_resource.get('source_path')
+        destination_plugin_yaml_path = dsl_resource.get('destination_path')
+
+        if not source_plugin_yaml_path or not destination_plugin_yaml_path:
+            missing_fields = []
+            if source_plugin_yaml_path is None:
+                missing_fields.append('source_path')
+            if destination_plugin_yaml_path is None:
+                missing_fields.append('destination_path')
+
+            raise CloudifyBootstrapError(
+                'The following fields are missing: {0}.'
+                .format(','.join(missing_fields)))
+
+        if destination_plugin_yaml_path.startswith('/'):
+            destination_plugin_yaml_path = destination_plugin_yaml_path[1:]
+
+        local_plugin_yaml_path = \
+            _get_resource_into_dir(temp_dir, source_plugin_yaml_path,
+                                   retries)
+
+        fab_env = copy.deepcopy(fabric_env)
+        fab_env['abort_exception'] = RecoverableError
+
+        with fabric.settings(**fab_env):
+
+            remote_plugin_yaml_file_path = \
+                "{0}{1}".format(remote_plugins_folder,
+                                destination_plugin_yaml_path)
+            upload_dsl_resource(local_path=local_plugin_yaml_path,
+                                remote_path=remote_plugin_yaml_file_path)
+
+
+def _get_resource_into_dir(destination_dir, resource_source_path, retries,
+                           wait_interval=5, timeout=30):
     """
     Copies a given path into the destination dir. The path could refer to
     a local file or a remote url. NOTE: If two files shares the same name,
@@ -502,6 +561,30 @@ def _get_resource_into_dir(destination_dir, resource_source_path):
 
     parts = urlparse.urlsplit(resource_source_path)
 
+    @retry(wait_fixed=wait_interval*1000,
+           stop_func=partial(_stop_retries, retries, wait_interval),
+           retry_on_exception=lambda e: isinstance(e, requests.Timeout))
+    def download_resource(source_path, dest_path):
+        try:
+            resource_request = requests.get(source_path, stream=True,
+                                            timeout=timeout)
+            if resource_request.status_code == 200:
+                with open(dest_path, 'wb') as f:
+                    resource_request.raw.decode_content = True
+                    shutil.copyfileobj(resource_request.raw, f)
+                resource_request.close()
+                logger.info('Download complete')
+                return dest_path
+            else:
+                msg = "The resource {0} failed to download. Error {1}." \
+                    .format(source_path,
+                            resource_request.status_code)
+                raise CloudifyBootstrapError(msg)
+        except requests.RequestException:
+            msg = '{0} is neither a valid local path nor a valid url' \
+                .format(source_path)
+            raise CloudifyBootstrapError(msg)
+
     if not parts.scheme or not parts.netloc:
         if not os.path.isabs(resource_source_path):
             resource_source_path = os.path.abspath(resource_source_path)
@@ -510,22 +593,26 @@ def _get_resource_into_dir(destination_dir, resource_source_path):
         shutil.copyfile(resource_source_path, temp_file_path)
         logger.info('Done copying')
     else:
-        try:
-            logger.info('Downloading from {0} to {1}'
-                        .format(resource_source_path, temp_file_path))
-            resource_request = requests.get(resource_source_path, stream=True)
-        except requests.exceptions.RequestException:
-            msg = '{0} is neither a valid local path nor a valid url' \
-                .format(resource_source_path)
-            raise CloudifyBootstrapError(msg)
-        if resource_request.status_code == 200:
-            with open(temp_file_path, 'wb') as f:
-                resource_request.raw.decode_content = True
-                shutil.copyfileobj(resource_request.raw, f)
-            resource_request.close()
-        else:
-            msg = "The url {0} doesn't exists".format(resource_source_path)
-            raise CloudifyBootstrapError(msg)
-        logger.info('Download complete')
+        logger.info('Downloading from {0} to {1}'
+                    .format(resource_source_path, temp_file_path))
 
-    return temp_file_path
+        return download_resource(source_path=resource_source_path,
+                                 dest_path=temp_file_path)
+
+
+def _stop_retries(retries, wait_interval, attempt, *args, **kwargs):
+    """
+    A wrapper function which enables logging for the retry mechanism.
+    :param retries: Total number of retries.
+    :param wait_interval: wait time between attempts.
+    :param self: will be used by the retry decorator.
+    :param attempt: will be used by the retry decorator.
+    :param args: any args passed by the decorator.
+    :param kwargs: any kwargs passed by the decorator.
+    :return: True if to continue the retries, False o/w.
+    """
+    logger = get_logger()
+    logger.info('Attempt {0} out of {1} failed. '
+                'Waiting for {2} seconds and trying again...'
+                .format(attempt, retries, wait_interval))
+    return attempt >= retries
