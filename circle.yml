@@ -13,5 +13,3 @@ test:
         parallel: true
     - case $CIRCLE_NODE_INDEX in 0) .tox -e flake8 ;; esac:
         parallel: true
-#
-#
