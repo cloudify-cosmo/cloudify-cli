@@ -7,8 +7,9 @@ dependencies:
     - pip install tox
 test:
   override:
-    - tox -e docs
-    - tox -e flake8
-    - tox -e py27
-# notify:
-#   flowdock: 1f4ec6febcf1ac9b35ae6c1f0049471f
+    - case $CIRCLE_NODE_INDEX in 0) .tox -e py27 ;; 1) ./generate_pr.sh ;; esac:
+        parallel: true
+    - case $CIRCLE_NODE_INDEX in 0) .tox -e docs ;; esac:
+        parallel: true
+    - case $CIRCLE_NODE_INDEX in 0) .tox -e flake8 ;; esac:
+        parallel: true
