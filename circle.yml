@@ -2,14 +2,25 @@ machine:
   python:
     version: 2.7.9
 
+checkout:
+  override:
+    - >
+      if [ -n "$CI_PULL_REQUEST" ]; then
+        PR_ID=${CI_PULL_REQUEST##*/}
+        git clone --depth=50 --branch=$CIRCLE_BRANCH  https://github.com/cloudify-cosmo/$CIRCLE_PROJECT_REPONAME.git cloudify-cosmo/$CIRCLE_PROJECT_REPONAME
+        cd cloudify-cosmo/$CIRCLE_PROJECT_REPONAME
+        git fetch origin +refs/pull/$PR_ID/merge:
+        git checkout -qf FETCH_HEAD
+      fi
+
 dependencies:
   override:
     - pip install tox
 test:
   override:
-    - case $CIRCLE_NODE_INDEX in 0) tox -e py27 ;; 1) ./generate_pr.sh ;; esac:
-        parallel: true
     - case $CIRCLE_NODE_INDEX in 0) tox -e docs ;; esac:
         parallel: true
     - case $CIRCLE_NODE_INDEX in 0) tox -e flake8 ;; esac:
+        parallel: true
+    - case $CIRCLE_NODE_INDEX in 0) tox -e py27 ;; 1) ./generate_pr.sh ;; esac:
         parallel: true
