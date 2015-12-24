@@ -22,5 +22,5 @@ test:
         parallel: true
     - case $CIRCLE_NODE_INDEX in 0) tox -e flake8 ;; esac:
         parallel: true
-    - case $CIRCLE_NODE_INDEX in 0) tox -e py27 ;; 1) ./generate_pr.sh ;; esac:
+    - case $CIRCLE_NODE_INDEX in 0) tox -e py27 ;; 1) ./circleci-pr-test.sh ;; esac:
         parallel: true
