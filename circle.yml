@@ -1,7 +1,6 @@
 checkout:
   post:
     - >
-      set -x
       if [ -n "$CI_PULL_REQUEST" ]; then
         PR_ID=${CI_PULL_REQUEST##*/}
         git fetch origin +refs/pull/$PR_ID/merge:
