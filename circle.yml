@@ -12,11 +12,9 @@ checkout:
 machine:
   python:
     version: 2.7.9
-
 dependencies:
   override:
     - pip install tox
-
 test:
   override:
     - case $CIRCLE_NODE_INDEX in 0) tox -e docs ;; esac:
