@@ -109,10 +109,10 @@ function update_remote_to_local_links() {
 }
 
 # VERSION/PRERELEASE/BUILD/CORE_TAG_NAME/PLUGINS_TAG_NAME must be exported as they are being read as an env var by the install wizard
-export VERSION="3.3.0"
-export PRERELEASE="ga"
-export BUILD="300"
-export CORE_TAG_NAME="3.3"
+export VERSION="3.4.0"
+export PRERELEASE="m1"
+export BUILD="390"
+export CORE_TAG_NAME="3.4m1"
 export PLUGINS_TAG_NAME="1.3"
 
 GITHUB_USERNAME=$1
