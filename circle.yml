@@ -1,0 +1,23 @@
+checkout:
+  post:
+    - >
+      if [ -n "$CI_PULL_REQUEST" ]; then
+        PR_ID=${CI_PULL_REQUEST##*/}
+        git fetch origin +refs/pull/$PR_ID/merge:
+        git checkout -qf FETCH_HEAD
+      fi
+
+machine:
+  python:
+    version: 2.7.9
+dependencies:
+  override:
+    - pip install tox
+test:
+  override:
+    - case $CIRCLE_NODE_INDEX in 0) tox -e docs ;; esac:
+        parallel: true
+    - case $CIRCLE_NODE_INDEX in 0) tox -e flake8 ;; esac:
+        parallel: true
+    - case $CIRCLE_NODE_INDEX in 0) tox -e py27 ;; esac:
+        parallel: true
