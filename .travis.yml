@@ -7,6 +7,7 @@ env:
   - TOX_ENV=flake8
   - TOX_ENV=py27
 install:
+  - pip install virtualenv --upgrade
   - pip install tox
 script:
   - tox -e $TOX_ENV

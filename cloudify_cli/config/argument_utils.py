@@ -33,3 +33,9 @@ def make_required(argument):
     argument_copy = copy.copy(argument)
     argument_copy['required'] = True
     return argument_copy
+
+
+def remove_type(argument):
+    argument_copy = copy.copy(argument)
+    del argument_copy['type']
+    return argument_copy

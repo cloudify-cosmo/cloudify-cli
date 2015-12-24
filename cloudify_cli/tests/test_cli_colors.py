@@ -14,14 +14,11 @@
 # limitations under the License.
 ############
 
-import os
 import unittest
-import tempfile
 
 import mock
-import yaml
 
-from cloudify_cli import utils, logger
+from cloudify_cli import logger
 from cloudify_cli.colorful_event import ColorfulEvent
 from cloudify import logs
 
@@ -29,30 +26,8 @@ from cloudify import logs
 @mock.patch('cloudify_cli.utils.is_initialized', lambda: True)
 class TestCLIColors(unittest.TestCase):
 
-    def setUp(self):
-        self.config_file_path = tempfile.mkstemp()[1]
-
-        with open(self.config_file_path, 'w') as f:
-            yaml.dump({'colors': True}, f)
-
-        patcher = mock.patch('cloudify_cli.utils.get_configuration_path',
-                             lambda: self.config_file_path)
-        self.addCleanup(patcher.stop)
-        patcher.start()
-
-    def tearDown(self):
-        os.remove(self.config_file_path)
-
-    def test_colors_configuration(self):
-        self.assertEquals(True, utils.is_use_colors())
-
-    def test_missing_colors_configuration(self):
-        # when colors configuration is missing, default should be false
-        with open(self.config_file_path, 'w') as f:
-            yaml.dump({}, f)
-        self.assertEquals(False, utils.is_use_colors())
-
     @mock.patch('cloudify_cli.logger._configure_from_file', mock.MagicMock())
+    @mock.patch('cloudify_cli.utils.is_use_colors', lambda: True)
     def test_configure_colors_for_events_and_logs(self):
         self.assertNotEquals(ColorfulEvent, logs.EVENT_CLASS)
 

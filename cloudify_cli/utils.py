@@ -20,6 +20,10 @@ import pkgutil
 import sys
 import tempfile
 import getpass
+import shutil
+import string
+import random
+import errno
 from contextlib import contextmanager
 
 import yaml
@@ -168,6 +172,13 @@ def is_initialized():
 
 
 def get_init_path():
+    """
+    Returns the path of the .cloudify dir
+
+    search in each directory up the cwd directory tree for the existence of the
+    Cloudify settings directory (`.cloudify`).
+    :return: if we found it, return it's path. else, return None
+    """
     current_lookup_dir = get_cwd()
     while True:
 
@@ -208,7 +219,7 @@ def dump_cloudify_working_dir_settings(cosmo_wd_settings=None, update=False):
         cosmo_wd_settings = CloudifyWorkingDirectorySettings()
     if update:
         # locate existing file
-        # this will raise an error if the file doesnt exist.
+        # this will raise an error if the file doesn't exist.
         target_file_path = get_context_path()
     else:
 
@@ -231,6 +242,14 @@ def is_use_colors():
 
     config = CloudifyConfig()
     return config.colors
+
+
+def is_auto_generate_ids():
+    if not is_initialized():
+        return False
+
+    config = CloudifyConfig()
+    return config.auto_generate_ids
 
 
 def get_import_resolver():
@@ -484,6 +503,24 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
         self._protocol = protocol
 
 
+def remove_if_exists(path):
+
+    try:
+        if os.path.isfile(path):
+            os.remove(path)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+
+    except OSError as e:
+        if e.errno != errno.ENOENT:  # errno.ENOENT = no such file or directory
+            raise  # re-raise exception if a different error occurred
+
+
+def generate_random_string(size=6,
+                           chars=string.ascii_uppercase + string.digits):
+    return ''.join(random.choice(chars) for _ in range(size))
+
+
 def delete_cloudify_working_dir_settings():
     target_file_path = os.path.join(
         get_cwd(), constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
@@ -514,6 +551,10 @@ class CloudifyConfig(object):
     @property
     def colors(self):
         return self._config.get('colors', False)
+
+    @property
+    def auto_generate_ids(self):
+        return self._config.get('auto_generate_ids', False)
 
     @property
     def logging(self):

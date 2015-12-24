@@ -20,11 +20,14 @@
 # flake8: noqa
 
 from cloudify_cli.commands import dev as dev_module
+from cloudify_cli.commands import install as install_module
 
 # import cfy actions
 from cloudify_cli.commands.version import VersionAction as version
 
 # import cfy direct commands
+from cloudify_cli.commands.install import install
+from cloudify_cli.commands.uninstall import uninstall
 from cloudify_cli.commands.dev import dev
 from cloudify_cli.commands.bootstrap import bootstrap
 from cloudify_cli.commands.teardown import teardown

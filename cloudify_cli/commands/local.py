@@ -14,7 +14,7 @@
 #    * limitations under the License.
 
 """
-Handles 'cfy local'
+Handles all commands that start with 'cfy local'
 """
 
 import json
@@ -27,15 +27,75 @@ from cloudify_cli import common
 from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
 from cloudify_cli.commands import init as cfy_init
+from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
+from cloudify_cli.constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
+from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
+from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW
 
 
 _NAME = 'local'
 _STORAGE_DIR_NAME = 'local-storage'
 
 
+def install(blueprint_path, inputs, install_plugins, workflow_id, parameters,
+            allow_custom_parameters, task_retries, task_retry_interval,
+            task_thread_pool_size):
+
+    # if no blueprint path was supplied, set it to a default value
+    if not blueprint_path:
+        blueprint_path = DEFAULT_BLUEPRINT_PATH
+
+    # If no inputs were supplied, and there is a file named inputs.yaml in
+    # the cwd, use it as the inputs file
+    if not inputs:
+        if os.path.isfile(
+                os.path.join(utils.get_cwd(),
+                             DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)):
+
+            inputs = DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
+
+    init(blueprint_path=blueprint_path,
+         inputs=inputs,
+         install_plugins=install_plugins)
+
+    # if no workflow was supplied, execute the `install` workflow
+    if not workflow_id:
+        workflow_id = DEFAULT_INSTALL_WORKFLOW
+
+    execute(workflow_id=workflow_id,
+            parameters=parameters,
+            allow_custom_parameters=allow_custom_parameters,
+            task_retries=task_retries,
+            task_retry_interval=task_retry_interval,
+            task_thread_pool_size=task_thread_pool_size)
+
+
+def uninstall(workflow_id, parameters, allow_custom_parameters, task_retries,
+              task_retry_interval, task_thread_pool_size):
+
+    # if no workflow was supplied, execute the `uninstall` workflow
+    if not workflow_id:
+        workflow_id = DEFAULT_UNINSTALL_WORKFLOW
+
+    execute(workflow_id=workflow_id,
+            parameters=parameters,
+            allow_custom_parameters=allow_custom_parameters,
+            task_retries=task_retries,
+            task_retry_interval=task_retry_interval,
+            task_thread_pool_size=task_thread_pool_size)
+
+    # Remove the local-storage dir
+    utils.remove_if_exists(_storage_dir())
+
+    # Note that although `local install` possibly creates a `.cloudify` dir in
+    # addition to the creation of the local storage dir, `local uninstall`
+    # does not remove the .cloudify dir.
+
+
+# The 'overshadowing' of the `install_plugins` parameter is totally fine
 def init(blueprint_path,
          inputs,
-         install_plugins_):
+         install_plugins):
     if os.path.isdir(_storage_dir()):
         shutil.rmtree(_storage_dir())
 
@@ -47,7 +107,7 @@ def init(blueprint_path,
             name=_NAME,
             inputs=inputs,
             storage=_storage(),
-            install_plugins=install_plugins_,
+            install_plugins=install_plugins,
             resolver=utils.get_import_resolver()
         )
     except ImportError as e:
