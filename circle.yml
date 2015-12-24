@@ -1,9 +1,5 @@
-machine:
-  python:
-    version: 2.7.9
-
 checkout:
-  override:
+  post:
     - >
       if [ -n "$CI_PULL_REQUEST" ]; then
         PR_ID=${CI_PULL_REQUEST##*/}
@@ -13,9 +9,14 @@ checkout:
         git checkout -qf FETCH_HEAD
       fi
 
+machine:
+  python:
+    version: 2.7.9
+
 dependencies:
   override:
     - pip install tox
+
 test:
   override:
     - case $CIRCLE_NODE_INDEX in 0) tox -e docs ;; esac:
