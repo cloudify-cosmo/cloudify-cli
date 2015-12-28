@@ -29,7 +29,7 @@ set -e
 pip install setuptools==18.1
 pip install wheel==0.24.0
 yum -y install git python-devel gcc libxslt-devel libxml2-devel
-curl http://cloudify-public-repositories.s3.amazonaws.com/cloudify-manager-blueprints/%{CORE_TAG_NAME}/cloudify-manager-blueprints.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz &&
+curl https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/%{CORE_TAG_NAME}.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz &&
 
 alias python=python2.7
 

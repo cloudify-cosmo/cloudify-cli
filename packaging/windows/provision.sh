@@ -44,7 +44,7 @@ function download_resources() {
         curl -LO https://dl.dropboxusercontent.com/u/407576/cfy-win-cli-package-resources/virtualenv/virtualenv-12.1.1-py2.py3-none-any.whl
     popd
     pushd packaging/source/blueprints
-        curl --fail http://cloudify-public-repositories.s3.amazonaws.com/cloudify-manager-blueprints/$CORE_TAG_NAME/cloudify-manager-blueprints.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
+        curl --fail https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/%{CORE_TAG_NAME}.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
         tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1
     popd
 
