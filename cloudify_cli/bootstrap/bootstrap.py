@@ -434,19 +434,26 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_port,
     upload_resources = \
         manager_node.properties['cloudify'].get('upload_resources', {})
 
+    params = upload_resources.get('parameters', {})
+    fetch_timeout = params.get('fetch_timeout') or 30
+
     rest_client = utils.get_rest_client(management_ip, rest_port, protocol)
+
+    # Every resource is first moved/downloaded to this temp dir.
     temp_dir = tempfile.mkdtemp()
     try:
         _upload_plugins(upload_resources.get('plugin_resources', ()), temp_dir,
-                        management_ip, rest_client, retries, wait_interval)
+                        management_ip, rest_client, retries, wait_interval,
+                        fetch_timeout)
         _upload_dsl_resources(upload_resources.get('dsl_resources', ()),
-                              temp_dir, fabric_env, retries, wait_interval)
+                              temp_dir, fabric_env, retries, wait_interval,
+                              fetch_timeout)
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 def _upload_plugins(plugin_resources, temp_dir, management_ip, rest_client,
-                    retries, wait_interval):
+                    retries, wait_interval, timeout):
     """
     Uploads plugins to the manager.
 
@@ -457,6 +464,7 @@ def _upload_plugins(plugin_resources, temp_dir, management_ip, rest_client,
     mgr).
     :param wait_interval: interval between download (and upload
     to manager) retries.
+    :param timeout: timeout for uploading a plugin.
     :return:
     """
     # This import is necessary to prevent from utils importing plugins, which
@@ -465,14 +473,21 @@ def _upload_plugins(plugin_resources, temp_dir, management_ip, rest_client,
 
     internal_error_msg = 'internal_server_error'
 
-    def is_internal_error_error(exception):
-        return all([isinstance(exception, CloudifyClientError),
-                    exception.status_code == 500,
-                    internal_error_msg in exception.error_code])
+    def is_internal_error(exception):
+        return isinstance(exception, CloudifyClientError) and \
+            all([exception.status_code == 500,
+                 internal_error_msg in exception.error_code])
+
+    def is_network_error(exception):
+        return isinstance(exception, (requests.Timeout, IOError))
+
+    def is_error(exception):
+        return any(filter(lambda func: func(exception), [is_internal_error,
+                                                         is_network_error]))
 
     @retry(wait_fixed=wait_interval*1000,
            stop_func=partial(_stop_retries, retries, wait_interval),
-           retry_on_exception=is_internal_error_error)
+           retry_on_exception=is_error)
     def upload_plugin(plugin_path):
         utils.upload_plugin(file(plugin_path), management_ip, rest_client,
                             plugins.validate)
@@ -480,13 +495,13 @@ def _upload_plugins(plugin_resources, temp_dir, management_ip, rest_client,
     for plugin_source_path in plugin_resources:
         plugin_local_path = \
             _get_resource_into_dir(temp_dir, plugin_source_path,
-                                   retries)
+                                   retries, wait_interval, timeout)
 
         upload_plugin(plugin_local_path)
 
 
 def _upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
-                          wait_interval):
+                          wait_interval, timeout):
     """
     Uploads dsl resources to the manager.
 
@@ -495,6 +510,7 @@ def _upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
     :param fabric_env: fabric env in order to upload the dsl_resources.
     :param retries: number of retries per resource download.
     :param wait_interval: interval between download retries.
+    :param timeout: timeout for uploading a dsl resource.
     :return:
     """
     logger = get_logger()
@@ -531,7 +547,7 @@ def _upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
 
         local_plugin_yaml_path = \
             _get_resource_into_dir(temp_dir, source_plugin_yaml_path,
-                                   retries)
+                                   retries, wait_interval, timeout)
 
         fab_env = copy.deepcopy(fabric_env)
         fab_env['abort_exception'] = RecoverableError
@@ -546,7 +562,7 @@ def _upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
 
 
 def _get_resource_into_dir(destination_dir, resource_source_path, retries,
-                           wait_interval=5, timeout=30):
+                           wait_interval, timeout):
     """
     Copies a given path into the destination dir. The path could refer to
     a local file or a remote url. NOTE: If two files shares the same name,
@@ -615,4 +631,4 @@ def _stop_retries(retries, wait_interval, attempt, *args, **kwargs):
     logger.info('Attempt {0} out of {1} failed. '
                 'Waiting for {2} seconds and trying again...'
                 .format(attempt, retries, wait_interval))
-    return attempt >= retries
+    return retries != -1 and attempt >= retries
