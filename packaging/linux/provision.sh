@@ -81,7 +81,7 @@ GITHUB_PASSWORD=$2
 
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
-AWS_S3_BUCKET_PATH="gigaspaces-repository-eu/org/cloudify3/${VERSION}/${PRERELEASE}-RELEASE"
+AWS_S3_BUCKET_PATH="gigaspaces-repository-eu/org/cloudify3/${VERSION}/${PRERELEASE}"
 
 echo "VERSION: ${VERSION}"
 echo "PRERELEASE: ${PRERELEASE}"
