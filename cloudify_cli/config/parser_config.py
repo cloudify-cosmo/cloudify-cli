@@ -96,7 +96,7 @@ def plugin_id_argument(hlp):
 
 def parser_config():
     return {
-        'description': 'Manages Cloudify in different Cloud Environments',
+        'description': 'Manages Cloudify in different cloud environments',
         'arguments': {
             '--version': {
                 'help': 'show version information and exit',
@@ -118,7 +118,7 @@ def parser_config():
                                 'completer': completion_utils.yaml_files_completer
                             }
                         },
-                        'help': 'command for uploading a plugin to the management server',
+                        'help': 'Command for uploading a plugin to the management server',
                         'handler': cfy.plugins.upload
                     },
                     'get': {
@@ -160,7 +160,7 @@ def parser_config():
                 }
             },
             'blueprints': {
-                'help': "Manages Cloudify's Blueprints",
+                'help': "Manages Cloudify's blueprints",
                 'sub_commands': {
                     'upload': {
                         'arguments': {
@@ -174,7 +174,7 @@ def parser_config():
                             },
                             '-b,--blueprint-id': argument_utils.remove_completer(blueprint_id_argument())
                         },
-                        'help': 'command for uploading a blueprint to the management server',
+                        'help': 'Command for uploading a blueprint to the management server',
                         'handler': cfy.blueprints.upload
                     },
                     'publish-archive': {
@@ -198,7 +198,7 @@ def parser_config():
                             },
                             '-b,--blueprint-id': argument_utils.remove_completer(blueprint_id_argument())
                         },
-                        'help': 'command for publishing a blueprint '
+                        'help': 'Command for publishing a blueprint '
                                 'archive from a path or URL to the '
                                 'management server',
                         'handler': cfy.blueprints.publish_archive
@@ -214,11 +214,11 @@ def parser_config():
                                 'required': False
                             }
                         },
-                        'help': 'command for downloading a blueprint from the management server',
+                        'help': 'Command for downloading a blueprint from the management server',
                         'handler': cfy.blueprints.download
                     },
                     'list': {
-                        'help': 'command for listing all blueprints on the '
+                        'help': 'Command for listing all blueprints on the '
                                 'Manager',
                         'handler': cfy.blueprints.ls
                     },
@@ -226,7 +226,7 @@ def parser_config():
                         'arguments': {
                             '-b,--blueprint-id': blueprint_id_argument()
                         },
-                        'help': 'command for deleting a blueprint',
+                        'help': 'Command for deleting a blueprint',
                         'handler': cfy.blueprints.delete
                     },
                     'validate': {
@@ -240,21 +240,21 @@ def parser_config():
                                 'completer': completion_utils.yaml_files_completer
                             }
                         },
-                        'help': 'command for validating a blueprint',
+                        'help': 'Command for validating a blueprint',
                         'handler': cfy.blueprints.validate
                     },
                     'get': {
                         'arguments': {
                             '-b,--blueprint-id': blueprint_id_argument()
                         },
-                        'help': 'command for getting a blueprint by its id',
+                        'help': 'Command for getting a blueprint by its id',
                         'handler': cfy.blueprints.get
                     },
                     'inputs': {
                         'arguments': {
                             '-b,--blueprint-id': blueprint_id_argument()
                         },
-                        'help': 'command for listing all available blueprint inputs',
+                        'help': 'Command for listing all available blueprint inputs',
                         'handler': cfy.blueprints.inputs
                     }
                 }
@@ -293,7 +293,7 @@ def parser_config():
                                 'dest': 'snapshot_path',
                                 'type': argparse.FileType(),
                                 'required': True,
-                                'help': "Path to the manager's snapshot file",
+                                'help': "Path to the Manager's snapshot file",
                                 'completer': completion_utils.yaml_files_completer
                             },
                             '-s,--snapshot-id': argument_utils.remove_completer(snapshot_id_argument('The id of the snapshot'))
@@ -316,14 +316,14 @@ def parser_config():
                         'handler': cfy.snapshots.download
                     },
                     'list': {
-                        'help': 'List all snapshots on the manager',
+                        'help': 'List all snapshots on the Manager',
                         'handler': cfy.snapshots.ls
                     },
                     'delete': {
                         'arguments': {
                             '-s,--snapshot-id': snapshot_id_argument('The id of the snapshot')
                         },
-                        'help': 'Delete a snapshot from the manager',
+                        'help': 'Delete a snapshot from the Manager',
                         'handler': cfy.snapshots.delete
                     },
                     'restore': {
@@ -339,16 +339,16 @@ def parser_config():
                                 'dest': 'force',
                                 'action': 'store_true',
                                 'default': False,
-                                'help': 'Force restoring the snapshot on a dirty manager'
+                                'help': 'Force restoring the snapshot on a dirty Manager'
                             }
                         },
-                        'help': 'Restore manager state to a specific snapshot',
+                        'help': 'Restore Manager state to a specific snapshot',
                         'handler': cfy.snapshots.restore
                     }
                 }
             },
             'agents': {
-                'help': "Manages Cloudify's Agents",
+                'help': "Manages Cloudify's agents",
                 'sub_commands': {
                     'install': {
                         'arguments': {
@@ -362,13 +362,13 @@ def parser_config():
                                 'help': 'Include logs in returned events'
                             }
                         },
-                        'help':'command for installing agents on deployments',
+                        'help': 'Command for installing agents on deployments',
                         'handler': cfy.agents.install
                     }
                 }
             },
             'deployments': {
-                'help': "Manages and Executes Cloudify's Deployments",
+                'help': "Manages and executes Cloudify's deployments",
                 'sub_commands': {
                     'create': {
                         'arguments': {
@@ -386,7 +386,7 @@ def parser_config():
                                         .format(FORMAT_INPUT_AS_YAML_OR_DICT)
                             }
                         },
-                        'help': 'command for creating a deployment of a blueprint',
+                        'help': 'Command for creating a deployment of a blueprint',
                         'handler': cfy.deployments.create
                     },
                     'delete': {
@@ -401,7 +401,7 @@ def parser_config():
                                         'if there are existing live nodes for it'
                             }
                         },
-                        'help': 'command for deleting a deployment',
+                        'help': 'Command for deleting a deployment',
                         'handler': cfy.deployments.delete
                     },
                     'list': {
@@ -410,7 +410,7 @@ def parser_config():
                                 blueprint_id_argument()
                             )
                         },
-                        'help': 'command for listing all deployments or all deployments'
+                        'help': 'Command for listing all deployments or all deployments'
                                 ' of a blueprint',
                         'handler': cfy.deployments.ls
                     },
@@ -420,7 +420,7 @@ def parser_config():
                                 hlp='The id of the deployment to get outputs for'
                             )
                         },
-                        'help': 'command for getting a specific deployment outputs',
+                        'help': 'Command for getting a specific deployment outputs',
                         'handler': cfy.deployments.outputs
                     }
                 }
@@ -442,16 +442,16 @@ def parser_config():
                                 'dest': 'tail',
                                 'action': 'store_true',
                                 'default': False,
-                                'help': 'tail the events of the specified execution until it ends'
+                                'help': 'Tail the events of the specified execution until it ends'
                             }
                         },
-                        'help': 'Displays Events for different executions',
+                        'help': 'Displays events for different executions',
                         'handler': cfy.events.ls
                     }
                 }
             },
             'executions': {
-                'help': "Manages Cloudify's Executions",
+                'help': "Manages Cloudify's executions",
                 'sub_commands': {
                     'get': {
                         'arguments': {
@@ -459,13 +459,13 @@ def parser_config():
                                 hlp='The id of the execution to get'
                             )
                         },
-                        'help': 'command for getting an execution by its id',
+                        'help': 'Command for getting an execution by its id',
                         'handler': cfy.executions.get
                     },
                     'list': {
                         'arguments': {
                             '-d,--deployment-id': deployment_id_argument(
-                                hlp="filter executions for a given deployment by the deployment's id"
+                                hlp="Filter executions for a given deployment by the deployment's id"
                             ),
                             '--system-workflows': {
                                 'dest': 'include_system_workflows',
@@ -474,7 +474,7 @@ def parser_config():
                                 'help': 'Include executions of system workflows.'
                             },
                         },
-                        'help': 'command for listing all executions of a deployment',
+                        'help': 'Command for listing all executions of a deployment',
                         'handler': cfy.executions.ls
                     },
                     'start': {
@@ -559,7 +559,7 @@ def parser_config():
                                 'help': 'Filter nodes for a given deployment according to the deployment ID'
                             }
                         },
-                        'help': 'command for getting a node by its ID',
+                        'help': 'Command for getting a node by its ID',
                         'handler': cfy.nodes.get
                     },
                     'list': {
@@ -608,7 +608,7 @@ def parser_config():
                 }
             },
             'workflows': {
-                'help': 'Manages Deployment Workflows',
+                'help': 'Manages deployment workflows',
                 'sub_commands': {
                     'get': {
                         'arguments': {
@@ -619,7 +619,7 @@ def parser_config():
                                 hlp='The id of the workflow to get'
                             )
                         },
-                        'help': 'command for getting a workflow by its name and deployment',
+                        'help': 'Command for getting a workflow by its name and deployment',
                         'handler': cfy.workflows.get
                     },
                     'list': {
@@ -628,7 +628,7 @@ def parser_config():
                                 hlp='The id of the deployment whose workflows to list'
                             )
                         },
-                        'help': 'command for listing workflows for a deployment',
+                        'help': 'Command for listing workflows for a deployment',
                         'handler': cfy.workflows.ls
                     }
                 }
@@ -677,7 +677,7 @@ def parser_config():
                         'handler': cfy.local.install_plugins
                     },
                     'create-requirements': {
-                        'help': 'Creates a PIP compliant requirements file for the given blueprint',
+                        'help': 'Creates a pip compliant requirements file for the given blueprint',
                         'arguments': {
                             '-p,--blueprint-path': {
                                 'dest': 'blueprint_path',
@@ -772,13 +772,13 @@ def parser_config():
                 'handler': cfy.status
             },
             'dev': {
-                'help': 'Executes fabric tasks on the management machine',
+                'help': 'Executes Fabric tasks on the management machine',
                 'arguments': {
                     '-t,--task': {
                         'metavar': 'TASK',
                         'type': str,
                         'dest': 'task',
-                        'help': 'name of fabric task to run',
+                        'help': 'Name of Fabric task to run',
                         'completer': completion_utils.dev_task_name_completer
                     },
                     '-a,--args': {
@@ -786,7 +786,7 @@ def parser_config():
                         'metavar': 'ARGS',
                         'dest': 'args',
                         'type': str,
-                        'help': 'arguments for the fabric task'
+                        'help': 'Arguments for the Fabric task'
                     },
                     '-p,--tasks-file': {
                         'dest': 'tasks_file',
@@ -841,8 +841,8 @@ def parser_config():
                     '--skip-validations': {
                         'dest': 'skip_validations',
                         'action': 'store_true',
-                        'help': 'Run bootstrap without,'
-                                ' validating resources prior to bootstrapping the manager'
+                        'help': 'Run bootstrap without'
+                                ' validating resources prior to bootstrapping the Manager'
                     },
                     '--validate-only': {
                         'dest': 'validate_only',
@@ -888,7 +888,7 @@ def parser_config():
                         'dest': 'ignore_deployments',
                         'action': 'store_true',
                         'help': 'Perform teardown even if deployments'
-                                'exist on the manager'
+                                'exist on the Manager'
                     },
                     '-f,--force': {
                         'dest': 'force',
