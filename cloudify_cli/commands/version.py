@@ -72,9 +72,11 @@ class VersionAction(argparse.Action):
     def _connected_to_manager(management_ip):
         port = utils.get_rest_port()
         try:
-            sock = socket.create_connection((management_ip, port), 5)
+            sock = socket.create_connection((str(management_ip), int(port)), 5)
             sock.close()
             return True
+        except ValueError:
+            return False
         except socket.error:
             return False
 
@@ -93,5 +95,5 @@ class VersionAction(argparse.Action):
                 prefix='Cloudify Manager ',
                 infix=' ',
                 suffix=' [ip={ip}]\n'.format(**rest_version_data))
-        parser.exit(message='{0}{1}'.format(cli_version,
-                                            rest_version))
+        print '{0}{1}'.format(cli_version, rest_version)
+        parser.exit()
