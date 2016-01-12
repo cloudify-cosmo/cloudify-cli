@@ -29,7 +29,7 @@ set -e
 pip install setuptools==18.1
 pip install wheel==0.24.0
 yum -y install git python-devel gcc libxslt-devel libxml2-devel
-curl https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/%{CORE_TAG_NAME}.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz &&
+curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/%{CORE_TAG_NAME}.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz &&
 
 alias python=python2.7
 
@@ -52,7 +52,7 @@ pip wheel git+https://github.com/cloudify-cosmo/cloudify-cli@%{CORE_TAG_NAME} --
 
 # Make directories
 
-mkdir -p %{buildroot}/opt/cfy/cloudify-manager-blueprints-commercial &&
+mkdir -p %{buildroot}/opt/cfy/cloudify-manager-blueprints &&
 mkdir -p %{buildroot}/opt/cfy/cloudify/types &&
 mkdir -p %{buildroot}/opt/cfy/cloudify/scripts &&
 mkdir -p %{buildroot}/opt/cfy/cloudify/plugins/fabric-plugin &&
@@ -67,7 +67,7 @@ mkdir -p %{buildroot}/opt/cfy/cloudify/plugins/tosca-vcloud-plugin &&
 cp /vagrant/LICENSE %{buildroot}/opt/cfy/ &&
 
 # Download manager-blueprints
-tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1 -C %{buildroot}/opt/cfy/cloudify-manager-blueprints-commercial &&
+tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1 -C %{buildroot}/opt/cfy/cloudify-manager-blueprints &&
 
 # Download plugin.yaml files to local plugins folder
 

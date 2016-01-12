@@ -101,10 +101,10 @@ if which yum; then
     else
         install_py27
     fi
-    build_rpm
+    build_rpm && rpm_result="success"
 fi
 
 # this should be used AFTER renaming the cli packages to contain versions.
 # cd /tmp/x86_64 && md5sum=$(md5sum *.rpm) && echo $md5sum | sudo tee ${md5sum##* }.md5 &&
-cd /tmp/x86_64 && md5sum=$(md5sum *.rpm) && echo $md5sum | sudo tee ${md5sum##* }.md5 &&
+[ "$rpm_result" == "success" ] && cd /tmp/x86_64 && md5sum=$(md5sum *.rpm) && echo $md5sum | sudo tee ${md5sum##* }.md5 &&
 [ -z ${AWS_ACCESS_KEY} ] || upload_to_s3
