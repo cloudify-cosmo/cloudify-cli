@@ -18,8 +18,7 @@ AppPublisher={#AppPublisher}
 AppPublisherURL={#AppURL}
 AppSupportURL={#AppURL}
 AppUpdatesURL={#AppURL}
-DefaultDirName={pf}\Cloudify
-DisableProgramGroupPage=yes
+DefaultDirName={sd}\Cloudify
 OutputBaseFilename=cloudify-windows-cli_{#AppVersion}-{#AppMilestone}-b{#AppBuild}
 Compression=lzma
 SolidCompression=yes
@@ -29,29 +28,29 @@ MinVersion=6.0
 SetupIconFile=source\icons\Cloudify.ico
 UninstallDisplayIcon={app}\Cloudify.ico
 OutputDir=output\
+DisableDirPage=auto
+DisableProgramGroupPage=yes
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "source\python\python.msi"; Flags: dontcopy nocompression
+Source: "source\python\*"; DestDir: "{app}\embedded" ;Flags: recursesubdirs
 Source: "source\wheels\*.whl"; Flags: dontcopy
-Source: "source\pip\*"; Flags: dontcopy
-Source: "source\virtualenv\*"; Flags: dontcopy
 Source: "source\icons\Cloudify.ico"; DestDir: "{app}"
 Source: "source\blueprints\*"; DestDir: "{app}\cloudify-manager-blueprints-commercial"; Flags: recursesubdirs
 
 Source: "source\types\*"; DestDir: "{app}\cloudify\types"; Flags: recursesubdirs
 Source: "source\scripts\*"; DestDir: "{app}\cloudify\scripts"; Flags: recursesubdirs
 Source: "source\plugins\*"; DestDir: "{app}\cloudify\plugins"; Flags: recursesubdirs
-Source: "source\import_resolver.yaml"; DestDir: "{app}"; Flags: dontcopy
+Source: "source\import_resolver.yaml"; Flags: dontcopy
 
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop icon";
 
 [Icons]
-Name: "{userdesktop}\Cloudify CLI"; Filename: "{cmd}"; Parameters: "/k ""{app}\Scripts\activate.bat"""; WorkingDir: "{app}"; IconFilename: "{app}\Cloudify.ico"; Tasks: "desktopicon";
+Name: "{userdesktop}\Cloudify CLI"; Filename: "{cmd}"; Parameters: "/k SET PATH=%PATH%;{app}\embedded\Scripts\"; WorkingDir: "{app}"; IconFilename: "{app}\Cloudify.ico"; Tasks: "desktopicon";
 
 [UninstallDelete]
 ;this is NOT recommended but in our case, no user data here
@@ -60,154 +59,20 @@ Type: "filesandordirs"; Name: "{app}"
 [Code]
 const
   mainPackagesName = 'cloudify cloudify-fabric-plugin cloudify-openstack-plugin cloudify-aws-plugin cloudify-softlayer-plugin cloudify-vsphere-plugin cloudify-vcloud-plugin';
-  //Registry key path
-  RegPythonPath = 'SOFTWARE\Python\PythonCore\2.7\InstallPath';
   //Error messages
-  errPythonMissing = 'Python installation was not found. In order to install {#AppName} you will need Python installed. Procceed to Python 2.7 installation?';
-  errPipMissing = 'Pip was not found. Pip is a package management tool that is required to successfully install {#AppName}. Would you like to install it?';
-  errVenvMissing = 'Virtualenv was not found. Virtualenv is a python environment managment tool that is required to successfully install {#AppName}. Would you like to install it?';
-  errUnexpected = 'Unexpected error. Check install logs';
-  infoPythonUninstall = 'Cloudify uninstaller will not remove Python as a safety precaution. Uninstalling Python should be done independently by the user';
+  errUnexpected = 'Unexpected error. Run setup with /LOG flag and check the logs for additional details.';
   LF = #10;
   CR = #13;
   CRLF = CR + LF;
-
-function getPythonDir(): String;
-var
-  InstallPath: String;
-begin
-  RegQueryStringValue(HKLM, RegPythonPath, '', InstallPath);
-  RegQueryStringValue(HKCU, RegPythonPath, '', InstallPath);
-  Result := InstallPath;
-end;
-
-
-function isPythonInstalled(): Boolean;
-begin
-  if getPythonDir <> '' then
-      Result := True
-  else
-      Result := False;
-end;
-
-
-function getPythonPath(): String;
-var
-  PythonPath: String;
-begin
-  if isPythonInstalled then begin
-    PythonPath := AddBackslash(getPythonDir) + 'python.exe';
-    if FileExists(PythonPath) then
-      Result := PythonPath
-  end;
-end;
-
-
-function runPythonSetup(): Boolean;
-var
-  PythonArgs: String;
-  InstallerPath: String;
-  ErrorCode: Integer;
-begin
-  ExtractTemporaryFile('python.msi');
-  InstallerPath := Expandconstant('{tmp}\python.msi');
-  PythonArgs := 'ADDDEFAULT=pip_feature';
-  if WizardSilent then
-    PythonArgs := PythonArgs + ' /qn';
-  ShellExec('', InstallerPath, PythonArgs, '', SW_SHOW, ewWaituntilterminated, ErrorCode);
-
-  if Errorcode <> 0 then
-    Result := False
-  else
-    Result := True;
-end;
-
-
-function getPipPath(): String;
-var
-  PipPath: String;
-begin
-  if isPythonInstalled then begin
-    PipPath := AddBackslash(getPythonDir) + 'Scripts\pip.exe';
-    if FileExists(PipPath) then
-      Result := PipPath
-  end;
-end;
-
-
-function isPipInstalled(): Boolean;
-begin
-  if getPipPath <> '' then
-      Result := True
-  else
-      Result := False;
-end;
-
 
 function runPipSetup(): Boolean;
 var
   GetPipArgs: String;
   ErrorCode: Integer;
 begin
-  if isPythonInstalled then begin
-    ExtractTemporaryFiles('*.whl');
-    ExtractTemporaryFile('get-pip.py');
-    GetPipArgs := 'get-pip.py --use-wheel --no-index --find-links .';
-    ShellExec('', getPythonPath, GetPipArgs, Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
-
-    if Errorcode <> 0 then
-      Result := False
-    else
-      Result := True;
-    end;
-end;
-
-
-function getVenvPath(): String;
-var
-  VenvPath: String;
-begin
-  if isPythonInstalled then begin
-    VenvPath := AddBackslash(getPythonDir) + 'Scripts\virtualenv.exe';
-    if FileExists(VenvPath) then
-      Result := VenvPath
-  end;
-end;
-
-
-function isVenvInstalled(): Boolean;
-begin
-  if getVenvPath <> '' then
-      Result := True
-  else
-      Result := False;
-end;
-
-
-function runVenvSetup(): Boolean;
-var
-  GetPipArgs: String;
-  ErrorCode: Integer;
-begin
-  if isPythonInstalled then begin
-    ExtractTemporaryFiles('*.whl');
-    GetPipArgs := 'install --use-wheel --no-index --find-links . virtualenv';
-    ShellExec('', getPipPath, GetPipArgs, Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
-
-    if Errorcode <> 0 then
-      Result := False
-    else
-      Result := True;
-    end;
-end;
-
-
-function runVenvInitialization(): Boolean;
-var
-  ErrorCode: Integer;
-begin
-  Exec(getVenvPath, Expandconstant('--clear "{app}"'), Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
-
+  GetPipArgs := '-m ensurepip';
+  Exec(Expandconstant('{app}\embedded\python.exe'), GetPipArgs, Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
+  Log('Installting pip return code: ' + IntToStr(ErrorCode));
   if Errorcode <> 0 then
     Result := False
   else
@@ -223,18 +88,15 @@ var
 begin
   ExtractTemporaryFiles('*.whl');
 
-  if not (isVenvInstalled and runVenvInitialization) then begin
-    Result := False;
-    Exit;
-  end;
+  PipArgs := 'install --pre --use-wheel --no-index --find-links . --force-reinstall --ignore-installed ' + mainPackagesName;
+  Exec(Expandconstant('{app}\embedded\Scripts\pip.exe'), PipArgs, Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
+  Log('Installting wheels return code: ' + IntToStr(ErrorCode));
 
-  PipArgs := Expandconstant('/c set "VIRTUAL_ENV={app}" && set "PATH={app}\Scripts;%PATH%" && pip install --pre --use-wheel --no-index --find-links . --force-reinstall --ignore-installed ' + mainPackagesName);
-  Exec(Expandconstant('{sys}\cmd.exe'), PipArgs, Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
-
-  if Errorcode <> 0 then
-    Result := False
+  //Pip seems to return errorcode 2 when it's not clean install
+  if (Errorcode = 0) or (Errorcode = 2) then
+    Result := True
   else
-    Result := True;
+    Result := False;
 end;
 
 function updateConfigYaml(): Boolean;
@@ -244,7 +106,7 @@ var
   Status: Boolean;
   Index: Integer;
 begin
-  ConfigYamlPath := Expandconstant('{app}\Lib\site-packages\cloudify_cli\resources\config.yaml')
+  ConfigYamlPath := Expandconstant('{app}\embedded\Lib\site-packages\cloudify_cli\resources\config.yaml')
   ExtractTemporaryFile('import_resolver.yaml');
   Status := LoadStringsFromFile(ExpandConstant('{tmp}\import_resolver.yaml'), MappingStrings);
 
@@ -264,82 +126,17 @@ begin
     // replacing the end line from linux to both windows and linux
     StringChangeEx(MappingStrings[Index], LF, CRLF, False);
   end;
+  Log('Saving new config: ' + ConfigYamlPath);
   Result := SaveStringsToFile(ConfigYamlPath, MappingStrings, True);
 
 end;
 
 
-//wrap MsgBox to handle silent install case
-function getUserResponse(Message: String): Integer;
-begin
-  if not WizardSilent then
-    Result := MsgBox(Message, mbError, MB_OKCANCEL)
-  else
-    Result := IDOK;
-end;
-
-
-//Pre-Assumptions: Python and pip are installed
+//Install Pip, Wheels and update resolver during setup
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
-  if CurStep = ssInstall then begin
-    if not runWheelsInstall then
-      RaiseException(errUnexpected);
-  end;
-
   if CurStep = ssPostInstall then begin
-    if not updateConfigYaml then
+    if not (runPipSetup and runWheelsInstall and updateConfigYaml) then
       RaiseException(errUnexpected);
   end;
-end;
-
-
-//Check for pre-requirements (Python, Pip, Virtualenv)
-function PrepareToInstall(var NeedsRestart: Boolean): String;
-var
-  UserResponse: Integer;
-begin
-  if not isPythonInstalled then begin
-    UserResponse := getUserResponse(errPythonMissing);
-    if UserResponse <> IDOK then begin
-      Result := 'Installation cannot continue without Python installed';
-      Exit;
-    end
-    else if not runPythonSetup then begin
-      Result := 'Python setup failed';
-      Exit;
-    end;
-  end;
-
-  if not isPipInstalled then begin
-    UserResponse := getUserResponse(errPipMissing)
-    if UserResponse <> IDOK then begin
-      Result := 'Installation cannot continue without Pip installed';
-      exit;
-    end
-    else if not runPipSetup then begin
-      Result := 'Pip installation failed';
-      Exit;
-    end;
-  end;
-
-  if not isVenvInstalled then begin
-    UserResponse := getUserResponse(errVenvMissing)
-    if UserResponse <> IDOK then begin
-      Result := 'Installation cannot continue without Virtualenv installed';
-      Exit;
-    end
-    else if not runVenvSetup then begin
-      Result := 'Virtualenv installation failed';
-      Exit;
-    end;
-  end;
-end;
-
-
-//Display info message when install done about Python uninstall
-procedure CurUninstallStepChanged(CurUninstallStep: TUninstallStep);
-begin
-  if (CurUninstallStep = usPostUninstall) and (not UninstallSilent) then
-    MsgBox(infoPythonUninstall, mbInformation, MB_OK);
 end;
