@@ -33,7 +33,7 @@ function download_resources() {
 
     mkdir -p packaging/source/{python,blueprints,types,scripts,plugins}
     pushd packaging/source/python
-        curl -L https://www.dropbox.com/s/5c43rnub9rxrlzc/Python279_x32.tar.gz -o /tmp/Python279_x32.tar.gz
+        curl -L http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/components/Python279_x32.tar.gz -o /tmp/Python279_x32.tar.gz
         tar -zxvf /tmp/Python279_x32.tar.gz --strip-components=1
     popd
     pushd packaging/source/blueprints
