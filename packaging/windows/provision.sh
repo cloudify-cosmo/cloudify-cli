@@ -31,17 +31,10 @@ function download_resources() {
     GITHUB_USERNAME=$1
     GITHUB_PASSWORD=$2
 
-    mkdir -p packaging/source/{pip,python,virtualenv,blueprints,types,scripts,plugins}
-    pushd packaging/source/pip
-        curl -LO https://dl.dropboxusercontent.com/u/407576/cfy-win-cli-package-resources/pip/get-pip.py
-        curl -LO https://dl.dropboxusercontent.com/u/407576/cfy-win-cli-package-resources/pip/pip-6.1.1-py2.py3-none-any.whl
-        curl -LO https://dl.dropboxusercontent.com/u/407576/cfy-win-cli-package-resources/pip/setuptools-15.2-py2.py3-none-any.whl
-    popd
+    mkdir -p packaging/source/{python,blueprints,types,scripts,plugins}
     pushd packaging/source/python
-        curl -LO https://dl.dropboxusercontent.com/u/407576/cfy-win-cli-package-resources/python/python.msi
-    popd
-    pushd packaging/source/virtualenv
-        curl -LO https://dl.dropboxusercontent.com/u/407576/cfy-win-cli-package-resources/virtualenv/virtualenv-12.1.1-py2.py3-none-any.whl
+        curl -L https://www.dropbox.com/s/5c43rnub9rxrlzc/Python279_x32.tar.gz -o /tmp/Python279_x32.tar.gz
+        tar -zxvf /tmp/Python279_x32.tar.gz --strip-components=1
     popd
     pushd packaging/source/blueprints
         curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/$CORE_TAG_NAME.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
