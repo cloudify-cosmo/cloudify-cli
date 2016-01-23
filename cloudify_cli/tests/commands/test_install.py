@@ -218,7 +218,7 @@ class InstallTest(CliCommandTest):
             cli_command=command,
             module=commands.deployments,
             function_name='create',
-            args=[STUB_BLUEPRINT_ID, STUB_BLUEPRINT_ID, STUB_INPUTS]
+            args=[STUB_BLUEPRINT_ID, STUB_BLUEPRINT_ID, [STUB_INPUTS]]
         )
 
     @patch('cloudify_cli.commands.blueprints.publish_archive')
@@ -236,7 +236,7 @@ class InstallTest(CliCommandTest):
             cli_command=command,
             module=commands.deployments,
             function_name='create',
-            args=[STUB_BLUEPRINT_ID, STUB_DEPLOYMENT_ID, STUB_INPUTS]
+            args=[STUB_BLUEPRINT_ID, STUB_DEPLOYMENT_ID, [STUB_INPUTS]]
         )
 
     @patch('cloudify_cli.commands.blueprints.publish_archive')
@@ -283,7 +283,7 @@ class InstallTest(CliCommandTest):
                     'allow_custom_parameters':
                         STUB_ALLOW_CUSTOM_PARAMETERS,
                     'include_logs': STUB_INCLUDE_LOGS,
-                    'parameters': STUB_PARAMETERS
+                    'parameters': [STUB_PARAMETERS]
                     }
         )
 
@@ -315,7 +315,7 @@ class InstallTest(CliCommandTest):
             [SAMPLE_BLUEPRINT_PATH,
              STUB_BLUEPRINT_ID,
              True]
-            )
+        )
 
     @patch('cloudify_cli.commands.executions.start')
     @patch('cloudify_cli.commands.deployments.create')
@@ -360,7 +360,7 @@ class InstallTest(CliCommandTest):
         deployments_create_mock.assert_called_with(
             STUB_BLUEPRINT_ID,
             STUB_DEPLOYMENT_ID,
-            STUB_INPUTS
+            [STUB_INPUTS]
         )
 
     @patch('cloudify_cli.commands.deployments.create')
@@ -396,7 +396,7 @@ class InstallTest(CliCommandTest):
             timeout=STUB_TIMEOUT,
             allow_custom_parameters=True,
             include_logs=True,
-            parameters=STUB_PARAMETERS
+            parameters=[STUB_PARAMETERS]
         )
 
     @patch('cloudify_cli.commands.install')
@@ -418,7 +418,7 @@ class InstallTest(CliCommandTest):
              'deployment_id': None,
              'inputs': None,
              'workflow_id': None,
-             'parameters': {},
+             'parameters': None,
              'allow_custom_parameters': False,
              'timeout': DEFAULT_TIMEOUT,
              'include_logs': False,

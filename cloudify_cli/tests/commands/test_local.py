@@ -20,6 +20,7 @@ Tests all commands that start with 'cfy blueprints'
 import os
 import json
 import tempfile
+import shutil
 
 import yaml
 import nose
@@ -69,10 +70,48 @@ class LocalTest(CliCommandTest):
         self.assertIn('"custom_param": null', output)
         self.assertIn('"input1": "default_input1"', output)
 
-    def test_local_init_with_inputs(self):
-        self._local_init(inputs={'input1': 'new_input1'})
+    def _assert_multiple_outputs(self):
         output = cli_runner.run_cli('cfy local outputs')
         self.assertIn('"input1": "new_input1"', output)
+        self.assertIn('"input2": "new_input2"', output)
+        self.assertIn('"input3": "new_input3"', output)
+
+    def _generate_multiple_input_files(self):
+        input_files_directory = tempfile.mkdtemp()
+        with open(os.path.join(input_files_directory, 'f1.yaml'), 'w') as f:
+            f.write('input1: new_input1\ninput2: new_input2')
+        with open(os.path.join(input_files_directory, 'f2.yaml'), 'w') as f:
+            f.write('input3: new_input3')
+        return input_files_directory
+
+    def test_local_init_with_inputs(self):
+        fd, inputs_file = tempfile.mkstemp()
+        os.close(fd)
+        with open(inputs_file, 'w') as f:
+            f.write('input3: new_input3')
+        try:
+            self._local_init(
+                inputs=['input1=new_input1;input2=new_input2', inputs_file])
+            self._assert_multiple_outputs()
+        finally:
+            os.remove(inputs_file)
+
+    def test_local_init_with_directory_inputs(self):
+        input_files_directory = self._generate_multiple_input_files()
+        try:
+            self._local_init(inputs=[input_files_directory])
+            self._assert_multiple_outputs()
+        finally:
+            shutil.rmtree(input_files_directory)
+
+    def test_local_init_with_wildcard_inputs(self):
+        input_files_directory = self._generate_multiple_input_files()
+        try:
+            self._local_init(
+                inputs=[os.path.join(input_files_directory, 'f*.yaml')])
+            self._assert_multiple_outputs()
+        finally:
+            shutil.rmtree(input_files_directory)
 
     def test_local_execute(self):
         self._local_init()
@@ -303,7 +342,7 @@ class LocalTest(CliCommandTest):
             blueprint_path=DEFAULT_BLUEPRINT_PATH,
             inputs=None,
             install_plugins=False
-            )
+        )
 
     @patch('cloudify_cli.commands.local.execute')
     @patch('cloudify_cli.commands.local.init')
@@ -317,9 +356,9 @@ class LocalTest(CliCommandTest):
 
         local_init_mock.assert_called_with(
             blueprint_path='blueprint_path.yaml',
-            inputs="key=value",
+            inputs=["key=value"],
             install_plugins=True
-            )
+        )
 
     @patch('cloudify_cli.commands.local.init')
     @patch('cloudify_cli.commands.local.execute')
@@ -336,7 +375,7 @@ class LocalTest(CliCommandTest):
             task_retries=0,
             task_retry_interval=1,
             task_thread_pool_size=DEFAULT_TASK_THREAD_POOL_SIZE
-            )
+        )
 
     @patch('cloudify_cli.commands.local.init')
     @patch('cloudify_cli.commands.local.execute')
@@ -354,7 +393,7 @@ class LocalTest(CliCommandTest):
         cli_runner.run_cli(local_install_command)
 
         local_execute_mock.assert_called_with(workflow_id='my-install',
-                                              parameters="key=value",
+                                              parameters=["key=value"],
                                               allow_custom_parameters=True,
                                               task_retries=14,
                                               task_retry_interval=7,
@@ -393,7 +432,7 @@ class LocalTest(CliCommandTest):
 
         local_execute_mock.assert_called_with(
             workflow_id='my-uninstall',
-            parameters='key=value',
+            parameters=['key=value'],
             allow_custom_parameters=True,
             task_retries=14,
             task_retry_interval=7,
@@ -441,12 +480,9 @@ class LocalTest(CliCommandTest):
         flags = '--install-plugins' if install_plugins else ''
         command = 'cfy local init {0} -p {1}'.format(flags,
                                                      blueprint_path)
-        if inputs:
-            inputs_path = os.path.join(TEST_WORK_DIR,
-                                       'temp_inputs.json')
-            with open(inputs_path, 'w') as f:
-                f.write(json.dumps(inputs))
-            command = '{0} -i {1}'.format(command, inputs_path)
+        inputs = inputs or []
+        for inputs_instance in inputs:
+            command += ' -i {0}'.format(inputs_instance)
         cli_runner.run_cli(command)
 
     def _local_execute(self, parameters=None,
