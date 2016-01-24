@@ -75,62 +75,25 @@ function download_resources() {
     popd
 }
 
-function upload_to_s3() {
-    ###
-    # This will upload both the artifact and md5 files to the relevant bucket.
-    # Note that the bucket path is also appended the version.
-    ###
-    # no preserve is set to false only because preserving file attributes is not yet supported on Windows.
-
-    file=$(basename $(find . -type f -name "$1"))
-    date=$(date +"%a, %d %b %Y %T %z")
-    acl="x-amz-acl:public-read"
-    content_type='application/x-compressed-exe'
-    string="PUT\n\n$content_type\n$date\n$acl\n/$AWS_S3_BUCKET/$AWS_S3_PATH/$file"
-    signature=$(echo -en "${string}" | openssl sha1 -hmac "${AWS_ACCESS_KEY}" -binary | base64)
-    curl -v -X PUT -T "$file" \
-      -H "Host: $AWS_S3_BUCKET.s3.amazonaws.com" \
-      -H "Date: $date" \
-      -H "Content-Type: $content_type" \
-      -H "$acl" \
-      -H "Authorization: AWS ${AWS_ACCESS_KEY_ID}:$signature" \
-      "https://$AWS_S3_BUCKET.s3.amazonaws.com/$AWS_S3_PATH/$file"
-}
-
 function update_remote_to_local_links() {
     sed -i -e 's/https:\/\/raw\.githubusercontent\.com\/cloudify-cosmo\/cloudify-manager\/.*\/resources\/rest-service\/cloudify\/.*\//file:\/cfy\/cloudify\/scripts\//g' packaging/source/types/types.yaml
 }
 
 # VERSION/PRERELEASE/BUILD/CORE_TAG_NAME/PLUGINS_TAG_NAME must be exported as they are being read as an env var by the install wizard
-export VERSION="3.4.0"
-export PRERELEASE="m1"
-export BUILD="390"
-export CORE_TAG_NAME="3.4m1"
-export PLUGINS_TAG_NAME="1.3.1"
+
+CORE_TAG_NAME="3.4m1"
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/$CORE_TAG_NAME/common/provision.sh -o ./common-provision.sh &&
+source common-provision.sh
 
 GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
-
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
-AWS_S3_BUCKET="gigaspaces-repository-eu"
-AWS_S3_PATH="org/cloudify3/${VERSION}/${PRERELEASE}"
-
-echo "VERSION: ${VERSION}"
-echo "PRERELEASE: ${PRERELEASE}"
-echo "BUILD: ${BUILD}"
-echo "CORE_TAG_NAME: ${CORE_TAG_NAME}"
-echo "PLUGINS_TAG_NAME: ${PLUGINS_TAG_NAME}"
-echo "AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID}"
-echo "AWS_ACCESS_KEY: ${AWS_ACCESS_KEY}"
-echo "AWS_S3_BUCKET: ${AWS_S3_BUCKET}"
-echo "AWS_S3_PATH: ${AWS_S3_PATH}"
-
 
 install_requirements &&
 download_wheels $GITHUB_USERNAME $GITHUB_PASSWORD &&
 download_resources $GITHUB_USERNAME $GITHUB_PASSWORD &&
 update_remote_to_local_links &&
 iscc packaging/create_install_wizard.iss &&
-cd /home/Administrator/packaging/output/ && md5sum=$(md5sum -t *.exe) && echo $md5sum > ${md5sum##* }.md5 &&
-[ -z ${AWS_ACCESS_KEY} ] || upload_to_s3 "*.exe" && upload_to_s3 "*.md5"
+cd /home/Administrator/packaging/output/ && create_md5 "exe"  &&
+[ -z ${AWS_ACCESS_KEY} ] || upload_to_s3 "exe" && upload_to_s3 "md5"
