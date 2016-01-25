@@ -1,0 +1,9 @@
+#!/bin/bash
+#
+# Perform necessary cloudify removal steps
+# after package is uninstalled.
+#
+
+echo "cloudify has been uninstalled!"
+
+exit 0

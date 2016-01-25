@@ -1,0 +1,34 @@
+---
+language: ruby
+rvm:
+- 2.1.3
+
+os:
+- osx
+
+before_install:
+- if [[ "$TRAVIS_OS_NAME" != "osx" ]] ; then echo "[ERROR] os" && exit 1 ; fi
+- sudo mkdir /opt/cloudify
+- sudo chown $USER /opt/cloudify
+- bundle install --binstubs
+- git config --global user.name "Travis-CI"
+- git config --global user.email "nobody@example.com"
+
+script:
+- bin/omnibus build cloudify
+
+after_script:
+- ls -l pkg/
+
+deploy:
+  provider: s3
+  access_key_id: AKIAIVFRNWPMIANMU27A
+  secret_access_key:
+    secure: qL8RVtZ3/mdNmFHQqvDa1azq7qfT67bcrLGiu22dfRHK/yiVIxM7l7NlZg7POmehr/i9HXh1cm5cGjcPbbb/4wiULCPAMzaLUlLpakV4JzABxD2bNviWdJQN+pqftSLH4/k+tjUIhuKCp+aRJsDpCq1+s1Wm1olgZI2uyxUUOfAHemWK4XYKc8C77E17lDhGzPsij5YWY5l6YmqqAn8q/XcXQNuVpS1m/ltDnROvjFPqhgpuF48Rcg1igmNueSoOaKMXW3tu70DyO5LAesd9lkiJU1W5KxBirRoMcEvY+qA4bJG46c1Pwg80Rg/Dsg8GSzFWI3hJt+c/yI1b2MHItjyUTheyr0w/vJaV5uCNpPpoU+4tYrIT6C47xWdJzN1q5EiuHTHdxDASvcSnw+zW2EJ5+2wVVpHnJa7eNZKWUjqNvjg5KlyIHlkJKs1exHlL6SCdfp+SRWLX7IL3+C8vx+QUiWJGfapnXpdBAL8FtkfKk20lNpFrV0ZelUFNMkZdBQx5WpALaDdZt/aPDR54brCBFb6T0/RWGPml968fUtSSgC3u3G4lQlh8TcwVYWfyEc/US/DSiBEjOLHIpHeIVmS74XiuYcpFV/xEi9OIz1aSAfnCpQZfDpebKTPvHVlSH1x/2rFgV85BREINV48L3a6iyastFKAEbEXwXtbHPck=
+  bucket: cloudify-builds
+  local-dir: pkg
+  upload-dir: pkg
+  acl: public_read
+  skip_cleanup: true
+  on:
+    repo: bretellis/cloudify-omnibus
