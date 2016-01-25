@@ -40,11 +40,14 @@ from cloudify_cli.bootstrap.tasks import (
     PROVIDER_RUNTIME_PROPERTY,
     MANAGER_IP_RUNTIME_PROPERTY,
     MANAGER_USER_RUNTIME_PROPERTY,
-    MANAGER_KEY_PATH_RUNTIME_PROPERTY,
-    REST_PORT)
+    MANAGER_KEY_PATH_RUNTIME_PROPERTY)
 from cloudify_cli.exceptions import CloudifyBootstrapError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify.exceptions import RecoverableError
+
+INTERNAL_REST_PROTOCOL = 'internal_rest_protocol'
+EXTERNAL_REST_PROTOCOL = 'external_rest_protocol'
+REST_PORT = 'rest_port'
 
 
 def _workdir():
@@ -105,15 +108,18 @@ def bootstrap_validation(blueprint_path,
 def _handle_provider_context(agent_remote_key_path,
                              fabric_env,
                              manager_node,
-                             manager_node_instance):
+                             manager_node_instance,
+                             internal_rest_protocol):
     if 'provider_context' in manager_node_instance.runtime_properties:
         provider_context = manager_node_instance.runtime_properties[
             'provider_context']
     else:
         provider_context = None
+
     _upload_provider_context(
         agent_remote_key_path, fabric_env, manager_node,
-        manager_node_instance, provider_context=provider_context)
+        manager_node_instance, internal_rest_protocol,
+        provider_context=provider_context)
     provider_context = \
         manager_node_instance.runtime_properties[
             'manager_provider_context']
@@ -140,11 +146,6 @@ def bootstrap(blueprint_path,
               task_retry_interval=30,
               task_thread_pool_size=1,
               install_plugins=False):
-
-    def get_protocol(rest_port):
-        return constants.SECURED_PROTOCOL \
-            if str(rest_port) == str(constants.SECURED_REST_PORT) \
-            else constants.DEFAULT_PROTOCOL
 
     storage = local.FileStorage(storage_dir=_workdir())
     try:
@@ -186,6 +187,12 @@ def bootstrap(blueprint_path,
                  nodes_by_id[node_instance.node_id].type_hierarchy)
         manager_node = nodes_by_id['manager_configuration']
 
+    rest_port = manager_node_instance.runtime_properties[REST_PORT]
+    internal_rest_protocol = \
+        manager_node_instance.runtime_properties[INTERNAL_REST_PROTOCOL]
+    external_rest_protocol = \
+        manager_node_instance.runtime_properties[EXTERNAL_REST_PROTOCOL]
+
     if manager_node_instance.runtime_properties.get('provider'):
         provider_context = \
             manager_node_instance.runtime_properties[
@@ -198,14 +205,10 @@ def bootstrap(blueprint_path,
                 MANAGER_USER_RUNTIME_PROPERTY]
         manager_key_path = manager_node_instance.runtime_properties[
             MANAGER_KEY_PATH_RUNTIME_PROPERTY]
-        rest_port = \
-            manager_node_instance.runtime_properties[REST_PORT]
     else:
         manager_ip = env.outputs()['manager_ip']
         manager_user = manager_node.properties['ssh_user']
         manager_key_path = manager_node.properties['ssh_key_filename']
-        rest_port = manager_node_instance.runtime_properties[REST_PORT]
-
         fabric_env = {
             "host_string": manager_ip,
             "user": manager_user,
@@ -214,18 +217,16 @@ def bootstrap(blueprint_path,
 
         agent_remote_key_path = _handle_agent_key_file(fabric_env,
                                                        manager_node)
-
         provider_context = _handle_provider_context(
             agent_remote_key_path=agent_remote_key_path,
             fabric_env=fabric_env,
             manager_node=manager_node,
-            manager_node_instance=manager_node_instance)
+            manager_node_instance=manager_node_instance,
+            internal_rest_protocol=internal_rest_protocol)
 
         _upload_resources(manager_node, fabric_env, manager_ip, rest_port,
-                          get_protocol(rest_port), task_retries,
+                          external_rest_protocol, task_retries,
                           task_retry_interval)
-
-    protocol = get_protocol(rest_port)
 
     return {
         'provider_name': 'provider',
@@ -234,7 +235,7 @@ def bootstrap(blueprint_path,
         'manager_user': manager_user,
         'manager_key_path': manager_key_path,
         'rest_port': rest_port,
-        'protocol': protocol
+        'protocol': external_rest_protocol
     }
 
 
@@ -357,6 +358,7 @@ def read_manager_deployment_dump_if_needed(manager_deployment_dump):
 
 def _upload_provider_context(remote_agents_private_key_path, fabric_env,
                              manager_node, manager_node_instance,
+                             internal_rest_protocol,
                              provider_context=None, update_context=False):
     provider_context = provider_context or {}
     cloudify_configuration = manager_node.properties['cloudify']
@@ -382,9 +384,13 @@ def _upload_provider_context(remote_agents_private_key_path, fabric_env,
     json.dump(full_provider_context, provider_context_json_file)
 
     request_params = '?update={0}'.format(update_context)
+    # using -k in the command below to Not verify the server's SSL certificate
+    # this option is ignored by curl if SSL is not in use
     upload_provider_context_cmd = \
-        'curl --fail -XPOST localhost:8101/api/{0}/provider/context{1} -H ' \
-        '"Content-Type: application/json" -d @{2}'.format(
+        'curl --fail -k -XPOST ' \
+        '{0}://localhost:8101/api/{1}/provider/context{2} -H ' \
+        '"Content-Type: application/json" -d @{3}'.format(
+            internal_rest_protocol,
             constants.API_VERSION, request_params,
             remote_provider_context_file)
 
@@ -418,7 +424,7 @@ def _copy_agent_key(agent_local_key_path, agent_remote_key_path,
 
 
 def _upload_resources(manager_node, fabric_env, management_ip, rest_port,
-                      protocol, retries, wait_interval):
+                      external_rest_protocol, retries, wait_interval):
     """
     Uploads resources supplied in the manager blueprint. uses both fabric for
     the dsl_resources, and the upload plugins mechanism for plugin_resources.
@@ -427,8 +433,8 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_port,
     properties from.
     :param fabric_env: fabric env in order to upload the dsl_resources.
     :param management_ip: used to retrieve rest client for the the manager.
-    :param rest_port: used to retrieve rest client for the the manager.
-    :param protocol: used to retrieve rest client for the the manager.
+    :param rest_port: used to create rest client for the manager.
+    :param external_rest_protocol: used to create rest client for the manager.
     """
 
     upload_resources = \
@@ -437,7 +443,9 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_port,
     params = upload_resources.get('parameters', {})
     fetch_timeout = params.get('fetch_timeout') or 30
 
-    rest_client = utils.get_rest_client(management_ip, rest_port, protocol)
+    rest_client = utils.get_rest_client(management_ip,
+                                        rest_port,
+                                        external_rest_protocol)
 
     # Every resource is first moved/downloaded to this temp dir.
     temp_dir = tempfile.mkdtemp()

@@ -80,27 +80,6 @@ class CliBootstrapUnitTests(unittest.TestCase):
     def test_manager_deployment_dump_read_already_exists(self):
         self.test_manager_deployment_dump(remove_deployment=False)
 
-    def test_creation_validation_empty_docker_dict(self):
-        packages = {
-            "docker": {}
-        }
-        try:
-            tasks.creation_validation(packages)
-        except NonRecoverableError as ex:
-            self.assertIn(
-                '"docker" must be a non-empty dictionary property under '
-                '"cloudify_packages"', ex.message)
-
-    def test_creation_validation_no_docker(self):
-        packages = {
-        }
-        try:
-            tasks.creation_validation(packages)
-        except NonRecoverableError as ex:
-            self.assertIn(
-                '"docker" must be a non-empty dictionary property under '
-                '"cloudify_packages"', ex.message)
-
     def test_ssl_configuration_without_cert_path(self):
         configurations = {
             constants.SSL_ENABLED_PROPERTY_NAME: True,
