@@ -108,7 +108,7 @@ def _plugins_to_requirements(blueprint_path, plugins):
             source = plugin[
                 dsl_constants.PLUGIN_SOURCE_KEY
             ]
-            if '://' in source:
+            if source and '://' in source:
                 # URL
                 sources.add(source)
             else:
