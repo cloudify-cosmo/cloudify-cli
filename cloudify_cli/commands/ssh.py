@@ -19,8 +19,8 @@ Handles 'cfy ssh'
 
 import os
 import platform
-
 from distutils import spawn
+
 from cloudify_cli import messages
 from cloudify_cli.logger import get_logger
 from cloudify_cli.exceptions import CloudifyCliError

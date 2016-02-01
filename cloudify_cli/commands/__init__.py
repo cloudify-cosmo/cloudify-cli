@@ -46,3 +46,4 @@ from cloudify_cli.commands import nodes
 from cloudify_cli.commands import node_instances
 from cloudify_cli.commands import workflows
 from cloudify_cli.commands import local
+from cloudify_cli.commands import logs
