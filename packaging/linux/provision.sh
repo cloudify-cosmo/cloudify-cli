@@ -59,7 +59,7 @@ function build_rpm() {
 }
 
 
-CORE_TAG_NAME="3.4m1"
+CORE_TAG_NAME="3.4m2"
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/$CORE_TAG_NAME/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
 
