@@ -3,8 +3,8 @@ import_resolver:
   parameters:
     rules:
     - {'http://www.getcloudify.org/spec/cloudify/CORE_TAG_NAME/types.yaml': 'file:/CLOUDIFY_PATH/cloudify/types/types.yaml'}
-    - {'http://www.getcloudify.org/spec/fabric-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/cloudify/plugins/fabric-plugin'}
-    - {'http://www.getcloudify.org/spec/script-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/cloudify/plugins/script-plugin'}
+    - {'http://www.getcloudify.org/spec/fabric-plugin/1.4': 'file:/CLOUDIFY_PATH/cloudify/plugins/fabric-plugin'}
+    - {'http://www.getcloudify.org/spec/script-plugin/1.4': 'file:/CLOUDIFY_PATH/cloudify/plugins/script-plugin'}
     - {'http://www.getcloudify.org/spec/diamond-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/cloudify/plugins/diamond-plugin'}
     - {'http://www.getcloudify.org/spec/openstack-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/cloudify/plugins/openstack-plugin'}
     - {'http://www.getcloudify.org/spec/aws-plugin/PLUGINS_TAG_NAME': 'file:/CLOUDIFY_PATH/cloudify/plugins/aws-plugin'}

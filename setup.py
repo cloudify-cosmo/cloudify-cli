@@ -46,7 +46,7 @@ setup(
         'cloudify-plugins-common==3.4a2',
         'cloudify-rest-client==3.4a2',
         'cloudify-dsl-parser==3.4a2',
-        'cloudify-script-plugin==1.3.1',
+        'cloudify-script-plugin==1.4',
         'pyyaml==3.10',
         'argcomplete==0.7.1',
         'fabric==1.8.3',
