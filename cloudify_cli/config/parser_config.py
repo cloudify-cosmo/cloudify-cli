@@ -172,7 +172,14 @@ def parser_config():
                                 'help': "Path to the application's blueprint file",
                                 'completer': completion_utils.yaml_files_completer
                             },
-                            '-b,--blueprint-id': argument_utils.remove_completer(blueprint_id_argument())
+                            '-b,--blueprint-id': argument_utils.remove_completer(blueprint_id_argument()),
+                            '--validate': {
+                                'dest': 'pre_validate',
+                                'action': 'store_true',
+                                'default': False,
+                                'help': 'Validate the blueprint before uploading it '
+                                        'to the manager'
+                            }
                         },
                         'help': 'command for uploading a blueprint to the management server',
                         'handler': cfy.blueprints.upload

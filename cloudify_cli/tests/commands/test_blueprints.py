@@ -54,6 +54,21 @@ class BlueprintsTest(CliCommandTest):
                            '{0}/helloworld/blueprint.yaml '
                            '-b my_blueprint_id'.format(BLUEPRINTS_DIR))
 
+    def test_blueprints_upload_invalid(self):
+        self.client.blueprints.upload = MagicMock()
+        cli_runner.run_cli('cfy blueprints upload -p '
+                           '{0}/bad_blueprint/blueprint.yaml '
+                           '-b my_blueprint_id'
+                           .format(BLUEPRINTS_DIR))
+
+    def test_blueprints_upload_invalid_validate(self):
+        self.client.blueprints.upload = MagicMock()
+        self._assert_ex('cfy blueprints upload -p '
+                        '{0}/bad_blueprint/blueprint.yaml '
+                        '-b my_blueprint_id --validate'
+                        .format(BLUEPRINTS_DIR),
+                        'Failed to validate blueprint')
+
     def test_blueprints_publish_archive(self):
         self.client.blueprints.publish_archive = MagicMock()
         cli_runner.run_cli('cfy blueprints publish-archive -l '
