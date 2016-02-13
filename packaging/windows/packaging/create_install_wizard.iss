@@ -72,7 +72,7 @@ var
 begin
   GetPipArgs := '-m ensurepip';
   Exec(Expandconstant('{app}\embedded\python.exe'), GetPipArgs, Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
-  Log('Installting pip return code: ' + IntToStr(ErrorCode));
+  Log('Installing pip return code: ' + IntToStr(ErrorCode));
   if Errorcode <> 0 then
     Result := False
   else
@@ -90,7 +90,7 @@ begin
 
   PipArgs := 'install --pre --use-wheel --no-index --find-links . --force-reinstall --ignore-installed ' + mainPackagesName;
   Exec(Expandconstant('{app}\embedded\Scripts\pip.exe'), PipArgs, Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
-  Log('Installting wheels return code: ' + IntToStr(ErrorCode));
+  Log('Installing wheels return code: ' + IntToStr(ErrorCode));
 
   //Pip seems to return errorcode 2 when it's not clean install
   if (Errorcode = 0) or (Errorcode = 2) then

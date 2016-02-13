@@ -13,7 +13,17 @@ function download_wheels() {
     curl -LO https://pypi.python.org/packages/2.7/l/lxml/lxml-3.5.0.win32-py2.7.exe
     wheel convert lxml-3.5.0.win32-py2.7.exe --dest-dir packaging/source/wheels
 
-    pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels https://github.com/cloudify-cosmo/cloudify-cli/archive/$CORE_TAG_NAME.zip#egg=cloudify-cli \
+    PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/${CORE_TAG_NAME}/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
+    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/${CORE_TAG_NAME}.zip
+    unzip -q -o ${CORE_TAG_NAME}.zip
+    [[ -f ${CORE_TAG_NAME}.zip ]] && rm -f ${CORE_TAG_NAME}.zip
+    curl -sL "${PATCH_URL}" -o cloudify-cli-${CORE_TAG_NAME}/cloudify_cli.patch
+    patch -p1 -d cloudify-cli-${CORE_TAG_NAME} < cloudify-cli-${CORE_TAG_NAME}/cloudify_cli.patch
+    rm -f cloudify-cli-${CORE_TAG_NAME}/cloudify_cli.patch
+    zip -q -r cloudify-cli-${CORE_TAG_NAME}.zip cloudify-cli-${CORE_TAG_NAME}
+    [[ $? -eq 0 ]] && rm -rf cloudify-cli-${CORE_TAG_NAME}
+
+    pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels file:///home/Administrator/cloudify-cli-${CORE_TAG_NAME}.zip#egg=cloudify-cli \
     https://github.com/cloudify-cosmo/cloudify-rest-client/archive/$CORE_TAG_NAME.zip#egg=cloudify-rest-client \
     https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/$CORE_TAG_NAME.zip#egg=cloudify-dsl-parser \
     https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/$CORE_TAG_NAME.zip#egg=cloudify-plugins-common \
