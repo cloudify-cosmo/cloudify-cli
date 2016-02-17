@@ -16,7 +16,7 @@ function download_wheels() {
     pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels https://github.com/cloudify-cosmo/cloudify-cli/archive/$CORE_TAG_NAME.zip#egg=cloudify-cli \
     https://github.com/cloudify-cosmo/cloudify-rest-client/archive/$CORE_TAG_NAME.zip#egg=cloudify-rest-client \
     https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/$CORE_TAG_NAME.zip#egg=cloudify-dsl-parser \
-    https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/$CORE_TAG_NAME.zip#egg=cloudify-plugins-common \
+    https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/3.3.1-sec1.zip#egg=cloudify-plugins-common \
     https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=cloudify-script-plugin \
     https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=cloudify-fabric-plugin \
     https://github.com/cloudify-cosmo/cloudify-openstack-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=cloudify-openstack-plugin \
@@ -44,7 +44,7 @@ function download_resources() {
         curl -LO https://dl.dropboxusercontent.com/u/407576/cfy-win-cli-package-resources/virtualenv/virtualenv-12.1.1-py2.py3-none-any.whl
     popd
     pushd packaging/source/blueprints
-        curl --fail http://cloudify-public-repositories.s3.amazonaws.com/cloudify-manager-blueprints/$CORE_TAG_NAME/cloudify-manager-blueprints.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
+        curl --fail http://cloudify-public-repositories.s3.amazonaws.com/cloudify-manager-blueprints/3.3.1-sec1/cloudify-manager-blueprints.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
         tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1
     popd
 
@@ -55,14 +55,14 @@ function download_resources() {
 
     # Downloading Scripts
     pushd packaging/source/scripts
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/fs/mkfs.sh
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/fs/fdisk.sh
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/fs/mount.sh
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/fs/unmount.sh
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/policies/host_failure.clj
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/policies/threshold.clj
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/policies/ewma_stabilized.clj
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/triggers/execute_workflow.clj
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/3.3.1-sec1/resources/rest-service/cloudify/fs/mkfs.sh
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/3.3.1-sec1/resources/rest-service/cloudify/fs/fdisk.sh
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/3.3.1-sec1/resources/rest-service/cloudify/fs/mount.sh
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/3.3.1-sec1/resources/rest-service/cloudify/fs/unmount.sh
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/3.3.1-sec1/resources/rest-service/cloudify/policies/host_failure.clj
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/3.3.1-sec1/resources/rest-service/cloudify/policies/threshold.clj
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/3.3.1-sec1/resources/rest-service/cloudify/policies/ewma_stabilized.clj
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/3.3.1-sec1/resources/rest-service/cloudify/triggers/execute_workflow.clj
     popd
 
     # Downloading plugin yamls
