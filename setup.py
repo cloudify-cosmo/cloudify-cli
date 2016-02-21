@@ -48,7 +48,7 @@ setup(
         'cloudify-dsl-parser==3.4a2',
         'cloudify-script-plugin==1.4',
         'pyyaml==3.10',
-        'argcomplete==0.7.1',
+        'argcomplete==1.1.0',
         'fabric==1.8.3',
         'PrettyTable>=0.7,<0.8',
         'colorama==0.3.3',
