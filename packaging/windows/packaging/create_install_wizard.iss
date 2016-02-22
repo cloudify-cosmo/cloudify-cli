@@ -38,7 +38,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Source: "source\python\*"; DestDir: "{app}\embedded" ;Flags: recursesubdirs
 Source: "source\wheels\*.whl"; Flags: dontcopy
 Source: "source\icons\Cloudify.ico"; DestDir: "{app}"
-Source: "source\blueprints\*"; DestDir: "{app}\cloudify-manager-blueprints-commercial"; Flags: recursesubdirs
+Source: "source\blueprints\*"; DestDir: "{app}\cloudify-manager-blueprints"; Flags: recursesubdirs
 
 Source: "source\types\*"; DestDir: "{app}\cloudify\types"; Flags: recursesubdirs
 Source: "source\scripts\*"; DestDir: "{app}\cloudify\scripts"; Flags: recursesubdirs
