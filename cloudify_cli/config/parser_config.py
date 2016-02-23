@@ -15,9 +15,11 @@
 
 # flake8: noqa
 
+import os
 import argparse
 
 from cloudify_cli import commands as cfy
+from cloudify_cli import utils
 from cloudify_cli.config import completion_utils
 from cloudify_cli.config import argument_utils
 from cloudify_cli.constants import DEFAULT_REST_PORT
@@ -104,6 +106,44 @@ def parser_config():
             }
         },
         'commands': {
+            'logs': {
+                'help': 'Handles Cloudify Manager logs',
+                'sub_commands': {
+                    'get': {
+                        'arguments': {
+                            '-d,--destination-path': {
+                                'dest': 'destination_path',
+                                'help': 'Destination path of the downloaded archive',
+                                'default': utils.get_cwd(),
+                            }
+                        },
+                        'help': "Retrieves an archive containing a Manager's logs (defaults to cwd)",
+                        'handler': cfy.logs.get
+                    },
+                    'purge': {
+                        'arguments': {
+                            '-f,--force': {
+                                'dest': 'force',
+                                'help': 'Force purge. This flag is mandatory',
+                                'required': True,
+                                'action': 'store_true',
+                            },
+                            '--backup-first': {
+                                'dest': 'backup_first',
+                                'help': 'Whether to backup before purging.'
+                                        'Backup will be in tar.gz format.',
+                                'action': 'store_true',
+                            }
+                        },
+                        'help': "Delete a Manager's logs",
+                        'handler': cfy.logs.purge
+                    },
+                    'backup': {
+                        'help': "Backs up a Manager's logs",
+                        'handler': cfy.logs.backup
+                    }
+                }
+            },
             'plugins': {
                 'help': "Manages Cloudify's plugins",
                 'sub_commands': {

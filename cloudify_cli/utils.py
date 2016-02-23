@@ -22,7 +22,6 @@ import tempfile
 import getpass
 from contextlib import contextmanager
 
-
 import yaml
 import pkg_resources
 from jinja2.environment import Template
@@ -31,6 +30,7 @@ from itsdangerous import base64_encode
 
 from cloudify_rest_client import CloudifyClient
 
+
 import cloudify_cli
 from cloudify_cli import constants
 from cloudify_cli.exceptions import CloudifyCliError
@@ -38,6 +38,7 @@ from cloudify_cli.logger import get_logger
 from dsl_parser import utils as dsl_parser_utils
 from dsl_parser.constants import IMPORT_RESOLVER_KEY
 from cloudify_cli import messages
+
 
 DEFAULT_LOG_FILE = os.path.expanduser(
     '{0}/cloudify-{1}/cloudify-cli.log'
@@ -257,6 +258,8 @@ def update_wd_settings():
 
 
 def get_cwd():
+    """Allows use to patch the cwd when needed.
+    """
     return os.getcwd()
 
 
@@ -527,3 +530,7 @@ class CloudifyConfig(object):
     @property
     def validate_definitions_version(self):
         return self._config.get('validate_definitions_version', True)
+
+
+def build_manager_host_string():
+    return '{0}@{1}'.format(get_management_user(), get_management_server_ip())

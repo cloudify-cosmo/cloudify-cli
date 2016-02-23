@@ -14,6 +14,7 @@
 # limitations under the License.
 ############
 
+# flake8: noqa
 
 FILE_NOT_FOUND = "Could not find file: {0}"
 
