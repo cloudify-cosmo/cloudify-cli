@@ -53,13 +53,14 @@ def validate(plugin_path):
     logger.info(messages.VALIDATING_PLUGIN_SUCCEEDED)
 
 
-def delete(plugin_id):
+def delete(plugin_id, force):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
     logger.info(messages.PLUGIN_DELETE.format(plugin_id, management_ip))
-    client.plugins.delete(plugin_id)
+    client.plugins.delete(plugin_id=plugin_id,
+                          force=force)
 
     logger.info(messages.PLUGIN_DELETE_SUCCEEDED.format(plugin_id))
 
