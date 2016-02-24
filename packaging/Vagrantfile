@@ -113,7 +113,7 @@ Vagrant.configure('2') do |config|
       aws.access_key_id = AWS_ACCESS_KEY_ID
       aws.secret_access_key = AWS_ACCESS_KEY
       # this a pre-baked AMI, not pure base image
-      aws.ami = "ami-118ee566"
+      aws.ami = "ami-1905b66a"
       aws.region = "eu-west-1"
       aws.instance_type = "m3.medium"
       aws.keypair_name = "vagrant_build"
