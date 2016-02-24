@@ -1,6 +1,5 @@
 #!/bin/bash -e
 
-
 function install_requirements() {
     pip install wheel==0.24.0
 }
@@ -13,17 +12,27 @@ function download_wheels() {
     curl -LO https://pypi.python.org/packages/2.7/l/lxml/lxml-3.5.0.win32-py2.7.exe
     wheel convert lxml-3.5.0.win32-py2.7.exe --dest-dir packaging/source/wheels
 
-    pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels https://github.com/cloudify-cosmo/cloudify-cli/archive/$CORE_TAG_NAME.zip#egg=cloudify-cli \
+    PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/${CORE_TAG_NAME}/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
+    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/${CORE_TAG_NAME}.zip
+    unzip -q -o ${CORE_TAG_NAME}.zip
+    [[ -f ${CORE_TAG_NAME}.zip ]] && rm -f ${CORE_TAG_NAME}.zip
+    curl -sL "${PATCH_URL}" -o cloudify-cli-${CORE_TAG_NAME}/cloudify_cli.patch
+    patch -p1 -d cloudify-cli-${CORE_TAG_NAME} < cloudify-cli-${CORE_TAG_NAME}/cloudify_cli.patch
+    rm -f cloudify-cli-${CORE_TAG_NAME}/cloudify_cli.patch
+    zip -q -r cloudify-cli-${CORE_TAG_NAME}.zip cloudify-cli-${CORE_TAG_NAME}
+    [[ $? -eq 0 ]] && rm -rf cloudify-cli-${CORE_TAG_NAME}
+
+    pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-${CORE_TAG_NAME}.zip \
     https://github.com/cloudify-cosmo/cloudify-rest-client/archive/$CORE_TAG_NAME.zip#egg=cloudify-rest-client \
     https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/$CORE_TAG_NAME.zip#egg=cloudify-dsl-parser \
     https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/$CORE_TAG_NAME.zip#egg=cloudify-plugins-common \
     https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.4.zip#egg=cloudify-script-plugin \
     https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.4.zip#egg=cloudify-fabric-plugin \
-    https://github.com/cloudify-cosmo/cloudify-openstack-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=cloudify-openstack-plugin \
-    https://github.com/cloudify-cosmo/cloudify-aws-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=cloudify-aws-plugin \
-    https://github.com/cloudify-cosmo/tosca-vcloud-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=cloudify-vcloud-plugin \
-    https://$GITHUB_USERNAME:$GITHUB_PASSWORD@github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=cloudify-vsphere-plugin \
-    https://$GITHUB_USERNAME:$GITHUB_PASSWORD@github.com/cloudify-cosmo/cloudify-softlayer-plugin/archive/$PLUGINS_TAG_NAME.zip#egg=cloudify-softlayer-plugin
+    https://github.com/cloudify-cosmo/cloudify-openstack-plugin/archive/1.3.1.zip#egg=cloudify-openstack-plugin \
+    https://github.com/cloudify-cosmo/cloudify-aws-plugin/archive/1.4.zip#egg=cloudify-aws-plugin \
+    https://github.com/cloudify-cosmo/tosca-vcloud-plugin/archive/1.3.1.zip#egg=cloudify-vcloud-plugin \
+    https://$GITHUB_USERNAME:$GITHUB_PASSWORD@github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/1.4.zip#egg=cloudify-vsphere-plugin \
+    https://$GITHUB_USERNAME:$GITHUB_PASSWORD@github.com/cloudify-cosmo/cloudify-softlayer-plugin/archive/1.3.1.zip#egg=cloudify-softlayer-plugin
 }
 
 function download_resources() {
@@ -64,14 +73,14 @@ function download_resources() {
 
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-fabric-plugin/1.4/plugin.yaml -o fabric-plugin/plugin.yaml
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-script-plugin/1.4/plugin.yaml -o script-plugin/plugin.yaml
-        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-diamond-plugin/$PLUGINS_TAG_NAME/plugin.yaml -o diamond-plugin/plugin.yaml
-        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/$PLUGINS_TAG_NAME/plugin.yaml -o openstack-plugin/plugin.yaml
-        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/$PLUGINS_TAG_NAME/plugin.yaml -o aws-plugin/plugin.yaml
-        curl -L https://raw.githubusercontent.com/cloudify-cosmo/tosca-vcloud-plugin/$PLUGINS_TAG_NAME/plugin.yaml -o tosca-vcloud-plugin/plugin.yaml
+        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-diamond-plugin/1.3.1/plugin.yaml -o diamond-plugin/plugin.yaml
+        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/1.3.1/plugin.yaml -o openstack-plugin/plugin.yaml
+        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.4/plugin.yaml -o aws-plugin/plugin.yaml
+        curl -L https://raw.githubusercontent.com/cloudify-cosmo/tosca-vcloud-plugin/1.3.1/plugin.yaml -o tosca-vcloud-plugin/plugin.yaml
 
         # Downloading commercial plugin yamls
-        curl -L https://$GITHUB_USERNAME:$GITHUB_PASSWORD@raw.githubusercontent.com/cloudify-cosmo/cloudify-vsphere-plugin/1.3rc1/plugin.yaml -o vsphere-plugin/plugin.yaml
-        curl -L https://$GITHUB_USERNAME:$GITHUB_PASSWORD@raw.githubusercontent.com/cloudify-cosmo/cloudify-softlayer-plugin/1.3rc1/plugin.yaml -o softlayer-plugin/plugin.yaml
+        curl -L https://$GITHUB_USERNAME:$GITHUB_PASSWORD@raw.githubusercontent.com/cloudify-cosmo/cloudify-vsphere-plugin/1.4/plugin.yaml -o vsphere-plugin/plugin.yaml
+        curl -L https://$GITHUB_USERNAME:$GITHUB_PASSWORD@raw.githubusercontent.com/cloudify-cosmo/cloudify-softlayer-plugin/1.3.1/plugin.yaml -o softlayer-plugin/plugin.yaml
     popd
 }
 
