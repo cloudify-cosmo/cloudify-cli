@@ -23,6 +23,7 @@ import tempfile
 
 import yaml
 import nose
+from mock import patch
 
 from dsl_parser import exceptions as parser_exceptions
 
@@ -34,12 +35,17 @@ from dsl_parser.constants import HOST_TYPE
 
 from cloudify_cli import utils
 from cloudify_cli import common
-
+from cloudify_cli.commands import local
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 from cloudify_cli.tests.commands.test_cli_command import \
     (BLUEPRINTS_DIR,
      TEST_WORK_DIR)
+from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
+from cloudify_cli.constants import DEFAULT_PARAMETERS
+from cloudify_cli.constants import DEFAULT_TASK_THREAD_POOL_SIZE
+from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
+from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW
 
 
 class LocalTest(CliCommandTest):
@@ -285,6 +291,137 @@ class LocalTest(CliCommandTest):
         blueprint_path = '{0}/local/windows_installers_blueprint.yaml'\
             .format(BLUEPRINTS_DIR)
         cli_runner.run_cli('cfy local init -p {0}'.format(blueprint_path))
+
+    @patch('cloudify_cli.commands.local.execute')
+    @patch('cloudify_cli.commands.local.init')
+    def test_install_command_default_init_arguments(self, local_init_mock, *_):
+
+        local_install_command = 'cfy local install'
+        cli_runner.run_cli(local_install_command)
+
+        local_init_mock.assert_called_with(
+            blueprint_path=DEFAULT_BLUEPRINT_PATH,
+            inputs=None,
+            install_plugins=False
+            )
+
+    @patch('cloudify_cli.commands.local.execute')
+    @patch('cloudify_cli.commands.local.init')
+    def test_install_command_custom_init_arguments(self, local_init_mock, *_):
+
+        local_install_command = \
+            'cfy local install -p blueprint_path.yaml -i key=value ' \
+            '--install-plugins'
+
+        cli_runner.run_cli(local_install_command)
+
+        local_init_mock.assert_called_with(
+            blueprint_path='blueprint_path.yaml',
+            inputs="key=value",
+            install_plugins=True
+            )
+
+    @patch('cloudify_cli.commands.local.init')
+    @patch('cloudify_cli.commands.local.execute')
+    def test_install_command_default_execute_arguments(self,
+                                                       local_execute_mock,
+                                                       *_):
+        local_install_command = 'cfy local install'
+        cli_runner.run_cli(local_install_command)
+
+        local_execute_mock.assert_called_with(
+            workflow_id=DEFAULT_INSTALL_WORKFLOW,
+            parameters=DEFAULT_PARAMETERS,
+            allow_custom_parameters=False,
+            task_retries=0,
+            task_retry_interval=1,
+            task_thread_pool_size=DEFAULT_TASK_THREAD_POOL_SIZE
+            )
+
+    @patch('cloudify_cli.commands.local.init')
+    @patch('cloudify_cli.commands.local.execute')
+    def test_install_command_custom_execute_arguments(self,
+                                                      local_execute_mock,
+                                                      *_):
+
+        local_install_command = 'cfy local install ' \
+                                '-w my-install ' \
+                                '--parameters key=value ' \
+                                '--allow-custom-parameters ' \
+                                '--task-retries 14 ' \
+                                '--task-retry-interval 7 ' \
+                                '--task-thread-pool-size 87'
+        cli_runner.run_cli(local_install_command)
+
+        local_execute_mock.assert_called_with(workflow_id='my-install',
+                                              parameters="key=value",
+                                              allow_custom_parameters=True,
+                                              task_retries=14,
+                                              task_retry_interval=7,
+                                              task_thread_pool_size=87
+                                              )
+
+    @patch('cloudify_cli.commands.local.execute')
+    def test_uninstall_command_execute_default_arguments(self,
+                                                         local_execute_mock
+                                                         ):
+        local_uninstall_command = 'cfy local uninstall'
+
+        cli_runner.run_cli(local_uninstall_command)
+
+        local_execute_mock.assert_called_with(
+            workflow_id=DEFAULT_UNINSTALL_WORKFLOW,
+            parameters=DEFAULT_PARAMETERS,
+            allow_custom_parameters=False,
+            task_retries=0,
+            task_retry_interval=1,
+            task_thread_pool_size=DEFAULT_TASK_THREAD_POOL_SIZE)
+
+    @patch('cloudify_cli.commands.local.execute')
+    def test_uninstall_command_execute_custom_arguments(self,
+                                                        local_execute_mock
+                                                        ):
+        local_uninstall_command = 'cfy local uninstall ' \
+                                  '-w my-uninstall ' \
+                                  '--parameters key=value ' \
+                                  '--allow-custom-parameters ' \
+                                  '--task-retries 14 ' \
+                                  '--task-retry-interval 7 ' \
+                                  '--task-thread-pool-size 87'
+
+        cli_runner.run_cli(local_uninstall_command)
+
+        local_execute_mock.assert_called_with(
+            workflow_id='my-uninstall',
+            parameters='key=value',
+            allow_custom_parameters=True,
+            task_retries=14,
+            task_retry_interval=7,
+            task_thread_pool_size=87)
+
+    def test_uninstall_command_removes_local_storage_dir(self):
+
+        sample_blueprint_path = os.path.join(BLUEPRINTS_DIR,
+                                             'local',
+                                             'blueprint.yaml')
+
+        # a custom workflow is used because the sample blueprint path does not
+        # have an 'install' workflow
+        cli_runner.run_cli('cfy local install '
+                           '-w run_test_op_on_nodes '
+                           '-p {0}'
+                           .format(sample_blueprint_path)
+                           )
+        self.assertTrue(os.path.isdir(local._storage_dir()))
+
+        # a custom workflow is used because the sample blueprint path does not
+        # have an 'uninstall' workflow
+        cli_runner.run_cli('cfy local uninstall '
+                           '-w run_test_op_on_nodes '
+                           .format(sample_blueprint_path)
+                           )
+
+        self.assertFalse(os.path.isdir(local._storage_dir()))
 
     @nose.tools.nottest
     def test_local_outputs(self):

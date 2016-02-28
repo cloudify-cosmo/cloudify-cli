@@ -16,6 +16,7 @@
 """
 Handles all commands that start with 'cfy blueprints'
 """
+
 import json
 
 import os
@@ -51,10 +52,10 @@ def validate(blueprint_path):
     logger.info(messages.VALIDATING_BLUEPRINT_SUCCEEDED)
 
 
-def upload(blueprint_path, blueprint_id, pre_validate):
+def upload(blueprint_path, blueprint_id, validate_blueprint):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
-    if pre_validate:
+    if validate_blueprint:
         validate(blueprint_path)
     else:
         logger.debug("Skipping blueprint validation")
@@ -71,24 +72,10 @@ def publish_archive(archive_location, blueprint_filename, blueprint_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
 
-    for archive_type in SUPPORTED_ARCHIVE_TYPES:
-        if archive_location.endswith('.{0}'.format(archive_type)):
-            break
-    else:
-        raise CloudifyCliError(
-            "Can't publish archive {0} - it's of an unsupported archive type. "
-            "Supported archive types: {1}".format(archive_location,
-                                                  SUPPORTED_ARCHIVE_TYPES))
+    check_if_archive_type_is_supported(archive_location)
 
-    archive_location_type = 'URL'
-    if not urlparse.urlparse(archive_location).scheme:
-        # archive_location is not a URL - validate it's a file path
-        if not os.path.isfile(archive_location):
-            raise CloudifyCliError(
-                "Can't publish archive {0} - it's not a valid URL nor a path "
-                "to an archive file".format(archive_location))
-        archive_location_type = 'path'
-        archive_location = os.path.expanduser(archive_location)
+    archive_location, archive_location_type = \
+        determine_archive_type(archive_location)
 
     logger.info('Publishing blueprint archive from {0} {1} to management '
                 'server {2}'
@@ -101,6 +88,34 @@ def publish_archive(archive_location, blueprint_filename, blueprint_id):
         archive_location, blueprint_id, blueprint_filename)
     logger.info("Published blueprint archive, blueprint's id is: {0}"
                 .format(blueprint.id))
+
+
+def check_if_archive_type_is_supported(archive_location):
+    for archive_type in SUPPORTED_ARCHIVE_TYPES:
+        if archive_location.endswith('.{0}'.format(archive_type)):
+            break
+    else:
+        raise CloudifyCliError(
+            "Can't publish archive {0} - it's of an unsupported "
+            "archive type. Supported archive types: {1}"
+            .format(archive_location, SUPPORTED_ARCHIVE_TYPES))
+
+
+def determine_archive_type(archive_location):
+
+    if not urlparse.urlparse(archive_location).scheme:
+        # archive_location is not a URL - validate it's a file path
+        archive_location = os.path.expanduser(archive_location)
+        if not os.path.isfile(archive_location):
+            raise CloudifyCliError(
+                "Can't publish archive {0} - "
+                "it's not a valid URL nor a path to an archive file"
+                .format(archive_location))
+        # The archive exists locally. Return it, and inform it's a path
+        return archive_location, 'path'
+
+    # The archive is a url. Return it, and inform it's a url
+    return os.path.expanduser(archive_location), 'url'
 
 
 def download(blueprint_id, output):

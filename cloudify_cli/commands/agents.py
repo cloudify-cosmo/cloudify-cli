@@ -13,6 +13,10 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+"""
+Handles all commands that start with 'cfy agents'
+"""
+
 import threading
 
 from cloudify_cli import utils

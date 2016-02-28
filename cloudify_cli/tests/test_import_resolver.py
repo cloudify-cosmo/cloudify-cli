@@ -122,7 +122,7 @@ class ImportResolverLocalUseTests(CliCommandTest):
             'validate_version': True
         }
         self.assert_method_called(
-            cli_command, mocked_module, 'parse_from_path', kwargs)
+            cli_command, mocked_module, 'parse_from_path', kwargs=kwargs)
 
     def test_validate_blueprint_uses_import_resolver(self):
         from cloudify_cli.commands import blueprints

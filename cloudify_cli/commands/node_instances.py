@@ -14,7 +14,7 @@
 #    * limitations under the License.
 
 """
-Handles all commands that start with 'cfy instances'
+Handles all commands that start with 'cfy node-instances'
 """
 
 from cloudify_rest_client.exceptions import CloudifyClientError

@@ -21,52 +21,95 @@ import argparse
 from cloudify_cli import commands as cfy
 from cloudify_cli import utils
 from cloudify_cli.config import completion_utils
-from cloudify_cli.config import argument_utils
+from cloudify_cli.config.argument_utils import remove_type
+from cloudify_cli.config.argument_utils import remove_completer
+from cloudify_cli.config.argument_utils import make_required
+from cloudify_cli.config.argument_utils import make_optional
 from cloudify_cli.constants import DEFAULT_REST_PORT
+from cloudify_cli.constants import DEFAULT_BLUEPRINT_FILE_NAME
+from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
+from cloudify_cli.constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
+from cloudify_cli.constants import DEFAULT_TIMEOUT
+from cloudify_cli.constants import DEFAULT_PARAMETERS
+from cloudify_cli.constants import DEFAULT_TASK_THREAD_POOL_SIZE
+from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
+from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW
 
 FORMAT_INPUT_AS_YAML_OR_DICT = 'formatted as YAML or as "key1=value1;key2=value2"'
 
 
-def blueprint_id_argument():
+def manager_blueprint_path_argument():
+
+    # These are specific attributes to the manager blueprint path argument
+    argument = {
+        'metavar': 'BLUEPRINT_FILE',
+        'type': argparse.FileType(),
+        'completer': completion_utils.yaml_files_completer
+    }
+    hlp = "Path to the application's blueprint file." \
+          "Default: `{0}`".format(DEFAULT_BLUEPRINT_PATH)
+
+    # Update the specific 'manager blueprint path argument' attributes with
+    # those that are shared with the 'local blueprint path argument'
+    argument.update(local_blueprint_path_argument(hlp))
+
+    return argument
+
+
+def local_blueprint_path_argument(hlp):
     return {
-        'metavar': 'BLUEPRINT_ID',
-        'type': str,
-        'help': 'The id of the blueprint',
-        'dest': 'blueprint_id',
-        'default': None,
+        'dest': 'blueprint_path',
         'required': True,
-        'completer': completion_utils.objects_args_completer_maker('blueprints')
+        'help': hlp
     }
 
 
-def snapshot_id_argument(hlp):
+def blueprint_id_argument():
     return {
-        'metavar': 'SNAPSHOT_ID',
-        'type': str,
-        'help': hlp,
-        'dest': 'snapshot_id',
-        'default': None,
+        'help': "The blueprint's id",
+        'dest': 'blueprint_id',
         'required': True,
-        'completer': completion_utils.objects_args_completer_maker('snapshots')
+        'completer':
+            completion_utils.objects_args_completer_maker('blueprints')
+    }
+
+
+def validate_blueprint_argument():
+    return {
+        'dest': 'validate_blueprint',
+        'action': 'store_true',
+        'help': 'Validate the blueprint before uploading it '
+                'to the manager'
+    }
+
+
+def archive_location_argument():
+    return {
+        'dest': 'archive_location',
+        'required': True,
+        'help': "Path or URL to the application's blueprint archive file",
+        'completer': completion_utils.archive_files_completer
     }
 
 
 def deployment_id_argument(hlp):
     return {
         'dest': 'deployment_id',
-        'metavar': 'DEPLOYMENT_ID',
-        'type': str,
-        'required': False,
         'help': hlp,
         'completer': completion_utils.objects_args_completer_maker('deployments')
+    }
+
+
+def inputs_argument(hlp):
+    return {
+        'dest': 'inputs',
+        'help': hlp
     }
 
 
 def execution_id_argument(hlp):
     return {
         'dest': 'execution_id',
-        'metavar': 'EXECUTION_ID',
-        'type': str,
         'required': True,
         'help': hlp,
         'completer': completion_utils.objects_args_completer_maker('executions')
@@ -77,22 +120,116 @@ def workflow_id_argument(hlp):
     return {
         'metavar': 'WORKFLOW',
         'dest': 'workflow_id',
-        'type': str,
         'required': True,
         'help': hlp,
         'completer': completion_utils.workflow_id_completer
     }
 
 
+def parameters_argument():
+    return {
+        'dest': 'parameters',
+        'default': DEFAULT_PARAMETERS,
+        'help': 'Parameters for the workflow execution ({0})'
+        .format(FORMAT_INPUT_AS_YAML_OR_DICT)
+    }
+
+
+def allow_custom_parameters_argument():
+    return {
+        'dest': 'allow_custom_parameters',
+        'action': 'store_true',
+        'help': 'Allow the passing of custom parameters ('
+                "parameters which were not defined in the workflow's schema "
+                'in the blueprint) to the execution'
+    }
+
+
+def force_argument(hlp):
+    return {
+        'dest': 'force',
+        'action': 'store_true',
+        'help': hlp
+    }
+
+
+def timeout_argument():
+    return {
+        'dest': 'timeout',
+        'type': int,
+        'default': DEFAULT_TIMEOUT,
+        'help': 'Operation timeout in seconds (The execution itself will keep '
+                'going. It is the CLI that will stop waiting for it to '
+                'terminate)'
+    }
+
+
+def include_logs_argument():
+    return {
+        'dest': 'include_logs',
+        'action': 'store_true',
+        'help': 'Include logs in returned events'
+    }
+
+
+def install_plugins_argument():
+    return {
+        'dest': 'install_plugins',
+        'action': 'store_true',
+        'help': 'Install necessary plugins of the given blueprint'
+    }
+
+
+def task_retries_argument(default_value):
+    return {
+        'dest': 'task_retries',
+        'default': default_value,
+        'type': int,
+        'help': 'How many times should a task be retried in case it fails'
+    }
+
+
+def task_retry_interval_argument(default_value):
+    return {
+        'dest': 'task_retry_interval',
+        'default': default_value,
+        'type': int,
+        'help': 'How many seconds to wait before each task is retried'
+    }
+
+
+def task_thread_pool_size_argument():
+    return {
+        'dest': 'task_thread_pool_size',
+        'default': DEFAULT_TASK_THREAD_POOL_SIZE,
+        'type': int,
+        'help': 'The size of the thread pool to execute tasks in'
+    }
+
+
 def plugin_id_argument(hlp):
     return {
-        'metavar': 'PLUGIN_ID',
-        'type': str,
         'help': hlp,
         'dest': 'plugin_id',
-        'default': None,
         'required': True,
         'completer': completion_utils.objects_args_completer_maker('plugins')
+    }
+
+
+def snapshot_id_argument(hlp):
+    return {
+        'help': hlp,
+        'dest': 'snapshot_id',
+        'required': True,
+        'completer': completion_utils.objects_args_completer_maker('snapshots')
+    }
+
+
+def auto_generate_ids_argument():
+    return {
+        'dest': 'auto_generate_ids',
+        'action': 'store_true',
+        'help': 'auto generate blueprint and deployment ids'
     }
 
 
@@ -101,7 +238,7 @@ def parser_config():
         'description': 'Manages Cloudify in different Cloud Environments',
         'arguments': {
             '--version': {
-                'help': 'show version information and exit',
+                'help': 'Show version information and exit',
                 'action': cfy.version
             }
         },
@@ -144,8 +281,75 @@ def parser_config():
                     }
                 }
             },
+            'install': {
+                'help': 'Install an application on a Cloudify Manager',
+                'arguments': {
+                    '-p,--blueprint-path':
+                        make_optional(
+                                remove_type(
+                                        manager_blueprint_path_argument())
+                        ),
+                    '-b,--blueprint-id': remove_completer(
+                            make_optional(blueprint_id_argument(
+                            ))
+                        ),
+                    '--validate': validate_blueprint_argument(),
+                    '-l,--archive-location': make_optional(
+                            archive_location_argument()),
+                    '-n,--blueprint-filename': {
+                        'dest': 'blueprint_filename',
+                        'help': "The name of the archive's main "
+                                "blueprint file. Default: `{0}`"
+                                .format(DEFAULT_BLUEPRINT_FILE_NAME)
+                        },
+                    '-d,--deployment-id': deployment_id_argument(
+                            hlp='The id of the deployed blueprint'
+                        ),
+                    '-i,--inputs':
+                        inputs_argument('Inputs file/string for the deployment'
+                                        ' creation ({0}). Default: {1}'
+                                        .format(FORMAT_INPUT_AS_YAML_OR_DICT,
+                                                DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)
+                                        ),
+                    '-w,--workflow': make_optional(workflow_id_argument(
+                            hlp='The workflow to start '
+                                '(default: `{0}`)'
+                                .format(DEFAULT_INSTALL_WORKFLOW)
+                            )
+                        ),
+                    '--parameters': parameters_argument(),
+                    '--allow-custom-parameters':
+                        allow_custom_parameters_argument(),
+                    '--timeout': timeout_argument(),
+                    '--include-logs': include_logs_argument(),
+                    '-g,--auto-generate-ids': auto_generate_ids_argument()
+                },
+                'handler': cfy.install
+            },
+            'uninstall': {
+                'help': 'Uninstall an existing application '
+                        'from the Cloudify Manager',
+                'arguments': {
+                    '-d,--deployment-id': make_required(
+                            deployment_id_argument(
+                                hlp='The id of the deployment you wish to '
+                                    'uninstall'
+                            )
+                        ),
+                    '-w,--workflow': make_optional(workflow_id_argument(
+                            hlp='The workflow to start (default: `{0}`'
+                                .format(DEFAULT_UNINSTALL_WORKFLOW))
+                        ),
+                    '--parameters': parameters_argument(),
+                    '--allow-custom-parameters':
+                        allow_custom_parameters_argument(),
+                    '--timeout': timeout_argument(),
+                    '-l,--include-logs': include_logs_argument()
+                },
+                'handler': cfy.uninstall
+            },
             'plugins': {
-                'help': "Manages Cloudify's plugins",
+                'help': "Manage Cloudify's plugins",
                 'sub_commands': {
                     'upload': {
                         'arguments': {
@@ -154,39 +358,36 @@ def parser_config():
                                 'dest': 'plugin_path',
                                 'type': argparse.FileType(),
                                 'required': True,
-                                'help': 'Path to the plugin file',
+                                'help': 'Path to a plugin Wagon (`.wgn` file)',
                                 'completer': completion_utils.yaml_files_completer
                             }
                         },
-                        'help': 'command for uploading a plugin to the management server',
+                        'help': 'Upload a plugin to the management server',
                         'handler': cfy.plugins.upload
                     },
                     'get': {
                         'arguments': {
                             '-p,--plugin-id': plugin_id_argument(
-                                hlp='The plugin id')
+                                hlp='Plugin id')
                         },
-                        'help': 'Command for listing all modules according to their plugin id',
+                        'help': 'List all modules according to their plugin id',
                         'handler': cfy.plugins.get
                     },
                     'download': {
                         'arguments': {
                             '-p,--plugin-id': plugin_id_argument(
-                                hlp='The plugin id'),
+                                hlp='Plugin id'),
                             '-o,--output': {
-                                'metavar': 'OUTPUT',
-                                'type': str,
-                                'help': 'The output file path of the plugin to be downloaded',
+                                'help': 'Path for the downloaded plugin',
                                 'dest': 'output',
-                                'required': False
+
                             }
                         },
-                        'help': 'Command for downloading a plugin from the management server',
+                        'help': 'Download a plugin from the Manager',
                         'handler': cfy.plugins.download
                     },
                     'list': {
-                        'help': 'Command for listing all plugins on the '
-                                'Manager',
+                        'help': 'List all the plugins on the Manager',
                         'handler': cfy.plugins.ls
                     },
                     'delete': {
@@ -194,78 +395,52 @@ def parser_config():
                             '-p,--plugin-id': plugin_id_argument(
                                 hlp='The plugin id')
                         },
-                        'help': 'Command for deleting a plugin',
+                        'help': 'Delete a plugin from the manager',
                         'handler': cfy.plugins.delete
                     }
                 }
             },
             'blueprints': {
-                'help': "Manages Cloudify's Blueprints",
+                'help': "Manage Cloudify's Blueprints",
                 'sub_commands': {
                     'upload': {
                         'arguments': {
-                            '-p,--blueprint-path': {
-                                'metavar': 'BLUEPRINT_FILE',
-                                'dest': 'blueprint_path',
-                                'type': argparse.FileType(),
-                                'required': True,
-                                'help': "Path to the application's blueprint file",
-                                'completer': completion_utils.yaml_files_completer
-                            },
-                            '-b,--blueprint-id': argument_utils.remove_completer(blueprint_id_argument()),
-                            '--validate': {
-                                'dest': 'pre_validate',
-                                'action': 'store_true',
-                                'default': False,
-                                'help': 'Validate the blueprint before uploading it '
-                                        'to the manager'
-                            }
+                            '-p,--blueprint-path':
+                                manager_blueprint_path_argument(),
+                            '-b,--blueprint-id': remove_completer(
+                                    blueprint_id_argument()),
+                            '--validate': validate_blueprint_argument()
                         },
-                        'help': 'command for uploading a blueprint to the management server',
+                        'help': 'Upload a blueprint to the Manager',
                         'handler': cfy.blueprints.upload
                     },
                     'publish-archive': {
                         'arguments': {
-                            '-l,--archive-location': {
-                                'metavar': 'ARCHIVE_LOCATION',
-                                'dest': 'archive_location',
-                                'type': str,
-                                'required': True,
-                                'help': "Path or URL to the application's "
-                                        "blueprint archive file",
-                                'completer': completion_utils.archive_files_completer
-                            },
+                            '-l,--archive-location': archive_location_argument(),
                             '-n,--blueprint-filename': {
-                                'metavar': 'BLUEPRINT_FILENAME',
                                 'dest': 'blueprint_filename',
-                                'type': str,
-                                'required': False,
-                                'help': "Name of the archive's main blueprint "
-                                        "file",
+                                'help': "The name of the archive's main "
+                                        "blueprint file"
                             },
-                            '-b,--blueprint-id': argument_utils.remove_completer(blueprint_id_argument())
+                            '-b,--blueprint-id': remove_completer(blueprint_id_argument())
                         },
-                        'help': 'command for publishing a blueprint '
-                                'archive from a path or URL to the '
-                                'management server',
+                        'help': 'Publish a blueprint archive from a path or '
+                                'a URL to the Manager',
                         'handler': cfy.blueprints.publish_archive
                     },
                     'download': {
                         'arguments': {
                             '-b,--blueprint-id': blueprint_id_argument(),
                             '-o,--output': {
-                                'metavar': 'OUTPUT',
-                                'type': str,
                                 'help': 'The output file path of the blueprint to be downloaded',
                                 'dest': 'output',
-                                'required': False
                             }
                         },
-                        'help': 'command for downloading a blueprint from the management server',
+                        'help': 'Download a blueprint from the Manager',
                         'handler': cfy.blueprints.download
                     },
                     'list': {
-                        'help': 'command for listing all blueprints on the '
+                        'help': 'List all blueprints on the '
                                 'Manager',
                         'handler': cfy.blueprints.ls
                     },
@@ -273,35 +448,29 @@ def parser_config():
                         'arguments': {
                             '-b,--blueprint-id': blueprint_id_argument()
                         },
-                        'help': 'command for deleting a blueprint',
+                        'help': 'Delete a blueprint from the manager',
                         'handler': cfy.blueprints.delete
                     },
                     'validate': {
                         'arguments': {
-                            '-p,--blueprint-path': {
-                                'metavar': 'BLUEPRINT_FILE',
-                                'type': argparse.FileType(),
-                                'dest': 'blueprint_path',
-                                'required': True,
-                                'help': "Path to the application's blueprint file",
-                                'completer': completion_utils.yaml_files_completer
-                            }
+                            '-p,--blueprint-path':
+                                manager_blueprint_path_argument(),
                         },
-                        'help': 'command for validating a blueprint',
+                        'help': 'Validate a blueprint',
                         'handler': cfy.blueprints.validate
                     },
                     'get': {
                         'arguments': {
                             '-b,--blueprint-id': blueprint_id_argument()
                         },
-                        'help': 'command for getting a blueprint by its id',
+                        'help': 'Get a blueprint by its id',
                         'handler': cfy.blueprints.get
                     },
                     'inputs': {
                         'arguments': {
                             '-b,--blueprint-id': blueprint_id_argument()
                         },
-                        'help': 'command for listing all available blueprint inputs',
+                        'help': "List a blueprint's inputs",
                         'handler': cfy.blueprints.inputs
                     }
                 }
@@ -311,7 +480,7 @@ def parser_config():
                 'sub_commands': {
                     'create': {
                         'arguments': {
-                            '-s,--snapshot-id': argument_utils.remove_completer(
+                            '-s,--snapshot-id': remove_completer(
                                 snapshot_id_argument(
                                     hlp='A unique id that will be assigned to the created snapshot'
                                 )
@@ -319,14 +488,12 @@ def parser_config():
                             '--include-metrics': {
                                 'dest': 'include_metrics',
                                 'action': 'store_true',
-                                'default': False,
                                 'help': 'Include metrics data'
                                         'in the snapshot'
                             },
                             '--exclude-credentials': {
                                 'dest': 'exclude_credentials',
                                 'action': 'store_true',
-                                'default': False,
                                 'help': 'Do not store credentials in snapshot'
                             }
                         },
@@ -343,27 +510,25 @@ def parser_config():
                                 'help': "Path to the manager's snapshot file",
                                 'completer': completion_utils.yaml_files_completer
                             },
-                            '-s,--snapshot-id': argument_utils.remove_completer(snapshot_id_argument('The id of the snapshot'))
+                            '-s,--snapshot-id': remove_completer(snapshot_id_argument('The id of the snapshot'))
                         },
-                        'help': 'Upload a snapshot to the management server',
+                        'help': 'Upload a snapshot to the Manager',
                         'handler': cfy.snapshots.upload
                     },
                     'download': {
                         'arguments': {
                             '-s,--snapshot-id': snapshot_id_argument('The id of the snapshot'),
                             '-o,--output': {
-                                'metavar': 'OUTPUT',
-                                'type': str,
                                 'help': 'The output file path of the snapshot to be downloaded',
                                 'dest': 'output',
-                                'required': False
+
                             }
                         },
-                        'help': 'Download a snapshot from the management server',
+                        'help': 'Download a snapshot from the Manager',
                         'handler': cfy.snapshots.download
                     },
                     'list': {
-                        'help': 'List all snapshots on the manager',
+                        'help': 'List all snapshots on the Manager',
                         'handler': cfy.snapshots.ls
                     },
                     'delete': {
@@ -379,15 +544,13 @@ def parser_config():
                             '--without-deployments-envs': {
                                 'dest': 'without_deployments_envs',
                                 'action': 'store_true',
-                                'default': False,
                                 'help': 'Restore snapshot without deployment environments'
                             },
-                            '-f,--force': {
-                                'dest': 'force',
-                                'action': 'store_true',
-                                'default': False,
-                                'help': 'Force restoring the snapshot on a dirty manager'
-                            }
+                            '-f,--force':
+                                force_argument(
+                                        hlp='Force restoring the snapshot on '
+                                            'a Manager with existing blueprints'
+                                            'and/or deployments')
                         },
                         'help': 'Restore manager state to a specific snapshot',
                         'handler': cfy.snapshots.restore
@@ -400,105 +563,95 @@ def parser_config():
                     'install': {
                         'arguments': {
                             '-d,--deployment-id': deployment_id_argument(
-                                hlp='The id of the deployment to install agents for. If ommited, this '
-                                'will install agents for all deployments'
+                                hlp='The id of the deployment to install '
+                                    'agents for. If omitted, this will '
+                                    'install agents for all deployments'
                             ),
-                            '-l,--include-logs': {
-                                'dest': 'include_logs',
-                                'action': 'store_true',
-                                'help': 'Include logs in returned events'
-                            }
+                            '-l,--include-logs': include_logs_argument()
                         },
-                        'help':'command for installing agents on deployments',
+                        'help':'Install agents on deployments',
                         'handler': cfy.agents.install
                     }
                 }
             },
             'deployments': {
-                'help': "Manages and Executes Cloudify's Deployments",
+                'help': "Manage Cloudify's Deployments",
                 'sub_commands': {
                     'create': {
                         'arguments': {
-                            '-d,--deployment-id': argument_utils.remove_completer(
+                            '-d,--deployment-id': remove_completer(
                                 deployment_id_argument(
-                                    hlp='A unique id that will be assigned to the created deployment'
+                                    hlp='A unique id that will be assigned to '
+                                        'the created deployment'
                                 )
                             ),
                             '-b,--blueprint-id': blueprint_id_argument(),
-                            '-i,--inputs': {
-                                'metavar': 'INPUTS',
-                                'dest': 'inputs',
-                                'required': False,
-                                'help': 'Inputs file/string for the deployment creation ({0})'
-                                        .format(FORMAT_INPUT_AS_YAML_OR_DICT)
-                            }
+                            '-i,--inputs': inputs_argument(
+                                hlp='Inputs file/string for the deployment'
+                                    'creation ({0})'
+                                    .format(FORMAT_INPUT_AS_YAML_OR_DICT))
                         },
-                        'help': 'command for creating a deployment of a blueprint',
+                        'help': 'Create a deployment from a blueprint',
                         'handler': cfy.deployments.create
                     },
                     'delete': {
                         'arguments': {
                             '-d,--deployment-id': deployment_id_argument(
-                                    hlp='the id of the deployment to delete'),
+                                hlp='The id of the deployment to delete'),
                             '-f,--ignore-live-nodes': {
                                 'dest': 'ignore_live_nodes',
                                 'action': 'store_true',
-                                'default': False,
-                                'help': 'Delete the deployment even '
-                                        'if there are existing live nodes for it'
+                                'help': 'Delete the deployment even if '
+                                        'there are existing live nodes for it'
                             }
                         },
-                        'help': 'command for deleting a deployment',
+                        'help': 'Delete a deployment from the manager',
                         'handler': cfy.deployments.delete
                     },
                     'list': {
                         'arguments': {
-                            '-b,--blueprint-id': argument_utils.make_optional(
+                            '-b,--blueprint-id': make_optional(
                                 blueprint_id_argument()
                             )
                         },
-                        'help': 'command for listing all deployments or all deployments'
-                                ' of a blueprint',
+                        'help': 'List the all deployments on the manager, '
+                                'or all deployments of a specific blueprint',
                         'handler': cfy.deployments.ls
                     },
                     'outputs': {
                         'arguments': {
                             '-d,--deployment-id': deployment_id_argument(
-                                hlp='The id of the deployment to get outputs for'
+                                hlp='The id of the deployment to get outputs '
+                                    'for'
                             )
                         },
-                        'help': 'command for getting a specific deployment outputs',
+                        'help': 'Get outputs for a specific deployment',
                         'handler': cfy.deployments.outputs
                     }
                 }
             },
             'events': {
-                'help': "Manages Cloudify's events",
+                'help': "Manage Cloudify's events",
                 'sub_commands': {
                     'list': {
                         'arguments': {
-                            '-l,--include-logs': {
-                                'dest': 'include_logs',
-                                'action': 'store_true',
-                                'help': 'Includes logs in the returned events'
-                            },
+                            '-l,--include-logs': include_logs_argument(),
                             '-e,--execution-id': execution_id_argument(
                                 hlp='The id of the execution to list events for'
                             ),
                             '--tail': {
                                 'dest': 'tail',
                                 'action': 'store_true',
-                                'default': False,
-                                'help': 'tail the events of the specified execution until it ends'
+                                'help': 'Tail the events of the specified execution until it ends'
                             }
                         },
-                        'help': 'Displays Events for different executions',
+                        'help': 'Display Events for different executions',
                         'handler': cfy.events.ls
                     }
                 }
             },
             'executions': {
-                'help': "Manages Cloudify's Executions",
+                'help': "Manage Cloudify's Executions",
                 'sub_commands': {
                     'get': {
                         'arguments': {
@@ -506,70 +659,45 @@ def parser_config():
                                 hlp='The id of the execution to get'
                             )
                         },
-                        'help': 'command for getting an execution by its id',
+                        'help': 'Get an execution by its id',
                         'handler': cfy.executions.get
                     },
                     'list': {
                         'arguments': {
                             '-d,--deployment-id': deployment_id_argument(
-                                hlp="filter executions for a given deployment by the deployment's id"
+                                hlp='The Deployment id to list executions for'
                             ),
                             '--system-workflows': {
                                 'dest': 'include_system_workflows',
                                 'action': 'store_true',
-                                'default': False,
-                                'help': 'Include executions of system workflows.'
+                                'help': 'Include executions of '
+                                        'system workflows'
                             },
                         },
-                        'help': 'command for listing all executions of a deployment',
+                        'help': 'List all running executions, or all '
+                                'executions for a specific deployment',
                         'handler': cfy.executions.ls
                     },
                     'start': {
                         'arguments': {
                             '-w,--workflow': workflow_id_argument(
                                 hlp='The workflow to start'),
-                            '-p,--parameters': {
-                                'metavar': 'PARAMETERS',
-                                'dest': 'parameters',
-                                'default': {},
-                                'type': str,
-                                'required': False,
-                                'help': 'Parameters for the workflow execution ({0})'
-                                        .format(FORMAT_INPUT_AS_YAML_OR_DICT)
-                            },
-                            '--allow-custom-parameters': {
-                                'dest': 'allow_custom_parameters',
-                                'action': 'store_true',
-                                'default': False,
-                                'help': 'Allow the passing of custom parameters ('
-                                        "parameters which were not defined in the workflow's schema in "
-                                        'the blueprint) to the execution'
-                            },
-                            '--timeout': {
-                                'dest': 'timeout',
-                                'metavar': 'TIMEOUT',
-                                'type': int,
-                                'required': False,
-                                'default': 900,
-                                'help': 'Operation timeout in seconds (The execution itself will keep '
-                                        'going, it is the CLI that will stop waiting for it to terminate)'
-                            },
-                            '-f,--force': {
-                                'dest': 'force',
-                                'action': 'store_true',
-                                'default': False,
-                                'help': 'Whether the workflow should execute even if there is an ongoing'
-                                        ' execution for the provided deployment'
-                            },
-                            '-l,--include-logs': {
-                                'dest': 'include_logs',
-                                'action': 'store_true',
-                                'help': 'Include logs in returned events'
-                            },
+                            '-p,--parameters': parameters_argument(),
+                            '--allow-custom-parameters':
+                                allow_custom_parameters_argument(),
+                            '--timeout': timeout_argument(),
+                            '-f,--force':
+                                force_argument(
+                                        hlp='Execute the workflow even if '
+                                            'there is an ongoing execution for'
+                                            'the given deployment'
+                                ),
+                            '-l,--include-logs': include_logs_argument(),
                             '-d,--deployment-id': deployment_id_argument(
                                 hlp='The deployment id')
                         },
-                        'help': 'Command for starting a workflow execution on a deployment',
+                        'help': 'Start executing a workflow '
+                                'on a given deployment',
                         'handler': cfy.executions.start
                     },
                     'cancel': {
@@ -577,13 +705,10 @@ def parser_config():
                             '-e,--execution-id': execution_id_argument(
                                 hlp='The id of the execution to cancel'
                             ),
-                            '-f,--force': {
-                                'dest': 'force',
-                                'action': 'store_true',
-                                'default': False,
-                                'help': 'Terminate the execution abruptly, '
-                                        'rather than request an orderly termination'
-                            }
+                            '-f,--force': force_argument(
+                                    hlp='Terminate the execution abruptly, '
+                                        'rather than request an orderly '
+                                        'termination')
                         },
                         'help': 'Cancel an execution by its id',
                         'handler': cfy.executions.cancel
@@ -598,26 +723,25 @@ def parser_config():
                             '--node-id': {
                                 'dest': 'node_id',
                                 'required': True,
-                                'help': 'The ID of the node to get'
+                                'help': "The node's id"
                             },
-                            '-d,--deployment-id': {
-                                'dest': 'deployment_id',
-                                'required': True,
-                                'help': 'Filter nodes for a given deployment according to the deployment ID'
-                            }
+                            '-d,--deployment-id': make_required(
+                                    deployment_id_argument(
+                                            hlp='The deployment id to which '
+                                                'the node is related'))
                         },
-                        'help': 'command for getting a node by its ID',
+                        'help': 'Get information about a specific node',
                         'handler': cfy.nodes.get
                     },
                     'list': {
                         'arguments': {
-                            '-d,--deployment-id': {
-                                'dest': 'deployment_id',
-                                'required': False,
-                                'help': 'Filter nodes for a given deployment according to the deployment ID'
-                            }
+                            '-d,--deployment-id': deployment_id_argument(
+                                    hlp='The id of the deployment to list '
+                                        'nodes for. If omitted, this will '
+                                        'list nodes for all deployments')
                         },
-                        'help': 'Command for getting all nodes',
+                        'help': 'List nodes for all deployments, or for a '
+                                'specific deployment',
                         'handler': cfy.nodes.ls
                     }
                 }
@@ -633,110 +757,153 @@ def parser_config():
                                 'help': 'The ID of the node instance to get'
                             }
                         },
-                        'help': 'Command for getting a node instance according to it\'s ID',
+                        'help': "Get a node instance according to its ID",
                         'handler': cfy.node_instances.get
                     },
                     'list': {
                         'arguments': {
-                            '-d,--deployment-id': {
-                                'dest': 'deployment_id',
-                                'required': False,
-                                'help': 'Filter node instances for a given deployment according to the deployment ID'
-                            },
+                            '-d,--deployment-id': deployment_id_argument(
+                                    hlp='The id of the deployment to list '
+                                        'node instances for. If omitted, '
+                                        'this will list node instances'
+                                        'for all deployments)'),
                             '--node-name': {
                                 'dest': 'node_name',
-                                'required': False,
-                                'help': 'Filter node instances according to the node name'
+                                'help': "The node's name"
                             }
                         },
-                        'help': 'Command for getting node instances',
+                        'help': 'List node instances for all deployments,'
+                                'or for a specific deployment',
                         'handler': cfy.node_instances.ls
                     }
                 }
             },
             'workflows': {
-                'help': 'Manages Deployment Workflows',
+                'help': 'Manage Deployment Workflows',
                 'sub_commands': {
                     'get': {
                         'arguments': {
                             '-d,--deployment-id': deployment_id_argument(
-                                hlp='The id of the deployment for which the workflow belongs'
+                                hlp='The id of the deployment to which the '
+                                    'workflow belongs'
                             ),
                             '-w,--workflow': workflow_id_argument(
                                 hlp='The id of the workflow to get'
                             )
                         },
-                        'help': 'command for getting a workflow by its name and deployment',
+                        'help': 'Get a workflow by its name and deployment',
                         'handler': cfy.workflows.get
                     },
                     'list': {
                         'arguments': {
                             '-d,--deployment-id': deployment_id_argument(
-                                hlp='The id of the deployment whose workflows to list'
+                                hlp='The id of the deployment whose workflows '
+                                    'to list'
                             )
                         },
-                        'help': 'command for listing workflows for a deployment',
+                        'help': 'List workflows for a deployment',
                         'handler': cfy.workflows.ls
                     }
                 }
             },
             'local': {
-                'help': 'Execute workflows locally',
+                'help': 'Manage local workflows',
                 'sub_commands': {
+                    'install': {
+                        'help': 'Install an application',
+                        'arguments': {
+                            '-p,--blueprint-path':
+                                make_optional(
+                                        local_blueprint_path_argument(
+                                                hlp="Path to the application's"
+                                                    "blueprint file. Default: "
+                                                    "`{0}`".format(DEFAULT_BLUEPRINT_PATH)
+                                        )
+                                ),
+                            '-i,--inputs':
+                                inputs_argument('Inputs file/string for the '
+                                                'deployment creation ({0}). '
+                                                'Default: {1}'
+                                                .format(FORMAT_INPUT_AS_YAML_OR_DICT,
+                                                        DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)
+                                                ),
+                            '--install-plugins': install_plugins_argument(),
+                            '-w,--workflow': make_optional(
+                                    workflow_id_argument(
+                                            hlp='The workflow to start '
+                                                '(default: `{0}`'
+                                                .format(DEFAULT_INSTALL_WORKFLOW)
+                                    )
+                                ),
+                            '--parameters': parameters_argument(),
+                            '--allow-custom-parameters':
+                                allow_custom_parameters_argument(),
+                            '--task-retries': task_retries_argument(0),
+                            '--task-retry-interval':
+                                task_retry_interval_argument(1),
+                            '--task-thread-pool-size':
+                                task_thread_pool_size_argument()
+                        },
+                        'handler': cfy.local.install
+                    },
+                    'uninstall': {
+                        'help': 'Uninstall an application',
+                        'arguments': {
+                            '-w,--workflow': make_optional(
+                                    workflow_id_argument(
+                                            hlp='The workflow to start '
+                                                '(default: `{0}`'
+                                                .format(DEFAULT_UNINSTALL_WORKFLOW)
+                                    )
+                                ),
+                            '--parameters': parameters_argument(),
+                            '--allow-custom-parameters':
+                                allow_custom_parameters_argument(),
+                            '--task-retries': task_retries_argument(0),
+                            '--task-retry-interval':
+                                task_retry_interval_argument(1),
+                            '--task-thread-pool-size':
+                                task_thread_pool_size_argument()
+                        },
+                        'handler': cfy.local.uninstall
+                    },
                     'init': {
-                        'help': 'Init a local workflow execution environment in '
+                        'help': 'Init a local workflow execution environment '
                                 'in the current working directory',
                         'arguments': {
-                            '-p,--blueprint-path': {
-                                'dest': 'blueprint_path',
-                                'metavar': 'BLUEPRINT_PATH',
-                                'type': str,
-                                'required': True,
-                                'help': 'Path to a blueprint'
-                            },
-                            '-i,--inputs': {
-                                'metavar': 'INPUTS',
-                                'dest': 'inputs',
-                                'required': False,
-                                'help': 'Inputs file/string for the local workflow creation ({0})'
+                            '-p,--blueprint-path':
+                                local_blueprint_path_argument(
+                                        hlp='Path to a blueprint'
+                                ),
+                            '-i,--inputs': inputs_argument(
+                                    hlp='Inputs file/string for the local '
+                                        'workflow creation ({0})'
                                         .format(FORMAT_INPUT_AS_YAML_OR_DICT)
-                            },
-                            '--install-plugins': {
-                                'dest': 'install_plugins_',
-                                'action': 'store_true',
-                                'default': False,
-                                'help': 'Install necessary plugins of the given blueprint.'
-                            }
+                                ),
+                            '--install-plugins': install_plugins_argument()
                         },
                         'handler': cfy.local.init
                     },
                     'install-plugins': {
-                        'help': 'Installs the necessary plugins for a given blueprint',
+                        'help': 'Install the necessary plugins for a given blueprint',
                         'arguments': {
-                            '-p,--blueprint-path': {
-                                'dest': 'blueprint_path',
-                                'metavar': 'BLUEPRINT_PATH',
-                                'type': str,
-                                'required': True,
-                                'help': 'Path to a blueprint'
-                            }
+                            '-p,--blueprint-path':
+                                local_blueprint_path_argument(
+                                        hlp='Path to a blueprint'
+                                ),
                         },
                         'handler': cfy.local.install_plugins
                     },
                     'create-requirements': {
-                        'help': 'Creates a PIP compliant requirements file for the given blueprint',
+                        'help': 'Create a pip-compliant requirements file for a given blueprint',
                         'arguments': {
-                            '-p,--blueprint-path': {
-                                'dest': 'blueprint_path',
-                                'metavar': 'BLUEPRINT_PATH',
-                                'type': str,
-                                'required': True,
-                                'help': 'Path to a blueprint'
-                            },
+                            '-p,--blueprint-path':
+                                local_blueprint_path_argument(
+                                        hlp='Path to a blueprint'
+                                ),
                             '-o,--output': {
                                 'metavar': 'REQUIREMENTS_OUTPUT',
                                 'dest': 'output',
-                                'required': False,
                                 'help': 'Path to a file that will hold the '
                                         'requirements of the blueprint'
                             }
@@ -747,49 +914,18 @@ def parser_config():
                         'help': 'Execute a workflow locally',
                         'arguments': {
                             '-w,--workflow':
-                                argument_utils.remove_completer(
+                                remove_completer(
                                     workflow_id_argument(
                                         hlp='The workflow to execute locally'))
                             ,
-                            '-p,--parameters': {
-                                'metavar': 'PARAMETERS',
-                                'dest': 'parameters',
-                                'default': {},
-                                'type': str,
-                                'required': False,
-                                'help': 'Parameters for the workflow execution ({0})'
-                                        .format(FORMAT_INPUT_AS_YAML_OR_DICT)
-                            },
-                            '--allow-custom-parameters': {
-                                'dest': 'allow_custom_parameters',
-                                'action': 'store_true',
-                                'default': False,
-                                'help': 'Allow the passing of custom parameters ('
-                                        "parameters which were not defined in the workflow's schema in "
-                                        'the blueprint) to the execution'
-                            },
-                            '--task-retries': {
-                                'metavar': 'TASK_RETRIES',
-                                'dest': 'task_retries',
-                                'default': 0,
-                                'type': int,
-                                'help': 'How many times should a task be retried in case '
-                                        'it fails'
-                            },
-                            '--task-retry-interval': {
-                                'metavar': 'TASK_RETRY_INTERVAL',
-                                'dest': 'task_retry_interval',
-                                'default': 1,
-                                'type': int,
-                                'help': 'How many seconds to wait before each task is retried'
-                            },
-                            '--task-thread-pool-size': {
-                                'metavar': 'TASK_THREAD_POOL_SIZE',
-                                'dest': 'task_thread_pool_size',
-                                'default': 1,
-                                'type': int,
-                                'help': 'The size of the thread pool size to execute tasks in'
-                            }
+                            '-p,--parameters': parameters_argument(),
+                            '--allow-custom-parameters':
+                                allow_custom_parameters_argument(),
+                            '--task-retries': task_retries_argument(0),
+                            '--task-retry-interval':
+                                task_retry_interval_argument(1),
+                            '--task-thread-pool-size':
+                                task_thread_pool_size_argument()
                         },
                         'handler': cfy.local.execute
                     },
@@ -802,12 +938,8 @@ def parser_config():
                         'help': 'Display node instances',
                         'arguments': {
                             '--node-id': {
-                                'metavar': 'NODE_ID',
                                 'dest': 'node_id',
-                                'default': None,
-                                'type': str,
-                                'required': False,
-                                'help': 'Only display node instances of this node id'
+                                'help': 'Display only node instances of this node id'
                             }
                         },
                         'handler': cfy.local.instances
@@ -815,43 +947,35 @@ def parser_config():
                 }
             },
             'status': {
-                'help': "Show a management server's status",
+                'help': "Show the Manager's status",
                 'handler': cfy.status
             },
             'dev': {
                 'help': 'Executes fabric tasks on the management machine',
                 'arguments': {
                     '-t,--task': {
-                        'metavar': 'TASK',
-                        'type': str,
                         'dest': 'task',
-                        'help': 'name of fabric task to run',
+                        'help': 'Name of fabric task to run',
                         'completer': completion_utils.dev_task_name_completer
                     },
                     '-a,--args': {
                         'nargs': argparse.REMAINDER,
-                        'metavar': 'ARGS',
                         'dest': 'args',
-                        'type': str,
-                        'help': 'arguments for the fabric task'
+                        'help': 'Arguments for the fabric task'
                     },
                     '-p,--tasks-file': {
                         'dest': 'tasks_file',
-                        'metavar': 'TASKS_FILE',
-                        'type': str,
                         'help': 'Path to a tasks file',
                     }
                 },
                 'handler': cfy.dev
             },
             'ssh': {
-                'help': 'SSH to management server',
+                'help': 'SSH to the machine the Manager is located on',
                 'arguments': {
                     '-c,--command': {
                         'dest': 'ssh_command',
                         'metavar': 'COMMAND',
-                        'default': None,
-                        'type': str,
                         'help': 'Execute command over SSH'
                     },
                     '-p,--plain': {
@@ -863,68 +987,39 @@ def parser_config():
                 'handler': cfy.ssh
             },
             'bootstrap': {
-                'help': 'Bootstrap a Cloudify management environment',
+                'help': 'Bootstrap a Cloudify Manager',
                 'arguments': {
-                    '-p,--blueprint-path': {
-                        'dest': 'blueprint_path',
-                        'metavar': 'BLUEPRINT_PATH',
-                        'required': True,
-                        'type': str,
-                        'help': 'Path to a manager blueprint'
-                    },
-                    '-i,--inputs': {
-                        'metavar': 'INPUTS',
-                        'dest': 'inputs',
-                        'required': False,
-                        'help': 'Inputs file/string for a manager blueprint ({0})'
-                                .format(FORMAT_INPUT_AS_YAML_OR_DICT)
-                    },
+                    '-p,--blueprint-path':
+                        local_blueprint_path_argument(
+                                hlp='Path to a blueprint'
+                        ),
+                    '-i,--inputs': inputs_argument(
+                        hlp='Inputs file/string for a manager blueprint ({0})'
+                            .format(FORMAT_INPUT_AS_YAML_OR_DICT)
+                    ),
                     '--keep-up-on-failure': {
                         'dest': 'keep_up',
                         'action': 'store_true',
                         'help': 'If the bootstrap fails,'
-                                ' the management server will remain running'
+                                ' the Manager will remain running'
                     },
                     '--skip-validations': {
                         'dest': 'skip_validations',
                         'action': 'store_true',
-                        'help': 'Run bootstrap without,'
-                                ' validating resources prior to bootstrapping the manager'
+                        'help': 'Run bootstrap without '
+                                'validating resources prior to bootstrapping the manager'
                     },
                     '--validate-only': {
                         'dest': 'validate_only',
                         'action': 'store_true',
-                        'help': 'Run validations without'
-                                ' actually performing the bootstrap process.'
+                        'help': 'Run validations without '
+                                'actually performing the bootstrap process'
                     },
-                    '--install-plugins': {
-                        'dest': 'install_plugins',
-                        'action': 'store_true',
-                        'default': False,
-                        'help': 'Install necessary plugins of the given blueprint.'
-                    },
-                    '--task-retries': {
-                        'metavar': 'TASK_RETRIES',
-                        'dest': 'task_retries',
-                        'default': 5,
-                        'type': int,
-                        'help': 'How many times should a task be retried in case '
-                                'it fails'
-                    },
-                    '--task-retry-interval': {
-                        'metavar': 'TASK_RETRY_INTERVAL',
-                        'dest': 'task_retry_interval',
-                        'default': 30,
-                        'type': int,
-                        'help': 'How many seconds to wait before each task is retried'
-                    },
-                    '--task-thread-pool-size': {
-                        'metavar': 'TASK_THREAD_POOL_SIZE',
-                        'dest': 'task_thread_pool_size',
-                        'default': 1,
-                        'type': int,
-                        'help': 'The size of the thread pool size to execute tasks in'
-                    }
+                    '--install-plugins': install_plugins_argument(),
+                    '--task-retries': task_retries_argument(5),
+                    '--task-retry-interval': task_retry_interval_argument(30),
+                    '--task-thread-pool-size':
+                        task_thread_pool_size_argument()
                 },
                 'handler': cfy.bootstrap
             },
@@ -937,51 +1032,24 @@ def parser_config():
                         'help': 'Perform teardown even if deployments'
                                 'exist on the manager'
                     },
-                    '-f,--force': {
-                        'dest': 'force',
-                        'action': 'store_true',
-                        'default': False,
-                        'help': 'Confirmation for the teardown request'
-                    }
+                    '-f,--force': force_argument(
+                            hlp='Confirmation for the teardown request')
                 },
                 'handler': cfy.teardown
             },
             'recover': {
-                'help': 'Performs recovery of the management machine '
-                        'and all its contained nodes.',
+                'help': 'Perform recovery of the management machine '
+                        'and all its contained nodes',
                 'arguments': {
-                    '-f,--force': {
-                        'dest': 'force',
-                        'action': 'store_true',
-                        'default': False,
-                        'help': 'Confirmation for the recovery request'
-                    },
-                    '--task-retries': {
-                        'metavar': 'TASK_RETRIES',
-                        'dest': 'task_retries',
-                        'default': 5,
-                        'type': int,
-                        'help': 'How many times should a task be retried '
-                                'in case it fails.'
-                    },
-                    '--task-retry-interval': {
-                        'metavar': 'TASK_RETRY_INTERVAL',
-                        'dest': 'task_retry_interval',
-                        'default': 30,
-                        'type': int,
-                        'help': 'How many seconds to wait before each task is retried.'
-                    },
-                    '--task-thread-pool-size': {
-                        'metavar': 'TASK_THREAD_POOL_SIZE',
-                        'dest': 'task_thread_pool_size',
-                        'default': 1,
-                        'type': int,
-                        'help': 'The size of the thread pool size to execute tasks in'
-                    },
+                    '-f,--force': force_argument(
+                            hlp='Confirmation for the recovery request'
+                    ),
+                    '--task-retries': task_retries_argument(5),
+                    '--task-retry-interval': task_retry_interval_argument(30),
+                    '--task-thread-pool-size':
+                        task_thread_pool_size_argument(),
                     '-s,--snapshot-path': {
-                        'metavar': 'SNAPSHOT_PATH',
                         'dest': 'snapshot_path',
-                        'default': None,
                         'type': argparse.FileType(),
                         'help': 'Path to the snapshot that will be restored'
                     }
@@ -989,17 +1057,15 @@ def parser_config():
                 'handler': cfy.recover
             },
             'use': {
-                'help': 'Use/switch to the specified management server',
+                'help': 'Use/switch to a specific Cloudify Manager',
                 'arguments': {
                     '-t,--management-ip': {
-                        'metavar': 'MANAGEMENT_IP',
-                        'type': str,
-                        'help': 'The cloudify management server ip address',
+                        'help': "The Cloudify Manager ip's address",
                         'dest': 'management_ip',
                         'required': True
                     },
                     '--port': {
-                        'help': 'Specify the rest server port',
+                        'help': "The rest server's port",
                         'default': DEFAULT_REST_PORT,
                         'type': int,
                         'dest': 'rest_port'
