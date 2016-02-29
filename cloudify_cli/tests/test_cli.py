@@ -16,10 +16,20 @@
 
 import unittest
 
+from mock import patch
+
 from cloudify_cli.cli import longest_command_length
+from cloudify_cli.tests import cli_runner
 
 
 class TestCLI(unittest.TestCase):
+
+    @patch('argparse.ArgumentParser.print_help')
+    def test_help_shows_if_no_cli_arguments(self, print_help_mock):
+
+        # SystemExit is raised when sys.exit is called
+        self.assertRaises(SystemExit, cli_runner.run_cli, 'cfy')
+        self.assertTrue(print_help_mock.called)
 
     def test_longest_longest_command_length(self):
 
