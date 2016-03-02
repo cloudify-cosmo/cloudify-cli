@@ -17,7 +17,10 @@
 Tests 'cfy bootstrap'
 """
 
+import mock
+
 from cloudify_cli import common
+from cloudify_cli.bootstrap import bootstrap
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import \
     CliCommandTest, BLUEPRINTS_DIR
@@ -31,13 +34,14 @@ class BootstrapTest(CliCommandTest):
         blueprint_path = '{0}/local/{1}.yaml'\
                          .format(BLUEPRINTS_DIR,
                                  'blueprint_with_plugins')
-        self.assert_method_called(
-            cli_command='cfy bootstrap --install-plugins -p {0}'
-                        .format(blueprint_path),
-            module=common,
-            function_name='install_blueprint_plugins',
-            kwargs={'blueprint_path': blueprint_path}
-        )
+        with mock.patch('cloudify_cli.bootstrap.bootstrap.'
+                        'validate_manager_deployment_size'):
+            self.assert_method_called(
+                cli_command='cfy bootstrap --install-plugins -p {0}'
+                            .format(blueprint_path),
+                module=common,
+                function_name='install_blueprint_plugins',
+                kwargs={'blueprint_path': blueprint_path})
 
     def test_bootstrap_no_validations_install_plugins(self):
 
@@ -63,16 +67,16 @@ class BootstrapTest(CliCommandTest):
         cli_command = 'cfy bootstrap -p {0}'.format(
             blueprint_path)
 
-        self._assert_ex(
-            cli_cmd=cli_command,
-            err_str_segment='No module named tasks',
-            possible_solutions=[
-                "Run 'cfy local install-plugins -p {0}'"
-                .format(blueprint_path),
-                "Run 'cfy bootstrap --install-plugins -p {0}'"
-                .format(blueprint_path)
-            ]
-        )
+        with mock.patch('cloudify_cli.bootstrap.bootstrap.'
+                        'validate_manager_deployment_size'):
+            self._assert_ex(
+                cli_cmd=cli_command,
+                err_str_segment='No module named tasks',
+                possible_solutions=[
+                    "Run 'cfy local install-plugins -p {0}'"
+                    .format(blueprint_path),
+                    "Run 'cfy bootstrap --install-plugins -p {0}'"
+                    .format(blueprint_path)])
 
     def test_bootstrap_no_validation_missing_plugin(self):
 
@@ -93,3 +97,28 @@ class BootstrapTest(CliCommandTest):
                 .format(blueprint_path)
             ]
         )
+
+    def test_bootstrap_validate_manager_deployment_size(self):
+        # verifying validation over manager deployment size is called before
+        # calling bootstrap
+        cli_runner.run_cli('cfy init')
+        blueprint_path = '{0}/local/{1}.yaml'.format(
+            BLUEPRINTS_DIR, 'blueprint')
+        self.assert_method_called(
+            cli_command='cfy bootstrap --validate-only -p {0}'.format(
+                blueprint_path),
+            module=bootstrap,
+            function_name='validate_manager_deployment_size',
+            kwargs={})
+
+    def test_bootstrap_skip_validate_manager_deployment_size(self):
+        # verifying validation over manager deployment size is not called
+        # when the "--skip-validation" flag is used
+        cli_runner.run_cli('cfy init')
+        blueprint_path = '{0}/local/{1}.yaml'.format(
+            BLUEPRINTS_DIR, 'blueprint')
+        self.assert_method_not_called(
+            cli_command='cfy bootstrap --validate-only --skip-validations '
+                        '-p {0}'.format(blueprint_path),
+            module=bootstrap,
+            function_name='validate_manager_deployment_size')
