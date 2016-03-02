@@ -48,12 +48,12 @@ def _parse_args(args):
     """
 
     parser = register_commands()
+    argcomplete.autocomplete(parser)
 
     if len(sys.argv) == 1:
         parser.print_help()
         sys.exit(1)
 
-    argcomplete.autocomplete(parser)
     parsed = parser.parse_args(args)
     set_global_verbosity_level(parsed.verbosity)
     if parsed.debug:
