@@ -54,3 +54,5 @@ SSH_WIN_NOT_FOUND = """ssh.exe not found. Are you sure you have it installed?
 As alternative you can use PuTTY to ssh into the management server. \
 Do not forget to convert your private key from OpenSSH format to \
 PuTTY's format using PuTTYGen."""
+
+SSH_ARGS_CONFLICT = """Choose one of --host, --list-sessions, --sid arguments."""

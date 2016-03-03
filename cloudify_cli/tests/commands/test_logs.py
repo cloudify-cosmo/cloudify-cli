@@ -29,7 +29,7 @@ class LogsTest(CliCommandTest):
         settings = utils.CloudifyWorkingDirectorySettings()
         self._create_cosmo_wd_settings(settings)
         self._assert_ex('cfy logs get',
-                        'Management Key is not set '
+                        'Management User is not set '
                         'in working directory settings')
 
     def test_with_no_key(self):
