@@ -579,10 +579,12 @@ def parser_config():
                 'sub_commands': {
                     'create': {
                         'arguments': {
-                            '-d,--deployment-id': remove_completer(
-                                deployment_id_argument(
-                                    hlp='A unique id that will be assigned to '
-                                        'the created deployment'
+                            '-d,--deployment-id': make_required(
+                                remove_completer(
+                                    deployment_id_argument(
+                                        hlp='A unique id that will be assigned'
+                                            ' to the created deployment'
+                                    )
                                 )
                             ),
                             '-b,--blueprint-id': blueprint_id_argument(),
@@ -596,8 +598,10 @@ def parser_config():
                     },
                     'delete': {
                         'arguments': {
-                            '-d,--deployment-id': deployment_id_argument(
-                                hlp='The id of the deployment to delete'),
+                            '-d,--deployment-id': make_required(
+                                deployment_id_argument(
+                                    hlp='The id of the deployment to delete')
+                            ),
                             '-f,--ignore-live-nodes': {
                                 'dest': 'ignore_live_nodes',
                                 'action': 'store_true',
@@ -620,9 +624,11 @@ def parser_config():
                     },
                     'outputs': {
                         'arguments': {
-                            '-d,--deployment-id': deployment_id_argument(
-                                hlp='The id of the deployment to get outputs '
-                                    'for'
+                            '-d,--deployment-id': make_required(
+                                deployment_id_argument(
+                                    hlp='The id of the deployment to get '
+                                        'outputs for'
+                                )
                             )
                         },
                         'help': 'Get outputs for a specific deployment',
@@ -688,13 +694,15 @@ def parser_config():
                             '--timeout': timeout_argument(),
                             '-f,--force':
                                 force_argument(
-                                        hlp='Execute the workflow even if '
-                                            'there is an ongoing execution for'
-                                            'the given deployment'
+                                    hlp='Execute the workflow even if there '
+                                        'is an ongoing execution for the '
+                                        'given deployment'
                                 ),
                             '-l,--include-logs': include_logs_argument(),
-                            '-d,--deployment-id': deployment_id_argument(
-                                hlp='The deployment id')
+                            '-d,--deployment-id': make_required(
+                                deployment_id_argument(
+                                    hlp='The deployment id')
+                            )
                         },
                         'help': 'Start executing a workflow '
                                 'on a given deployment',
@@ -783,9 +791,11 @@ def parser_config():
                 'sub_commands': {
                     'get': {
                         'arguments': {
-                            '-d,--deployment-id': deployment_id_argument(
-                                hlp='The id of the deployment to which the '
-                                    'workflow belongs'
+                            '-d,--deployment-id': make_required(
+                                deployment_id_argument(
+                                    hlp='The id of the deployment to which '
+                                        'the workflow belongs'
+                                )
                             ),
                             '-w,--workflow': workflow_id_argument(
                                 hlp='The id of the workflow to get'
@@ -796,9 +806,11 @@ def parser_config():
                     },
                     'list': {
                         'arguments': {
-                            '-d,--deployment-id': deployment_id_argument(
-                                hlp='The id of the deployment whose workflows '
-                                    'to list'
+                            '-d,--deployment-id': make_required(
+                                deployment_id_argument(
+                                    hlp='The id of the deployment whose '
+                                        'workflows to list'
+                                )
                             )
                         },
                         'help': 'List workflows for a deployment',
