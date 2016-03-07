@@ -44,6 +44,7 @@ def run_cli_expect_system_exit_code(command, expected_code):
 
 
 def run_cli(command):
+    cli.set_global_verbosity_level(cli.NO_VERBOSE)
     runner_lgr.info(command)
     sys.argv = command.split()
     cli.main()

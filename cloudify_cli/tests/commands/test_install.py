@@ -283,7 +283,8 @@ class InstallTest(CliCommandTest):
                     'allow_custom_parameters':
                         STUB_ALLOW_CUSTOM_PARAMETERS,
                     'include_logs': STUB_INCLUDE_LOGS,
-                    'parameters': [STUB_PARAMETERS]
+                    'parameters': [STUB_PARAMETERS],
+                    'json': False
                     }
         )
 
@@ -379,7 +380,8 @@ class InstallTest(CliCommandTest):
             '--timeout {3} ' \
             '--parameters {4} ' \
             '--allow-custom-parameters ' \
-            '--include-logs' \
+            '--include-logs ' \
+            '--json' \
             .format(SAMPLE_ARCHIVE_PATH,
                     STUB_WORKFLOW,
                     STUB_DEPLOYMENT_ID,
@@ -396,7 +398,8 @@ class InstallTest(CliCommandTest):
             timeout=STUB_TIMEOUT,
             allow_custom_parameters=True,
             include_logs=True,
-            parameters=[STUB_PARAMETERS]
+            parameters=[STUB_PARAMETERS],
+            json=True
         )
 
     @patch('cloudify_cli.commands.install')
@@ -422,7 +425,8 @@ class InstallTest(CliCommandTest):
              'allow_custom_parameters': False,
              'timeout': DEFAULT_TIMEOUT,
              'include_logs': False,
-             'auto_generate_ids': False
+             'auto_generate_ids': False,
+             'json': False
              }
 
         self.assertEqual(install_command_arguments,

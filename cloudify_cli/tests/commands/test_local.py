@@ -17,6 +17,8 @@
 Tests all commands that start with 'cfy blueprints'
 """
 
+import logging
+import sys
 import os
 import json
 import tempfile
@@ -28,10 +30,14 @@ from mock import patch
 
 from dsl_parser import exceptions as parser_exceptions
 
+import cloudify.utils
+import cloudify.exceptions
+import cloudify.logs
 from cloudify.decorators import operation, workflow
 from cloudify import ctx as op_ctx
 from cloudify.exceptions import CommandExecutionException
 from cloudify.workflows import ctx as workflow_ctx
+from cloudify.workflows import tasks as workflow_tasks
 from dsl_parser.constants import HOST_TYPE
 
 from cloudify_cli import utils
@@ -47,6 +53,7 @@ from cloudify_cli.constants import DEFAULT_PARAMETERS
 from cloudify_cli.constants import DEFAULT_TASK_THREAD_POOL_SIZE
 from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
 from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW
+from cloudify_cli.tests.commands import utils as test_utils
 
 
 class LocalTest(CliCommandTest):
@@ -467,6 +474,68 @@ class LocalTest(CliCommandTest):
         # tested extensively by the other tests
         self.fail()
 
+    def test_verbose_logging(self):
+        def run(level=None, message=None, error=None, user_cause=None,
+                verbose_flag=''):
+            params = {}
+            if level is not None:
+                params['level'] = level
+            if message is not None:
+                params['message'] = message
+            if error is not None:
+                params['error'] = error
+            if user_cause is not None:
+                params['user_cause'] = user_cause
+            params_path = os.path.join(utils.get_cwd(), 'parameters.json')
+            with open(params_path, 'w') as f:
+                f.write(json.dumps(params))
+            with test_utils.mock_stdout() as output:
+                cli_runner.run_cli('cfy local execute -w logging_workflow '
+                                   '-p {0} {1}'.format(params_path,
+                                                       verbose_flag))
+            return output.getvalue()
+
+        blueprint_path = '{0}/logging/blueprint.yaml'.format(BLUEPRINTS_DIR)
+        cli_runner.run_cli('cfy local init -p {0}'.format(blueprint_path))
+
+        message = 'MESSAGE'
+
+        def assert_output(verbosity,
+                          expect_debug=False,
+                          expect_traceback=False):
+            output = run(level='INFO', message=message, verbose_flag=verbosity)
+            self.assertIn('INFO: {0}'.format(message), output)
+            output = run(level='DEBUG', message=message,
+                         verbose_flag=verbosity)
+            if expect_debug:
+                self.assertIn('DEBUG: {0}'.format(message), output)
+            else:
+                self.assertNotIn(message, output)
+            output = run(message=message, error=True, verbose_flag=verbosity)
+            self.assertIn('Task failed', output)
+            self.assertIn(message, output)
+            if expect_traceback:
+                self.assertIn('Traceback', output)
+                self.assertNotIn('Causes', output)
+            else:
+                self.assertNotIn('Traceback', output)
+            output = run(message=message, error=True, user_cause=True,
+                         verbose_flag=verbosity)
+            self.assertIn('Task failed', output)
+            self.assertIn(message, output)
+            if expect_traceback:
+                if expect_traceback:
+                    self.assertIn('Traceback', output)
+                    self.assertIn('Causes', output)
+                else:
+                    self.assertNotIn('Traceback', output)
+        assert_output(verbosity='')
+        assert_output(verbosity='-v', expect_traceback=True)
+        assert_output(verbosity='-vv', expect_traceback=True,
+                      expect_debug=True)
+        assert_output(verbosity='-vvv', expect_traceback=True,
+                      expect_debug=True)
+
     def _init(self):
         cli_runner.run_cli('cfy init')
 
@@ -524,3 +593,34 @@ def mock_workflow(param, custom_param=None, **kwargs):
                 'param': param,
                 'custom_param': custom_param
             })
+
+
+@workflow
+def logging_workflow(**kwargs):
+    kwargs.pop('ctx', None)
+    graph = workflow_ctx.graph_mode()
+    instance = next(workflow_ctx.node_instances)
+    task = instance.execute_operation('test.op', kwargs=kwargs)
+
+    def on_failure(tsk):
+        return workflow_tasks.HandlerResult.ignore()
+    task.on_failure = on_failure
+    graph.add_task(task)
+    graph.execute()
+
+
+@operation
+def logging_operation(level, message, error=False, user_cause=False, **kwargs):
+    if error:
+        causes = []
+        if user_cause:
+            try:
+                raise RuntimeError(message)
+            except RuntimeError:
+                _, ex, tb = sys.exc_info()
+                causes.append(cloudify.utils.exception_to_error_cause(
+                    ex, tb))
+        raise cloudify.exceptions.NonRecoverableError(message, causes=causes)
+    else:
+        level = getattr(logging, level)
+        op_ctx.logger.log(level, message)

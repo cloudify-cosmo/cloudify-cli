@@ -35,7 +35,7 @@ from cloudify_cli.exceptions import CloudifyCliError
 def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
             blueprint_filename, deployment_id, inputs, workflow_id, parameters,
             allow_custom_parameters, timeout, include_logs,
-            auto_generate_ids):
+            auto_generate_ids, json):
 
     # First, make sure the `blueprint_path` wasn't supplied with
     # `archive_location` or with `blueprint_filename`
@@ -174,7 +174,8 @@ def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
                      force=force,
                      allow_custom_parameters=allow_custom_parameters,
                      include_logs=include_logs,
-                     parameters=parameters)
+                     parameters=parameters,
+                     json=json)
 
 
 def _check_for_mutually_exclusive_arguments(blueprint_path,

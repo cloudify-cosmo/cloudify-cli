@@ -15,10 +15,11 @@
 ############
 
 import json
+import os
+import sys
+import copy
 import logging
 import logging.config
-import os
-import copy
 
 import colorama
 
@@ -118,33 +119,31 @@ def _configure_from_file():
     logging.config.dictConfig(logger_dict)
 
 
-def get_events_logger():
+def get_events_logger(json_output):
 
-    def verbose_events_logger(events):
-
+    def json_events_logger(events):
         """
-        The verbose events logger prints the entire event as json.
+        The json events logger prints events as consumable JSON formatted
+        entries. Each event appears in its own line.
         :param events: The events to print.
         :return:
         """
         for event in events:
-            _lgr.info(json.dumps(event, indent=4))
+            sys.stdout.write('{}\n'.format(json.dumps(event)))
+            sys.stdout.flush()
 
-    def default_events_logger(events):
-
+    def text_events_logger(events):
         """
         The default events logger prints events as short messages.
         :param events: The events to print.
         :return:
         """
         for event in events:
-            _lgr.info(logs.create_event_message_prefix(event))
+            output = logs.create_event_message_prefix(event)
+            if output:
+                _lgr.info(output)
 
-    # currently needs to be imported dynamically since
-    # otherwise it creates a circular import.
-    from cloudify_cli.cli import verbose_output
-
-    if verbose_output:
-        return verbose_events_logger
+    if json_output:
+        return json_events_logger
     else:
-        return default_events_logger
+        return text_events_logger
