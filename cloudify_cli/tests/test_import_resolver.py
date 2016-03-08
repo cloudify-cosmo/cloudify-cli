@@ -136,14 +136,11 @@ class ImportResolverLocalUseTests(CliCommandTest):
         blueprint_path = '{0}/local/{1}.yaml'.format(
             BLUEPRINTS_DIR, 'blueprint')
 
-        old_validate_dep_size = bootstrap.validate_manager_deployment_size
         old_load_env = bootstrap.load_env
         old_init = cloudify.workflows.local.FileStorage.init
         old_get_nodes = cloudify.workflows.local.FileStorage.get_nodes
         old_get_node_instances = \
             cloudify.workflows.local.FileStorage.get_node_instances
-
-        bootstrap.validate_manager_deployment_size = lambda: None
 
         def mock_load_env(name):
             raise IOError('mock load env')
@@ -178,7 +175,6 @@ class ImportResolverLocalUseTests(CliCommandTest):
             self._test_using_import_resolver(
                 'bootstrap', blueprint_path, dsl_parser.parser)
         finally:
-            bootstrap.validate_manager_deployment_size = old_validate_dep_size
             bootstrap.load_env = old_load_env
             bootstrap.local.FileStorage.init = old_init
             cloudify.workflows.local.FileStorage.get_nodes = old_get_nodes

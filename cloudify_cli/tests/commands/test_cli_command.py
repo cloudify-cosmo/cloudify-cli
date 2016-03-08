@@ -138,20 +138,6 @@ class CliCommandTest(unittest.TestCase):
                 self.logger.info(e.message)
             mock.assert_called_with(*args, **kwargs)
 
-    def assert_method_not_called(self,
-                                 cli_command,
-                                 module,
-                                 function_name,
-                                 ignore_errors=False):
-        with patch.object(module, function_name) as mock:
-            try:
-                cli_runner.run_cli(cli_command)
-            except BaseException as e:
-                if not ignore_errors:
-                    raise
-                self.logger.info(e.message)
-            self.assertFalse(mock.called)
-
     def _create_cosmo_wd_settings(self, settings=None):
         directory_settings = utils.CloudifyWorkingDirectorySettings()
         directory_settings.set_management_server('localhost')

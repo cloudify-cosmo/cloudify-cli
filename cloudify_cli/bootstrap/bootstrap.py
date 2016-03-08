@@ -47,10 +47,6 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify.exceptions import RecoverableError
 
 
-MANAGER_DEPLOYMENT_ARCHIVE_IGNORED_FILES = ['.git']
-MAX_MANAGER_DEPLOYMENT_SIZE = 50 * (10 ** 6)  # 50MB
-
-
 def _workdir():
     cloudify_dir = utils.get_init_path()
     workdir = os.path.join(cloudify_dir, 'bootstrap')
@@ -72,62 +68,6 @@ def load_env(name='manager'):
                           storage=storage)
 
 
-def blueprint_archive_filter_func(tarinfo):
-    if any((tarinfo.name.endswith(ignored_file) for ignored_file in
-            MANAGER_DEPLOYMENT_ARCHIVE_IGNORED_FILES)):
-        # ignoring file when creating the archive
-        return None
-    return tarinfo
-
-
-def tar_manager_deployment():
-    name = 'manager'
-    file_obj = BytesIO()
-    with tarfile.open(fileobj=file_obj, mode='w:gz') as tar:
-        tar.add(os.path.join(_workdir(), name),
-                arcname=name,
-                filter=blueprint_archive_filter_func)
-    file_obj.seek(0)
-    return file_obj
-
-
-# Temp workaround to allow teardown and recovery on different clients
-# assumes deployment name is manager
-def dump_manager_deployment():
-    archive_obj = tar_manager_deployment()
-    output = StringIO()
-    base64.encode(archive_obj, output)
-    return output.getvalue()
-
-
-def read_manager_deployment_dump_if_needed(manager_deployment_dump):
-    name = 'manager'
-    if not manager_deployment_dump:
-        return False
-    if os.path.exists(os.path.join(_workdir(), name)):
-        return False
-    dump_input = StringIO(manager_deployment_dump)
-    dump_input.seek(0)
-    file_obj = BytesIO()
-    base64.decode(dump_input, file_obj)
-    file_obj.seek(0)
-    with tarfile.open(fileobj=file_obj, mode='r:gz') as tar:
-        tar.extractall(_workdir())
-    return True
-
-
-def validate_manager_deployment_size():
-    archive_obj = tar_manager_deployment()
-    manager_dep_size = len(archive_obj.getvalue())
-    if manager_dep_size > MAX_MANAGER_DEPLOYMENT_SIZE:
-        raise CloudifyBootstrapError(
-            "The manager blueprint's folder is above the maximum allowed size "
-            "when archived (size is {0} bytes; max is {1}); Please ensure the "
-            "manager blueprint's folder doesn't contain any unnecessary files "
-            "or directories".format(manager_dep_size,
-                                    MAX_MANAGER_DEPLOYMENT_SIZE))
-
-
 def bootstrap_validation(blueprint_path,
                          name='manager',
                          inputs=None,
@@ -136,8 +76,6 @@ def bootstrap_validation(blueprint_path,
                          task_thread_pool_size=1,
                          install_plugins=False,
                          resolver=None):
-    validate_manager_deployment_size()
-
     try:
         env = common.initialize_blueprint(
             blueprint_path,
@@ -385,6 +323,36 @@ def recover(snapshot_path,
     if execution.status == execution.TERMINATED:
         logger.info('Successfully restored snapshot {0}'.format(snapshot_id))
     client.snapshots.delete(snapshot_id)
+
+
+# Temp workaround to allow teardown and recovery on different clients
+# assumes deployment name is manager
+def dump_manager_deployment():
+    name = 'manager'
+    file_obj = BytesIO()
+    output = StringIO()
+    with tarfile.open(fileobj=file_obj, mode='w:gz') as tar:
+        tar.add(os.path.join(_workdir(), name),
+                arcname=name)
+    file_obj.seek(0)
+    base64.encode(file_obj, output)
+    return output.getvalue()
+
+
+def read_manager_deployment_dump_if_needed(manager_deployment_dump):
+    name = 'manager'
+    if not manager_deployment_dump:
+        return False
+    if os.path.exists(os.path.join(_workdir(), name)):
+        return False
+    dump_input = StringIO(manager_deployment_dump)
+    dump_input.seek(0)
+    file_obj = BytesIO()
+    base64.decode(dump_input, file_obj)
+    file_obj.seek(0)
+    with tarfile.open(fileobj=file_obj, mode='r:gz') as tar:
+        tar.extractall(_workdir())
+    return True
 
 
 def _upload_provider_context(remote_agents_private_key_path, fabric_env,
