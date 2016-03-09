@@ -558,3 +558,29 @@ class InstallTest(CliCommandTest):
         mock_is_auto_generate_ids.return_value = True
         self.assertTrue(commands.install_module._auto_generate_ids(False))
         self.assertTrue(commands.install_module._auto_generate_ids(True))
+
+    @patch('cloudify_cli.commands.executions.start')
+    @patch('cloudify_cli.commands.deployments.create')
+    def test_default_blueprint_path_does_not_exist(self, *_):
+
+        start_of_file_does_not_exist_message = \
+            'Your blueprint was not found in the path:'
+
+        self.assertRaisesRegexp(CloudifyCliError,
+                                start_of_file_does_not_exist_message,
+                                cli_runner.run_cli,
+                                'cfy install')
+
+        tmp_blueprint_path = os.path.join(utils.get_cwd(),
+                                          DEFAULT_BLUEPRINT_PATH)
+
+        start_of_permission_denied_message = \
+            'A problem was encountered while trying to open the path'
+
+        open(tmp_blueprint_path, 'w').close()
+        os.chmod(tmp_blueprint_path, 0)
+
+        self.assertRaisesRegexp(CloudifyCliError,
+                                start_of_permission_denied_message,
+                                cli_runner.run_cli,
+                                'cfy install')

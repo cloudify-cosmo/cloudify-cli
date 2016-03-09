@@ -17,6 +17,7 @@
 Handles 'cfy install'
 """
 
+import errno
 import os
 import urlparse
 
@@ -61,6 +62,7 @@ def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
             # if the archive is a local path, assign blueprint_id the name of
             # the archive file without the extension
             if archive_location_type == 'path':
+
                 filename, ext = os.path.splitext(
                     os.path.basename(archive_location))
                 blueprint_id = filename
@@ -88,6 +90,8 @@ def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
                                    blueprint_id)
     else:
 
+        blueprint_path_supplied = bool(blueprint_path)
+
         if not blueprint_path:
             blueprint_path = os.path.join(utils.get_cwd(),
                                           DEFAULT_BLUEPRINT_PATH)
@@ -113,11 +117,25 @@ def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
                 blueprints.upload(blueprint_file,
                                   blueprint_id,
                                   validate_blueprint)
+
         except IOError as e:
-            raise CloudifyCliError("A problem was encountered while trying to "
-                                   "open the path `{0}`.\n({1})"
-                                   .format(blueprint_path, e)
-                                   )
+
+            # No such file or directory
+            if not blueprint_path_supplied and e.errno == errno.ENOENT:
+
+                raise CloudifyCliError(
+                    'Your blueprint was not found in the path: `{0}`.\n\n'
+                    'Consider providing an explicit path to your blueprint '
+                    'using the `-p`/`--blueprint-path` flag, like so:\n'
+                    '`cfy install -p /path/to/blueprint_file.yaml`\n'
+                    .format(blueprint_path)
+                )
+
+            else:
+                raise CloudifyCliError(
+                    'A problem was encountered while trying to open the path '
+                    '`{0}`.\n({1})'.format(blueprint_path, e)
+                )
 
     # If deployment_id wasn't supplied, use the same name as the blueprint id.
     if not deployment_id:
