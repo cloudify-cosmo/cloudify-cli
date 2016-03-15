@@ -73,7 +73,7 @@ tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1 -C %{buil
 
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-fabric-plugin/1.4/plugin.yaml -o %{buildroot}/opt/cfy/cloudify/plugins/fabric-plugin/plugin.yaml &&
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-script-plugin/1.4/plugin.yaml -o %{buildroot}/opt/cfy/cloudify/plugins/script-plugin/plugin.yaml &&
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-diamond-plugin/1.3.1/plugin.yaml -o %{buildroot}/opt/cfy/cloudify/plugins/diamond-plugin/plugin.yaml &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-diamond-plugin/1.3.2/plugin.yaml -o %{buildroot}/opt/cfy/cloudify/plugins/diamond-plugin/plugin.yaml &&
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/1.3.1/plugin.yaml -o %{buildroot}/opt/cfy/cloudify/plugins/openstack-plugin/plugin.yaml &&
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.4/plugin.yaml -o %{buildroot}/opt/cfy/cloudify/plugins/aws-plugin/plugin.yaml &&
 curl https://raw.githubusercontent.com/cloudify-cosmo/tosca-vcloud-plugin/1.3.1/plugin.yaml -o %{buildroot}/opt/cfy/cloudify/plugins/tosca-vcloud-plugin/plugin.yaml &&
@@ -124,7 +124,7 @@ import_resolver:
     - {'http://www.getcloudify.org/spec/cloudify/%{CORE_TAG_NAME}/types.yaml': 'file:/opt/cfy/cloudify/types/types.yaml'}
     - {'http://www.getcloudify.org/spec/fabric-plugin/1.4': 'file:/opt/cfy/cloudify/plugins/fabric-plugin'}
     - {'http://www.getcloudify.org/spec/script-plugin/1.4': 'file:/opt/cfy/cloudify/plugins/script-plugin'}
-    - {'http://www.getcloudify.org/spec/diamond-plugin/1.3.1': 'file:/opt/cfy/cloudify/plugins/diamond-plugin'}
+    - {'http://www.getcloudify.org/spec/diamond-plugin/1.3.2': 'file:/opt/cfy/cloudify/plugins/diamond-plugin'}
     - {'http://www.getcloudify.org/spec/openstack-plugin/1.3.1': 'file:/opt/cfy/cloudify/plugins/openstack-plugin'}
     - {'http://www.getcloudify.org/spec/aws-plugin/1.4': 'file:/opt/cfy/cloudify/plugins/aws-plugin'}
     - {'http://www.getcloudify.org/spec/vsphere-plugin/1.4': 'file:/opt/cfy/cloudify/plugins/vsphere-plugin'}

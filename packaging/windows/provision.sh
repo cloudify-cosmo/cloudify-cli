@@ -73,7 +73,7 @@ function download_resources() {
 
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-fabric-plugin/1.4/plugin.yaml -o fabric-plugin/plugin.yaml
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-script-plugin/1.4/plugin.yaml -o script-plugin/plugin.yaml
-        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-diamond-plugin/1.3.1/plugin.yaml -o diamond-plugin/plugin.yaml
+        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-diamond-plugin/1.3.2/plugin.yaml -o diamond-plugin/plugin.yaml
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/1.3.1/plugin.yaml -o openstack-plugin/plugin.yaml
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.4/plugin.yaml -o aws-plugin/plugin.yaml
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/tosca-vcloud-plugin/1.3.1/plugin.yaml -o tosca-vcloud-plugin/plugin.yaml
