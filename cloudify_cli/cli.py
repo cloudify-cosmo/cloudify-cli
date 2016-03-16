@@ -22,6 +22,9 @@ import argcomplete
 import logging
 
 from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify_rest_client.exceptions import MaintenanceModeActiveError
+from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
+from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify import logs
 
 from cloudify_cli import constants
@@ -233,9 +236,14 @@ def _set_cli_except_hook():
         output_message = True
         if issubclass(tpe, CloudifyClientError):
             server_traceback = value.server_traceback
-            # this means we made a server call and it failed.
-            # we should include this information in the error
-            prefix = 'An error occurred on the server'
+            if not issubclass(
+                    tpe,
+                    (MaintenanceModeActiveError,
+                     MaintenanceModeActivatingError,
+                     NotModifiedError)):
+                # this means we made a server call and it failed.
+                # we should include this information in the error
+                prefix = 'An error occurred on the server'
         if issubclass(tpe, SuppressedCloudifyCliError):
             output_message = False
         if issubclass(tpe, CloudifyBootstrapError):
