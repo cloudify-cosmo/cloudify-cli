@@ -46,8 +46,8 @@ def manager_blueprint_path_argument():
         'type': argparse.FileType(),
         'completer': completion_utils.yaml_files_completer
     }
-    hlp = "Path to the application's blueprint file." \
-          "Default: `{0}`".format(DEFAULT_BLUEPRINT_PATH)
+    hlp = "Path to the application's blueprint file. " \
+          "(default: {0})".format(DEFAULT_BLUEPRINT_PATH)
 
     # Update the specific 'manager blueprint path argument' attributes with
     # those that are shared with the 'local blueprint path argument'
@@ -254,7 +254,7 @@ def parser_config():
                                 'default': utils.get_cwd(),
                             }
                         },
-                        'help': "Retrieves an archive containing a Manager's logs (defaults to cwd)",
+                        'help': "Retrieves an archive containing a Manager's logs (default: cwd)",
                         'handler': cfy.logs.get
                     },
                     'purge': {
@@ -299,7 +299,7 @@ def parser_config():
                     '-n,--blueprint-filename': {
                         'dest': 'blueprint_filename',
                         'help': "The name of the archive's main "
-                                "blueprint file. Default: `{0}`"
+                                "blueprint file. (default: {0})"
                                 .format(DEFAULT_BLUEPRINT_FILE_NAME)
                         },
                     '-d,--deployment-id': deployment_id_argument(
@@ -307,13 +307,13 @@ def parser_config():
                         ),
                     '-i,--inputs':
                         inputs_argument('Inputs file/string for the deployment'
-                                        ' creation ({0}). Default: {1}'
+                                        ' creation ({0}). (default: {1})'
                                         .format(FORMAT_INPUT_AS_YAML_OR_DICT,
                                                 DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)
                                         ),
                     '-w,--workflow': make_optional(workflow_id_argument(
                             hlp='The workflow to start '
-                                '(default: `{0}`)'
+                                '(default: {0})'
                                 .format(DEFAULT_INSTALL_WORKFLOW)
                             )
                         ),
@@ -337,7 +337,7 @@ def parser_config():
                             )
                         ),
                     '-w,--workflow': make_optional(workflow_id_argument(
-                            hlp='The workflow to start (default: `{0}`'
+                            hlp='The workflow to start (default: {0}'
                                 .format(DEFAULT_UNINSTALL_WORKFLOW))
                         ),
                     '--parameters': parameters_argument(),
@@ -828,14 +828,14 @@ def parser_config():
                                 make_optional(
                                         local_blueprint_path_argument(
                                                 hlp="Path to the application's"
-                                                    "blueprint file. Default: "
-                                                    "`{0}`".format(DEFAULT_BLUEPRINT_PATH)
+                                                    "blueprint file. (default: "
+                                                    "{0})".format(DEFAULT_BLUEPRINT_PATH)
                                         )
                                 ),
                             '-i,--inputs':
                                 inputs_argument('Inputs file/string for the '
                                                 'deployment creation ({0}). '
-                                                'Default: {1}'
+                                                '(default: {1})'
                                                 .format(FORMAT_INPUT_AS_YAML_OR_DICT,
                                                         DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)
                                                 ),
@@ -843,7 +843,7 @@ def parser_config():
                             '-w,--workflow': make_optional(
                                     workflow_id_argument(
                                             hlp='The workflow to start '
-                                                '(default: `{0}`'
+                                                '(default: {0}'
                                                 .format(DEFAULT_INSTALL_WORKFLOW)
                                     )
                                 ),
@@ -864,7 +864,7 @@ def parser_config():
                             '-w,--workflow': make_optional(
                                     workflow_id_argument(
                                             hlp='The workflow to start '
-                                                '(default: `{0}`'
+                                                '(default: {0}'
                                                 .format(DEFAULT_UNINSTALL_WORKFLOW)
                                     )
                                 ),
