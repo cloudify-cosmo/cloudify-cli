@@ -229,7 +229,7 @@ def auto_generate_ids_argument():
     return {
         'dest': 'auto_generate_ids',
         'action': 'store_true',
-        'help': 'auto generate blueprint and deployment ids'
+        'help': 'Auto generate blueprint and deployment ids'
     }
 
 
@@ -244,7 +244,7 @@ def parser_config():
         },
         'commands': {
             'logs': {
-                'help': 'Handles Cloudify Manager logs',
+                'help': 'Handle Cloudify Manager logs',
                 'sub_commands': {
                     'get': {
                         'arguments': {
@@ -254,7 +254,7 @@ def parser_config():
                                 'default': utils.get_cwd(),
                             }
                         },
-                        'help': "Retrieves an archive containing a Manager's logs (default: cwd)",
+                        'help': "Retrieve an archive containing a Manager's logs (default: cwd)",
                         'handler': cfy.logs.get
                     },
                     'purge': {
@@ -276,7 +276,7 @@ def parser_config():
                         'handler': cfy.logs.purge
                     },
                     'backup': {
-                        'help': "Backs up a Manager's logs",
+                        'help': "Back up a Manager's logs",
                         'handler': cfy.logs.backup
                     }
                 }
@@ -440,8 +440,7 @@ def parser_config():
                         'handler': cfy.blueprints.download
                     },
                     'list': {
-                        'help': 'List all blueprints on the '
-                                'Manager',
+                        'help': 'List all blueprints on the Manager',
                         'handler': cfy.blueprints.ls
                     },
                     'delete': {
@@ -476,7 +475,7 @@ def parser_config():
                 }
             },
             'snapshots': {
-                'help': "Manages Cloudify's Snapshots",
+                'help': "Manage Cloudify's Snapshots",
                 'sub_commands': {
                     'create': {
                         'arguments': {
@@ -549,8 +548,8 @@ def parser_config():
                             '-f,--force':
                                 force_argument(
                                         hlp='Force restoring the snapshot on '
-                                            'a Manager with existing blueprints'
-                                            'and/or deployments')
+                                            'a Manager with existing '
+                                            'blueprints and/or deployments')
                         },
                         'help': 'Restore manager state to a specific snapshot',
                         'handler': cfy.snapshots.restore
@@ -558,7 +557,7 @@ def parser_config():
                 }
             },
             'agents': {
-                'help': "Manages Cloudify's Agents",
+                'help': "Manage Cloudify's Agents",
                 'sub_commands': {
                     'install': {
                         'arguments': {
@@ -963,7 +962,7 @@ def parser_config():
                 'handler': cfy.status
             },
             'dev': {
-                'help': 'Executes fabric tasks on the management machine',
+                'help': 'Execute fabric tasks on the management machine',
                 'arguments': {
                     '-t,--task': {
                         'dest': 'task',
