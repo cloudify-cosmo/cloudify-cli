@@ -111,7 +111,8 @@ def register_command(subparsers, command_name, command):
 
     command_help = command['help']
     command_parser = subparsers.add_parser(
-        command_name, help=command_help
+        command_name, help=command_help,
+        formatter_class=ConciseArgumentDefaultsHelpFormatter
     )
     command_arg_names = []
     if 'arguments' in command:
@@ -263,8 +264,22 @@ def _set_cli_except_hook():
 
 
 def longest_command_length(commands_dict):
-
     return max([len(key) for key in commands_dict.keys()])
+
+
+class ConciseArgumentDefaultsHelpFormatter(
+        argparse.ArgumentDefaultsHelpFormatter):
+
+    def _get_help_string(self, action):
+
+        default = action.default
+        help = action.help
+
+        if default != argparse.SUPPRESS and default not in [None, False]:
+            if '%(default)' not in help:
+                help += ' (default: %(default)s)'
+
+        return help
 
 
 if __name__ == '__main__':
