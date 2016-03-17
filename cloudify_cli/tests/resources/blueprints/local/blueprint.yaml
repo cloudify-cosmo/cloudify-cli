@@ -8,6 +8,10 @@ plugins:
 inputs:
     input1:
         default: default_input1
+    input2:
+        default: default_input2
+    input3:
+        default: default_input3
 
 node_types:
     test_type: {}
@@ -22,6 +26,10 @@ node_templates:
 outputs:
     input1:
         value: { get_input: input1 }
+    input2:
+        value: { get_input: input2 }
+    input3:
+        value: { get_input: input3 }
     param:
         value: { get_attribute: [node, param] }
     custom_param:

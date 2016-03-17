@@ -29,7 +29,6 @@ TEST_WORK_DIR = TEST_DIR + '/cloudify'
 
 
 class CliUtilsUnitTests(unittest.TestCase):
-
     """
     Unit tests for methods in utils.py
     """
@@ -186,10 +185,13 @@ class CliUtilsUnitTests(unittest.TestCase):
         input_str = "my_key1=my_value1;my_key2"
         resource_name = "my_resource_name"
 
-        expected_err_msg = "Invalid input: {0}. {1} must represent a " \
-                           "dictionary. Valid values can either be a path" \
-                           " to a YAML file, a string formatted as YAML or" \
-                           " a string formatted as key1=value1;key2=value2"
+        expected_err_msg = \
+            ("Invalid input: {0}. {1} must represent a dictionary. "
+             "Valid values can be one of:\n "
+             "- a path to a YAML file\n "
+             "- a path to a directory containing YAML files\n "
+             "- a single quoted wildcard based path ")
+
         self.assertRaisesRegexp(
             CloudifyCliError,
             expected_err_msg.format(input_str, resource_name),

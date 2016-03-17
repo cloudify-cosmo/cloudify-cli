@@ -103,7 +103,8 @@ def deployment_id_argument(hlp):
 def inputs_argument(hlp):
     return {
         'dest': 'inputs',
-        'help': hlp
+        'help': hlp,
+        'action': 'append'
     }
 
 
@@ -129,8 +130,9 @@ def workflow_id_argument(hlp):
 def parameters_argument():
     return {
         'dest': 'parameters',
-        'default': DEFAULT_PARAMETERS,
-        'help': 'Parameters for the workflow execution ({0})'
+        'action': 'append',
+        'help': ('Parameters for the workflow execution ({0}). '
+        'This argument can be used multiple times.')
         .format(FORMAT_INPUT_AS_YAML_OR_DICT)
     }
 
@@ -307,7 +309,9 @@ def parser_config():
                         ),
                     '-i,--inputs':
                         inputs_argument('Inputs file/string for the deployment'
-                                        ' creation ({0}). (default: {1})'
+                                        ' creation ({0}). '
+                                        'This argument can be used multiple times. '
+                                        '(default: {1})'
                                         .format(FORMAT_INPUT_AS_YAML_OR_DICT,
                                                 DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)
                                         ),
@@ -588,9 +592,10 @@ def parser_config():
                             ),
                             '-b,--blueprint-id': blueprint_id_argument(),
                             '-i,--inputs': inputs_argument(
-                                hlp='Inputs file/string for the deployment'
-                                    'creation ({0})'
-                                    .format(FORMAT_INPUT_AS_YAML_OR_DICT))
+                                hlp='Inputs file/string for the deployment creation ({0}) '
+                                    'This argument can be used multiple times.'
+                                    .format(FORMAT_INPUT_AS_YAML_OR_DICT)
+                            )
                         },
                         'help': 'Create a deployment from a blueprint',
                         'handler': cfy.deployments.create
@@ -834,6 +839,7 @@ def parser_config():
                             '-i,--inputs':
                                 inputs_argument('Inputs file/string for the '
                                                 'deployment creation ({0}). '
+                                                'This argument can be used multiple times. '
                                                 '(default: {1})'
                                                 .format(FORMAT_INPUT_AS_YAML_OR_DICT,
                                                         DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)
@@ -887,8 +893,8 @@ def parser_config():
                                         hlp='Path to a blueprint'
                                 ),
                             '-i,--inputs': inputs_argument(
-                                    hlp='Inputs file/string for the local '
-                                        'workflow creation ({0})'
+                                    hlp='Inputs files/strings for the local workflow creation ({0}). '
+                                        'This argument can be used multiple times.'
                                         .format(FORMAT_INPUT_AS_YAML_OR_DICT)
                                 ),
                             '--install-plugins': install_plugins_argument()
@@ -1005,7 +1011,8 @@ def parser_config():
                                 hlp='Path to a blueprint'
                         ),
                     '-i,--inputs': inputs_argument(
-                        hlp='Inputs file/string for a manager blueprint ({0})'
+                        hlp='Inputs file/string for a manager blueprint ({0}) '
+                            'This argument can be used multiple times.'
                             .format(FORMAT_INPUT_AS_YAML_OR_DICT)
                     ),
                     '--keep-up-on-failure': {
