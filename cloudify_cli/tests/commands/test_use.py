@@ -20,6 +20,7 @@ Tests 'cfy use'
 from mock import MagicMock
 from mock import patch
 
+from cloudify_rest_client.client import DEFAULT_API_VERSION as API_VERSION
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import UserUnauthorizedError
 from cloudify_cli import utils
@@ -28,7 +29,6 @@ from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
 
-API_VERSION = 'v2'
 SSL_PORT = '443'
 
 
