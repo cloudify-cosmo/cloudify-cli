@@ -50,5 +50,6 @@ from cloudify_cli.commands import node_instances
 from cloudify_cli.commands import workflows
 from cloudify_cli.commands import local
 from cloudify_cli.commands import logs
+from cloudify_cli.commands import upgrade
 from cloudify_cli.commands import maintenance
 from cloudify_cli.commands import groups
