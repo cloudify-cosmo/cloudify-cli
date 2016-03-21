@@ -19,13 +19,14 @@ import tempfile
 import unittest
 import shutil
 
+from cloudify_rest_client.client import DEFAULT_API_VERSION as API_VERSION
+
 from cloudify_cli import utils
 from cloudify_cli import constants
 from cloudify_cli.tests import cli_runner
 
 TRUST_ALL = 'non-empty-value'
 CERT_PATH = 'path-to-certificate'
-API_VERSION = 'v2'
 
 
 class TestGetRestClient(unittest.TestCase):
