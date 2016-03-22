@@ -89,7 +89,7 @@ def ls(deployment_id, include_system_workflows):
 
 
 def start(workflow_id, deployment_id, timeout, force,
-          allow_custom_parameters, include_logs, parameters):
+          allow_custom_parameters, include_logs, parameters, json):
     logger = get_logger()
     parameters = utils.inputs_to_dict(parameters, 'parameters')
     management_ip = utils.get_management_server_ip()
@@ -100,7 +100,7 @@ def start(workflow_id, deployment_id, timeout, force,
                         management_ip,
                         timeout))
 
-    events_logger = get_events_logger()
+    events_logger = get_events_logger(json)
 
     events_message = "* Run 'cfy events list --include-logs " \
                      "--execution-id {0}' to retrieve the " \

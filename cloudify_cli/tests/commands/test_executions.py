@@ -21,6 +21,7 @@ import datetime
 from uuid import uuid4
 
 from mock import MagicMock
+from mock import patch
 from cloudify_rest_client import exceptions
 from cloudify_rest_client.executions import Execution
 
@@ -48,6 +49,15 @@ class ExecutionsTest(CliCommandTest):
     def test_executions_cancel(self):
         self.client.executions.cancel = MagicMock()
         cli_runner.run_cli('cfy executions cancel -e e_id')
+
+    @patch('cloudify_cli.commands.executions.get_events_logger')
+    def test_executions_start_json(self, get_events_logger_mock):
+        execution = execution_mock('started')
+        self.client.executions.start = MagicMock(return_value=execution)
+        with patch('cloudify_cli.commands.executions.wait_for_execution',
+                   return_value=execution):
+            cli_runner.run_cli('cfy executions start -w mock_wf -d dep --json')
+        get_events_logger_mock.assert_called_with(True)
 
     def test_executions_start_dep_env_pending(self):
         self._test_executions_start_dep_env(

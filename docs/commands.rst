@@ -1,18 +1,24 @@
 Commands
 ========
 
-There are two flags that can be used for all operations:
- * ``--verbose`` prints the traceback and prints the events in verbose mode (a full event json)
- * ``--debug`` sets all loggers declared in the `config <https://github.com/cloudify-cosmo/cloudify-cli/blob/3.1/cloudify_cli/resources/config.yaml>`_ file to debug mode.
+The ``-v/--verbose`` flag is available for all commands. It sets the command verbosity level. At the moment, there are 4 verbosity levels:
 
-      In particular, sets the rest client logger to debug mode, this means that the output will include http communication with the rest server (response, requests and headers).
-      
+* Running a command without the verbose flag. (This is obviously the default).
+* Running a command with ``-v`` will print tracebacks where relevant, in addition to the normal output.
+* Running a command with ``-vv`` will, in addition, show ``DEBUG`` log statements of local/remote execution events.
+* Running a command with ``-vvv`` will, in addition, set all loggers declared in the
+  `config <https://github.com/cloudify-cosmo/cloudify-cli/blob/3.4/cloudify_cli/resources/config.yaml>`_ file to debug mode.
+
+.. note::
+  ``--debug`` is equivalent to ``-vvv``
+
+
 Inputs and Parameters
       All commands that accept inputs or paramaters (e.g. "cfy execute" or "cfy deployments create") expect the value to represent a dictionary. Valid formats are:
  * A path to the YAML file
  * A string formatted as YAML
  * A string formatted as "key1=value1;key2=value2"
- 
+
 cfy
 ---
 .. argparse::

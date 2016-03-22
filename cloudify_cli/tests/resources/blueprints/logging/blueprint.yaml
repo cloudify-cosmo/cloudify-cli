@@ -1,0 +1,29 @@
+tosca_definitions_version: cloudify_dsl_1_2
+
+plugins:
+  p:
+    executor: central_deployment_agent
+    install: false
+
+node_types:
+  type: {}
+
+node_templates:
+  node:
+    type: type
+    interfaces:
+      test:
+        op: p.cloudify_cli.tests.commands.test_local.logging_operation
+
+workflows:
+  logging_workflow:
+    mapping: p.cloudify_cli.tests.commands.test_local.logging_workflow
+    parameters:
+      level:
+        default: 'INFO'
+      message:
+        default: ''
+      error:
+        default: false
+      user_cause:
+        default: false

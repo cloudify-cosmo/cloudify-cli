@@ -74,9 +74,7 @@ class ColorfulEvent(Event):
         'FATAL': Fore.RED
     }
 
-    def __init__(self, event):
-        super(ColorfulEvent, self).__init__(event)
-        self._color_context = self.RESET_COLOR
+    _color_context = RESET_COLOR
 
     @property
     def operation_info(self):

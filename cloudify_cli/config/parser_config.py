@@ -56,6 +56,14 @@ def manager_blueprint_path_argument():
     return argument
 
 
+def json_events_argument():
+    return {
+        'dest': 'json',
+        'action': 'store_true',
+        'help': 'Output events in a consumable JSON format'
+    }
+
+
 def local_blueprint_path_argument(hlp):
     return {
         'dest': 'blueprint_path',
@@ -326,7 +334,8 @@ def parser_config():
                         allow_custom_parameters_argument(),
                     '--timeout': timeout_argument(),
                     '--include-logs': include_logs_argument(),
-                    '-g,--auto-generate-ids': auto_generate_ids_argument()
+                    '-g,--auto-generate-ids': auto_generate_ids_argument(),
+                    '--json': json_events_argument()
                 },
                 'handler': cfy.install
             },
@@ -653,7 +662,8 @@ def parser_config():
                                 'dest': 'tail',
                                 'action': 'store_true',
                                 'help': 'Tail the events of the specified execution until it ends'
-                            }
+                            },
+                            '--json': json_events_argument()
                         },
                         'help': 'Display Events for different executions',
                         'handler': cfy.events.ls
@@ -706,7 +716,8 @@ def parser_config():
                             '-d,--deployment-id': make_required(
                                 deployment_id_argument(
                                     hlp='The deployment id')
-                            )
+                            ),
+                            '--json': json_events_argument()
                         },
                         'help': 'Start executing a workflow '
                                 'on a given deployment',

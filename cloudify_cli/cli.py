@@ -22,13 +22,19 @@ import argcomplete
 import logging
 
 from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify import logs
 
 from cloudify_cli import constants
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.exceptions import CloudifyBootstrapError
 
 
-verbose_output = False
+HIGH_VERBOSE = 3
+MEDIUM_VERBOSE = 2
+LOW_VERBOSE = 1
+NO_VERBOSE = 0
+
+verbosity_level = NO_VERBOSE
 
 
 def main():
@@ -55,10 +61,13 @@ def _parse_args(args):
         sys.exit(1)
 
     parsed = parser.parse_args(args)
-    set_global_verbosity_level(parsed.verbosity)
     if parsed.debug:
+        global_verbosity_level = HIGH_VERBOSE
+    else:
+        global_verbosity_level = parsed.verbosity
+    set_global_verbosity_level(global_verbosity_level)
+    if global_verbosity_level >= HIGH_VERBOSE:
         set_debug()
-        set_global_verbosity_level(True)
     return parsed
 
 
@@ -135,8 +144,9 @@ def register_command(subparsers, command_name, command):
     command_parser.add_argument(
         '-v', '--verbose',
         dest='verbosity',
-        action='store_true',
-        help='Set verbose output'
+        action='count',
+        default=NO_VERBOSE,
+        help='Set verbosity level (can be passed multiple times)'
     )
 
     # Add debug flag for each command
@@ -144,7 +154,7 @@ def register_command(subparsers, command_name, command):
         '--debug',
         dest='debug',
         action='store_true',
-        help='Set debug output'
+        help='Set debug output (equivalent to -vvv)'
     )
 
     def command_cmd_handler(args):
@@ -168,9 +178,9 @@ def set_global_verbosity_level(verbose):
 
     :param bool verbose: verbose output or not.
     """
-
-    global verbose_output
-    verbose_output = verbose
+    global verbosity_level
+    verbosity_level = verbose
+    logs.EVENT_VERBOSITY_LEVEL = verbose
 
 
 def set_debug():
@@ -180,11 +190,9 @@ def set_debug():
     loggers to debug level
 
     """
-
     from cloudify_cli.logger import all_loggers
     for logger_name in all_loggers():
-        logging.getLogger(logger_name)\
-            .setLevel(logging.DEBUG)
+        logging.getLogger(logger_name).setLevel(logging.DEBUG)
 
 
 def get_global_verbosity():
@@ -195,8 +203,8 @@ def get_global_verbosity():
     :return: verbose or not
     :rtype: bool
     """
-    global verbose_output
-    return verbose_output
+    global verbosity_level
+    return verbosity_level
 
 
 def _configure_loggers():
@@ -232,7 +240,7 @@ def _set_cli_except_hook():
             output_message = False
         if issubclass(tpe, CloudifyBootstrapError):
             output_message = False
-        if verbose_output:
+        if verbosity_level:
             # print traceback if verbose
             s_traceback = StringIO.StringIO()
             traceback.print_exception(
@@ -247,7 +255,7 @@ def _set_cli_except_hook():
                 # No need for print_tb since this exception
                 # is already formatted by the server
                 logger.error(server_traceback)
-        if output_message and not verbose_output:
+        if output_message and not verbosity_level:
 
             # if we output the traceback
             # we output the message too.

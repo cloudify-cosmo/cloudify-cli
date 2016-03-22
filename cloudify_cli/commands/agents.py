@@ -85,7 +85,9 @@ def install(deployment_id, include_logs):
     def threadsafe_events_logger(events):
         with event_lock:
             for event in events:
-                logger.info(logs.create_event_message_prefix(event))
+                output = logs.create_event_message_prefix(event)
+                if output:
+                    logger.info(output)
 
     def worker(dep_id):
         try:

@@ -14,15 +14,23 @@
 # limitations under the License.
 ########
 
+import logging
 import unittest
 
 from mock import patch
 
+from cloudify import logs
+
+from cloudify_cli import cli
+from cloudify_cli import logger
 from cloudify_cli.cli import longest_command_length
 from cloudify_cli.tests import cli_runner
 
 
 class TestCLI(unittest.TestCase):
+
+    def tearDown(self):
+        self._reset_verbosity_and_loggers()
 
     @patch('argparse.ArgumentParser.print_help')
     def test_help_shows_if_no_cli_arguments(self, print_help_mock):
@@ -36,3 +44,31 @@ class TestCLI(unittest.TestCase):
         sample_dict = {'a': 'v1', 'ab': 'v2'}
 
         self.assertEqual(longest_command_length(sample_dict), 2)
+
+    def test_verbosity(self):
+        def test(flag, expected):
+            self._reset_verbosity_and_loggers()
+            with patch('cloudify_cli.commands.status'):
+                cli_runner.run_cli('cfy status {0}'.format(flag))
+            self.assertEqual(cli.verbosity_level, expected)
+            self.assertEqual(logs.EVENT_VERBOSITY_LEVEL, expected)
+            if expected >= cli.HIGH_VERBOSE:
+                expected_logging_level = logging.DEBUG
+            else:
+                expected_logging_level = logging.INFO
+            self.assertTrue(logger.all_loggers())
+            for logger_name in logger.all_loggers():
+                log = logging.getLogger(logger_name)
+                self.assertEqual(log.level, expected_logging_level)
+
+        test('', cli.NO_VERBOSE)
+        test('-v', cli.LOW_VERBOSE)
+        test('-vv', cli.MEDIUM_VERBOSE)
+        test('-vvv', cli.HIGH_VERBOSE)
+        test('--debug', cli.HIGH_VERBOSE)
+        test('--debug -v', cli.HIGH_VERBOSE)
+
+    def _reset_verbosity_and_loggers(self):
+        cli.verbosity_level = cli.NO_VERBOSE
+        logs.EVENT_VERBOSITY_LEVEL = cli.NO_VERBOSE
+        logger.configure_loggers()

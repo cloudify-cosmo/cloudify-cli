@@ -26,7 +26,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_cli import utils
 
 
-def ls(execution_id, include_logs, tail):
+def ls(execution_id, include_logs, tail, json):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     logger.info("Getting events from management server {0} for "
@@ -41,7 +41,7 @@ def ls(execution_id, include_logs, tail):
             execution_id,
             include_logs=include_logs)
 
-        events_logger = get_events_logger()
+        events_logger = get_events_logger(json)
 
         if tail:
             execution = wait_for_execution(client,
