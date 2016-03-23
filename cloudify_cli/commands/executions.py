@@ -29,6 +29,11 @@ from cloudify_cli.execution_events_fetcher import wait_for_execution
 from cloudify_cli.logger import get_events_logger
 
 
+_STATUS_CANCELING_MESSAGE = (
+    'NOTE: Executions currently in a "canceling/force-canceling" status '
+    'may take a while to change into "cancelled"')
+
+
 def get(execution_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -57,6 +62,8 @@ def get(execution_id):
     for param_name, param_value in utils.decode_dict(
             execution.parameters).iteritems():
         logger.info('\t{0}: \t{1}'.format(param_name, param_value))
+    if execution.status in (execution.CANCELLING, execution.FORCE_CANCELLING):
+        logger.info(_STATUS_CANCELING_MESSAGE)
     logger.info('')
 
 
@@ -78,14 +85,18 @@ def ls(deployment_id, include_system_workflows):
     except exceptions.CloudifyClientError, e:
         if not e.status_code != 404:
             raise
-        msg = ('Deployment {0} does not exist on management server'
-               .format(deployment_id))
-        raise CloudifyCliError(msg)
+        raise CloudifyCliError(
+            'Deployment {0} does not exist on management server'
+            .format(deployment_id))
 
-    columns = ['id', 'workflow_id', 'deployment_id',
-               'status', 'created_at']
+    columns = ['id', 'workflow_id', 'deployment_id', 'status', 'created_at']
     pt = utils.table(columns, executions)
     utils.print_table('Executions:', pt)
+
+    if any(execution.status in (execution.CANCELLING,
+                                execution.FORCE_CANCELLING)
+           for execution in executions):
+        logger.info(_STATUS_CANCELING_MESSAGE)
 
 
 def start(workflow_id, deployment_id, timeout, force,
