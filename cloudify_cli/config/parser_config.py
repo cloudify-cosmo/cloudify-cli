@@ -1004,12 +1004,26 @@ def parser_config():
                     '-c,--command': {
                         'dest': 'ssh_command',
                         'metavar': 'COMMAND',
+                        'type': str,
+                        'default': '',
                         'help': 'Execute command over SSH'
                     },
-                    '-p,--plain': {
-                        'dest': 'ssh_plain_mode',
+                    '--host': {
+                        'dest': 'host_session',
                         'action': 'store_true',
-                        'help': 'Leave authentication to user'
+                        'help': 'Hosts an SSH tmux session'
+                    },
+                    '--sid': {
+                        'dest': 'sid',
+                        'type': str,
+                        'default': '',
+                        'metavar': 'SESSION_ID',
+                        'help': 'Joins an SSH tmux session'
+                    },
+                    '-l,--list': {
+                        'dest': 'list_sessions',
+                        'action': 'store_true',
+                        'help': 'Lists available SSH tmux sessions'
                     }
                 },
                 'handler': cfy.ssh

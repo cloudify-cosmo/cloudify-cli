@@ -23,25 +23,40 @@ def get_file_from_manager(remote_source_path, destination_path):
         fab.get(remote_source_path, destination_path)
 
 
-def run_command_on_manager(command, use_sudo=False):
+def run_command_on_manager(command,
+                           use_sudo=False,
+                           open_shell=False,
+                           host_string='',
+                           force_output=False):
+    """Runs an SSH command on a Manager.
+
+    `open_shell` opens an interactive shell to the server.
+    `host_string` can be explicitly provided to save on REST calls.
+    `force_output` forces all output as if running in verbose.
+    """
+    host_string = host_string or utils.build_manager_host_string()
+
     def execute():
         key_filename = os.path.expanduser(utils.get_management_key())
         with fab.settings(
-                host_string=utils.build_manager_host_string(),
+                host_string=host_string,
                 key_filename=key_filename,
                 warn_only=True):
             if use_sudo:
-                result = fab.sudo(command)
+                output = fab.sudo(command)
+            elif open_shell:
+                fab.open_shell(command)
+                return None
             else:
-                result = fab.run(command)
-            if result.failed:
+                output = fab.run(command)
+            if output.failed:
                 raise CloudifyCliError(
                     'Failed to execute: {0} ({1})'.format(
-                        result.read_command, result.stderr))
-            return result
+                        output.real_command, output.stderr))
+            return output
 
-    if get_global_verbosity():
+    if get_global_verbosity() or force_output:
         return execute()
     else:
-        with fab.hide('running', 'stdout'):
+        with fab.hide('running', 'stdout', 'stderr', 'warnings'):
             return execute()

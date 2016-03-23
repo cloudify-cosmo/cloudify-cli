@@ -615,5 +615,7 @@ class CloudifyConfig(object):
         return self._config.get('validate_definitions_version', True)
 
 
-def build_manager_host_string():
-    return '{0}@{1}'.format(get_management_user(), get_management_server_ip())
+def build_manager_host_string(user='', ip=''):
+    user = user or get_management_user()
+    ip = ip or get_management_server_ip()
+    return '{0}@{1}'.format(user, ip)
