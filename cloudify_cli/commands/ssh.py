@@ -17,15 +17,28 @@
 Handles 'cfy ssh'
 """
 
-import platform
-from distutils import spawn
+import os
 import re
+import platform
+import subprocess
+from distutils import spawn
 
 from cloudify_cli import utils
-from cloudify_cli.ssh import run_command_on_manager
 from cloudify_cli import messages
+from cloudify_cli.ssh import run_command_on_manager
 from cloudify_cli.logger import get_logger
 from cloudify_cli.exceptions import CloudifyCliError
+
+
+def _open_interactive_shell(host_string, command=''):
+    """Used as fabric's open_shell=True doesn't work well.
+    (Disfigures coloring and such...)
+    """
+    ssh_key_path = os.path.expanduser(utils.get_management_key())
+    cmd = ['ssh', '-t', host_string, '-i', ssh_key_path]
+    if command:
+        cmd.append(command)
+    subprocess.call(cmd)
 
 
 def _verify_tmux_exists_on_manager(host_string):
@@ -76,9 +89,8 @@ def _join_session(logger, sid, host_string):
     if sid not in _get_sessions_list(logger, host_string):
         logger.error('Session {0} does not exist.'.format(sid))
         return
-    run_command_on_manager(
-        'tmux attach -t {0}'.format(sid),
-        open_shell=True,
+    _open_interactive_shell(
+        command='tmux attach -t {0}'.format(sid),
         host_string=host_string)
 
 
@@ -159,8 +171,9 @@ def ssh(ssh_command, host_session, sid, list_sessions):
     else:
         if ssh_command:
             logger.info('Executing command {0}...'.format(ssh_command))
-        run_command_on_manager(
-            ssh_command,
-            open_shell=not ssh_command,
-            host_string=host_string,
-            force_output=True)
+            run_command_on_manager(
+                ssh_command,
+                host_string=host_string,
+                force_output=True)
+        else:
+            _open_interactive_shell(host_string=host_string)
