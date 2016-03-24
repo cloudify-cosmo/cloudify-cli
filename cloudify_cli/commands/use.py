@@ -45,9 +45,9 @@ def use(management_ip, rest_port):
         msg = "Can't use management server {0}: User is unauthorized.".format(
             management_ip)
         raise CloudifyCliError(msg)
-    except CloudifyClientError:
-        msg = "Can't use management server {0}: No response.".format(
-            management_ip)
+    except CloudifyClientError as e:
+        msg = "Can't use management server {0}: {1}".format(
+            management_ip, str(e))
         raise CloudifyCliError(msg)
 
     # check if cloudify was initialized.
