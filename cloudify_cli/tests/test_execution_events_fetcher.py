@@ -13,14 +13,16 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+from itertools import chain, repeat, count
 import unittest
 
-from mock import MagicMock
+from mock import MagicMock, patch
 from cloudify_cli.execution_events_fetcher import ExecutionEventsFetcher, \
     wait_for_execution
 from cloudify_cli.exceptions import EventProcessingTimeoutError, \
     ExecutionTimeoutError
 from cloudify_rest_client.client import CloudifyClient
+from cloudify_rest_client.executions import Execution
 
 
 class ExecutionEventsFetcherTest(unittest.TestCase):
@@ -161,8 +163,81 @@ class ExecutionEventsFetcherTest(unittest.TestCase):
         self.assertEqual(len(events_bulk3), events_count)
 
     def test_wait_for_execution_timeout(self):
-        self.events = range(0, 5)
+        self.events = [{'id': num} for num in range(0, 5)]
         mock_execution = self.client.executions.get('deployment_id')
         self.assertRaises(ExecutionTimeoutError, wait_for_execution,
                           self.client, mock_execution,
                           timeout=2)
+
+
+class WaitForExecutionTests(unittest.TestCase):
+
+    def setUp(self):
+        self.client = CloudifyClient()
+
+        time_patcher = patch('cloudify_cli.execution_events_fetcher.time')
+        self.time = time_patcher.start()
+        self.addCleanup(time_patcher.stop)
+        # prepare mock time.time() calls - return 0, 1, 2, 3...
+        self.time.time.side_effect = count(0)
+
+    def test_wait_for_log_after_execution_finishes(self):
+        """wait_for_execution continues polling logs, after execution status
+        is terminated
+        """
+
+        # prepare mock executions.get() calls - first return a status='started'
+        # then continue returning status='terminated'
+        executions = chain(
+            [MagicMock(status=Execution.STARTED)],
+            repeat(MagicMock(status=Execution.TERMINATED))
+        )
+
+        # prepare mock events.get() calls - first return empty events 100 times
+        # and only then return a 'workflow_succeeded' event
+        events = chain(
+            repeat(([], 0), 100),
+            [([{'event_type': 'workflow_succeeded'}], 1)],
+            repeat(([], 0))
+        )
+
+        self.client.executions.get = MagicMock(side_effect=executions)
+        self.client.events.get = MagicMock(side_effect=events)
+
+        mock_execution = MagicMock(status=Execution.STARTED)
+        wait_for_execution(self.client, mock_execution, timeout=None)
+
+        calls_count = len(self.client.events.get.mock_calls)
+        self.assertEqual(calls_count, 101, """wait_for_execution didnt keep
+            polling events after execution terminated (expected 101
+            calls, got %d)""" % calls_count)
+
+    def test_wait_for_execution_after_log_succeeded(self):
+        """wait_for_execution continues polling the execution status,
+        even after it received a "workflow succeeded" log
+        """
+
+        # prepare mock executions.get() calls - return a status='started'
+        # execution the first 100 times, and then return a 'terminated' one
+        executions = chain(
+            [MagicMock(status=Execution.STARTED)] * 100,
+            repeat(MagicMock(status=Execution.TERMINATED))
+        )
+
+        # prepare mock events.get() calls - return a 'workflow_succeeded'
+        # immediately, and there's no events after that
+        events = chain(
+            [([{'event_type': 'workflow_succeeded'}], 1)],
+            repeat(([], 0))
+        )
+
+        self.client.executions.get = MagicMock(side_effect=executions)
+        self.client.events.get = MagicMock(side_effect=events)
+
+        mock_execution = MagicMock(status=Execution.STARTED)
+        wait_for_execution(self.client, mock_execution, timeout=None)
+
+        calls_count = len(self.client.executions.get.mock_calls)
+        self.assertEqual(calls_count, 101, """wait_for_execution didnt keep
+            polling the execution status after it received a workflow_succeeded
+            event (expected 101 calls, got %d)""" % calls_count)

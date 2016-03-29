@@ -57,10 +57,22 @@ class DeploymentsTest(CliCommandTest):
             'deployment_id': 'deployment-id',
             'blueprint_id': 'blueprint-id',
             'error': '',
-            'id': id,
+            'id': 'id',
             'created_at': datetime.datetime.now(),
             'parameters': {}
         })
+        success_event = {
+            'event_type': 'workflow_succeeded',
+            'type': 'foo',
+            'timestamp': '12345678',
+            'message': {
+                'text': 'workflow execution succeeded'
+            },
+            'context': {
+                'deployment_id': 'deployment-id'
+            }
+        }
+        get_events_response = ([success_event], 1)
 
         self.client.executions.start = MagicMock(
             return_value=execute_response
@@ -68,7 +80,7 @@ class DeploymentsTest(CliCommandTest):
         self.client.executions.get = MagicMock(
             return_value=get_execution_response
         )
-        self.client.events.get = MagicMock(return_value=([], 0))
+        self.client.events.get = MagicMock(return_value=get_events_response)
         cli_runner.run_cli('cfy executions start '
                            '-d a-deployment-id -w install')
 
