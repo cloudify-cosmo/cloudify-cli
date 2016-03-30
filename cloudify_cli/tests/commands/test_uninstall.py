@@ -46,7 +46,8 @@ class UninstallTest(CliCommandTest):
             force=False,
             include_logs=False,
             allow_custom_parameters=False,
-            parameters=DEFAULT_PARAMETERS
+            parameters=DEFAULT_PARAMETERS,
+            json=False
         )
 
     @patch('cloudify_cli.commands.blueprints.delete')
@@ -63,6 +64,7 @@ class UninstallTest(CliCommandTest):
                             '--allow-custom-parameters ' \
                             '--include-logs ' \
                             '--parameters key=value ' \
+                            '--json'
 
         cli_runner.run_cli(uninstall_command)
 
@@ -73,7 +75,8 @@ class UninstallTest(CliCommandTest):
             force=False,
             include_logs=True,
             allow_custom_parameters=True,
-            parameters=["key=value"]
+            parameters=["key=value"],
+            json=True
         )
 
     @patch('cloudify_cli.commands.executions.start')

@@ -357,7 +357,8 @@ def parser_config():
                     '--allow-custom-parameters':
                         allow_custom_parameters_argument(),
                     '--timeout': timeout_argument(),
-                    '-l,--include-logs': include_logs_argument()
+                    '-l,--include-logs': include_logs_argument(),
+                    '--json': json_events_argument()
                 },
                 'handler': cfy.uninstall
             },

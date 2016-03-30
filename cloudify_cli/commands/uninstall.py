@@ -25,7 +25,7 @@ from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW
 
 
 def uninstall(deployment_id, workflow_id, parameters,
-              allow_custom_parameters, timeout, include_logs):
+              allow_custom_parameters, timeout, include_logs, json):
 
     # Although the `uninstall` command does not use the `force` argument,
     # we are using the `executions start` handler as a part of it.
@@ -43,7 +43,8 @@ def uninstall(deployment_id, workflow_id, parameters,
                      force=force,
                      allow_custom_parameters=allow_custom_parameters,
                      include_logs=include_logs,
-                     parameters=parameters)
+                     parameters=parameters,
+                     json=json)
 
     # before deleting the deployment, save its blueprint_id, so we will be able
     # to delete the blueprint after deleting the deployment
