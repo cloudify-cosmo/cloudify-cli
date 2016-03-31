@@ -16,7 +16,7 @@
 
 # These options are required for all software definitions
 name "cloudify-cli"
-default_version "3.3m7"
+default_version "3.4m4"
 
 dependency "python"
 if ! windows?
