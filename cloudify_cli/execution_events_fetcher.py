@@ -19,6 +19,7 @@ from cloudify_rest_client.executions import Execution
 
 
 WAIT_FOR_EXECUTION_SLEEP_INTERVAL = 3
+WAIT_BEFORE_FETCHING_LAST_EVENTS_SLEEP_INTERVAL = 2
 
 
 class ExecutionEventsFetcher(object):
@@ -121,6 +122,7 @@ def wait_for_execution(client,
         execution = client.executions.get(execution.id)
         if execution.status in Execution.END_STATES:
             # fetching any last events the execution might have
+            time.sleep(WAIT_BEFORE_FETCHING_LAST_EVENTS_SLEEP_INTERVAL)
             events_fetcher.fetch_and_process_events(
                 events_handler=events_handler, timeout=timeout)
             break
