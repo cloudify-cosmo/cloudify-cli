@@ -19,6 +19,8 @@ from cloudify_rest_client.executions import Execution
 
 
 WAIT_FOR_EXECUTION_SLEEP_INTERVAL = 3
+WORKFLOW_END_TYPES = {u'workflow_succeeded', u'workflow_failed',
+                      u'workflow_cancelled'}
 
 
 class ExecutionEventsFetcher(object):
@@ -85,6 +87,34 @@ def get_deployment_environment_creation_execution(client, deployment_id):
                            executions))
 
 
+class EventsWatcher(object):
+    """Wraps an event_handler function, examines events to check if an
+    workflow execution finished has arrived.
+
+    This will set its .end_log_received instance attribute to True,
+    when it receives an event of type workflow_succeeded, workflow_cancelled
+    or workflow_failed.
+
+    :ivar end_log_received: was a "workflow execution finished" event seen?
+    :vartype end_log_received: bool
+    """
+
+    def __init__(self, events_handler=None):
+        self._events_handler = events_handler
+        self.end_log_received = False
+
+    def __call__(self, events):
+        if self._events_handler is not None:
+            self._events_handler(events)
+
+        if any(self._is_end_event(evt) for evt in events):
+            self.end_log_received = True
+
+    def _is_end_event(self, event):
+        """Is event a 'workflow execution finished' event?"""
+        return event.get('event_type') in WORKFLOW_END_TYPES
+
+
 def wait_for_execution(client,
                        execution,
                        events_handler=None,
@@ -101,7 +131,10 @@ def wait_for_execution(client,
     events_fetcher = ExecutionEventsFetcher(client, execution.id,
                                             include_logs=include_logs)
 
-    # Poll for execution status until execution ends
+    # Poll for execution status and execution logs, until execution ends
+    # and we receive an event of type in WORKFLOW_END_TYPES
+    execution_ended = False
+    events_watcher = EventsWatcher(events_handler)
     while True:
         if timeout is not None:
             if time.time() > deadline:
@@ -112,18 +145,20 @@ def wait_for_execution(client,
                                        execution.deployment_id))
             else:
                 # update the remaining timeout
-                timeout = deadline-time.time()
+                timeout = deadline - time.time()
 
-        if execution.status != Execution.PENDING:
-            events_fetcher.fetch_and_process_events(
-                events_handler=events_handler, timeout=timeout)
+        if not execution_ended:
+            execution = client.executions.get(execution.id)
+            execution_ended = execution.status in Execution.END_STATES
 
-        execution = client.executions.get(execution.id)
-        if execution.status in Execution.END_STATES:
-            # fetching any last events the execution might have
+        if not events_watcher.end_log_received and \
+                execution.status != Execution.PENDING:
             events_fetcher.fetch_and_process_events(
-                events_handler=events_handler, timeout=timeout)
+                events_handler=events_watcher, timeout=timeout)
+
+        if execution_ended and events_watcher.end_log_received:
             break
+
         time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
 
     return execution

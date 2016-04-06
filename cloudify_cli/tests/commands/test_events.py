@@ -19,7 +19,6 @@ Tests all commands that start with 'cfy events'
 
 import json
 import time
-import threading
 from StringIO import StringIO
 
 from mock import patch
@@ -41,29 +40,31 @@ class EventsTest(CliCommandTest):
         self.events = []
         self._create_cosmo_wd_settings()
         # execution will terminate after 10 seconds
-        self.stop_generating_events = False
-        self.execution_termination_time = time.time() + 10
+        self.execution_start_time = time.time()
+        self.execution_termination_time = self.execution_start_time + 10
+        self.events = self._generate_events(self.execution_start_time,
+                                            self.execution_termination_time)
         self.executions_status = Execution.STARTED
-        self.events_generator = threading.Thread(
-            target=self.generate_events,
-            args=(self.execution_termination_time,))
-        self.events_generator.daemon = True
-        self.events_generator.start()
-        self.addCleanup(self.stop_events_generator)
 
-    def stop_events_generator(self):
-        self.stop_generating_events = True
-        self.events_generator.join(timeout=10)
+    def _generate_events(self, start_time, end_time):
+        events = []
+        event_time = start_time
 
-    def generate_events(self, execution_termination_time):
-        while (not self.stop_generating_events and
-               time.time() < execution_termination_time):
-            # to simulate a common events flow, sleep for 3 secs every 2 secs
-            if len(self.events) > 0 and time.time() % 2 == 0:
-                time.sleep(3)
-            event = {'event_name': 'test_event_{0}'.format(time.time())}
-            self.events.append(event)
-            time.sleep(0.3)
+        while event_time < end_time:
+            event = {'event_name': 'test_event_{0}'.format(event_time)}
+            events.append((event_time, event))
+            event_time += 0.3
+
+        success_event = {
+            'event_name': 'test_event_{0}'.format(end_time),
+            'event_type': 'workflow_succeeded'
+        }
+        events.append((end_time, success_event))
+        return events
+
+    def _get_events_before(self, end_time):
+        return [event for event_time, event in self.events
+                if event_time < end_time]
 
     def _mock_executions_get(self, execution_id):
         self.update_execution_status()
@@ -79,10 +80,8 @@ class EventsTest(CliCommandTest):
 
     def _mock_events_get(self, execution_id, from_event=0,
                          batch_size=100, include_logs=False):
-        if from_event >= len(self.events):
-            return [], len(self.events)
-        until_event = min(from_event + batch_size, len(self.events))
-        return self.events[from_event:until_event], len(self.events)
+        events = self._get_events_before(time.time())
+        return events[from_event:from_event+batch_size], len(events)
 
     def update_execution_status(self):
         """ sets the execution status to TERMINATED when
@@ -91,44 +90,52 @@ class EventsTest(CliCommandTest):
         if time.time() > self.execution_termination_time:
             self.executions_status = Execution.TERMINATED
 
-    @patch('cloudify_cli.logger.logs.create_event_message_prefix',
-           new=mock_log_message_prefix)
-    def test_events_tail(self):
-        self.client.executions.get = self._mock_executions_get
-        self.client.events.get = self._mock_events_get
-
-        out = cli_runner.run_cli(
-            'cfy events list --tail --execution-id execution-id')
-
+    def _assert_events_displayed(self, events, output):
         expected_event_logs = []
-        for event in self.events:
+        for event in events:
             expected_event_logs.append(event['event_name'])
 
         missing_events_error_message = \
             'command output does not contain all expected values.'\
             '\noutput: \n{0}\n'\
             '\nexpected: \n{1}\n'\
-            .format(out, '\n'.join(expected_event_logs))
+            .format(output, '\n'.join(expected_event_logs))
 
-        self.assertTrue(all(event_log in out
+        self.assertTrue(all(event_log in output
                             for event_log in expected_event_logs),
                         missing_events_error_message)
 
     @patch('cloudify_cli.logger.logs.create_event_message_prefix',
            new=mock_log_message_prefix)
+    def test_events_tail(self):
+        self.client.executions.get = self._mock_executions_get
+        self.client.events.get = self._mock_events_get
+
+        stdout = StringIO()
+        with patch('sys.stdout', stdout):
+            cli_runner.run_cli(
+                'cfy events list --tail --execution-id execution-id')
+        output = stdout.getvalue()
+        expected_events = self._get_events_before(
+            self.execution_termination_time)
+
+        self._assert_events_displayed(expected_events, output)
+
+    @patch('cloudify_cli.logger.logs.create_event_message_prefix',
+           new=mock_log_message_prefix)
     def test_events(self):
         output = self._test_events()
-        for event in self.events:
-            self.assertIn(mock_log_message_prefix(event), output)
+        expected_events = self._get_events_before(time.time())
+        self._assert_events_displayed(expected_events, output)
 
     def test_event_json(self):
         output = self._test_events(flag='--json')
-        for event in self.events:
+        expected_events = self._get_events_before(time.time())
+        self._assert_events_displayed(expected_events, output)
+        for event in expected_events:
             self.assertIn(json.dumps(event), output)
 
     def _test_events(self, flag=''):
-        while not self.events:
-            time.sleep(0.1)
         self.client.executions.get = self._mock_executions_get
         self.client.events.get = self._mock_events_get
         stdout = StringIO()
