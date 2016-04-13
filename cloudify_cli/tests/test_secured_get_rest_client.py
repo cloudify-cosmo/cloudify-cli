@@ -56,7 +56,8 @@ class TestGetRestClient(unittest.TestCase):
         shutil.rmtree(self.test_dir)
 
     def test_get_rest_client(self):
-        client = utils.get_rest_client(manager_ip='localhost')
+        client = utils.get_rest_client(manager_ip='localhost',
+                                       skip_version_check=True)
         self.assertIsNotNone(client._client.headers[
             constants.CLOUDIFY_AUTHENTICATION_HEADER])
 
@@ -64,9 +65,11 @@ class TestGetRestClient(unittest.TestCase):
         protocol = 'https'
         host = 'localhost'
         port = 443
+        skip_version_check = True
 
         client = utils.get_rest_client(
-            manager_ip=host, rest_port=port, protocol=protocol)
+            manager_ip=host, rest_port=port, protocol=protocol,
+            skip_version_check=skip_version_check)
 
         self.assertEqual(CERT_PATH, client._client.cert)
         self.assertTrue(client._client.trust_all)
