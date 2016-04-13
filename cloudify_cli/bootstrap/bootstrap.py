@@ -281,7 +281,8 @@ def bootstrap(blueprint_path,
         agent_remote_key_path = _handle_agent_key_file(fabric_env,
                                                        manager_node)
 
-        rest_client = utils.get_rest_client(manager_ip, rest_port, protocol)
+        rest_client = utils.get_rest_client(manager_ip, rest_port, protocol,
+                                            skip_version_check=True)
         provider_context = _handle_provider_context(
             rest_client=rest_client,
             agent_remote_key_path=agent_remote_key_path,
