@@ -1154,6 +1154,23 @@ def parser_config():
                     },
                 },
                 'handler': cfy.init
+            },
+            'groups': {
+                'help': 'Manage Deployment Groups',
+                'sub_commands': {
+                    'list': {
+                        'arguments': {
+                            '-d,--deployment-id': make_required(
+                                deployment_id_argument(
+                                    hlp='The id of the deployment whose '
+                                        'groups to list'
+                                )
+                            )
+                        },
+                        'help': 'List groups for a deployment',
+                        'handler': cfy.groups.ls
+                    }
+                }
             }
         }
     }
