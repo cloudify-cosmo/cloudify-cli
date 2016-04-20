@@ -16,6 +16,8 @@ Usage
 -----
 ### Build
 
+You need to set the environment variable CORE_TAG_NAME to something like "3.4m4"
+
 You create a platform-specific package using the `build project` command:
 
 ```shell
@@ -37,7 +39,7 @@ $ bin/omnibus clean cloudify
 ```
 
 Adding the `--purge` purge option removes __ALL__ files generated during the
-build including the project install directory (`/opt/cloudify`) and
+build including the project install directory (`/opt/cfy`) and
 the package cache directory (`/var/cache/omnibus/pkg`):
 
 ```shell

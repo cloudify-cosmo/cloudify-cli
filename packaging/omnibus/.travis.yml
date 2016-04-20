@@ -8,8 +8,8 @@ os:
 
 before_install:
 - if [[ "$TRAVIS_OS_NAME" != "osx" ]] ; then echo "[ERROR] os" && exit 1 ; fi
-- sudo mkdir /opt/cloudify
-- sudo chown $USER /opt/cloudify
+- sudo mkdir /opt/cfy
+- sudo chown $USER /opt/cfy
 - bundle install --binstubs
 - git config --global user.name "Travis-CI"
 - git config --global user.email "nobody@example.com"

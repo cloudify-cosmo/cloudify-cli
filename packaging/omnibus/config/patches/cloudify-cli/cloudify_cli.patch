@@ -16,6 +16,26 @@ index 3eb3efd..1feae45 100644
      else:
          get_logger().debug('There are no plugins to install..')
 
+diff --git a/cloudify_cli/resources/config.yaml b/cloudify_cli/resources/config.yaml
+index 2ffe55d..6e6e3cb 100644
+--- a/cloudify_cli/resources/config.yaml
++++ b/cloudify_cli/resources/config.yaml
+@@ -13,3 +13,14 @@ logging:
+
+     # rest client http logs, including headers.
+     cloudify.rest_client.http: info
++
++import_resolver:
++  parameters:
++    rules:
++    - {'http://www.getcloudify.org/spec/cloudify/3.4m4/types.yaml': 'file:/opt/cfy/types/types.yaml'}
++    - {'http://www.getcloudify.org/spec/aws-plugin/1.4': 'file:/opt/cfy/plugins/aws-plugin'}
++    - {'http://www.getcloudify.org/spec/openstack-plugin/1.3.1': 'file:/opt/cfy/plugins/openstack-plugin'}
++    - {'http://www.getcloudify.org/spec/fabric-plugin/1.4': 'file:/opt/cfy/plugins/fabric-plugin'}
++    - {'http://www.getcloudify.org/spec/script-plugin/1.4': 'file:/opt/cfy/plugins/script-plugin'}
++    - {'http://www.getcloudify.org/spec/diamond-plugin/1.3.2': 'file:/opt/cfy/plugins/diamond-plugin'}
++    - {'http://www.getcloudify.org/spec/vsphere-plugin/1.4': 'file:/opt/cfy/plugins/vsphere-plugin'}
+
 diff --git a/cloudify_cli/utils.py b/cloudify_cli/utils.py
 index c890351..169d8c5 100644
 --- a/cloudify_cli/utils.py

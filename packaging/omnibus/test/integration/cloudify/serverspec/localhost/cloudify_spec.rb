@@ -6,17 +6,17 @@ if ['debian', 'centos', 'redhat', 'ubuntu'].include?(os[:family])
     it { should be_installed }
   end 
 
-  describe file('/opt/cloudify') do
+  describe file('/opt/cfy') do
     it { should be_directory }
     it { should be_readable }
   end
 
-  describe file('/opt/cloudify/bin') do
+  describe file('/opt/cfy/bin') do
     it { should be_directory }
     it { should be_readable }
   end
 
-  describe file('/opt/cloudify/embedded') do
+  describe file('/opt/cfy/embedded') do
     it { should be_directory }
     it { should be_readable }
   end
@@ -25,7 +25,7 @@ if ['debian', 'centos', 'redhat', 'ubuntu'].include?(os[:family])
     it { should be_executable }
   end
 
-  describe file('/opt/cloudify/bin/cfy') do
+  describe file('/opt/cfy/bin/cfy') do
     it { should be_executable }
   end
 
