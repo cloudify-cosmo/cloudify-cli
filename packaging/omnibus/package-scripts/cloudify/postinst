@@ -5,7 +5,7 @@
 #
 
 PROGNAME=$(basename $0)
-INSTALLER_DIR="/opt/cloudify"
+INSTALLER_DIR="/opt/cfy"
 PREFIX="/usr"
 
 function error_exit

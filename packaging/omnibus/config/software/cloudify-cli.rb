@@ -16,7 +16,21 @@
 
 # These options are required for all software definitions
 name "cloudify-cli"
-default_version "3.3m7"
+
+ENV['CORE_TAG_NAME'] || raise('CORE_TAG_NAME environment variable not set')
+default_version ENV['CORE_TAG_NAME']
+
+ENV['GITHUB_USERNAME'] || raise('GITHUB_USERNAME environment variable not set (required for private repo)')
+ENV['GITHUB_PASSWORD'] || raise('GITHUB_PASSWORD environment variable not set (required for private repo)')
+github_username=ENV['GITHUB_USERNAME']
+github_password=ENV['GITHUB_PASSWORD']
+
+openstack_plugin_tag = '1.3.1'
+aws_plugin_tag = '1.4'
+fabric_plugin_tag = '1.4'
+script_plugin_tag = '1.4'
+vsphere_plugin_tag = '2.0'
+vcloud_plugin_tag = '1.3.1'
 
 dependency "python"
 if ! windows?
@@ -34,9 +48,27 @@ build do
     patch source: "cloudify_cli.patch"
 
     command ["#{install_dir}/embedded/bin/pip",
-         "install", "-I", "--build=#{project_dir}",
-         ".",
-         "-r", "dev-requirements.txt"]
+             "install", "-I", "--build=#{project_dir}",
+             ".",
+             "-r", "dev-requirements.txt"]
+
+    command ["#{install_dir}/embedded/bin/pip",
+             "install", "--build=#{project_dir}/aws-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-aws-plugin/archive/#{aws_plugin_tag}.zip"]
+
+    command ["#{install_dir}/embedded/bin/pip",
+             "install", "--build=#{project_dir}/openstack-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-openstack-plugin/archive/#{openstack_plugin_tag}.zip"]
+
+    command ["#{install_dir}/embedded/bin/pip",
+             "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/#{fabric_plugin_tag}.zip"]
+
+    command ["#{install_dir}/embedded/bin/pip",
+             "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/#{script_plugin_tag}.zip"]
+
+    command ["#{install_dir}/embedded/bin/pip",
+             "install", "--build=#{project_dir}/vsphere-plugin", ".", "https://#{github_username}:#{github_password}@github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/#{vsphere_plugin_tag}.zip"]
+
+    command ["#{install_dir}/embedded/bin/pip",
+             "install", "--build=#{project_dir}/vcloud-plugin", ".", "https://github.com/cloudify-cosmo/tosca-vcloud-plugin/archive/#{vcloud_plugin_tag}.zip"]
 
     erb :dest => "#{install_dir}/bin/cfy",
       :source => "cfy_wrapper.erb",
