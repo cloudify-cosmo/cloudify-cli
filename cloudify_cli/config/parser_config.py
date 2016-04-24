@@ -636,6 +636,20 @@ def parser_config():
                                 'or all deployments of a specific blueprint',
                         'handler': cfy.deployments.ls
                     },
+                    'update': {
+                        'arguments': {
+                            '-d,--deployment-id': make_required(
+                                deployment_id_argument(
+                                    hlp='The id of the deployment to update'
+                                )
+                            ),
+                            '-p,--blueprint-path':
+                                manager_blueprint_path_argument(),
+                        },
+                        'help': 'Update a specified deployment according to '
+                                'the specified blueprint',
+                        'handler': cfy.deployments.update
+                    },
                     'outputs': {
                         'arguments': {
                             '-d,--deployment-id': make_required(
