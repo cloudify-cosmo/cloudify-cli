@@ -116,6 +116,8 @@ def start(workflow_id, deployment_id, timeout, force,
     events_message = "* Run 'cfy events list --include-logs " \
                      "--execution-id {0}' to retrieve the " \
                      "execution's events/logs"
+    original_timeout = timeout
+
     try:
         client = utils.get_rest_client(management_ip)
         try:
@@ -174,12 +176,17 @@ def start(workflow_id, deployment_id, timeout, force,
                         " '{1}'".format(workflow_id, deployment_id))
             logger.info(events_message.format(execution.id))
     except ExecutionTimeoutError, e:
-        logger.info("Execution of workflow '{0}' "
-                    "for deployment '{1}' timed out. "
-                    "* Run 'cfy executions cancel "
-                    "--execution-id {2}' to cancel"
-                    " the running workflow."
-                    .format(workflow_id, deployment_id, e.execution_id))
+        logger.info(
+            "Timed out waiting for workflow '{0}' of deployment '{1}' to "
+            "end. The execution may still be running properly; however, "
+            "the command-line utility was instructed to wait up to {3} "
+            "seconds for its completion.\n\n"
+            "* Run 'cfy executions list' to determine the execution's "
+            "status.\n"
+            "* Run 'cfy executions cancel --execution-id {2}' to cancel"
+            " the running workflow.".format(
+                workflow_id, deployment_id, e.execution_id, original_timeout))
+
         events_tail_message = "* Run 'cfy events list --tail --include-logs " \
                               "--execution-id {0}' to retrieve the " \
                               "execution's events/logs"
