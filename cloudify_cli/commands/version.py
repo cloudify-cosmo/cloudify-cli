@@ -18,14 +18,10 @@ Handles 'cfy --version'
 """
 
 import argparse
-import socket
-
 from StringIO import StringIO
-from cloudify_cli import utils
-from cloudify_cli.utils import load_cloudify_working_dir_settings
+
+from cloudify_cli.utils import get_manager_version_data
 from cloudify_cli.utils import get_version_data
-from cloudify_cli.utils import get_rest_client
-from cloudify_rest_client.exceptions import CloudifyClientError
 
 
 class VersionAction(argparse.Action):
@@ -53,36 +49,10 @@ class VersionAction(argparse.Action):
         output.write('{suffix}'.format(**all_data))
         return output.getvalue()
 
-    def _get_manager_version_data(self):
-        dir_settings = load_cloudify_working_dir_settings(suppress_error=True)
-        if not (dir_settings and dir_settings.get_management_server()):
-            return None
-        management_ip = dir_settings.get_management_server()
-        if not self._connected_to_manager(management_ip):
-            return None
-        client = get_rest_client(management_ip)
-        try:
-            version_data = client.manager.get_version()
-        except CloudifyClientError:
-            return None
-        version_data['ip'] = management_ip
-        return version_data
-
-    @staticmethod
-    def _connected_to_manager(management_ip):
-        port = utils.get_rest_port()
-        try:
-            sock = socket.create_connection((str(management_ip), int(port)), 5)
-            sock.close()
-            return True
-        except ValueError:
-            return False
-        except socket.error:
-            return False
-
     def __call__(self, parser, namespace, values, option_string=None):
         cli_version_data = get_version_data()
-        rest_version_data = self._get_manager_version_data()
+        rest_version_data = get_manager_version_data()
+
         cli_version = self._format_version_data(
             cli_version_data,
             prefix='Cloudify CLI ',
