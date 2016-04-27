@@ -18,7 +18,6 @@ import glob
 import json
 import os
 import pkgutil
-import socket
 import sys
 import tempfile
 import getpass
@@ -30,7 +29,6 @@ from contextlib import contextmanager
 
 import yaml
 import pkg_resources
-from cloudify_rest_client.exceptions import CloudifyClientError
 from jinja2.environment import Template
 from prettytable import PrettyTable
 from itsdangerous import base64_encode
@@ -326,8 +324,7 @@ def get_cwd():
     return os.getcwd()
 
 
-def get_rest_client(manager_ip=None, rest_port=None, protocol=None,
-                    skip_version_check=False):
+def get_rest_client(manager_ip=None, rest_port=None, protocol=None):
     if not manager_ip:
         manager_ip = get_management_server_ip()
 
@@ -347,21 +344,8 @@ def get_rest_client(manager_ip=None, rest_port=None, protocol=None,
 
     trust_all = get_ssl_trust_all()
 
-    client = CloudifyClient(host=manager_ip, port=rest_port, protocol=protocol,
-                            headers=headers, cert=cert, trust_all=trust_all)
-
-    if skip_version_check:
-        return client
-
-    cli_version, manager_version = get_cli_manager_versions()
-
-    if cli_version == manager_version:
-        return client
-    else:
-        message = ('CLI and Manager versions do not match\n'
-                   'CLI Version: {0}\n'
-                   'Manager Version: {1}').format(cli_version, manager_version)
-        raise CloudifyCliError(message)
+    return CloudifyClient(host=manager_ip, port=rest_port, protocol=protocol,
+                          headers=headers, cert=cert, trust_all=trust_all)
 
 
 def get_auth_header(username, password):
@@ -466,45 +450,6 @@ def get_version():
 def get_version_data():
     data = pkgutil.get_data('cloudify_cli', 'VERSION')
     return json.loads(data)
-
-
-def connected_to_manager(management_ip):
-    port = get_rest_port()
-    try:
-        sock = socket.create_connection((str(management_ip), int(port)), 5)
-        sock.close()
-        return True
-    except ValueError:
-        return False
-    except socket.error:
-        return False
-
-
-def get_manager_version_data():
-    dir_settings = load_cloudify_working_dir_settings(suppress_error=True)
-    if not (dir_settings and dir_settings.get_management_server()):
-        return None
-    management_ip = dir_settings.get_management_server()
-    if not connected_to_manager(management_ip):
-        return None
-    client = get_rest_client(management_ip, skip_version_check=True)
-    try:
-        version_data = client.manager.get_version()
-    except CloudifyClientError:
-        return None
-    version_data['ip'] = management_ip
-    return version_data
-
-
-def get_cli_manager_versions():
-    manager_version_data = get_manager_version_data()
-    cli_version = get_version_data().get('version')
-
-    if not manager_version_data:
-        return cli_version, None
-    else:
-        manager_version = manager_version_data.get('version')
-        return cli_version, manager_version
 
 
 def table(cols, data, defaults=None):

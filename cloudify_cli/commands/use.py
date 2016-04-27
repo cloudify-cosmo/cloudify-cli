@@ -37,8 +37,7 @@ def use(management_ip, rest_port):
     else:
         protocol = constants.DEFAULT_PROTOCOL
     client = utils.get_rest_client(
-        manager_ip=management_ip, rest_port=rest_port, protocol=protocol,
-        skip_version_check=True)
+        manager_ip=management_ip, rest_port=rest_port, protocol=protocol)
     try:
         # first check this server is available.
         client.manager.get_status()
