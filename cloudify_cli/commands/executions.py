@@ -83,7 +83,7 @@ def ls(deployment_id, include_system_workflows):
             deployment_id=deployment_id,
             include_system_workflows=include_system_workflows)
     except exceptions.CloudifyClientError, e:
-        if not e.status_code != 404:
+        if e.status_code != 404:
             raise
         raise CloudifyCliError(
             'Deployment {0} does not exist on management server'

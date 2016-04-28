@@ -34,6 +34,7 @@ def status():
     client = utils.get_rest_client(management_ip)
     try:
         status_result = client.manager.get_status()
+        maintenance_response = client.maintenance_mode.status()
     except UserUnauthorizedError:
         logger.info("Can't query management server status: User is "
                     "unauthorized")
@@ -55,4 +56,9 @@ def status():
         })
     pt = utils.table(['service', 'status'], data=services)
     utils.print_table('Services:', pt)
+
+    maintenance_status = maintenance_response.status
+    if maintenance_status != 'deactivated':
+        logger.info('Maintenance mode '
+                    'is {0}.\n'.format(maintenance_response.status))
     return True

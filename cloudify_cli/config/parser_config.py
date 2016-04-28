@@ -163,11 +163,11 @@ def force_argument(hlp):
     }
 
 
-def timeout_argument():
+def timeout_argument(default_timeout=DEFAULT_TIMEOUT):
     return {
         'dest': 'timeout',
         'type': int,
-        'default': DEFAULT_TIMEOUT,
+        'default': default_timeout,
         'help': 'Operation timeout in seconds (The execution itself will keep '
                 'going. It is the CLI that will stop waiting for it to '
                 'terminate)'
@@ -1099,6 +1099,33 @@ def parser_config():
                     }
                 },
                 'handler': cfy.recover
+            },
+            'maintenance-mode': {
+                'help': "Manage Cloudify's maintenance mode",
+                'sub_commands': {
+                    'status': {
+                        'help': "Get maintenance mode status",
+                        'handler': cfy.maintenance.status
+                    },
+                    'activate': {
+                        'arguments': {
+                            '--wait': {
+                                'dest': 'wait',
+                                'action': 'store_true',
+                                'help': "Wait until there are no running "
+                                        "executions and automatically "
+                                        "activate maintenance mode."
+                            },
+                            '--timeout': timeout_argument(default_timeout=0)
+                        },
+                        'help': 'Activate maintenance mode.',
+                        'handler': cfy.maintenance.activate
+                    },
+                    'deactivate': {
+                        'help': 'Deactivate maintenance mode.',
+                        'handler': cfy.maintenance.deactivate
+                    }
+                }
             },
             'use': {
                 'help': 'Use/switch to a specific Cloudify Manager',

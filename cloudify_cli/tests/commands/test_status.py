@@ -30,9 +30,13 @@ from cloudify_rest_client.exceptions import UserUnauthorizedError
 
 class StatusTest(CliCommandTest):
 
+    def setUp(self):
+        super(StatusTest, self).setUp()
+        self.client.manager.get_status = MagicMock()
+        self.client.maintenance_mode.status = MagicMock()
+
     def test_status_command(self):
         self._create_cosmo_wd_settings()
-        self.client.manager.get_status = MagicMock()
         cli_runner.run_cli('cfy status')
 
     def test_status_no_management_server_defined(self):
@@ -50,7 +54,6 @@ class StatusTest(CliCommandTest):
                 self.assertIn('User is unauthorized', output)
 
     def test_status_command_from_inner_dir(self):
-        self.client.manager.get_status = MagicMock()
         self._create_cosmo_wd_settings()
         cwd = utils.get_cwd()
         new_dir = os.path.join(cwd, 'test_command_from_inner_dir')
