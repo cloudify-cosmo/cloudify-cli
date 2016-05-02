@@ -95,9 +95,10 @@ def activate(wait, timeout):
 
         while True:
             if _is_timeout(timeout, deadline):
-                client.maintenance_mode.deactivate()
                 raise exceptions.CloudifyCliError(
-                    'Activating maintenance mode timed out.')
+                    "Request for maintenance mode activation timed out. "
+                    "Run 'cfy maintenance-mode deactivate' to "
+                    "cancel the activation.")
 
             status_response = client.maintenance_mode.status()
             if status_response.status == MAINTENANCE_MODE_ACTIVE:
