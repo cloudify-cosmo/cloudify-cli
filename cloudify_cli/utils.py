@@ -38,6 +38,7 @@ from cloudify_rest_client import CloudifyClient
 
 import cloudify_cli
 from cloudify_cli import constants
+from cloudify_cli.commands.blueprints import SUPPORTED_ARCHIVE_TYPES
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.logger import get_logger
 from dsl_parser import utils as dsl_parser_utils
@@ -556,6 +557,12 @@ def remove_if_exists(path):
     except OSError as e:
         if e.errno != errno.ENOENT:  # errno.ENOENT = no such file or directory
             raise  # re-raise exception if a different error occurred
+
+
+def is_supported_archive_type(blueprint_path):
+
+    extensions = ['.{}'.format(ext) for ext in SUPPORTED_ARCHIVE_TYPES]
+    return blueprint_path.endwith(tuple(extensions))
 
 
 def generate_random_string(size=6,
