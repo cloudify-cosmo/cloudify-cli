@@ -71,20 +71,22 @@ def update(deployment_id, blueprint_path):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
-    # TODO: check if the file is an archive or a plain blueprint
     logger.info('Staging blueprint from {0}, to update deployment {1}'
                 .format(blueprint_path, deployment_id))
-    if os.path.isfile(blueprint_path):
+
+    if utils.is_supported_archive_type(blueprint_path):
         deployment_update = \
-            client.deployment_updates.stage(deployment_id, blueprint_path)
+            client.deployment_updates.stage(deployment_id,
+                                            blueprint_path)
     else:
         deployment_update = \
             client.deployment_updates.stage_archive(deployment_id,
                                                     blueprint_path)
 
-    #  Launch update which needs to calculate the steps and executed a commit
-    logger.info('Extracting and applying changes from specified  blueprint')
+    logger.info('Extracting and applying changes from specified blueprint')
+
     client.deployment_updates.update(deployment_update.id)
+    client.deployment_updates.commit()
 
 
 def create(blueprint_id, deployment_id, inputs):
