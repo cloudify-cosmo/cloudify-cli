@@ -7,7 +7,7 @@ AWS_ACCESS_KEY=$4
 CLI_BRANCH=$5
 PACKAGER_BRANCH=$6
 
-CORE_TAG_NAME="3.4m4"
+CORE_TAG_NAME="3.4m5"
 
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${PACKAGER_BRANCH-$CORE_TAG_NAME}/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
