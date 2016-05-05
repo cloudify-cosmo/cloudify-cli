@@ -78,10 +78,9 @@ def update(deployment_id, blueprint_path):
                                                          blueprint_path)
     # TODO if not successful, return a failure message
     logger.info('Successfully updated deployment {dep_id}. Deployment update'
-                'id: {depup_id}'.format(
-        depup_id=deployment_update.id, dep_id=deployment_id)
-    )
-
+                'id: {depup_id}'.format(depup_id=deployment_update.id,
+                                        dep_id=deployment_id)
+                )
 
 
 def create(blueprint_id, deployment_id, inputs):
