@@ -559,12 +559,6 @@ def remove_if_exists(path):
             raise  # re-raise exception if a different error occurred
 
 
-def is_supported_archive_type(blueprint_path):
-
-    extensions = ['.{}'.format(ext) for ext in SUPPORTED_ARCHIVE_TYPES]
-    return blueprint_path.endwith(tuple(extensions))
-
-
 def generate_random_string(size=6,
                            chars=string.ascii_uppercase + string.digits):
     return ''.join(random.choice(chars) for _ in range(size))
