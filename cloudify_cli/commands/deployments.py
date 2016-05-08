@@ -66,7 +66,7 @@ def ls(blueprint_id):
     utils.print_table('Deployments:', pt)
 
 
-def update(deployment_id, blueprint_path):
+def update(deployment_id, blueprint_path, workflow=None):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -81,6 +81,8 @@ def update(deployment_id, blueprint_path):
                 'id: {depup_id}'.format(depup_id=deployment_update.id,
                                         dep_id=deployment_id)
                 )
+
+    client.deployment_updates.commit(workflow)
 
 
 def create(blueprint_id, deployment_id, inputs):

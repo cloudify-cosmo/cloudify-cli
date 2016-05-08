@@ -653,6 +653,11 @@ def parser_config():
                             }),
                             '-p,--blueprint-path':make_optional(
                                 manager_blueprint_path_argument()),
+                            '-w,--workflow':
+                                make_optional(workflow_id_argument(
+                                    hlp='The workflow to execute (default: {0}'
+                                        .format(DEFAULT_UNINSTALL_WORKFLOW))
+                            ),
                         },
                         'help': 'Update a specified deployment according to '
                                 'the specified blueprint',
