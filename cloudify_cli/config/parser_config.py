@@ -643,8 +643,16 @@ def parser_config():
                                     hlp='The id of the deployment to update'
                                 )
                             ),
-                            '-p,--blueprint-path':
-                                manager_blueprint_path_argument(),
+                            '-l,--archive-location': make_optional(
+                                    archive_location_argument()),
+                            '-n,--blueprint-filename': make_optional({
+                                'dest': 'blueprint_filename',
+                                'help': "The name of the archive's main "
+                                        "blueprint file. (default: {0})"
+                                    .format(DEFAULT_BLUEPRINT_FILE_NAME)
+                            }),
+                            '-p,--blueprint-path':make_optional(
+                                manager_blueprint_path_argument()),
                         },
                         'help': 'Update a specified deployment according to '
                                 'the specified blueprint',

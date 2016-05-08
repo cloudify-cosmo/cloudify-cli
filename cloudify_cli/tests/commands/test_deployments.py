@@ -18,10 +18,11 @@ Tests all commands that start with 'cfy deployments'
 """
 
 import datetime
+import tempfile
 
 from mock import MagicMock
 
-from cloudify_rest_client import deployments
+from cloudify_rest_client import deployments, deployment_updates
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.executions import Execution
 
@@ -149,3 +150,38 @@ class DeploymentsTest(CliCommandTest):
         self.client.deployments.get = MagicMock(return_value=deployment)
         self.client.deployments.outputs.get = MagicMock(return_value=outputs)
         cli_runner.run_cli('cfy deployments outputs -d dep1')
+
+    def test_deployment_update(self):
+        depup_id = 'deployment_update_id'
+        deployment_id = 'deployment_id'
+
+        bp_path = tempfile.NamedTemporaryFile()
+
+        return_msg = \
+            "Successfully updated deployment {0}. Deployment updateid: {1}"\
+            .format(deployment_id, depup_id)
+
+        update_response = deployment_updates.DeploymentUpdate({
+            'id': depup_id,
+            'state': 'Running',
+            'deployment_id': deployment_id,
+            'steps': ['step1', 'step2']
+
+
+        })
+
+        self.client.deployment_updates.update = \
+            MagicMock(return_value=update_response)
+        output = cli_runner.run_cli('cfy deployments update -d {0} -p {1}'
+                                    .format(deployment_id, bp_path.name))
+        self.assertIn(return_msg, output)
+
+    def test_incorrect_bp_path(self):
+        deployment_id = 'deployment_id'
+        bp_path = 'wrong_path'
+        cmd = 'cfy deployments update -d {0} -p {1}'.format(deployment_id,
+                                                            bp_path)
+
+        self.client.deployment_updates.update = MagicMock()
+
+        self._assert_ex(cmd, '2')
