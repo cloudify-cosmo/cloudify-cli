@@ -383,11 +383,16 @@ def recover(snapshot_path,
             logger.info('Waiting {0} seconds for '
                         'snapshot restoration'.format(wait_time))
         time.sleep(5)
+    execution = client.executions.get(execution.id)
     if execution.status == execution.FAILED:
         raise RuntimeError('Failed to restore '
                            'snapshot {0}'.format(snapshot_id))
-    if execution.status == execution.TERMINATED:
+    elif execution.status == execution.TERMINATED:
         logger.info('Successfully restored snapshot {0}'.format(snapshot_id))
+    else:
+        raise RuntimeError('Failed to restore snapshot {0}, '
+                           'Unexpected snapshot status: {1}'
+                           .format(snapshot_id, execution.status))
     client.snapshots.delete(snapshot_id)
 
 
