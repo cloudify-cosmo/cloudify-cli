@@ -406,7 +406,10 @@ def parser_config():
                     'delete': {
                         'arguments': {
                             '-p,--plugin-id': plugin_id_argument(
-                                hlp='The plugin id')
+                                hlp='The plugin id'),
+                            '-f,--force': force_argument(
+                                hlp='Delete the plugin even if there is a '
+                                    'deployment currently using it.'),
                         },
                         'help': 'Delete a plugin from the manager',
                         'handler': cfy.plugins.delete
