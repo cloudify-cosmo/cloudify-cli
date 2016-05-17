@@ -15,6 +15,7 @@
 ############
 
 import os
+import sys
 import tempfile
 
 from cloudify.utils import LocalCommandRunner
@@ -72,8 +73,9 @@ def install_blueprint_plugins(blueprint_path):
         # of cleanup in case an installation fails.
         tmp_path = tempfile.mkstemp(suffix='.txt', prefix='requirements_')[1]
         utils.dump_to_file(collection=requirements, file_path=tmp_path)
-        runner.run(command='pip install -r {0}'.format(tmp_path),
-                   stdout_pipe=False)
+        command_parts = [sys.executable, '-m', 'pip', 'install', '-r',
+                         tmp_path]
+        runner.run(command=' '.join(command_parts), stdout_pipe=False)
     else:
         get_logger().debug('There are no plugins to install..')
 
