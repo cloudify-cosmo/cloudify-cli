@@ -1061,15 +1061,16 @@ def parser_config():
                 'handler': cfy.bootstrap
             },
             'upgrade': {
-                'help': 'Upgrade the Manager to a new version ',
+                'help': 'Upgrade the Manager to a new version',
                 'arguments': {
                     '-p,--blueprint-path':
                         local_blueprint_path_argument(
-                                hlp="The path to the desired simple Manager blueprint"
+                                hlp='The path to the desired simple Manager blueprint'
                         ),
-                    '-i,--inputs': {'dest': 'inputs',
-                                            'help': '',
-                                            },
+                    '-i,--inputs': {
+                        'dest': 'inputs',
+                        'help': 'The Required inputs for running the upgrade process',
+                    },
                     '--skip-validations': {
                         'dest': 'skip_validations',
                         'action': 'store_true',
@@ -1088,6 +1089,23 @@ def parser_config():
                         task_thread_pool_size_argument()
                 },
                 'handler': cfy.upgrade.upgrade
+            },
+            'rollback': {
+                'help': 'Rollback the Manager upgrade',
+                'arguments': {
+                    '-p,--blueprint-path':
+                        local_blueprint_path_argument(
+                                hlp='The path to the simple Manager blueprint used for upgrade'
+                        ),
+                    '-i,--inputs': {
+                        'dest': 'inputs',
+                        'help': 'The Required inputs for running the rollback process',
+                    },
+                    '--install-plugins': install_plugins_argument(),
+                    '--task-retries': task_retries_argument(5),
+                    '--task-retry-interval': task_retry_interval_argument(30)
+                },
+                'handler': cfy.rollback.rollback
             },
             'teardown': {
                 'help': 'Teardown the Manager',

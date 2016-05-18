@@ -28,8 +28,7 @@ from cloudify_cli.exceptions import CloudifyCliError
 def validate(plugin_path):
     logger = get_logger()
 
-    logger.info(
-        messages.VALIDATING_PLUGIN.format(plugin_path.name))
+    logger.info(messages.VALIDATING_PLUGIN.format(plugin_path.name))
     if not tarfile.is_tarfile(plugin_path.name):
         raise CloudifyCliError('Archive {0} is of an unsupported archive type.'
                                ' Only tar.gz is allowed'

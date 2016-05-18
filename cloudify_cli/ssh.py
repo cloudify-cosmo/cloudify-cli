@@ -23,11 +23,16 @@ def get_file_from_manager(remote_source_path, destination_path):
         fab.get(remote_source_path, destination_path)
 
 
-def put_file_in_manager(source_path, remote_source_path, use_sudo=True):
-    key_filename = os.path.expanduser(utils.get_management_key())
+def put_file_in_manager(source_path,
+                        remote_source_path,
+                        use_sudo=True,
+                        key_filename=None,
+                        user=None):
+    if not key_filename:
+        key_filename = os.path.expanduser(utils.get_management_key())
     with fab.settings(
             fab.hide('running', 'stdout'),
-            host_string=utils.build_manager_host_string(),
+            host_string=utils.build_manager_host_string(user=user),
             key_filename=key_filename):
         fab.put(use_sudo=use_sudo,
                 local_path=source_path,
