@@ -1,21 +1,3 @@
-diff --git a/cloudify_cli/common.py b/cloudify_cli/common.py
-index 3eb3efd..1feae45 100644
---- a/cloudify_cli/common.py
-+++ b/cloudify_cli/common.py
-@@ -72,8 +72,12 @@ def install_blueprint_plugins(blueprint_path):
-         # of cleanup in case an installation fails.
-         tmp_path = tempfile.mkstemp(suffix='.txt', prefix='requirements_')[1]
-         utils.dump_to_file(collection=requirements, file_path=tmp_path)
--        runner.run(command='pip install -r {0}'.format(tmp_path),
-+        runner.run(command='pip install --user -r {0}'.format(tmp_path),
-                    stdout_pipe=False)
-+
-+        # reload sys.path
-+        import site
-+        reload(site)
-     else:
-         get_logger().debug('There are no plugins to install..')
-
 diff --git a/cloudify_cli/resources/config.yaml b/cloudify_cli/resources/config.yaml
 index 2ffe55d..6e6e3cb 100644
 --- a/cloudify_cli/resources/config.yaml
