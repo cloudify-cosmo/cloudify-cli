@@ -357,6 +357,10 @@ def get_rest_client(manager_ip=None, rest_port=None, protocol=None,
 
     if cli_version == manager_version:
         return client
+    elif not manager_version:
+        get_logger().info('Version compatibility check could not be '
+                          'performed.')
+        return client
     else:
         message = ('CLI and Manager versions do not match\n'
                    'CLI Version: {0}\n'
