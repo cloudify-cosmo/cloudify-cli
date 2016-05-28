@@ -81,8 +81,7 @@ class WorkflowsTest(CliCommandTest):
 
     def test_workflows_get_nonexistent_workflow(self):
 
-        expected_message = ("Workflow 'nonexistent_workflow' "
-                            "not found on management server")
+        expected_message = ('Workflow nonexistent_workflow not found')
         deployment = Deployment({
             'blueprint_id': 'mock_blueprint_id',
             'workflows': [

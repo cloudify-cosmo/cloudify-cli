@@ -23,15 +23,15 @@ class BaseUpgradeTest(CliCommandTest):
 
     def _test_not_in_maintenance(self, action):
         self.client.maintenance_mode.status = MagicMock(
-                return_value=Maintenance({'status': 'deactivated'}))
+            return_value=Maintenance({'status': 'deactivated'}))
         self._assert_ex('cfy {0} --blueprint-path path '
                         '--inputs private_ip=localhost'.format(action),
-                        'Manager must be in maintenance-mode for '
-                        'workflow to run')
+                        'To perform an upgrade of a manager to a newer '
+                        'version, the manager must be in maintenance mode')
 
     def _test_no_bp(self, action):
         self.client.maintenance_mode.status = MagicMock(
-                return_value=Maintenance({'status': 'active'}))
+            return_value=Maintenance({'status': 'active'}))
         self._assert_ex('cfy {0} --blueprint-path path '
                         '--inputs private_ip=localhost;'
                         'ssh_key_filename=key_path'.format(action),
@@ -39,13 +39,13 @@ class BaseUpgradeTest(CliCommandTest):
 
     def _test_no_private_ip(self, action):
         self.client.maintenance_mode.status = MagicMock(
-                return_value=Maintenance({'status': 'active'}))
+            return_value=Maintenance({'status': 'active'}))
         self._assert_ex('cfy {0} --blueprint-path path'.format(action),
                         'Private IP must be provided for the upgrade process')
 
     def _test_no_inputs(self, action):
         self.client.maintenance_mode.status = MagicMock(
-                return_value=Maintenance({'status': 'active'}))
+            return_value=Maintenance({'status': 'active'}))
         self._assert_ex('cfy {0} '
                         '--blueprint-path path --inputs inputs'.format(action),
                         'Invalid input: inputs')

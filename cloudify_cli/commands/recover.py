@@ -21,8 +21,8 @@ import os
 
 from cloudify_cli import utils
 from cloudify_cli import exceptions
-from cloudify_cli.bootstrap import bootstrap as bs
 from cloudify_cli.logger import get_logger
+from cloudify_cli.bootstrap import bootstrap as bs
 
 
 CLOUDIFY_MANAGER_PK_PATH_ENVAR = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
@@ -86,7 +86,7 @@ def recover(force,
                 "variable".format(CLOUDIFY_MANAGER_PK_PATH_ENVAR)
             )
 
-    logger.info('Recovering manager deployment')
+    logger.info('Recovering manager...')
     settings = utils.load_cloudify_working_dir_settings()
     provider_context = settings.get_provider_context()
     bs.read_manager_deployment_dump_if_needed(
@@ -95,4 +95,4 @@ def recover(force,
                task_retry_interval=task_retry_interval,
                task_thread_pool_size=task_thread_pool_size,
                snapshot_path=snapshot_path)
-    logger.info('Successfully recovered manager deployment')
+    logger.info('Manager recovered successfully')

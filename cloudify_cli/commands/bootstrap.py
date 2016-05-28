@@ -20,8 +20,8 @@ Handles 'cfy bootstrap'
 import sys
 
 from cloudify_cli import utils
-from cloudify_cli.bootstrap import bootstrap as bs
 from cloudify_cli.logger import get_logger
+from cloudify_cli.bootstrap import bootstrap as bs
 
 
 def bootstrap(keep_up,
@@ -52,7 +52,7 @@ def bootstrap(keep_up,
             '-r" command')
 
     if not skip_validations:
-        logger.info('executing bootstrap validation')
+        logger.info('Executing bootstrap validation...')
         bs.bootstrap_validation(
             blueprint_path,
             name=env_name,
@@ -62,11 +62,11 @@ def bootstrap(keep_up,
             task_thread_pool_size=task_thread_pool_size,
             install_plugins=install_plugins,
             resolver=utils.get_import_resolver())
-        logger.info('bootstrap validation completed successfully')
+        logger.info('Bootstrap validation completed successfully')
 
     if not validate_only:
         try:
-            logger.info('executing bootstrap')
+            logger.info('Executing manager bootstrap...')
             details = bs.bootstrap(
                 blueprint_path,
                 name=env_name,
@@ -86,11 +86,11 @@ def bootstrap(keep_up,
                 ws_settings.set_rest_port(details['rest_port'])
                 ws_settings.set_protocol(details['protocol'])
 
-            logger.info('bootstrapping complete')
-            logger.info('management server is up at {0}'.format(manager_ip))
+            logger.info('Bootstrap complete')
+            logger.info('Manager is up at {0}'.format(manager_ip))
         except Exception as ex:
             tpe, value, traceback = sys.exc_info()
-            logger.error('bootstrap failed! ({0})'.format(str(ex)))
+            logger.error('Bootstrap failed! ({0})'.format(str(ex)))
             if not keep_up:
                 try:
                     bs.load_env(env_name)
@@ -99,7 +99,8 @@ def bootstrap(keep_up,
                     # even initialized - nothing to teardown.
                     pass
                 else:
-                    logger.info('executing teardown due to failed bootstrap')
+                    logger.info(
+                        'Executing teardown due to failed bootstrap...')
                     bs.teardown(name=env_name,
                                 task_retries=5,
                                 task_retry_interval=30,

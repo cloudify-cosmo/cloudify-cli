@@ -14,37 +14,36 @@
 # limitations under the License.
 ############
 
-import glob
-import json
 import os
-import pkgutil
-import socket
 import sys
-import tempfile
-import getpass
-import shutil
+import json
+import glob
+import errno
+import socket
 import string
 import random
-import errno
+import shutil
+import pkgutil
+import getpass
+import tempfile
 from contextlib import contextmanager
 
 import yaml
 import pkg_resources
-from cloudify_rest_client.exceptions import CloudifyClientError
-from jinja2.environment import Template
 from prettytable import PrettyTable
+from jinja2.environment import Template
 from itsdangerous import base64_encode
 
-from cloudify_rest_client import CloudifyClient
+from dsl_parser import utils as dsl_parser_utils
+from dsl_parser.constants import IMPORT_RESOLVER_KEY
 
+from cloudify_rest_client import CloudifyClient
+from cloudify_rest_client.exceptions import CloudifyClientError
 
 import cloudify_cli
 from cloudify_cli import constants
-from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.logger import get_logger
-from dsl_parser import utils as dsl_parser_utils
-from dsl_parser.constants import IMPORT_RESOLVER_KEY
-from cloudify_cli import messages
+from cloudify_cli.exceptions import CloudifyCliError
 
 
 DEFAULT_LOG_FILE = os.path.expanduser(
@@ -135,7 +134,7 @@ def inputs_to_dict(resources, resource_name):
     parsed_dict = {}
 
     def handle_inputs_source(resource):
-        logger.info('Processing Inputs Source: {0}'.format(resource))
+        logger.info('Processing inputs source: {0}'.format(resource))
         try:
             # parse resource as string representation of a dictionary
             content = plain_string_to_dict(resource)
@@ -359,10 +358,10 @@ def get_rest_client(manager_ip=None, rest_port=None, protocol=None,
         return client
     elif not manager_version:
         get_logger().info('Version compatibility check could not be '
-                          'performed.')
+                          'performed')
         return client
     else:
-        message = ('CLI and Manager versions do not match\n'
+        message = ('CLI and manager versions do not match\n'
                    'CLI Version: {0}\n'
                    'Manager Version: {1}').format(cli_version, manager_version)
         raise CloudifyCliError(message)
@@ -395,11 +394,8 @@ def get_management_server_ip():
     management_ip = cosmo_wd_settings.get_management_server()
     if management_ip:
         return management_ip
-
-    msg = ("Must either first run 'cfy use' command for a "
-           "management server or provide a management "
-           "server ip explicitly")
-    raise CloudifyCliError(msg)
+    raise CloudifyCliError(
+        'Must either first run `cfy use` or explicitly provide a manager IP')
 
 
 def get_username():
@@ -546,10 +542,9 @@ def table(cols, data, defaults=None):
 def upload_plugin(plugin_path, management_ip, rest_client, validate):
     logger = get_logger()
     validate(plugin_path)
-    logger.info(messages.UPLOADING_PLUGIN
-                .format(plugin_path.name, management_ip))
+    logger.info('Uploading plugin {0}'.format(plugin_path.name))
     plugin = rest_client.plugins.upload(plugin_path.name)
-    logger.info(messages.UPLOADING_PLUGIN_SUCCEEDED.format(plugin.id))
+    logger.info("Plugin uploaded. The plugin's id is {0}".format(plugin.id))
 
 
 class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
@@ -678,3 +673,8 @@ def build_manager_host_string(user='', ip=''):
     user = user or get_management_user()
     ip = ip or get_management_server_ip()
     return '{0}@{1}'.format(user, ip)
+
+
+def manager_msg(message, manager_ip=None):
+    return '{0} [Manager={1}]'.format(
+        message, manager_ip or get_management_server_ip())

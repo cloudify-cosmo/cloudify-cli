@@ -20,12 +20,12 @@ Handles all commands that start with 'cfy deployments'
 import os
 from StringIO import StringIO
 
-from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
-from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_cli import utils
 from cloudify_cli.logger import get_logger, get_events_logger
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.execution_events_fetcher import wait_for_execution
+from cloudify_rest_client.exceptions import UnknownDeploymentInputError
+from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 
 
 def _print_deployment_inputs(client, blueprint_id):
@@ -46,12 +46,10 @@ def ls(blueprint_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
     if blueprint_id:
-        logger.info("Getting deployments list for blueprint: "
-                    "'{0}'... [manager={1}]"
-                    .format(blueprint_id, management_ip))
+        logger.info('Listing deployments for blueprint {0}...'.format(
+            blueprint_id))
     else:
-        logger.info('Getting deployments list...[manager={0}]'
-                    .format(management_ip))
+        logger.info('Listing all deployments...')
     deployments = client.deployments.list()
     if blueprint_id:
         deployments = filter(lambda deployment:
@@ -135,38 +133,36 @@ def create(blueprint_id, deployment_id, inputs):
     management_ip = utils.get_management_server_ip()
     inputs = utils.inputs_to_dict(inputs, 'inputs')
 
-    logger.info('Creating new deployment from blueprint {0} at '
-                'management server {1}'
-                .format(blueprint_id, management_ip))
+    logger.info('Creating new deployment from blueprint {0}...'.format(
+        blueprint_id))
     client = utils.get_rest_client(management_ip)
 
     try:
         deployment = client.deployments.create(blueprint_id,
                                                deployment_id,
                                                inputs=inputs)
-    except MissingRequiredDeploymentInputError, e:
-        logger.info('Unable to create deployment, not all '
+    except MissingRequiredDeploymentInputError as e:
+        logger.info('Unable to create deployment. Not all '
                     'required inputs have been specified...')
         _print_deployment_inputs(client, blueprint_id)
         raise SuppressedCloudifyCliError(str(e))
-    except UnknownDeploymentInputError, e:
+    except UnknownDeploymentInputError as e:
         logger.info(
             'Unable to create deployment, an unknown input was specified...')
         _print_deployment_inputs(client, blueprint_id)
         raise SuppressedCloudifyCliError(str(e))
 
-    logger.info("Deployment created, deployment's id is: {0}"
-                .format(deployment.id))
+    logger.info("Deployment created. The deployment's id is {0}".format(
+        deployment.id))
 
 
 def delete(deployment_id, ignore_live_nodes):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
-    logger.info('Deleting deployment {0} from management server {1}'
-                .format(deployment_id, management_ip))
+    logger.info('Deleting deployment {0}...'.format(deployment_id))
     client = utils.get_rest_client(management_ip)
     client.deployments.delete(deployment_id, ignore_live_nodes)
-    logger.info("Deleted deployment successfully")
+    logger.info("Deployment deleted")
 
 
 def outputs(deployment_id):
@@ -174,9 +170,8 @@ def outputs(deployment_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
-    logger.info("Getting outputs for deployment: {0} [manager={1}]".format(
-        deployment_id, management_ip))
-
+    logger.info('Retrieving outputs for deployment {0}...'.format(
+        deployment_id))
     dep = client.deployments.get(deployment_id, _include=['outputs'])
     outputs_def = dep.outputs
     response = client.deployments.outputs.get(deployment_id)

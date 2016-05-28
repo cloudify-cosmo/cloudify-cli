@@ -18,15 +18,15 @@ import os
 import sys
 import tempfile
 
-from cloudify.utils import LocalCommandRunner
 from cloudify.workflows import local
-from dsl_parser import constants as dsl_constants
+from cloudify.utils import LocalCommandRunner
 from dsl_parser.parser import parse_from_path
+from dsl_parser import constants as dsl_constants
 
 from cloudify_cli import utils
 from cloudify_cli import constants
-from cloudify_cli.logger import get_logger
 from cloudify_cli import exceptions
+from cloudify_cli.logger import get_logger
 
 
 def initialize_blueprint(blueprint_path,
@@ -77,7 +77,7 @@ def install_blueprint_plugins(blueprint_path):
                          tmp_path]
         runner.run(command=' '.join(command_parts), stdout_pipe=False)
     else:
-        get_logger().debug('There are no plugins to install..')
+        get_logger().debug('There are no plugins to install')
 
 
 def create_requirements(blueprint_path):

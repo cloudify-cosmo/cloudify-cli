@@ -18,8 +18,8 @@ Handles all commands that start with 'cfy logs'
 """
 import os
 
-from cloudify_cli import utils
 from cloudify_cli import ssh
+from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
 
 
@@ -36,7 +36,7 @@ def _archive_logs():
     ssh.run_command_on_manager(
         'journalctl > /tmp/jctl && '
         'mv /tmp/jctl {0}'.format(journalctl_destination_path), use_sudo=True)
-    logger.info('Creating logs archive in Manager: {0}'.format(archive_path))
+    logger.info('Creating logs archive in manager: {0}'.format(archive_path))
     # We skip checking if the tar executable can be found on the machine
     # knowingly. We don't want to run another ssh command just to verify
     # something that will almost never happen.
@@ -55,7 +55,7 @@ def get(destination_path):
     archive_path_on_manager = _archive_logs()
     logger.info('Downloading archive to: {0}'.format(destination_path))
     ssh.get_file_from_manager(archive_path_on_manager, destination_path)
-    logger.info('Removing archive from Manager...')
+    logger.info('Removing archive from manager...')
     ssh.run_command_on_manager(
         'rm {0}'.format(archive_path_on_manager), use_sudo=True)
 
@@ -72,7 +72,7 @@ def purge(force, backup_first):
     if backup_first:
         backup()
 
-    logger.info('Purging Manager Logs...')
+    logger.info('Purging manager logs...')
     # well, we could've just `find /var/log/cloudify -name "*" -type f -delete`
     # thing is, it will delete all files and nothing will be written into them
     # until the relevant service is restarted.
@@ -88,7 +88,7 @@ def backup():
     """
     logger = get_logger()
     archive_path_on_manager = _archive_logs()
-    logger.info('Backing up Manager logs to /var/log/{0}'.format(
+    logger.info('Backing up manager logs to /var/log/{0}'.format(
         os.path.basename(archive_path_on_manager)))
     ssh.run_command_on_manager('mv {0} {1}'.format(
         archive_path_on_manager, '/var/log/'), use_sudo=True)
