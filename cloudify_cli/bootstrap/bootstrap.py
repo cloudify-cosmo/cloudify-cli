@@ -165,6 +165,28 @@ def bootstrap_validation(blueprint_path,
                 task_thread_pool_size=task_thread_pool_size)
 
 
+def _perform_sanity(env,
+                    manager_ip,
+                    fabric_env,
+                    task_retries=5,
+                    task_retry_interval=30,
+                    task_thread_pool_size=1):
+
+    env.execute(workflow='execute_operation',
+                parameters={'operation':
+                            'cloudify.interfaces.lifecycle.start',
+                            'node_ids': ['sanity'],
+                            'allow_kwargs_override': 'true',
+                            'operation_kwargs':
+                                {'run_sanity': 'true',
+                                 'manager_ip': manager_ip,
+                                 'fabric_env': fabric_env}},
+                allow_custom_parameters=True,
+                task_retries=task_retries,
+                task_retry_interval=task_retry_interval,
+                task_thread_pool_size=task_thread_pool_size)
+
+
 def _handle_provider_context(rest_client, agent_remote_key_path,
                              fabric_env,
                              manager_node,
@@ -292,6 +314,13 @@ def bootstrap(blueprint_path,
 
         _upload_resources(manager_node, fabric_env, manager_ip, rest_client,
                           task_retries, task_retry_interval)
+
+        _perform_sanity(env=env,
+                        manager_ip=manager_ip,
+                        fabric_env=fabric_env,
+                        task_retries=task_retries,
+                        task_retry_interval=task_retry_interval,
+                        task_thread_pool_size=task_thread_pool_size)
 
     return {
         'provider_name': 'provider',
