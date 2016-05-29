@@ -15,20 +15,20 @@
 from cloudify_cli.tests.commands.base_upgrade_test import BaseUpgradeTest
 
 
-class ManagerUpgradeTest(BaseUpgradeTest):
+class ManagerRollbackTest(BaseUpgradeTest):
 
     def setUp(self):
-        super(ManagerUpgradeTest, self).setUp()
+        super(ManagerRollbackTest, self).setUp()
         self._create_cosmo_wd_settings()
 
-    def test_not_in_maintenance_upgrade(self):
-        self._test_not_in_maintenance(action='upgrade')
+    def test_not_in_maintenance_rollback(self):
+        self._test_not_in_maintenance(action='rollback')
 
-    def test_upgrade_no_bp(self):
-        self._test_no_bp(action='upgrade')
+    def test_rollback_no_bp(self):
+        self._test_no_bp(action='rollback')
 
-    def _test_upgrade_no_private_ip(self):
-        self._test_no_private_ip(action='upgrade')
+    def _test_rollback_no_private_ip(self):
+        self._test_no_private_ip(action='rollback')
 
-    def _test_upgrade_no_inputs(self):
-        self._test_no_inputs(action='upgrade')
+    def _test_rollback_no_inputs(self):
+        self._test_no_inputs(action='rollback')
