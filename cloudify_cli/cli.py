@@ -119,6 +119,27 @@ def register_commands():
     return parser
 
 
+def _register_argument(args, command_parser):
+    command_arg_names = []
+
+    for argument_name, argument in args.iteritems():
+        completer = argument.get('completer')
+        if completer:
+            del argument['completer']
+
+        arg = command_parser.add_argument(
+                *argument_name.split(','),
+                **argument
+        )
+
+        if completer:
+            arg.completer = completer
+
+        command_arg_names.append(argument['dest'])
+
+    return command_arg_names
+
+
 def register_command(subparsers, command_name, command):
 
     command_help = command['help']
@@ -126,23 +147,20 @@ def register_command(subparsers, command_name, command):
         command_name, help=command_help,
         formatter_class=ConciseArgumentDefaultsHelpFormatter
     )
+
     command_arg_names = []
-    if 'arguments' in command:
-        for argument_name, argument in command['arguments'].iteritems():
-            completer = argument.get('completer')
-            if completer:
-                del argument['completer']
+    arguments = command.get('arguments', {})
 
-            arg = command_parser.add_argument(
-                *argument_name.split(','),
-                **argument
-            )
+    mutually_exclusive = arguments.pop('_mutually_exclusive', [])
 
-            if completer:
-                arg.completer = completer
+    command_arg_names += _register_argument(arguments,
+                                            command_parser)
 
-            command_arg_names.append(argument['dest'])
-
+    for mutual_exclusive_group in mutually_exclusive:
+        command_arg_names += _register_argument(
+                mutual_exclusive_group,
+                command_parser.add_mutually_exclusive_group(required=True)
+        )
     # Add verbosity flag for each command
     command_parser.add_argument(
         '-v', '--verbose',

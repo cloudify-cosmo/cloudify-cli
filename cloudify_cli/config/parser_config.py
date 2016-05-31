@@ -637,6 +637,55 @@ def parser_config():
                                 'or all deployments of a specific blueprint',
                         'handler': cfy.deployments.ls
                     },
+                    'update': {
+                        'arguments': {
+                            '_mutually_exclusive': [{
+                                '-l,--archive-location': make_optional(
+                                        archive_location_argument()),
+                                '-p,--blueprint-path': make_optional(
+                                        manager_blueprint_path_argument()),
+                            }],
+                            '-w,--workflow': make_optional(workflow_id_argument(
+                                    hlp='A workflow to execute instead of '
+                                        'update')),
+                            '--skip-install': {
+                                'dest': 'skip_install',
+                                'help': 'Skip install lifecycle operations',
+                                'action': 'store_true',
+                            },
+                            '--skip-uninstall': {
+                                'dest': 'skip_uninstall',
+                                'help': 'Skip uninstall lifecycle operations',
+                                'action': 'store_true',
+                            },
+                            '-d,--deployment-id': make_required(
+                                deployment_id_argument(
+                                    hlp='The id of the deployment to update'
+                                )
+                            ),
+
+                            '-n,--blueprint-filename': make_optional({
+                                'dest': 'blueprint_filename',
+                                'help': "The name of the archive's main "
+                                        "blueprint file. (default: {0})"
+                                        .format(DEFAULT_BLUEPRINT_FILE_NAME)
+                            }),
+                            '-i,--inputs':
+                                inputs_argument(
+                                    'Inputs file/string for the '
+                                    'deployment creation ({0}). '
+                                    'This argument can be used multiple '
+                                    'times. (default: {1})'
+                                    .format(FORMAT_INPUT_AS_YAML_OR_DICT,
+                                            DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)
+                                    ),
+                            '--include-logs': include_logs_argument(),
+                            '--json': json_events_argument(),
+                        },
+                        'help': 'Update a specified deployment according to '
+                                'the specified blueprint',
+                        'handler': cfy.deployments.update
+                    },
                     'outputs': {
                         'arguments': {
                             '-d,--deployment-id': make_required(

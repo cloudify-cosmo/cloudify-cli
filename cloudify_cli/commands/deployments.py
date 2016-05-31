@@ -23,8 +23,9 @@ from StringIO import StringIO
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
+from cloudify_cli.logger import get_logger, get_events_logger
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
+from cloudify_cli.execution_events_fetcher import wait_for_execution
 
 
 def _print_deployment_inputs(client, blueprint_id):
@@ -64,6 +65,67 @@ def ls(blueprint_id):
          'updated_at'],
         deployments)
     utils.print_table('Deployments:', pt)
+
+
+def update(deployment_id,
+           blueprint_path,
+           inputs,
+           blueprint_filename,
+           archive_location,
+           skip_install,
+           skip_uninstall,
+           workflow_id,
+           include_logs,
+           json):
+    logger = get_logger()
+    management_ip = utils.get_management_server_ip()
+    client = utils.get_rest_client(management_ip)
+
+    processed_inputs = utils.inputs_to_dict(inputs, 'inputs')
+
+    blueprint_or_archive_path = blueprint_path.name \
+        if blueprint_path else archive_location
+    logger.info('Updating deployment {dep_id} using blueprint {path}'.format(
+        dep_id=deployment_id, path=blueprint_or_archive_path))
+
+    deployment_update = client.deployment_updates.update(
+        deployment_id,
+        blueprint_or_archive_path,
+        application_file_name=blueprint_filename,
+        inputs=processed_inputs,
+        workflow_id=workflow_id,
+        skip_install=skip_install,
+        skip_uninstall=skip_uninstall)
+
+    events_logger = get_events_logger(json)
+
+    execution = wait_for_execution(
+        client,
+        client.executions.get(deployment_update.execution_id),
+        events_handler=events_logger,
+        include_logs=include_logs,
+        timeout=None)  # don't timeout ever
+    if execution.error:
+        logger.info("Execution of workflow '{0}' for deployment "
+                    "'{1}' failed. [error={2}]"
+                    .format(execution.workflow_id,
+                            execution.deployment_id,
+                            execution.error))
+        logger.info('Failed updating deployment {dep_id}. Deployment update '
+                    'id: {depup_id}. Execution id: {exec_id}'
+                    .format(depup_id=deployment_update.id,
+                            dep_id=deployment_id,
+                            exec_id=execution.id))
+        raise SuppressedCloudifyCliError()
+    else:
+        logger.info("Finished executing workflow '{0}' on deployment "
+                    "'{1}'".format(execution.workflow_id,
+                                   execution.deployment_id))
+        logger.info('Successfully updated deployment {dep_id}. '
+                    'Deployment update id: {depup_id}. Execution id: {exec_id}'
+                    .format(depup_id=deployment_update.id,
+                            dep_id=deployment_id,
+                            exec_id=execution.id))
 
 
 def create(blueprint_id, deployment_id, inputs):
