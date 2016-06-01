@@ -25,7 +25,7 @@ ENV['GITHUB_PASSWORD'] || raise('GITHUB_PASSWORD environment variable not set (r
 github_username=ENV['GITHUB_USERNAME']
 github_password=ENV['GITHUB_PASSWORD']
 
-openstack_plugin_tag = '1.3.1'
+openstack_plugin_tag = '1.4'
 aws_plugin_tag = '1.4'
 fabric_plugin_tag = '1.4.1'
 script_plugin_tag = '1.4'
