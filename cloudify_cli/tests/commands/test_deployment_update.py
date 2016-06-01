@@ -94,6 +94,12 @@ class DeploymentUpdatesTest(CliCommandTest):
             '{0}/helloworld/blueprint.yaml '
             '-d my_deployment --skip-uninstall'.format(BLUEPRINTS_DIR))
 
+    def test_deployment_update_force_flag(self):
+        cli_runner.run_cli(
+            'cfy deployments update -p '
+            '{0}/helloworld/blueprint.yaml '
+            '-d my_deployment --force'.format(BLUEPRINTS_DIR))
+
     def test_deployment_update_override_workflow_parameter(self):
         cli_runner.run_cli(
             'cfy deployments update -p '

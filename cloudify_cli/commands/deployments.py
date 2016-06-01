@@ -75,6 +75,7 @@ def update(deployment_id,
            skip_install,
            skip_uninstall,
            workflow_id,
+           force,
            include_logs,
            json):
     logger = get_logger()
@@ -95,7 +96,8 @@ def update(deployment_id,
         inputs=processed_inputs,
         workflow_id=workflow_id,
         skip_install=skip_install,
-        skip_uninstall=skip_uninstall)
+        skip_uninstall=skip_uninstall,
+        force=force)
 
     events_logger = get_events_logger(json)
 
