@@ -369,11 +369,7 @@ def recover(snapshot_path,
     manager_user = manager_node.properties['ssh_user']
     manager_key_path = manager_node.properties['ssh_key_filename']
 
-    fabric_env = {
-        "host_string": manager_ip,
-        "user": manager_user,
-        "key_filename": manager_key_path
-    }
+    fabric_env = build_fabric_env(manager_ip, manager_key_path, manager_user)
 
     agent_remote_key_path = _handle_agent_key_file(fabric_env,
                                                    manager_node)
@@ -423,6 +419,14 @@ def recover(snapshot_path,
                            'Unexpected snapshot status: {1}'
                            .format(snapshot_id, execution.status))
     client.snapshots.delete(snapshot_id)
+
+
+def build_fabric_env(manager_ip, manager_user, manager_key_path):
+    return {
+        "host_string": manager_ip,
+        "user": manager_user,
+        "key_filename": manager_key_path
+    }
 
 
 def _upload_provider_context(client, remote_agents_private_key_path,
@@ -495,9 +499,9 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_client,
         _upload_plugins(upload_resources.get('plugin_resources', ()), temp_dir,
                         management_ip, rest_client, retries, wait_interval,
                         fetch_timeout)
-        _upload_dsl_resources(upload_resources.get('dsl_resources', ()),
-                              temp_dir, fabric_env, retries, wait_interval,
-                              fetch_timeout)
+        upload_dsl_resources(upload_resources.get('dsl_resources', ()),
+                             temp_dir, fabric_env, retries, wait_interval,
+                             fetch_timeout)
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -550,8 +554,8 @@ def _upload_plugins(plugin_resources, temp_dir, management_ip, rest_client,
         upload_plugin(plugin_local_path)
 
 
-def _upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
-                          wait_interval, timeout):
+def upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
+                         wait_interval, timeout):
     """
     Uploads dsl resources to the manager.
 
