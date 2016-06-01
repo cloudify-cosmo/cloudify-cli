@@ -1,6 +1,6 @@
 name "openstack-plugin"
 
-default_version "1.3.1"
+default_version "1.4"
 
 source :git => "https://github.com/cloudify-cosmo/cloudify-openstack-plugin"
 
