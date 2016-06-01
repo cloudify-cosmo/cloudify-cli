@@ -14,22 +14,23 @@
 # limitations under the License.
 ############
 
-import StringIO
-import argparse
 import sys
+import argparse
+import StringIO
 import traceback
-import argcomplete
 import logging
 
+import argcomplete
+
+from cloudify import logs
+from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
-from cloudify_rest_client.exceptions import NotModifiedError
-from cloudify import logs
 
 from cloudify_cli import constants
-from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.exceptions import CloudifyBootstrapError
+from cloudify_cli.exceptions import SuppressedCloudifyCliError
 
 
 HIGH_VERBOSE = 3
@@ -193,7 +194,6 @@ def register_command(subparsers, command_name, command):
 
 
 def set_global_verbosity_level(verbose):
-
     """
     Sets the global verbosity level.
 
@@ -205,7 +205,6 @@ def set_global_verbosity_level(verbose):
 
 
 def set_debug():
-
     """
     Sets all previously configured
     loggers to debug level
@@ -217,7 +216,6 @@ def set_debug():
 
 
 def get_global_verbosity():
-
     """
     Returns the globally set verbosity
 

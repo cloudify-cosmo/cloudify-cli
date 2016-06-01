@@ -17,32 +17,32 @@
 Handles 'cfy status'
 """
 
-from cloudify_cli.logger import get_logger
 from cloudify_rest_client.exceptions import (
     CloudifyClientError,
     UserUnauthorizedError
 )
+
 from cloudify_cli import utils
+from cloudify_cli.logger import get_logger
 
 
 def status():
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
-    logger.info('Getting management services status... [ip={0}]'
-                .format(management_ip))
+    logger.info('Retrieving manager services status... [ip={0}]'.format(
+        management_ip))
 
     client = utils.get_rest_client(management_ip)
     try:
         status_result = client.manager.get_status()
         maintenance_response = client.maintenance_mode.status()
     except UserUnauthorizedError:
-        logger.info("Can't query management server status: User is "
-                    "unauthorized")
+        logger.info(
+            "Failed to query manager servicetatus: User is unauthorized")
         return False
     except CloudifyClientError:
-        logger.info('REST service at management server '
-                    '{0} is not responding!'
-                    .format(management_ip))
+        logger.info('REST service at manager {0} is not responding!'.format(
+            management_ip))
         return False
 
     services = []
@@ -59,6 +59,6 @@ def status():
 
     maintenance_status = maintenance_response.status
     if maintenance_status != 'deactivated':
-        logger.info('Maintenance mode '
-                    'is {0}.\n'.format(maintenance_response.status))
+        logger.info('Maintenance mode is {0}.\n'.format(
+            maintenance_response.status))
     return True

@@ -24,9 +24,7 @@ import urlparse
 
 from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
-from cloudify_cli import messages
 from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.utils import print_table
 from dsl_parser.parser import parse_from_path
 from dsl_parser.exceptions import DSLParsingException
 
@@ -38,7 +36,7 @@ def validate(blueprint_path):
     logger = get_logger()
 
     logger.info(
-        messages.VALIDATING_BLUEPRINT.format(blueprint_path.name))
+        'Validating blueprint: {0}'.format(blueprint_path.name))
     try:
         resolver = utils.get_import_resolver()
         validate_version = utils.is_validate_definitions_version()
@@ -46,10 +44,9 @@ def validate(blueprint_path):
                         resolver=resolver,
                         validate_version=validate_version)
     except DSLParsingException as ex:
-        msg = (messages.VALIDATING_BLUEPRINT_FAILED
-               .format(blueprint_path.name, str(ex)))
-        raise CloudifyCliError(msg)
-    logger.info(messages.VALIDATING_BLUEPRINT_SUCCEEDED)
+        raise CloudifyCliError('Failed to validate blueprint {0}'.format(
+            str(ex)))
+    logger.info('Blueprint validated successfully')
 
 
 def upload(blueprint_path, blueprint_id, validate_blueprint):
@@ -58,14 +55,13 @@ def upload(blueprint_path, blueprint_id, validate_blueprint):
     if validate_blueprint:
         validate(blueprint_path)
     else:
-        logger.debug("Skipping blueprint validation")
+        logger.debug("Skipping blueprint validation...")
 
-    logger.info('Uploading blueprint {0} to management server {1}'
-                .format(blueprint_path.name, management_ip))
+    logger.info('Uploading blueprint {0}...'.format(blueprint_path.name))
     client = utils.get_rest_client(management_ip)
     blueprint = client.blueprints.upload(blueprint_path.name, blueprint_id)
-    logger.info("Uploaded blueprint, blueprint's id is: {0}"
-                .format(blueprint.id))
+    logger.info("Blueprint uploaded. "
+                "The blueprint's id is {0}".format(blueprint.id))
 
 
 def publish_archive(archive_location, blueprint_filename, blueprint_id):
@@ -77,17 +73,14 @@ def publish_archive(archive_location, blueprint_filename, blueprint_id):
     archive_location, archive_location_type = \
         determine_archive_type(archive_location)
 
-    logger.info('Publishing blueprint archive from {0} {1} to management '
-                'server {2}'
-                .format(archive_location_type,
-                        archive_location,
-                        management_ip))
+    logger.info('Publishing blueprint archive from {0} {1}...'.format(
+        archive_location_type, archive_location))
 
     client = utils.get_rest_client(management_ip)
     blueprint = client.blueprints.publish_archive(
         archive_location, blueprint_id, blueprint_filename)
-    logger.info("Published blueprint archive, blueprint's id is: {0}"
-                .format(blueprint.id))
+    logger.info("Blueprint archive published. "
+                "The blueprint's id is {0}".format(blueprint.id))
 
 
 def check_if_archive_type_is_supported(archive_location):
@@ -97,8 +90,8 @@ def check_if_archive_type_is_supported(archive_location):
     else:
         raise CloudifyCliError(
             "Can't publish archive {0} - it's of an unsupported "
-            "archive type. Supported archive types: {1}"
-            .format(archive_location, SUPPORTED_ARCHIVE_TYPES))
+            "archive type. Supported archive types: {1}".format(
+                archive_location, SUPPORTED_ARCHIVE_TYPES))
 
 
 def determine_archive_type(archive_location):
@@ -109,8 +102,8 @@ def determine_archive_type(archive_location):
         if not os.path.isfile(archive_location):
             raise CloudifyCliError(
                 "Can't publish archive {0} - "
-                "it's not a valid URL nor a path to an archive file"
-                .format(archive_location))
+                "it's not a valid URL nor a path to a valid archive".format(
+                    archive_location))
         # The archive exists locally. Return it, and inform it's a path
         return archive_location, 'path'
 
@@ -121,29 +114,26 @@ def determine_archive_type(archive_location):
 def download(blueprint_id, output):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
-    logger.info(messages.DOWNLOADING_BLUEPRINT.format(blueprint_id))
+    logger.info('Downloading blueprint {0}...'.format(blueprint_id))
     client = utils.get_rest_client(management_ip)
     target_file = client.blueprints.download(blueprint_id, output)
-    logger.info(messages.DOWNLOADING_BLUEPRINT_SUCCEEDED
-                .format(blueprint_id, target_file))
+    logger.info('Blueprint downloaded as {1}'.format(target_file))
 
 
 def delete(blueprint_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
-    logger.info('Deleting blueprint {0} from management server {1}'
-                .format(blueprint_id, management_ip))
+    logger.info('Deleting blueprint {0}...'.format(blueprint_id))
     client = utils.get_rest_client(management_ip)
     client.blueprints.delete(blueprint_id)
-    logger.info('Deleted blueprint successfully')
+    logger.info('Blueprint deleted')
 
 
 def ls():
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
-    logger.info('Getting blueprints list... [manager={0}]'
-                .format(management_ip))
+    logger.info('Listing all blueprints...')
 
     def trim_description(blueprint):
         if blueprint['description'] is not None:
@@ -160,7 +150,7 @@ def ls():
                       'created_at', 'updated_at'],
                      data=blueprints)
 
-    print_table('Blueprints:', pt)
+    utils.print_table('Available blueprints:', pt)
 
 
 def get(blueprint_id):
@@ -169,9 +159,7 @@ def get(blueprint_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
-    logger.info('Getting blueprint: '
-                '\'{0}\' [manager={1}]'
-                .format(blueprint_id, management_ip))
+    logger.info('Retrieving blueprint {0}...'.format(blueprint_id))
     blueprint = client.blueprints.get(blueprint_id)
 
     deployments = client.deployments.list(_include=['id'],
@@ -196,8 +184,7 @@ def inputs(blueprint_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
-    logger.info('Getting inputs for blueprint {0}... [manager={1}]'
-                .format(blueprint_id, management_ip))
+    logger.info('Retrieving inputs for blueprint {0}...'.format(blueprint_id))
 
     blueprint = client.blueprints.get(blueprint_id)
     inputs = blueprint['plan']['inputs']
@@ -210,4 +197,4 @@ def inputs(blueprint_id):
     pt = utils.table(['name', 'type', 'default', 'description'],
                      data=data)
 
-    print_table('Inputs:', pt)
+    utils.print_table('Inputs:', pt)

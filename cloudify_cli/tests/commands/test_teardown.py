@@ -69,7 +69,7 @@ class TeardownTest(CliCommandTest):
         cli_runner.run_cli('cfy init')
         cli_runner.run_cli('cfy use -t 10.0.0.1')
         self._assert_ex('cfy teardown -f',
-                        'The Manager server may be down')
+                        'The manager may be down')
 
     @patch('cloudify_cli.bootstrap.bootstrap.teardown')
     def test_teardown_manager_down_ignore_deployments(self, mock_teardown):
@@ -93,8 +93,8 @@ class TeardownTest(CliCommandTest):
     def test_teardown_no_management_ip_in_context_wrong_directory(self):
         cli_runner.run_cli('cfy init')
         self._assert_ex('cfy teardown -f',
-                        "You are attempting to execute 'teardown' "
-                        "from an invalid directory")
+                        'You are attempting to teardown from '
+                        'an invalid directory')
 
     @patch('cloudify_cli.bootstrap.bootstrap.teardown')
     @patch('cloudify_cli.bootstrap.bootstrap.load_env')

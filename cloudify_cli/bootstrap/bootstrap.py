@@ -15,26 +15,30 @@
 ############
 
 import os
+import time
+import copy
 import shutil
 import base64
 import tarfile
 import tempfile
 import urlparse
-import time
-import copy
-from functools import partial
 from io import BytesIO
+from functools import partial
 from StringIO import StringIO
+
 from retrying import retry
 
-import fabric.api as fabric
 import requests
+import fabric.api as fabric
 
 from cloudify.workflows import local
-from cloudify_cli.logger import get_logger
+from cloudify.exceptions import RecoverableError
+from cloudify_rest_client.exceptions import CloudifyClientError
+
+from cloudify_cli import utils
 from cloudify_cli import common
 from cloudify_cli import constants
-from cloudify_cli import utils
+from cloudify_cli.logger import get_logger
 from cloudify_cli.bootstrap.tasks import (
     PROVIDER_RUNTIME_PROPERTY,
     MANAGER_IP_RUNTIME_PROPERTY,
@@ -42,8 +46,6 @@ from cloudify_cli.bootstrap.tasks import (
     MANAGER_KEY_PATH_RUNTIME_PROPERTY,
     REST_PORT)
 from cloudify_cli.exceptions import CloudifyBootstrapError
-from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify.exceptions import RecoverableError
 
 
 MANAGER_DEPLOYMENT_ARCHIVE_IGNORED_FILES = ['.git']
@@ -539,7 +541,7 @@ def _upload_plugins(plugin_resources, temp_dir, management_ip, rest_client,
         return any(filter(lambda func: func(exception), [is_internal_error,
                                                          is_network_error]))
 
-    @retry(wait_fixed=wait_interval*1000,
+    @retry(wait_fixed=wait_interval * 1000,
            stop_func=partial(_stop_retries, retries, wait_interval),
            retry_on_exception=is_error)
     def upload_plugin(plugin_path):
@@ -570,7 +572,7 @@ def upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
     logger = get_logger()
     remote_plugins_folder = '/opt/manager/resources/'
 
-    @retry(wait_fixed=wait_interval*1000,
+    @retry(wait_fixed=wait_interval * 1000,
            stop_func=partial(_stop_retries, retries, wait_interval),
            retry_on_exception=lambda e: isinstance(e, RecoverableError))
     def upload_dsl_resource(local_path, remote_path):
@@ -631,7 +633,7 @@ def _get_resource_into_dir(destination_dir, resource_source_path, retries,
 
     parts = urlparse.urlsplit(resource_source_path)
 
-    @retry(wait_fixed=wait_interval*1000,
+    @retry(wait_fixed=wait_interval * 1000,
            stop_func=partial(_stop_retries, retries, wait_interval),
            retry_on_exception=lambda e: isinstance(e, requests.Timeout))
     def download_resource(source_path, dest_path):
