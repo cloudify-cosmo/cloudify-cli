@@ -27,7 +27,7 @@ github_password=ENV['GITHUB_PASSWORD']
 
 openstack_plugin_tag = '1.3.1'
 aws_plugin_tag = '1.4'
-fabric_plugin_tag = '1.4'
+fabric_plugin_tag = '1.4.1'
 script_plugin_tag = '1.4'
 vsphere_plugin_tag = '2.0'
 vcloud_plugin_tag = '1.3.1'
