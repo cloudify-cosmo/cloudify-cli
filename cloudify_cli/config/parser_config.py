@@ -658,6 +658,10 @@ def parser_config():
                                 'help': 'Skip uninstall lifecycle operations',
                                 'action': 'store_true',
                             },
+                            '-f,--force': force_argument(
+                                hlp='Force running update in case a previous '
+                                    'update on this deployment has failed '
+                                    'to finished successfully'),
                             '-d,--deployment-id': make_required(
                                 deployment_id_argument(
                                     hlp='The id of the deployment to update'
