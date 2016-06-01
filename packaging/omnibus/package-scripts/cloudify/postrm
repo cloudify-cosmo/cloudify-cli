@@ -4,6 +4,6 @@
 # after package is uninstalled.
 #
 
-echo "cloudify has been uninstalled!"
+echo "Cloudify has been uninstalled!"
 
 exit 0
