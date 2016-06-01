@@ -1,6 +1,6 @@
 name "diamond-plugin"
 
-default_version "1.3.2"
+default_version "1.3.3"
 
 source :git => "https://github.com/cloudify-cosmo/cloudify-diamond-plugin"
 
