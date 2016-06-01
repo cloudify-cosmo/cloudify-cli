@@ -19,6 +19,7 @@ Handles 'cfy upgrade command'
 import os
 import time
 import json
+import shutil
 import tempfile
 
 from cloudify_cli import ssh
@@ -27,6 +28,7 @@ from cloudify_cli import common
 from cloudify_cli import exceptions
 from cloudify_cli.logger import get_logger
 from cloudify_cli.commands import maintenance
+from cloudify_cli.bootstrap import bootstrap as bs
 from cloudify_cli.bootstrap.bootstrap import load_env
 
 
@@ -94,16 +96,30 @@ def upgrade(validate_only,
                             if node.id == 'manager_configuration')
         upload_resources = \
             manager_node.properties['cloudify'].get('upload_resources', {})
+        dsl_resources = upload_resources.get('dsl_resources', ())
+        if dsl_resources:
+            fetch_timeout = upload_resources.get('parameters', {}) \
+                .get('fetch_timeout', 30)
+            fabric_env = bs.build_fabric_env(management_ip,
+                                             inputs['ssh_user'],
+                                             inputs['ssh_key_filename'])
+            temp_dir = tempfile.mkdtemp()
+            try:
+                logger.info('Uploading dsl resources...')
+                bs.upload_dsl_resources(dsl_resources,
+                                        temp_dir=temp_dir,
+                                        fabric_env=fabric_env,
+                                        retries=task_retries,
+                                        wait_interval=task_retry_interval,
+                                        timeout=fetch_timeout)
+            finally:
+                shutil.rmtree(temp_dir, ignore_errors=True)
+
         plugin_resources = upload_resources.get('plugin_resources', ())
         if plugin_resources:
             logger.warn('Plugins upload is not supported for upgrade. Plugins '
                         '{0} will not be uploaded to Manager'
                         .format(plugin_resources))
-        dsl_resources = upload_resources.get('dsl_resources', ())
-        if dsl_resources:
-            logger.warn('dsl resource upload is not supported for upgrade. '
-                        'Resources {0} will not be uploaded to Manager'
-                        .format(dsl_resources))
 
     logger.info('Upgrade complete. Management server is up at {0}'
                 .format(utils.get_management_server_ip()))
