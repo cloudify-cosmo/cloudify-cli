@@ -15,26 +15,30 @@
 ############
 
 import os
+import time
+import copy
 import shutil
 import base64
 import tarfile
 import tempfile
 import urlparse
-import time
-import copy
-from functools import partial
 from io import BytesIO
+from functools import partial
 from StringIO import StringIO
+
 from retrying import retry
 
-import fabric.api as fabric
 import requests
+import fabric.api as fabric
 
 from cloudify.workflows import local
-from cloudify_cli.logger import get_logger
+from cloudify.exceptions import RecoverableError
+from cloudify_rest_client.exceptions import CloudifyClientError
+
+from cloudify_cli import utils
 from cloudify_cli import common
 from cloudify_cli import constants
-from cloudify_cli import utils
+from cloudify_cli.logger import get_logger
 from cloudify_cli.bootstrap.tasks import (
     PROVIDER_RUNTIME_PROPERTY,
     MANAGER_IP_RUNTIME_PROPERTY,
@@ -42,8 +46,6 @@ from cloudify_cli.bootstrap.tasks import (
     MANAGER_KEY_PATH_RUNTIME_PROPERTY,
     REST_PORT)
 from cloudify_cli.exceptions import CloudifyBootstrapError
-from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify.exceptions import RecoverableError
 
 
 MANAGER_DEPLOYMENT_ARCHIVE_IGNORED_FILES = ['.git']
@@ -160,6 +162,28 @@ def bootstrap_validation(blueprint_path,
     env.execute(workflow='execute_operation',
                 parameters={'operation':
                             'cloudify.interfaces.validation.creation'},
+                task_retries=task_retries,
+                task_retry_interval=task_retry_interval,
+                task_thread_pool_size=task_thread_pool_size)
+
+
+def _perform_sanity(env,
+                    manager_ip,
+                    fabric_env,
+                    task_retries=5,
+                    task_retry_interval=30,
+                    task_thread_pool_size=1):
+
+    env.execute(workflow='execute_operation',
+                parameters={'operation':
+                            'cloudify.interfaces.lifecycle.start',
+                            'node_ids': ['sanity'],
+                            'allow_kwargs_override': 'true',
+                            'operation_kwargs':
+                                {'run_sanity': 'true',
+                                 'manager_ip': manager_ip,
+                                 'fabric_env': fabric_env}},
+                allow_custom_parameters=True,
                 task_retries=task_retries,
                 task_retry_interval=task_retry_interval,
                 task_thread_pool_size=task_thread_pool_size)
@@ -293,6 +317,13 @@ def bootstrap(blueprint_path,
         _upload_resources(manager_node, fabric_env, manager_ip, rest_client,
                           task_retries, task_retry_interval)
 
+        _perform_sanity(env=env,
+                        manager_ip=manager_ip,
+                        fabric_env=fabric_env,
+                        task_retries=task_retries,
+                        task_retry_interval=task_retry_interval,
+                        task_thread_pool_size=task_thread_pool_size)
+
     return {
         'provider_name': 'provider',
         'provider_context': provider_context,
@@ -340,11 +371,7 @@ def recover(snapshot_path,
     manager_user = manager_node.properties['ssh_user']
     manager_key_path = manager_node.properties['ssh_key_filename']
 
-    fabric_env = {
-        "host_string": manager_ip,
-        "user": manager_user,
-        "key_filename": manager_key_path
-    }
+    fabric_env = build_fabric_env(manager_ip, manager_key_path, manager_user)
 
     agent_remote_key_path = _handle_agent_key_file(fabric_env,
                                                    manager_node)
@@ -394,6 +421,14 @@ def recover(snapshot_path,
                            'Unexpected snapshot status: {1}'
                            .format(snapshot_id, execution.status))
     client.snapshots.delete(snapshot_id)
+
+
+def build_fabric_env(manager_ip, manager_user, manager_key_path):
+    return {
+        "host_string": manager_ip,
+        "user": manager_user,
+        "key_filename": manager_key_path
+    }
 
 
 def _upload_provider_context(client, remote_agents_private_key_path,
@@ -466,9 +501,9 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_client,
         _upload_plugins(upload_resources.get('plugin_resources', ()), temp_dir,
                         management_ip, rest_client, retries, wait_interval,
                         fetch_timeout)
-        _upload_dsl_resources(upload_resources.get('dsl_resources', ()),
-                              temp_dir, fabric_env, retries, wait_interval,
-                              fetch_timeout)
+        upload_dsl_resources(upload_resources.get('dsl_resources', ()),
+                             temp_dir, fabric_env, retries, wait_interval,
+                             fetch_timeout)
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -506,7 +541,7 @@ def _upload_plugins(plugin_resources, temp_dir, management_ip, rest_client,
         return any(filter(lambda func: func(exception), [is_internal_error,
                                                          is_network_error]))
 
-    @retry(wait_fixed=wait_interval*1000,
+    @retry(wait_fixed=wait_interval * 1000,
            stop_func=partial(_stop_retries, retries, wait_interval),
            retry_on_exception=is_error)
     def upload_plugin(plugin_path):
@@ -521,8 +556,8 @@ def _upload_plugins(plugin_resources, temp_dir, management_ip, rest_client,
         upload_plugin(plugin_local_path)
 
 
-def _upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
-                          wait_interval, timeout):
+def upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
+                         wait_interval, timeout):
     """
     Uploads dsl resources to the manager.
 
@@ -537,7 +572,7 @@ def _upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
     logger = get_logger()
     remote_plugins_folder = '/opt/manager/resources/'
 
-    @retry(wait_fixed=wait_interval*1000,
+    @retry(wait_fixed=wait_interval * 1000,
            stop_func=partial(_stop_retries, retries, wait_interval),
            retry_on_exception=lambda e: isinstance(e, RecoverableError))
     def upload_dsl_resource(local_path, remote_path):
@@ -598,7 +633,7 @@ def _get_resource_into_dir(destination_dir, resource_source_path, retries,
 
     parts = urlparse.urlsplit(resource_source_path)
 
-    @retry(wait_fixed=wait_interval*1000,
+    @retry(wait_fixed=wait_interval * 1000,
            stop_func=partial(_stop_retries, retries, wait_interval),
            retry_on_exception=lambda e: isinstance(e, requests.Timeout))
     def download_resource(source_path, dest_path):

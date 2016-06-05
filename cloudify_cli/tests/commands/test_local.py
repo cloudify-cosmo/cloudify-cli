@@ -184,9 +184,9 @@ class LocalTest(CliCommandTest):
                                                      blueprint)
 
         expected_possible_solutions = [
-            "Run 'cfy local init --install-plugins -p {0}'"
+            "Run `cfy local init --install-plugins -p {0}`"
             .format(blueprint_path),
-            "Run 'cfy local install-plugins -p {0}'"
+            "Run `cfy local install-plugins -p {0}`"
             .format(blueprint_path)
         ]
         try:
@@ -231,27 +231,27 @@ class LocalTest(CliCommandTest):
         self._local_init()
         self._local_execute()
         self._assert_ex('cfy local instances --node-id no_node',
-                        'No node with id: no_node')
+                        'Could not find node no_node')
 
     def test_execute_with_no_init(self):
         self._assert_ex('cfy local execute -w run_test_op_on_nodes',
                         'has not been initialized',
                         possible_solutions=[
-                            "Run 'cfy local init' in this directory"
+                            "Run `cfy local init` in this directory"
                         ])
 
     def test_outputs_with_no_init(self):
         self._assert_ex('cfy local outputs',
                         'has not been initialized',
                         possible_solutions=[
-                            "Run 'cfy local init' in this directory"
+                            "Run `cfy local init` in this directory"
                         ])
 
     def test_instances_with_no_init(self):
         self._assert_ex('cfy local instances',
                         'has not been initialized',
                         possible_solutions=[
-                            "Run 'cfy local init' in this directory"
+                            "Run `cfy local init` in this directory"
                         ])
 
     def test_create_requirements(self):
@@ -285,8 +285,7 @@ class LocalTest(CliCommandTest):
         self._assert_ex(
             cli_cmd='cfy local create-requirements -p {0} -o {1}'
                     .format(blueprint_path, file_path),
-            err_str_segment='output path already exists : '
-                            '{0}'.format(file_path)
+            err_str_segment='Output path {0} already exists'.format(file_path)
         )
 
     def test_create_requirements_no_output(self):

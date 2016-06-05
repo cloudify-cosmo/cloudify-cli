@@ -16,11 +16,11 @@
 """
 Handles all commands that start with 'cfy workflows'
 """
+from cloudify_rest_client.exceptions import CloudifyClientError
 
+from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
 from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify_cli import utils
 
 
 def get(deployment_id, workflow_id):
@@ -28,22 +28,19 @@ def get(deployment_id, workflow_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
     try:
-        logger.info('Getting workflow '
-                    '\'{0}\' of deployment \'{1}\' [manager={2}]'
-                    .format(workflow_id, deployment_id, management_ip))
+        logger.info('Retrieving workflow {0} for deployment {1}'.format(
+            workflow_id, deployment_id))
         deployment = client.deployments.get(deployment_id)
         workflow = next((wf for wf in deployment.workflows if
                          wf.name == workflow_id), None)
         if not workflow:
-            msg = ("Workflow '{0}' not found on management server for "
-                   "deployment {1}".format(workflow_id, deployment_id))
-            raise CloudifyCliError(msg)
-    except CloudifyClientError, e:
+            raise CloudifyCliError(
+                'Workflow {0} not found'.format(workflow_id, deployment_id))
+    except CloudifyClientError as e:
         if e.status_code != 404:
             raise
-        msg = ("Deployment '{0}' not found on management server"
-               .format(deployment_id))
-        raise CloudifyCliError(msg)
+        raise CloudifyCliError('Deployment {0} not found'.format(
+            deployment_id))
 
     pt = utils.table(['blueprint_id', 'deployment_id',
                       'name', 'created_at'],
@@ -87,9 +84,8 @@ def ls(deployment_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
-    logger.info('Getting workflows list for deployment: '
-                '\'{0}\'... [manager={1}]'
-                .format(deployment_id, management_ip))
+    logger.info('Listing workflows for deployment {0}...'.format(
+        deployment_id))
 
     deployment = client.deployments.get(deployment_id)
     workflows = deployment.workflows

@@ -24,9 +24,8 @@ import subprocess
 from distutils import spawn
 
 from cloudify_cli import utils
-from cloudify_cli import messages
-from cloudify_cli.ssh import run_command_on_manager
 from cloudify_cli.logger import get_logger
+from cloudify_cli.ssh import run_command_on_manager
 from cloudify_cli.exceptions import CloudifyCliError
 
 
@@ -46,11 +45,11 @@ def _verify_tmux_exists_on_manager(host_string):
         run_command_on_manager('which tmux', host_string=host_string)
     except:
         raise CloudifyCliError(
-            'tmux executable not found on Manager {0}.\n'
+            'tmux executable not found on manager {0}.\n'
             'Please verify that tmux is installed and in PATH before '
             'attempting to use shared SSH sessions.\n'
             'You can run `cfy ssh -c "sudo yum install tmux -y"` to try and '
-            'install tmux on the Manager.'.format(
+            'install tmux on the manager.'.format(
                 host_string.split('@')[1]))
 
 
@@ -73,21 +72,31 @@ def _validate_env(ssh_command, host_session, sid, list_sessions):
 
     ssh_path = spawn.find_executable('ssh')
     if not ssh_path:
-        raise CloudifyCliError(messages.SSH_LINUX_NOT_FOUND)
+        raise CloudifyCliError(
+            "ssh not found. Possible reasons:\n"
+            "1) You don't have ssh installed (try installing OpenSSH)\n"
+            "2) Your PATH variable is not configured correctly\n"
+            "3) You are running this command with Sudo which can manipulate "
+            "environment variables for security reasons")
 
     if not ssh_path and platform.system() == 'Windows':
-        raise CloudifyCliError(messages.SSH_WIN_NOT_FOUND)
+        raise CloudifyCliError(
+            "ssh.exe not found. Are you sure you have it installed? "
+            "As an alternative, you can use PuTTY to ssh into the manager. "
+            "Do not forget to convert your private key from OpenSSH format to "
+            "PuTTY's format using PuTTYGen.")
 
     if any([host_session and sid,
             host_session and list_sessions,
             sid and list_sessions]):
-        raise CloudifyCliError(messages.SSH_ARGS_CONFLICT)
+        raise CloudifyCliError(
+            'Choose one of --host, --list-sessions, --sid arguments.')
 
 
 def _join_session(logger, sid, host_string):
     logger.info('Attempting to join session...')
     if sid not in _get_sessions_list(logger, host_string):
-        logger.error('Session {0} does not exist.'.format(sid))
+        logger.error('Session {0} does not exist'.format(sid))
         return
     _open_interactive_shell(
         command='tmux attach -t {0}'.format(sid),
@@ -113,7 +122,7 @@ def _get_sessions_list(logger, host_string):
 
 
 def ssh(ssh_command, host_session, sid, list_sessions):
-    """Connects to a running Manager via SSH.
+    """Connects to a running manager via SSH.
 
     `host_session` starts a tmux session (e.g. tmux new -s
     "ssh_session_vi120m") after which a command for a client is printed
@@ -139,7 +148,7 @@ def ssh(ssh_command, host_session, sid, list_sessions):
     logger.info('Connecting to {0}...'.format(host_string))
     if host_session:
         sid = 'ssh_session_' + utils.generate_random_string()
-        logger.info('Creating session: {0}...'.format(sid))
+        logger.info('Creating session {0}...'.format(sid))
         try:
             run_command_on_manager(
                 'tmux new -d -A -s {0}'.format(sid),
@@ -152,14 +161,14 @@ def ssh(ssh_command, host_session, sid, list_sessions):
                        host_string=host_string)
             _join_session(logger, sid, host_string)
         except Exception as ex:
-            logger.error('Failed to create session ({0}).'.format(ex))
-        logger.info('Killing session: {0}...'.format(sid))
+            logger.error('Failed to create session ({0})'.format(ex))
+        logger.info('Killing session {0}...'.format(sid))
         try:
             run_command_on_manager(
                 'tmux kill-session -t {0}'.format(sid),
                 host_string=host_string)
         except Exception as ex:
-            logger.warn('Failed to kill session ({0}).'.format(ex))
+            logger.warn('Failed to kill session ({0})'.format(ex))
     elif sid:
         _join_session(logger, sid, host_string)
     elif list_sessions:
@@ -167,7 +176,7 @@ def ssh(ssh_command, host_session, sid, list_sessions):
         if sessions:
             logger.info('Available Sessions are:\n{0}'.format(sessions.stdout))
         else:
-            logger.info('No sessions are available.')
+            logger.info('No sessions are available')
     else:
         if ssh_command:
             logger.info('Executing command {0}...'.format(ssh_command))

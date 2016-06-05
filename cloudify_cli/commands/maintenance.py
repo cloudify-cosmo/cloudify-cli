@@ -21,9 +21,9 @@ import time
 
 from cloudify_cli import utils
 from cloudify_cli import exceptions
+from cloudify_cli.cli import NO_VERBOSE
 from cloudify_cli.logger import get_logger
 from cloudify_cli.cli import get_global_verbosity
-from cloudify_cli.cli import NO_VERBOSE
 
 DEFAULT_TIMEOUT_INTERVAL = 5
 MAINTENANCE_MODE_ACTIVE = 'activated'
@@ -54,10 +54,14 @@ def _print_maintenance_mode_status(client):
     if remaining_executions:
         if len(remaining_executions) == 1:
             logger.info(
-                    'There is 1 running execution. ')
+                    'Cloudify Manager currently has one '
+                    'running or pending execution. Waiting for it'
+                    ' to finish before activating.')
         else:
             logger.info(
-                    'There are {0} running executions. '.format(
+                    'Cloudify Manager currently has {0} '
+                    'running or pending executions. Waiting for all '
+                    'executions to finish before activating.'.format(
                             len(remaining_executions)))
 
         if get_global_verbosity() != NO_VERBOSE:
@@ -67,9 +71,9 @@ def _print_maintenance_mode_status(client):
             utils.print_table('Remaining executions:', pt)
 
     if status_response.status == MAINTENANCE_MODE_ACTIVE:
-        logger.info('Note: maintenance mode is active; '
-                    'most requests will be blocked and '
-                    'ignored until maintenance mode is deactivated.\n')
+        logger.info('INFO - Cloudify Manager is currently under maintenance. '
+                    'Most requests will be blocked '
+                    'until maintenance mode is deactivated.\n')
 
 
 def activate(wait, timeout):
@@ -90,14 +94,16 @@ def activate(wait, timeout):
 
     if wait:
         logger.info("Maintenance mode will be activated once there are "
-                    "no running executions...\n")
+                    "no running or pending executions...\n")
         deadline = time.time() + timeout
 
         while True:
             if _is_timeout(timeout, deadline):
                 raise exceptions.CloudifyCliError(
-                    "Request for maintenance mode activation timed out. "
-                    "Run 'cfy maintenance-mode deactivate' to "
+                    "Maintenance mode timed out while waiting for activation. "
+                    "Note that maintenance mode is still "
+                    "being activated in the background. You can run "
+                    "'cfy maintenance-mode deactivate' to "
                     "cancel the activation.")
 
             status_response = client.maintenance_mode.status()
@@ -107,9 +113,7 @@ def activate(wait, timeout):
                             'ignored until maintenance mode is deactivated.')
                 return
             time.sleep(DEFAULT_TIMEOUT_INTERVAL)
-    logger.info("Running any command will activate "
-                "maintenance mode in case there are no running executions.\n"
-                "Run 'cfy maintenance-mode status' to check the "
+    logger.info("Run 'cfy maintenance-mode status' to check the "
                 "maintenance mode's status.\n")
 
 
