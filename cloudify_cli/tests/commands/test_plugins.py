@@ -54,14 +54,6 @@ class PluginsTest(CliCommandTest):
         self.client.plugins.delete = MagicMock()
         cli_runner.run_cli('cfy plugins delete -p a-plugin-id')
 
-    def test_plugins_delete_force(self):
-        for flag in ['--force', '-f']:
-            mock = MagicMock()
-            self.client.plugins.delete = mock
-            cli_runner.run_cli('cfy plugins delete -p a-plugin-id {0}'
-                               .format(flag))
-            mock.assert_called_once_with(plugin_id='a-plugin-id', force=True)
-
     def test_plugins_upload(self):
         self.client.plugins.upload = MagicMock()
         plugin_dest = os.path.join(tempfile.gettempdir(), 'plugin.tar.gz')

@@ -76,3 +76,5 @@ build do
       :vars => { :install_dir => install_dir }
   end
 end
+
+whitelist_file /.*/

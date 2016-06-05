@@ -12,7 +12,6 @@ CORE_TAG_NAME="3.4rc1"
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${CORE_TAG_NAME}/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
 
-install_common_prereqs &&
 rm -rf cloudify-cli
 git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd cloudify-cli/packaging/omnibus

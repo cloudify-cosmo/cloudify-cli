@@ -16,10 +16,10 @@
 """
 Handles all commands that start with 'cfy plugins'
 """
-import os
 import tarfile
 
 from cloudify_cli import utils
+from cloudify_cli import messages
 from cloudify_cli.logger import get_logger
 from cloudify_cli.utils import print_table
 from cloudify_cli.exceptions import CloudifyCliError
@@ -28,38 +28,40 @@ from cloudify_cli.exceptions import CloudifyCliError
 def validate(plugin_path):
     logger = get_logger()
 
-    logger.info('Validating plugin {0}...'.format(plugin_path.name))
+    logger.info(
+        messages.VALIDATING_PLUGIN.format(plugin_path.name))
     if not tarfile.is_tarfile(plugin_path.name):
-        raise CloudifyCliError('Archive {0} is of an unsupported type. Only '
-                               'tar.gz is allowed'.format(plugin_path.name))
+        raise CloudifyCliError('Archive {0} is of an unsupported archive type.'
+                               ' Only tar.gz is allowed'
+                               .format(plugin_path.name))
     with tarfile.open(plugin_path.name, 'r') as tar:
         tar_members = tar.getmembers()
-        package_json_path = os.path.join(tar_members[0].name, 'package.json')
+        package_json_path = '{0}/package.json'.format(tar_members[0].name)
         try:
             package_member = tar.getmember(package_json_path)
         except KeyError:
-            raise CloudifyCliError(
-                'Failed to validate plugin {0} '
-                '(package.json was not found in archive)'.format(plugin_path))
+            raise CloudifyCliError(messages.VALIDATING_PLUGIN_FAILED
+                                   .format(plugin_path, 'package.json was not '
+                                                        'found in archive'))
         try:
             tar.extractfile(package_member).read()
         except:
-            raise CloudifyCliError(
-                'Failed to validate plugin {0} '
-                '(unable to read package.json)'.format(plugin_path))
+            raise CloudifyCliError(messages.VALIDATING_PLUGIN_FAILED
+                                   .format(plugin_path, 'unable to read '
+                                                        'package.json'))
 
-    logger.info('Plugin validated successfully')
+    logger.info(messages.VALIDATING_PLUGIN_SUCCEEDED)
 
 
-def delete(plugin_id, force):
+def delete(plugin_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
-    logger.info('Deleting plugin {0}...'.format(plugin_id))
-    client.plugins.delete(plugin_id=plugin_id, force=force)
+    logger.info(messages.PLUGIN_DELETE.format(plugin_id, management_ip))
+    client.plugins.delete(plugin_id)
 
-    logger.info('Plugin deleted')
+    logger.info(messages.PLUGIN_DELETE_SUCCEEDED.format(plugin_id))
 
 
 def upload(plugin_path):
@@ -72,10 +74,11 @@ def download(plugin_id,
              output):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
-    logger.info('Downloading plugin {0}...'.format(plugin_id))
+    logger.info(messages.DOWNLOADING_PLUGIN.format(plugin_id))
     client = utils.get_rest_client(management_ip)
     target_file = client.plugins.download(plugin_id, output)
-    logger.info('Plugin downloaded as {0}'.format(target_file))
+    logger.info(messages.DOWNLOADING_PLUGIN_SUCCEEDED.format(plugin_id,
+                                                             target_file))
 
 
 fields = ['id', 'package_name', 'package_version', 'supported_platform',
@@ -87,7 +90,7 @@ def get(plugin_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
-    logger.info('Retrieving plugin {0}...'.format(plugin_id))
+    logger.info(messages.PLUGINS_GET.format(plugin_id, management_ip))
     plugin = client.plugins.get(plugin_id, _include=fields)
 
     pt = utils.table(fields, data=[plugin])
@@ -99,7 +102,7 @@ def ls():
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
-    logger.info('Listing all plugins...')
+    logger.info(messages.PLUGINS_LIST.format(management_ip))
     plugins = client.plugins.list(_include=fields)
 
     pt = utils.table(fields, data=plugins)

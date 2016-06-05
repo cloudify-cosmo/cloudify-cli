@@ -54,7 +54,6 @@ setup(
         'colorama==0.3.3',
         'jinja2==2.7.2',
         'itsdangerous==0.24',
-        'retrying==1.3.3',
-        'wagon==0.3.1'
+        'retrying==1.3.3'
     ]
 )
