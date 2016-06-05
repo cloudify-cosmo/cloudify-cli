@@ -18,12 +18,12 @@ Handles 'cfy dev'
 """
 
 from fabric.api import env
-from cloudify_cli import utils
-from cloudify_cli import exec_env
 from fabric.context_managers import settings
-from cloudify_cli.utils import get_management_key
-from cloudify_cli.utils import get_management_user
+from cloudify_cli import exec_env
+from cloudify_cli import utils
 from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.utils import get_management_user
+from cloudify_cli.utils import get_management_key
 
 
 def dev(args, task, tasks_file):
@@ -67,7 +67,7 @@ def exec_tasks_file(tasks_file=None):
     exec_globals = exec_env.exec_globals(tasks_file)
     try:
         execfile(tasks_file, exec_globals)
-    except Exception as e:
+    except Exception, e:
         raise CloudifyCliError('Failed evaluating {0} ({1}:{2}'
                                .format(tasks_file, type(e).__name__, e))
 
@@ -80,13 +80,13 @@ def _execute_task(ip, task, tasks, task_args):
     args, kwargs = _parse_task_args(task_args)
     task_function = tasks.get(task)
     if not task_function:
-        raise CloudifyCliError('Task {0} not found'.format(task))
+        raise CloudifyCliError('task: "{0}" not found'.format(task))
     try:
         with settings(host_string=ip):
             task_function(*args, **kwargs)
     except Exception as e:
-        raise CloudifyCliError('Failed to execute {0} ({1}) '.format(
-            task, str(e)))
+        raise CloudifyCliError('failed to execute: "{0}" '
+                               '({1}) '.format(task, str(e)))
 
 
 def _parse_task_args(task_args):

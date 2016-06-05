@@ -19,8 +19,8 @@ Handles 'cfy uninstall'
 
 from cloudify_cli import utils
 from cloudify_cli.commands import blueprints
-from cloudify_cli.commands import executions
 from cloudify_cli.commands import deployments
+from cloudify_cli.commands import executions
 from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW
 
 

@@ -19,14 +19,13 @@ Tests 'cfy status'
 
 import os
 
-from mock import patch
 from mock import MagicMock
-
-from cloudify_rest_client.exceptions import UserUnauthorizedError
+from mock import patch
 
 from cloudify_cli import utils
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
+from cloudify_rest_client.exceptions import UserUnauthorizedError
 
 
 class StatusTest(CliCommandTest):
@@ -45,8 +44,7 @@ class StatusTest(CliCommandTest):
         # first calling "cfy use" or providing a target server explicitly
         cli_runner.run_cli('cfy init')
         self._assert_ex('cfy status',
-                        'Must either first run `cfy use` or explicitly '
-                        'provide a manager IP')
+                        "Must either first run 'cfy use' command")
 
     def test_status_by_unauthorized_user(self):
         with patch('cloudify_cli.utils.get_management_server_ip'):

@@ -22,11 +22,11 @@ from cloudify_rest_client.exceptions import (
     UserUnauthorizedError
 )
 
-from cloudify_cli import utils
 from cloudify_cli import constants
-from cloudify_cli.logger import get_logger
+from cloudify_cli import utils
 from cloudify_cli.bootstrap import bootstrap as bs
 from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import get_logger
 
 
 def use(management_ip, rest_port):
@@ -43,11 +43,12 @@ def use(management_ip, rest_port):
         # first check this server is available.
         client.manager.get_status()
     except UserUnauthorizedError:
-        msg = "Can't use manager {0}: User is unauthorized.".format(
+        msg = "Can't use management server {0}: User is unauthorized.".format(
             management_ip)
         raise CloudifyCliError(msg)
     except CloudifyClientError as e:
-        msg = "Can't use manager {0}: {1}".format(management_ip, str(e))
+        msg = "Can't use management server {0}: {1}".format(
+            management_ip, str(e))
         raise CloudifyCliError(msg)
 
     # check if cloudify was initialized.
@@ -66,8 +67,8 @@ def use(management_ip, rest_port):
         wd_settings.set_provider_context(provider_context)
         wd_settings.set_rest_port(rest_port)
         wd_settings.set_protocol(protocol)
-        logger.info('Using manager {0} with port {1}'.format(
-            management_ip, rest_port))
+        logger.info('Using management server {0} with port {1}'
+                    .format(management_ip, rest_port))
 
     # delete the previous manager deployment if exists.
     bs.delete_workdir()

@@ -75,7 +75,8 @@ class GroupsTest(CliCommandTest):
         cli_runner.run_cli('cfy groups list -d a-deployment-id')
 
     def test_groups_list_nonexistent_deployment(self):
-        expected_message = ('Deployment nonexistent-dep not found')
+        expected_message = ("Deployment 'nonexistent-dep' "
+                            "not found on management server")
         error = CloudifyClientError('')
         error.status_code = 404
         self.client.deployments.get = MagicMock(side_effect=error)

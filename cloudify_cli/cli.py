@@ -14,23 +14,22 @@
 # limitations under the License.
 ############
 
-import sys
-import argparse
 import StringIO
+import argparse
+import sys
 import traceback
+import argcomplete
 import logging
 
-import argcomplete
-
-from cloudify import logs
-from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
+from cloudify_rest_client.exceptions import NotModifiedError
+from cloudify import logs
 
 from cloudify_cli import constants
-from cloudify_cli.exceptions import CloudifyBootstrapError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
+from cloudify_cli.exceptions import CloudifyBootstrapError
 
 
 HIGH_VERBOSE = 3
@@ -120,27 +119,6 @@ def register_commands():
     return parser
 
 
-def _register_argument(args, command_parser):
-    command_arg_names = []
-
-    for argument_name, argument in args.iteritems():
-        completer = argument.get('completer')
-        if completer:
-            del argument['completer']
-
-        arg = command_parser.add_argument(
-                *argument_name.split(','),
-                **argument
-        )
-
-        if completer:
-            arg.completer = completer
-
-        command_arg_names.append(argument['dest'])
-
-    return command_arg_names
-
-
 def register_command(subparsers, command_name, command):
 
     command_help = command['help']
@@ -148,20 +126,23 @@ def register_command(subparsers, command_name, command):
         command_name, help=command_help,
         formatter_class=ConciseArgumentDefaultsHelpFormatter
     )
-
     command_arg_names = []
-    arguments = command.get('arguments', {})
+    if 'arguments' in command:
+        for argument_name, argument in command['arguments'].iteritems():
+            completer = argument.get('completer')
+            if completer:
+                del argument['completer']
 
-    mutually_exclusive = arguments.pop('_mutually_exclusive', [])
+            arg = command_parser.add_argument(
+                *argument_name.split(','),
+                **argument
+            )
 
-    command_arg_names += _register_argument(arguments,
-                                            command_parser)
+            if completer:
+                arg.completer = completer
 
-    for mutual_exclusive_group in mutually_exclusive:
-        command_arg_names += _register_argument(
-                mutual_exclusive_group,
-                command_parser.add_mutually_exclusive_group(required=True)
-        )
+            command_arg_names.append(argument['dest'])
+
     # Add verbosity flag for each command
     command_parser.add_argument(
         '-v', '--verbose',
@@ -194,6 +175,7 @@ def register_command(subparsers, command_name, command):
 
 
 def set_global_verbosity_level(verbose):
+
     """
     Sets the global verbosity level.
 
@@ -205,6 +187,7 @@ def set_global_verbosity_level(verbose):
 
 
 def set_debug():
+
     """
     Sets all previously configured
     loggers to debug level
@@ -216,6 +199,7 @@ def set_debug():
 
 
 def get_global_verbosity():
+
     """
     Returns the globally set verbosity
 

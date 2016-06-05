@@ -17,19 +17,19 @@
 Handles 'cfy install'
 """
 
-import os
 import errno
+import os
 import urlparse
 
 from cloudify_cli import utils
 from cloudify_cli.commands import blueprints
-from cloudify_cli.commands import executions
 from cloudify_cli.commands import deployments
-from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
-from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
+from cloudify_cli.commands import executions
 from cloudify_cli.constants import DEFAULT_BLUEPRINT_FILE_NAME
+from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
 from cloudify_cli.constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
+from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
+from cloudify_cli.exceptions import CloudifyCliError
 
 
 def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
@@ -47,6 +47,7 @@ def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
     # between `install` in 'blueprints upload' mode,
     # and `install` in 'blueprints publish archive' mode.
     if archive_location:
+
         blueprints.check_if_archive_type_is_supported(archive_location)
 
         if not blueprint_filename:
@@ -54,22 +55,28 @@ def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
 
         # If blueprint_id wasn't supplied, assign it to the name of the archive
         if not blueprint_id:
+
             (archive_location, archive_location_type) = \
                 blueprints.determine_archive_type(archive_location)
+
             # if the archive is a local path, assign blueprint_id the name of
             # the archive file without the extension
             if archive_location_type == 'path':
+
                 filename, ext = os.path.splitext(
                     os.path.basename(archive_location))
                 blueprint_id = filename
+
             # if the archive is a url, assign blueprint_id name of the file
             # that the url leads to, without the extension.
             # e.g. http://example.com/path/archive.zip?para=val#sect -> archive
             elif archive_location_type == 'url':
+
                 path = urlparse.urlparse(archive_location).path
                 archive_file = path.split('/')[-1]
                 archive_name = archive_file.split('.')[0]
                 blueprint_id = archive_name
+
             else:
                 raise CloudifyCliError("The archive's source is not a local "
                                        'file path nor a web url')
@@ -82,7 +89,9 @@ def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
                                    blueprint_filename,
                                    blueprint_id)
     else:
+
         blueprint_path_supplied = bool(blueprint_path)
+
         if not blueprint_path:
             blueprint_path = os.path.join(utils.get_cwd(),
                                           DEFAULT_BLUEPRINT_PATH)
@@ -90,6 +99,7 @@ def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
         # If blueprint_id wasn't supplied, assign it to the name of
         # folder containing the application's blueprint file.
         if not blueprint_id:
+
             blueprint_id = os.path.basename(
                 os.path.dirname(
                     os.path.abspath(blueprint_path)))
@@ -103,24 +113,29 @@ def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
 
         try:
             with open(blueprint_path) as blueprint_file:
+
                 blueprints.upload(blueprint_file,
                                   blueprint_id,
                                   validate_blueprint)
+
         except IOError as e:
 
             # No such file or directory
             if not blueprint_path_supplied and e.errno == errno.ENOENT:
+
                 raise CloudifyCliError(
-                    'Your blueprint was not found in the path: {0}.\n\n'
+                    'Your blueprint was not found in the path: `{0}`.\n\n'
                     'Consider providing an explicit path to your blueprint '
                     'using the `-p`/`--blueprint-path` flag, like so:\n'
                     '`cfy install -p /path/to/blueprint_file.yaml`\n'
                     .format(blueprint_path)
                 )
+
             else:
                 raise CloudifyCliError(
-                    'A problem was encountered while trying to open '
-                    '{0}.\n({1})'.format(blueprint_path, e))
+                    'A problem was encountered while trying to open the path '
+                    '`{0}`.\n({1})'.format(blueprint_path, e)
+                )
 
     # If deployment_id wasn't supplied, use the same name as the blueprint id.
     if not deployment_id:
@@ -166,6 +181,7 @@ def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
 def _check_for_mutually_exclusive_arguments(blueprint_path,
                                             archive_location,
                                             blueprint_filename):
+
     if blueprint_path and (archive_location or blueprint_filename):
         raise CloudifyCliError(
             "`-p/--blueprint-path` can't be supplied with "
@@ -174,8 +190,10 @@ def _check_for_mutually_exclusive_arguments(blueprint_path,
 
 
 def _auto_generate_ids(auto_generate_ids):
+
     return utils.is_auto_generate_ids() or auto_generate_ids
 
 
 def _generate_suffixed_id(id):
+
     return '{0}_{1}'.format(id, utils.generate_random_string())

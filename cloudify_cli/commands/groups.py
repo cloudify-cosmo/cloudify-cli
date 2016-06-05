@@ -19,8 +19,8 @@ Handles all commands that start with 'cfy groups'
 
 import json
 
-from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
+from cloudify_cli import utils
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
@@ -29,15 +29,16 @@ def ls(deployment_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
-    logger.info("Listing groups for deployment {0}...".format(
-        deployment_id))
+    logger.info("Getting groups list for deployment: '{0}'... [manager={1}]"
+                .format(deployment_id, management_ip))
     try:
         deployment = client.deployments.get(deployment_id)
-    except CloudifyClientError as e:
+    except CloudifyClientError, e:
         if e.status_code != 404:
             raise
-        raise CloudifyCliError('Deployment {0} not found'.format(
-            deployment_id))
+        msg = ("Deployment '{0}' not found on management server"
+               .format(deployment_id))
+        raise CloudifyCliError(msg)
 
     groups = deployment.get('groups', {})
     scaling_groups = deployment.get('scaling_groups', {})
@@ -46,7 +47,7 @@ def ls(deployment_id):
         logger.info('No groups defined for deployment {0}'.format(
             deployment.id))
     else:
-        logger.info("Groups: {0}".format(deployment.id))
+        logger.info("Deployment '{0}' groups:".format(deployment.id))
         for group_name, group in groups.items():
             logger.info('  - Name: {0}'.format(group_name))
             logger.info('    Members: {0}'.format(
