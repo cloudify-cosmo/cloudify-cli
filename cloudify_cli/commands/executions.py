@@ -19,14 +19,14 @@ Handles all commands that start with 'cfy executions'
 
 import time
 
-from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
 from cloudify_rest_client import exceptions
-from cloudify_cli.logger import get_events_logger
+from cloudify_cli import utils
 from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.exceptions import ExecutionTimeoutError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
+from cloudify_cli.exceptions import ExecutionTimeoutError
+from cloudify_cli.logger import get_logger
 from cloudify_cli.execution_events_fetcher import wait_for_execution
+from cloudify_cli.logger import get_events_logger
 
 
 _STATUS_CANCELING_MESSAGE = (
@@ -40,12 +40,16 @@ def get(execution_id):
     client = utils.get_rest_client(management_ip)
 
     try:
-        logger.info('Retrieving execution {0}'.format(execution_id))
+        logger.info('Getting execution: '
+                    '\'{0}\' [manager={1}]'
+                    .format(execution_id, management_ip))
         execution = client.executions.get(execution_id)
-    except exceptions.CloudifyClientError as e:
+    except exceptions.CloudifyClientError, e:
         if e.status_code != 404:
             raise
-        raise CloudifyCliError('Execution {0} not found'.format(execution_id))
+        msg = ("Execution '{0}' not found on management server"
+               .format(execution_id))
+        raise CloudifyCliError(msg)
 
     pt = utils.table(['id', 'workflow_id', 'status', 'deployment_id',
                       'created_at', 'error'],
@@ -69,18 +73,21 @@ def ls(deployment_id, include_system_workflows):
     client = utils.get_rest_client(management_ip)
     try:
         if deployment_id:
-            logger.info('Listing executions for deployment {0}...'.format(
-                deployment_id))
+            logger.info('Getting executions list for deployment: \'{0}\' '
+                        '[manager={1}]'.format(deployment_id, management_ip))
         else:
-            logger.info('Listing all executions...')
+            logger.info(
+                'Getting a list of all executions: [manager={0}]'.format(
+                    management_ip))
         executions = client.executions.list(
             deployment_id=deployment_id,
             include_system_workflows=include_system_workflows)
-    except exceptions.CloudifyClientError as e:
+    except exceptions.CloudifyClientError, e:
         if e.status_code != 404:
             raise
-        raise CloudifyCliError('Deployment {0} does not exist'.format(
-            deployment_id))
+        raise CloudifyCliError(
+            'Deployment {0} does not exist on management server'
+            .format(deployment_id))
 
     columns = ['id', 'workflow_id', 'deployment_id', 'status', 'created_at']
     pt = utils.table(columns, executions)
@@ -97,11 +104,12 @@ def start(workflow_id, deployment_id, timeout, force,
     logger = get_logger()
     parameters = utils.inputs_to_dict(parameters, 'parameters')
     management_ip = utils.get_management_server_ip()
-    logger.info('Executing workflow {0} on deployment {1} '
-                '[timeout={2} seconds]'.format(
-                    workflow_id,
-                    deployment_id,
-                    timeout))
+    logger.info("Executing workflow '{0}' on deployment '{1}' at"
+                " management server {2} [timeout={3} seconds]"
+                .format(workflow_id,
+                        deployment_id,
+                        management_ip,
+                        timeout))
 
     events_logger = get_events_logger(json)
 
@@ -129,10 +137,10 @@ def start(workflow_id, deployment_id, timeout, force,
             else:
                 status = 'in progress'
 
-            logger.info('Deployment environment creation is {0}...'.format(
+            logger.info('Deployment environment creation is {0}!'.format(
                 status))
-            logger.debug('Waiting for create_deployment_environment '
-                         'workflow execution to finish...')
+            logger.info('Waiting for create_deployment_environment '
+                        'workflow execution to finish...')
             now = time.time()
             wait_for_execution(client,
                                _get_deployment_environment_creation_execution(
@@ -156,18 +164,18 @@ def start(workflow_id, deployment_id, timeout, force,
                                        include_logs=include_logs,
                                        timeout=timeout)
         if execution.error:
-            logger.info('Execution of workflow {0} for deployment '
-                        '{1} failed. [error={2}]'.format(
-                            workflow_id,
-                            deployment_id,
-                            execution.error))
+            logger.info("Execution of workflow '{0}' for deployment "
+                        "'{1}' failed. [error={2}]"
+                        .format(workflow_id,
+                                deployment_id,
+                                execution.error))
             logger.info(events_message.format(execution.id))
             raise SuppressedCloudifyCliError()
         else:
-            logger.info('Finished executing workflow {0} on deployment '
-                        '{1}'.format(workflow_id, deployment_id))
+            logger.info("Finished executing workflow '{0}' on deployment"
+                        " '{1}'".format(workflow_id, deployment_id))
             logger.info(events_message.format(execution.id))
-    except ExecutionTimeoutError as e:
+    except ExecutionTimeoutError, e:
         logger.info(
             "Timed out waiting for workflow '{0}' of deployment '{1}' to "
             "end. The execution may still be running properly; however, "
@@ -191,20 +199,21 @@ def cancel(execution_id, force):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
     logger.info(
-        '{0}Cancelling execution {1}'.format(
-            'Force-' if force else '', execution_id))
+        '{0}Cancelling execution {1} on management server {2}'
+        .format('Force-' if force else '', execution_id, management_ip))
     client.executions.cancel(execution_id, force)
     logger.info(
-        "A cancel request for execution {0} has been sent. "
-        "To track the execution's status, use:\n"
-        "cfy executions get -e {0}".format(execution_id))
+        'A cancel request for execution {0} has been sent to management '
+        "server {1}. To track the execution's status, use:\n"
+        "cfy executions get -e {0}"
+        .format(execution_id, management_ip))
 
 
 def _get_deployment_environment_creation_execution(client, deployment_id):
     executions = client.executions.list(deployment_id=deployment_id)
-    for execution in executions:
-        if execution.workflow_id == 'create_deployment_environment':
-            return execution
+    for e in executions:
+        if e.workflow_id == 'create_deployment_environment':
+            return e
     raise RuntimeError('Failed to get create_deployment_environment '
-                       'workflow execution.'
-                       'Available executions: {0}'.format(executions))
+                       'workflow execution'
+                       '. Available executions: {0}'.format(executions))

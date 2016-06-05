@@ -17,21 +17,20 @@
 Handles all commands that start with 'cfy local'
 """
 
-import os
 import json
 import shutil
+import os
 
 from cloudify.workflows import local
-
-from cloudify_cli import utils
-from cloudify_cli import common
 from cloudify_cli import exceptions
+from cloudify_cli import common
+from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
 from cloudify_cli.commands import init as cfy_init
 from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
+from cloudify_cli.constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
 from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW
-from cloudify_cli.constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
 
 _NAME = 'local'
@@ -119,16 +118,18 @@ def init(blueprint_path,
         # TODO - all of our exceptions. so that we
         # TODO - easily identify them here
         e.possible_solutions = [
-            "Run `cfy local init --install-plugins -p {0}`"
+            "Run 'cfy local init --install-plugins -p {0}'"
             .format(blueprint_path),
-            "Run `cfy local install-plugins -p {0}`"
+            "Run 'cfy local install-plugins -p {0}'"
             .format(blueprint_path)
         ]
         raise
 
     get_logger().info("Initiated {0}\nIf you make changes to the "
-                      "blueprint, run `cfy local init -p {0}` "
-                      "again to apply them".format(blueprint_path))
+                      "blueprint, "
+                      "run 'cfy local init -p {0}' "
+                      "again to apply them"
+                      .format(blueprint_path))
 
 
 def execute(workflow_id,
@@ -168,8 +169,8 @@ def instances(node_id):
         node_instances = [instance for instance in node_instances
                           if instance.node_id == node_id]
         if not node_instances:
-            raise exceptions.CloudifyCliError(
-                'Could not find node {0}'.format(node_id))
+            raise exceptions.CloudifyCliError('No node with id: {0}'
+                                              .format(node_id))
     logger.info(json.dumps(node_instances,
                            sort_keys=True,
                            indent=2))
@@ -183,8 +184,8 @@ def install_plugins(blueprint_path):
 def create_requirements(blueprint_path, output):
     logger = get_logger()
     if output and os.path.exists(output):
-        raise exceptions.CloudifyCliError(
-            'Output path {0} already exists'.format(output))
+        raise exceptions.CloudifyCliError('output path already exists : {0}'
+                                          .format(output))
 
     requirements = common.create_requirements(
         blueprint_path=blueprint_path
@@ -192,7 +193,7 @@ def create_requirements(blueprint_path, output):
 
     if output:
         utils.dump_to_file(requirements, output)
-        logger.info('Requirements file created successfully --> {0}'
+        logger.info('Requirements created successfully --> {0}'
                     .format(output))
     else:
         # we don't want to use just lgr
@@ -215,14 +216,14 @@ def _storage():
 def _load_env():
     if not os.path.isdir(_storage_dir()):
         error = exceptions.CloudifyCliError(
-            '{0} has not been initialized with a blueprint.'.format(
-                utils.get_cwd()))
+            '{0} has not been initialized with a blueprint.'
+            .format(utils.get_cwd()))
 
         # init was probably not executed.
         # suggest solution.
 
         error.possible_solutions = [
-            "Run `cfy local init` in this directory"
+            "Run 'cfy local init' in this directory"
         ]
         raise error
     return local.load_env(name=_NAME,

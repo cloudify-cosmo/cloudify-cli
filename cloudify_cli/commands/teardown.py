@@ -21,9 +21,9 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 
 from cloudify_cli import utils
 from cloudify_cli import exceptions
-from cloudify_cli.commands.use import use
-from cloudify_cli.logger import get_logger
 from cloudify_cli.bootstrap import bootstrap as bs
+from cloudify_cli.logger import get_logger
+from cloudify_cli.commands.use import use
 
 
 def teardown(force, ignore_deployments):
@@ -49,12 +49,12 @@ def teardown(force, ignore_deployments):
             # manager is down, the user must return to the original
             # directory in order to teardown
             raise exceptions.CloudifyCliError(
-                "You are attempting to teardown from an "
-                "invalid directory. Please execute `cfy use` before "
-                "running this command. If the manager is "
+                "You are attempting to execute 'teardown' from an "
+                "invalid directory. Please execute 'cfy use' before "
+                "running this command. If the management server is "
                 "unavailable, you must execute this command from the "
                 "directory you initially bootstrapped from, or from the last "
-                "directory a `cfy use` command was executed on this manager.")
+                "directory a 'cfy use' command was executed on this manager.")
         else:
             _do_teardown()
     else:
@@ -75,8 +75,8 @@ def _update_local_provider_context(management_ip):
     try:
         use(management_ip, utils.get_rest_port())
     except BaseException as e:
-        logger.warning('Failed to retrieve provider context: {0}. This '
-                       'may cause a leaking manager '
+        logger.warning('Failed retrieving provider context: {0}. This '
+                       'may cause a leaking management server '
                        'in case it has gone through a '
                        'recovery process'.format(str(e)))
 
@@ -87,11 +87,11 @@ def _get_number_of_deployments(management_ip):
         return len(client.deployments.list())
     except CloudifyClientError:
         raise exceptions.CloudifyCliError(
-            "Failed to query manager {0} about existing "
-            "deployments; The manager may be down. If you wish to "
+            "Failed querying manager server {0} about existing "
+            "deployments; The Manager server may be down. If you wish to "
             "skip this check, you may use the "'--ignore-deployments'" "
             "flag, in which case teardown will occur regardless of "
-            "the deployment's status."
+            "the deployments status."
             .format(management_ip))
 
 
@@ -100,7 +100,7 @@ def _validate_deployments(ignore_deployments, management_ip):
         return
     if _get_number_of_deployments(management_ip) > 0:
         raise exceptions.CloudifyCliError(
-            "Manager {0} has existing deployments. Delete "
+            "Manager server {0} has existing deployments. Delete "
             "all deployments first or add the "
             "'--ignore-deployments' flag to your command to ignore "
             "these deployments and execute teardown."
@@ -111,9 +111,9 @@ def _validate_deployments(ignore_deployments, management_ip):
 def _validate_force(force):
     if not force:
         raise exceptions.CloudifyCliError(
-            "This action requires additional confirmation. Add the "
-            "'-f/--force' flag to your command if you are certain this "
-            "command should be executed.")
+            "This action requires additional confirmation. Add the '-f' or "
+            "'--force' flags to your command if you are certain this command "
+            "should be executed.")
 
 
 def _do_teardown():

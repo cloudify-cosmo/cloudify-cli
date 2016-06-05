@@ -17,13 +17,11 @@
 Handles all commands that start with 'cfy agents'
 """
 
-import time
 import threading
 
 from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
-from cloudify_cli.execution_events_fetcher import wait_for_execution, \
-    WAIT_FOR_EXECUTION_SLEEP_INTERVAL
+from cloudify_cli.execution_events_fetcher import wait_for_execution
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.exceptions import ExecutionTimeoutError
 from cloudify import logs
@@ -135,13 +133,9 @@ def install(deployment_id, include_logs):
                for dep_id in deps]
 
     for t in threads:
-        t.daemon = True
         t.start()
-
-    while True:
-        if all(not thread.is_alive() for thread in threads):
-            break
-        time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
+    for t in threads:
+        t.join()
 
     if error_summary:
         logger.error('Summary:\n{0}\n'.format(

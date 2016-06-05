@@ -579,7 +579,7 @@ class InstallTest(CliCommandTest):
                                           DEFAULT_BLUEPRINT_PATH)
 
         start_of_permission_denied_message = \
-            'A problem was encountered while trying to open'
+            'A problem was encountered while trying to open the path'
 
         open(tmp_blueprint_path, 'w').close()
         os.chmod(tmp_blueprint_path, 0)

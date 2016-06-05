@@ -28,6 +28,6 @@ fi
 
 ln -sf $INSTALLER_DIR/bin/cfy $PREFIX/bin || error_exit "Cannot link cfy to $PREFIX/bin"
 
-echo "Thank you for installing Cloudify!"
+echo "Thank you for installing cloudify!"
 
 exit 0

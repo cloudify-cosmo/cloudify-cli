@@ -18,10 +18,9 @@ Handles all commands that start with 'cfy node-instances'
 """
 
 from cloudify_rest_client.exceptions import CloudifyClientError
-
 from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
 from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import get_logger
 
 
 def get(node_instance_id):
@@ -29,13 +28,16 @@ def get(node_instance_id):
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
-    logger.info('Retrieving node instance {0}'.format(node_instance_id))
+    logger.info('Getting node instance with ID: \'{0}\' [manager={1}]'
+                .format(node_instance_id, management_ip))
     try:
         node_instance = client.node_instances.get(node_instance_id)
-    except CloudifyClientError as e:
+    except CloudifyClientError, e:
         if e.status_code != 404:
             raise
-        raise CloudifyCliError('Node instance {0} not found')
+        msg = ("Node instance with ID '{0}' was not found on the management "
+               "server".format(node_instance_id))
+        raise CloudifyCliError(msg)
 
     columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
     pt = utils.table(columns, [node_instance])
@@ -56,17 +58,20 @@ def ls(deployment_id, node_name=None):
     client = utils.get_rest_client(management_ip)
     try:
         if deployment_id:
-            logger.info('Listing instances for deployment {0}...'.format(
-                deployment_id))
+            logger.info('Getting instances list for deployment: \'{0}\' '
+                        '[manager={1}]'.format(deployment_id, management_ip))
         else:
-            logger.info('Listing all instances...')
+            logger.info(
+                'Getting a list of all instances: [manager={0}]'.format(
+                    management_ip))
         instances = client.node_instances.list(deployment_id=deployment_id,
                                                node_name=node_name)
-    except CloudifyClientError as e:
+    except CloudifyClientError, e:
         if not e.status_code != 404:
             raise
-        raise CloudifyCliError('Deployment {0} does not exist'.format(
-            deployment_id))
+        msg = 'Deployment {0} does not exist on management server'\
+              .format(deployment_id)
+        raise CloudifyCliError(msg)
 
     columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
     pt = utils.table(columns, instances)

@@ -154,8 +154,6 @@ class CliCommandTest(unittest.TestCase):
     def _create_cosmo_wd_settings(self, settings=None):
         directory_settings = utils.CloudifyWorkingDirectorySettings()
         directory_settings.set_management_server('localhost')
-        directory_settings.set_management_key('key')
-        directory_settings.set_management_user('user')
         utils.delete_cloudify_working_dir_settings()
         utils.dump_cloudify_working_dir_settings(
             settings or directory_settings, update=False)

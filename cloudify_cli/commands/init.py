@@ -33,8 +33,8 @@ def init(reset_config, skip_logging=False):
             constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
             constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)):
         if not reset_config:
-            error = exceptions.CloudifyCliError(
-                'Current directory is already initialized')
+            msg = 'Current directory is already initialized'
+            error = exceptions.CloudifyCliError(msg)
             error.possible_solutions = [
                 "Run 'cfy init -r' to force re-initialization "
                 "(might overwrite existing "
