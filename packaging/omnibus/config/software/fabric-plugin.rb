@@ -1,6 +1,6 @@
 name "fabric-plugin"
 
-default_version "1.4"
+default_version "1.4.1"
 
 source :git => "https://github.com/cloudify-cosmo/cloudify-fabric-plugin"
 
