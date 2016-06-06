@@ -1,6 +1,7 @@
 name "vsphere-plugin"
 
-default_version "2.0"
+plugin_version = "vsphere-plugin/2.0"
+default_version plugin_version.sub! "vsphere-plugin/", ""
 
 ENV['GITHUB_USERNAME'] || raise('GITHUB_USERNAME environment variable not set (required for private repo)')
 ENV['GITHUB_PASSWORD'] || raise('GITHUB_PASSWORD environment variable not set (required for private repo)')

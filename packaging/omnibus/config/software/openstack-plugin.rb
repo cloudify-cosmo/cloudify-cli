@@ -1,6 +1,7 @@
 name "openstack-plugin"
 
-default_version "1.4"
+plugin_version = "openstack-plugin/1.4"
+default_version plugin_version.sub! "openstack-plugin/", ""
 
 source :git => "https://github.com/cloudify-cosmo/cloudify-openstack-plugin"
 
