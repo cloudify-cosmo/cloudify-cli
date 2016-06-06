@@ -23,15 +23,15 @@ function download_wheels() {
     [[ $? -eq 0 ]] && rm -rf cloudify-cli-${CORE_TAG_NAME}
 
     pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-${CORE_TAG_NAME}.zip \
-    https://github.com/cloudify-cosmo/cloudify-rest-client/archive/$CORE_TAG_NAME.zip#egg=cloudify-rest-client \
-    https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/$CORE_TAG_NAME.zip#egg=cloudify-dsl-parser \
-    https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/$CORE_TAG_NAME.zip#egg=cloudify-plugins-common \
+    https://github.com/cloudify-cosmo/cloudify-rest-client/archive/${CORE_TAG_NAME}.zip#egg=cloudify-rest-client \
+    https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/${CORE_TAG_NAME}.zip#egg=cloudify-dsl-parser \
+    https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/${CORE_TAG_NAME}.zip#egg=cloudify-plugins-common \
     https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.4.zip#egg=cloudify-script-plugin \
     https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.4.1.zip#egg=cloudify-fabric-plugin \
     https://github.com/cloudify-cosmo/cloudify-openstack-plugin/archive/1.4.zip#egg=cloudify-openstack-plugin \
     https://github.com/cloudify-cosmo/cloudify-aws-plugin/archive/1.4.zip#egg=cloudify-aws-plugin \
     https://github.com/cloudify-cosmo/tosca-vcloud-plugin/archive/1.3.1.zip#egg=cloudify-vcloud-plugin \
-    https://$GITHUB_USERNAME:$GITHUB_PASSWORD@github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/2.0.zip#egg=cloudify-vsphere-plugin \
+    https://$GITHUB_USERNAME:$GITHUB_PASSWORD@github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/2.0.zip#egg=cloudify-vsphere-plugin
 }
 
 function download_resources() {
@@ -89,7 +89,7 @@ function update_remote_to_local_links() {
 # VERSION/PRERELEASE/BUILD/CORE_TAG_NAME/PLUGINS_TAG_NAME must be exported as they are being read as an env var by the install wizard
 
 CORE_TAG_NAME="3.4m5"
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/$CORE_TAG_NAME/common/provision.sh -o ./common-provision.sh &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${CORE_TAG_NAME}/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
 
 GITHUB_USERNAME=$1
@@ -97,11 +97,11 @@ GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
 
-
 install_requirements &&
 download_wheels $GITHUB_USERNAME $GITHUB_PASSWORD &&
 download_resources $GITHUB_USERNAME $GITHUB_PASSWORD &&
 update_remote_to_local_links &&
 iscc packaging/create_install_wizard.iss &&
-cd /home/Administrator/packaging/output/ && create_md5 "exe"  &&
+cd /home/Administrator/packaging/output/ &&
+create_md5 "exe" &&
 [ -z ${AWS_ACCESS_KEY} ] || upload_to_s3 "exe" && upload_to_s3 "md5"
