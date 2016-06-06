@@ -1,6 +1,7 @@
 name "tosca-vcloud-plugin"
 
-default_version "1.3.1"
+plugin_version = "tosca-vcloud-plugin/1.3.1"
+default_version plugin_version.sub! "tosca-vcloud-plugin/", ""
 
 source :git => "https://github.com/cloudify-cosmo/tosca-vcloud-plugin"
 
