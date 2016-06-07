@@ -23,15 +23,15 @@ function download_wheels() {
     [[ $? -eq 0 ]] && rm -rf cloudify-cli-${CORE_TAG_NAME}
 
     pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-${CORE_TAG_NAME}.zip \
-    https://github.com/cloudify-cosmo/cloudify-rest-client/archive/$CORE_TAG_NAME.zip#egg=cloudify-rest-client \
-    https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/$CORE_TAG_NAME.zip#egg=cloudify-dsl-parser \
-    https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/$CORE_TAG_NAME.zip#egg=cloudify-plugins-common \
+    https://github.com/cloudify-cosmo/cloudify-rest-client/archive/${CORE_TAG_NAME}.zip#egg=cloudify-rest-client \
+    https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/${CORE_TAG_NAME}.zip#egg=cloudify-dsl-parser \
+    https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/${CORE_TAG_NAME}.zip#egg=cloudify-plugins-common \
     https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.4.zip#egg=cloudify-script-plugin \
     https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.4.1.zip#egg=cloudify-fabric-plugin \
     https://github.com/cloudify-cosmo/cloudify-openstack-plugin/archive/1.4.zip#egg=cloudify-openstack-plugin \
     https://github.com/cloudify-cosmo/cloudify-aws-plugin/archive/1.4.zip#egg=cloudify-aws-plugin \
     https://github.com/cloudify-cosmo/tosca-vcloud-plugin/archive/1.3.1.zip#egg=cloudify-vcloud-plugin \
-    https://$GITHUB_USERNAME:$GITHUB_PASSWORD@github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/2.0.zip#egg=cloudify-vsphere-plugin \
+    https://github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/2.0.zip#egg=cloudify-vsphere-plugin
 }
 
 function download_resources() {
@@ -45,25 +45,25 @@ function download_resources() {
         tar -zxvf /tmp/Python279_x32.tar.gz --strip-components=1
     popd
     pushd packaging/source/blueprints
-        curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/$CORE_TAG_NAME.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
+        curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/${CORE_TAG_NAME}.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
         tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1
     popd
 
     # Downloading types.yaml
     pushd packaging/source/types
-        curl -LO http://getcloudify.org.s3.amazonaws.com/spec/cloudify/$CORE_TAG_NAME/types.yaml
+        curl -LO http://getcloudify.org.s3.amazonaws.com/spec/cloudify/${CORE_TAG_NAME}/types.yaml
     popd
 
     # Downloading Scripts
     pushd packaging/source/scripts
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/fs/mkfs.sh
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/fs/fdisk.sh
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/fs/mount.sh
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/fs/unmount.sh
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/policies/host_failure.clj
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/policies/threshold.clj
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/policies/ewma_stabilized.clj
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/$CORE_TAG_NAME/resources/rest-service/cloudify/triggers/execute_workflow.clj
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_TAG_NAME}/resources/rest-service/cloudify/fs/mkfs.sh
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_TAG_NAME}/resources/rest-service/cloudify/fs/fdisk.sh
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_TAG_NAME}/resources/rest-service/cloudify/fs/mount.sh
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_TAG_NAME}/resources/rest-service/cloudify/fs/unmount.sh
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_TAG_NAME}/resources/rest-service/cloudify/policies/host_failure.clj
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_TAG_NAME}/resources/rest-service/cloudify/policies/threshold.clj
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_TAG_NAME}/resources/rest-service/cloudify/policies/ewma_stabilized.clj
+        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_TAG_NAME}/resources/rest-service/cloudify/triggers/execute_workflow.clj
     popd
 
     # Downloading plugin yamls
@@ -78,7 +78,7 @@ function download_resources() {
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/tosca-vcloud-plugin/1.3.1/plugin.yaml -o tosca-vcloud-plugin/plugin.yaml
 
         # Downloading commercial plugin yamls
-        curl -L https://$GITHUB_USERNAME:$GITHUB_PASSWORD@raw.githubusercontent.com/cloudify-cosmo/cloudify-vsphere-plugin/2.0/plugin.yaml -o vsphere-plugin/plugin.yaml
+        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-vsphere-plugin/2.0/plugin.yaml -o vsphere-plugin/plugin.yaml
     popd
 }
 
@@ -89,7 +89,7 @@ function update_remote_to_local_links() {
 # VERSION/PRERELEASE/BUILD/CORE_TAG_NAME/PLUGINS_TAG_NAME must be exported as they are being read as an env var by the install wizard
 
 CORE_TAG_NAME="3.4rc1"
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/$CORE_TAG_NAME/common/provision.sh -o ./common-provision.sh &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${CORE_TAG_NAME}/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
 
 GITHUB_USERNAME=$1
