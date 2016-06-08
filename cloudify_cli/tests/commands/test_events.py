@@ -27,6 +27,8 @@ from cloudify_rest_client.executions import Execution
 
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
+from cloudify_cli.tests.resources.mocks.mock_list_response \
+    import MockListResponse
 
 
 def mock_log_message_prefix(event):
@@ -78,10 +80,14 @@ class EventsTest(CliCommandTest):
 
         return execution
 
-    def _mock_events_get(self, execution_id, from_event=0,
-                         batch_size=100, include_logs=False):
+    def _mock_events_list(self, include_logs=False, message=None,
+                          from_datetime=None, to_datetime=None, _include=None,
+                          sort='@timestamp', **kwargs):
+        from_event = kwargs.get('_offset', 0)
+        batch_size = kwargs.get('_size', 100)
         events = self._get_events_before(time.time())
-        return events[from_event:from_event+batch_size], len(events)
+        return MockListResponse(
+            events[from_event:from_event+batch_size], len(events))
 
     def update_execution_status(self):
         """ sets the execution status to TERMINATED when
@@ -109,7 +115,7 @@ class EventsTest(CliCommandTest):
            new=mock_log_message_prefix)
     def test_events_tail(self):
         self.client.executions.get = self._mock_executions_get
-        self.client.events.get = self._mock_events_get
+        self.client.events.list = self._mock_events_list
 
         stdout = StringIO()
         with patch('sys.stdout', stdout):
@@ -137,7 +143,7 @@ class EventsTest(CliCommandTest):
 
     def _test_events(self, flag=''):
         self.client.executions.get = self._mock_executions_get
-        self.client.events.get = self._mock_events_get
+        self.client.events.list = self._mock_events_list
         stdout = StringIO()
         with patch('sys.stdout', stdout):
             cli_runner.run_cli(
