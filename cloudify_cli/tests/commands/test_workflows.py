@@ -54,6 +54,51 @@ class WorkflowsTest(CliCommandTest):
         self.client.deployments.get = MagicMock(return_value=deployment)
         cli_runner.run_cli('cfy workflows list -d a-deployment-id')
 
+    def test_workflows_sort_list(self):
+
+        deployment = Deployment({
+            'blueprint_id': 'mock_blueprint_id',
+            'workflows': [
+                {
+                    'created_at': None,
+                    'name': 'my_workflow_1',
+                    'parameters': {
+                        'test-key': {
+                            'default': 'test-value'
+                        },
+                        'test-mandatory-key': {},
+                        'test-nested-key': {
+                            'default': {
+                                'key': 'val'
+                            }
+                        }
+                    }
+                },
+                {
+                    'created_at': None,
+                    'name': 'my_workflow_0',
+                    'parameters': {
+                        'test-key': {
+                            'default': 'test-value'
+                        },
+                        'test-mandatory-key': {},
+                        'test-nested-key': {
+                            'default': {
+                                'key': 'val'
+                            }
+                        }
+                    }
+                }
+            ]
+        })
+
+        self.client.deployments.get = MagicMock(return_value=deployment)
+
+        output = cli_runner.run_cli('cfy workflows list -d a-deployment-id')
+        first = output.find('my_workflow_0')
+        second = output.find('my_workflow_1')
+        self.assertTrue(0 < first < second)
+
     def test_workflows_get(self):
         deployment = Deployment({
             'blueprint_id': 'mock_blueprint_id',

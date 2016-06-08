@@ -63,7 +63,8 @@ def get(execution_id):
     logger.info('')
 
 
-def ls(deployment_id, include_system_workflows):
+def ls(deployment_id, include_system_workflows,
+       sort_by=None, descending=False):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -75,7 +76,9 @@ def ls(deployment_id, include_system_workflows):
             logger.info('Listing all executions...')
         executions = client.executions.list(
             deployment_id=deployment_id,
-            include_system_workflows=include_system_workflows)
+            include_system_workflows=include_system_workflows,
+            sort=sort_by,
+            is_descending=descending)
     except exceptions.CloudifyClientError as e:
         if e.status_code != 404:
             raise

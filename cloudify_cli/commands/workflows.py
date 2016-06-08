@@ -90,6 +90,8 @@ def ls(deployment_id):
     deployment = client.deployments.get(deployment_id)
     workflows = deployment.workflows
 
+    workflows = sorted(workflows, key=lambda w: w.name)
+
     pt = utils.table(['blueprint_id', 'deployment_id',
                       'name', 'created_at'],
                      data=workflows,
