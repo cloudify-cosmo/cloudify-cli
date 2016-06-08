@@ -18,6 +18,7 @@ Tests all commands that start with 'cfy workflows'
 """
 
 from mock import MagicMock
+from cloudify_cli import utils
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 from cloudify_rest_client.deployments import Deployment
@@ -53,6 +54,62 @@ class WorkflowsTest(CliCommandTest):
 
         self.client.deployments.get = MagicMock(return_value=deployment)
         cli_runner.run_cli('cfy workflows list -d a-deployment-id')
+
+    def test_workflows_sort_list(self):
+
+        def set_mocks():
+            def mock_table(*_, **kwargs):
+                workflows = kwargs['data']
+                self.assertEqual(2, len(workflows))
+                self.assertEqual('0', workflows[0].name)
+                self.assertEqual('1', workflows[1].name)
+
+            def mock_print_table(*_, **__):
+                pass
+
+            utils.table, utils.print_table = mock_table, mock_print_table
+
+        original_table, original_print_table = utils.table, utils.print_table
+        deployment = Deployment({
+            'blueprint_id': 'mock_blueprint_id',
+            'workflows': [
+                {
+                    'created_at': None,
+                    'name': '1',
+                    'parameters': {
+                        'test-key': {
+                            'default': 'test-value'
+                        },
+                        'test-mandatory-key': {},
+                        'test-nested-key': {
+                            'default': {
+                                'key': 'val'
+                            }
+                        }
+                    }
+                },
+                {
+                    'created_at': None,
+                    'name': '0',
+                    'parameters': {
+                        'test-key': {
+                            'default': 'test-value'
+                        },
+                        'test-mandatory-key': {},
+                        'test-nested-key': {
+                            'default': {
+                                'key': 'val'
+                            }
+                        }
+                    }
+                }
+            ]
+        })
+
+        self.client.deployments.get = MagicMock(return_value=deployment)
+        set_mocks()
+        cli_runner.run_cli('cfy workflows list -d a-deployment-id')
+        utils.table, utils.print_table = original_table, original_print_table
 
     def test_workflows_get(self):
         deployment = Deployment({

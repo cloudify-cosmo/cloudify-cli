@@ -78,10 +78,32 @@ class EventsTest(CliCommandTest):
 
         return execution
 
-    def _mock_events_get(self, execution_id, from_event=0,
-                         batch_size=100, include_logs=False):
+    class MockListResponse(object):
+
+        def __init__(self, items, _):
+            self.items = items
+            self.metadata = None
+
+        def __iter__(self):
+            return iter(self.items)
+
+        def __getitem__(self, index):
+            return self.items[index]
+
+        def __len__(self):
+            return len(self.items)
+
+        def sort(self, cmp=None, key=None, reverse=False):
+            return self.items.sort(cmp, key, reverse)
+
+    def _mock_events_list(self, include_logs=False, message=None,
+                          from_datetime=None, to_datetime=None, _include=None,
+                          sort='@timestamp', **kwargs):
+        from_event = kwargs.get('_offset', 0)
+        batch_size = kwargs.get('_size', 100)
         events = self._get_events_before(time.time())
-        return events[from_event:from_event+batch_size], len(events)
+        return self.MockListResponse(
+            events[from_event:from_event+batch_size], len(events))
 
     def update_execution_status(self):
         """ sets the execution status to TERMINATED when
@@ -109,7 +131,7 @@ class EventsTest(CliCommandTest):
            new=mock_log_message_prefix)
     def test_events_tail(self):
         self.client.executions.get = self._mock_executions_get
-        self.client.events.get = self._mock_events_get
+        self.client.events.list = self._mock_events_list
 
         stdout = StringIO()
         with patch('sys.stdout', stdout):
@@ -137,7 +159,7 @@ class EventsTest(CliCommandTest):
 
     def _test_events(self, flag=''):
         self.client.executions.get = self._mock_executions_get
-        self.client.events.get = self._mock_events_get
+        self.client.events.list = self._mock_events_list
         stdout = StringIO()
         with patch('sys.stdout', stdout):
             cli_runner.run_cli(

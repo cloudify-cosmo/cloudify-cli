@@ -41,7 +41,7 @@ def _print_deployment_inputs(client, blueprint_id):
     logger.info(inputs_output.getvalue())
 
 
-def ls(blueprint_id):
+def ls(blueprint_id, sort_by=None, reverse=False):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -50,7 +50,7 @@ def ls(blueprint_id):
             blueprint_id))
     else:
         logger.info('Listing all deployments...')
-    deployments = client.deployments.list()
+    deployments = client.deployments.list(sort=sort_by, is_descending=reverse)
     if blueprint_id:
         deployments = filter(lambda deployment:
                              deployment['blueprint_id'] == blueprint_id,

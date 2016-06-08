@@ -94,13 +94,14 @@ def get(plugin_id):
     print_table('Plugin:', pt)
 
 
-def ls():
+def ls(sort_by=None, reverse=False):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
     logger.info('Listing all plugins...')
-    plugins = client.plugins.list(_include=fields)
+    plugins = client.plugins.list(
+        _include=fields, sort=sort_by, is_descending=reverse)
 
     pt = utils.table(fields, data=plugins)
     print_table('Plugins:', pt)
