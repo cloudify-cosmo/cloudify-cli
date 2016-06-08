@@ -49,6 +49,24 @@ class DeploymentsTest(CliCommandTest):
         self.client.deployments.delete = MagicMock()
         cli_runner.run_cli('cfy deployments delete -d my-dep')
 
+    class MockListResponse(object):
+
+        def __init__(self, items, _):
+            self.items = items
+            self.metadata = None
+
+        def __iter__(self):
+            return iter(self.items)
+
+        def __getitem__(self, index):
+            return self.items[index]
+
+        def __len__(self):
+            return len(self.items)
+
+        def sort(self, cmp=None, key=None, reverse=False):
+            return self.items.sort(cmp, key, reverse)
+
     def test_deployments_execute(self):
         execute_response = Execution({'status': 'started'})
         get_execution_response = Execution({
@@ -72,7 +90,7 @@ class DeploymentsTest(CliCommandTest):
                 'deployment_id': 'deployment-id'
             }
         }
-        get_events_response = ([success_event], 1)
+        get_events_response = self.MockListResponse([success_event], 1)
 
         self.client.executions.start = MagicMock(
             return_value=execute_response
@@ -80,7 +98,7 @@ class DeploymentsTest(CliCommandTest):
         self.client.executions.get = MagicMock(
             return_value=get_execution_response
         )
-        self.client.events.get = MagicMock(return_value=get_events_response)
+        self.client.events.list = MagicMock(return_value=get_events_response)
         cli_runner.run_cli('cfy executions start '
                            '-d a-deployment-id -w install')
 
