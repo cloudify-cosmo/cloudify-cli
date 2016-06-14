@@ -117,7 +117,7 @@ def download(blueprint_id, output):
     logger.info('Downloading blueprint {0}...'.format(blueprint_id))
     client = utils.get_rest_client(management_ip)
     target_file = client.blueprints.download(blueprint_id, output)
-    logger.info('Blueprint downloaded as {1}'.format(target_file))
+    logger.info('Blueprint downloaded as {0}'.format(target_file))
 
 
 def delete(blueprint_id):
