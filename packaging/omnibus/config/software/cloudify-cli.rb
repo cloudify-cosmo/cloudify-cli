@@ -46,7 +46,7 @@ build do
              "-r", "dev-requirements.txt"]
 
     command ["#{install_dir}/embedded/bin/pip",
-             "install", "--build=#{project_dir}/aws-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-aws-plugin/archive/1.4.zip"]
+             "install", "--build=#{project_dir}/aws-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-aws-plugin/archive/1.4.1.zip"]
 
     command ["#{install_dir}/embedded/bin/pip",
              "install", "--build=#{project_dir}/openstack-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-openstack-plugin/archive/1.4.zip"]
