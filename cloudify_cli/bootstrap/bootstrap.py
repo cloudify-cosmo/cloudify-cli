@@ -371,7 +371,7 @@ def recover(snapshot_path,
     manager_user = manager_node.properties['ssh_user']
     manager_key_path = manager_node.properties['ssh_key_filename']
 
-    fabric_env = build_fabric_env(manager_ip, manager_key_path, manager_user)
+    fabric_env = build_fabric_env(manager_ip, manager_user, manager_key_path)
 
     agent_remote_key_path = _handle_agent_key_file(fabric_env,
                                                    manager_node)
