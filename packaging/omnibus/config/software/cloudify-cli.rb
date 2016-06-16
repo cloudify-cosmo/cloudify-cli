@@ -55,7 +55,7 @@ build do
              "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.4.1.zip"]
 
     command ["#{install_dir}/embedded/bin/pip",
-             "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.4.zip"]
+             "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.4.1.zip"]
 
     command ["#{install_dir}/embedded/bin/pip",
              "install", "--build=#{project_dir}/vsphere-plugin", ".", "https://#{github_username}:#{github_password}@github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/2.0.zip"]
