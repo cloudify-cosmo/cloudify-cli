@@ -17,11 +17,21 @@
 Handles 'cfy bootstrap'
 """
 
+import os
 import sys
 
 from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
 from cloudify_cli.bootstrap import bootstrap as bs
+
+
+def _get_manager_blueprint_path(env):
+    return os.path.join(
+        os.path.dirname(__file__),
+        '..',
+        'resources',
+        'manager-blueprints',
+        '{0}-manager-blueprint.yaml'.format(env))
 
 
 def bootstrap(keep_up,
@@ -32,12 +42,24 @@ def bootstrap(keep_up,
               install_plugins,
               task_retries,
               task_retry_interval,
-              task_thread_pool_size):
+              task_thread_pool_size,
+              provider):
     logger = get_logger()
     env_name = 'manager'
 
     # Verify directory is initialized
     utils.get_context_path()
+
+    if provider and blueprint_path:
+        raise RuntimeError('Choose one of `provider` or `blueprint_path`.')
+    if not blueprint_path:
+        if not provider:
+            if keep_up:
+                logger.warning('Bootstrapping on existing machine - '
+                               'ignoring --keep-up-on-failure...')
+            blueprint_path = _get_manager_blueprint_path('simple')
+        else:
+            blueprint_path = _get_manager_blueprint_path(provider)
 
     # verifying no environment exists from a previous bootstrap
     try:

@@ -13,7 +13,23 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+import os
 from setuptools import setup
+
+
+data_files = [
+    'VERSION',
+    'resources/config.yaml',
+    'resources/getdocker.sh',
+    'bootstrap/resources/install_plugins.sh.template'
+]
+
+cwd = os.getcwd()
+os.chdir('cloudify_cli')
+for root, _, files in os.walk('resources/manager-blueprint'):
+    for filename in files:
+        data_files.append(os.path.join(root, filename))
+os.chdir(cwd)
 
 
 setup(
@@ -26,14 +42,7 @@ setup(
               'cloudify_cli.bootstrap',
               'cloudify_cli.bootstrap.resources',
               'cloudify_cli.config'],
-    package_data={
-        'cloudify_cli': [
-            'VERSION',
-            'resources/config.yaml',
-            'resources/getdocker.sh',
-            'bootstrap/resources/install_plugins.sh.template'
-        ],
-    },
+    package_data={'cloudify_cli': data_files},
     license='LICENSE',
     description='Cloudify CLI',
     entry_points={

@@ -1079,10 +1079,10 @@ def parser_config():
             'bootstrap': {
                 'help': 'Bootstrap a Manager',
                 'arguments': {
-                    '-p,--blueprint-path':
-                        local_blueprint_path_argument(
-                                hlp='The path to a Manager blueprint'
-                        ),
+                    '-p,--blueprint-path': {
+                        'dest': 'blueprint_path',
+                        'help': 'The path to a Manager Blueprint'
+                    },
                     '-i,--inputs': inputs_argument(
                         hlp='Inputs for a Manager blueprint ({0}). '
                             'This argument can be used multiple times.'
@@ -1108,8 +1108,11 @@ def parser_config():
                     '--install-plugins': install_plugins_argument(),
                     '--task-retries': task_retries_argument(5),
                     '--task-retry-interval': task_retry_interval_argument(30),
-                    '--task-thread-pool-size':
-                        task_thread_pool_size_argument()
+                    '--task-thread-pool-size': task_thread_pool_size_argument(),
+                    '--provider': {
+                        'dest': 'provider',
+                        'help': 'Cloud Provider to bootstrap on.'
+                    },
                 },
                 'handler': cfy.bootstrap
             },

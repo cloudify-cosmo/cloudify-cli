@@ -1,0 +1,4 @@
+#! /usr/bin/env bash
+for proc in "$(/usr/bin/ps aux | /usr/bin/grep rabbitmq | /usr/bin/grep -v grep | /usr/bin/awk '{ print $2 }')"; do
+    /usr/bin/kill ${proc}
+done
