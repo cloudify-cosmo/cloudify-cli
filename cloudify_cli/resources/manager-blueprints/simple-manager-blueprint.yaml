@@ -29,6 +29,19 @@ inputs:
     default: ''
     type: string
 
+
+dsl_definitions:
+  exec_config: &exec_config
+    hide_output:
+      - running
+    use_sudo: false
+    fabric_env:
+      user: { get_input: ssh_user }
+      key_filename: { get_input: ssh_key_filename }
+      host_string: { get_property: [manager_host, public_ip] }
+      always_use_pty: true
+
+
 ######################################################################
 # This is a simple blueprint specific node_type to allow us to define
 # The public_ip of the machine is an accessible property of the host.
@@ -100,20 +113,13 @@ node_templates:
           implementation: fabric.fabric_plugin.tasks.run_script
           inputs:
             script_path: components/manager/scripts/create_conf.py
-            hide_output: &hide_output
-              - running
-            fabric_env: &simple_fabric_env
-              user: { get_input: ssh_user }
-              key_filename: { get_input: ssh_key_filename }
-              host_string: { get_property: [manager_host, public_ip] }
-              always_use_pty: true
+            << : *exec_config
       cloudify.interfaces.validation:
         creation:
           implementation: fabric.fabric_plugin.tasks.run_script
           inputs:
             script_path: components/manager/scripts/creation_validation.py
-            hide_output: *hide_output
-            fabric_env: *simple_fabric_env
+            << : *exec_config
 
     relationships:
       - type: cloudify.relationships.contained_in
