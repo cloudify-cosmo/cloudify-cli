@@ -1,0 +1,280 @@
+imports:
+  - http://www.getcloudify.org/spec/cloudify/3.4rc1/types.yaml
+  - http://www.getcloudify.org/spec/fabric-plugin/1.4.1/plugin.yaml
+  - service-types.yaml
+  - configuration-inputs.yaml
+  - dev-inputs.yaml
+  - resource-inputs.yaml
+
+
+dsl_definitions:
+  exec_config: &exec_config
+    hide_output:
+      default:
+        - running
+    use_sudo:
+      default: false
+    fabric_env:
+      user: { get_input: ssh_user }
+      key_filename: { get_input: ssh_key_filename }
+      host_string: { get_property: [manager_host, public_ip] }
+      always_use_pty: true
+
+
+node_templates:
+  # #####################################################################
+  # The manager_configuration node is meant to be read by Cloudify to
+  # provide runtime configuration and information for the CLI and the
+  # Manager.
+  # #####################################################################
+  manager_resources:
+    type: cloudify.nodes.ManagerResources
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: manager_host
+
+  # #####################################################################
+  # The Python and Java nodes are used to provide runtime environments
+  # on specific hosts. It allows us to define the runtime environment
+  # and install it only once per host and then have a node depend on it.
+  # Note that Erlang and NodeJS are also installed as runtime envs as
+  # part of the RabbitMQ and WebUI nodes respectively but as they're not
+  # used by multiple nodes, we're not specifying them as independent
+  # entities.
+  # #####################################################################
+  python_runtime:
+    type: manager.nodes.PythonRuntime
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: manager_host
+      - type: cloudify.relationships.depends_on
+        target: manager_configuration
+
+  java_runtime:
+    type: manager.nodes.JavaRuntime
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: manager_host
+      - type: cloudify.relationships.depends_on
+        target: manager_configuration
+
+  # ######################################################################
+  # # These are the nodes comprising the Cloudify Manager's components
+  # ######################################################################
+  rabbitmq:
+    type: manager.nodes.RabbitMQ
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: manager_host
+      - type: cloudify.relationships.depends_on
+        target: manager_configuration
+    interfaces:
+      cloudify.interfaces.validation:
+        creation:
+          implementation: fabric.fabric_plugin.tasks.run_script
+          inputs:
+            script_path: components/rabbitmq/scripts/creation_validation.py
+            << : *exec_config
+
+  elasticsearch:
+    type: manager.nodes.Elasticsearch
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: manager_host
+      - type: cloudify.relationships.depends_on
+        target: java_runtime
+      - type: cloudify.relationships.depends_on
+        target: manager_configuration
+    interfaces:
+      cloudify.interfaces.validation:
+        creation:
+          implementation: fabric.fabric_plugin.tasks.run_script
+          inputs:
+            script_path: components/elasticsearch/scripts/creation_validation.py
+            << : *exec_config
+
+  logstash:
+    type: manager.nodes.Logstash
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: manager_host
+      - type: cloudify.relationships.depends_on
+        target: java_runtime
+      - type: logstash_to_elasticsearch
+        target: elasticsearch
+      - type: cloudify.relationships.depends_on
+        target: manager_configuration
+    interfaces:
+      cloudify.interfaces.validation:
+        creation:
+          implementation: fabric.fabric_plugin.tasks.run_script
+          inputs:
+            script_path: components/logstash/scripts/creation_validation.py
+            << : *exec_config
+
+  influxdb:
+    type: manager.nodes.InfluxDB
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: manager_host
+      - type: cloudify.relationships.depends_on
+        target: manager_configuration
+    interfaces:
+      cloudify.interfaces.validation:
+        creation:
+          implementation: fabric.fabric_plugin.tasks.run_script
+          inputs:
+            script_path: components/influxdb/scripts/creation_validation.py
+            << : *exec_config
+
+  nginx:
+    type: manager.nodes.Nginx
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: manager_host
+      - type: nginx_to_manager_configuration
+        target: manager_configuration
+      - type: nginx_to_restservice
+        target: rest_service
+    interfaces:
+      cloudify.interfaces.validation:
+        creation:
+          implementation: fabric.fabric_plugin.tasks.run_script
+          inputs:
+            script_path: components/nginx/scripts/creation_validation.py
+            << : *exec_config
+
+  riemann:
+    type: manager.nodes.Riemann
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: manager_host
+      - type: cloudify.relationships.depends_on
+        target: java_runtime
+      - type: riemann_to_rabbitmq
+        target: rabbitmq
+      - type: riemann_to_nginx
+        target: nginx
+      - type: cloudify.relationships.depends_on
+        target: manager_configuration
+    interfaces:
+      cloudify.interfaces.validation:
+        creation:
+          implementation: fabric.fabric_plugin.tasks.run_script
+          inputs:
+            script_path: components/riemann/scripts/creation_validation.py
+            << : *exec_config
+
+  rest_service:
+    type: manager.nodes.RestService
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: manager_host
+      - type: cloudify.relationships.depends_on
+        target: python_runtime
+      - type: rest_to_mgr_config
+        target: manager_configuration
+      - type: restservice_to_elasticsearch
+        target: elasticsearch
+      - type: restservice_to_rabbitmq
+        target: rabbitmq
+    interfaces:
+      cloudify.interfaces.validation:
+        creation:
+          implementation: fabric.fabric_plugin.tasks.run_script
+          inputs:
+            script_path: components/restservice/scripts/creation_validation.py
+            << : *exec_config
+
+  mgmt_worker:
+    type: manager.nodes.ManagementWorker
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: manager_host
+      - type: cloudify.relationships.depends_on
+        target: python_runtime
+      - type: mgmtworker_to_rabbitmq
+        target: rabbitmq
+      - type: mgmtworker_to_nginx
+        target: nginx
+      - type: cloudify.relationships.depends_on
+        target: manager_configuration
+    interfaces:
+      cloudify.interfaces.validation:
+        creation:
+          implementation: fabric.fabric_plugin.tasks.run_script
+          inputs:
+            script_path: components/mgmtworker/scripts/creation_validation.py
+            << : *exec_config
+
+  amqp_influx:
+    type: manager.nodes.AmqpInfluxBroker
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: manager_host
+      - type: cloudify.relationships.depends_on
+        target: python_runtime
+      - type: amqpinflux_to_rabbitmq
+        target: rabbitmq
+      - type: amqpinflux_to_influxdb
+        target: influxdb
+      - type: cloudify.relationships.depends_on
+        target: manager_configuration
+    interfaces:
+      cloudify.interfaces.validation:
+        creation:
+          implementation: fabric.fabric_plugin.tasks.run_script
+          inputs:
+            script_path: components/amqpinflux/scripts/creation_validation.py
+            << : *exec_config
+
+  webui:
+    type: manager.nodes.WebUI
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: manager_host
+      - type: webui_to_restservice
+        target: rest_service
+      - type: webui_to_influxdb
+        target: influxdb
+      - type: cloudify.relationships.depends_on
+        target: manager_configuration
+
+  #################################
+  # Sanity
+  #################################
+  sanity:
+    type: manager.nodes.Sanity
+    relationships:
+      - type: cloudify.relationships.contained_in
+        target: manager_host
+      - type: sanity_to_mgr_config
+        target: manager_configuration
+      - type: cloudify.relationships.depends_on
+        target: python_runtime
+      - type: cloudify.relationships.depends_on
+        target: java_runtime
+      - type: cloudify.relationships.depends_on
+        target: elasticsearch
+      - type: cloudify.relationships.depends_on
+        target: logstash
+      - type: cloudify.relationships.depends_on
+        target: influxdb
+      - type: cloudify.relationships.depends_on
+        target: nginx
+      - type: cloudify.relationships.depends_on
+        target: riemann
+      - type: cloudify.relationships.depends_on
+        target: rest_service
+      - type: cloudify.relationships.depends_on
+        target: mgmt_worker
+      - type: cloudify.relationships.depends_on
+        target: manager_resources
+      - type: cloudify.relationships.depends_on
+        target: amqp_influx
+
+
+plugins:
+  cli:
+    install: false
+    executor: central_deployment_agent

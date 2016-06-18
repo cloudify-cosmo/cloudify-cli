@@ -1,0 +1,140 @@
+inputs:
+  #############################
+  # Manager Resources Package
+  #############################
+  manager_resources_package:
+    description: A URL to a tar files containing all of the manager's resources
+    type: string
+    default: https://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/3.4.0/rc1-RELEASE/cloudify-manager-resources_3.4.0-rc1-b395.tar.gz
+
+  manager_resources_package_checksum_file:
+    description: >
+      A URL to the Manager Resources Package md5 checksum file.
+      This defaults to an empty string, meaning that
+    type: string
+    default: ''
+
+  skip_checksum_validation:
+    description: Whether to skip md5 checksum validation or not
+    type: boolean
+    default: true
+
+  #############################
+  # Agent Packages
+  #############################
+
+  # Nginx, being the fileserver, also serves agent packages.
+  # The key names of the agents must be in the format: distro_release_agent
+  # as the key is what's used to name the file, which later allows our
+  # agent installer to identify it for your distro and release automatically.
+  agent_package_urls:
+    default:
+      ubuntu_trusty_agent: Ubuntu-trusty-agent_3.4.0-rc1-b395.tar.gz
+      ubuntu_precise_agent: Ubuntu-precise-agent_3.4.0-rc1-b395.tar.gz
+      centos_7x_agent: centos-Core-agent_3.4.0-rc1-b395.tar.gz
+      centos_6x_agent: centos-Final-agent_3.4.0-rc1-b395.tar.gz
+      redhat_7x_agent: redhat-Maipo-agent_3.4.0-rc1-b395.tar.gz
+      redhat_6x_agent: redhat-Santiago-agent_3.4.0-rc1-b395.tar.gz
+      cloudify_windows_agent: cloudify-windows-agent_3.4.0-rc1-b395.exe
+
+  #############################
+  # Cloudify Modules
+  #############################
+  rest_service_rpm_source_url:
+    type: string
+    default: cloudify-rest-service-3.4.0-rc1_b395.x86_64.rpm
+
+  management_worker_rpm_source_url:
+    type: string
+    default: cloudify-management-worker-3.4.0-rc1_b395.x86_64.rpm
+
+  amqpinflux_rpm_source_url:
+    type: string
+    default: cloudify-amqp-influx-3.4.0-rc1_b395.x86_64.rpm
+
+  cloudify_resources_url:
+    type: string
+    default: cloudify-manager-3.4rc1.tar.gz
+
+  webui_source_url:
+    type: string
+    default: cloudify-ui-3.4.0-rc1-b395.tgz
+
+  # This is a Cloudify specific redistribution of Grafana.
+  grafana_source_url:
+    type: string
+    default: grafana-1.9.0.tgz
+
+  #############################
+  # External Components
+  #############################
+  pip_source_rpm_url:
+    type: string
+    default: python-pip-7.1.0-1.el7.noarch.rpm
+
+  java_source_url:
+    type: string
+    default: jre1.8.0_45-1.8.0_45-fcs.x86_64.rpm
+
+  erlang_source_url:
+    type: string
+    default: erlang-17.4-1.el6.x86_64.rpm
+
+  rabbitmq_source_url:
+    type: string
+    default: rabbitmq-server-3.5.3-1.noarch.rpm
+
+  elasticsearch_source_url:
+    type: string
+    default: elasticsearch-1.6.0.noarch.rpm
+
+  elasticsearch_curator_rpm_source_url:
+    type: string
+    default: elasticsearch-curator-3.2.3-1.x86_64.rpm
+
+  logstash_source_url:
+    type: string
+    default: logstash-1.5.0-1.noarch.rpm
+
+  nginx_source_url:
+    type: string
+    default: nginx-1.8.0-1.el7.ngx.x86_64.rpm
+
+  influxdb_source_url:
+    type: string
+    default: influxdb-0.8.8-1.x86_64.rpm
+
+  langohr_source_url:
+    type: string
+    default: langohr.jar
+
+  daemonize_source_url:
+    type: string
+    default: daemonize-1.7.3-7.el7.x86_64.rpm
+
+  riemann_source_url:
+    type: string
+    default: riemann-0.2.6-1.noarch.rpm
+
+  nodejs_source_url:
+    type: string
+    default: node-v0.10.35-linux-x64.tar.gz
+
+  sanity_app_source_url:
+    type: string
+    default: cloudify-hello-world-example-3.4rc1.tar.gz
+
+  #############################
+  # Upload Resources Inputs
+  #############################
+  dsl_resources:
+    description: >
+      Holds a set of dsl required resources
+    default:
+      - {'source_path': 'http://www.getcloudify.org/spec/openstack-plugin/1.4/plugin.yaml', 'destination_path': '/spec/openstack-plugin/1.4/plugin.yaml'}
+      - {'source_path': 'http://www.getcloudify.org/spec/aws-plugin/1.4.1/plugin.yaml', 'destination_path': '/spec/aws-plugin/1.4.1/plugin.yaml'}
+      - {'source_path': 'http://www.getcloudify.org/spec/tosca-vcloud-plugin/1.3.1/plugin.yaml', 'destination_path': '/spec/tosca-vcloud-plugin/1.3.1/plugin.yaml'}
+      - {'source_path': 'http://www.getcloudify.org/spec/vsphere-plugin/2.0/plugin.yaml', 'destination_path': '/spec/vsphere-plugin/2.0/plugin.yaml'}
+      - {'source_path': 'http://www.getcloudify.org/spec/fabric-plugin/1.4.1/plugin.yaml', 'destination_path': '/spec/fabric-plugin/1.4.1/plugin.yaml'}
+      - {'source_path': 'http://www.getcloudify.org/spec/diamond-plugin/1.3.3/plugin.yaml', 'destination_path': '/spec/diamond-plugin/1.3.3/plugin.yaml'}
+      - {'source_path': 'http://www.getcloudify.org/spec/cloudify/3.4rc1/types.yaml', 'destination_path': '/spec/cloudify/3.4rc1/types.yaml'}
