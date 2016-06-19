@@ -39,16 +39,24 @@ class ListSortTest(CliCommandTest):
         }
         self.count_mock_calls = 0
 
+        self.original_lists = {}
+        for r in self.resources_types:
+            self.original_lists[r] = self.resources_types[r].list
+
+    def tearDown(self):
+        for r in self.resources_types:
+            self.resources_types[r].list = self.original_lists[r]
+
     def test_list_sort(self):
         for r in self.resources_types:
             self._set_mock_list(r, 'order')
-            cli_runner.run_cli('cfy {0} list -s order'.format(r))
+            cli_runner.run_cli('cfy {0} list --sort-by order'.format(r))
         self.assertEqual(len(self.resources_types), self.count_mock_calls)
 
     def test_list_sort_reverse(self):
         for r in self.resources_types:
-            self._set_mock_list(r, 'order', reverse=True)
-            cli_runner.run_cli('cfy {0} list -s order -r'.format(r))
+            self._set_mock_list(r, 'order', descending=True)
+            cli_runner.run_cli('cfy {0} list -s order --desc'.format(r))
         self.assertEqual(len(self.resources_types), self.count_mock_calls)
 
     def test_list_sort_default(self):
@@ -67,16 +75,16 @@ class ListSortTest(CliCommandTest):
                 r,
                 parser_config()['commands'][r]['sub_commands']['list']
                 ['arguments']['-s,--sort-by']['default'],
-                reverse=True
+                descending=True
             )
-            cli_runner.run_cli('cfy {0} list -r'.format(r))
+            cli_runner.run_cli('cfy {0} list --desc'.format(r))
         self.assertEqual(len(self.resources_types), self.count_mock_calls)
 
-    def _set_mock_list(self, resource, sort, reverse=False):
+    def _set_mock_list(self, resource, sort, descending=False):
         def _mock_list(*_, **kwargs):
             self.count_mock_calls += 1
             self.assertEqual(sort, kwargs['sort'])
-            self.assertEqual(reverse, kwargs['is_descending'])
+            self.assertEqual(descending, kwargs['is_descending'])
             return []
 
         self.resources_types[resource].list = _mock_list

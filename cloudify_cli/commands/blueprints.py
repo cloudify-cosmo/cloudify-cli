@@ -129,7 +129,7 @@ def delete(blueprint_id):
     logger.info('Blueprint deleted')
 
 
-def ls(sort_by=None, reverse=False):
+def ls(sort_by=None, descending=False):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -146,7 +146,7 @@ def ls(sort_by=None, reverse=False):
 
     blueprints = [trim_description(b)
                   for b in client.blueprints.list(
-            sort=sort_by, is_descending=reverse)]
+            sort=sort_by, is_descending=descending)]
 
     pt = utils.table(['id', 'description', 'main_file_name',
                       'created_at', 'updated_at'],

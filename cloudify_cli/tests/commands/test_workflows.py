@@ -57,19 +57,28 @@ class WorkflowsTest(CliCommandTest):
 
     def test_workflows_sort_list(self):
 
-        def set_mocks():
-            def mock_table(*_, **kwargs):
+        class set_table_mocks():
+            def _mock_table(*_, **kwargs):
                 workflows = kwargs['data']
                 self.assertEqual(2, len(workflows))
                 self.assertEqual('0', workflows[0].name)
                 self.assertEqual('1', workflows[1].name)
 
-            def mock_print_table(*_, **__):
+            def _mock_print_table(*_, **__):
                 pass
 
-            utils.table, utils.print_table = mock_table, mock_print_table
+            def __init__(self):
+                self.original_table = utils.table
+                self.original_print_table = utils.print_table
 
-        original_table, original_print_table = utils.table, utils.print_table
+            def __enter__(self):
+                utils.table = self._mock_table
+                utils.print_table = MagicMock(return_value=None)
+
+            def __exit__(self, exc_type, exc_val, exc_tb):
+                utils.table = self.original_table
+                utils.print_table = self.original_print_table
+
         deployment = Deployment({
             'blueprint_id': 'mock_blueprint_id',
             'workflows': [
@@ -107,9 +116,8 @@ class WorkflowsTest(CliCommandTest):
         })
 
         self.client.deployments.get = MagicMock(return_value=deployment)
-        set_mocks()
-        cli_runner.run_cli('cfy workflows list -d a-deployment-id')
-        utils.table, utils.print_table = original_table, original_print_table
+        with set_table_mocks():
+            cli_runner.run_cli('cfy workflows list -d a-deployment-id')
 
     def test_workflows_get(self):
         deployment = Deployment({
