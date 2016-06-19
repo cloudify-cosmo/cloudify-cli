@@ -10,7 +10,7 @@ ctx.download_resource(
 import utils  # NOQA
 
 
-pip_result = utils.sudo(['pip'], ignore_failures=True)
+pip_result = utils.run(['pip'], ignore_failures=True)
 if pip_result.returncode != 0:
     ctx.abort_operation('Python runtime installation error: '
                         'pip was not installed')

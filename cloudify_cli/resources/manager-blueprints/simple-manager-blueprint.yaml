@@ -34,7 +34,7 @@ dsl_definitions:
   exec_config: &exec_config
     hide_output:
       - running
-    use_sudo: false
+    use_sudo: true
     fabric_env:
       user: { get_input: ssh_user }
       key_filename: { get_input: ssh_key_filename }

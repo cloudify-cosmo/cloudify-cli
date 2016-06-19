@@ -22,8 +22,8 @@ def _disable_requiretty():
                                     script_dest,
                                     NODE_NAME)
 
-    utils.sudo('chmod +x {0}'.format(script_dest))
-    utils.sudo(script_dest)
+    utils.run('chmod +x {0}'.format(script_dest))
+    utils.run(script_dest)
 
 
 def _set_ports():

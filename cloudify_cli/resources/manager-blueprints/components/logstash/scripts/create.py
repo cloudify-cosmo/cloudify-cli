@@ -97,7 +97,7 @@ def install_logstash():
         LOGSTASH_SERVICE_NAME)
 
     utils.logrotate(LOGSTASH_SERVICE_NAME)
-    utils.sudo(['/sbin/chkconfig', 'logstash', 'on'])
+    utils.run(['/sbin/chkconfig', 'logstash', 'on'])
     utils.clean_var_log_dir(LOGSTASH_SERVICE_NAME)
 
 

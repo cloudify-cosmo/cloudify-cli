@@ -10,7 +10,7 @@ dsl_definitions:
       default:
         - running
     use_sudo:
-      default: false
+      default: true
     fabric_env:
       default:
         user: { get_input: ssh_user }

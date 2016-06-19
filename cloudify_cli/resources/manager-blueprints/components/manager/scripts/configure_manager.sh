@@ -37,8 +37,8 @@ function _disable_requiretty() {
         requiretty='!requiretty'
 
         echo "Creating sudoers user file and setting disable requiretty directive."
-        echo "Defaults:${whoami} ${requiretty}" | sudo tee /etc/sudoers.d/${whoami} >/dev/null
-        sudo chmod 0440 /etc/sudoers.d/${whoami}
+        echo "Defaults:${whoami} ${requiretty}" | tee /etc/sudoers.d/${whoami} >/dev/null
+        chmod 0440 /etc/sudoers.d/${whoami}
     }
 
     function disable_for_all_users() {
@@ -49,12 +49,12 @@ function _disable_requiretty() {
             ctx abort-operation "Could not find sudoers file at expected location (/etc/sudoers)"
         fi
         echo "Setting directive in /etc/sudoers."
-        sudo sed -i 's/^Defaults.*requiretty/#&/g' /etc/sudoers || ctx abort-operation "Failed to edit sudoers file to disable requiretty directive" 1
+        sed -i 's/^Defaults.*requiretty/#&/g' /etc/sudoers || ctx abort-operation "Failed to edit sudoers file to disable requiretty directive" 1
     }
 
     # for supported distros, this will disable requiretty for a specific user.
     # Otherwise, it will disable it for all users.
-    if sudo grep -q -E '[^!]requiretty' /etc/sudoers; then
+    if grep -q -E '[^!]requiretty' /etc/sudoers; then
         if [ "$(get_distro)" != 'unsupported' ]; then
             echo "Distro is supported."
             disable_for_user

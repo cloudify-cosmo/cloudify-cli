@@ -13,7 +13,7 @@ dsl_definitions:
       default:
         - running
     use_sudo:
-      default: false
+      default: true
     fabric_env:
       user: { get_input: ssh_user }
       key_filename: { get_input: ssh_key_filename }

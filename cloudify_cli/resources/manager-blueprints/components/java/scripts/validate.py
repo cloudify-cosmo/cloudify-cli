@@ -10,6 +10,6 @@ ctx.download_resource(
 import utils  # NOQA
 
 
-java_result = utils.sudo(['java', '-version'], ignore_failures=True)
+java_result = utils.run(['java', '-version'], ignore_failures=True)
 if java_result.returncode != 0:
     ctx.abort_operation('Java runtime error: java was not installed')

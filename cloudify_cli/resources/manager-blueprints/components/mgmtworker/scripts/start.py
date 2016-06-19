@@ -16,7 +16,7 @@ CELERY_PATH = '/opt/mgmtworker/env/bin/celery'  # also hardcoded in create
 @utils.retry(ValueError)
 def check_worker_running():
     """Use `celery status` to check if the worker is running."""
-    result = utils.sudo([
+    result = utils.run([
         'CELERY_WORK_DIR=/opt/mgmtworker/work',
         CELERY_PATH,
         '--config=cloudify.broker_config',

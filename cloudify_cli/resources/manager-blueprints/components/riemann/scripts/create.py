@@ -44,7 +44,7 @@ def install_riemann():
     rabbit_props = utils.ctx_factory.get('rabbitmq')
     ctx.instance.runtime_properties['rabbitmq_endpoint_ip'] = \
         utils.get_rabbitmq_endpoint_ip(
-                rabbit_props.get('rabbitmq_endpoint_ip'))
+            rabbit_props.get('rabbitmq_endpoint_ip'))
     ctx.instance.runtime_properties['rabbitmq_username'] = \
         rabbit_props.get('rabbitmq_username')
     ctx.instance.runtime_properties['rabbitmq_password'] = \
@@ -61,9 +61,9 @@ def install_riemann():
 
     langohr = utils.download_cloudify_resource(langohr_source_url,
                                                RIEMANN_SERVICE_NAME)
-    utils.sudo(['cp', langohr, extra_classpath])
+    utils.run(['cp', langohr, extra_classpath])
     ctx.logger.info('Applying Langohr permissions...')
-    utils.sudo(['chmod', '644', extra_classpath])
+    utils.run(['chmod', '644', extra_classpath])
     utils.yum_install(daemonize_source_url, service_name=RIEMANN_SERVICE_NAME)
     utils.yum_install(riemann_source_url, service_name=RIEMANN_SERVICE_NAME)
 

@@ -81,7 +81,7 @@ def install_mgmtworker():
 
     ctx.instance.runtime_properties['rabbitmq_endpoint_ip'] = \
         utils.get_rabbitmq_endpoint_ip(
-                rabbit_props.get('rabbitmq_endpoint_ip'))
+            rabbit_props.get('rabbitmq_endpoint_ip'))
 
     # Fix possible injections in json of rabbit credentials
     # See json.org for string spec
@@ -144,7 +144,7 @@ def install_mgmtworker():
             '{0}/broker_config.json'.format(CONFIG_PATH), broker_conf_path,
             MGMT_WORKER_SERVICE_NAME)
         # The config contains credentials, do not let the world read it
-        utils.sudo(['chmod', '440', broker_conf_path])
+        utils.run(['chmod', '440', broker_conf_path])
     utils.systemd.configure(MGMT_WORKER_SERVICE_NAME)
     utils.logrotate(MGMT_WORKER_SERVICE_NAME)
 

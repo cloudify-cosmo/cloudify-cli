@@ -157,7 +157,7 @@ def _configure_index_rotation():
         '/etc/cron.daily/rotate_es_indices', ES_SERVICE_NAME)
     utils.chown('root', 'root', '/etc/cron.daily/rotate_es_indices')
     # VALIDATE!
-    utils.sudo('chmod +x /etc/cron.daily/rotate_es_indices')
+    utils.run('chmod +x /etc/cron.daily/rotate_es_indices')
 
 
 def _install_elasticsearch():
@@ -377,7 +377,7 @@ def dump_upgrade_data():
         for hit in hits:
             type_values.append(hit)
 
-    utils.mkdir(utils.ES_UPGRADE_DUMP_PATH, use_sudo=False)
+    utils.mkdir(utils.ES_UPGRADE_DUMP_PATH)
     with open(DUMP_FILE_PATH, 'w') as f:
         for item in type_values:
             f.write(json.dumps(item) + os.linesep)
