@@ -19,6 +19,7 @@ cd cloudify-cli/packaging/omnibus
 git checkout ${CLI_BRANCH-$CORE_TAG_NAME}
 git tag -d $CORE_TAG_NAME
 NEW_TAG_NAME="${VERSION}.${PRERELEASE}"
+git -d tag $NEW_TAG_NAME
 git tag $NEW_TAG_NAME
 omnibus build cloudify && result="success"
 cd pkg
