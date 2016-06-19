@@ -1223,16 +1223,31 @@ def parser_config():
                 'help': 'Control a specific Manager',
                 'arguments': {
                     '-t,--management-ip': {
-                        'help': "The Manager's ip address",
+                        'help': "The manager's ip address",
                         'dest': 'management_ip',
-                        'required': True
+                        # 'required': True
                     },
                     '--port': {
                         'help': "The REST server's port",
                         'default': DEFAULT_REST_PORT,
                         'type': int,
                         'dest': 'rest_port'
-                    }
+                    },
+                    '-u,--management-user': {
+                        'help': "The user to use when sshing to the manager",
+                        'dest': 'management_user',
+                        'required': False
+                    },
+                    '-k,--management-key': {
+                        'help': "The ssh key file to use when sshing to the manager",
+                        'dest': 'management_key',
+                        'required': False
+                    },
+                    '-s,--show-active': {
+                        'help': "Only show information on the currently active manager",
+                        'dest': 'show_active',
+                        'action': 'store_true'
+                    },
                 },
                 'handler': cfy.use
             },
