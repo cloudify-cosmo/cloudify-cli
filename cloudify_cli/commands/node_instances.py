@@ -50,7 +50,7 @@ def get(node_instance_id):
     logger.info('')
 
 
-def ls(deployment_id, node_name=None, sort_by=None, reverse=False):
+def ls(deployment_id, node_name=None, sort_by=None, descending=False):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -62,7 +62,7 @@ def ls(deployment_id, node_name=None, sort_by=None, reverse=False):
             logger.info('Listing all instances...')
         instances = client.node_instances.list(
             deployment_id=deployment_id, node_name=node_name,
-            sort=sort_by, is_descending=reverse)
+            sort=sort_by, is_descending=descending)
     except CloudifyClientError as e:
         if not e.status_code != 404:
             raise

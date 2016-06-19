@@ -73,12 +73,12 @@ def download(snapshot_id, output):
     logger.info('Snapshot downloaded as {0}'.format(target_file))
 
 
-def ls(sort_by=None, reverse=False):
+def ls(sort_by=None, descending=False):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
     logger.info('Listing snapshots...')
     pt = utils.table(['id', 'created_at', 'status', 'error'],
                      data=client.snapshots.list(
-                         sort=sort_by, is_descending=reverse))
+                         sort=sort_by, is_descending=descending))
     print_table('Snapshots:', pt)

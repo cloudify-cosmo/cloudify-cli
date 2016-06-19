@@ -118,11 +118,11 @@ def sort_by_argument(default_value='created_at'):
     }
 
 
-def reverse_argument():
+def descending_argument():
     return {
-        'dest': 'reverse',
+        'dest': 'descending',
         'action': 'store_true',
-        'help': 'Reverse list order'
+        'help': 'Sort list in descending order (default: ascending)'
     }
 
 
@@ -419,7 +419,7 @@ def parser_config():
                     'list': {
                         'arguments': {
                             '-s,--sort-by': sort_by_argument('uploaded_at'),
-                            '-r,--reverse': reverse_argument()
+                            '--desc': descending_argument()
                         },
                         'help': 'List all plugins currently on the Manager',
                         'handler': cfy.plugins.ls
@@ -479,7 +479,7 @@ def parser_config():
                     'list': {
                         'arguments': {
                             '-s,--sort-by': sort_by_argument(),
-                            '-r,--reverse': reverse_argument()
+                            '--desc': descending_argument()
                         },
                         'help': 'List all blueprints on the Manager',
                         'handler': cfy.blueprints.ls
@@ -569,7 +569,7 @@ def parser_config():
                     'list': {
                         'arguments': {
                             '-s,--sort-by': sort_by_argument(),
-                            '-r,--reverse': reverse_argument()
+                            '--desc': descending_argument()
                         },
                         'help': 'List all snapshots on the Manager',
                         'handler': cfy.snapshots.ls
@@ -661,7 +661,7 @@ def parser_config():
                                 blueprint_id_argument()
                             ),
                             '-s,--sort-by': sort_by_argument(),
-                            '-r,--reverse': reverse_argument()
+                            '--desc': descending_argument()
                         },
                         'help': 'List the all deployments on the Manager, '
                                 'or all deployments of a specific blueprint',
@@ -777,7 +777,7 @@ def parser_config():
                                 'help': 'Include executions of system workflows'
                             },
                             '-s,--sort-by': sort_by_argument(),
-                            '-r,--reverse': reverse_argument()
+                            '--desc': descending_argument()
                         },
                         'help': 'List all running executions on the Manager or all '
                                 'executions for a specific deployment',
@@ -847,7 +847,7 @@ def parser_config():
                                         'nodes for. If omitted, this will '
                                         'list nodes for all deployments'),
                             '-s,--sort-by': sort_by_argument('deployment_id'),
-                            '-r,--reverse': reverse_argument()
+                            '--desc': descending_argument()
                         },
                         'help': 'List nodes for all deployments, or for a '
                                 'specific deployment',
@@ -881,7 +881,7 @@ def parser_config():
                                 'help': "The node's name"
                             },
                             '-s,--sort-by': sort_by_argument('node_id'),
-                            '-r,--reverse': reverse_argument()
+                            '--desc': descending_argument()
                         },
                         'help': 'List node-instances for all deployments, '
                                 'or for a specific deployment',
