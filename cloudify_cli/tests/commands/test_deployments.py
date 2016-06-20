@@ -27,6 +27,7 @@ from cloudify_rest_client.executions import Execution
 
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
+from cloudify_cli.tests.mocks.mock_list_response import MockListResponse
 
 
 class DeploymentsTest(CliCommandTest):
@@ -48,24 +49,6 @@ class DeploymentsTest(CliCommandTest):
     def test_deployments_delete(self):
         self.client.deployments.delete = MagicMock()
         cli_runner.run_cli('cfy deployments delete -d my-dep')
-
-    class MockListResponse(object):
-
-        def __init__(self, items, _):
-            self.items = items
-            self.metadata = None
-
-        def __iter__(self):
-            return iter(self.items)
-
-        def __getitem__(self, index):
-            return self.items[index]
-
-        def __len__(self):
-            return len(self.items)
-
-        def sort(self, cmp=None, key=None, reverse=False):
-            return self.items.sort(cmp, key, reverse)
 
     def test_deployments_execute(self):
         execute_response = Execution({'status': 'started'})
@@ -90,7 +73,7 @@ class DeploymentsTest(CliCommandTest):
                 'deployment_id': 'deployment-id'
             }
         }
-        get_events_response = self.MockListResponse([success_event], 1)
+        get_events_response = MockListResponse([success_event], 1)
 
         self.client.executions.start = MagicMock(
             return_value=execute_response

@@ -46,6 +46,7 @@ class ListSortTest(CliCommandTest):
     def tearDown(self):
         for r in self.resources_types:
             self.resources_types[r].list = self.original_lists[r]
+        super(ListSortTest, self).tearDown()
 
     def test_list_sort(self):
         for r in self.resources_types:

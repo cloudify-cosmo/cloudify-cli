@@ -27,6 +27,7 @@ from cloudify_rest_client.executions import Execution
 
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
+from cloudify_cli.tests.mocks.mock_list_response import MockListResponse
 
 
 def mock_log_message_prefix(event):
@@ -78,31 +79,13 @@ class EventsTest(CliCommandTest):
 
         return execution
 
-    class MockListResponse(object):
-
-        def __init__(self, items, _):
-            self.items = items
-            self.metadata = None
-
-        def __iter__(self):
-            return iter(self.items)
-
-        def __getitem__(self, index):
-            return self.items[index]
-
-        def __len__(self):
-            return len(self.items)
-
-        def sort(self, cmp=None, key=None, reverse=False):
-            return self.items.sort(cmp, key, reverse)
-
     def _mock_events_list(self, include_logs=False, message=None,
                           from_datetime=None, to_datetime=None, _include=None,
                           sort='@timestamp', **kwargs):
         from_event = kwargs.get('_offset', 0)
         batch_size = kwargs.get('_size', 100)
         events = self._get_events_before(time.time())
-        return self.MockListResponse(
+        return MockListResponse(
             events[from_event:from_event+batch_size], len(events))
 
     def update_execution_status(self):

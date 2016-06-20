@@ -74,6 +74,38 @@ class GroupsTest(CliCommandTest):
         self.client.deployments.get = MagicMock(return_value=deployment)
         cli_runner.run_cli('cfy groups list -d a-deployment-id')
 
+    def test_groups_sort_list(self):
+        deployment = Deployment({
+            'blueprint_id': 'mock_blueprint_id',
+            'groups': {
+                'group2': {
+                    'members': ['node1', 'node2'],
+                    'policies': {
+                        'policy1': {
+                            'type': 'cloudify.policies.threshold'
+                        }
+                    }
+                },
+                'group1': {
+                    'members': ['node1', 'node2'],
+                    'policies': {
+                        'policy2': {
+                            'type': 'cloudify.policies.host_failure'
+                        }
+                    }
+                },
+                'group3': {
+                    'members': ['group1', 'node3']
+                }
+            }
+        })
+        self.client.deployments.get = MagicMock(return_value=deployment)
+        result = cli_runner.run_cli('cfy groups list -d a-deployment-id')
+        g1 = result.find('- Name: group1\n')
+        g2 = result.find('- Name: group2\n')
+        g3 = result.find('- Name: group3\n')
+        self.assertTrue(g1 > 0 and g2 > 0 and g3 > 0 and g1 < g2 < g3)
+
     def test_groups_list_nonexistent_deployment(self):
         expected_message = ('Deployment nonexistent-dep not found')
         error = CloudifyClientError('')

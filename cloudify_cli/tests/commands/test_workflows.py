@@ -57,7 +57,7 @@ class WorkflowsTest(CliCommandTest):
 
     def test_workflows_sort_list(self):
 
-        class set_table_mocks():
+        class table_mocks():
             def _mock_table(*_, **kwargs):
                 workflows = kwargs['data']
                 self.assertEqual(2, len(workflows))
@@ -116,7 +116,7 @@ class WorkflowsTest(CliCommandTest):
         })
 
         self.client.deployments.get = MagicMock(return_value=deployment)
-        with set_table_mocks():
+        with table_mocks():
             cli_runner.run_cli('cfy workflows list -d a-deployment-id')
 
     def test_workflows_get(self):
