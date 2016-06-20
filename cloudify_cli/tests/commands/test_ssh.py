@@ -63,7 +63,9 @@ class SshTest(CliCommandTest):
         self.settings.set_management_user('test')
         self.settings.set_management_key('/tmp/test.pem')
         self._create_cosmo_wd_settings(self.settings)
-        self._assert_ex('cfy ssh', 'Must either first run')
+        self._assert_ex(
+            'cfy ssh',
+            'You must first run `cfy use -t MANAGEMENT_IP`')
 
     def test_ssh_without_ssh_windows(self):
         platform.system = lambda: 'Windows'
