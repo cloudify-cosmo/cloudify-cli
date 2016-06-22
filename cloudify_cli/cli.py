@@ -15,10 +15,11 @@
 ############
 
 import sys
+import logging
 import argparse
 import StringIO
 import traceback
-import logging
+from itertools import imap
 
 import argcomplete
 
@@ -76,7 +77,6 @@ def _parse_args(args):
 
 
 def register_commands():
-
     from cloudify_cli.config.parser_config import parser_config
     parser_conf = parser_config()
     parser = argparse.ArgumentParser(description=parser_conf['description'])
@@ -87,8 +87,7 @@ def register_commands():
 
     subparsers = parser.add_subparsers(
         title='Commands',
-        metavar=(' ' * (constants.HELP_TEXT_COLUMN_BUFFER +
-                        longest_command_length(parser_conf['commands'])))
+        metavar=''
     )
 
     for command_name, command in parser_conf['commands'].iteritems():
@@ -296,7 +295,7 @@ def _set_cli_except_hook():
 
 
 def longest_command_length(commands_dict):
-    return max([len(key) for key in commands_dict.keys()])
+    return max(imap(len, commands_dict))
 
 
 class ConciseArgumentDefaultsHelpFormatter(
