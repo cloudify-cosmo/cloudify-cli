@@ -16,6 +16,7 @@
 """
 Tests 'cfy bootstrap'
 """
+import json
 
 import mock
 
@@ -57,6 +58,25 @@ class BootstrapTest(CliCommandTest):
             function_name='install_blueprint_plugins',
             kwargs={'blueprint_path': blueprint_path}
         )
+
+    def test_bootstrap_no_validations_add_ignore_bootstrap_validations(self):
+
+        cli_runner.run_cli('cfy init')
+        blueprint_path = '{0}/local/{1}.yaml'.format(
+            BLUEPRINTS_DIR, 'blueprint')
+        self.assert_method_called(
+            cli_command='cfy bootstrap --skip-validations -p {0} '
+                        '-i "some_input=some_value"'.format(blueprint_path),
+            module=common,
+            function_name='add_ignore_bootstrap_validations_input',
+            args=[['"some_input=some_value"']]
+        )
+
+    def test_viable_ignore_bootstrap_validations_input(self):
+        inputs = []
+        inputs = common.add_ignore_bootstrap_validations_input(inputs)
+        ignore_input = json.loads(inputs[0])
+        self.assertTrue(ignore_input['ignore_bootstrap_validations'])
 
     def test_bootstrap_missing_plugin(self):
 

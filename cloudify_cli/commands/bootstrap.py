@@ -20,6 +20,7 @@ Handles 'cfy bootstrap'
 import sys
 
 from cloudify_cli import utils
+from cloudify_cli import common
 from cloudify_cli.logger import get_logger
 from cloudify_cli.bootstrap import bootstrap as bs
 
@@ -63,6 +64,10 @@ def bootstrap(keep_up,
             install_plugins=install_plugins,
             resolver=utils.get_import_resolver())
         logger.info('Bootstrap validation completed successfully')
+    elif inputs:
+        # The user expects that `--skip-validations` will also ignore
+        # bootstrap validations and not only creation_validations
+        inputs = common.add_ignore_bootstrap_validations_input(inputs)
 
     if not validate_only:
         try:

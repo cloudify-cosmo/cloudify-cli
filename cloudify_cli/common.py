@@ -123,3 +123,8 @@ def _plugins_to_requirements(blueprint_path, plugins):
                     source)
                 sources.add(plugin_path)
     return sources
+
+
+def add_ignore_bootstrap_validations_input(inputs):
+    inputs.append('{"ignore_bootstrap_validations":true}')
+    return inputs
