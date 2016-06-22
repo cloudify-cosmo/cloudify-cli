@@ -23,12 +23,12 @@ from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 class LogsTest(CliCommandTest):
 
     def test_no_prior_init(self):
-        self._assert_ex('cfy logs get', 'Cannot find .cloudify')
+        self._assert_ex('cfy logs download', 'Cannot find .cloudify')
 
     def test_with_empty_config(self):
         settings = utils.CloudifyWorkingDirectorySettings()
         self._create_cosmo_wd_settings(settings)
-        self._assert_ex('cfy logs get',
+        self._assert_ex('cfy logs download',
                         'Management User is not set '
                         'in working directory settings')
 
@@ -37,7 +37,7 @@ class LogsTest(CliCommandTest):
         settings.set_management_user('test')
         settings.set_management_server('127.0.0.1')
         self._create_cosmo_wd_settings(settings)
-        self._assert_ex('cfy logs get',
+        self._assert_ex('cfy logs download',
                         'Management Key is not set '
                         'in working directory settings')
 
@@ -46,7 +46,7 @@ class LogsTest(CliCommandTest):
         settings.set_management_server('127.0.0.1')
         settings.set_management_key('/tmp/test.pem')
         self._create_cosmo_wd_settings(settings)
-        self._assert_ex('cfy logs get',
+        self._assert_ex('cfy logs download',
                         'Management User is not set '
                         'in working directory settings')
 
@@ -55,7 +55,7 @@ class LogsTest(CliCommandTest):
         settings.set_management_user('test')
         settings.set_management_key('/tmp/test.pem')
         self._create_cosmo_wd_settings(settings)
-        self._assert_ex('cfy logs get', 'Must either first run')
+        self._assert_ex('cfy logs download', 'Must either first run')
 
     def test_purge_no_force(self):
         # unlike the other tests, this drops on argparse raising

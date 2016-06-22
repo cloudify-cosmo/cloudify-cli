@@ -258,17 +258,17 @@ def parser_config():
             'logs': {
                 'help': "Handle the Manager's logs",
                 'sub_commands': {
-                    'get': {
+                    'download': {
                         'arguments': {
-                            '-d,--destination-path': {
-                                'dest': 'destination_path',
+                            '-o,--output': {
+                                'dest': 'output',
                                 'help': 'Destination path of the downloaded archive '
                                 '(default location for retrieved archive: cwd)',
                                 'default': utils.get_cwd(),
                             }
                         },
                         'help': "Download an archive containing the Manager's current logs",
-                        'handler': cfy.logs.get
+                        'handler': cfy.logs.download
                     },
                     'purge': {
                         'arguments': {
