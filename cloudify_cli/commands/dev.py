@@ -9,65 +9,70 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
-"""
-Handles 'cfy dev'
-"""
-
-from fabric.api import env
-from cloudify_cli import utils
-from cloudify_cli import exec_env
+import click
+from fabric.api import env as fabric_env
 from fabric.context_managers import settings
-from cloudify_cli.utils import get_management_key
-from cloudify_cli.utils import get_management_user
-from cloudify_cli.utils import get_management_port
-from cloudify_cli.exceptions import CloudifyCliError
+
+from ..env import profile
+from ..cli import cfy, helptexts
+from ..exceptions import CloudifyCliError
 
 
-def dev(args, task, tasks_file):
-    management_ip = utils.get_management_server_ip()
-    _execute(username=get_management_user(),
-             port=get_management_port(),
-             key=get_management_key(),
-             ip=management_ip,
+@cfy.command(name='dev', short_help='Run fabric tasks [manager only]')
+@cfy.argument('task', required=True)
+@click.option('-t',
+              'tasks-file',
+              required=True,
+              help='Tasks file from which to draw tasks')
+@click.option('-a',
+              '--args',
+              multiple=True,
+              help=helptexts.DEV_TASK_ARGS)
+@cfy.options.verbose()
+@cfy.assert_manager_active
+def dev(tasks_file, task, args):
+    """Run fabric tasks on the manager
+    """
+    _execute(username=profile.manager_user,
+             port=profile.manager_port,
+             key=profile.manager_key,
+             ip=profile.manager_ip,
              task=task,
              tasks_file=tasks_file,
              args=args)
 
 
-def _execute(username, key, ip, task, tasks_file, args, port):
-    _setup_fabric_env(username=username, port=port,
-                      key=key)
+def _execute(username, port, key, ip, task, tasks_file, args):
+    _setup_fabric_env(username=username, port=port, key=key)
     tasks = exec_tasks_file(tasks_file=tasks_file)
-    _execute_task(ip=ip,
-                  task=task,
-                  tasks=tasks,
-                  task_args=args)
+    _execute_task(ip=ip, task=task, tasks=tasks, task_args=args)
 
 
-def _setup_fabric_env(username, key, port):
-    env.user = username
-    env.port = port
-    env.key_filename = key
-    env.warn_only = True
-    env.abort_on_prompts = False
-    env.connection_attempts = 5
-    env.keepalive = 0
-    env.linewise = False
-    env.pool_size = 0
-    env.skip_bad_hosts = False
-    env.timeout = 10
-    env.forward_agent = True
-    env.status = False
-    env.disable_known_hosts = False
+def _setup_fabric_env(username, port, key):
+    fabric_env.user = username
+    fabric_env.port = port
+    fabric_env.key_filename = key
+    fabric_env.warn_only = True
+    fabric_env.abort_on_prompts = False
+    fabric_env.connection_attempts = 5
+    fabric_env.keepalive = 0
+    fabric_env.linewise = False
+    fabric_env.pool_size = 0
+    fabric_env.skip_bad_hosts = False
+    fabric_env.timeout = 10
+    fabric_env.forward_agent = True
+    fabric_env.status = False
+    fabric_env.disable_known_hosts = False
 
 
 def exec_tasks_file(tasks_file=None):
     tasks_file = tasks_file or 'tasks.py'
-    exec_globals = exec_env.exec_globals(tasks_file)
+    exec_globals = get_exec_globals(tasks_file)
     try:
         execfile(tasks_file, exec_globals)
     except Exception as e:
@@ -113,3 +118,13 @@ def _parse_task_args(task_args):
         else:
             args.append(task_arg)
     return args, kwargs
+
+
+def get_exec_globals(tasks_file):
+    copied_globals = globals().copy()
+    del copied_globals['exec_globals']
+    copied_globals['__doc__'] = 'empty globals for exec'
+    copied_globals['__file__'] = tasks_file
+    copied_globals['__name__'] = 'cli_dev_tasks'
+    copied_globals['__package__'] = None
+    return copied_globals

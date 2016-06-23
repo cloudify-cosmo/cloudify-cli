@@ -1,34 +1,40 @@
 ########
-# Copyright (c) 2015 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
-
-"""
-Handles all commands that start with 'cfy agents'
-"""
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
 import time
 import threading
 
-from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
-from cloudify_cli.execution_events_fetcher import wait_for_execution, \
-    WAIT_FOR_EXECUTION_SLEEP_INTERVAL
-from cloudify_cli.exceptions import SuppressedCloudifyCliError
-from cloudify_cli.exceptions import ExecutionTimeoutError
 from cloudify import logs
 
+from ..cli import cfy
+from ..exceptions import ExecutionTimeoutError
+from ..exceptions import SuppressedCloudifyCliError
+from ..execution_events_fetcher import wait_for_execution, \
+    WAIT_FOR_EXECUTION_SLEEP_INTERVAL
+
 _NODE_INSTANCE_STATE_STARTED = 'started'
+
+
+@cfy.group(name='agents')
+@cfy.options.verbose()
+@cfy.assert_manager_active
+def agents():
+    """Handle a deployment's agents
+    """
+    pass
 
 
 def _is_deployment_installed(client, deployment_id):
@@ -46,10 +52,21 @@ def _deployment_exists(client, deployment_id):
     return True
 
 
-def install(deployment_id, include_logs, install_script=None):
+@agents.command(name='install',
+                short_help='Install deployment agents [manager only]')
+@cfy.argument('deployment-id', required=False)
+@cfy.options.include_logs
+@cfy.options.install_script
+@cfy.options.verbose()
+@cfy.pass_logger
+@cfy.pass_client()
+def install(deployment_id, include_logs, install_script, logger, client):
+    """Install agents on the hosts of existing deployments
+
+    See Cloudify's documentation at http://docs.getcloudify.org for more
+    information.
+    """
     workflow_id = 'install_new_agents'
-    logger = get_logger()
-    client = utils.get_rest_client()
 
     if deployment_id:
         deps = [deployment_id]

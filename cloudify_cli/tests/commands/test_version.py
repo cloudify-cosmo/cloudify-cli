@@ -1,27 +1,27 @@
-########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+import mock
 
-"""
-Tests 'cfy --version'
-"""
+from .test_base import CliCommandTest
 
-from cloudify_cli.tests import cli_runner
-from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
+
+def manager_data():
+    return {
+        'date': '', 'commit': '',
+        'version': '3.4.0',
+        'build': '85',
+        'ip': '10.10.1.10'
+    }
 
 
 class VersionTest(CliCommandTest):
 
     def test_version(self):
-        cli_runner.run_cli_expect_system_exit_0('cfy --version')
+        outcome = self.invoke('cfy --version')
+        self.assertIn('Cloudify CLI', outcome.logs)
+
+    @mock.patch('cloudify_cli.env.is_manager_active', return_value=True)
+    @mock.patch('cloudify_cli.env.get_manager_version_data',
+                return_value=manager_data())
+    def test_version_with_manager(self, *_):
+        outcome = self.invoke('cfy --version')
+        self.assertIn('Cloudify Manager', outcome.logs)
+        self.assertIn('ip=10.10.1.10', outcome.logs)

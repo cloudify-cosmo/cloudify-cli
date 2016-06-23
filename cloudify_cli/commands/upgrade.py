@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2016 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -9,28 +9,26 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
-"""
-Handles 'cfy upgrade command'
-"""
 import os
 import time
 import json
 import shutil
 import tempfile
 
-from cloudify_cli import ssh
-from cloudify_cli import utils
-from cloudify_cli import common
-from cloudify_cli import exceptions
-from cloudify_cli.logger import get_logger
-from cloudify_cli.commands import maintenance
-from cloudify_cli.bootstrap import bootstrap as bs
-from cloudify_cli.bootstrap.bootstrap import load_env
-
+from .. import ssh
+from .. import local
+from .. import utils
+from ..cli import cfy
+from .. import exceptions
+from ..env import profile
+from . import maintenance_mode
+from ..bootstrap import bootstrap as bs
+from ..bootstrap.bootstrap import load_env
 
 MAINTENANCE_MODE_DEACTIVATED = 'deactivated'
 MAINTENANCE_MODE_ACTIVATING = 'activating'
@@ -38,30 +36,55 @@ MAINTENANCE_MODE_ACTIVATING = 'activating'
 REMOTE_WORKFLOW_STATE_PATH = '/opt/cloudify/_workflow_state.json'
 
 
-def upgrade(validate_only,
-            skip_validations,
-            blueprint_path,
+@cfy.command(name='upgrade',
+             short_help='Upgrade a manager to a new version [manager only]')
+@cfy.argument('blueprint-path')
+@cfy.options.inputs
+@cfy.options.validate_only
+@cfy.options.skip_validations
+@cfy.options.install_plugins
+@cfy.options.task_retries()
+@cfy.options.task_retry_interval()
+@cfy.options.task_thread_pool_size()
+@cfy.options.verbose()
+@cfy.assert_manager_active
+@cfy.pass_logger
+@cfy.pass_client(skip_version_check=True)
+def upgrade(blueprint_path,
             inputs,
+            validate_only,
+            skip_validations,
             install_plugins,
             task_retries,
             task_retry_interval,
-            task_thread_pool_size):
+            task_thread_pool_size,
+            logger,
+            client):
+    """Upgrade a manager to a newer version
 
-    logger = get_logger()
-    management_ip = utils.get_management_server_ip()
+    Note that you must supply a simple-manager-blueprint to perform
+    the upgrade and provide it with the relevant inputs.
 
-    client = utils.get_rest_client(management_ip, skip_version_check=True)
+    `BLUEPRINT_PATH` is the path of the manager blueprint to use for upgrade.
+    """
 
+    manager_ip = profile.manager_ip
     verify_and_wait_for_maintenance_mode_activation(client)
 
+    if skip_validations:
+        # The user expects that `--skip-validations` will also ignore
+        # bootstrap validations and not only creation_validations
+        utils.add_ignore_bootstrap_validations_input(inputs)
+
     inputs = update_inputs(inputs)
+
     env_name = 'manager-upgrade'
     # init local workflow execution environment
-    env = common.initialize_blueprint(blueprint_path,
-                                      storage=None,
-                                      install_plugins=install_plugins,
-                                      name=env_name,
-                                      inputs=json.dumps(inputs))
+    working_env = local.initialize_blueprint(blueprint_path,
+                                             storage=None,
+                                             install_plugins=install_plugins,
+                                             name=env_name,
+                                             inputs=inputs)
     logger.info('Upgrading manager...')
     put_workflow_state_file(is_upgrade=True,
                             key_filename=inputs['ssh_key_filename'],
@@ -69,21 +92,22 @@ def upgrade(validate_only,
                             port=inputs['ssh_port'])
     if not skip_validations:
         logger.info('Executing upgrade validations...')
-        env.execute(workflow='execute_operation',
-                    parameters={'operation':
-                                'cloudify.interfaces.validation.creation'},
-                    task_retries=task_retries,
-                    task_retry_interval=task_retry_interval,
-                    task_thread_pool_size=task_thread_pool_size)
+        working_env.execute(workflow='execute_operation',
+                            parameters={
+                                'operation':
+                                    'cloudify.interfaces.validation.creation'},
+                            task_retries=task_retries,
+                            task_retry_interval=task_retry_interval,
+                            task_thread_pool_size=task_thread_pool_size)
         logger.info('Upgrade validation completed successfully')
 
     if not validate_only:
         try:
             logger.info('Executing manager upgrade...')
-            env.execute('install',
-                        task_retries=task_retries,
-                        task_retry_interval=task_retry_interval,
-                        task_thread_pool_size=task_thread_pool_size)
+            working_env.execute('install',
+                                task_retries=task_retries,
+                                task_retry_interval=task_retry_interval,
+                                task_thread_pool_size=task_thread_pool_size)
         except Exception as e:
             msg = 'Upgrade failed! ({0})'.format(e)
             error = exceptions.CloudifyCliError(msg)
@@ -93,7 +117,7 @@ def upgrade(validate_only,
             ]
             raise error
 
-        manager_node = next(node for node in env.storage.get_nodes()
+        manager_node = next(node for node in working_env.storage.get_nodes()
                             if node.id == 'manager_configuration')
         upload_resources = \
             manager_node.properties['cloudify'].get('upload_resources', {})
@@ -101,10 +125,10 @@ def upgrade(validate_only,
         if dsl_resources:
             fetch_timeout = upload_resources.get('parameters', {}) \
                 .get('fetch_timeout', 30)
-            fabric_env = bs.build_fabric_env(management_ip,
+            fabric_env = bs.build_fabric_env(manager_ip,
                                              inputs['ssh_user'],
                                              inputs['ssh_key_filename'],
-                                             manager_port=inputs['ssh_port'])
+                                             inputs['ssh_port'])
             temp_dir = tempfile.mkdtemp()
             try:
                 logger.info('Uploading dsl resources...')
@@ -125,16 +149,16 @@ def upgrade(validate_only,
 
     logger.info('Upgrade complete')
     logger.info('Manager is up at {0}'.format(
-        utils.get_management_server_ip()))
+        profile.manager_ip))
 
 
 def update_inputs(inputs=None):
-    inputs = utils.inputs_to_dict(inputs, 'inputs') or {}
+    inputs = inputs or dict()
     inputs.update({'private_ip': _load_private_ip(inputs)})
-    inputs.update({'ssh_key_filename': _load_management_key(inputs)})
-    inputs.update({'ssh_user': _load_management_user(inputs)})
-    inputs.update({'ssh_port': _load_management_port(inputs)})
-    inputs.update({'public_ip': utils.get_management_server_ip()})
+    inputs.update({'ssh_key_filename': _load_manager_key(inputs)})
+    inputs.update({'ssh_user': _load_manager_user(inputs)})
+    inputs.update({'ssh_port': _load_manager_port(inputs)})
+    inputs.update({'public_ip': profile.manager_ip})
     return inputs
 
 
@@ -146,33 +170,33 @@ def _load_private_ip(inputs):
                                           'the upgrade/rollback process')
 
 
-def _load_management_key(inputs):
+def _load_manager_key(inputs):
     try:
-        key_path = inputs.get('ssh_key_filename') or utils.get_management_key()
+        key_path = inputs.get('ssh_key_filename') or profile.manager_key
         return os.path.expanduser(key_path)
     except Exception:
         raise exceptions.CloudifyCliError('Manager key must be provided for '
                                           'the upgrade/rollback process')
 
 
-def _load_management_user(inputs):
+def _load_manager_user(inputs):
     try:
-        return inputs.get('ssh_user') or utils.get_management_user()
+        return inputs.get('ssh_user') or profile.manager_user
     except Exception:
         raise exceptions.CloudifyCliError('Manager user must be provided for '
                                           'the upgrade/rollback process')
 
 
-def _load_management_port(inputs):
+def _load_manager_port(inputs):
     try:
-        return inputs.get('ssh_port') or utils.get_management_port()
+        return inputs.get('ssh_port') or profile.manager_port
     except Exception:
         raise exceptions.CloudifyCliError('Manager port must be provided for '
                                           'the upgrade/rollback process')
 
 
-def verify_and_wait_for_maintenance_mode_activation(client):
-    logger = get_logger()
+@cfy.pass_logger
+def verify_and_wait_for_maintenance_mode_activation(client, logger):
     curr_status = client.maintenance_mode.status().status
     if curr_status == MAINTENANCE_MODE_DEACTIVATED:
         error = exceptions.CloudifyCliError(
@@ -201,7 +225,7 @@ def put_workflow_state_file(is_upgrade, key_filename, user, port):
 
 def _wait_for_maintenance(client, logger):
     curr_status = client.maintenance_mode.status().status
-    while curr_status != maintenance.MAINTENANCE_MODE_ACTIVE:
+    while curr_status != maintenance_mode.MAINTENANCE_MODE_ACTIVE:
         logger.info('Waiting for maintenance mode to be activated...')
-        time.sleep(maintenance.DEFAULT_TIMEOUT_INTERVAL)
+        time.sleep(maintenance_mode.DEFAULT_TIMEOUT_INTERVAL)
         curr_status = client.maintenance_mode.status().status

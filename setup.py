@@ -22,6 +22,7 @@ setup(
     author='Gigaspaces',
     author_email='cosmo-admin@gigaspaces.com',
     packages=['cloudify_cli',
+              'cloudify_cli.cli',
               'cloudify_cli.commands',
               'cloudify_cli.bootstrap',
               'cloudify_cli.bootstrap.resources',
@@ -29,32 +30,32 @@ setup(
     package_data={
         'cloudify_cli': [
             'VERSION',
-            'resources/config.yaml',
-            'resources/getdocker.sh',
+            'config/config_template.yaml',
             'bootstrap/resources/install_plugins.sh.template'
         ],
     },
     license='LICENSE',
-    description='Cloudify CLI',
+    description="Cloudify's Command Line Interface",
     entry_points={
         'console_scripts': [
-            'cfy = cloudify_cli.cli:main',
-            'activate_cfy_bash_completion = cloudify_cli.activate_bash_completion:main'  # NOQA
+            'cfy = cloudify_cli.main:_cfy'
         ]
     },
     install_requires=[
-        'cloudify-plugins-common==4.0a1',
-        'cloudify-rest-client==4.0a1',
+        'click==4.0',
+        'wagon==0.3.2',
+        'pyyaml==3.10',
+        'fabric==1.8.3',
+        'jinja2==2.7.2',
+        'retrying==1.3.3',
+        'colorama==0.3.3',
+        'itsdangerous==0.24',
+        'PrettyTable>=0.7,<0.8',
+        'click_didyoumean==0.0.3',
         'cloudify-dsl-parser==4.0a1',
         'cloudify-script-plugin==1.4',
-        'pyyaml==3.10',
-        'argcomplete==1.1.0',
-        'fabric==1.8.3',
-        'PrettyTable>=0.7,<0.8',
-        'colorama==0.3.3',
-        'jinja2==2.7.2',
-        'itsdangerous==0.24',
-        'retrying==1.3.3',
-        'wagon==0.3.2'
+        'cloudify-rest-client==4.0a1',
+        'cloudify-plugins-common==4.0a1',
+        'backports.shutil_get_terminal_size==1.0.0',
     ]
 )

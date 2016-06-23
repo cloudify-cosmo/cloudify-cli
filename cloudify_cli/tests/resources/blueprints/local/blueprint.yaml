@@ -6,12 +6,12 @@ plugins:
         install: false
 
 inputs:
-    input1:
-        default: default_input1
-    input2:
-        default: default_input2
-    input3:
-        default: default_input3
+    key1:
+        default: default_val1
+    key2:
+        default: default_val2
+    key3:
+        default: default_val3
 
 node_types:
     test_type: {}
@@ -21,15 +21,15 @@ node_templates:
         type: test_type
         interfaces:
             test:
-                op: p.cloudify_cli.tests.commands.test_local.mock_op
+                op: p.cloudify_cli.tests.commands.mocks.mock_op
 
 outputs:
-    input1:
-        value: { get_input: input1 }
-    input2:
-        value: { get_input: input2 }
-    input3:
-        value: { get_input: input3 }
+    key1:
+        value: { get_input: key1 }
+    key2:
+        value: { get_input: key2 }
+    key3:
+        value: { get_input: key3 }
     param:
         value: { get_attribute: [node, param] }
     custom_param:
@@ -39,7 +39,7 @@ outputs:
 
 workflows:
     run_test_op_on_nodes:
-        mapping: p.cloudify_cli.tests.commands.test_local.mock_workflow
+        mapping: p.cloudify_cli.tests.commands.mocks.mock_workflow
         parameters:
             param:
                 default: default_param

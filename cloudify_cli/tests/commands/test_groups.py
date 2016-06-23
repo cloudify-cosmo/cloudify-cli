@@ -1,39 +1,19 @@
-########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
-
-"""
-Tests all commands that start with 'cfy workflows'
-"""
-
 from mock import MagicMock
 
-from cloudify_rest_client.deployments import Deployment
-from cloudify_rest_client.exceptions import CloudifyClientError
+from .test_base import CliCommandTest
 
-from cloudify_cli.tests import cli_runner
-from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
+from cloudify_rest_client import deployments
+from cloudify_rest_client.exceptions import CloudifyClientError
 
 
 class GroupsTest(CliCommandTest):
 
     def setUp(self):
         super(GroupsTest, self).setUp()
-        self._create_cosmo_wd_settings()
+        self.use_manager()
 
     def test_groups_list(self):
-        deployment = Deployment({
+        deployment = deployments.Deployment({
             'blueprint_id': 'mock_blueprint_id',
             'groups': {
                 'group1': {
@@ -72,10 +52,10 @@ class GroupsTest(CliCommandTest):
             }
         })
         self.client.deployments.get = MagicMock(return_value=deployment)
-        cli_runner.run_cli('cfy groups list -d a-deployment-id')
+        self.invoke('cfy groups list -d a-deployment-id')
 
     def test_groups_sort_list(self):
-        deployment = Deployment({
+        deployment = deployments.Deployment({
             'blueprint_id': 'mock_blueprint_id',
             'groups': {
                 'group2': {
@@ -100,7 +80,7 @@ class GroupsTest(CliCommandTest):
             }
         })
         self.client.deployments.get = MagicMock(return_value=deployment)
-        output = cli_runner.run_cli('cfy groups list -d a-deployment-id')
+        output = self.invoke('cfy groups list -d a-deployment-id').logs
         first = output.find('group1')
         second = output.find('group2')
         third = output.find('group3')
@@ -111,4 +91,4 @@ class GroupsTest(CliCommandTest):
         error = CloudifyClientError('')
         error.status_code = 404
         self.client.deployments.get = MagicMock(side_effect=error)
-        self._assert_ex("cfy groups list -d nonexistent-dep", expected_message)
+        self.invoke("cfy groups list -d nonexistent-dep", expected_message)

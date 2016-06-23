@@ -5,43 +5,56 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
-"""
-Handles all commands that start with 'cfy events'
-"""
-
-from cloudify_cli import utils
-from cloudify_cli.exceptions import CloudifyCliError, \
-    SuppressedCloudifyCliError
-from cloudify_cli.logger import get_logger, get_events_logger
 from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify_cli.execution_events_fetcher import ExecutionEventsFetcher, \
+
+from ..cli import cfy
+from ..logger import get_events_logger
+from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
+from ..execution_events_fetcher import ExecutionEventsFetcher, \
     wait_for_execution
 
 
-def ls(execution_id, include_logs, tail, json):
-    logger = get_logger()
-    rest_host = utils.get_rest_host()
-    logger.info("Getting events from management server {0} for "
-                "execution id '{1}' "
-                "[include_logs={2}]".format(rest_host,
-                                            execution_id,
-                                            include_logs))
-    client = utils.get_rest_client(rest_host)
+@cfy.group(name='events')
+@cfy.options.verbose()
+@cfy.assert_manager_active
+def events():
+    """Show events from workflow executions
+    """
+    pass
+
+
+@events.command(name='list',
+                short_help='List deployments events [manager only]')
+@cfy.argument('execution-id')
+@cfy.options.include_logs
+@cfy.options.json_output
+@cfy.options.tail
+@cfy.options.verbose()
+@cfy.pass_client()
+@cfy.pass_logger
+def list(execution_id, include_logs, json_output, tail, logger, client):
+    """Display events for an execution
+
+    `EXECUTION_ID` is the execution to list events for.
+    """
+    logger.info('Listing events for execution id {0} '
+                '[include_logs={1}]'.format(execution_id, include_logs))
     try:
         execution_events = ExecutionEventsFetcher(
             client,
             execution_id,
             include_logs=include_logs)
 
-        events_logger = get_events_logger(json)
+        events_logger = get_events_logger(json_output)
 
         if tail:
             execution = wait_for_execution(client,
@@ -70,3 +83,29 @@ def ls(execution_id, include_logs, tail, json):
         if e.status_code != 404:
             raise
         raise CloudifyCliError('Execution {0} not found'.format(execution_id))
+
+
+@events.command(name='delete',
+                short_help='Delete deployment events [manager only]')
+@cfy.argument('deployment-id')
+@cfy.options.include_logs
+@cfy.options.verbose()
+@cfy.pass_client()
+@cfy.pass_logger
+def delete(deployment_id, include_logs, logger, client):
+    """Delete events attached to a deployment
+    """
+    logger.info(
+        'Deleting events for deployment id {0} [include_logs={1}]'.format(
+            deployment_id, include_logs))
+
+    # Make sure the deployment exists - raise 404 otherwise
+    client.deployments.get(deployment_id)
+    deleted_events_count = client.events.delete(
+        deployment_id, include_logs=include_logs
+    )
+    deleted_events_count = deleted_events_count.items[0]
+    if deleted_events_count:
+        logger.info('\nDeleted {0} events'.format(deleted_events_count))
+    else:
+        logger.info('\nNo events to delete')

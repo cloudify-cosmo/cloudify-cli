@@ -1,47 +1,64 @@
 ########
-# Copyright (c) 2015 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
-"""
-Handles all commands that start with 'cfy node-instances'
-"""
+import json
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
-from cloudify_cli.exceptions import CloudifyCliError
+from .. import table
+from .. import utils
+from ..cli import cfy
+from ..local import load_env
+from ..exceptions import CloudifyCliError
 
 
-def get(node_instance_id):
-    logger = get_logger()
-    rest_host = utils.get_rest_host()
-    client = utils.get_rest_client(rest_host)
+@cfy.group(name='node-instances')
+@cfy.options.verbose()
+@cfy.assert_manager_active
+def manager():
+    """Handle a deployment's node-instances
+    """
+    pass
 
-    logger.info('Retrieving node instance with ID: \'{0}\' [manager={1}]'
-                .format(node_instance_id, rest_host))
+
+@manager.command(name='get',
+                 short_help='Retrieve node-instance information '
+                 '[manager only]')
+@cfy.argument('node_instance_id')
+@cfy.options.verbose()
+@cfy.pass_logger
+@cfy.pass_client()
+def get(node_instance_id, logger, client):
+    """Retrieve information for a specific node-instance
+
+    `NODE_INSTANCE_ID` is the id of the node-instance to get information on.
+    """
+    logger.info('Retrieving node instance {0}'.format(node_instance_id))
     try:
         node_instance = client.node_instances.get(node_instance_id)
     except CloudifyClientError as e:
         if e.status_code != 404:
             raise
-        raise CloudifyCliError('Node instance {0} not found')
+        raise CloudifyCliError('Node instance {0} not found'.format(
+            node_instance_id))
 
     columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
-    pt = utils.table(columns, [node_instance])
+    pt = table.generate(columns, data=[node_instance])
     pt.max_width = 50
-    utils.print_table('Instance:', pt)
+    table.log('Node-instance:', pt)
 
     # print node instance runtime properties
     logger.info('Instance runtime properties:')
@@ -51,21 +68,33 @@ def get(node_instance_id):
     logger.info('')
 
 
-def ls(deployment_id, node_name=None, sort_by=None, descending=False):
-    logger = get_logger()
-    rest_host = utils.get_rest_host()
-    client = utils.get_rest_client(rest_host)
+@manager.command(name='list',
+                 short_help='List node-instances for a deployment '
+                 '[manager only]')
+@cfy.options.deployment_id(required=False)
+@cfy.options.node_name
+@cfy.options.sort_by('node_id')
+@cfy.options.descending
+@cfy.options.verbose()
+@cfy.pass_logger
+@cfy.pass_client()
+def list(deployment_id, node_name, sort_by, descending, logger, client):
+    """List node-instances
+
+    If `DEPLOYMENT_ID` is provided, list node-instances for that deployment.
+    Otherwise, list node-instances for all deployments.
+    """
     try:
         if deployment_id:
-            logger.info('Listing instances for deployment: \'{0}\' '
-                        '[manager={1}]'.format(deployment_id, rest_host))
+            logger.info('Listing instances for deployment {0}...'.format(
+                deployment_id))
         else:
-            logger.info(
-                'Listing all instances: [manager={0}]'.format(
-                    rest_host))
-        instances = client.node_instances.list(
-            deployment_id=deployment_id, node_name=node_name,
-            sort=sort_by, is_descending=descending)
+            logger.info('Listing all instances...')
+        node_instances = client.node_instances.list(
+            deployment_id=deployment_id,
+            node_name=node_name,
+            sort=sort_by,
+            is_descending=descending)
     except CloudifyClientError as e:
         if e.status_code != 404:
             raise
@@ -73,5 +102,27 @@ def ls(deployment_id, node_name=None, sort_by=None, descending=False):
             deployment_id))
 
     columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
-    pt = utils.table(columns, instances)
-    utils.print_table('Instances:', pt)
+    pt = table.generate(columns, data=node_instances)
+    table.log('Node-instances:', pt)
+
+
+@cfy.command(name='node-instances',
+             short_help='Show node-instance information [locally]')
+@cfy.argument('node-id', required=False)
+@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
+@cfy.options.verbose()
+@cfy.pass_logger
+def local(node_id, blueprint_id, logger):
+    """Display node-instances for the execution
+
+    `NODE_ID` is id of the node to list instances for.
+    """
+    env = load_env(blueprint_id)
+    node_instances = env.storage.get_node_instances()
+    if node_id:
+        node_instances = [instance for instance in node_instances
+                          if instance.node_id == node_id]
+        if not node_instances:
+            raise CloudifyCliError(
+                'Could not find node {0}'.format(node_id))
+    logger.info(json.dumps(node_instances, sort_keys=True, indent=2))
