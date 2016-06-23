@@ -59,11 +59,12 @@ class MaintenanceModeTest(CliCommandTest):
                 self.fail('expected maintenance mode activation to timeout')
             except CloudifyCliError as e:
                 self.assertEqual(e.message,
-                                 "Maintenance mode timed out while waiting "
-                                 "for activation. Note that maintenance mode "
-                                 "is still being activated in the background. "
-                                 "You can run 'cfy maintenance-mode "
-                                 "deactivate' to cancel the activation.")
+                                 "Timed-out while entering maintenance mode. "
+                                 "Note that manager is still entering "
+                                 "maintenance mode"
+                                 " in the background. You can run "
+                                 "'cfy maintenance-mode status' "
+                                 "check the status.")
 
     def test_activate_maintenance_timeout_no_wait(self):
         self._assert_ex('cfy maintenance-mode activate --timeout 5',
