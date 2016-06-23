@@ -47,14 +47,14 @@ def _archive_logs():
     return archive_path
 
 
-def get(destination_path):
-    """Retrieves an archive containing manager logs to `destination_path`
+def download(output):
+    """Retrieves an archive containing manager logs to `output`
     on the local machine.
     """
     logger = get_logger()
     archive_path_on_manager = _archive_logs()
-    logger.info('Downloading archive to: {0}'.format(destination_path))
-    ssh.get_file_from_manager(archive_path_on_manager, destination_path)
+    logger.info('Downloading archive to: {0}'.format(output))
+    ssh.get_file_from_manager(archive_path_on_manager, output)
     logger.info('Removing archive from manager...')
     ssh.run_command_on_manager(
         'rm {0}'.format(archive_path_on_manager), use_sudo=True)
