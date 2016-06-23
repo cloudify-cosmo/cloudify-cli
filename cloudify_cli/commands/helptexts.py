@@ -1,0 +1,5 @@
+BLUEPRINT_PATH = "The path to the application's blueprint file"
+VALIDATE_BLUEPRINT = "Validate the blueprint"
+RESET_CONFIG = "Reset the working environment"
+SKIP_LOGGING = "Initialize quietly"
+OUTPUT_PATH = "The local path to download to"

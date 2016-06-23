@@ -17,54 +17,102 @@
 Handles all commands that start with 'cfy blueprints'
 """
 
-import json
-
 import os
+import json
 import urlparse
+
+import click
+
+from dsl_parser.parser import parse_from_path
+from dsl_parser.exceptions import DSLParsingException
 
 from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
 from cloudify_cli.exceptions import CloudifyCliError
-from dsl_parser.parser import parse_from_path
-from dsl_parser.exceptions import DSLParsingException
+from cloudify_cli.commands import (helptexts, envvars)
 
-SUPPORTED_ARCHIVE_TYPES = ['zip', 'tar', 'tar.gz', 'tar.bz2']
+SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
 DESCRIPTION_LIMIT = 20
 
 
-def validate(blueprint_path):
+@click.group(context_settings=utils.CLICK_CONTEXT_SETTINGS)
+def blueprints():
+    pass
+
+
+@blueprints.command(name='validate')
+@click.argument('blueprint-path',
+                required=True,
+                envvar=envvars.BLUEPRINT_PATH,
+                type=click.Path(exists=True))
+def validate_blueprint(blueprint_path):
+    """Validate a blueprint
+    """
     logger = get_logger()
 
-    logger.info(
-        'Validating blueprint: {0}'.format(blueprint_path.name))
+    logger.info('Validating blueprint: {0}'.format(blueprint_path))
     try:
         resolver = utils.get_import_resolver()
         validate_version = utils.is_validate_definitions_version()
-        parse_from_path(dsl_file_path=blueprint_path.name,
-                        resolver=resolver,
-                        validate_version=validate_version)
+        parse_from_path(
+            dsl_file_path=blueprint_path,
+            resolver=resolver,
+            validate_version=validate_version)
     except DSLParsingException as ex:
-        raise CloudifyCliError('Failed to validate blueprint {0}'.format(
-            str(ex)))
+        raise CloudifyCliError('Failed to validate blueprint {0}'.format(ex))
     logger.info('Blueprint validated successfully')
 
 
-def upload(blueprint_path, blueprint_id, validate_blueprint):
+@blueprints.command(name='upload')
+@click.argument('blueprint-path',
+                required=True,
+                envvar=envvars.BLUEPRINT_PATH,
+                type=click.Path(exists=True))
+@click.option('-b',
+              '--blueprint-id',
+              required=True,
+              help=helptexts.BLUEPRINT_PATH)
+@click.option('--validate',
+              required=False,
+              is_flag=True,
+              help=helptexts.VALIDATE_BLUEPRINT)
+def upload(blueprint_path,
+           blueprint_filename,
+           blueprint_id,
+           validate):
+    """Upload a blueprint to a manager
+    """
+    if not _is_archive(blueprint_path):
+        _publish_directory(
+            blueprint_path,
+            blueprint_id,
+            validate)
+    else:
+        if validate:
+            raise CloudifyCliError(
+                'Validate is only relevant when uploading from a file.')
+        _publish_archive(
+            blueprint_path,
+            blueprint_filename,
+            blueprint_id)
+
+
+def _publish_directory(blueprint_path, blueprint_id, validate):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
-    if validate_blueprint:
-        validate(blueprint_path)
+    if validate:
+        validate_blueprint(blueprint_path)
     else:
         logger.debug("Skipping blueprint validation...")
 
-    logger.info('Uploading blueprint {0}...'.format(blueprint_path.name))
+    logger.info('Uploading blueprint {0}...'.format(blueprint_path))
     client = utils.get_rest_client(management_ip)
-    blueprint = client.blueprints.upload(blueprint_path.name, blueprint_id)
+    blueprint = client.blueprints.upload(blueprint_path, blueprint_id)
     logger.info("Blueprint uploaded. "
                 "The blueprint's id is {0}".format(blueprint.id))
 
 
-def publish_archive(archive_location, blueprint_filename, blueprint_id):
+def _publish_archive(archive_location, blueprint_filename, blueprint_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
 
@@ -83,11 +131,12 @@ def publish_archive(archive_location, blueprint_filename, blueprint_id):
                 "The blueprint's id is {0}".format(blueprint.id))
 
 
+def _is_archive(archive_location):
+    return archive_location.endswith(SUPPORTED_ARCHIVE_TYPES)
+
+
 def check_if_archive_type_is_supported(archive_location):
-    for archive_type in SUPPORTED_ARCHIVE_TYPES:
-        if archive_location.endswith('.{0}'.format(archive_type)):
-            break
-    else:
+    if not _is_archive(archive_location):
         raise CloudifyCliError(
             "Can't publish archive {0} - it's of an unsupported "
             "archive type. Supported archive types: {1}".format(
@@ -111,7 +160,16 @@ def determine_archive_type(archive_location):
     return os.path.expanduser(archive_location), 'url'
 
 
-def download(blueprint_id, output):
+@blueprints.command(name='download')
+@click.argument('blueprint-id',
+                required=True,
+                envvar=envvars.BLUEPRINT_ID)
+@click.option('-o',
+              '--output-path',
+              help=helptexts.OUTPUT_PATH)
+def download(blueprint_id, output_path):
+    """Download a blueprint from a manager
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     logger.info('Downloading blueprint {0}...'.format(blueprint_id))
@@ -120,7 +178,13 @@ def download(blueprint_id, output):
     logger.info('Blueprint downloaded as {0}'.format(target_file))
 
 
+@blueprints.command(name='delete')
+@click.argument('blueprint-id',
+                required=True,
+                envvar=envvars.BLUEPRINT_ID)
 def delete(blueprint_id):
+    """Delete a blueprint from a manager
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     logger.info('Deleting blueprint {0}...'.format(blueprint_id))
@@ -129,7 +193,10 @@ def delete(blueprint_id):
     logger.info('Blueprint deleted')
 
 
+@blueprints.command(name='ls')
 def ls():
+    """List all blueprints found uploaded to a manager
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -153,8 +220,13 @@ def ls():
     utils.print_table('Available blueprints:', pt)
 
 
+@blueprints.command(name='get')
+@click.argument('blueprint-id',
+                required=True,
+                envvar=envvars.BLUEPRINT_ID)
 def get(blueprint_id):
-
+    """Retrieve information on a specific blueprint
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -180,7 +252,13 @@ def get(blueprint_id):
     logger.info('{0}\n'.format(json.dumps([d['id'] for d in deployments])))
 
 
+@blueprints.command(name='inputs')
+@click.argument('blueprint-id',
+                required=True,
+                envvar=envvars.BLUEPRINT_ID)
 def inputs(blueprint_id):
+    """Retrieve inputs for a specific blueprint
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)

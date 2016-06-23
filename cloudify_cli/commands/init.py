@@ -20,13 +20,24 @@ Handles 'cfy init'
 import os
 import shutil
 
+import click
+
 from cloudify_cli import utils
 from cloudify_cli import constants
 from cloudify_cli import exceptions
 from cloudify_cli.logger import get_logger
+from cloudify_cli.commands import helptexts
 from cloudify_cli.logger import configure_loggers
 
 
+@click.command(context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@click.option('-r',
+              '--reset-config',
+              is_flag=True,
+              help=helptexts.RESET_CONFIG)
+@click.option('--skip-logging',
+              is_flag=True,
+              help=helptexts.SKIP_LOGGING)
 def init(reset_config, skip_logging=False):
     if os.path.exists(os.path.join(
             utils.get_cwd(),

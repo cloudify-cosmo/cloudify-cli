@@ -38,8 +38,7 @@ setup(
     description='Cloudify CLI',
     entry_points={
         'console_scripts': [
-            'cfy = cloudify_cli.cli:main',
-            'activate_cfy_bash_completion = cloudify_cli.activate_bash_completion:main'  # NOQA
+            'cfy = cloudify_cli.cli:main'
         ]
     },
     install_requires=[
@@ -55,6 +54,7 @@ setup(
         'jinja2==2.7.2',
         'itsdangerous==0.24',
         'retrying==1.3.3',
-        'wagon==0.3.2'
+        'wagon==0.3.2',
+        'click==4.0'
     ]
 )

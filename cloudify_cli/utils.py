@@ -29,6 +29,7 @@ import tempfile
 from contextlib import contextmanager
 
 import yaml
+import click
 import pkg_resources
 from prettytable import PrettyTable
 from jinja2.environment import Template
@@ -678,3 +679,26 @@ def build_manager_host_string(user='', ip=''):
 def manager_msg(message, manager_ip=None):
     return '{0} [Manager={1}]'.format(
         message, manager_ip or get_management_server_ip())
+
+
+class MutuallyExclusiveOption(click.Option):
+    def __init__(self, *args, **kwargs):
+        self.mutually_exclusive = set(kwargs.pop('mutually_exclusive', []))
+        self.mutuality_string = ', '.join(self.mutually_exclusive)
+        if self.mutually_exclusive:
+            help = kwargs.get('help', '')
+            kwargs['help'] = (
+                '{0}. This argument is mutually exclusive with '
+                'arguments: [{1}]'.format(help, self.mutuality_string))
+        super(MutuallyExclusiveOption, self).__init__(*args, **kwargs)
+
+    def handle_parse_result(self, ctx, opts, args):
+        if self.mutually_exclusive.intersection(opts) and self.name in opts:
+            raise click.UsageError(
+                "Illegal usage: `{0}` is mutually exclusive with "
+                "arguments `{1}`.".format(self.name, self.mutuality_string))
+        return super(MutuallyExclusiveOption, self).handle_parse_result(
+            ctx, opts, args)
+
+
+CLICK_CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])

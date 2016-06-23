@@ -16,6 +16,7 @@
 """
 Handles 'cfy use'
 """
+import click
 
 from cloudify_rest_client.exceptions import (
     CloudifyClientError,
@@ -27,8 +28,15 @@ from cloudify_cli import constants
 from cloudify_cli.logger import get_logger
 from cloudify_cli.bootstrap import bootstrap as bs
 from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.constants import DEFAULT_REST_PORT
 
 
+@click.command(name='use', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@click.argument('management_ip', required=True)
+@click.option('--rest-port',
+              required=False,
+              default=DEFAULT_REST_PORT,
+              help="The REST server's port")
 def use(management_ip, rest_port):
     logger = get_logger()
     # determine SSL mode by port

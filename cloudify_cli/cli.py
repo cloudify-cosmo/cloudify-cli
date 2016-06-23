@@ -21,7 +21,7 @@ import StringIO
 import traceback
 from itertools import imap
 
-import argcomplete
+import click
 
 from cloudify import logs
 from cloudify_rest_client.exceptions import NotModifiedError
@@ -30,6 +30,9 @@ from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
 from cloudify_cli import constants
+from cloudify_cli.commands import use
+from cloudify_cli.commands import init
+from cloudify_cli.commands import blueprints
 from cloudify_cli.exceptions import CloudifyBootstrapError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 
@@ -42,11 +45,30 @@ NO_VERBOSE = 0
 verbosity_level = NO_VERBOSE
 
 
-def main():
+@click.group()
+@click.option('-v', '--verbose', count=True)
+@click.option('--debug', default=False, is_flag=True)
+def main(verbose, debug):
+    # TODO: fix verbosity level
+    raise Exception(verbose)
     _configure_loggers()
-    _set_cli_except_hook()
-    args = _parse_args(sys.argv[1:])
-    args.handler(args)
+
+    if debug:
+        global_verbosity_level = HIGH_VERBOSE
+    else:
+        global_verbosity_level = verbose
+    set_global_verbosity_level(global_verbosity_level)
+    if global_verbosity_level >= HIGH_VERBOSE:
+        set_debug()
+    # _set_cli_except_hook()
+
+
+# TODO: here is where we decide which commands register with the cli
+# and which don't. We should decide that according to whether
+# a manager is currently `use`d or not.
+main.add_command(use.use)
+main.add_command(blueprints.blueprints)
+main.add_command(init.init)
 
 
 def _parse_args(args):
@@ -128,8 +150,8 @@ def _register_argument(args, command_parser):
             del argument['completer']
 
         arg = command_parser.add_argument(
-                *argument_name.split(','),
-                **argument
+            *argument_name.split(','),
+            **argument
         )
 
         if completer:
@@ -158,8 +180,8 @@ def register_command(subparsers, command_name, command):
 
     for mutual_exclusive_group in mutually_exclusive:
         command_arg_names += _register_argument(
-                mutual_exclusive_group,
-                command_parser.add_mutually_exclusive_group(required=True)
+            mutual_exclusive_group,
+            command_parser.add_mutually_exclusive_group(required=True)
         )
     # Add verbosity flag for each command
     command_parser.add_argument(
