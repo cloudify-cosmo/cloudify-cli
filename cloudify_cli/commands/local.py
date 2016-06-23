@@ -21,6 +21,8 @@ import os
 import json
 import shutil
 
+import click
+
 from cloudify.workflows import local
 
 from cloudify_cli import utils
@@ -38,6 +40,43 @@ _NAME = 'local'
 _STORAGE_DIR_NAME = 'local-storage'
 
 
+@click.group(name='local', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+def local_group():
+    pass
+
+
+@local_group.command(name='install')
+@click.argument('blueprint-path',
+                required=True,
+                envvar=envvars.BLUEPRINT_PATH,
+                type=click.Path(exists=True))
+@click.option('-i',
+              '--inputs',
+              multiple=True,
+              help=helptexts.INPUTS)
+@click.option('--install-plugins',
+              help=helptexts.INSTALL_PLUGINS)
+@click.option('-w',
+              '--workflow-id',
+              help=helptexts.EXECUTE_DEFAULT_INSTALL_WORKFLOW)
+@click.option('-p',
+              '--parameters',
+              help=helptexts.PARAMETERS)
+@click.option('--allow-custom-parameters',
+              is_flag=True,
+              help=helptexts.ALLOW_CUSTOM_PARAMETERS)
+@click.option('--task-retries',
+              type=int,
+              default=0,
+              help=helptexts.TASK_RETRIES)
+@click.option('--task-retry-interval',
+              type=int,
+              default=1,
+              help=helptexts.TASK_RETRIES)
+@click.options('--task-thread-pool-size',
+               type=int,
+               default=1,
+               help=helptexts.TASK_THREAD_POOL_SIZE)
 def install(blueprint_path, inputs, install_plugins, workflow_id, parameters,
             allow_custom_parameters, task_retries, task_retry_interval,
             task_thread_pool_size):

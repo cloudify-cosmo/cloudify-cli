@@ -70,19 +70,30 @@ def validate_blueprint(blueprint_path):
                 type=click.Path(exists=True))
 @click.option('-b',
               '--blueprint-id',
-              required=True,
+              required=False,
               help=helptexts.BLUEPRINT_PATH)
+@click.option('-n',
+              '--blueprint-filename',
+              required=False,
+              help=helptexts.BLUEPRINT_FILENAME)
 @click.option('--validate',
               required=False,
               is_flag=True,
               help=helptexts.VALIDATE_BLUEPRINT)
 def upload(blueprint_path,
-           blueprint_filename,
            blueprint_id,
+           blueprint_filename,
            validate):
     """Upload a blueprint to a manager
     """
+    # TODO: to fix the ambiguity of whether this is an archive
+    # or not, we can allow the user to pass an `archive_format`
+    # parameter which states that the user (explicitly) wanted
+    # to pass a path to an archive.
     if not _is_archive(blueprint_path):
+        if not blueprint_id:
+            blueprint_id = utils._generate_suffixed_id(
+                get_blueprint_id(blueprint_path))
         _publish_directory(
             blueprint_path,
             blueprint_id,
@@ -174,7 +185,7 @@ def download(blueprint_id, output_path):
     management_ip = utils.get_management_server_ip()
     logger.info('Downloading blueprint {0}...'.format(blueprint_id))
     client = utils.get_rest_client(management_ip)
-    target_file = client.blueprints.download(blueprint_id, output)
+    target_file = client.blueprints.download(blueprint_id, output_path)
     logger.info('Blueprint downloaded as {0}'.format(target_file))
 
 
@@ -195,7 +206,7 @@ def delete(blueprint_id):
 
 @blueprints.command(name='ls')
 def ls():
-    """List all blueprints found uploaded to a manager
+    """List all blueprints uploaded to a manager
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -276,3 +287,25 @@ def inputs(blueprint_id):
                      data=data)
 
     utils.print_table('Inputs:', pt)
+
+
+def get_blueprint_id(archive_location):
+    (archive_location, archive_location_type) = \
+        determine_archive_type(archive_location)
+    # if the archive is a local path, assign blueprint_id the name of
+    # the archive file without the extension
+    if archive_location_type == 'path':
+        filename, ext = os.path.splitext(
+            os.path.basename(archive_location))
+        return filename
+    # if the archive is a url, assign blueprint_id name of the file
+    # that the url leads to, without the extension.
+    # e.g. http://example.com/path/archive.zip?para=val#sect -> archive
+    elif archive_location_type == 'url':
+        path = urlparse.urlparse(archive_location).path
+        archive_file = path.split('/')[-1]
+        archive_name = archive_file.split('.')[0]
+        return archive_name
+    else:
+        raise CloudifyCliError("The archive's source is not a local "
+                               'file path nor a web url')

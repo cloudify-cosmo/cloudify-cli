@@ -32,6 +32,7 @@ from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 from cloudify_cli import constants
 from cloudify_cli.commands import use
 from cloudify_cli.commands import init
+from cloudify_cli.commands import local
 from cloudify_cli.commands import blueprints
 from cloudify_cli.exceptions import CloudifyBootstrapError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
@@ -46,11 +47,10 @@ verbosity_level = NO_VERBOSE
 
 
 @click.group()
-@click.option('-v', '--verbose', count=True)
+@click.option('-v', '--verbose', count=True, is_eager=True)
 @click.option('--debug', default=False, is_flag=True)
 def main(verbose, debug):
-    # TODO: fix verbosity level
-    raise Exception(verbose)
+    # TODO: fix verbosity placement
     _configure_loggers()
 
     if debug:
@@ -69,6 +69,7 @@ def main(verbose, debug):
 main.add_command(use.use)
 main.add_command(blueprints.blueprints)
 main.add_command(init.init)
+main.add_command(local.local_group)
 
 
 def _parse_args(args):

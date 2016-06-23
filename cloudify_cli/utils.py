@@ -701,4 +701,8 @@ class MutuallyExclusiveOption(click.Option):
             ctx, opts, args)
 
 
+def _generate_suffixed_id(id):
+    return '{0}_{1}'.format(id, generate_random_string())
+
+
 CLICK_CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])

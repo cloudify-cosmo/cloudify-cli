@@ -19,7 +19,6 @@ Handles 'cfy install'
 
 import os
 import errno
-import urlparse
 
 from cloudify_cli import utils
 from cloudify_cli.commands import blueprints
@@ -54,29 +53,11 @@ def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
 
         # If blueprint_id wasn't supplied, assign it to the name of the archive
         if not blueprint_id:
-            (archive_location, archive_location_type) = \
-                blueprints.determine_archive_type(archive_location)
-            # if the archive is a local path, assign blueprint_id the name of
-            # the archive file without the extension
-            if archive_location_type == 'path':
-                filename, ext = os.path.splitext(
-                    os.path.basename(archive_location))
-                blueprint_id = filename
-            # if the archive is a url, assign blueprint_id name of the file
-            # that the url leads to, without the extension.
-            # e.g. http://example.com/path/archive.zip?para=val#sect -> archive
-            elif archive_location_type == 'url':
-                path = urlparse.urlparse(archive_location).path
-                archive_file = path.split('/')[-1]
-                archive_name = archive_file.split('.')[0]
-                blueprint_id = archive_name
-            else:
-                raise CloudifyCliError("The archive's source is not a local "
-                                       'file path nor a web url')
+            blueprint_id = blueprints.get_blueprint_id(archive_location)
 
         # auto-generate blueprint id if necessary
         if _auto_generate_ids(auto_generate_ids):
-            blueprint_id = _generate_suffixed_id(blueprint_id)
+            blueprint_id = utils._generate_suffixed_id(blueprint_id)
 
         blueprints.publish_archive(archive_location,
                                    blueprint_filename,
@@ -99,7 +80,7 @@ def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
         # (The reason for this is beyond me. That's just the way it is)
 
         if _auto_generate_ids(auto_generate_ids):
-            blueprint_id = _generate_suffixed_id(blueprint_id)
+            blueprint_id = utils._generate_suffixed_id(blueprint_id)
 
         try:
             with open(blueprint_path) as blueprint_file:
@@ -128,7 +109,7 @@ def install(blueprint_path, blueprint_id, validate_blueprint, archive_location,
 
     # generate deployment-id suffix if necessary
     if _auto_generate_ids(auto_generate_ids):
-        deployment_id = _generate_suffixed_id(deployment_id)
+        deployment_id = utils._generate_suffixed_id(deployment_id)
 
     # If no inputs were supplied, and there is a file named inputs.yaml in
     # the cwd, use it as the inputs file
@@ -175,7 +156,3 @@ def _check_for_mutually_exclusive_arguments(blueprint_path,
 
 def _auto_generate_ids(auto_generate_ids):
     return utils.is_auto_generate_ids() or auto_generate_ids
-
-
-def _generate_suffixed_id(id):
-    return '{0}_{1}'.format(id, utils.generate_random_string())
