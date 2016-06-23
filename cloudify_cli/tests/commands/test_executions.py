@@ -1,75 +1,63 @@
-########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+import os
 
-"""
-Tests all commands that start with 'cfy executions'
-"""
+from mock import MagicMock, patch
 
-from uuid import uuid4
-from datetime import datetime
-
-from mock import MagicMock
-from mock import patch
-from cloudify_rest_client import exceptions
-from cloudify_rest_client.executions import Execution
-
-from cloudify_cli.commands import executions
-
-from cloudify_cli.tests import cli_runner
-from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
+from .. import cfy
+from .mocks import execution_mock
+from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
+from .test_base import CliCommandTest
+from ...commands import executions
+from cloudify_rest_client.exceptions import \
+    DeploymentEnvironmentCreationPendingError, \
+    DeploymentEnvironmentCreationInProgressError
 
 
 class ExecutionsTest(CliCommandTest):
 
     def setUp(self):
         super(ExecutionsTest, self).setUp()
-        self._create_cosmo_wd_settings()
+        self.use_manager()
 
     def test_executions_get(self):
         execution = execution_mock('terminated')
         self.client.executions.get = MagicMock(return_value=execution)
-        cli_runner.run_cli('cfy executions get -e execution-id')
+        self.invoke('cfy executions get execution-id')
 
     def test_executions_list(self):
         self.client.executions.list = MagicMock(return_value=[])
-        cli_runner.run_cli('cfy executions list -d deployment-id')
+        self.invoke('cfy executions list -d deployment-id')
 
     def test_executions_cancel(self):
         self.client.executions.cancel = MagicMock()
-        cli_runner.run_cli('cfy executions cancel -e e_id')
+        self.invoke('cfy executions cancel e_id')
 
     @patch('cloudify_cli.commands.executions.get_events_logger')
     def test_executions_start_json(self, get_events_logger_mock):
         execution = execution_mock('started')
-        self.client.executions.start = MagicMock(return_value=execution)
-        with patch('cloudify_cli.commands.executions.wait_for_execution',
-                   return_value=execution):
-            cli_runner.run_cli('cfy executions start -w mock_wf -d dep --json')
-        get_events_logger_mock.assert_called_with(True)
+        original_client_execution_start = self.client.executions.start
+        original_wait_for_executions = executions.wait_for_execution
+        try:
+            self.client.executions.start = MagicMock(return_value=execution)
+            executions.wait_for_execution = MagicMock(return_value=execution)
+            self.invoke('cfy executions start mock_wf -d dep --json-output')
+            get_events_logger_mock.assert_called_with(True)
+        finally:
+            self.client.executions.start = original_client_execution_start
+            executions.wait_for_execution = original_wait_for_executions
 
     def test_executions_start_dep_env_pending(self):
         self._test_executions_start_dep_env(
-            ex=exceptions.DeploymentEnvironmentCreationPendingError('m'))
+            ex=DeploymentEnvironmentCreationPendingError('m'))
 
     def test_executions_start_dep_env_in_progress(self):
         self._test_executions_start_dep_env(
-            ex=exceptions.DeploymentEnvironmentCreationInProgressError('m'))
+            ex=DeploymentEnvironmentCreationInProgressError('m'))
 
     def test_executions_start_dep_other_ex_sanity(self):
-        self.assertRaises(RuntimeError, self._test_executions_start_dep_env,
-                          ex=RuntimeError)
+        try:
+            self._test_executions_start_dep_env(ex=RuntimeError)
+        except cfy.ClickInvocationException as e:
+            self.assertEqual(str(RuntimeError), e.exception)
 
     def _test_executions_start_dep_env(self, ex):
         start_mock = MagicMock(side_effect=[ex, execution_mock('started')])
@@ -83,7 +71,7 @@ class ExecutionsTest(CliCommandTest):
         original_wait_for = executions.wait_for_execution
         try:
             executions.wait_for_execution = wait_for_mock
-            cli_runner.run_cli('cfy executions start -w mock_wf -d dep')
+            self.invoke('cfy executions start mock_wf -d dep')
             self.assertEqual(wait_for_mock.mock_calls[0][1][1].workflow_id,
                              'create_deployment_environment')
             self.assertEqual(wait_for_mock.mock_calls[1][1][1].workflow_id,
@@ -91,15 +79,56 @@ class ExecutionsTest(CliCommandTest):
         finally:
             executions.wait_for_execution = original_wait_for
 
+    def test_local_execution_default_param(self):
+        self._init_local_env()
+        self._assert_outputs({'param': 'null'})
+        self.invoke('cfy executions start {0}'.format('run_test_op_on_nodes'))
+        self._assert_outputs({'param': 'default_param'})
 
-def execution_mock(status, wf_id='mock_wf'):
-    return Execution({
-        'status': status,
-        'workflow_id': wf_id,
-        'deployment_id': 'deployment-id',
-        'blueprint_id': 'blueprint-id',
-        'error': '',
-        'id': uuid4(),
-        'created_at': datetime.now().isoformat()[:-3],
-        'parameters': {}
-    })
+    def test_local_execution_custom_param_value(self):
+        self._init_local_env()
+        self.invoke('cfy executions start {0} -p param=custom_value'.format(
+            'run_test_op_on_nodes')
+        )
+        self._assert_outputs({'param': 'custom_value'})
+
+    def test_local_execution_allow_custom_params(self):
+        self._init_local_env()
+        self.invoke('cfy executions start {0} '
+                    '-p custom_param=custom_value --allow-custom-parameters'
+                    ''.format('run_test_op_on_nodes')
+                    )
+        self._assert_outputs(
+            {'param': 'default_param', 'custom_param': 'custom_value'}
+        )
+
+    def test_local_execution_dont_allow_custom_params(self):
+        self._init_local_env()
+        self.invoke(
+            'cfy executions start {0} -p custom_param=custom_value'.format(
+                'run_test_op_on_nodes'
+            ),
+            err_str_segment='Workflow "run_test_op_on_nodes" does not '
+                            'have the following parameters declared: '
+                            'custom_param',
+            exception=ValueError
+        )
+
+    def _assert_outputs(self, expected_outputs):
+        output = self.invoke('cfy deployments outputs').logs.split('\n')
+        for key, value in expected_outputs.iteritems():
+            if value == 'null':
+                key_val_string = '  "{0}": {1}, '.format(key, value)
+            else:
+                key_val_string = '  "{0}": "{1}", '.format(key, value)
+            self.assertIn(key_val_string, output)
+
+    def _init_local_env(self):
+        blueprint_path = os.path.join(
+            BLUEPRINTS_DIR,
+            'local',
+            DEFAULT_BLUEPRINT_FILE_NAME
+        )
+
+        self.invoke('cfy init {0}'.format(blueprint_path))
+        cfy.register_commands()

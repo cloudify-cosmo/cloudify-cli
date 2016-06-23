@@ -9,27 +9,34 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
-"""
-Handles all commands that start with 'cfy logs'
-"""
 import os
 
-from cloudify_cli import ssh
-from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
+from .. import ssh
+from .. import env
+from ..cli import helptexts, cfy
+from ..exceptions import CloudifyCliError
 
 
-def _archive_logs():
+@cfy.group(name='logs')
+@cfy.options.verbose()
+@cfy.assert_manager_active
+def logs():
+    """Handle manager service logs
+    """
+    pass
+
+
+def _archive_logs(logger):
     """Creates an archive of all logs found under /var/log/cloudify plus
     journalctl.
     """
-    logger = get_logger()
     archive_filename = 'cloudify-manager-logs_{0}_{1}.tar.gz'.format(
-        ssh.get_manager_date(), utils.get_management_server_ip())
+        ssh.get_manager_date(), env.profile.manager_ip)
     archive_path = os.path.join('/tmp', archive_filename)
     journalctl_destination_path = '/var/log/cloudify/journalctl.log'
 
@@ -47,28 +54,40 @@ def _archive_logs():
     return archive_path
 
 
-def download(output):
-    """Retrieves an archive containing manager logs to `output`
-    on the local machine.
+@logs.command(name='download',
+              short_help='Download manager service logs [manager only]')
+@cfy.options.output_path
+@cfy.options.verbose()
+@cfy.pass_logger
+def download(output_path, logger):
+    """Download an archive containing all of the manager's service logs
     """
-    logger = get_logger()
-    archive_path_on_manager = _archive_logs()
-    logger.info('Downloading archive to: {0}'.format(output))
-    ssh.get_file_from_manager(archive_path_on_manager, output)
+    archive_path_on_manager = _archive_logs(logger)
+    logger.info('Downloading archive to: {0}'.format(output_path))
+    ssh.get_file_from_manager(archive_path_on_manager, output_path)
     logger.info('Removing archive from manager...')
     ssh.run_command_on_manager(
         'rm {0}'.format(archive_path_on_manager), use_sudo=True)
 
 
-def purge(force, backup_first):
-    """Truncates all logs files under /var/log/cloudify.
+@logs.command(name='purge',
+              short_help='Purge manager service logs [manager only]')
+@cfy.options.force(help=helptexts.FORCE_PURGE_LOGS)
+@cfy.options.backup_first
+@cfy.options.verbose()
+@cfy.pass_logger
+def purge(force, backup_first, logger):
+    """Truncate all logs files under /var/log/cloudify.
 
-    This aims to allow a user to take extreme measures to clean up
-    data from the manager. For instance, when the disk is full due to some
-    bug causing the logs to bloat up.
-    The `--force` flag must be provided to provide a safety measure.
+    This allows the user to take extreme measures to clean up data from the
+    manager. For instance, when the disk is full due to some bug causing the
+    logs to bloat up.
+
+    The `-f, --force` flag is mandatory as a safety measure.
     """
-    logger = get_logger()
+    if not force:
+        raise CloudifyCliError(
+            'You must supply the `-f, --force` flag to perform the purge')
     if backup_first:
         backup()
 
@@ -82,12 +101,15 @@ def purge(force, backup_first):
         'done', use_sudo=True)
 
 
-def backup():
-    """Creates a backup of all logs under a single archive and saves it
-    on the manager machine.
+@logs.command(name='backup',
+              short_help='Backup manager service logs [manager only]')
+@cfy.options.verbose()
+@cfy.pass_logger
+def backup(logger):
+    """Create a backup of all logs under a single archive and save it
+    on the manager under /var/log.
     """
-    logger = get_logger()
-    archive_path_on_manager = _archive_logs()
+    archive_path_on_manager = _archive_logs(logger)
     logger.info('Backing up manager logs to /var/log/{0}'.format(
         os.path.basename(archive_path_on_manager)))
     ssh.run_command_on_manager('mv {0} {1}'.format(

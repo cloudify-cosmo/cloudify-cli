@@ -1,32 +1,8 @@
-########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+from mock import MagicMock, patch
 
-"""
-Tests 'cfy status'
-"""
-
-import os
-
-from mock import patch
-from mock import MagicMock
+from .test_base import CliCommandTest
 
 from cloudify_rest_client.exceptions import UserUnauthorizedError
-
-from cloudify_cli import utils
-from cloudify_cli.tests import cli_runner
-from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
 
 class StatusTest(CliCommandTest):
@@ -37,39 +13,46 @@ class StatusTest(CliCommandTest):
         self.client.maintenance_mode.status = MagicMock()
 
     def test_status_command(self):
-        self._create_cosmo_wd_settings()
-        cli_runner.run_cli('cfy status')
+        self.use_manager()
+        self.invoke('cfy status')
 
-    def test_status_no_management_server_defined(self):
-        # running a command which requires a target management server without
+    def test_status_no_manager_server_defined(self):
+        # Running a command which requires a target manager server without
         # first calling "cfy use" or providing a target server explicitly
-        cli_runner.run_cli('cfy init')
-        self._assert_ex('cfy status',
-                        'Must either first run `cfy use` or explicitly '
-                        'provide a manager IP')
+        self.invoke(
+            'cfy status',
+            'This command is only available when using a manager'
+        )
 
     def test_status_by_unauthorized_user(self):
-        self._create_cosmo_wd_settings()
-        with patch('cloudify_cli.utils.get_management_server_ip'):
-            with patch.object(self.client.manager, 'get_status') as mock:
-                mock.side_effect = UserUnauthorizedError('Unauthorized user')
-                output = cli_runner.run_cli('cfy status')
-                self.assertIn('User is unauthorized', output)
+        self.use_manager()
+        with patch.object(self.client.manager, 'get_status') as mock:
+            mock.side_effect = UserUnauthorizedError('Unauthorized user')
+            outcome = self.invoke('cfy status')
+            self.assertIn('User is unauthorized', outcome.logs)
 
-    def test_status_command_from_inner_dir(self):
-        self._create_cosmo_wd_settings()
-        cwd = utils.get_cwd()
-        new_dir = os.path.join(cwd, 'test_command_from_inner_dir')
-        os.mkdir(new_dir)
-        utils.get_cwd = lambda: new_dir
-        cli_runner.run_cli('cfy status')
+    def test_status_result_services(self):
+        self.use_manager()
 
-    def test_status_command_from_outer_dir(self):
-        self._create_cosmo_wd_settings()
-        cwd = utils.get_cwd()
-        new_dir = os.path.dirname(cwd)
-        utils.get_cwd = lambda: new_dir
-        self._assert_ex('cfy status',
-                        'Cannot find .cloudify in {0}, '
-                        'or in any of its parent directories'
-                        .format(new_dir))
+        status_result = {
+            'services': [{
+                'instances': [{'state': 'state1'}],
+                'display_name': 'name1'
+            }, {
+                'instances': [{'state': 'state2'}],
+                'display_name': 'name2'
+            }]
+        }
+
+        self.client.manager.get_status = MagicMock(return_value=status_result)
+
+        outcome = self.invoke('cfy status')
+        outcome = [o.strip() for o in outcome.logs.split('\n')]
+
+        expected_outputs = [
+            '| name1                          | state1 |',
+            '| name2                          | state2 |',
+            ]
+
+        for output in expected_outputs:
+            self.assertIn(output, outcome)

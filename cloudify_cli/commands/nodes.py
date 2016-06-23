@@ -1,35 +1,50 @@
 ########
-# Copyright (c) 2015 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
-"""
-Handles all commands that start with 'cfy nodes'
-"""
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
-from cloudify_cli.exceptions import CloudifyCliError
+from .. import table
+from .. import utils
+from ..cli import cfy
+from ..exceptions import CloudifyCliError
 
 
-def get(deployment_id, node_id):
-    logger = get_logger()
-    rest_host = utils.get_rest_host()
-    client = utils.get_rest_client(rest_host)
+@cfy.group(name='nodes')
+@cfy.options.verbose()
+@cfy.assert_manager_active
+def nodes():
+    """Handle a deployment's nodes
+    """
+    pass
 
-    logger.info('Retrieving node: \'{0}\' for deployment with ID \'{1}\' '
-                '[manager={2}]'.format(node_id, deployment_id, rest_host))
+
+@nodes.command(name='get',
+               short_help='Retrieve node information [manager only]')
+@cfy.argument('node-id')
+@cfy.options.deployment_id(required=True)
+@cfy.options.verbose()
+@cfy.pass_logger
+@cfy.pass_client()
+def get(node_id, deployment_id, logger, client):
+    """Retrieve information for a specific node of a specific deployment
+
+    `NODE_ID` is the node id to get information on.
+    """
+    logger.info('Retrieving node {0} for deployment {1}'.format(
+        node_id, deployment_id))
     try:
         node = client.nodes.get(deployment_id, node_id)
     except CloudifyClientError as e:
@@ -44,13 +59,15 @@ def get(deployment_id, node_id):
     except CloudifyClientError as e:
         if e.status_code != 404:
             raise
+        raise CloudifyCliError('No node instances were found for '
+                               'node {0}'.format(node_id))
 
     # print node parameters
     columns = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                'number_of_instances', 'planned_number_of_instances']
-    pt = utils.table(columns, [node])
+    pt = table.generate(columns, data=[node])
     pt.max_width = 50
-    utils.print_table('Node:', pt)
+    table.log('Node:', pt)
 
     # print node properties
     logger.info('Node properties:')
@@ -68,20 +85,31 @@ def get(deployment_id, node_id):
         logger.info('\tNo node instances')
 
 
-def ls(deployment_id, sort_by=None, descending=False):
-    logger = get_logger()
-    rest_host = utils.get_rest_host()
-    client = utils.get_rest_client(rest_host)
+@nodes.command(name='list',
+               short_help='List nodes for a deployment '
+               '[manager only]')
+@cfy.options.deployment_id()
+@cfy.options.sort_by('deployment_id')
+@cfy.options.descending
+@cfy.options.verbose()
+@cfy.pass_logger
+@cfy.pass_client()
+def list(deployment_id, sort_by, descending, logger, client):
+    """List nodes
+
+    If `DEPLOYMENT_ID` is provided, list nodes for that deployment.
+    Otherwise, list nodes for all deployments.
+    """
     try:
         if deployment_id:
             logger.info('Listing nodes for deployment: \'{0}\' '
                         '[manager={1}]'.format(deployment_id, rest_host))
         else:
-            logger.info(
-                'Listing all nodes: [manager={0}]'.format(
-                    rest_host))
-        nodes = client.nodes.list(deployment_id=deployment_id,
-                                  sort=sort_by, is_descending=descending)
+            logger.info('Listing all nodes...')
+        nodes = client.nodes.list(
+            deployment_id=deployment_id,
+            sort=sort_by,
+            is_descending=descending)
     except CloudifyClientError as e:
         if not e.status_code != 404:
             raise
@@ -90,5 +118,5 @@ def ls(deployment_id, sort_by=None, descending=False):
 
     columns = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                'number_of_instances', 'planned_number_of_instances']
-    pt = utils.table(columns, nodes)
-    utils.print_table('Nodes:', pt)
+    pt = table.generate(columns, data=nodes)
+    table.log('Nodes:', pt)

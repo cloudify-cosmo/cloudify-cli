@@ -20,28 +20,35 @@ import tempfile
 
 from cloudify.workflows import local
 from cloudify.utils import LocalCommandRunner
+
 from dsl_parser.parser import parse_from_path
 from dsl_parser import constants as dsl_constants
 
-from cloudify_cli import utils
-from cloudify_cli import constants
-from cloudify_cli import exceptions
-from cloudify_cli.logger import get_logger
+from . import env
+from . import utils
+from . import constants
+from . import exceptions
+from .logger import get_logger
+from .config.config import CloudifyConfig
+
+
+_ENV_NAME = 'local'
+_STORAGE_DIR_NAME = '' if env.MULTIPLE_LOCAL_BLUEPRINTS else 'local-storage'
 
 
 def initialize_blueprint(blueprint_path,
                          name,
-                         storage,
+                         storage=None,
                          install_plugins=False,
                          inputs=None,
                          resolver=None):
-    if install_plugins:
-        install_blueprint_plugins(
-            blueprint_path=blueprint_path
-        )
+    logger = get_logger()
 
-    config = utils.CloudifyConfig()
-    inputs = utils.inputs_to_dict(inputs, 'inputs')
+    logger.info('Initializing blueprint...')
+    if install_plugins:
+        _install_plugins(blueprint_path=blueprint_path)
+
+    config = CloudifyConfig()
     return local.init_env(
         blueprint_path=blueprint_path,
         name=name,
@@ -53,31 +60,51 @@ def initialize_blueprint(blueprint_path,
         validate_version=config.validate_definitions_version)
 
 
-def install_blueprint_plugins(blueprint_path):
+def storage_dir(blueprint_id=None):
+    if blueprint_id:
+        return os.path.join(
+            env.PROFILES_DIR,
+            _ENV_NAME,
+            blueprint_id
+        )
+    else:
+        return os.path.join(env.PROFILES_DIR, _ENV_NAME, _STORAGE_DIR_NAME)
 
-    requirements = create_requirements(
-        blueprint_path=blueprint_path
-    )
+
+def get_storage():
+    return local.FileStorage(storage_dir=storage_dir())
+
+
+def load_env(blueprint_id=None):
+    if not os.path.isdir(storage_dir()):
+        error = exceptions.CloudifyCliError('Please initialize a blueprint')
+        error.possible_solutions = ["Run `cfy init BLUEPRINT_PATH`"]
+        raise error
+    return local.load_env(name=blueprint_id or 'local', storage=get_storage())
+
+
+def _install_plugins(blueprint_path):
+    requirements = create_requirements(blueprint_path=blueprint_path)
+    logger = get_logger()
 
     if requirements:
-        # validate we are inside a virtual env
+        # Validate we are inside a virtual env
         if not utils.is_virtual_env():
             raise exceptions.CloudifyCliError(
                 'You must be running inside a '
                 'virtualenv to install blueprint plugins')
 
-        runner = LocalCommandRunner(get_logger())
-        # dump the requirements to a file
-        # and let pip install it.
-        # this will utilize pip's mechanism
-        # of cleanup in case an installation fails.
+        runner = LocalCommandRunner(logger)
+        # Dump the requirements to a file and let pip install it.
+        # This will utilize pip's mechanism of cleanup in case an installation
+        # fails.
         tmp_path = tempfile.mkstemp(suffix='.txt', prefix='requirements_')[1]
         utils.dump_to_file(collection=requirements, file_path=tmp_path)
         command_parts = [sys.executable, '-m', 'pip', 'install', '-r',
                          tmp_path]
         runner.run(command=' '.join(command_parts), stdout_pipe=False)
     else:
-        get_logger().debug('There are no plugins to install')
+        logger.info('There are no plugins to install')
 
 
 def create_requirements(blueprint_path):
@@ -86,19 +113,12 @@ def create_requirements(blueprint_path):
 
     requirements = _plugins_to_requirements(
         blueprint_path=blueprint_path,
-        plugins=parsed_dsl[
-            dsl_constants.DEPLOYMENT_PLUGINS_TO_INSTALL
-        ]
-    )
+        plugins=parsed_dsl[dsl_constants.DEPLOYMENT_PLUGINS_TO_INSTALL])
 
     for node in parsed_dsl['nodes']:
-        requirements.update(
-            _plugins_to_requirements(
-                blueprint_path=blueprint_path,
-                plugins=node['plugins']
-            )
-        )
-
+        requirements.update(_plugins_to_requirements(
+            blueprint_path=blueprint_path,
+            plugins=node['plugins']))
     return requirements
 
 
@@ -107,9 +127,7 @@ def _plugins_to_requirements(blueprint_path, plugins):
     sources = set()
     for plugin in plugins:
         if plugin[dsl_constants.PLUGIN_INSTALL_KEY]:
-            source = plugin[
-                dsl_constants.PLUGIN_SOURCE_KEY
-            ]
+            source = plugin[dsl_constants.PLUGIN_SOURCE_KEY]
             if not source:
                 continue
             if '://' in source:
@@ -123,8 +141,3 @@ def _plugins_to_requirements(blueprint_path, plugins):
                     source)
                 sources.add(plugin_path)
     return sources
-
-
-def add_ignore_bootstrap_validations_input(inputs):
-    inputs.append('{"ignore_bootstrap_validations":true}')
-    return inputs

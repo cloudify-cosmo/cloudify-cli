@@ -5,28 +5,43 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
-"""
-Handles all commands that start with 'cfy workflows'
-"""
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
-from cloudify_cli.exceptions import CloudifyCliError
+from .. import table
+from .. import utils
+from ..cli import cfy
+from ..exceptions import CloudifyCliError
 
 
-def get(deployment_id, workflow_id):
-    logger = get_logger()
-    rest_host = utils.get_rest_host()
-    client = utils.get_rest_client(rest_host)
+@cfy.group(name='workflows')
+@cfy.assert_manager_active
+def workflows():
+    """Handle deployment workflows
+    """
+    pass
+
+
+@workflows.command(name='get',
+                   short_help='Retrieve workflow information [manager only]')
+@cfy.argument('workflow-id')
+@cfy.options.deployment_id(required=True)
+@cfy.options.verbose()
+@cfy.pass_logger
+@cfy.pass_client()
+def get(workflow_id, deployment_id, logger, client):
+    """Retrieve information for a specific workflow of a specific deployment
+
+    `WORKFLOW_ID` is the id of the workflow to get information on.
+    """
     try:
         logger.info('Retrieving workflow '
                     '\'{0}\' of deployment \'{1}\' [manager={2}]'
@@ -43,13 +58,13 @@ def get(deployment_id, workflow_id):
         raise CloudifyCliError('Deployment {0} not found'.format(
             deployment_id))
 
-    pt = utils.table(['blueprint_id', 'deployment_id',
-                      'name', 'created_at'],
-                     data=[workflow],
-                     defaults={'blueprint_id': deployment.blueprint_id,
-                               'deployment_id': deployment.id})
-
-    utils.print_table('Workflows:', pt)
+    columns = ['blueprint_id', 'deployment_id', 'name', 'created_at']
+    defaults = {
+        'blueprint_id': deployment.blueprint_id,
+        'deployment_id': deployment.id
+    }
+    pt = table.generate(columns, data=[workflow], defaults=defaults)
+    table.log('Workflows:', pt)
 
     # print workflow parameters
     mandatory_params = dict()
@@ -80,23 +95,26 @@ def get(deployment_id, workflow_id):
     logger.info('')
 
 
-def ls(deployment_id):
-    logger = get_logger()
-    rest_host = utils.get_rest_host()
-    client = utils.get_rest_client(rest_host)
+@workflows.command(name='list',
+                   short_help='List workflows for a deployment [manager only]')
+@cfy.options.deployment_id(required=True)
+@cfy.options.verbose()
+@cfy.pass_logger
+@cfy.pass_client()
+def list(deployment_id, logger, client):
+    """List all workflows on the manager
 
-    logger.info('Listing workflows for deployment: '
-                '\'{0}\'... [manager={1}]'
-                .format(deployment_id, rest_host))
-
+    `DEPLOYMENT_ID` is the id of the deployment to list workflows for.
+    """
+    logger.info('Listing workflows for deployment {0}...'.format(
+        deployment_id))
     deployment = client.deployments.get(deployment_id)
-    workflows = deployment.workflows
+    sorted_workflows = sorted(deployment.workflows, key=lambda w: w.name)
 
-    workflows = sorted(workflows, key=lambda w: w.name)
-
-    pt = utils.table(['blueprint_id', 'deployment_id',
-                      'name', 'created_at'],
-                     data=workflows,
-                     defaults={'blueprint_id': deployment.blueprint_id,
-                               'deployment_id': deployment.id})
-    utils.print_table('Workflows:', pt)
+    columns = ['blueprint_id', 'deployment_id', 'name', 'created_at']
+    defaults = {
+        'blueprint_id': deployment.blueprint_id,
+        'deployment_id': deployment.id
+    }
+    pt = table.generate(columns, data=sorted_workflows, defaults=defaults)
+    table.log('Workflows:', pt)
