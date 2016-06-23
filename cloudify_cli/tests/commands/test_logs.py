@@ -55,7 +55,9 @@ class LogsTest(CliCommandTest):
         settings.set_management_user('test')
         settings.set_management_key('/tmp/test.pem')
         self._create_cosmo_wd_settings(settings)
-        self._assert_ex('cfy logs get', 'Must either first run')
+        self._assert_ex(
+            'cfy logs get',
+            'You must first run `cfy use -t MANAGEMENT_IP`')
 
     def test_purge_no_force(self):
         # unlike the other tests, this drops on argparse raising

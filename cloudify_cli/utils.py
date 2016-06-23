@@ -394,8 +394,7 @@ def get_management_server_ip():
     management_ip = cosmo_wd_settings.get_management_server()
     if management_ip:
         return management_ip
-    raise CloudifyCliError(
-        'Must either first run `cfy use` or explicitly provide a manager IP')
+    raise CloudifyCliError('You must first run `cfy use -t MANAGEMENT_IP`')
 
 
 def get_username():

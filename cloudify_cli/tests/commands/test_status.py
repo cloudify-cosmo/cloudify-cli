@@ -44,9 +44,9 @@ class StatusTest(CliCommandTest):
         # running a command which requires a target management server without
         # first calling "cfy use" or providing a target server explicitly
         cli_runner.run_cli('cfy init')
-        self._assert_ex('cfy status',
-                        'Must either first run `cfy use` or explicitly '
-                        'provide a manager IP')
+        self._assert_ex(
+            'cfy status',
+            'You must first run `cfy use -t MANAGEMENT_IP`')
 
     def test_status_by_unauthorized_user(self):
         with patch('cloudify_cli.utils.get_management_server_ip'):

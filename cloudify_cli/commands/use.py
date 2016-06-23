@@ -29,8 +29,39 @@ from cloudify_cli.bootstrap import bootstrap as bs
 from cloudify_cli.exceptions import CloudifyCliError
 
 
-def use(management_ip, rest_port):
+def use(management_ip,
+        rest_port,
+        management_user,
+        management_key,
+        show_active):
     logger = get_logger()
+
+    if show_active:
+        print_solution = False
+        current_management_ip = utils.get_management_server_ip()
+        try:
+            current_management_user = utils.get_management_user()
+        except CloudifyCliError as ex:
+            print_solution = True
+            current_management_user = str(ex)
+        try:
+            current_management_key = utils.get_management_key()
+        except CloudifyCliError as ex:
+            print_solution = True
+            current_management_key = str(ex)
+
+        logger.info('Management IP: {0}'.format(current_management_ip))
+        logger.info('Management User: {0}'.format(current_management_user))
+        logger.info('Management Key: {0}'.format(current_management_key))
+
+        if print_solution:
+            logger.info(
+                'You can run the `-u` and `-k` flags to set the user and '
+                'key-file path respectively. '
+                '(e.g. `cfy use -u my_user -k ~/my/key/path`)'
+            )
+        return
+
     # determine SSL mode by port
     if rest_port == constants.SECURED_REST_PORT:
         protocol = constants.SECURED_PROTOCOL
@@ -62,12 +93,18 @@ def use(management_ip, rest_port):
         provider_context = None
 
     with utils.update_wd_settings() as wd_settings:
-        wd_settings.set_management_server(management_ip)
-        wd_settings.set_provider_context(provider_context)
-        wd_settings.set_rest_port(rest_port)
-        wd_settings.set_protocol(protocol)
-        logger.info('Using manager {0} with port {1}'.format(
-            management_ip, rest_port))
-
+        if management_ip:
+            wd_settings.set_management_server(management_ip)
+            wd_settings.set_provider_context(provider_context)
+            wd_settings.set_rest_port(rest_port)
+            wd_settings.set_protocol(protocol)
+            logger.info('Using manager {0} with port {1}'.format(
+                management_ip, rest_port))
+        if management_user:
+            wd_settings.set_management_user(management_user)
+            logger.info('Using user vagrant'.format(management_user))
+        if management_key:
+            wd_settings.set_management_key(management_key)
+            logger.info('Using key file {0}'.format(management_key))
     # delete the previous manager deployment if exists.
     bs.delete_workdir()
