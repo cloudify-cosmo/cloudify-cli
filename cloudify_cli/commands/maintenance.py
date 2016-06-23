@@ -56,12 +56,13 @@ def _print_maintenance_mode_status(client):
             logger.info(
                     'Cloudify Manager currently has one '
                     'running or pending execution. Waiting for it'
-                    ' to finish before activating.')
+                    ' to finish before entering maintenance mode.')
         else:
             logger.info(
                     'Cloudify Manager currently has {0} '
                     'running or pending executions. Waiting for all '
-                    'executions to finish before activating.'.format(
+                    'executions to finish before entering '
+                    'maintenance mode.'.format(
                             len(remaining_executions)))
 
         if get_global_verbosity() != NO_VERBOSE:
@@ -71,9 +72,8 @@ def _print_maintenance_mode_status(client):
             utils.print_table('Remaining executions:', pt)
 
     if status_response.status == MAINTENANCE_MODE_ACTIVE:
-        logger.info('INFO - Cloudify Manager is currently under maintenance. '
-                    'Most requests will be blocked '
-                    'until maintenance mode is deactivated.\n')
+        logger.info('INFO - Cloudify Manager is currently '
+                    'in maintenance mode. Most requests will be blocked.\n')
 
 
 def activate(wait, timeout):
@@ -89,28 +89,27 @@ def activate(wait, timeout):
         ]
         raise error
 
-    logger.info('Activating maintenance mode...')
+    logger.info('Entering maintenance mode...')
     client.maintenance_mode.activate()
 
     if wait:
-        logger.info("Maintenance mode will be activated once there are "
-                    "no running or pending executions...\n")
+        logger.info("Cloudify manager will enter maintenance mode "
+                    "once there are no running or pending executions...\n")
         deadline = time.time() + timeout
 
         while True:
             if _is_timeout(timeout, deadline):
                 raise exceptions.CloudifyCliError(
-                    "Maintenance mode timed out while waiting for activation. "
-                    "Note that maintenance mode is still "
-                    "being activated in the background. You can run "
-                    "'cfy maintenance-mode deactivate' to "
-                    "cancel the activation.")
+                    "Timed-out while entering maintenance mode. "
+                    "Note that manager is still entering maintenance mode"
+                    " in the background. You can run "
+                    "'cfy maintenance-mode status' check the status.")
 
             status_response = client.maintenance_mode.status()
             if status_response.status == MAINTENANCE_MODE_ACTIVE:
-                logger.info('Maintenance mode activated.')
-                logger.info('Most requests will be blocked and '
-                            'ignored until maintenance mode is deactivated.')
+                logger.info('Manager is in maintenance mode.')
+                logger.info('While in maintenance mode, '
+                            'most requests will be blocked.')
                 return
             time.sleep(DEFAULT_TIMEOUT_INTERVAL)
     logger.info("Run 'cfy maintenance-mode status' to check the "
@@ -122,9 +121,9 @@ def deactivate():
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
-    logger.info('Deactivating maintenance mode...')
+    logger.info('Turning off maintenance mode...')
     client.maintenance_mode.deactivate()
-    logger.info('Maintenance mode deactivated.')
+    logger.info('Maintenance mode is off.')
 
 
 def _is_timeout(timeout, deadline):
