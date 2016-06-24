@@ -16,8 +16,11 @@
 """
 Handles 'cfy uninstall'
 """
+import click
 
 from cloudify_cli import utils
+from cloudify_cli.commands import local
+from cloudify_cli.config import helptexts
 from cloudify_cli.commands import blueprints
 from cloudify_cli.commands import executions
 from cloudify_cli.commands import deployments
@@ -61,8 +64,7 @@ def remote_uninstall(deployment_id,
     force = False
 
     # if no workflow was supplied, execute the `uninstall` workflow
-    if not workflow_id:
-        workflow_id = DEFAULT_UNINSTALL_WORKFLOW
+    workflow_id = workflow_id or DEFAULT_UNINSTALL_WORKFLOW
 
     executions.start(workflow_id=workflow_id,
                      deployment_id=deployment_id,
@@ -76,8 +78,8 @@ def remote_uninstall(deployment_id,
     # before deleting the deployment, save its blueprint_id, so we will be able
     # to delete the blueprint after deleting the deployment
     client = utils.get_rest_client()
-    deployment = client.deployments.get(deployment_id,
-                                        _include=['blueprint_id'])
+    deployment = client.deployments.get(
+        deployment_id, _include=['blueprint_id'])
     blueprint_id = deployment.blueprint_id
 
     deployments.delete(deployment_id, ignore_live_nodes=False)
@@ -116,18 +118,17 @@ def local_uninstall(workflow_id,
     """Uninstall an application
     """
     # if no workflow was supplied, execute the `uninstall` workflow
-    if not workflow_id:
-        workflow_id = DEFAULT_UNINSTALL_WORKFLOW
+    workflow_id = workflow_id or DEFAULT_UNINSTALL_WORKFLOW
 
-    execute(workflow_id=workflow_id,
-            parameters=parameters,
-            allow_custom_parameters=allow_custom_parameters,
-            task_retries=task_retries,
-            task_retry_interval=task_retry_interval,
-            task_thread_pool_size=task_thread_pool_size)
+    local.execute(workflow_id=workflow_id,
+                  parameters=parameters,
+                  allow_custom_parameters=allow_custom_parameters,
+                  task_retries=task_retries,
+                  task_retry_interval=task_retry_interval,
+                  task_thread_pool_size=task_thread_pool_size)
 
     # Remove the local-storage dir
-    utils.remove_if_exists(_storage_dir())
+    utils.remove_if_exists(local._storage_dir())
 
     # Note that although `local install` possibly creates a `.cloudify` dir in
     # addition to the creation of the local storage dir, `local uninstall`

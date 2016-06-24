@@ -20,12 +20,22 @@ Handles all commands that start with 'cfy deployments'
 import os
 from StringIO import StringIO
 
+import click
+
 from cloudify_cli import utils
+from cloudify_cli.config import helptexts
 from cloudify_cli.logger import get_logger, get_events_logger
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 from cloudify_cli.execution_events_fetcher import wait_for_execution
 from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
+
+
+@click.group(name='deployments', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+def deployments():
+    """Handle deployments on the Manager
+    """
+    pass
 
 
 def _print_deployment_inputs(client, blueprint_id):
@@ -41,7 +51,14 @@ def _print_deployment_inputs(client, blueprint_id):
     logger.info(inputs_output.getvalue())
 
 
+@deployments.command(name='ls')
+@click.argument('blueprint-id', required=False)
 def ls(blueprint_id):
+    """List deployments
+
+    If `BLUEPRINT_ID` is provided, list deployments for that blueprint.
+    Else, list deployments for all blueprints.
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -65,25 +82,59 @@ def ls(blueprint_id):
     utils.print_table('Deployments:', pt)
 
 
+@deployments.command(name='update')
+@click.argument('deployment-id', required=True)
+@click.option('-p',
+              '--blueprint-path',
+              required=True,
+              type=click.Path(exists=True))
+@click.option('-i',
+              '--inputs',
+              multiple=True,
+              help=helptexts.INPUTS)
+@click.option('-n',
+              '--blueprint-filename',
+              required=False,
+              help=helptexts.BLUEPRINT_FILENAME)
+@click.option('-w',
+              '--workflow-id',
+              help=helptexts.EXECUTE_DEFAULT_UNINSTALL_WORKFLOW)
+@click.option('--skip-install',
+              is_flag=True,
+              help=helptexts.SKIP_INSTALL)
+@click.option('--skip-uninstall',
+              is_flag=True,
+              help=helptexts.SKIP_UNINSTALL)
+@click.option('-f',
+              '--force',
+              is_flag=True,
+              help=helptexts.FORCE_UPDATE)
+@click.option('-l',
+              '--include-logs',
+              is_flag=True,
+              help=helptexts.INCLUDE_LOGS)
+@click.option('--json',
+              is_flag=True,
+              help=helptexts.JSON_OUTPUT)
 def update(deployment_id,
            blueprint_path,
            inputs,
            blueprint_filename,
-           archive_location,
            skip_install,
            skip_uninstall,
            workflow_id,
            force,
            include_logs,
            json):
+    """Update a specified deployment according to the specified blueprint
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
     processed_inputs = utils.inputs_to_dict(inputs, 'inputs')
 
-    blueprint_or_archive_path = blueprint_path.name \
-        if blueprint_path else archive_location
+    blueprint_or_archive_path = blueprint_path
     logger.info('Updating deployment {dep_id} using blueprint {path}'.format(
         dep_id=deployment_id, path=blueprint_or_archive_path))
 
@@ -128,11 +179,25 @@ def update(deployment_id,
                             exec_id=execution.id))
 
 
-def create(blueprint_id, deployment_id, inputs):
+@deployments.command(name='create')
+@click.argument('blueprint-id', required=True)
+@click.option('-d',
+              '--deployment-id',
+              help=helptexts.DEPLOYMENT_ID)
+@click.option('-i',
+              '--inputs',
+              multiple=True,
+              help=helptexts.INPUTS)
+def create(blueprint_id,
+           deployment_id,
+           inputs):
+    """Create a deployment on the Manager
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     inputs = utils.inputs_to_dict(inputs, 'inputs')
 
+    deployment_id = deployment_id or utils._generate_suffixed_id(blueprint_id)
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
     client = utils.get_rest_client(management_ip)
@@ -156,16 +221,27 @@ def create(blueprint_id, deployment_id, inputs):
         deployment.id))
 
 
-def delete(deployment_id, ignore_live_nodes):
+@deployments.command(name='delete')
+@click.argument('deployment-id', required=True)
+@click.option('-f',
+              '--force',
+              help=helptexts.IGNORE_LIVE_NODES)
+def delete(deployment_id, force):
+    """Delete a deployment from the Manager
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     logger.info('Deleting deployment {0}...'.format(deployment_id))
     client = utils.get_rest_client(management_ip)
-    client.deployments.delete(deployment_id, ignore_live_nodes)
+    client.deployments.delete(deployment_id, force)
     logger.info("Deployment deleted")
 
 
+@deployments.command(name='outputs')
+@click.argument('deployment-id', required=True)
 def outputs(deployment_id):
+    """Retrieve outputs for a specific deployment
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)

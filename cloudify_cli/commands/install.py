@@ -27,8 +27,8 @@ from cloudify_cli.commands import local
 from cloudify_cli.commands import blueprints
 from cloudify_cli.commands import executions
 from cloudify_cli.commands import deployments
+from cloudify_cli.config import (helptexts, envvars)
 from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.commands import (helptexts, envvars)
 from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
 from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
 # from cloudify_cli.constants import DEFAULT_BLUEPRINT_FILE_NAME

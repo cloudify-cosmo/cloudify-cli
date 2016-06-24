@@ -26,7 +26,7 @@ from cloudify_cli import utils
 from cloudify_cli import constants
 from cloudify_cli import exceptions
 from cloudify_cli.logger import get_logger
-from cloudify_cli.commands import helptexts
+from cloudify_cli.config import helptexts
 from cloudify_cli.logger import configure_loggers
 
 

@@ -29,3 +29,12 @@ OPERATION_TIMEOUT = """Operation timeout in seconds (The execution itself will k
 going, but the CLI will stop waiting for it to terminate)"""
 INCLUDE_LOGS = "Include logs in returned events"
 JSON_OUTPUT = "Output events in a consumable JSON format"
+
+SKIP_INSTALL = "Skip install lifecycle operations"
+SKIP_UNINSTALL = "Skip uninstall lifecycle operations"
+FORCE_UPDATE = """Force running update in case a previous
+update on this deployment has failed to finished successfully"""
+
+DEPLOYMENT_ID = "The ID of the deployment"
+IGNORE_LIVE_NODES = """Delete the deployment even if there are existing live
+nodes for it"""

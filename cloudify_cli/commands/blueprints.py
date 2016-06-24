@@ -29,7 +29,7 @@ from dsl_parser.exceptions import DSLParsingException
 from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
 from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.commands import (helptexts, envvars)
+from cloudify_cli.config import (helptexts, envvars)
 
 SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
 DESCRIPTION_LIMIT = 20
@@ -37,6 +37,8 @@ DESCRIPTION_LIMIT = 20
 
 @click.group(context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def blueprints():
+    """Handle blueprints on the manager
+    """
     pass
 
 
@@ -80,12 +82,22 @@ def validate_blueprint(blueprint_path):
               required=False,
               is_flag=True,
               help=helptexts.VALIDATE_BLUEPRINT)
+def upload_command(blueprint_path,
+                   blueprint_id,
+                   blueprint_filename,
+                   validate):
+    """Upload a blueprint to the manager
+    """
+    upload(blueprint_path,
+           blueprint_id,
+           blueprint_filename,
+           validate)
+
+
 def upload(blueprint_path,
            blueprint_id,
            blueprint_filename,
            validate):
-    """Upload a blueprint to a manager
-    """
     # TODO: to fix the ambiguity of whether this is an archive
     # or not, we can allow the user to pass an `archive_format`
     # parameter which states that the user (explicitly) wanted
@@ -179,7 +191,7 @@ def determine_archive_type(archive_location):
               '--output-path',
               help=helptexts.OUTPUT_PATH)
 def download(blueprint_id, output_path):
-    """Download a blueprint from a manager
+    """Download a blueprint from the manager
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -194,7 +206,7 @@ def download(blueprint_id, output_path):
                 required=True,
                 envvar=envvars.BLUEPRINT_ID)
 def delete(blueprint_id):
-    """Delete a blueprint from a manager
+    """Delete a blueprint from the manager
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -206,7 +218,7 @@ def delete(blueprint_id):
 
 @blueprints.command(name='ls')
 def ls():
-    """List all blueprints uploaded to a manager
+    """List all blueprints
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
