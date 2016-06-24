@@ -183,6 +183,12 @@ def uninstall(workflow_id,
               is_flag=True,
               help=helptexts.INSTALL_PLUGINS)
 # The 'overshadowing' of the `install_plugins` parameter is totally fine
+def init_command(blueprint_path,
+                 inputs,
+                 install_plugins):
+    init(blueprint_path, inputs, install_plugins)
+
+
 def init(blueprint_path,
          inputs,
          install_plugins):
@@ -244,6 +250,20 @@ def init(blueprint_path,
               type=int,
               default=1,
               help=helptexts.TASK_THREAD_POOL_SIZE)
+def execute_command(workflow_id,
+                    parameters,
+                    allow_custom_parameters,
+                    task_retries,
+                    task_retry_interval,
+                    task_thread_pool_size):
+    execute(workflow_id,
+            parameters,
+            allow_custom_parameters,
+            task_retries,
+            task_retry_interval,
+            task_thread_pool_size)
+
+
 def execute(workflow_id,
             parameters,
             allow_custom_parameters,

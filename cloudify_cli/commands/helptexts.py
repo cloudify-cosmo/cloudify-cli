@@ -24,3 +24,8 @@ SSH_COMMAND = "Execute a command on the manager over SSH"
 SSH_HOST_SESSION = "Host an SSH tmux session"
 SSH_CONNECT_TO_SESSION = "Join an SSH tmux session"
 SSH_LIST_SESSIONS = "List available SSH tmux sessions"
+
+OPERATION_TIMEOUT = """Operation timeout in seconds (The execution itself will keep
+going, but the CLI will stop waiting for it to terminate)"""
+INCLUDE_LOGS = "Include logs in returned events"
+JSON_OUTPUT = "Output events in a consumable JSON format"

@@ -24,8 +24,35 @@ from cloudify_cli.commands import deployments
 from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW
 
 
-def uninstall(deployment_id, workflow_id, parameters,
-              allow_custom_parameters, timeout, include_logs, json):
+@click.command(name='uninstall', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@click.argument('deployment-id')
+@click.option('-w',
+              '--workflow-id',
+              help=helptexts.EXECUTE_DEFAULT_UNINSTALL_WORKFLOW)
+@click.option('-p',
+              '--parameters',
+              help=helptexts.PARAMETERS)
+@click.option('--allow-custom-parameters',
+              is_flag=True,
+              help=helptexts.ALLOW_CUSTOM_PARAMETERS)
+@click.option('--timeout',
+              type=int,
+              default=900,
+              help=helptexts.OPERATION_TIMEOUT)
+@click.option('-l',
+              '--include-logs',
+              is_flag=True,
+              help=helptexts.INCLUDE_LOGS)
+@click.option('--json',
+              is_flag=True,
+              help=helptexts.JSON_OUTPUT)
+def remote_uninstall(deployment_id,
+                     workflow_id,
+                     parameters,
+                     allow_custom_parameters,
+                     timeout,
+                     include_logs,
+                     json):
 
     # Although the `uninstall` command does not use the `force` argument,
     # we are using the `executions start` handler as a part of it.
@@ -56,3 +83,52 @@ def uninstall(deployment_id, workflow_id, parameters,
     deployments.delete(deployment_id, ignore_live_nodes=False)
 
     blueprints.delete(blueprint_id)
+
+
+@click.command(name='uninstall', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@click.option('-w',
+              '--workflow-id',
+              help=helptexts.EXECUTE_DEFAULT_UNINSTALL_WORKFLOW)
+@click.option('-p',
+              '--parameters',
+              help=helptexts.PARAMETERS)
+@click.option('--allow-custom-parameters',
+              is_flag=True,
+              help=helptexts.ALLOW_CUSTOM_PARAMETERS)
+@click.option('--task-retries',
+              type=int,
+              default=0,
+              help=helptexts.TASK_RETRIES)
+@click.option('--task-retry-interval',
+              type=int,
+              default=1,
+              help=helptexts.TASK_RETRIES)
+@click.option('--task-thread-pool-size',
+              type=int,
+              default=1,
+              help=helptexts.TASK_THREAD_POOL_SIZE)
+def local_uninstall(workflow_id,
+                    parameters,
+                    allow_custom_parameters,
+                    task_retries,
+                    task_retry_interval,
+                    task_thread_pool_size):
+    """Uninstall an application
+    """
+    # if no workflow was supplied, execute the `uninstall` workflow
+    if not workflow_id:
+        workflow_id = DEFAULT_UNINSTALL_WORKFLOW
+
+    execute(workflow_id=workflow_id,
+            parameters=parameters,
+            allow_custom_parameters=allow_custom_parameters,
+            task_retries=task_retries,
+            task_retry_interval=task_retry_interval,
+            task_thread_pool_size=task_thread_pool_size)
+
+    # Remove the local-storage dir
+    utils.remove_if_exists(_storage_dir())
+
+    # Note that although `local install` possibly creates a `.cloudify` dir in
+    # addition to the creation of the local storage dir, `local uninstall`
+    # does not remove the .cloudify dir.

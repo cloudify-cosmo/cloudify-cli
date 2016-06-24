@@ -31,9 +31,10 @@ from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
 from cloudify_cli import utils
 from cloudify_cli.commands import use
-from cloudify_cli.commands import ssh
 from cloudify_cli.commands import init
 from cloudify_cli.commands import local
+from cloudify_cli.commands import install
+from cloudify_cli.commands import uninstall
 from cloudify_cli.commands import blueprints
 from cloudify_cli.exceptions import CloudifyBootstrapError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
@@ -47,7 +48,7 @@ NO_VERBOSE = 0
 verbosity_level = NO_VERBOSE
 
 
-@click.group()
+@click.group(context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.option('-v', '--verbose', count=True, is_eager=True)
 @click.option('--debug', default=False, is_flag=True)
 def main(verbose, debug):
@@ -79,8 +80,9 @@ def register_commands():
 
     if is_manager_active:
         main.add_command(blueprints.blueprints)
-        main.add_command(ssh.ssh)
-
+        main.add_command(install.remote_install)
+    else:
+        main.add_command(install.local_install)
 
 register_commands()
 
