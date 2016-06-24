@@ -36,6 +36,7 @@ from cloudify_cli.commands import local
 from cloudify_cli.commands import install
 from cloudify_cli.commands import uninstall
 from cloudify_cli.commands import blueprints
+from cloudify_cli.commands import executions
 from cloudify_cli.commands import deployments
 from cloudify_cli.exceptions import CloudifyBootstrapError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
@@ -81,8 +82,9 @@ def register_commands():
 
     if is_manager_active:
         main.add_command(blueprints.blueprints)
-        main.add_command(deployments.deployments)
+        main.add_command(executions.executions)
         main.add_command(install.remote_install)
+        main.add_command(deployments.deployments)
         main.add_command(uninstall.remote_uninstall)
     else:
         main.add_command(install.local_install)

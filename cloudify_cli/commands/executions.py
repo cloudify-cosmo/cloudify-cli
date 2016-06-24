@@ -16,10 +16,12 @@
 """
 Handles all commands that start with 'cfy executions'
 """
-
 import time
 
+import click
+
 from cloudify_cli import utils
+from cloudify_cli.config import helptexts
 from cloudify_cli.logger import get_logger
 from cloudify_rest_client import exceptions
 from cloudify_cli.logger import get_events_logger
@@ -34,6 +36,13 @@ _STATUS_CANCELING_MESSAGE = (
     'may take a while to change into "cancelled"')
 
 
+@click.group(name='executions', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+def executions():
+    pass
+
+
+@executions.command(name='get')
+@click.argument('execution-id', required=True)
 def get(execution_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -63,6 +72,12 @@ def get(execution_id):
     logger.info('')
 
 
+@executions.command(name='ls')
+@click.argument('deployment-id', required=False)
+@click.option('--include-system-workflows',
+              required=False,
+              is_flag=True,
+              help=helptexts.INCLUDE_SYSTEM_WORKFLOWS)
 def ls(deployment_id, include_system_workflows):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -92,8 +107,40 @@ def ls(deployment_id, include_system_workflows):
         logger.info(_STATUS_CANCELING_MESSAGE)
 
 
-def start(workflow_id, deployment_id, timeout, force,
-          allow_custom_parameters, include_logs, parameters, json):
+@executions.command(name='start')
+@click.argument('workflow-id', required=True)
+@click.option('-d',
+              '--deployment-id',
+              required=True,
+              help=helptexts.DEPLOYMENT_ID)
+@click.option('-p',
+              '--parameters',
+              help=helptexts.PARAMETERS)
+@click.option('--allow-custom-parameters',
+              is_flag=True,
+              help=helptexts.ALLOW_CUSTOM_PARAMETERS)
+@click.option('-f',
+              '--force',
+              help=helptexts.FORCE_CONCURRENT_EXECUTION)
+@click.option('--timeout',
+              type=int,
+              default=900,
+              help=helptexts.OPERATION_TIMEOUT)
+@click.option('-l',
+              '--include-logs',
+              is_flag=True,
+              help=helptexts.INCLUDE_LOGS)
+@click.option('--json',
+              is_flag=True,
+              help=helptexts.JSON_OUTPUT)
+def start(workflow_id,
+          deployment_id,
+          parameters,
+          allow_custom_parameters,
+          force,
+          timeout,
+          include_logs,
+          json):
     logger = get_logger()
     parameters = utils.inputs_to_dict(parameters, 'parameters')
     management_ip = utils.get_management_server_ip()
@@ -186,6 +233,11 @@ def start(workflow_id, deployment_id, timeout, force,
         raise SuppressedCloudifyCliError()
 
 
+@executions.command(name='cancel')
+@click.argument('execution-id', required=True)
+@click.option('-f',
+              '--force',
+              help=helptexts.FORCE_CANCEL_EXECUTION)
 def cancel(execution_id, force):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()

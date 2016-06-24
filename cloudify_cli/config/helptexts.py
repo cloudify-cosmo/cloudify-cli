@@ -38,3 +38,10 @@ update on this deployment has failed to finished successfully"""
 DEPLOYMENT_ID = "The ID of the deployment"
 IGNORE_LIVE_NODES = """Delete the deployment even if there are existing live
 nodes for it"""
+
+INCLUDE_SYSTEM_WORKFLOWS = "Include executions of system workflows"
+
+FORCE_CONCURRENT_EXECUTION = """Execute the workflow even if there is an ongoing
+execution for the given deployment"""
+FORCE_CANCEL_EXECUTION = """Terminate the execution abruptly, rather than request
+an orderly termination"""

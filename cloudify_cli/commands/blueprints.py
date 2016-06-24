@@ -68,8 +68,7 @@ def validate_blueprint(blueprint_path):
 @blueprints.command(name='upload')
 @click.argument('blueprint-path',
                 required=True,
-                envvar=envvars.BLUEPRINT_PATH,
-                type=click.Path(exists=True))
+                envvar=envvars.BLUEPRINT_PATH)
 @click.option('-b',
               '--blueprint-id',
               required=False,
@@ -102,10 +101,11 @@ def upload(blueprint_path,
     # or not, we can allow the user to pass an `archive_format`
     # parameter which states that the user (explicitly) wanted
     # to pass a path to an archive.
+    if not blueprint_id:
+        blueprint_id = utils._generate_suffixed_id(
+            get_blueprint_id(blueprint_path))
+
     if not _is_archive(blueprint_path):
-        if not blueprint_id:
-            blueprint_id = utils._generate_suffixed_id(
-                get_blueprint_id(blueprint_path))
         _publish_directory(
             blueprint_path,
             blueprint_id,
