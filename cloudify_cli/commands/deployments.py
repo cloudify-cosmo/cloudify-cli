@@ -188,11 +188,19 @@ def update(deployment_id,
               '--inputs',
               multiple=True,
               help=helptexts.INPUTS)
+def create_command(blueprint_id,
+                   deployment_id,
+                   inputs):
+    """Create a deployment on the Manager
+    """
+    create(blueprint_id,
+           deployment_id,
+           inputs)
+
+
 def create(blueprint_id,
            deployment_id,
            inputs):
-    """Create a deployment on the Manager
-    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     inputs = utils.inputs_to_dict(inputs, 'inputs')

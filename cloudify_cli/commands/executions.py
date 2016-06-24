@@ -133,6 +133,25 @@ def ls(deployment_id, include_system_workflows):
 @click.option('--json',
               is_flag=True,
               help=helptexts.JSON_OUTPUT)
+def start_command(workflow_id,
+                  deployment_id,
+                  parameters,
+                  allow_custom_parameters,
+                  force,
+                  timeout,
+                  include_logs,
+                  json):
+
+    start(workflow_id,
+          deployment_id,
+          parameters,
+          allow_custom_parameters,
+          force,
+          timeout,
+          include_logs,
+          json)
+
+
 def start(workflow_id,
           deployment_id,
           parameters,

@@ -101,9 +101,8 @@ def upload(blueprint_path,
     # or not, we can allow the user to pass an `archive_format`
     # parameter which states that the user (explicitly) wanted
     # to pass a path to an archive.
-    if not blueprint_id:
-        blueprint_id = utils._generate_suffixed_id(
-            get_blueprint_id(blueprint_path))
+    blueprint_id = blueprint_id or utils._generate_suffixed_id(
+        get_blueprint_id(blueprint_path))
 
     if not _is_archive(blueprint_path):
         _publish_directory(

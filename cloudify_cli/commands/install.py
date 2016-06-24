@@ -28,7 +28,7 @@ from cloudify_cli.commands import blueprints
 from cloudify_cli.commands import executions
 from cloudify_cli.commands import deployments
 from cloudify_cli.config import (helptexts, envvars)
-from cloudify_cli.exceptions import CloudifyCliError
+# from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
 from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
 # from cloudify_cli.constants import DEFAULT_BLUEPRINT_FILE_NAME
@@ -38,23 +38,26 @@ from cloudify_cli.constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 @click.command(name='install', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path',
                 required=False,
-                envvar=envvars.BLUEPRINT_PATH,
-                type=click.Path(exists=True))
+                envvar=envvars.BLUEPRINT_PATH)
 @click.option('-b',
               '--blueprint-id',
               required=False,
               help=helptexts.BLUEPRINT_PATH)
+@click.option('-n',
+              '--blueprint-filename',
+              required=False,
+              help=helptexts.BLUEPRINT_FILENAME)
 @click.option('--validate',
               required=False,
               is_flag=True,
               help=helptexts.VALIDATE_BLUEPRINT)
+@click.option('-d',
+              '--deployment-id',
+              help=helptexts.DEPLOYMENT_ID)
 @click.option('-i',
               '--inputs',
               multiple=True,
               help=helptexts.INPUTS)
-@click.option('--install-plugins',
-              is_flag=True,
-              help=helptexts.INSTALL_PLUGINS)
 @click.option('-w',
               '--workflow-id',
               help=helptexts.EXECUTE_DEFAULT_INSTALL_WORKFLOW)
@@ -64,18 +67,17 @@ from cloudify_cli.constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 @click.option('--allow-custom-parameters',
               is_flag=True,
               help=helptexts.ALLOW_CUSTOM_PARAMETERS)
-@click.option('--task-retries',
+@click.option('--timeout',
               type=int,
-              default=0,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-retry-interval',
-              type=int,
-              default=1,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-thread-pool-size',
-              type=int,
-              default=1,
-              help=helptexts.TASK_THREAD_POOL_SIZE)
+              default=900,
+              help=helptexts.OPERATION_TIMEOUT)
+@click.option('-l',
+              '--include-logs',
+              is_flag=True,
+              help=helptexts.INCLUDE_LOGS)
+@click.option('--json',
+              is_flag=True,
+              help=helptexts.JSON_OUTPUT)
 def remote_install(blueprint_path,
                    blueprint_id,
                    blueprint_filename,
@@ -87,7 +89,6 @@ def remote_install(blueprint_path,
                    allow_custom_parameters,
                    timeout,
                    include_logs,
-                   auto_generate_ids,
                    json):
     """Install an application via the Manager
     """
@@ -151,69 +152,57 @@ def remote_install(blueprint_path,
     #             raise CloudifyCliError(
     #                 'A problem was encountered while trying to open '
     #                 '{0}.\n({1})'.format(blueprint_path, e))
-
-    if _auto_generate_ids(auto_generate_ids):
-        blueprint_id = utils._generate_suffixed_id(blueprint_id)
-
-    blueprints.upload(
-        blueprint_path,
-        blueprint_id,
-        blueprint_filename,
-        validate)
-
-    # If deployment_id wasn't supplied, use the same name as the blueprint id.
-    deployment_id = deployment_id or blueprint_id
-
-    # generate deployment-id suffix if necessary
-    if _auto_generate_ids(auto_generate_ids):
-        deployment_id = utils._generate_suffixed_id(deployment_id)
-
-    # If no inputs were supplied, and there is a file named inputs.yaml in
-    # the cwd, use it as the inputs file
+    blueprint_id = blueprint_id or utils._generate_suffixed_id(
+        blueprints.get_blueprint_id(blueprint_path))
+    deployment_id = deployment_id or utils._generate_suffixed_id(blueprint_id)
+    workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
     if not inputs and os.path.isfile(os.path.join(
             utils.get_cwd(), DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)):
         inputs = DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
-
-    deployments.create(blueprint_id, deployment_id, inputs)
-
     # although the `install` command does not need the `force` argument,
     # we *are* using the `executions start` handler as a part of it.
     # as a result, we need to provide it with a `force` argument, which is
     # defined below.
     force = False
 
-    # if no workflow was supplied, execute the `install` workflow
-    workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
-
-    executions.start(workflow_id=workflow_id,
-                     deployment_id=deployment_id,
-                     timeout=timeout,
-                     force=force,
-                     allow_custom_parameters=allow_custom_parameters,
-                     include_logs=include_logs,
-                     parameters=parameters,
-                     json=json)
-
-
-def _check_for_mutually_exclusive_arguments(blueprint_path,
-                                            archive_location,
-                                            blueprint_filename):
-    if blueprint_path and (archive_location or blueprint_filename):
-        raise CloudifyCliError(
-            "`-p/--blueprint-path` can't be supplied with "
-            "`-l/--archive-location` and/or `-n/--blueprint-filename`"
-        )
+    blueprints.upload(
+        blueprint_path=blueprint_path,
+        blueprint_id=blueprint_id,
+        blueprint_filename=blueprint_filename,
+        validate=validate)
+    deployments.create(
+        blueprint_id=blueprint_id,
+        deployment_id=deployment_id,
+        inputs=inputs)
+    executions.start(
+        workflow_id=workflow_id,
+        deployment_id=deployment_id,
+        timeout=timeout,
+        force=force,
+        allow_custom_parameters=allow_custom_parameters,
+        include_logs=include_logs,
+        parameters=parameters,
+        json=json)
 
 
-def _auto_generate_ids(auto_generate_ids):
-    return utils.is_auto_generate_ids() or auto_generate_ids
+# def _check_for_mutually_exclusive_arguments(blueprint_path,
+#                                             archive_location,
+#                                             blueprint_filename):
+#     if blueprint_path and (archive_location or blueprint_filename):
+#         raise CloudifyCliError(
+#             "`-p/--blueprint-path` can't be supplied with "
+#             "`-l/--archive-location` and/or `-n/--blueprint-filename`"
+#         )
+
+
+# def _auto_generate_ids(auto_generate_ids):
+#     return utils.is_auto_generate_ids() or auto_generate_ids
 
 
 @click.command(name='install', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path',
                 required=True,
-                envvar=envvars.BLUEPRINT_PATH,
-                type=click.Path(exists=True))
+                envvar=envvars.BLUEPRINT_PATH)
 @click.option('-i',
               '--inputs',
               multiple=True,
@@ -253,25 +242,20 @@ def local_install(blueprint_path,
                   task_thread_pool_size):
     """Install an application
     """
-    # if no blueprint path was supplied, set it to a default value
     blueprint_path = blueprint_path or DEFAULT_BLUEPRINT_PATH
-
-    # If no inputs were supplied, and there is a file named inputs.yaml in
-    # the cwd, use it as the inputs file
+    workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
     if not inputs and os.path.isfile(os.path.join(
             utils.get_cwd(), DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)):
         inputs = DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
-    local.init(blueprint_path=blueprint_path,
-               inputs=inputs,
-               install_plugins=install_plugins)
-
-    # if no workflow was supplied, execute the `install` workflow
-    workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
-
-    local.execute(workflow_id=workflow_id,
-                  parameters=parameters,
-                  allow_custom_parameters=allow_custom_parameters,
-                  task_retries=task_retries,
-                  task_retry_interval=task_retry_interval,
-                  task_thread_pool_size=task_thread_pool_size)
+    local.init(
+        blueprint_path=blueprint_path,
+        inputs=inputs,
+        install_plugins=install_plugins)
+    local.execute(
+        workflow_id=workflow_id,
+        parameters=parameters,
+        allow_custom_parameters=allow_custom_parameters,
+        task_retries=task_retries,
+        task_retry_interval=task_retry_interval,
+        task_thread_pool_size=task_thread_pool_size)
