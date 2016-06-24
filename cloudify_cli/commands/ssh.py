@@ -27,6 +27,7 @@ from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
 from cloudify_cli.ssh import run_command_on_manager
 from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.commands import helptexts
 
 
 def _open_interactive_shell(host_string, command=''):
@@ -60,11 +61,11 @@ def _send_keys(logger, command, sid, host_string):
         host_string=host_string)
 
 
-def _validate_env(ssh_command, host_session, sid, list_sessions):
-    if not isinstance(ssh_command, str):
-        raise CloudifyCliError('ssh_command should be a string.')
-    if not isinstance(host_session, bool):
-        raise CloudifyCliError('host_session should be a boolean.')
+def _validate_env(command, host, sid, list_sessions):
+    if not isinstance(command, str):
+        raise CloudifyCliError('command should be a string.')
+    if not isinstance(host, bool):
+        raise CloudifyCliError('host should be a boolean.')
     if not isinstance(sid, str):
         raise CloudifyCliError('sid should be a str.')
     if not isinstance(list_sessions, bool):
@@ -86,8 +87,8 @@ def _validate_env(ssh_command, host_session, sid, list_sessions):
             "Do not forget to convert your private key from OpenSSH format to "
             "PuTTY's format using PuTTYGen.")
 
-    if any([host_session and sid,
-            host_session and list_sessions,
+    if any([host and sid,
+            host and list_sessions,
             sid and list_sessions]):
         raise CloudifyCliError(
             'Choose one of --host, --list-sessions, --sid arguments.')
@@ -121,10 +122,21 @@ def _get_sessions_list(logger, host_string):
         _get_all_sessions(logger, host_string))
 
 
-def ssh(ssh_command, host_session, sid, list_sessions):
+@blueprints.command(name='ssh')
+@click.option('-c',
+              '--command',
+              help=helptexts.command)
+@click.option('--host',
+              help=helptexts.SSH_HOST_SESSION)
+@click.option('--sid',
+              help=helptexts.SSH_CONNECT_TO_SESSION)
+@click.option('-l',
+              '--list-sessions',
+              help=helptexts.SSH_LIST_SESSIONS)
+def ssh(command, host, sid, list_sessions):
     """Connects to a running manager via SSH.
 
-    `host_session` starts a tmux session (e.g. tmux new -s
+    `host` starts a tmux session (e.g. tmux new -s
     "ssh_session_vi120m") after which a command for a client is printed
     in the tmux session for the host to send to the client
     (i.e. cfy ssh --sid ssh_session_vi120m).
@@ -136,17 +148,17 @@ def ssh(ssh_command, host_session, sid, list_sessions):
     When the host exits the tmux session, a command will be executed
     to kill the session.
 
-    Passing an `ssh_command` will simply execute it on the manager while
+    Passing an `command` will simply execute it on the manager while
     omitting a command will connect to an interactive shell.
     """
-    _validate_env(ssh_command, host_session, sid, list_sessions)
+    _validate_env(command, host, sid, list_sessions)
     host_string = utils.build_manager_host_string()
-    if host_session or sid or list_sessions:
+    if host or sid or list_sessions:
         _verify_tmux_exists_on_manager(host_string)
 
     logger = get_logger()
     logger.info('Connecting to {0}...'.format(host_string))
-    if host_session:
+    if host:
         sid = 'ssh_session_' + utils.generate_random_string()
         logger.info('Creating session {0}...'.format(sid))
         try:
@@ -178,10 +190,10 @@ def ssh(ssh_command, host_session, sid, list_sessions):
         else:
             logger.info('No sessions are available')
     else:
-        if ssh_command:
-            logger.info('Executing command {0}...'.format(ssh_command))
+        if command:
+            logger.info('Executing command {0}...'.format(command))
             run_command_on_manager(
-                ssh_command,
+                command,
                 host_string=host_string,
                 force_output=True)
         else:

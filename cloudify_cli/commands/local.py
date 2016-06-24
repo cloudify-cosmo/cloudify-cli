@@ -30,6 +30,7 @@ from cloudify_cli import common
 from cloudify_cli import exceptions
 from cloudify_cli.logger import get_logger
 from cloudify_cli.commands import init as cfy_init
+from cloudify_cli.commands import (helptexts, envvars)
 from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
 from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
 from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW
@@ -42,6 +43,8 @@ _STORAGE_DIR_NAME = 'local-storage'
 
 @click.group(name='local', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def local_group():
+    """Handle local environments
+    """
     pass
 
 
@@ -55,6 +58,7 @@ def local_group():
               multiple=True,
               help=helptexts.INPUTS)
 @click.option('--install-plugins',
+              is_flag=True,
               help=helptexts.INSTALL_PLUGINS)
 @click.option('-w',
               '--workflow-id',
@@ -73,14 +77,21 @@ def local_group():
               type=int,
               default=1,
               help=helptexts.TASK_RETRIES)
-@click.options('--task-thread-pool-size',
-               type=int,
-               default=1,
-               help=helptexts.TASK_THREAD_POOL_SIZE)
-def install(blueprint_path, inputs, install_plugins, workflow_id, parameters,
-            allow_custom_parameters, task_retries, task_retry_interval,
+@click.option('--task-thread-pool-size',
+              type=int,
+              default=1,
+              help=helptexts.TASK_THREAD_POOL_SIZE)
+def install(blueprint_path,
+            inputs,
+            install_plugins,
+            workflow_id,
+            parameters,
+            allow_custom_parameters,
+            task_retries,
+            task_retry_interval,
             task_thread_pool_size):
-
+    """Install an application
+    """
     # if no blueprint path was supplied, set it to a default value
     if not blueprint_path:
         blueprint_path = DEFAULT_BLUEPRINT_PATH
@@ -110,9 +121,36 @@ def install(blueprint_path, inputs, install_plugins, workflow_id, parameters,
             task_thread_pool_size=task_thread_pool_size)
 
 
-def uninstall(workflow_id, parameters, allow_custom_parameters, task_retries,
-              task_retry_interval, task_thread_pool_size):
-
+@local_group.command(name='uninstall')
+@click.option('-w',
+              '--workflow-id',
+              help=helptexts.EXECUTE_DEFAULT_UNINSTALL_WORKFLOW)
+@click.option('-p',
+              '--parameters',
+              help=helptexts.PARAMETERS)
+@click.option('--allow-custom-parameters',
+              is_flag=True,
+              help=helptexts.ALLOW_CUSTOM_PARAMETERS)
+@click.option('--task-retries',
+              type=int,
+              default=0,
+              help=helptexts.TASK_RETRIES)
+@click.option('--task-retry-interval',
+              type=int,
+              default=1,
+              help=helptexts.TASK_RETRIES)
+@click.option('--task-thread-pool-size',
+              type=int,
+              default=1,
+              help=helptexts.TASK_THREAD_POOL_SIZE)
+def uninstall(workflow_id,
+              parameters,
+              allow_custom_parameters,
+              task_retries,
+              task_retry_interval,
+              task_thread_pool_size):
+    """Uninstall an application
+    """
     # if no workflow was supplied, execute the `uninstall` workflow
     if not workflow_id:
         workflow_id = DEFAULT_UNINSTALL_WORKFLOW
@@ -132,10 +170,24 @@ def uninstall(workflow_id, parameters, allow_custom_parameters, task_retries,
     # does not remove the .cloudify dir.
 
 
+@local_group.command(name='init')
+@click.argument('blueprint-path',
+                required=True,
+                envvar=envvars.BLUEPRINT_PATH,
+                type=click.Path(exists=True))
+@click.option('-i',
+              '--inputs',
+              multiple=True,
+              help=helptexts.INPUTS)
+@click.option('--install-plugins',
+              is_flag=True,
+              help=helptexts.INSTALL_PLUGINS)
 # The 'overshadowing' of the `install_plugins` parameter is totally fine
 def init(blueprint_path,
          inputs,
          install_plugins):
+    """Initialize a local environment in the current working directory
+    """
     if os.path.isdir(_storage_dir()):
         shutil.rmtree(_storage_dir())
 
@@ -170,12 +222,36 @@ def init(blueprint_path,
                       "again to apply them".format(blueprint_path))
 
 
+@local_group.command(name='execute')
+@click.option('-w',
+              '--workflow-id',
+              help=helptexts.EXECUTE_DEFAULT_UNINSTALL_WORKFLOW)
+@click.option('-p',
+              '--parameters',
+              help=helptexts.PARAMETERS)
+@click.option('--allow-custom-parameters',
+              is_flag=True,
+              help=helptexts.ALLOW_CUSTOM_PARAMETERS)
+@click.option('--task-retries',
+              type=int,
+              default=0,
+              help=helptexts.TASK_RETRIES)
+@click.option('--task-retry-interval',
+              type=int,
+              default=1,
+              help=helptexts.TASK_RETRIES)
+@click.option('--task-thread-pool-size',
+              type=int,
+              default=1,
+              help=helptexts.TASK_THREAD_POOL_SIZE)
 def execute(workflow_id,
             parameters,
             allow_custom_parameters,
             task_retries,
             task_retry_interval,
             task_thread_pool_size):
+    """Execute a workflow
+    """
     logger = get_logger()
     parameters = utils.inputs_to_dict(parameters, 'parameters')
     env = _load_env()
@@ -191,7 +267,10 @@ def execute(workflow_id,
                                indent=2))
 
 
+@local_group.command(name='outputs')
 def outputs():
+    """Display outputs for the execution
+    """
     logger = get_logger()
     env = _load_env()
     logger.info(json.dumps(env.outputs() or {},
@@ -199,7 +278,11 @@ def outputs():
                            indent=2))
 
 
+@local_group.command(name='instances')
+@click.argument('node-id', required=True)
 def instances(node_id):
+    """Display node-instances for the execution
+    """
     logger = get_logger()
     env = _load_env()
     node_instances = env.storage.get_node_instances()
@@ -214,25 +297,39 @@ def instances(node_id):
                            indent=2))
 
 
+@local_group.command(name='install-plugins')
+@click.argument('blueprint-path',
+                required=True,
+                envvar=envvars.BLUEPRINT_PATH,
+                type=click.Path(exists=True))
 def install_plugins(blueprint_path):
-    common.install_blueprint_plugins(
-        blueprint_path=blueprint_path)
+    """Install the necessary plugins for a given blueprint
+    """
+    common.install_blueprint_plugins(blueprint_path=blueprint_path)
 
 
-def create_requirements(blueprint_path, output):
+@local_group.command(name='create-requirements')
+@click.argument('blueprint-path',
+                required=True,
+                envvar=envvars.BLUEPRINT_PATH,
+                type=click.Path(exists=True))
+@click.option('-o',
+              '--output-path',
+              help=helptexts.OUTPUT_PATH)
+def create_requirements(blueprint_path, output_path):
+    """Create a pip-compliant requirements file for a given blueprint
+    """
     logger = get_logger()
-    if output and os.path.exists(output):
+    if output_path and os.path.exists(output_path):
         raise exceptions.CloudifyCliError(
-            'Output path {0} already exists'.format(output))
+            'Output path {0} already exists'.format(output_path))
 
-    requirements = common.create_requirements(
-        blueprint_path=blueprint_path
-    )
+    requirements = common.create_requirements(blueprint_path=blueprint_path)
 
     if output:
-        utils.dump_to_file(requirements, output)
+        utils.dump_to_file(requirements, output_path)
         logger.info('Requirements file created successfully --> {0}'
-                    .format(output))
+                    .format(output_path))
     else:
         # we don't want to use just lgr
         # since we want this output to be prefix free.

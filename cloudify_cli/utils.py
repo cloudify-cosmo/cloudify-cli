@@ -396,7 +396,16 @@ def get_management_server_ip():
     if management_ip:
         return management_ip
     raise CloudifyCliError(
-        'Must either first run `cfy use` or explicitly provide a manager IP')
+        "You must being using a manager to perform this action. "
+        "You can run `cfy use MANAGER_IP` to use a manager.")
+
+
+def is_manager_active():
+    try:
+        get_management_server_ip()
+        return True
+    except CloudifyCliError:
+        return False
 
 
 def get_username():
