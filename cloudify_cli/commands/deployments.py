@@ -191,7 +191,7 @@ def update(deployment_id,
 def create_command(blueprint_id,
                    deployment_id,
                    inputs):
-    """Create a deployment on the Manager
+    """Create a deployment on the manager
     """
     create(blueprint_id,
            deployment_id,
@@ -235,7 +235,7 @@ def create(blueprint_id,
               '--force',
               help=helptexts.IGNORE_LIVE_NODES)
 def delete(deployment_id, force):
-    """Delete a deployment from the Manager
+    """Delete a deployment from the manager
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()

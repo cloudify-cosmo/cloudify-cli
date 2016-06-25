@@ -32,7 +32,9 @@ from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 from cloudify_cli import utils
 from cloudify_cli.commands import use
 from cloudify_cli.commands import init
+from cloudify_cli.commands import agents
 from cloudify_cli.commands import install
+from cloudify_cli.commands import validate
 from cloudify_cli.commands import uninstall
 from cloudify_cli.commands import snapshots
 from cloudify_cli.commands import blueprints
@@ -78,10 +80,12 @@ def register_commands():
     is_manager_active = utils.is_manager_active()
 
     main.add_command(use.use)
-    main.add_command(init.init)
+    main.add_command(init.init_command)
+    main.add_command(validate.validate)
     # main.add_command(local.local_group)
 
     if is_manager_active:
+        main.add_command(agents.agents)
         main.add_command(snapshots.snapshots)
         main.add_command(blueprints.blueprints)
         main.add_command(executions.executions)

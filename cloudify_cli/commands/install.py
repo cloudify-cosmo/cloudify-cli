@@ -23,15 +23,14 @@ import os
 import click
 
 from cloudify_cli import utils
+from cloudify_cli.commands import init
 from cloudify_cli.commands import local
 from cloudify_cli.commands import blueprints
 from cloudify_cli.commands import executions
 from cloudify_cli.commands import deployments
 from cloudify_cli.config import (helptexts, envvars)
-# from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
 from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
-# from cloudify_cli.constants import DEFAULT_BLUEPRINT_FILE_NAME
 from cloudify_cli.constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
 
@@ -91,6 +90,9 @@ def remote_install(blueprint_path,
                    include_logs,
                    json):
     """Install an application via the Manager
+
+    This will upload the blueprint, create a deployment and execute the
+    `install` workflow.
     """
     # # The presence of the `archive_location` argument is used to distinguish
     # # between `install` in 'blueprints upload' mode,
@@ -153,7 +155,7 @@ def remote_install(blueprint_path,
     #                 'A problem was encountered while trying to open '
     #                 '{0}.\n({1})'.format(blueprint_path, e))
     blueprint_id = blueprint_id or utils._generate_suffixed_id(
-        blueprints.get_blueprint_id(blueprint_path))
+        blueprints.get_archive_id(blueprint_path))
     deployment_id = deployment_id or utils._generate_suffixed_id(blueprint_id)
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
     if not inputs and os.path.isfile(os.path.join(
@@ -248,7 +250,7 @@ def local_install(blueprint_path,
             utils.get_cwd(), DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)):
         inputs = DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
-    local.init(
+    init.init(
         blueprint_path=blueprint_path,
         inputs=inputs,
         install_plugins=install_plugins)

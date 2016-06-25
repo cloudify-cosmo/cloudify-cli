@@ -13,10 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles 'cfy init'
-"""
-
 import os
 import shutil
 
@@ -52,12 +48,23 @@ _STORAGE_DIR_NAME = 'local-storage'
 @click.option('--install-plugins',
               is_flag=True,
               help=helptexts.INSTALL_PLUGINS)
+def init_command(blueprint_path,
+                 reset_config,
+                 skip_logging,
+                 inputs,
+                 install_plugins):
+    init(blueprint_path,
+         reset_config,
+         skip_logging,
+         inputs,
+         install_plugins)
+
+
 def init(blueprint_path,
          reset_config,
          skip_logging,
          inputs,
          install_plugins):
-
     def _init():
         if os.path.exists(os.path.join(
                 utils.get_cwd(),

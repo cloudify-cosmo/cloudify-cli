@@ -13,14 +13,13 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles all commands that start with 'cfy agents'
-"""
-
 import time
 import threading
 
+import click
+
 from cloudify_cli import utils
+from cloudify_cli.config import helptexts
 from cloudify_cli.logger import get_logger
 from cloudify_cli.execution_events_fetcher import wait_for_execution, \
     WAIT_FOR_EXECUTION_SLEEP_INTERVAL
@@ -29,6 +28,13 @@ from cloudify_cli.exceptions import ExecutionTimeoutError
 from cloudify import logs
 
 _NODE_INSTANCE_STATE_STARTED = 'started'
+
+
+@click.group(name='agents', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+def agents():
+    """Handle a deployment's agents
+    """
+    pass
 
 
 def _is_deployment_installed(client, deployment_id):
@@ -46,7 +52,18 @@ def _deployment_exists(client, deployment_id):
     return True
 
 
+@agents.command(name='install')
+@click.argument('deployment-id', required=False)
+@click.option('-l',
+              '--include-logs',
+              is_flag=True,
+              help=helptexts.INCLUDE_LOGS)
 def install(deployment_id, include_logs):
+    """Install agents on the hosts of existing deployments
+
+    This allows to install agents on deployments which were previously created
+    but for which the user chose not to install agents previously.
+    """
     workflow_id = 'install_new_agents'
     logger = get_logger()
     client = utils.get_rest_client()

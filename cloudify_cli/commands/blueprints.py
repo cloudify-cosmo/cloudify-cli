@@ -13,10 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles all commands that start with 'cfy blueprints'
-"""
-
 import os
 import json
 import urlparse
@@ -29,7 +25,7 @@ from dsl_parser.exceptions import DSLParsingException
 from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
 from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.config import (helptexts, envvars)
+from cloudify_cli.config import helptexts
 
 SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
 DESCRIPTION_LIMIT = 20
@@ -44,9 +40,7 @@ def blueprints():
 
 @blueprints.command(name='validate')
 @click.argument('blueprint-path',
-                required=True,
-                envvar=envvars.BLUEPRINT_PATH,
-                type=click.Path(exists=True))
+                required=True)
 def validate_blueprint(blueprint_path):
     """Validate a blueprint
     """
@@ -67,8 +61,7 @@ def validate_blueprint(blueprint_path):
 
 @blueprints.command(name='upload')
 @click.argument('blueprint-path',
-                required=True,
-                envvar=envvars.BLUEPRINT_PATH)
+                required=True)
 @click.option('-b',
               '--blueprint-id',
               required=False,
@@ -102,7 +95,7 @@ def upload(blueprint_path,
     # parameter which states that the user (explicitly) wanted
     # to pass a path to an archive.
     blueprint_id = blueprint_id or utils._generate_suffixed_id(
-        get_blueprint_id(blueprint_path))
+        get_archive_id(blueprint_path))
 
     if not _is_archive(blueprint_path):
         _publish_directory(
@@ -184,8 +177,7 @@ def determine_archive_type(archive_location):
 
 @blueprints.command(name='download')
 @click.argument('blueprint-id',
-                required=True,
-                envvar=envvars.BLUEPRINT_ID)
+                required=True)
 @click.option('-o',
               '--output-path',
               help=helptexts.OUTPUT_PATH)
@@ -202,8 +194,7 @@ def download(blueprint_id, output_path):
 
 @blueprints.command(name='delete')
 @click.argument('blueprint-id',
-                required=True,
-                envvar=envvars.BLUEPRINT_ID)
+                required=True)
 def delete(blueprint_id):
     """Delete a blueprint from the manager
     """
@@ -243,11 +234,9 @@ def ls():
 
 
 @blueprints.command(name='get')
-@click.argument('blueprint-id',
-                required=True,
-                envvar=envvars.BLUEPRINT_ID)
+@click.argument('blueprint-id', required=True)
 def get(blueprint_id):
-    """Retrieve information on a specific blueprint
+    """Retrieve information for a specific blueprint
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -275,9 +264,7 @@ def get(blueprint_id):
 
 
 @blueprints.command(name='inputs')
-@click.argument('blueprint-id',
-                required=True,
-                envvar=envvars.BLUEPRINT_ID)
+@click.argument('blueprint-id', required=True)
 def inputs(blueprint_id):
     """Retrieve inputs for a specific blueprint
     """
@@ -300,7 +287,8 @@ def inputs(blueprint_id):
     utils.print_table('Inputs:', pt)
 
 
-def get_blueprint_id(archive_location):
+# TODO: move to utils
+def get_archive_id(archive_location):
     (archive_location, archive_location_type) = \
         determine_archive_type(archive_location)
     # if the archive is a local path, assign blueprint_id the name of

@@ -13,9 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles 'cfy uninstall'
-"""
 import click
 
 from cloudify_cli import utils
@@ -56,7 +53,11 @@ def remote_uninstall(deployment_id,
                      timeout,
                      include_logs,
                      json):
+    """Uninstall an application via the Manager
 
+    This will execute the `uninstall` workflow, delete the deployment and
+    delete the blueprint (if there is only one deployment for that blueprint).
+    """
     # Although the `uninstall` command does not use the `force` argument,
     # we are using the `executions start` handler as a part of it.
     # As a result, we need to provide it with a `force` argument, which is

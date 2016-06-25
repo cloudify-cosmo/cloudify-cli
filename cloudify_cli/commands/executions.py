@@ -38,12 +38,16 @@ _STATUS_CANCELING_MESSAGE = (
 
 @click.group(name='executions', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def executions():
+    """Handle workflow executions
+    """
     pass
 
 
 @executions.command(name='get')
 @click.argument('execution-id', required=True)
 def get(execution_id):
+    """Retrieve information for a specific execution
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -79,6 +83,11 @@ def get(execution_id):
               is_flag=True,
               help=helptexts.INCLUDE_SYSTEM_WORKFLOWS)
 def ls(deployment_id, include_system_workflows):
+    """List executions
+
+    If `DEPLOYMENT_ID` is provided, list executions for that deployment.
+    Else, list executions for all deployments.
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -141,7 +150,8 @@ def start_command(workflow_id,
                   timeout,
                   include_logs,
                   json):
-
+    """Execute a workflow on a given deployment
+    """
     start(workflow_id,
           deployment_id,
           parameters,
@@ -258,6 +268,8 @@ def start(workflow_id,
               '--force',
               help=helptexts.FORCE_CANCEL_EXECUTION)
 def cancel(execution_id, force):
+    """Cancel a workflow's execution
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)

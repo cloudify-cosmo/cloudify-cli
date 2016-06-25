@@ -32,12 +32,16 @@ from cloudify_cli.exceptions import CloudifyCliError
 @click.group(name='node-instances',
              context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def node_instances():
+    """Handle a deployment's node-instances
+    """
     pass
 
 
 @node_instances.command(name='get')
 @click.argument('node_instance_id', required=True)
 def get(node_instance_id):
+    """Retrieve information for a specific node-instance
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -64,13 +68,18 @@ def get(node_instance_id):
 
 
 @node_instances.command(name='ls')
-@click.argument('deployment-id')
+@click.argument('deployment-id', required=False)
 @click.option('-n',
               '--node-name',
               required=False,
               default=None,
               help=helptexts.NODE_NAME)
 def ls(deployment_id, node_name):
+    """List node-instances
+
+    If `DEPLOYMENT_ID` is provided, list node-instances for that deployment.
+    Else, list node-instances for all deployments.
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)

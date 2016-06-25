@@ -27,6 +27,8 @@ from cloudify_cli.logger import get_logger
 
 @click.group(name='logs', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def logs():
+    """Handle manager service logs
+    """
     pass
 
 
@@ -56,17 +58,16 @@ def _archive_logs():
 
 @logs.command(name='download')
 @click.option('-o',
-              '--output',
+              '--output-path',
               required=False,
               help=helptexts.OUTPUT_PATH)
-def download(output):
-    """Retrieves an archive containing manager logs to `output`
-    on the local machine.
+def download(output_path):
+    """Download an archive containing all of the manager's service logs
     """
     logger = get_logger()
     archive_path_on_manager = _archive_logs()
-    logger.info('Downloading archive to: {0}'.format(output))
-    ssh.get_file_from_manager(archive_path_on_manager, output)
+    logger.info('Downloading archive to: {0}'.format(output_path))
+    ssh.get_file_from_manager(archive_path_on_manager, output_path)
     logger.info('Removing archive from manager...')
     ssh.run_command_on_manager(
         'rm {0}'.format(archive_path_on_manager), use_sudo=True)
@@ -83,12 +84,13 @@ def download(output):
               is_flag=True,
               help=helptexts.BACKUP_LOGS_FIRST)
 def purge(force, backup_first):
-    """Truncates all logs files under /var/log/cloudify.
+    """Truncate all logs files under /var/log/cloudify.
 
-    This aims to allow a user to take extreme measures to clean up
-    data from the manager. For instance, when the disk is full due to some
-    bug causing the logs to bloat up.
-    The `--force` flag must be provided to provide a safety measure.
+    This allows the user to take extreme measures to clean up data from the
+    manager. For instance, when the disk is full due to some bug causing the
+    logs to bloat up.
+
+    The `-f, --force` flag is mandatory as a safety measure.
     """
     logger = get_logger()
     if backup_first:
@@ -106,8 +108,8 @@ def purge(force, backup_first):
 
 @logs.command(name='backup')
 def backup():
-    """Creates a backup of all logs under a single archive and saves it
-    on the manager machine.
+    """Create a backup of all logs under a single archive and save it
+    on the manager under /var/log.
     """
     logger = get_logger()
     archive_path_on_manager = _archive_logs()
