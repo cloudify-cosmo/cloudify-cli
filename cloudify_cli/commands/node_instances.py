@@ -16,14 +16,27 @@
 """
 Handles all commands that start with 'cfy node-instances'
 """
+import json
+
+import click
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from cloudify_cli import utils
+from cloudify_cli.commands import local
+from cloudify_cli.config import helptexts
 from cloudify_cli.logger import get_logger
 from cloudify_cli.exceptions import CloudifyCliError
 
 
+@click.group(name='node-instances',
+             context_settings=utils.CLICK_CONTEXT_SETTINGS)
+def node_instances():
+    pass
+
+
+@node_instances.command(name='get')
+@click.argument('node_instance_id', required=True)
 def get(node_instance_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -50,7 +63,14 @@ def get(node_instance_id):
     logger.info('')
 
 
-def ls(deployment_id, node_name=None):
+@node_instances.command(name='ls')
+@click.argument('deployment-id')
+@click.option('-n',
+              '--node-name',
+              required=False,
+              default=None,
+              help=helptexts.NODE_NAME)
+def ls(deployment_id, node_name):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -71,3 +91,21 @@ def ls(deployment_id, node_name=None):
     columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
     pt = utils.table(columns, instances)
     utils.print_table('Instances:', pt)
+
+
+@click.command(name='node-instances',
+               context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@click.argument('node-id', required=False)
+def node_instances_command(node_id):
+    """Display node-instances for the execution
+    """
+    logger = get_logger()
+    env = local._load_env()
+    node_instances = env.storage.get_node_instances()
+    if node_id:
+        node_instances = [instance for instance in node_instances
+                          if instance.node_id == node_id]
+        if not node_instances:
+            raise exceptions.CloudifyCliError(
+                'Could not find node {0}'.format(node_id))
+    logger.info(json.dumps(node_instances, sort_keys=True, indent=2))

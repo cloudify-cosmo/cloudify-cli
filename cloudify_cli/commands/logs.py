@@ -18,9 +18,16 @@ Handles all commands that start with 'cfy logs'
 """
 import os
 
+import click
+
 from cloudify_cli import ssh
 from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
+
+
+@click.group(name='logs', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+def logs():
+    pass
 
 
 def _archive_logs():
@@ -47,6 +54,11 @@ def _archive_logs():
     return archive_path
 
 
+@logs.command(name='download')
+@click.option('-o',
+              '--output',
+              required=False,
+              help=helptexts.OUTPUT_PATH)
 def download(output):
     """Retrieves an archive containing manager logs to `output`
     on the local machine.
@@ -60,6 +72,16 @@ def download(output):
         'rm {0}'.format(archive_path_on_manager), use_sudo=True)
 
 
+@logs.command(name='purge')
+@click.option('-f',
+              '--force',
+              required=False,
+              is_flag=True,
+              help=helptexts.FORCE_PURGE_LOGS)
+@click.option('--backup-first',
+              required=False,
+              is_flag=True,
+              help=helptexts.BACKUP_LOGS_FIRST)
 def purge(force, backup_first):
     """Truncates all logs files under /var/log/cloudify.
 
@@ -82,6 +104,7 @@ def purge(force, backup_first):
         'done', use_sudo=True)
 
 
+@logs.command(name='backup')
 def backup():
     """Creates a backup of all logs under a single archive and saves it
     on the manager machine.

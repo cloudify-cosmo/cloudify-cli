@@ -16,12 +16,29 @@
 """
 Handles all commands that start with 'cfy snapshots'
 """
+import click
+
 
 from cloudify_cli import utils
+from cloudify_cli.config import helptexts
 from cloudify_cli.logger import get_logger
 from cloudify_cli.utils import print_table
 
 
+@click.group(name='snapshots', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+def snapshots():
+    pass
+
+
+@snapshots.command(name='restore')
+@click.argument('snapshot-id', required=True)
+@click.option('--without-deployments-envs',
+              is_flag=True,
+              help=helptexts.RESTORE_SNAPSHOT_EXCLUDE_EXISTING_DEPLOYMENTS)
+@click.option('-f',
+              '--force',
+              is_flag=True,
+              help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
 def restore(snapshot_id, without_deployments_envs, force):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -33,8 +50,17 @@ def restore(snapshot_id, without_deployments_envs, force):
         execution.id))
 
 
+@snapshots.command(name='create')
+@click.argument('snapshot-id', required=False)
+@click.option('--include-metrics',
+              is_flag=True,
+              help=helptexts.INCLUDE_METRICS_IN_SNAPSHOT)
+@click.option('--exclude-credentials',
+              is_flag=True,
+              help=helptexts.EXCLUDE_CREDENTIALS_IN_SNAPSHOT)
 def create(snapshot_id, include_metrics, exclude_credentials):
     logger = get_logger()
+    snapshot_id = snapshot_id or utils._generate_suffixed_id('snapshot')
     management_ip = utils.get_management_server_ip()
     logger.info('Creating snapshot {0}...'.format(snapshot_id))
     client = utils.get_rest_client(management_ip)
@@ -45,6 +71,8 @@ def create(snapshot_id, include_metrics, exclude_credentials):
         execution.id))
 
 
+@snapshots.command(name='delete')
+@click.argument('snapshot-id', required=True)
 def delete(snapshot_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -54,8 +82,15 @@ def delete(snapshot_id):
     logger.info('Snapshot deleted successfully')
 
 
+@snapshots.command(name='upload')
+@click.argument('snapshot_path', required=True)
+@click.option('-s',
+              '--snapshot-id',
+              required=False,
+              help=helptexts.SNAPSHOT_ID)
 def upload(snapshot_path, snapshot_id):
     logger = get_logger()
+    snapshot_id = snapshot_id or utils._generate_suffixed_id('snapshot')
     management_ip = utils.get_management_server_ip()
     logger.info('Uploading snapshot {0}...'.format(snapshot_path.name))
     client = utils.get_rest_client(management_ip)
@@ -64,15 +99,21 @@ def upload(snapshot_path, snapshot_id):
         snapshot.id))
 
 
-def download(snapshot_id, output):
+@snapshots.command(name='upload')
+@click.argument('snapshot_id', required=True)
+@click.option('-o',
+              '--output-path',
+              help=helptexts.OUTPUT_PATH)
+def download(snapshot_id, output_path):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     logger.info('Downloading snapshot {0}...'.format(snapshot_id))
     client = utils.get_rest_client(management_ip)
-    target_file = client.snapshots.download(snapshot_id, output)
+    target_file = client.snapshots.download(snapshot_id, output_path)
     logger.info('Snapshot downloaded as {0}'.format(target_file))
 
 
+@snapshots.command(name='ls')
 def ls():
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
