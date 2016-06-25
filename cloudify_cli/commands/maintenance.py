@@ -13,11 +13,9 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles all commands that start with 'cfy maintenance-mode'
-"""
-
 import time
+
+import click
 
 from cloudify_cli import utils
 from cloudify_cli import exceptions
@@ -29,6 +27,15 @@ DEFAULT_TIMEOUT_INTERVAL = 5
 MAINTENANCE_MODE_ACTIVE = 'activated'
 
 
+@click.group(name='maintenance-mode',
+             context_settings=utils.CLICK_CONTEXT_SETTINGS)
+def maintenance_mode():
+    """Handle the manager's maintenance-mode
+    """
+    pass
+
+
+@maintenance_mode.command(name='status')
 def status():
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -46,23 +53,23 @@ def _print_maintenance_mode_status(client):
             status_response).iteritems():
         if param_value and param_name != 'remaining_executions':
             logger.info('\t{0}:\t{1}'.format(
-                    param_name.title().replace("_", " "),
-                    param_value))
+                param_name.title().replace("_", " "),
+                param_value))
     logger.info('')
 
     remaining_executions = status_response.remaining_executions
     if remaining_executions:
         if len(remaining_executions) == 1:
             logger.info(
-                    'Cloudify Manager currently has one '
-                    'running or pending execution. Waiting for it'
-                    ' to finish before activating.')
+                'Cloudify Manager currently has one '
+                'running or pending execution. Waiting for it'
+                ' to finish before activating.')
         else:
             logger.info(
-                    'Cloudify Manager currently has {0} '
-                    'running or pending executions. Waiting for all '
-                    'executions to finish before activating.'.format(
-                            len(remaining_executions)))
+                'Cloudify Manager currently has {0} '
+                'running or pending executions. Waiting for all '
+                'executions to finish before activating.'.format(
+                    len(remaining_executions)))
 
         if get_global_verbosity() != NO_VERBOSE:
             pt = utils.table(['id', 'deployment_id', 'workflow_id', 'status'],
@@ -76,6 +83,14 @@ def _print_maintenance_mode_status(client):
                     'until maintenance mode is deactivated.\n')
 
 
+@maintenance_mode.command(name='activate')
+@click.option('--wait',
+              is_flag=True,
+              help=helptexts.MAINTENANCE_MODE_WAIT)
+@click.option('--timeout',
+              type=int,
+              default=0,
+              help=helptexts.OPERATION_TIMEOUT)
 def activate(wait, timeout):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -117,6 +132,7 @@ def activate(wait, timeout):
                 "maintenance mode's status.\n")
 
 
+@maintenance_mode.command(name='deactivate')
 def deactivate():
     logger = get_logger()
     management_ip = utils.get_management_server_ip()

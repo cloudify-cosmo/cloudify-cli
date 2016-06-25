@@ -75,3 +75,19 @@ FORCE_RESTORE_ON_DIRTY_MANAGER = (
 INCLUDE_METRICS_IN_SNAPSHOT = "Include metrics data in the snapshot"
 EXCLUDE_CREDENTIALS_IN_SNAPSHOT = "Exclude credentials in the snapshot"
 SNAPSHOT_ID = "The unique identifier for the snapshot"
+
+KEEP_UP_ON_FAILURE = "Do not teardown the manager even if the bootstrap fails"
+VALIDATE_ONLY = (
+    "Only perform resource creation validation without actually bootstrapping"
+)
+SKIP_BOOTSTRAP_VALIDATIONS = (
+    "Bootstrap without validating resource creation prior to bootstrapping "
+    "the manager"
+)
+
+DEV_TASK_ARGS = "Arguments for the fabric task"
+
+MAINTENANCE_MODE_WAIT = (
+    "Wait until there are no running executions and automatically activate "
+    "maintenance-mode."
+)

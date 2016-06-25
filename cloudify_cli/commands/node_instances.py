@@ -13,9 +13,6 @@
 # * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles all commands that start with 'cfy node-instances'
-"""
 import json
 
 import click

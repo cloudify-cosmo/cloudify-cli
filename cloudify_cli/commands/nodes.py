@@ -13,17 +13,29 @@
 # * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles all commands that start with 'cfy nodes'
-"""
+import click
+
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from cloudify_cli import utils
+from cloudify_cli.config import helptexts
 from cloudify_cli.logger import get_logger
 from cloudify_cli.exceptions import CloudifyCliError
 
 
+@click.group(name='nodes', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+def nodes():
+    """Handle a deployment's nodes
+    """
+    pass
+
+
+@nodes.command(name='get')
+@click.argument('deployment-id', required=True)
+@click.argument('node-id', required=True)
 def get(deployment_id, node_id):
+    """Retrieve information for a specific node of a specific deployment
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -68,6 +80,10 @@ def get(deployment_id, node_id):
         logger.info('\tNo node instances')
 
 
+@nodes.command(name='ls')
+@click.option('-d',
+              '--deployment-id',
+              help=helptexts.DEPLOYMENT_ID)
 def ls(deployment_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()

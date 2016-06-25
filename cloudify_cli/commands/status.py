@@ -13,9 +13,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles 'cfy status'
-"""
+import click
 
 from cloudify_rest_client.exceptions import (
     CloudifyClientError,
@@ -26,6 +24,7 @@ from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
 
 
+@click.command(name='status', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def status():
     logger = get_logger()
     management_ip = utils.get_management_server_ip()

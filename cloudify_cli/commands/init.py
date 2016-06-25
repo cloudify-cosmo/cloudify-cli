@@ -32,7 +32,7 @@ _NAME = 'local'
 _STORAGE_DIR_NAME = 'local-storage'
 
 
-@click.command(context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@click.command(name='init', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path', required=False)
 @click.option('-r',
               '--reset-config',

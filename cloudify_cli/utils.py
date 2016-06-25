@@ -401,11 +401,15 @@ def get_management_server_ip():
 
 
 def is_manager_active():
-    try:
-        get_management_server_ip()
-        return True
-    except CloudifyCliError:
+    dir_settings = load_cloudify_working_dir_settings(suppress_error=True)
+    if not (dir_settings and dir_settings.get_management_server()):
         return False
+    return True
+    # try:
+    #     get_management_server_ip()
+    #     return True
+    # except CloudifyCliError:
+    #     return False
 
 
 def get_username():

@@ -13,20 +13,28 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles 'cfy dev'
-"""
+import click
 
 from fabric.api import env
 from cloudify_cli import utils
 from cloudify_cli import exec_env
+from cloudify_cli.config import helptexts
 from fabric.context_managers import settings
 from cloudify_cli.utils import get_management_key
 from cloudify_cli.utils import get_management_user
 from cloudify_cli.exceptions import CloudifyCliError
 
 
-def dev(args, task, tasks_file):
+@click.command(name='dev')
+@click.argument('tasks-file', required=True)
+@click.argument('task', required=True)
+@click.option('-a',
+              '--args',
+              multiple=True,
+              help=helptexts.DEV_TASK_ARGS)
+def dev(tasks_file, task, args):
+    """Run fabric tasks on the manager
+    """
     management_ip = utils.get_management_server_ip()
     _execute(username=get_management_user(),
              key=get_management_key(),

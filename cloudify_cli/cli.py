@@ -31,15 +31,21 @@ from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
 from cloudify_cli import utils
 from cloudify_cli.commands import use
+from cloudify_cli.commands import dev
 from cloudify_cli.commands import init
+from cloudify_cli.commands import nodes
 from cloudify_cli.commands import agents
+from cloudify_cli.commands import status
 from cloudify_cli.commands import install
+from cloudify_cli.commands import version
 from cloudify_cli.commands import validate
 from cloudify_cli.commands import uninstall
 from cloudify_cli.commands import snapshots
+from cloudify_cli.commands import bootstrap
 from cloudify_cli.commands import blueprints
 from cloudify_cli.commands import executions
 from cloudify_cli.commands import deployments
+# from cloudify_cli.commands import maintenance
 from cloudify_cli.commands import node_instances
 from cloudify_cli.exceptions import CloudifyBootstrapError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
@@ -54,8 +60,17 @@ verbosity_level = NO_VERBOSE
 
 
 @click.group(context_settings=utils.CLICK_CONTEXT_SETTINGS)
-@click.option('-v', '--verbose', count=True, is_eager=True)
-@click.option('--debug', default=False, is_flag=True)
+@click.option('-v',
+              '--verbose',
+              count=True,
+              is_eager=True)
+@click.option('--debug',
+              default=False,
+              is_flag=True)
+@click.option('--version',
+              is_flag=True,
+              callback=version.version,
+              expose_value=False)
 def main(verbose, debug):
     # TODO: fix verbosity placement
     _configure_loggers()
@@ -82,16 +97,21 @@ def register_commands():
     main.add_command(use.use)
     main.add_command(init.init_command)
     main.add_command(validate.validate)
+    main.add_command(bootstrap.bootstrap)
     # main.add_command(local.local_group)
 
     if is_manager_active:
+        main.add_command(dev.dev)
+        main.add_command(nodes.nodes)
         main.add_command(agents.agents)
+        main.add_command(status.status)
         main.add_command(snapshots.snapshots)
         main.add_command(blueprints.blueprints)
         main.add_command(executions.executions)
         main.add_command(install.remote_install)
         main.add_command(deployments.deployments)
         main.add_command(uninstall.remote_uninstall)
+        # main.add_command(maintenance.maintenance_mode)
         main.add_command(node_instances.node_instances)
     else:
         main.add_command(install.local_install)
