@@ -13,9 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles 'cfy use'
-"""
 import click
 
 from cloudify_rest_client.exceptions import (
@@ -38,6 +35,8 @@ from cloudify_cli.constants import DEFAULT_REST_PORT
               default=DEFAULT_REST_PORT,
               help="The REST server's port")
 def use(management_ip, rest_port):
+    """Control a specific manager
+    """
     logger = get_logger()
     # determine SSL mode by port
     if rest_port == constants.SECURED_REST_PORT:

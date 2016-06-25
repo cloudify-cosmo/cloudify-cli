@@ -36,7 +36,9 @@ def _format_version_data(version_data,
 
 
 def version(ctx, param, value):
-    # if --version was not passed, return to main
+    # The callback in the `main` group is called regardless of whether
+    # the --version flag was set or not so we need to return to main
+    # in case it wasn't called.
     if not value or ctx.resilient_parsing:
         return
 

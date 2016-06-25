@@ -53,6 +53,8 @@ def init_command(blueprint_path,
                  skip_logging,
                  inputs,
                  install_plugins):
+    """Initialize a working environment in the current working directory
+    """
     init(blueprint_path,
          reset_config,
          skip_logging,

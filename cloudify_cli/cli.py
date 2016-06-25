@@ -70,7 +70,8 @@ verbosity_level = NO_VERBOSE
 @click.option('--version',
               is_flag=True,
               callback=version.version,
-              expose_value=False)
+              expose_value=False,
+              is_eager=True)
 def main(verbose, debug):
     # TODO: fix verbosity placement
     _configure_loggers()
