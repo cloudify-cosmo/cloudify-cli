@@ -19,7 +19,6 @@ Handles all commands that start with 'cfy local'
 
 import os
 import json
-import shutil
 
 import click
 
@@ -29,12 +28,7 @@ from cloudify_cli import utils
 from cloudify_cli import common
 from cloudify_cli import exceptions
 from cloudify_cli.logger import get_logger
-from cloudify_cli.commands import init as cfy_init
 from cloudify_cli.config import (helptexts, envvars)
-# from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
-# from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
-# from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW
-# from cloudify_cli.constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
 
 _NAME = 'local'
@@ -46,186 +40,6 @@ def local_group():
     """Handle local environments
     """
     pass
-
-
-# @local_group.command(name='install')
-# @click.argument('blueprint-path',
-#                 required=True,
-#                 envvar=envvars.BLUEPRINT_PATH,
-#                 type=click.Path(exists=True))
-# @click.option('-i',
-#               '--inputs',
-#               multiple=True,
-#               help=helptexts.INPUTS)
-# @click.option('--install-plugins',
-#               is_flag=True,
-#               help=helptexts.INSTALL_PLUGINS)
-# @click.option('-w',
-#               '--workflow-id',
-#               help=helptexts.EXECUTE_DEFAULT_INSTALL_WORKFLOW)
-# @click.option('-p',
-#               '--parameters',
-#               help=helptexts.PARAMETERS)
-# @click.option('--allow-custom-parameters',
-#               is_flag=True,
-#               help=helptexts.ALLOW_CUSTOM_PARAMETERS)
-# @click.option('--task-retries',
-#               type=int,
-#               default=0,
-#               help=helptexts.TASK_RETRIES)
-# @click.option('--task-retry-interval',
-#               type=int,
-#               default=1,
-#               help=helptexts.TASK_RETRIES)
-# @click.option('--task-thread-pool-size',
-#               type=int,
-#               default=1,
-#               help=helptexts.TASK_THREAD_POOL_SIZE)
-# def install(blueprint_path,
-#             inputs,
-#             install_plugins,
-#             workflow_id,
-#             parameters,
-#             allow_custom_parameters,
-#             task_retries,
-#             task_retry_interval,
-#             task_thread_pool_size):
-#     """Install an application
-#     """
-#     # if no blueprint path was supplied, set it to a default value
-#     if not blueprint_path:
-#         blueprint_path = DEFAULT_BLUEPRINT_PATH
-
-#     # If no inputs were supplied, and there is a file named inputs.yaml in
-#     # the cwd, use it as the inputs file
-#     if not inputs:
-#         if os.path.isfile(
-#                 os.path.join(utils.get_cwd(),
-#                              DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)):
-
-#             inputs = DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
-
-#     init(blueprint_path=blueprint_path,
-#          inputs=inputs,
-#          install_plugins=install_plugins)
-
-#     # if no workflow was supplied, execute the `install` workflow
-#     if not workflow_id:
-#         workflow_id = DEFAULT_INSTALL_WORKFLOW
-
-#     execute(workflow_id=workflow_id,
-#             parameters=parameters,
-#             allow_custom_parameters=allow_custom_parameters,
-#             task_retries=task_retries,
-#             task_retry_interval=task_retry_interval,
-#             task_thread_pool_size=task_thread_pool_size)
-
-
-# @local_group.command(name='uninstall')
-# @click.option('-w',
-#               '--workflow-id',
-#               help=helptexts.EXECUTE_DEFAULT_UNINSTALL_WORKFLOW)
-# @click.option('-p',
-#               '--parameters',
-#               help=helptexts.PARAMETERS)
-# @click.option('--allow-custom-parameters',
-#               is_flag=True,
-#               help=helptexts.ALLOW_CUSTOM_PARAMETERS)
-# @click.option('--task-retries',
-#               type=int,
-#               default=0,
-#               help=helptexts.TASK_RETRIES)
-# @click.option('--task-retry-interval',
-#               type=int,
-#               default=1,
-#               help=helptexts.TASK_RETRIES)
-# @click.option('--task-thread-pool-size',
-#               type=int,
-#               default=1,
-#               help=helptexts.TASK_THREAD_POOL_SIZE)
-# def uninstall(workflow_id,
-#               parameters,
-#               allow_custom_parameters,
-#               task_retries,
-#               task_retry_interval,
-#               task_thread_pool_size):
-#     """Uninstall an application
-#     """
-#     # if no workflow was supplied, execute the `uninstall` workflow
-#     if not workflow_id:
-#         workflow_id = DEFAULT_UNINSTALL_WORKFLOW
-
-#     execute(workflow_id=workflow_id,
-#             parameters=parameters,
-#             allow_custom_parameters=allow_custom_parameters,
-#             task_retries=task_retries,
-#             task_retry_interval=task_retry_interval,
-#             task_thread_pool_size=task_thread_pool_size)
-
-#     # Remove the local-storage dir
-#     utils.remove_if_exists(_storage_dir())
-
-#    # Note that although `local install` possibly creates a `.cloudify` dir in
-#     # addition to the creation of the local storage dir, `local uninstall`
-#     # does not remove the .cloudify dir.
-
-
-@local_group.command(name='init')
-@click.argument('blueprint-path',
-                required=True,
-                envvar=envvars.BLUEPRINT_PATH,
-                type=click.Path(exists=True))
-@click.option('-i',
-              '--inputs',
-              multiple=True,
-              help=helptexts.INPUTS)
-@click.option('--install-plugins',
-              is_flag=True,
-              help=helptexts.INSTALL_PLUGINS)
-# The 'overshadowing' of the `install_plugins` parameter is totally fine
-def init_command(blueprint_path,
-                 inputs,
-                 install_plugins):
-    init(blueprint_path, inputs, install_plugins)
-
-
-def init(blueprint_path,
-         inputs,
-         install_plugins):
-    """Initialize a local environment in the current working directory
-    """
-    if os.path.isdir(_storage_dir()):
-        shutil.rmtree(_storage_dir())
-
-    if not utils.is_initialized():
-        cfy_init(reset_config=False, skip_logging=True)
-    try:
-        common.initialize_blueprint(
-            blueprint_path=blueprint_path,
-            name=_NAME,
-            inputs=inputs,
-            storage=_storage(),
-            install_plugins=install_plugins,
-            resolver=utils.get_import_resolver()
-        )
-    except ImportError as e:
-
-        # import error indicates
-        # some plugin modules are missing
-        # TODO - consider adding an error code to
-        # TODO - all of our exceptions. so that we
-        # TODO - easily identify them here
-        e.possible_solutions = [
-            "Run `cfy local init --install-plugins -p {0}`"
-            .format(blueprint_path),
-            "Run `cfy local install-plugins -p {0}`"
-            .format(blueprint_path)
-        ]
-        raise
-
-    get_logger().info("Initiated {0}\nIf you make changes to the "
-                      "blueprint, run `cfy local init -p {0}` "
-                      "again to apply them".format(blueprint_path))
 
 
 @local_group.command(name='execute')

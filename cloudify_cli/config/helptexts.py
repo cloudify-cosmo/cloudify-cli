@@ -45,3 +45,5 @@ FORCE_CONCURRENT_EXECUTION = """Execute the workflow even if there is an ongoing
 execution for the given deployment"""
 FORCE_CANCEL_EXECUTION = """Terminate the execution abruptly, rather than request
 an orderly termination"""
+
+INIT_LOCAL = "Initialize environment for local executions"
