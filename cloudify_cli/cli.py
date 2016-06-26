@@ -36,6 +36,7 @@ from cloudify_cli.commands import dev
 from cloudify_cli.commands import init
 from cloudify_cli.commands import nodes
 from cloudify_cli.commands import agents
+from cloudify_cli.commands import events
 from cloudify_cli.commands import groups
 from cloudify_cli.commands import status
 from cloudify_cli.commands import install
@@ -123,6 +124,7 @@ def register_commands():
         # main.add_command(ssh.ssh)
         main.add_command(nodes.nodes)
         main.add_command(agents.agents)
+        main.add_command(events.events)
         main.add_command(groups.groups)
         main.add_command(status.status)
         main.add_command(plugins.plugins)

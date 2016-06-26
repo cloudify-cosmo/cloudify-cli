@@ -103,3 +103,5 @@ FORCE_TEARDOWN = "This is mandatory for performing the teardown"
 
 IGNORE_DEPLOYMENTS = \
     "Teardown even if there are existing deployments on the manager"
+
+TAIL_OUTPUT = "Tail the events of the specified execution until it ends"

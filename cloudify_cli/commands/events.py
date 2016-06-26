@@ -13,11 +13,10 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles all commands that start with 'cfy events'
-"""
+import click
 
 from cloudify_cli import utils
+from cloudify_cli.config import helptexts
 from cloudify_cli.exceptions import CloudifyCliError, \
     SuppressedCloudifyCliError
 from cloudify_cli.logger import get_logger, get_events_logger
@@ -26,7 +25,28 @@ from cloudify_cli.execution_events_fetcher import ExecutionEventsFetcher, \
     wait_for_execution
 
 
+@click.group(name='events', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+def events():
+    """Show events from workflow executions
+    """
+    pass
+
+
+@events.command(name='ls')
+@click.argument('execution-id', required=True)
+@click.option('-l',
+              '--include-logs',
+              is_flag=True,
+              help=helptexts.INCLUDE_LOGS)
+@click.option('--tail',
+              is_flag=True,
+              help=helptexts.TAIL_OUTPUT)
+@click.option('--json',
+              is_flag=True,
+              help=helptexts.JSON_OUTPUT)
 def ls(execution_id, include_logs, tail, json):
+    """Display events for an execution
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     logger.info('Listing events for execution id {0} '
