@@ -58,6 +58,7 @@ from cloudify_cli.commands import executions
 from cloudify_cli.commands import deployments
 # from cloudify_cli.commands import maintenance
 from cloudify_cli.commands import node_instances
+from cloudify_cli.logger import configure_loggers
 from cloudify_cli.exceptions import CloudifyBootstrapError
 from cloudify_cli.exceptions import SuppressedCloudifyCliError
 
@@ -103,9 +104,9 @@ def get_global_verbosity():
     return verbosity_level
 
 
-def _configure_loggers():
-    from cloudify_cli import logger
-    logger.configure_loggers()
+# def _configure_loggers():
+#     from cloudify_cli import logger
+#     logger.configure_loggers()
 
 
 def _set_cli_except_hook():
@@ -258,7 +259,7 @@ def main(verbose, debug):
     # stating that "Some commands only exist when using a manager. You can run
     # `cfy use MANAGER_IP` and try this command again."
     # TODO: fix verbosity placement
-    _configure_loggers()
+    configure_loggers()
 
     if debug:
         global_verbosity_level = HIGH_VERBOSE
