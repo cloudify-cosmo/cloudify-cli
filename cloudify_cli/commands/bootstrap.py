@@ -24,7 +24,7 @@ from cloudify_cli.logger import get_logger
 from cloudify_cli.bootstrap import bootstrap as bs
 
 
-@click.command(name='bootstrap')
+@click.command(name='bootstrap', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path', required=True)
 @click.option('-i',
               '--inputs',

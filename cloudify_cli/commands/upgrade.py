@@ -13,19 +13,19 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles 'cfy upgrade command'
-"""
 import os
 import time
 import json
 import shutil
 import tempfile
 
+import click
+
 from cloudify_cli import ssh
 from cloudify_cli import utils
 from cloudify_cli import common
 from cloudify_cli import exceptions
+from cloudify_cli.config import helptexts
 from cloudify_cli.logger import get_logger
 from cloudify_cli.commands import maintenance
 from cloudify_cli.bootstrap import bootstrap as bs
@@ -38,9 +38,40 @@ MAINTENANCE_MODE_ACTIVATING = 'activating'
 REMOTE_WORKFLOW_STATE_PATH = '/opt/cloudify/_workflow_state.json'
 
 
-def upgrade(validate_only,
+@click.command(name='upgrade', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@click.argument('blueprint-path', required=True)
+@click.option('-i',
+              '--inputs',
+              multiple=True,
+              help=helptexts.INPUTS)
+@click.option('--validate_only',
+              is_flag=True,
+              help=helptexts.VALIDATE_ONLY)
+@click.option('--skip-validations',
+              is_flag=True,
+              help=helptexts.SKIP_BOOTSTRAP_VALIDATIONS)
+@click.option('-i',
+              '--inputs',
+              multiple=True,
+              help=helptexts.INPUTS)
+@click.option('--install-plugins',
+              is_flag=True,
+              help=helptexts.INSTALL_PLUGINS)
+@click.option('--task-retries',
+              type=int,
+              default=0,
+              help=helptexts.TASK_RETRIES)
+@click.option('--task-retry-interval',
+              type=int,
+              default=1,
+              help=helptexts.TASK_RETRIES)
+@click.option('--task-thread-pool-size',
+              type=int,
+              default=1,
+              help=helptexts.TASK_THREAD_POOL_SIZE)
+def upgrade(blueprint_path,
+            validate_only,
             skip_validations,
-            blueprint_path,
             inputs,
             install_plugins,
             task_retries,

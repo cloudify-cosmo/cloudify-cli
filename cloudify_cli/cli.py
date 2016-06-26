@@ -42,8 +42,10 @@ from cloudify_cli.commands import install
 from cloudify_cli.commands import recover
 from cloudify_cli.commands import version
 from cloudify_cli.commands import plugins
+# from cloudify_cli.commands import upgrade
 from cloudify_cli.commands import validate
 from cloudify_cli.commands import teardown
+# from cloudify_cli.commands import rollback
 from cloudify_cli.commands import uninstall
 from cloudify_cli.commands import workflows
 from cloudify_cli.commands import snapshots
@@ -124,7 +126,9 @@ def register_commands():
         main.add_command(groups.groups)
         main.add_command(status.status)
         main.add_command(plugins.plugins)
+        # main.add_command(upgrade.upgrade)
         main.add_command(teardown.teardown)
+        # main.add_command(rollback.rollback)
         main.add_command(workflows.workflows)
         main.add_command(snapshots.snapshots)
         main.add_command(blueprints.blueprints)

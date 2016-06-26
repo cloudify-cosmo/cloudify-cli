@@ -18,8 +18,8 @@ import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
 from cloudify_cli.config import helptexts
+from cloudify_cli.logger import get_logger
 from cloudify_cli.exceptions import CloudifyCliError
 
 

@@ -12,14 +12,15 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-"""
-Handles 'cfy rollback command'
-"""
+
 import json
+
+import click
 
 from cloudify_cli import utils
 from cloudify_cli import common
 from cloudify_cli import exceptions
+from cloudify_cli.config import helptexts
 from cloudify_cli.logger import get_logger
 from cloudify_cli.commands.upgrade import update_inputs
 from cloudify_cli.commands.upgrade import put_workflow_state_file
@@ -27,6 +28,23 @@ from cloudify_cli.commands.upgrade import \
     verify_and_wait_for_maintenance_mode_activation
 
 
+@click.command(name='rollback', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@click.argument('blueprint-path', required=True)
+@click.option('-i',
+              '--inputs',
+              multiple=True,
+              help=helptexts.INPUTS)
+@click.option('--install-plugins',
+              is_flag=True,
+              help=helptexts.INSTALL_PLUGINS)
+@click.option('--task-retries',
+              type=int,
+              default=0,
+              help=helptexts.TASK_RETRIES)
+@click.option('--task-retry-interval',
+              type=int,
+              default=1,
+              help=helptexts.TASK_RETRIES)
 def rollback(blueprint_path,
              inputs,
              install_plugins,
