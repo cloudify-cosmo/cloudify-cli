@@ -349,7 +349,7 @@ def get_rest_client(manager_ip=None, rest_port=None, protocol=None,
     client = CloudifyClient(host=manager_ip, port=rest_port, protocol=protocol,
                             headers=headers, cert=cert, trust_all=trust_all)
 
-    if skip_version_check:
+    if skip_version_check or True:  # version compatibility check is disabled:
         return client
 
     cli_version, manager_version = get_cli_manager_versions()
