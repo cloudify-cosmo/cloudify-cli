@@ -23,10 +23,10 @@ from cloudify.utils import LocalCommandRunner
 from dsl_parser.parser import parse_from_path
 from dsl_parser import constants as dsl_constants
 
-from cloudify_cli import utils
-from cloudify_cli import constants
-from cloudify_cli import exceptions
-from cloudify_cli.logger import get_logger
+from . import utils
+from . import constants
+from . import exceptions
+from .logger import get_logger
 
 
 def initialize_blueprint(blueprint_path,

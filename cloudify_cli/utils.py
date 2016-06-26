@@ -42,9 +42,9 @@ from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 import cloudify_cli
-from cloudify_cli import constants
-from cloudify_cli.logger import get_logger
-from cloudify_cli.exceptions import CloudifyCliError
+from . import constants
+from .logger import get_logger
+from .exceptions import CloudifyCliError
 
 
 DEFAULT_LOG_FILE = os.path.expanduser(

@@ -21,7 +21,7 @@ Logging configuration (formatters, handlers..)
 Note:
 -----
 
-This file doe's not include the actual loggers.
+This file does not include the actual loggers.
 The loggers are configured in the config.yaml file
 in order to expose them to cli users.
 

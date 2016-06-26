@@ -16,8 +16,8 @@ import time
 
 from cloudify_rest_client.executions import Execution
 
-from cloudify_cli.exceptions import (ExecutionTimeoutError,
-                                     EventProcessingTimeoutError)
+from .exceptions import (ExecutionTimeoutError,
+                         EventProcessingTimeoutError)
 
 
 WAIT_FOR_EXECUTION_SLEEP_INTERVAL = 3

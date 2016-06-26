@@ -35,11 +35,11 @@ from cloudify.workflows import local
 from cloudify.exceptions import RecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from cloudify_cli import utils
-from cloudify_cli import common
-from cloudify_cli import constants
-from cloudify_cli.logger import get_logger
-from cloudify_cli.bootstrap.tasks import (
+from .. import utils
+from .. import common
+from .. import constants
+from ..logger import get_logger
+from .tasks import (
     PROVIDER_RUNTIME_PROPERTY,
     MANAGER_IP_RUNTIME_PROPERTY,
     MANAGER_USER_RUNTIME_PROPERTY,

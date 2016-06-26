@@ -15,53 +15,50 @@
 ############
 
 import sys
-import argparse
 import StringIO
 import traceback
-from itertools import imap
 
 import click
 
-# from cloudify import logs
 from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
-# TODO: after fixing impossible imports, just import the commands package
-from cloudify_cli import utils
-from cloudify_cli import logger
-from cloudify_cli.logger import configure_loggers
-from cloudify_cli.exceptions import CloudifyBootstrapError
-from cloudify_cli.exceptions import SuppressedCloudifyCliError
+# TODO: just import the commands package
+from . import utils
+from . import logger
+from .logger import configure_loggers
+from .exceptions import CloudifyBootstrapError
+from .exceptions import SuppressedCloudifyCliError
 
-from cloudify_cli.commands import use
-from cloudify_cli.commands import dev
-from cloudify_cli.commands import ssh
-from cloudify_cli.commands import init
-from cloudify_cli.commands import logs
-from cloudify_cli.commands import nodes
-from cloudify_cli.commands import agents
-from cloudify_cli.commands import events
-from cloudify_cli.commands import groups
-from cloudify_cli.commands import status
-from cloudify_cli.commands import install
-from cloudify_cli.commands import recover
-from cloudify_cli.commands import version
-from cloudify_cli.commands import plugins
-from cloudify_cli.commands import upgrade
-from cloudify_cli.commands import validate
-from cloudify_cli.commands import teardown
-from cloudify_cli.commands import rollback
-from cloudify_cli.commands import uninstall
-from cloudify_cli.commands import workflows
-from cloudify_cli.commands import snapshots
-from cloudify_cli.commands import bootstrap
-from cloudify_cli.commands import blueprints
-from cloudify_cli.commands import executions
-from cloudify_cli.commands import deployments
-from cloudify_cli.commands import maintenance
-from cloudify_cli.commands import node_instances
+from .commands import use
+from .commands import dev
+from .commands import ssh
+from .commands import init
+from .commands import logs
+from .commands import nodes
+from .commands import agents
+from .commands import events
+from .commands import groups
+from .commands import status
+from .commands import install
+from .commands import recover
+from .commands import version
+from .commands import plugins
+from .commands import upgrade
+from .commands import validate
+from .commands import teardown
+from .commands import rollback
+from .commands import uninstall
+from .commands import workflows
+from .commands import snapshots
+from .commands import bootstrap
+from .commands import blueprints
+from .commands import executions
+from .commands import deployments
+from .commands import maintenance
+from .commands import node_instances
 
 
 def _set_cli_except_hook():
@@ -128,25 +125,6 @@ def _set_cli_except_hook():
     sys.excepthook = new_excepthook
 
 
-def longest_command_length(commands_dict):
-    return max(imap(len, commands_dict))
-
-
-class ConciseArgumentDefaultsHelpFormatter(
-        argparse.ArgumentDefaultsHelpFormatter):
-
-    def _get_help_string(self, action):
-
-        default = action.default
-        help = action.help
-
-        if default != argparse.SUPPRESS and default not in [None, False]:
-            if '%(default)' not in help:
-                help += ' (default: %(default)s)'
-
-        return help
-
-
 def register_commands():
     """Register the CLI's commands.
 
@@ -208,11 +186,18 @@ def register_commands():
               expose_value=False,
               is_eager=True)
 def main(verbose, debug):
+    """Cloudify's Command Line Interface
+
+    Note that some commands are only available if you're using a manager.
+    You can use a manager by running the `cfy use` command and providing
+    it with the IP of your manager.
+    """
     # TODO: when calling a command which only exists in the context
     # of a manager but no manager is currently `use`d, print out a message
     # stating that "Some commands only exist when using a manager. You can run
     # `cfy use MANAGER_IP` and try this command again."
-    # TODO: fix verbosity placement
+    # TODO: fix verbosity placement. Currently you can only declare the
+    # verbosity level after `cfy` (i.e. `cfy -v`) and not after.
     configure_loggers()
 
     if debug:
@@ -226,149 +211,6 @@ def main(verbose, debug):
 
 
 register_commands()
-
-
-# def _parse_args(args):
-#     """
-#     Parses the arguments using the Python argparse library.
-#     Generates shell autocomplete using the argcomplete library.
-
-#     :param list args: arguments from cli
-#     :rtype: `python argument parser`
-#     """
-
-#     parser = register_commands()
-#     argcomplete.autocomplete(parser)
-
-#     if len(sys.argv) == 1:
-#         parser.print_help()
-#         sys.exit(1)
-
-#     parsed = parser.parse_args(args)
-#     if parsed.debug:
-#         global_verbosity_level = HIGH_VERBOSE
-#     else:
-#         global_verbosity_level = parsed.verbosity
-#     set_global_verbosity_level(global_verbosity_level)
-#     if global_verbosity_level >= HIGH_VERBOSE:
-#         set_debug()
-#     return parsed
-
-
-# def register_commands():
-#     from cloudify_cli.config.parser_config import parser_config
-#     parser_conf = parser_config()
-#     parser = argparse.ArgumentParser(description=parser_conf['description'])
-
-#     # Direct arguments for the 'cfy' command (like -v)
-#     for argument_name, argument in parser_conf['arguments'].iteritems():
-#         parser.add_argument(argument_name, **argument)
-
-#     subparsers = parser.add_subparsers(
-#         title='Commands',
-#         metavar=''
-#     )
-
-#     for command_name, command in parser_conf['commands'].iteritems():
-
-#         if 'sub_commands' in command:
-
-#             # Add sub commands. Such as 'cfy blueprints list',
-#             # 'cfy deployments create' ...
-#             controller_help = command['help']
-#             controller_parser = subparsers.add_parser(
-#                 command_name, help=controller_help
-#             )
-#             controller_subparsers = controller_parser.add_subparsers(
-#                 title='Commands',
-#                 metavar=(' ' *
-#                          (constants.HELP_TEXT_COLUMN_BUFFER +
-#                           longest_command_length(command['sub_commands'])))
-#             )
-#             for controller_sub_command_name, controller_sub_command in \
-#                     command['sub_commands'].iteritems():
-#                 register_command(controller_subparsers,
-#                                  controller_sub_command_name,
-#                                  controller_sub_command)
-#         else:
-
-#             # Add direct commands. Such as 'cfy status', 'cfy ssh' ...
-#             register_command(subparsers, command_name, command)
-
-#     return parser
-
-
-# def _register_argument(args, command_parser):
-#     command_arg_names = []
-
-#     for argument_name, argument in args.iteritems():
-#         completer = argument.get('completer')
-#         if completer:
-#             del argument['completer']
-
-#         arg = command_parser.add_argument(
-#             *argument_name.split(','),
-#             **argument
-#         )
-
-#         if completer:
-#             arg.completer = completer
-
-#         command_arg_names.append(argument['dest'])
-
-#     return command_arg_names
-
-
-# def register_command(subparsers, command_name, command):
-
-#     command_help = command['help']
-#     command_parser = subparsers.add_parser(
-#         command_name, help=command_help,
-#         formatter_class=ConciseArgumentDefaultsHelpFormatter
-#     )
-
-#     command_arg_names = []
-#     arguments = command.get('arguments', {})
-
-#     mutually_exclusive = arguments.pop('_mutually_exclusive', [])
-
-#     command_arg_names += _register_argument(arguments,
-#                                             command_parser)
-
-#     for mutual_exclusive_group in mutually_exclusive:
-#         command_arg_names += _register_argument(
-#             mutual_exclusive_group,
-#             command_parser.add_mutually_exclusive_group(required=True)
-#         )
-#     # Add verbosity flag for each command
-#     command_parser.add_argument(
-#         '-v', '--verbose',
-#         dest='verbosity',
-#         action='count',
-#         default=NO_VERBOSE,
-#         help='Set verbosity level (can be passed multiple times)'
-#     )
-
-#     # Add debug flag for each command
-#     command_parser.add_argument(
-#         '--debug',
-#         dest='debug',
-#         action='store_true',
-#         help='Set debug output (equivalent to -vvv)'
-#     )
-
-#     def command_cmd_handler(args):
-#         kwargs = {}
-#         for arg_name in command_arg_names:
-#             # Filter verbosity since it accessed globally
-#             # and not via the method signature.
-#             if hasattr(args, arg_name):
-#                 arg_value = getattr(args, arg_name)
-#                 kwargs[arg_name] = arg_value
-
-#         command['handler'](**kwargs)
-
-#     command_parser.set_defaults(handler=command_cmd_handler)
 
 
 if __name__ == '__main__':

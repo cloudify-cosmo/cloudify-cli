@@ -25,8 +25,8 @@ import colorama
 
 from cloudify import logs
 
-from cloudify_cli.config import logger_config
-from cloudify_cli.colorful_event import ColorfulEvent
+from .config import logger_config
+from .colorful_event import ColorfulEvent
 
 
 HIGH_VERBOSE = 3

@@ -18,9 +18,9 @@ import os
 
 import fabric.api as fab
 
-from cloudify_cli import utils
-from cloudify_cli.logger import get_global_verbosity
-from cloudify_cli.exceptions import CloudifyCliError
+from . import utils
+from .logger import get_global_verbosity
+from .exceptions import CloudifyCliError
 
 
 def get_manager_date():

@@ -18,14 +18,13 @@ import click
 from dsl_parser.parser import parse_from_path
 from dsl_parser.exceptions import DSLParsingException
 
-from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
-from cloudify_cli.exceptions import CloudifyCliError
+from .. import utils
+from ..logger import get_logger
+from ..exceptions import CloudifyCliError
 
 
 @click.command(name='validate')
-@click.argument('blueprint-path',
-                required=True)
+@click.argument('blueprint-path', required=True)
 def validate(blueprint_path):
     """Validate a blueprint
     """
