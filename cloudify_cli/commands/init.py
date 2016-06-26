@@ -33,19 +33,32 @@ _STORAGE_DIR_NAME = 'local-storage'
 
 
 @click.command(name='init', context_settings=utils.CLICK_CONTEXT_SETTINGS)
-@click.argument('blueprint-path', required=False)
+@click.argument('blueprint-path',
+                required=False)
 @click.option('-r',
               '--reset-config',
+              cls=utils.MutuallyExclusiveOption,
+              mutually_exclusive=['inputs',
+                                  'install_plugins'],
+              mutuality_error_message='MUasdasdads',
               is_flag=True,
               help=helptexts.RESET_CONFIG)
 @click.option('--skip-logging',
+              cls=utils.MutuallyExclusiveOption,
+              mutually_exclusive=['blueprint_path',
+                                  'inputs',
+                                  'install_plugins'],
               is_flag=True,
               help=helptexts.SKIP_LOGGING)
 @click.option('-i',
               '--inputs',
+              cls=utils.MutuallyExclusiveOption,
+              mutually_exclusive=['reset_config', 'skip_logging'],
               multiple=True,
               help=helptexts.INPUTS)
 @click.option('--install-plugins',
+              cls=utils.MutuallyExclusiveOption,
+              mutually_exclusive=['reset_config', 'skip_logging'],
               is_flag=True,
               help=helptexts.INSTALL_PLUGINS)
 def init_command(blueprint_path,

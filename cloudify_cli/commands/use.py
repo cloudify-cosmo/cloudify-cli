@@ -36,8 +36,12 @@ from cloudify_cli.constants import DEFAULT_REST_PORT
               help="The REST server's port")
 def use(management_ip, rest_port):
     """Control a specific manager
+
+    Additional CLI commands will be added after a manager is used.
+    To stop using a manager, you can run `cfy init -r`.
     """
     logger = get_logger()
+    logger.info('Attemping to connect...'.format(management_ip))
     # determine SSL mode by port
     if rest_port == constants.SECURED_REST_PORT:
         protocol = constants.SECURED_PROTOCOL

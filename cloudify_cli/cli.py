@@ -32,14 +32,20 @@ from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 from cloudify_cli import utils
 from cloudify_cli.commands import use
 from cloudify_cli.commands import dev
+# from cloudify_cli.commands import ssh
 from cloudify_cli.commands import init
 from cloudify_cli.commands import nodes
 from cloudify_cli.commands import agents
+from cloudify_cli.commands import groups
 from cloudify_cli.commands import status
 from cloudify_cli.commands import install
+from cloudify_cli.commands import recover
 from cloudify_cli.commands import version
+from cloudify_cli.commands import plugins
 from cloudify_cli.commands import validate
+from cloudify_cli.commands import teardown
 from cloudify_cli.commands import uninstall
+from cloudify_cli.commands import workflows
 from cloudify_cli.commands import snapshots
 from cloudify_cli.commands import bootstrap
 from cloudify_cli.commands import blueprints
@@ -73,6 +79,10 @@ verbosity_level = NO_VERBOSE
               expose_value=False,
               is_eager=True)
 def main(verbose, debug):
+    # TODO: when calling a command which only exists in the context
+    # of a manager but no manager is currently `use`d, print out a message
+    # stating that "Some commands only exist when using a manager. You can run
+    # `cfy use MANAGER_IP` and try this command again."
     # TODO: fix verbosity placement
     _configure_loggers()
 
@@ -96,16 +106,26 @@ def register_commands():
     is_manager_active = utils.is_manager_active()
 
     main.add_command(use.use)
+    main.add_command(recover.recover)
     main.add_command(init.init_command)
     main.add_command(validate.validate)
     main.add_command(bootstrap.bootstrap)
     # main.add_command(local.local_group)
 
+    # TODO: Instead of manually stating each module,
+    # we should try to import all modules in the `commands`
+    # package recursively and check if they have a certain attribute
+    # which indicates they belong to `manager`.
     if is_manager_active:
         main.add_command(dev.dev)
+        # main.add_command(ssh.ssh)
         main.add_command(nodes.nodes)
         main.add_command(agents.agents)
+        main.add_command(groups.groups)
         main.add_command(status.status)
+        main.add_command(plugins.plugins)
+        main.add_command(teardown.teardown)
+        main.add_command(workflows.workflows)
         main.add_command(snapshots.snapshots)
         main.add_command(blueprints.blueprints)
         main.add_command(executions.executions)

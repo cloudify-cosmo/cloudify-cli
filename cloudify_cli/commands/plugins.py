@@ -18,13 +18,31 @@ Handles all commands that start with 'cfy plugins'
 """
 import tarfile
 
+import click
+
 from cloudify_cli import utils
+from cloudify_cli.config import helptexts
 from cloudify_cli.logger import get_logger
 from cloudify_cli.utils import print_table
 from cloudify_cli.exceptions import CloudifyCliError
 
 
+@click.group(name='plugins', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+def plugins():
+    """Handle plugins on the manager
+    """
+    pass
+
+
+@plugins.command(name='validate')
+@click.argument('plugin-path', required=True)
 def validate(plugin_path):
+    """Validate a plugin
+
+    This will try to validate the plugin's archive is not corrupted.
+    A valid plugin is a wagon (http://github.com/cloudify-cosomo/wagon)
+    in the tar.gz format.
+    """
     logger = get_logger()
 
     logger.info('Validating plugin {0}...'.format(plugin_path.name))
@@ -51,7 +69,15 @@ def validate(plugin_path):
     logger.info('Plugin validated successfully')
 
 
+@plugins.command(name='delete')
+@click.argument('plugin-id', required=True)
+@click.option('-f',
+              '--force',
+              is_flag=True,
+              help=helptexts.FORCE_DELETE_PLUGIN)
 def delete(plugin_id, force):
+    """Delete a plugin from the manager
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -62,19 +88,29 @@ def delete(plugin_id, force):
     logger.info('Plugin deleted')
 
 
+@plugins.command(name='upload')
+@click.argument('plugin-path', required=True)
 def upload(plugin_path):
+    """Upload a plugin to the manager
+    """
     server_ip = utils.get_management_server_ip()
     utils.upload_plugin(plugin_path, server_ip,
                         utils.get_rest_client(server_ip), validate)
 
 
-def download(plugin_id,
-             output):
+@plugins.command(name='download')
+@click.argument('plugin-id', required=True)
+@click.option('-o',
+              '--output-path',
+              help=helptexts.OUTPUT_PATH)
+def download(plugin_id, output_path):
+    """Download a plugin from the manager
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     logger.info('Downloading plugin {0}...'.format(plugin_id))
     client = utils.get_rest_client(management_ip)
-    target_file = client.plugins.download(plugin_id, output)
+    target_file = client.plugins.download(plugin_id, output_path)
     logger.info('Plugin downloaded as {0}'.format(target_file))
 
 
@@ -82,7 +118,11 @@ fields = ['id', 'package_name', 'package_version', 'supported_platform',
           'distribution', 'distribution_release', 'uploaded_at']
 
 
+@plugins.command(name='get')
+@click.argument('plugin-id', required=True)
 def get(plugin_id):
+    """Retrieve information for a specific plugin
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -94,7 +134,10 @@ def get(plugin_id):
     print_table('Plugin:', pt)
 
 
+@plugins.command(name='ls')
 def ls():
+    """List all plugins on the manager
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)

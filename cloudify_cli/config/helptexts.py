@@ -89,5 +89,17 @@ DEV_TASK_ARGS = "Arguments for the fabric task"
 
 MAINTENANCE_MODE_WAIT = (
     "Wait until there are no running executions and automatically activate "
-    "maintenance-mode."
+    "maintenance-mode"
 )
+
+FORCE_DELETE_PLUGIN = (
+    "Delete the plugin even if there are deployments which are currently "
+    "using it"
+)
+
+FORCE_RECOVER = "This is mandatory for performing the recovery"
+
+FORCE_TEARDOWN = "This is mandatory for performing the teardown"
+
+IGNORE_DEPLOYMENTS = \
+    "Teardown even if there are existing deployments on the manager"

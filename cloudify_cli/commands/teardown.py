@@ -13,21 +13,30 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles 'cfy teardown'
-"""
+import click
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from cloudify_cli import utils
 from cloudify_cli import exceptions
 from cloudify_cli.commands.use import use
+from cloudify_cli.config import helptexts
 from cloudify_cli.logger import get_logger
 from cloudify_cli.bootstrap import bootstrap as bs
 
 
+@click.command(name='teardown', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@click.option('-f',
+              '--force',
+              required=True,
+              is_flag=True,
+              help=helptexts.FORCE_TEARDOWN)
+@click.option('--ignore-deployments',
+              is_flag=True,
+              help=helptexts.IGNORE_DEPLOYMENTS)
 def teardown(force, ignore_deployments):
-
+    """Teardown the manager
+    """
     _validate_force(force)
 
     try:
@@ -70,6 +79,8 @@ def teardown(force, ignore_deployments):
         _do_teardown()
 
 
+# TODO: do we need this if the `teardown` only appears in the context of a
+# manager?
 def _update_local_provider_context(management_ip):
     logger = get_logger()
     try:

@@ -13,17 +13,32 @@
 # * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles all commands that start with 'cfy workflows'
-"""
+import click
+
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
+from cloudify_cli.config import helptexts
 from cloudify_cli.exceptions import CloudifyCliError
 
 
-def get(deployment_id, workflow_id):
+@click.group(name='workflows', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+def workflows():
+    """Handle deployment workflows
+    """
+    pass
+
+
+@workflows.command(name='get')
+@click.argument('workflow-id', required=True)
+@click.option('-d',
+              '--deployment-id',
+              required=True,
+              help=helptexts.DEPLOYMENT_ID)
+def get(workflow_id, deployment_id):
+    """Retrieve information for a specific workflow of a specific deplouyment
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -79,7 +94,11 @@ def get(deployment_id, workflow_id):
     logger.info('')
 
 
+@workflows.command(name='ls')
+@click.argument('deployment-id', required=True)
 def ls(deployment_id):
+    """List all workflows on the manager
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)

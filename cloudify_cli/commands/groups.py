@@ -13,11 +13,9 @@
 # * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles all commands that start with 'cfy groups'
-"""
-
 import json
+
+import click
 
 from cloudify_cli import utils
 from cloudify_cli.logger import get_logger
@@ -25,7 +23,18 @@ from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 
+@click.group(name='groups', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+def groups():
+    """Handle deployment groups
+    """
+    pass
+
+
+@groups.command(name='ls')
+@click.argument('deployment-id', required=True)
 def ls(deployment_id):
+    """List all groups for a deployment
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)

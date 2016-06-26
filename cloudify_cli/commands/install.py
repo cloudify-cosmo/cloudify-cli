@@ -84,7 +84,7 @@ def remote_install(blueprint_path,
                    timeout,
                    include_logs,
                    json):
-    """Install an application via the Manager
+    """Install an application via the manager
 
     This will upload the blueprint, create a deployment and execute the
     `install` workflow.

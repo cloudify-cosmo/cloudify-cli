@@ -697,19 +697,27 @@ def manager_msg(message, manager_ip=None):
 class MutuallyExclusiveOption(click.Option):
     def __init__(self, *args, **kwargs):
         self.mutually_exclusive = set(kwargs.pop('mutually_exclusive', []))
+        self.mutuality_error_message = \
+            kwargs.pop('mutuality_error_message', [])
         self.mutuality_string = ', '.join(self.mutually_exclusive)
         if self.mutually_exclusive:
             help = kwargs.get('help', '')
             kwargs['help'] = (
                 '{0}. This argument is mutually exclusive with '
-                'arguments: [{1}]'.format(help, self.mutuality_string))
+                'arguments: [{1}] ({2})'.format(
+                    help,
+                    self.mutuality_string,
+                    self.mutuality_error_message))
         super(MutuallyExclusiveOption, self).__init__(*args, **kwargs)
 
     def handle_parse_result(self, ctx, opts, args):
         if self.mutually_exclusive.intersection(opts) and self.name in opts:
             raise click.UsageError(
                 "Illegal usage: `{0}` is mutually exclusive with "
-                "arguments `{1}`.".format(self.name, self.mutuality_string))
+                "arguments `{1}` ({2}).".format(
+                    self.name,
+                    self.mutuality_string,
+                    self.mutuality_error_message))
         return super(MutuallyExclusiveOption, self).handle_parse_result(
             ctx, opts, args)
 

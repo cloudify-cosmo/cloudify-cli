@@ -13,14 +13,13 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles 'cfy recover'
-"""
-
 import os
+
+import click
 
 from cloudify_cli import utils
 from cloudify_cli import exceptions
+from cloudify_cli.config import helptexts
 from cloudify_cli.logger import get_logger
 from cloudify_cli.bootstrap import bootstrap as bs
 
@@ -28,24 +27,33 @@ from cloudify_cli.bootstrap import bootstrap as bs
 CLOUDIFY_MANAGER_PK_PATH_ENVAR = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
 
 
-def recover(force,
+@click.command(name='recover', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@click.argument('snapshot-path', required=True)
+@click.option('-f',
+              '--force',
+              required=True,
+              is_flag=True,
+              help=helptexts.FORCE_RECOVER)
+@click.option('--task-retries',
+              type=int,
+              default=0,
+              help=helptexts.TASK_RETRIES)
+@click.option('--task-retry-interval',
+              type=int,
+              default=1,
+              help=helptexts.TASK_RETRIES)
+@click.option('--task-thread-pool-size',
+              type=int,
+              default=1,
+              help=helptexts.TASK_THREAD_POOL_SIZE)
+def recover(snapshot_path,
+            force,
             task_retries,
             task_retry_interval,
-            task_thread_pool_size,
-            snapshot_path):
+            task_thread_pool_size):
+    """Recover a manager to a previous state
+    """
     logger = get_logger()
-    if not force:
-        msg = ("This action requires additional "
-               "confirmation. Add the '-f' or '--force' "
-               "flags to your command if you are certain "
-               "this command should be executed.")
-        raise exceptions.CloudifyCliError(msg)
-
-    if not snapshot_path:
-        msg = ("This action requires a valid "
-               "snapshot path. Add the '-s' or '--snapshot-path' "
-               "flag to your command")
-        raise exceptions.CloudifyCliError(msg)
 
     if CLOUDIFY_MANAGER_PK_PATH_ENVAR in os.environ:
         # user defined the key file path inside an env variable.

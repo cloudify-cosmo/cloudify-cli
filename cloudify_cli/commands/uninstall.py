@@ -53,7 +53,7 @@ def remote_uninstall(deployment_id,
                      timeout,
                      include_logs,
                      json):
-    """Uninstall an application via the Manager
+    """Uninstall an application via the manager
 
     This will execute the `uninstall` workflow, delete the deployment and
     delete the blueprint (if there is only one deployment for that blueprint).

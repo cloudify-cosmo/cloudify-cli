@@ -26,6 +26,8 @@ from cloudify_cli.logger import get_logger
 
 @click.command(name='status', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def status():
+    """Show the status of the manager
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     logger.info('Retrieving manager services status... [ip={0}]'.format(

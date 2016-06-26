@@ -126,7 +126,7 @@ def download(snapshot_id, output_path):
 
 @snapshots.command(name='ls')
 def ls():
-    """List snapshots on the manager
+    """List all snapshots on the manager
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
