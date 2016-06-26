@@ -70,35 +70,125 @@ NO_VERBOSE = 0
 verbosity_level = NO_VERBOSE
 
 
-@click.group(context_settings=utils.CLICK_CONTEXT_SETTINGS)
-@click.option('-v',
-              '--verbose',
-              count=True,
-              is_eager=True)
-@click.option('--debug',
-              default=False,
-              is_flag=True)
-@click.option('--version',
-              is_flag=True,
-              callback=version.version,
-              expose_value=False,
-              is_eager=True)
-def main(verbose, debug):
-    # TODO: when calling a command which only exists in the context
-    # of a manager but no manager is currently `use`d, print out a message
-    # stating that "Some commands only exist when using a manager. You can run
-    # `cfy use MANAGER_IP` and try this command again."
-    # TODO: fix verbosity placement
-    _configure_loggers()
+def set_global_verbosity_level(verbose):
+    """
+    Sets the global verbosity level.
 
-    if debug:
-        global_verbosity_level = HIGH_VERBOSE
-    else:
-        global_verbosity_level = verbose
-    set_global_verbosity_level(global_verbosity_level)
-    if global_verbosity_level >= HIGH_VERBOSE:
-        set_debug()
-    # _set_cli_except_hook()
+    :param bool verbose: verbose output or not.
+    """
+    global verbosity_level
+    verbosity_level = verbose
+    logs.EVENT_VERBOSITY_LEVEL = verbose
+
+
+def set_debug():
+    """
+    Sets all previously configured
+    loggers to debug level
+
+    """
+    from cloudify_cli.logger import all_loggers
+    for logger_name in all_loggers():
+        logging.getLogger(logger_name).setLevel(logging.DEBUG)
+
+
+def get_global_verbosity():
+    """
+    Returns the globally set verbosity
+
+    :return: verbose or not
+    :rtype: bool
+    """
+    global verbosity_level
+    return verbosity_level
+
+
+def _configure_loggers():
+    from cloudify_cli import logger
+    logger.configure_loggers()
+
+
+def _set_cli_except_hook():
+
+    def recommend(possible_solutions):
+
+        from cloudify_cli.logger import get_logger
+        logger = get_logger()
+
+        logger.info('Possible solutions:')
+        for solution in possible_solutions:
+            logger.info('  - {0}'.format(solution))
+
+    def new_excepthook(tpe, value, tb):
+
+        from cloudify_cli.logger import get_logger
+        logger = get_logger()
+
+        prefix = None
+        server_traceback = None
+        output_message = True
+        if issubclass(tpe, CloudifyClientError):
+            server_traceback = value.server_traceback
+            if not issubclass(
+                    tpe,
+                    (MaintenanceModeActiveError,
+                     MaintenanceModeActivatingError,
+                     NotModifiedError)):
+                # this means we made a server call and it failed.
+                # we should include this information in the error
+                prefix = 'An error occurred on the server'
+        if issubclass(tpe, SuppressedCloudifyCliError):
+            output_message = False
+        if issubclass(tpe, CloudifyBootstrapError):
+            output_message = False
+        if verbosity_level:
+            # print traceback if verbose
+            s_traceback = StringIO.StringIO()
+            traceback.print_exception(
+                etype=tpe,
+                value=value,
+                tb=tb,
+                file=s_traceback)
+            logger.error(s_traceback.getvalue())
+            if server_traceback:
+                logger.error('Server Traceback (most recent call last):')
+
+                # No need for print_tb since this exception
+                # is already formatted by the server
+                logger.error(server_traceback)
+        if output_message and not verbosity_level:
+
+            # if we output the traceback
+            # we output the message too.
+            # print_exception does that.
+            # here we just want the message (non verbose)
+            if prefix:
+                logger.error('{0}: {1}'.format(prefix, value))
+            else:
+                logger.error(value)
+        if hasattr(value, 'possible_solutions'):
+            recommend(getattr(value, 'possible_solutions'))
+
+    sys.excepthook = new_excepthook
+
+
+def longest_command_length(commands_dict):
+    return max(imap(len, commands_dict))
+
+
+class ConciseArgumentDefaultsHelpFormatter(
+        argparse.ArgumentDefaultsHelpFormatter):
+
+    def _get_help_string(self, action):
+
+        default = action.default
+        help = action.help
+
+        if default != argparse.SUPPRESS and default not in [None, False]:
+            if '%(default)' not in help:
+                help += ' (default: %(default)s)'
+
+        return help
 
 
 def register_commands():
@@ -147,6 +237,38 @@ def register_commands():
         main.add_command(install.local_install)
         main.add_command(uninstall.local_uninstall)
         main.add_command(node_instances.node_instances_command)
+
+
+@click.group(context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@click.option('-v',
+              '--verbose',
+              count=True,
+              is_eager=True)
+@click.option('--debug',
+              default=False,
+              is_flag=True)
+@click.option('--version',
+              is_flag=True,
+              callback=version.version,
+              expose_value=False,
+              is_eager=True)
+def main(verbose, debug):
+    # TODO: when calling a command which only exists in the context
+    # of a manager but no manager is currently `use`d, print out a message
+    # stating that "Some commands only exist when using a manager. You can run
+    # `cfy use MANAGER_IP` and try this command again."
+    # TODO: fix verbosity placement
+    _configure_loggers()
+
+    if debug:
+        global_verbosity_level = HIGH_VERBOSE
+    else:
+        global_verbosity_level = verbose
+    set_global_verbosity_level(global_verbosity_level)
+    if global_verbosity_level >= HIGH_VERBOSE:
+        set_debug()
+    # _set_cli_except_hook()
+
 
 register_commands()
 
@@ -292,127 +414,6 @@ register_commands()
 #         command['handler'](**kwargs)
 
 #     command_parser.set_defaults(handler=command_cmd_handler)
-
-
-def set_global_verbosity_level(verbose):
-    """
-    Sets the global verbosity level.
-
-    :param bool verbose: verbose output or not.
-    """
-    global verbosity_level
-    verbosity_level = verbose
-    logs.EVENT_VERBOSITY_LEVEL = verbose
-
-
-def set_debug():
-    """
-    Sets all previously configured
-    loggers to debug level
-
-    """
-    from cloudify_cli.logger import all_loggers
-    for logger_name in all_loggers():
-        logging.getLogger(logger_name).setLevel(logging.DEBUG)
-
-
-def get_global_verbosity():
-    """
-    Returns the globally set verbosity
-
-    :return: verbose or not
-    :rtype: bool
-    """
-    global verbosity_level
-    return verbosity_level
-
-
-def _configure_loggers():
-    from cloudify_cli import logger
-    logger.configure_loggers()
-
-
-def _set_cli_except_hook():
-
-    def recommend(possible_solutions):
-
-        from cloudify_cli.logger import get_logger
-        logger = get_logger()
-
-        logger.info('Possible solutions:')
-        for solution in possible_solutions:
-            logger.info('  - {0}'.format(solution))
-
-    def new_excepthook(tpe, value, tb):
-
-        from cloudify_cli.logger import get_logger
-        logger = get_logger()
-
-        prefix = None
-        server_traceback = None
-        output_message = True
-        if issubclass(tpe, CloudifyClientError):
-            server_traceback = value.server_traceback
-            if not issubclass(
-                    tpe,
-                    (MaintenanceModeActiveError,
-                     MaintenanceModeActivatingError,
-                     NotModifiedError)):
-                # this means we made a server call and it failed.
-                # we should include this information in the error
-                prefix = 'An error occurred on the server'
-        if issubclass(tpe, SuppressedCloudifyCliError):
-            output_message = False
-        if issubclass(tpe, CloudifyBootstrapError):
-            output_message = False
-        if verbosity_level:
-            # print traceback if verbose
-            s_traceback = StringIO.StringIO()
-            traceback.print_exception(
-                etype=tpe,
-                value=value,
-                tb=tb,
-                file=s_traceback)
-            logger.error(s_traceback.getvalue())
-            if server_traceback:
-                logger.error('Server Traceback (most recent call last):')
-
-                # No need for print_tb since this exception
-                # is already formatted by the server
-                logger.error(server_traceback)
-        if output_message and not verbosity_level:
-
-            # if we output the traceback
-            # we output the message too.
-            # print_exception does that.
-            # here we just want the message (non verbose)
-            if prefix:
-                logger.error('{0}: {1}'.format(prefix, value))
-            else:
-                logger.error(value)
-        if hasattr(value, 'possible_solutions'):
-            recommend(getattr(value, 'possible_solutions'))
-
-    sys.excepthook = new_excepthook
-
-
-def longest_command_length(commands_dict):
-    return max(imap(len, commands_dict))
-
-
-class ConciseArgumentDefaultsHelpFormatter(
-        argparse.ArgumentDefaultsHelpFormatter):
-
-    def _get_help_string(self, action):
-
-        default = action.default
-        help = action.help
-
-        if default != argparse.SUPPRESS and default not in [None, False]:
-            if '%(default)' not in help:
-                help += ' (default: %(default)s)'
-
-        return help
 
 
 if __name__ == '__main__':

@@ -24,6 +24,7 @@ import logging.config
 import colorama
 
 from cloudify import logs
+
 from cloudify_cli.config import logger_config
 from cloudify_cli.colorful_event import ColorfulEvent
 
@@ -47,6 +48,7 @@ def configure_loggers():
     # even before the init was executed.
     _configure_defaults()
 
+    # TODO: why isn't this imported above?
     from cloudify_cli import utils
     if utils.is_initialized():
         # init was already called
@@ -74,6 +76,7 @@ def _configure_defaults():
             'handlers': list(logger_dict['handlers'].keys())
         }
     }
+    # TODO: why isn't this imported above?
     from cloudify_cli import utils
     logger_dict['handlers']['file']['filename'] = utils.DEFAULT_LOG_FILE
     logfile_dir = os.path.dirname(utils.DEFAULT_LOG_FILE)
@@ -122,9 +125,9 @@ def _configure_from_file():
 def get_events_logger(json_output):
 
     def json_events_logger(events):
-        """
-        The json events logger prints events as consumable JSON formatted
+        """The json events logger prints events as consumable JSON formatted
         entries. Each event appears in its own line.
+
         :param events: The events to print.
         :return:
         """
@@ -133,8 +136,8 @@ def get_events_logger(json_output):
             sys.stdout.flush()
 
     def text_events_logger(events):
-        """
-        The default events logger prints events as short messages.
+        """The default events logger prints events as short messages.
+
         :param events: The events to print.
         :return:
         """
@@ -143,7 +146,4 @@ def get_events_logger(json_output):
             if output:
                 _lgr.info(output)
 
-    if json_output:
-        return json_events_logger
-    else:
-        return text_events_logger
+    return json_events_logger if json_output else text_events_logger

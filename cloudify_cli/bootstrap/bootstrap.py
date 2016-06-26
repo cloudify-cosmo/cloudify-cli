@@ -26,10 +26,10 @@ from io import BytesIO
 from functools import partial
 from StringIO import StringIO
 
-from retrying import retry
 
 import requests
 import fabric.api as fabric
+from retrying import retry
 
 from cloudify.workflows import local
 from cloudify.exceptions import RecoverableError
@@ -498,9 +498,13 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_client,
     # Every resource is first moved/downloaded to this temp dir.
     temp_dir = tempfile.mkdtemp()
     try:
-        _upload_plugins(upload_resources.get('plugin_resources', ()), temp_dir,
-                        management_ip, rest_client, retries, wait_interval,
-                        fetch_timeout)
+        # _upload_plugins(upload_resources.get('plugin_resources', ()),
+        #                 temp_dir,
+        #                 management_ip,
+        #                 rest_client,
+        #                 retries,
+        #                 wait_interval,
+        #                 fetch_timeout)
         upload_dsl_resources(upload_resources.get('dsl_resources', ()),
                              temp_dir, fabric_env, retries, wait_interval,
                              fetch_timeout)

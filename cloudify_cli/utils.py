@@ -32,8 +32,8 @@ import yaml
 import click
 import pkg_resources
 from prettytable import PrettyTable
-from jinja2.environment import Template
 from itsdangerous import base64_encode
+from jinja2.environment import Template
 
 from dsl_parser import utils as dsl_parser_utils
 from dsl_parser.constants import IMPORT_RESOLVER_KEY
@@ -551,14 +551,6 @@ def table(cols, data, defaults=None):
         pt.add_row(map(lambda c: d[c] if c in d else defaults[c], cols))
 
     return pt
-
-
-def upload_plugin(plugin_path, management_ip, rest_client, validate):
-    logger = get_logger()
-    validate(plugin_path)
-    logger.info('Uploading plugin {0}'.format(plugin_path.name))
-    plugin = rest_client.plugins.upload(plugin_path.name)
-    logger.info("Plugin uploaded. The plugin's id is {0}".format(plugin.id))
 
 
 class CloudifyWorkingDirectorySettings(yaml.YAMLObject):

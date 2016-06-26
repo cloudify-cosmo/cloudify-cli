@@ -75,11 +75,11 @@ def init_command(blueprint_path,
          install_plugins)
 
 
-def init(blueprint_path,
-         reset_config,
-         skip_logging,
-         inputs,
-         install_plugins):
+def init(blueprint_path=None,
+         reset_config=False,
+         skip_logging=False,
+         inputs=None,
+         install_plugins=False):
     def _init():
         if os.path.exists(os.path.join(
                 utils.get_cwd(),

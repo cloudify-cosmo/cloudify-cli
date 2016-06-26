@@ -84,7 +84,6 @@ def delete(plugin_id, force):
 
     logger.info('Deleting plugin {0}...'.format(plugin_id))
     client.plugins.delete(plugin_id=plugin_id, force=force)
-
     logger.info('Plugin deleted')
 
 
@@ -93,9 +92,14 @@ def delete(plugin_id, force):
 def upload(plugin_path):
     """Upload a plugin to the manager
     """
-    server_ip = utils.get_management_server_ip()
-    utils.upload_plugin(plugin_path, server_ip,
-                        utils.get_rest_client(server_ip), validate)
+    logger = get_logger()
+    management_ip = utils.get_management_server_ip()
+    client = utils.get_rest_client(management_ip)
+    validate(plugin_path)
+
+    logger.info('Uploading plugin {0}'.format(plugin_path))
+    plugin = client.plugins.upload(plugin_path)
+    logger.info("Plugin uploaded. The plugin's id is {0}".format(plugin.id))
 
 
 @plugins.command(name='download')
@@ -108,8 +112,9 @@ def download(plugin_id, output_path):
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
-    logger.info('Downloading plugin {0}...'.format(plugin_id))
     client = utils.get_rest_client(management_ip)
+
+    logger.info('Downloading plugin {0}...'.format(plugin_id))
     target_file = client.plugins.download(plugin_id, output_path)
     logger.info('Plugin downloaded as {0}'.format(target_file))
 
