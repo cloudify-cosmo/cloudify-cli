@@ -19,7 +19,7 @@ import os
 import fabric.api as fab
 
 from cloudify_cli import utils
-from cloudify_cli.cli import get_global_verbosity
+from cloudify_cli.logger import get_global_verbosity
 from cloudify_cli.exceptions import CloudifyCliError
 
 

@@ -128,7 +128,6 @@ def inputs_to_dict(resources, resource_name):
     - A key1=value1;key2=value2 pairs string.
     - Wildcard based string (e.g. *-inputs.yaml)
     """
-
     logger = get_logger()
     if not resources:
         return None
@@ -149,8 +148,8 @@ def inputs_to_dict(resources, resource_name):
                     # parse resource content as yaml
                     content = yaml.load(resource)
             except yaml.error.YAMLError as e:
-                msg = ("'{0}' is not a valid YAML. {1}"
-                       .format(resource, str(e)))
+                msg = ("'{0}' is not a valid YAML. {1}".format(
+                    resource, str(e)))
                 raise CloudifyCliError(msg)
 
         if isinstance(content, dict):
@@ -172,11 +171,10 @@ def inputs_to_dict(resources, resource_name):
 
     if not isinstance(resources, list):
         resources = [resources]
-
     for resource in resources:
         # workflow parameters always pass an empty dictionary.
         # we ignore it.
-        if isinstance(resource, str):
+        if isinstance(resource, basestring):
             input_files = glob.glob(resource)
             if os.path.isdir(resource):
                 for input_file in os.listdir(resource):

@@ -15,7 +15,6 @@
 ############
 
 import sys
-import logging
 import argparse
 import StringIO
 import traceback
@@ -23,7 +22,7 @@ from itertools import imap
 
 import click
 
-from cloudify import logs
+# from cloudify import logs
 from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
@@ -31,11 +30,16 @@ from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
 # TODO: after fixing impossible imports, just import the commands package
 from cloudify_cli import utils
+from cloudify_cli import logger
+from cloudify_cli.logger import configure_loggers
+from cloudify_cli.exceptions import CloudifyBootstrapError
+from cloudify_cli.exceptions import SuppressedCloudifyCliError
+
 from cloudify_cli.commands import use
 from cloudify_cli.commands import dev
-# from cloudify_cli.commands import ssh
+from cloudify_cli.commands import ssh
 from cloudify_cli.commands import init
-# from cloudify_cli.commands import logs
+from cloudify_cli.commands import logs
 from cloudify_cli.commands import nodes
 from cloudify_cli.commands import agents
 from cloudify_cli.commands import events
@@ -45,10 +49,10 @@ from cloudify_cli.commands import install
 from cloudify_cli.commands import recover
 from cloudify_cli.commands import version
 from cloudify_cli.commands import plugins
-# from cloudify_cli.commands import upgrade
+from cloudify_cli.commands import upgrade
 from cloudify_cli.commands import validate
 from cloudify_cli.commands import teardown
-# from cloudify_cli.commands import rollback
+from cloudify_cli.commands import rollback
 from cloudify_cli.commands import uninstall
 from cloudify_cli.commands import workflows
 from cloudify_cli.commands import snapshots
@@ -56,57 +60,8 @@ from cloudify_cli.commands import bootstrap
 from cloudify_cli.commands import blueprints
 from cloudify_cli.commands import executions
 from cloudify_cli.commands import deployments
-# from cloudify_cli.commands import maintenance
+from cloudify_cli.commands import maintenance
 from cloudify_cli.commands import node_instances
-from cloudify_cli.logger import configure_loggers
-from cloudify_cli.exceptions import CloudifyBootstrapError
-from cloudify_cli.exceptions import SuppressedCloudifyCliError
-
-
-HIGH_VERBOSE = 3
-MEDIUM_VERBOSE = 2
-LOW_VERBOSE = 1
-NO_VERBOSE = 0
-
-verbosity_level = NO_VERBOSE
-
-
-def set_global_verbosity_level(verbose):
-    """
-    Sets the global verbosity level.
-
-    :param bool verbose: verbose output or not.
-    """
-    global verbosity_level
-    verbosity_level = verbose
-    logs.EVENT_VERBOSITY_LEVEL = verbose
-
-
-def set_debug():
-    """
-    Sets all previously configured
-    loggers to debug level
-
-    """
-    from cloudify_cli.logger import all_loggers
-    for logger_name in all_loggers():
-        logging.getLogger(logger_name).setLevel(logging.DEBUG)
-
-
-def get_global_verbosity():
-    """
-    Returns the globally set verbosity
-
-    :return: verbose or not
-    :rtype: bool
-    """
-    global verbosity_level
-    return verbosity_level
-
-
-# def _configure_loggers():
-#     from cloudify_cli import logger
-#     logger.configure_loggers()
 
 
 def _set_cli_except_hook():
@@ -206,7 +161,6 @@ def register_commands():
     main.add_command(init.init_command)
     main.add_command(validate.validate)
     main.add_command(bootstrap.bootstrap)
-    # main.add_command(local.local_group)
 
     # TODO: Instead of manually stating each module,
     # we should try to import all modules in the `commands`
@@ -214,17 +168,17 @@ def register_commands():
     # which indicates they belong to `manager`.
     if is_manager_active:
         main.add_command(dev.dev)
-        # main.add_command(ssh.ssh)
-        # main.add_command(logs.logs)
+        main.add_command(ssh.ssh)
+        main.add_command(logs.logs)
         main.add_command(nodes.nodes)
         main.add_command(agents.agents)
         main.add_command(events.events)
         main.add_command(groups.groups)
         main.add_command(status.status)
         main.add_command(plugins.plugins)
-        # main.add_command(upgrade.upgrade)
+        main.add_command(upgrade.upgrade)
         main.add_command(teardown.teardown)
-        # main.add_command(rollback.rollback)
+        main.add_command(rollback.rollback)
         main.add_command(workflows.workflows)
         main.add_command(snapshots.snapshots)
         main.add_command(blueprints.blueprints)
@@ -232,7 +186,7 @@ def register_commands():
         main.add_command(install.remote_install)
         main.add_command(deployments.deployments)
         main.add_command(uninstall.remote_uninstall)
-        # main.add_command(maintenance.maintenance_mode)
+        main.add_command(maintenance.maintenance_mode)
         main.add_command(node_instances.node_instances)
     else:
         main.add_command(install.local_install)
@@ -262,12 +216,12 @@ def main(verbose, debug):
     configure_loggers()
 
     if debug:
-        global_verbosity_level = HIGH_VERBOSE
+        global_verbosity_level = logger.HIGH_VERBOSE
     else:
         global_verbosity_level = verbose
-    set_global_verbosity_level(global_verbosity_level)
-    if global_verbosity_level >= HIGH_VERBOSE:
-        set_debug()
+    logger.set_global_verbosity_level(global_verbosity_level)
+    if global_verbosity_level >= logger.HIGH_VERBOSE:
+        logger.set_debug()
     # _set_cli_except_hook()
 
 

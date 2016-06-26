@@ -73,6 +73,9 @@ def bootstrap(blueprint_path,
     creation validation AND any additional validations done on the host
     once it is up.
     """
+    # This must be a list so that we can append to it if necessary.
+    inputs = list(inputs)
+
     logger = get_logger()
     env_name = 'manager'
 

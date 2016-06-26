@@ -13,21 +13,19 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles 'cfy ssh'
-"""
-
 import os
 import re
 import platform
 import subprocess
 from distutils import spawn
 
+import click
+
 from cloudify_cli import utils
+from cloudify_cli.config import helptexts
 from cloudify_cli.logger import get_logger
 from cloudify_cli.ssh import run_command_on_manager
 from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.commands import helptexts
 
 
 def _open_interactive_shell(host_string, command=''):
@@ -122,10 +120,10 @@ def _get_sessions_list(logger, host_string):
         _get_all_sessions(logger, host_string))
 
 
-@blueprints.command(name='ssh')
+@click.command(name='ssh')
 @click.option('-c',
               '--command',
-              help=helptexts.command)
+              help=helptexts.SSH_COMMAND)
 @click.option('--host',
               help=helptexts.SSH_HOST_SESSION)
 @click.option('--sid',

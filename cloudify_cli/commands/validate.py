@@ -30,7 +30,6 @@ def validate(blueprint_path):
     """Validate a blueprint
     """
     logger = get_logger()
-
     logger.info('Validating blueprint: {0}'.format(blueprint_path))
     try:
         resolver = utils.get_import_resolver()

@@ -29,6 +29,14 @@ from cloudify_cli.config import logger_config
 from cloudify_cli.colorful_event import ColorfulEvent
 
 
+HIGH_VERBOSE = 3
+MEDIUM_VERBOSE = 2
+LOW_VERBOSE = 1
+NO_VERBOSE = 0
+
+verbosity_level = NO_VERBOSE
+
+
 _lgr = None
 
 _all_loggers = set()
@@ -147,3 +155,32 @@ def get_events_logger(json_output):
                 _lgr.info(output)
 
     return json_events_logger if json_output else text_events_logger
+
+
+def set_global_verbosity_level(verbose):
+    """
+    Sets the global verbosity level.
+
+    :param bool verbose: verbose output or not.
+    """
+    global verbosity_level
+    verbosity_level = verbose
+    logs.EVENT_VERBOSITY_LEVEL = verbose
+
+
+def set_debug():
+    """Sets all previously configured loggers to debug level
+    """
+    for logger_name in all_loggers():
+        logging.getLogger(logger_name).setLevel(logging.DEBUG)
+
+
+def get_global_verbosity():
+    """
+    Returns the globally set verbosity
+
+    :return: verbose or not
+    :rtype: bool
+    """
+    global verbosity_level
+    return verbosity_level

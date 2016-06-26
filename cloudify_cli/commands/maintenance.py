@@ -19,9 +19,10 @@ import click
 
 from cloudify_cli import utils
 from cloudify_cli import exceptions
-from cloudify_cli.cli import NO_VERBOSE
+from cloudify_cli.config import helptexts
+from cloudify_cli.logger import NO_VERBOSE
 from cloudify_cli.logger import get_logger
-from cloudify_cli.cli import get_global_verbosity
+from cloudify_cli.logger import get_global_verbosity
 
 DEFAULT_TIMEOUT_INTERVAL = 5
 MAINTENANCE_MODE_ACTIVE = 'activated'
