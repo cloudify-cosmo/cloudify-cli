@@ -160,7 +160,7 @@ def create_requirements(blueprint_path, output_path):
 
     requirements = common.create_requirements(blueprint_path=blueprint_path)
 
-    if output:
+    if output_path:
         utils.dump_to_file(requirements, output_path)
         logger.info('Requirements file created successfully --> {0}'
                     .format(output_path))

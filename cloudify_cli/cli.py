@@ -29,11 +29,13 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
+# TODO: after fixing impossible imports, just import the commands package
 from cloudify_cli import utils
 from cloudify_cli.commands import use
 from cloudify_cli.commands import dev
 # from cloudify_cli.commands import ssh
 from cloudify_cli.commands import init
+# from cloudify_cli.commands import logs
 from cloudify_cli.commands import nodes
 from cloudify_cli.commands import agents
 from cloudify_cli.commands import events
@@ -122,6 +124,7 @@ def register_commands():
     if is_manager_active:
         main.add_command(dev.dev)
         # main.add_command(ssh.ssh)
+        # main.add_command(logs.logs)
         main.add_command(nodes.nodes)
         main.add_command(agents.agents)
         main.add_command(events.events)
