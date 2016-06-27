@@ -15,13 +15,13 @@
 
 import click
 
-from cloudify_cli import utils
-from cloudify_cli.commands import local
-from cloudify_cli.config import helptexts
-from cloudify_cli.commands import blueprints
-from cloudify_cli.commands import executions
-from cloudify_cli.commands import deployments
-from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW
+from .. import utils
+from . import blueprints
+from . import executions
+from . import deployments
+from . import local as lcl
+from ..config import helptexts
+from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 
 
 @click.command(name='uninstall', context_settings=utils.CLICK_CONTEXT_SETTINGS)
@@ -46,13 +46,13 @@ from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW
 @click.option('--json',
               is_flag=True,
               help=helptexts.JSON_OUTPUT)
-def remote_uninstall(deployment_id,
-                     workflow_id,
-                     parameters,
-                     allow_custom_parameters,
-                     timeout,
-                     include_logs,
-                     json):
+def manager(deployment_id,
+            workflow_id,
+            parameters,
+            allow_custom_parameters,
+            timeout,
+            include_logs,
+            json):
     """Uninstall an application via the manager
 
     This will execute the `uninstall` workflow, delete the deployment and
@@ -110,26 +110,26 @@ def remote_uninstall(deployment_id,
               type=int,
               default=1,
               help=helptexts.TASK_THREAD_POOL_SIZE)
-def local_uninstall(workflow_id,
-                    parameters,
-                    allow_custom_parameters,
-                    task_retries,
-                    task_retry_interval,
-                    task_thread_pool_size):
+def local(workflow_id,
+          parameters,
+          allow_custom_parameters,
+          task_retries,
+          task_retry_interval,
+          task_thread_pool_size):
     """Uninstall an application
     """
     # if no workflow was supplied, execute the `uninstall` workflow
     workflow_id = workflow_id or DEFAULT_UNINSTALL_WORKFLOW
 
-    local.execute(workflow_id=workflow_id,
-                  parameters=parameters,
-                  allow_custom_parameters=allow_custom_parameters,
-                  task_retries=task_retries,
-                  task_retry_interval=task_retry_interval,
-                  task_thread_pool_size=task_thread_pool_size)
+    lcl.execute(workflow_id=workflow_id,
+                parameters=parameters,
+                allow_custom_parameters=allow_custom_parameters,
+                task_retries=task_retries,
+                task_retry_interval=task_retry_interval,
+                task_thread_pool_size=task_thread_pool_size)
 
     # Remove the local-storage dir
-    utils.remove_if_exists(local._storage_dir())
+    utils.remove_if_exists(lcl._storage_dir())
 
     # Note that although `local install` possibly creates a `.cloudify` dir in
     # addition to the creation of the local storage dir, `local uninstall`

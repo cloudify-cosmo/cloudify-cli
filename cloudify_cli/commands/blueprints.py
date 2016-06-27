@@ -19,13 +19,11 @@ import urlparse
 
 import click
 
-from dsl_parser.parser import parse_from_path
-from dsl_parser.exceptions import DSLParsingException
-
-from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
-from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.config import helptexts
+from .validate import validate
+from .. import utils
+from ..config import helptexts
+from ..logger import get_logger
+from ..exceptions import CloudifyCliError
 
 SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
 DESCRIPTION_LIMIT = 20
@@ -44,19 +42,7 @@ def blueprints():
 def validate_blueprint(blueprint_path):
     """Validate a blueprint
     """
-    logger = get_logger()
-
-    logger.info('Validating blueprint: {0}'.format(blueprint_path))
-    try:
-        resolver = utils.get_import_resolver()
-        validate_version = utils.is_validate_definitions_version()
-        parse_from_path(
-            dsl_file_path=blueprint_path,
-            resolver=resolver,
-            validate_version=validate_version)
-    except DSLParsingException as ex:
-        raise CloudifyCliError('Failed to validate blueprint {0}'.format(ex))
-    logger.info('Blueprint validated successfully')
+    validate(blueprint_path)
 
 
 @blueprints.command(name='upload')
@@ -74,10 +60,10 @@ def validate_blueprint(blueprint_path):
               required=False,
               is_flag=True,
               help=helptexts.VALIDATE_BLUEPRINT)
-def upload_command(blueprint_path,
-                   blueprint_id,
-                   blueprint_filename,
-                   validate):
+def upload_blueprint(blueprint_path,
+                     blueprint_id,
+                     blueprint_filename,
+                     validate):
     """Upload a blueprint to the manager
     """
     upload(blueprint_path,

@@ -20,11 +20,11 @@ import tarfile
 
 import click
 
-from cloudify_cli import utils
-from cloudify_cli.config import helptexts
-from cloudify_cli.logger import get_logger
-from cloudify_cli.utils import print_table
-from cloudify_cli.exceptions import CloudifyCliError
+from .. import utils
+from ..config import helptexts
+from ..logger import get_logger
+from ..utils import print_table
+from ..exceptions import CloudifyCliError
 
 
 @click.group(name='plugins', context_settings=utils.CLICK_CONTEXT_SETTINGS)

@@ -15,10 +15,10 @@
 
 import click
 
-from cloudify_cli import utils
-from cloudify_cli.config import helptexts
-from cloudify_cli.logger import get_logger
-from cloudify_cli.utils import print_table
+from .. import utils
+from ..config import helptexts
+from ..logger import get_logger
+from ..utils import print_table
 
 
 @click.group(name='snapshots', context_settings=utils.CLICK_CONTEXT_SETTINGS)

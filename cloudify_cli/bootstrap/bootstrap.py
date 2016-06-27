@@ -45,7 +45,7 @@ from .tasks import (
     MANAGER_USER_RUNTIME_PROPERTY,
     MANAGER_KEY_PATH_RUNTIME_PROPERTY,
     REST_PORT)
-from cloudify_cli.exceptions import CloudifyBootstrapError
+from ..exceptions import CloudifyBootstrapError
 
 
 MANAGER_DEPLOYMENT_ARCHIVE_IGNORED_FILES = ['.git']

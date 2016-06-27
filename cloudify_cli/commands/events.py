@@ -15,13 +15,14 @@
 
 import click
 
-from cloudify_cli import utils
-from cloudify_cli.config import helptexts
-from cloudify_cli.exceptions import CloudifyCliError, \
-    SuppressedCloudifyCliError
-from cloudify_cli.logger import get_logger, get_events_logger
 from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify_cli.execution_events_fetcher import ExecutionEventsFetcher, \
+
+from .. import utils
+from ..config import helptexts
+from ..exceptions import CloudifyCliError, \
+    SuppressedCloudifyCliError
+from ..logger import get_logger, get_events_logger
+from ..execution_events_fetcher import ExecutionEventsFetcher, \
     wait_for_execution
 
 

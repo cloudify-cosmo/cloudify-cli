@@ -35,26 +35,25 @@ setup(
         ],
     },
     license='LICENSE',
-    description='Cloudify CLI',
+    description="Cloudify's Command Line Interface",
     entry_points={
         'console_scripts': [
-            'cfy = cloudify_cli.cli:main'
+            'cfy = cloudify_cli.cli:cfy'
         ]
     },
     install_requires=[
-        'cloudify-plugins-common==3.4rc1',
-        'cloudify-rest-client==3.4rc1',
+        'click==4.0'
+        'wagon==0.3.2',
+        'pyyaml==3.10',
+        'fabric==1.8.3',
+        'jinja2==2.7.2',
+        'retrying==1.3.3',
+        'colorama==0.3.3',
+        'itsdangerous==0.24',
+        'PrettyTable>=0.7,<0.8',
         'cloudify-dsl-parser==3.4rc1',
         'cloudify-script-plugin==1.4',
-        'pyyaml==3.10',
-        'argcomplete==1.1.0',
-        'fabric==1.8.3',
-        'PrettyTable>=0.7,<0.8',
-        'colorama==0.3.3',
-        'jinja2==2.7.2',
-        'itsdangerous==0.24',
-        'retrying==1.3.3',
-        'wagon==0.3.2',
-        'click==4.0'
+        'cloudify-rest-client==3.4rc1',
+        'cloudify-plugins-common==3.4rc1',
     ]
 )

@@ -17,12 +17,12 @@ import click
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from cloudify_cli import utils
-from cloudify_cli import exceptions
-from cloudify_cli.commands.use import use
-from cloudify_cli.config import helptexts
-from cloudify_cli.logger import get_logger
-from cloudify_cli.bootstrap import bootstrap as bs
+from .use import use
+from .. import utils
+from .. import exceptions
+from ..config import helptexts
+from ..logger import get_logger
+from ..bootstrap import bootstrap as bs
 
 
 @click.command(name='teardown', context_settings=utils.CLICK_CONTEXT_SETTINGS)
@@ -34,7 +34,23 @@ from cloudify_cli.bootstrap import bootstrap as bs
 @click.option('--ignore-deployments',
               is_flag=True,
               help=helptexts.IGNORE_DEPLOYMENTS)
-def teardown(force, ignore_deployments):
+@click.option('--task-retries',
+              type=int,
+              default=0,
+              help=helptexts.TASK_RETRIES)
+@click.option('--task-retry-interval',
+              type=int,
+              default=1,
+              help=helptexts.TASK_RETRIES)
+@click.option('--task-thread-pool-size',
+              type=int,
+              default=1,
+              help=helptexts.TASK_THREAD_POOL_SIZE)
+def teardown(force,
+             ignore_deployments,
+             task_retries,
+             task_retry_interval,
+             task_thread_pool_size):
     """Teardown the manager
     """
     _validate_force(force)
@@ -65,7 +81,10 @@ def teardown(force, ignore_deployments):
                 "directory you initially bootstrapped from, or from the last "
                 "directory a `cfy use` command was executed on this manager.")
         else:
-            _do_teardown()
+            _do_teardown(
+                task_retries,
+                task_retry_interval,
+                task_thread_pool_size)
     else:
         # make sure we don't teardown the manager if there are running
         # deployments, unless the user explicitly specified it.
@@ -76,7 +95,10 @@ def teardown(force, ignore_deployments):
         _update_local_provider_context(management_ip)
 
         # execute teardown
-        _do_teardown()
+        _do_teardown(
+            task_retries,
+            task_retry_interval,
+            task_thread_pool_size)
 
 
 # TODO: do we need this if the `teardown` only appears in the context of a
@@ -127,13 +149,13 @@ def _validate_force(force):
             "command should be executed.")
 
 
-def _do_teardown():
+def _do_teardown(task_retries, task_retry_interval, task_thread_pool_size):
     # reload settings since the provider context maybe changed
     settings = utils.load_cloudify_working_dir_settings()
     provider_context = settings.get_provider_context()
     bs.read_manager_deployment_dump_if_needed(
         provider_context.get('cloudify', {}).get('manager_deployment'))
-    bs.teardown()
+    bs.teardown(task_retries, task_retry_interval, task_thread_pool_size)
     # cleaning relevant data from working directory settings
     with utils.update_wd_settings() as wd_settings:
         # wd_settings.set_provider_context(provider_context)

@@ -24,11 +24,11 @@ import click
 
 from cloudify.workflows import local
 
-from cloudify_cli import utils
-from cloudify_cli import common
-from cloudify_cli import exceptions
-from cloudify_cli.logger import get_logger
-from cloudify_cli.config import (helptexts, envvars)
+from .. import common
+from .. import utils
+from .. import exceptions
+from ..logger import get_logger
+from ..config import (helptexts, envvars)
 
 
 _NAME = 'local'

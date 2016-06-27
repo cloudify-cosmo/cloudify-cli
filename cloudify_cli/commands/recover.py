@@ -17,11 +17,11 @@ import os
 
 import click
 
-from cloudify_cli import utils
-from cloudify_cli import exceptions
-from cloudify_cli.config import helptexts
-from cloudify_cli.logger import get_logger
-from cloudify_cli.bootstrap import bootstrap as bs
+from .. import utils
+from .. import exceptions
+from ..config import helptexts
+from ..logger import get_logger
+from ..bootstrap import bootstrap as bs
 
 
 CLOUDIFY_MANAGER_PK_PATH_ENVAR = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'

@@ -20,8 +20,8 @@ from cloudify_rest_client.exceptions import (
     UserUnauthorizedError
 )
 
-from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
+from .. import utils
+from ..logger import get_logger
 
 
 @click.command(name='status', context_settings=utils.CLICK_CONTEXT_SETTINGS)

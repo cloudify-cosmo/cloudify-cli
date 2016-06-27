@@ -19,11 +19,11 @@ import click
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from cloudify_cli import utils
-from cloudify_cli.commands import local
-from cloudify_cli.config import helptexts
-from cloudify_cli.logger import get_logger
-from cloudify_cli.exceptions import CloudifyCliError
+from .. import utils
+from . import local as lcl
+from ..config import helptexts
+from ..logger import get_logger
+from ..exceptions import CloudifyCliError
 
 
 @click.group(name='node-instances',
@@ -102,11 +102,11 @@ def ls(deployment_id, node_name):
 @click.command(name='node-instances',
                context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('node-id', required=False)
-def node_instances_command(node_id):
+def local(node_id):
     """Display node-instances for the execution
     """
     logger = get_logger()
-    env = local._load_env()
+    env = lcl._load_env()
     node_instances = env.storage.get_node_instances()
     if node_id:
         node_instances = [instance for instance in node_instances

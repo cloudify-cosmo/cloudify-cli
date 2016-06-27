@@ -31,8 +31,8 @@ import fabric.api
 from cloudify import ctx
 from cloudify.decorators import operation
 from cloudify.exceptions import NonRecoverableError
-from cloudify_cli import utils
-from cloudify_cli import constants
+from .. import utils
+from .. import constants
 
 # internal runtime properties - used by the CLI to store local context
 PROVIDER_RUNTIME_PROPERTY = 'provider'
@@ -614,11 +614,12 @@ def _is_installed(binary, use_sudo):
 
 
 def _wait_for_management(ip, timeout, port=constants.DEFAULT_REST_PORT):
-    """ Wait for url to become available
-        :param ip: the manager IP
-        :param timeout: in seconds
-        :param port: port used by the rest service.
-        :return: True of False
+    """Wait for url to become available
+
+    :param ip: the manager IP
+    :param timeout: in seconds
+    :param port: port used by the rest service.
+    :return: True of False
     """
     protocol = 'http' if port == constants.DEFAULT_REST_PORT else 'https'
     validation_url = '{0}://{1}:{2}/api/{3}/version'.format(protocol, ip, port,

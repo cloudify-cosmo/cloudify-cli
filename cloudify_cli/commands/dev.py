@@ -16,13 +16,14 @@
 import click
 
 from fabric.api import env
-from cloudify_cli import utils
-from cloudify_cli import exec_env
-from cloudify_cli.config import helptexts
 from fabric.context_managers import settings
-from cloudify_cli.utils import get_management_key
-from cloudify_cli.utils import get_management_user
-from cloudify_cli.exceptions import CloudifyCliError
+
+from .. import utils
+from .. import exec_env
+from ..config import helptexts
+from ..utils import get_management_key
+from ..utils import get_management_user
+from ..exceptions import CloudifyCliError
 
 
 @click.command(name='dev')

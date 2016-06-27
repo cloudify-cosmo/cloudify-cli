@@ -21,11 +21,11 @@ from distutils import spawn
 
 import click
 
-from cloudify_cli import utils
-from cloudify_cli.config import helptexts
-from cloudify_cli.logger import get_logger
-from cloudify_cli.ssh import run_command_on_manager
-from cloudify_cli.exceptions import CloudifyCliError
+from .. import utils
+from ..config import helptexts
+from ..logger import get_logger
+from ..ssh import run_command_on_manager
+from ..exceptions import CloudifyCliError
 
 
 def _open_interactive_shell(host_string, command=''):

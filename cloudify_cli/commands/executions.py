@@ -20,15 +20,16 @@ import time
 
 import click
 
-from cloudify_cli import utils
-from cloudify_cli.config import helptexts
-from cloudify_cli.logger import get_logger
 from cloudify_rest_client import exceptions
-from cloudify_cli.logger import get_events_logger
-from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.exceptions import ExecutionTimeoutError
-from cloudify_cli.exceptions import SuppressedCloudifyCliError
-from cloudify_cli.execution_events_fetcher import wait_for_execution
+
+from .. import utils
+from ..config import helptexts
+from ..logger import get_logger
+from ..logger import get_events_logger
+from ..exceptions import CloudifyCliError
+from ..exceptions import ExecutionTimeoutError
+from ..exceptions import SuppressedCloudifyCliError
+from ..execution_events_fetcher import wait_for_execution
 
 
 _STATUS_CANCELING_MESSAGE = (

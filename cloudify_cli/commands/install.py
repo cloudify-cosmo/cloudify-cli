@@ -17,16 +17,16 @@ import os
 
 import click
 
-from cloudify_cli import utils
-from cloudify_cli.commands import init
-from cloudify_cli.commands import local
-from cloudify_cli.commands import blueprints
-from cloudify_cli.commands import executions
-from cloudify_cli.commands import deployments
-from cloudify_cli.config import (helptexts, envvars)
-from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
-from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
-from cloudify_cli.constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
+from . import init
+from .. import utils
+from . import blueprints
+from . import executions
+from . import deployments
+from . import local as lcl
+from ..config import (helptexts, envvars)
+from ..constants import DEFAULT_BLUEPRINT_PATH
+from ..constants import DEFAULT_INSTALL_WORKFLOW
+from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
 
 @click.command(name='install', context_settings=utils.CLICK_CONTEXT_SETTINGS)
@@ -72,18 +72,18 @@ from cloudify_cli.constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 @click.option('--json',
               is_flag=True,
               help=helptexts.JSON_OUTPUT)
-def remote_install(blueprint_path,
-                   blueprint_id,
-                   blueprint_filename,
-                   validate,
-                   deployment_id,
-                   inputs,
-                   workflow_id,
-                   parameters,
-                   allow_custom_parameters,
-                   timeout,
-                   include_logs,
-                   json):
+def manager(blueprint_path,
+            blueprint_id,
+            blueprint_filename,
+            validate,
+            deployment_id,
+            inputs,
+            workflow_id,
+            parameters,
+            allow_custom_parameters,
+            timeout,
+            include_logs,
+            json):
     """Install an application via the manager
 
     This will upload the blueprint, create a deployment and execute the
@@ -182,20 +182,6 @@ def remote_install(blueprint_path,
         json=json)
 
 
-# def _check_for_mutually_exclusive_arguments(blueprint_path,
-#                                             archive_location,
-#                                             blueprint_filename):
-#     if blueprint_path and (archive_location or blueprint_filename):
-#         raise CloudifyCliError(
-#             "`-p/--blueprint-path` can't be supplied with "
-#             "`-l/--archive-location` and/or `-n/--blueprint-filename`"
-#         )
-
-
-# def _auto_generate_ids(auto_generate_ids):
-#     return utils.is_auto_generate_ids() or auto_generate_ids
-
-
 @click.command(name='install', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path',
                 required=True,
@@ -228,15 +214,15 @@ def remote_install(blueprint_path,
               type=int,
               default=1,
               help=helptexts.TASK_THREAD_POOL_SIZE)
-def local_install(blueprint_path,
-                  inputs,
-                  install_plugins,
-                  workflow_id,
-                  parameters,
-                  allow_custom_parameters,
-                  task_retries,
-                  task_retry_interval,
-                  task_thread_pool_size):
+def local(blueprint_path,
+          inputs,
+          install_plugins,
+          workflow_id,
+          parameters,
+          allow_custom_parameters,
+          task_retries,
+          task_retry_interval,
+          task_thread_pool_size):
     """Install an application
     """
     blueprint_path = blueprint_path or DEFAULT_BLUEPRINT_PATH
@@ -249,7 +235,7 @@ def local_install(blueprint_path,
         blueprint_path=blueprint_path,
         inputs=inputs,
         install_plugins=install_plugins)
-    local.execute(
+    lcl.execute(
         workflow_id=workflow_id,
         parameters=parameters,
         allow_custom_parameters=allow_custom_parameters,

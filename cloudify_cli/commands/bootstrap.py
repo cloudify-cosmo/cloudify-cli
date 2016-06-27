@@ -17,11 +17,11 @@ import sys
 
 import click
 
-from cloudify_cli import utils
-from cloudify_cli import common
-from cloudify_cli.config import helptexts
-from cloudify_cli.logger import get_logger
-from cloudify_cli.bootstrap import bootstrap as bs
+from .. import utils
+from .. import common
+from ..config import helptexts
+from ..logger import get_logger
+from ..bootstrap import bootstrap as bs
 
 
 @click.command(name='bootstrap', context_settings=utils.CLICK_CONTEXT_SETTINGS)

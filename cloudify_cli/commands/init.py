@@ -18,14 +18,14 @@ import shutil
 
 import click
 
-from cloudify_cli import utils
-from cloudify_cli import common
-from cloudify_cli import constants
-from cloudify_cli import exceptions
-from cloudify_cli.commands import local
-from cloudify_cli.config import helptexts
-from cloudify_cli.logger import get_logger
-from cloudify_cli.logger import configure_loggers
+from . import local
+from .. import utils
+from .. import common
+from .. import constants
+from .. import exceptions
+from ..config import helptexts
+from ..logger import get_logger
+from ..logger import configure_loggers
 
 
 _NAME = 'local'
@@ -61,11 +61,11 @@ _STORAGE_DIR_NAME = 'local-storage'
               mutually_exclusive=['reset_config', 'skip_logging'],
               is_flag=True,
               help=helptexts.INSTALL_PLUGINS)
-def init_command(blueprint_path,
-                 reset_config,
-                 skip_logging,
-                 inputs,
-                 install_plugins):
+def init_env(blueprint_path,
+             reset_config,
+             skip_logging,
+             inputs,
+             install_plugins):
     """Initialize a working environment in the current working directory
     """
     init(blueprint_path,

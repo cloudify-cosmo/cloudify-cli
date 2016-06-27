@@ -21,15 +21,15 @@ import tempfile
 
 import click
 
-from cloudify_cli import ssh
-from cloudify_cli import utils
-from cloudify_cli import common
-from cloudify_cli import exceptions
-from cloudify_cli.config import helptexts
-from cloudify_cli.logger import get_logger
-from cloudify_cli.commands import maintenance
-from cloudify_cli.bootstrap import bootstrap as bs
-from cloudify_cli.bootstrap.bootstrap import load_env
+from .. import ssh
+from .. import utils
+from .. import common
+from .. import exceptions
+from . import maintenance
+from ..config import helptexts
+from ..logger import get_logger
+from ..bootstrap import bootstrap as bs
+from ..bootstrap.bootstrap import load_env
 
 
 MAINTENANCE_MODE_DEACTIVATED = 'deactivated'

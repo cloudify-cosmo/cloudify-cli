@@ -20,10 +20,10 @@ import os
 
 import click
 
-from cloudify_cli import ssh
-from cloudify_cli import utils
-from cloudify_cli.config import helptexts
-from cloudify_cli.logger import get_logger
+from .. import ssh
+from .. import utils
+from ..config import helptexts
+from ..logger import get_logger
 
 
 @click.group(name='logs', context_settings=utils.CLICK_CONTEXT_SETTINGS)

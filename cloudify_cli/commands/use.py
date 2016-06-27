@@ -20,12 +20,12 @@ from cloudify_rest_client.exceptions import (
     UserUnauthorizedError
 )
 
-from cloudify_cli import utils
-from cloudify_cli import constants
-from cloudify_cli.logger import get_logger
-from cloudify_cli.bootstrap import bootstrap as bs
-from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.constants import DEFAULT_REST_PORT
+from .. import utils
+from .. import constants
+from ..logger import get_logger
+from ..bootstrap import bootstrap as bs
+from ..exceptions import CloudifyCliError
+from ..constants import DEFAULT_REST_PORT
 
 
 @click.command(name='use', context_settings=utils.CLICK_CONTEXT_SETTINGS)

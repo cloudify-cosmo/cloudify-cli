@@ -18,14 +18,16 @@ import threading
 
 import click
 
-from cloudify_cli import utils
-from cloudify_cli.config import helptexts
-from cloudify_cli.logger import get_logger
-from cloudify_cli.execution_events_fetcher import wait_for_execution, \
-    WAIT_FOR_EXECUTION_SLEEP_INTERVAL
-from cloudify_cli.exceptions import SuppressedCloudifyCliError
-from cloudify_cli.exceptions import ExecutionTimeoutError
 from cloudify import logs
+
+from .. import utils
+from ..config import helptexts
+from ..logger import get_logger
+from ..exceptions import ExecutionTimeoutError
+from ..exceptions import SuppressedCloudifyCliError
+from ..execution_events_fetcher import wait_for_execution, \
+    WAIT_FOR_EXECUTION_SLEEP_INTERVAL
+
 
 _NODE_INSTANCE_STATE_STARTED = 'started'
 
@@ -61,8 +63,8 @@ def _deployment_exists(client, deployment_id):
 def install(deployment_id, include_logs):
     """Install agents on the hosts of existing deployments
 
-    This allows to install agents on deployments which were previously created
-    but for which the user chose not to install agents previously.
+    See Cloudify's documentation at http://docs.getcloudify.org for more
+    information.
     """
     workflow_id = 'install_new_agents'
     logger = get_logger()

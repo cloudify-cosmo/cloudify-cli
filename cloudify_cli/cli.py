@@ -25,40 +25,12 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
-# TODO: just import the commands package
 from . import utils
 from . import logger
+from . import commands
 from .logger import configure_loggers
 from .exceptions import CloudifyBootstrapError
 from .exceptions import SuppressedCloudifyCliError
-
-from .commands import use
-from .commands import dev
-from .commands import ssh
-from .commands import init
-from .commands import logs
-from .commands import nodes
-from .commands import agents
-from .commands import events
-from .commands import groups
-from .commands import status
-from .commands import install
-from .commands import recover
-from .commands import version
-from .commands import plugins
-from .commands import upgrade
-from .commands import validate
-from .commands import teardown
-from .commands import rollback
-from .commands import uninstall
-from .commands import workflows
-from .commands import snapshots
-from .commands import bootstrap
-from .commands import blueprints
-from .commands import executions
-from .commands import deployments
-from .commands import maintenance
-from .commands import node_instances
 
 
 def _set_cli_except_hook():
@@ -134,42 +106,42 @@ def register_commands():
     """
     is_manager_active = utils.is_manager_active()
 
-    main.add_command(use.use)
-    main.add_command(recover.recover)
-    main.add_command(init.init_command)
-    main.add_command(validate.validate)
-    main.add_command(bootstrap.bootstrap)
+    cfy.add_command(commands.use)
+    cfy.add_command(commands.recover)
+    cfy.add_command(commands.init_env)
+    cfy.add_command(commands.bootstrap)
+    cfy.add_command(commands.validate_blueprint)
 
     # TODO: Instead of manually stating each module,
-    # we should try to import all modules in the `commands`
+    # we might want to try importing all modules in the `commands`
     # package recursively and check if they have a certain attribute
     # which indicates they belong to `manager`.
     if is_manager_active:
-        main.add_command(dev.dev)
-        main.add_command(ssh.ssh)
-        main.add_command(logs.logs)
-        main.add_command(nodes.nodes)
-        main.add_command(agents.agents)
-        main.add_command(events.events)
-        main.add_command(groups.groups)
-        main.add_command(status.status)
-        main.add_command(plugins.plugins)
-        main.add_command(upgrade.upgrade)
-        main.add_command(teardown.teardown)
-        main.add_command(rollback.rollback)
-        main.add_command(workflows.workflows)
-        main.add_command(snapshots.snapshots)
-        main.add_command(blueprints.blueprints)
-        main.add_command(executions.executions)
-        main.add_command(install.remote_install)
-        main.add_command(deployments.deployments)
-        main.add_command(uninstall.remote_uninstall)
-        main.add_command(maintenance.maintenance_mode)
-        main.add_command(node_instances.node_instances)
+        cfy.add_command(commands.dev)
+        cfy.add_command(commands.ssh)
+        cfy.add_command(commands.logs)
+        cfy.add_command(commands.nodes)
+        cfy.add_command(commands.agents)
+        cfy.add_command(commands.events)
+        cfy.add_command(commands.groups)
+        cfy.add_command(commands.status)
+        cfy.add_command(commands.plugins)
+        cfy.add_command(commands.upgrade)
+        cfy.add_command(commands.teardown)
+        cfy.add_command(commands.rollback)
+        cfy.add_command(commands.workflows)
+        cfy.add_command(commands.snapshots)
+        cfy.add_command(commands.blueprints)
+        cfy.add_command(commands.executions)
+        cfy.add_command(commands.deployments)
+        cfy.add_command(commands.install.manager)
+        cfy.add_command(commands.maintenance_mode)
+        cfy.add_command(commands.uninstall.manager)
+        cfy.add_command(commands.node_instances.node_instances)
     else:
-        main.add_command(install.local_install)
-        main.add_command(uninstall.local_uninstall)
-        main.add_command(node_instances.node_instances_command)
+        cfy.add_command(commands.install.local)
+        cfy.add_command(commands.uninstall.local)
+        cfy.add_command(commands.node_instances.local)
 
 
 @click.group(context_settings=utils.CLICK_CONTEXT_SETTINGS)
@@ -182,10 +154,10 @@ def register_commands():
               is_flag=True)
 @click.option('--version',
               is_flag=True,
-              callback=version.version,
+              callback=commands.version,
               expose_value=False,
               is_eager=True)
-def main(verbose, debug):
+def cfy(verbose, debug):
     """Cloudify's Command Line Interface
 
     Note that some commands are only available if you're using a manager.

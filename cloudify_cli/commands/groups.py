@@ -17,10 +17,11 @@ import json
 
 import click
 
-from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
-from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_rest_client.exceptions import CloudifyClientError
+
+from .. import utils
+from ..logger import get_logger
+from ..exceptions import CloudifyCliError
 
 
 @click.group(name='groups', context_settings=utils.CLICK_CONTEXT_SETTINGS)

@@ -18,13 +18,14 @@ from StringIO import StringIO
 
 import click
 
-from cloudify_cli import utils
-from cloudify_cli.config import helptexts
-from cloudify_cli.logger import get_logger, get_events_logger
-from cloudify_cli.exceptions import SuppressedCloudifyCliError
-from cloudify_cli.execution_events_fetcher import wait_for_execution
 from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
+
+from .. import utils
+from ..config import helptexts
+from ..logger import get_logger, get_events_logger
+from ..exceptions import SuppressedCloudifyCliError
+from ..execution_events_fetcher import wait_for_execution
 
 
 @click.group(name='deployments', context_settings=utils.CLICK_CONTEXT_SETTINGS)

@@ -25,9 +25,13 @@ from ..exceptions import CloudifyCliError
 
 @click.command(name='validate')
 @click.argument('blueprint-path', required=True)
-def validate(blueprint_path):
+def validate_blueprint(blueprint_path):
     """Validate a blueprint
     """
+    validate(blueprint_path)
+
+
+def validate(blueprint_path):
     logger = get_logger()
     logger.info('Validating blueprint: {0}'.format(blueprint_path))
     try:

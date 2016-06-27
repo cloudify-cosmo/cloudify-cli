@@ -17,15 +17,14 @@ import json
 
 import click
 
-from cloudify_cli import utils
-from cloudify_cli import common
-from cloudify_cli import exceptions
-from cloudify_cli.config import helptexts
-from cloudify_cli.logger import get_logger
-from cloudify_cli.commands.upgrade import update_inputs
-from cloudify_cli.commands.upgrade import put_workflow_state_file
-from cloudify_cli.commands.upgrade import \
-    verify_and_wait_for_maintenance_mode_activation
+from .. import utils
+from .. import common
+from .. import exceptions
+from ..config import helptexts
+from ..logger import get_logger
+from .upgrade import update_inputs
+from .upgrade import put_workflow_state_file
+from .upgrade import verify_and_wait_for_maintenance_mode_activation
 
 
 @click.command(name='rollback', context_settings=utils.CLICK_CONTEXT_SETTINGS)
