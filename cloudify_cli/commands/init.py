@@ -38,8 +38,7 @@ _STORAGE_DIR_NAME = 'local-storage'
 @click.option('-r',
               '--reset-config',
               cls=utils.MutuallyExclusiveOption,
-              mutually_exclusive=['inputs',
-                                  'install_plugins'],
+              mutually_exclusive=['inputs', 'install_plugins'],
               mutuality_error_message='MUasdasdads',
               is_flag=True,
               help=helptexts.RESET_CONFIG)
@@ -86,6 +85,8 @@ def init(blueprint_path=None,
          install_plugins=False,
          hard=False):
     def _init():
+        logger = get_logger()
+
         if os.path.exists(os.path.join(
                 utils.get_cwd(),
                 constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
@@ -95,8 +96,6 @@ def init(blueprint_path=None,
                     'Current directory is already initialized')
                 error.possible_solutions = [
                     "Run 'cfy init -r' to force re-initialization "
-                    "(might overwrite existing "
-                    "configuration files if exist) "
                 ]
                 raise error
             else:
@@ -106,14 +105,8 @@ def init(blueprint_path=None,
                 if hard:
                     shutil.rmtree(workdir)
                 else:
-                    to_delete = \
-                        [f for f in os.listdir(workdir) if f != 'config.yaml']
-                    for f in to_delete:
-                        full_path = os.path.join(workdir, f)
-                        if os.path.isfile(full_path):
-                            os.remove(full_path)
-                        else:
-                            shutil.rmtree(full_path)
+                    os.remove(os.path.join(
+                        workdir, constants.CLOUDIFY_WD_SETTINGS_FILE_NAME))
 
         settings = utils.CloudifyWorkingDirectorySettings()
         utils.dump_cloudify_working_dir_settings(settings)
@@ -121,7 +114,7 @@ def init(blueprint_path=None,
             utils.dump_configuration_file()
         configure_loggers()
         if not skip_logging:
-            get_logger().info('Initialization completed successfully')
+            logger.info('Initialization completed successfully')
 
     if blueprint_path:
         if os.path.isdir(local._storage_dir()):
