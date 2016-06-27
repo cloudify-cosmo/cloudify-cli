@@ -19,8 +19,9 @@ import urlparse
 
 import click
 
-from .validate import validate
 from .. import utils
+from ..config import options
+from .validate import validate
 from ..config import helptexts
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
@@ -49,9 +50,7 @@ def validate_blueprint(blueprint_path):
 @click.option('-b',
               '--blueprint-id',
               help=helptexts.BLUEPRINT_ID)
-@click.option('-n',
-              '--blueprint-filename',
-              help=helptexts.BLUEPRINT_FILENAME)
+@options.blueprint_filename()
 @click.option('--validate',
               is_flag=True,
               help=helptexts.VALIDATE_BLUEPRINT)
@@ -157,11 +156,8 @@ def determine_archive_type(archive_location):
 
 
 @blueprints.command(name='download')
-@click.argument('blueprint-id',
-                required=True)
-@click.option('-o',
-              '--output-path',
-              help=helptexts.OUTPUT_PATH)
+@click.argument('blueprint-id', required=True)
+@options.output_path
 def download(blueprint_id, output_path):
     """Download a blueprint from the manager
     """
@@ -176,8 +172,7 @@ def download(blueprint_id, output_path):
 
 
 @blueprints.command(name='delete')
-@click.argument('blueprint-id',
-                required=True)
+@click.argument('blueprint-id', required=True)
 def delete(blueprint_id):
     """Delete a blueprint from the manager
     """

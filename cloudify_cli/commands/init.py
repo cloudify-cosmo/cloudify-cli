@@ -33,8 +33,8 @@ _STORAGE_DIR_NAME = 'local-storage'
 
 
 @click.command(name='init', context_settings=utils.CLICK_CONTEXT_SETTINGS)
-@click.argument('blueprint-path',
-                required=False)
+@click.argument('blueprint-path')
+# TODO: Change name. This is not true. It only resets the context
 @click.option('-r',
               '--reset-config',
               cls=utils.MutuallyExclusiveOption,

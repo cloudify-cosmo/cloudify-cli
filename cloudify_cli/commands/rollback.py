@@ -20,7 +20,7 @@ import click
 from .. import utils
 from .. import common
 from .. import exceptions
-from ..config import helptexts
+from ..config import options
 from ..logger import get_logger
 from .upgrade import update_inputs
 from .upgrade import put_workflow_state_file
@@ -29,26 +29,17 @@ from .upgrade import verify_and_wait_for_maintenance_mode_activation
 
 @click.command(name='rollback', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path', required=True)
-@click.option('-i',
-              '--inputs',
-              multiple=True,
-              help=helptexts.INPUTS)
-@click.option('--install-plugins',
-              is_flag=True,
-              help=helptexts.INSTALL_PLUGINS)
-@click.option('--task-retries',
-              type=int,
-              default=0,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-retry-interval',
-              type=int,
-              default=1,
-              help=helptexts.TASK_RETRIES)
+@options.inputs
+@options.install_plugins
+@options.task_retries()
+@options.task_retry_interval()
+@options.task_thread_pool_size()
 def rollback(blueprint_path,
              inputs,
              install_plugins,
              task_retries,
-             task_retry_interval):
+             task_retry_interval,
+             task_thread_pool_size):
 
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -76,7 +67,8 @@ def rollback(blueprint_path,
     try:
         env.execute('install',
                     task_retries=task_retries,
-                    task_retry_interval=task_retry_interval)
+                    task_retry_interval=task_retry_interval,
+                    task_thread_pool_size=task_thread_pool_size)
     except Exception as e:
         msg = 'Failed to rollback Manager upgrade. Error: {0}'.format(e)
         raise exceptions.CloudifyCliError(msg)

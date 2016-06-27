@@ -22,6 +22,7 @@ from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 
 from .. import utils
+from ..config import options
 from ..config import helptexts
 from ..logger import get_logger, get_events_logger
 from ..exceptions import SuppressedCloudifyCliError
@@ -49,7 +50,7 @@ def _print_deployment_inputs(client, blueprint_id):
 
 
 @deployments.command(name='ls')
-@click.argument('blueprint-id', required=False)
+@click.argument('blueprint-id')
 def ls(blueprint_id):
     """List deployments
 
@@ -85,34 +86,18 @@ def ls(blueprint_id):
               '--blueprint-path',
               required=True,
               type=click.Path(exists=True))
-@click.option('-i',
-              '--inputs',
-              multiple=True,
-              help=helptexts.INPUTS)
-@click.option('-n',
-              '--blueprint-filename',
-              required=False,
-              help=helptexts.BLUEPRINT_FILENAME)
-@click.option('-w',
-              '--workflow-id',
-              help=helptexts.EXECUTE_DEFAULT_UNINSTALL_WORKFLOW)
+@options.inputs
+@options.blueprint_filename()
+@options.workflow_id('update')
 @click.option('--skip-install',
               is_flag=True,
               help=helptexts.SKIP_INSTALL)
 @click.option('--skip-uninstall',
               is_flag=True,
               help=helptexts.SKIP_UNINSTALL)
-@click.option('-f',
-              '--force',
-              is_flag=True,
-              help=helptexts.FORCE_UPDATE)
-@click.option('-l',
-              '--include-logs',
-              is_flag=True,
-              help=helptexts.INCLUDE_LOGS)
-@click.option('--json',
-              is_flag=True,
-              help=helptexts.JSON_OUTPUT)
+@options.force(help=helptexts.FORCE_UPDATE)
+@options.include_logs
+@options.json
 def update(deployment_id,
            blueprint_path,
            inputs,
@@ -178,13 +163,8 @@ def update(deployment_id,
 
 @deployments.command(name='create')
 @click.argument('blueprint-id', required=True)
-@click.option('-d',
-              '--deployment-id',
-              help=helptexts.DEPLOYMENT_ID)
-@click.option('-i',
-              '--inputs',
-              multiple=True,
-              help=helptexts.INPUTS)
+@options.deployment_id()
+@options.inputs
 def create_command(blueprint_id,
                    deployment_id,
                    inputs):
@@ -228,9 +208,7 @@ def create(blueprint_id,
 
 @deployments.command(name='delete')
 @click.argument('deployment-id', required=True)
-@click.option('-f',
-              '--force',
-              help=helptexts.IGNORE_LIVE_NODES)
+@options.force(help=helptexts.IGNORE_LIVE_NODES)
 def delete(deployment_id, force):
     """Delete a deployment from the manager
     """

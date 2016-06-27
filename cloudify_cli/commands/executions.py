@@ -23,6 +23,7 @@ import click
 from cloudify_rest_client import exceptions
 
 from .. import utils
+from ..config import options
 from ..config import helptexts
 from ..logger import get_logger
 from ..logger import get_events_logger
@@ -119,30 +120,13 @@ def ls(deployment_id, include_system_workflows):
 
 @executions.command(name='start')
 @click.argument('workflow-id', required=True)
-@click.option('-d',
-              '--deployment-id',
-              required=True,
-              help=helptexts.DEPLOYMENT_ID)
-@click.option('-p',
-              '--parameters',
-              help=helptexts.PARAMETERS)
-@click.option('--allow-custom-parameters',
-              is_flag=True,
-              help=helptexts.ALLOW_CUSTOM_PARAMETERS)
-@click.option('-f',
-              '--force',
-              help=helptexts.FORCE_CONCURRENT_EXECUTION)
-@click.option('--timeout',
-              type=int,
-              default=900,
-              help=helptexts.OPERATION_TIMEOUT)
-@click.option('-l',
-              '--include-logs',
-              is_flag=True,
-              help=helptexts.INCLUDE_LOGS)
-@click.option('--json',
-              is_flag=True,
-              help=helptexts.JSON_OUTPUT)
+@options.deployment_id(required=True)
+@options.parameters
+@options.allow_custom_parameters
+@options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
+@options.timeout()
+@options.include_logs
+@options.json
 def start_command(workflow_id,
                   deployment_id,
                   parameters,
@@ -265,9 +249,7 @@ def start(workflow_id,
 
 @executions.command(name='cancel')
 @click.argument('execution-id', required=True)
-@click.option('-f',
-              '--force',
-              help=helptexts.FORCE_CANCEL_EXECUTION)
+@options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
 def cancel(execution_id, force):
     """Cancel a workflow's execution
     """

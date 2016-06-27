@@ -18,7 +18,7 @@ import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
-from ..config import helptexts
+from ..config import options
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
@@ -31,9 +31,9 @@ def nodes():
 
 
 @nodes.command(name='get')
-@click.argument('deployment-id', required=True)
 @click.argument('node-id', required=True)
-def get(deployment_id, node_id):
+@options.deployment_id(required=True)
+def get(node_id, deployment_id):
     """Retrieve information for a specific node of a specific deployment
     """
     logger = get_logger()
@@ -81,9 +81,7 @@ def get(deployment_id, node_id):
 
 
 @nodes.command(name='ls')
-@click.option('-d',
-              '--deployment-id',
-              help=helptexts.DEPLOYMENT_ID)
+@options.deployment_id()
 def ls(deployment_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()

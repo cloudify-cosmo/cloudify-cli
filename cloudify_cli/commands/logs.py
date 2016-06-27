@@ -13,15 +13,13 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles all commands that start with 'cfy logs'
-"""
 import os
 
 import click
 
 from .. import ssh
 from .. import utils
+from ..config import options
 from ..config import helptexts
 from ..logger import get_logger
 
@@ -58,10 +56,7 @@ def _archive_logs():
 
 
 @logs.command(name='download')
-@click.option('-o',
-              '--output-path',
-              required=False,
-              help=helptexts.OUTPUT_PATH)
+@options.output_path
 def download(output_path):
     """Download an archive containing all of the manager's service logs
     """
@@ -75,13 +70,8 @@ def download(output_path):
 
 
 @logs.command(name='purge')
-@click.option('-f',
-              '--force',
-              required=False,
-              is_flag=True,
-              help=helptexts.FORCE_PURGE_LOGS)
+@options.force(help=helptexts.FORCE_PURGE_LOGS)
 @click.option('--backup-first',
-              required=False,
               is_flag=True,
               help=helptexts.BACKUP_LOGS_FIRST)
 def purge(force, backup_first):

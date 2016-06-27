@@ -19,6 +19,7 @@ import click
 
 from .. import utils
 from .. import exceptions
+from ..config import options
 from ..config import helptexts
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
@@ -29,23 +30,10 @@ CLOUDIFY_MANAGER_PK_PATH_ENVAR = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
 
 @click.command(name='recover', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('snapshot-path', required=True)
-@click.option('-f',
-              '--force',
-              required=True,
-              is_flag=True,
-              help=helptexts.FORCE_RECOVER)
-@click.option('--task-retries',
-              type=int,
-              default=0,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-retry-interval',
-              type=int,
-              default=1,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-thread-pool-size',
-              type=int,
-              default=1,
-              help=helptexts.TASK_THREAD_POOL_SIZE)
+@options.force(help=helptexts.FORCE_RECOVER, required=True)
+@options.task_retries()
+@options.task_retry_interval()
+@options.task_thread_pool_size()
 def recover(snapshot_path,
             force,
             task_retries,

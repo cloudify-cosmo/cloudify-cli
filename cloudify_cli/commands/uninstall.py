@@ -20,32 +20,18 @@ from . import blueprints
 from . import executions
 from . import deployments
 from . import local as lcl
-from ..config import helptexts
+from ..config import options
 from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 
 
 @click.command(name='uninstall', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('deployment-id')
-@click.option('-w',
-              '--workflow-id',
-              help=helptexts.EXECUTE_DEFAULT_UNINSTALL_WORKFLOW)
-@click.option('-p',
-              '--parameters',
-              help=helptexts.PARAMETERS)
-@click.option('--allow-custom-parameters',
-              is_flag=True,
-              help=helptexts.ALLOW_CUSTOM_PARAMETERS)
-@click.option('--timeout',
-              type=int,
-              default=900,
-              help=helptexts.OPERATION_TIMEOUT)
-@click.option('-l',
-              '--include-logs',
-              is_flag=True,
-              help=helptexts.INCLUDE_LOGS)
-@click.option('--json',
-              is_flag=True,
-              help=helptexts.JSON_OUTPUT)
+@options.workflow_id('uninstall')
+@options.parameters
+@options.allow_custom_parameters
+@options.timeout()
+@options.include_logs
+@options.json
 def manager(deployment_id,
             workflow_id,
             parameters,
@@ -89,27 +75,12 @@ def manager(deployment_id,
 
 
 @click.command(name='uninstall', context_settings=utils.CLICK_CONTEXT_SETTINGS)
-@click.option('-w',
-              '--workflow-id',
-              help=helptexts.EXECUTE_DEFAULT_UNINSTALL_WORKFLOW)
-@click.option('-p',
-              '--parameters',
-              help=helptexts.PARAMETERS)
-@click.option('--allow-custom-parameters',
-              is_flag=True,
-              help=helptexts.ALLOW_CUSTOM_PARAMETERS)
-@click.option('--task-retries',
-              type=int,
-              default=0,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-retry-interval',
-              type=int,
-              default=1,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-thread-pool-size',
-              type=int,
-              default=1,
-              help=helptexts.TASK_THREAD_POOL_SIZE)
+@options.workflow_id('uninstall')
+@options.parameters
+@options.allow_custom_parameters
+@options.task_retries()
+@options.task_retry_interval()
+@options.task_thread_pool_size()
 def local(workflow_id,
           parameters,
           allow_custom_parameters,

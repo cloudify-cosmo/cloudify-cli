@@ -21,7 +21,7 @@ import click
 from cloudify import logs
 
 from .. import utils
-from ..config import helptexts
+from ..config import options
 from ..logger import get_logger
 from ..exceptions import ExecutionTimeoutError
 from ..exceptions import SuppressedCloudifyCliError
@@ -56,10 +56,7 @@ def _deployment_exists(client, deployment_id):
 
 @agents.command(name='install')
 @click.argument('deployment-id', required=False)
-@click.option('-l',
-              '--include-logs',
-              is_flag=True,
-              help=helptexts.INCLUDE_LOGS)
+@options.include_logs
 def install(deployment_id, include_logs):
     """Install agents on the hosts of existing deployments
 

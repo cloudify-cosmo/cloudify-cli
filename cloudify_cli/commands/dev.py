@@ -27,8 +27,11 @@ from ..exceptions import CloudifyCliError
 
 
 @click.command(name='dev')
-@click.argument('tasks-file', required=True)
 @click.argument('task', required=True)
+@click.option('-t',
+              'tasks-file',
+              required=True,
+              help='Tasks file from which to draw tasks')
 @click.option('-a',
               '--args',
               multiple=True,

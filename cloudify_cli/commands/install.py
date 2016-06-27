@@ -23,6 +23,7 @@ from . import blueprints
 from . import executions
 from . import deployments
 from . import local as lcl
+from ..config import options
 from ..config import helptexts
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..constants import DEFAULT_INSTALL_WORKFLOW
@@ -30,47 +31,24 @@ from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
 
 @click.command(name='install', context_settings=utils.CLICK_CONTEXT_SETTINGS)
-@click.argument('blueprint-path',
-                required=False)
+@click.argument('blueprint-path')
 @click.option('-b',
               '--blueprint-id',
-              required=False,
-              help=helptexts.BLUEPRINT_PATH)
+              help=helptexts.BLUEPRINT_ID)
 @click.option('-n',
               '--blueprint-filename',
-              required=False,
               help=helptexts.BLUEPRINT_FILENAME)
 @click.option('--validate',
-              required=False,
               is_flag=True,
               help=helptexts.VALIDATE_BLUEPRINT)
-@click.option('-d',
-              '--deployment-id',
-              help=helptexts.DEPLOYMENT_ID)
-@click.option('-i',
-              '--inputs',
-              multiple=True,
-              help=helptexts.INPUTS)
-@click.option('-w',
-              '--workflow-id',
-              help=helptexts.EXECUTE_DEFAULT_INSTALL_WORKFLOW)
-@click.option('-p',
-              '--parameters',
-              help=helptexts.PARAMETERS)
-@click.option('--allow-custom-parameters',
-              is_flag=True,
-              help=helptexts.ALLOW_CUSTOM_PARAMETERS)
-@click.option('--timeout',
-              type=int,
-              default=900,
-              help=helptexts.OPERATION_TIMEOUT)
-@click.option('-l',
-              '--include-logs',
-              is_flag=True,
-              help=helptexts.INCLUDE_LOGS)
-@click.option('--json',
-              is_flag=True,
-              help=helptexts.JSON_OUTPUT)
+@options.deployment_id()
+@options.inputs
+@options.workflow_id('install')
+@options.parameters
+@options.allow_custom_parameters
+@options.timeout()
+@options.include_logs
+@options.json
 def manager(blueprint_path,
             blueprint_id,
             blueprint_filename,
@@ -182,36 +160,15 @@ def manager(blueprint_path,
 
 
 @click.command(name='install', context_settings=utils.CLICK_CONTEXT_SETTINGS)
-@click.argument('blueprint-path',
-                required=True)
-@click.option('-i',
-              '--inputs',
-              multiple=True,
-              help=helptexts.INPUTS)
-@click.option('--install-plugins',
-              is_flag=True,
-              help=helptexts.INSTALL_PLUGINS)
-@click.option('-w',
-              '--workflow-id',
-              help=helptexts.EXECUTE_DEFAULT_INSTALL_WORKFLOW)
-@click.option('-p',
-              '--parameters',
-              help=helptexts.PARAMETERS)
-@click.option('--allow-custom-parameters',
-              is_flag=True,
-              help=helptexts.ALLOW_CUSTOM_PARAMETERS)
-@click.option('--task-retries',
-              type=int,
-              default=0,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-retry-interval',
-              type=int,
-              default=1,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-thread-pool-size',
-              type=int,
-              default=1,
-              help=helptexts.TASK_THREAD_POOL_SIZE)
+@click.argument('blueprint-path', required=True)
+@options.inputs
+@options.install_plugins
+@options.workflow_id('install')
+@options.parameters
+@options.allow_custom_parameters
+@options.task_retries()
+@options.task_retry_interval()
+@options.task_thread_pool_size()
 def local(blueprint_path,
           inputs,
           install_plugins,

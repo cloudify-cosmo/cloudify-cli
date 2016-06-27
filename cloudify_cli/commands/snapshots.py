@@ -16,6 +16,7 @@
 import click
 
 from .. import utils
+from ..config import options
 from ..config import helptexts
 from ..logger import get_logger
 from ..utils import print_table
@@ -33,10 +34,7 @@ def snapshots():
 @click.option('--without-deployments-envs',
               is_flag=True,
               help=helptexts.RESTORE_SNAPSHOT_EXCLUDE_EXISTING_DEPLOYMENTS)
-@click.option('-f',
-              '--force',
-              is_flag=True,
-              help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
+@options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
 def restore(snapshot_id, without_deployments_envs, force):
     """Restore a manager to its previous state
     """
@@ -51,7 +49,7 @@ def restore(snapshot_id, without_deployments_envs, force):
 
 
 @snapshots.command(name='create')
-@click.argument('snapshot-id', required=False)
+@click.argument('snapshot-id')
 @click.option('--include-metrics',
               is_flag=True,
               help=helptexts.INCLUDE_METRICS_IN_SNAPSHOT)
@@ -93,7 +91,6 @@ def delete(snapshot_id):
 @click.argument('snapshot_path', required=True)
 @click.option('-s',
               '--snapshot-id',
-              required=False,
               help=helptexts.SNAPSHOT_ID)
 def upload(snapshot_path, snapshot_id):
     """Upload a snapshot to the manager
@@ -109,10 +106,8 @@ def upload(snapshot_path, snapshot_id):
 
 
 @snapshots.command(name='download')
-@click.argument('snapshot_id', required=True)
-@click.option('-o',
-              '--output-path',
-              help=helptexts.OUTPUT_PATH)
+@click.argument('snapshot-id', required=True)
+@options.output_path
 def download(snapshot_id, output_path):
     """Download a snapshot from the manager
     """

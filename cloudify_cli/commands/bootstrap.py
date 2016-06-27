@@ -19,6 +19,7 @@ import click
 
 from .. import utils
 from .. import common
+from ..config import options
 from ..config import helptexts
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
@@ -26,43 +27,24 @@ from ..bootstrap import bootstrap as bs
 
 @click.command(name='bootstrap', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path', required=True)
-@click.option('-i',
-              '--inputs',
-              multiple=True,
-              help=helptexts.INPUTS)
+@options.inputs
+@options.validate_only
+@options.skip_validations
+@options.install_plugins
+@options.task_retries()
+@options.task_retry_interval()
+@options.task_thread_pool_size()
 @click.option('--keep-up-on-failure',
-              required=False,
               help=helptexts.KEEP_UP_ON_FAILURE)
-@click.option('--validate_only',
-              is_flag=True,
-              help=helptexts.VALIDATE_ONLY)
-@click.option('--skip-validations',
-              is_flag=True,
-              help=helptexts.SKIP_BOOTSTRAP_VALIDATIONS)
-@click.option('--install-plugins',
-              is_flag=True,
-              help=helptexts.INSTALL_PLUGINS)
-@click.option('--task-retries',
-              type=int,
-              default=0,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-retry-interval',
-              type=int,
-              default=1,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-thread-pool-size',
-              type=int,
-              default=1,
-              help=helptexts.TASK_THREAD_POOL_SIZE)
 def bootstrap(blueprint_path,
               inputs,
-              keep_up_on_failure,
               validate_only,
               skip_validations,
               install_plugins,
               task_retries,
               task_retry_interval,
-              task_thread_pool_size):
+              task_thread_pool_size,
+              keep_up_on_failure):
     """Bootstrap a manager
 
     Note that `--validate-only` will validate resource creation without
@@ -148,6 +130,7 @@ def bootstrap(blueprint_path,
                 else:
                     logger.info(
                         'Executing teardown due to failed bootstrap...')
+                    # TODO: why are we not propagating to this one?
                     bs.teardown(name=env_name,
                                 task_retries=5,
                                 task_retry_interval=30,

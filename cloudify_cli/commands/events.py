@@ -18,10 +18,12 @@ import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
+from ..config import options
 from ..config import helptexts
 from ..exceptions import CloudifyCliError, \
     SuppressedCloudifyCliError
-from ..logger import get_logger, get_events_logger
+from ..logger import get_logger
+from ..logger import get_events_logger
 from ..execution_events_fetcher import ExecutionEventsFetcher, \
     wait_for_execution
 
@@ -35,17 +37,12 @@ def events():
 
 @events.command(name='ls')
 @click.argument('execution-id', required=True)
-@click.option('-l',
-              '--include-logs',
-              is_flag=True,
-              help=helptexts.INCLUDE_LOGS)
+@options.include_logs
+@options.json
 @click.option('--tail',
               is_flag=True,
               help=helptexts.TAIL_OUTPUT)
-@click.option('--json',
-              is_flag=True,
-              help=helptexts.JSON_OUTPUT)
-def ls(execution_id, include_logs, tail, json):
+def ls(execution_id, include_logs, json, tail):
     """Display events for an execution
     """
     logger = get_logger()

@@ -18,7 +18,7 @@ import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
-from ..config import helptexts
+from ..config import options
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
@@ -32,10 +32,7 @@ def workflows():
 
 @workflows.command(name='get')
 @click.argument('workflow-id', required=True)
-@click.option('-d',
-              '--deployment-id',
-              required=True,
-              help=helptexts.DEPLOYMENT_ID)
+@options.deployment_id(required=True)
 def get(workflow_id, deployment_id):
     """Retrieve information for a specific workflow of a specific deplouyment
     """

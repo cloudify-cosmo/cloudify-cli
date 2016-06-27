@@ -20,11 +20,11 @@ import click
 
 from cloudify.workflows import local
 
-from .. import common
 from .. import utils
+from .. import common
 from .. import exceptions
+from ..config import options
 from ..logger import get_logger
-from ..config import (helptexts, envvars)
 
 
 _NAME = 'local'
@@ -39,33 +39,20 @@ def local_group():
 
 
 @local_group.command(name='execute')
-@click.option('-w',
-              '--workflow-id',
-              help=helptexts.EXECUTE_DEFAULT_UNINSTALL_WORKFLOW)
-@click.option('-p',
-              '--parameters',
-              help=helptexts.PARAMETERS)
-@click.option('--allow-custom-parameters',
-              is_flag=True,
-              help=helptexts.ALLOW_CUSTOM_PARAMETERS)
-@click.option('--task-retries',
-              type=int,
-              default=0,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-retry-interval',
-              type=int,
-              default=1,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-thread-pool-size',
-              type=int,
-              default=1,
-              help=helptexts.TASK_THREAD_POOL_SIZE)
+@click.argument('workflow-id', required=True)
+@options.parameters
+@options.allow_custom_parameters
+@options.task_retries()
+@options.task_retry_interval()
+@options.task_thread_pool_size()
 def execute_command(workflow_id,
                     parameters,
                     allow_custom_parameters,
                     task_retries,
                     task_retry_interval,
                     task_thread_pool_size):
+    """Execute a workflow
+    """
     execute(workflow_id,
             parameters,
             allow_custom_parameters,
@@ -80,8 +67,6 @@ def execute(workflow_id,
             task_retries,
             task_retry_interval,
             task_thread_pool_size):
-    """Execute a workflow
-    """
     logger = get_logger()
     parameters = utils.inputs_to_dict(parameters, 'parameters')
     env = _load_env()
@@ -128,10 +113,7 @@ def instances(node_id):
 
 
 @local_group.command(name='install-plugins')
-@click.argument('blueprint-path',
-                required=True,
-                envvar=envvars.BLUEPRINT_PATH,
-                type=click.Path(exists=True))
+@click.argument('blueprint-path', required=True, type=click.Path(exists=True))
 def install_plugins(blueprint_path):
     """Install the necessary plugins for a given blueprint
     """
@@ -139,13 +121,8 @@ def install_plugins(blueprint_path):
 
 
 @local_group.command(name='create-requirements')
-@click.argument('blueprint-path',
-                required=True,
-                envvar=envvars.BLUEPRINT_PATH,
-                type=click.Path(exists=True))
-@click.option('-o',
-              '--output-path',
-              help=helptexts.OUTPUT_PATH)
+@click.argument('blueprint-path', required=True, type=click.Path(exists=True))
+@options.output_path
 def create_requirements(blueprint_path, output_path):
     """Create a pip-compliant requirements file for a given blueprint
     """

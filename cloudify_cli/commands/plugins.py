@@ -13,14 +13,12 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles all commands that start with 'cfy plugins'
-"""
 import tarfile
 
 import click
 
 from .. import utils
+from ..config import options
 from ..config import helptexts
 from ..logger import get_logger
 from ..utils import print_table
@@ -71,10 +69,7 @@ def validate(plugin_path):
 
 @plugins.command(name='delete')
 @click.argument('plugin-id', required=True)
-@click.option('-f',
-              '--force',
-              is_flag=True,
-              help=helptexts.FORCE_DELETE_PLUGIN)
+@options.force(help=helptexts.FORCE_DELETE_PLUGIN)
 def delete(plugin_id, force):
     """Delete a plugin from the manager
     """
@@ -104,9 +99,7 @@ def upload(plugin_path):
 
 @plugins.command(name='download')
 @click.argument('plugin-id', required=True)
-@click.option('-o',
-              '--output-path',
-              help=helptexts.OUTPUT_PATH)
+@options.output_path
 def download(plugin_id, output_path):
     """Download a plugin from the manager
     """

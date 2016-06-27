@@ -19,6 +19,7 @@ import click
 
 from .. import utils
 from .. import exceptions
+from ..config import options
 from ..config import helptexts
 from ..logger import NO_VERBOSE
 from ..logger import get_logger
@@ -88,10 +89,7 @@ def _print_maintenance_mode_status(client):
 @click.option('--wait',
               is_flag=True,
               help=helptexts.MAINTENANCE_MODE_WAIT)
-@click.option('--timeout',
-              type=int,
-              default=0,
-              help=helptexts.OPERATION_TIMEOUT)
+@options.timeout(default=0)
 def activate(wait, timeout):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()

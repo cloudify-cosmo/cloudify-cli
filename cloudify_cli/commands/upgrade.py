@@ -26,7 +26,7 @@ from .. import utils
 from .. import common
 from .. import exceptions
 from . import maintenance
-from ..config import helptexts
+from ..config import options
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 from ..bootstrap.bootstrap import load_env
@@ -40,35 +40,13 @@ REMOTE_WORKFLOW_STATE_PATH = '/opt/cloudify/_workflow_state.json'
 
 @click.command(name='upgrade', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path', required=True)
-@click.option('-i',
-              '--inputs',
-              multiple=True,
-              help=helptexts.INPUTS)
-@click.option('--validate_only',
-              is_flag=True,
-              help=helptexts.VALIDATE_ONLY)
-@click.option('--skip-validations',
-              is_flag=True,
-              help=helptexts.SKIP_BOOTSTRAP_VALIDATIONS)
-@click.option('-i',
-              '--inputs',
-              multiple=True,
-              help=helptexts.INPUTS)
-@click.option('--install-plugins',
-              is_flag=True,
-              help=helptexts.INSTALL_PLUGINS)
-@click.option('--task-retries',
-              type=int,
-              default=0,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-retry-interval',
-              type=int,
-              default=1,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-thread-pool-size',
-              type=int,
-              default=1,
-              help=helptexts.TASK_THREAD_POOL_SIZE)
+@options.validate_only
+@options.skip_validations
+@options.inputs
+@options.install_plugins
+@options.task_retries()
+@options.task_retry_interval()
+@options.task_thread_pool_size()
 def upgrade(blueprint_path,
             validate_only,
             skip_validations,
@@ -106,6 +84,10 @@ def upgrade(blueprint_path,
                     task_retry_interval=task_retry_interval,
                     task_thread_pool_size=task_thread_pool_size)
         logger.info('Upgrade validation completed successfully')
+    elif inputs:
+        # The user expects that `--skip-validations` will also ignore
+        # bootstrap validations and not only creation_validations
+        inputs = common.add_ignore_bootstrap_validations_input(inputs)
 
     if not validate_only:
         try:

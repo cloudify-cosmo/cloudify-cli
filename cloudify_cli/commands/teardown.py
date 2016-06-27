@@ -20,32 +20,20 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from .use import use
 from .. import utils
 from .. import exceptions
+from ..config import options
 from ..config import helptexts
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 
 
 @click.command(name='teardown', context_settings=utils.CLICK_CONTEXT_SETTINGS)
-@click.option('-f',
-              '--force',
-              required=True,
-              is_flag=True,
-              help=helptexts.FORCE_TEARDOWN)
+@options.force(help=helptexts.FORCE_TEARDOWN, required=True)
 @click.option('--ignore-deployments',
               is_flag=True,
               help=helptexts.IGNORE_DEPLOYMENTS)
-@click.option('--task-retries',
-              type=int,
-              default=0,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-retry-interval',
-              type=int,
-              default=1,
-              help=helptexts.TASK_RETRIES)
-@click.option('--task-thread-pool-size',
-              type=int,
-              default=1,
-              help=helptexts.TASK_THREAD_POOL_SIZE)
+@options.task_retries()
+@options.task_retry_interval()
+@options.task_thread_pool_size()
 def teardown(force,
              ignore_deployments,
              task_retries,
