@@ -28,108 +28,20 @@ from ..ssh import run_command_on_manager
 from ..exceptions import CloudifyCliError
 
 
-def _open_interactive_shell(host_string, command=''):
-    """Used as fabric's open_shell=True doesn't work well.
-    (Disfigures coloring and such...)
-    """
-    ssh_key_path = os.path.expanduser(utils.get_management_key())
-    cmd = ['ssh', '-t', host_string, '-i', ssh_key_path]
-    if command:
-        cmd.append(command)
-    subprocess.call(cmd)
-
-
-def _verify_tmux_exists_on_manager(host_string):
-    try:
-        run_command_on_manager('which tmux', host_string=host_string)
-    except:
-        raise CloudifyCliError(
-            'tmux executable not found on manager {0}.\n'
-            'Please verify that tmux is installed and in PATH before '
-            'attempting to use shared SSH sessions.\n'
-            'You can run `cfy ssh -c "sudo yum install tmux -y"` to try and '
-            'install tmux on the manager.'.format(
-                host_string.split('@')[1]))
-
-
-def _send_keys(logger, command, sid, host_string):
-    logger.debug('Sending "{0}" to session...'.format(command))
-    run_command_on_manager(
-        'tmux send-keys -t {0} \'{1}\' C-m'.format(sid, command),
-        host_string=host_string)
-
-
-def _validate_env(command, host, sid, list_sessions):
-    if not isinstance(command, str):
-        raise CloudifyCliError('command should be a string.')
-    if not isinstance(host, bool):
-        raise CloudifyCliError('host should be a boolean.')
-    if not isinstance(sid, str):
-        raise CloudifyCliError('sid should be a str.')
-    if not isinstance(list_sessions, bool):
-        raise CloudifyCliError('list_sessions should be a boolean.')
-
-    ssh_path = spawn.find_executable('ssh')
-    if not ssh_path:
-        raise CloudifyCliError(
-            "ssh not found. Possible reasons:\n"
-            "1) You don't have ssh installed (try installing OpenSSH)\n"
-            "2) Your PATH variable is not configured correctly\n"
-            "3) You are running this command with Sudo which can manipulate "
-            "environment variables for security reasons")
-
-    if not ssh_path and platform.system() == 'Windows':
-        raise CloudifyCliError(
-            "ssh.exe not found. Are you sure you have it installed? "
-            "As an alternative, you can use PuTTY to ssh into the manager. "
-            "Do not forget to convert your private key from OpenSSH format to "
-            "PuTTY's format using PuTTYGen.")
-
-    if any([host and sid,
-            host and list_sessions,
-            sid and list_sessions]):
-        raise CloudifyCliError(
-            'Choose one of --host, --list-sessions, --sid arguments.')
-
-
-def _join_session(logger, sid, host_string):
-    logger.info('Attempting to join session...')
-    if sid not in _get_sessions_list(logger, host_string):
-        logger.error('Session {0} does not exist'.format(sid))
-        return
-    _open_interactive_shell(
-        command='tmux attach -t {0}'.format(sid),
-        host_string=host_string)
-
-
-def _get_all_sessions(logger, host_string):
-    logger.info('Retrieving list of existing sessions...')
-    try:
-        # TODO: apply tmux formatting
-        output = run_command_on_manager(
-            'tmux list-sessions',
-            host_string=host_string)
-    except:
-        return None
-    return output
-
-
-def _get_sessions_list(logger, host_string):
-    return re.findall(
-        r'ssh_session_\w{6}',
-        _get_all_sessions(logger, host_string))
-
-
 @click.command(name='ssh')
 @click.option('-c',
               '--command',
+              type=basestring,
               help=helptexts.SSH_COMMAND)
 @click.option('--host',
+              is_flag=True,
               help=helptexts.SSH_HOST_SESSION)
 @click.option('--sid',
+              type=basestring,
               help=helptexts.SSH_CONNECT_TO_SESSION)
 @click.option('-l',
               '--list-sessions',
+              is_flag=True,
               help=helptexts.SSH_LIST_SESSIONS)
 def ssh(command, host, sid, list_sessions):
     """Connects to a running manager via SSH.
@@ -196,3 +108,87 @@ def ssh(command, host, sid, list_sessions):
                 force_output=True)
         else:
             _open_interactive_shell(host_string=host_string)
+
+
+def _open_interactive_shell(host_string, command=''):
+    """Used as fabric's open_shell=True doesn't work well.
+    (Disfigures coloring and such...)
+    """
+    ssh_key_path = os.path.expanduser(utils.get_management_key())
+    cmd = ['ssh', '-t', host_string, '-i', ssh_key_path]
+    if command:
+        cmd.append(command)
+    subprocess.call(cmd)
+
+
+def _verify_tmux_exists_on_manager(host_string):
+    try:
+        run_command_on_manager('which tmux', host_string=host_string)
+    except:
+        raise CloudifyCliError(
+            'tmux executable not found on manager {0}.\n'
+            'Please verify that tmux is installed and in PATH before '
+            'attempting to use shared SSH sessions.\n'
+            'You can run `cfy ssh -c "sudo yum install tmux -y"` to try and '
+            'install tmux on the manager.'.format(
+                host_string.split('@')[1]))
+
+
+def _send_keys(logger, command, sid, host_string):
+    logger.debug('Sending "{0}" to session...'.format(command))
+    run_command_on_manager(
+        'tmux send-keys -t {0} \'{1}\' C-m'.format(sid, command),
+        host_string=host_string)
+
+
+def _validate_env(command, host, sid, list_sessions):
+
+    ssh_path = spawn.find_executable('ssh')
+    if not ssh_path:
+        raise CloudifyCliError(
+            "ssh not found. Possible reasons:\n"
+            "1) You don't have ssh installed (try installing OpenSSH)\n"
+            "2) Your PATH variable is not configured correctly\n"
+            "3) You are running this command with Sudo which can manipulate "
+            "environment variables for security reasons")
+
+    if not ssh_path and platform.system() == 'Windows':
+        raise CloudifyCliError(
+            "ssh.exe not found. Are you sure you have it installed? "
+            "As an alternative, you can use PuTTY to ssh into the manager. "
+            "Do not forget to convert your private key from OpenSSH format to "
+            "PuTTY's format using PuTTYGen.")
+
+    if any([host and sid,
+            host and list_sessions,
+            sid and list_sessions]):
+        raise CloudifyCliError(
+            'Choose one of --host, --list-sessions, --sid arguments.')
+
+
+def _join_session(logger, sid, host_string):
+    logger.info('Attempting to join session...')
+    if sid not in _get_sessions_list(logger, host_string):
+        logger.error('Session {0} does not exist'.format(sid))
+        return
+    _open_interactive_shell(
+        command='tmux attach -t {0}'.format(sid),
+        host_string=host_string)
+
+
+def _get_all_sessions(logger, host_string):
+    logger.info('Retrieving list of existing sessions...')
+    try:
+        # TODO: apply tmux formatting
+        output = run_command_on_manager(
+            'tmux list-sessions',
+            host_string=host_string)
+    except:
+        return None
+    return output
+
+
+def _get_sessions_list(logger, host_string):
+    return re.findall(
+        r'ssh_session_\w{6}',
+        _get_all_sessions(logger, host_string))

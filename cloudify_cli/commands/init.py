@@ -61,25 +61,30 @@ _STORAGE_DIR_NAME = 'local-storage'
               mutually_exclusive=['reset_config', 'skip_logging'],
               is_flag=True,
               help=helptexts.INSTALL_PLUGINS)
+@click.option('--hard',
+              is_flag=True)
 def init_env(blueprint_path,
              reset_config,
              skip_logging,
              inputs,
-             install_plugins):
+             install_plugins,
+             hard):
     """Initialize a working environment in the current working directory
     """
     init(blueprint_path,
          reset_config,
          skip_logging,
          inputs,
-         install_plugins)
+         install_plugins,
+         hard)
 
 
 def init(blueprint_path=None,
          reset_config=False,
          skip_logging=False,
          inputs=None,
-         install_plugins=False):
+         install_plugins=False,
+         hard=False):
     def _init():
         if os.path.exists(os.path.join(
                 utils.get_cwd(),
@@ -95,13 +100,25 @@ def init(blueprint_path=None,
                 ]
                 raise error
             else:
-                shutil.rmtree(os.path.join(
+                workdir = os.path.join(
                     utils.get_cwd(),
-                    constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME))
+                    constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+                if hard:
+                    shutil.rmtree(workdir)
+                else:
+                    to_delete = \
+                        [f for f in os.listdir(workdir) if f != 'config.yaml']
+                    for f in to_delete:
+                        full_path = os.path.join(workdir, f)
+                        if os.path.isfile(full_path):
+                            os.remove(full_path)
+                        else:
+                            shutil.rmtree(full_path)
 
         settings = utils.CloudifyWorkingDirectorySettings()
         utils.dump_cloudify_working_dir_settings(settings)
-        utils.dump_configuration_file()
+        if hard:
+            utils.dump_configuration_file()
         configure_loggers()
         if not skip_logging:
             get_logger().info('Initialization completed successfully')

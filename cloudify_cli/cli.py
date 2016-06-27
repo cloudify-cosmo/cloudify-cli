@@ -28,16 +28,15 @@ from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 from . import utils
 from . import logger
 from . import commands
+from .logger import get_logger
 from .logger import configure_loggers
 from .exceptions import CloudifyBootstrapError
 from .exceptions import SuppressedCloudifyCliError
 
 
-def _set_cli_except_hook():
+def _set_cli_except_hook(global_verbosity_level):
 
     def recommend(possible_solutions):
-
-        from cloudify_cli.logger import get_logger
         logger = get_logger()
 
         logger.info('Possible solutions:')
@@ -45,8 +44,6 @@ def _set_cli_except_hook():
             logger.info('  - {0}'.format(solution))
 
     def new_excepthook(tpe, value, tb):
-
-        from cloudify_cli.logger import get_logger
         logger = get_logger()
 
         prefix = None
@@ -66,7 +63,7 @@ def _set_cli_except_hook():
             output_message = False
         if issubclass(tpe, CloudifyBootstrapError):
             output_message = False
-        if verbosity_level:
+        if global_verbosity_level:
             # print traceback if verbose
             s_traceback = StringIO.StringIO()
             traceback.print_exception(
@@ -81,7 +78,7 @@ def _set_cli_except_hook():
                 # No need for print_tb since this exception
                 # is already formatted by the server
                 logger.error(server_traceback)
-        if output_message and not verbosity_level:
+        if output_message and not global_verbosity_level:
 
             # if we output the traceback
             # we output the message too.
@@ -139,6 +136,7 @@ def register_commands():
         cfy.add_command(commands.uninstall.manager)
         cfy.add_command(commands.node_instances.node_instances)
     else:
+        cfy.add_command(commands.local_group)
         cfy.add_command(commands.install.local)
         cfy.add_command(commands.uninstall.local)
         cfy.add_command(commands.node_instances.local)
@@ -179,7 +177,7 @@ def cfy(verbose, debug):
     logger.set_global_verbosity_level(global_verbosity_level)
     if global_verbosity_level >= logger.HIGH_VERBOSE:
         logger.set_debug()
-    # _set_cli_except_hook()
+    # _set_cli_except_hook(global_verbosity_level)
 
 
 register_commands()

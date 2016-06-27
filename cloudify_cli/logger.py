@@ -25,6 +25,7 @@ import colorama
 
 from cloudify import logs
 
+import utils
 from .config import logger_config
 from .colorful_event import ColorfulEvent
 
@@ -57,7 +58,6 @@ def configure_loggers():
     _configure_defaults()
 
     # TODO: why isn't this imported above?
-    from cloudify_cli import utils
     if utils.is_initialized():
         # init was already called
         # use the configuration file.

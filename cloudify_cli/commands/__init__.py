@@ -37,6 +37,7 @@ from .recover import recover
 from .version import version
 from .plugins import plugins
 from .upgrade import upgrade
+from .local import local_group
 from .teardown import teardown
 from .rollback import rollback
 from .workflows import workflows
