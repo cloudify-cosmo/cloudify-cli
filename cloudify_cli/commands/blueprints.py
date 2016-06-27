@@ -37,8 +37,7 @@ def blueprints():
 
 
 @blueprints.command(name='validate')
-@click.argument('blueprint-path',
-                required=True)
+@click.argument('blueprint-path', required=True)
 def validate_blueprint(blueprint_path):
     """Validate a blueprint
     """
@@ -46,18 +45,14 @@ def validate_blueprint(blueprint_path):
 
 
 @blueprints.command(name='upload')
-@click.argument('blueprint-path',
-                required=True)
+@click.argument('blueprint-path', required=True)
 @click.option('-b',
               '--blueprint-id',
-              required=False,
-              help=helptexts.BLUEPRINT_PATH)
+              help=helptexts.BLUEPRINT_ID)
 @click.option('-n',
               '--blueprint-filename',
-              required=False,
               help=helptexts.BLUEPRINT_FILENAME)
 @click.option('--validate',
-              required=False,
               is_flag=True,
               help=helptexts.VALIDATE_BLUEPRINT)
 def upload_blueprint(blueprint_path,
@@ -172,9 +167,11 @@ def download(blueprint_id, output_path):
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
-    logger.info('Downloading blueprint {0}...'.format(blueprint_id))
     client = utils.get_rest_client(management_ip)
+
+    logger.info('Downloading blueprint {0}...'.format(blueprint_id))
     target_file = client.blueprints.download(blueprint_id, output_path)
+
     logger.info('Blueprint downloaded as {0}'.format(target_file))
 
 
@@ -186,9 +183,11 @@ def delete(blueprint_id):
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
-    logger.info('Deleting blueprint {0}...'.format(blueprint_id))
     client = utils.get_rest_client(management_ip)
+
+    logger.info('Deleting blueprint {0}...'.format(blueprint_id))
     client.blueprints.delete(blueprint_id)
+
     logger.info('Blueprint deleted')
 
 
@@ -199,7 +198,6 @@ def ls():
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
-    logger.info('Listing all blueprints...')
 
     def trim_description(blueprint):
         if blueprint['description'] is not None:
@@ -210,6 +208,7 @@ def ls():
             blueprint['description'] = ''
         return blueprint
 
+    logger.info('Listing all blueprints...')
     blueprints = [trim_description(b) for b in client.blueprints.list()]
 
     pt = utils.table(['id', 'description', 'main_file_name',
@@ -233,7 +232,6 @@ def get(blueprint_id):
 
     deployments = client.deployments.list(_include=['id'],
                                           blueprint_id=blueprint_id)
-
     blueprint['#deployments'] = len(deployments)
 
     pt = utils.table(['id', 'main_file_name', 'created_at', 'updated_at',
@@ -257,8 +255,8 @@ def inputs(blueprint_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
-    logger.info('Retrieving inputs for blueprint {0}...'.format(blueprint_id))
 
+    logger.info('Retrieving inputs for blueprint {0}...'.format(blueprint_id))
     blueprint = client.blueprints.get(blueprint_id)
     inputs = blueprint['plan']['inputs']
     data = [{'name': name,
@@ -283,7 +281,7 @@ def get_archive_id(archive_location):
         filename, ext = os.path.splitext(
             os.path.basename(archive_location))
         return filename
-    # if the archive is a url, assign blueprint_id name of the file
+    # if the archive is a url, assign blueprint_id same of the file
     # that the url leads to, without the extension.
     # e.g. http://example.com/path/archive.zip?para=val#sect -> archive
     elif archive_location_type == 'url':
@@ -293,4 +291,4 @@ def get_archive_id(archive_location):
         return archive_name
     else:
         raise CloudifyCliError("The archive's source is not a local "
-                               'file path nor a web url')
+                               "file path nor a web url")

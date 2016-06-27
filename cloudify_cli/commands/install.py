@@ -23,7 +23,7 @@ from . import blueprints
 from . import executions
 from . import deployments
 from . import local as lcl
-from ..config import (helptexts, envvars)
+from ..config import helptexts
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..constants import DEFAULT_INSTALL_WORKFLOW
 from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
@@ -31,8 +31,7 @@ from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
 @click.command(name='install', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path',
-                required=False,
-                envvar=envvars.BLUEPRINT_PATH)
+                required=False)
 @click.option('-b',
               '--blueprint-id',
               required=False,
@@ -184,8 +183,7 @@ def manager(blueprint_path,
 
 @click.command(name='install', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path',
-                required=True,
-                envvar=envvars.BLUEPRINT_PATH)
+                required=True)
 @click.option('-i',
               '--inputs',
               multiple=True,
