@@ -60,6 +60,14 @@ def get_management_user():
     raise CloudifyCliError(msg)
 
 
+def get_management_port():
+    cosmo_wd_settings = load_cloudify_working_dir_settings()
+    if cosmo_wd_settings.get_management_port():
+        return str(cosmo_wd_settings.get_management_port())
+    msg = 'Management Port is not set in working directory settings'
+    raise CloudifyCliError(msg)
+
+
 def dump_to_file(collection, file_path):
     with open(file_path, 'a') as f:
         f.write(os.linesep.join(collection))
@@ -555,6 +563,7 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
         self._management_ip = None
         self._management_key = None
         self._management_user = None
+        self._management_port = None
         self._provider_context = None
         self._rest_port = constants.DEFAULT_REST_PORT
         self._protocol = constants.DEFAULT_PROTOCOL
@@ -576,6 +585,12 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
 
     def set_management_user(self, _management_user):
         self._management_user = _management_user
+
+    def get_management_port(self):
+        return self._management_port
+
+    def set_management_port(self, _management_port):
+        self._management_port = _management_port
 
     def get_provider_context(self):
         return self._provider_context
