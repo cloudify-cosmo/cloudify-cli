@@ -23,12 +23,14 @@ from cloudify_cli import exec_env
 from fabric.context_managers import settings
 from cloudify_cli.utils import get_management_key
 from cloudify_cli.utils import get_management_user
+from cloudify_cli.utils import get_management_port
 from cloudify_cli.exceptions import CloudifyCliError
 
 
 def dev(args, task, tasks_file):
     management_ip = utils.get_management_server_ip()
     _execute(username=get_management_user(),
+             port=get_management_port(),
              key=get_management_key(),
              ip=management_ip,
              task=task,
@@ -36,8 +38,8 @@ def dev(args, task, tasks_file):
              args=args)
 
 
-def _execute(username, key, ip, task, tasks_file, args):
-    _setup_fabric_env(username=username,
+def _execute(username, key, ip, task, tasks_file, args, port):
+    _setup_fabric_env(username=username, port=port,
                       key=key)
     tasks = exec_tasks_file(tasks_file=tasks_file)
     _execute_task(ip=ip,
@@ -46,8 +48,9 @@ def _execute(username, key, ip, task, tasks_file, args):
                   task_args=args)
 
 
-def _setup_fabric_env(username, key):
+def _setup_fabric_env(username, key, port):
     env.user = username
+    env.port = port
     env.key_filename = key
     env.warn_only = True
     env.abort_on_prompts = False

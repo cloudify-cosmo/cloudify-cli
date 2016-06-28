@@ -34,7 +34,8 @@ def _open_interactive_shell(host_string, command=''):
     (Disfigures coloring and such...)
     """
     ssh_key_path = os.path.expanduser(utils.get_management_key())
-    cmd = ['ssh', '-t', host_string, '-i', ssh_key_path]
+    port = utils.get_management_port()
+    cmd = ['ssh', '-t', host_string, '-i', ssh_key_path, '-p', port]
     if command:
         cmd.append(command)
     subprocess.call(cmd)
@@ -42,7 +43,8 @@ def _open_interactive_shell(host_string, command=''):
 
 def _verify_tmux_exists_on_manager(host_string):
     try:
-        run_command_on_manager('which tmux', host_string=host_string)
+        run_command_on_manager(
+            'which tmux', host_string=host_string)
     except:
         raise CloudifyCliError(
             'tmux executable not found on manager {0}.\n'
@@ -98,18 +100,16 @@ def _join_session(logger, sid, host_string):
     if sid not in _get_sessions_list(logger, host_string):
         logger.error('Session {0} does not exist'.format(sid))
         return
-    _open_interactive_shell(
-        command='tmux attach -t {0}'.format(sid),
-        host_string=host_string)
+    _open_interactive_shell(command='tmux attach -t {0}'.format(sid),
+                            host_string=host_string)
 
 
 def _get_all_sessions(logger, host_string):
     logger.info('Retrieving list of existing sessions...')
     try:
         # TODO: apply tmux formatting
-        output = run_command_on_manager(
-            'tmux list-sessions',
-            host_string=host_string)
+        output = run_command_on_manager('tmux list-sessions',
+                                        host_string=host_string)
     except:
         return None
     return output
@@ -150,9 +150,8 @@ def ssh(ssh_command, host_session, sid, list_sessions):
         sid = 'ssh_session_' + utils.generate_random_string()
         logger.info('Creating session {0}...'.format(sid))
         try:
-            run_command_on_manager(
-                'tmux new -d -A -s {0}'.format(sid),
-                host_string=host_string)
+            run_command_on_manager('tmux new -d -A -s {0}'.format(sid),
+                                   host_string=host_string)
             logger.info('Preparing environment...')
             _send_keys(logger, 'alias exit="tmux detach"; clear', sid,
                        host_string=host_string)

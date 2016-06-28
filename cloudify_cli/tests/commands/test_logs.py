@@ -36,9 +36,20 @@ class LogsTest(CliCommandTest):
         settings = utils.CloudifyWorkingDirectorySettings()
         settings.set_management_user('test')
         settings.set_management_server('127.0.0.1')
+        settings.set_management_port('22')
         self._create_cosmo_wd_settings(settings)
         self._assert_ex('cfy logs download',
                         'Management Key is not set '
+                        'in working directory settings')
+
+    def test_with_no_port(self):
+        settings = utils.CloudifyWorkingDirectorySettings()
+        settings.set_management_user('test')
+        settings.set_management_server('127.0.0.1')
+        settings.set_management_key('/tmp/test.pem')
+        self._create_cosmo_wd_settings(settings)
+        self._assert_ex('cfy logs download',
+                        'Management Port is not set '
                         'in working directory settings')
 
     def test_with_no_user(self):

@@ -34,7 +34,8 @@ class BaseUpgradeTest(CliCommandTest):
             return_value=Maintenance({'status': 'active'}))
         self._assert_ex('cfy {0} --blueprint-path path '
                         '--inputs private_ip=localhost;'
-                        'ssh_key_filename=key_path'.format(action),
+                        'ssh_key_filename=key_path;'
+                        'ssh_port=22'.format(action),
                         'No such file or directory: \'path\'')
 
     def _test_no_private_ip(self, action):
