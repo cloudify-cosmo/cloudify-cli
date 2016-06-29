@@ -29,6 +29,10 @@ from . import exceptions
 from .logger import get_logger
 
 
+_NAME = 'local'
+_STORAGE_DIR_NAME = 'local-storage'
+
+
 def initialize_blueprint(blueprint_path,
                          name,
                          storage,
@@ -128,3 +132,28 @@ def _plugins_to_requirements(blueprint_path, plugins):
 def add_ignore_bootstrap_validations_input(inputs):
     inputs.append('{"ignore_bootstrap_validations":true}')
     return inputs
+
+
+def storage_dir():
+    return os.path.join(utils.get_cwd(), _STORAGE_DIR_NAME)
+
+
+def storage():
+    return local.FileStorage(storage_dir=storage_dir())
+
+
+def load_env():
+    if not os.path.isdir(storage_dir()):
+        error = exceptions.CloudifyCliError(
+            '{0} has not been initialized with a blueprint.'.format(
+                utils.get_cwd()))
+
+        # init was probably not executed.
+        # suggest solution.
+
+        error.possible_solutions = [
+            "Run `cfy local init` in this directory"
+        ]
+        raise error
+    return local.load_env(name=_NAME,
+                          storage=storage())

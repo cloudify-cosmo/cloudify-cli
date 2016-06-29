@@ -69,8 +69,7 @@ def delete_workdir():
 
 def load_env(name='manager'):
     storage = local.FileStorage(storage_dir=_workdir())
-    return local.load_env(name=name,
-                          storage=storage)
+    return local.load_env(name=name, storage=storage)
 
 
 def blueprint_archive_filter_func(tarinfo):
@@ -246,10 +245,8 @@ def bootstrap(blueprint_path,
         )
     except ImportError as e:
         e.possible_solutions = [
-            "Run 'cfy local install-plugins -p {0}'"
-            .format(blueprint_path),
-            "Run 'cfy bootstrap --install-plugins -p {0}'"
-            .format(blueprint_path)
+            "Run 'cfy install-plugins {0}'".format(blueprint_path),
+            "Run 'cfy bootstrap {0} --install-plugins'".format(blueprint_path)
         ]
         raise
 

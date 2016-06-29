@@ -20,21 +20,21 @@ import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
-from . import local as lcl
-from ..config import helptexts
+from .. import common
+from ..config import options
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
 @click.group(name='node-instances',
              context_settings=utils.CLICK_CONTEXT_SETTINGS)
-def node_instances():
+def manager():
     """Handle a deployment's node-instances
     """
     pass
 
 
-@node_instances.command(name='get')
+@manager.command(name='get')
 @click.argument('node_instance_id', required=True)
 def get(node_instance_id):
     """Retrieve information for a specific node-instance
@@ -64,13 +64,9 @@ def get(node_instance_id):
     logger.info('')
 
 
-@node_instances.command(name='ls')
+@manager.command(name='ls')
 @click.argument('deployment-id', required=False)
-@click.option('-n',
-              '--node-name',
-              required=False,
-              default=None,
-              help=helptexts.NODE_NAME)
+@options.node_name
 def ls(deployment_id, node_name):
     """List node-instances
 
@@ -106,7 +102,7 @@ def local(node_id):
     """Display node-instances for the execution
     """
     logger = get_logger()
-    env = lcl._load_env()
+    env = common.load_env()
     node_instances = env.storage.get_node_instances()
     if node_id:
         node_instances = [instance for instance in node_instances

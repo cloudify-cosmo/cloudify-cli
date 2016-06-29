@@ -13,9 +13,6 @@
 # * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Handles all commands that start with 'cfy executions'
-"""
 import time
 
 import click
@@ -127,26 +124,6 @@ def ls(deployment_id, include_system_workflows):
 @options.timeout()
 @options.include_logs
 @options.json
-def start_command(workflow_id,
-                  deployment_id,
-                  parameters,
-                  allow_custom_parameters,
-                  force,
-                  timeout,
-                  include_logs,
-                  json):
-    """Execute a workflow on a given deployment
-    """
-    start(workflow_id,
-          deployment_id,
-          parameters,
-          allow_custom_parameters,
-          force,
-          timeout,
-          include_logs,
-          json)
-
-
 def start(workflow_id,
           deployment_id,
           parameters,
@@ -155,6 +132,8 @@ def start(workflow_id,
           timeout,
           include_logs,
           json):
+    """Execute a workflow on a given deployment
+    """
     logger = get_logger()
     parameters = utils.inputs_to_dict(parameters, 'parameters')
     management_ip = utils.get_management_server_ip()

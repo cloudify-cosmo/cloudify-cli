@@ -22,27 +22,17 @@ from distutils import spawn
 import click
 
 from .. import utils
-from ..config import helptexts
+from ..config import options
 from ..logger import get_logger
 from ..ssh import run_command_on_manager
 from ..exceptions import CloudifyCliError
 
 
 @click.command(name='ssh')
-@click.option('-c',
-              '--command',
-              type=basestring,
-              help=helptexts.SSH_COMMAND)
-@click.option('--host',
-              is_flag=True,
-              help=helptexts.SSH_HOST_SESSION)
-@click.option('--sid',
-              type=basestring,
-              help=helptexts.SSH_CONNECT_TO_SESSION)
-@click.option('-l',
-              '--list-sessions',
-              is_flag=True,
-              help=helptexts.SSH_LIST_SESSIONS)
+@options.ssh_command
+@options.host_session
+@options.session_id
+@options.list_sessions
 def ssh(command, host, sid, list_sessions):
     """Connects to a running manager via SSH.
 

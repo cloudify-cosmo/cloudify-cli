@@ -20,7 +20,6 @@ import click
 from .. import utils
 from .. import exceptions
 from ..config import options
-from ..config import helptexts
 from ..logger import NO_VERBOSE
 from ..logger import get_logger
 from ..logger import get_global_verbosity
@@ -86,9 +85,7 @@ def _print_maintenance_mode_status(client):
 
 
 @maintenance_mode.command(name='activate')
-@click.option('--wait',
-              is_flag=True,
-              help=helptexts.MAINTENANCE_MODE_WAIT)
+@options.wait
 @options.timeout(default=0)
 def activate(wait, timeout):
     logger = get_logger()

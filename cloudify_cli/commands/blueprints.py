@@ -22,7 +22,6 @@ import click
 from .. import utils
 from ..config import options
 from .validate import validate
-from ..config import helptexts
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
@@ -47,29 +46,15 @@ def validate_blueprint(blueprint_path):
 
 @blueprints.command(name='upload')
 @click.argument('blueprint-path', required=True)
-@click.option('-b',
-              '--blueprint-id',
-              help=helptexts.BLUEPRINT_ID)
+@options.blueprint_id()
 @options.blueprint_filename()
-@click.option('--validate',
-              is_flag=True,
-              help=helptexts.VALIDATE_BLUEPRINT)
-def upload_blueprint(blueprint_path,
-                     blueprint_id,
-                     blueprint_filename,
-                     validate):
-    """Upload a blueprint to the manager
-    """
-    upload(blueprint_path,
-           blueprint_id,
-           blueprint_filename,
-           validate)
-
-
+@options.validate
 def upload(blueprint_path,
            blueprint_id,
            blueprint_filename,
            validate):
+    """Upload a blueprint to the manager
+    """
     # TODO: to fix the ambiguity of whether this is an archive
     # or not, we can allow the user to pass an `archive_format`
     # parameter which states that the user (explicitly) wanted
@@ -85,7 +70,8 @@ def upload(blueprint_path,
     else:
         if validate:
             raise CloudifyCliError(
-                'Validate is only relevant when uploading from a file.')
+                'The `--validate` flag is only relevant when uploading '
+                'from a file.')
         _publish_archive(
             blueprint_path,
             blueprint_filename,

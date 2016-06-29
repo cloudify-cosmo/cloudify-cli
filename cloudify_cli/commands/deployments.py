@@ -82,19 +82,12 @@ def ls(blueprint_id):
 
 @deployments.command(name='update')
 @click.argument('deployment-id', required=True)
-@click.option('-p',
-              '--blueprint-path',
-              required=True,
-              type=click.Path(exists=True))
+@options.blueprint_path(required=True)
 @options.inputs
 @options.blueprint_filename()
 @options.workflow_id('update')
-@click.option('--skip-install',
-              is_flag=True,
-              help=helptexts.SKIP_INSTALL)
-@click.option('--skip-uninstall',
-              is_flag=True,
-              help=helptexts.SKIP_UNINSTALL)
+@options.skip_install
+@options.skip_uninstall
 @options.force(help=helptexts.FORCE_UPDATE)
 @options.include_logs
 @options.json
@@ -165,19 +158,11 @@ def update(deployment_id,
 @click.argument('blueprint-id', required=True)
 @options.deployment_id()
 @options.inputs
-def create_command(blueprint_id,
-                   deployment_id,
-                   inputs):
-    """Create a deployment on the manager
-    """
-    create(blueprint_id,
-           deployment_id,
-           inputs)
-
-
 def create(blueprint_id,
            deployment_id,
            inputs):
+    """Create a deployment on the manager
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     inputs = utils.inputs_to_dict(inputs, 'inputs')

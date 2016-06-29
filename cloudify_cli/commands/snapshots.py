@@ -50,12 +50,8 @@ def restore(snapshot_id, without_deployments_envs, force):
 
 @snapshots.command(name='create')
 @click.argument('snapshot-id')
-@click.option('--include-metrics',
-              is_flag=True,
-              help=helptexts.INCLUDE_METRICS_IN_SNAPSHOT)
-@click.option('--exclude-credentials',
-              is_flag=True,
-              help=helptexts.EXCLUDE_CREDENTIALS_IN_SNAPSHOT)
+@options.include_metrics
+@options.exclude_credentials
 def create(snapshot_id, include_metrics, exclude_credentials):
     """Create a snapshot on the manager
 

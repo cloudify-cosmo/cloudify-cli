@@ -157,15 +157,17 @@ def get_events_logger(json_output):
     return json_events_logger if json_output else text_events_logger
 
 
-def set_global_verbosity_level(verbose):
+def set_global_verbosity_level(verbose, debug):
     """
     Sets the global verbosity level.
 
     :param bool verbose: verbose output or not.
     """
     global verbosity_level
-    verbosity_level = verbose
-    logs.EVENT_VERBOSITY_LEVEL = verbose
+    verbosity_level = HIGH_VERBOSE if debug else verbose
+    logs.EVENT_VERBOSITY_LEVEL = verbosity_level
+    if verbosity_level >= HIGH_VERBOSE:
+        set_debug()
 
 
 def set_debug():

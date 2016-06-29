@@ -106,3 +106,10 @@ IGNORE_DEPLOYMENTS = \
     "Teardown even if there are existing deployments on the manager"
 
 TAIL_OUTPUT = "Tail the events of the specified execution until it ends"
+
+
+SET_MANAGEMENT_CREDS = (
+    'You can use the `-u` and `-k` flags to set the user and '
+    'key-file path respectively. '
+    '(e.g. `cfy use -u my_user -k ~/my/key/path`)'
+)

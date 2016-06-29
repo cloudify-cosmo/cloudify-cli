@@ -18,12 +18,11 @@ import shutil
 
 import click
 
-from . import local
 from .. import utils
 from .. import common
 from .. import constants
 from .. import exceptions
-from ..config import helptexts
+from ..config import options
 from ..logger import get_logger
 from ..logger import configure_loggers
 
@@ -33,57 +32,20 @@ _STORAGE_DIR_NAME = 'local-storage'
 
 
 @click.command(name='init', context_settings=utils.CLICK_CONTEXT_SETTINGS)
-@click.argument('blueprint-path')
-# TODO: Change name. This is not true. It only resets the context
-@click.option('-r',
-              '--reset-config',
-              cls=utils.MutuallyExclusiveOption,
-              mutually_exclusive=['inputs', 'install_plugins'],
-              mutuality_error_message='MUasdasdads',
-              is_flag=True,
-              help=helptexts.RESET_CONFIG)
-@click.option('--skip-logging',
-              cls=utils.MutuallyExclusiveOption,
-              mutually_exclusive=['blueprint_path',
-                                  'inputs',
-                                  'install_plugins'],
-              is_flag=True,
-              help=helptexts.SKIP_LOGGING)
-@click.option('-i',
-              '--inputs',
-              cls=utils.MutuallyExclusiveOption,
-              mutually_exclusive=['reset_config', 'skip_logging'],
-              multiple=True,
-              help=helptexts.INPUTS)
-@click.option('--install-plugins',
-              cls=utils.MutuallyExclusiveOption,
-              mutually_exclusive=['reset_config', 'skip_logging'],
-              is_flag=True,
-              help=helptexts.INSTALL_PLUGINS)
-@click.option('--hard',
-              is_flag=True)
-def init_env(blueprint_path,
-             reset_config,
-             skip_logging,
-             inputs,
-             install_plugins,
-             hard):
-    """Initialize a working environment in the current working directory
-    """
-    init(blueprint_path,
-         reset_config,
-         skip_logging,
-         inputs,
-         install_plugins,
-         hard)
-
-
+@click.argument('blueprint-path', required=False)
+@options.reset_config
+@options.skip_logging
+@options.inputs
+@options.install_plugins
+@options.init_hard_reset
 def init(blueprint_path=None,
          reset_config=False,
          skip_logging=False,
          inputs=None,
          install_plugins=False,
          hard=False):
+    """Initialize a working environment in the current working directory
+    """
     def _init():
         logger = get_logger()
 
@@ -117,8 +79,8 @@ def init(blueprint_path=None,
             logger.info('Initialization completed successfully')
 
     if blueprint_path:
-        if os.path.isdir(local._storage_dir()):
-            shutil.rmtree(local._storage_dir())
+        if os.path.isdir(common.storage_dir()):
+            shutil.rmtree(common.storage_dir())
 
         if not utils.is_initialized():
             _init(reset_config=False, skip_logging=True)
@@ -127,7 +89,7 @@ def init(blueprint_path=None,
                 blueprint_path=blueprint_path,
                 name=_NAME,
                 inputs=inputs,
-                storage=local._storage(),
+                storage=common.storage(),
                 install_plugins=install_plugins,
                 resolver=utils.get_import_resolver()
             )
@@ -135,9 +97,9 @@ def init(blueprint_path=None,
 
             # import error indicates
             # some plugin modules are missing
-            # TODO - consider adding an error code to
-            # TODO - all of our exceptions. so that we
-            # TODO - easily identify them here
+            # TODO: consider adding an error code to
+            # all of our exceptions. so that we
+            # easily identify them here
             e.possible_solutions = [
                 "Run `cfy init {0} --install-plugins`".format(blueprint_path),
                 "Run `cfy local install-plugins -p {0}`".format(blueprint_path)

@@ -28,8 +28,8 @@ from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 from . import utils
 from . import logger
 from . import commands
+from .config import options
 from .logger import get_logger
-from .logger import configure_loggers
 from .exceptions import CloudifyBootstrapError
 from .exceptions import SuppressedCloudifyCliError
 
@@ -104,10 +104,11 @@ def register_commands():
     is_manager_active = utils.is_manager_active()
 
     cfy.add_command(commands.use)
+    cfy.add_command(commands.init)
     cfy.add_command(commands.recover)
-    cfy.add_command(commands.init_env)
     cfy.add_command(commands.bootstrap)
     cfy.add_command(commands.validate_blueprint)
+    cfy.add_command(commands.create_requirements)
 
     # TODO: Instead of manually stating each module,
     # we might want to try importing all modules in the `commands`
@@ -134,27 +135,20 @@ def register_commands():
         cfy.add_command(commands.install.manager)
         cfy.add_command(commands.maintenance_mode)
         cfy.add_command(commands.uninstall.manager)
-        cfy.add_command(commands.node_instances.node_instances)
+        cfy.add_command(commands.node_instances.manager)
     else:
-        cfy.add_command(commands.local_group)
+        cfy.add_command(commands.execute)
+        cfy.add_command(commands.outputs)
         cfy.add_command(commands.install.local)
         cfy.add_command(commands.uninstall.local)
+        cfy.add_command(commands.install_plugins)
         cfy.add_command(commands.node_instances.local)
 
 
 @click.group(context_settings=utils.CLICK_CONTEXT_SETTINGS)
-@click.option('-v',
-              '--verbose',
-              count=True,
-              is_eager=True)
-@click.option('--debug',
-              default=False,
-              is_flag=True)
-@click.option('--version',
-              is_flag=True,
-              callback=commands.version,
-              expose_value=False,
-              is_eager=True)
+@options.verbose
+@options.debug
+@options.version
 def cfy(verbose, debug):
     """Cloudify's Command Line Interface
 
@@ -168,15 +162,8 @@ def cfy(verbose, debug):
     # `cfy use MANAGER_IP` and try this command again."
     # TODO: fix verbosity placement. Currently you can only declare the
     # verbosity level after `cfy` (i.e. `cfy -v`) and not after.
-    configure_loggers()
-
-    if debug:
-        global_verbosity_level = logger.HIGH_VERBOSE
-    else:
-        global_verbosity_level = verbose
-    logger.set_global_verbosity_level(global_verbosity_level)
-    if global_verbosity_level >= logger.HIGH_VERBOSE:
-        logger.set_debug()
+    logger.configure_loggers()
+    logger.set_global_verbosity_level(verbose, debug)
     # _set_cli_except_hook(global_verbosity_level)
 
 

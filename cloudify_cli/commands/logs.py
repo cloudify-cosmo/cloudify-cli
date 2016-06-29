@@ -71,9 +71,7 @@ def download(output_path):
 
 @logs.command(name='purge')
 @options.force(help=helptexts.FORCE_PURGE_LOGS)
-@click.option('--backup-first',
-              is_flag=True,
-              help=helptexts.BACKUP_LOGS_FIRST)
+@options.backup_first
 def purge(force, backup_first):
     """Truncate all logs files under /var/log/cloudify.
 

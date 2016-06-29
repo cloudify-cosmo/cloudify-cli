@@ -23,64 +23,21 @@ from cloudify_rest_client.exceptions import (
 from . import init
 from .. import utils
 from .. import constants
+from ..config import options
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 from ..exceptions import CloudifyCliError
-from ..constants import DEFAULT_REST_PORT
-
-
-def show_active_manager(ctx, param, value):
-    if not value or ctx.resilient_parsing:
-        return
-
-    logger = get_logger()
-
-    print_solution = False
-    current_management_ip = utils.get_management_server_ip()
-    try:
-        current_management_user = utils.get_management_user()
-    except CloudifyCliError as ex:
-        print_solution = True
-        current_management_user = str(ex)
-    try:
-        current_management_key = utils.get_management_key()
-    except CloudifyCliError as ex:
-        print_solution = True
-        current_management_key = str(ex)
-    logger.info('Management IP: {0}'.format(current_management_ip))
-    logger.info('Management User: {0}'.format(current_management_user))
-    logger.info('Management Key: {0}'.format(current_management_key))
-    if print_solution:
-        logger.info(
-            'You can run the `-u` and `-k` flags to set the user and '
-            'key-file path respectively. '
-            '(e.g. `cfy use -u my_user -k ~/my/key/path`)'
-        )
-    ctx.exit()
 
 
 @click.command(name='use', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('management-ip', required=False)
-@click.option('-u',
-              '--management-user',
-              required=False,
-              help="The username on the host "
-              "machine with which you bootstrapped")
-@click.option('-k',
-              '--management-key',
-              required=False,
-              help="The path to the ssh key-file you used to bootstrap")
-@click.option('--rest-port',
-              required=False,
-              default=DEFAULT_REST_PORT,
-              help="The REST server's port")
-@click.option('--show-active',
-              is_flag=True,
-              is_eager=True,
-              expose_value=False,
-              callback=show_active_manager,
-              help="Show connection information for the active manager")
-def use(management_ip,
+@options.management_user
+@options.management_key
+@options.rest_port
+@options.show_active
+@click.pass_context
+def use(ctx,
+        management_ip,
         management_user,
         management_key,
         rest_port):
@@ -90,15 +47,15 @@ def use(management_ip,
     To stop using a manager, you can run `cfy init -r`.
     """
     logger = get_logger()
-
-    if not management_ip or management_user or management_key:
+    if not (management_ip or management_user or management_key):
+        # TODO: add this message to I know where
         raise CloudifyCliError(
             'You must specify either `MANAGEMENT_IP` or the '
             '`--management-user` or `--management-key` flags')
 
     # TODO: remove this and allow multiple profile names instead.
     if management_ip == 'local':
-        init.init(reset_config=True)
+        ctx.invoke(init.init, reset_config=True)
         return
 
     logger.info('Attemping to connect...'.format(management_ip))

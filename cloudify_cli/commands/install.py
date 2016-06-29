@@ -19,12 +19,11 @@ import click
 
 from . import init
 from .. import utils
+from . import execute
 from . import blueprints
 from . import executions
 from . import deployments
-from . import local as lcl
 from ..config import options
-from ..config import helptexts
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..constants import DEFAULT_INSTALL_WORKFLOW
 from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
@@ -32,15 +31,9 @@ from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
 @click.command(name='install', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path')
-@click.option('-b',
-              '--blueprint-id',
-              help=helptexts.BLUEPRINT_ID)
-@click.option('-n',
-              '--blueprint-filename',
-              help=helptexts.BLUEPRINT_FILENAME)
-@click.option('--validate',
-              is_flag=True,
-              help=helptexts.VALIDATE_BLUEPRINT)
+@options.blueprint_id()
+@options.blueprint_filename()
+@options.validate
 @options.deployment_id()
 @options.inputs
 @options.workflow_id('install')
@@ -49,6 +42,7 @@ from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 @options.timeout()
 @options.include_logs
 @options.json
+@click.pass_context
 def manager(blueprint_path,
             blueprint_id,
             blueprint_filename,
@@ -126,6 +120,7 @@ def manager(blueprint_path,
     #             raise CloudifyCliError(
     #                 'A problem was encountered while trying to open '
     #                 '{0}.\n({1})'.format(blueprint_path, e))
+
     blueprint_id = blueprint_id or utils._generate_suffixed_id(
         blueprints.get_archive_id(blueprint_path))
     deployment_id = deployment_id or utils._generate_suffixed_id(blueprint_id)
@@ -139,16 +134,19 @@ def manager(blueprint_path,
     # defined below.
     force = False
 
-    blueprints.upload(
+    ctx.invoke(
+        blueprints.upload,
         blueprint_path=blueprint_path,
         blueprint_id=blueprint_id,
         blueprint_filename=blueprint_filename,
         validate=validate)
-    deployments.create(
+    ctx.invoke(
+        deployments.create,
         blueprint_id=blueprint_id,
         deployment_id=deployment_id,
         inputs=inputs)
-    executions.start(
+    ctx.invoke(
+        executions.start,
         workflow_id=workflow_id,
         deployment_id=deployment_id,
         timeout=timeout,
@@ -169,7 +167,9 @@ def manager(blueprint_path,
 @options.task_retries()
 @options.task_retry_interval()
 @options.task_thread_pool_size()
-def local(blueprint_path,
+@click.pass_context
+def local(ctx,
+          blueprint_path,
           inputs,
           install_plugins,
           workflow_id,
@@ -186,11 +186,13 @@ def local(blueprint_path,
             utils.get_cwd(), DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)):
         inputs = DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
-    init.init(
+    ctx.invoke(
+        init.init,
         blueprint_path=blueprint_path,
         inputs=inputs,
         install_plugins=install_plugins)
-    lcl.execute(
+    ctx.invoke(
+        execute.execute,
         workflow_id=workflow_id,
         parameters=parameters,
         allow_custom_parameters=allow_custom_parameters,

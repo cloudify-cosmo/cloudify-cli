@@ -17,8 +17,8 @@ from StringIO import StringIO
 
 import click
 
-from ..utils import get_manager_version_data
 from ..utils import get_version_data
+from ..utils import get_manager_version_data
 
 
 def _format_version_data(version_data,

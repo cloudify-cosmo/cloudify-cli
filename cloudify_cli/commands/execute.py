@@ -1,0 +1,51 @@
+########
+# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# * See the License for the specific language governing permissions and
+#    * limitations under the License.
+
+import json
+
+import click
+
+from .. import utils
+from .. import common
+from ..config import options
+from ..logger import get_logger
+
+
+@click.command(name='execute')
+@click.argument('workflow-id', required=True)
+@options.parameters
+@options.allow_custom_parameters
+@options.task_retries()
+@options.task_retry_interval()
+@options.task_thread_pool_size()
+def execute(workflow_id,
+            parameters,
+            allow_custom_parameters,
+            task_retries,
+            task_retry_interval,
+            task_thread_pool_size):
+    """Execute a workflow
+    """
+    logger = get_logger()
+    parameters = utils.inputs_to_dict(parameters, 'parameters')
+    env = common.load_env()
+    result = env.execute(workflow=workflow_id,
+                         parameters=parameters,
+                         allow_custom_parameters=allow_custom_parameters,
+                         task_retries=task_retries,
+                         task_retry_interval=task_retry_interval,
+                         task_thread_pool_size=task_thread_pool_size)
+    if result is not None:
+        logger.info(json.dumps(result, sort_keys=True, indent=2))

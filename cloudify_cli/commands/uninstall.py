@@ -16,10 +16,10 @@
 import click
 
 from .. import utils
+from . import execute
 from . import blueprints
 from . import executions
 from . import deployments
-from . import local as lcl
 from ..config import options
 from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 
@@ -32,7 +32,9 @@ from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 @options.timeout()
 @options.include_logs
 @options.json
-def manager(deployment_id,
+@click.pass_context
+def manager(ctx,
+            deployment_id,
             workflow_id,
             parameters,
             allow_custom_parameters,
@@ -53,14 +55,16 @@ def manager(deployment_id,
     # if no workflow was supplied, execute the `uninstall` workflow
     workflow_id = workflow_id or DEFAULT_UNINSTALL_WORKFLOW
 
-    executions.start(workflow_id=workflow_id,
-                     deployment_id=deployment_id,
-                     timeout=timeout,
-                     force=force,
-                     allow_custom_parameters=allow_custom_parameters,
-                     include_logs=include_logs,
-                     parameters=parameters,
-                     json=json)
+    ctx.invoke(
+        executions.start,
+        workflow_id=workflow_id,
+        deployment_id=deployment_id,
+        timeout=timeout,
+        force=force,
+        allow_custom_parameters=allow_custom_parameters,
+        include_logs=include_logs,
+        parameters=parameters,
+        json=json)
 
     # before deleting the deployment, save its blueprint_id, so we will be able
     # to delete the blueprint after deleting the deployment
@@ -68,10 +72,13 @@ def manager(deployment_id,
     deployment = client.deployments.get(
         deployment_id, _include=['blueprint_id'])
     blueprint_id = deployment.blueprint_id
-
-    deployments.delete(deployment_id, ignore_live_nodes=False)
-
-    blueprints.delete(blueprint_id)
+    ctx.invoke(
+        deployments.delete,
+        deployment_id=deployment_id,
+        ignore_live_nodes=False)
+    ctx.invoke(
+        blueprints.delete,
+        blueprint_id=blueprint_id)
 
 
 @click.command(name='uninstall', context_settings=utils.CLICK_CONTEXT_SETTINGS)
@@ -81,7 +88,9 @@ def manager(deployment_id,
 @options.task_retries()
 @options.task_retry_interval()
 @options.task_thread_pool_size()
-def local(workflow_id,
+@click.pass_context
+def local(ctx,
+          workflow_id,
           parameters,
           allow_custom_parameters,
           task_retries,
@@ -92,16 +101,18 @@ def local(workflow_id,
     # if no workflow was supplied, execute the `uninstall` workflow
     workflow_id = workflow_id or DEFAULT_UNINSTALL_WORKFLOW
 
-    lcl.execute(workflow_id=workflow_id,
-                parameters=parameters,
-                allow_custom_parameters=allow_custom_parameters,
-                task_retries=task_retries,
-                task_retry_interval=task_retry_interval,
-                task_thread_pool_size=task_thread_pool_size)
+    ctx.invoke(
+        execute.execute,
+        workflow_id=workflow_id,
+        parameters=parameters,
+        allow_custom_parameters=allow_custom_parameters,
+        task_retries=task_retries,
+        task_retry_interval=task_retry_interval,
+        task_thread_pool_size=task_thread_pool_size)
 
     # Remove the local-storage dir
-    utils.remove_if_exists(lcl._storage_dir())
+    utils.remove_if_exists(common.storage_dir())
 
-    # Note that although `local install` possibly creates a `.cloudify` dir in
-    # addition to the creation of the local storage dir, `local uninstall`
+    # Note that although `install` possibly creates a `.cloudify` dir in
+    # addition to the creation of the local storage dir, `uninstall`
     # does not remove the .cloudify dir.
