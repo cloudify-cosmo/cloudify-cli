@@ -152,7 +152,7 @@ def _cfy(verbose, debug):
 
     Note that some commands are only available if you're using a manager.
     You can use a manager by running the `cfy use` command and providing
-    it with the IP of your manager.
+    it with the IP of your manager (and ssh credentials if applicable).
     """
     # TODO: when calling a command which only exists in the context
     # of a manager but no manager is currently `use`d, print out a message
@@ -162,7 +162,7 @@ def _cfy(verbose, debug):
     # verbosity level after `cfy` (i.e. `cfy -v`) and not after.
     logger.configure_loggers()
     logger.set_global_verbosity_level(verbose, debug)
-    # _set_cli_except_hook(global_verbosity_level)
+    # _set_cli_except_hook(verbose)
 
 
 register_commands()

@@ -40,7 +40,10 @@ def rollback(blueprint_path,
              task_retries,
              task_retry_interval,
              task_thread_pool_size):
+    """Rollback a manager to its previous version
 
+    Note that you can only rollback to the last version you upgraded from.
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
 

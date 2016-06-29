@@ -55,7 +55,13 @@ def upgrade(blueprint_path,
             task_retries,
             task_retry_interval,
             task_thread_pool_size):
+    """Upgrade a manager to a newer version
 
+    Note that you must supply a simple-manager-blueprint to perform
+    the upgrade and provide it with the relevant inputs.
+
+    See http://docs.getcloudify.org/ for more information.
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
 
