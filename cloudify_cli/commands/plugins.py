@@ -145,3 +145,12 @@ def ls():
 
     pt = utils.table(fields, data=plugins)
     print_table('Plugins:', pt)
+
+
+# @plugins.command('install')
+# @click.argument('wagon_path')
+# @click.argument('wagon_args', nargs=-1, type=click.UNPROCESSED)
+# def install(wagon_path):
+#     from wagon import wagon
+#     installer = wagon.Wagon(wagon_path)
+#     installer.install(dict(wagon_args))

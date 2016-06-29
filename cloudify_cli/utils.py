@@ -716,4 +716,5 @@ def _generate_suffixed_id(id):
 
 CLICK_CONTEXT_SETTINGS = dict(
     help_option_names=['-h', '--help'],
-    token_normalize_func=lambda param: param.lower())
+    token_normalize_func=lambda param: param.lower(),
+    ignore_unknown_options=True)

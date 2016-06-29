@@ -18,6 +18,7 @@ import json
 import urlparse
 
 import click
+from click_didyoumean import DYMGroup
 
 from .. import utils
 from ..config import options
@@ -29,7 +30,7 @@ SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
 DESCRIPTION_LIMIT = 20
 
 
-@click.group(context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@click.group(context_settings=utils.CLICK_CONTEXT_SETTINGS, cls=DYMGroup)
 def blueprints():
     """Handle blueprints on the manager
     """

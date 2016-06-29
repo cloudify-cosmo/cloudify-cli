@@ -19,6 +19,7 @@ import StringIO
 import traceback
 
 import click
+from click_didyoumean import DYMGroup
 
 from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
@@ -145,7 +146,7 @@ def register_commands():
         cfy.add_command(commands.node_instances.local)
 
 
-@click.group(context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@click.group(context_settings=utils.CLICK_CONTEXT_SETTINGS, cls=DYMGroup)
 @options.verbose
 @options.debug
 @options.version
