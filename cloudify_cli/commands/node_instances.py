@@ -63,7 +63,7 @@ def ls(deployment_id, node_name=None):
         instances = client.node_instances.list(deployment_id=deployment_id,
                                                node_name=node_name)
     except CloudifyClientError as e:
-        if not e.status_code != 404:
+        if e.status_code != 404:
             raise
         raise CloudifyCliError('Deployment {0} does not exist'.format(
             deployment_id))
