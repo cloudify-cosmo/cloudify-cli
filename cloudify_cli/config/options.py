@@ -1,6 +1,5 @@
 import click
 
-# TODO: should all decorators be functions?
 from StringIO import StringIO
 
 from .. import utils
@@ -114,6 +113,7 @@ parameters = click.option(
 output_path = click.option(
     '-o',
     '--output-path',
+    default=utils.get_cwd(),
     help=helptexts.OUTPUT_PATH)
 
 allow_custom_parameters = click.option(
@@ -198,6 +198,7 @@ reset_config = click.option(
     '--reset-config',
     # TODO: Change name. This is not true. It only resets the context
     is_flag=True,
+    required=True,
     help=helptexts.RESET_CONFIG)
 skip_logging = click.option(
     '--skip-logging',
@@ -228,7 +229,6 @@ exclude_credentials = click.option(
 ssh_command = click.option(
     '-c',
     '--command',
-    type=basestring,
     help=helptexts.SSH_COMMAND)
 host_session = click.option(
     '--host',
@@ -236,7 +236,6 @@ host_session = click.option(
     help=helptexts.SSH_HOST_SESSION)
 session_id = click.option(
     '--sid',
-    type=basestring,
     help=helptexts.SSH_CONNECT_TO_SESSION)
 list_sessions = click.option(
     '-l',
@@ -250,11 +249,10 @@ ignore_deployments = click.option(
     help=helptexts.IGNORE_DEPLOYMENTS)
 
 
-def force(help, required=False):
+def force(help):
     return click.option(
         '-f',
         '--force',
-        required=required,
         is_flag=True,
         help=help)
 
@@ -319,6 +317,7 @@ def blueprint_id(required=False):
     return click.option(
         '-b',
         '--blueprint-id',
+        required=required,
         help=helptexts.BLUEPRINT_ID)
 
 

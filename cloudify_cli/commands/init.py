@@ -38,12 +38,12 @@ _STORAGE_DIR_NAME = 'local-storage'
 @options.inputs
 @options.install_plugins
 @options.init_hard_reset
-def init(blueprint_path=None,
-         reset_config=False,
-         skip_logging=False,
-         inputs=None,
-         install_plugins=False,
-         hard=False):
+def init(blueprint_path,
+         reset_config,
+         skip_logging,
+         inputs,
+         install_plugins,
+         hard):
     """Initialize a working environment in the current working directory
     """
     def _init():

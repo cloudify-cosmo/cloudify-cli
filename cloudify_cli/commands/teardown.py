@@ -27,7 +27,7 @@ from ..bootstrap import bootstrap as bs
 
 
 @click.command(name='teardown', context_settings=utils.CLICK_CONTEXT_SETTINGS)
-@options.force(help=helptexts.FORCE_TEARDOWN, required=True)
+@options.force(help=helptexts.FORCE_TEARDOWN)
 @options.ignore_deployments
 @options.task_retries()
 @options.task_retry_interval()

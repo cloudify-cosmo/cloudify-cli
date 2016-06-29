@@ -30,7 +30,7 @@ CLOUDIFY_MANAGER_PK_PATH_ENVAR = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
 
 @click.command(name='recover', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('snapshot-path', required=True)
-@options.force(help=helptexts.FORCE_RECOVER, required=True)
+@options.force(help=helptexts.FORCE_RECOVER)
 @options.task_retries()
 @options.task_retry_interval()
 @options.task_thread_pool_size()
@@ -42,6 +42,12 @@ def recover(snapshot_path,
     """Recover a manager to a previous state
     """
     logger = get_logger()
+    if not force:
+        msg = ("This action requires additional "
+               "confirmation. Add the '-f' or '--force' "
+               "flags to your command if you are certain "
+               "this command should be executed.")
+        raise exceptions.CloudifyCliError(msg)
 
     if CLOUDIFY_MANAGER_PK_PATH_ENVAR in os.environ:
         # user defined the key file path inside an env variable.

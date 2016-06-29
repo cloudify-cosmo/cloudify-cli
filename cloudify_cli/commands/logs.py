@@ -22,6 +22,7 @@ from .. import utils
 from ..config import options
 from ..config import helptexts
 from ..logger import get_logger
+from ..exceptions import CloudifyCliError
 
 
 @click.group(name='logs', context_settings=utils.CLICK_CONTEXT_SETTINGS)
@@ -81,6 +82,9 @@ def purge(force, backup_first):
 
     The `-f, --force` flag is mandatory as a safety measure.
     """
+    if not force:
+        raise CloudifyCliError(
+            'You must supply the `-f, --force` flag to perform the purge')
     logger = get_logger()
     if backup_first:
         backup()
