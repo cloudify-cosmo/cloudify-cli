@@ -35,7 +35,7 @@ _STATUS_CANCELING_MESSAGE = (
     'may take a while to change into "cancelled"')
 
 
-@click.group(name='executions', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group.name='executions', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def executions():
     """Handle workflow executions
     """
@@ -117,13 +117,13 @@ def ls(deployment_id, include_system_workflows):
 
 @executions.command(name='start')
 @click.argument('workflow-id', required=True)
-@options.deployment_id(required=True)
-@options.parameters
-@options.allow_custom_parameters
-@options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
-@options.timeout()
-@options.include_logs
-@options.json
+@cfy.options.deployment_id(required=True)
+@cfy.options.parameters
+@cfy.options.allow_custom_parameters
+@cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
+@cfy.options.timeout()
+@cfy.options.include_logs
+@cfy.options.json
 def start(workflow_id,
           deployment_id,
           parameters,
@@ -228,7 +228,7 @@ def start(workflow_id,
 
 @executions.command(name='cancel')
 @click.argument('execution-id', required=True)
-@options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
+@cfy.options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
 def cancel(execution_id, force):
     """Cancel a workflow's execution
     """

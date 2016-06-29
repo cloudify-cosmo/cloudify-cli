@@ -23,7 +23,7 @@ from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
-@click.group(name='nodes', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group.name='nodes', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def nodes():
     """Handle a deployment's nodes
     """
@@ -32,7 +32,7 @@ def nodes():
 
 @nodes.command(name='get')
 @click.argument('node-id', required=True)
-@options.deployment_id(required=True)
+@cfy.options.deployment_id(required=True)
 def get(node_id, deployment_id):
     """Retrieve information for a specific node of a specific deployment
     """
@@ -81,7 +81,7 @@ def get(node_id, deployment_id):
 
 
 @nodes.command(name='ls')
-@options.deployment_id(required=False)
+@cfy.options.deployment_id(required=False)
 def ls(deployment_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()

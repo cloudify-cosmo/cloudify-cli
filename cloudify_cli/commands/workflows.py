@@ -23,7 +23,7 @@ from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
-@click.group(name='workflows', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group.name='workflows', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def workflows():
     """Handle deployment workflows
     """
@@ -32,7 +32,7 @@ def workflows():
 
 @workflows.command(name='get')
 @click.argument('workflow-id', required=True)
-@options.deployment_id(required=True)
+@cfy.options.deployment_id(required=True)
 def get(workflow_id, deployment_id):
     """Retrieve information for a specific workflow of a specific deplouyment
     """

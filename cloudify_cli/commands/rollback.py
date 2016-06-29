@@ -29,11 +29,11 @@ from .upgrade import verify_and_wait_for_maintenance_mode_activation
 
 @click.command(name='rollback', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path', required=True)
-@options.inputs
-@options.install_plugins
-@options.task_retries()
-@options.task_retry_interval()
-@options.task_thread_pool_size()
+@cfy.options.inputs
+@cfy.options.install_plugins
+@cfy.options.task_retries()
+@cfy.options.task_retry_interval()
+@cfy.options.task_thread_pool_size()
 def rollback(blueprint_path,
              inputs,
              install_plugins,

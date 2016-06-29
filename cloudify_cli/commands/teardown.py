@@ -27,11 +27,11 @@ from ..bootstrap import bootstrap as bs
 
 
 @click.command(name='teardown', context_settings=utils.CLICK_CONTEXT_SETTINGS)
-@options.force(help=helptexts.FORCE_TEARDOWN)
-@options.ignore_deployments
-@options.task_retries()
-@options.task_retry_interval()
-@options.task_thread_pool_size()
+@cfy.options.force(help=helptexts.FORCE_TEARDOWN)
+@cfy.options.ignore_deployments
+@cfy.options.task_retries()
+@cfy.options.task_retry_interval()
+@cfy.options.task_thread_pool_size()
 def teardown(force,
              ignore_deployments,
              task_retries,

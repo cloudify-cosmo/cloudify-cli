@@ -30,7 +30,7 @@ SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
 DESCRIPTION_LIMIT = 20
 
 
-@click.group(context_settings=utils.CLICK_CONTEXT_SETTINGS, cls=DYMGroup)
+@cfy.group.context_settings=utils.CLICK_CONTEXT_SETTINGS, cls=DYMGroup)
 def blueprints():
     """Handle blueprints on the manager
     """
@@ -47,9 +47,9 @@ def validate_blueprint(blueprint_path):
 
 @blueprints.command(name='upload')
 @click.argument('blueprint-path', required=True)
-@options.blueprint_id()
-@options.blueprint_filename()
-@options.validate
+@cfy.options.blueprint_id()
+@cfy.options.blueprint_filename()
+@cfy.options.validate
 def upload(blueprint_path,
            blueprint_id,
            blueprint_filename,
@@ -144,7 +144,7 @@ def determine_archive_type(archive_location):
 
 @blueprints.command(name='download')
 @click.argument('blueprint-id', required=True)
-@options.output_path
+@cfy.options.output_path
 def download(blueprint_id, output_path):
     """Download a blueprint from the manager
     """

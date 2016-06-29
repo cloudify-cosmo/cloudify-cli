@@ -23,18 +23,18 @@ from cloudify_rest_client.exceptions import (
 from . import init
 from .. import utils
 from .. import constants
-from ..config import options
+from ..config import cfy
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 from ..exceptions import CloudifyCliError
 
 
-@click.command(name='use', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.command(name='use')
 @click.argument('management-ip', required=False)
-@options.management_user
-@options.management_key
-@options.rest_port
-@options.show_active
+@cfy.options.management_user
+@cfy.options.management_key
+@cfy.options.rest_port
+@cfy.options.show_active
 @click.pass_context
 def use(ctx,
         management_ip,

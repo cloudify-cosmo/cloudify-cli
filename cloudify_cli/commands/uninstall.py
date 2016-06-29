@@ -27,12 +27,12 @@ from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 
 @click.command(name='uninstall', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('deployment-id')
-@options.workflow_id('uninstall')
-@options.parameters
-@options.allow_custom_parameters
-@options.timeout()
-@options.include_logs
-@options.json
+@cfy.options.workflow_id('uninstall')
+@cfy.options.parameters
+@cfy.options.allow_custom_parameters
+@cfy.options.timeout()
+@cfy.options.include_logs
+@cfy.options.json
 @click.pass_context
 def manager(ctx,
             deployment_id,
@@ -83,12 +83,12 @@ def manager(ctx,
 
 
 @click.command(name='uninstall', context_settings=utils.CLICK_CONTEXT_SETTINGS)
-@options.workflow_id('uninstall')
-@options.parameters
-@options.allow_custom_parameters
-@options.task_retries()
-@options.task_retry_interval()
-@options.task_thread_pool_size()
+@cfy.options.workflow_id('uninstall')
+@cfy.options.parameters
+@cfy.options.allow_custom_parameters
+@cfy.options.task_retries()
+@cfy.options.task_retry_interval()
+@cfy.options.task_thread_pool_size()
 @click.pass_context
 def local(ctx,
           workflow_id,

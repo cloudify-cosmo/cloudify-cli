@@ -26,7 +26,7 @@ from ..logger import get_logger
 
 @click.command(name='create-requirements')
 @click.argument('blueprint-path', required=True, type=click.Path(exists=True))
-@options.output_path
+@cfy.options.output_path
 def create_requirements(blueprint_path, output_path):
     """Create a pip-compliant requirements file for a given blueprint
     """

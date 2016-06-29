@@ -25,7 +25,7 @@ from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
-@click.group(name='logs', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group.name='logs', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def logs():
     """Handle manager service logs
     """
@@ -57,7 +57,7 @@ def _archive_logs():
 
 
 @logs.command(name='download')
-@options.output_path
+@cfy.options.output_path
 def download(output_path):
     """Download an archive containing all of the manager's service logs
     """
@@ -71,8 +71,8 @@ def download(output_path):
 
 
 @logs.command(name='purge')
-@options.force(help=helptexts.FORCE_PURGE_LOGS)
-@options.backup_first
+@cfy.options.force(help=helptexts.FORCE_PURGE_LOGS)
+@cfy.options.backup_first
 def purge(force, backup_first):
     """Truncate all logs files under /var/log/cloudify.
 

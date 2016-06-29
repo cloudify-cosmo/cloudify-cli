@@ -22,14 +22,14 @@ from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 
 from .. import utils
-from ..config import options
+from ..config import cfy
 from ..config import helptexts
 from ..logger import get_logger, get_events_logger
 from ..exceptions import SuppressedCloudifyCliError
 from ..execution_events_fetcher import wait_for_execution
 
 
-@click.group(name='deployments', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group(name='deployments')
 def deployments():
     """Handle deployments on the Manager
     """
@@ -82,15 +82,15 @@ def ls(blueprint_id):
 
 @deployments.command(name='update')
 @click.argument('deployment-id', required=True)
-@options.blueprint_path(required=True)
-@options.inputs
-@options.blueprint_filename()
-@options.workflow_id('update')
-@options.skip_install
-@options.skip_uninstall
-@options.force(help=helptexts.FORCE_UPDATE)
-@options.include_logs
-@options.json
+@cfy.options.blueprint_path(required=True)
+@cfy.options.inputs
+@cfy.options.blueprint_filename()
+@cfy.options.workflow_id('update')
+@cfy.options.skip_install
+@cfy.options.skip_uninstall
+@cfy.options.force(help=helptexts.FORCE_UPDATE)
+@cfy.options.include_logs
+@cfy.options.json
 def update(deployment_id,
            blueprint_path,
            inputs,
@@ -156,8 +156,8 @@ def update(deployment_id,
 
 @deployments.command(name='create')
 @click.argument('blueprint-id', required=True)
-@options.deployment_id()
-@options.inputs
+@cfy.options.deployment_id()
+@cfy.options.inputs
 def create(blueprint_id,
            deployment_id,
            inputs):
@@ -193,7 +193,7 @@ def create(blueprint_id,
 
 @deployments.command(name='delete')
 @click.argument('deployment-id', required=True)
-@options.force(help=helptexts.IGNORE_LIVE_NODES)
+@cfy.options.force(help=helptexts.IGNORE_LIVE_NODES)
 def delete(deployment_id, force):
     """Delete a deployment from the manager
     """

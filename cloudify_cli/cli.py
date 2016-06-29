@@ -18,9 +18,6 @@ import sys
 import StringIO
 import traceback
 
-import click
-from click_didyoumean import DYMGroup
-
 from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
@@ -29,7 +26,7 @@ from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 from . import utils
 from . import logger
 from . import commands
-from .config import options
+from .config import cfy
 from .logger import get_logger
 from .exceptions import CloudifyBootstrapError
 from .exceptions import SuppressedCloudifyCliError
@@ -104,53 +101,53 @@ def register_commands():
     """
     is_manager_active = utils.is_manager_active()
 
-    cfy.add_command(commands.use)
-    cfy.add_command(commands.init)
-    cfy.add_command(commands.recover)
-    cfy.add_command(commands.bootstrap)
-    cfy.add_command(commands.validate_blueprint)
-    cfy.add_command(commands.create_requirements)
+    _cfy.add_command(commands.use)
+    _cfy.add_command(commands.init)
+    _cfy.add_command(commands.recover)
+    _cfy.add_command(commands.bootstrap)
+    _cfy.add_command(commands.validate_blueprint)
+    _cfy.add_command(commands.create_requirements)
 
     # TODO: Instead of manually stating each module,
     # we might want to try importing all modules in the `commands`
     # package recursively and check if they have a certain attribute
     # which indicates they belong to `manager`.
     if is_manager_active:
-        cfy.add_command(commands.dev)
-        cfy.add_command(commands.ssh)
-        cfy.add_command(commands.logs)
-        cfy.add_command(commands.nodes)
-        cfy.add_command(commands.agents)
-        cfy.add_command(commands.events)
-        cfy.add_command(commands.groups)
-        cfy.add_command(commands.status)
-        cfy.add_command(commands.plugins)
-        cfy.add_command(commands.upgrade)
-        cfy.add_command(commands.teardown)
-        cfy.add_command(commands.rollback)
-        cfy.add_command(commands.workflows)
-        cfy.add_command(commands.snapshots)
-        cfy.add_command(commands.blueprints)
-        cfy.add_command(commands.executions)
-        cfy.add_command(commands.deployments)
-        cfy.add_command(commands.install.manager)
-        cfy.add_command(commands.maintenance_mode)
-        cfy.add_command(commands.uninstall.manager)
-        cfy.add_command(commands.node_instances.manager)
+        _cfy.add_command(commands.dev)
+        _cfy.add_command(commands.ssh)
+        _cfy.add_command(commands.logs)
+        _cfy.add_command(commands.nodes)
+        _cfy.add_command(commands.agents)
+        _cfy.add_command(commands.events)
+        _cfy.add_command(commands.groups)
+        _cfy.add_command(commands.status)
+        _cfy.add_command(commands.plugins)
+        _cfy.add_command(commands.upgrade)
+        _cfy.add_command(commands.teardown)
+        _cfy.add_command(commands.rollback)
+        _cfy.add_command(commands.workflows)
+        _cfy.add_command(commands.snapshots)
+        _cfy.add_command(commands.blueprints)
+        _cfy.add_command(commands.executions)
+        _cfy.add_command(commands.deployments)
+        _cfy.add_command(commands.install.manager)
+        _cfy.add_command(commands.maintenance_mode)
+        _cfy.add_command(commands.uninstall.manager)
+        _cfy.add_command(commands.node_instances.manager)
     else:
-        cfy.add_command(commands.execute)
-        cfy.add_command(commands.outputs)
-        cfy.add_command(commands.install.local)
-        cfy.add_command(commands.uninstall.local)
-        cfy.add_command(commands.install_plugins)
-        cfy.add_command(commands.node_instances.local)
+        _cfy.add_command(commands.execute)
+        _cfy.add_command(commands.outputs)
+        _cfy.add_command(commands.install.local)
+        _cfy.add_command(commands.uninstall.local)
+        _cfy.add_command(commands.install_plugins)
+        _cfy.add_command(commands.node_instances.local)
 
 
-@click.group(context_settings=utils.CLICK_CONTEXT_SETTINGS, cls=DYMGroup)
-@options.verbose
-@options.debug
-@options.version
-def cfy(verbose, debug):
+@cfy.group(name='cfy')
+@cfy.options.verbose
+@cfy.options.debug
+@cfy.options.version
+def _cfy(verbose, debug):
     """Cloudify's Command Line Interface
 
     Note that some commands are only available if you're using a manager.

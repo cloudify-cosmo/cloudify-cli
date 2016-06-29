@@ -27,13 +27,13 @@ from ..bootstrap import bootstrap as bs
 
 @click.command(name='bootstrap', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path', required=True)
-@options.inputs
-@options.validate_only
-@options.skip_validations
-@options.install_plugins
-@options.task_retries()
-@options.task_retry_interval()
-@options.task_thread_pool_size()
+@cfy.options.inputs
+@cfy.options.validate_only
+@cfy.options.skip_validations
+@cfy.options.install_plugins
+@cfy.options.task_retries()
+@cfy.options.task_retry_interval()
+@cfy.options.task_thread_pool_size()
 @click.option('--keep-up-on-failure',
               help=helptexts.KEEP_UP_ON_FAILURE)
 def bootstrap(blueprint_path,

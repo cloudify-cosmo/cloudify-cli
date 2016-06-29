@@ -28,7 +28,7 @@ from ..execution_events_fetcher import ExecutionEventsFetcher, \
     wait_for_execution
 
 
-@click.group(name='events', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group.name='events', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def events():
     """Show events from workflow executions
     """
@@ -37,8 +37,8 @@ def events():
 
 @events.command(name='ls')
 @click.argument('execution-id', required=True)
-@options.include_logs
-@options.json
+@cfy.options.include_logs
+@cfy.options.json
 @click.option('--tail',
               is_flag=True,
               help=helptexts.TAIL_OUTPUT)

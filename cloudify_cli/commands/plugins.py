@@ -25,7 +25,7 @@ from ..utils import print_table
 from ..exceptions import CloudifyCliError
 
 
-@click.group(name='plugins', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group.name='plugins', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def plugins():
     """Handle plugins on the manager
     """
@@ -69,7 +69,7 @@ def validate(plugin_path):
 
 @plugins.command(name='delete')
 @click.argument('plugin-id', required=True)
-@options.force(help=helptexts.FORCE_DELETE_PLUGIN)
+@cfy.options.force(help=helptexts.FORCE_DELETE_PLUGIN)
 def delete(plugin_id, force):
     """Delete a plugin from the manager
     """
@@ -99,7 +99,7 @@ def upload(plugin_path):
 
 @plugins.command(name='download')
 @click.argument('plugin-id', required=True)
-@options.output_path
+@cfy.options.output_path
 def download(plugin_id, output_path):
     """Download a plugin from the manager
     """

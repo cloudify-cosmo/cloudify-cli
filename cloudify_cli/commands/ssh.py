@@ -29,10 +29,10 @@ from ..exceptions import CloudifyCliError
 
 
 @click.command(name='ssh')
-@options.ssh_command
-@options.host_session
-@options.session_id
-@options.list_sessions
+@cfy.options.ssh_command
+@cfy.options.host_session
+@cfy.options.session_id
+@cfy.options.list_sessions
 def ssh(command, host, sid, list_sessions):
     """Connects to a running manager via SSH.
 

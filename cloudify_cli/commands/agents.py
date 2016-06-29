@@ -32,7 +32,7 @@ from ..execution_events_fetcher import wait_for_execution, \
 _NODE_INSTANCE_STATE_STARTED = 'started'
 
 
-@click.group(name='agents', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group(name='agents', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def agents():
     """Handle a deployment's agents
     """
@@ -56,7 +56,7 @@ def _deployment_exists(client, deployment_id):
 
 @agents.command(name='install')
 @click.argument('deployment-id', required=False)
-@options.include_logs
+@cfy.options.include_logs
 def install(deployment_id, include_logs):
     """Install agents on the hosts of existing deployments
 

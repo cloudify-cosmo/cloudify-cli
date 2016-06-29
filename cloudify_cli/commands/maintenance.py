@@ -28,7 +28,7 @@ DEFAULT_TIMEOUT_INTERVAL = 5
 MAINTENANCE_MODE_ACTIVE = 'activated'
 
 
-@click.group(name='maintenance-mode',
+@cfy.group.name='maintenance-mode',
              context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def maintenance_mode():
     """Handle the manager's maintenance-mode
@@ -85,8 +85,8 @@ def _print_maintenance_mode_status(client):
 
 
 @maintenance_mode.command(name='activate')
-@options.wait
-@options.timeout(default=0)
+@cfy.options.wait
+@cfy.options.timeout(default=0)
 def activate(wait, timeout):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()

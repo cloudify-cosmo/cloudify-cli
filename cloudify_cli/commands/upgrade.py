@@ -40,13 +40,13 @@ REMOTE_WORKFLOW_STATE_PATH = '/opt/cloudify/_workflow_state.json'
 
 @click.command(name='upgrade', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path', required=True)
-@options.validate_only
-@options.skip_validations
-@options.inputs
-@options.install_plugins
-@options.task_retries()
-@options.task_retry_interval()
-@options.task_thread_pool_size()
+@cfy.options.validate_only
+@cfy.options.skip_validations
+@cfy.options.inputs
+@cfy.options.install_plugins
+@cfy.options.task_retries()
+@cfy.options.task_retry_interval()
+@cfy.options.task_thread_pool_size()
 def upgrade(blueprint_path,
             validate_only,
             skip_validations,

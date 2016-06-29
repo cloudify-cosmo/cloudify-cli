@@ -22,7 +22,7 @@ from .. import utils
 from .. import common
 from .. import constants
 from .. import exceptions
-from ..config import options
+from ..config import cfy
 from ..logger import get_logger
 from ..logger import configure_loggers
 
@@ -31,13 +31,13 @@ _NAME = 'local'
 _STORAGE_DIR_NAME = 'local-storage'
 
 
-@click.command(name='init', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.command(name='init')
 @click.argument('blueprint-path', required=False)
-@options.reset_config
-@options.skip_logging
-@options.inputs
-@options.install_plugins
-@options.init_hard_reset
+@cfy.options.reset_config
+@cfy.options.skip_logging
+@cfy.options.inputs
+@cfy.options.install_plugins
+@cfy.options.init_hard_reset
 def init(blueprint_path,
          reset_config,
          skip_logging,

@@ -38,11 +38,11 @@ setup(
     description="Cloudify's Command Line Interface",
     entry_points={
         'console_scripts': [
-            'cfy = cloudify_cli.cli:cfy'
+            'cfy = cloudify_cli.cli:_cfy'
         ]
     },
     install_requires=[
-        'click==4.0'
+        'click==4.0',
         'wagon==0.3.2',
         'pyyaml==3.10',
         'fabric==1.8.3',

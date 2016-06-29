@@ -30,10 +30,10 @@ CLOUDIFY_MANAGER_PK_PATH_ENVAR = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
 
 @click.command(name='recover', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('snapshot-path', required=True)
-@options.force(help=helptexts.FORCE_RECOVER)
-@options.task_retries()
-@options.task_retry_interval()
-@options.task_thread_pool_size()
+@cfy.options.force(help=helptexts.FORCE_RECOVER)
+@cfy.options.task_retries()
+@cfy.options.task_retry_interval()
+@cfy.options.task_thread_pool_size()
 def recover(snapshot_path,
             force,
             task_retries,

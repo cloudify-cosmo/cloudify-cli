@@ -31,17 +31,17 @@ from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
 @click.command(name='install', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path')
-@options.blueprint_id()
-@options.blueprint_filename()
-@options.validate
-@options.deployment_id()
-@options.inputs
-@options.workflow_id('install')
-@options.parameters
-@options.allow_custom_parameters
-@options.timeout()
-@options.include_logs
-@options.json
+@cfy.options.blueprint_id()
+@cfy.options.blueprint_filename()
+@cfy.options.validate
+@cfy.options.deployment_id()
+@cfy.options.inputs
+@cfy.options.workflow_id('install')
+@cfy.options.parameters
+@cfy.options.allow_custom_parameters
+@cfy.options.timeout()
+@cfy.options.include_logs
+@cfy.options.json
 @click.pass_context
 def manager(blueprint_path,
             blueprint_id,
@@ -159,14 +159,14 @@ def manager(blueprint_path,
 
 @click.command(name='install', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 @click.argument('blueprint-path', required=True)
-@options.inputs
-@options.install_plugins
-@options.workflow_id('install')
-@options.parameters
-@options.allow_custom_parameters
-@options.task_retries()
-@options.task_retry_interval()
-@options.task_thread_pool_size()
+@cfy.options.inputs
+@cfy.options.install_plugins
+@cfy.options.workflow_id('install')
+@cfy.options.parameters
+@cfy.options.allow_custom_parameters
+@cfy.options.task_retries()
+@cfy.options.task_retry_interval()
+@cfy.options.task_thread_pool_size()
 @click.pass_context
 def local(ctx,
           blueprint_path,

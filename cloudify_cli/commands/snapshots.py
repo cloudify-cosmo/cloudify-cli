@@ -22,7 +22,7 @@ from ..logger import get_logger
 from ..utils import print_table
 
 
-@click.group(name='snapshots', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group.name='snapshots', context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def snapshots():
     """Handle manager snapshots
     """
@@ -34,7 +34,7 @@ def snapshots():
 @click.option('--without-deployments-envs',
               is_flag=True,
               help=helptexts.RESTORE_SNAPSHOT_EXCLUDE_EXISTING_DEPLOYMENTS)
-@options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
+@cfy.options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
 def restore(snapshot_id, without_deployments_envs, force):
     """Restore a manager to its previous state
     """
@@ -50,8 +50,8 @@ def restore(snapshot_id, without_deployments_envs, force):
 
 @snapshots.command(name='create')
 @click.argument('snapshot-id')
-@options.include_metrics
-@options.exclude_credentials
+@cfy.options.include_metrics
+@cfy.options.exclude_credentials
 def create(snapshot_id, include_metrics, exclude_credentials):
     """Create a snapshot on the manager
 
@@ -103,7 +103,7 @@ def upload(snapshot_path, snapshot_id):
 
 @snapshots.command(name='download')
 @click.argument('snapshot-id', required=True)
-@options.output_path
+@cfy.options.output_path
 def download(snapshot_id, output_path):
     """Download a snapshot from the manager
     """

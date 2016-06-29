@@ -26,7 +26,7 @@ from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
-@click.group(name='node-instances',
+@cfy.group.name='node-instances',
              context_settings=utils.CLICK_CONTEXT_SETTINGS)
 def manager():
     """Handle a deployment's node-instances
@@ -66,7 +66,7 @@ def get(node_instance_id):
 
 @manager.command(name='ls')
 @click.argument('deployment-id', required=False)
-@options.node_name
+@cfy.options.node_name
 def ls(deployment_id, node_name):
     """List node-instances
 
