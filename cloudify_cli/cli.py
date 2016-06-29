@@ -104,8 +104,7 @@ def register_commands():
     _cfy.add_command(commands.use)
     _cfy.add_command(commands.init)
     _cfy.add_command(commands.recover)
-    _cfy.add_command(commands.bootstrap)
-    _cfy.add_command(commands.validate_blueprint)
+    _cfy.add_command(commands.validate)
     _cfy.add_command(commands.create_requirements)
 
     # TODO: Instead of manually stating each module,
@@ -137,6 +136,7 @@ def register_commands():
     else:
         _cfy.add_command(commands.execute)
         _cfy.add_command(commands.outputs)
+        _cfy.add_command(commands.bootstrap)
         _cfy.add_command(commands.install.local)
         _cfy.add_command(commands.uninstall.local)
         _cfy.add_command(commands.install_plugins)

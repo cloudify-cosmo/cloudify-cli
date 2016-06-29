@@ -29,7 +29,6 @@ import tempfile
 from contextlib import contextmanager
 
 import yaml
-import click
 import pkg_resources
 from prettytable import PrettyTable
 from itsdangerous import base64_encode
@@ -682,39 +681,5 @@ def manager_msg(message, manager_ip=None):
         message, manager_ip or get_management_server_ip())
 
 
-class MutuallyExclusiveOption(click.Option):
-    def __init__(self, *args, **kwargs):
-        self.mutually_exclusive = set(kwargs.pop('mutually_exclusive', []))
-        self.mutuality_error_message = \
-            kwargs.pop('mutuality_error_message', [])
-        self.mutuality_string = ', '.join(self.mutually_exclusive)
-        if self.mutually_exclusive:
-            help = kwargs.get('help', '')
-            kwargs['help'] = (
-                '{0}. This argument is mutually exclusive with '
-                'arguments: [{1}] ({2})'.format(
-                    help,
-                    self.mutuality_string,
-                    self.mutuality_error_message))
-        super(MutuallyExclusiveOption, self).__init__(*args, **kwargs)
-
-    def handle_parse_result(self, ctx, opts, args):
-        if self.mutually_exclusive.intersection(opts) and self.name in opts:
-            raise click.UsageError(
-                "Illegal usage: `{0}` is mutually exclusive with "
-                "arguments `{1}` ({2}).".format(
-                    self.name,
-                    self.mutuality_string,
-                    self.mutuality_error_message))
-        return super(MutuallyExclusiveOption, self).handle_parse_result(
-            ctx, opts, args)
-
-
 def _generate_suffixed_id(id):
     return '{0}_{1}'.format(id, generate_random_string())
-
-
-CLICK_CONTEXT_SETTINGS = dict(
-    help_option_names=['-h', '--help'],
-    token_normalize_func=lambda param: param.lower(),
-    ignore_unknown_options=True)

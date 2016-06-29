@@ -21,7 +21,7 @@ import click
 from cloudify import logs
 
 from .. import utils
-from ..config import options
+from ..config import cfy
 from ..logger import get_logger
 from ..exceptions import ExecutionTimeoutError
 from ..exceptions import SuppressedCloudifyCliError
@@ -32,7 +32,7 @@ from ..execution_events_fetcher import wait_for_execution, \
 _NODE_INSTANCE_STATE_STARTED = 'started'
 
 
-@cfy.group(name='agents', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group(name='agents')
 def agents():
     """Handle a deployment's agents
     """

@@ -20,11 +20,11 @@ import click
 from .. import utils
 from .. import common
 from .. import exceptions
-from ..config import options
+from ..config import cfy
 from ..logger import get_logger
 
 
-@click.command(name='create-requirements')
+@cfy.command(name='create-requirements')
 @click.argument('blueprint-path', required=True, type=click.Path(exists=True))
 @cfy.options.output_path
 def create_requirements(blueprint_path, output_path):

@@ -20,13 +20,14 @@ from fabric.context_managers import settings
 
 from .. import utils
 from .. import exec_env
+from ..config import cfy
 from ..config import helptexts
 from ..utils import get_management_key
 from ..utils import get_management_user
 from ..exceptions import CloudifyCliError
 
 
-@click.command(name='dev')
+@cfy.command(name='dev')
 @click.argument('task', required=True)
 @click.option('-t',
               'tasks-file',

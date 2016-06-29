@@ -20,16 +20,16 @@ import click
 from . import init
 from .. import utils
 from . import execute
+from ..config import cfy
 from . import blueprints
 from . import executions
 from . import deployments
-from ..config import options
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..constants import DEFAULT_INSTALL_WORKFLOW
 from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
 
-@click.command(name='install', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.command(name='install')
 @click.argument('blueprint-path')
 @cfy.options.blueprint_id()
 @cfy.options.blueprint_filename()
@@ -157,7 +157,7 @@ def manager(blueprint_path,
         json=json)
 
 
-@click.command(name='install', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.command(name='install')
 @click.argument('blueprint-path', required=True)
 @cfy.options.inputs
 @cfy.options.install_plugins

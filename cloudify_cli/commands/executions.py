@@ -20,7 +20,7 @@ import click
 from cloudify_rest_client import exceptions
 
 from .. import utils
-from ..config import options
+from ..config import cfy
 from ..config import helptexts
 from ..logger import get_logger
 from ..logger import get_events_logger
@@ -35,7 +35,7 @@ _STATUS_CANCELING_MESSAGE = (
     'may take a while to change into "cancelled"')
 
 
-@cfy.group.name='executions', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group(name='executions')
 def executions():
     """Handle workflow executions
     """

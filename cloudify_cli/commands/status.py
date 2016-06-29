@@ -13,18 +13,17 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import click
-
 from cloudify_rest_client.exceptions import (
     CloudifyClientError,
     UserUnauthorizedError
 )
 
 from .. import utils
+from ..config import cfy
 from ..logger import get_logger
 
 
-@click.command(name='status', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.command(name='status')
 def status():
     """Show the status of the manager
     """

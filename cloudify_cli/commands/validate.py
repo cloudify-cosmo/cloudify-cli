@@ -19,19 +19,16 @@ from dsl_parser.parser import parse_from_path
 from dsl_parser.exceptions import DSLParsingException
 
 from .. import utils
+from ..config import cfy
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
-@click.command(name='validate')
+@cfy.command(name='validate')
 @click.argument('blueprint-path', required=True)
-def validate_blueprint(blueprint_path):
+def validate(blueprint_path):
     """Validate a blueprint
     """
-    validate(blueprint_path)
-
-
-def validate(blueprint_path):
     logger = get_logger()
     logger.info('Validating blueprint: {0}'.format(blueprint_path))
     try:

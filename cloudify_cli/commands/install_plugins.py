@@ -16,9 +16,10 @@
 import click
 
 from .. import common
+from ..config import cfy
 
 
-@click.command(name='install-plugins')
+@cfy.command(name='install-plugins')
 @click.argument('blueprint-path', required=True, type=click.Path(exists=True))
 def install_plugins(blueprint_path):
     """Install the necessary plugins for a given blueprint

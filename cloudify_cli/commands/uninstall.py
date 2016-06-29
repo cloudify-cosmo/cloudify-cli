@@ -18,14 +18,14 @@ import click
 from .. import utils
 from .. import common
 from . import execute
+from ..config import cfy
 from . import blueprints
 from . import executions
 from . import deployments
-from ..config import options
 from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 
 
-@click.command(name='uninstall', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.command(name='uninstall')
 @click.argument('deployment-id')
 @cfy.options.workflow_id('uninstall')
 @cfy.options.parameters
@@ -82,7 +82,7 @@ def manager(ctx,
         blueprint_id=blueprint_id)
 
 
-@click.command(name='uninstall', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.command(name='uninstall')
 @cfy.options.workflow_id('uninstall')
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters

@@ -19,7 +19,7 @@ import click
 
 from .. import utils
 from .. import exceptions
-from ..config import options
+from ..config import cfy
 from ..config import helptexts
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
@@ -28,7 +28,7 @@ from ..bootstrap import bootstrap as bs
 CLOUDIFY_MANAGER_PK_PATH_ENVAR = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
 
 
-@click.command(name='recover', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.command(name='recover')
 @click.argument('snapshot-path', required=True)
 @cfy.options.force(help=helptexts.FORCE_RECOVER)
 @cfy.options.task_retries()

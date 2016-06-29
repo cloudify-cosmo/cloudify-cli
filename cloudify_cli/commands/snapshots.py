@@ -16,13 +16,13 @@
 import click
 
 from .. import utils
-from ..config import options
+from ..config import cfy
 from ..config import helptexts
 from ..logger import get_logger
 from ..utils import print_table
 
 
-@cfy.group.name='snapshots', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group(name='snapshots')
 def snapshots():
     """Handle manager snapshots
     """
@@ -31,9 +31,7 @@ def snapshots():
 
 @snapshots.command(name='restore')
 @click.argument('snapshot-id', required=True)
-@click.option('--without-deployments-envs',
-              is_flag=True,
-              help=helptexts.RESTORE_SNAPSHOT_EXCLUDE_EXISTING_DEPLOYMENTS)
+@cfy.options.without_deployments_envs
 @cfy.options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
 def restore(snapshot_id, without_deployments_envs, force):
     """Restore a manager to its previous state

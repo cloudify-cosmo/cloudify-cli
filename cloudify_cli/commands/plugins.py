@@ -18,14 +18,14 @@ import tarfile
 import click
 
 from .. import utils
-from ..config import options
+from ..config import cfy
 from ..config import helptexts
 from ..logger import get_logger
 from ..utils import print_table
 from ..exceptions import CloudifyCliError
 
 
-@cfy.group.name='plugins', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group(name='plugins')
 def plugins():
     """Handle plugins on the manager
     """

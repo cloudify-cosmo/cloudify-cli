@@ -19,11 +19,11 @@ import click
 
 from .. import utils
 from .. import common
-from ..config import options
+from ..config import cfy
 from ..logger import get_logger
 
 
-@click.command(name='execute')
+@cfy.command(name='execute')
 @click.argument('workflow-id', required=True)
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters

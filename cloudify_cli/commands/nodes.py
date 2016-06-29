@@ -18,12 +18,12 @@ import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
-from ..config import options
+from ..config import cfy
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
-@cfy.group.name='nodes', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group(name='nodes')
 def nodes():
     """Handle a deployment's nodes
     """

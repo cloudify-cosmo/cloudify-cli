@@ -15,17 +15,15 @@
 
 import os
 
-import click
-
 from .. import ssh
 from .. import utils
-from ..config import options
+from ..config import cfy
 from ..config import helptexts
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
-@cfy.group.name='logs', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group(name='logs')
 def logs():
     """Handle manager service logs
     """

@@ -19,16 +19,14 @@ import platform
 import subprocess
 from distutils import spawn
 
-import click
-
 from .. import utils
-from ..config import options
+from ..config import cfy
 from ..logger import get_logger
 from ..ssh import run_command_on_manager
 from ..exceptions import CloudifyCliError
 
 
-@click.command(name='ssh')
+@cfy.command(name='ssh')
 @cfy.options.ssh_command
 @cfy.options.host_session
 @cfy.options.session_id

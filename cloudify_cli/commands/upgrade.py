@@ -24,9 +24,9 @@ import click
 from .. import ssh
 from .. import utils
 from .. import common
+from ..config import cfy
 from .. import exceptions
 from . import maintenance
-from ..config import options
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 from ..bootstrap.bootstrap import load_env
@@ -38,19 +38,19 @@ MAINTENANCE_MODE_ACTIVATING = 'activating'
 REMOTE_WORKFLOW_STATE_PATH = '/opt/cloudify/_workflow_state.json'
 
 
-@click.command(name='upgrade', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.command(name='upgrade')
 @click.argument('blueprint-path', required=True)
+@cfy.options.inputs
 @cfy.options.validate_only
 @cfy.options.skip_validations
-@cfy.options.inputs
 @cfy.options.install_plugins
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 def upgrade(blueprint_path,
+            inputs,
             validate_only,
             skip_validations,
-            inputs,
             install_plugins,
             task_retries,
             task_retry_interval,

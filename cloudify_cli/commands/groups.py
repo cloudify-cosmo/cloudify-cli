@@ -20,11 +20,12 @@ import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
+from ..config import cfy
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
-@cfy.group.name='groups', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group(name='groups')
 def groups():
     """Handle deployment groups
     """

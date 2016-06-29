@@ -19,15 +19,15 @@ import click
 
 from .. import utils
 from .. import common
+from ..config import cfy
 from .. import exceptions
-from ..config import options
 from ..logger import get_logger
 from .upgrade import update_inputs
 from .upgrade import put_workflow_state_file
 from .upgrade import verify_and_wait_for_maintenance_mode_activation
 
 
-@click.command(name='rollback', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.command(name='rollback')
 @click.argument('blueprint-path', required=True)
 @cfy.options.inputs
 @cfy.options.install_plugins

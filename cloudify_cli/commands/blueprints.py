@@ -18,10 +18,9 @@ import json
 import urlparse
 
 import click
-from click_didyoumean import DYMGroup
 
 from .. import utils
-from ..config import options
+from ..config import cfy
 from .validate import validate
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
@@ -30,7 +29,7 @@ SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
 DESCRIPTION_LIMIT = 20
 
 
-@cfy.group.context_settings=utils.CLICK_CONTEXT_SETTINGS, cls=DYMGroup)
+@cfy.group(name='blueprints')
 def blueprints():
     """Handle blueprints on the manager
     """
@@ -39,10 +38,11 @@ def blueprints():
 
 @blueprints.command(name='validate')
 @click.argument('blueprint-path', required=True)
-def validate_blueprint(blueprint_path):
+@click.pass_context
+def validate_blueprint(ctx, blueprint_path):
     """Validate a blueprint
     """
-    validate(blueprint_path)
+    ctx.invoke(validate, blueprint_path=blueprint_path)
 
 
 @blueprints.command(name='upload')

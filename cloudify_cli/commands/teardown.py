@@ -13,20 +13,18 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import click
-
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .use import use
 from .. import utils
+from ..config import cfy
 from .. import exceptions
-from ..config import options
 from ..config import helptexts
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 
 
-@click.command(name='teardown', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.command(name='teardown')
 @cfy.options.force(help=helptexts.FORCE_TEARDOWN)
 @cfy.options.ignore_deployments
 @cfy.options.task_retries()

@@ -18,8 +18,7 @@ import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
-from ..config import options
-from ..config import helptexts
+from ..config import cfy
 from ..exceptions import CloudifyCliError, \
     SuppressedCloudifyCliError
 from ..logger import get_logger
@@ -28,7 +27,7 @@ from ..execution_events_fetcher import ExecutionEventsFetcher, \
     wait_for_execution
 
 
-@cfy.group.name='events', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group(name='events')
 def events():
     """Show events from workflow executions
     """
@@ -39,9 +38,7 @@ def events():
 @click.argument('execution-id', required=True)
 @cfy.options.include_logs
 @cfy.options.json
-@click.option('--tail',
-              is_flag=True,
-              help=helptexts.TAIL_OUTPUT)
+@cfy.options.tail
 def ls(execution_id, include_logs, json, tail):
     """Display events for an execution
     """

@@ -19,13 +19,13 @@ import click
 
 from .. import utils
 from .. import common
-from ..config import options
+from ..config import cfy
 from ..config import helptexts
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 
 
-@click.command(name='bootstrap', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.command(name='bootstrap')
 @click.argument('blueprint-path', required=True)
 @cfy.options.inputs
 @cfy.options.validate_only

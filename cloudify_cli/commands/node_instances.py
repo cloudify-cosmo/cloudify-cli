@@ -21,13 +21,12 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
 from .. import common
-from ..config import options
+from ..config import cfy
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
-@cfy.group.name='node-instances',
-             context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group(name='node-instances')
 def manager():
     """Handle a deployment's node-instances
     """
@@ -95,8 +94,7 @@ def ls(deployment_id, node_name):
     utils.print_table('Instances:', pt)
 
 
-@click.command(name='node-instances',
-               context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.command(name='node-instances')
 @click.argument('node-id', required=False)
 def local(node_id):
     """Display node-instances for the execution

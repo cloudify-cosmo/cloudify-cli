@@ -15,11 +15,9 @@
 
 import time
 
-import click
-
 from .. import utils
+from ..config import cfy
 from .. import exceptions
-from ..config import options
 from ..logger import NO_VERBOSE
 from ..logger import get_logger
 from ..logger import get_global_verbosity
@@ -28,8 +26,7 @@ DEFAULT_TIMEOUT_INTERVAL = 5
 MAINTENANCE_MODE_ACTIVE = 'activated'
 
 
-@cfy.group.name='maintenance-mode',
-             context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.group(name='maintenance-mode')
 def maintenance_mode():
     """Handle the manager's maintenance-mode
     """

@@ -15,14 +15,12 @@
 
 import json
 
-import click
-
-from .. import utils
 from .. import common
+from ..config import cfy
 from ..logger import get_logger
 
 
-@click.command(name='outputs', context_settings=utils.CLICK_CONTEXT_SETTINGS)
+@cfy.command(name='outputs')
 def outputs():
     """Display outputs for the execution
     """
