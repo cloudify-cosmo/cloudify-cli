@@ -21,8 +21,7 @@ from .. import utils
 from ..config import cfy
 from ..exceptions import CloudifyCliError, \
     SuppressedCloudifyCliError
-from ..logger import get_logger
-from ..logger import get_events_logger
+from ..logger import get_logger, get_events_logger
 from ..execution_events_fetcher import ExecutionEventsFetcher, \
     wait_for_execution
 

@@ -24,9 +24,9 @@ from . import init
 from .. import utils
 from .. import constants
 from ..config import cfy
+from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 from ..exceptions import CloudifyCliError
-from ..logger import get_logger, set_global_verbosity_level
 
 
 @cfy.command(name='use')

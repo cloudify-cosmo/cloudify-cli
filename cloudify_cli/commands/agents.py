@@ -22,9 +22,9 @@ from cloudify import logs
 
 from .. import utils
 from ..config import cfy
-from ..logger import get_logger
 from ..exceptions import ExecutionTimeoutError
 from ..exceptions import SuppressedCloudifyCliError
+from ..logger import get_logger, set_global_verbosity_level
 from ..execution_events_fetcher import wait_for_execution, \
     WAIT_FOR_EXECUTION_SLEEP_INTERVAL
 
@@ -57,12 +57,16 @@ def _deployment_exists(client, deployment_id):
 @agents.command(name='install')
 @click.argument('deployment-id', required=False)
 @cfy.options.include_logs
-def install(deployment_id, include_logs):
+@cfy.options.verbose
+@cfy.options.debug
+def install(deployment_id, include_logs, verbose, debug):
     """Install agents on the hosts of existing deployments
 
     See Cloudify's documentation at http://docs.getcloudify.org for more
     information.
     """
+    set_global_verbosity_level(verbose, debug)
+
     workflow_id = 'install_new_agents'
     logger = get_logger()
     client = utils.get_rest_client()

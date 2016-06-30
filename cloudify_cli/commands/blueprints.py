@@ -25,6 +25,7 @@ from .validate import validate
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
+
 SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
 DESCRIPTION_LIMIT = 20
 

@@ -24,9 +24,9 @@ from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 from .. import utils
 from ..config import cfy
 from ..config import helptexts
-from ..logger import get_logger, get_events_logger
 from ..exceptions import SuppressedCloudifyCliError
 from ..execution_events_fetcher import wait_for_execution
+from ..logger import get_logger, get_events_logger
 
 
 @cfy.group(name='deployments')
