@@ -35,31 +35,25 @@ from ..exceptions import CloudifyCliError
 @cfy.options.management_key
 @cfy.options.rest_port
 @cfy.options.show_active
-@cfy.options.verbose
-@cfy.options.debug
 @click.pass_context
 def use(ctx,
         management_ip,
         management_user,
         management_key,
-        rest_port,
-        verbose,
-        debug):
+        rest_port):
     """Control a specific manager
 
     Additional CLI commands will be added after a manager is used.
     To stop using a manager, you can run `cfy init -r`.
     """
-    set_global_verbosity_level(verbose, debug)
     logger = get_logger()
-    logger.debug('banana')
     if not (management_ip or management_user or management_key):
-        # TODO: add this message to I know where
+        # TODO: add this message to helptexts.py
         raise CloudifyCliError(
             'You must specify either `MANAGEMENT_IP` or the '
             '`--management-user` or `--management-key` flags')
 
-    # TODO: remove this and allow multiple profile names instead.
+    # TODO: Remove this once multiple profiles have been added
     if management_ip == 'local':
         ctx.invoke(init.init, reset_config=True)
         return

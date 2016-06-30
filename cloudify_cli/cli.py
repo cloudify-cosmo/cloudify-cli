@@ -154,19 +154,23 @@ def _cfy(verbose, debug):
     You can use a manager by running the `cfy use` command and providing
     it with the IP of your manager (and ssh credentials if applicable).
     """
-    # TODO: when calling a command which only exists in the context
+    # TODO: When calling a command which only exists in the context
     # of a manager but no manager is currently `use`d, print out a message
     # stating that "Some commands only exist when using a manager. You can run
     # `cfy use MANAGER_IP` and try this command again."
-    # TODO: fix verbosity placement. Currently you can only declare the
+    # TODO: Fix verbosity placement. Currently you can only declare the
     # verbosity level after `cfy` (i.e. `cfy -v`) and not after.
     logger.configure_loggers()
     logger.set_global_verbosity_level(verbose, debug)
     # _set_cli_except_hook(verbose)
 
+    # TODO: Consider replacing `cfy init BLUEPRINT_PATH` with
+    # `cfy blueprints init BLUEPRINT_PATH` for local.
+    # TODO: Consider replacing `cfy bootstrap` with `cfy init`
+    # after having run `cfy use MANAGER_IP -u USER -k KEY_PATH`
 
 register_commands()
 
 
 if __name__ == '__main__':
-    cfy()
+    _cfy()

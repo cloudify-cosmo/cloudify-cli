@@ -102,12 +102,12 @@ def init(blueprint_path,
             # easily identify them here
             e.possible_solutions = [
                 "Run `cfy init {0} --install-plugins`".format(blueprint_path),
-                "Run `cfy local install-plugins -p {0}`".format(blueprint_path)
+                "Run `cfy install-plugins {0}`".format(blueprint_path)
             ]
             raise
 
-        get_logger().info("Initiated {0}\nIf you make changes to the "
-                          "blueprint, run `cfy init {0}` "
-                          "again to apply them".format(blueprint_path))
+        logger.info("Initialized {0}\nIf you make changes to the "
+                    "blueprint, run `cfy init {0}` "
+                    "again to apply them".format(blueprint_path))
     else:
         _init()

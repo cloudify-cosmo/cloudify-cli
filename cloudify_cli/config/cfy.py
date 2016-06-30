@@ -95,6 +95,16 @@ def show_active_manager(ctx, param, value):
     ctx.exit()
 
 
+# from functools import partial
+
+# cfy.group(name='x')
+
+# group = partial(
+#     click.group
+#     context_settings=CLICK_CONTEXT_SETTINGS,
+#     cls=DYMGroup)
+
+
 def group(name):
     return click.group(
         name=name,
