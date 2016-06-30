@@ -95,28 +95,44 @@ def show_active_manager(ctx, param, value):
     ctx.exit()
 
 
-# TODO: ideally, both verbose and debug should have callbacks
-# which set the global verbosity level accordingly once a command
-# is decorated without having to call a function explicitly from each command.
-# The problem currently is, that setting the global verbosity level depends
-# on both `verbose` and `debug` and to make them affect one another we need
-# to pass one result of the decorator to the other (probably through click's
-# state). For now, we're just calling `logger.set_global_verbosity_level`
-# from each command.
+def group(name):
+    return click.group(
+        name=name,
+        context_settings=CLICK_CONTEXT_SETTINGS,
+        cls=DYMGroup)
+
+
+def command(name, with_context=True):
+    context_settings = CLICK_CONTEXT_SETTINGS if with_context else None
+    return click.command(name=name, context_settings=context_settings)
+
 
 class Options(object):
     def __init__(self):
+
+        # TODO: Ideally, both verbose and debug should have callbacks
+        # which set the global verbosity level accordingly once a command
+        # is decorated without having to call a function explicitly from each
+        # command. The problem currently is, that setting the global verbosity
+        # level depends on both `verbose` and `debug` and to make them affect
+        # one another we need to pass one result of the decorator to the other
+        # (probably using click's `get_current_state` impelmeneted in Click 6).
+        # For now, we're just calling `logger.set_global_verbosity_level`
+        # from each command.
+
         self.verbose = click.option(
             '-v',
             '--verbose',
             count=True,
-            is_eager=True)
+            is_eager=True,
+            help=helptexts.VERBOSE)
 
         self.debug = click.option(
             '--debug',
             default=False,
             is_flag=True,
-            is_eager=True)
+            is_eager=True,
+            help=helptexts.DEBUG)
 
         self.version = click.option(
             '--version',
@@ -378,18 +394,6 @@ class Options(object):
 
 
 options = Options()
-
-
-def group(name):
-    return click.group(
-        name=name,
-        context_settings=CLICK_CONTEXT_SETTINGS,
-        cls=DYMGroup)
-
-
-def command(name, with_context=True):
-    context_settings = CLICK_CONTEXT_SETTINGS if with_context else None
-    return click.command(name=name, context_settings=context_settings)
 
 
 class MutuallyExclusiveOption(click.Option):
