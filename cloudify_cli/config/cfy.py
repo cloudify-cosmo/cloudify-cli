@@ -399,7 +399,7 @@ class Options(object):
         return click.option(
             '-p',
             '--blueprint-path',
-            required=True,
+            required=required,
             type=click.Path(exists=True))
 
 

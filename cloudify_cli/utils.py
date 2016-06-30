@@ -53,6 +53,17 @@ DEFAULT_LOG_FILE = os.path.expanduser(
             getpass.getuser()))
 
 
+CLOUDIFY_WORKDIR = os.path.join(
+    os.path.expanduser('~'),
+    constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+CLOUDIFY_CONTEXT_FILE_PATH = os.path.join(
+    CLOUDIFY_WORKDIR,
+    constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
+CLOUDIFY_CONFIG_FILE_PATH = os.path.join(
+    CLOUDIFY_WORKDIR,
+    'config.yaml')
+
+
 def get_management_user():
     cosmo_wd_settings = load_cloudify_working_dir_settings()
     if cosmo_wd_settings.get_management_user():
@@ -97,7 +108,7 @@ def raise_uninitialized():
         'Not initialized: Cannot find {0} in {1}, '
         'or in any of its parent directories'
         .format(constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-                get_cwd()))
+                os.path.expanduser('~')))
     error.possible_solutions = [
         "Run 'cfy init' in this directory"
     ]
@@ -223,7 +234,7 @@ def get_init_path():
     Cloudify settings directory (`.cloudify`).
     :return: if we found it, return it's path. else, return None
     """
-    current_lookup_dir = get_cwd()
+    current_lookup_dir = os.path.expanduser('~')
     while True:
 
         path = os.path.join(current_lookup_dir,
@@ -258,7 +269,12 @@ def dump_configuration_file():
         f.write(os.linesep)
 
 
-def dump_cloudify_working_dir_settings(cosmo_wd_settings=None, update=False):
+def dump_cloudify_working_dir_settings(cosmo_wd_settings=None,
+                                       update=False,
+                                       workdir=None):
+    workdir = workdir or os.path.join(
+        os.path.expanduser('~'), constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+
     if cosmo_wd_settings is None:
         cosmo_wd_settings = CloudifyWorkingDirectorySettings()
     if update:
@@ -268,12 +284,10 @@ def dump_cloudify_working_dir_settings(cosmo_wd_settings=None, update=False):
     else:
 
         # create a new file
-        path = os.path.join(get_cwd(),
-                            constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
-        if not os.path.exists(path):
-            os.mkdir(path)
+        if not os.path.exists(workdir):
+            os.mkdir(workdir)
         target_file_path = os.path.join(
-            get_cwd(), constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+            workdir,
             constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
 
     with open(target_file_path, 'w') as f:
@@ -620,7 +634,7 @@ def generate_random_string(size=6,
 
 def delete_cloudify_working_dir_settings():
     target_file_path = os.path.join(
-        get_cwd(), constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+        os.path.expanduser('~'), constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
         constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
     if os.path.exists(target_file_path):
         os.remove(target_file_path)

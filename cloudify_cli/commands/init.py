@@ -46,13 +46,17 @@ def init(blueprint_path,
          hard):
     """Initialize a working environment in the current working directory
     """
-    def _init():
-        logger = get_logger()
+    logger = get_logger()
 
-        if os.path.exists(os.path.join(
-                utils.get_cwd(),
-                constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-                constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)):
+    def _init():
+
+        workdir = os.path.join(
+            os.path.expanduser('~'),
+            constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+        context_file_path = os.path.join(
+            workdir, constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
+
+        if os.path.exists(context_file_path):
             if not reset_config:
                 error = exceptions.CloudifyCliError(
                     'Current directory is already initialized')
@@ -61,18 +65,14 @@ def init(blueprint_path,
                 ]
                 raise error
             else:
-                workdir = os.path.join(
-                    utils.get_cwd(),
-                    constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
                 if hard:
                     shutil.rmtree(workdir)
                 else:
-                    os.remove(os.path.join(
-                        workdir, constants.CLOUDIFY_WD_SETTINGS_FILE_NAME))
+                    os.remove(context_file_path)
 
         settings = utils.CloudifyWorkingDirectorySettings()
         utils.dump_cloudify_working_dir_settings(settings)
-        if hard:
+        if hard or not os.path.isfile(os.path.join(workdir, 'config.yaml')):
             utils.dump_configuration_file()
         configure_loggers()
         if not skip_logging:
