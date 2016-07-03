@@ -27,6 +27,7 @@ from cloudify_rest_client.executions import Execution
 
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
+from cloudify_cli.tests.mocks.mock_list_response import MockListResponse
 
 
 class DeploymentsTest(CliCommandTest):
@@ -72,7 +73,7 @@ class DeploymentsTest(CliCommandTest):
                 'deployment_id': 'deployment-id'
             }
         }
-        get_events_response = ([success_event], 1)
+        get_events_response = MockListResponse([success_event], 1)
 
         self.client.executions.start = MagicMock(
             return_value=execute_response
@@ -80,7 +81,7 @@ class DeploymentsTest(CliCommandTest):
         self.client.executions.get = MagicMock(
             return_value=get_execution_response
         )
-        self.client.events.get = MagicMock(return_value=get_events_response)
+        self.client.events.list = MagicMock(return_value=get_events_response)
         cli_runner.run_cli('cfy executions start '
                            '-d a-deployment-id -w install')
 

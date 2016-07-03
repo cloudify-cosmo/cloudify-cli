@@ -23,6 +23,7 @@ from cloudify_cli.exceptions import EventProcessingTimeoutError, \
     ExecutionTimeoutError
 from cloudify_rest_client.client import CloudifyClient
 from cloudify_rest_client.executions import Execution
+from cloudify_cli.tests.mocks.mock_list_response import MockListResponse
 
 
 class ExecutionEventsFetcherTest(unittest.TestCase):
@@ -32,14 +33,18 @@ class ExecutionEventsFetcherTest(unittest.TestCase):
     def setUp(self):
         self.client = CloudifyClient()
         self.client.executions.get = MagicMock()
-        self.client.events.get = self._mock_get
+        self.client.events.list = self._mock_list
 
-    def _mock_get(self, execution_id, from_event=0,
-                  batch_size=100, include_logs=False):
+    def _mock_list(self, include_logs=False, message=None,
+                   from_datetime=None, to_datetime=None, _include=None,
+                   sort='@timestamp', **kwargs):
+        from_event = kwargs.get('_offset', 0)
+        batch_size = kwargs.get('_size', 100)
         if from_event >= len(self.events):
-            return [], len(self.events)
+            return MockListResponse([], len(self.events))
         until_event = min(from_event + batch_size, len(self.events))
-        return self.events[from_event:until_event], len(self.events)
+        return MockListResponse(
+            self.events[from_event:until_event], len(self.events))
 
     def test_no_events(self):
         events_fetcher = ExecutionEventsFetcher(self.client,
@@ -196,18 +201,18 @@ class WaitForExecutionTests(unittest.TestCase):
         # prepare mock events.get() calls - first return empty events 100 times
         # and only then return a 'workflow_succeeded' event
         events = chain(
-            repeat(([], 0), 100),
-            [([{'event_type': 'workflow_succeeded'}], 1)],
-            repeat(([], 0))
+            repeat(MockListResponse([], 0), 100),
+            [MockListResponse([{'event_type': 'workflow_succeeded'}], 1)],
+            repeat(MockListResponse([], 0))
         )
 
         self.client.executions.get = MagicMock(side_effect=executions)
-        self.client.events.get = MagicMock(side_effect=events)
+        self.client.events.list = MagicMock(side_effect=events)
 
         mock_execution = MagicMock(status=Execution.STARTED)
         wait_for_execution(self.client, mock_execution, timeout=None)
 
-        calls_count = len(self.client.events.get.mock_calls)
+        calls_count = len(self.client.events.list.mock_calls)
         self.assertEqual(calls_count, 101, """wait_for_execution didnt keep
             polling events after execution terminated (expected 101
             calls, got %d)""" % calls_count)
@@ -227,12 +232,12 @@ class WaitForExecutionTests(unittest.TestCase):
         # prepare mock events.get() calls - return a 'workflow_succeeded'
         # immediately, and there's no events after that
         events = chain(
-            [([{'event_type': 'workflow_succeeded'}], 1)],
-            repeat(([], 0))
+            [MockListResponse([{'event_type': 'workflow_succeeded'}], 1)],
+            repeat(MockListResponse([], 0))
         )
 
         self.client.executions.get = MagicMock(side_effect=executions)
-        self.client.events.get = MagicMock(side_effect=events)
+        self.client.events.list = MagicMock(side_effect=events)
 
         mock_execution = MagicMock(status=Execution.STARTED)
         wait_for_execution(self.client, mock_execution, timeout=None)
