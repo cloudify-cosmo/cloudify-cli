@@ -74,6 +74,11 @@ def upload(blueprint_path,
             raise CloudifyCliError(
                 'The `--validate` flag is only relevant when uploading '
                 'from a file.')
+        if not blueprint_filename:
+            logger.warning(
+                'When supplying an archive, we will look for `blueprint.yaml` '
+                'within the archive unless another file name has been '
+                'provided via the `--blueprint-filename` flag.')
         _publish_archive(
             blueprint_path,
             blueprint_filename,

@@ -225,7 +225,24 @@ class Options(object):
             '-k',
             '--management-key',
             required=False,
-            help="The path to the ssh key-file you used to bootstrap")
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['management-password'],
+            help="The path to the ssh key-file to use when "
+            "connecting to the manager")
+
+        self.management_password = click.option(
+            '-p',
+            '--management-password',
+            required=False,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['management-key'],
+            help="The password to use when connecting to the manager")
+
+        self.management_port = click.option(
+            '--ssh-port',
+            required=False,
+            default=22,
+            help="The port to use when connecting to the manager")
 
         self.rest_port = click.option(
             '--rest-port',

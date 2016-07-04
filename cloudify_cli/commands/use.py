@@ -33,6 +33,8 @@ from ..exceptions import CloudifyCliError
 @click.argument('management-ip', required=False)
 @cfy.options.management_user
 @cfy.options.management_key
+@cfy.options.management_password
+@cfy.options.management_port
 @cfy.options.rest_port
 @cfy.options.show_active
 @click.pass_context
@@ -40,6 +42,8 @@ def use(ctx,
         management_ip,
         management_user,
         management_key,
+        management_password,
+        management_port,
         rest_port):
     """Control a specific manager
 
@@ -47,7 +51,11 @@ def use(ctx,
     To stop using a manager, you can run `cfy init -r`.
     """
     logger = get_logger()
-    if not (management_ip or management_user or management_key):
+    if not (management_ip or
+            management_user or
+            management_key or
+            management_password or
+            management_port):
         # TODO: add this message to helptexts.py
         raise CloudifyCliError(
             'You must specify either `MANAGEMENT_IP` or the '
@@ -99,9 +107,15 @@ def use(ctx,
                 management_ip, rest_port))
         if management_user:
             wd_settings.set_management_user(management_user)
-            logger.info('Using user vagrant'.format(management_user))
+            logger.info('Using SSH user vagrant'.format(management_user))
         if management_key:
             wd_settings.set_management_key(management_key)
-            logger.info('Using key file {0}'.format(management_key))
+            logger.info('Using SSH key-file {0}'.format(management_key))
+        if management_password:
+            wd_settings.set_management_password(management_password)
+            logger.info('Using SSH password {0}'.format(management_password))
+        if management_port:
+            wd_settings.set_management_port(management_port)
+            logger.info('Using SSH port {0}'.format(management_port))
     # delete the previous manager deployment if exists.
     bs.delete_workdir()
