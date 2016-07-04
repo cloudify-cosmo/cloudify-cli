@@ -28,7 +28,6 @@ from ..logger import configure_loggers
 
 
 _NAME = 'local'
-_STORAGE_DIR_NAME = 'local-storage'
 
 
 @cfy.command(name='init')

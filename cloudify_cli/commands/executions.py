@@ -74,13 +74,13 @@ def get(execution_id):
     logger.info('')
 
 
-@executions.command(name='ls')
+@executions.command(name='list')
 @click.argument('deployment-id', required=False)
 @click.option('--include-system-workflows',
               required=False,
               is_flag=True,
               help=helptexts.INCLUDE_SYSTEM_WORKFLOWS)
-def ls(deployment_id, include_system_workflows):
+def list(deployment_id, include_system_workflows):
     """List executions
 
     If `DEPLOYMENT_ID` is provided, list executions for that deployment.

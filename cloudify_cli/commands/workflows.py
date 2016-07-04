@@ -91,9 +91,9 @@ def get(workflow_id, deployment_id):
     logger.info('')
 
 
-@workflows.command(name='ls')
+@workflows.command(name='list')
 @click.argument('deployment-id', required=True)
-def ls(deployment_id):
+def list(deployment_id):
     """List all workflows on the manager
     """
     logger = get_logger()

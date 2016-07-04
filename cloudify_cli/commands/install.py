@@ -164,8 +164,8 @@ def manager(blueprint_path,
 @cfy.options.workflow_id('install')
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
-@cfy.options.task_retries()
-@cfy.options.task_retry_interval()
+@cfy.options.task_retries(5)
+@cfy.options.task_retry_interval(3)
 @cfy.options.task_thread_pool_size()
 @click.pass_context
 def local(ctx,

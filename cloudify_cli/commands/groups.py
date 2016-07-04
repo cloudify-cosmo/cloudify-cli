@@ -32,9 +32,9 @@ def groups():
     pass
 
 
-@groups.command(name='ls')
+@groups.command(name='list')
 @click.argument('deployment-id', required=True)
-def ls(deployment_id):
+def list(deployment_id):
     """List all groups for a deployment
     """
     logger = get_logger()

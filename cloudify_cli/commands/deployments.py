@@ -24,7 +24,7 @@ from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 from .. import utils
 from ..config import cfy
 from ..config import helptexts
-from ..exceptions import SuppressedCloudifyCliError
+from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 from ..execution_events_fetcher import wait_for_execution
 from ..logger import get_logger, get_events_logger
 
@@ -49,9 +49,9 @@ def _print_deployment_inputs(client, blueprint_id):
     logger.info(inputs_output.getvalue())
 
 
-@deployments.command(name='ls')
+@deployments.command(name='list')
 @click.argument('blueprint-id')
-def ls(blueprint_id):
+def list(blueprint_id):
     """List deployments
 
     If `BLUEPRINT_ID` is provided, list deployments for that blueprint.
@@ -166,7 +166,6 @@ def create(blueprint_id,
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     inputs = utils.inputs_to_dict(inputs, 'inputs')
-
     deployment_id = deployment_id or utils._generate_suffixed_id(blueprint_id)
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
@@ -180,12 +179,12 @@ def create(blueprint_id,
         logger.info('Unable to create deployment. Not all '
                     'required inputs have been specified...')
         _print_deployment_inputs(client, blueprint_id)
-        raise SuppressedCloudifyCliError(str(e))
+        raise CloudifyCliError(str(e))
     except UnknownDeploymentInputError as e:
         logger.info(
             'Unable to create deployment, an unknown input was specified...')
         _print_deployment_inputs(client, blueprint_id)
-        raise SuppressedCloudifyCliError(str(e))
+        raise CloudifyCliError(str(e))
 
     logger.info("Deployment created. The deployment's id is {0}".format(
         deployment.id))
@@ -227,3 +226,22 @@ def outputs(deployment_id):
                                                          os.linesep))
         outputs_.write('     Value: {0}{1}'.format(output, os.linesep))
     logger.info(outputs_.getvalue())
+
+
+@deployments.command(name='inputs')
+@click.argument('deployment-id', required=True)
+def inputs(deployment_id):
+    """Retrieve inputs for a specific deployment
+    """
+    logger = get_logger()
+    management_ip = utils.get_management_server_ip()
+    client = utils.get_rest_client(management_ip)
+
+    logger.info('Retrieving inputs for deployment {0}...'.format(
+        deployment_id))
+    dep = client.deployments.get(deployment_id, _include=['inputs'])
+    inputs_ = StringIO()
+    for input_name, input in dep.inputs.iteritems():
+        inputs_.write(' - "{0}":{1}'.format(input_name, os.linesep))
+        inputs_.write('     Value: {0}{1}'.format(input, os.linesep))
+    logger.info(inputs_.getvalue())

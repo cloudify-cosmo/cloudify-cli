@@ -115,32 +115,38 @@ def register_commands():
         _cfy.add_command(commands.dev)
         _cfy.add_command(commands.ssh)
         _cfy.add_command(commands.logs)
-        _cfy.add_command(commands.nodes)
         _cfy.add_command(commands.agents)
         _cfy.add_command(commands.events)
-        _cfy.add_command(commands.groups)
         _cfy.add_command(commands.status)
-        _cfy.add_command(commands.plugins)
         _cfy.add_command(commands.upgrade)
         _cfy.add_command(commands.teardown)
         _cfy.add_command(commands.rollback)
-        _cfy.add_command(commands.workflows)
         _cfy.add_command(commands.snapshots)
-        _cfy.add_command(commands.blueprints)
-        _cfy.add_command(commands.executions)
-        _cfy.add_command(commands.deployments)
         _cfy.add_command(commands.install.manager)
         _cfy.add_command(commands.maintenance_mode)
         _cfy.add_command(commands.uninstall.manager)
         _cfy.add_command(commands.node_instances.manager)
+
+        # TODO: consolidate with `local` of the same type
+        _cfy.add_command(commands.nodes)
+        _cfy.add_command(commands.groups)
+        _cfy.add_command(commands.plugins)
+        _cfy.add_command(commands.workflows)
+        _cfy.add_command(commands.blueprints)
+        _cfy.add_command(commands.executions)
+        _cfy.add_command(commands.deployments)
+
     else:
-        _cfy.add_command(commands.execute)
-        _cfy.add_command(commands.outputs)
         _cfy.add_command(commands.bootstrap)
         _cfy.add_command(commands.install.local)
         _cfy.add_command(commands.uninstall.local)
         _cfy.add_command(commands.install_plugins)
         _cfy.add_command(commands.node_instances.local)
+
+        # TODO: consolidate with `local` of the same type
+        _cfy.add_command(commands.inputs)
+        _cfy.add_command(commands.execute)
+        _cfy.add_command(commands.outputs)
 
 
 @cfy.group(name='cfy')

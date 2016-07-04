@@ -183,7 +183,7 @@ def inputs_to_dict(resources, resource_name):
             raise CloudifyCliError(msg)
 
     if not isinstance(resources, list):
-        resources = [resources]
+        resources = list(resources)
     for resource in resources:
         # workflow parameters always pass an empty dictionary.
         # we ignore it.

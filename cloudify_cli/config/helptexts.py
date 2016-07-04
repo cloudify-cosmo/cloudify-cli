@@ -38,7 +38,7 @@ OPERATION_TIMEOUT = (
     "Operation timeout in seconds (The execution itself will keep going, but "
     "the CLI will stop waiting for it to terminate) [default: {0}]"
 )
-INCLUDE_LOGS = "Include logs in returned events"
+INCLUDE_LOGS = "Include logs in returned events [default: True]"
 JSON_OUTPUT = "Output events in a consumable JSON format"
 
 SKIP_INSTALL = "Skip install lifecycle operations"

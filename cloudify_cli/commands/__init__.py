@@ -33,6 +33,7 @@ from .agents import agents
 from .events import events
 from .groups import groups
 from .status import status
+from .inputs import inputs
 from .execute import execute
 from .outputs import outputs
 from .recover import recover

@@ -113,8 +113,8 @@ def download(snapshot_id, output_path):
     logger.info('Snapshot downloaded as {0}'.format(target_file))
 
 
-@snapshots.command(name='ls')
-def ls():
+@snapshots.command(name='list')
+def list():
     """List all snapshots on the manager
     """
     logger = get_logger()

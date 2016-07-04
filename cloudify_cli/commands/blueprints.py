@@ -174,8 +174,8 @@ def delete(blueprint_id):
     logger.info('Blueprint deleted')
 
 
-@blueprints.command(name='ls')
-def ls():
+@blueprints.command(name='list')
+def list():
     """List all blueprints
     """
     logger = get_logger()

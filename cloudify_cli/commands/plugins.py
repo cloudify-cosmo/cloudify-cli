@@ -132,8 +132,8 @@ def get(plugin_id):
     print_table('Plugin:', pt)
 
 
-@plugins.command(name='ls')
-def ls():
+@plugins.command(name='list')
+def list():
     """List all plugins on the manager
     """
     logger = get_logger()

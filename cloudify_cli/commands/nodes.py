@@ -80,9 +80,9 @@ def get(node_id, deployment_id):
         logger.info('\tNo node instances')
 
 
-@nodes.command(name='ls')
+@nodes.command(name='list')
 @cfy.options.deployment_id(required=False)
-def ls(deployment_id):
+def list(deployment_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
