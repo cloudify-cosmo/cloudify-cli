@@ -20,6 +20,7 @@ import unittest
 
 from cloudify_cli import utils
 from cloudify_cli import constants
+from cloudify_cli.logger import configure_loggers
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.utils import CloudifyWorkingDirectorySettings
 
@@ -182,6 +183,7 @@ class CliUtilsUnitTests(unittest.TestCase):
                                 input_str)
 
     def test_inputs_to_dict_error_handling(self):
+        configure_loggers()
         input_str = "my_key1=my_value1;my_key2"
         resource_name = "my_resource_name"
 

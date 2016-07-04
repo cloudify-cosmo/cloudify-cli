@@ -51,14 +51,16 @@ def validate(blueprint_path):
 
 def upload(blueprint_path, blueprint_id, validate_blueprint):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
+    rest_host = utils.get_rest_host()
     if validate_blueprint:
         validate(blueprint_path)
     else:
         logger.debug("Skipping blueprint validation...")
 
-    logger.info('Uploading blueprint {0}...'.format(blueprint_path.name))
-    client = utils.get_rest_client(management_ip)
+    logger.info('Uploading blueprint {0} to management server {1}'
+                .format(blueprint_path.name, rest_host))
+
+    client = utils.get_rest_client(rest_host)
     blueprint = client.blueprints.upload(blueprint_path.name, blueprint_id)
     logger.info("Blueprint uploaded. "
                 "The blueprint's id is {0}".format(blueprint.id))
@@ -66,17 +68,20 @@ def upload(blueprint_path, blueprint_id, validate_blueprint):
 
 def publish_archive(archive_location, blueprint_filename, blueprint_id):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
+    rest_host = utils.get_rest_host()
 
     check_if_archive_type_is_supported(archive_location)
 
     archive_location, archive_location_type = \
         determine_archive_type(archive_location)
 
-    logger.info('Publishing blueprint archive from {0} {1}...'.format(
-        archive_location_type, archive_location))
+    logger.info('Publishing blueprint archive from {0} {1} to management '
+                'server {2}'
+                .format(archive_location_type,
+                        archive_location,
+                        rest_host))
 
-    client = utils.get_rest_client(management_ip)
+    client = utils.get_rest_client(rest_host)
     blueprint = client.blueprints.publish_archive(
         archive_location, blueprint_id, blueprint_filename)
     logger.info("Blueprint archive published. "
@@ -113,27 +118,28 @@ def determine_archive_type(archive_location):
 
 def download(blueprint_id, output):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    logger.info('Downloading blueprint {0}...'.format(blueprint_id))
-    client = utils.get_rest_client(management_ip)
+    logger.info('Downloading blueprint \'{0}\' ...'.format(blueprint_id))
+    client = utils.get_rest_client()
     target_file = client.blueprints.download(blueprint_id, output)
     logger.info('Blueprint downloaded as {0}'.format(target_file))
 
 
 def delete(blueprint_id):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    logger.info('Deleting blueprint {0}...'.format(blueprint_id))
-    client = utils.get_rest_client(management_ip)
+    rest_host = utils.get_rest_host()
+    logger.info('Deleting blueprint {0} from management server {1}'
+                .format(blueprint_id, rest_host))
+    client = utils.get_rest_client(rest_host)
     client.blueprints.delete(blueprint_id)
     logger.info('Blueprint deleted')
 
 
-def ls():
+def ls(sort_by=None, descending=False):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
-    logger.info('Listing all blueprints...')
+    rest_host = utils.get_rest_host()
+    client = utils.get_rest_client(rest_host)
+    logger.info('Getting blueprints list... [manager={0}]'
+                .format(rest_host))
 
     def trim_description(blueprint):
         if blueprint['description'] is not None:
@@ -144,7 +150,9 @@ def ls():
             blueprint['description'] = ''
         return blueprint
 
-    blueprints = [trim_description(b) for b in client.blueprints.list()]
+    blueprints = [trim_description(b)
+                  for b in client.blueprints.list(
+            sort=sort_by, is_descending=descending)]
 
     pt = utils.table(['id', 'description', 'main_file_name',
                       'created_at', 'updated_at'],
@@ -156,10 +164,12 @@ def ls():
 def get(blueprint_id):
 
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    rest_host = utils.get_rest_host()
+    client = utils.get_rest_client(rest_host)
 
-    logger.info('Retrieving blueprint {0}...'.format(blueprint_id))
+    logger.info('Getting blueprint: '
+                '\'{0}\' [manager={1}]'
+                .format(blueprint_id, rest_host))
     blueprint = client.blueprints.get(blueprint_id)
 
     deployments = client.deployments.list(_include=['id'],
@@ -182,9 +192,10 @@ def get(blueprint_id):
 
 def inputs(blueprint_id):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
-    logger.info('Retrieving inputs for blueprint {0}...'.format(blueprint_id))
+    rest_host = utils.get_rest_host()
+    client = utils.get_rest_client(rest_host)
+    logger.info('Getting inputs for blueprint {0}... [manager={1}]'
+                .format(blueprint_id, rest_host))
 
     blueprint = client.blueprints.get(blueprint_id)
     inputs = blueprint['plan']['inputs']

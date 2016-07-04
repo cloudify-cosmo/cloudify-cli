@@ -26,10 +26,11 @@ from cloudify_cli.exceptions import CloudifyCliError
 
 def get(node_instance_id):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    rest_host = utils.get_rest_host()
+    client = utils.get_rest_client(rest_host)
 
-    logger.info('Retrieving node instance {0}'.format(node_instance_id))
+    logger.info('Getting node instance with ID: \'{0}\' [manager={1}]'
+                .format(node_instance_id, rest_host))
     try:
         node_instance = client.node_instances.get(node_instance_id)
     except CloudifyClientError as e:
@@ -50,19 +51,21 @@ def get(node_instance_id):
     logger.info('')
 
 
-def ls(deployment_id, node_name=None):
+def ls(deployment_id, node_name=None, sort_by=None, descending=False):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    rest_host = utils.get_rest_host()
+    client = utils.get_rest_client(rest_host)
     try:
         if deployment_id:
-            logger.info('Listing instances for deployment {0}...'.format(
-                deployment_id))
+            logger.info('Listing instances list for deployment: \'{0}\' '
+                        '[manager={1}]'.format(deployment_id, rest_host))
         else:
-            logger.info('Listing all instances...')
+            logger.info(
+                'Listing all instances: [manager={0}]'.format(
+                    rest_host))
         instances = client.node_instances.list(deployment_id=deployment_id,
                                                node_name=node_name)
-    except CloudifyClientError as e:
+    except CloudifyClientError, e:
         if not e.status_code != 404:
             raise
         raise CloudifyCliError('Deployment {0} does not exist'.format(

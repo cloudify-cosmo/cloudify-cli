@@ -25,11 +25,12 @@ from cloudify_cli.exceptions import CloudifyCliError
 
 def get(deployment_id, workflow_id):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    rest_host = utils.get_rest_host()
+    client = utils.get_rest_client(rest_host)
     try:
-        logger.info('Retrieving workflow {0} for deployment {1}'.format(
-            workflow_id, deployment_id))
+        logger.info('Retrieving workflow '
+                    '\'{0}\' of deployment \'{1}\' [manager={2}]'
+                    .format(workflow_id, deployment_id, rest_host))
         deployment = client.deployments.get(deployment_id)
         workflow = next((wf for wf in deployment.workflows if
                          wf.name == workflow_id), None)
@@ -81,14 +82,17 @@ def get(deployment_id, workflow_id):
 
 def ls(deployment_id):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    rest_host = utils.get_rest_host()
+    client = utils.get_rest_client(rest_host)
 
-    logger.info('Listing workflows for deployment {0}...'.format(
-        deployment_id))
+    logger.info('Listing workflows for deployment: '
+                '\'{0}\'... [manager={1}]'
+                .format(deployment_id, rest_host))
 
     deployment = client.deployments.get(deployment_id)
     workflows = deployment.workflows
+
+    workflows = sorted(workflows, key=lambda w: w.name)
 
     pt = utils.table(['blueprint_id', 'deployment_id',
                       'name', 'created_at'],

@@ -44,19 +44,19 @@ class TestGetRestClient(unittest.TestCase):
         os.environ[constants.CLOUDIFY_USERNAME_ENV] = 'test_username'
         os.environ[constants.CLOUDIFY_PASSWORD_ENV] = 'test_password'
         os.environ[constants.CLOUDIFY_SSL_TRUST_ALL] = TRUST_ALL
-        os.environ[constants.CLOUDIFY_SSL_CERT] = CERT_PATH
+        os.environ[constants.LOCAL_REST_CERT_FILE] = CERT_PATH
 
     def tearDown(self):
 
         del os.environ[constants.CLOUDIFY_USERNAME_ENV]
         del os.environ[constants.CLOUDIFY_PASSWORD_ENV]
         del os.environ[constants.CLOUDIFY_SSL_TRUST_ALL]
-        del os.environ[constants.CLOUDIFY_SSL_CERT]
+        del os.environ[constants.LOCAL_REST_CERT_FILE]
 
         shutil.rmtree(self.test_dir)
 
     def test_get_rest_client(self):
-        client = utils.get_rest_client(manager_ip='localhost',
+        client = utils.get_rest_client(rest_host='localhost',
                                        skip_version_check=True)
         self.assertIsNotNone(client._client.headers[
             constants.CLOUDIFY_AUTHENTICATION_HEADER])
@@ -68,7 +68,7 @@ class TestGetRestClient(unittest.TestCase):
         skip_version_check = True
 
         client = utils.get_rest_client(
-            manager_ip=host, rest_port=port, protocol=protocol,
+            rest_host=host, rest_port=port, rest_protocol=protocol,
             skip_version_check=skip_version_check)
 
         self.assertEqual(CERT_PATH, client._client.cert)
