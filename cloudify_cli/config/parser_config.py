@@ -110,6 +110,22 @@ def deployment_id_argument(hlp):
     }
 
 
+def sort_by_argument(default_value='created_at'):
+    return {
+        'dest': 'sort_by',
+        'default': default_value,
+        'help': 'Key for sorting the list'
+    }
+
+
+def descending_argument():
+    return {
+        'dest': 'descending',
+        'action': 'store_true',
+        'help': 'Sort list in descending order (default: ascending)'
+    }
+
+
 def inputs_argument(hlp):
     return {
         'dest': 'inputs',
@@ -401,6 +417,10 @@ def parser_config():
                         'handler': cfy.plugins.download
                     },
                     'list': {
+                        'arguments': {
+                            '-s,--sort-by': sort_by_argument('uploaded_at'),
+                            '--desc': descending_argument()
+                        },
                         'help': 'List all plugins currently on the Manager',
                         'handler': cfy.plugins.ls
                     },
@@ -457,6 +477,10 @@ def parser_config():
                         'handler': cfy.blueprints.download
                     },
                     'list': {
+                        'arguments': {
+                            '-s,--sort-by': sort_by_argument(),
+                            '--desc': descending_argument()
+                        },
                         'help': 'List all blueprints on the Manager',
                         'handler': cfy.blueprints.ls
                     },
@@ -543,6 +567,10 @@ def parser_config():
                         'handler': cfy.snapshots.download
                     },
                     'list': {
+                        'arguments': {
+                            '-s,--sort-by': sort_by_argument(),
+                            '--desc': descending_argument()
+                        },
                         'help': 'List all snapshots on the Manager',
                         'handler': cfy.snapshots.ls
                     },
@@ -631,7 +659,9 @@ def parser_config():
                         'arguments': {
                             '-b,--blueprint-id': make_optional(
                                 blueprint_id_argument()
-                            )
+                            ),
+                            '-s,--sort-by': sort_by_argument(),
+                            '--desc': descending_argument()
                         },
                         'help': 'List the all deployments on the Manager, '
                                 'or all deployments of a specific blueprint',
@@ -746,6 +776,8 @@ def parser_config():
                                 'action': 'store_true',
                                 'help': 'Include executions of system workflows'
                             },
+                            '-s,--sort-by': sort_by_argument(),
+                            '--desc': descending_argument()
                         },
                         'help': 'List all running executions on the Manager or all '
                                 'executions for a specific deployment',
@@ -813,7 +845,9 @@ def parser_config():
                             '-d,--deployment-id': deployment_id_argument(
                                     hlp='The ID of the deployment to list '
                                         'nodes for. If omitted, this will '
-                                        'list nodes for all deployments')
+                                        'list nodes for all deployments'),
+                            '-s,--sort-by': sort_by_argument('deployment_id'),
+                            '--desc': descending_argument()
                         },
                         'help': 'List nodes for all deployments, or for a '
                                 'specific deployment',
@@ -845,7 +879,9 @@ def parser_config():
                             '--node-name': {
                                 'dest': 'node_name',
                                 'help': "The node's name"
-                            }
+                            },
+                            '-s,--sort-by': sort_by_argument('node_id'),
+                            '--desc': descending_argument()
                         },
                         'help': 'List node-instances for all deployments, '
                                 'or for a specific deployment',
