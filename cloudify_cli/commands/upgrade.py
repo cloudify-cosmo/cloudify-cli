@@ -65,7 +65,8 @@ def upgrade(validate_only,
     logger.info('Upgrading manager...')
     put_workflow_state_file(is_upgrade=True,
                             key_filename=inputs['ssh_key_filename'],
-                            user=inputs['ssh_user'])
+                            user=inputs['ssh_user'],
+                            port=inputs['ssh_port'])
     if not skip_validations:
         logger.info('Executing upgrade validations...')
         env.execute(workflow='execute_operation',
@@ -102,7 +103,8 @@ def upgrade(validate_only,
                 .get('fetch_timeout', 30)
             fabric_env = bs.build_fabric_env(management_ip,
                                              inputs['ssh_user'],
-                                             inputs['ssh_key_filename'])
+                                             inputs['ssh_key_filename'],
+                                             manager_port=inputs['ssh_port'])
             temp_dir = tempfile.mkdtemp()
             try:
                 logger.info('Uploading dsl resources...')
@@ -131,6 +133,7 @@ def update_inputs(inputs=None):
     inputs.update({'private_ip': _load_private_ip(inputs)})
     inputs.update({'ssh_key_filename': _load_management_key(inputs)})
     inputs.update({'ssh_user': _load_management_user(inputs)})
+    inputs.update({'ssh_port': _load_management_port(inputs)})
     inputs.update({'public_ip': utils.get_management_server_ip()})
     return inputs
 
@@ -145,7 +148,7 @@ def _load_private_ip(inputs):
 
 def _load_management_key(inputs):
     try:
-        key_path = inputs['ssh_key_filename'] or utils.get_management_key()
+        key_path = inputs.get('ssh_key_filename') or utils.get_management_key()
         return os.path.expanduser(key_path)
     except Exception:
         raise exceptions.CloudifyCliError('Manager key must be provided for '
@@ -157,6 +160,14 @@ def _load_management_user(inputs):
         return inputs.get('ssh_user') or utils.get_management_user()
     except Exception:
         raise exceptions.CloudifyCliError('Manager user must be provided for '
+                                          'the upgrade/rollback process')
+
+
+def _load_management_port(inputs):
+    try:
+        return inputs.get('ssh_port') or utils.get_management_port()
+    except Exception:
+        raise exceptions.CloudifyCliError('Manager port must be provided for '
                                           'the upgrade/rollback process')
 
 
@@ -176,7 +187,7 @@ def verify_and_wait_for_maintenance_mode_activation(client):
         _wait_for_maintenance(client, logger)
 
 
-def put_workflow_state_file(is_upgrade, key_filename, user):
+def put_workflow_state_file(is_upgrade, key_filename, user, port):
     manager_state_file = tempfile.NamedTemporaryFile(delete=True)
     content = {'is_upgrade': is_upgrade}
     with open(manager_state_file.name, 'w') as f:
@@ -184,7 +195,8 @@ def put_workflow_state_file(is_upgrade, key_filename, user):
     ssh.put_file_in_manager(manager_state_file,
                             REMOTE_WORKFLOW_STATE_PATH,
                             key_filename=key_filename,
-                            user=user)
+                            user=user,
+                            port=port)
 
 
 def _wait_for_maintenance(client, logger):

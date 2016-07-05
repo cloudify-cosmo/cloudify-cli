@@ -34,7 +34,8 @@ def get_file_from_manager(remote_source_path, destination_path):
     with fab.settings(
             fab.hide('running', 'stdout'),
             host_string=utils.build_manager_host_string(),
-            key_filename=key_filename):
+            key_filename=key_filename,
+            port=utils.get_management_port()):
         fab.get(remote_source_path, destination_path)
 
 
@@ -42,13 +43,16 @@ def put_file_in_manager(source_path,
                         remote_source_path,
                         use_sudo=True,
                         key_filename=None,
-                        user=None):
+                        user=None,
+                        port=''):
+    port = port or utils.get_management_port()
     if not key_filename:
         key_filename = os.path.expanduser(utils.get_management_key())
     with fab.settings(
             fab.hide('running', 'stdout'),
             host_string=utils.build_manager_host_string(user=user),
-            key_filename=key_filename):
+            key_filename=key_filename,
+            port=port):
         fab.put(use_sudo=use_sudo,
                 local_path=source_path,
                 remote_path=remote_source_path)
@@ -66,12 +70,14 @@ def run_command_on_manager(command,
     `force_output` forces all output as if running in verbose.
     """
     host_string = host_string or utils.build_manager_host_string()
+    port = utils.get_management_port()
 
     def execute():
         key_filename = os.path.expanduser(utils.get_management_key())
         with fab.settings(
                 host_string=host_string,
                 key_filename=key_filename,
+                port=port,
                 warn_only=True):
             if use_sudo:
                 output = fab.sudo(command)

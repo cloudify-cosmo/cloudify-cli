@@ -87,6 +87,7 @@ def bootstrap(keep_up,
                 ws_settings.set_management_server(manager_ip)
                 ws_settings.set_management_key(details['manager_key_path'])
                 ws_settings.set_management_user(details['manager_user'])
+                ws_settings.set_management_port(details['manager_port'])
                 ws_settings.set_provider_context(provider_context)
                 ws_settings.set_rest_port(details['rest_port'])
                 ws_settings.set_protocol(details['protocol'])

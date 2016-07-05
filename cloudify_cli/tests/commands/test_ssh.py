@@ -46,9 +46,19 @@ class SshTest(CliCommandTest):
     def test_ssh_with_no_key(self):
         self.settings.set_management_user('test')
         self.settings.set_management_server('127.0.0.1')
+        self.settings.set_management_port('22')
         self._create_cosmo_wd_settings(self.settings)
         self._assert_ex('cfy ssh',
                         'Management Key is not set '
+                        'in working directory settings')
+
+    def test_ssh_with_no_port(self):
+        self.settings.set_management_user('test')
+        self.settings.set_management_server('127.0.0.1')
+        self.settings.set_management_key('/tmp/test.pem')
+        self._create_cosmo_wd_settings(self.settings)
+        self._assert_ex('cfy ssh',
+                        'Management Port is not set '
                         'in working directory settings')
 
     def test_ssh_with_no_user(self):

@@ -38,6 +38,7 @@ from cloudify_cli import constants
 PROVIDER_RUNTIME_PROPERTY = 'provider'
 MANAGER_IP_RUNTIME_PROPERTY = 'manager_ip'
 MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
+MANAGER_PORT_RUNTIME_PROPERTY = 'manager_port'
 MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
 DEFAULT_REMOTE_AGENT_KEY_PATH = '~/.ssh/agent_key.pem'
 REST_PORT = 'rest_port'
@@ -646,6 +647,8 @@ def _set_manager_endpoint_data():
         fabric.api.env.host_string
     ctx.instance.runtime_properties[MANAGER_USER_RUNTIME_PROPERTY] = \
         fabric.api.env.user
+    ctx.instance.runtime_properties[MANAGER_PORT_RUNTIME_PROPERTY] = \
+        fabric.api.env.port
     ctx.instance.runtime_properties[MANAGER_KEY_PATH_RUNTIME_PROPERTY] = \
         fabric.api.env.key_filename
 
