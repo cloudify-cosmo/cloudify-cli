@@ -22,13 +22,14 @@ from cloudify_cli.logger import get_logger
 from cloudify_cli.utils import print_table
 
 
-def restore(snapshot_id, without_deployments_envs, force):
+def restore(snapshot_id, without_deployments_envs, force, timeout):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
-    logger.info('Restoring snapshot {0}...'.format(snapshot_id))
+    logger.info('Restoring snapshot... [snapshot_id={0}, timeout={1}]'.format(
+        snapshot_id, timeout))
     client = utils.get_rest_client(management_ip)
     execution = client.snapshots.restore(
-        snapshot_id, not without_deployments_envs, force)
+        snapshot_id, not without_deployments_envs, force, timeout)
     logger.info("Started workflow execution. The execution's id is {0}".format(
         execution.id))
 
