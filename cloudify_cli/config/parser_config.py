@@ -33,6 +33,7 @@ from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
 from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW
 from cloudify_cli.constants import DEFAULT_BLUEPRINT_FILE_NAME
 from cloudify_cli.constants import DEFAULT_TASK_THREAD_POOL_SIZE
+from cloudify_cli.constants import DEFAULT_SNAPSHOTS_RESTORE_TIMEOUT_SECONDS
 from cloudify_cli.constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
 FORMAT_INPUT_AS_YAML_OR_DICT = \
@@ -181,12 +182,13 @@ def force_argument(hlp):
     }
 
 
-def timeout_argument(default_timeout=DEFAULT_TIMEOUT):
+def timeout_argument(default_timeout=DEFAULT_TIMEOUT, hlp=''):
     return {
         'dest': 'timeout',
         'type': int,
         'default': default_timeout,
-        'help': 'Operation timeout in seconds (The execution itself will keep '
+        'help': hlp if hlp else
+                'Operation timeout in seconds (The execution itself will keep '
                 'going, but the CLI will stop waiting for it to '
                 'terminate)'
     }
@@ -593,8 +595,12 @@ def parser_config():
                                 force_argument(
                                         hlp='Force restoring the snapshot on '
                                             'a Manager with existing '
-                                            'blueprints or deployments')
-                        },
+                                            'blueprints or deployments'),
+                             '-t,--timeout':
+                                timeout_argument(
+                                          default_timeout=DEFAULT_SNAPSHOTS_RESTORE_TIMEOUT_SECONDS,
+                                          hlp='Manager database read timeout in seconds')
+                       },
                         'help': 'Restore a Manager using a snapshot',
                         'handler': cfy.snapshots.restore
                     }
