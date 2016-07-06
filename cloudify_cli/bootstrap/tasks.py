@@ -453,12 +453,7 @@ def recover_docker(docker_path=None, use_sudo=True,
     lgr.info('waiting for cloudify management services to restart')
     port = ctx.instance.runtime_properties[REST_PORT]
     started = _wait_for_management(manager_ip, timeout=180, port=port)
-
-    cloudify_config = ctx.node.properties['cloudify']
-    transient_deployment_workers_mode_enabled = cloudify_config.get(
-        'transient_deployment_workers_mode', {}).get('enabled', True)
-    if not transient_deployment_workers_mode_enabled:
-        _recover_deployments(docker_path, use_sudo)
+    _recover_deployments(docker_path, use_sudo)
 
     if not started:
         err = 'failed waiting for cloudify management services to restart.'
