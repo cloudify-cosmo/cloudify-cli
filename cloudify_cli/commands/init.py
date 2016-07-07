@@ -30,14 +30,20 @@ from ..logger import configure_loggers
 _NAME = 'local'
 
 
+# cfy init my_profile
+# cfy use my_profile -t ...
+# cfy init my_profile -r
+
 @cfy.command(name='init')
-@click.argument('blueprint-path', required=False)
+@click.argument('profile-name', required=False)
+@cfy.options.blueprint_path()
 @cfy.options.reset_config
 @cfy.options.skip_logging
 @cfy.options.inputs
 @cfy.options.install_plugins
 @cfy.options.init_hard_reset
-def init(blueprint_path,
+def init(profile_name,
+         blueprint_path,
          reset_config,
          skip_logging,
          inputs,
@@ -47,32 +53,39 @@ def init(blueprint_path,
     """
     logger = get_logger()
 
-    def _init():
+    def _init(profile_name=None):
+        logger.info('Initializing profile {0}'.format(profile_name))
+        profile_name = profile_name or 'default'
 
-        workdir = os.path.join(
-            os.path.expanduser('~'),
-            constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
         context_file_path = os.path.join(
-            workdir, constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
+            utils.CLOUDIFY_WORKDIR,
+            profile_name,
+            constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
 
-        if os.path.exists(context_file_path):
-            if not reset_config:
+        if os.path.isfile(context_file_path):
+            if reset_config:
+                if hard:
+                    os.remove(utils.CLOUDIFY_CONFIG_PATH)
+                else:
+                    os.remove(context_file_path)
+            else:
                 error = exceptions.CloudifyCliError(
-                    'Current directory is already initialized')
+                    'Profile is already initialized')
                 error.possible_solutions = [
                     "Run 'cfy init -r' to force re-initialization "
                 ]
                 raise error
-            else:
-                if hard:
-                    shutil.rmtree(workdir)
-                else:
-                    os.remove(context_file_path)
+
+        if not os.path.isdir(utils.CLOUDIFY_WORKDIR):
+            os.makedirs(utils.CLOUDIFY_WORKDIR)
+        utils.update_active_profile(profile_name)
+        if not os.path.isdir(utils.CLOUDIFY_CONFIG_PATH) or hard:
+            utils.dump_configuration_file()
 
         settings = utils.CloudifyWorkingDirectorySettings()
-        utils.dump_cloudify_working_dir_settings(settings)
-        if hard or not os.path.isfile(os.path.join(workdir, 'config.yaml')):
-            utils.dump_configuration_file()
+        utils.dump_cloudify_working_dir_settings(
+            settings, profile_name=profile_name)
+
         configure_loggers()
         if not skip_logging:
             logger.info('Initialization completed successfully')
@@ -109,4 +122,4 @@ def init(blueprint_path,
                     "blueprint, run `cfy init {0}` "
                     "again to apply them".format(blueprint_path))
     else:
-        _init()
+        _init(profile_name)

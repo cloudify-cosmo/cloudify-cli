@@ -56,45 +56,38 @@ DEFAULT_LOG_FILE = os.path.expanduser(
 CLOUDIFY_WORKDIR = os.path.join(
     os.path.expanduser('~'),
     constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
-CLOUDIFY_CONTEXT_FILE_PATH = os.path.join(
-    CLOUDIFY_WORKDIR,
-    constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
-CLOUDIFY_CONFIG_FILE_PATH = os.path.join(
-    CLOUDIFY_WORKDIR,
-    'config.yaml')
+CLOUDIFY_CONFIG_PATH = os.path.join(CLOUDIFY_WORKDIR, 'config.yaml')
+ACTIVE_PRO_FILE = os.path.join(CLOUDIFY_WORKDIR, 'active.profile')
 
 
-def get_management_user():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
-    if cosmo_wd_settings.get_management_user():
-        return cosmo_wd_settings.get_management_user()
-    msg = 'Management User is not set in working directory settings'
-    raise CloudifyCliError(
-        '{0}\n{1}'.format(msg, helptexts.SET_MANAGEMENT_CREDS))
+def update_active_profile(profile_name):
+    with open(ACTIVE_PRO_FILE, 'w+') as active_profile:
+        active_profile.write(profile_name)
 
 
-def get_management_key():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
-    if cosmo_wd_settings.get_management_key():
-        return cosmo_wd_settings.get_management_key()
-    msg = 'Management Key is not set in working directory settings'
-    raise CloudifyCliError(
-        '{0}\n{1}'.format(msg, helptexts.SET_MANAGEMENT_CREDS))
+def get_active_profile():
+    if os.path.isfile(ACTIVE_PRO_FILE):
+        with open(ACTIVE_PRO_FILE) as active_profile:
+            return active_profile.read().strip()
+    else:
+        return None
 
 
-def dump_to_file(collection, file_path):
-    with open(file_path, 'a') as f:
-        f.write(os.linesep.join(collection))
-        f.write(os.linesep)
+def is_manager_active():
+    active_profile = get_active_profile()
+    if not active_profile:
+        return False
+
+    profile = load_cloudify_working_dir_settings(
+        active_profile, suppress_error=True)
+    if not (profile and profile.get_management_server()):
+        return False
+    return True
 
 
-def is_virtual_env():
-    return hasattr(sys, 'real_prefix')
-
-
-def load_cloudify_working_dir_settings(suppress_error=False):
+def load_cloudify_working_dir_settings(profile_name, suppress_error=False):
     try:
-        path = get_context_path()
+        path = get_context_path(profile_name)
         with open(path, 'r') as f:
             return yaml.load(f.read())
     except CloudifyCliError:
@@ -103,7 +96,84 @@ def load_cloudify_working_dir_settings(suppress_error=False):
         raise
 
 
-def raise_uninitialized():
+def get_context_path(profile_name):
+    init_path = get_init_path(profile_name)
+    if init_path is None:
+        raise_uninitialized(profile_name)
+    context_path = os.path.join(
+        init_path,
+        constants.CLOUDIFY_WD_SETTINGS_FILE_NAME
+    )
+    if not os.path.exists(context_path):
+        raise CloudifyCliError(
+            'File {0} does not exist'
+            .format(context_path)
+        )
+    return context_path
+
+
+def is_initialized(profile_name=None):
+    if profile_name:
+        return get_init_path(profile_name) is not None
+    else:
+        return os.path.isfile(CLOUDIFY_CONFIG_PATH)
+
+
+def get_init_path(profile_name):
+    """
+    Returns the path of the .cloudify dir
+
+    search in each directory up the cwd directory tree for the existence of the
+    Cloudify settings directory (`.cloudify`).
+    :return: if we found it, return it's path. else, return None
+    """
+    path = os.path.join(
+        os.path.expanduser('~'),
+        constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+        profile_name)
+    return path if os.path.exists(path) else None
+
+
+def dump_configuration_file():
+    config = pkg_resources.resource_string(
+        cloudify_cli.__name__,
+        'resources/config.yaml')
+
+    template = Template(config)
+    rendered = template.render(log_path=DEFAULT_LOG_FILE)
+    with open(CLOUDIFY_CONFIG_PATH, 'w') as f:
+        f.write(rendered)
+        f.write(os.linesep)
+
+
+def dump_cloudify_working_dir_settings(cosmo_wd_settings=None,
+                                       update=False,
+                                       profile_name=None):
+    workdir = os.path.join(
+        os.path.expanduser('~'),
+        constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
+        profile_name)
+
+    if cosmo_wd_settings is None:
+        cosmo_wd_settings = CloudifyWorkingDirectorySettings()
+    if update:
+        # locate existing file
+        # this will raise an error if the file doesn't exist.
+        target_file_path = get_context_path(profile_name)
+    else:
+
+        # create a new file
+        if not os.path.exists(workdir):
+            os.mkdir(workdir)
+        target_file_path = os.path.join(
+            workdir,
+            constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
+
+    with open(target_file_path, 'w') as f:
+        f.write(yaml.dump(cosmo_wd_settings))
+
+
+def raise_uninitialized(profile_name):
     error = CloudifyCliError(
         'Not initialized: Cannot find {0} in {1}, '
         'or in any of its parent directories'
@@ -115,20 +185,30 @@ def raise_uninitialized():
     raise error
 
 
-def get_context_path():
-    init_path = get_init_path()
-    if init_path is None:
-        raise_uninitialized()
-    context_path = os.path.join(
-        init_path,
-        constants.CLOUDIFY_WD_SETTINGS_FILE_NAME
-    )
-    if not os.path.exists(context_path):
-        raise CloudifyCliError(
-            'File {0} does not exist'
-            .format(context_path)
-        )
-    return context_path
+@contextmanager
+def profile(profile_name):
+    profile = load_cloudify_working_dir_settings(profile_name)
+    yield profile
+
+
+@contextmanager
+def update_wd_settings(profile_name):
+    cosmo_wd_settings = load_cloudify_working_dir_settings(profile_name)
+    yield cosmo_wd_settings
+    dump_cloudify_working_dir_settings(
+        cosmo_wd_settings,
+        update=True,
+        profile_name=profile_name)
+
+
+def dump_to_file(collection, file_path):
+    with open(file_path, 'a') as f:
+        f.write(os.linesep.join(collection))
+        f.write(os.linesep)
+
+
+def is_virtual_env():
+    return hasattr(sys, 'real_prefix')
 
 
 def inputs_to_dict(resources, resource_name):
@@ -222,78 +302,6 @@ def plain_string_to_dict(input_string):
     return input_dict
 
 
-def is_initialized():
-    return get_init_path() is not None
-
-
-def get_init_path():
-    """
-    Returns the path of the .cloudify dir
-
-    search in each directory up the cwd directory tree for the existence of the
-    Cloudify settings directory (`.cloudify`).
-    :return: if we found it, return it's path. else, return None
-    """
-    current_lookup_dir = os.path.expanduser('~')
-    while True:
-
-        path = os.path.join(current_lookup_dir,
-                            constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
-
-        if os.path.exists(path):
-            return path
-        else:
-            if os.path.dirname(current_lookup_dir) == current_lookup_dir:
-                return None
-            current_lookup_dir = os.path.dirname(current_lookup_dir)
-
-
-def get_configuration_path():
-    dot_cloudify = get_init_path()
-    return os.path.join(
-        dot_cloudify,
-        'config.yaml'
-    )
-
-
-def dump_configuration_file():
-    config = pkg_resources.resource_string(
-        cloudify_cli.__name__,
-        'resources/config.yaml')
-
-    template = Template(config)
-    rendered = template.render(log_path=DEFAULT_LOG_FILE)
-    target_config_path = get_configuration_path()
-    with open(os.path.join(target_config_path), 'w') as f:
-        f.write(rendered)
-        f.write(os.linesep)
-
-
-def dump_cloudify_working_dir_settings(cosmo_wd_settings=None,
-                                       update=False,
-                                       workdir=None):
-    workdir = workdir or os.path.join(
-        os.path.expanduser('~'), constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
-
-    if cosmo_wd_settings is None:
-        cosmo_wd_settings = CloudifyWorkingDirectorySettings()
-    if update:
-        # locate existing file
-        # this will raise an error if the file doesn't exist.
-        target_file_path = get_context_path()
-    else:
-
-        # create a new file
-        if not os.path.exists(workdir):
-            os.mkdir(workdir)
-        target_file_path = os.path.join(
-            workdir,
-            constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
-
-    with open(target_file_path, 'w') as f:
-        f.write(yaml.dump(cosmo_wd_settings))
-
-
 def is_use_colors():
     if not is_initialized():
         return False
@@ -325,13 +333,6 @@ def is_validate_definitions_version():
         return True
     config = CloudifyConfig()
     return config.validate_definitions_version
-
-
-@contextmanager
-def update_wd_settings():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
-    yield cosmo_wd_settings
-    dump_cloudify_working_dir_settings(cosmo_wd_settings, update=True)
 
 
 def get_cwd():
@@ -404,21 +405,35 @@ def get_protocol():
     return cosmo_wd_settings.get_protocol()
 
 
+def get_management_user():
+    active_profile = get_active_profile()
+    cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
+    if cosmo_wd_settings.get_management_user():
+        return cosmo_wd_settings.get_management_user()
+    msg = 'Management User is not set in working directory settings'
+    raise CloudifyCliError(
+        '{0}\n{1}'.format(msg, helptexts.SET_MANAGEMENT_CREDS))
+
+
+def get_management_key():
+    active_profile = get_active_profile()
+    cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
+    if cosmo_wd_settings.get_management_key():
+        return cosmo_wd_settings.get_management_key()
+    msg = 'Management Key is not set in working directory settings'
+    raise CloudifyCliError(
+        '{0}\n{1}'.format(msg, helptexts.SET_MANAGEMENT_CREDS))
+
+
 def get_management_server_ip():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
+    active_profile = get_active_profile()
+    cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
     management_ip = cosmo_wd_settings.get_management_server()
     if management_ip:
         return management_ip
     raise CloudifyCliError(
         "You must being using a manager to perform this action. "
         "You can run `cfy use MANAGER_IP` to use a manager.")
-
-
-def is_manager_active():
-    dir_settings = load_cloudify_working_dir_settings(suppress_error=True)
-    if not (dir_settings and dir_settings.get_management_server()):
-        return False
-    return True
 
 
 def get_username():
@@ -569,6 +584,8 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
     def __init__(self):
         self._management_ip = None
         self._management_key = None
+        self._management_password = None
+        self._management_port = None
         self._management_user = None
         self._provider_context = None
         self._rest_port = constants.DEFAULT_REST_PORT
@@ -585,6 +602,18 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
 
     def set_management_key(self, management_key):
         self._management_key = management_key
+
+    def get_management_password(self):
+        return self._management_password
+
+    def set_management_password(self, management_password):
+        self._management_password = management_password
+
+    def get_management_port(self):
+        return self._management_port
+
+    def set_management_port(self, management_port):
+        self._management_port = management_port
 
     def get_management_user(self):
         return self._management_user
@@ -656,7 +685,7 @@ class CloudifyConfig(object):
             return self._logging.get('loggers', {})
 
     def __init__(self):
-        with open(get_configuration_path()) as f:
+        with open(CLOUDIFY_CONFIG_PATH) as f:
             self._config = yaml.safe_load(f.read())
 
     @property

@@ -20,7 +20,6 @@ from StringIO import StringIO
 
 from .. import utils
 from . import helptexts
-from .. import constants
 from ..constants import DEFAULT_REST_PORT
 from ..exceptions import CloudifyCliError
 
@@ -29,6 +28,59 @@ CLICK_CONTEXT_SETTINGS = dict(
     help_option_names=['-h', '--help'],
     token_normalize_func=lambda param: param.lower(),
     ignore_unknown_options=True)
+
+
+class MutuallyExclusiveOption(click.Option):
+    def __init__(self, *args, **kwargs):
+        self.mutually_exclusive = set(kwargs.pop('mutually_exclusive', []))
+        self.mutuality_error_message = \
+            kwargs.pop('mutuality_error_message', [])
+        self.mutuality_string = ', '.join(self.mutually_exclusive)
+        if self.mutually_exclusive:
+            help = kwargs.get('help', '')
+            kwargs['help'] = (
+                '{0}. This argument is mutually exclusive with '
+                'arguments: [{1}] ({2})'.format(
+                    help,
+                    self.mutuality_string,
+                    self.mutuality_error_message))
+        super(MutuallyExclusiveOption, self).__init__(*args, **kwargs)
+
+    def handle_parse_result(self, ctx, opts, args):
+        if self.mutually_exclusive.intersection(opts) and self.name in opts:
+            raise click.UsageError(
+                "Illegal usage: `{0}` is mutually exclusive with "
+                "arguments `{1}` ({2}).".format(
+                    self.name,
+                    self.mutuality_string,
+                    self.mutuality_error_message))
+        return super(MutuallyExclusiveOption, self).handle_parse_result(
+            ctx, opts, args)
+
+
+class RequiresOption(click.Option):
+    def __init__(self, *args, **kwargs):
+        self.requires = set(kwargs.pop('requires', []))
+        self.requires_error_message = \
+            kwargs.pop('requires_error_message', [])
+        self.requires_string = ', '.join(self.requires)
+        if self.requires:
+            help = kwargs.get('help', '')
+            kwargs['help'] = (
+                '{0}. This argument requires arguments: [{1}] ({2})'.format(
+                    help,
+                    self.requires,
+                    self.requires_error_message))
+        super(RequiresOption, self).__init__(*args, **kwargs)
+
+    def handle_parse_result(self, ctx, opts, args):
+        if any(not flag for flag in self.requires) and self.name in opts:
+            raise click.UsageError(
+                "Illegal usage: `{0}` requires arguments `{1}` ({2}).".format(
+                    self.name,
+                    self.requires_string,
+                    self.requires_error_message))
+        return super(RequiresOption, self).handle_parse_result(ctx, opts, args)
 
 
 def _format_version_data(version_data,
@@ -214,6 +266,13 @@ class Options(object):
             is_flag=True,
             help=helptexts.BACKUP_LOGS_FIRST)
 
+        self.management_ip = click.option(
+            '-t',
+            '--management-ip',
+            required=False,
+            help="The IP of the host "
+            "machine on which you bootstrapped")
+
         self.management_user = click.option(
             '-u',
             '--management-user',
@@ -225,8 +284,8 @@ class Options(object):
             '-k',
             '--management-key',
             required=False,
-            cls=MutuallyExclusiveOption,
-            mutually_exclusive=['management-password'],
+            # cls=MutuallyExclusiveOption,
+            # mutually_exclusive=['management-password'],
             help="The path to the ssh key-file to use when "
             "connecting to the manager")
 
@@ -234,12 +293,12 @@ class Options(object):
             '-p',
             '--management-password',
             required=False,
-            cls=MutuallyExclusiveOption,
-            mutually_exclusive=['management-key'],
+            # cls=MutuallyExclusiveOption,
+            # mutually_exclusive=['management-key'],
             help="The password to use when connecting to the manager")
 
         self.management_port = click.option(
-            '--ssh-port',
+            '--management-port',
             required=False,
             default=22,
             help="The port to use when connecting to the manager")
@@ -337,12 +396,11 @@ class Options(object):
             help=help)
 
     @staticmethod
-    def blueprint_filename(default=constants.DEFAULT_BLUEPRINT_FILE_NAME):
+    def blueprint_filename():
         return click.option(
             '-n',
             '--blueprint-filename',
-            default=default,
-            help=helptexts.BLUEPRINT_FILENAME.format(default))
+            help=helptexts.BLUEPRINT_FILENAME)
 
     @staticmethod
     def workflow_id(default):
@@ -410,31 +468,3 @@ class Options(object):
 
 
 options = Options()
-
-
-class MutuallyExclusiveOption(click.Option):
-    def __init__(self, *args, **kwargs):
-        self.mutually_exclusive = set(kwargs.pop('mutually_exclusive', []))
-        self.mutuality_error_message = \
-            kwargs.pop('mutuality_error_message', [])
-        self.mutuality_string = ', '.join(self.mutually_exclusive)
-        if self.mutually_exclusive:
-            help = kwargs.get('help', '')
-            kwargs['help'] = (
-                '{0}. This argument is mutually exclusive with '
-                'arguments: [{1}] ({2})'.format(
-                    help,
-                    self.mutuality_string,
-                    self.mutuality_error_message))
-        super(MutuallyExclusiveOption, self).__init__(*args, **kwargs)
-
-    def handle_parse_result(self, ctx, opts, args):
-        if self.mutually_exclusive.intersection(opts) and self.name in opts:
-            raise click.UsageError(
-                "Illegal usage: `{0}` is mutually exclusive with "
-                "arguments `{1}` ({2}).".format(
-                    self.name,
-                    self.mutuality_string,
-                    self.mutuality_error_message))
-        return super(MutuallyExclusiveOption, self).handle_parse_result(
-            ctx, opts, args)

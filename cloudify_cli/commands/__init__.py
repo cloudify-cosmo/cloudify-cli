@@ -42,6 +42,7 @@ from .upgrade import upgrade
 from .teardown import teardown
 from .rollback import rollback
 from .validate import validate
+from .profiles import profiles
 from .workflows import workflows
 from .snapshots import snapshots
 from .bootstrap import bootstrap

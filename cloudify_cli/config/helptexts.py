@@ -16,7 +16,7 @@ RESET_CONFIG = "Reset the working environment"
 SKIP_LOGGING = "Initialize quietly"
 OUTPUT_PATH = "The local path to download to [default: cwd]"
 BLUEPRINT_FILENAME = \
-    "The name of the archive's main blueprint file. [default: {0}]"
+    "The name of the archive's main blueprint file"
 INPUTS = "Inputs for the deployment {0}".format(INPUTS_PARAMS_USAGE)
 PARAMETERS = "Parameters for the workflow {0}".format(INPUTS_PARAMS_USAGE)
 ALLOW_CUSTOM_PARAMETERS = (

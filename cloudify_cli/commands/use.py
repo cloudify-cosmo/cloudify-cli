@@ -30,7 +30,8 @@ from ..exceptions import CloudifyCliError
 
 
 @cfy.command(name='use')
-@click.argument('management-ip', required=False)
+@click.argument('profile-name', required=False)
+@cfy.options.management_ip
 @cfy.options.management_user
 @cfy.options.management_key
 @cfy.options.management_password
@@ -39,6 +40,7 @@ from ..exceptions import CloudifyCliError
 @cfy.options.show_active
 @click.pass_context
 def use(ctx,
+        profile_name,
         management_ip,
         management_user,
         management_key,
@@ -51,6 +53,9 @@ def use(ctx,
     To stop using a manager, you can run `cfy init -r`.
     """
     logger = get_logger()
+
+    profile_name = profile_name or 'default'
+
     if not (management_ip or
             management_user or
             management_key or
@@ -63,7 +68,7 @@ def use(ctx,
 
     # TODO: Remove this once multiple profiles have been added
     if management_ip == 'local':
-        ctx.invoke(init.init, reset_config=True)
+        ctx.invoke(init.init, profile_name=profile_name, reset_config=True)
         return
 
     logger.info('Attemping to connect...'.format(management_ip))
@@ -73,7 +78,9 @@ def use(ctx,
     else:
         protocol = constants.DEFAULT_PROTOCOL
     client = utils.get_rest_client(
-        manager_ip=management_ip, rest_port=rest_port, protocol=protocol,
+        manager_ip=management_ip,
+        rest_port=rest_port,
+        protocol=protocol,
         skip_version_check=True)
     try:
         # first check this server is available.
@@ -86,10 +93,10 @@ def use(ctx,
         msg = "Can't use manager {0}: {1}".format(management_ip, str(e))
         raise CloudifyCliError(msg)
 
-    # check if cloudify was initialized.
-    if not utils.is_initialized():
-        utils.dump_cloudify_working_dir_settings()
-        utils.dump_configuration_file()
+    # # check if cloudify was initialized.
+    # if not utils.is_initialized(profile_name):
+    #     utils.dump_cloudify_working_dir_settings()
+    #     utils.dump_configuration_file()
 
     try:
         response = client.manager.get_context()
@@ -97,7 +104,7 @@ def use(ctx,
     except CloudifyClientError:
         provider_context = None
 
-    with utils.update_wd_settings() as wd_settings:
+    with utils.update_wd_settings(profile_name) as wd_settings:
         if management_ip:
             wd_settings.set_management_server(management_ip)
             wd_settings.set_provider_context(provider_context)
@@ -118,4 +125,4 @@ def use(ctx,
             wd_settings.set_management_port(management_port)
             logger.info('Using SSH port {0}'.format(management_port))
     # delete the previous manager deployment if exists.
-    bs.delete_workdir()
+    # bs.delete_workdir()

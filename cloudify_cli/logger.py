@@ -57,7 +57,6 @@ def configure_loggers():
     # even before the init was executed.
     _configure_defaults()
 
-    # TODO: why isn't this imported above?
     if utils.is_initialized():
         # init was already called
         # use the configuration file.

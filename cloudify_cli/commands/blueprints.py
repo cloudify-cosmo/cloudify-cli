@@ -57,10 +57,6 @@ def upload(blueprint_path,
            validate):
     """Upload a blueprint to the manager
     """
-    # TODO: to fix the ambiguity of whether this is an archive
-    # or not, we can allow the user to pass an `archive_format`
-    # parameter which states that the user (explicitly) wanted
-    # to pass a path to an archive.
     blueprint_id = blueprint_id or utils._generate_suffixed_id(
         get_archive_id(blueprint_path))
 
@@ -70,15 +66,15 @@ def upload(blueprint_path,
             blueprint_id,
             validate)
     else:
+        if not blueprint_filename:
+            raise CloudifyCliError(
+                'Supplying an archive requires that the name of the main '
+                'blueprint yaml file in the archive is provided via the '
+                '`--blueprint-filename` flag. (e.g. blueprint.yaml)')
         if validate:
             raise CloudifyCliError(
                 'The `--validate` flag is only relevant when uploading '
                 'from a file.')
-        if not blueprint_filename:
-            logger.warning(
-                'When supplying an archive, we will look for `blueprint.yaml` '
-                'within the archive unless another file name has been '
-                'provided via the `--blueprint-filename` flag.')
         _publish_archive(
             blueprint_path,
             blueprint_filename,
@@ -102,9 +98,14 @@ def _publish_directory(blueprint_path, blueprint_id, validate):
 
 def _publish_archive(archive_location, blueprint_filename, blueprint_id):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
 
-    check_if_archive_type_is_supported(archive_location)
+    if not _is_archive(archive_location):
+        raise CloudifyCliError(
+            "Can't publish archive {0} - it's of an unsupported "
+            "archive type. Supported archive types: {1}".format(
+                archive_location, SUPPORTED_ARCHIVE_TYPES))
+
+    management_ip = utils.get_management_server_ip()
 
     archive_location, archive_location_type = \
         determine_archive_type(archive_location)
@@ -120,15 +121,9 @@ def _publish_archive(archive_location, blueprint_filename, blueprint_id):
 
 
 def _is_archive(archive_location):
+    # TODO: actually check the format of the files instead of their extensions.
+    # We can use `zipfile.is_zipfile` and `tarfile.is_tarfile` for example.
     return archive_location.endswith(SUPPORTED_ARCHIVE_TYPES)
-
-
-def check_if_archive_type_is_supported(archive_location):
-    if not _is_archive(archive_location):
-        raise CloudifyCliError(
-            "Can't publish archive {0} - it's of an unsupported "
-            "archive type. Supported archive types: {1}".format(
-                archive_location, SUPPORTED_ARCHIVE_TYPES))
 
 
 def determine_archive_type(archive_location):

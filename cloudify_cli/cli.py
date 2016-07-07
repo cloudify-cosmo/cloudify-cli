@@ -105,6 +105,7 @@ def register_commands():
     _cfy.add_command(commands.init)
     _cfy.add_command(commands.recover)
     _cfy.add_command(commands.validate)
+    _cfy.add_command(commands.profiles)
     _cfy.add_command(commands.create_requirements)
 
     # TODO: Instead of manually stating each module,
