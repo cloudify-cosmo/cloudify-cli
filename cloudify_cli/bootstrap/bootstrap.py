@@ -52,8 +52,8 @@ MANAGER_DEPLOYMENT_ARCHIVE_IGNORED_FILES = ['.git']
 MAX_MANAGER_DEPLOYMENT_SIZE = 50 * (10 ** 6)  # 50MB
 
 
-def _workdir(profile_name):
-    cloudify_dir = utils.get_init_path(profile_name)
+def _workdir():
+    cloudify_dir = utils.get_init_path()
     workdir = os.path.join(cloudify_dir, 'bootstrap')
     if not os.path.isdir(workdir):
         os.mkdir(workdir)
