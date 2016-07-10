@@ -390,6 +390,10 @@ class Options(object):
             is_flag=True,
             help=helptexts.IGNORE_DEPLOYMENTS)
 
+        self.profile_alias = click.option(
+            '--alias',
+            help=helptexts.PROFILE_ALIAS)
+
     @staticmethod
     def force(help):
         return click.option(

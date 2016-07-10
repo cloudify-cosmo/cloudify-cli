@@ -30,17 +30,15 @@ from ..exceptions import CloudifyCliError
 
 
 @cfy.command(name='use')
-@click.argument('profile-name')
-@cfy.options.management_ip
+@cfy.options.profile_alias
 @cfy.options.management_user
 @cfy.options.management_key
 @cfy.options.management_password
 @cfy.options.management_port
 @cfy.options.rest_port
 @cfy.options.show_active
-@click.pass_context
-def use(ctx,
-        profile_name,
+@click.argument('management-ip', required=True)
+def use(alias,
         management_ip,
         management_user,
         management_key,
@@ -54,63 +52,53 @@ def use(ctx,
     """
     logger = get_logger()
 
-    if profile_name in ('local', 'default'):
-        if not utils.is_profile_exists(profile_name):
-            ctx.invoke(init.init, profile_name=profile_name)
-        if profile_name == 'local':
-            utils.set_active_profile(profile_name)
-            return
+    management_ip = management_ip or 'local'
+    if management_ip == 'local':
+        if not utils.is_profile_exists(management_ip):
+            init.init_profile(profile_name=management_ip)
+        return
 
-    utils.assert_profile_exists(profile_name)
-    utils.set_active_profile(profile_name)
-
-    if not (management_ip or
-            management_user or
-            management_key or
-            management_password or
-            management_port):
-        # TODO: add this message to helptexts.py
+    logger.info('Attemping to connect...'.format(management_ip))
+    # determine SSL mode by port
+    if rest_port == constants.SECURED_REST_PORT:
+        protocol = constants.SECURED_PROTOCOL
+    else:
+        protocol = constants.DEFAULT_PROTOCOL
+    client = utils.get_rest_client(
+        manager_ip=management_ip,
+        rest_port=rest_port,
+        protocol=protocol,
+        skip_version_check=True)
+    try:
+        # first check this server is available.
+        client.manager.get_status()
+    except UserUnauthorizedError:
         raise CloudifyCliError(
-            'You must specify either `MANAGEMENT_IP` or the '
-            '`--management-user` or `--management-key` flags')
+            "Can't use manager {0}: User is unauthorized.".format(
+                management_ip))
+    except CloudifyClientError as e:
+        raise CloudifyCliError(
+            "Can't use manager {0}: {1}".format(management_ip, str(e)))
 
-    if management_ip:
-        logger.info('Attemping to connect...'.format(management_ip))
-        # determine SSL mode by port
-        if rest_port == constants.SECURED_REST_PORT:
-            protocol = constants.SECURED_PROTOCOL
-        else:
-            protocol = constants.DEFAULT_PROTOCOL
-        client = utils.get_rest_client(
-            manager_ip=management_ip,
-            rest_port=rest_port,
-            protocol=protocol,
-            skip_version_check=True)
-        try:
-            # first check this server is available.
-            client.manager.get_status()
-        except UserUnauthorizedError:
-            raise CloudifyCliError(
-                "Can't use manager {0}: User is unauthorized.".format(
-                    management_ip))
-        except CloudifyClientError as e:
-            raise CloudifyCliError(
-                "Can't use manager {0}: {1}".format(management_ip, str(e)))
+    if not utils.is_profile_exists(management_ip):
+        init.init_profile(profile_name=management_ip)
+    utils.set_active_profile(management_ip)
+    if management_ip == 'local':
+        return
 
-        try:
-            response = client.manager.get_context()
-            provider_context = response['context']
-        except CloudifyClientError:
-            provider_context = None
+    try:
+        response = client.manager.get_context()
+        provider_context = response['context']
+    except CloudifyClientError:
+        provider_context = None
 
-    with utils.update_wd_settings(profile_name) as wd_settings:
-        if management_ip:
-            wd_settings.set_management_server(management_ip)
-            wd_settings.set_provider_context(provider_context)
-            wd_settings.set_rest_port(rest_port)
-            wd_settings.set_protocol(protocol)
-            logger.info('Using manager {0} with port {1}'.format(
-                management_ip, rest_port))
+    with utils.update_wd_settings(management_ip) as wd_settings:
+        wd_settings.set_management_server(management_ip)
+        wd_settings.set_provider_context(provider_context)
+        wd_settings.set_rest_port(rest_port)
+        wd_settings.set_protocol(protocol)
+        logger.info('Using manager {0} with port {1}'.format(
+            management_ip, rest_port))
         if management_user:
             wd_settings.set_management_user(management_user)
             logger.info('Using SSH user vagrant'.format(management_user))

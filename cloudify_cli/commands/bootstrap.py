@@ -14,20 +14,20 @@
 #    * limitations under the License.
 
 import sys
+import shutil
 
 import click
 
-from . import init
 from .. import utils
 from .. import common
 from ..config import cfy
+from .init import init_profile
 from ..config import helptexts
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 
 
 @cfy.command(name='bootstrap')
-@click.argument('blueprint-path', required=True)
 @cfy.options.inputs
 @cfy.options.validate_only
 @cfy.options.skip_validations
@@ -35,11 +35,10 @@ from ..bootstrap import bootstrap as bs
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
+@click.argument('blueprint-path', required=True)
 @click.option('--keep-up-on-failure',
               help=helptexts.KEEP_UP_ON_FAILURE)
-@click.pass_context
-def bootstrap(ctx,
-              blueprint_path,
+def bootstrap(blueprint_path,
               inputs,
               validate_only,
               skip_validations,
@@ -64,9 +63,11 @@ def bootstrap(ctx,
     logger = get_logger()
     env_name = 'manager'
 
-    if utils.get_active_profile() is None:
-        if not utils.is_profile_exists('default'):
-            ctx.invoke(init, profile_name='default')
+    # TODO: propagate key, user, etc.. to inputs
+    active_profile = utils.get_active_profile()
+    if not active_profile or active_profile == 'local':
+        active_profile = utils.generate_random_string()
+        init_profile(profile_name=active_profile)
 
     # verifying no environment exists from a previous bootstrap
     try:
@@ -109,16 +110,22 @@ def bootstrap(ctx,
                 task_thread_pool_size=task_thread_pool_size,
                 install_plugins=install_plugins)
 
+            manager_ip = details['manager_ip']
             with utils.update_wd_settings() as ws_settings:
-                ws_settings.set_management_server(details['manager_ip'])
+                ws_settings.set_management_server(manager_ip)
                 ws_settings.set_management_key(details['manager_key_path'])
                 ws_settings.set_management_user(details['manager_user'])
                 ws_settings.set_provider_context(details['provider_context'])
                 ws_settings.set_rest_port(details['rest_port'])
                 ws_settings.set_protocol(details['protocol'])
+                ws_settings.set_bootstrap_state(True)
+
+            temp_profile = os.path.join(utils.CLOUDIFY_WORKDIR, active_profile)
+            new_profile = os.path.join(utils.CLOUDIFY_WORKDIR, manager_ip)
+            shutil.move(temp_profile, new_profile)
 
             logger.info('Bootstrap complete')
-            logger.info('Manager is up at {0}'.format(details['manager_ip']))
+            logger.info('Manager is up at {0}'.format(manager_ip))
         except Exception as ex:
             tpe, value, traceback = sys.exc_info()
             logger.error('Bootstrap failed! ({0})'.format(str(ex)))

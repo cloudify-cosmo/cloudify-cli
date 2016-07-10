@@ -107,6 +107,7 @@ def register_commands():
     _cfy.add_command(commands.init)
     _cfy.add_command(commands.recover)
     _cfy.add_command(commands.validate)
+    _cfy.add_command(commands.bootstrap)
     # _cfy.add_command(commands.profiles)
     _cfy.add_command(commands.create_requirements)
 
@@ -140,7 +141,6 @@ def register_commands():
         _cfy.add_command(commands.deployments)
 
     else:
-        _cfy.add_command(commands.bootstrap)
         _cfy.add_command(commands.install.local)
         _cfy.add_command(commands.uninstall.local)
         _cfy.add_command(commands.install_plugins)

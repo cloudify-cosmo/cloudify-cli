@@ -599,6 +599,7 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
     yaml_loader = yaml.Loader
 
     def __init__(self):
+        self._bootstrap_state = None
         self._management_ip = None
         self._management_key = None
         self._management_password = None
@@ -607,6 +608,12 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
         self._provider_context = None
         self._rest_port = constants.DEFAULT_REST_PORT
         self._protocol = constants.DEFAULT_PROTOCOL
+
+    def get_bootstrap_state(self):
+        return self._bootstrap_state
+
+    def set_bootstrap_state(self, bootstrap_state):
+        self._bootstrap_state = _bootstrap_state
 
     def get_management_server(self):
         return self._management_ip

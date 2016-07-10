@@ -123,3 +123,8 @@ MUTUAL_SSH_KEY_AND_PASSWORD = (
     'You cannot use both an SSH key and password at the same time. '
     'Please only provide one of them'
 )
+
+PROFILE_ALIAS = (
+    'An alias to assign to the profile. This allows you to use '
+    '`cfy use PROFILE_ALIAS` on top of `cfy use MANAGER_IP`'
+)

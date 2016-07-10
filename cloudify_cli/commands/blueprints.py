@@ -69,7 +69,7 @@ def upload(blueprint_path,
         if not blueprint_filename:
             raise CloudifyCliError(
                 'Supplying an archive requires that the name of the main '
-                'blueprint yaml file in the archive is provided via the '
+                'blueprint yaml file in the archive be provided via the '
                 '`--blueprint-filename` flag. (e.g. blueprint.yaml)')
         if validate:
             raise CloudifyCliError(
