@@ -17,8 +17,8 @@
 Tests all commands that start with 'cfy executions'
 """
 
-import datetime
 from uuid import uuid4
+from datetime import datetime
 
 from mock import MagicMock
 from mock import patch
@@ -100,6 +100,6 @@ def execution_mock(status, wf_id='mock_wf'):
         'blueprint_id': 'blueprint-id',
         'error': '',
         'id': uuid4(),
-        'created_at': datetime.datetime.now(),
+        'created_at': datetime.now().isoformat()[:-3],
         'parameters': {}
     })
