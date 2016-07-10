@@ -44,13 +44,14 @@ from cloudify_cli.bootstrap.tasks import (
     MANAGER_IP_RUNTIME_PROPERTY,
     MANAGER_USER_RUNTIME_PROPERTY,
     MANAGER_PORT_RUNTIME_PROPERTY,
-    MANAGER_KEY_PATH_RUNTIME_PROPERTY,
-    REST_PORT)
+    MANAGER_KEY_PATH_RUNTIME_PROPERTY)
 from cloudify_cli.exceptions import CloudifyBootstrapError
 
 
 MANAGER_DEPLOYMENT_ARCHIVE_IGNORED_FILES = ['.git']
 MAX_MANAGER_DEPLOYMENT_SIZE = 50 * (10 ** 6)  # 50MB
+CLOUDIFY_USERNAME_ENV_VAR = 'CLOUDIFY_USERNAME'
+CLOUDIFY_PASSWORD_ENV_VAR = 'CLOUDIFY_PASSWORD'
 
 
 def _workdir():
@@ -132,6 +133,15 @@ def validate_manager_deployment_size(blueprint_path):
                                     MAX_MANAGER_DEPLOYMENT_SIZE))
 
 
+def _validate_credentials_are_set():
+    cred_env_vars = (CLOUDIFY_USERNAME_ENV_VAR, CLOUDIFY_PASSWORD_ENV_VAR)
+    if not set(cred_env_vars).issubset(os.environ.keys()):
+        raise CloudifyBootstrapError(
+            'The following environment variables must be set before '
+            'bootstrapping a secured manager: {0}'
+            .format(', '.join(cred_env_vars)))
+
+
 def bootstrap_validation(blueprint_path,
                          name='manager',
                          inputs=None,
@@ -159,6 +169,11 @@ def bootstrap_validation(blueprint_path,
             .format(blueprint_path)
         ]
         raise
+
+    manager_config_node = env.storage.get_node('manager_configuration')
+    security_enabled = manager_config_node.properties['security']['enabled']
+    if security_enabled:
+        _validate_credentials_are_set()
 
     env.execute(workflow='execute_operation',
                 parameters={'operation':
@@ -190,22 +205,30 @@ def _perform_sanity(env,
                 task_thread_pool_size=task_thread_pool_size)
 
 
-def _handle_provider_context(rest_client, agent_remote_key_path,
-                             fabric_env,
+def _handle_provider_context(rest_client,
+                             remote_agents_private_key_path,
                              manager_node,
                              manager_node_instance):
+    provider_context = manager_node_instance.runtime_properties.get(
+        'provider_context', {})
+    cloudify_configuration = manager_node.properties['cloudify']
+    cloudify_configuration['cloudify_agent']['agent_key_path'] = \
+        remote_agents_private_key_path
+    broker_ip = manager_node_instance.runtime_properties.get('broker_ip', '')
+    cloudify_configuration['cloudify_agent']['broker_ip'] = broker_ip
+    provider_context['cloudify'] = cloudify_configuration
+    manager_node_instance.runtime_properties['manager_provider_context'] = \
+        provider_context
 
-    if 'provider_context' in manager_node_instance.runtime_properties:
-        provider_context = manager_node_instance.runtime_properties[
-            'provider_context']
-    else:
-        provider_context = None
-    _upload_provider_context(
-        rest_client, agent_remote_key_path, fabric_env, manager_node,
-        manager_node_instance, provider_context=provider_context)
-    provider_context = \
-        manager_node_instance.runtime_properties[
-            'manager_provider_context']
+    # 'manager_deployment' is used when running 'cfy use ...'
+    # and then calling teardown or recover. Anyway, this code will only live
+    # until we implement the fuller feature of uploading manager blueprint
+    # deployments to the manager.
+    cloudify_configuration['manager_deployment'] = \
+        _dump_manager_deployment(manager_node_instance)
+
+    rest_client.manager.create_context(name='provider',
+                                       context=provider_context)
     return provider_context
 
 
@@ -229,11 +252,6 @@ def bootstrap(blueprint_path,
               task_retry_interval=30,
               task_thread_pool_size=1,
               install_plugins=False):
-
-    def get_protocol(rest_port):
-        return constants.SECURED_PROTOCOL \
-            if str(rest_port) == str(constants.SECURED_REST_PORT) \
-            else constants.DEFAULT_PROTOCOL
 
     storage = local.FileStorage(storage_dir=_workdir())
     try:
@@ -275,6 +293,11 @@ def bootstrap(blueprint_path,
                  nodes_by_id[node_instance.node_id].type_hierarchy)
         manager_node = nodes_by_id['manager_configuration']
 
+    rest_port = manager_node_instance.runtime_properties[
+        constants.REST_PORT_RUNTIME_PROPERTY]
+    rest_protocol = manager_node_instance.runtime_properties[
+        constants.REST_PROTOCOL_RUNTIME_PROPERTY]
+
     if manager_node_instance.runtime_properties.get('provider'):
         provider_context = \
             manager_node_instance.runtime_properties[
@@ -290,16 +313,11 @@ def bootstrap(blueprint_path,
                 MANAGER_PORT_RUNTIME_PROPERTY]
         manager_key_path = manager_node_instance.runtime_properties[
             MANAGER_KEY_PATH_RUNTIME_PROPERTY]
-        rest_port = \
-            manager_node_instance.runtime_properties[REST_PORT]
-        protocol = get_protocol(rest_port)
     else:
         manager_ip = env.outputs()['manager_ip']
         manager_user = manager_node.properties['ssh_user']
         manager_port = manager_node.properties['ssh_port']
         manager_key_path = manager_node.properties['ssh_key_filename']
-        rest_port = manager_node_instance.runtime_properties[REST_PORT]
-        protocol = get_protocol(rest_port)
 
         fabric_env = build_fabric_env(
             manager_ip, manager_user, manager_key_path, manager_port)
@@ -307,17 +325,29 @@ def bootstrap(blueprint_path,
         agent_remote_key_path = _handle_agent_key_file(fabric_env,
                                                        manager_node)
 
-        rest_client = utils.get_rest_client(manager_ip, rest_port, protocol,
+        # dump public rest certificate to a local file for future
+        # communication with the rest server
+        rest_public_cert = env.outputs()['rest_server_public_certificate']
+        if rest_public_cert:
+            cert_path = utils.get_default_rest_cert_local_path()
+            with open(cert_path, 'w') as cert_file:
+                cert_file.write(rest_public_cert)
+
+        rest_client = utils.get_rest_client(rest_host=manager_ip,
+                                            rest_port=rest_port,
+                                            rest_protocol=rest_protocol,
+                                            username=utils.get_username(),
+                                            password=utils.get_password(),
                                             skip_version_check=True)
+
         provider_context = _handle_provider_context(
             rest_client=rest_client,
-            agent_remote_key_path=agent_remote_key_path,
-            fabric_env=fabric_env,
+            remote_agents_private_key_path=agent_remote_key_path,
             manager_node=manager_node,
             manager_node_instance=manager_node_instance)
 
-        _upload_resources(manager_node, fabric_env, manager_ip, rest_client,
-                          task_retries, task_retry_interval)
+        _upload_resources(manager_node, fabric_env, rest_client, task_retries,
+                          task_retry_interval)
 
         _perform_sanity(env=env,
                         manager_ip=manager_ip,
@@ -334,7 +364,7 @@ def bootstrap(blueprint_path,
         'manager_port': manager_port,
         'manager_key_path': manager_key_path,
         'rest_port': rest_port,
-        'protocol': protocol
+        'rest_protocol': rest_protocol
     }
 
 
@@ -440,30 +470,6 @@ def build_fabric_env(manager_ip,
     }
 
 
-def _upload_provider_context(client, remote_agents_private_key_path,
-                             fabric_env, manager_node, manager_node_instance,
-                             provider_context=None, update_context=False):
-    provider_context = provider_context or {}
-    cloudify_configuration = manager_node.properties['cloudify']
-    cloudify_configuration['cloudify_agent']['agent_key_path'] = \
-        remote_agents_private_key_path
-    provider_context['cloudify'] = cloudify_configuration
-    manager_node_instance.runtime_properties['manager_provider_context'] = \
-        provider_context
-
-    # 'manager_deployment' is used when running 'cfy use ...'
-    # and then calling teardown or recover. Anyway, this code will only live
-    # until we implement the fuller feature of uploading manager blueprint
-    # deployments to the manager.
-    cloudify_configuration['manager_deployment'] = \
-        _dump_manager_deployment(manager_node_instance)
-
-    if update_context:
-        client.manager.update_context('provider', provider_context)
-    else:
-        client.manager.create_context('provider', provider_context)
-
-
 def _dump_manager_deployment(manager_node_instance):
     # explicitly write the manager node instance id to local storage
     env = load_env('manager')
@@ -485,8 +491,8 @@ def _copy_agent_key(agent_local_key_path, agent_remote_key_path,
     return agent_remote_key_path
 
 
-def _upload_resources(manager_node, fabric_env, management_ip, rest_client,
-                      retries, wait_interval):
+def _upload_resources(manager_node, fabric_env, rest_client, retries,
+                      wait_interval):
     """
     Uploads resources supplied in the manager blueprint. uses both fabric for
     the dsl_resources, and the upload plugins mechanism for plugin_resources.
@@ -494,8 +500,7 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_client,
     :param manager_node: The manager node from which to retrieve the
     properties from.
     :param fabric_env: fabric env in order to upload the dsl_resources.
-    :param management_ip: used to retrieve rest client for the the manager.
-    :param rest_client: used to upload plugins
+    :param rest_client: the rest client to use to upload plugins.
     """
 
     upload_resources = \
@@ -508,8 +513,7 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_client,
     temp_dir = tempfile.mkdtemp()
     try:
         _upload_plugins(upload_resources.get('plugin_resources', ()), temp_dir,
-                        management_ip, rest_client, retries, wait_interval,
-                        fetch_timeout)
+                        rest_client, retries, wait_interval, fetch_timeout)
         upload_dsl_resources(upload_resources.get('dsl_resources', ()),
                              temp_dir, fabric_env, retries, wait_interval,
                              fetch_timeout)
@@ -517,16 +521,14 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_client,
         shutil.rmtree(temp_dir, ignore_errors=True)
 
 
-def _upload_plugins(plugin_resources, temp_dir, management_ip, rest_client,
-                    retries, wait_interval, timeout):
+def _upload_plugins(plugin_resources, temp_dir, rest_client, retries,
+                    wait_interval, timeout):
     """
     Uploads plugins to the manager.
 
     :param temp_dir:
-    :param management_ip: used to retrieve rest client for the the manager.
     :param rest_client: The rest client to the manager.
-    :param retries: number of retries per resource download (and upload to
-    mgr).
+    :param retries: number of retries per resource download/upload to the mgr.
     :param wait_interval: interval between download (and upload
     to manager) retries.
     :param timeout: timeout for uploading a plugin.
@@ -554,8 +556,7 @@ def _upload_plugins(plugin_resources, temp_dir, management_ip, rest_client,
            stop_func=partial(_stop_retries, retries, wait_interval),
            retry_on_exception=is_error)
     def upload_plugin(plugin_path):
-        utils.upload_plugin(file(plugin_path), management_ip, rest_client,
-                            plugins.validate)
+        utils.upload_plugin(file(plugin_path), rest_client, plugins.validate)
 
     for plugin_source_path in plugin_resources:
         plugin_local_path = \

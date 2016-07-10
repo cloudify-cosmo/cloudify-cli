@@ -49,6 +49,7 @@ class StatusTest(CliCommandTest):
                         'provide a manager IP')
 
     def test_status_by_unauthorized_user(self):
+        self._create_cosmo_wd_settings()
         with patch('cloudify_cli.utils.get_management_server_ip'):
             with patch.object(self.client.manager, 'get_status') as mock:
                 mock.side_effect = UserUnauthorizedError('Unauthorized user')
