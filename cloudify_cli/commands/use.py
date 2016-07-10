@@ -30,7 +30,7 @@ from ..exceptions import CloudifyCliError
 
 
 @cfy.command(name='use')
-@click.argument('profile-name', required=False)
+@click.argument('profile-name')
 @cfy.options.management_ip
 @cfy.options.management_user
 @cfy.options.management_key
@@ -54,7 +54,15 @@ def use(ctx,
     """
     logger = get_logger()
 
-    profile_name = profile_name or 'default'
+    if profile_name in ('local', 'default'):
+        if not utils.is_profile_exists(profile_name):
+            ctx.invoke(init.init, profile_name=profile_name)
+        if profile_name == 'local':
+            utils.set_active_profile(profile_name)
+            return
+
+    utils.assert_profile_exists(profile_name)
+    utils.set_active_profile(profile_name)
 
     if not (management_ip or
             management_user or
@@ -66,43 +74,34 @@ def use(ctx,
             'You must specify either `MANAGEMENT_IP` or the '
             '`--management-user` or `--management-key` flags')
 
-    # TODO: Remove this once multiple profiles have been added
-    if management_ip == 'local':
-        ctx.invoke(init.init, profile_name=profile_name, reset_config=True)
-        return
+    if management_ip:
+        logger.info('Attemping to connect...'.format(management_ip))
+        # determine SSL mode by port
+        if rest_port == constants.SECURED_REST_PORT:
+            protocol = constants.SECURED_PROTOCOL
+        else:
+            protocol = constants.DEFAULT_PROTOCOL
+        client = utils.get_rest_client(
+            manager_ip=management_ip,
+            rest_port=rest_port,
+            protocol=protocol,
+            skip_version_check=True)
+        try:
+            # first check this server is available.
+            client.manager.get_status()
+        except UserUnauthorizedError:
+            raise CloudifyCliError(
+                "Can't use manager {0}: User is unauthorized.".format(
+                    management_ip))
+        except CloudifyClientError as e:
+            raise CloudifyCliError(
+                "Can't use manager {0}: {1}".format(management_ip, str(e)))
 
-    logger.info('Attemping to connect...'.format(management_ip))
-    # determine SSL mode by port
-    if rest_port == constants.SECURED_REST_PORT:
-        protocol = constants.SECURED_PROTOCOL
-    else:
-        protocol = constants.DEFAULT_PROTOCOL
-    client = utils.get_rest_client(
-        manager_ip=management_ip,
-        rest_port=rest_port,
-        protocol=protocol,
-        skip_version_check=True)
-    try:
-        # first check this server is available.
-        client.manager.get_status()
-    except UserUnauthorizedError:
-        msg = "Can't use manager {0}: User is unauthorized.".format(
-            management_ip)
-        raise CloudifyCliError(msg)
-    except CloudifyClientError as e:
-        msg = "Can't use manager {0}: {1}".format(management_ip, str(e))
-        raise CloudifyCliError(msg)
-
-    # # check if cloudify was initialized.
-    # if not utils.is_initialized(profile_name):
-    #     utils.dump_cloudify_working_dir_settings()
-    #     utils.dump_configuration_file()
-
-    try:
-        response = client.manager.get_context()
-        provider_context = response['context']
-    except CloudifyClientError:
-        provider_context = None
+        try:
+            response = client.manager.get_context()
+            provider_context = response['context']
+        except CloudifyClientError:
+            provider_context = None
 
     with utils.update_wd_settings(profile_name) as wd_settings:
         if management_ip:
@@ -125,4 +124,4 @@ def use(ctx,
             wd_settings.set_management_port(management_port)
             logger.info('Using SSH port {0}'.format(management_port))
     # delete the previous manager deployment if exists.
-    # bs.delete_workdir()
+    bs.delete_workdir()

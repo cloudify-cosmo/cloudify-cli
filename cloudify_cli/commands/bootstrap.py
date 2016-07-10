@@ -17,6 +17,7 @@ import sys
 
 import click
 
+from . import init
 from .. import utils
 from .. import common
 from ..config import cfy
@@ -36,7 +37,9 @@ from ..bootstrap import bootstrap as bs
 @cfy.options.task_thread_pool_size()
 @click.option('--keep-up-on-failure',
               help=helptexts.KEEP_UP_ON_FAILURE)
-def bootstrap(blueprint_path,
+@click.pass_context
+def bootstrap(ctx,
+              blueprint_path,
               inputs,
               validate_only,
               skip_validations,
@@ -61,8 +64,9 @@ def bootstrap(blueprint_path,
     logger = get_logger()
     env_name = 'manager'
 
-    # Verify directory is initialized
-    utils.get_context_path()
+    if utils.get_active_profile() is None:
+        if not utils.is_profile_exists('default'):
+            ctx.invoke(init, profile_name='default')
 
     # verifying no environment exists from a previous bootstrap
     try:
@@ -105,18 +109,16 @@ def bootstrap(blueprint_path,
                 task_thread_pool_size=task_thread_pool_size,
                 install_plugins=install_plugins)
 
-            manager_ip = details['manager_ip']
-            provider_context = details['provider_context']
             with utils.update_wd_settings() as ws_settings:
-                ws_settings.set_management_server(manager_ip)
+                ws_settings.set_management_server(details['manager_ip'])
                 ws_settings.set_management_key(details['manager_key_path'])
                 ws_settings.set_management_user(details['manager_user'])
-                ws_settings.set_provider_context(provider_context)
+                ws_settings.set_provider_context(details['provider_context'])
                 ws_settings.set_rest_port(details['rest_port'])
                 ws_settings.set_protocol(details['protocol'])
 
             logger.info('Bootstrap complete')
-            logger.info('Manager is up at {0}'.format(manager_ip))
+            logger.info('Manager is up at {0}'.format(details['manager_ip']))
         except Exception as ex:
             tpe, value, traceback = sys.exc_info()
             logger.error('Bootstrap failed! ({0})'.format(str(ex)))

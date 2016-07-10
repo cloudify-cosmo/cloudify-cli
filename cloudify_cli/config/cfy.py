@@ -20,7 +20,7 @@ from StringIO import StringIO
 
 from .. import utils
 from . import helptexts
-from ..constants import DEFAULT_REST_PORT
+from .. import constants
 from ..exceptions import CloudifyCliError
 
 
@@ -34,7 +34,8 @@ class MutuallyExclusiveOption(click.Option):
     def __init__(self, *args, **kwargs):
         self.mutually_exclusive = set(kwargs.pop('mutually_exclusive', []))
         self.mutuality_error_message = \
-            kwargs.pop('mutuality_error_message', [])
+            kwargs.pop('mutuality_error_message',
+                       helptexts.DEFAULT_MUTUALITY_MESSAGE)
         self.mutuality_string = ', '.join(self.mutually_exclusive)
         if self.mutually_exclusive:
             help = kwargs.get('help', '')
@@ -49,8 +50,8 @@ class MutuallyExclusiveOption(click.Option):
     def handle_parse_result(self, ctx, opts, args):
         if self.mutually_exclusive.intersection(opts) and self.name in opts:
             raise click.UsageError(
-                "Illegal usage: `{0}` is mutually exclusive with "
-                "arguments `{1}` ({2}).".format(
+                'Illegal usage: `{0}` is mutually exclusive with '
+                'arguments: [{1}] ({2}).'.format(
                     self.name,
                     self.mutuality_string,
                     self.mutuality_error_message))
@@ -284,8 +285,9 @@ class Options(object):
             '-k',
             '--management-key',
             required=False,
-            # cls=MutuallyExclusiveOption,
-            # mutually_exclusive=['management-password'],
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['management_password'],
+            mutuality_error_message=helptexts.MUTUAL_SSH_KEY_AND_PASSWORD,
             help="The path to the ssh key-file to use when "
             "connecting to the manager")
 
@@ -293,20 +295,21 @@ class Options(object):
             '-p',
             '--management-password',
             required=False,
-            # cls=MutuallyExclusiveOption,
-            # mutually_exclusive=['management-key'],
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['management_key'],
+            mutuality_error_message=helptexts.MUTUAL_SSH_KEY_AND_PASSWORD,
             help="The password to use when connecting to the manager")
 
         self.management_port = click.option(
             '--management-port',
             required=False,
-            default=22,
+            default=constants.REMOTE_EXECUTION_PORT,
             help="The port to use when connecting to the manager")
 
         self.rest_port = click.option(
             '--rest-port',
             required=False,
-            default=DEFAULT_REST_PORT,
+            default=constants.DEFAULT_REST_PORT,
             help="The REST server's port")
 
         self.show_active = click.option(
@@ -323,13 +326,13 @@ class Options(object):
             help='Hard reset the configuration, '
             'including coloring and loggers')
 
-        self.reset_config = click.option(
+        self.reset_context = click.option(
             '-r',
-            '--reset-config',
+            '--reset-context',
             # TODO: Change name. This is not true. It only resets the context
             is_flag=True,
             required=True,
-            help=helptexts.RESET_CONFIG)
+            help=helptexts.RESET_CONTEXT)
 
         self.skip_logging = click.option(
             '--skip-logging',

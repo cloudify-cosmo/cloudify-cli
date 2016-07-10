@@ -53,17 +53,19 @@ MAX_MANAGER_DEPLOYMENT_SIZE = 50 * (10 ** 6)  # 50MB
 
 
 def _workdir():
-    cloudify_dir = utils.get_init_path()
-    workdir = os.path.join(cloudify_dir, 'bootstrap')
+    active_profile = utils.get_active_profile()
+    profile_dir = utils.get_init_path(active_profile)
+    workdir = os.path.join(profile_dir, 'bootstrap')
     if not os.path.isdir(workdir):
-        os.mkdir(workdir)
+        os.makedirs(workdir)
     return workdir
 
 
-def delete_workdir(profile_name):
-    cloudify_dir = utils.get_init_path(profile_name)
-    workdir = os.path.join(cloudify_dir, 'bootstrap')
-    if os.path.exists(workdir):
+def delete_workdir():
+    active_profile = utils.get_active_profile()
+    profile_dir = utils.get_init_path(active_profile)
+    workdir = os.path.join(profile_dir, 'bootstrap')
+    if os.path.isdir(workdir):
         shutil.rmtree(workdir)
 
 

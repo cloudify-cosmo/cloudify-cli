@@ -12,7 +12,7 @@ WORKFLOW_TO_EXECUTE = "The workflow to execute [(default: {0}]"
 BLUEPRINT_PATH = "The path to the application's blueprint file"
 BLUEPRINT_ID = "The unique identifier for the blueprint"
 VALIDATE_BLUEPRINT = "Validate the blueprint"
-RESET_CONFIG = "Reset the working environment"
+RESET_CONTEXT = "Reset the working environment"
 SKIP_LOGGING = "Initialize quietly"
 OUTPUT_PATH = "The local path to download to [default: cwd]"
 BLUEPRINT_FILENAME = \
@@ -116,4 +116,10 @@ SET_MANAGEMENT_CREDS = (
     'You can use the `-u` and `-k` flags to set the user and '
     'key-file path respectively. '
     '(e.g. `cfy use -u my_user -k ~/my/key/path`)'
+)
+
+DEFAULT_MUTUALITY_MESSAGE = 'Cannot be used simultaneously'
+MUTUAL_SSH_KEY_AND_PASSWORD = (
+    'You cannot use both an SSH key and password at the same time. '
+    'Please only provide one of them'
 )

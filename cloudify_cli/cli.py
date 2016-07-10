@@ -18,6 +18,8 @@ import sys
 import StringIO
 import traceback
 
+import click
+
 from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
@@ -105,7 +107,7 @@ def register_commands():
     _cfy.add_command(commands.init)
     _cfy.add_command(commands.recover)
     _cfy.add_command(commands.validate)
-    _cfy.add_command(commands.profiles)
+    # _cfy.add_command(commands.profiles)
     _cfy.add_command(commands.create_requirements)
 
     # TODO: Instead of manually stating each module,
@@ -154,7 +156,8 @@ def register_commands():
 @cfy.options.verbose
 @cfy.options.debug
 @cfy.options.version
-def _cfy(verbose, debug):
+@click.pass_context
+def _cfy(ctx, verbose, debug):
     """Cloudify's Command Line Interface
 
     Note that some commands are only available if you're using a manager.
@@ -173,8 +176,6 @@ def _cfy(verbose, debug):
 
     # TODO: Consider replacing `cfy init BLUEPRINT_PATH` with
     # `cfy blueprints init BLUEPRINT_PATH` for local.
-    # TODO: Consider replacing `cfy bootstrap` with `cfy init`
-    # after having run `cfy use MANAGER_IP -u USER -k KEY_PATH`
 
 register_commands()
 

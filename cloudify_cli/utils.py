@@ -60,7 +60,19 @@ CLOUDIFY_CONFIG_PATH = os.path.join(CLOUDIFY_WORKDIR, 'config.yaml')
 ACTIVE_PRO_FILE = os.path.join(CLOUDIFY_WORKDIR, 'active.profile')
 
 
-def update_active_profile(profile_name):
+def is_profile_exists(profile_name):
+    return os.path.isfile(os.path.join(
+        CLOUDIFY_WORKDIR, profile_name, 'context'))
+
+
+def assert_profile_exists(profile_name=None):
+    if not is_profile_exists(profile_name):
+        raise CloudifyCliError(
+            'Profile {0} does not exist. You can run `cfy init {0}` to '
+            'create the profile.'.format(profile_name))
+
+
+def set_active_profile(profile_name):
     with open(ACTIVE_PRO_FILE, 'w+') as active_profile:
         active_profile.write(profile_name)
 
@@ -96,7 +108,8 @@ def load_cloudify_working_dir_settings(profile_name, suppress_error=False):
         raise
 
 
-def get_context_path(profile_name):
+def get_context_path(profile_name=None):
+    profile_name = profile_name or get_active_profile()
     init_path = get_init_path(profile_name)
     if init_path is None:
         raise_uninitialized(profile_name)
@@ -396,12 +409,14 @@ def get_auth_header(username, password):
 
 
 def get_rest_port():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
+    active_profile = get_active_profile()
+    cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
     return cosmo_wd_settings.get_rest_port()
 
 
 def get_protocol():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
+    active_profile = get_active_profile()
+    cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
     return cosmo_wd_settings.get_protocol()
 
 
@@ -519,7 +534,9 @@ def connected_to_manager(management_ip):
 
 
 def get_manager_version_data():
-    dir_settings = load_cloudify_working_dir_settings(suppress_error=True)
+    active_profile = get_active_profile()
+    dir_settings = load_cloudify_working_dir_settings(
+        active_profile, suppress_error=True)
     if not (dir_settings and dir_settings.get_management_server()):
         return None
     management_ip = dir_settings.get_management_server()

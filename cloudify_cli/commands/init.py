@@ -25,26 +25,23 @@ from .. import exceptions
 from ..config import cfy
 from ..logger import get_logger
 from ..logger import configure_loggers
+from ..bootstrap import bootstrap as bs
 
 
 _NAME = 'local'
 
 
-# cfy init my_profile
-# cfy use my_profile -t ...
-# cfy init my_profile -r
-
 @cfy.command(name='init')
 @click.argument('profile-name', required=False)
 @cfy.options.blueprint_path()
-@cfy.options.reset_config
+@cfy.options.reset_context
 @cfy.options.skip_logging
 @cfy.options.inputs
 @cfy.options.install_plugins
 @cfy.options.init_hard_reset
 def init(profile_name,
          blueprint_path,
-         reset_config,
+         reset_context,
          skip_logging,
          inputs,
          install_plugins,
@@ -52,10 +49,10 @@ def init(profile_name,
     """Initialize a working environment in the current working directory
     """
     logger = get_logger()
+    profile_name = profile_name or 'default'
 
-    def _init(profile_name=None):
+    def _init():
         logger.info('Initializing profile {0}'.format(profile_name))
-        profile_name = profile_name or 'default'
 
         context_file_path = os.path.join(
             utils.CLOUDIFY_WORKDIR,
@@ -63,11 +60,12 @@ def init(profile_name,
             constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
 
         if os.path.isfile(context_file_path):
-            if reset_config:
+            if reset_context:
                 if hard:
                     os.remove(utils.CLOUDIFY_CONFIG_PATH)
                 else:
                     os.remove(context_file_path)
+                bs.delete_workdir()
             else:
                 error = exceptions.CloudifyCliError(
                     'Profile is already initialized')
@@ -78,7 +76,7 @@ def init(profile_name,
 
         if not os.path.isdir(utils.CLOUDIFY_WORKDIR):
             os.makedirs(utils.CLOUDIFY_WORKDIR)
-        utils.update_active_profile(profile_name)
+        utils.set_active_profile(profile_name)
         if not os.path.isdir(utils.CLOUDIFY_CONFIG_PATH) or hard:
             utils.dump_configuration_file()
 
@@ -95,7 +93,7 @@ def init(profile_name,
             shutil.rmtree(common.storage_dir())
 
         if not utils.is_initialized():
-            _init(reset_config=False, skip_logging=True)
+            _init()
         try:
             common.initialize_blueprint(
                 blueprint_path=blueprint_path,
@@ -122,4 +120,4 @@ def init(profile_name,
                     "blueprint, run `cfy init {0}` "
                     "again to apply them".format(blueprint_path))
     else:
-        _init(profile_name)
+        _init()

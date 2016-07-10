@@ -43,7 +43,8 @@ from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 @cfy.options.include_logs
 @cfy.options.json
 @click.pass_context
-def manager(blueprint_path,
+def manager(ctx,
+            blueprint_path,
             blueprint_id,
             blueprint_filename,
             validate,
@@ -158,7 +159,7 @@ def manager(blueprint_path,
 
 
 @cfy.command(name='install')
-@click.argument('blueprint-path', required=True)
+@click.argument('blueprint-path')
 @cfy.options.inputs
 @cfy.options.install_plugins
 @cfy.options.workflow_id('install')
