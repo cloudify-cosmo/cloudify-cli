@@ -272,6 +272,7 @@ class Options(object):
             is_flag=True,
             help=helptexts.BACKUP_LOGS_FIRST)
 
+        # TODO: move all help texts to `helptexts.py`
         self.management_ip = click.option(
             '-t',
             '--management-ip',
@@ -323,13 +324,12 @@ class Options(object):
             is_eager=True,
             expose_value=False,
             callback=show_active_manager,
-            help="Show connection information for the active manager")
+            help=helptexts.SHOW_ACTIVE_CONNECTION_INFORMATION)
 
         self.init_hard_reset = click.option(
             '--hard',
             is_flag=True,
-            help='Hard reset the configuration, '
-            'including coloring and loggers')
+            help=helptexts.HARD_RESET)
 
         self.reset_context = click.option(
             '-r',

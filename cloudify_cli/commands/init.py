@@ -28,9 +28,6 @@ from ..logger import configure_loggers
 from ..bootstrap import bootstrap as bs
 
 
-_NAME = 'local'
-
-
 @cfy.command(name='init')
 @cfy.options.reset_context
 @cfy.options.inputs
@@ -42,7 +39,20 @@ def init(blueprint_path,
          inputs,
          install_plugins,
          hard):
-    """Initialize a working environment in the current working directory
+    """Initialize a Cloudify environment.
+
+    This is required to perform many actions and should be the first
+    action performed after installing Cloudify.
+
+    Note: Running `cfy bootstrap`, `cfy intall` or `cfy use` will
+    initialize a environment automatically.
+
+    Providing a `BLUEPRINT_PATH` will also initialize a blueprint to
+    work on.
+
+    After initialization, the CLI's configuration can be found under
+    ~/.cloudify/config.yaml. For more information refer to the docs
+    at http://docs.getcloudify.org
     """
     logger = get_logger()
     profile_name = 'local'
@@ -61,7 +71,7 @@ def init(blueprint_path,
         try:
             common.initialize_blueprint(
                 blueprint_path=blueprint_path,
-                name=_NAME,
+                name='local',
                 inputs=inputs,
                 storage=common.storage(),
                 install_plugins=install_plugins,
@@ -69,7 +79,7 @@ def init(blueprint_path,
             )
         except ImportError as e:
 
-            # import error indicates
+            # ImportError indicates
             # some plugin modules are missing
             # TODO: consider adding an error code to
             # all of our exceptions. so that we
@@ -89,6 +99,7 @@ def init(blueprint_path,
 
 
 def init_profile(profile_name, reset_context=False, hard=False):
+    # TODO: support profile aliases
     logger = get_logger()
     logger.info('Initializing profile {0}...'.format(profile_name))
 

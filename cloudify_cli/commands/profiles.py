@@ -28,9 +28,10 @@ def profiles():
 
     Each profile can manage a single Cloudify manager.
 
-    A profile is automatically created when using the `cfy use`
-    and `cfy bootstrap` commands. Profiles are named according to
-    the IP of the manager they manage.
+    A profile is automatically created when using the `cfy use`,
+    and `cfy bootstrap` commands.
+
+    Profiles are named according to the IP of the manager they manage.
     """
     pass
 
@@ -74,6 +75,8 @@ def list():
 @click.argument('profile-name')
 def delete(profile_name):
     """Delete a profile
+
+    `PROFILE_NAME` is the IP of the manager the profile manages.
     """
     logger = get_logger()
 

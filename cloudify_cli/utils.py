@@ -70,6 +70,7 @@ def delete_profile(profile_name):
 def get_profile(profile_name):
     set_active_profile(profile_name)
 
+    # TODO: add rest port and protocol, ssh port and ssh password
     cosmo_wd_settings = load_cloudify_working_dir_settings(profile_name)
     ssh_key_path = cosmo_wd_settings.get_management_key() or 'Not Set'
     ssh_user = cosmo_wd_settings.get_management_user() or 'Not Set'
@@ -119,10 +120,11 @@ def is_manager_active():
     return True
 
 
+# TODO: default to `get_active_profile` if profile name is not provided
 def load_cloudify_working_dir_settings(profile_name, suppress_error=False):
     try:
         path = get_context_path(profile_name)
-        with open(path, 'r') as f:
+        with open(path) as f:
             return yaml.load(f.read())
     except CloudifyCliError:
         if suppress_error:
@@ -137,13 +139,9 @@ def get_context_path(profile_name=None):
         raise_uninitialized()
     context_path = os.path.join(
         init_path,
-        constants.CLOUDIFY_WD_SETTINGS_FILE_NAME
-    )
-    if not os.path.exists(context_path):
-        raise CloudifyCliError(
-            'File {0} does not exist'
-            .format(context_path)
-        )
+        constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
+    if not os.path.isfile(context_path):
+        raise CloudifyCliError('File {0} does not exist'.format(context_path))
     return context_path
 
 
@@ -755,6 +753,7 @@ def build_manager_host_string(user='', ip=''):
     return '{0}@{1}'.format(user, ip)
 
 
+# TODO: apply to log messages if necessary or remove
 def manager_msg(message, manager_ip=None):
     return '{0} [Manager={1}]'.format(
         message, manager_ip or get_management_server_ip())

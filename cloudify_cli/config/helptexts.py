@@ -12,7 +12,12 @@ WORKFLOW_TO_EXECUTE = "The workflow to execute [(default: {0}]"
 BLUEPRINT_PATH = "The path to the application's blueprint file"
 BLUEPRINT_ID = "The unique identifier for the blueprint"
 VALIDATE_BLUEPRINT = "Validate the blueprint"
+
 RESET_CONTEXT = "Reset the working environment"
+HARD_RESET = "Hard reset the configuration, including coloring and loggers"
+SHOW_ACTIVE_CONNECTION_INFORMATION = \
+    "Show connection information for the active manager"
+
 OUTPUT_PATH = "The local path to download to [default: cwd]"
 BLUEPRINT_FILENAME = \
     "The name of the archive's main blueprint file"

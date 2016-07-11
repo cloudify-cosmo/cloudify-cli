@@ -61,67 +61,6 @@ def manager(ctx,
     This will upload the blueprint, create a deployment and execute the
     `install` workflow.
     """
-    # # The presence of the `archive_location` argument is used to distinguish
-    # # between `install` in 'blueprints upload' mode,
-    # # and `install` in 'blueprints publish archive' mode.
-    # if archive_location:
-    #     blueprints.check_if_archive_type_is_supported(archive_location)
-
-    #     if not blueprint_filename:
-    #         blueprint_filename = DEFAULT_BLUEPRINT_FILE_NAME
-
-    # If blueprint_id wasn't supplied, assign it to the name of the archive
-    #     if not blueprint_id:
-    #         blueprint_id = blueprints.get_blueprint_id(archive_location)
-
-    #     # auto-generate blueprint id if necessary
-    #     if _auto_generate_ids(auto_generate_ids):
-    #         blueprint_id = utils._generate_suffixed_id(blueprint_id)
-
-    #     blueprints.publish_archive(archive_location,
-    #                                blueprint_filename,
-    #                                blueprint_id)
-    # else:
-    #     blueprint_path_supplied = bool(blueprint_path)
-    #     if not blueprint_path:
-    #         blueprint_path = os.path.join(utils.get_cwd(),
-    #                                       DEFAULT_BLUEPRINT_PATH)
-
-    #     # If blueprint_id wasn't supplied, assign it to the name of
-    #     # folder containing the application's blueprint file.
-    #     if not blueprint_id:
-    #         blueprint_id = os.path.basename(
-    #             os.path.dirname(
-    #                 os.path.abspath(blueprint_path)))
-
-    #     # Try opening `blueprint_path`, since `blueprints.upload` expects the
-    #     # `blueprint_path` argument to be a file.
-    #     # (The reason for this is beyond me. That's just the way it is)
-
-    #     if _auto_generate_ids(auto_generate_ids):
-    #         blueprint_id = utils._generate_suffixed_id(blueprint_id)
-
-    #     try:
-    #         with open(blueprint_path) as blueprint_file:
-    #             blueprints.upload(blueprint_file,
-    #                               blueprint_id,
-    #                               validate)
-    #     except IOError as e:
-
-    #         # No such file or directory
-    #         if not blueprint_path_supplied and e.errno == errno.ENOENT:
-    #             raise CloudifyCliError(
-    #                 'Your blueprint was not found in the path: {0}.\n\n'
-    #                 'Consider providing an explicit path to your blueprint '
-    #                 'using the `-p`/`--blueprint-path` flag, like so:\n'
-    #                 '`cfy install -p /path/to/blueprint_file.yaml`\n'
-    #                 .format(blueprint_path)
-    #             )
-    #         else:
-    #             raise CloudifyCliError(
-    #                 'A problem was encountered while trying to open '
-    #                 '{0}.\n({1})'.format(blueprint_path, e))
-
     blueprint_id = blueprint_id or utils._generate_suffixed_id(
         blueprints.get_archive_id(blueprint_path))
     deployment_id = deployment_id or utils._generate_suffixed_id(blueprint_id)
@@ -129,7 +68,7 @@ def manager(ctx,
     if not inputs and os.path.isfile(os.path.join(
             utils.get_cwd(), DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)):
         inputs = DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
-    # although the `install` command does not need the `force` argument,
+    # Although the `install` command does not need the `force` argument,
     # we *are* using the `executions start` handler as a part of it.
     # as a result, we need to provide it with a `force` argument, which is
     # defined below.

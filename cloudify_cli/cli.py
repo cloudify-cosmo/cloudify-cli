@@ -18,8 +18,6 @@ import sys
 import StringIO
 import traceback
 
-import click
-
 from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
@@ -146,7 +144,7 @@ def register_commands():
         _cfy.add_command(commands.install_plugins)
         _cfy.add_command(commands.node_instances.local)
 
-        # TODO: consolidate with `local` of the same type
+        # TODO: consolidate with `manager` of the same type
         _cfy.add_command(commands.inputs)
         _cfy.add_command(commands.execute)
         _cfy.add_command(commands.outputs)
@@ -156,8 +154,7 @@ def register_commands():
 @cfy.options.verbose
 @cfy.options.debug
 @cfy.options.version
-@click.pass_context
-def _cfy(ctx, verbose, debug):
+def _cfy(verbose, debug):
     """Cloudify's Command Line Interface
 
     Note that some commands are only available if you're using a manager.
