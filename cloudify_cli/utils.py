@@ -58,7 +58,7 @@ CLOUDIFY_WORKDIR = os.path.join(
     constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
 CLOUDIFY_CONFIG_PATH = os.path.join(CLOUDIFY_WORKDIR, 'config.yaml')
 PROFILES_DIR = os.path.join(CLOUDIFY_WORKDIR, 'profiles')
-ACTIVE_PRO_FILE = os.path.join(PROFILES_DIR, 'active.profile')
+ACTIVE_PRO_FILE = os.path.join(CLOUDIFY_WORKDIR, 'active.profile')
 
 
 def delete_profile(profile_name):
@@ -134,7 +134,7 @@ def get_context_path(profile_name=None):
     profile_name = profile_name or get_active_profile()
     init_path = get_init_path(profile_name)
     if init_path is None:
-        raise_uninitialized(profile_name)
+        raise_uninitialized()
     context_path = os.path.join(
         init_path,
         constants.CLOUDIFY_WD_SETTINGS_FILE_NAME
@@ -201,14 +201,11 @@ def dump_cloudify_working_dir_settings(cosmo_wd_settings=None,
         f.write(yaml.dump(cosmo_wd_settings))
 
 
-def raise_uninitialized(profile_name):
+def raise_uninitialized():
     error = CloudifyCliError(
-        'Not initialized: Cannot find {0} in {1}, '
-        'or in any of its parent directories'
-        .format(constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-                os.path.expanduser('~')))
+        'Cloudify environment is not initalized')
     error.possible_solutions = [
-        "Run 'cfy init' in this directory"
+        "Run 'cfy init'"
     ]
     raise error
 

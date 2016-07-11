@@ -44,12 +44,15 @@ def list():
     # TODO: should profiles include the local profile?
     logger = get_logger()
 
+    if not utils.is_initialized():
+        utils.raise_uninitialized()
+
     current_profile = utils.get_active_profile()
     profiles = []
 
     logger.info('Listing all profiles...')
 
-    excluded = ['active.profile', 'local']
+    excluded = ['local']
     profiles_names = [item for item in os.listdir(utils.PROFILES_DIR)
                       if item not in excluded]
 
@@ -73,6 +76,9 @@ def delete(profile_name):
     """Delete a profile
     """
     logger = get_logger()
+
+    if not utils.is_initialized():
+        utils.raise_uninitialized()
 
     logger.info('Deleting profile {0}...'.format(profile_name))
 
