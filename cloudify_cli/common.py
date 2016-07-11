@@ -39,6 +39,9 @@ def initialize_blueprint(blueprint_path,
                          install_plugins=False,
                          inputs=None,
                          resolver=None):
+    logger = get_logger()
+
+    logger.info('Initializing blueprint...')
     if install_plugins:
         install_blueprint_plugins(
             blueprint_path=blueprint_path
@@ -135,7 +138,7 @@ def add_ignore_bootstrap_validations_input(inputs):
 
 
 def storage_dir():
-    return os.path.join(utils.get_cwd(), _STORAGE_DIR_NAME)
+    return os.path.join(utils.PROFILES_DIR, 'local', _STORAGE_DIR_NAME)
 
 
 def storage():
@@ -144,9 +147,7 @@ def storage():
 
 def load_env():
     if not os.path.isdir(storage_dir()):
-        error = exceptions.CloudifyCliError(
-            'Please initialize a blueprint'.format(
-                utils.get_cwd()))
+        error = exceptions.CloudifyCliError('Please initialize a blueprint')
 
         error.possible_solutions = [
             "Run `cfy init BLUEPRINT_PATH`"

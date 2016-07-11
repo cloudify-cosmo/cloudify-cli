@@ -90,7 +90,7 @@ def init(blueprint_path,
 
 def init_profile(profile_name, reset_context=False, hard=False):
     logger = get_logger()
-    logger.info('Initializing profile {0}'.format(profile_name))
+    logger.info('Initializing profile {0}...'.format(profile_name))
 
     context_file_path = os.path.join(
         utils.PROFILES_DIR,
@@ -115,7 +115,7 @@ def init_profile(profile_name, reset_context=False, hard=False):
     if not os.path.isdir(utils.PROFILES_DIR):
         os.makedirs(utils.PROFILES_DIR)
     utils.set_active_profile(profile_name)
-    if not os.path.isdir(utils.CLOUDIFY_CONFIG_PATH) or hard:
+    if not os.path.isfile(utils.CLOUDIFY_CONFIG_PATH) or hard:
         utils.dump_configuration_file()
 
     settings = utils.CloudifyWorkingDirectorySettings()
