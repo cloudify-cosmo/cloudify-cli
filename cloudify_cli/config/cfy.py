@@ -212,6 +212,11 @@ class Options(object):
             default=utils.get_cwd(),
             help=helptexts.OUTPUT_PATH)
 
+        self.optional_output_path = click.option(
+            '-o',
+            '--output-path',
+            help=helptexts.OUTPUT_PATH)
+
         self.allow_custom_parameters = click.option(
             '--allow-custom-parameters',
             is_flag=True,
@@ -331,13 +336,7 @@ class Options(object):
             '--reset-context',
             # TODO: Change name. This is not true. It only resets the context
             is_flag=True,
-            required=True,
             help=helptexts.RESET_CONTEXT)
-
-        self.skip_logging = click.option(
-            '--skip-logging',
-            is_flag=True,
-            help=helptexts.SKIP_LOGGING)
 
         self.wait = click.option(
             '--wait',

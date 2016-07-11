@@ -145,14 +145,11 @@ def storage():
 def load_env():
     if not os.path.isdir(storage_dir()):
         error = exceptions.CloudifyCliError(
-            '{0} has not been initialized with a blueprint.'.format(
+            'Please initialize a blueprint'.format(
                 utils.get_cwd()))
 
-        # init was probably not executed.
-        # suggest solution.
-
         error.possible_solutions = [
-            "Run `cfy local init` in this directory"
+            "Run `cfy init BLUEPRINT_PATH`"
         ]
         raise error
     return local.load_env(name=_NAME,

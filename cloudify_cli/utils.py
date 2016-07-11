@@ -57,12 +57,34 @@ CLOUDIFY_WORKDIR = os.path.join(
     os.path.expanduser('~'),
     constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
 CLOUDIFY_CONFIG_PATH = os.path.join(CLOUDIFY_WORKDIR, 'config.yaml')
-ACTIVE_PRO_FILE = os.path.join(CLOUDIFY_WORKDIR, 'active.profile')
+PROFILES_DIR = os.path.join(CLOUDIFY_WORKDIR, 'profiles')
+ACTIVE_PRO_FILE = os.path.join(PROFILES_DIR, 'active.profile')
+
+
+def delete_profile(profile_name):
+    profile_dir = os.path.join(PROFILES_DIR, profile_name)
+    if os.path.isdir(profile_dir):
+        shutil.rmtree(profile_dir)
+
+
+def get_profile(profile_name):
+    set_active_profile(profile_name)
+
+    cosmo_wd_settings = load_cloudify_working_dir_settings(profile_name)
+    ssh_key_path = cosmo_wd_settings.get_management_key() or 'Not Set'
+    ssh_user = cosmo_wd_settings.get_management_user() or 'Not Set'
+    manager_ip = cosmo_wd_settings.get_management_server() or 'Not Set'
+
+    return dict(
+        manager_ip=manager_ip,
+        alias=None,
+        ssh_key_path=ssh_key_path,
+        ssh_user=ssh_user)
 
 
 def is_profile_exists(profile_name):
     return os.path.isfile(os.path.join(
-        CLOUDIFY_WORKDIR, profile_name, 'context'))
+        PROFILES_DIR, profile_name, 'context'))
 
 
 def assert_profile_exists(profile_name=None):
@@ -140,10 +162,7 @@ def get_init_path(profile_name):
     Cloudify settings directory (`.cloudify`).
     :return: if we found it, return it's path. else, return None
     """
-    path = os.path.join(
-        os.path.expanduser('~'),
-        constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-        profile_name)
+    path = os.path.join(PROFILES_DIR, profile_name)
     return path if os.path.exists(path) else None
 
 
@@ -162,11 +181,7 @@ def dump_configuration_file():
 def dump_cloudify_working_dir_settings(cosmo_wd_settings=None,
                                        update=False,
                                        profile_name=None):
-    workdir = os.path.join(
-        os.path.expanduser('~'),
-        constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-        profile_name)
-
+    workdir = os.path.join(PROFILES_DIR, profile_name)
     if cosmo_wd_settings is None:
         cosmo_wd_settings = CloudifyWorkingDirectorySettings()
     if update:
@@ -613,7 +628,7 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
         return self._bootstrap_state
 
     def set_bootstrap_state(self, bootstrap_state):
-        self._bootstrap_state = _bootstrap_state
+        self._bootstrap_state = bootstrap_state
 
     def get_management_server(self):
         return self._management_ip

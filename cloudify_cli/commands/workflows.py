@@ -31,7 +31,7 @@ def workflows():
 
 
 @workflows.command(name='get')
-@click.argument('workflow-id', required=True)
+@click.argument('workflow-id')
 @cfy.options.deployment_id(required=True)
 def get(workflow_id, deployment_id):
     """Retrieve information for a specific workflow of a specific deplouyment
@@ -92,7 +92,7 @@ def get(workflow_id, deployment_id):
 
 
 @workflows.command(name='list')
-@click.argument('deployment-id', required=True)
+@click.argument('deployment-id')
 def list(deployment_id):
     """List all workflows on the manager
     """

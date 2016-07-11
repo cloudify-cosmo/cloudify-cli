@@ -54,8 +54,10 @@ def use(alias,
 
     management_ip = management_ip or 'local'
     if management_ip == 'local':
+        logger.info('Using local environment...')
         if not utils.is_profile_exists(management_ip):
             init.init_profile(profile_name=management_ip)
+        utils.set_active_profile('local')
         return
 
     logger.info('Attemping to connect...'.format(management_ip))

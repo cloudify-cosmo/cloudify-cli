@@ -25,16 +25,18 @@ from ..logger import get_logger
 
 
 @cfy.command(name='create-requirements')
+@cfy.options.optional_output_path
 @click.argument('blueprint-path', required=True, type=click.Path(exists=True))
-@cfy.options.output_path
 def create_requirements(blueprint_path, output_path):
     """Create a pip-compliant requirements file for a given blueprint
     """
     logger = get_logger()
     if output_path and os.path.exists(output_path):
         raise exceptions.CloudifyCliError(
-            'Output path {0} already exists'.format(output_path))
+            'Path {0} already exists'.format(output_path))
 
+    # TODO: this might show duplicates when printing.
+    # `dump_to_file` removes duplicates. We need to fix it here.
     requirements = common.create_requirements(blueprint_path=blueprint_path)
 
     if output_path:

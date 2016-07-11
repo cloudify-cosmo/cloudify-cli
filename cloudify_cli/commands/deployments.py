@@ -155,11 +155,11 @@ def update(deployment_id,
 
 
 @deployments.command(name='create')
-@click.argument('deployment-id', required=True)
-@cfy.options.blueprint_id(required=True)
+@click.argument('blueprint-id', required=True)
+@cfy.options.deployment_id()
 @cfy.options.inputs
-def create(deployment_id,
-           blueprint_id,
+def create(blueprint_id,
+           deployment_id,
            inputs):
     """Create a deployment on the manager
     """

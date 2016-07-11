@@ -33,7 +33,7 @@ def plugins():
 
 
 @plugins.command(name='validate')
-@click.argument('plugin-path', required=True)
+@click.argument('plugin-path')
 def validate(plugin_path):
     """Validate a plugin
 
@@ -43,11 +43,11 @@ def validate(plugin_path):
     """
     logger = get_logger()
 
-    logger.info('Validating plugin {0}...'.format(plugin_path.name))
-    if not tarfile.is_tarfile(plugin_path.name):
+    logger.info('Validating plugin {0}...'.format(plugin_path))
+    if not tarfile.is_tarfile(plugin_path):
         raise CloudifyCliError('Archive {0} is of an unsupported type. Only '
-                               'tar.gz is allowed'.format(plugin_path.name))
-    with tarfile.open(plugin_path.name, 'r') as tar:
+                               'tar.gz is allowed'.format(plugin_path))
+    with tarfile.open(plugin_path, 'r') as tar:
         tar_members = tar.getmembers()
         package_json_path = "{0}/{1}".format(tar_members[0].name,
                                              'package.json')
@@ -68,7 +68,7 @@ def validate(plugin_path):
 
 
 @plugins.command(name='delete')
-@click.argument('plugin-id', required=True)
+@click.argument('plugin-id')
 @cfy.options.force(help=helptexts.FORCE_DELETE_PLUGIN)
 def delete(plugin_id, force):
     """Delete a plugin from the manager
@@ -83,14 +83,15 @@ def delete(plugin_id, force):
 
 
 @plugins.command(name='upload')
-@click.argument('plugin-path', required=True)
-def upload(plugin_path):
+@click.argument('plugin-path')
+@click.pass_context
+def upload(ctx, plugin_path):
     """Upload a plugin to the manager
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
-    validate(plugin_path)
+    ctx.invoke(validate, plugin_path=plugin_path)
 
     logger.info('Uploading plugin {0}'.format(plugin_path))
     plugin = client.plugins.upload(plugin_path)
@@ -98,7 +99,7 @@ def upload(plugin_path):
 
 
 @plugins.command(name='download')
-@click.argument('plugin-id', required=True)
+@click.argument('plugin-id')
 @cfy.options.output_path
 def download(plugin_id, output_path):
     """Download a plugin from the manager
@@ -117,7 +118,7 @@ fields = ['id', 'package_name', 'package_version', 'supported_platform',
 
 
 @plugins.command(name='get')
-@click.argument('plugin-id', required=True)
+@click.argument('plugin-id')
 def get(plugin_id):
     """Retrieve information for a specific plugin
     """

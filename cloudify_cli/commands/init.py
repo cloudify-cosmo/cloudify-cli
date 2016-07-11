@@ -33,14 +33,12 @@ _NAME = 'local'
 
 @cfy.command(name='init')
 @cfy.options.reset_context
-@cfy.options.skip_logging
 @cfy.options.inputs
 @cfy.options.install_plugins
 @cfy.options.init_hard_reset
 @click.argument('blueprint-path', required=False)
 def init(blueprint_path,
          reset_context,
-         skip_logging,
          inputs,
          install_plugins,
          hard):
@@ -49,11 +47,14 @@ def init(blueprint_path,
     logger = get_logger()
     profile_name = 'local'
 
-    if not utils.is_initialized():
-        init_profile(profile_name, reset_context, hard)
-    utils.set_active_profile(profile_name)
-
     if blueprint_path:
+        if reset_context or hard:
+            logger.warning(
+                'The `--reset-context` and `--hard` flags are ignored '
+                'when initalizing a blueprint')
+        init_profile(profile_name, reset_context=True, hard=False)
+        utils.set_active_profile(profile_name)
+
         if os.path.isdir(common.storage_dir()):
             shutil.rmtree(common.storage_dir())
 
@@ -82,6 +83,9 @@ def init(blueprint_path,
         logger.info("Initialized {0}\nIf you make changes to the "
                     "blueprint, run `cfy init {0}` "
                     "again to apply them".format(blueprint_path))
+    else:
+        init_profile(profile_name, reset_context, hard)
+        utils.set_active_profile(profile_name)
 
 
 def init_profile(profile_name, reset_context=False, hard=False):
@@ -89,7 +93,7 @@ def init_profile(profile_name, reset_context=False, hard=False):
     logger.info('Initializing profile {0}'.format(profile_name))
 
     context_file_path = os.path.join(
-        utils.CLOUDIFY_WORKDIR,
+        utils.PROFILES_DIR,
         profile_name,
         constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
 
@@ -108,8 +112,8 @@ def init_profile(profile_name, reset_context=False, hard=False):
             ]
             raise error
 
-    if not os.path.isdir(utils.CLOUDIFY_WORKDIR):
-        os.makedirs(utils.CLOUDIFY_WORKDIR)
+    if not os.path.isdir(utils.PROFILES_DIR):
+        os.makedirs(utils.PROFILES_DIR)
     utils.set_active_profile(profile_name)
     if not os.path.isdir(utils.CLOUDIFY_CONFIG_PATH) or hard:
         utils.dump_configuration_file()

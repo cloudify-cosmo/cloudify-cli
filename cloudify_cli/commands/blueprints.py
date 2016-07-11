@@ -57,15 +57,13 @@ def upload(blueprint_path,
            validate):
     """Upload a blueprint to the manager
     """
+
+    # TODO: allow to upload from github like so:
+    # `cfy blueprints upload cloudify-examples/my-blueprint:branch`
     blueprint_id = blueprint_id or utils._generate_suffixed_id(
         get_archive_id(blueprint_path))
 
-    if not _is_archive(blueprint_path):
-        _publish_directory(
-            blueprint_path,
-            blueprint_id,
-            validate)
-    else:
+    if _is_archive(blueprint_path):
         if not blueprint_filename:
             raise CloudifyCliError(
                 'Supplying an archive requires that the name of the main '
@@ -79,6 +77,11 @@ def upload(blueprint_path,
             blueprint_path,
             blueprint_filename,
             blueprint_id)
+    elif os.path.isfile(blueprint_path):
+        _publish_directory(
+            blueprint_path,
+            blueprint_id,
+            validate)
 
 
 def _publish_directory(blueprint_path, blueprint_id, validate):
