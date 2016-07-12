@@ -39,13 +39,14 @@ from .. import utils
 from .. import common
 from .. import constants
 from ..logger import get_logger
-from .tasks import (
-    PROVIDER_RUNTIME_PROPERTY,
-    MANAGER_IP_RUNTIME_PROPERTY,
-    MANAGER_USER_RUNTIME_PROPERTY,
-    MANAGER_KEY_PATH_RUNTIME_PROPERTY,
-    REST_PORT)
 from ..exceptions import CloudifyBootstrapError
+
+
+PROVIDER_RUNTIME_PROPERTY = 'provider'
+MANAGER_IP_RUNTIME_PROPERTY = 'manager_ip'
+MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
+MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
+REST_PORT = 'rest_port'
 
 
 MANAGER_DEPLOYMENT_ARCHIVE_IGNORED_FILES = ['.git']

@@ -16,18 +16,18 @@
 
 import os
 import shutil
+import filecmp
 import unittest
 import tempfile
-import filecmp
 
 from mock import patch
 
-from cloudify_cli import constants
 from cloudify_cli import utils
-from cloudify_cli.bootstrap import bootstrap
+from cloudify_cli import constants
 from cloudify_cli.bootstrap import tasks
-from cloudify_cli.exceptions import CloudifyBootstrapError
+from cloudify_cli.bootstrap import bootstrap
 from cloudify.exceptions import NonRecoverableError
+from cloudify_cli.exceptions import CloudifyBootstrapError
 
 TEST_DIR = '/tmp/cloudify-cli-unit-tests'
 
@@ -119,7 +119,7 @@ class CliBootstrapUnitTests(unittest.TestCase):
         # setting the limit to be smaller than the archive's size when
         # compressed with the .git folder included in the archive
         with patch.object(bootstrap, 'MAX_MANAGER_DEPLOYMENT_SIZE',
-                          manager_dep_size-1):
+                          manager_dep_size - 1):
             # validation should pass as the limit is still bigger than
             # the size of the archive when the .git folder is excluded
             bootstrap.validate_manager_deployment_size(
