@@ -28,8 +28,8 @@ from StringIO import StringIO
 
 
 import requests
-import fabric.api as fabric
 from retrying import retry
+import fabric.api as fabric
 
 from cloudify.workflows import local
 from cloudify.exceptions import RecoverableError
@@ -52,6 +52,8 @@ REST_PORT = 'rest_port'
 MANAGER_DEPLOYMENT_ARCHIVE_IGNORED_FILES = ['.git']
 MAX_MANAGER_DEPLOYMENT_SIZE = 50 * (10 ** 6)  # 50MB
 
+_ENV_NAME = 'manager'
+
 
 def _workdir():
     active_profile = utils.get_active_profile()
@@ -70,7 +72,7 @@ def delete_workdir():
         shutil.rmtree(workdir)
 
 
-def load_env(name='manager'):
+def load_env(name=_ENV_NAME):
     storage = local.FileStorage(storage_dir=_workdir())
     return local.load_env(name=name, storage=storage)
 
@@ -84,7 +86,7 @@ def blueprint_archive_filter_func(tarinfo):
 
 
 def tar_manager_deployment(manager_deployment_path=None):
-    name = 'manager'
+    name = _ENV_NAME
     file_obj = BytesIO()
     with tarfile.open(fileobj=file_obj, mode='w:gz') as tar:
         tar.add(manager_deployment_path or os.path.join(_workdir(), name),
@@ -104,7 +106,7 @@ def dump_manager_deployment():
 
 
 def read_manager_deployment_dump_if_needed(manager_deployment_dump):
-    name = 'manager'
+    name = _ENV_NAME
     if not manager_deployment_dump:
         return False
     if os.path.exists(os.path.join(_workdir(), name)):
@@ -498,16 +500,13 @@ def _upload_resources(manager_node, fabric_env, management_ip, rest_client,
     # Every resource is first moved/downloaded to this temp dir.
     temp_dir = tempfile.mkdtemp()
     try:
-        # _upload_plugins(upload_resources.get('plugin_resources', ()),
-        #                 temp_dir,
-        #                 management_ip,
-        #                 rest_client,
-        #                 retries,
-        #                 wait_interval,
-        #                 fetch_timeout)
-        upload_dsl_resources(upload_resources.get('dsl_resources', ()),
-                             temp_dir, fabric_env, retries, wait_interval,
-                             fetch_timeout)
+        upload_dsl_resources(
+            upload_resources.get('dsl_resources', ()),
+            temp_dir,
+            fabric_env,
+            retries,
+            wait_interval,
+            fetch_timeout)
     finally:
         shutil.rmtree(temp_dir, ignore_errors=True)
 
@@ -679,6 +678,7 @@ def _get_resource_into_dir(destination_dir, resource_source_path, retries,
 def _stop_retries(retries, wait_interval, attempt, *args, **kwargs):
     """
     A wrapper function which enables logging for the retry mechanism.
+
     :param retries: Total number of retries.
     :param wait_interval: wait time between attempts.
     :param self: will be used by the retry decorator.

@@ -39,8 +39,8 @@ class CliBootstrapUnitTests(unittest.TestCase):
         os.makedirs(TEST_DIR)
         test_workdir = tempfile.mkdtemp(dir=TEST_DIR)
         utils.get_cwd = lambda: test_workdir
-        self.bootstrap_dir = os.path.join(test_workdir, '.cloudify',
-                                          'bootstrap')
+        self.bootstrap_dir = os.path.join(
+            test_workdir, '.cloudify', 'bootstrap')
         self.manager_dir = os.path.join(self.bootstrap_dir, 'manager')
         os.makedirs(self.bootstrap_dir)
 

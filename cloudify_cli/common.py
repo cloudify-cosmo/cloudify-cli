@@ -29,7 +29,7 @@ from . import exceptions
 from .logger import get_logger
 
 
-_NAME = 'local'
+_ENV_NAME = 'local'
 _STORAGE_DIR_NAME = 'local-storage'
 
 
@@ -43,9 +43,7 @@ def initialize_blueprint(blueprint_path,
 
     logger.info('Initializing blueprint...')
     if install_plugins:
-        install_blueprint_plugins(
-            blueprint_path=blueprint_path
-        )
+        install_blueprint_plugins(blueprint_path=blueprint_path)
 
     config = utils.CloudifyConfig()
     inputs = utils.inputs_to_dict(inputs, 'inputs')
@@ -62,9 +60,7 @@ def initialize_blueprint(blueprint_path,
 
 def install_blueprint_plugins(blueprint_path):
 
-    requirements = create_requirements(
-        blueprint_path=blueprint_path
-    )
+    requirements = create_requirements(blueprint_path=blueprint_path)
 
     if requirements:
         # validate we are inside a virtual env
@@ -74,17 +70,17 @@ def install_blueprint_plugins(blueprint_path):
                 'virtualenv to install blueprint plugins')
 
         runner = LocalCommandRunner(get_logger())
-        # dump the requirements to a file
-        # and let pip install it.
-        # this will utilize pip's mechanism
-        # of cleanup in case an installation fails.
+        # Dump the requirements to a file and let pip install it.
+        # This will utilize pip's mechanism of cleanup in case an installation
+        # fails.
         tmp_path = tempfile.mkstemp(suffix='.txt', prefix='requirements_')[1]
         utils.dump_to_file(collection=requirements, file_path=tmp_path)
         command_parts = [sys.executable, '-m', 'pip', 'install', '-r',
                          tmp_path]
         runner.run(command=' '.join(command_parts), stdout_pipe=False)
     else:
-        get_logger().debug('There are no plugins to install')
+        logger = get_logger()
+        logger.debug('There are no plugins to install')
 
 
 def create_requirements(blueprint_path):
@@ -93,19 +89,12 @@ def create_requirements(blueprint_path):
 
     requirements = _plugins_to_requirements(
         blueprint_path=blueprint_path,
-        plugins=parsed_dsl[
-            dsl_constants.DEPLOYMENT_PLUGINS_TO_INSTALL
-        ]
-    )
+        plugins=parsed_dsl[dsl_constants.DEPLOYMENT_PLUGINS_TO_INSTALL])
 
     for node in parsed_dsl['nodes']:
-        requirements.update(
-            _plugins_to_requirements(
-                blueprint_path=blueprint_path,
-                plugins=node['plugins']
-            )
-        )
-
+        requirements.update(_plugins_to_requirements(
+            blueprint_path=blueprint_path,
+            plugins=node['plugins']))
     return requirements
 
 
@@ -114,9 +103,7 @@ def _plugins_to_requirements(blueprint_path, plugins):
     sources = set()
     for plugin in plugins:
         if plugin[dsl_constants.PLUGIN_INSTALL_KEY]:
-            source = plugin[
-                dsl_constants.PLUGIN_SOURCE_KEY
-            ]
+            source = plugin[dsl_constants.PLUGIN_SOURCE_KEY]
             if not source:
                 continue
             if '://' in source:
@@ -138,7 +125,7 @@ def add_ignore_bootstrap_validations_input(inputs):
 
 
 def storage_dir():
-    return os.path.join(utils.PROFILES_DIR, 'local', _STORAGE_DIR_NAME)
+    return os.path.join(utils.PROFILES_DIR, _ENV_NAME, _STORAGE_DIR_NAME)
 
 
 def storage():
@@ -148,10 +135,6 @@ def storage():
 def load_env():
     if not os.path.isdir(storage_dir()):
         error = exceptions.CloudifyCliError('Please initialize a blueprint')
-
-        error.possible_solutions = [
-            "Run `cfy init BLUEPRINT_PATH`"
-        ]
+        error.possible_solutions = ["Run `cfy init BLUEPRINT_PATH`"]
         raise error
-    return local.load_env(name=_NAME,
-                          storage=storage())
+    return local.load_env(name=_ENV_NAME, storage=storage())
