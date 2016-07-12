@@ -102,9 +102,11 @@ def upload(ctx,
         blueprint_id = blueprint_id or utils.get_archive_id(
             processed_blueprint_path)
 
+        progress_handler = utils.generate_progress_handler(blueprint_path, '')
         logger.info('Uploading blueprint {0}...'.format(blueprint_path))
-        blueprint = client.blueprints.upload(
-            processed_blueprint_path, blueprint_id)
+        blueprint = client.blueprints.upload(processed_blueprint_path,
+                                             blueprint_id,
+                                             progress_handler)
         logger.info("Blueprint uploaded. The blueprint's id is {0}".format(
             blueprint.id))
     finally:
@@ -131,7 +133,10 @@ def download(blueprint_id, output_path):
     client = env.get_rest_client()
 
     logger.info('Downloading blueprint {0}...'.format(blueprint_id))
-    target_file = client.blueprints.download(blueprint_id, output_path)
+    progress_handler = utils.generate_progress_handler(output_path, '')
+    target_file = client.blueprints.download(blueprint_id,
+                                             output_path,
+                                             progress_handler)
     logger.info('Blueprint downloaded as {0}'.format(target_file))
 
 

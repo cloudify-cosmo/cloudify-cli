@@ -117,8 +117,9 @@ def upload(ctx, plugin_path):
     logger = get_logger()
     client = env.get_rest_client()
 
+    progress_handler = utils.generate_progress_handler(plugin_path, '')
     logger.info('Uploading plugin {0}...'.format(plugin_path))
-    plugin = client.plugins.upload(plugin_path)
+    plugin = client.plugins.upload(plugin_path, progress_handler)
     logger.info("Plugin uploaded. The plugin's id is {0}".format(plugin.id))
 
 
@@ -135,7 +136,10 @@ def download(plugin_id, output_path):
     client = env.get_rest_client()
 
     logger.info('Downloading plugin {0}...'.format(plugin_id))
-    target_file = client.plugins.download(plugin_id, output_path)
+    progress_handler = utils.generate_progress_handler(output_path, '')
+    target_file = client.plugins.download(plugin_id,
+                                          output_path,
+                                          progress_handler)
     logger.info('Plugin downloaded as {0}'.format(target_file))
 
 
