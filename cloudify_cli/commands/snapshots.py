@@ -16,10 +16,10 @@
 import click
 
 from .. import utils
+from .. import common
 from ..config import cfy
 from ..config import helptexts
 from ..logger import get_logger
-from ..utils import print_table
 
 
 @cfy.group(name='snapshots')
@@ -123,4 +123,4 @@ def list():
     logger.info('Listing snapshots...')
     pt = utils.table(['id', 'created_at', 'status', 'error'],
                      data=client.snapshots.list())
-    print_table('Snapshots:', pt)
+    common.print_table('Snapshots:', pt)

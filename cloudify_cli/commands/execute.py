@@ -17,7 +17,6 @@ import json
 
 import click
 
-from .. import utils
 from .. import common
 from ..config import cfy
 from ..logger import get_logger
@@ -39,7 +38,7 @@ def execute(workflow_id,
     """Execute a workflow
     """
     logger = get_logger()
-    parameters = utils.inputs_to_dict(parameters, 'parameters')
+    parameters = common.inputs_to_dict(parameters, 'parameters')
     env = common.load_env()
     result = env.execute(workflow=workflow_id,
                          parameters=parameters,

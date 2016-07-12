@@ -146,7 +146,7 @@ def upgrade(blueprint_path,
 
 
 def update_inputs(inputs=None):
-    inputs = utils.inputs_to_dict(inputs, 'inputs') or {}
+    inputs = common.inputs_to_dict(inputs, 'inputs') or {}
     inputs.update({'private_ip': _load_private_ip(inputs)})
     inputs.update({'ssh_key_filename': _load_management_key(inputs)})
     inputs.update({'ssh_user': _load_management_user(inputs)})

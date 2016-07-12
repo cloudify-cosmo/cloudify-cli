@@ -53,7 +53,7 @@ def get(node_instance_id):
     columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
     pt = utils.table(columns, [node_instance])
     pt.max_width = 50
-    utils.print_table('Instance:', pt)
+    common.print_table('Instance:', pt)
 
     # print node instance runtime properties
     logger.info('Instance runtime properties:')
@@ -91,7 +91,7 @@ def list(deployment_id, node_name):
 
     columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
     pt = utils.table(columns, instances)
-    utils.print_table('Instances:', pt)
+    common.print_table('Instances:', pt)
 
 
 @cfy.command(name='node-instances')

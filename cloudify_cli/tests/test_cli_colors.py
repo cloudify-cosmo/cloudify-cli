@@ -18,9 +18,10 @@ import unittest
 
 import mock
 
+from cloudify import logs
+
 from cloudify_cli import logger
 from cloudify_cli.colorful_event import ColorfulEvent
-from cloudify import logs
 
 
 @mock.patch('cloudify_cli.utils.is_initialized', lambda: True)

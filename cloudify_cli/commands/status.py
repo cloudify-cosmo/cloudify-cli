@@ -19,6 +19,7 @@ from cloudify_rest_client.exceptions import (
 )
 
 from .. import utils
+from .. import common
 from ..config import cfy
 from ..logger import get_logger
 
@@ -55,7 +56,7 @@ def status():
             'status': state
         })
     pt = utils.table(['service', 'status'], data=services)
-    utils.print_table('Services:', pt)
+    common.print_table('Services:', pt)
 
     maintenance_status = maintenance_response.status
     if maintenance_status != 'deactivated':

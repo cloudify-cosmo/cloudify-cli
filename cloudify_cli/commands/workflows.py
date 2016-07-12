@@ -18,6 +18,7 @@ import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
+from .. import common
 from ..config import cfy
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
@@ -60,7 +61,7 @@ def get(workflow_id, deployment_id):
                      defaults={'blueprint_id': deployment.blueprint_id,
                                'deployment_id': deployment.id})
 
-    utils.print_table('Workflows:', pt)
+    common.print_table('Workflows:', pt)
 
     # print workflow parameters
     mandatory_params = dict()
@@ -111,4 +112,4 @@ def list(deployment_id):
                      data=workflows,
                      defaults={'blueprint_id': deployment.blueprint_id,
                                'deployment_id': deployment.id})
-    utils.print_table('Workflows:', pt)
+    common.print_table('Workflows:', pt)

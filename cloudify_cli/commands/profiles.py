@@ -17,6 +17,7 @@ import os
 import click
 
 from .. import utils
+from .. import common
 from ..config import cfy
 from ..logger import get_logger
 
@@ -68,7 +69,7 @@ def list():
          'ssh_user',
          'ssh_key_path'],
         profiles)
-    utils.print_table('Profiles:', pt)
+    common.print_table('Profiles:', pt)
 
 
 @profiles.command(name='delete')

@@ -20,6 +20,7 @@ import click
 from cloudify_rest_client import exceptions
 
 from .. import utils
+from .. import common
 from ..config import cfy
 from ..config import helptexts
 from ..exceptions import CloudifyCliError
@@ -62,7 +63,7 @@ def get(execution_id):
                       'created_at', 'error'],
                      [execution])
     pt.max_width = 50
-    utils.print_table('Executions:', pt)
+    common.print_table('Executions:', pt)
 
     # print execution parameters
     logger.info('Execution Parameters:')
@@ -106,7 +107,7 @@ def list(deployment_id, include_system_workflows):
 
     columns = ['id', 'workflow_id', 'deployment_id', 'status', 'created_at']
     pt = utils.table(columns, executions)
-    utils.print_table('Executions:', pt)
+    common.print_table('Executions:', pt)
 
     if any(execution.status in (execution.CANCELLING,
                                 execution.FORCE_CANCELLING)
@@ -134,7 +135,7 @@ def start(workflow_id,
     """Execute a workflow on a given deployment
     """
     logger = get_logger()
-    parameters = utils.inputs_to_dict(parameters, 'parameters')
+    parameters = common.inputs_to_dict(parameters, 'parameters')
     management_ip = utils.get_management_server_ip()
     logger.info('Executing workflow {0} on deployment {1} '
                 '[timeout={2} seconds]'.format(

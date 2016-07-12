@@ -18,6 +18,7 @@ import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
+from .. import common
 from ..config import cfy
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
@@ -62,7 +63,7 @@ def get(node_id, deployment_id):
                'number_of_instances', 'planned_number_of_instances']
     pt = utils.table(columns, [node])
     pt.max_width = 50
-    utils.print_table('Node:', pt)
+    common.print_table('Node:', pt)
 
     # print node properties
     logger.info('Node properties:')
@@ -102,4 +103,4 @@ def list(deployment_id):
     columns = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                'number_of_instances', 'planned_number_of_instances']
     pt = utils.table(columns, nodes)
-    utils.print_table('Nodes:', pt)
+    common.print_table('Nodes:', pt)

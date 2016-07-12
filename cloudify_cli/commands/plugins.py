@@ -18,10 +18,10 @@ import tarfile
 import click
 
 from .. import utils
+from .. import common
 from ..config import cfy
 from ..config import helptexts
 from ..logger import get_logger
-from ..utils import print_table
 from ..exceptions import CloudifyCliError
 
 
@@ -130,7 +130,7 @@ def get(plugin_id):
     plugin = client.plugins.get(plugin_id, _include=fields)
 
     pt = utils.table(fields, data=[plugin])
-    print_table('Plugin:', pt)
+    common.print_table('Plugin:', pt)
 
 
 @plugins.command(name='list')
@@ -145,7 +145,7 @@ def list():
     plugins = client.plugins.list(_include=fields)
 
     pt = utils.table(fields, data=plugins)
-    print_table('Plugins:', pt)
+    common.print_table('Plugins:', pt)
 
 
 # @plugins.command('install')

@@ -16,6 +16,7 @@
 import time
 
 from .. import utils
+from .. import common
 from ..config import cfy
 from .. import exceptions
 from ..logger import NO_VERBOSE
@@ -73,7 +74,7 @@ def _print_maintenance_mode_status(client):
             pt = utils.table(['id', 'deployment_id', 'workflow_id', 'status'],
                              remaining_executions)
             pt.max_width = 50
-            utils.print_table('Remaining executions:', pt)
+            common.print_table('Remaining executions:', pt)
 
     if status_response.status == MAINTENANCE_MODE_ACTIVE:
         logger.info('INFO - Cloudify Manager is currently under maintenance. '

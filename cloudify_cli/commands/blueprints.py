@@ -20,6 +20,7 @@ import urlparse
 import click
 
 from .. import utils
+from .. import common
 from ..config import cfy
 from .validate import validate
 from ..logger import get_logger
@@ -201,7 +202,7 @@ def list():
                       'created_at', 'updated_at'],
                      data=blueprints)
 
-    utils.print_table('Available blueprints:', pt)
+    common.print_table('Available blueprints:', pt)
 
 
 @blueprints.command(name='get')
@@ -223,7 +224,7 @@ def get(blueprint_id):
     pt = utils.table(['id', 'main_file_name', 'created_at', 'updated_at',
                       '#deployments'], [blueprint])
     pt.max_width = 50
-    utils.print_table('Blueprint:', pt)
+    common.print_table('Blueprint:', pt)
 
     logger.info('Description:')
     logger.info('{0}\n'.format(blueprint['description'] if
@@ -254,7 +255,7 @@ def inputs(blueprint_id):
     pt = utils.table(['name', 'type', 'default', 'description'],
                      data=data)
 
-    utils.print_table('Inputs:', pt)
+    common.print_table('Inputs:', pt)
 
 
 # TODO: move to utils

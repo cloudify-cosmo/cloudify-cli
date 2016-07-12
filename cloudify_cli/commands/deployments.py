@@ -22,6 +22,7 @@ from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 
 from .. import utils
+from .. import common
 from ..config import cfy
 from ..config import helptexts
 from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
@@ -77,7 +78,7 @@ def list(blueprint_id):
          'created_at',
          'updated_at'],
         deployments)
-    utils.print_table('Deployments:', pt)
+    common.print_table('Deployments:', pt)
 
 
 @deployments.command(name='update')
@@ -107,7 +108,7 @@ def update(deployment_id,
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
-    processed_inputs = utils.inputs_to_dict(inputs, 'inputs')
+    processed_inputs = common.inputs_to_dict(inputs, 'inputs')
 
     blueprint_or_archive_path = blueprint_path
     logger.info('Updating deployment {dep_id} using blueprint {path}'.format(
@@ -165,7 +166,7 @@ def create(blueprint_id,
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
-    inputs = utils.inputs_to_dict(inputs, 'inputs')
+    inputs = common.inputs_to_dict(inputs, 'inputs')
     deployment_id = deployment_id or utils._generate_suffixed_id(blueprint_id)
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
