@@ -17,15 +17,16 @@
 import os
 import shutil
 import unittest
+
 from mock import patch
 
+from cloudify.utils import setup_logger
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify.utils import setup_logger
 
 
-from cloudify_cli import exceptions
-from cloudify_cli.tests import cli_runner
+from .. import exceptions
+from ..tests import cli_runner
 from cloudify_cli import utils
 from cloudify_cli.utils import os as utils_os
 from cloudify_cli.utils import DEFAULT_LOG_FILE

@@ -14,13 +14,13 @@
 # limitations under the License.
 ########
 
-import unittest
 import json
+import unittest
 
 from mock import patch
 
-from cloudify_cli import logger
-from cloudify_cli.tests.commands import utils
+from .. import logger
+from .commands import utils
 
 
 class TestLogger(unittest.TestCase):

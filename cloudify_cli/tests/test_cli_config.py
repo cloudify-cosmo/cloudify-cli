@@ -33,8 +33,8 @@ class TestCLIConfig(unittest.TestCase):
         with open(self.config_file_path, 'w') as f:
             yaml.dump({'colors': True, 'auto_generate_ids': True}, f)
 
-        patcher = mock.patch('cloudify_cli.utils.get_configuration_path',
-                             lambda: self.config_file_path)
+        patcher = mock.patch('cloudify_cli.utils.CLOUDIFY_CONFIG_PATH',
+                             self.config_file_path)
         self.addCleanup(patcher.stop)
         patcher.start()
 

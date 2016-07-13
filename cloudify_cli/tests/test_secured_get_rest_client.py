@@ -15,15 +15,14 @@
 ############
 
 import os
-import tempfile
 import unittest
-import shutil
 
-from cloudify_rest_client.client import DEFAULT_API_VERSION as API_VERSION
+from cloudify_rest_client.client import DEFAULT_API_VERSION
 
-from cloudify_cli import utils
-from cloudify_cli import constants
-from cloudify_cli.tests import cli_runner
+from . import cli
+from .. import utils
+from .. import constants
+
 
 TRUST_ALL = 'non-empty-value'
 CERT_PATH = 'path-to-certificate'
@@ -32,14 +31,10 @@ CERT_PATH = 'path-to-certificate'
 class TestGetRestClient(unittest.TestCase):
 
     def setUp(self):
-
-        self.test_dir = os.path.join('/tmp', 'cloudify-cli-unit-tests')
-        os.makedirs(self.test_dir)
-        test_workdir = tempfile.mkdtemp(dir=self.test_dir)
-        utils.get_cwd = lambda: test_workdir
-        os.chdir(test_workdir)
-
-        cli_runner.run_cli('cfy init -r')
+        # cli.invoke('init blueprint.yaml -r=x')
+        # cli.invoke('init', 'blueprint.yaml', '-r', '--what=x')
+        cli.invoke('init -r')
+        # cli.invoke('init', opts={'-r': None})
 
         os.environ[constants.CLOUDIFY_USERNAME_ENV] = 'test_username'
         os.environ[constants.CLOUDIFY_PASSWORD_ENV] = 'test_password'
@@ -53,7 +48,7 @@ class TestGetRestClient(unittest.TestCase):
         del os.environ[constants.CLOUDIFY_SSL_TRUST_ALL]
         del os.environ[constants.CLOUDIFY_SSL_CERT]
 
-        shutil.rmtree(self.test_dir)
+        cli.clean_workdir()
 
     def test_get_rest_client(self):
         client = utils.get_rest_client(manager_ip='localhost',
@@ -74,5 +69,5 @@ class TestGetRestClient(unittest.TestCase):
         self.assertEqual(CERT_PATH, client._client.cert)
         self.assertTrue(client._client.trust_all)
         self.assertEqual('{0}://{1}:{2}/api/{3}'.format(
-            protocol, host, port, API_VERSION),
+            protocol, host, port, DEFAULT_API_VERSION),
             client._client.url)

@@ -20,16 +20,17 @@ import cloudify
 from cloudify.workflows import local
 from cloudify_rest_client.nodes import Node
 from cloudify_rest_client.node_instances import NodeInstance
+
 import dsl_parser
 from dsl_parser.constants import IMPORT_RESOLVER_KEY, \
     RESOLVER_IMPLEMENTATION_KEY, RESLOVER_PARAMETERS_KEY
 from dsl_parser.import_resolver.default_import_resolver import \
     DefaultImportResolver
 
-from cloudify_cli.bootstrap import bootstrap
-from cloudify_cli.tests import cli_runner
-from cloudify_cli import utils
-from cloudify_cli.tests.commands.test_cli_command import \
+from .. import utils
+from . import cli_runner
+from ..bootstrap import bootstrap
+from .commands.test_cli_command import \
     CliCommandTest, BLUEPRINTS_DIR
 
 
@@ -186,7 +187,7 @@ class ImportResolverLocalUseTests(CliCommandTest):
             cloudify.workflows.local.FileStorage.get_node_instances = \
                 old_get_node_instances
 
-    @mock.patch('cloudify_cli.commands.local._storage', new=mock.MagicMock)
+    @mock.patch('.commands.local._storage', new=mock.MagicMock)
     @mock.patch('cloudify.workflows.local._prepare_nodes_and_instances')
     @mock.patch('dsl_parser.tasks.prepare_deployment_plan')
     def test_local_init(self, *_):

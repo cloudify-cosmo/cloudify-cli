@@ -132,6 +132,11 @@ def load_cloudify_working_dir_settings(profile_name, suppress_error=False):
 
 def get_context_path(profile_name=None):
     profile_name = profile_name or get_active_profile()
+    if not profile_name:
+        raise CloudifyCliError(
+            'No profile name provided and there is no '
+            'currently active profile. Please initialize '
+            'and try again.')
     init_path = get_init_path(profile_name)
     if init_path is None:
         raise_uninitialized()
@@ -159,7 +164,7 @@ def get_init_path(profile_name):
     :return: if we found it, return it's path. else, return None
     """
     path = os.path.join(PROFILES_DIR, profile_name)
-    return path if os.path.exists(path) else None
+    return path if os.path.isdir(path) else None
 
 
 def dump_configuration_file():
@@ -271,7 +276,9 @@ def get_cwd():
     return os.getcwd()
 
 
-def get_rest_client(manager_ip=None, rest_port=None, protocol=None,
+def get_rest_client(manager_ip=None,
+                    rest_port=None,
+                    protocol=None,
                     skip_version_check=False):
     if not manager_ip:
         manager_ip = get_management_server_ip()

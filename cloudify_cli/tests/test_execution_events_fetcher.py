@@ -13,16 +13,18 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from itertools import chain, repeat, count
 import unittest
+from itertools import chain, repeat, count
 
 from mock import MagicMock, patch
-from cloudify_cli.execution_events_fetcher import ExecutionEventsFetcher, \
-    wait_for_execution
-from cloudify_cli.exceptions import EventProcessingTimeoutError, \
-    ExecutionTimeoutError
-from cloudify_rest_client.client import CloudifyClient
+
 from cloudify_rest_client.executions import Execution
+from cloudify_rest_client.client import CloudifyClient
+
+from ..exceptions import EventProcessingTimeoutError, \
+    ExecutionTimeoutError
+from ..execution_events_fetcher import ExecutionEventsFetcher, \
+    wait_for_execution
 
 
 class ExecutionEventsFetcherTest(unittest.TestCase):
