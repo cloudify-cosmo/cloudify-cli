@@ -42,7 +42,7 @@ class CustomImportResolver(DefaultImportResolver):
 
 
 def update_config_file(resolver_configuration):
-    config_path = utils.get_configuration_path()
+    config_path = utils.CLOUDIFY_CONFIG_PATH
     with open(config_path, 'a') as f:
         yaml.dump(resolver_configuration, f)
 

@@ -18,36 +18,33 @@ import os
 import shutil
 import filecmp
 import unittest
-import tempfile
 
 from mock import patch
 
-from cloudify_cli import utils
-from cloudify_cli import constants
-from cloudify_cli.bootstrap import tasks
-from cloudify_cli.bootstrap import bootstrap
 from cloudify.exceptions import NonRecoverableError
-from cloudify_cli.exceptions import CloudifyBootstrapError
 
-TEST_DIR = '/tmp/cloudify-cli-unit-tests'
+from . import cfy
+from .. import utils
+from .. import constants
+from ..bootstrap import tasks
+from ..bootstrap import bootstrap
+from ..exceptions import CloudifyBootstrapError
 
 
 class CliBootstrapUnitTests(unittest.TestCase):
     """Unit tests for functions in bootstrap/bootstrap.py"""
 
     def setUp(self):
-        os.makedirs(TEST_DIR)
-        test_workdir = tempfile.mkdtemp(dir=TEST_DIR)
-        utils.get_cwd = lambda: test_workdir
+        # TODO: create an actual non-local profile here.
         self.bootstrap_dir = os.path.join(
-            test_workdir, '.cloudify', 'bootstrap')
+            utils.PROFILES_DIR, 'local', 'bootstrap')
         self.manager_dir = os.path.join(self.bootstrap_dir, 'manager')
         os.makedirs(self.bootstrap_dir)
 
-        os.chdir(test_workdir)
+        cfy.invoke('init -r')
 
     def tearDown(self):
-        shutil.rmtree(TEST_DIR)
+        cfy.purge_dot_cloudify()
 
     def test_manager_deployment_dump(self, remove_deployment=True):
         manager1_original_dir = self._copy_manager1_dir_to_manager_dir()

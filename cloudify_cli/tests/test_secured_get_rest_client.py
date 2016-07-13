@@ -19,7 +19,7 @@ import unittest
 
 from cloudify_rest_client.client import DEFAULT_API_VERSION
 
-from . import cli
+from . import cfy
 from .. import utils
 from .. import constants
 
@@ -31,10 +31,7 @@ CERT_PATH = 'path-to-certificate'
 class TestGetRestClient(unittest.TestCase):
 
     def setUp(self):
-        # cli.invoke('init blueprint.yaml -r=x')
-        # cli.invoke('init', 'blueprint.yaml', '-r', '--what=x')
-        cli.invoke('init -r')
-        # cli.invoke('init', opts={'-r': None})
+        cfy.invoke('init -r')
 
         os.environ[constants.CLOUDIFY_USERNAME_ENV] = 'test_username'
         os.environ[constants.CLOUDIFY_PASSWORD_ENV] = 'test_password'
@@ -48,7 +45,7 @@ class TestGetRestClient(unittest.TestCase):
         del os.environ[constants.CLOUDIFY_SSL_TRUST_ALL]
         del os.environ[constants.CLOUDIFY_SSL_CERT]
 
-        cli.clean_workdir()
+        cfy.purge_dot_cloudify()
 
     def test_get_rest_client(self):
         client = utils.get_rest_client(manager_ip='localhost',

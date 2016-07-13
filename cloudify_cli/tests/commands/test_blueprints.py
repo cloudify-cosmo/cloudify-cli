@@ -13,17 +13,14 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Tests all commands that start with 'cfy blueprints'
-"""
-
 import yaml
 from mock import MagicMock, patch
 
-from cloudify_cli import utils
-from cloudify_cli.tests import cli_runner
-from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
-from cloudify_cli.tests.commands.test_cli_command import BLUEPRINTS_DIR
+from .. import cfy
+from ... import utils
+from ..tests import cli_runner
+from ..tests.commands.test_cli_command import CliCommandTest
+from ..tests.commands.test_cli_command import BLUEPRINTS_DIR
 
 
 class BlueprintsTest(CliCommandTest):
@@ -34,7 +31,7 @@ class BlueprintsTest(CliCommandTest):
 
     def test_blueprints_list(self):
         self.client.blueprints.list = MagicMock(return_value=[])
-        cli_runner.run_cli('cfy blueprints list')
+        cfy.invoke('blueprints list')
 
     def test_blueprints_delete(self):
         self.client.blueprints.delete = MagicMock()
@@ -114,24 +111,22 @@ class BlueprintsTest(CliCommandTest):
 
     def test_blueprint_inputs(self):
 
-        BLUEPRINT_ID = 'a-blueprint-id'
-        NAME = 'test_input'
-        TYPE = 'string'
-        DESCRIPTION = 'Test input.'
+        blueprint_id = 'a-blueprint-id'
+        name = 'test_input'
+        type = 'string'
+        description = 'Test input.'
 
-        BLUEPRINT = {
+        blueprint = {
             'plan': {
                 'inputs': {
-                    NAME: {
-                        'type': TYPE,
-                        'description': DESCRIPTION
+                    name: {
+                        'type': type,
+                        'description': description
                         # field 'default' intentionally omitted
                     }
                 }
             }
         }
-
-        assertEqual = self.assertEqual
 
         class RestClientMock(object):
             class BlueprintsClientMock(object):
@@ -140,7 +135,7 @@ class BlueprintsTest(CliCommandTest):
                     self.blueprint = blueprint
 
                 def get(self, blueprint_id):
-                    assertEqual(blueprint_id, self.blueprint_id)
+                    self.assertEqual(blueprint_id, self.blueprint_id)
                     return self.blueprint
 
             def __init__(self, blueprint_id, blueprint):
@@ -148,7 +143,7 @@ class BlueprintsTest(CliCommandTest):
                                                             blueprint)
 
         def get_rest_client_mock(*args, **kwargs):
-            return RestClientMock(BLUEPRINT_ID, BLUEPRINT)
+            return RestClientMock(blueprint_id, blueprint)
 
         def table_mock(fields, data, *args, **kwargs):
             self.assertEqual(len(data), 1)
@@ -158,13 +153,13 @@ class BlueprintsTest(CliCommandTest):
             self.assertIn('default', input)
             self.assertIn('description', input)
 
-            self.assertEqual(input['name'], NAME)
-            self.assertEqual(input['type'], TYPE)
+            self.assertEqual(input['name'], name)
+            self.assertEqual(input['type'], type)
             self.assertEqual(input['default'], '-')
-            self.assertEqual(input['description'], DESCRIPTION)
+            self.assertEqual(input['description'], description)
 
         with patch('cloudify_cli.utils.get_rest_client',
                    get_rest_client_mock),\
                 patch('cloudify_cli.utils.table', table_mock):
             cli_runner.run_cli('cfy blueprints inputs -b {0}'
-                               .format(BLUEPRINT_ID))
+                               .format(blueprint_id))
