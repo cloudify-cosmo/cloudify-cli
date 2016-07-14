@@ -72,7 +72,7 @@ def ls(deployment_id, include_system_workflows,
     client = utils.get_rest_client(rest_host)
     try:
         if deployment_id:
-            logger.info('Listing executions list for deployment: \'{0}\' '
+            logger.info('Listing executions for deployment: \'{0}\' '
                         '[manager={1}]'.format(deployment_id, rest_host))
         else:
             logger.info(
