@@ -228,7 +228,7 @@ def get_init_path():
 
     search in each directory up the cwd directory tree for the existence of the
     Cloudify settings directory (`.cloudify`).
-    :return: if we found it, return it's path. else, return None
+    :return: if we found it, return its path; else, return None
     """
     current_lookup_dir = get_cwd()
     while True:
@@ -420,7 +420,17 @@ def get_password():
 
 
 def get_default_rest_cert_local_path():
-    return os.path.join(get_init_path(), constants.PUBLIC_REST_CERT)
+    init_path = get_init_path()
+    if init_path:
+        return os.path.join(init_path, constants.PUBLIC_REST_CERT)
+
+    error = CloudifyCliError(
+        'The default path for REST certificates cannot be calculated '
+        'because a working directory is not set.')
+    error.possible_solutions = [
+        "Run 'cfy init' or 'cfy use' to initialize a working directory"
+    ]
+    raise error
 
 
 def get_ssl_cert():
