@@ -26,6 +26,7 @@ from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='groups')
+@cfy.options.verbose
 def groups():
     """Handle deployment groups
     """
@@ -33,6 +34,7 @@ def groups():
 
 
 @groups.command(name='list')
+@cfy.options.verbose
 @click.argument('deployment-id', required=True)
 def list(deployment_id):
     """List all groups for a deployment

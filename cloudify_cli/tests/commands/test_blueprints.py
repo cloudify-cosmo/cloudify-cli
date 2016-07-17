@@ -16,81 +16,86 @@
 import yaml
 from mock import MagicMock, patch
 
-from .. import cfy
-from ... import utils
-from ..tests import cli_runner
-from ..tests.commands.test_cli_command import CliCommandTest
-from ..tests.commands.test_cli_command import BLUEPRINTS_DIR
+import cloudify_cli  # NOQA
+
+from .test_cli_command import CliCommandTest
+from .test_cli_command import BLUEPRINTS_DIR
 
 
 class BlueprintsTest(CliCommandTest):
 
     def setUp(self):
         super(BlueprintsTest, self).setUp()
-        self._create_cosmo_wd_settings()
+        self.create_cosmo_wd_settings()
 
     def test_blueprints_list(self):
         self.client.blueprints.list = MagicMock(return_value=[])
-        cfy.invoke('blueprints list')
+        self.cfy_check('blueprints list')
 
     def test_blueprints_delete(self):
         self.client.blueprints.delete = MagicMock()
-        cli_runner.run_cli('cfy blueprints delete -b a-blueprint-id')
+        self.cfy_check('blueprints delete a-blueprint-id')
 
     @patch('cloudify_cli.utils.table', autospec=True)
-    @patch('cloudify_cli.utils.print_table', autospec=True)
+    @patch('cloudify_cli.common.print_table', autospec=True)
     def test_blueprints_get(self, *args):
         self.client.blueprints.get = MagicMock()
         self.client.deployments.list = MagicMock()
-
-        cli_runner.run_cli('cfy blueprints get -b a-blueprint-id')
+        self.cfy_check('blueprints get a-blueprint-id')
 
     def test_blueprints_upload(self):
         self.client.blueprints.upload = MagicMock()
-        cli_runner.run_cli('cfy blueprints upload -p '
-                           '{0}/helloworld/blueprint.yaml '
-                           '-b my_blueprint_id'.format(BLUEPRINTS_DIR))
+        self.cfy_check(
+            'blueprints upload {0}/helloworld/blueprint.yaml'.format(
+                BLUEPRINTS_DIR))
 
     def test_blueprints_upload_invalid(self):
         self.client.blueprints.upload = MagicMock()
-        cli_runner.run_cli('cfy blueprints upload -p '
-                           '{0}/bad_blueprint/blueprint.yaml '
-                           '-b my_blueprint_id'
-                           .format(BLUEPRINTS_DIR))
+        self.cfy_check(
+            'cfy blueprints upload {0}/bad_blueprint/blueprint.yaml '
+            '-b my_blueprint_id'.format(BLUEPRINTS_DIR))
 
     def test_blueprints_upload_invalid_validate(self):
         self.client.blueprints.upload = MagicMock()
-        self._assert_ex('cfy blueprints upload -p '
-                        '{0}/bad_blueprint/blueprint.yaml '
-                        '-b my_blueprint_id --validate'
-                        .format(BLUEPRINTS_DIR),
-                        'Failed to validate blueprint')
+        self.cfy_check(
+            'cfy blueprints upload {0}/bad_blueprint/blueprint.yaml '
+            '-b my_blueprint_id --validate'.format(BLUEPRINTS_DIR),
+            err_str_segment='Failed to validate blueprint',
+            should_fail=True)
 
     def test_blueprints_publish_archive(self):
         self.client.blueprints.publish_archive = MagicMock()
-        cli_runner.run_cli('cfy blueprints publish-archive -l '
-                           '{0}/helloworld.zip '
-                           '-b my_blueprint_id'.format(BLUEPRINTS_DIR))
+        self.cfy_check(
+            'cfy blueprints upload {0}/helloworld.zip '
+            '-b my_blueprint_id --blueprint-filename blueprint.yaml'
+            .format(BLUEPRINTS_DIR))
 
     def test_blueprints_publish_unsupported_archive_type(self):
         self.client.blueprints.publish_archive = MagicMock()
         # passing in a directory instead of a valid archive type
-        self._assert_ex('cfy blueprints publish-archive -l '
-                        '{0}/helloworld '
-                        '-b my_blueprint_id'.format(BLUEPRINTS_DIR),
-                        "unsupported archive type")
+        self.cfy_check(
+            'cfy blueprints upload {0}/helloworld -b my_blueprint_id'.format(
+                BLUEPRINTS_DIR),
+            'You must either provide a path to a local blueprint file')
 
     def test_blueprints_publish_archive_bad_file_path(self):
         self.client.blueprints.publish_archive = MagicMock()
-        self._assert_ex('cfy blueprints publish-archive -l '
-                        '{0}/helloworld.tar.gz '
-                        '-b my_blueprint_id'.format(BLUEPRINTS_DIR),
-                        "not a valid URL nor a path")
+        self.cfy_check(
+            'cfy blueprints upload {0}/helloworld.tar.gz -n blah'
+            .format(BLUEPRINTS_DIR),
+            "not a valid URL nor a path")
+
+    def test_blueprints_publish_archive_no_filename(self):
+        self.client.blueprints.publish_archive = MagicMock()
+        self.cfy_check(
+            'cfy blueprints upload {0}/helloworld.tar.gz -b my_blueprint_id'
+            .format(BLUEPRINTS_DIR),
+            "Supplying an archive requires that the name of the main")
 
     def test_blueprint_validate(self):
-        cli_runner.run_cli('cfy blueprints validate '
-                           '-p {0}/helloworld/blueprint.yaml'
-                           .format(BLUEPRINTS_DIR))
+        self.cfy_check(
+            'cfy blueprints validate -p {0}/helloworld/blueprint.yaml'.format(
+                BLUEPRINTS_DIR))
 
     def test_blueprint_validate_definitions_version_false(self):
         with open(utils.get_configuration_path()) as f:

@@ -66,6 +66,7 @@ def delete_profile(profile_name):
 
 
 def get_profile(profile_name):
+    current_profile = get_active_profile()
     set_active_profile(profile_name)
 
     # TODO: add rest port and protocol, ssh port and ssh password
@@ -73,6 +74,8 @@ def get_profile(profile_name):
     ssh_key_path = cosmo_wd_settings.get_management_key() or 'Not Set'
     ssh_user = cosmo_wd_settings.get_management_user() or 'Not Set'
     manager_ip = cosmo_wd_settings.get_management_server() or 'Not Set'
+
+    set_active_profile(current_profile)
 
     return dict(
         manager_ip=manager_ip,
@@ -118,8 +121,9 @@ def is_manager_active():
     return True
 
 
-# TODO: default to `get_active_profile` if profile name is not provided
-def load_cloudify_working_dir_settings(profile_name, suppress_error=False):
+def load_cloudify_working_dir_settings(profile_name=None,
+                                       suppress_error=False):
+    profile_name = profile_name or get_active_profile()
     try:
         path = get_context_path(profile_name)
         with open(path) as f:
@@ -182,6 +186,7 @@ def dump_configuration_file():
 def dump_cloudify_working_dir_settings(cosmo_wd_settings=None,
                                        update=False,
                                        profile_name=None):
+    profile_name = profile_name or get_active_profile()
     workdir = os.path.join(PROFILES_DIR, profile_name)
     if cosmo_wd_settings is None:
         cosmo_wd_settings = CloudifyWorkingDirectorySettings()
@@ -212,8 +217,9 @@ def raise_uninitialized():
 
 
 @contextmanager
-def profile(profile_name):
-    profile = load_cloudify_working_dir_settings(profile_name)
+def profile(profile_name=None):
+    active_profile = get_active_profile()
+    profile = load_cloudify_working_dir_settings(active_profile)
     yield profile
 
 
@@ -454,6 +460,7 @@ def connected_to_manager(management_ip):
         return False
 
 
+# TODO: move to version.py
 def get_manager_version_data():
     active_profile = get_active_profile()
     dir_settings = load_cloudify_working_dir_settings(
@@ -606,6 +613,7 @@ def generate_random_string(size=6,
     return ''.join(random.choice(chars) for _ in range(size))
 
 
+# TODO: get rid of this. Used only by tests
 def delete_cloudify_working_dir_settings():
     target_file_path = os.path.join(
         os.path.expanduser('~'), constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,

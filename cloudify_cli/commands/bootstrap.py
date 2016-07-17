@@ -36,6 +36,7 @@ from ..bootstrap import bootstrap as bs
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
+@cfy.options.verbose
 @click.argument('blueprint-path', required=True)
 @click.option('--keep-up-on-failure',
               help=helptexts.KEEP_UP_ON_FAILURE)

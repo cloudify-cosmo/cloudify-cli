@@ -31,6 +31,7 @@ from ..exceptions import CloudifyCliError
 @cfy.options.host_session
 @cfy.options.session_id
 @cfy.options.list_sessions
+@cfy.options.verbose
 def ssh(command, host, sid, list_sessions):
     """Connects to a running manager via SSH.
 

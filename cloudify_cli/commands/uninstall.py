@@ -26,14 +26,15 @@ from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 
 
 @cfy.command(name='uninstall')
-@click.argument('deployment-id')
 @cfy.options.workflow_id('uninstall')
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
 @cfy.options.timeout()
 @cfy.options.include_logs
 @cfy.options.json
+@cfy.options.verbose
 @click.pass_context
+@click.argument('deployment-id')
 def manager(ctx,
             deployment_id,
             workflow_id,
@@ -89,6 +90,7 @@ def manager(ctx,
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
+@cfy.options.verbose
 @click.pass_context
 def local(ctx,
           workflow_id,

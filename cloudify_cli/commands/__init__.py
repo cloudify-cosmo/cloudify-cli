@@ -34,14 +34,13 @@ from .events import events
 from .groups import groups
 from .status import status
 from .inputs import inputs
-from .execute import execute
 from .outputs import outputs
+from .execute import execute
 from .recover import recover
 from .plugins import plugins
 from .upgrade import upgrade
 from .teardown import teardown
 from .rollback import rollback
-from .validate import validate
 from .profiles import profiles
 from .workflows import workflows
 from .snapshots import snapshots

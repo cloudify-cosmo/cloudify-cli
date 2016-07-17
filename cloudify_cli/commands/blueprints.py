@@ -19,10 +19,12 @@ import urlparse
 
 import click
 
+from dsl_parser.parser import parse_from_path
+from dsl_parser.exceptions import DSLParsingException
+
 from .. import utils
 from .. import common
 from ..config import cfy
-from .validate import validate
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
@@ -32,6 +34,7 @@ DESCRIPTION_LIMIT = 20
 
 
 @cfy.group(name='blueprints')
+@cfy.options.verbose
 def blueprints():
     """Handle blueprints on the manager
     """
@@ -39,32 +42,44 @@ def blueprints():
 
 
 @blueprints.command(name='validate')
+@cfy.options.verbose
 @click.argument('blueprint-path', required=True)
-@click.pass_context
-def validate_blueprint(ctx, blueprint_path):
+def validate_blueprint(blueprint_path):
     """Validate a blueprint
     """
-    ctx.invoke(validate, blueprint_path=blueprint_path)
+    logger = get_logger()
+    logger.info('Validating blueprint: {0}'.format(blueprint_path))
+    try:
+        resolver = utils.get_import_resolver()
+        validate_version = utils.is_validate_definitions_version()
+        parse_from_path(
+            dsl_file_path=blueprint_path,
+            resolver=resolver,
+            validate_version=validate_version)
+    except DSLParsingException as ex:
+        raise CloudifyCliError('Failed to validate blueprint {0}'.format(ex))
+    logger.info('Blueprint validated successfully')
 
 
 @blueprints.command(name='upload')
-@click.argument('blueprint-path', required=True)
 @cfy.options.blueprint_id()
 @cfy.options.blueprint_filename()
 @cfy.options.validate
-def upload(blueprint_path,
+@cfy.options.verbose
+@click.argument('blueprint-path')
+@click.pass_context
+def upload(ctx,
+           blueprint_path,
            blueprint_id,
            blueprint_filename,
            validate):
     """Upload a blueprint to the manager
     """
-
-    # TODO: allow to upload from github like so:
-    # `cfy blueprints upload cloudify-examples/my-blueprint:branch`
-    blueprint_id = blueprint_id or utils._generate_suffixed_id(
-        get_archive_id(blueprint_path))
-
     if _is_archive(blueprint_path):
+        # TODO: allow to upload from github like so:
+        # `cfy blueprints upload cloudify-examples/my-blueprint:branch`
+        blueprint_id = blueprint_id or utils._generate_suffixed_id(
+            get_archive_id(blueprint_path))
         if not blueprint_filename:
             raise CloudifyCliError(
                 'Supplying an archive requires that the name of the main '
@@ -79,17 +94,26 @@ def upload(blueprint_path,
             blueprint_filename,
             blueprint_id)
     elif os.path.isfile(blueprint_path):
+        filename, _ = os.path.splitext(
+            os.path.basename(blueprint_path))
+        blueprint_id = blueprint_id = os.path.basename(filename)
         _publish_directory(
+            ctx,
             blueprint_path,
             blueprint_id,
             validate)
+    else:
+        raise CloudifyCliError(
+            'You must either provide a path to a local blueprint file, '
+            'a path to a blueprint archive or a URL of a blueprint archive. '
+            'Archive can be of types: {0}'.format(SUPPORTED_ARCHIVE_TYPES))
 
 
-def _publish_directory(blueprint_path, blueprint_id, validate):
+def _publish_directory(ctx, blueprint_path, blueprint_id, validate):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     if validate:
-        validate_blueprint(blueprint_path)
+        ctx.invoke(validate_blueprint, blueprint_path=blueprint_path)
     else:
         logger.debug("Skipping blueprint validation...")
 
@@ -148,8 +172,9 @@ def determine_archive_type(archive_location):
 
 
 @blueprints.command(name='download')
-@click.argument('blueprint-id', required=True)
 @cfy.options.output_path
+@cfy.options.verbose
+@click.argument('blueprint-id', required=True)
 def download(blueprint_id, output_path):
     """Download a blueprint from the manager
     """
@@ -164,6 +189,7 @@ def download(blueprint_id, output_path):
 
 
 @blueprints.command(name='delete')
+@cfy.options.verbose
 @click.argument('blueprint-id', required=True)
 def delete(blueprint_id):
     """Delete a blueprint from the manager
@@ -179,6 +205,7 @@ def delete(blueprint_id):
 
 
 @blueprints.command(name='list')
+@cfy.options.verbose
 def list():
     """List all blueprints
     """
@@ -206,6 +233,7 @@ def list():
 
 
 @blueprints.command(name='get')
+@cfy.options.verbose
 @click.argument('blueprint-id', required=True)
 def get(blueprint_id):
     """Retrieve information for a specific blueprint
@@ -235,6 +263,7 @@ def get(blueprint_id):
 
 
 @blueprints.command(name='inputs')
+@cfy.options.verbose
 @click.argument('blueprint-id', required=True)
 def inputs(blueprint_id):
     """Retrieve inputs for a specific blueprint
@@ -265,7 +294,7 @@ def get_archive_id(archive_location):
     # if the archive is a local path, assign blueprint_id the name of
     # the archive file without the extension
     if archive_location_type == 'path':
-        filename, ext = os.path.splitext(
+        filename, _ = os.path.splitext(
             os.path.basename(archive_location))
         return filename
     # if the archive is a url, assign blueprint_id same of the file

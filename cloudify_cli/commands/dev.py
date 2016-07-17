@@ -37,6 +37,7 @@ from ..exceptions import CloudifyCliError
               '--args',
               multiple=True,
               help=helptexts.DEV_TASK_ARGS)
+@cfy.options.verbose
 def dev(tasks_file, task, args):
     """Run fabric tasks on the manager
     """

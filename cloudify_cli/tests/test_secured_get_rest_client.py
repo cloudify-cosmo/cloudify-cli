@@ -23,7 +23,6 @@ from . import cfy
 from .. import utils
 from .. import constants
 
-
 TRUST_ALL = 'non-empty-value'
 CERT_PATH = 'path-to-certificate'
 

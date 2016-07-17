@@ -21,6 +21,7 @@ from ..logger import get_logger
 
 
 @cfy.command(name='outputs')
+@cfy.options.verbose
 def outputs():
     """Display outputs for the execution
     """

@@ -20,7 +20,8 @@ from ..config import cfy
 
 
 @cfy.command(name='install-plugins')
-@click.argument('blueprint-path', required=True, type=click.Path(exists=True))
+@cfy.options.verbose
+@click.argument('blueprint-path', type=click.Path(exists=True))
 def install_plugins(blueprint_path):
     """Install the necessary plugins for a given blueprint
     """

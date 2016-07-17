@@ -33,6 +33,7 @@ _NODE_INSTANCE_STATE_STARTED = 'started'
 
 
 @cfy.group(name='agents')
+@cfy.options.verbose
 def agents():
     """Handle a deployment's agents
     """
@@ -57,8 +58,6 @@ def _deployment_exists(client, deployment_id):
 @agents.command(name='install')
 @click.argument('deployment-id', required=False)
 @cfy.options.include_logs
-@cfy.options.verbose
-@cfy.options.debug
 def install(deployment_id, include_logs, verbose, debug):
     """Install agents on the hosts of existing deployments
 

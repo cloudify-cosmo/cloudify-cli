@@ -42,8 +42,8 @@ setup(
         ]
     },
     install_requires=[
-        'click==4.0',
-        'wagon==0.3.2',
+        'click==6.6',
+        # 'wagon==0.3.2',
         'pyyaml==3.10',
         'fabric==1.8.3',
         'jinja2==2.7.2',

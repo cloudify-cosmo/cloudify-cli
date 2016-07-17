@@ -18,18 +18,15 @@ import os
 import shutil
 import unittest
 
-from mock import patch
-
 from cloudify.utils import setup_logger
 from cloudify_rest_client import CloudifyClient
-from cloudify_rest_client.exceptions import CloudifyClientError
 
 
-from .. import exceptions
-from ..tests import cli_runner
-from cloudify_cli import utils
-from cloudify_cli.utils import os as utils_os
-from cloudify_cli.utils import DEFAULT_LOG_FILE
+from .. import cfy
+from ... import utils
+from ...utils import os as utils_os
+from ...utils import DEFAULT_LOG_FILE
+from ...exceptions import CloudifyCliError
 
 
 TEST_DIR = '/tmp/cloudify-cli-component-tests'
@@ -44,10 +41,12 @@ class CliCommandTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.logger = setup_logger('CliCommandTest')
+        cfy.invoke('init -r')
 
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(TEST_DIR)
+        cfy.purge_dot_cloudify()
 
     def setUp(self):
         logdir = os.path.dirname(DEFAULT_LOG_FILE)
@@ -88,78 +87,99 @@ class CliCommandTest(unittest.TestCase):
         if os.path.exists(TEST_WORK_DIR):
             shutil.rmtree(TEST_WORK_DIR)
 
-    def _assert_ex(self,
-                   cli_cmd,
-                   err_str_segment,
-                   possible_solutions=None):
+    def cfy_check(self,
+                  command,
+                  err_str_segment=None,
+                  should_fail=None,
+                  exception=CloudifyCliError):
 
-        def _assert():
-            self.assertIn(err_str_segment, str(ex))
-            if possible_solutions:
-                if hasattr(ex, 'possible_solutions'):
-                    self.assertEqual(ex.possible_solutions,
-                                     possible_solutions)
-                else:
-                    self.fail('Exception should have '
-                              'declared possible solutions')
+        if err_str_segment and should_fail is None:
+            should_fail = True
+        outcome = cfy.invoke(command)
+        if should_fail and outcome.exit_code == 0:
+            raise cfy.ClickInvocationException(
+                'Command {0} should have failed'.format(outcome.command))
+        elif not should_fail and outcome.exit_code != 0:
+            raise cfy.ClickInvocationException(
+                'Command {0} should not have failed'.format(outcome.command),
+                logs=outcome.logs)
+        if err_str_segment:
+            self.assertEqual(exception, type(outcome.exception))
+            self.assertIn(err_str_segment, str(outcome.exception))
 
-        try:
-            cli_runner.run_cli(cli_cmd)
-            self.fail('Expected error {0} was not raised for command {1}'
-                      .format(err_str_segment, cli_cmd))
-        except SystemExit as ex:
-            _assert()
-        except exceptions.CloudifyCliError as ex:
-            _assert()
-        except exceptions.CloudifyValidationError as ex:
-            _assert()
-        except CloudifyClientError as ex:
-            _assert()
-        except ValueError as ex:
-            _assert()
-        except IOError as ex:
-            _assert()
-        except ImportError as ex:
-            _assert()
+    # def _assert_ex(self,
+    #                cli_cmd,
+    #                err_str_segment,
+    #                possible_solutions=None):
 
-    def assert_method_called(self,
-                             cli_command,
-                             module,
-                             function_name,
-                             args=None,
-                             kwargs=None):
-        args = args or []
-        kwargs = kwargs or {}
+    #     def _assert():
+    #         self.assertIn(err_str_segment, str(ex))
+    #         if possible_solutions:
+    #             if hasattr(ex, 'possible_solutions'):
+    #                 self.assertEqual(ex.possible_solutions,
+    #                                  possible_solutions)
+    #             else:
+    #                 self.fail('Exception should have '
+    #                           'declared possible solutions')
 
-        with patch.object(module, function_name) as mock:
-            try:
-                cli_runner.run_cli(cli_command)
-            except BaseException as e:
-                self.logger.info(e.message)
-            mock.assert_called_with(*args, **kwargs)
+    #     try:
+    #         cli_runner.run_cli(cli_cmd)
+    #         self.fail('Expected error {0} was not raised for command {1}'
+    #                   .format(err_str_segment, cli_cmd))
+    #     except SystemExit as ex:
+    #         _assert()
+    #     except exceptions.CloudifyCliError as ex:
+    #         _assert()
+    #     except exceptions.CloudifyValidationError as ex:
+    #         _assert()
+    #     except CloudifyClientError as ex:
+    #         _assert()
+    #     except ValueError as ex:
+    #         _assert()
+    #     except IOError as ex:
+    #         _assert()
+    #     except ImportError as ex:
+    #         _assert()
 
-    def assert_method_not_called(self,
-                                 cli_command,
-                                 module,
-                                 function_name,
-                                 ignore_errors=False):
-        with patch.object(module, function_name) as mock:
-            try:
-                cli_runner.run_cli(cli_command)
-            except BaseException as e:
-                if not ignore_errors:
-                    raise
-                self.logger.info(e.message)
-            self.assertFalse(mock.called)
+    # def assert_method_called(self,
+    #                          cli_command,
+    #                          module,
+    #                          function_name,
+    #                          args=None,
+    #                          kwargs=None):
+    #     args = args or []
+    #     kwargs = kwargs or {}
 
-    def _create_cosmo_wd_settings(self, settings=None):
+    #     with patch.object(module, function_name) as mock:
+    #         try:
+    #             cli_runner.run_cli(cli_command)
+    #         except BaseException as e:
+    #             self.logger.info(e.message)
+    #         mock.assert_called_with(*args, **kwargs)
+
+    # def assert_method_not_called(self,
+    #                              cli_command,
+    #                              module,
+    #                              function_name,
+    #                              ignore_errors=False):
+    #     with patch.object(module, function_name) as mock:
+    #         try:
+    #             cli_runner.run_cli(cli_command)
+    #         except BaseException as e:
+    #             if not ignore_errors:
+    #                 raise
+    #             self.logger.info(e.message)
+    #         self.assertFalse(mock.called)
+
+    def create_cosmo_wd_settings(self, settings=None):
         directory_settings = utils.CloudifyWorkingDirectorySettings()
         directory_settings.set_management_server('localhost')
         directory_settings.set_management_key('key')
         directory_settings.set_management_user('user')
         utils.delete_cloudify_working_dir_settings()
         utils.dump_cloudify_working_dir_settings(
-            settings or directory_settings, update=False)
+            settings or directory_settings,
+            update=False)
         utils.dump_configuration_file()
 
     def _read_cosmo_wd_settings(self):

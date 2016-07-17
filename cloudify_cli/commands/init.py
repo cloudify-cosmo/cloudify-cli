@@ -33,6 +33,7 @@ from ..bootstrap import bootstrap as bs
 @cfy.options.inputs
 @cfy.options.install_plugins
 @cfy.options.init_hard_reset
+@cfy.options.verbose
 @click.argument('blueprint-path', required=False)
 def init(blueprint_path,
          reset_context,

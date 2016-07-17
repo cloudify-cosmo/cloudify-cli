@@ -36,6 +36,7 @@ _STATUS_CANCELING_MESSAGE = (
 
 
 @cfy.group(name='executions')
+@cfy.options.verbose
 def executions():
     """Handle workflow executions
     """
@@ -43,7 +44,8 @@ def executions():
 
 
 @executions.command(name='get')
-@click.argument('execution-id', required=True)
+@cfy.options.verbose
+@click.argument('execution-id')
 def get(execution_id):
     """Retrieve information for a specific execution
     """
@@ -76,11 +78,9 @@ def get(execution_id):
 
 
 @executions.command(name='list')
-@click.argument('deployment-id', required=False)
-@click.option('--include-system-workflows',
-              required=False,
-              is_flag=True,
-              help=helptexts.INCLUDE_SYSTEM_WORKFLOWS)
+@cfy.options.include_system_workflows
+@cfy.options.verbose
+@click.argument('deployment-id')
 def list(deployment_id, include_system_workflows):
     """List executions
 
@@ -116,7 +116,6 @@ def list(deployment_id, include_system_workflows):
 
 
 @executions.command(name='start')
-@click.argument('workflow-id', required=True)
 @cfy.options.deployment_id(required=True)
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
@@ -124,6 +123,8 @@ def list(deployment_id, include_system_workflows):
 @cfy.options.timeout()
 @cfy.options.include_logs
 @cfy.options.json
+@cfy.options.verbose
+@click.argument('workflow-id', required=True)
 def start(workflow_id,
           deployment_id,
           parameters,
@@ -227,8 +228,9 @@ def start(workflow_id,
 
 
 @executions.command(name='cancel')
-@click.argument('execution-id', required=True)
 @cfy.options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
+@cfy.options.verbose
+@click.argument('execution-id', required=True)
 def cancel(execution_id, force):
     """Cancel a workflow's execution
     """

@@ -30,7 +30,6 @@ from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
 
 @cfy.command(name='install')
-@click.argument('blueprint-path')
 @cfy.options.blueprint_id()
 @cfy.options.blueprint_filename()
 @cfy.options.validate
@@ -42,6 +41,8 @@ from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 @cfy.options.timeout()
 @cfy.options.include_logs
 @cfy.options.json
+@cfy.options.verbose
+@click.argument('blueprint-path')
 @click.pass_context
 def manager(ctx,
             blueprint_path,
@@ -98,7 +99,6 @@ def manager(ctx,
 
 
 @cfy.command(name='install')
-@click.argument('blueprint-path')
 @cfy.options.inputs
 @cfy.options.install_plugins
 @cfy.options.workflow_id('install')
@@ -107,6 +107,8 @@ def manager(ctx,
 @cfy.options.task_retries(5)
 @cfy.options.task_retry_interval(3)
 @cfy.options.task_thread_pool_size()
+@cfy.options.verbose
+@click.argument('blueprint-path')
 @click.pass_context
 def local(ctx,
           blueprint_path,

@@ -24,6 +24,7 @@ from ..logger import get_logger
 
 @cfy.group(name='profiles')
 @cfy.options.show_active
+@cfy.options.verbose
 def profiles():
     """Handle Cloudify CLI profiles
 
@@ -38,6 +39,7 @@ def profiles():
 
 
 @profiles.command(name='list')
+@cfy.options.verbose
 def list():
     """List all profiles
     """
@@ -49,7 +51,6 @@ def list():
     if not utils.is_initialized():
         utils.raise_uninitialized()
 
-    current_profile = utils.get_active_profile()
     profiles = []
 
     logger.info('Listing all profiles...')
@@ -61,8 +62,6 @@ def list():
     for profile in profiles_names:
         profiles.append(utils.get_profile(profile))
 
-    utils.set_active_profile(current_profile)
-
     pt = utils.table(
         ['manager_ip',
          'alias',
@@ -73,6 +72,7 @@ def list():
 
 
 @profiles.command(name='delete')
+@cfy.options.verbose
 @click.argument('profile-name')
 def delete(profile_name):
     """Delete a profile
@@ -93,6 +93,8 @@ def delete(profile_name):
         logger.info('Profile does not exist')
 
 
+# TODO: add `cfy profiles create`
+# TODO: add `cfy profiles delete`
 # TODO: add `cfy profiles configure` to attach key, user, etc to a profile
 # TODO: add `cfy profiles export` (all or specific profile)
 # TODO: add `cfy profiles import` (all or specific profile)

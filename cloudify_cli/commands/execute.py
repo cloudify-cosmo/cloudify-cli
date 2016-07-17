@@ -23,12 +23,13 @@ from ..logger import get_logger
 
 
 @cfy.command(name='execute')
-@click.argument('workflow-id', required=True)
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
+@cfy.options.verbose
+@click.argument('workflow-id', required=True)
 def execute(workflow_id,
             parameters,
             allow_custom_parameters,

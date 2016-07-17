@@ -26,6 +26,7 @@ from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='plugins')
+@cfy.options.verbose
 def plugins():
     """Handle plugins on the manager
     """
@@ -33,6 +34,7 @@ def plugins():
 
 
 @plugins.command(name='validate')
+@cfy.options.verbose
 @click.argument('plugin-path')
 def validate(plugin_path):
     """Validate a plugin
@@ -68,8 +70,9 @@ def validate(plugin_path):
 
 
 @plugins.command(name='delete')
-@click.argument('plugin-id')
 @cfy.options.force(help=helptexts.FORCE_DELETE_PLUGIN)
+@cfy.options.verbose
+@click.argument('plugin-id')
 def delete(plugin_id, force):
     """Delete a plugin from the manager
     """
@@ -83,6 +86,7 @@ def delete(plugin_id, force):
 
 
 @plugins.command(name='upload')
+@cfy.options.verbose
 @click.argument('plugin-path')
 @click.pass_context
 def upload(ctx, plugin_path):
@@ -99,8 +103,9 @@ def upload(ctx, plugin_path):
 
 
 @plugins.command(name='download')
-@click.argument('plugin-id')
 @cfy.options.output_path
+@cfy.options.verbose
+@click.argument('plugin-id')
 def download(plugin_id, output_path):
     """Download a plugin from the manager
     """
@@ -118,6 +123,7 @@ fields = ['id', 'package_name', 'package_version', 'supported_platform',
 
 
 @plugins.command(name='get')
+@cfy.options.verbose
 @click.argument('plugin-id')
 def get(plugin_id):
     """Retrieve information for a specific plugin
@@ -134,6 +140,7 @@ def get(plugin_id):
 
 
 @plugins.command(name='list')
+@cfy.options.verbose
 def list():
     """List all plugins on the manager
     """

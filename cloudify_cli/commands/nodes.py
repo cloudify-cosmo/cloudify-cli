@@ -25,6 +25,7 @@ from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='nodes')
+@cfy.options.verbose
 def nodes():
     """Handle a deployment's nodes
     """
@@ -32,8 +33,9 @@ def nodes():
 
 
 @nodes.command(name='get')
-@click.argument('node-id', required=True)
 @cfy.options.deployment_id(required=True)
+@cfy.options.verbose
+@click.argument('node-id')
 def get(node_id, deployment_id):
     """Retrieve information for a specific node of a specific deployment
     """
@@ -83,6 +85,7 @@ def get(node_id, deployment_id):
 
 @nodes.command(name='list')
 @cfy.options.deployment_id(required=False)
+@cfy.options.verbose
 def list(deployment_id):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()

@@ -37,6 +37,7 @@ from ..exceptions import CloudifyCliError
 @cfy.options.management_port
 @cfy.options.rest_port
 @cfy.options.show_active
+@cfy.options.verbose
 @click.argument('management-ip', required=True)
 def use(alias,
         management_ip,

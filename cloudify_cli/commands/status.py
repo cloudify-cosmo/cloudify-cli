@@ -25,6 +25,7 @@ from ..logger import get_logger
 
 
 @cfy.command(name='status')
+@cfy.options.verbose
 def status():
     """Show the status of the manager
     """

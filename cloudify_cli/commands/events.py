@@ -27,6 +27,7 @@ from ..execution_events_fetcher import ExecutionEventsFetcher, \
 
 
 @cfy.group(name='events')
+@cfy.options.verbose
 def events():
     """Show events from workflow executions
     """
@@ -34,10 +35,11 @@ def events():
 
 
 @events.command(name='list')
-@click.argument('execution-id', required=True)
 @cfy.options.include_logs
 @cfy.options.json
 @cfy.options.tail
+@cfy.options.verbose
+@click.argument('execution-id', required=True)
 def list(execution_id, include_logs, json, tail):
     """Display events for an execution
     """

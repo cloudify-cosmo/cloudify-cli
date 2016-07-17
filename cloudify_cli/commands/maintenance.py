@@ -28,6 +28,7 @@ MAINTENANCE_MODE_ACTIVE = 'activated'
 
 
 @cfy.group(name='maintenance-mode')
+@cfy.options.verbose
 def maintenance_mode():
     """Handle the manager's maintenance-mode
     """
@@ -35,6 +36,7 @@ def maintenance_mode():
 
 
 @maintenance_mode.command(name='status')
+@cfy.options.verbose
 def status():
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
@@ -85,6 +87,7 @@ def _print_maintenance_mode_status(client):
 @maintenance_mode.command(name='activate')
 @cfy.options.wait
 @cfy.options.timeout(default=0)
+@cfy.options.verbose
 def activate(wait, timeout):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -127,6 +130,7 @@ def activate(wait, timeout):
 
 
 @maintenance_mode.command(name='deactivate')
+@cfy.options.verbose
 def deactivate():
     logger = get_logger()
     management_ip = utils.get_management_server_ip()

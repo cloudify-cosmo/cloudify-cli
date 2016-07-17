@@ -13,15 +13,28 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+import sys
+import StringIO
+import traceback
+
 import click
 from click_didyoumean import DYMGroup
 
-from StringIO import StringIO
+
+from cloudify_rest_client.exceptions import NotModifiedError
+from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify_rest_client.exceptions import MaintenanceModeActiveError
+from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
+
 
 from .. import utils
+from .. import logger
 from . import helptexts
 from .. import constants
+from ..logger import get_logger
 from ..exceptions import CloudifyCliError
+from ..exceptions import CloudifyBootstrapError
+from ..exceptions import SuppressedCloudifyCliError
 
 
 CLICK_CONTEXT_SETTINGS = dict(
@@ -59,29 +72,29 @@ class MutuallyExclusiveOption(click.Option):
             ctx, opts, args)
 
 
-class RequiresOption(click.Option):
-    def __init__(self, *args, **kwargs):
-        self.requires = set(kwargs.pop('requires', []))
-        self.requires_error_message = \
-            kwargs.pop('requires_error_message', [])
-        self.requires_string = ', '.join(self.requires)
-        if self.requires:
-            help = kwargs.get('help', '')
-            kwargs['help'] = (
-                '{0}. This argument requires arguments: [{1}] ({2})'.format(
-                    help,
-                    self.requires,
-                    self.requires_error_message))
-        super(RequiresOption, self).__init__(*args, **kwargs)
+# class RequiresOption(click.Option):
+#     def __init__(self, *args, **kwargs):
+#         self.requires = set(kwargs.pop('requires', []))
+#         self.requires_error_message = \
+#             kwargs.pop('requires_error_message', [])
+#         self.requires_string = ', '.join(self.requires)
+#         if self.requires:
+#             help = kwargs.get('help', '')
+#             kwargs['help'] = (
+#                 '{0}. This argument requires arguments: [{1}] ({2})'.format(
+#                     help,
+#                     self.requires,
+#                     self.requires_error_message))
+#         super(RequiresOption, self).__init__(*args, **kwargs)
 
-    def handle_parse_result(self, ctx, opts, args):
-        if any(not flag for flag in self.requires) and self.name in opts:
-            raise click.UsageError(
-                "Illegal usage: `{0}` requires arguments `{1}` ({2}).".format(
-                    self.name,
-                    self.requires_string,
-                    self.requires_error_message))
-        return super(RequiresOption, self).handle_parse_result(ctx, opts, args)
+#     def handle_parse_result(self, ctx, opts, args):
+#         if any(not flag for flag in self.requires) and self.name in opts:
+#             raise click.UsageError(
+#                 "Illegal usage: `{0}` requires arguments `{1}` ({2}).".format(
+#                     self.name,
+#                     self.requires_string,
+#                     self.requires_error_message))
+#         return super(RequiresOption, self).handle_parse_result(ctx, opts, args)
 
 
 def _format_version_data(version_data,
@@ -92,7 +105,7 @@ def _format_version_data(version_data,
     all_data['prefix'] = prefix or ''
     all_data['suffix'] = suffix or ''
     all_data['infix'] = infix or ''
-    output = StringIO()
+    output = StringIO.StringIO()
     output.write('{prefix}{version}'.format(**all_data))
     output.write('{suffix}'.format(**all_data))
     return output.getvalue()
@@ -122,6 +135,74 @@ def show_version(ctx, param, value):
             suffix=' [ip={ip}]\n'.format(**rest_version_data))
     click.echo('{0}{1}'.format(cli_version, rest_version))
     ctx.exit()
+
+
+def set_verbosity_level(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+
+    logger.set_global_verbosity_level(value)
+    _set_cli_except_hook(value)
+
+
+def _set_cli_except_hook(global_verbosity_level):
+
+    def recommend(possible_solutions):
+        logger = get_logger()
+
+        logger.info('Possible solutions:')
+        for solution in possible_solutions:
+            logger.info('  - {0}'.format(solution))
+
+    def new_excepthook(tpe, value, tb):
+        logger = get_logger()
+
+        prefix = None
+        server_traceback = None
+        output_message = True
+        if issubclass(tpe, CloudifyClientError):
+            server_traceback = value.server_traceback
+            if not issubclass(
+                    tpe,
+                    (MaintenanceModeActiveError,
+                     MaintenanceModeActivatingError,
+                     NotModifiedError)):
+                # this means we made a server call and it failed.
+                # we should include this information in the error
+                prefix = 'An error occurred on the server'
+        if issubclass(tpe, SuppressedCloudifyCliError):
+            output_message = False
+        if issubclass(tpe, CloudifyBootstrapError):
+            output_message = False
+        if global_verbosity_level:
+            # print traceback if verbose
+            s_traceback = StringIO.StringIO()
+            traceback.print_exception(
+                etype=tpe,
+                value=value,
+                tb=tb,
+                file=s_traceback)
+            logger.error(s_traceback.getvalue())
+            if server_traceback:
+                logger.error('Server Traceback (most recent call last):')
+
+                # No need for print_tb since this exception
+                # is already formatted by the server
+                logger.error(server_traceback)
+        if output_message and not global_verbosity_level:
+
+            # If we output the traceback
+            # we output the message too.
+            # print_exception does that.
+            # here we just want the message (non verbose)
+            if prefix:
+                logger.error('{0}: {1}'.format(prefix, value))
+            else:
+                logger.error(value)
+        if hasattr(value, 'possible_solutions'):
+            recommend(getattr(value, 'possible_solutions'))
+
+    sys.excepthook = new_excepthook
 
 
 def show_active_manager(ctx, param, value):
@@ -155,9 +236,8 @@ def group(name):
         cls=DYMGroup)
 
 
-def command(name, with_context=True):
-    context_settings = CLICK_CONTEXT_SETTINGS if with_context else None
-    return click.command(name=name, context_settings=context_settings)
+def command(name):
+    return click.command(name=name)
 
 
 class Options(object):
@@ -177,22 +257,18 @@ class Options(object):
             '-v',
             '--verbose',
             count=True,
+            callback=set_verbosity_level,
+            expose_value=False,
             is_eager=True,
             help=helptexts.VERBOSE)
-
-        self.debug = click.option(
-            '--debug',
-            default=False,
-            is_flag=True,
-            is_eager=True,
-            help=helptexts.DEBUG)
 
         self.version = click.option(
             '--version',
             is_flag=True,
             callback=show_version,
             expose_value=False,
-            is_eager=True)
+            is_eager=True,
+            help=helptexts.VERSION)
 
         self.inputs = click.option(
             '-i',
@@ -349,6 +425,11 @@ class Options(object):
             required=False,
             help=helptexts.NODE_NAME)
 
+        self.snapshot_id = click.option(
+            '-s',
+            '--snapshot-id',
+            help=helptexts.SNAPSHOT_ID)
+
         self.without_deployments_envs = click.option(
             '--without-deployments-envs',
             is_flag=True,
@@ -388,6 +469,12 @@ class Options(object):
             '--ignore-deployments',
             is_flag=True,
             help=helptexts.IGNORE_DEPLOYMENTS)
+
+        self.include_system_workflows = click.option(
+            '--include-system-workflows',
+            required=False,
+            is_flag=True,
+            help=helptexts.INCLUDE_SYSTEM_WORKFLOWS)
 
         self.profile_alias = click.option(
             '--alias',

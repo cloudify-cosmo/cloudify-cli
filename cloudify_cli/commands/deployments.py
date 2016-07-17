@@ -31,6 +31,7 @@ from ..logger import get_logger, get_events_logger
 
 
 @cfy.group(name='deployments')
+@cfy.options.verbose
 def deployments():
     """Handle deployments on the Manager
     """
@@ -51,6 +52,7 @@ def _print_deployment_inputs(client, blueprint_id):
 
 
 @deployments.command(name='list')
+@cfy.options.verbose
 @click.argument('blueprint-id')
 def list(blueprint_id):
     """List deployments
@@ -82,7 +84,6 @@ def list(blueprint_id):
 
 
 @deployments.command(name='update')
-@click.argument('deployment-id', required=True)
 @cfy.options.blueprint_path(required=True)
 @cfy.options.inputs
 @cfy.options.blueprint_filename()
@@ -92,6 +93,8 @@ def list(blueprint_id):
 @cfy.options.force(help=helptexts.FORCE_UPDATE)
 @cfy.options.include_logs
 @cfy.options.json
+@cfy.options.verbose
+@click.argument('deployment-id')
 def update(deployment_id,
            blueprint_path,
            inputs,
@@ -156,9 +159,10 @@ def update(deployment_id,
 
 
 @deployments.command(name='create')
-@click.argument('blueprint-id', required=True)
 @cfy.options.deployment_id()
 @cfy.options.inputs
+@cfy.options.verbose
+@click.argument('blueprint-id', required=True)
 def create(blueprint_id,
            deployment_id,
            inputs):
@@ -192,8 +196,9 @@ def create(blueprint_id,
 
 
 @deployments.command(name='delete')
-@click.argument('deployment-id', required=True)
 @cfy.options.force(help=helptexts.IGNORE_LIVE_NODES)
+@cfy.options.verbose
+@click.argument('deployment-id')
 def delete(deployment_id, force):
     """Delete a deployment from the manager
     """
@@ -206,7 +211,8 @@ def delete(deployment_id, force):
 
 
 @deployments.command(name='outputs')
-@click.argument('deployment-id', required=True)
+@cfy.options.verbose
+@click.argument('deployment-id')
 def outputs(deployment_id):
     """Retrieve outputs for a specific deployment
     """
@@ -230,7 +236,8 @@ def outputs(deployment_id):
 
 
 @deployments.command(name='inputs')
-@click.argument('deployment-id', required=True)
+@cfy.options.verbose
+@click.argument('deployment-id')
 def inputs(deployment_id):
     """Retrieve inputs for a specific deployment
     """

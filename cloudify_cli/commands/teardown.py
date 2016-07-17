@@ -30,6 +30,7 @@ from ..bootstrap import bootstrap as bs
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
+@cfy.options.verbose
 def teardown(force,
              ignore_deployments,
              task_retries,

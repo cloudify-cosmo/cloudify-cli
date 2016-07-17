@@ -1,6 +1,9 @@
 VERBOSE = \
     "Show verbose output. You can supply this up to three times (i.e. -vvv)"
-DEBUG = "Show debug level output (equivalent to -vvv)"
+VERSION = (
+    "Display the version and exit (if a manager is used, its version will "
+    "also show)"
+)
 
 INPUTS_PARAMS_USAGE = (
     '(Can be provided as wildcard based paths '
@@ -11,7 +14,7 @@ WORKFLOW_TO_EXECUTE = "The workflow to execute [(default: {0}]"
 
 BLUEPRINT_PATH = "The path to the application's blueprint file"
 BLUEPRINT_ID = "The unique identifier for the blueprint"
-VALIDATE_BLUEPRINT = "Validate the blueprint"
+VALIDATE_BLUEPRINT = "Validate the blueprint first"
 
 RESET_CONTEXT = "Reset the working environment"
 HARD_RESET = "Hard reset the configuration, including coloring and loggers"
@@ -19,8 +22,9 @@ SHOW_ACTIVE_CONNECTION_INFORMATION = \
     "Show connection information for the active manager"
 
 OUTPUT_PATH = "The local path to download to [default: cwd]"
-BLUEPRINT_FILENAME = \
-    "The name of the archive's main blueprint file"
+BLUEPRINT_FILENAME = (
+    "The name of the archive's main blueprint file. "
+    "This is only relevant if uploading an archive")
 INPUTS = "Inputs for the deployment {0}".format(INPUTS_PARAMS_USAGE)
 PARAMETERS = "Parameters for the workflow {0}".format(INPUTS_PARAMS_USAGE)
 ALLOW_CUSTOM_PARAMETERS = (
