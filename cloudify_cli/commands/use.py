@@ -31,6 +31,12 @@ from cloudify_cli.exceptions import CloudifyCliError
 
 def use(management_ip, rest_port):
     logger = get_logger()
+
+    # check if cloudify was initialized.
+    if not utils.is_initialized():
+        utils.dump_cloudify_working_dir_settings()
+        utils.dump_configuration_file()
+
     # determine SSL mode by port
     if rest_port == constants.SECURED_REST_PORT:
         protocol = constants.SECURED_PROTOCOL
@@ -49,11 +55,6 @@ def use(management_ip, rest_port):
     except CloudifyClientError as e:
         msg = "Can't use manager {0}: {1}".format(management_ip, str(e))
         raise CloudifyCliError(msg)
-
-    # check if cloudify was initialized.
-    if not utils.is_initialized():
-        utils.dump_cloudify_working_dir_settings()
-        utils.dump_configuration_file()
 
     try:
         response = client.manager.get_context()
