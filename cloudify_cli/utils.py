@@ -286,27 +286,25 @@ def get_rest_client(manager_ip=None,
                     rest_port=None,
                     protocol=None,
                     skip_version_check=False):
-    if not manager_ip:
-        manager_ip = get_management_server_ip()
-
-    if not rest_port:
-        rest_port = get_rest_port()
-
-    if not protocol:
-        protocol = get_protocol()
-
+    # TODO: Go through all commands remove remove the call
+    # to get_management_server_ip as it is already defaulted
+    # here.
+    manager_ip = manager_ip or get_management_server_ip()
+    rest_port = rest_port or get_rest_port()
+    protocol = protocol or get_protocol()
     username = get_username()
-
     password = get_password()
-
     headers = get_auth_header(username, password)
-
     cert = get_ssl_cert()
-
     trust_all = get_ssl_trust_all()
 
-    client = CloudifyClient(host=manager_ip, port=rest_port, protocol=protocol,
-                            headers=headers, cert=cert, trust_all=trust_all)
+    client = CloudifyClient(
+        host=manager_ip,
+        port=rest_port,
+        protocol=protocol,
+        headers=headers,
+        cert=cert,
+        trust_all=trust_all)
 
     if skip_version_check:
         return client

@@ -19,6 +19,8 @@ import sys
 import glob
 import tempfile
 
+import yaml
+
 from cloudify.workflows import local
 from cloudify.utils import LocalCommandRunner
 from dsl_parser.parser import parse_from_path
@@ -28,6 +30,7 @@ from . import utils
 from . import constants
 from . import exceptions
 from .logger import get_logger
+from .exceptions import CloudifyCliError
 
 
 _ENV_NAME = 'local'
@@ -47,7 +50,7 @@ def initialize_blueprint(blueprint_path,
         install_blueprint_plugins(blueprint_path=blueprint_path)
 
     config = utils.CloudifyConfig()
-    inputs = utils.inputs_to_dict(inputs, 'inputs')
+    inputs = inputs_to_dict(inputs, 'inputs')
     return local.init_env(
         blueprint_path=blueprint_path,
         name=name,

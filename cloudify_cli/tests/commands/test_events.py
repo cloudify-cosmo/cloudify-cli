@@ -13,10 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Tests all commands that start with 'cfy events'
-"""
-
 import json
 import time
 from StringIO import StringIO
@@ -25,7 +21,6 @@ from mock import patch
 
 from cloudify_rest_client.executions import Execution
 
-from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
 
@@ -38,8 +33,8 @@ class EventsTest(CliCommandTest):
     def setUp(self):
         super(EventsTest, self).setUp()
         self.events = []
-        self._create_cosmo_wd_settings()
-        # execution will terminate after 10 seconds
+        self.create_cosmo_wd_settings()
+        # Execution will terminate after 10 seconds
         self.execution_start_time = time.time()
         self.execution_termination_time = self.execution_start_time + 10
         self.events = self._generate_events(self.execution_start_time,
@@ -71,7 +66,6 @@ class EventsTest(CliCommandTest):
         if self.executions_status != Execution.TERMINATED:
             execution = Execution({'id': 'execution_id',
                                    'status': Execution.STARTED})
-
         else:
             execution = Execution({'id': 'execution_id',
                                    'status': Execution.TERMINATED})
@@ -81,10 +75,10 @@ class EventsTest(CliCommandTest):
     def _mock_events_get(self, execution_id, from_event=0,
                          batch_size=100, include_logs=False):
         events = self._get_events_before(time.time())
-        return events[from_event:from_event+batch_size], len(events)
+        return events[from_event:from_event + batch_size], len(events)
 
     def update_execution_status(self):
-        """ sets the execution status to TERMINATED when
+        """Sets the execution status to TERMINATED when
         reaching execution_termination_time
         """
         if time.time() > self.execution_termination_time:
@@ -95,15 +89,15 @@ class EventsTest(CliCommandTest):
         for event in events:
             expected_event_logs.append(event['event_name'])
 
-        missing_events_error_message = \
-            'command output does not contain all expected values.'\
-            '\noutput: \n{0}\n'\
-            '\nexpected: \n{1}\n'\
-            .format(output, '\n'.join(expected_event_logs))
+        missing_events_error_message = (
+            'Command output does not contain all expected values.'
+            '\nOutput: \n{0}\n'
+            '\nExpected: \n{1}\n'
+            .format(output, '\n'.join(expected_event_logs)))
 
-        self.assertTrue(all(event_log in output
-                            for event_log in expected_event_logs),
-                        missing_events_error_message)
+        self.assertTrue(
+            all(event_log in output for event_log in expected_event_logs),
+            missing_events_error_message)
 
     @patch('cloudify_cli.logger.logs.create_event_message_prefix',
            new=mock_log_message_prefix)
@@ -111,10 +105,11 @@ class EventsTest(CliCommandTest):
         self.client.executions.get = self._mock_executions_get
         self.client.events.get = self._mock_events_get
 
+        # Since we're tailing stdout here, we have to patch it.
+        # Can't just read the output once.
         stdout = StringIO()
         with patch('sys.stdout', stdout):
-            cli_runner.run_cli(
-                'cfy events list --tail --execution-id execution-id')
+            self.cfy_check('cfy events list execution-id --tail')
         output = stdout.getvalue()
         expected_events = self._get_events_before(
             self.execution_termination_time)
@@ -138,8 +133,6 @@ class EventsTest(CliCommandTest):
     def _test_events(self, flag=''):
         self.client.executions.get = self._mock_executions_get
         self.client.events.get = self._mock_events_get
-        stdout = StringIO()
-        with patch('sys.stdout', stdout):
-            cli_runner.run_cli(
-                'cfy events list --execution-id execution-id {}'.format(flag))
-        return stdout.getvalue()
+        outcome = self.cfy_check('cfy events list execution-id {0}'.format(
+            flag))
+        return outcome.output if flag else outcome.logs

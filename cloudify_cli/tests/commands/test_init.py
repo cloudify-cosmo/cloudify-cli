@@ -13,33 +13,34 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Tests 'cfy init'
-"""
-from cloudify_cli.tests import cli_runner
+from .. import cfy
+
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
 
 class InitTest(CliCommandTest):
 
     def test_init_initialized_directory(self):
-        self._create_cosmo_wd_settings()
-        self._assert_ex('cfy init',
-                        'Current directory is already initialized')
+        self.create_cosmo_wd_settings()
+        self.cfy_check(
+            'cfy init',
+            err_str_segment='local profile already initialized')
 
     def test_init_overwrite(self):
-        # ensuring the init with overwrite command also works when the
-        # directory already contains a ".cloudify" file
-        cli_runner.run_cli('cfy init')
-        cli_runner.run_cli('cfy init -r')
+        # Ensuring the init with overwrite command works
+        self.cfy_check('cfy init -r')
 
     def test_init_overwrite_on_initial_init(self):
-        # simply verifying the overwrite flag doesn't break the first init
-        cli_runner.run_cli('cfy init -r')
+        # Simply verifying the overwrite flag doesn't break the first init
+        cfy.purge_dot_cloudify()
+        self.cfy_check('cfy init -r')
 
     def test_no_init(self):
-        self._assert_ex('cfy bootstrap -p stub',
-                        'Not initialized',
-                        possible_solutions=[
-                            "Run 'cfy init' in this directory"
-                        ])
+        cfy.purge_dot_cloudify()
+        self.cfy_check('cfy outputs',
+                       err_str_segment='Please initialize a blueprint',
+                       # TODO: put back
+                       # possible_solutions=[
+                       #     "Run 'cfy init' in this directory"
+                       # ]
+                       )

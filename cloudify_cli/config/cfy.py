@@ -328,6 +328,11 @@ class Options(object):
             is_flag=True,
             help=helptexts.SKIP_BOOTSTRAP_VALIDATIONS)
 
+        self.keep_up_on_failure = click.option(
+            '--keep-up-on-failure',
+            is_flag=True,
+            help=helptexts.KEEP_UP_ON_FAILURE)
+
         self.validate = click.option(
             '--validate',
             is_flag=True,

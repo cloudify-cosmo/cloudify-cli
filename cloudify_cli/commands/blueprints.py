@@ -96,7 +96,8 @@ def upload(ctx,
     elif os.path.isfile(blueprint_path):
         filename, _ = os.path.splitext(
             os.path.basename(blueprint_path))
-        blueprint_id = blueprint_id = os.path.basename(filename)
+        blueprint_id = blueprint_id or utils._generate_suffixed_id(
+            os.path.basename(filename))
         _publish_directory(
             ctx,
             blueprint_path,
@@ -174,7 +175,7 @@ def determine_archive_type(archive_location):
 @blueprints.command(name='download')
 @cfy.options.output_path
 @cfy.options.verbose
-@click.argument('blueprint-id', required=True)
+@click.argument('blueprint-id')
 def download(blueprint_id, output_path):
     """Download a blueprint from the manager
     """
@@ -190,7 +191,7 @@ def download(blueprint_id, output_path):
 
 @blueprints.command(name='delete')
 @cfy.options.verbose
-@click.argument('blueprint-id', required=True)
+@click.argument('blueprint-id')
 def delete(blueprint_id):
     """Delete a blueprint from the manager
     """
@@ -234,17 +235,17 @@ def list():
 
 @blueprints.command(name='get')
 @cfy.options.verbose
-@click.argument('blueprint-id', required=True)
+@click.argument('blueprint-id')
 def get(blueprint_id):
     """Retrieve information for a specific blueprint
     """
     logger = get_logger()
+    # TODO: Default `utils.get_rest_client` to the management_ip
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
 
     logger.info('Retrieving blueprint {0}...'.format(blueprint_id))
     blueprint = client.blueprints.get(blueprint_id)
-
     deployments = client.deployments.list(_include=['id'],
                                           blueprint_id=blueprint_id)
     blueprint['#deployments'] = len(deployments)
@@ -264,7 +265,7 @@ def get(blueprint_id):
 
 @blueprints.command(name='inputs')
 @cfy.options.verbose
-@click.argument('blueprint-id', required=True)
+@click.argument('blueprint-id')
 def inputs(blueprint_id):
     """Retrieve inputs for a specific blueprint
     """

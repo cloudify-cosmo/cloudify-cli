@@ -42,7 +42,7 @@ def invoke(command, capture):
     # TODO: replace ~/.cloudify with WORKDIR. Right now
     # it will actually work on the user's `~/.cloudify` folder.
     logger.configure_loggers()
-    logger.set_global_verbosity_level(verbose=True, debug=False)
+    logger.set_global_verbosity_level(verbose=True)
 
     cli = clicktest.CliRunner()
 
@@ -56,25 +56,38 @@ def invoke(command, capture):
 
     outcome = cli.invoke(getattr(commands, func), params)
     outcome.command = command
-    outcome.logs = \
+    logs = \
         [capture.records[m].msg for m in range(len(capture.records))]
-
+    outcome.logs = '\n'.join(logs)
     return outcome
 
 
 class ClickInvocationException(Exception):
-    def __init__(self, message, logs=None, error_code=1):
+    def __init__(self,
+                 message,
+                 logs=None,
+                 exit_code=1,
+                 exception=None,
+                 exc_info=None):
         self.message = message
         self.logs = logs
-        self.error_code = error_code
+        self.exit_code = exit_code
+        self.exception = exception
+        self.exc_info = exc_info
 
     def __str__(self):
-        return '{0} (Error Code: {1})\n{2}'.format(
-            self.message, self.error_code, self.logs)
+        string = '\nMESSAGE: {0}\n'.format(self.message)
+        string += 'EXIT_CODE: {0}\n'.format(self.exit_code)
+        string += 'LOGS: {0}\n'.format(self.logs)
+        string += 'EXCEPTION: {0}\n'.format(self.exception)
+        string += 'EXC_INFO: {0}\n'.format(self.exc_info)
+        return string
 
 
 def purge_dot_cloudify():
-    shutil.rmtree(os.path.expanduser('~/.cloudify'))
+    dot_cloudify_dir = os.path.expanduser('~/.cloudify')
+    if os.path.isdir(dot_cloudify_dir):
+        shutil.rmtree(dot_cloudify_dir)
 
 
 def run_cli_expect_system_exit_0(command):

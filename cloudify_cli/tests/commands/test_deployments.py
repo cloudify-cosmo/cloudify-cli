@@ -13,19 +13,14 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Tests all commands that start with 'cfy deployments'
-"""
-
 import datetime
 
 from mock import MagicMock
 
 from cloudify_rest_client import deployments
-from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.executions import Execution
+from cloudify_rest_client.exceptions import CloudifyClientError
 
-from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
 
@@ -33,7 +28,7 @@ class DeploymentsTest(CliCommandTest):
 
     def setUp(self):
         super(DeploymentsTest, self).setUp()
-        self._create_cosmo_wd_settings()
+        self.create_cosmo_wd_settings()
 
     def test_deployment_create(self):
 
@@ -42,12 +37,12 @@ class DeploymentsTest(CliCommandTest):
         })
 
         self.client.deployments.create = MagicMock(return_value=deployment)
-        cli_runner.run_cli('cfy deployments create -b '
-                           'a-blueprint-id -d deployment')
+        self.cfy_check(
+            'cfy deployments create a-blueprint-id -d deployment')
 
     def test_deployments_delete(self):
         self.client.deployments.delete = MagicMock()
-        cli_runner.run_cli('cfy deployments delete -d my-dep')
+        self.cfy_check('cfy deployments delete my-dep')
 
     def test_deployments_execute(self):
         execute_response = Execution({'status': 'started'})
@@ -75,36 +70,33 @@ class DeploymentsTest(CliCommandTest):
         get_events_response = ([success_event], 1)
 
         self.client.executions.start = MagicMock(
-            return_value=execute_response
-        )
+            return_value=execute_response)
         self.client.executions.get = MagicMock(
-            return_value=get_execution_response
-        )
+            return_value=get_execution_response)
         self.client.events.get = MagicMock(return_value=get_events_response)
-        cli_runner.run_cli('cfy executions start '
-                           '-d a-deployment-id -w install')
+        self.cfy_check('cfy executions start install -d a-deployment-id')
 
     def test_deployments_list_all(self):
         self.client.deployments.list = MagicMock(return_value=[])
-        cli_runner.run_cli('cfy deployments list')
+        self.cfy_check('cfy deployments list')
 
     def test_deployments_list_of_blueprint(self):
 
         deployments = [
             {
-                'blueprint_id': 'b1',
+                'blueprint_id': 'b1_blueprint',
                 'created_at': 'now',
                 'updated_at': 'now',
                 'id': 'id'
             },
             {
-                'blueprint_id': 'b1',
+                'blueprint_id': 'b1_blueprint',
                 'created_at': 'now',
                 'updated_at': 'now',
                 'id': 'id'
             },
             {
-                'blueprint_id': 'b2',
+                'blueprint_id': 'b2_blueprint',
                 'created_at': 'now',
                 'updated_at': 'now',
                 'id': 'id'
@@ -112,12 +104,12 @@ class DeploymentsTest(CliCommandTest):
         ]
 
         self.client.deployments.list = MagicMock(return_value=deployments)
-        output = cli_runner.run_cli('cfy deployments list -b b1 -v')
-        self.assertNotIn('b2', output)
-        self.assertIn('b1', output)
+        outcome = self.cfy_check('cfy deployments list b1_blueprint -v')
+        self.assertNotIn('b2_blueprint', outcome.logs)
+        self.assertIn('b1_blueprint', outcome.logs)
 
     def test_deployments_execute_nonexistent_operation(self):
-        # verifying that the CLI allows for arbitrary operation names,
+        # Verifying that the CLI allows for arbitrary operation names,
         # while also ensuring correct error-handling of nonexistent
         # operations
 
@@ -126,9 +118,12 @@ class DeploymentsTest(CliCommandTest):
         self.client.executions.start = MagicMock(
             side_effect=CloudifyClientError(expected_error))
 
-        command = 'cfy executions start ' \
-                  '-w nonexistent-operation -d a-deployment-id'
-        self._assert_ex(command, expected_error)
+        command = \
+            'cfy executions start nonexistent-operation -d a-deployment-id'
+        self.cfy_check(
+            command,
+            err_str_segment=expected_error,
+            exception=CloudifyClientError)
 
     def test_deployments_outputs(self):
 
@@ -148,4 +143,4 @@ class DeploymentsTest(CliCommandTest):
         })
         self.client.deployments.get = MagicMock(return_value=deployment)
         self.client.deployments.outputs.get = MagicMock(return_value=outputs)
-        cli_runner.run_cli('cfy deployments outputs -d dep1')
+        self.cfy_check('cfy deployments outputs dep1')

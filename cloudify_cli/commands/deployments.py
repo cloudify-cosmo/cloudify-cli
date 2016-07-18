@@ -25,9 +25,9 @@ from .. import utils
 from .. import common
 from ..config import cfy
 from ..config import helptexts
-from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
-from ..execution_events_fetcher import wait_for_execution
 from ..logger import get_logger, get_events_logger
+from ..execution_events_fetcher import wait_for_execution
+from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 
 
 @cfy.group(name='deployments')
@@ -53,7 +53,7 @@ def _print_deployment_inputs(client, blueprint_id):
 
 @deployments.command(name='list')
 @cfy.options.verbose
-@click.argument('blueprint-id')
+@click.argument('blueprint-id', required=False)
 def list(blueprint_id):
     """List deployments
 
@@ -110,7 +110,6 @@ def update(deployment_id,
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
-
     processed_inputs = common.inputs_to_dict(inputs, 'inputs')
 
     blueprint_or_archive_path = blueprint_path
@@ -126,7 +125,6 @@ def update(deployment_id,
         skip_install=skip_install,
         skip_uninstall=skip_uninstall,
         force=force)
-
     events_logger = get_events_logger(json)
 
     execution = wait_for_execution(
@@ -135,6 +133,7 @@ def update(deployment_id,
         events_handler=events_logger,
         include_logs=include_logs,
         timeout=None)  # don't timeout ever
+
     if execution.error:
         logger.info("Execution of workflow '{0}' for deployment "
                     "'{1}' failed. [error={2}]"

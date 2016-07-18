@@ -146,8 +146,7 @@ def start(workflow_id,
 
     events_logger = get_events_logger(json)
 
-    events_message = "* Run 'cfy events list --include-logs " \
-                     "--execution-id {0}' to retrieve the " \
+    events_message = "* Run 'cfy events list {0}' to retrieve the " \
                      "execution's events/logs"
     original_timeout = timeout
 

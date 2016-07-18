@@ -13,16 +13,12 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Tests all commands that start with 'cfy workflows'
-"""
 
 from mock import MagicMock
 
 from cloudify_rest_client.deployments import Deployment
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
 
@@ -30,7 +26,7 @@ class GroupsTest(CliCommandTest):
 
     def setUp(self):
         super(GroupsTest, self).setUp()
-        self._create_cosmo_wd_settings()
+        self.create_cosmo_wd_settings()
 
     def test_groups_list(self):
         deployment = Deployment({
@@ -72,11 +68,11 @@ class GroupsTest(CliCommandTest):
             }
         })
         self.client.deployments.get = MagicMock(return_value=deployment)
-        cli_runner.run_cli('cfy groups list -d a-deployment-id')
+        self.cfy_check('cfy groups list a-deployment-id')
 
     def test_groups_list_nonexistent_deployment(self):
         expected_message = ('Deployment nonexistent-dep not found')
         error = CloudifyClientError('')
         error.status_code = 404
         self.client.deployments.get = MagicMock(side_effect=error)
-        self._assert_ex("cfy groups list -d nonexistent-dep", expected_message)
+        self.cfy_check("cfy groups list nonexistent-dep", expected_message)

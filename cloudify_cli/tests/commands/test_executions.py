@@ -13,21 +13,17 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Tests all commands that start with 'cfy executions'
-"""
-
 import datetime
 from uuid import uuid4
 
-from mock import MagicMock
 from mock import patch
+from mock import MagicMock
+
 from cloudify_rest_client import exceptions
 from cloudify_rest_client.executions import Execution
 
 from cloudify_cli.commands import executions
 
-from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
 
@@ -35,28 +31,28 @@ class ExecutionsTest(CliCommandTest):
 
     def setUp(self):
         super(ExecutionsTest, self).setUp()
-        self._create_cosmo_wd_settings()
+        self.create_cosmo_wd_settings()
 
     def test_executions_get(self):
         execution = execution_mock('terminated')
         self.client.executions.get = MagicMock(return_value=execution)
-        cli_runner.run_cli('cfy executions get -e execution-id')
+        self.cfy_check('cfy executions get execution-id')
 
     def test_executions_list(self):
         self.client.executions.list = MagicMock(return_value=[])
-        cli_runner.run_cli('cfy executions list -d deployment-id')
+        self.cfy_check('cfy executions list deployment-id')
 
     def test_executions_cancel(self):
         self.client.executions.cancel = MagicMock()
-        cli_runner.run_cli('cfy executions cancel -e e_id')
+        self.cfy_check('cfy executions cancel e_id')
 
-    @patch('cloudify_cli.commands.executions.get_events_logger')
+    @patch('cloudify_cli.logger.get_events_logger')
     def test_executions_start_json(self, get_events_logger_mock):
         execution = execution_mock('started')
         self.client.executions.start = MagicMock(return_value=execution)
-        with patch('cloudify_cli.commands.executions.wait_for_execution',
+        with patch('cloudify_cli.execution_events_fetcher.wait_for_execution',
                    return_value=execution):
-            cli_runner.run_cli('cfy executions start -w mock_wf -d dep --json')
+            self.cfy_check('cfy executions start mock_wf -d dep --json')
         get_events_logger_mock.assert_called_with(True)
 
     def test_executions_start_dep_env_pending(self):
@@ -83,7 +79,7 @@ class ExecutionsTest(CliCommandTest):
         original_wait_for = executions.wait_for_execution
         try:
             executions.wait_for_execution = wait_for_mock
-            cli_runner.run_cli('cfy executions start -w mock_wf -d dep')
+            self.cfy_check('cfy executions start mock_wf -d dep')
             self.assertEqual(wait_for_mock.mock_calls[0][1][1].workflow_id,
                              'create_deployment_environment')
             self.assertEqual(wait_for_mock.mock_calls[1][1][1].workflow_id,
