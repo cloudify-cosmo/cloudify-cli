@@ -13,30 +13,27 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Tests all commands that start with 'cfy plugins'
-"""
-import tarfile
 import os
-import tempfile
 import shutil
+import tarfile
+import tempfile
 
 from mock import MagicMock
 
-from cloudify_cli.tests import cli_runner
-from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 from cloudify_rest_client.plugins import Plugin
+
+from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
 
 class PluginsTest(CliCommandTest):
 
     def setUp(self):
         super(PluginsTest, self).setUp()
-        self._create_cosmo_wd_settings()
+        self.create_cosmo_wd_settings()
 
     def test_plugins_list(self):
         self.client.plugins.list = MagicMock(return_value=[])
-        cli_runner.run_cli('cfy plugins list')
+        self.invoke('cfy plugins list')
 
     def test_plugin_get(self):
         self.client.plugins.get = MagicMock(
@@ -48,18 +45,18 @@ class PluginsTest(CliCommandTest):
                                  'distribution': 'ubuntu',
                                  'uploaded_at': 'now'}))
 
-        cli_runner.run_cli('cfy plugins get -p some_id')
+        self.invoke('cfy plugins get some_id')
 
     def test_plugins_delete(self):
         self.client.plugins.delete = MagicMock()
-        cli_runner.run_cli('cfy plugins delete -p a-plugin-id')
+        self.invoke('cfy plugins delete a-plugin-id')
 
     def test_plugins_delete_force(self):
         for flag in ['--force', '-f']:
             mock = MagicMock()
             self.client.plugins.delete = mock
-            cli_runner.run_cli('cfy plugins delete -p a-plugin-id {0}'
-                               .format(flag))
+            self.invoke('cfy plugins delete a-plugin-id {0}'.format(
+                flag))
             mock.assert_called_once_with(plugin_id='a-plugin-id', force=True)
 
     def test_plugins_upload(self):
@@ -67,14 +64,13 @@ class PluginsTest(CliCommandTest):
         plugin_dest = os.path.join(tempfile.gettempdir(), 'plugin.tar.gz')
         try:
             self.make_sample_plugin(plugin_dest)
-            cli_runner.run_cli('cfy plugins upload -p '
-                               '{0}'.format(plugin_dest))
+            self.invoke('cfy plugins upload {0}'.format(plugin_dest))
         finally:
             shutil.rmtree(plugin_dest, ignore_errors=True)
 
     def test_plugins_download(self):
         self.client.plugins.download = MagicMock(return_value='some_file')
-        cli_runner.run_cli('cfy plugins download -p a-plugin-id')
+        self.invoke('cfy plugins download a-plugin-id')
 
     def make_sample_plugin(self, plugin_dest):
         temp_folder = tempfile.mkdtemp()

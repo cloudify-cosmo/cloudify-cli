@@ -20,7 +20,6 @@ import shlex
 import shutil
 import tempfile
 
-# import mock
 import click.testing as clicktest
 from testfixtures import log_capture
 
@@ -51,25 +50,32 @@ def invoke(command, capture):
     # of the command
     if lexed_command[0] == 'cfy':
         del lexed_command[0]
-    func = lexed_command[0]
+    # For commands which contain a dash (like maintenance-mode)
+    func = lexed_command[0].replace('-', '_')
     params = lexed_command[1:]
 
-    outcome = cli.invoke(getattr(commands, func), params)
+    # If we call `cfy init`, what we actually want to do is get the
+    # init module from `commands` and then get the `init` command
+    # from that module, hence the attribute getting.
+    outcome = cli.invoke(getattr(getattr(commands, func), func), params)
     outcome.command = command
-    logs = \
-        [capture.records[m].msg for m in range(len(capture.records))]
+
+    logs = [capture.records[m].msg for m in range(len(capture.records))]
     outcome.logs = '\n'.join(logs)
+
     return outcome
 
 
 class ClickInvocationException(Exception):
     def __init__(self,
                  message,
+                 output=None,
                  logs=None,
                  exit_code=1,
                  exception=None,
                  exc_info=None):
         self.message = message
+        self.output = output
         self.logs = logs
         self.exit_code = exit_code
         self.exception = exception
@@ -77,6 +83,7 @@ class ClickInvocationException(Exception):
 
     def __str__(self):
         string = '\nMESSAGE: {0}\n'.format(self.message)
+        string += 'STDOUT: {0}\n'.format(self.output)
         string += 'EXIT_CODE: {0}\n'.format(self.exit_code)
         string += 'LOGS: {0}\n'.format(self.logs)
         string += 'EXCEPTION: {0}\n'.format(self.exception)

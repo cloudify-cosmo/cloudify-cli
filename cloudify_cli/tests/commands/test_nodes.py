@@ -13,17 +13,13 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Tests all commands that start with 'cfy nodes'
-"""
-
 from uuid import uuid4
 
 from mock import MagicMock
 
 from cloudify_rest_client.nodes import Node
 from cloudify_rest_client.node_instances import NodeInstance
-from cloudify_cli.tests import cli_runner
+
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
 
@@ -31,29 +27,25 @@ class NodesTest(CliCommandTest):
 
     def setUp(self):
         super(NodesTest, self).setUp()
-        self._create_cosmo_wd_settings()
+        self.create_cosmo_wd_settings()
 
     def test_nodes_get(self):
         self.client.nodes.get = MagicMock(return_value=node_get_mock())
-        self.client.node_instances.list = \
-            MagicMock(return_value=[node_instance_get_mock()])
-        cli_runner.run_cli('cfy nodes get --node-id mongod -d nodecellar')
+        self.client.node_instances.list = MagicMock(
+            return_value=[node_instance_get_mock()])
+        self.invoke('cfy nodes get mongod -d nodecellar')
 
     def test_node_get_no_node_id(self):
-        with self.assertRaises(SystemExit) as sys_exit:
-            cli_runner.run_cli('cfy nodes get -d nodecellar')
-        self.assertNotEquals(sys_exit.exception.code, 0)
+        self.invoke('cfy nodes get -d nodecellar', should_fail=True)
 
     def test_node_get_no_deployment_id(self):
-        with self.assertRaises(SystemExit) as sys_exit:
-            cli_runner.run_cli('cfy nodes get --node-id mongod')
-        self.assertNotEquals(sys_exit.exception.code, 0)
+        self.invoke('cfy nodes get --node-id mongod', should_fail=True)
 
     def test_nodes_list(self):
-        self.client.nodes.list = MagicMock(return_value=[node_get_mock(),
-                                                         node_get_mock()])
-        cli_runner.run_cli('cfy nodes list')
-        cli_runner.run_cli('cfy nodes list -d nodecellar')
+        self.client.nodes.list = MagicMock(
+            return_value=[node_get_mock(), node_get_mock()])
+        self.invoke('cfy nodes list')
+        self.invoke('cfy nodes list nodecellar')
 
 
 def node_get_mock():

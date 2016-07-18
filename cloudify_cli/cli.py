@@ -16,8 +16,41 @@
 
 import logger
 from . import utils
-from . import commands
 from .config import cfy
+
+
+from commands import install
+from commands import uninstall
+from commands import node_instances
+
+from commands.use import use
+from commands.dev import dev
+from commands.ssh import ssh
+from commands.init import init
+from commands.logs import logs
+from commands.nodes import nodes
+from commands.agents import agents
+from commands.events import events
+from commands.groups import groups
+from commands.status import status
+from commands.inputs import inputs
+from commands.outputs import outputs
+from commands.execute import execute
+from commands.recover import recover
+from commands.plugins import plugins
+from commands.upgrade import upgrade
+from commands.teardown import teardown
+from commands.rollback import rollback
+from commands.profiles import profiles
+from commands.workflows import workflows
+from commands.snapshots import snapshots
+from commands.bootstrap import bootstrap
+from commands.blueprints import blueprints
+from commands.executions import executions
+from commands.deployments import deployments
+from commands.install_plugins import install_plugins
+from commands.maintenance_mode import maintenance_mode
+from commands.create_requirements import create_requirements
 
 
 @cfy.group(name='cfy')
@@ -49,52 +82,52 @@ def _register_commands():
     """
     is_manager_active = utils.is_manager_active()
 
-    _cfy.add_command(commands.use)
-    _cfy.add_command(commands.init)
-    _cfy.add_command(commands.recover)
-    _cfy.add_command(commands.bootstrap)
-    _cfy.add_command(commands.profiles)
-    _cfy.add_command(commands.create_requirements)
+    _cfy.add_command(use)
+    _cfy.add_command(init)
+    _cfy.add_command(recover)
+    _cfy.add_command(bootstrap)
+    _cfy.add_command(profiles)
+    _cfy.add_command(create_requirements)
 
     # TODO: Instead of manually stating each module,
     # we might want to try importing all modules in the `commands`
     # package recursively and check if they have a certain attribute
     # which indicates they belong to `manager`.
     if is_manager_active:
-        _cfy.add_command(commands.dev)
-        _cfy.add_command(commands.ssh)
-        _cfy.add_command(commands.logs)
-        _cfy.add_command(commands.agents)
-        _cfy.add_command(commands.events)
-        _cfy.add_command(commands.status)
-        _cfy.add_command(commands.upgrade)
-        _cfy.add_command(commands.teardown)
-        _cfy.add_command(commands.rollback)
-        _cfy.add_command(commands.snapshots)
-        _cfy.add_command(commands.install.manager)
-        _cfy.add_command(commands.maintenance_mode)
-        _cfy.add_command(commands.uninstall.manager)
-        _cfy.add_command(commands.node_instances.manager)
+        _cfy.add_command(dev)
+        _cfy.add_command(ssh)
+        _cfy.add_command(logs)
+        _cfy.add_command(agents)
+        _cfy.add_command(events)
+        _cfy.add_command(status)
+        _cfy.add_command(upgrade)
+        _cfy.add_command(teardown)
+        _cfy.add_command(rollback)
+        _cfy.add_command(snapshots)
+        _cfy.add_command(install.manager)
+        _cfy.add_command(maintenance_mode)
+        _cfy.add_command(uninstall.manager)
+        _cfy.add_command(node_instances.manager)
 
         # TODO: consolidate with `local` of the same type
-        _cfy.add_command(commands.nodes)
-        _cfy.add_command(commands.groups)
-        _cfy.add_command(commands.plugins)
-        _cfy.add_command(commands.workflows)
-        _cfy.add_command(commands.blueprints)
-        _cfy.add_command(commands.executions)
-        _cfy.add_command(commands.deployments)
+        _cfy.add_command(nodes)
+        _cfy.add_command(groups)
+        _cfy.add_command(plugins)
+        _cfy.add_command(workflows)
+        _cfy.add_command(blueprints)
+        _cfy.add_command(executions)
+        _cfy.add_command(deployments)
 
     else:
-        _cfy.add_command(commands.install.local)
-        _cfy.add_command(commands.uninstall.local)
-        _cfy.add_command(commands.install_plugins)
-        _cfy.add_command(commands.node_instances.local)
+        _cfy.add_command(install.local)
+        _cfy.add_command(uninstall.local)
+        _cfy.add_command(install_plugins)
+        _cfy.add_command(node_instances.local)
 
         # TODO: consolidate with `manager` of the same type
-        _cfy.add_command(commands.inputs)
-        _cfy.add_command(commands.outputs)
-        _cfy.add_command(commands.execute)
+        _cfy.add_command(inputs)
+        _cfy.add_command(outputs)
+        _cfy.add_command(execute)
 
 
 _register_commands()

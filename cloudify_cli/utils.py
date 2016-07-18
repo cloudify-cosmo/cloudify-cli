@@ -187,6 +187,9 @@ def dump_cloudify_working_dir_settings(cosmo_wd_settings=None,
                                        update=False,
                                        profile_name=None):
     profile_name = profile_name or get_active_profile()
+    if not profile_name:
+        raise CloudifyCliError(
+            'Either provide a profile name or activate a profile')
     workdir = os.path.join(PROFILES_DIR, profile_name)
     if cosmo_wd_settings is None:
         cosmo_wd_settings = CloudifyWorkingDirectorySettings()
@@ -224,8 +227,9 @@ def profile(profile_name=None):
 
 
 @contextmanager
-def update_wd_settings(profile_name):
-    cosmo_wd_settings = load_cloudify_working_dir_settings(profile_name)
+def update_wd_settings(profile_name=None):
+    active_profile = get_active_profile()
+    cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
     yield cosmo_wd_settings
     dump_cloudify_working_dir_settings(
         cosmo_wd_settings,

@@ -13,16 +13,12 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Tests 'cfy maintenance-mode'
-"""
-
-from mock import call, patch, MagicMock
 from functools import wraps
 
+from mock import call, patch, MagicMock
+
 from cloudify_rest_client.maintenance import Maintenance
-from cloudify_cli.tests import cli_runner
-from cloudify_cli.exceptions import CloudifyCliError
+
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
 
@@ -30,49 +26,44 @@ class MaintenanceModeTest(CliCommandTest):
 
     def setUp(self):
         super(MaintenanceModeTest, self).setUp()
-        self._create_cosmo_wd_settings()
+        self.create_cosmo_wd_settings()
         self.client.maintenance_mode.deactivate = MagicMock()
         self.client.maintenance_mode.activate = MagicMock()
 
     def test_maintenance_status(self):
         self.client.maintenance_mode.status = MagicMock()
-        cli_runner.run_cli('cfy maintenance-mode status')
+        self.invoke('cfy maintenance-mode status')
 
     def test_activate_maintenance(self):
-        cli_runner.run_cli('cfy maintenance-mode activate')
+        self.invoke('cfy maintenance-mode activate')
 
     def test_activate_maintenance_with_wait(self):
         with patch('cloudify_rest_client.maintenance.'
                    'MaintenanceModeClient.status',
                    new=mock_activated_status):
             with patch('time.sleep') as sleep_mock:
-                cli_runner.run_cli('cfy maintenance-mode activate --wait')
-                cli_runner.run_cli('cfy maintenance-mode '
-                                   'activate --wait --timeout 20')
+                self.invoke('cfy maintenance-mode activate --wait')
+                self.invoke('cfy maintenance-mode '
+                               'activate --wait --timeout 20')
                 sleep_mock.assert_has_calls([call(5), call(5)])
 
     def test_activate_maintenance_timeout(self):
-        with patch('cloudify_cli.commands.maintenance._is_timeout',
+        with patch('cloudify_cli.commands.maintenance_mode._is_timeout',
                    new=mock_is_timeout):
-            try:
-                cli_runner.run_cli('cfy maintenance-mode activate --wait')
-                self.fail('expected maintenance mode activation to timeout')
-            except CloudifyCliError as e:
-                self.assertEqual(e.message,
-                                 "Maintenance mode timed out while waiting "
-                                 "for activation. Note that maintenance mode "
-                                 "is still being activated in the background. "
-                                 "You can run 'cfy maintenance-mode "
-                                 "deactivate' to cancel the activation.")
+            self.invoke(
+                'cfy maintenance-mode activate --wait',
+                err_str_segment='Maintenance mode timed out while waiting')
 
     def test_activate_maintenance_timeout_no_wait(self):
-        self._assert_ex('cfy maintenance-mode activate --timeout 5',
-                        "'--timeout' was used without '--wait'.",
-                        possible_solutions=["Add the '--wait' flag to "
-                                            "the command in order to wait."])
+        self.invoke('cfy maintenance-mode activate --timeout 5',
+                       "'--timeout' was used without '--wait'.",
+                       # TODO: put back
+                       # possible_solutions=["Add the '--wait' flag to "
+                       #                     "the command in order to wait."]
+                       )
 
     def test_deactivate_maintenance(self):
-        cli_runner.run_cli('cfy maintenance-mode deactivate')
+        self.invoke('cfy maintenance-mode deactivate')
 
 
 def counter(func):

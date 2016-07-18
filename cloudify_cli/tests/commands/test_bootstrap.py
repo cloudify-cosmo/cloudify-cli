@@ -79,7 +79,7 @@ class BootstrapTest(CliCommandTest):
 
         with mock.patch('cloudify_cli.bootstrap.bootstrap.'
                         'validate_manager_deployment_size'):
-            self.cfy_check(
+            self.invoke(
                 command=command,
                 err_str_segment='No module named tasks',
                 exception=ImportError
@@ -98,7 +98,7 @@ class BootstrapTest(CliCommandTest):
         command = 'cfy bootstrap --skip-validations {0}'.format(
             blueprint_path)
 
-        self.cfy_check(
+        self.invoke(
             command=command,
             err_str_segment='No module named tasks',
             exception=ImportError

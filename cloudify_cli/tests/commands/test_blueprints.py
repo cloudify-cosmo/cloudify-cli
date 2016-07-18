@@ -29,34 +29,34 @@ class BlueprintsTest(CliCommandTest):
 
     def test_blueprints_list(self):
         self.client.blueprints.list = MagicMock(return_value=[])
-        self.cfy_check('blueprints list')
+        self.invoke('blueprints list')
 
     def test_blueprints_delete(self):
         self.client.blueprints.delete = MagicMock()
-        self.cfy_check('blueprints delete a-blueprint-id')
+        self.invoke('blueprints delete a-blueprint-id')
 
     @patch('cloudify_cli.utils.table', autospec=True)
     @patch('cloudify_cli.common.print_table', autospec=True)
     def test_blueprints_get(self, *args):
         self.client.blueprints.get = MagicMock()
         self.client.deployments.list = MagicMock()
-        self.cfy_check('blueprints get a-blueprint-id')
+        self.invoke('blueprints get a-blueprint-id')
 
     def test_blueprints_upload(self):
         self.client.blueprints.upload = MagicMock()
-        self.cfy_check(
+        self.invoke(
             'blueprints upload {0}/helloworld/blueprint.yaml'.format(
                 BLUEPRINTS_DIR))
 
     def test_blueprints_upload_invalid(self):
         self.client.blueprints.upload = MagicMock()
-        self.cfy_check(
+        self.invoke(
             'cfy blueprints upload {0}/bad_blueprint/blueprint.yaml '
             '-b my_blueprint_id'.format(BLUEPRINTS_DIR))
 
     def test_blueprints_upload_invalid_validate(self):
         self.client.blueprints.upload = MagicMock()
-        self.cfy_check(
+        self.invoke(
             'cfy blueprints upload {0}/bad_blueprint/blueprint.yaml '
             '-b my_blueprint_id --validate'.format(BLUEPRINTS_DIR),
             err_str_segment='Failed to validate blueprint',
@@ -64,7 +64,7 @@ class BlueprintsTest(CliCommandTest):
 
     def test_blueprints_publish_archive(self):
         self.client.blueprints.publish_archive = MagicMock()
-        self.cfy_check(
+        self.invoke(
             'cfy blueprints upload {0}/helloworld.zip '
             '-b my_blueprint_id --blueprint-filename blueprint.yaml'
             .format(BLUEPRINTS_DIR))
@@ -72,27 +72,27 @@ class BlueprintsTest(CliCommandTest):
     def test_blueprints_publish_unsupported_archive_type(self):
         self.client.blueprints.publish_archive = MagicMock()
         # passing in a directory instead of a valid archive type
-        self.cfy_check(
+        self.invoke(
             'cfy blueprints upload {0}/helloworld -b my_blueprint_id'.format(
                 BLUEPRINTS_DIR),
             'You must either provide a path to a local blueprint file')
 
     def test_blueprints_publish_archive_bad_file_path(self):
         self.client.blueprints.publish_archive = MagicMock()
-        self.cfy_check(
+        self.invoke(
             'cfy blueprints upload {0}/helloworld.tar.gz -n blah'
             .format(BLUEPRINTS_DIR),
             err_str_segment="not a valid URL nor a path")
 
     def test_blueprints_publish_archive_no_filename(self):
         self.client.blueprints.publish_archive = MagicMock()
-        self.cfy_check(
+        self.invoke(
             'cfy blueprints upload {0}/helloworld.tar.gz -b my_blueprint_id'
             .format(BLUEPRINTS_DIR),
             err_str_segment="Supplying an archive requires that the name of")
 
     def test_blueprint_validate(self):
-        self.cfy_check(
+        self.invoke(
             'cfy blueprints validate {0}/helloworld/blueprint.yaml'.format(
                 BLUEPRINTS_DIR))
 
@@ -102,13 +102,13 @@ class BlueprintsTest(CliCommandTest):
         with open(utils.CLOUDIFY_CONFIG_PATH, 'w') as f:
             config['validate_definitions_version'] = False
             f.write(yaml.safe_dump(config))
-        self.cfy_check(
+        self.invoke(
             'cfy blueprints validate '
             '{0}/local/blueprint_validate_definitions_version.yaml'
             .format(BLUEPRINTS_DIR))
 
     def test_validate_bad_blueprint(self):
-        self.cfy_check(
+        self.invoke(
             'cfy blueprints validate {0}/bad_blueprint/blueprint.yaml'
             .format(BLUEPRINTS_DIR),
             err_str_segment='Failed to validate blueprint')
@@ -165,4 +165,4 @@ class BlueprintsTest(CliCommandTest):
         with patch('cloudify_cli.utils.get_rest_client',
                    get_rest_client_mock),\
                 patch('cloudify_cli.utils.table', table_mock):
-            self.cfy_check('cfy blueprints inputs {0}'.format(blueprint_id))
+            self.invoke('cfy blueprints inputs {0}'.format(blueprint_id))

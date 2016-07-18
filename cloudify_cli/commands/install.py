@@ -17,16 +17,17 @@ import os
 
 import click
 
-from . import init
 from .. import utils
-from . import execute
 from ..config import cfy
-from . import blueprints
-from . import executions
-from . import deployments
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..constants import DEFAULT_INSTALL_WORKFLOW
 from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
+
+from . import init
+from . import execute
+from . import blueprints
+from . import executions
+from . import deployments
 
 
 @cfy.command(name='install')

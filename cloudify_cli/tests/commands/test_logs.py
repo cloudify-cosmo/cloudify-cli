@@ -13,52 +13,49 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Tests 'cfy logs'
-"""
-from cloudify_cli import utils
+from ... import utils
+
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
 
 class LogsTest(CliCommandTest):
 
-    def test_no_prior_init(self):
-        self._assert_ex('cfy logs download', 'Cannot find .cloudify')
-
     def test_with_empty_config(self):
         settings = utils.CloudifyWorkingDirectorySettings()
-        self._create_cosmo_wd_settings(settings)
-        self._assert_ex('cfy logs download',
-                        'Management User is not set '
-                        'in working directory settings')
+        self.create_cosmo_wd_settings(settings)
+        self.invoke('cfy logs download',
+                       'Management User is not set '
+                       'in working directory settings')
 
     def test_with_no_key(self):
         settings = utils.CloudifyWorkingDirectorySettings()
         settings.set_management_user('test')
         settings.set_management_server('127.0.0.1')
-        self._create_cosmo_wd_settings(settings)
-        self._assert_ex('cfy logs download',
-                        'Management Key is not set '
-                        'in working directory settings')
+        self.create_cosmo_wd_settings(settings)
+        self.invoke('cfy logs download',
+                       'Management Key is not set '
+                       'in working directory settings')
 
     def test_with_no_user(self):
         settings = utils.CloudifyWorkingDirectorySettings()
         settings.set_management_server('127.0.0.1')
         settings.set_management_key('/tmp/test.pem')
-        self._create_cosmo_wd_settings(settings)
-        self._assert_ex('cfy logs download',
-                        'Management User is not set '
-                        'in working directory settings')
+        self.create_cosmo_wd_settings(settings)
+        self.invoke('cfy logs download',
+                       'Management User is not set '
+                       'in working directory settings')
 
     def test_with_no_server(self):
         settings = utils.CloudifyWorkingDirectorySettings()
         settings.set_management_user('test')
         settings.set_management_key('/tmp/test.pem')
-        self._create_cosmo_wd_settings(settings)
-        self._assert_ex('cfy logs download', 'Must either first run')
+        self.create_cosmo_wd_settings(settings)
+        self.invoke(
+            'cfy logs download',
+            err_str_segment='You must being using a manager to perform this')
 
     def test_purge_no_force(self):
         # unlike the other tests, this drops on argparse raising
         # that the `-f` flag is required for purge, which is why
         # the exception message is actually the returncode from argparse.
-        self._assert_ex('cfy logs purge', '2')
+        self.invoke('cfy logs purge', 'You must supply the `-f, --force`')

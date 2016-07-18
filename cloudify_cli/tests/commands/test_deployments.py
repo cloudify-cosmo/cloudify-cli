@@ -37,12 +37,12 @@ class DeploymentsTest(CliCommandTest):
         })
 
         self.client.deployments.create = MagicMock(return_value=deployment)
-        self.cfy_check(
+        self.invoke(
             'cfy deployments create a-blueprint-id -d deployment')
 
     def test_deployments_delete(self):
         self.client.deployments.delete = MagicMock()
-        self.cfy_check('cfy deployments delete my-dep')
+        self.invoke('cfy deployments delete my-dep')
 
     def test_deployments_execute(self):
         execute_response = Execution({'status': 'started'})
@@ -74,11 +74,11 @@ class DeploymentsTest(CliCommandTest):
         self.client.executions.get = MagicMock(
             return_value=get_execution_response)
         self.client.events.get = MagicMock(return_value=get_events_response)
-        self.cfy_check('cfy executions start install -d a-deployment-id')
+        self.invoke('cfy executions start install -d a-deployment-id')
 
     def test_deployments_list_all(self):
         self.client.deployments.list = MagicMock(return_value=[])
-        self.cfy_check('cfy deployments list')
+        self.invoke('cfy deployments list')
 
     def test_deployments_list_of_blueprint(self):
 
@@ -104,7 +104,7 @@ class DeploymentsTest(CliCommandTest):
         ]
 
         self.client.deployments.list = MagicMock(return_value=deployments)
-        outcome = self.cfy_check('cfy deployments list b1_blueprint -v')
+        outcome = self.invoke('cfy deployments list b1_blueprint -v')
         self.assertNotIn('b2_blueprint', outcome.logs)
         self.assertIn('b1_blueprint', outcome.logs)
 
@@ -120,7 +120,7 @@ class DeploymentsTest(CliCommandTest):
 
         command = \
             'cfy executions start nonexistent-operation -d a-deployment-id'
-        self.cfy_check(
+        self.invoke(
             command,
             err_str_segment=expected_error,
             exception=CloudifyClientError)
@@ -143,4 +143,4 @@ class DeploymentsTest(CliCommandTest):
         })
         self.client.deployments.get = MagicMock(return_value=deployment)
         self.client.deployments.outputs.get = MagicMock(return_value=outputs)
-        self.cfy_check('cfy deployments outputs dep1')
+        self.invoke('cfy deployments outputs dep1')

@@ -84,9 +84,14 @@ def get(node_id, deployment_id):
 
 
 @nodes.command(name='list')
-@cfy.options.deployment_id(required=False)
 @cfy.options.verbose
+@click.argument('deployment_id', required=False)
 def list(deployment_id):
+    """List nodes
+
+    If `DEPLOYMENT_ID` is provided, list nodes for that deployment.
+    Else, list nodes for all deployments.
+    """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)

@@ -49,7 +49,7 @@ class DeploymentUpdatesTest(CliCommandTest):
         patcher.start()
 
     def test_deployment_update_successful(self):
-        outcome = self.cfy_check(
+        outcome = self.invoke(
             'cfy deployments update -p {0}/helloworld/blueprint.yaml '
             'my_deployment'.format(BLUEPRINTS_DIR))
         self.assertIn('Updating deployment my_deployment', outcome.logs)
@@ -61,7 +61,7 @@ class DeploymentUpdatesTest(CliCommandTest):
         self._is_update_execution_error = True
 
         with self.assertRaises(SuppressedCloudifyCliError):
-            outcome = self.cfy_check(
+            outcome = self.invoke(
                 'cfy deployments update -p '
                 '{0}/helloworld/blueprint.yaml '
                 'my_deployment'.format(BLUEPRINTS_DIR))
@@ -71,82 +71,82 @@ class DeploymentUpdatesTest(CliCommandTest):
                 'Failed updating deployment my_deployment', outcome.logs)
 
     def test_deployment_update_json_parameter(self):
-        self.cfy_check(
+        self.invoke(
             'cfy deployments update -p '
             '{0}/helloworld/blueprint.yaml '
             '-my_deployment --json'.format(BLUEPRINTS_DIR))
 
     def test_deployment_update_include_logs_parameter(self):
-        self.cfy_check(
+        self.invoke(
             'cfy deployments update -p '
             '{0}/helloworld/blueprint.yaml '
             'my_deployment --include-logs'.format(BLUEPRINTS_DIR))
 
     def test_deployment_update_skip_install_flag(self):
-        self.cfy_check(
+        self.invoke(
             'cfy deployments update -p '
             '{0}/helloworld/blueprint.yaml '
             'my_deployment --skip-install'.format(BLUEPRINTS_DIR))
 
     def test_deployment_update_skip_uninstall_flag(self):
-        self.cfy_check(
+        self.invoke(
             'cfy deployments update -p '
             '{0}/helloworld/blueprint.yaml '
             'my_deployment --skip-uninstall'.format(BLUEPRINTS_DIR))
 
     def test_deployment_update_force_flag(self):
-        self.cfy_check(
+        self.invoke(
             'cfy deployments update -p '
             '{0}/helloworld/blueprint.yaml '
             'my_deployment --force'.format(BLUEPRINTS_DIR))
 
     def test_deployment_update_override_workflow_parameter(self):
-        self.cfy_check(
+        self.invoke(
             'cfy deployments update -p '
             '{0}/helloworld/blueprint.yaml '
             'my_deployment -w override-wf'.format(BLUEPRINTS_DIR))
 
     def test_deployment_update_archive_location_parameter(self):
-        self.cfy_check(
+        self.invoke(
             'cfy deployments update -l '
             '{0}/helloworld/blueprint.tar.gz '
             'my_deployment'.format(BLUEPRINTS_DIR))
 
     def test_dep_update_archive_loc_and_bp_path_parameters_exclusion(self):
-        self.cfy_check(
+        self.invoke(
             'cfy deployments update -l '
             '{0}/helloworld/blueprint.tar.gz -p {0}/helloworld/'
             'blueprint.yaml my_deployment'.format(BLUEPRINTS_DIR),
             should_fail=True)
 
     def test_deployment_update_blueprint_filename_parameter(self):
-        self.cfy_check(
+        self.invoke(
             'cfy deployments update -l '
             '{0}/helloworld/blueprint.tar.gz -n my-blueprint.yaml '
             '-d my_deployment'.format(BLUEPRINTS_DIR))
 
     def test_deployment_update_inputs_parameter(self):
-        self.cfy_check(
+        self.invoke(
             'cfy deployments update -l '
             '{0}/helloworld/blueprint.tar.gz -i inputs.yaml '
             '-d my_deployment'.format(BLUEPRINTS_DIR))
 
     def test_deployment_update_multiple_inputs_parameter(self):
-        self.cfy_check(
+        self.invoke(
             'cfy deployments update -l '
             '{0}/helloworld/blueprint.tar.gz -i inputs1.yaml -i inputs2.yaml '
             '-d my_deployment'.format(BLUEPRINTS_DIR))
 
     def test_deployment_update_no_deployment_id_parameter(self):
         with self.assertRaises(SystemExit) as sys_exit:
-            self.cfy_check(
+            self.invoke(
                 'cfy deployments update -p '
                 '{0}/helloworld/blueprint.tar.gz'.format(BLUEPRINTS_DIR))
         self.assertNotEquals(sys_exit.exception.code, 0)
 
     def test_deployment_update_no_bp_path_nor_archive_loc_parameters(self):
         with self.assertRaises(SystemExit) as sys_exit:
-            self.cfy_check(
+            self.invoke(
                 'cfy deployments update -d my_deployment'.format(
                     BLUEPRINTS_DIR))
         self.assertNotEquals(sys_exit.exception.code, 0)

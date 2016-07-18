@@ -38,6 +38,9 @@ THIS_DIR = os.path.dirname(os.path.dirname(__file__))
 BLUEPRINTS_DIR = os.path.join(THIS_DIR, 'resources', 'blueprints')
 SNAPSHOTS_DIR = os.path.join(THIS_DIR, 'resources', 'snapshots')
 
+# TODO: Test outputs
+# TODO: Test profiles
+
 
 class CliCommandTest(unittest.TestCase):
 
@@ -88,11 +91,11 @@ class CliCommandTest(unittest.TestCase):
         if os.path.exists(TEST_WORK_DIR):
             shutil.rmtree(TEST_WORK_DIR)
 
-    def cfy_check(self,
-                  command,
-                  err_str_segment=None,
-                  should_fail=None,
-                  exception=CloudifyCliError):
+    def invoke(self,
+               command,
+               err_str_segment=None,
+               should_fail=None,
+               exception=CloudifyCliError):
 
         if err_str_segment and should_fail is None:
             should_fail = True
@@ -100,6 +103,7 @@ class CliCommandTest(unittest.TestCase):
         if should_fail and outcome.exit_code == 0:
             raise cfy.ClickInvocationException(
                 'Command {0} should have failed'.format(outcome.command),
+                output=outcome.output,
                 logs=outcome.logs,
                 exit_code=outcome.exit_code,
                 exception=str(type(outcome.exception)),
@@ -107,6 +111,7 @@ class CliCommandTest(unittest.TestCase):
         elif not should_fail and outcome.exit_code != 0:
             raise cfy.ClickInvocationException(
                 'Command {0} should not have failed'.format(outcome.command),
+                output=outcome.output,
                 logs=outcome.logs,
                 exit_code=outcome.exit_code,
                 exception=str(type(outcome.exception)),

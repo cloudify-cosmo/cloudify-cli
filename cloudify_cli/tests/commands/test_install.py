@@ -62,7 +62,7 @@ class InstallTest(CliCommandTest):
                                         executions_start_mock,
                                         blueprints_upload_mock,
                                         deployments_create_mock):
-        self.cfy_check('cfy install {0}'.format(SAMPLE_BLUEPRINT_PATH))
+        self.invoke('cfy install {0}'.format(SAMPLE_BLUEPRINT_PATH))
 
         self.assertTrue(executions_start_mock.called)
         self.assertTrue(blueprints_upload_mock.called)

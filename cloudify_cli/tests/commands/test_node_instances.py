@@ -13,10 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Tests all commands that start with 'cfy instances'
-"""
-
 from uuid import uuid4
 
 from mock import MagicMock

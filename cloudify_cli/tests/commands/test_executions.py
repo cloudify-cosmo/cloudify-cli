@@ -36,15 +36,15 @@ class ExecutionsTest(CliCommandTest):
     def test_executions_get(self):
         execution = execution_mock('terminated')
         self.client.executions.get = MagicMock(return_value=execution)
-        self.cfy_check('cfy executions get execution-id')
+        self.invoke('cfy executions get execution-id')
 
     def test_executions_list(self):
         self.client.executions.list = MagicMock(return_value=[])
-        self.cfy_check('cfy executions list deployment-id')
+        self.invoke('cfy executions list deployment-id')
 
     def test_executions_cancel(self):
         self.client.executions.cancel = MagicMock()
-        self.cfy_check('cfy executions cancel e_id')
+        self.invoke('cfy executions cancel e_id')
 
     @patch('cloudify_cli.logger.get_events_logger')
     def test_executions_start_json(self, get_events_logger_mock):
@@ -52,7 +52,7 @@ class ExecutionsTest(CliCommandTest):
         self.client.executions.start = MagicMock(return_value=execution)
         with patch('cloudify_cli.execution_events_fetcher.wait_for_execution',
                    return_value=execution):
-            self.cfy_check('cfy executions start mock_wf -d dep --json')
+            self.invoke('cfy executions start mock_wf -d dep --json')
         get_events_logger_mock.assert_called_with(True)
 
     def test_executions_start_dep_env_pending(self):
@@ -79,7 +79,7 @@ class ExecutionsTest(CliCommandTest):
         original_wait_for = executions.wait_for_execution
         try:
             executions.wait_for_execution = wait_for_mock
-            self.cfy_check('cfy executions start mock_wf -d dep')
+            self.invoke('cfy executions start mock_wf -d dep')
             self.assertEqual(wait_for_mock.mock_calls[0][1][1].workflow_id,
                              'create_deployment_environment')
             self.assertEqual(wait_for_mock.mock_calls[1][1][1].workflow_id,
