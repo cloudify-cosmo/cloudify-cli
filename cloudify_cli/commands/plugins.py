@@ -14,7 +14,7 @@
 #    * limitations under the License.
 
 import tarfile
-
+from urlparse import urlparse
 import click
 
 from .. import utils
@@ -48,7 +48,7 @@ def validate(plugin_path):
     logger.info('Validating plugin {0}...'.format(plugin_path))
     if not tarfile.is_tarfile(plugin_path):
         raise CloudifyCliError('Archive {0} is of an unsupported type. Only '
-                               'tar.gz is allowed'.format(plugin_path))
+                               'tar.gz/wgn is allowed'.format(plugin_path))
     with tarfile.open(plugin_path, 'r') as tar:
         tar_members = tar.getmembers()
         package_json_path = "{0}/{1}".format(tar_members[0].name,
@@ -95,7 +95,12 @@ def upload(ctx, plugin_path):
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
     client = utils.get_rest_client(management_ip)
-    ctx.invoke(validate, plugin_path=plugin_path)
+
+    # Test whether the path is a valid URL. If it is, no point in doing local
+    # validations - it will be validated on the server side anyway
+    parsed_url = urlparse(plugin_path)
+    if not parsed_url.scheme or not parsed_url.netloc:
+        ctx.invoke(validate, plugin_path=plugin_path)
 
     logger.info('Uploading plugin {0}'.format(plugin_path))
     plugin = client.plugins.upload(plugin_path)
