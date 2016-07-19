@@ -31,19 +31,18 @@ def snapshots():
 
 
 @snapshots.command(name='restore')
-@cfy.options.without_deployments_envs
+@cfy.options.without_deployment_envs
 @cfy.options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
 @cfy.options.verbose
 @click.argument('snapshot-id')
-def restore(snapshot_id, without_deployments_envs, force):
+def restore(snapshot_id, without_deployment_envs, force):
     """Restore a manager to its previous state
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    ctx.logger.info('Restoring snapshot {0}...'.format(snapshot_id))
-    client = utils.get_rest_client(management_ip)
+    logger.info('Restoring snapshot {0}...'.format(snapshot_id))
+    client = utils.get_rest_client()
     execution = client.snapshots.restore(
-        snapshot_id, not without_deployments_envs, force)
+        snapshot_id, not without_deployment_envs, force)
     logger.info("Started workflow execution. The execution's id is {0}".format(
         execution.id))
 
@@ -61,9 +60,8 @@ def create(snapshot_id, include_metrics, exclude_credentials):
     """
     logger = get_logger()
     snapshot_id = snapshot_id or utils._generate_suffixed_id('snapshot')
-    management_ip = utils.get_management_server_ip()
     logger.info('Creating snapshot {0}...'.format(snapshot_id))
-    client = utils.get_rest_client(management_ip)
+    client = utils.get_rest_client()
     execution = client.snapshots.create(snapshot_id,
                                         include_metrics,
                                         not exclude_credentials)
@@ -78,9 +76,8 @@ def delete(snapshot_id):
     """Delete a snapshot from the manager
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
     logger.info('Deleting snapshot {0}...'.format(snapshot_id))
-    client = utils.get_rest_client(management_ip)
+    client = utils.get_rest_client()
     client.snapshots.delete(snapshot_id)
     logger.info('Snapshot deleted successfully')
 
@@ -94,9 +91,8 @@ def upload(snapshot_path, snapshot_id):
     """
     logger = get_logger()
     snapshot_id = snapshot_id or utils._generate_suffixed_id('snapshot')
-    management_ip = utils.get_management_server_ip()
     logger.info('Uploading snapshot {0}...'.format(snapshot_path))
-    client = utils.get_rest_client(management_ip)
+    client = utils.get_rest_client()
     snapshot = client.snapshots.upload(snapshot_path, snapshot_id)
     logger.info("Snapshot uploaded. The snapshot's id is {0}".format(
         snapshot.id))
@@ -110,9 +106,8 @@ def download(snapshot_id, output_path):
     """Download a snapshot from the manager
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
     logger.info('Downloading snapshot {0}...'.format(snapshot_id))
-    client = utils.get_rest_client(management_ip)
+    client = utils.get_rest_client()
     target_file = client.snapshots.download(snapshot_id, output_path)
     logger.info('Snapshot downloaded as {0}'.format(target_file))
 
@@ -123,8 +118,7 @@ def list():
     """List all snapshots on the manager
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    client = utils.get_rest_client()
     logger.info('Listing snapshots...')
     pt = utils.table(['id', 'created_at', 'status', 'error'],
                      data=client.snapshots.list())

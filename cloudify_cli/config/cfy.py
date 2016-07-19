@@ -435,8 +435,8 @@ class Options(object):
             '--snapshot-id',
             help=helptexts.SNAPSHOT_ID)
 
-        self.without_deployments_envs = click.option(
-            '--without-deployments-envs',
+        self.without_deployment_envs = click.option(
+            '--without-deployment-envs',
             is_flag=True,
             help=helptexts.RESTORE_SNAPSHOT_EXCLUDE_EXISTING_DEPLOYMENTS)
 

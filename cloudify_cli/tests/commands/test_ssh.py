@@ -13,19 +13,14 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Tests 'cfy ssh'
-"""
-
-import platform
 import os
-
+import platform
 from distutils import spawn
 
-from cloudify_cli.commands.ssh import _validate_env
 from cloudify_cli import utils
-from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
+from cloudify_cli.commands.ssh import _validate_env
 from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
 
 class SshTest(CliCommandTest):
@@ -35,35 +30,35 @@ class SshTest(CliCommandTest):
         self.settings = utils.CloudifyWorkingDirectorySettings()
 
     def test_ssh_no_prior_init(self):
-        self._assert_ex('cfy ssh', 'Cannot find .cloudify')
+        self.invoke('cfy ssh', 'Cloudify environment is not initalized')
 
     def test_ssh_with_empty_config(self):
-        self._create_cosmo_wd_settings(self.settings)
-        self._assert_ex('cfy ssh',
-                        'Management User is not set '
-                        'in working directory settings')
+        self.create_cosmo_wd_settings(self.settings)
+        self.invoke('cfy ssh',
+                    'Management User is not set '
+                    'in working directory settings')
 
     def test_ssh_with_no_key(self):
         self.settings.set_management_user('test')
         self.settings.set_management_server('127.0.0.1')
-        self._create_cosmo_wd_settings(self.settings)
-        self._assert_ex('cfy ssh',
-                        'Management Key is not set '
-                        'in working directory settings')
+        self.create_cosmo_wd_settings(self.settings)
+        self.invoke('cfy ssh',
+                    'Management Key is not set '
+                    'in working directory settings')
 
     def test_ssh_with_no_user(self):
         self.settings.set_management_server('127.0.0.1')
         self.settings.set_management_key('/tmp/test.pem')
-        self._create_cosmo_wd_settings(self.settings)
-        self._assert_ex('cfy ssh',
-                        'Management User is not set '
-                        'in working directory settings')
+        self.create_cosmo_wd_settings(self.settings)
+        self.invoke('cfy ssh',
+                    'Management User is not set '
+                    'in working directory settings')
 
     def test_ssh_with_no_server(self):
         self.settings.set_management_user('test')
         self.settings.set_management_key('/tmp/test.pem')
-        self._create_cosmo_wd_settings(self.settings)
-        self._assert_ex('cfy ssh', 'Must either first run')
+        self.create_cosmo_wd_settings(self.settings)
+        self.invoke('cfy ssh', 'You must being using a manager')
 
     def test_ssh_without_ssh_windows(self):
         platform.system = lambda: 'Windows'
@@ -72,9 +67,9 @@ class SshTest(CliCommandTest):
         self.settings.set_management_user('test')
         self.settings.set_management_key('/tmp/test.pem')
         self.settings.set_management_server('127.0.0.1')
-        self._create_cosmo_wd_settings(self.settings)
+        self.create_cosmo_wd_settings(self.settings)
         spawn.find_executable = lambda x: None
-        self._assert_ex('cfy ssh', 'ssh.exe not found')
+        self.invoke('cfy ssh', 'ssh.exe not found')
 
     def test_ssh_without_ssh_linux(self):
         platform.system = lambda: 'Linux'
@@ -83,51 +78,16 @@ class SshTest(CliCommandTest):
         self.settings.set_management_user('test')
         self.settings.set_management_key('/tmp/test.pem')
         self.settings.set_management_server('127.0.0.1')
-        self._create_cosmo_wd_settings(self.settings)
+        self.create_cosmo_wd_settings(self.settings)
         spawn.find_executable = lambda x: None
-        self._assert_ex('cfy ssh', 'ssh not found')
-
-    def test_ssh_bad_args(self):
-        ssh_args = [
-            {
-                'ssh_command': {},
-                'host_session': True,
-                'sid': '',
-                'list_sessions': '',
-            },
-            {
-                'ssh_command': '',
-                'host_session': {},
-                'sid': '',
-                'list_sessions': '',
-            },
-            {
-                'ssh_command': '',
-                'host_session': True,
-                'sid': {},
-                'list_sessions': '',
-            },
-            {
-                'ssh_command': '',
-                'host_session': True,
-                'sid': '',
-                'list_sessions': {},
-            },
-        ]
-
-        for arg_set in ssh_args:
-            self.assertRaises(
-                CloudifyCliError,
-                _validate_env,
-                **arg_set
-            )
+        self.invoke('cfy ssh', 'ssh not found')
 
     def test_host_list_conflicts(self):
         self.assertRaises(
             CloudifyCliError,
             _validate_env,
-            ssh_command='',
-            host_session=True,
+            command='',
+            host=True,
             sid='',
             list_sessions=True
         )
