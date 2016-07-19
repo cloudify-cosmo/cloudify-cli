@@ -64,14 +64,14 @@ def _cfy():
     it with the IP of your manager (and ssh credentials if applicable).
 
     To activate bash-completion. Run: `eval "$(_CFY_COMPLETE=source cfy)"`
+
+    Cloudify's working directory resides in ~/.cloudify. To change it, set
+    the variable `CFY_WORKDIR` to something else (e.g. /tmp/).
     """
     # TODO: When calling a command which only exists in the context
     # of a manager but no manager is currently `use`d, print out a message
     # stating that "Some commands only exist when using a manager. You can run
     # `cfy use MANAGER_IP` and try this command again."
-
-    # TODO: Consider replacing `cfy init BLUEPRINT_PATH` with
-    # `cfy blueprints init BLUEPRINT_PATH` for local.
     logger.configure_loggers()
 
 

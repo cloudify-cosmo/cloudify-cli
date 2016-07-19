@@ -51,9 +51,9 @@ DEFAULT_LOG_FILE = os.path.expanduser(
             getpass.getuser()))
 
 
-CLOUDIFY_WORKDIR = os.path.join(
-    os.path.expanduser('~'),
-    constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+CLOUDIFY_WORKDIR = \
+    os.path.join(os.environ.get('CFY_WORKDIR', os.path.expanduser('~')),
+                 constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
 CLOUDIFY_CONFIG_PATH = os.path.join(CLOUDIFY_WORKDIR, 'config.yaml')
 PROFILES_DIR = os.path.join(CLOUDIFY_WORKDIR, 'profiles')
 ACTIVE_PRO_FILE = os.path.join(CLOUDIFY_WORKDIR, 'active.profile')

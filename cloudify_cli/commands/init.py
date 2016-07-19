@@ -26,6 +26,7 @@ from ..config import cfy
 from ..logger import get_logger
 from ..logger import configure_loggers
 from ..bootstrap import bootstrap as bs
+from ..exceptions import CloudifyCliError
 
 
 @cfy.command(name='init')
@@ -55,8 +56,12 @@ def init(blueprint_path,
     ~/.cloudify/config.yaml. For more information refer to the docs
     at http://docs.getcloudify.org
     """
+
     logger = get_logger()
     profile_name = 'local'
+
+    # TODO: Consider replacing `cfy init BLUEPRINT_PATH` with
+    # `cfy blueprints init BLUEPRINT_PATH` for local.
 
     if blueprint_path:
         if reset_context or hard:
@@ -82,6 +87,7 @@ def init(blueprint_path,
 
             # ImportError indicates
             # some plugin modules are missing
+
             # TODO: consider adding an error code to
             # all of our exceptions. so that we
             # easily identify them here
@@ -95,6 +101,10 @@ def init(blueprint_path,
                     "blueprint, run `cfy init {0}` "
                     "again to apply them".format(blueprint_path))
     else:
+        # if utils.is_initialized():
+        #     raise CloudifyCliError(
+        #         'Environment is already initialized. '
+        #         'You can reset the environment by running `cfy init -r`')
         init_profile(profile_name, reset_context, hard)
         utils.set_active_profile(profile_name)
 
@@ -130,9 +140,11 @@ def init_profile(profile_name, reset_context=False, hard=False):
     if not os.path.isfile(utils.CLOUDIFY_CONFIG_PATH) or hard:
         utils.dump_configuration_file()
 
-    settings = utils.CloudifyWorkingDirectorySettings()
-    utils.dump_cloudify_working_dir_settings(
-        settings, profile_name=profile_name)
+    # TODO: Verify that we don't break anything!
+    if not profile_name == 'local':
+        settings = utils.CloudifyWorkingDirectorySettings()
+        utils.dump_cloudify_working_dir_settings(
+            settings, profile_name=profile_name)
 
     configure_loggers()
     logger.info('Initialization completed successfully')
