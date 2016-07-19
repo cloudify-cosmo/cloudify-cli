@@ -15,7 +15,6 @@
 ############
 
 import os
-import sys
 import shlex
 import shutil
 import tempfile
@@ -25,9 +24,8 @@ from testfixtures import log_capture
 
 from cloudify.utils import setup_logger
 
-import cloudify_cli  # NOQA
-
-from .. import cli
+from .. import cli  # NOQA
+from .. import utils
 from .. import logger
 from .. import commands
 
@@ -38,12 +36,20 @@ runner_lgr = setup_logger('cli_runner')
 
 @log_capture()
 def invoke(command, capture):
-    # TODO: replace ~/.cloudify with WORKDIR. Right now
-    # it will actually work on the user's `~/.cloudify` folder.
+    # For each invocation we should use a temporary directory
+    # for the cfy workdir.
+    utils.CLOUDIFY_WORKDIR = '/tmp/.cloudify'
+    utils.CLOUDIFY_CONFIG_PATH = os.path.join(
+        utils.CLOUDIFY_WORKDIR, 'config.yaml')
+    utils.PROFILES_DIR = os.path.join(
+        utils.CLOUDIFY_WORKDIR, 'profiles')
+    utils.ACTIVE_PRO_FILE = os.path.join(
+        utils.CLOUDIFY_WORKDIR, 'active.profile')
+
     logger.configure_loggers()
     logger.set_global_verbosity_level(verbose=True)
 
-    cli = clicktest.CliRunner()
+    cfy = clicktest.CliRunner()
 
     lexed_command = shlex.split(command)
     # Safety measure in case someone wrote `cfy` at the beginning
@@ -57,7 +63,7 @@ def invoke(command, capture):
     # If we call `cfy init`, what we actually want to do is get the
     # init module from `commands` and then get the `init` command
     # from that module, hence the attribute getting.
-    outcome = cli.invoke(getattr(getattr(commands, func), func), params)
+    outcome = cfy.invoke(getattr(getattr(commands, func), func), params)
     outcome.command = command
 
     logs = [capture.records[m].msg for m in range(len(capture.records))]
@@ -92,38 +98,6 @@ class ClickInvocationException(Exception):
 
 
 def purge_dot_cloudify():
-    dot_cloudify_dir = os.path.expanduser('~/.cloudify')
+    dot_cloudify_dir = utils.CLOUDIFY_WORKDIR
     if os.path.isdir(dot_cloudify_dir):
         shutil.rmtree(dot_cloudify_dir)
-
-
-def run_cli_expect_system_exit_0(command):
-    run_cli_expect_system_exit_code(command, expected_code=0)
-
-
-def run_cli_expect_system_exit_1(command):
-    run_cli_expect_system_exit_code(command, expected_code=1)
-
-
-def run_cli_expect_system_exit_code(command, expected_code):
-    try:
-        run_cli(command)
-    except SystemExit as e:
-        assert e.code == expected_code
-    else:
-        raise RuntimeError("Expected SystemExit with {0} return code"
-                           .format(expected_code))
-
-
-def run_cli(command):
-    cli.set_global_verbosity_level(cli.NO_VERBOSE)
-    runner_lgr.info(command)
-    sys.argv = command.split()
-    cli.main()
-
-    # Return the content of the log file
-    # this enables making assertions on the output
-    if os.path.exists(DEFAULT_LOG_FILE):
-        with open(DEFAULT_LOG_FILE, 'r') as f:
-            return f.read()
-    return ''

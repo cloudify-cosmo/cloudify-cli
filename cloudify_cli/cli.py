@@ -18,39 +18,38 @@ import logger
 from . import utils
 from .config import cfy
 
+from .commands import install
+from .commands import uninstall
+from .commands import node_instances
 
-from commands import install
-from commands import uninstall
-from commands import node_instances
-
-from commands.use import use
-from commands.dev import dev
-from commands.ssh import ssh
-from commands.init import init
-from commands.logs import logs
-from commands.nodes import nodes
-from commands.agents import agents
-from commands.events import events
-from commands.groups import groups
-from commands.status import status
-from commands.inputs import inputs
-from commands.outputs import outputs
-from commands.execute import execute
-from commands.recover import recover
-from commands.plugins import plugins
-from commands.upgrade import upgrade
-from commands.teardown import teardown
-from commands.rollback import rollback
-from commands.profiles import profiles
-from commands.workflows import workflows
-from commands.snapshots import snapshots
-from commands.bootstrap import bootstrap
-from commands.blueprints import blueprints
-from commands.executions import executions
-from commands.deployments import deployments
-from commands.install_plugins import install_plugins
-from commands.maintenance_mode import maintenance_mode
-from commands.create_requirements import create_requirements
+from .commands.use import use
+from .commands.dev import dev
+from .commands.ssh import ssh
+from .commands.init import init
+from .commands.logs import logs
+from .commands.nodes import nodes
+from .commands.agents import agents
+from .commands.events import events
+from .commands.groups import groups
+from .commands.status import status
+from .commands.inputs import inputs
+from .commands.outputs import outputs
+from .commands.execute import execute
+from .commands.recover import recover
+from .commands.plugins import plugins
+from .commands.upgrade import upgrade
+from .commands.teardown import teardown
+from .commands.rollback import rollback
+from .commands.profiles import profiles
+from .commands.workflows import workflows
+from .commands.snapshots import snapshots
+from .commands.bootstrap import bootstrap
+from .commands.blueprints import blueprints
+from .commands.executions import executions
+from .commands.deployments import deployments
+from .commands.install_plugins import install_plugins
+from .commands.maintenance_mode import maintenance_mode
+from .commands.create_requirements import create_requirements
 
 
 @cfy.group(name='cfy')

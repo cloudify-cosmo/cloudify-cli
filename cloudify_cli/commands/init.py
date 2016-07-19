@@ -101,10 +101,10 @@ def init(blueprint_path,
                     "blueprint, run `cfy init {0}` "
                     "again to apply them".format(blueprint_path))
     else:
-        # if utils.is_initialized():
-        #     raise CloudifyCliError(
-        #         'Environment is already initialized. '
-        #         'You can reset the environment by running `cfy init -r`')
+        if utils.is_initialized() and not (reset_context or hard):
+            raise CloudifyCliError(
+                'Environment is already initialized. '
+                'You can reset the environment by running `cfy init -r`')
         init_profile(profile_name, reset_context, hard)
         utils.set_active_profile(profile_name)
 
