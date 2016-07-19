@@ -20,6 +20,7 @@ from StringIO import StringIO
 from mock import patch
 
 from cloudify_rest_client.executions import Execution
+from cloudify_rest_client.deployments import Deployment
 
 from .test_cli_command import CliCommandTest
 from ..resources.mocks.mock_list_response import MockListResponse
@@ -45,15 +46,20 @@ class EventsTest(CliCommandTest):
     def _generate_events(self, start_time, end_time):
         events = []
         event_time = start_time
+        event_count = 0
 
         while event_time < end_time:
-            event = {'event_name': 'test_event_{0}'.format(event_time)}
+            deployment_id = 'deployment_id_{0}'.format(event_count % 2)  # 0/1
+            event = {'event_name': 'test_event_{0}'.format(event_time),
+                     'deployment_id': deployment_id}
             events.append((event_time, event))
             event_time += 0.3
+            event_count += 1
 
         success_event = {
             'event_name': 'test_event_{0}'.format(end_time),
-            'event_type': 'workflow_succeeded'
+            'event_type': 'workflow_succeeded',
+            'deployment_id': 'deployment_id_{0}'.format(event_count % 2)
         }
         events.append((end_time, success_event))
         return events
@@ -73,6 +79,9 @@ class EventsTest(CliCommandTest):
 
         return execution
 
+    def _mock_deployments_get(self, deployment_id):
+        return Deployment({'id': deployment_id})
+
     def _mock_events_list(self, include_logs=False, message=None,
                            from_datetime=None, to_datetime=None, _include=None,
                            sort='@timestamp', **kwargs):
@@ -81,6 +90,18 @@ class EventsTest(CliCommandTest):
         events = self._get_events_before(time.time())
         return MockListResponse(
             events[from_event:from_event+batch_size], len(events))
+
+    def _mock_events_delete(self, deployment_id, **kwargs):
+        events_before = len(self.events)
+        self.events = [event for event in self.events if
+                       event[1]['deployment_id'] != deployment_id]
+        events_after = len(self.events)
+
+        class DeletedEvents(object):
+            def __init__(self, deleted_events_count):
+                self.items = [deleted_events_count]
+
+        return DeletedEvents(events_before - events_after)
 
     def update_execution_status(self):
         """Sets the execution status to TERMINATED when
@@ -141,3 +162,23 @@ class EventsTest(CliCommandTest):
         outcome = self.invoke('cfy events list execution-id {0}'.format(
             flag))
         return outcome.output if flag else outcome.logs
+
+    def _patch_clients_for_deletion(self):
+        self.client.deployments.get = self._mock_deployments_get
+        self.client.events.delete = self._mock_events_delete
+
+    def test_delete_events(self):
+        self._patch_clients_for_deletion()
+        self.assertEqual(len(self.events), 35)
+
+        outcome = self.invoke('cfy events delete deployment_id_1')
+        self.assertEqual(outcome.logs.split('\n')[-1], 'Deleted 17 events')
+        self.assertEqual(len(self.events), 18)
+
+        outcome = self.invoke('cfy events delete deployment_id_0')
+        self.assertEqual(outcome.logs.split('\n')[-1], 'Deleted 18 events')
+        self.assertEqual(len(self.events), 0)
+
+        outcome = self.invoke('cfy events delete deployment_id_0')
+        self.assertEqual(outcome.logs.split('\n')[-1], 'No events to delete')
+        self.assertEqual(len(self.events), 0)
