@@ -44,11 +44,11 @@ def recover(snapshot_path,
     """
     logger = get_logger()
     if not force:
-        msg = ("This action requires additional "
-               "confirmation. Add the '-f' or '--force' "
-               "flags to your command if you are certain "
-               "this command should be executed.")
-        raise exceptions.CloudifyCliError(msg)
+        raise exceptions.CloudifyCliError(
+            "This action requires additional "
+            "confirmation. Add the '-f' or '--force' "
+            "flags to your command if you are certain "
+            "this command should be executed.")
 
     if CLOUDIFY_MANAGER_PK_PATH_ENVAR in os.environ:
         # user defined the key file path inside an env variable.

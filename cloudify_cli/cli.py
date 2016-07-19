@@ -62,6 +62,8 @@ def _cfy():
     Note that some commands are only available if you're using a manager.
     You can use a manager by running the `cfy use` command and providing
     it with the IP of your manager (and ssh credentials if applicable).
+
+    To activate bash-completion. Run: `eval "$(_CFY_COMPLETE=source cfy)"`
     """
     # TODO: When calling a command which only exists in the context
     # of a manager but no manager is currently `use`d, print out a message

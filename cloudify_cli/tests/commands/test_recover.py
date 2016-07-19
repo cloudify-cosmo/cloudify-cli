@@ -19,6 +19,7 @@ from mock import patch
 from mock import MagicMock
 
 from ...utils import update_wd_settings
+from ...exceptions import CloudifyValidationError
 
 from cloudify_cli.tests.commands.test_cli_command import TEST_WORK_DIR
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
@@ -59,11 +60,7 @@ class RecoverTest(CliCommandTest):
            '.read_manager_deployment_dump_if_needed')
     @patch('cloudify_cli.bootstrap.bootstrap.recover')
     def test_recover_without_snapshot_flag(self, *_):
-
-        # recovery command should not fail because there
-        # is no snapshot flag
-        self.invoke('cfy recover -f',
-                    'This action requires a valid snapshot path.')
+        self.invoke('cfy recover -f', should_fail=True)
 
     @patch('cloudify_cli.bootstrap.bootstrap'
            '.read_manager_deployment_dump_if_needed')
@@ -84,7 +81,8 @@ class RecoverTest(CliCommandTest):
         # the context file does not exist
         self.invoke('cfy recover -f {0}'.format(fake_snapshot_path),
                     'Cannot perform recovery. manager key '
-                    'file does not exist')
+                    'file does not exist',
+                    exception=CloudifyValidationError)
 
     @patch('cloudify_cli.bootstrap.bootstrap'
            '.read_manager_deployment_dump_if_needed')
@@ -104,7 +102,8 @@ class RecoverTest(CliCommandTest):
                         'key file defined in '
                         'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH '
                         'environment variable does not exist: '
-                        '{0}'.format(key_path))
+                        '{0}'.format(key_path),
+                        exception=CloudifyValidationError)
         finally:
             del os.environ['CLOUDIFY_MANAGER_PRIVATE_KEY_PATH']
 

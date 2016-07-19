@@ -19,7 +19,7 @@ class ManagerRollbackTest(BaseUpgradeTest):
 
     def setUp(self):
         super(ManagerRollbackTest, self).setUp()
-        self._create_cosmo_wd_settings()
+        self.create_cosmo_wd_settings()
 
     def test_not_in_maintenance_rollback(self):
         self._test_not_in_maintenance(action='rollback')
