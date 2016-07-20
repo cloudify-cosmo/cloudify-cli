@@ -152,6 +152,7 @@ def bootstrap_validation(blueprint_path,
                          resolver=None):
     validate_manager_deployment_size(blueprint_path=blueprint_path)
 
+    logger = get_logger()
     try:
         env = common.initialize_blueprint(
             blueprint_path,
@@ -173,7 +174,13 @@ def bootstrap_validation(blueprint_path,
     manager_config_node = env.storage.get_node('manager_configuration')
     security_enabled = manager_config_node.properties['security']['enabled']
     if security_enabled:
-        _validate_credentials_are_set()
+        logger.info("security enabled")
+        try:
+            _validate_credentials_are_set()
+        except Exception, e:
+            logger.error('failed: {0}'.format(e))
+            raise
+        logger.info("security credentials validated")
 
     env.execute(workflow='execute_operation',
                 parameters={'operation':
