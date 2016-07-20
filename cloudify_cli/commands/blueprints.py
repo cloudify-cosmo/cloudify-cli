@@ -49,6 +49,7 @@ def validate_blueprint(blueprint_path):
     """
     logger = get_logger()
     logger.info('Validating blueprint: {0}'.format(blueprint_path))
+
     try:
         resolver = utils.get_import_resolver()
         validate_version = utils.is_validate_definitions_version()
@@ -116,8 +117,8 @@ def _publish_directory(ctx, blueprint_path, blueprint_id, validate):
         ctx.invoke(validate_blueprint, blueprint_path=blueprint_path)
     else:
         logger.debug("Skipping blueprint validation...")
-
     logger.info('Uploading blueprint {0}...'.format(blueprint_path))
+
     client = utils.get_rest_client()
     blueprint = client.blueprints.upload(blueprint_path, blueprint_id)
     logger.info("Blueprint uploaded. "
@@ -177,9 +178,9 @@ def download(blueprint_id, output_path):
     """Download a blueprint from the manager
     """
     logger = get_logger()
-    client = utils.get_rest_client()
-
     logger.info('Downloading blueprint {0}...'.format(blueprint_id))
+
+    client = utils.get_rest_client()
     target_file = client.blueprints.download(blueprint_id, output_path)
 
     logger.info('Blueprint downloaded as {0}'.format(target_file))
@@ -192,9 +193,9 @@ def delete(blueprint_id):
     """Delete a blueprint from the manager
     """
     logger = get_logger()
-    client = utils.get_rest_client()
-
     logger.info('Deleting blueprint {0}...'.format(blueprint_id))
+
+    client = utils.get_rest_client()
     client.blueprints.delete(blueprint_id)
 
     logger.info('Blueprint deleted')
@@ -206,6 +207,8 @@ def list():
     """List all blueprints
     """
     logger = get_logger()
+    logger.info('Listing all blueprints...')
+
     client = utils.get_rest_client()
 
     def trim_description(blueprint):
@@ -217,7 +220,6 @@ def list():
             blueprint['description'] = ''
         return blueprint
 
-    logger.info('Listing all blueprints...')
     blueprints = [trim_description(b) for b in client.blueprints.list()]
 
     pt = utils.table(['id', 'description', 'main_file_name',
@@ -234,9 +236,9 @@ def get(blueprint_id):
     """Retrieve information for a specific blueprint
     """
     logger = get_logger()
-    client = utils.get_rest_client()
-
     logger.info('Retrieving blueprint {0}...'.format(blueprint_id))
+
+    client = utils.get_rest_client()
     blueprint = client.blueprints.get(blueprint_id)
     deployments = client.deployments.list(_include=['id'],
                                           blueprint_id=blueprint_id)
@@ -262,9 +264,9 @@ def inputs(blueprint_id):
     """Retrieve inputs for a specific blueprint
     """
     logger = get_logger()
-    client = utils.get_rest_client()
-
     logger.info('Retrieving inputs for blueprint {0}...'.format(blueprint_id))
+
+    client = utils.get_rest_client()
     blueprint = client.blueprints.get(blueprint_id)
     inputs = blueprint['plan']['inputs']
     data = [{'name': name,

@@ -13,21 +13,18 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Tests all commands that start with 'cfy workflows'
-"""
-
 from mock import MagicMock
-from cloudify_cli.tests import cli_runner
-from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
+
 from cloudify_rest_client.deployments import Deployment
 from cloudify_rest_client.exceptions import CloudifyClientError
+
+from .test_cli_command import CliCommandTest
 
 
 class WorkflowsTest(CliCommandTest):
     def setUp(self):
         super(WorkflowsTest, self).setUp()
-        self._create_cosmo_wd_settings()
+        self.create_cosmo_wd_settings()
 
     def test_workflows_list(self):
         deployment = Deployment({
@@ -52,7 +49,7 @@ class WorkflowsTest(CliCommandTest):
         })
 
         self.client.deployments.get = MagicMock(return_value=deployment)
-        cli_runner.run_cli('cfy workflows list -d a-deployment-id')
+        self.invoke('cfy workflows list a-deployment-id')
 
     def test_workflows_get(self):
         deployment = Deployment({
@@ -77,7 +74,7 @@ class WorkflowsTest(CliCommandTest):
         })
 
         self.client.deployments.get = MagicMock(return_value=deployment)
-        cli_runner.run_cli('cfy workflows get -w mock_workflow -d dep_id')
+        self.invoke('cfy workflows get mock_workflow -d dep_id')
 
     def test_workflows_get_nonexistent_workflow(self):
 
@@ -104,16 +101,16 @@ class WorkflowsTest(CliCommandTest):
         })
 
         self.client.deployments.get = MagicMock(return_value=deployment)
-        self._assert_ex('cfy workflows get -w nonexistent_workflow -d dep_id',
-                        expected_message)
+        self.invoke('cfy workflows get nonexistent_workflow -d dep_id',
+                    expected_message)
 
     def test_workflows_get_nonexistent_deployment(self):
 
-        expected_message = ("Deployment 'nonexistent-dep' "
-                            "not found on management server")
+        expected_message = \
+            "Deployment 'nonexistent-dep' not found on management server"
 
         self.client.deployments.get = MagicMock(
-            side_effect=CloudifyClientError(expected_message)
-        )
-        self._assert_ex("cfy workflows get -w wf -d nonexistent-dep -v",
-                        expected_message)
+            side_effect=CloudifyClientError(expected_message))
+        self.invoke('cfy workflows get wf -d nonexistent-dep -v',
+                    err_str_segment=expected_message,
+                    exception=CloudifyClientError)

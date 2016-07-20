@@ -63,7 +63,7 @@ def invoke(command, capture):
     # If we call `cfy init`, what we actually want to do is get the
     # init module from `commands` and then get the `init` command
     # from that module, hence the attribute getting.
-    outcome = cfy.invoke(getattr(getattr(commands, func), func), params)
+    outcome = cfy.invoke(func, params)
     outcome.command = command
 
     logs = [capture.records[m].msg for m in range(len(capture.records))]

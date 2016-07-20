@@ -40,6 +40,7 @@ def deployments():
 
 def _print_deployment_inputs(client, blueprint_id):
     logger = get_logger()
+
     blueprint = client.blueprints.get(blueprint_id)
     logger.info('Deployment inputs:')
     inputs_output = StringIO()
@@ -61,13 +62,14 @@ def list(blueprint_id):
     Else, list deployments for all blueprints.
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
     if blueprint_id:
         logger.info('Listing deployments for blueprint {0}...'.format(
             blueprint_id))
     else:
         logger.info('Listing all deployments...')
+
+    client = utils.get_rest_client()
+
     deployments = client.deployments.list()
     if blueprint_id:
         deployments = filter(lambda deployment:
@@ -108,13 +110,13 @@ def update(deployment_id,
     """Update a specified deployment according to the specified blueprint
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
-    processed_inputs = common.inputs_to_dict(inputs, 'inputs')
-
     blueprint_or_archive_path = blueprint_path
-    logger.info('Updating deployment {dep_id} using blueprint {path}'.format(
-        dep_id=deployment_id, path=blueprint_or_archive_path))
+    logger.info('Updating deployment {0} using blueprint {1}'.format(
+        deployment_id, blueprint_or_archive_path))
+
+    client = utils.get_rest_client()
+
+    processed_inputs = common.inputs_to_dict(inputs, 'inputs')
 
     deployment_update = client.deployment_updates.update(
         deployment_id,
@@ -168,12 +170,13 @@ def create(blueprint_id,
     """Create a deployment on the manager
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    inputs = common.inputs_to_dict(inputs, 'inputs')
-    deployment_id = deployment_id or utils._generate_suffixed_id(blueprint_id)
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
-    client = utils.get_rest_client(management_ip)
+
+    client = utils.get_rest_client()
+
+    inputs = common.inputs_to_dict(inputs, 'inputs')
+    deployment_id = deployment_id or utils._generate_suffixed_id(blueprint_id)
 
     try:
         deployment = client.deployments.create(blueprint_id,
@@ -202,9 +205,10 @@ def delete(deployment_id, force):
     """Delete a deployment from the manager
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
     logger.info('Deleting deployment {0}...'.format(deployment_id))
-    client = utils.get_rest_client(management_ip)
+
+    client = utils.get_rest_client()
+
     client.deployments.delete(deployment_id, force)
     logger.info("Deployment deleted")
 
@@ -216,11 +220,11 @@ def outputs(deployment_id):
     """Retrieve outputs for a specific deployment
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
-
     logger.info('Retrieving outputs for deployment {0}...'.format(
         deployment_id))
+
+    client = utils.get_rest_client()
+
     dep = client.deployments.get(deployment_id, _include=['outputs'])
     outputs_def = dep.outputs
     response = client.deployments.outputs.get(deployment_id)
@@ -241,11 +245,11 @@ def inputs(deployment_id):
     """Retrieve inputs for a specific deployment
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
-
     logger.info('Retrieving inputs for deployment {0}...'.format(
         deployment_id))
+
+    client = utils.get_rest_client()
+
     dep = client.deployments.get(deployment_id, _include=['inputs'])
     inputs_ = StringIO()
     for input_name, input in dep.inputs.iteritems():
