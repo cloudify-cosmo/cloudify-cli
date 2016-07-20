@@ -30,6 +30,12 @@ def status():
     """Show the status of the manager
     """
     logger = get_logger()
+    if not utils.is_manager_active():
+        logger.info(
+            'No manager is currently being used. You can either '
+            'bootstrap a manager or run `cfy use` to use an existing one.')
+        return
+
     management_ip = utils.get_management_server_ip()
     logger.info('Retrieving manager services status... [ip={0}]'.format(
         management_ip))

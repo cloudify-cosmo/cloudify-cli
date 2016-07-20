@@ -30,18 +30,20 @@ from ..exceptions import CloudifyCliError
 def plugins():
     """Handle plugins on the manager
     """
-    pass
+    utils.assert_manager_active()
 
 
 @plugins.command(name='validate')
+@cfy.argument('plugin-path')
 @cfy.options.verbose
-@click.argument('plugin-path')
 def validate(plugin_path):
     """Validate a plugin
 
     This will try to validate the plugin's archive is not corrupted.
     A valid plugin is a wagon (http://github.com/cloudify-cosomo/wagon)
     in the tar.gz format.
+
+    `PLUGIN_PATH` is the path to wagon archive to validate.
     """
     logger = get_logger()
 
@@ -70,11 +72,13 @@ def validate(plugin_path):
 
 
 @plugins.command(name='delete')
+@cfy.argument('plugin-id')
 @cfy.options.force(help=helptexts.FORCE_DELETE_PLUGIN)
 @cfy.options.verbose
-@click.argument('plugin-id')
 def delete(plugin_id, force):
     """Delete a plugin from the manager
+
+    `PLUGIN_ID` is the id of the plugin to delete.
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -86,11 +90,13 @@ def delete(plugin_id, force):
 
 
 @plugins.command(name='upload')
+@cfy.argument('plugin-path')
 @cfy.options.verbose
-@click.argument('plugin-path')
 @click.pass_context
 def upload(ctx, plugin_path):
     """Upload a plugin to the manager
+
+    `PLUGIN_PATH` is the path to wagon archive to upload.
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -105,9 +111,11 @@ def upload(ctx, plugin_path):
 @plugins.command(name='download')
 @cfy.options.output_path
 @cfy.options.verbose
-@click.argument('plugin-id')
+@cfy.argument('plugin-id')
 def download(plugin_id, output_path):
     """Download a plugin from the manager
+
+    `PLUGIN_ID` is the id of the plugin to download.
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -123,10 +131,12 @@ fields = ['id', 'package_name', 'package_version', 'supported_platform',
 
 
 @plugins.command(name='get')
+@cfy.argument('plugin-id')
 @cfy.options.verbose
-@click.argument('plugin-id')
 def get(plugin_id):
     """Retrieve information for a specific plugin
+
+    `PLUGIN_ID` is the id of the plugin to get information on.
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -156,8 +166,8 @@ def list():
 
 
 # @plugins.command('install')
-# @click.argument('wagon_path')
-# @click.argument('wagon_args', nargs=-1, type=click.UNPROCESSED)
+# @cfy.argument('wagon_path')
+# @cfy.argument('wagon_args', nargs=-1, type=click.UNPROCESSED)
 # def install(wagon_path):
 #     from wagon import wagon
 #     installer = wagon.Wagon(wagon_path)

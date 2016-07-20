@@ -28,7 +28,7 @@ from ..exceptions import CloudifyCliError
 def logs():
     """Handle manager service logs
     """
-    pass
+    utils.assert_manager_active()
 
 
 def _archive_logs():

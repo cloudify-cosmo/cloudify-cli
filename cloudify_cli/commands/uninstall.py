@@ -17,15 +17,17 @@ import click
 
 from .. import utils
 from .. import common
-from . import execute
 from ..config import cfy
+from ..constants import DEFAULT_UNINSTALL_WORKFLOW
+
+from . import execute
 from . import blueprints
 from . import executions
 from . import deployments
-from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 
 
 @cfy.command(name='uninstall')
+@cfy.argument('deployment-id')
 @cfy.options.workflow_id('uninstall')
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
@@ -34,7 +36,6 @@ from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 @cfy.options.json
 @cfy.options.verbose
 @click.pass_context
-@click.argument('deployment-id')
 def manager(ctx,
             deployment_id,
             workflow_id,
@@ -47,7 +48,11 @@ def manager(ctx,
 
     This will execute the `uninstall` workflow, delete the deployment and
     delete the blueprint (if there is only one deployment for that blueprint).
+
+    `DEPLOYMENT_ID` is the id of the deployment to uninstall.
     """
+    utils.assert_manager_active()
+
     # Although the `uninstall` command does not use the `force` argument,
     # we are using the `executions start` handler as a part of it.
     # As a result, we need to provide it with a `force` argument, which is

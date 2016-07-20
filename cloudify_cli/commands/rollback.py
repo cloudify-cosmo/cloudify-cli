@@ -15,26 +15,25 @@
 
 import json
 
-import click
-
 from .. import utils
 from .. import common
 from ..config import cfy
 from .. import exceptions
 from ..logger import get_logger
+
 from .upgrade import update_inputs
 from .upgrade import put_workflow_state_file
 from .upgrade import verify_and_wait_for_maintenance_mode_activation
 
 
 @cfy.command(name='rollback')
+@cfy.argument('blueprint-path')
 @cfy.options.inputs
 @cfy.options.install_plugins
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose
-@click.argument('blueprint-path')
 def rollback(blueprint_path,
              inputs,
              install_plugins,
@@ -44,7 +43,11 @@ def rollback(blueprint_path,
     """Rollback a manager to its previous version
 
     Note that you can only rollback to the last version you upgraded from.
+
+    `BLUEPRINT_PATH` is the path of the manager blueprint to use for rollback.
     """
+    utils.assert_manager_active()
+
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
 

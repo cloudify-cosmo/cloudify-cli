@@ -15,21 +15,19 @@
 
 import json
 
-import click
-
 from .. import common
 from ..config import cfy
 from ..logger import get_logger
 
 
 @cfy.command(name='execute')
+@cfy.argument('workflow-id')
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose
-@click.argument('workflow-id', required=True)
 def execute(workflow_id,
             parameters,
             allow_custom_parameters,
@@ -37,6 +35,8 @@ def execute(workflow_id,
             task_retry_interval,
             task_thread_pool_size):
     """Execute a workflow
+
+    `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
     logger = get_logger()
     parameters = common.inputs_to_dict(parameters, 'parameters')

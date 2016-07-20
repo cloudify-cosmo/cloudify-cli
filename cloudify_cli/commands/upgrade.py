@@ -19,17 +19,16 @@ import json
 import shutil
 import tempfile
 
-import click
-
 from .. import ssh
 from .. import utils
 from .. import common
 from ..config import cfy
 from .. import exceptions
-from . import maintenance
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 from ..bootstrap.bootstrap import load_env
+
+from . import maintenance
 
 
 MAINTENANCE_MODE_DEACTIVATED = 'deactivated'
@@ -39,6 +38,7 @@ REMOTE_WORKFLOW_STATE_PATH = '/opt/cloudify/_workflow_state.json'
 
 
 @cfy.command(name='upgrade')
+@cfy.argument('blueprint-path')
 @cfy.options.inputs
 @cfy.options.validate_only
 @cfy.options.skip_validations
@@ -47,7 +47,6 @@ REMOTE_WORKFLOW_STATE_PATH = '/opt/cloudify/_workflow_state.json'
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose
-@click.argument('blueprint-path')
 def upgrade(blueprint_path,
             inputs,
             validate_only,
@@ -61,8 +60,10 @@ def upgrade(blueprint_path,
     Note that you must supply a simple-manager-blueprint to perform
     the upgrade and provide it with the relevant inputs.
 
-    See http://docs.getcloudify.org/ for more information.
+    `BLUEPRINT_PATH` is the path of the manager blueprint to use for upgrade.
     """
+    utils.assert_manager_active()
+
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
 

@@ -17,8 +17,6 @@ import os
 import tarfile
 from contextlib import closing
 
-import click
-
 from .. import utils
 from .. import common
 from ..config import cfy
@@ -76,8 +74,8 @@ def list():
 
 
 @profiles.command(name='delete')
+@cfy.argument('profile-name')
 @cfy.options.verbose
-@click.argument('profile-name')
 def delete(profile_name):
     """Delete a profile
 
@@ -118,12 +116,12 @@ def export_profiles(output_path):
 
 
 @profiles.command(name='import')
+@cfy.argument('archive-path')
 @cfy.options.verbose
-@click.argument('archive-path')
 def import_profiles(archive_path):
     """Import profiles from a profiles archive
 
-    `ARCHIVE_PATH` is the path to the profiles archive.
+    `ARCHIVE_PATH` is the path to the profiles archive to import.
 
     WARNING: If a profile exists both in the archive and locally
     it will be overwritten (any other profiles will be left intact).

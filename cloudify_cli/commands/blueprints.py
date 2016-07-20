@@ -38,14 +38,16 @@ DESCRIPTION_LIMIT = 20
 def blueprints():
     """Handle blueprints on the manager
     """
-    pass
+    utils.assert_manager_active()
 
 
 @blueprints.command(name='validate')
+@cfy.argument('blueprint-path')
 @cfy.options.verbose
-@click.argument('blueprint-path', required=True)
 def validate_blueprint(blueprint_path):
     """Validate a blueprint
+
+    `BLUEPRINT_PATH` is the path of the blueprint to validate.
     """
     logger = get_logger()
     logger.info('Validating blueprint: {0}'.format(blueprint_path))
@@ -63,11 +65,11 @@ def validate_blueprint(blueprint_path):
 
 
 @blueprints.command(name='upload')
+@cfy.argument('blueprint-path')
 @cfy.options.blueprint_id()
 @cfy.options.blueprint_filename()
 @cfy.options.validate
 @cfy.options.verbose
-@click.argument('blueprint-path')
 @click.pass_context
 def upload(ctx,
            blueprint_path,
@@ -75,6 +77,11 @@ def upload(ctx,
            blueprint_filename,
            validate):
     """Upload a blueprint to the manager
+
+    `BLUEPRINT_PATH` is the path of the blueprint to upload.
+
+    This can be either a path to a local yaml, a URL of a blueprint archive
+    or a path to a local blueprint archive.
     """
     if _is_archive(blueprint_path):
         # TODO: allow to upload from github like so:
@@ -171,11 +178,13 @@ def determine_archive_type(archive_location):
 
 
 @blueprints.command(name='download')
+@cfy.argument('blueprint-id')
 @cfy.options.output_path
 @cfy.options.verbose
-@click.argument('blueprint-id')
 def download(blueprint_id, output_path):
     """Download a blueprint from the manager
+
+    `BLUEPRINT_ID` is the id of the blueprint to download.
     """
     logger = get_logger()
     logger.info('Downloading blueprint {0}...'.format(blueprint_id))
@@ -187,8 +196,8 @@ def download(blueprint_id, output_path):
 
 
 @blueprints.command(name='delete')
+@cfy.argument('blueprint-id')
 @cfy.options.verbose
-@click.argument('blueprint-id')
 def delete(blueprint_id):
     """Delete a blueprint from the manager
     """
@@ -230,10 +239,12 @@ def list():
 
 
 @blueprints.command(name='get')
+@cfy.argument('blueprint-id')
 @cfy.options.verbose
-@click.argument('blueprint-id')
 def get(blueprint_id):
     """Retrieve information for a specific blueprint
+
+    `BLUEPRINT_ID` is the id of the blueprint to get information on.
     """
     logger = get_logger()
     logger.info('Retrieving blueprint {0}...'.format(blueprint_id))
@@ -258,10 +269,12 @@ def get(blueprint_id):
 
 
 @blueprints.command(name='inputs')
+@cfy.argument('blueprint-id')
 @cfy.options.verbose
-@click.argument('blueprint-id')
 def inputs(blueprint_id):
     """Retrieve inputs for a specific blueprint
+
+    `BLUEPRINT_ID` is the path of the blueprint to get inputs for.
     """
     logger = get_logger()
     logger.info('Retrieving inputs for blueprint {0}...'.format(blueprint_id))

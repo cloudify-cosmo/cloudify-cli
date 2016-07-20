@@ -29,6 +29,7 @@ from ..bootstrap import bootstrap as bs
 
 
 @cfy.command(name='bootstrap')
+@cfy.argument('blueprint-path')
 @cfy.options.inputs
 @cfy.options.validate_only
 @cfy.options.skip_validations
@@ -38,7 +39,6 @@ from ..bootstrap import bootstrap as bs
 @cfy.options.task_thread_pool_size()
 @cfy.options.keep_up_on_failure
 @cfy.options.verbose
-@click.argument('blueprint-path', required=True)
 def bootstrap(blueprint_path,
               inputs,
               validate_only,
@@ -49,6 +49,9 @@ def bootstrap(blueprint_path,
               task_thread_pool_size,
               keep_up_on_failure):
     """Bootstrap a manager
+
+    `BLUEPRINT_PATH` is a path to the manager-blueprint used to bootstrap
+    the manager.
 
     Note that `--validate-only` will validate resource creation without
     actually validating the host's OS type, Available Memory, etc.. as
@@ -64,8 +67,6 @@ def bootstrap(blueprint_path,
     logger = get_logger()
     env_name = 'manager'
 
-    # TODO: propagate key, user, etc.. to inputs
-    # TODO: delete temporary profile if bootstrap failed
     # TODO: allow to skip sanity
     temp_profile_active = False
     active_profile = utils.get_active_profile()

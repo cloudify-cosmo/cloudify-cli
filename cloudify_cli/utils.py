@@ -109,6 +109,15 @@ def get_active_profile():
         return None
 
 
+def assert_manager_active():
+    # TODO: https://github.com/pallets/click/pull/500 implements hidden
+    # options in click. This will allow us to replace this function.
+    if not is_manager_active():
+        raise CloudifyCliError(
+            'This command is only available when using a manager. '
+            'You can either bootstrap a manager or run `cfy use MANAGER_IP`')
+
+
 def is_manager_active():
     active_profile = get_active_profile()
     if not active_profile:

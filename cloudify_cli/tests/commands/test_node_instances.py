@@ -31,16 +31,17 @@ class InstancesTest(CliCommandTest):
     def test_instances_get(self):
         self.client.node_instances.get = \
             MagicMock(return_value=node_instance_get_mock())
-        self.invoke('cfy node-instances get instance_id')
+        self.invoke('cfy node-instances get instance_id', context='manager')
 
     def test_instance_get_no_instance_id(self):
-        self.invoke('cfy node-instances get')
+        self.invoke(
+            'cfy node-instances get', should_fail=True, context='manager')
 
     def test_instances_list(self):
         self.client.node_instances.list = MagicMock(
             return_value=[node_instance_get_mock(), node_instance_get_mock()])
-        self.invoke('cfy node-instances list')
-        self.invoke('cfy node-instances list nodecellar')
+        self.invoke('cfy node-instances list', context='manager')
+        self.invoke('cfy node-instances list nodecellar', context='manager')
 
 
 def node_instance_get_mock():

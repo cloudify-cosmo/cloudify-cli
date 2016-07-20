@@ -28,7 +28,7 @@ from ..exceptions import CloudifyCliError
 
 
 @cfy.command(name='dev')
-@click.argument('task', required=True)
+@cfy.argument('task', required=True)
 @click.option('-t',
               'tasks-file',
               required=True,
@@ -41,6 +41,8 @@ from ..exceptions import CloudifyCliError
 def dev(tasks_file, task, args):
     """Run fabric tasks on the manager
     """
+    utils.assert_manager_active()
+
     management_ip = utils.get_management_server_ip()
     _execute(username=get_management_user(),
              key=get_management_key(),

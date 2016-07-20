@@ -72,31 +72,6 @@ class MutuallyExclusiveOption(click.Option):
             ctx, opts, args)
 
 
-# class RequiresOption(click.Option):
-#     def __init__(self, *args, **kwargs):
-#         self.requires = set(kwargs.pop('requires', []))
-#         self.requires_error_message = \
-#             kwargs.pop('requires_error_message', [])
-#         self.requires_string = ', '.join(self.requires)
-#         if self.requires:
-#             help = kwargs.get('help', '')
-#             kwargs['help'] = (
-#                 '{0}. This argument requires arguments: [{1}] ({2})'.format(
-#                     help,
-#                     self.requires,
-#                     self.requires_error_message))
-#         super(RequiresOption, self).__init__(*args, **kwargs)
-
-#     def handle_parse_result(self, ctx, opts, args):
-#         if any(not flag for flag in self.requires) and self.name in opts:
-#             raise click.UsageError(
-#                 "Illegal usage: `{0}` requires arguments `{1}` ({2}).".format(
-#                     self.name,
-#                     self.requires_string,
-#                     self.requires_error_message))
-#         return super(RequiresOption, self).handle_parse_result(ctx, opts, args)
-
-
 def _format_version_data(version_data,
                          prefix=None,
                          suffix=None,
@@ -142,10 +117,9 @@ def set_verbosity_level(ctx, param, value):
         return
 
     logger.set_global_verbosity_level(value)
-    _set_cli_except_hook(value)
 
 
-def _set_cli_except_hook(global_verbosity_level):
+def set_cli_except_hook(global_verbosity_level):
 
     def recommend(possible_solutions):
         logger = get_logger()
@@ -240,25 +214,30 @@ def command(name):
     return click.command(name=name)
 
 
+def argument(name, type=click.STRING, required=True):
+    return click.argument(name, required=required, type=type)
+
+
 class Options(object):
     def __init__(self):
 
-        # TODO: Ideally, both verbose and debug should have callbacks
-        # which set the global verbosity level accordingly once a command
-        # is decorated without having to call a function explicitly from each
-        # command. The problem currently is, that setting the global verbosity
-        # level depends on both `verbose` and `debug` and to make them affect
-        # one another we need to pass one result of the decorator to the other
-        # (probably using click's `get_current_state` impelmeneted in Click 6).
-        # For now, we're just calling `logger.set_global_verbosity_level`
-        # from each command.
-
+        # TODO: Convert verbose to a function which allows to pass
+        # whether the value is exposed or not as an argument.
+        # Then, remove `verbose_exposed`.
         self.verbose = click.option(
             '-v',
             '--verbose',
             count=True,
             callback=set_verbosity_level,
             expose_value=False,
+            is_eager=True,
+            help=helptexts.VERBOSE)
+
+        self.verbose_exposed = click.option(
+            '-v',
+            '--verbose',
+            count=True,
+            callback=set_verbosity_level,
             is_eager=True,
             help=helptexts.VERBOSE)
 

@@ -13,8 +13,6 @@
 # * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import click
-
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
@@ -28,22 +26,24 @@ from ..exceptions import CloudifyCliError
 def workflows():
     """Handle deployment workflows
     """
-    pass
+    utils.assert_manager_active()
 
 
 @workflows.command(name='get')
+@cfy.argument('workflow-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose
-@click.argument('workflow-id')
 def get(workflow_id, deployment_id):
-    """Retrieve information for a specific workflow of a specific deplouyment
+    """Retrieve information for a specific workflow of a specific deployment
+
+    `WORKFLOW_ID` is the id of the workflow to get information on.
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+
     try:
         logger.info('Retrieving workflow {0} for deployment {1}'.format(
             workflow_id, deployment_id))
+        client = utils.get_rest_client()
         deployment = client.deployments.get(deployment_id)
         workflow = next((wf for wf in deployment.workflows if
                          wf.name == workflow_id), None)
@@ -94,24 +94,23 @@ def get(workflow_id, deployment_id):
 
 
 @workflows.command(name='list')
+@cfy.argument('deployment-id')
 @cfy.options.verbose
-@click.argument('deployment-id')
 def list(deployment_id):
     """List all workflows on the manager
+
+    `DEPLOYMENT_ID` is the id of the deployment to list workflows for.
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
-
     logger.info('Listing workflows for deployment {0}...'.format(
         deployment_id))
 
+    client = utils.get_rest_client()
     deployment = client.deployments.get(deployment_id)
-    workflows = deployment.workflows
 
     pt = utils.table(['blueprint_id', 'deployment_id',
                       'name', 'created_at'],
-                     data=workflows,
+                     data=deployment.workflows,
                      defaults={'blueprint_id': deployment.blueprint_id,
                                'deployment_id': deployment.id})
     common.print_table('Workflows:', pt)

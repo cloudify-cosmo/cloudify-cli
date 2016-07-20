@@ -16,8 +16,6 @@
 import os
 import shutil
 
-import click
-
 from .. import utils
 from .. import common
 from .. import constants
@@ -30,12 +28,12 @@ from ..exceptions import CloudifyCliError
 
 
 @cfy.command(name='init')
+@cfy.argument('blueprint-path', required=False)
 @cfy.options.reset_context
 @cfy.options.inputs
 @cfy.options.install_plugins
 @cfy.options.init_hard_reset
 @cfy.options.verbose
-@click.argument('blueprint-path', required=False)
 def init(blueprint_path,
          reset_context,
          inputs,

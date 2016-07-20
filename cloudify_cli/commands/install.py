@@ -31,6 +31,7 @@ from . import deployments
 
 
 @cfy.command(name='install')
+@cfy.argument('blueprint-path')
 @cfy.options.blueprint_id()
 @cfy.options.blueprint_filename()
 @cfy.options.validate
@@ -43,7 +44,6 @@ from . import deployments
 @cfy.options.include_logs
 @cfy.options.json
 @cfy.options.verbose
-@click.argument('blueprint-path')
 @click.pass_context
 def manager(ctx,
             blueprint_path,
@@ -59,6 +59,8 @@ def manager(ctx,
             include_logs,
             json):
     """Install an application via the manager
+
+    `BLUEPRINT_PATH` is the path to the blueprint to install.
 
     This will upload the blueprint, create a deployment and execute the
     `install` workflow.
@@ -100,6 +102,7 @@ def manager(ctx,
 
 
 @cfy.command(name='install')
+@cfy.argument('blueprint-path')
 @cfy.options.inputs
 @cfy.options.install_plugins
 @cfy.options.workflow_id('install')
@@ -109,7 +112,6 @@ def manager(ctx,
 @cfy.options.task_retry_interval(3)
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose
-@click.argument('blueprint-path')
 @click.pass_context
 def local(ctx,
           blueprint_path,
@@ -122,6 +124,8 @@ def local(ctx,
           task_retry_interval,
           task_thread_pool_size):
     """Install an application
+
+    `BLUEPRINT_PATH` is the path to the blueprint to install.
     """
     blueprint_path = blueprint_path or DEFAULT_BLUEPRINT_PATH
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW

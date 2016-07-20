@@ -20,9 +20,11 @@ from ..config import cfy
 
 
 @cfy.command(name='install-plugins')
+@cfy.argument('blueprint-path', type=click.Path(exists=True))
 @cfy.options.verbose
-@click.argument('blueprint-path', type=click.Path(exists=True))
 def install_plugins(blueprint_path):
     """Install the necessary plugins for a given blueprint
+
+    `BLUEPRINT_PATH` is the path to the blueprint to install plugins for.
     """
     common.install_blueprint_plugins(blueprint_path=blueprint_path)

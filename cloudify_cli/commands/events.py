@@ -13,8 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import click
-
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
@@ -31,23 +29,25 @@ from ..execution_events_fetcher import ExecutionEventsFetcher, \
 def events():
     """Show events from workflow executions
     """
-    pass
+    utils.assert_manager_active()
 
 
 @events.command(name='list')
+@cfy.argument('execution-id')
 @cfy.options.include_logs
 @cfy.options.json
 @cfy.options.tail
 @cfy.options.verbose
-@click.argument('execution-id', required=True)
 def list(execution_id, include_logs, json, tail):
     """Display events for an execution
+
+    `EXECUTION_ID` is the execution to list events for.
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
     logger.info('Listing events for execution id {0} '
                 '[include_logs={1}]'.format(execution_id, include_logs))
-    client = utils.get_rest_client(management_ip)
+
+    client = utils.get_rest_client()
     try:
         execution_events = ExecutionEventsFetcher(
             client,

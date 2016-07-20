@@ -13,14 +13,11 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import click
-
 from cloudify_rest_client.exceptions import (
     CloudifyClientError,
     UserUnauthorizedError
 )
 
-from . import init
 from .. import utils
 from .. import constants
 from ..config import cfy
@@ -28,8 +25,11 @@ from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 from ..exceptions import CloudifyCliError
 
+from . import init
+
 
 @cfy.command(name='use')
+@cfy.argument('management-ip')
 @cfy.options.profile_alias
 @cfy.options.management_user
 @cfy.options.management_key
@@ -38,7 +38,6 @@ from ..exceptions import CloudifyCliError
 @cfy.options.rest_port
 @cfy.options.show_active
 @cfy.options.verbose
-@click.argument('management-ip', required=True)
 def use(alias,
         management_ip,
         management_user,
@@ -48,10 +47,14 @@ def use(alias,
         rest_port):
     """Control a specific manager
 
+    `MANAGEMENT_IP` is the IP of the manager to use.
+
     Additional CLI commands will be added after a manager is used.
     To stop using a manager, you can run `cfy init -r`.
     """
     logger = get_logger()
+
+    # TODO: add support for setting the ssh port and password
 
     management_ip = management_ip or 'local'
     if management_ip == 'local':

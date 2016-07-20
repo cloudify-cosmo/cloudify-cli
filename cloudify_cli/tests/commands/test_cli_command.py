@@ -95,11 +95,12 @@ class CliCommandTest(unittest.TestCase):
                command,
                err_str_segment=None,
                should_fail=None,
-               exception=CloudifyCliError):
+               exception=CloudifyCliError,
+               context=None):
 
         if err_str_segment and should_fail is None:
             should_fail = True
-        outcome = cfy.invoke(command)
+        outcome = cfy.invoke(command, context=context)
         if should_fail and outcome.exit_code == 0:
             raise cfy.ClickInvocationException(
                 'Command {0} should have failed'.format(outcome.command),

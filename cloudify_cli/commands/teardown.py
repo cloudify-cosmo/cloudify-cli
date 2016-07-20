@@ -15,13 +15,14 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .use import use
 from .. import utils
 from ..config import cfy
 from .. import exceptions
 from ..config import helptexts
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
+
+from .use import use
 
 
 @cfy.command(name='teardown')
@@ -38,6 +39,8 @@ def teardown(force,
              task_thread_pool_size):
     """Teardown the manager
     """
+    utils.assert_manager_active()
+
     _validate_force(force)
 
     try:

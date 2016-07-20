@@ -50,6 +50,8 @@ def ssh(command, host, sid, list_sessions):
     Passing an `command` will simply execute it on the manager while
     omitting a command will connect to an interactive shell.
     """
+    utils.assert_manager_active()
+
     _validate_env(command, host, sid, list_sessions)
     host_string = utils.build_manager_host_string()
     if host or sid or list_sessions:

@@ -13,8 +13,6 @@
 # * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import click
-
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
@@ -29,15 +27,17 @@ from ..exceptions import CloudifyCliError
 def nodes():
     """Handle a deployment's nodes
     """
-    pass
+    utils.assert_manager_active()
 
 
 @nodes.command(name='get')
+@cfy.argument('node-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose
-@click.argument('node-id')
 def get(node_id, deployment_id):
     """Retrieve information for a specific node of a specific deployment
+
+    `NODE_ID` is the node id to get information on.
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
@@ -84,13 +84,13 @@ def get(node_id, deployment_id):
 
 
 @nodes.command(name='list')
+@cfy.argument('deployment_id', required=False)
 @cfy.options.verbose
-@click.argument('deployment_id', required=False)
 def list(deployment_id):
     """List nodes
 
     If `DEPLOYMENT_ID` is provided, list nodes for that deployment.
-    Else, list nodes for all deployments.
+    Otherwise, list nodes for all deployments.
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()

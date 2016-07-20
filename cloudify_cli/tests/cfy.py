@@ -35,7 +35,7 @@ runner_lgr = setup_logger('cli_runner')
 
 
 @log_capture()
-def invoke(command, capture):
+def invoke(command, capture, context=None):
     # For each invocation we should use a temporary directory
     # for the cfy workdir.
     utils.CLOUDIFY_WORKDIR = '/tmp/.cloudify'
@@ -60,10 +60,12 @@ def invoke(command, capture):
     func = lexed_command[0].replace('-', '_')
     params = lexed_command[1:]
 
+    sub_func = context or func
+
     # If we call `cfy init`, what we actually want to do is get the
     # init module from `commands` and then get the `init` command
     # from that module, hence the attribute getting.
-    outcome = cfy.invoke(func, params)
+    outcome = cfy.invoke(getattr(getattr(commands, func), sub_func), params)
     outcome.command = command
 
     logs = [capture.records[m].msg for m in range(len(capture.records))]

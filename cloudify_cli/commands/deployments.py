@@ -16,8 +16,6 @@
 import os
 from StringIO import StringIO
 
-import click
-
 from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 
@@ -35,7 +33,7 @@ from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 def deployments():
     """Handle deployments on the Manager
     """
-    pass
+    utils.assert_manager_active()
 
 
 def _print_deployment_inputs(client, blueprint_id):
@@ -53,8 +51,8 @@ def _print_deployment_inputs(client, blueprint_id):
 
 
 @deployments.command(name='list')
+@cfy.argument('blueprint-id', required=False)
 @cfy.options.verbose
-@click.argument('blueprint-id', required=False)
 def list(blueprint_id):
     """List deployments
 
@@ -86,6 +84,7 @@ def list(blueprint_id):
 
 
 @deployments.command(name='update')
+@cfy.argument('deployment-id')
 @cfy.options.blueprint_path(required=True)
 @cfy.options.inputs
 @cfy.options.blueprint_filename()
@@ -96,7 +95,6 @@ def list(blueprint_id):
 @cfy.options.include_logs
 @cfy.options.json
 @cfy.options.verbose
-@click.argument('deployment-id')
 def update(deployment_id,
            blueprint_path,
            inputs,
@@ -108,6 +106,8 @@ def update(deployment_id,
            include_logs,
            json):
     """Update a specified deployment according to the specified blueprint
+
+    `DEPLOYMENT_ID` is the deployment's id to update.
     """
     logger = get_logger()
     blueprint_or_archive_path = blueprint_path
@@ -160,14 +160,17 @@ def update(deployment_id,
 
 
 @deployments.command(name='create')
+@cfy.argument('blueprint-id')
 @cfy.options.deployment_id()
 @cfy.options.inputs
 @cfy.options.verbose
-@click.argument('blueprint-id', required=True)
 def create(blueprint_id,
            deployment_id,
            inputs):
     """Create a deployment on the manager
+
+    `BLUEPRINT_ID` is the id of the blueprint from which to create a
+    deployment.
     """
     logger = get_logger()
     logger.info('Creating new deployment from blueprint {0}...'.format(
@@ -198,11 +201,13 @@ def create(blueprint_id,
 
 
 @deployments.command(name='delete')
+@cfy.argument('deployment-id')
 @cfy.options.force(help=helptexts.IGNORE_LIVE_NODES)
 @cfy.options.verbose
-@click.argument('deployment-id')
 def delete(deployment_id, force):
     """Delete a deployment from the manager
+
+    `DEPLOYMENT_ID` is the id of the deployment to delete.
     """
     logger = get_logger()
     logger.info('Deleting deployment {0}...'.format(deployment_id))
@@ -214,10 +219,12 @@ def delete(deployment_id, force):
 
 
 @deployments.command(name='outputs')
+@cfy.argument('deployment-id')
 @cfy.options.verbose
-@click.argument('deployment-id')
 def outputs(deployment_id):
     """Retrieve outputs for a specific deployment
+
+    `DEPLOYMENT_ID` is the id of the deployment to print outputs for.
     """
     logger = get_logger()
     logger.info('Retrieving outputs for deployment {0}...'.format(
@@ -239,10 +246,12 @@ def outputs(deployment_id):
 
 
 @deployments.command(name='inputs')
+@cfy.argument('deployment-id')
 @cfy.options.verbose
-@click.argument('deployment-id')
 def inputs(deployment_id):
     """Retrieve inputs for a specific deployment
+
+    `DEPLOYMENT_ID` is the id of the deployment to print inputs for.
     """
     logger = get_logger()
     logger.info('Retrieving inputs for deployment {0}...'.format(

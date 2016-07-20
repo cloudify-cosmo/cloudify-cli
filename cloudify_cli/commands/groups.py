@@ -15,8 +15,6 @@
 
 import json
 
-import click
-
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
@@ -30,14 +28,16 @@ from ..exceptions import CloudifyCliError
 def groups():
     """Handle deployment groups
     """
-    pass
+    utils.assert_manager_active()
 
 
 @groups.command(name='list')
+@cfy.argument('deployment-id')
 @cfy.options.verbose
-@click.argument('deployment-id', required=True)
 def list(deployment_id):
     """List all groups for a deployment
+
+    `DEPLOYMENT_ID` is the id of the deployment to list groups for.
     """
     logger = get_logger()
     management_ip = utils.get_management_server_ip()

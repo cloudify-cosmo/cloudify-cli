@@ -15,8 +15,6 @@
 
 import json
 
-import click
-
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
@@ -31,26 +29,28 @@ from ..exceptions import CloudifyCliError
 def manager():
     """Handle a deployment's node-instances
     """
-    pass
+    utils.assert_manager_active()
 
 
 @manager.command(name='get')
+@cfy.argument('node_instance_id')
 @cfy.options.verbose
-@click.argument('node_instance_id')
 def get(node_instance_id):
     """Retrieve information for a specific node-instance
+
+    `NODE_INSTANCE_ID` is the id of the node-instance to get information on.
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
-
     logger.info('Retrieving node instance {0}'.format(node_instance_id))
+
+    client = utils.get_rest_client()
     try:
         node_instance = client.node_instances.get(node_instance_id)
     except CloudifyClientError as e:
         if e.status_code != 404:
             raise
-        raise CloudifyCliError('Node instance {0} not found')
+        raise CloudifyCliError('Node instance {0} not found'.format(
+            node_instance_id))
 
     columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
     pt = utils.table(columns, [node_instance])
@@ -66,24 +66,24 @@ def get(node_instance_id):
 
 
 @manager.command(name='list')
+@cfy.argument('deployment-id', required=False)
 @cfy.options.node_name
 @cfy.options.verbose
-@click.argument('deployment-id', required=False)
 def list(deployment_id, node_name):
     """List node-instances
 
     If `DEPLOYMENT_ID` is provided, list node-instances for that deployment.
-    Else, list node-instances for all deployments.
+    Otherwise, list node-instances for all deployments.
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+
     try:
         if deployment_id:
             logger.info('Listing instances for deployment {0}...'.format(
                 deployment_id))
         else:
             logger.info('Listing all instances...')
+        client = utils.get_rest_client()
         instances = client.node_instances.list(deployment_id=deployment_id,
                                                node_name=node_name)
     except CloudifyClientError as e:
@@ -98,10 +98,12 @@ def list(deployment_id, node_name):
 
 
 @cfy.command(name='node-instances')
+@cfy.argument('node-id', required=False)
 @cfy.options.verbose
-@click.argument('node-id', required=False)
 def local(node_id):
     """Display node-instances for the execution
+
+    `NODE_ID` is id of the node to list instances for.
     """
     logger = get_logger()
     env = common.load_env()
