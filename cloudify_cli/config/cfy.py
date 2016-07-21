@@ -332,20 +332,17 @@ class Options(object):
             is_flag=True,
             help=helptexts.BACKUP_LOGS_FIRST)
 
-        # TODO: move all help texts to `helptexts.py`
         self.management_ip = click.option(
             '-t',
             '--management-ip',
             required=False,
-            help="The IP of the host "
-            "machine on which you bootstrapped")
+            help=helptexts.MANAGEMENT_IP)
 
         self.management_user = click.option(
             '-u',
             '--management-user',
             required=False,
-            help="The username on the host "
-            "machine with which you bootstrapped")
+            help=helptexts.MANAGEMENT_USER)
 
         self.management_key = click.option(
             '-k',
@@ -354,8 +351,7 @@ class Options(object):
             cls=MutuallyExclusiveOption,
             mutually_exclusive=['management_password'],
             mutuality_error_message=helptexts.MUTUAL_SSH_KEY_AND_PASSWORD,
-            help="The path to the ssh key-file to use when "
-            "connecting to the manager")
+            help=helptexts.MANAGEMENT_KEY)
 
         self.management_password = click.option(
             '-p',
@@ -364,19 +360,19 @@ class Options(object):
             cls=MutuallyExclusiveOption,
             mutually_exclusive=['management_key'],
             mutuality_error_message=helptexts.MUTUAL_SSH_KEY_AND_PASSWORD,
-            help="The password to use when connecting to the manager")
+            help=helptexts.MANAGEMENT_PASSWORD)
 
         self.management_port = click.option(
             '--management-port',
             required=False,
             default=constants.REMOTE_EXECUTION_PORT,
-            help="The port to use when connecting to the manager")
+            help=helptexts.MANAGEMENT_PORT)
 
         self.rest_port = click.option(
             '--rest-port',
             required=False,
             default=constants.DEFAULT_REST_PORT,
-            help="The REST server's port")
+            help=helptexts.REST_PORT)
 
         self.show_active = click.option(
             '--show-active',

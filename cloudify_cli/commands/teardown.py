@@ -39,9 +39,8 @@ def teardown(force,
              task_thread_pool_size):
     """Teardown the manager
     """
+    _assert_force(force)
     utils.assert_manager_active()
-
-    _validate_force(force)
 
     try:
         management_ip = utils.get_management_server_ip()
@@ -129,7 +128,7 @@ def _validate_deployments(ignore_deployments, management_ip):
         )
 
 
-def _validate_force(force):
+def _assert_force(force):
     if not force:
         raise exceptions.CloudifyCliError(
             "This action requires additional confirmation. Add the "

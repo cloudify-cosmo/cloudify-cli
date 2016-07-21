@@ -83,8 +83,6 @@ def _configure_defaults():
             'handlers': list(logger_dict['handlers'].keys())
         }
     }
-    # TODO: why isn't this imported above?
-    from cloudify_cli import utils
     logger_dict['handlers']['file']['filename'] = utils.DEFAULT_LOG_FILE
     logfile_dir = os.path.dirname(utils.DEFAULT_LOG_FILE)
     if not os.path.exists(logfile_dir):
@@ -97,7 +95,6 @@ def _configure_defaults():
 
 def _configure_from_file():
 
-    from cloudify_cli import utils
     config = utils.CloudifyConfig()
     logging_config = config.logging
     loggers_config = logging_config.loggers
@@ -138,7 +135,7 @@ def get_events_logger(json_output):
         :param events: The events to print.
         :return:
         """
-        # TODO: Check why we're writing directly to stdout here
+        # TODO: Why we're writing directly to stdout here
         # but use the logger when the --json flag isn't passed.
         for event in events:
             sys.stdout.write('{}\n'.format(json.dumps(event)))

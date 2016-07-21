@@ -17,7 +17,11 @@
 import os
 import sys
 import glob
+import urllib
+import tarfile
+import zipfile
 import tempfile
+from contextlib import closing
 
 import yaml
 
@@ -173,7 +177,7 @@ def inputs_to_dict(resources, resource_name):
             try:
                 # if resource is a path - parse as a yaml file
                 if os.path.isfile(resource):
-                    with open(resource, 'r') as f:
+                    with open(resource) as f:
                         content = yaml.load(f.read())
                 else:
                     # parse resource content as yaml
@@ -201,7 +205,8 @@ def inputs_to_dict(resources, resource_name):
             raise CloudifyCliError(msg)
 
     if not isinstance(resources, list):
-        resources = list(resources)
+        resources = [resources]
+
     for resource in resources:
         # workflow parameters always pass an empty dictionary.
         # we ignore it.
@@ -238,3 +243,96 @@ def plain_string_to_dict(input_string):
             raise CloudifyCliError(msg)
 
     return input_dict
+
+
+def get_blueprint(source, blueprint_filename='blueprint.yaml'):
+    """Get a source and return a directory containing the blueprint
+
+    if it's a URL of an archive, download and extract it.
+    if it's a local archive, extract it.
+    if it's a local yaml, return it.
+    else turn to github and try to get it.
+    else should implicitly fail.
+    """
+    def get_blueprint_file(final_source, nest_one=False):
+        blueprint = _extract_archive(final_source)
+        if nest_one:
+            blueprint = os.path.join(blueprint, os.listdir(blueprint)[0])
+        blueprint_file = os.path.join(blueprint, blueprint_filename)
+        if not os.path.isfile(blueprint_file):
+            raise CloudifyCliError(
+                'Could not find `{0}`. Please provide the name of the main '
+                'blueprint file by using the `-n/--blueprint-filename flag'
+                .format(blueprint_filename))
+        return blueprint_file
+
+    if '://' in source:
+        downloaded_source = download_file(source)
+        return get_blueprint_file(downloaded_source)
+    elif os.path.isfile(source):
+        if _is_archive(source):
+            return get_blueprint_file(downloaded_source)
+        else:
+            # Maybe check if yaml. If not, verified by dsl parser
+            return source
+    else:
+        downloaded_source = _get_from_github(source)
+        # GitHub archives provide an inner folder with each archive.
+        return get_blueprint_file(downloaded_source, nest_one=True)
+
+
+def _is_archive(source):
+    if tarfile.is_tarfile(source) or zipfile.is_zipfile(source):
+        return True
+    return False
+
+
+def _extract_archive(source):
+    if tarfile.is_tarfile(source):
+        return _untar(source)
+    elif zipfile.is_zipfile(source):
+        return _unzip(source)
+    raise CloudifyCliError(
+        'Unsupported archive type provided or archive is not valid.')
+
+
+def _untar(archive, destination=None):
+    if not destination:
+        destination = tempfile.mkdtemp()
+    logger = get_logger()
+    logger.debug('Extracting tgz {0} to {1}...'.format(archive, destination))
+    with closing(tarfile.open(name=archive)) as tar:
+        tar.extractall(path=destination, members=tar.getmembers())
+    return destination
+
+
+def _unzip(archive, destination=None):
+    if not destination:
+        destination = tempfile.mkdtemp()
+    logger = get_logger()
+    logger.debug('Extracting zip {0} to {1}...'.format(archive, destination))
+    with closing(zipfile.ZipFile(archive, 'r')) as zip_file:
+        zip_file.extractall(destination)
+    return destination
+
+
+def download_file(url, destination=None):
+    if not destination:
+        fd, destination = tempfile.mkstemp()
+        os.close(fd)
+    logger = get_logger()
+    logger.info('Downloading {0} to {1}...'.format(url, destination))
+    final_url = urllib.urlopen(url).geturl()
+    if final_url != url:
+        logger.debug('Redirected to {0}'.format(final_url))
+    f = urllib.URLopener()
+    f.retrieve(final_url, destination)
+    return destination
+
+
+def _get_from_github(source):
+    source_parts = source.split(':', 1)
+    repo = source_parts[0]
+    tag = source_parts[1] if len(source_parts) == 2 else 'master'
+    url = 'http://github.com/{0}/archive/{1}.zip'.format(repo, tag)
+    return download_file(url)

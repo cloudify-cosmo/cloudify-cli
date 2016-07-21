@@ -14,10 +14,12 @@
 #    * limitations under the License.
 
 import os
+import shutil
 
 import click
 
 from .. import utils
+from .. import common
 from ..config import cfy
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..constants import DEFAULT_INSTALL_WORKFLOW
@@ -103,6 +105,7 @@ def manager(ctx,
 
 @cfy.command(name='install')
 @cfy.argument('blueprint-path')
+@cfy.options.blueprint_filename()
 @cfy.options.inputs
 @cfy.options.install_plugins
 @cfy.options.workflow_id('install')
@@ -115,6 +118,7 @@ def manager(ctx,
 @click.pass_context
 def local(ctx,
           blueprint_path,
+          blueprint_filename,
           inputs,
           install_plugins,
           workflow_id,
@@ -132,12 +136,21 @@ def local(ctx,
     if not inputs and os.path.isfile(os.path.join(
             utils.get_cwd(), DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)):
         inputs = DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
+    blueprint_filename = blueprint_filename or 'blueprint.yaml'
 
-    ctx.invoke(
-        init.init,
-        blueprint_path=blueprint_path,
-        inputs=inputs,
-        install_plugins=install_plugins)
+    new_path = common.get_blueprint(blueprint_path, blueprint_filename)
+    try:
+        ctx.invoke(
+            init.init,
+            blueprint_path=new_path,
+            inputs=inputs,
+            install_plugins=install_plugins)
+    finally:
+        # Every situation other than the user providing a path of a local
+        # yaml means a temp folder will be created that should be later
+        # removed.
+        if new_path != blueprint_path:
+            shutil.rmtree(new_path)
     ctx.invoke(
         execute.execute,
         workflow_id=workflow_id,

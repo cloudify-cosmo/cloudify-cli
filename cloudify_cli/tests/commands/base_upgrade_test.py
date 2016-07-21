@@ -34,7 +34,8 @@ class BaseUpgradeTest(CliCommandTest):
             return_value=Maintenance({'status': 'active'}))
         self.invoke('cfy {0} path --inputs private_ip=localhost;'
                     'ssh_key_filename=key_path'.format(action),
-                    'No such file or directory: \'path\'')
+                    "No such file or directory: u'path'",
+                    exception=IOError)
 
     def _test_no_private_ip(self, action):
         self.client.maintenance_mode.status = MagicMock(

@@ -132,6 +132,8 @@ class BlueprintsTest(CliCommandTest):
             }
         }
 
+        assert_equal = self.assertEqual
+
         class RestClientMock(object):
             class BlueprintsClientMock(object):
                 def __init__(self, blueprint_id, blueprint):
@@ -139,7 +141,7 @@ class BlueprintsTest(CliCommandTest):
                     self.blueprint = blueprint
 
                 def get(self, blueprint_id):
-                    self.assertEqual(blueprint_id, self.blueprint_id)
+                    assert_equal(blueprint_id, self.blueprint_id)
                     return self.blueprint
 
             def __init__(self, blueprint_id, blueprint):

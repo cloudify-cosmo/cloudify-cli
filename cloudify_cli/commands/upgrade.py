@@ -64,6 +64,9 @@ def upgrade(blueprint_path,
     """
     utils.assert_manager_active()
 
+    # This must be a list so that we can append to it if necessary.
+    inputs = list(inputs)
+
     logger = get_logger()
     management_ip = utils.get_management_server_ip()
 
@@ -71,7 +74,13 @@ def upgrade(blueprint_path,
 
     verify_and_wait_for_maintenance_mode_activation(client)
 
+    if skip_validations:
+        # The user expects that `--skip-validations` will also ignore
+        # bootstrap validations and not only creation_validations
+        inputs = common.add_ignore_bootstrap_validations_input(inputs)
+
     inputs = update_inputs(inputs)
+
     env_name = 'manager-upgrade'
     # init local workflow execution environment
     env = common.initialize_blueprint(blueprint_path,
@@ -92,10 +101,6 @@ def upgrade(blueprint_path,
                     task_retry_interval=task_retry_interval,
                     task_thread_pool_size=task_thread_pool_size)
         logger.info('Upgrade validation completed successfully')
-    elif inputs:
-        # The user expects that `--skip-validations` will also ignore
-        # bootstrap validations and not only creation_validations
-        inputs = common.add_ignore_bootstrap_validations_input(inputs)
 
     if not validate_only:
         try:

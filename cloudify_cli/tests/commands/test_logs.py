@@ -24,8 +24,8 @@ class LogsTest(CliCommandTest):
         settings = utils.CloudifyWorkingDirectorySettings()
         self.create_cosmo_wd_settings(settings)
         self.invoke('cfy logs download',
-                       'Management User is not set '
-                       'in working directory settings')
+                    'Management User is not set '
+                    'in working directory settings')
 
     def test_with_no_key(self):
         settings = utils.CloudifyWorkingDirectorySettings()
@@ -33,8 +33,8 @@ class LogsTest(CliCommandTest):
         settings.set_management_server('127.0.0.1')
         self.create_cosmo_wd_settings(settings)
         self.invoke('cfy logs download',
-                       'Management Key is not set '
-                       'in working directory settings')
+                    'Management Key is not set '
+                    'in working directory settings')
 
     def test_with_no_user(self):
         settings = utils.CloudifyWorkingDirectorySettings()
@@ -42,8 +42,8 @@ class LogsTest(CliCommandTest):
         settings.set_management_key('/tmp/test.pem')
         self.create_cosmo_wd_settings(settings)
         self.invoke('cfy logs download',
-                       'Management User is not set '
-                       'in working directory settings')
+                    'Management User is not set '
+                    'in working directory settings')
 
     def test_with_no_server(self):
         settings = utils.CloudifyWorkingDirectorySettings()

@@ -86,16 +86,11 @@ class TeardownTest(CliCommandTest):
         self.invoke('cfy teardown -f --ignore-deployments')
         mock_teardown.assert_called_once_with()
 
-    def test_teardown_no_management_ip_in_context_wrong_directory(self):
-        self.invoke('cfy teardown -f',
-                    'You are attempting to teardown from '
-                    'an invalid directory')
-
     @patch('cloudify_cli.bootstrap.bootstrap.teardown')
     @patch('cloudify_cli.bootstrap.bootstrap.load_env')
     def test_teardown_no_management_ip_in_context_right_directory(
             self, mock_load_env, mock_teardown):  # NOQA
-        # self.invoke('cfy init')
+        self.invoke('cfy init')
 
         with utils.update_wd_settings() as wd:
             wd.set_provider_context({})

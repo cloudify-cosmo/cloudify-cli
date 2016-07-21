@@ -136,3 +136,10 @@ PROFILE_ALIAS = (
     'An alias to assign to the profile. This allows you to use '
     '`cfy use PROFILE_ALIAS` on top of `cfy use MANAGER_IP`'
 )
+
+MANAGEMENT_IP = 'The IP of the host machine on which you bootstrapped'
+MANAGEMENT_USER = 'The user on the host machine with which you bootstrapped'
+MANAGEMENT_KEY = 'The path to the ssh key-file to use when connecting'
+MANAGEMENT_PASSWORD = 'The password to use when connecting to the manager'
+MANAGEMENT_PORT = 'The port to use when connecting to the manager'
+REST_PORT = "The REST server's port"

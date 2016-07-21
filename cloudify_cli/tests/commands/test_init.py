@@ -24,7 +24,7 @@ class InitTest(CliCommandTest):
         self.create_cosmo_wd_settings()
         self.invoke(
             'cfy init',
-            err_str_segment='local profile already initialized')
+            err_str_segment='Environment is already initialized')
 
     def test_init_overwrite(self):
         # Ensuring the init with overwrite command works
@@ -38,9 +38,9 @@ class InitTest(CliCommandTest):
     def test_no_init(self):
         cfy.purge_dot_cloudify()
         self.invoke('cfy outputs',
-                       err_str_segment='Please initialize a blueprint',
-                       # TODO: put back
-                       # possible_solutions=[
-                       #     "Run 'cfy init' in this directory"
-                       # ]
-                       )
+                    err_str_segment='Please initialize a blueprint',
+                    # TODO: put back
+                    # possible_solutions=[
+                    #     "Run 'cfy init' in this directory"
+                    # ]
+                    )

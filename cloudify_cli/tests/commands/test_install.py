@@ -13,18 +13,13 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-"""
-Tests 'cfy install'
-"""
-
 import os
 
 from mock import patch
 
 from ... import utils
 from ... import commands
-
-from cloudify_cli.exceptions import CloudifyCliError
+from ...exceptions import CloudifyCliError
 
 from ...constants import DEFAULT_TIMEOUT
 from ...constants import DEFAULT_BLUEPRINT_PATH
@@ -32,8 +27,8 @@ from ...constants import DEFAULT_INSTALL_WORKFLOW
 from ...constants import DEFAULT_BLUEPRINT_FILE_NAME
 from ...constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
-from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
-from cloudify_cli.tests.commands.test_cli_command import BLUEPRINTS_DIR
+from .test_cli_command import CliCommandTest
+from .test_cli_command import BLUEPRINTS_DIR
 
 
 STUB_TIMEOUT = 900
@@ -100,7 +95,7 @@ class InstallTest(CliCommandTest):
         # create a tmp file representing a blueprint to upload
         open(tmp_blueprint_path, 'w+').close()
 
-        cli_runner.run_cli(install_upload_mode_command)
+        self.invoke(install_upload_mode_command)
 
         blueprint_path_argument_from_upload = \
             blueprints_upload_mock.call_args_list[0][0][0]
@@ -117,8 +112,8 @@ class InstallTest(CliCommandTest):
     def test_blueprint_id_default_publish_archive_mode_local_path(self, *_):
 
         publish_archive_command = \
-            'cfy install -n {0} --archive-location={1}'\
-            .format(STUB_BLUEPRINT_FILENAME, SAMPLE_ARCHIVE_PATH)
+            'cfy install -n {0} --archive-location={1}'.format(
+                STUB_BLUEPRINT_FILENAME, SAMPLE_ARCHIVE_PATH)
 
         archive_name = 'helloworld'
 
@@ -128,8 +123,7 @@ class InstallTest(CliCommandTest):
             function_name='publish_archive',
             args=[SAMPLE_ARCHIVE_PATH,
                   STUB_BLUEPRINT_FILENAME,
-                  archive_name]
-        )
+                  archive_name])
 
     @patch('cloudify_cli.commands.executions.start')
     @patch('cloudify_cli.commands.deployments.create')
@@ -137,7 +131,7 @@ class InstallTest(CliCommandTest):
     def test_blueprint_id_default_publish_archive_mode_url(self, *_):
 
         publish_archive_command = \
-            'cfy install -n {0} --archive-location={1}' \
+            'cfy install {0} --archive-location={1}' \
             .format(STUB_BLUEPRINT_FILENAME, SAMPLE_ARCHIVE_URL)
 
         archive_name = 'archive'
@@ -162,7 +156,7 @@ class InstallTest(CliCommandTest):
 
         directory_name = 'helloworld'
 
-        cli_runner.run_cli(install_upload_mode_command)
+        self.invoke(install_upload_mode_command)
 
         blueprint_id_argument_from_upload = \
             blueprints_upload_mock.call_args_list[0][0][1]
@@ -268,7 +262,7 @@ class InstallTest(CliCommandTest):
             .format(SAMPLE_BLUEPRINT_PATH,
                     STUB_BLUEPRINT_ID)
 
-        cli_runner.run_cli(command)
+        self.invoke(command)
 
         blueprint_path_argument_from_upload = \
             blueprints_upload_mock.call_args_list[0][0][0]
@@ -301,7 +295,7 @@ class InstallTest(CliCommandTest):
                     STUB_BLUEPRINT_FILENAME,
                     STUB_BLUEPRINT_ID)
 
-        cli_runner.run_cli(command)
+        self.invoke(command)
 
         blueprints_publish_archive_mock.assert_called_with(
             STUB_ARCHIVE_LOCATION,
@@ -325,7 +319,7 @@ class InstallTest(CliCommandTest):
                     STUB_DEPLOYMENT_ID,
                     STUB_INPUTS)
 
-        cli_runner.run_cli(command)
+        self.invoke(command)
 
         deployments_create_mock.assert_called_with(
             STUB_BLUEPRINT_ID,
@@ -358,7 +352,7 @@ class InstallTest(CliCommandTest):
                     STUB_PARAMETERS
                     )
 
-        cli_runner.run_cli(command)
+        self.invoke(command)
 
         executions_start_mock.assert_called_with(
             workflow_id=STUB_WORKFLOW,
@@ -376,7 +370,7 @@ class InstallTest(CliCommandTest):
 
         install_command = 'cfy install'
 
-        cli_runner.run_cli(install_command)
+        self.invoke(install_command)
 
         install_command_arguments = \
             install_mock.call_args_list[0][1]
@@ -423,15 +417,15 @@ class InstallTest(CliCommandTest):
                     STUB_ARCHIVE_LOCATION)
 
         self.assertRaises(CloudifyCliError,
-                          cli_runner.run_cli,
+                          self.invoke,
                           path_and_filename_cmd
                           )
         self.assertRaises(CloudifyCliError,
-                          cli_runner.run_cli,
+                          self.invoke,
                           path_and_archive_cmd
                           )
         self.assertRaises(CloudifyCliError,
-                          cli_runner.run_cli,
+                          self.invoke,
                           path_and_filename_and_archive_cmd
                           )
 
@@ -452,7 +446,7 @@ class InstallTest(CliCommandTest):
         # create a tmp file representing a blueprint to upload
         open(tmp_blueprint_path, 'w+').close()
 
-        cli_runner.run_cli(upload_mode_command)
+        self.invoke(upload_mode_command)
 
         blueprints_upload_blueprint_id_argument = \
             blueprints_upload_mock.call_args_list[0][0][1]
@@ -477,7 +471,7 @@ class InstallTest(CliCommandTest):
         publish_archive_mode_command = \
             'cfy install -b bid -d did -g -l {0}'.format(STUB_ARCHIVE_LOCATION)
 
-        cli_runner.run_cli(publish_archive_mode_command)
+        self.invoke(publish_archive_mode_command)
 
         blueprints_publish_archive_blueprint_id_argument = \
             blueprints_publish_archive_mock.call_args_list[0][0][2]
@@ -507,18 +501,18 @@ class InstallTest(CliCommandTest):
 
         mock_is_auto_generate_ids.return_value = False
 
-        cli_runner.run_cli(auto_generate_ids_command)
+        self.invoke(auto_generate_ids_command)
         self.assertEqual(mock_generate_suffixed_id.call_count, 2)
 
-        cli_runner.run_cli(dont_auto_generate_ids_command)
+        self.invoke(dont_auto_generate_ids_command)
         self.assertEqual(mock_generate_suffixed_id.call_count, 2)
 
         mock_is_auto_generate_ids.return_value = True
 
-        cli_runner.run_cli(auto_generate_ids_command)
+        self.invoke(auto_generate_ids_command)
         self.assertEqual(mock_generate_suffixed_id.call_count, 4)
 
-        cli_runner.run_cli(dont_auto_generate_ids_command)
+        self.invoke(dont_auto_generate_ids_command)
         self.assertEqual(mock_generate_suffixed_id.call_count, 6)
 
     @patch('cloudify_cli.utils.is_auto_generate_ids')
@@ -541,7 +535,7 @@ class InstallTest(CliCommandTest):
 
         self.assertRaisesRegexp(CloudifyCliError,
                                 start_of_file_does_not_exist_message,
-                                cli_runner.run_cli,
+                                self.invoke,
                                 'cfy install')
 
         tmp_blueprint_path = os.path.join(utils.get_cwd(),
@@ -555,5 +549,5 @@ class InstallTest(CliCommandTest):
 
         self.assertRaisesRegexp(CloudifyCliError,
                                 start_of_permission_denied_message,
-                                cli_runner.run_cli,
+                                self.invoke,
                                 'cfy install')

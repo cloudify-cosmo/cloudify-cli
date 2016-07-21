@@ -58,6 +58,8 @@ def init(blueprint_path,
     logger = get_logger()
     profile_name = 'local'
 
+    # TODO: enable `cfy init --enable-colors`
+
     # TODO: Consider replacing `cfy init BLUEPRINT_PATH` with
     # `cfy blueprints init BLUEPRINT_PATH` for local.
 
