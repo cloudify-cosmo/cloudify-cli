@@ -22,6 +22,7 @@ import click
 from dsl_parser.parser import parse_from_path
 from dsl_parser.exceptions import DSLParsingException
 
+from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
@@ -38,7 +39,7 @@ DESCRIPTION_LIMIT = 20
 def blueprints():
     """Handle blueprints on the manager
     """
-    utils.assert_manager_active()
+    env.assert_manager_active()
 
 
 @blueprints.command(name='validate')
@@ -126,7 +127,7 @@ def _publish_directory(ctx, blueprint_path, blueprint_id, validate):
         logger.debug("Skipping blueprint validation...")
     logger.info('Uploading blueprint {0}...'.format(blueprint_path))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     blueprint = client.blueprints.upload(blueprint_path, blueprint_id)
     logger.info("Blueprint uploaded. "
                 "The blueprint's id is {0}".format(blueprint.id))
@@ -147,7 +148,7 @@ def _publish_archive(archive_location, blueprint_filename, blueprint_id):
     logger.info('Publishing blueprint archive from {0} {1}...'.format(
         archive_location_type, archive_location))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     blueprint = client.blueprints.publish_archive(
         archive_location, blueprint_id, blueprint_filename)
     logger.info("Blueprint archive published. "
@@ -189,7 +190,7 @@ def download(blueprint_id, output_path):
     logger = get_logger()
     logger.info('Downloading blueprint {0}...'.format(blueprint_id))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     target_file = client.blueprints.download(blueprint_id, output_path)
 
     logger.info('Blueprint downloaded as {0}'.format(target_file))
@@ -204,7 +205,7 @@ def delete(blueprint_id):
     logger = get_logger()
     logger.info('Deleting blueprint {0}...'.format(blueprint_id))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     client.blueprints.delete(blueprint_id)
 
     logger.info('Blueprint deleted')
@@ -218,7 +219,7 @@ def list():
     logger = get_logger()
     logger.info('Listing all blueprints...')
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
 
     def trim_description(blueprint):
         if blueprint['description'] is not None:
@@ -249,7 +250,7 @@ def get(blueprint_id):
     logger = get_logger()
     logger.info('Retrieving blueprint {0}...'.format(blueprint_id))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     blueprint = client.blueprints.get(blueprint_id)
     deployments = client.deployments.list(_include=['id'],
                                           blueprint_id=blueprint_id)
@@ -279,7 +280,7 @@ def inputs(blueprint_id):
     logger = get_logger()
     logger.info('Retrieving inputs for blueprint {0}...'.format(blueprint_id))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     blueprint = client.blueprints.get(blueprint_id)
     inputs = blueprint['plan']['inputs']
     data = [{'name': name,

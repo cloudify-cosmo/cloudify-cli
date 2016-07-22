@@ -13,6 +13,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
@@ -25,7 +26,7 @@ from ..logger import get_logger
 def snapshots():
     """Handle manager snapshots
     """
-    utils.assert_manager_active()
+    env.assert_manager_active()
 
 
 @snapshots.command(name='restore')
@@ -41,7 +42,7 @@ def restore(snapshot_id, without_deployment_envs, force):
     logger = get_logger()
     logger.info('Restoring snapshot {0}...'.format(snapshot_id))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     execution = client.snapshots.restore(
         snapshot_id, not without_deployment_envs, force)
     logger.info("Started workflow execution. The execution's id is {0}".format(
@@ -65,7 +66,7 @@ def create(snapshot_id, include_metrics, exclude_credentials):
     snapshot_id = snapshot_id or utils._generate_suffixed_id('snapshot')
     logger.info('Creating snapshot {0}...'.format(snapshot_id))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     execution = client.snapshots.create(snapshot_id,
                                         include_metrics,
                                         not exclude_credentials)
@@ -82,7 +83,7 @@ def delete(snapshot_id):
     logger = get_logger()
     logger.info('Deleting snapshot {0}...'.format(snapshot_id))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     client.snapshots.delete(snapshot_id)
     logger.info('Snapshot deleted successfully')
 
@@ -100,7 +101,7 @@ def upload(snapshot_path, snapshot_id):
     logger.info('Uploading snapshot {0}...'.format(snapshot_path))
 
     snapshot_id = snapshot_id or utils._generate_suffixed_id('snapshot')
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     snapshot = client.snapshots.upload(snapshot_path, snapshot_id)
     logger.info("Snapshot uploaded. The snapshot's id is {0}".format(
         snapshot.id))
@@ -118,7 +119,7 @@ def download(snapshot_id, output_path):
     logger = get_logger()
     logger.info('Downloading snapshot {0}...'.format(snapshot_id))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     target_file = client.snapshots.download(snapshot_id, output_path)
     logger.info('Snapshot downloaded as {0}'.format(target_file))
 
@@ -131,7 +132,7 @@ def list():
     logger = get_logger()
     logger.info('Listing snapshots...')
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     pt = utils.table(['id', 'created_at', 'status', 'error'],
                      data=client.snapshots.list())
     common.print_table('Snapshots:', pt)

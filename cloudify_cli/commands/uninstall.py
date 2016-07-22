@@ -15,6 +15,7 @@
 
 import click
 
+from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
@@ -51,7 +52,7 @@ def manager(ctx,
 
     `DEPLOYMENT_ID` is the id of the deployment to uninstall.
     """
-    utils.assert_manager_active()
+    env.assert_manager_active()
 
     # Although the `uninstall` command does not use the `force` argument,
     # we are using the `executions start` handler as a part of it.
@@ -75,7 +76,7 @@ def manager(ctx,
 
     # before deleting the deployment, save its blueprint_id, so we will be able
     # to delete the blueprint after deleting the deployment
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     deployment = client.deployments.get(
         deployment_id, _include=['blueprint_id'])
     blueprint_id = deployment.blueprint_id

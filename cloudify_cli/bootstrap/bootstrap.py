@@ -38,6 +38,8 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from .. import utils
 from .. import common
 from .. import constants
+# TODO: fix this
+from .. import env as workenv
 from ..logger import get_logger
 from ..exceptions import CloudifyBootstrapError
 
@@ -56,8 +58,8 @@ _ENV_NAME = 'manager'
 
 
 def _workdir():
-    active_profile = utils.get_active_profile()
-    profile_dir = utils.get_init_path(active_profile)
+    active_profile = workenv.get_active_profile()
+    profile_dir = workenv.get_init_path(active_profile)
     workdir = os.path.join(profile_dir, 'bootstrap')
     if not os.path.isdir(workdir):
         os.makedirs(workdir)
@@ -65,8 +67,8 @@ def _workdir():
 
 
 def delete_workdir():
-    active_profile = utils.get_active_profile()
-    profile_dir = utils.get_init_path(active_profile)
+    active_profile = workenv.get_active_profile()
+    profile_dir = workenv.get_init_path(active_profile)
     workdir = os.path.join(profile_dir, 'bootstrap')
     if os.path.isdir(workdir):
         shutil.rmtree(workdir)
@@ -246,7 +248,7 @@ def bootstrap(blueprint_path,
             inputs=inputs,
             storage=storage,
             install_plugins=install_plugins,
-            resolver=utils.get_import_resolver()
+            resolver=workenv.get_import_resolver()
         )
     except ImportError as e:
         e.possible_solutions = [
@@ -307,8 +309,8 @@ def bootstrap(blueprint_path,
         agent_remote_key_path = _handle_agent_key_file(fabric_env,
                                                        manager_node)
 
-        rest_client = utils.get_rest_client(manager_ip, rest_port, protocol,
-                                            skip_version_check=True)
+        rest_client = workenv.get_rest_client(manager_ip, rest_port, protocol,
+                                              skip_version_check=True)
         provider_context = _handle_provider_context(
             rest_client=rest_client,
             agent_remote_key_path=agent_remote_key_path,
@@ -379,7 +381,7 @@ def recover(snapshot_path,
                                                    manager_node)
 
     logger = get_logger()
-    client = utils.get_rest_client(manager_ip)
+    client = workenv.get_rest_client(manager_ip)
     _handle_provider_context(
         rest_client=client,
         agent_remote_key_path=agent_remote_key_path,
@@ -548,6 +550,8 @@ def _upload_plugins(plugin_resources, temp_dir, management_ip, rest_client,
            stop_func=partial(_stop_retries, retries, wait_interval),
            retry_on_exception=is_error)
     def upload_plugin(plugin_path):
+        # TODO: uploadn_plugin isn't available there. Should invoke
+        # plugins.upload from commands instead.
         utils.upload_plugin(file(plugin_path), management_ip, rest_client,
                             plugins.validate)
 

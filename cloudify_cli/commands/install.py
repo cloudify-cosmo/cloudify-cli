@@ -150,7 +150,7 @@ def local(ctx,
         # yaml means a temp folder will be created that should be later
         # removed.
         if new_path != blueprint_path:
-            shutil.rmtree(new_path)
+            shutil.rmtree(os.path.dirname(new_path))
     ctx.invoke(
         execute.execute,
         workflow_id=workflow_id,

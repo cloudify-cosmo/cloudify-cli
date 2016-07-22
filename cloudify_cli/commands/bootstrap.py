@@ -17,13 +17,10 @@ import os
 import sys
 import shutil
 
-import click
-
-from .. import utils
+from .. import env
 from .. import common
 from ..config import cfy
 from .init import init_profile
-from ..config import helptexts
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 
@@ -69,9 +66,9 @@ def bootstrap(blueprint_path,
 
     # TODO: allow to skip sanity
     temp_profile_active = False
-    active_profile = utils.get_active_profile()
+    active_profile = env.get_active_profile()
     if not active_profile or active_profile == 'local':
-        active_profile = utils.generate_random_string()
+        active_profile = env.generate_random_string()
         temp_profile_active = True
         init_profile(profile_name=active_profile)
 
@@ -98,7 +95,7 @@ def bootstrap(blueprint_path,
                 task_retry_interval=task_retry_interval,
                 task_thread_pool_size=task_thread_pool_size,
                 install_plugins=install_plugins,
-                resolver=utils.get_import_resolver())
+                resolver=env.get_import_resolver())
             logger.info('Bootstrap validation completed successfully')
         elif inputs:
             # The user expects that `--skip-validations` will also ignore
@@ -118,7 +115,7 @@ def bootstrap(blueprint_path,
                     install_plugins=install_plugins)
 
                 manager_ip = details['manager_ip']
-                with utils.update_wd_settings(active_profile) as profile:
+                with env.update_wd_settings(active_profile) as profile:
                     profile.set_management_server(manager_ip)
                     profile.set_management_key(details['manager_key_path'])
                     profile.set_management_user(details['manager_user'])
@@ -128,11 +125,11 @@ def bootstrap(blueprint_path,
                     profile.set_bootstrap_state(True)
 
                 temp_profile = os.path.join(
-                    utils.PROFILES_DIR, active_profile)
+                    env.PROFILES_DIR, active_profile)
                 new_profile = os.path.join(
-                    utils.PROFILES_DIR, manager_ip)
+                    env.PROFILES_DIR, manager_ip)
                 shutil.move(temp_profile, new_profile)
-                utils.set_active_profile(new_profile)
+                env.set_active_profile(new_profile)
 
                 logger.info('Bootstrap complete')
                 logger.info('Manager is up at {0}'.format(manager_ip))
@@ -157,4 +154,4 @@ def bootstrap(blueprint_path,
                 raise tpe, value, traceback
     finally:
         if temp_profile_active:
-            utils.delete_profile(active_profile)
+            env.delete_profile(active_profile)

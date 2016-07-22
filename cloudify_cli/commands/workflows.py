@@ -26,7 +26,7 @@ from ..exceptions import CloudifyCliError
 def workflows():
     """Handle deployment workflows
     """
-    utils.assert_manager_active()
+    env.assert_manager_active()
 
 
 @workflows.command(name='get')
@@ -43,7 +43,7 @@ def get(workflow_id, deployment_id):
     try:
         logger.info('Retrieving workflow {0} for deployment {1}'.format(
             workflow_id, deployment_id))
-        client = utils.get_rest_client()
+        client = env.get_rest_client()
         deployment = client.deployments.get(deployment_id)
         workflow = next((wf for wf in deployment.workflows if
                          wf.name == workflow_id), None)
@@ -105,7 +105,7 @@ def list(deployment_id):
     logger.info('Listing workflows for deployment {0}...'.format(
         deployment_id))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     deployment = client.deployments.get(deployment_id)
 
     pt = utils.table(['blueprint_id', 'deployment_id',

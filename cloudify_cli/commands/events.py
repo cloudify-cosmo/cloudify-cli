@@ -15,6 +15,7 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
+from .. import env
 from .. import utils
 from ..config import cfy
 from ..exceptions import CloudifyCliError, \
@@ -29,7 +30,7 @@ from ..execution_events_fetcher import ExecutionEventsFetcher, \
 def events():
     """Show events from workflow executions
     """
-    utils.assert_manager_active()
+    env.assert_manager_active()
 
 
 @events.command(name='list')
@@ -47,7 +48,7 @@ def list(execution_id, include_logs, json, tail):
     logger.info('Listing events for execution id {0} '
                 '[include_logs={1}]'.format(execution_id, include_logs))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     try:
         execution_events = ExecutionEventsFetcher(
             client,

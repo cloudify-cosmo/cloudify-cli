@@ -19,6 +19,7 @@ from StringIO import StringIO
 from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 
+from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
@@ -33,7 +34,7 @@ from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 def deployments():
     """Handle deployments on the Manager
     """
-    utils.assert_manager_active()
+    env.assert_manager_active()
 
 
 def _print_deployment_inputs(client, blueprint_id):
@@ -66,7 +67,7 @@ def list(blueprint_id):
     else:
         logger.info('Listing all deployments...')
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
 
     deployments = client.deployments.list()
     if blueprint_id:
@@ -114,7 +115,7 @@ def update(deployment_id,
     logger.info('Updating deployment {0} using blueprint {1}'.format(
         deployment_id, blueprint_or_archive_path))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
 
     processed_inputs = common.inputs_to_dict(inputs, 'inputs')
 
@@ -176,7 +177,7 @@ def create(blueprint_id,
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
 
     inputs = common.inputs_to_dict(inputs, 'inputs')
     deployment_id = deployment_id or utils._generate_suffixed_id(blueprint_id)
@@ -212,7 +213,7 @@ def delete(deployment_id, force):
     logger = get_logger()
     logger.info('Deleting deployment {0}...'.format(deployment_id))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
 
     client.deployments.delete(deployment_id, force)
     logger.info("Deployment deleted")
@@ -230,7 +231,7 @@ def outputs(deployment_id):
     logger.info('Retrieving outputs for deployment {0}...'.format(
         deployment_id))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
 
     dep = client.deployments.get(deployment_id, _include=['outputs'])
     outputs_def = dep.outputs
@@ -257,7 +258,7 @@ def inputs(deployment_id):
     logger.info('Retrieving inputs for deployment {0}...'.format(
         deployment_id))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
 
     dep = client.deployments.get(deployment_id, _include=['inputs'])
     inputs_ = StringIO()

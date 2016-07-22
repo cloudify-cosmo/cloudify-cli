@@ -18,6 +18,7 @@ import threading
 
 from cloudify import logs
 
+from .. import env
 from .. import utils
 from ..config import cfy
 from ..logger import get_logger
@@ -35,7 +36,7 @@ _NODE_INSTANCE_STATE_STARTED = 'started'
 def agents():
     """Handle a deployment's agents
     """
-    utils.assert_manager_active()
+    env.assert_manager_active()
 
 
 def _is_deployment_installed(client, deployment_id):
@@ -64,7 +65,7 @@ def install(deployment_id, include_logs):
     """
     workflow_id = 'install_new_agents'
     logger = get_logger()
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
 
     if deployment_id:
         deps = [deployment_id]

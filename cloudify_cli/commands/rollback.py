@@ -15,6 +15,7 @@
 
 import json
 
+from .. import env as workenv
 from .. import utils
 from .. import common
 from ..config import cfy
@@ -46,12 +47,12 @@ def rollback(blueprint_path,
 
     `BLUEPRINT_PATH` is the path of the manager blueprint to use for rollback.
     """
-    utils.assert_manager_active()
+    workenv.assert_manager_active()
 
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
+    management_ip = env.get_management_server_ip()
 
-    client = utils.get_rest_client(management_ip, skip_version_check=True)
+    client = env.get_rest_client(management_ip, skip_version_check=True)
 
     verify_and_wait_for_maintenance_mode_activation(client)
 

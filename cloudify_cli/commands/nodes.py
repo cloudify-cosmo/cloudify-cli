@@ -15,6 +15,7 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
+from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
@@ -27,7 +28,7 @@ from ..exceptions import CloudifyCliError
 def nodes():
     """Handle a deployment's nodes
     """
-    utils.assert_manager_active()
+    env.assert_manager_active()
 
 
 @nodes.command(name='get')
@@ -40,8 +41,8 @@ def get(node_id, deployment_id):
     `NODE_ID` is the node id to get information on.
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    management_ip = env.get_management_server_ip()
+    client = env.get_rest_client(management_ip)
 
     logger.info('Retrieving node {0} for deployment {1}'.format(
         node_id, deployment_id))
@@ -93,8 +94,8 @@ def list(deployment_id):
     Otherwise, list nodes for all deployments.
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    management_ip = env.get_management_server_ip()
+    client = env.get_rest_client(management_ip)
     try:
         if deployment_id:
             logger.info('Listing nodes for deployment {0}...'.format(

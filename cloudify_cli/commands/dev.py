@@ -21,9 +21,11 @@ from fabric.context_managers import settings
 from .. import utils
 from .. import exec_env
 from ..config import cfy
+# TODO: Fix this
+from .. import env as workenv
 from ..config import helptexts
-from ..utils import get_management_key
-from ..utils import get_management_user
+from ..env import get_management_key
+from ..env import get_management_user
 from ..exceptions import CloudifyCliError
 
 
@@ -41,9 +43,9 @@ from ..exceptions import CloudifyCliError
 def dev(tasks_file, task, args):
     """Run fabric tasks on the manager
     """
-    utils.assert_manager_active()
+    workenv.assert_manager_active()
 
-    management_ip = utils.get_management_server_ip()
+    management_ip = env.get_management_server_ip()
     _execute(username=get_management_user(),
              key=get_management_key(),
              ip=management_ip,
@@ -53,13 +55,9 @@ def dev(tasks_file, task, args):
 
 
 def _execute(username, key, ip, task, tasks_file, args):
-    _setup_fabric_env(username=username,
-                      key=key)
+    _setup_fabric_env(username=username, key=key)
     tasks = exec_tasks_file(tasks_file=tasks_file)
-    _execute_task(ip=ip,
-                  task=task,
-                  tasks=tasks,
-                  task_args=args)
+    _execute_task(ip=ip, task=task, tasks=tasks, task_args=args)
 
 
 def _setup_fabric_env(username, key):

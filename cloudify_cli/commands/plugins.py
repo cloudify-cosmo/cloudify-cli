@@ -17,6 +17,7 @@ import tarfile
 
 import click
 
+from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
@@ -30,7 +31,7 @@ from ..exceptions import CloudifyCliError
 def plugins():
     """Handle plugins on the manager
     """
-    utils.assert_manager_active()
+    env.assert_manager_active()
 
 
 @plugins.command(name='validate')
@@ -81,8 +82,8 @@ def delete(plugin_id, force):
     `PLUGIN_ID` is the id of the plugin to delete.
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    management_ip = env.get_management_server_ip()
+    client = env.get_rest_client(management_ip)
 
     logger.info('Deleting plugin {0}...'.format(plugin_id))
     client.plugins.delete(plugin_id=plugin_id, force=force)
@@ -99,11 +100,11 @@ def upload(ctx, plugin_path):
     `PLUGIN_PATH` is the path to wagon archive to upload.
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    management_ip = env.get_management_server_ip()
+    client = env.get_rest_client(management_ip)
     ctx.invoke(validate, plugin_path=plugin_path)
 
-    logger.info('Uploading plugin {0}'.format(plugin_path))
+    logger.info('Uploading plugin {0}...'.format(plugin_path))
     plugin = client.plugins.upload(plugin_path)
     logger.info("Plugin uploaded. The plugin's id is {0}".format(plugin.id))
 
@@ -118,8 +119,8 @@ def download(plugin_id, output_path):
     `PLUGIN_ID` is the id of the plugin to download.
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    management_ip = env.get_management_server_ip()
+    client = env.get_rest_client(management_ip)
 
     logger.info('Downloading plugin {0}...'.format(plugin_id))
     target_file = client.plugins.download(plugin_id, output_path)
@@ -139,8 +140,8 @@ def get(plugin_id):
     `PLUGIN_ID` is the id of the plugin to get information on.
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    management_ip = env.get_management_server_ip()
+    client = env.get_rest_client(management_ip)
 
     logger.info('Retrieving plugin {0}...'.format(plugin_id))
     plugin = client.plugins.get(plugin_id, _include=fields)
@@ -155,8 +156,8 @@ def list():
     """List all plugins on the manager
     """
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    management_ip = env.get_management_server_ip()
+    client = env.get_rest_client(management_ip)
 
     logger.info('Listing all plugins...')
     plugins = client.plugins.list(_include=fields)

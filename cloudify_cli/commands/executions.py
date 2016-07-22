@@ -17,6 +17,7 @@ import time
 
 from cloudify_rest_client import exceptions
 
+from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
@@ -38,7 +39,7 @@ _STATUS_CANCELING_MESSAGE = (
 def executions():
     """Handle workflow executions
     """
-    utils.assert_manager_active()
+    env.assert_manager_active()
 
 
 @executions.command(name='get')
@@ -53,7 +54,7 @@ def get(execution_id):
 
     try:
         logger.info('Retrieving execution {0}'.format(execution_id))
-        client = utils.get_rest_client()
+        client = env.get_rest_client()
         execution = client.executions.get(execution_id)
     except exceptions.CloudifyClientError as e:
         if e.status_code != 404:
@@ -94,7 +95,7 @@ def list(deployment_id, include_system_workflows):
                 deployment_id))
         else:
             logger.info('Listing all executions...')
-        client = utils.get_rest_client()
+        client = env.get_rest_client()
         executions = client.executions.list(
             deployment_id=deployment_id,
             include_system_workflows=include_system_workflows)
@@ -150,7 +151,7 @@ def start(workflow_id,
                     deployment_id,
                     timeout))
     try:
-        client = utils.get_rest_client()
+        client = env.get_rest_client()
         try:
             execution = client.executions.start(
                 deployment_id,
@@ -237,7 +238,7 @@ def cancel(execution_id, force):
     logger.info('{0}Cancelling execution {1}'.format(
         'Force-' if force else '', execution_id))
 
-    client = utils.get_rest_client()
+    client = env.get_rest_client()
     client.executions.cancel(execution_id, force)
     logger.info(
         "A cancel request for execution {0} has been sent. "

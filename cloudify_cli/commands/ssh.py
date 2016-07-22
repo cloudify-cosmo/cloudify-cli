@@ -19,6 +19,7 @@ import platform
 import subprocess
 from distutils import spawn
 
+from .. import env
 from .. import utils
 from ..config import cfy
 from ..logger import get_logger
@@ -50,10 +51,10 @@ def ssh(command, host, sid, list_sessions):
     Passing an `command` will simply execute it on the manager while
     omitting a command will connect to an interactive shell.
     """
-    utils.assert_manager_active()
+    env.assert_manager_active()
 
     _validate_env(command, host, sid, list_sessions)
-    host_string = utils.build_manager_host_string()
+    host_string = env.build_manager_host_string()
     if host or sid or list_sessions:
         _verify_tmux_exists_on_manager(host_string)
 
@@ -105,7 +106,7 @@ def _open_interactive_shell(host_string, command=''):
     """Used as fabric's open_shell=True doesn't work well.
     (Disfigures coloring and such...)
     """
-    ssh_key_path = os.path.expanduser(utils.get_management_key())
+    ssh_key_path = os.path.expanduser(env.get_management_key())
     cmd = ['ssh', '-t', host_string, '-i', ssh_key_path]
     if command:
         cmd.append(command)

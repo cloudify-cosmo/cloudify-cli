@@ -62,15 +62,15 @@ def upgrade(blueprint_path,
 
     `BLUEPRINT_PATH` is the path of the manager blueprint to use for upgrade.
     """
-    utils.assert_manager_active()
+    env.assert_manager_active()
 
     # This must be a list so that we can append to it if necessary.
     inputs = list(inputs)
 
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
+    management_ip = env.get_management_server_ip()
 
-    client = utils.get_rest_client(management_ip, skip_version_check=True)
+    client = env.get_rest_client(management_ip, skip_version_check=True)
 
     verify_and_wait_for_maintenance_mode_activation(client)
 
@@ -149,7 +149,7 @@ def upgrade(blueprint_path,
 
     logger.info('Upgrade complete')
     logger.info('Manager is up at {0}'.format(
-        utils.get_management_server_ip()))
+        env.get_management_server_ip()))
 
 
 def update_inputs(inputs=None):
@@ -157,7 +157,7 @@ def update_inputs(inputs=None):
     inputs.update({'private_ip': _load_private_ip(inputs)})
     inputs.update({'ssh_key_filename': _load_management_key(inputs)})
     inputs.update({'ssh_user': _load_management_user(inputs)})
-    inputs.update({'public_ip': utils.get_management_server_ip()})
+    inputs.update({'public_ip': env.get_management_server_ip()})
     return inputs
 
 
@@ -171,7 +171,7 @@ def _load_private_ip(inputs):
 
 def _load_management_key(inputs):
     try:
-        key_path = inputs['ssh_key_filename'] or utils.get_management_key()
+        key_path = inputs['ssh_key_filename'] or env.get_management_key()
         return os.path.expanduser(key_path)
     except Exception:
         raise exceptions.CloudifyCliError('Manager key must be provided for '
@@ -180,7 +180,7 @@ def _load_management_key(inputs):
 
 def _load_management_user(inputs):
     try:
-        return inputs.get('ssh_user') or utils.get_management_user()
+        return inputs.get('ssh_user') or env.get_management_user()
     except Exception:
         raise exceptions.CloudifyCliError('Manager user must be provided for '
                                           'the upgrade/rollback process')

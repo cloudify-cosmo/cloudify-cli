@@ -16,7 +16,7 @@
 import os
 import shutil
 
-from .. import utils
+from .. import env
 from .. import common
 from .. import constants
 from .. import exceptions
@@ -69,7 +69,7 @@ def init(blueprint_path,
                 'The `--reset-context` and `--hard` flags are ignored '
                 'when initalizing a blueprint')
         init_profile(profile_name, reset_context=True, hard=False)
-        utils.set_active_profile(profile_name)
+        env.set_active_profile(profile_name)
 
         if os.path.isdir(common.storage_dir()):
             shutil.rmtree(common.storage_dir())
@@ -81,7 +81,7 @@ def init(blueprint_path,
                 inputs=inputs,
                 storage=common.storage(),
                 install_plugins=install_plugins,
-                resolver=utils.get_import_resolver()
+                resolver=env.get_import_resolver()
             )
         except ImportError as e:
 
@@ -101,12 +101,12 @@ def init(blueprint_path,
                     "blueprint, run `cfy init {0}` "
                     "again to apply them".format(blueprint_path))
     else:
-        if utils.is_initialized() and not (reset_context or hard):
+        if env.is_initialized() and not (reset_context or hard):
             raise CloudifyCliError(
                 'Environment is already initialized. '
                 'You can reset the environment by running `cfy init -r`')
         init_profile(profile_name, reset_context, hard)
-        utils.set_active_profile(profile_name)
+        env.set_active_profile(profile_name)
 
 
 def init_profile(profile_name, reset_context=False, hard=False):
@@ -115,14 +115,14 @@ def init_profile(profile_name, reset_context=False, hard=False):
     logger.info('Initializing profile {0}...'.format(profile_name))
 
     context_file_path = os.path.join(
-        utils.PROFILES_DIR,
+        env.PROFILES_DIR,
         profile_name,
         constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
 
     if os.path.isfile(context_file_path):
         if reset_context:
             if hard:
-                os.remove(utils.CLOUDIFY_CONFIG_PATH)
+                os.remove(env.CLOUDIFY_CONFIG_PATH)
             else:
                 os.remove(context_file_path)
             bs.delete_workdir()
@@ -134,16 +134,16 @@ def init_profile(profile_name, reset_context=False, hard=False):
             ]
             raise error
 
-    if not os.path.isdir(utils.PROFILES_DIR):
-        os.makedirs(utils.PROFILES_DIR)
-    utils.set_active_profile(profile_name)
-    if not os.path.isfile(utils.CLOUDIFY_CONFIG_PATH) or hard:
-        utils.dump_configuration_file()
+    if not os.path.isdir(env.PROFILES_DIR):
+        os.makedirs(env.PROFILES_DIR)
+    env.set_active_profile(profile_name)
+    if not os.path.isfile(env.CLOUDIFY_CONFIG_PATH) or hard:
+        env.dump_configuration_file()
 
     # TODO: Verify that we don't break anything!
     if not profile_name == 'local':
-        settings = utils.CloudifyWorkingDirectorySettings()
-        utils.dump_cloudify_working_dir_settings(
+        settings = env.CloudifyWorkingDirectorySettings()
+        env.dump_cloudify_working_dir_settings(
             settings, profile_name=profile_name)
 
     configure_loggers()

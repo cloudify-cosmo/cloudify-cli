@@ -17,11 +17,7 @@
 import os
 import sys
 import glob
-import urllib
-import tarfile
-import zipfile
 import tempfile
-from contextlib import closing
 
 import yaml
 
@@ -30,6 +26,7 @@ from cloudify.utils import LocalCommandRunner
 from dsl_parser.parser import parse_from_path
 from dsl_parser import constants as dsl_constants
 
+from . import env
 from . import utils
 from . import constants
 from . import exceptions
@@ -53,7 +50,7 @@ def initialize_blueprint(blueprint_path,
     if install_plugins:
         install_blueprint_plugins(blueprint_path=blueprint_path)
 
-    config = utils.CloudifyConfig()
+    config = env.CloudifyConfig()
     inputs = inputs_to_dict(inputs, 'inputs')
     return local.init_env(
         blueprint_path=blueprint_path,
@@ -133,7 +130,7 @@ def add_ignore_bootstrap_validations_input(inputs):
 
 
 def storage_dir():
-    return os.path.join(utils.PROFILES_DIR, _ENV_NAME, _STORAGE_DIR_NAME)
+    return os.path.join(env.PROFILES_DIR, _ENV_NAME, _STORAGE_DIR_NAME)
 
 
 def storage():
@@ -255,7 +252,7 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
     else should implicitly fail.
     """
     def get_blueprint_file(final_source, nest_one=False):
-        blueprint = _extract_archive(final_source)
+        blueprint = utils.extract_archive(final_source)
         if nest_one:
             blueprint = os.path.join(blueprint, os.listdir(blueprint)[0])
         blueprint_file = os.path.join(blueprint, blueprint_filename)
@@ -267,10 +264,10 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
         return blueprint_file
 
     if '://' in source:
-        downloaded_source = download_file(source)
+        downloaded_source = utils.download_file(source)
         return get_blueprint_file(downloaded_source)
     elif os.path.isfile(source):
-        if _is_archive(source):
+        if utils.is_archive(source):
             return get_blueprint_file(downloaded_source)
         else:
             # Maybe check if yaml. If not, verified by dsl parser
@@ -281,58 +278,9 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
         return get_blueprint_file(downloaded_source, nest_one=True)
 
 
-def _is_archive(source):
-    if tarfile.is_tarfile(source) or zipfile.is_zipfile(source):
-        return True
-    return False
-
-
-def _extract_archive(source):
-    if tarfile.is_tarfile(source):
-        return _untar(source)
-    elif zipfile.is_zipfile(source):
-        return _unzip(source)
-    raise CloudifyCliError(
-        'Unsupported archive type provided or archive is not valid.')
-
-
-def _untar(archive, destination=None):
-    if not destination:
-        destination = tempfile.mkdtemp()
-    logger = get_logger()
-    logger.debug('Extracting tgz {0} to {1}...'.format(archive, destination))
-    with closing(tarfile.open(name=archive)) as tar:
-        tar.extractall(path=destination, members=tar.getmembers())
-    return destination
-
-
-def _unzip(archive, destination=None):
-    if not destination:
-        destination = tempfile.mkdtemp()
-    logger = get_logger()
-    logger.debug('Extracting zip {0} to {1}...'.format(archive, destination))
-    with closing(zipfile.ZipFile(archive, 'r')) as zip_file:
-        zip_file.extractall(destination)
-    return destination
-
-
-def download_file(url, destination=None):
-    if not destination:
-        fd, destination = tempfile.mkstemp()
-        os.close(fd)
-    logger = get_logger()
-    logger.info('Downloading {0} to {1}...'.format(url, destination))
-    final_url = urllib.urlopen(url).geturl()
-    if final_url != url:
-        logger.debug('Redirected to {0}'.format(final_url))
-    f = urllib.URLopener()
-    f.retrieve(final_url, destination)
-    return destination
-
-
 def _get_from_github(source):
     source_parts = source.split(':', 1)
     repo = source_parts[0]
     tag = source_parts[1] if len(source_parts) == 2 else 'master'
     url = 'http://github.com/{0}/archive/{1}.zip'.format(repo, tag)
-    return download_file(url)
+    return utils.download_file(url)

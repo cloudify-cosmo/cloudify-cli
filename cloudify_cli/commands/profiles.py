@@ -17,6 +17,7 @@ import os
 import tarfile
 from contextlib import closing
 
+from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
@@ -37,8 +38,8 @@ def profiles():
 
     Profiles are named according to the IP of the manager they manage.
     """
-    if not utils.is_initialized():
-        utils.raise_uninitialized()
+    if not env.is_initialized():
+        env.raise_uninitialized()
 
 
 @profiles.command(name='list')
@@ -56,11 +57,11 @@ def list():
 
     # TODO: Remove after deciding whether `local` at all exists or not.
     excluded = ['local']
-    profile_names = [item for item in os.listdir(utils.PROFILES_DIR)
+    profile_names = [item for item in os.listdir(env.PROFILES_DIR)
                      if item not in excluded]
 
     for profile in profile_names:
-        profiles.append(utils.get_profile(profile))
+        profiles.append(env.get_profile(profile))
 
     pt = utils.table(['manager_ip', 'alias', 'ssh_user', 'ssh_key_path'],
                      profiles)
@@ -84,8 +85,8 @@ def delete(profile_name):
     logger = get_logger()
 
     logger.info('Deleting profile {0}...'.format(profile_name))
-    if utils.is_profile_exists(profile_name):
-        utils.delete_profile(profile_name)
+    if env.is_profile_exists(profile_name):
+        env.delete_profile(profile_name)
         logger.info('Profile deleted')
     else:
         logger.info('Profile does not exist')
@@ -108,7 +109,7 @@ def export_profiles(output_path):
         os.path.join(os.getcwd(), 'cfy-profiles.tar.gz')
 
     logger.info('Exporting profiles to {0}...'.format(destination))
-    _tar(utils.PROFILES_DIR, destination)
+    utils.tar(env.PROFILES_DIR, destination)
     logger.info('Export complete!')
     logger.info(
         'You can import the profiles by running '
@@ -132,30 +133,14 @@ def import_profiles(archive_path):
     _assert_profiles_archive(archive_path)
 
     logger.info('Importing profiles from {0}...'.format(archive_path))
-    _untar(archive_path, os.path.dirname(utils.PROFILES_DIR))
+    utils.untar(archive_path, os.path.dirname(env.PROFILES_DIR))
     logger.info('Import complete!')
     logger.info('You can list profiles using `cfy profiles list`')
 
 
-def _tar(source, destination):
-    logger = get_logger()
-    logger.debug('Creating tgz archive: {0}...'.format(destination))
-    with closing(tarfile.open(destination, 'w:gz')) as tar:
-        tar.add(source, arcname=os.path.basename(source))
-
-
-def _untar(archive, destination):
-    logger = get_logger()
-    logger.debug('Extracting tgz {0} to {1}...'.format(archive, destination))
-    with closing(tarfile.open(name=archive)) as tar:
-        tar.extractall(path=destination, members=tar.getmembers())
-
-
 def _assert_profiles_exist():
-    profiles = os.listdir(utils.PROFILES_DIR)
-    if not profiles:
-        raise CloudifyCliError(
-            'No profiles to export.')
+    if not os.listdir(env.PROFILES_DIR):
+        raise CloudifyCliError('No profiles to export.')
 
 
 def _assert_profiles_archive(archive_path):
@@ -168,8 +153,7 @@ def _assert_profiles_archive(archive_path):
 
 def _assert_is_tarfile(archive_path):
     if not tarfile.is_tarfile(archive_path):
-        raise CloudifyCliError(
-            'The archive provided must be a tar.gz archive.')
+        raise CloudifyCliError('The archive provided must be a tar.gz archive')
 
 
 # TODO: add `cfy profiles init`

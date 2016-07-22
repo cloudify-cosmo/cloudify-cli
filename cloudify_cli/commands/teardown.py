@@ -40,10 +40,10 @@ def teardown(force,
     """Teardown the manager
     """
     _assert_force(force)
-    utils.assert_manager_active()
+    env.assert_manager_active()
 
     try:
-        management_ip = utils.get_management_server_ip()
+        management_ip = env.get_management_server_ip()
     except exceptions.CloudifyCliError:
         # management ip does not exist in the local context
         # this can mean one of two things:
@@ -102,7 +102,7 @@ def _update_local_provider_context(management_ip):
 
 
 def _get_number_of_deployments(management_ip):
-    client = utils.get_rest_client(management_ip)
+    client = env.get_rest_client(management_ip)
     try:
         return len(client.deployments.list())
     except CloudifyClientError:
