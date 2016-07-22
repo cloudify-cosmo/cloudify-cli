@@ -15,14 +15,12 @@
 
 import click
 
-from fabric.api import env
+from fabric.api import env as fabric_env
 from fabric.context_managers import settings
 
-from .. import utils
+from .. import env
 from .. import exec_env
 from ..config import cfy
-# TODO: Fix this
-from .. import env as workenv
 from ..config import helptexts
 from ..env import get_management_key
 from ..env import get_management_user
@@ -43,7 +41,7 @@ from ..exceptions import CloudifyCliError
 def dev(tasks_file, task, args):
     """Run fabric tasks on the manager
     """
-    workenv.assert_manager_active()
+    env.assert_manager_active()
 
     management_ip = env.get_management_server_ip()
     _execute(username=get_management_user(),
@@ -61,19 +59,19 @@ def _execute(username, key, ip, task, tasks_file, args):
 
 
 def _setup_fabric_env(username, key):
-    env.user = username
-    env.key_filename = key
-    env.warn_only = True
-    env.abort_on_prompts = False
-    env.connection_attempts = 5
-    env.keepalive = 0
-    env.linewise = False
-    env.pool_size = 0
-    env.skip_bad_hosts = False
-    env.timeout = 10
-    env.forward_agent = True
-    env.status = False
-    env.disable_known_hosts = False
+    fabric_env.user = username
+    fabric_env.key_filename = key
+    fabric_env.warn_only = True
+    fabric_env.abort_on_prompts = False
+    fabric_env.connection_attempts = 5
+    fabric_env.keepalive = 0
+    fabric_env.linewise = False
+    fabric_env.pool_size = 0
+    fabric_env.skip_bad_hosts = False
+    fabric_env.timeout = 10
+    fabric_env.forward_agent = True
+    fabric_env.status = False
+    fabric_env.disable_known_hosts = False
 
 
 def exec_tasks_file(tasks_file=None):

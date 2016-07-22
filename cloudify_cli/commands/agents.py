@@ -19,7 +19,6 @@ import threading
 from cloudify import logs
 
 from .. import env
-from .. import utils
 from ..config import cfy
 from ..logger import get_logger
 from ..exceptions import ExecutionTimeoutError

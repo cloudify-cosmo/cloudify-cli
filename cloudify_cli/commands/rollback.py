@@ -15,16 +15,15 @@
 
 import json
 
-from .. import env as workenv
-from .. import utils
+from .upgrade import update_inputs
+from .upgrade import put_workflow_state_file
+from .upgrade import verify_and_wait_for_maintenance_mode_activation
+
+from .. import env
 from .. import common
 from ..config import cfy
 from .. import exceptions
 from ..logger import get_logger
-
-from .upgrade import update_inputs
-from .upgrade import put_workflow_state_file
-from .upgrade import verify_and_wait_for_maintenance_mode_activation
 
 
 @cfy.command(name='rollback')
@@ -47,7 +46,7 @@ def rollback(blueprint_path,
 
     `BLUEPRINT_PATH` is the path of the manager blueprint to use for rollback.
     """
-    workenv.assert_manager_active()
+    env.assert_manager_active()
 
     logger = get_logger()
     management_ip = env.get_management_server_ip()
@@ -60,11 +59,11 @@ def rollback(blueprint_path,
 
     env_name = 'manager-rollback'
     # init local workflow execution environment
-    env = common.initialize_blueprint(blueprint_path,
-                                      storage=None,
-                                      install_plugins=install_plugins,
-                                      name=env_name,
-                                      inputs=json.dumps(inputs))
+    working_env = common.initialize_blueprint(blueprint_path,
+                                              storage=None,
+                                              install_plugins=install_plugins,
+                                              name=env_name,
+                                              inputs=json.dumps(inputs))
 
     logger.info('Starting Manager rollback process...')
     put_workflow_state_file(is_upgrade=False,
@@ -73,10 +72,10 @@ def rollback(blueprint_path,
 
     logger.info('Executing Manager rollback...')
     try:
-        env.execute('install',
-                    task_retries=task_retries,
-                    task_retry_interval=task_retry_interval,
-                    task_thread_pool_size=task_thread_pool_size)
+        working_env.execute('install',
+                            task_retries=task_retries,
+                            task_retry_interval=task_retry_interval,
+                            task_thread_pool_size=task_thread_pool_size)
     except Exception as e:
         msg = 'Failed to rollback Manager upgrade. Error: {0}'.format(e)
         raise exceptions.CloudifyCliError(msg)

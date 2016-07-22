@@ -52,7 +52,7 @@ def _print_deployment_inputs(client, blueprint_id):
 
 
 @deployments.command(name='list')
-@cfy.argument('blueprint-id', required=False)
+@cfy.options.blueprint_id()
 @cfy.options.verbose
 def list(blueprint_id):
     """List deployments
@@ -161,7 +161,8 @@ def update(deployment_id,
 
 
 @deployments.command(name='create')
-@cfy.argument('blueprint-id')
+@cfy.argument('deployment-id', required=False)
+@cfy.options.blueprint_id(required=True)
 @cfy.options.deployment_id()
 @cfy.options.inputs
 @cfy.options.verbose

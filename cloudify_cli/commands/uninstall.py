@@ -107,7 +107,6 @@ def local(ctx,
           task_thread_pool_size):
     """Uninstall an application
     """
-    # if no workflow was supplied, execute the `uninstall` workflow
     workflow_id = workflow_id or DEFAULT_UNINSTALL_WORKFLOW
 
     ctx.invoke(
@@ -121,7 +120,3 @@ def local(ctx,
 
     # Remove the local-storage dir
     utils.remove_if_exists(common.storage_dir())
-
-    # Note that although `install` possibly creates a `.cloudify` dir in
-    # addition to the creation of the local storage dir, `uninstall`
-    # does not remove the .cloudify dir.

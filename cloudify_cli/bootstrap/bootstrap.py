@@ -39,7 +39,7 @@ from .. import utils
 from .. import common
 from .. import constants
 # TODO: fix this
-from .. import env as workenv
+from .. import env
 from ..logger import get_logger
 from ..exceptions import CloudifyBootstrapError
 
@@ -58,8 +58,8 @@ _ENV_NAME = 'manager'
 
 
 def _workdir():
-    active_profile = workenv.get_active_profile()
-    profile_dir = workenv.get_init_path(active_profile)
+    active_profile = env.get_active_profile()
+    profile_dir = env.get_init_path(active_profile)
     workdir = os.path.join(profile_dir, 'bootstrap')
     if not os.path.isdir(workdir):
         os.makedirs(workdir)
@@ -67,8 +67,8 @@ def _workdir():
 
 
 def delete_workdir():
-    active_profile = workenv.get_active_profile()
-    profile_dir = workenv.get_init_path(active_profile)
+    active_profile = env.get_active_profile()
+    profile_dir = env.get_init_path(active_profile)
     workdir = os.path.join(profile_dir, 'bootstrap')
     if os.path.isdir(workdir):
         shutil.rmtree(workdir)
@@ -148,7 +148,7 @@ def bootstrap_validation(blueprint_path,
     validate_manager_deployment_size(blueprint_path=blueprint_path)
 
     try:
-        env = common.initialize_blueprint(
+        working_env = common.initialize_blueprint(
             blueprint_path,
             name=name,
             inputs=inputs,
@@ -165,12 +165,12 @@ def bootstrap_validation(blueprint_path,
         ]
         raise
 
-    env.execute(workflow='execute_operation',
-                parameters={'operation':
-                            'cloudify.interfaces.validation.creation'},
-                task_retries=task_retries,
-                task_retry_interval=task_retry_interval,
-                task_thread_pool_size=task_thread_pool_size)
+    working_env.execute(workflow='execute_operation',
+                        parameters={'operation':
+                                    'cloudify.interfaces.validation.creation'},
+                        task_retries=task_retries,
+                        task_retry_interval=task_retry_interval,
+                        task_thread_pool_size=task_thread_pool_size)
 
 
 def _perform_sanity(env,
@@ -180,19 +180,19 @@ def _perform_sanity(env,
                     task_retry_interval=30,
                     task_thread_pool_size=1):
 
-    env.execute(workflow='execute_operation',
-                parameters={'operation':
-                            'cloudify.interfaces.lifecycle.start',
-                            'node_ids': ['sanity'],
-                            'allow_kwargs_override': 'true',
-                            'operation_kwargs':
-                                {'run_sanity': 'true',
-                                 'manager_ip': manager_ip,
-                                 'fabric_env': fabric_env}},
-                allow_custom_parameters=True,
-                task_retries=task_retries,
-                task_retry_interval=task_retry_interval,
-                task_thread_pool_size=task_thread_pool_size)
+    working_env.execute(workflow='execute_operation',
+                        parameters={'operation':
+                                    'cloudify.interfaces.lifecycle.start',
+                                    'node_ids': ['sanity'],
+                                    'allow_kwargs_override': 'true',
+                                    'operation_kwargs':
+                                        {'run_sanity': 'true',
+                                         'manager_ip': manager_ip,
+                                         'fabric_env': fabric_env}},
+                        allow_custom_parameters=True,
+                        task_retries=task_retries,
+                        task_retry_interval=task_retry_interval,
+                        task_thread_pool_size=task_thread_pool_size)
 
 
 def _handle_provider_context(rest_client, agent_remote_key_path,
@@ -242,13 +242,13 @@ def bootstrap(blueprint_path,
 
     storage = local.FileStorage(storage_dir=_workdir())
     try:
-        env = common.initialize_blueprint(
+        working_env = common.initialize_blueprint(
             blueprint_path,
             name=name,
             inputs=inputs,
             storage=storage,
             install_plugins=install_plugins,
-            resolver=workenv.get_import_resolver()
+            resolver=env.get_import_resolver()
         )
     except ImportError as e:
         e.possible_solutions = [
@@ -257,13 +257,13 @@ def bootstrap(blueprint_path,
         ]
         raise
 
-    env.execute(workflow='install',
-                task_retries=task_retries,
-                task_retry_interval=task_retry_interval,
-                task_thread_pool_size=task_thread_pool_size)
+    working_env.execute(workflow='install',
+                        task_retries=task_retries,
+                        task_retry_interval=task_retry_interval,
+                        task_thread_pool_size=task_thread_pool_size)
 
-    nodes = env.storage.get_nodes()
-    node_instances = env.storage.get_node_instances()
+    nodes = working_env.storage.get_nodes()
+    node_instances = working_env.storage.get_node_instances()
     nodes_by_id = {node.id: node for node in nodes}
 
     try:
@@ -294,7 +294,7 @@ def bootstrap(blueprint_path,
             manager_node_instance.runtime_properties[REST_PORT]
         protocol = get_protocol(rest_port)
     else:
-        manager_ip = env.outputs()['manager_ip']
+        manager_ip = working_env.outputs()['manager_ip']
         manager_user = manager_node.properties['ssh_user']
         manager_key_path = manager_node.properties['ssh_key_filename']
         rest_port = manager_node_instance.runtime_properties[REST_PORT]
@@ -309,8 +309,8 @@ def bootstrap(blueprint_path,
         agent_remote_key_path = _handle_agent_key_file(fabric_env,
                                                        manager_node)
 
-        rest_client = workenv.get_rest_client(manager_ip, rest_port, protocol,
-                                              skip_version_check=True)
+        rest_client = env.get_rest_client(
+            manager_ip, rest_port, protocol, skip_version_check=True)
         provider_context = _handle_provider_context(
             rest_client=rest_client,
             agent_remote_key_path=agent_remote_key_path,
@@ -343,11 +343,11 @@ def teardown(name='manager',
              task_retries=5,
              task_retry_interval=30,
              task_thread_pool_size=1):
-    env = load_env(name)
-    env.execute('uninstall',
-                task_retries=task_retries,
-                task_retry_interval=task_retry_interval,
-                task_thread_pool_size=task_thread_pool_size)
+    working_env = load_env(name)
+    working_env.execute('uninstall',
+                        task_retries=task_retries,
+                        task_retry_interval=task_retry_interval,
+                        task_thread_pool_size=task_thread_pool_size)
 
     # deleting local environment data
     shutil.rmtree(_workdir())
@@ -358,19 +358,20 @@ def recover(snapshot_path,
             task_retries=5,
             task_retry_interval=30,
             task_thread_pool_size=1):
-    env = load_env(name)
-    with env.storage.payload() as payload:
+    working_env = load_env(name)
+    with working_env.storage.payload() as payload:
         manager_node_instance_id = payload['manager_node_instance_id']
 
-    env.execute('heal',
-                parameters={'node_instance_id': manager_node_instance_id},
-                task_retries=task_retries,
-                task_retry_interval=task_retry_interval,
-                task_thread_pool_size=task_thread_pool_size)
+    working_env.execute('heal',
+                        parameters={'node_instance_id':
+                                    manager_node_instance_id},
+                        task_retries=task_retries,
+                        task_retry_interval=task_retry_interval,
+                        task_thread_pool_size=task_thread_pool_size)
 
-    manager_ip = env.outputs()['manager_ip']
-    manager_node = env.storage.get_node('manager_configuration')
-    manager_node_instance = env.storage.get_node_instance(
+    manager_ip = working_env.outputs()['manager_ip']
+    manager_node = working_env.storage.get_node('manager_configuration')
+    manager_node_instance = working_env.storage.get_node_instance(
         manager_node_instance_id)
     manager_user = manager_node.properties['ssh_user']
     manager_key_path = manager_node.properties['ssh_key_filename']
@@ -381,7 +382,7 @@ def recover(snapshot_path,
                                                    manager_node)
 
     logger = get_logger()
-    client = workenv.get_rest_client(manager_ip)
+    client = env.get_rest_client(manager_ip)
     _handle_provider_context(
         rest_client=client,
         agent_remote_key_path=agent_remote_key_path,
@@ -461,8 +462,8 @@ def _upload_provider_context(client, remote_agents_private_key_path,
 
 def _dump_manager_deployment(manager_node_instance):
     # explicitly write the manager node instance id to local storage
-    env = load_env('manager')
-    with env.storage.payload() as payload:
+    working_env = load_env('manager')
+    with working_env.storage.payload() as payload:
         payload['manager_node_instance_id'] = manager_node_instance.id
 
     # explicitly flush runtime properties to local storage

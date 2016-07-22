@@ -78,7 +78,7 @@ def get(execution_id):
 
 
 @executions.command(name='list')
-@cfy.argument('deployment-id')
+@cfy.options.deployment_id(required=False)
 @cfy.options.include_system_workflows
 @cfy.options.verbose
 def list(deployment_id, include_system_workflows):
