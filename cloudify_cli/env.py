@@ -144,7 +144,7 @@ def is_initialized(profile_name=None):
         return os.path.isfile(CLOUDIFY_CONFIG_PATH)
 
 
-def get_init_path(profile_name):
+def get_init_path(profile_name=None):
     """
     Returns the path of the .cloudify dir
 
@@ -152,6 +152,7 @@ def get_init_path(profile_name):
     Cloudify settings directory (`.cloudify`).
     :return: if we found it, return it's path. else, return None
     """
+    profile_name = profile_name or get_active_profile()
     path = os.path.join(PROFILES_DIR, profile_name)
     return path if os.path.isdir(path) else None
 

@@ -18,10 +18,12 @@ import os
 import shutil
 import unittest
 
-from cloudify_cli import utils
-from cloudify_cli import constants
-from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.utils import CloudifyWorkingDirectorySettings
+from .. import env
+from .. import utils
+from .. import common
+from .. import constants
+from ..exceptions import CloudifyCliError
+from ..env import CloudifyWorkingDirectorySettings
 
 
 TEST_DIR = '/tmp/cloudify-cli-unit-tests'
@@ -65,7 +67,7 @@ class CliUtilsUnitTests(unittest.TestCase):
         os.mkdir(new_cwd)
         utils.get_cwd = lambda: new_cwd
 
-        self.assertEqual(utils.get_init_path(), init_path)
+        self.assertEqual(env.get_init_path(), init_path)
 
     def test_get_existing_init_path_from_init_dir(self):
 
@@ -74,7 +76,7 @@ class CliUtilsUnitTests(unittest.TestCase):
                                  constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
         os.mkdir(init_path)
 
-        self.assertEqual(utils.get_init_path(), init_path)
+        self.assertEqual(env.get_init_path(), init_path)
 
     def test_get_init_path_from_outside_dir(self):
 
@@ -87,58 +89,58 @@ class CliUtilsUnitTests(unittest.TestCase):
         new_cwd = os.path.dirname(os.path.dirname(init_path))
         utils.get_cwd = lambda: new_cwd
 
-        self.assertRaises(CloudifyCliError, utils.get_context_path)
+        self.assertRaises(CloudifyCliError, env.get_context_path)
 
     def test_dump_cosmo_working_dir_settings_update(self):
 
         self.assertRaises(CloudifyCliError,
-                          utils.dump_cloudify_working_dir_settings,
+                          env.dump_cloudify_working_dir_settings,
                           cosmo_wd_settings=CloudifyWorkingDirectorySettings(),
                           update=True)
 
     def test_dump_cosmo_working_dir_settings_create(self):
 
         directory_settings = CloudifyWorkingDirectorySettings()
-        utils.dump_cloudify_working_dir_settings(
+        env.dump_cloudify_working_dir_settings(
             cosmo_wd_settings=directory_settings,
             update=False)
 
-        utils.load_cloudify_working_dir_settings()
+        env.load_cloudify_working_dir_settings()
 
     def test_parsing_input_as_string(self):
 
-        self.assertEqual(utils.plain_string_to_dict(""), {})
+        self.assertEqual(common.plain_string_to_dict(""), {})
 
-        self.assertEqual(utils.plain_string_to_dict(" "), {})
+        self.assertEqual(common.plain_string_to_dict(" "), {})
 
-        self.assertEqual(utils.plain_string_to_dict(";"), {})
+        self.assertEqual(common.plain_string_to_dict(";"), {})
 
-        self.assertEqual(utils.plain_string_to_dict(" ; "), {})
+        self.assertEqual(common.plain_string_to_dict(" ; "), {})
 
         expected_dict = dict(my_key1="my_value1", my_key2="my_value2")
 
-        parsed_dict = utils.plain_string_to_dict(
+        parsed_dict = common.plain_string_to_dict(
             "my_key1=my_value1;my_key2=my_value2")
         self.assertEqual(parsed_dict, expected_dict)
 
-        parsed_dict = utils.plain_string_to_dict(
+        parsed_dict = common.plain_string_to_dict(
             " my_key1 = my_value1 ;my_key2=my_value2; ")
         self.assertEqual(parsed_dict, expected_dict)
 
-        parsed_dict = utils.plain_string_to_dict(
+        parsed_dict = common.plain_string_to_dict(
             " my_key1 = my_value1 ;my_key2=my_value2; ")
         self.assertEqual(parsed_dict, expected_dict)
 
         expected_dict = dict(my_key1="")
-        parsed_dict = utils.plain_string_to_dict(" my_key1=")
+        parsed_dict = common.plain_string_to_dict(" my_key1=")
         self.assertEqual(parsed_dict, expected_dict)
 
-        parsed_dict = utils.plain_string_to_dict(" my_key1=;")
+        parsed_dict = common.plain_string_to_dict(" my_key1=;")
         self.assertEqual(parsed_dict, expected_dict)
 
         expected_dict = dict(my_key1="my_value1",
                              my_key2="my_value2,my_other_value2")
-        parsed_dict = utils.plain_string_to_dict(
+        parsed_dict = common.plain_string_to_dict(
             " my_key1 = my_value1 ;my_key2=my_value2,my_other_value2; ")
         self.assertEqual(parsed_dict, expected_dict)
 
@@ -150,35 +152,35 @@ class CliUtilsUnitTests(unittest.TestCase):
         input_str = "my_key1"
         self.assertRaisesRegexp(CloudifyCliError,
                                 expected_err_msg.format(input_str),
-                                utils.plain_string_to_dict, input_str)
+                                common.plain_string_to_dict, input_str)
 
         input_str = "my_key1;"
         self.assertRaisesRegexp(CloudifyCliError,
                                 expected_err_msg.format(input_str),
-                                utils.plain_string_to_dict, input_str)
+                                common.plain_string_to_dict, input_str)
 
         input_str = "my_key1=my_value1;myvalue2;"
         self.assertRaisesRegexp(CloudifyCliError,
                                 expected_err_msg.format(input_str),
-                                utils.plain_string_to_dict,
+                                common.plain_string_to_dict,
                                 input_str)
 
         input_str = "my_key1=my_value1;my_key2=myvalue2;my_other_value2;"
         self.assertRaisesRegexp(CloudifyCliError,
                                 expected_err_msg.format(input_str),
-                                utils.plain_string_to_dict,
+                                common.plain_string_to_dict,
                                 input_str)
 
         input_str = "my_key1=my_value1;my_key2=myvalue2;my_other_value2;"
         self.assertRaisesRegexp(CloudifyCliError,
                                 expected_err_msg.format(input_str),
-                                utils.plain_string_to_dict,
+                                common.plain_string_to_dict,
                                 input_str)
 
         input_str = "my_key1:my_value1;my_key2:my_value2"
         self.assertRaisesRegexp(CloudifyCliError,
                                 expected_err_msg.format(input_str),
-                                utils.plain_string_to_dict,
+                                common.plain_string_to_dict,
                                 input_str)
 
     def test_inputs_to_dict_error_handling(self):
@@ -195,6 +197,6 @@ class CliUtilsUnitTests(unittest.TestCase):
         self.assertRaisesRegexp(
             CloudifyCliError,
             expected_err_msg.format(input_str, resource_name),
-            utils.inputs_to_dict,
+            common.inputs_to_dict,
             input_str,
             resource_name)

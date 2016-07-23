@@ -25,7 +25,7 @@ from testfixtures import log_capture
 from cloudify.utils import setup_logger
 
 from .. import cli  # NOQA
-from .. import utils
+from .. import env
 from .. import logger
 from .. import commands
 
@@ -38,13 +38,13 @@ runner_lgr = setup_logger('cli_runner')
 def invoke(command, capture, context=None):
     # For each invocation we should use a temporary directory
     # for the cfy workdir.
-    utils.CLOUDIFY_WORKDIR = '/tmp/.cloudify'
-    utils.CLOUDIFY_CONFIG_PATH = os.path.join(
-        utils.CLOUDIFY_WORKDIR, 'config.yaml')
-    utils.PROFILES_DIR = os.path.join(
-        utils.CLOUDIFY_WORKDIR, 'profiles')
-    utils.ACTIVE_PRO_FILE = os.path.join(
-        utils.CLOUDIFY_WORKDIR, 'active.profile')
+    env.CLOUDIFY_WORKDIR = '/tmp/.cloudify'
+    env.CLOUDIFY_CONFIG_PATH = os.path.join(
+        env.CLOUDIFY_WORKDIR, 'config.yaml')
+    env.PROFILES_DIR = os.path.join(
+        env.CLOUDIFY_WORKDIR, 'profiles')
+    env.ACTIVE_PRO_FILE = os.path.join(
+        env.CLOUDIFY_WORKDIR, 'active.profile')
 
     logger.configure_loggers()
     logger.set_global_verbosity_level(verbose=True)
@@ -100,6 +100,6 @@ class ClickInvocationException(Exception):
 
 
 def purge_dot_cloudify():
-    dot_cloudify_dir = utils.CLOUDIFY_WORKDIR
+    dot_cloudify_dir = env.CLOUDIFY_WORKDIR
     if os.path.isdir(dot_cloudify_dir):
         shutil.rmtree(dot_cloudify_dir)

@@ -25,10 +25,10 @@ from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import cfy
+from ... import env
 from ... import utils
 from ... import exceptions
 from ...utils import os as utils_os
-from ...utils import DEFAULT_LOG_FILE
 from ...exceptions import CloudifyCliError
 
 
@@ -53,7 +53,7 @@ class CliCommandTest(unittest.TestCase):
         shutil.rmtree(TEST_DIR)
 
     def setUp(self):
-        logdir = os.path.dirname(DEFAULT_LOG_FILE)
+        logdir = os.path.dirname(env.DEFAULT_LOG_FILE)
         cfy.invoke('init -r')
         # create log folder
         if not os.path.exists(logdir):
@@ -68,8 +68,8 @@ class CliCommandTest(unittest.TestCase):
         def get_mock_rest_client(*args, **kwargs):
             return self.client
 
-        self.original_utils_get_rest_client = utils.get_rest_client
-        utils.get_rest_client = get_mock_rest_client
+        self.original_utils_get_rest_client = env.get_rest_client
+        env.get_rest_client = get_mock_rest_client
         self.original_utils_get_cwd = utils.get_cwd
         utils.get_cwd = lambda: TEST_WORK_DIR
         self.original_utils_os_getcwd = utils_os.getcwd
@@ -78,13 +78,13 @@ class CliCommandTest(unittest.TestCase):
     def tearDown(self):
         cfy.purge_dot_cloudify()
         # remove mocks
-        utils.get_rest_client = self.original_utils_get_rest_client
+        env.get_rest_client = self.original_utils_get_rest_client
         utils.get_cwd = self.original_utils_get_cwd = utils.get_cwd
         utils_os.getcwd = self.original_utils_os_getcwd = utils_os.getcwd
 
         # empty log file
-        if os.path.exists(DEFAULT_LOG_FILE):
-            with open(DEFAULT_LOG_FILE, 'w') as f:
+        if os.path.exists(env.DEFAULT_LOG_FILE):
+            with open(env.DEFAULT_LOG_FILE, 'w') as f:
                 f.write('')
 
         # delete test working directory
@@ -187,15 +187,15 @@ class CliCommandTest(unittest.TestCase):
             self.assertFalse(mock.called)
 
     def create_cosmo_wd_settings(self, settings=None):
-        directory_settings = utils.CloudifyWorkingDirectorySettings()
+        directory_settings = env.CloudifyWorkingDirectorySettings()
         directory_settings.set_management_server('localhost')
         directory_settings.set_management_key('key')
         directory_settings.set_management_user('user')
-        utils.delete_cloudify_working_dir_settings()
-        utils.dump_cloudify_working_dir_settings(
+        env.delete_cloudify_working_dir_settings()
+        env.dump_cloudify_working_dir_settings(
             settings or directory_settings,
             update=False)
-        utils.dump_configuration_file()
+        env.dump_configuration_file()
 
     def _read_cosmo_wd_settings(self):
-        return utils.load_cloudify_working_dir_settings()
+        return env.load_cloudify_working_dir_settings()

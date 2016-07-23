@@ -282,5 +282,5 @@ def _get_from_github(source):
     source_parts = source.split(':', 1)
     repo = source_parts[0]
     tag = source_parts[1] if len(source_parts) == 2 else 'master'
-    url = 'http://github.com/{0}/archive/{1}.zip'.format(repo, tag)
+    url = 'https://github.com/{0}/archive/{1}.zip'.format(repo, tag)
     return utils.download_file(url)
