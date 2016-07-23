@@ -85,7 +85,7 @@ def get(node_id, deployment_id):
 
 
 @nodes.command(name='list')
-@cfy.argument('deployment_id', required=False)
+@cfy.options.deployment_id()
 @cfy.options.verbose
 def list(deployment_id):
     """List nodes

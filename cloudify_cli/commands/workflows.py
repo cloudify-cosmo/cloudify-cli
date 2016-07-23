@@ -15,6 +15,7 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
+from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
@@ -56,8 +57,7 @@ def get(workflow_id, deployment_id):
         raise CloudifyCliError('Deployment {0} not found'.format(
             deployment_id))
 
-    pt = utils.table(['blueprint_id', 'deployment_id',
-                      'name', 'created_at'],
+    pt = utils.table(['blueprint_id', 'deployment_id', 'name', 'created_at'],
                      data=[workflow],
                      defaults={'blueprint_id': deployment.blueprint_id,
                                'deployment_id': deployment.id})
@@ -94,7 +94,7 @@ def get(workflow_id, deployment_id):
 
 
 @workflows.command(name='list')
-@cfy.argument('deployment-id')
+@cfy.options.deployment_id(required=True)
 @cfy.options.verbose
 def list(deployment_id):
     """List all workflows on the manager
@@ -108,8 +108,7 @@ def list(deployment_id):
     client = env.get_rest_client()
     deployment = client.deployments.get(deployment_id)
 
-    pt = utils.table(['blueprint_id', 'deployment_id',
-                      'name', 'created_at'],
+    pt = utils.table(['blueprint_id', 'deployment_id', 'name', 'created_at'],
                      data=deployment.workflows,
                      defaults={'blueprint_id': deployment.blueprint_id,
                                'deployment_id': deployment.id})

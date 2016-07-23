@@ -18,7 +18,6 @@ import json
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import env
-from .. import utils
 from ..config import cfy
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
@@ -33,7 +32,7 @@ def groups():
 
 
 @groups.command(name='list')
-@cfy.argument('deployment-id')
+@cfy.options.deployment_id(required=True)
 @cfy.options.verbose
 def list(deployment_id):
     """List all groups for a deployment
@@ -41,11 +40,10 @@ def list(deployment_id):
     `DEPLOYMENT_ID` is the id of the deployment to list groups for.
     """
     logger = get_logger()
-    management_ip = env.get_management_server_ip()
-    client = env.get_rest_client(management_ip)
     logger.info("Listing groups for deployment {0}...".format(
         deployment_id))
     try:
+        client = env.get_rest_client()
         deployment = client.deployments.get(deployment_id)
     except CloudifyClientError as e:
         if e.status_code != 404:

@@ -47,11 +47,12 @@ def validate(plugin_path):
     `PLUGIN_PATH` is the path to wagon archive to validate.
     """
     logger = get_logger()
-
     logger.info('Validating plugin {0}...'.format(plugin_path))
+
     if not tarfile.is_tarfile(plugin_path):
-        raise CloudifyCliError('Archive {0} is of an unsupported type. Only '
-                               'tar.gz is allowed'.format(plugin_path))
+        raise CloudifyCliError(
+            'Archive {0} is of an unsupported type. Only '
+            'tar.gz is allowed'.format(plugin_path))
     with tarfile.open(plugin_path, 'r') as tar:
         tar_members = tar.getmembers()
         package_json_path = "{0}/{1}".format(tar_members[0].name,
@@ -99,36 +100,31 @@ def upload(ctx, plugin_path):
 
     `PLUGIN_PATH` is the path to wagon archive to upload.
     """
-    logger = get_logger()
-    management_ip = env.get_management_server_ip()
-    client = env.get_rest_client(management_ip)
     ctx.invoke(validate, plugin_path=plugin_path)
 
+    logger = get_logger()
     logger.info('Uploading plugin {0}...'.format(plugin_path))
+
+    client = env.get_rest_client()
     plugin = client.plugins.upload(plugin_path)
     logger.info("Plugin uploaded. The plugin's id is {0}".format(plugin.id))
 
 
 @plugins.command(name='download')
+@cfy.argument('plugin-id')
 @cfy.options.output_path
 @cfy.options.verbose
-@cfy.argument('plugin-id')
 def download(plugin_id, output_path):
     """Download a plugin from the manager
 
     `PLUGIN_ID` is the id of the plugin to download.
     """
     logger = get_logger()
-    management_ip = env.get_management_server_ip()
-    client = env.get_rest_client(management_ip)
-
     logger.info('Downloading plugin {0}...'.format(plugin_id))
+
+    client = env.get_rest_client()
     target_file = client.plugins.download(plugin_id, output_path)
     logger.info('Plugin downloaded as {0}'.format(target_file))
-
-
-fields = ['id', 'package_name', 'package_version', 'supported_platform',
-          'distribution', 'distribution_release', 'uploaded_at']
 
 
 @plugins.command(name='get')
@@ -140,10 +136,19 @@ def get(plugin_id):
     `PLUGIN_ID` is the id of the plugin to get information on.
     """
     logger = get_logger()
-    management_ip = env.get_management_server_ip()
-    client = env.get_rest_client(management_ip)
-
     logger.info('Retrieving plugin {0}...'.format(plugin_id))
+
+    fields = [
+        'id',
+        'package_name',
+        'package_version',
+        'supported_platform',
+        'distribution',
+        'distribution_release',
+        'uploaded_at'
+    ]
+
+    client = env.get_rest_client(management_ip)
     plugin = client.plugins.get(plugin_id, _include=fields)
 
     pt = utils.table(fields, data=[plugin])

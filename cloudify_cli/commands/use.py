@@ -82,7 +82,11 @@ def use(alias,
         raise CloudifyCliError(
             "Can't use manager {0}: User is unauthorized.".format(
                 management_ip))
-    except CloudifyClientError as e:
+    # TODO: Be more specific. The problem here is that, for instance,
+    # any problem raised by the rest client will trigger this.
+    # Triggering a CloudifyClientError only doesn't actually deal
+    # with situations like No route to host and the likes.
+    except Exception as e:
         raise CloudifyCliError(
             "Can't use manager {0}: {1}".format(management_ip, str(e)))
 

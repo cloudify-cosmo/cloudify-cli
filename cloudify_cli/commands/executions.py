@@ -85,7 +85,7 @@ def list(deployment_id, include_system_workflows):
     """List executions
 
     If `DEPLOYMENT_ID` is provided, list executions for that deployment.
-    Else, list executions for all deployments.
+    Otherwise, list executions for all deployments.
     """
     logger = get_logger()
 

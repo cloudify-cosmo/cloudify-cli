@@ -58,7 +58,7 @@ def list(blueprint_id):
     """List deployments
 
     If `BLUEPRINT_ID` is provided, list deployments for that blueprint.
-    Else, list deployments for all blueprints.
+    Otherwise, list deployments for all blueprints.
     """
     logger = get_logger()
     if blueprint_id:
