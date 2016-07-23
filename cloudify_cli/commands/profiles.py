@@ -189,6 +189,13 @@ def _restore_ssh_keys(ctx):
 
 
 def _move_ssh_keys(ctx, direction):
+    """Iterate through all profiles and move their ssh keys
+
+    If the direction is `profile` - move to the profile directory.
+    If the direction is `origin` - move back to where the key was before.
+
+    This is how we backup and restore ssh keys.
+    """
     current_profile = env.get_active_profile()
     profile_names = _get_profile_names()
     for profile in profile_names:

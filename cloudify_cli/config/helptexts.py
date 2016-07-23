@@ -21,7 +21,7 @@ HARD_RESET = "Hard reset the configuration, including coloring and loggers"
 SHOW_ACTIVE_CONNECTION_INFORMATION = \
     "Show connection information for the active manager"
 
-OUTPUT_PATH = "The local path to download to [default: cwd]"
+OUTPUT_PATH = "The local path to download to"
 BLUEPRINT_FILENAME = (
     "The name of the archive's main blueprint file. "
     "This is only relevant if uploading an archive")
