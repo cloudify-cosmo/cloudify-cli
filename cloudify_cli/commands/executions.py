@@ -51,10 +51,10 @@ def get(execution_id):
     `EXECUTION_ID` is the execution to get information on.
     """
     logger = get_logger()
+    client = env.get_rest_client()
 
     try:
         logger.info('Retrieving execution {0}'.format(execution_id))
-        client = env.get_rest_client()
         execution = client.executions.get(execution_id)
     except exceptions.CloudifyClientError as e:
         if e.status_code != 404:
@@ -88,6 +88,7 @@ def list(deployment_id, include_system_workflows):
     Otherwise, list executions for all deployments.
     """
     logger = get_logger()
+    client = env.get_rest_client()
 
     try:
         if deployment_id:
@@ -95,7 +96,6 @@ def list(deployment_id, include_system_workflows):
                 deployment_id))
         else:
             logger.info('Listing all executions...')
-        client = env.get_rest_client()
         executions = client.executions.list(
             deployment_id=deployment_id,
             include_system_workflows=include_system_workflows)
@@ -138,12 +138,11 @@ def start(workflow_id,
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
     logger = get_logger()
-    events_logger = get_events_logger(json)
 
+    events_logger = get_events_logger(json)
     events_message = "* Run 'cfy events list {0}' to retrieve the " \
                      "execution's events/logs"
     original_timeout = timeout
-
     parameters = common.inputs_to_dict(parameters, 'parameters')
     logger.info('Executing workflow {0} on deployment {1} '
                 '[timeout={2} seconds]'.format(
@@ -235,10 +234,10 @@ def cancel(execution_id, force):
     """Cancel a workflow's execution
     """
     logger = get_logger()
+    client = env.get_rest_client()
+
     logger.info('{0}Cancelling execution {1}'.format(
         'Force-' if force else '', execution_id))
-
-    client = env.get_rest_client()
     client.executions.cancel(execution_id, force)
     logger.info(
         "A cancel request for execution {0} has been sent. "

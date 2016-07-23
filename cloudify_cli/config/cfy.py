@@ -264,7 +264,6 @@ class Options(object):
         self.output_path = click.option(
             '-o',
             '--output-path',
-            default=utils.get_cwd(),
             help=helptexts.OUTPUT_PATH)
 
         self.optional_output_path = click.option(

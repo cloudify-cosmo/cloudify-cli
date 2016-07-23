@@ -26,6 +26,17 @@ from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
+fields = [
+    'id',
+    'package_name',
+    'package_version',
+    'supported_platform',
+    'distribution',
+    'distribution_release',
+    'uploaded_at'
+]
+
+
 @cfy.group(name='plugins')
 @cfy.options.verbose
 def plugins():
@@ -53,10 +64,12 @@ def validate(plugin_path):
         raise CloudifyCliError(
             'Archive {0} is of an unsupported type. Only '
             'tar.gz is allowed'.format(plugin_path))
-    with tarfile.open(plugin_path, 'r') as tar:
+    with tarfile.open(plugin_path) as tar:
         tar_members = tar.getmembers()
-        package_json_path = "{0}/{1}".format(tar_members[0].name,
-                                             'package.json')
+        package_json_path = "{0}/{1}".format(
+            tar_members[0].name, 'package.json')
+        # TODO: Find a better way to validate a plugin.
+        # This is.. bad.
         try:
             package_member = tar.getmember(package_json_path)
         except KeyError:
@@ -83,8 +96,7 @@ def delete(plugin_id, force):
     `PLUGIN_ID` is the id of the plugin to delete.
     """
     logger = get_logger()
-    management_ip = env.get_management_server_ip()
-    client = env.get_rest_client(management_ip)
+    client = env.get_rest_client()
 
     logger.info('Deleting plugin {0}...'.format(plugin_id))
     client.plugins.delete(plugin_id=plugin_id, force=force)
@@ -103,9 +115,9 @@ def upload(ctx, plugin_path):
     ctx.invoke(validate, plugin_path=plugin_path)
 
     logger = get_logger()
-    logger.info('Uploading plugin {0}...'.format(plugin_path))
-
     client = env.get_rest_client()
+
+    logger.info('Uploading plugin {0}...'.format(plugin_path))
     plugin = client.plugins.upload(plugin_path)
     logger.info("Plugin uploaded. The plugin's id is {0}".format(plugin.id))
 
@@ -120,9 +132,9 @@ def download(plugin_id, output_path):
     `PLUGIN_ID` is the id of the plugin to download.
     """
     logger = get_logger()
-    logger.info('Downloading plugin {0}...'.format(plugin_id))
-
     client = env.get_rest_client()
+
+    logger.info('Downloading plugin {0}...'.format(plugin_id))
     target_file = client.plugins.download(plugin_id, output_path)
     logger.info('Plugin downloaded as {0}'.format(target_file))
 
@@ -136,19 +148,9 @@ def get(plugin_id):
     `PLUGIN_ID` is the id of the plugin to get information on.
     """
     logger = get_logger()
+    client = env.get_rest_client()
+
     logger.info('Retrieving plugin {0}...'.format(plugin_id))
-
-    fields = [
-        'id',
-        'package_name',
-        'package_version',
-        'supported_platform',
-        'distribution',
-        'distribution_release',
-        'uploaded_at'
-    ]
-
-    client = env.get_rest_client(management_ip)
     plugin = client.plugins.get(plugin_id, _include=fields)
 
     pt = utils.table(fields, data=[plugin])
@@ -161,8 +163,7 @@ def list():
     """List all plugins on the manager
     """
     logger = get_logger()
-    management_ip = env.get_management_server_ip()
-    client = env.get_rest_client(management_ip)
+    client = env.get_rest_client()
 
     logger.info('Listing all plugins...')
     plugins = client.plugins.list(_include=fields)
@@ -171,10 +172,6 @@ def list():
     common.print_table('Plugins:', pt)
 
 
-# @plugins.command('install')
-# @cfy.argument('wagon_path')
-# @cfy.argument('wagon_args', nargs=-1, type=click.UNPROCESSED)
-# def install(wagon_path):
-#     from wagon import wagon
-#     installer = wagon.Wagon(wagon_path)
-#     installer.install(dict(wagon_args))
+# TODO: Add plugins install for local. Currently, we use wagon for that.
+# We should transparently pass all wagon args to wagon from an install
+# command like `cfy plugins install`

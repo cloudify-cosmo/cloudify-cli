@@ -41,8 +41,7 @@ def get(node_id, deployment_id):
     `NODE_ID` is the node id to get information on.
     """
     logger = get_logger()
-    management_ip = env.get_management_server_ip()
-    client = env.get_rest_client(management_ip)
+    client = env.get_rest_client()
 
     logger.info('Retrieving node {0} for deployment {1}'.format(
         node_id, deployment_id))
@@ -94,8 +93,8 @@ def list(deployment_id):
     Otherwise, list nodes for all deployments.
     """
     logger = get_logger()
-    management_ip = env.get_management_server_ip()
-    client = env.get_rest_client(management_ip)
+    client = env.get_rest_client()
+
     try:
         if deployment_id:
             logger.info('Listing nodes for deployment {0}...'.format(

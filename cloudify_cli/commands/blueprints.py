@@ -51,8 +51,8 @@ def validate_blueprint(blueprint_path):
     `BLUEPRINT_PATH` is the path of the blueprint to validate.
     """
     logger = get_logger()
-    logger.info('Validating blueprint: {0}'.format(blueprint_path))
 
+    logger.info('Validating blueprint: {0}'.format(blueprint_path))
     try:
         resolver = utils.get_import_resolver()
         validate_version = utils.is_validate_definitions_version()
@@ -84,10 +84,12 @@ def upload(ctx,
     This can be either a path to a local yaml, a URL of a blueprint archive
     or a path to a local blueprint archive.
     """
+
+    # TODO: Replace this entire crazy contraption with common.get_blueprint.
     if _is_archive(blueprint_path):
         # TODO: allow to upload from github like so:
         # `cfy blueprints upload cloudify-examples/my-blueprint:branch`
-        blueprint_id = blueprint_id or utils._generate_suffixed_id(
+        blueprint_id = blueprint_id or utils.generate_suffixed_id(
             get_archive_id(blueprint_path))
         if not blueprint_filename:
             raise CloudifyCliError(
@@ -105,7 +107,7 @@ def upload(ctx,
     elif os.path.isfile(blueprint_path):
         filename, _ = os.path.splitext(
             os.path.basename(blueprint_path))
-        blueprint_id = blueprint_id or utils._generate_suffixed_id(
+        blueprint_id = blueprint_id or utils.generate_suffixed_id(
             os.path.basename(filename))
         _publish_directory(
             ctx,
@@ -121,13 +123,14 @@ def upload(ctx,
 
 def _publish_directory(ctx, blueprint_path, blueprint_id, validate):
     logger = get_logger()
+    client = env.get_rest_client()
+
     if validate:
         ctx.invoke(validate_blueprint, blueprint_path=blueprint_path)
     else:
         logger.debug("Skipping blueprint validation...")
     logger.info('Uploading blueprint {0}...'.format(blueprint_path))
 
-    client = env.get_rest_client()
     blueprint = client.blueprints.upload(blueprint_path, blueprint_id)
     logger.info("Blueprint uploaded. "
                 "The blueprint's id is {0}".format(blueprint.id))
@@ -135,6 +138,7 @@ def _publish_directory(ctx, blueprint_path, blueprint_id, validate):
 
 def _publish_archive(archive_location, blueprint_filename, blueprint_id):
     logger = get_logger()
+    client = env.get_rest_client()
 
     if not _is_archive(archive_location):
         raise CloudifyCliError(
@@ -148,7 +152,6 @@ def _publish_archive(archive_location, blueprint_filename, blueprint_id):
     logger.info('Publishing blueprint archive from {0} {1}...'.format(
         archive_location_type, archive_location))
 
-    client = env.get_rest_client()
     blueprint = client.blueprints.publish_archive(
         archive_location, blueprint_id, blueprint_filename)
     logger.info("Blueprint archive published. "
@@ -188,9 +191,9 @@ def download(blueprint_id, output_path):
     `BLUEPRINT_ID` is the id of the blueprint to download.
     """
     logger = get_logger()
-    logger.info('Downloading blueprint {0}...'.format(blueprint_id))
-
     client = env.get_rest_client()
+
+    logger.info('Downloading blueprint {0}...'.format(blueprint_id))
     target_file = client.blueprints.download(blueprint_id, output_path)
 
     logger.info('Blueprint downloaded as {0}'.format(target_file))
@@ -203,11 +206,10 @@ def delete(blueprint_id):
     """Delete a blueprint from the manager
     """
     logger = get_logger()
-    logger.info('Deleting blueprint {0}...'.format(blueprint_id))
-
     client = env.get_rest_client()
-    client.blueprints.delete(blueprint_id)
 
+    logger.info('Deleting blueprint {0}...'.format(blueprint_id))
+    client.blueprints.delete(blueprint_id)
     logger.info('Blueprint deleted')
 
 
@@ -217,8 +219,6 @@ def list():
     """List all blueprints
     """
     logger = get_logger()
-    logger.info('Listing all blueprints...')
-
     client = env.get_rest_client()
 
     def trim_description(blueprint):
@@ -230,6 +230,7 @@ def list():
             blueprint['description'] = ''
         return blueprint
 
+    logger.info('Listing all blueprints...')
     blueprints = [trim_description(b) for b in client.blueprints.list()]
 
     pt = utils.table(['id', 'description', 'main_file_name',
@@ -248,9 +249,9 @@ def get(blueprint_id):
     `BLUEPRINT_ID` is the id of the blueprint to get information on.
     """
     logger = get_logger()
-    logger.info('Retrieving blueprint {0}...'.format(blueprint_id))
-
     client = env.get_rest_client()
+
+    logger.info('Retrieving blueprint {0}...'.format(blueprint_id))
     blueprint = client.blueprints.get(blueprint_id)
     deployments = client.deployments.list(_include=['id'],
                                           blueprint_id=blueprint_id)
@@ -278,9 +279,9 @@ def inputs(blueprint_id):
     `BLUEPRINT_ID` is the path of the blueprint to get inputs for.
     """
     logger = get_logger()
-    logger.info('Retrieving inputs for blueprint {0}...'.format(blueprint_id))
-
     client = env.get_rest_client()
+
+    logger.info('Retrieving inputs for blueprint {0}...'.format(blueprint_id))
     blueprint = client.blueprints.get(blueprint_id)
     inputs = blueprint['plan']['inputs']
     data = [{'name': name,

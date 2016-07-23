@@ -39,8 +39,8 @@ def deployments():
 
 def _print_deployment_inputs(client, blueprint_id):
     logger = get_logger()
-
     blueprint = client.blueprints.get(blueprint_id)
+
     logger.info('Deployment inputs:')
     inputs_output = StringIO()
     for input_name, input_def in blueprint.plan['inputs'].iteritems():
@@ -61,13 +61,13 @@ def list(blueprint_id):
     Otherwise, list deployments for all blueprints.
     """
     logger = get_logger()
+    client = env.get_rest_client()
+
     if blueprint_id:
         logger.info('Listing deployments for blueprint {0}...'.format(
             blueprint_id))
     else:
         logger.info('Listing all deployments...')
-
-    client = env.get_rest_client()
 
     deployments = client.deployments.list()
     if blueprint_id:
@@ -111,11 +111,11 @@ def update(deployment_id,
     `DEPLOYMENT_ID` is the deployment's id to update.
     """
     logger = get_logger()
+    client = env.get_rest_client()
+
     blueprint_or_archive_path = blueprint_path
     logger.info('Updating deployment {0} using blueprint {1}'.format(
         deployment_id, blueprint_or_archive_path))
-
-    client = env.get_rest_client()
 
     processed_inputs = common.inputs_to_dict(inputs, 'inputs')
 
@@ -175,18 +175,16 @@ def create(blueprint_id,
     deployment.
     """
     logger = get_logger()
-    logger.info('Creating new deployment from blueprint {0}...'.format(
-        blueprint_id))
-
     client = env.get_rest_client()
 
+    logger.info('Creating new deployment from blueprint {0}...'.format(
+        blueprint_id))
     inputs = common.inputs_to_dict(inputs, 'inputs')
-    deployment_id = deployment_id or utils._generate_suffixed_id(blueprint_id)
+    deployment_id = deployment_id or utils.generate_suffixed_id(blueprint_id)
 
     try:
-        deployment = client.deployments.create(blueprint_id,
-                                               deployment_id,
-                                               inputs=inputs)
+        deployment = client.deployments.create(
+            blueprint_id, deployment_id, inputs=inputs)
     except MissingRequiredDeploymentInputError as e:
         logger.info('Unable to create deployment. Not all '
                     'required inputs have been specified...')
@@ -212,10 +210,9 @@ def delete(deployment_id, force):
     `DEPLOYMENT_ID` is the id of the deployment to delete.
     """
     logger = get_logger()
-    logger.info('Deleting deployment {0}...'.format(deployment_id))
-
     client = env.get_rest_client()
 
+    logger.info('Deleting deployment {0}...'.format(deployment_id))
     client.deployments.delete(deployment_id, force)
     logger.info("Deployment deleted")
 
@@ -229,11 +226,10 @@ def outputs(deployment_id):
     `DEPLOYMENT_ID` is the id of the deployment to print outputs for.
     """
     logger = get_logger()
-    logger.info('Retrieving outputs for deployment {0}...'.format(
-        deployment_id))
-
     client = env.get_rest_client()
 
+    logger.info('Retrieving outputs for deployment {0}...'.format(
+        deployment_id))
     dep = client.deployments.get(deployment_id, _include=['outputs'])
     outputs_def = dep.outputs
     response = client.deployments.outputs.get(deployment_id)
@@ -256,11 +252,10 @@ def inputs(deployment_id):
     `DEPLOYMENT_ID` is the id of the deployment to print inputs for.
     """
     logger = get_logger()
-    logger.info('Retrieving inputs for deployment {0}...'.format(
-        deployment_id))
-
     client = env.get_rest_client()
 
+    logger.info('Retrieving inputs for deployment {0}...'.format(
+        deployment_id))
     dep = client.deployments.get(deployment_id, _include=['inputs'])
     inputs_ = StringIO()
     for input_name, input in dep.inputs.iteritems():

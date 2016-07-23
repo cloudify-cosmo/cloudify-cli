@@ -40,10 +40,11 @@ def list(deployment_id):
     `DEPLOYMENT_ID` is the id of the deployment to list groups for.
     """
     logger = get_logger()
+    client = env.get_rest_client()
+
     logger.info("Listing groups for deployment {0}...".format(
         deployment_id))
     try:
-        client = env.get_rest_client()
         deployment = client.deployments.get(deployment_id)
     except CloudifyClientError as e:
         if e.status_code != 404:

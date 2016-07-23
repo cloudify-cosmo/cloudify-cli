@@ -42,9 +42,9 @@ def get(node_instance_id):
     `NODE_INSTANCE_ID` is the id of the node-instance to get information on.
     """
     logger = get_logger()
-    logger.info('Retrieving node instance {0}'.format(node_instance_id))
-
     client = env.get_rest_client()
+
+    logger.info('Retrieving node instance {0}'.format(node_instance_id))
     try:
         node_instance = client.node_instances.get(node_instance_id)
     except CloudifyClientError as e:
@@ -77,6 +77,7 @@ def list(deployment_id, node_name):
     Otherwise, list node-instances for all deployments.
     """
     logger = get_logger()
+    client = env.get_rest_client()
 
     try:
         if deployment_id:
@@ -84,7 +85,6 @@ def list(deployment_id, node_name):
                 deployment_id))
         else:
             logger.info('Listing all instances...')
-        client = env.get_rest_client()
         instances = client.node_instances.list(deployment_id=deployment_id,
                                                node_name=node_name)
     except CloudifyClientError as e:
@@ -107,6 +107,7 @@ def local(node_id):
     `NODE_ID` is id of the node to list instances for.
     """
     logger = get_logger()
+
     env = common.load_env()
     node_instances = env.storage.get_node_instances()
     if node_id:

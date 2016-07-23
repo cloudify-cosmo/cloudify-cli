@@ -40,11 +40,11 @@ def get(workflow_id, deployment_id):
     `WORKFLOW_ID` is the id of the workflow to get information on.
     """
     logger = get_logger()
+    client = env.get_rest_client()
 
     try:
         logger.info('Retrieving workflow {0} for deployment {1}'.format(
             workflow_id, deployment_id))
-        client = env.get_rest_client()
         deployment = client.deployments.get(deployment_id)
         workflow = next((wf for wf in deployment.workflows if
                          wf.name == workflow_id), None)
@@ -102,10 +102,10 @@ def list(deployment_id):
     `DEPLOYMENT_ID` is the id of the deployment to list workflows for.
     """
     logger = get_logger()
+    client = env.get_rest_client()
+
     logger.info('Listing workflows for deployment {0}...'.format(
         deployment_id))
-
-    client = env.get_rest_client()
     deployment = client.deployments.get(deployment_id)
 
     pt = utils.table(['blueprint_id', 'deployment_id', 'name', 'created_at'],

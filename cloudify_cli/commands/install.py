@@ -67,9 +67,9 @@ def manager(ctx,
     This will upload the blueprint, create a deployment and execute the
     `install` workflow.
     """
-    blueprint_id = blueprint_id or utils._generate_suffixed_id(
+    blueprint_id = blueprint_id or utils.generate_suffixed_id(
         blueprints.get_archive_id(blueprint_path))
-    deployment_id = deployment_id or utils._generate_suffixed_id(blueprint_id)
+    deployment_id = deployment_id or utils.generate_suffixed_id(blueprint_id)
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
     if not inputs and os.path.isfile(os.path.join(
             utils.get_cwd(), DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)):

@@ -39,9 +39,7 @@ def maintenance_mode():
 @maintenance_mode.command(name='status')
 @cfy.options.verbose
 def status():
-    management_ip = env.get_management_server_ip()
-    client = env.get_rest_client(management_ip)
-
+    client = env.get_rest_client()
     _print_maintenance_mode_status(client)
 
 
@@ -91,8 +89,7 @@ def _print_maintenance_mode_status(client):
 @cfy.options.verbose
 def activate(wait, timeout):
     logger = get_logger()
-    management_ip = env.get_management_server_ip()
-    client = env.get_rest_client(management_ip)
+    client = env.get_rest_client()
 
     if timeout and not wait:
         msg = "'--timeout' was used without '--wait'."
@@ -134,8 +131,7 @@ def activate(wait, timeout):
 @cfy.options.verbose
 def deactivate():
     logger = get_logger()
-    management_ip = env.get_management_server_ip()
-    client = env.get_rest_client(management_ip)
+    client = env.get_rest_client()
 
     logger.info('Deactivating maintenance mode...')
     client.maintenance_mode.deactivate()

@@ -40,9 +40,9 @@ def restore(snapshot_id, without_deployment_envs, force):
     `SNAPSHOT_ID` is the id of the snapshot to use for restoration.
     """
     logger = get_logger()
-    logger.info('Restoring snapshot {0}...'.format(snapshot_id))
-
     client = env.get_rest_client()
+
+    logger.info('Restoring snapshot {0}...'.format(snapshot_id))
     execution = client.snapshots.restore(
         snapshot_id, not without_deployment_envs, force)
     logger.info("Started workflow execution. The execution's id is {0}".format(
@@ -63,10 +63,11 @@ def create(snapshot_id, include_metrics, exclude_credentials):
     `SNAPSHOT_ID` is the id to attach to the snapshot.
     """
     logger = get_logger()
-    snapshot_id = snapshot_id or utils._generate_suffixed_id('snapshot')
+    client = env.get_rest_client()
+
+    snapshot_id = snapshot_id or utils.generate_suffixed_id('snapshot')
     logger.info('Creating snapshot {0}...'.format(snapshot_id))
 
-    client = env.get_rest_client()
     execution = client.snapshots.create(snapshot_id,
                                         include_metrics,
                                         not exclude_credentials)
@@ -81,9 +82,9 @@ def delete(snapshot_id):
     """Delete a snapshot from the manager
     """
     logger = get_logger()
-    logger.info('Deleting snapshot {0}...'.format(snapshot_id))
-
     client = env.get_rest_client()
+
+    logger.info('Deleting snapshot {0}...'.format(snapshot_id))
     client.snapshots.delete(snapshot_id)
     logger.info('Snapshot deleted successfully')
 
@@ -98,10 +99,11 @@ def upload(snapshot_path, snapshot_id):
     `SNAPSHOT_PATH` is the path to the snapshot to upload.
     """
     logger = get_logger()
-    logger.info('Uploading snapshot {0}...'.format(snapshot_path))
-
-    snapshot_id = snapshot_id or utils._generate_suffixed_id('snapshot')
     client = env.get_rest_client()
+
+    snapshot_id = snapshot_id or utils.generate_suffixed_id('snapshot')
+
+    logger.info('Uploading snapshot {0}...'.format(snapshot_path))
     snapshot = client.snapshots.upload(snapshot_path, snapshot_id)
     logger.info("Snapshot uploaded. The snapshot's id is {0}".format(
         snapshot.id))
@@ -117,9 +119,9 @@ def download(snapshot_id, output_path):
     `SNAPSHOT_ID` is the id of the snapshot to download.
     """
     logger = get_logger()
-    logger.info('Downloading snapshot {0}...'.format(snapshot_id))
-
     client = env.get_rest_client()
+
+    logger.info('Downloading snapshot {0}...'.format(snapshot_id))
     target_file = client.snapshots.download(snapshot_id, output_path)
     logger.info('Snapshot downloaded as {0}'.format(target_file))
 
@@ -130,9 +132,9 @@ def list():
     """List all snapshots on the manager
     """
     logger = get_logger()
-    logger.info('Listing snapshots...')
-
     client = env.get_rest_client()
+
+    logger.info('Listing snapshots...')
     pt = utils.table(['id', 'created_at', 'status', 'error'],
                      data=client.snapshots.list())
     common.print_table('Snapshots:', pt)
