@@ -15,6 +15,7 @@
 
 import click
 
+from .. import env
 from .. import common
 from ..config import cfy
 
@@ -27,4 +28,6 @@ def install_plugins(blueprint_path):
 
     `BLUEPRINT_PATH` is the path to the blueprint to install plugins for.
     """
+    env.assert_local_active()
+
     common.install_blueprint_plugins(blueprint_path=blueprint_path)

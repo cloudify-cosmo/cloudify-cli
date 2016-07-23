@@ -107,6 +107,7 @@ def manager(ctx,
 @cfy.argument('blueprint-path')
 @cfy.options.blueprint_filename()
 @cfy.options.inputs
+@cfy.options.validate
 @cfy.options.install_plugins
 @cfy.options.workflow_id('install')
 @cfy.options.parameters
@@ -120,6 +121,7 @@ def local(ctx,
           blueprint_path,
           blueprint_filename,
           inputs,
+          validate,
           install_plugins,
           workflow_id,
           parameters,
@@ -129,7 +131,11 @@ def local(ctx,
           task_thread_pool_size):
     """Install an application
 
-    `BLUEPRINT_PATH` is the path to the blueprint to install.
+    `BLUEPRINT_PATH` can be one of:
+        * A local blueprint yaml file
+        * A local blueprint archive
+        * A URL to a blueprint archive
+        * A GitHub `organization/blueprint_repo[:tag/branch]` form
     """
     blueprint_path = blueprint_path or DEFAULT_BLUEPRINT_PATH
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
@@ -145,6 +151,10 @@ def local(ctx,
             blueprint_path=new_path,
             inputs=inputs,
             install_plugins=install_plugins)
+        if validate:
+            ctx.invoke(
+                blueprints.validate_blueprint,
+                blueprint_path=new_path)
     finally:
         # Every situation other than the user providing a path of a local
         # yaml means a temp folder will be created that should be later

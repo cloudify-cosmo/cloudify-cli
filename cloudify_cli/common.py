@@ -263,7 +263,7 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
         if not os.path.isfile(blueprint_file):
             raise CloudifyCliError(
                 'Could not find `{0}`. Please provide the name of the main '
-                'blueprint file by using the `-n/--blueprint-filename flag'
+                'blueprint file by using the `-n/--blueprint-filename` flag'
                 .format(blueprint_filename))
         return blueprint_file
 
@@ -280,11 +280,16 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
         downloaded_source = _get_from_github(source)
         # GitHub archives provide an inner folder with each archive.
         return get_blueprint_file(downloaded_source)
+    # TODO: Consider providing an error if the repo can't be found.
+    #     raise CloudifyCliError(
+    #         'You must either provide a path to a local blueprint file, '
+    #         'a path to a blueprint archive or a URL of a blueprint archive. '
+    #         'Archive can be of types: {0}'.format(SUPPORTED_ARCHIVE_TYPES))
 
 
 def _get_from_github(source):
     source_parts = source.split(':', 1)
     repo = source_parts[0]
     tag = source_parts[1] if len(source_parts) == 2 else 'master'
-    url = 'https://github.com/{0}/archive/{1}.zip'.format(repo, tag)
+    url = 'https://github.com/{0}/archive/{1}.tar.gz'.format(repo, tag)
     return utils.download_file(url)

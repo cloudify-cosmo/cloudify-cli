@@ -97,7 +97,8 @@ SKIP_BOOTSTRAP_VALIDATIONS = (
     "Bootstrap without validating resource creation prior to bootstrapping "
     "the manager"
 )
-
+SKIP_BOOTSTRAP_SANITY = \
+    "Bootstrap without performing the post-bootstrap sanity test"
 DEV_TASK_ARGS = "Arguments for the fabric task"
 
 MAINTENANCE_MODE_WAIT = (
@@ -143,3 +144,5 @@ MANAGEMENT_KEY = 'The path to the ssh key-file to use when connecting'
 MANAGEMENT_PASSWORD = 'The password to use when connecting to the manager'
 MANAGEMENT_PORT = 'The port to use when connecting to the manager'
 REST_PORT = "The REST server's port"
+
+INCLUDE_SSH_KEYS = 'Include ssh key files in archive'

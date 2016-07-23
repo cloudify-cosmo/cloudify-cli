@@ -183,5 +183,9 @@ def download_file(url, destination=None):
     if final_url != url:
         logger.debug('Redirected to {0}'.format(final_url))
     f = urllib.URLopener()
-    f.retrieve(final_url, destination)
+    try:
+        f.retrieve(final_url, destination)
+    except IOError as ex:
+        raise CloudifyCliError(
+            'Failed to download {0}. ({1})'.format(url, str(ex)))
     return destination

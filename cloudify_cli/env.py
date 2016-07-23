@@ -94,6 +94,13 @@ def assert_manager_active():
             'You can either bootstrap a manager or run `cfy use MANAGER_IP`')
 
 
+def assert_local_active():
+    if is_manager_active():
+        raise CloudifyCliError(
+            'This command is not available when using a manager. '
+            'You can run `cfy use local` to stop using a manager.')
+
+
 def is_manager_active():
     active_profile = get_active_profile()
     if not active_profile:

@@ -20,12 +20,10 @@ import traceback
 import click
 from click_didyoumean import DYMGroup
 
-
 from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
-
 
 from .. import env
 from .. import logger
@@ -272,6 +270,11 @@ class Options(object):
             '--output-path',
             help=helptexts.OUTPUT_PATH)
 
+        self.include_keys = click.option(
+            '--include-keys',
+            is_flag=True,
+            help=helptexts.INCLUDE_SSH_KEYS)
+
         self.allow_custom_parameters = click.option(
             '--allow-custom-parameters',
             is_flag=True,
@@ -306,6 +309,12 @@ class Options(object):
             '--skip-validations',
             is_flag=True,
             help=helptexts.SKIP_BOOTSTRAP_VALIDATIONS)
+
+        self.skip_sanity = click.option(
+            '--skip-sanity',
+            is_flag=True,
+            default=False,
+            help=helptexts.SKIP_BOOTSTRAP_SANITY)
 
         self.keep_up_on_failure = click.option(
             '--keep-up-on-failure',

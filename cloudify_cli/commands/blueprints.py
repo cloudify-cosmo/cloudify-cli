@@ -16,7 +16,6 @@
 import os
 import json
 import shutil
-import urlparse
 
 import click
 
@@ -80,119 +79,36 @@ def upload(ctx,
            validate):
     """Upload a blueprint to the manager
 
-    `BLUEPRINT_PATH` is the path of the blueprint to upload.
-
-    This can be either a path to a local yaml, a URL of a blueprint archive
-    or a path to a local blueprint archive.
+    `BLUEPRINT_PATH` can be one of:
+        * A local blueprint yaml file
+        * A local blueprint archive
+        * A URL to a blueprint archive
+        * A GitHub `organization/blueprint_repo[:tag/branch]` form
     """
+    logger = get_logger()
+    client = env.get_rest_client()
 
     blueprint_filename = blueprint_filename or 'blueprint.yaml'
+    # TODO: Consider using client.blueprints.publish_archive if the
+    # path is an achive. This requires additional logic when identifying
+    # the source.
     new_path = common.get_blueprint(blueprint_path, blueprint_filename)
     try:
+        if validate:
+            ctx.invoke(validate_blueprint, blueprint_path=new_path)
         blueprint_id = blueprint_id or utils.generate_suffixed_id(
             get_archive_id(new_path))
-        _publish_directory(ctx, new_path, blueprint_id, validate)
+
+        logger.info('Uploading blueprint {0}...'.format(blueprint_path))
+        blueprint = client.blueprints.upload(new_path, blueprint_id)
+        logger.info("Blueprint uploaded. The blueprint's id is {0}".format(
+            blueprint.id))
     finally:
         # Every situation other than the user providing a path of a local
         # yaml means a temp folder will be created that should be later
         # removed.
         if new_path != blueprint_path:
             shutil.rmtree(os.path.dirname(new_path))
-
-    # TODO: Replace this entire crazy contraption with common.get_blueprint.
-    # if _is_archive(blueprint_path):
-    #     # TODO: allow to upload from github like so:
-    #     # `cfy blueprints upload cloudify-examples/my-blueprint:branch`
-    #     blueprint_id = blueprint_id or utils.generate_suffixed_id(
-    #         get_archive_id(blueprint_path))
-    #     if not blueprint_filename:
-    #         raise CloudifyCliError(
-    #             'Supplying an archive requires that the name of the main '
-    #             'blueprint yaml file in the archive be provided via the '
-    #             '`--blueprint-filename` flag. (e.g. blueprint.yaml)')
-    #     if validate:
-    #         raise CloudifyCliError(
-    #             'The `--validate` flag is only relevant when uploading '
-    #             'from a file.')
-    #     _publish_archive(
-    #         blueprint_path,
-    #         blueprint_filename,
-    #         blueprint_id)
-    # elif os.path.isfile(blueprint_path):
-    #     filename, _ = os.path.splitext(
-    #         os.path.basename(blueprint_path))
-    #     blueprint_id = blueprint_id or utils.generate_suffixed_id(
-    #         os.path.basename(filename))
-    #     _publish_directory(
-    #         ctx,
-    #         blueprint_path,
-    #         blueprint_id,
-    #         validate)
-    # else:
-    #     raise CloudifyCliError(
-    #         'You must either provide a path to a local blueprint file, '
-    #         'a path to a blueprint archive or a URL of a blueprint archive. '
-    #         'Archive can be of types: {0}'.format(SUPPORTED_ARCHIVE_TYPES))
-
-
-def _publish_directory(ctx, blueprint_path, blueprint_id, validate):
-    logger = get_logger()
-    client = env.get_rest_client()
-
-    if validate:
-        ctx.invoke(validate_blueprint, blueprint_path=blueprint_path)
-    else:
-        logger.debug("Skipping blueprint validation...")
-    logger.info('Uploading blueprint {0}...'.format(blueprint_path))
-
-    blueprint = client.blueprints.upload(blueprint_path, blueprint_id)
-    logger.info("Blueprint uploaded. "
-                "The blueprint's id is {0}".format(blueprint.id))
-
-
-def _publish_archive(archive_location, blueprint_filename, blueprint_id):
-    logger = get_logger()
-    client = env.get_rest_client()
-
-    if not _is_archive(archive_location):
-        raise CloudifyCliError(
-            "Can't publish archive {0} - it's of an unsupported "
-            "archive type. Supported archive types: {1}".format(
-                archive_location, SUPPORTED_ARCHIVE_TYPES))
-
-    archive_location, archive_location_type = \
-        determine_archive_type(archive_location)
-
-    logger.info('Publishing blueprint archive from {0} {1}...'.format(
-        archive_location_type, archive_location))
-
-    blueprint = client.blueprints.publish_archive(
-        archive_location, blueprint_id, blueprint_filename)
-    logger.info("Blueprint archive published. "
-                "The blueprint's id is {0}".format(blueprint.id))
-
-
-def _is_archive(archive_location):
-    # TODO: actually check the format of the files instead of their extensions.
-    # We can use `zipfile.is_zipfile` and `tarfile.is_tarfile` for example.
-    return archive_location.endswith(SUPPORTED_ARCHIVE_TYPES)
-
-
-def determine_archive_type(archive_location):
-
-    if not urlparse.urlparse(archive_location).scheme:
-        # archive_location is not a URL - validate it's a file path
-        archive_location = os.path.expanduser(archive_location)
-        if not os.path.isfile(archive_location):
-            raise CloudifyCliError(
-                "Can't publish archive {0} - "
-                "it's not a valid URL nor a path to a valid archive".format(
-                    archive_location))
-        # The archive exists locally. Return it, and inform it's a path
-        return archive_location, 'path'
-
-    # The archive is a url. Return it, and inform it's a url
-    return os.path.expanduser(archive_location), 'url'
 
 
 @blueprints.command(name='download')
@@ -209,7 +125,6 @@ def download(blueprint_id, output_path):
 
     logger.info('Downloading blueprint {0}...'.format(blueprint_id))
     target_file = client.blueprints.download(blueprint_id, output_path)
-
     logger.info('Blueprint downloaded as {0}'.format(target_file))
 
 
@@ -277,8 +192,7 @@ def get(blueprint_id):
     common.print_table('Blueprint:', pt)
 
     logger.info('Description:')
-    logger.info('{0}\n'.format(blueprint['description'] if
-                               blueprint['description'] is not None else ''))
+    logger.info('{0}\n'.format(blueprint['description'] or ''))
 
     logger.info('Existing deployments:')
     logger.info('{0}\n'.format(json.dumps([d['id'] for d in deployments])))
@@ -312,22 +226,6 @@ def inputs(blueprint_id):
 
 # TODO: move to utils
 def get_archive_id(archive_location):
-    (archive_location, archive_location_type) = \
-        determine_archive_type(archive_location)
-    # if the archive is a local path, assign blueprint_id the name of
-    # the archive file without the extension
-    if archive_location_type == 'path':
-        filename, _ = os.path.splitext(
-            os.path.basename(archive_location))
-        return filename
-    # if the archive is a url, assign blueprint_id same of the file
-    # that the url leads to, without the extension.
-    # e.g. http://example.com/path/archive.zip?para=val#sect -> archive
-    elif archive_location_type == 'url':
-        path = urlparse.urlparse(archive_location).path
-        archive_file = path.split('/')[-1]
-        archive_name = archive_file.split('.')[0]
-        return archive_name
-    else:
-        raise CloudifyCliError("The archive's source is not a local "
-                               "file path nor a web url")
+    filename, _ = os.path.splitext(os.path.basename(archive_location))
+    dirname = os.path.dirname(archive_location).split('/')[-1]
+    return dirname.replace('-', '_') + '_' + filename

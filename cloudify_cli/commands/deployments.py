@@ -57,7 +57,7 @@ def _print_deployment_inputs(client, blueprint_id):
 def list(blueprint_id):
     """List deployments
 
-    If `BLUEPRINT_ID` is provided, list deployments for that blueprint.
+    If `--blueprint-id` is provided, list deployments for that blueprint.
     Otherwise, list deployments for all blueprints.
     """
     logger = get_logger()

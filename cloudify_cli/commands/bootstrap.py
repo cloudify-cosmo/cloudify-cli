@@ -20,9 +20,10 @@ import shutil
 from .. import env
 from .. import common
 from ..config import cfy
-from .init import init_profile
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
+
+from .init import init_profile
 
 
 @cfy.command(name='bootstrap')
@@ -30,6 +31,7 @@ from ..bootstrap import bootstrap as bs
 @cfy.options.inputs
 @cfy.options.validate_only
 @cfy.options.skip_validations
+@cfy.options.skip_sanity
 @cfy.options.install_plugins
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
@@ -40,6 +42,7 @@ def bootstrap(blueprint_path,
               inputs,
               validate_only,
               skip_validations,
+              skip_sanity,
               install_plugins,
               task_retries,
               task_retry_interval,
@@ -60,6 +63,8 @@ def bootstrap(blueprint_path,
     """
     # This must be a list so that we can append to it if necessary.
     inputs = list(inputs)
+    # TODO: use `common.get_blueprint` to allow to bootstrap from an archive,
+    # github, etc..
 
     logger = get_logger()
     env_name = 'manager'
@@ -112,7 +117,8 @@ def bootstrap(blueprint_path,
                     task_retries=task_retries,
                     task_retry_interval=task_retry_interval,
                     task_thread_pool_size=task_thread_pool_size,
-                    install_plugins=install_plugins)
+                    install_plugins=install_plugins,
+                    skip_sanity=skip_sanity)
 
                 manager_ip = details['manager_ip']
                 with env.update_wd_settings(active_profile) as profile:

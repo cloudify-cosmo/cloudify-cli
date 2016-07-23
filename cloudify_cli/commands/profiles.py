@@ -14,8 +14,11 @@
 #    * limitations under the License.
 
 import os
+import shutil
 import tarfile
 from contextlib import closing
+
+import click
 
 from .. import env
 from .. import utils
@@ -23,6 +26,8 @@ from .. import common
 from ..config import cfy
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
+
+from . import use
 
 
 @cfy.group(name='profiles')
@@ -51,18 +56,14 @@ def list():
     # easy querying and management.
     logger = get_logger()
 
-    profiles = []
-
     logger.info('Listing all profiles...')
-
-    # TODO: Remove after deciding whether `local` at all exists or not.
-    excluded = ['local']
-    profile_names = [item for item in os.listdir(env.PROFILES_DIR)
-                     if item not in excluded]
-
+    profiles = []
+    current_profile = env.get_active_profile()
+    profile_names = _get_profile_names()
     for profile in profile_names:
         profiles.append(env.get_profile(profile))
 
+    env.set_active_profile(current_profile)
     pt = utils.table(['manager_ip', 'alias', 'ssh_user', 'ssh_key_path'],
                      profiles)
     common.print_table('Profiles:', pt)
@@ -93,9 +94,11 @@ def delete(profile_name):
 
 
 @profiles.command(name='export')
-@cfy.options.verbose
+@cfy.options.include_keys
 @cfy.options.optional_output_path
-def export_profiles(output_path):
+@cfy.options.verbose
+@click.pass_context
+def export_profiles(ctx, include_keys, output_path):
     """Export all profiles to a file
 
     If `-o / --output-path` is omitted, the archive's name will be
@@ -109,6 +112,8 @@ def export_profiles(output_path):
         os.path.join(os.getcwd(), 'cfy-profiles.tar.gz')
 
     logger.info('Exporting profiles to {0}...'.format(destination))
+    if include_keys:
+        _backup_ssh_keys(ctx)
     utils.tar(env.PROFILES_DIR, destination)
     logger.info('Export complete!')
     logger.info(
@@ -119,7 +124,8 @@ def export_profiles(output_path):
 @profiles.command(name='import')
 @cfy.argument('archive-path')
 @cfy.options.verbose
-def import_profiles(archive_path):
+@click.pass_context
+def import_profiles(ctx, archive_path):
     """Import profiles from a profiles archive
 
     `ARCHIVE_PATH` is the path to the profiles archive to import.
@@ -134,6 +140,8 @@ def import_profiles(archive_path):
 
     logger.info('Importing profiles from {0}...'.format(archive_path))
     utils.untar(archive_path, os.path.dirname(env.PROFILES_DIR))
+    _restore_ssh_keys(ctx)
+
     logger.info('Import complete!')
     logger.info('You can list profiles using `cfy profiles list`')
 
@@ -156,5 +164,46 @@ def _assert_is_tarfile(archive_path):
         raise CloudifyCliError('The archive provided must be a tar.gz archive')
 
 
+def _get_profile_names():
+    # TODO: Remove after deciding whether `local` at all exists or not.
+    excluded = ['local']
+    profile_names = [item for item in os.listdir(env.PROFILES_DIR)
+                     if item not in excluded]
+
+    return profile_names
+
 # TODO: add `cfy profiles init`
 # TODO: add `cfy profiles configure` to attach key, user, etc to a profile
+
+
+def _backup_ssh_keys(ctx):
+    logger = get_logger()
+    logger.info('Backing up profile ssh keys...')
+    _move_ssh_keys(ctx, direction='profile')
+
+
+def _restore_ssh_keys(ctx):
+    logger = get_logger()
+    logger.info('Restoring profile ssh keys...')
+    _move_ssh_keys(ctx, direction='origin')
+
+
+def _move_ssh_keys(ctx, direction):
+    current_profile = env.get_active_profile()
+    profile_names = _get_profile_names()
+    for profile in profile_names:
+        ctx.invoke(use.use, management_ip=profile)
+        try:
+            key_filepath = env.get_management_key()
+        except CloudifyCliError:
+            key_filepath = None
+        if key_filepath:
+            profile_path = env.get_init_path()
+            key_filename = os.path.basename(key_filepath)
+            in_profile_ssh_key = os.path.join(
+                profile_path, key_filename) + '.ssh.profile'
+            if direction == 'origin':
+                shutil.move(in_profile_ssh_key, key_filepath)
+            elif direction == 'profile':
+                shutil.copy2(key_filepath, in_profile_ssh_key)
+        env.set_active_profile(current_profile)

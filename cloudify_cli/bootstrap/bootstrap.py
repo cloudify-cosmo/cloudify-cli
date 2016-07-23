@@ -35,11 +35,10 @@ from cloudify.workflows import local
 from cloudify.exceptions import RecoverableError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
+from .. import env
 from .. import utils
 from .. import common
 from .. import constants
-# TODO: fix this
-from .. import env
 from ..logger import get_logger
 from ..exceptions import CloudifyBootstrapError
 
@@ -233,7 +232,8 @@ def bootstrap(blueprint_path,
               task_retries=5,
               task_retry_interval=30,
               task_thread_pool_size=1,
-              install_plugins=False):
+              install_plugins=False,
+              skip_sanity=False):
 
     def get_protocol(rest_port):
         return constants.SECURED_PROTOCOL \
@@ -318,15 +318,21 @@ def bootstrap(blueprint_path,
             manager_node=manager_node,
             manager_node_instance=manager_node_instance)
 
-        _upload_resources(manager_node, fabric_env, manager_ip, rest_client,
-                          task_retries, task_retry_interval)
+        _upload_resources(
+            manager_node,
+            fabric_env,
+            manager_ip,
+            rest_client,
+            task_retries,
+            task_retry_interval)
 
-        _perform_sanity(env=env,
-                        manager_ip=manager_ip,
-                        fabric_env=fabric_env,
-                        task_retries=task_retries,
-                        task_retry_interval=task_retry_interval,
-                        task_thread_pool_size=task_thread_pool_size)
+        if skip_sanity:
+            _perform_sanity(env=env,
+                            manager_ip=manager_ip,
+                            fabric_env=fabric_env,
+                            task_retries=task_retries,
+                            task_retry_interval=task_retry_interval,
+                            task_thread_pool_size=task_thread_pool_size)
 
     return {
         'provider_name': 'provider',
@@ -693,7 +699,7 @@ def _stop_retries(retries, wait_interval, attempt, *args, **kwargs):
     :return: True if to continue the retries, False o/w.
     """
     logger = get_logger()
-    logger.info('Attempt {0} out of {1} failed. '
-                'Waiting for {2} seconds and trying again...'
-                .format(attempt, retries, wait_interval))
+    logger.info(
+        'Attempt {0} out of {1} failed. Waiting for {2} seconds and trying '
+        'again...'.format(attempt, retries, wait_interval))
     return retries != -1 and attempt >= retries

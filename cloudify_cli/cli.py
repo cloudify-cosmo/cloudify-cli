@@ -15,7 +15,7 @@
 ############
 
 import logger
-# from . import utils
+from . import env
 from .config import cfy
 
 from .commands import use
@@ -85,56 +85,58 @@ def _register_commands():
     and which don't. We should decide that according to whether
     a manager is currently `use`d or not.
     """
-    # TODO: decide whether all commands are registered or not.
-    # is_manager_active = utils.is_manager_active()
+    # TODO: Instead of manually stating each module,
+    # we might want to try importing all modules in the `commands`
+    # package recursively and check if they have a certain attribute
+    # which indicates they belong to `manager` and which don't.
 
+    # Manager agnostic commands
     _cfy.add_command(use.use)
     _cfy.add_command(init.init)
+    _cfy.add_command(status.status)
     _cfy.add_command(recover.recover)
     _cfy.add_command(profiles.profiles)
     _cfy.add_command(bootstrap.bootstrap)
     _cfy.add_command(create_requirements.create_requirements)
 
-    # TODO: Instead of manually stating each module,
-    # we might want to try importing all modules in the `commands`
-    # package recursively and check if they have a certain attribute
-    # which indicates they belong to `manager`.
-    # if is_manager_active:
+    # Manager only commands
     _cfy.add_command(dev.dev)
     _cfy.add_command(ssh.ssh)
     _cfy.add_command(logs.logs)
     _cfy.add_command(agents.agents)
     _cfy.add_command(events.events)
-    _cfy.add_command(status.status)
+    _cfy.add_command(plugins.plugins)
     _cfy.add_command(upgrade.upgrade)
-    _cfy.add_command(install.manager)
-    _cfy.add_command(uninstall.manager)
     _cfy.add_command(teardown.teardown)
     _cfy.add_command(rollback.rollback)
     _cfy.add_command(snapshots.snapshots)
-    _cfy.add_command(node_instances.manager)
     _cfy.add_command(maintenance_mode.maintenance_mode)
 
     # TODO: consolidate with `local` of the same type
     _cfy.add_command(nodes.nodes)
     _cfy.add_command(groups.groups)
-    _cfy.add_command(plugins.plugins)
     _cfy.add_command(workflows.workflows)
     _cfy.add_command(blueprints.blueprints)
     _cfy.add_command(executions.executions)
     _cfy.add_command(deployments.deployments)
 
-    # else:
-    _cfy.add_command(install.local)
-    _cfy.add_command(uninstall.local)
-    _cfy.add_command(node_instances.local)
-    _cfy.add_command(install_plugins.install_plugins)
-
     # TODO: consolidate with `manager` of the same type
-    _cfy.add_command(inputs.inputs)
-    _cfy.add_command(outputs.outputs)
-    _cfy.add_command(execute.execute)
+    _cfy.add_command(inputs.inputs)  # cfy deployments inputs
+    _cfy.add_command(outputs.outputs)  # cfy deployments outputs
+    _cfy.add_command(execute.execute)  # cfy executions start
+    # Add nodes and groups and see about the rest.
 
+    is_manager_active = env.is_manager_active()
+    if is_manager_active:
+        _cfy.add_command(install.manager)
+        _cfy.add_command(uninstall.manager)
+        _cfy.add_command(node_instances.manager)
+    else:
+        _cfy.add_command(install.local)
+        _cfy.add_command(uninstall.local)
+        _cfy.add_command(node_instances.local)
+
+    _cfy.add_command(install_plugins.install_plugins)
 
 _register_commands()
 
