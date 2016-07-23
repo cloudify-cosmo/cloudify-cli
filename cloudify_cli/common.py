@@ -251,8 +251,12 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
     else turn to github and try to get it.
     else should implicitly fail.
     """
-    def get_blueprint_file(final_source, nest_one=False):
+    def get_blueprint_file(final_source, nest_one=True):
         blueprint = utils.extract_archive(final_source)
+        # TODO: To support cases in which the blueprint is not nested
+        # within the archive, we need to allow this to be false.
+        # This will currently not work as nothing calls this with false.
+        # We need to add a check for that or something.
         if nest_one:
             blueprint = os.path.join(blueprint, os.listdir(blueprint)[0])
         blueprint_file = os.path.join(blueprint, blueprint_filename)
@@ -275,7 +279,7 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
     else:
         downloaded_source = _get_from_github(source)
         # GitHub archives provide an inner folder with each archive.
-        return get_blueprint_file(downloaded_source, nest_one=True)
+        return get_blueprint_file(downloaded_source)
 
 
 def _get_from_github(source):

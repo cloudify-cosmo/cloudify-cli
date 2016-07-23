@@ -27,7 +27,7 @@ from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
 
-from .. import utils
+from .. import env
 from .. import logger
 from . import helptexts
 from .. import constants
@@ -93,8 +93,8 @@ def show_version(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
 
-    cli_version_data = utils.get_version_data()
-    rest_version_data = utils.get_manager_version_data()
+    cli_version_data = env.get_version_data()
+    rest_version_data = env.get_manager_version_data()
 
     cli_version = _format_version_data(
         cli_version_data,
@@ -183,15 +183,16 @@ def show_active_manager(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
 
+    env.assert_manager_active()
     print_solution = False
-    current_management_ip = utils.get_management_server_ip()
+    current_management_ip = env.get_management_server_ip()
     try:
-        current_management_user = utils.get_management_user()
+        current_management_user = env.get_management_user()
     except CloudifyCliError as ex:
         print_solution = True
         current_management_user = str(ex)
     try:
-        current_management_key = utils.get_management_key()
+        current_management_key = env.get_management_key()
     except CloudifyCliError as ex:
         print_solution = True
         current_management_key = str(ex)

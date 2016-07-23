@@ -15,6 +15,7 @@
 
 import os
 import json
+import shutil
 import urlparse
 
 import click
@@ -54,8 +55,8 @@ def validate_blueprint(blueprint_path):
 
     logger.info('Validating blueprint: {0}'.format(blueprint_path))
     try:
-        resolver = utils.get_import_resolver()
-        validate_version = utils.is_validate_definitions_version()
+        resolver = env.get_import_resolver()
+        validate_version = env.is_validate_definitions_version()
         parse_from_path(
             dsl_file_path=blueprint_path,
             resolver=resolver,
@@ -85,40 +86,53 @@ def upload(ctx,
     or a path to a local blueprint archive.
     """
 
+    blueprint_filename = blueprint_filename or 'blueprint.yaml'
+    new_path = common.get_blueprint(blueprint_path, blueprint_filename)
+    try:
+        blueprint_id = blueprint_id or utils.generate_suffixed_id(
+            get_archive_id(new_path))
+        _publish_directory(ctx, new_path, blueprint_id, validate)
+    finally:
+        # Every situation other than the user providing a path of a local
+        # yaml means a temp folder will be created that should be later
+        # removed.
+        if new_path != blueprint_path:
+            shutil.rmtree(os.path.dirname(new_path))
+
     # TODO: Replace this entire crazy contraption with common.get_blueprint.
-    if _is_archive(blueprint_path):
-        # TODO: allow to upload from github like so:
-        # `cfy blueprints upload cloudify-examples/my-blueprint:branch`
-        blueprint_id = blueprint_id or utils.generate_suffixed_id(
-            get_archive_id(blueprint_path))
-        if not blueprint_filename:
-            raise CloudifyCliError(
-                'Supplying an archive requires that the name of the main '
-                'blueprint yaml file in the archive be provided via the '
-                '`--blueprint-filename` flag. (e.g. blueprint.yaml)')
-        if validate:
-            raise CloudifyCliError(
-                'The `--validate` flag is only relevant when uploading '
-                'from a file.')
-        _publish_archive(
-            blueprint_path,
-            blueprint_filename,
-            blueprint_id)
-    elif os.path.isfile(blueprint_path):
-        filename, _ = os.path.splitext(
-            os.path.basename(blueprint_path))
-        blueprint_id = blueprint_id or utils.generate_suffixed_id(
-            os.path.basename(filename))
-        _publish_directory(
-            ctx,
-            blueprint_path,
-            blueprint_id,
-            validate)
-    else:
-        raise CloudifyCliError(
-            'You must either provide a path to a local blueprint file, '
-            'a path to a blueprint archive or a URL of a blueprint archive. '
-            'Archive can be of types: {0}'.format(SUPPORTED_ARCHIVE_TYPES))
+    # if _is_archive(blueprint_path):
+    #     # TODO: allow to upload from github like so:
+    #     # `cfy blueprints upload cloudify-examples/my-blueprint:branch`
+    #     blueprint_id = blueprint_id or utils.generate_suffixed_id(
+    #         get_archive_id(blueprint_path))
+    #     if not blueprint_filename:
+    #         raise CloudifyCliError(
+    #             'Supplying an archive requires that the name of the main '
+    #             'blueprint yaml file in the archive be provided via the '
+    #             '`--blueprint-filename` flag. (e.g. blueprint.yaml)')
+    #     if validate:
+    #         raise CloudifyCliError(
+    #             'The `--validate` flag is only relevant when uploading '
+    #             'from a file.')
+    #     _publish_archive(
+    #         blueprint_path,
+    #         blueprint_filename,
+    #         blueprint_id)
+    # elif os.path.isfile(blueprint_path):
+    #     filename, _ = os.path.splitext(
+    #         os.path.basename(blueprint_path))
+    #     blueprint_id = blueprint_id or utils.generate_suffixed_id(
+    #         os.path.basename(filename))
+    #     _publish_directory(
+    #         ctx,
+    #         blueprint_path,
+    #         blueprint_id,
+    #         validate)
+    # else:
+    #     raise CloudifyCliError(
+    #         'You must either provide a path to a local blueprint file, '
+    #         'a path to a blueprint archive or a URL of a blueprint archive. '
+    #         'Archive can be of types: {0}'.format(SUPPORTED_ARCHIVE_TYPES))
 
 
 def _publish_directory(ctx, blueprint_path, blueprint_id, validate):

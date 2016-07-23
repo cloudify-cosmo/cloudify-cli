@@ -127,7 +127,7 @@ def generate_random_string(size=6,
     return ''.join(random.choice(chars) for _ in range(size))
 
 
-def _generate_suffixed_id(id):
+def generate_suffixed_id(id):
     return '{0}_{1}'.format(id, generate_random_string())
 
 
