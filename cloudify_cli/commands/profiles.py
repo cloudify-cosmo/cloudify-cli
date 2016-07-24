@@ -58,12 +58,10 @@ def list():
 
     logger.info('Listing all profiles...')
     profiles = []
-    current_profile = env.get_active_profile()
     profile_names = _get_profile_names()
     for profile in profile_names:
         profiles.append(env.get_profile(profile))
 
-    env.set_active_profile(current_profile)
     pt = utils.table(['manager_ip', 'alias', 'ssh_user', 'ssh_key_path'],
                      profiles)
     common.print_table('Profiles:', pt)
@@ -141,7 +139,6 @@ def import_profiles(ctx, archive_path):
     logger.info('Importing profiles from {0}...'.format(archive_path))
     utils.untar(archive_path, os.path.dirname(env.PROFILES_DIR))
     _restore_ssh_keys(ctx)
-
     logger.info('Import complete!')
     logger.info('You can list profiles using `cfy profiles list`')
 
@@ -196,6 +193,8 @@ def _move_ssh_keys(ctx, direction):
 
     This is how we backup and restore ssh keys.
     """
+    assert direction in ('profile', 'origin')
+
     current_profile = env.get_active_profile()
     profile_names = _get_profile_names()
     for profile in profile_names:
@@ -213,4 +212,4 @@ def _move_ssh_keys(ctx, direction):
                 shutil.move(in_profile_ssh_key, key_filepath)
             elif direction == 'profile':
                 shutil.copy2(key_filepath, in_profile_ssh_key)
-        env.set_active_profile(current_profile)
+    env.set_active_profile(current_profile)

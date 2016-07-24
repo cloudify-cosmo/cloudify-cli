@@ -42,6 +42,7 @@ def delete_profile(profile_name):
         shutil.rmtree(profile_dir)
 
 
+# TODO: Consider moving to profiles.py
 def get_profile(profile_name):
     current_profile = get_active_profile()
     set_active_profile(profile_name)
