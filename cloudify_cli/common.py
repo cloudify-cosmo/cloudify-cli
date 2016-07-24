@@ -68,7 +68,7 @@ def install_blueprint_plugins(blueprint_path):
     requirements = create_requirements(blueprint_path=blueprint_path)
 
     if requirements:
-        # validate we are inside a virtual env
+        # Validate we are inside a virtual env
         if not utils.is_virtual_env():
             raise exceptions.CloudifyCliError(
                 'You must be running inside a '
@@ -272,7 +272,7 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
         return get_blueprint_file(downloaded_source)
     elif os.path.isfile(source):
         if utils.is_archive(source):
-            return get_blueprint_file(downloaded_source)
+            return get_blueprint_file(source)
         else:
             # Maybe check if yaml. If not, verified by dsl parser
             return source
@@ -280,11 +280,6 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
         downloaded_source = _get_from_github(source)
         # GitHub archives provide an inner folder with each archive.
         return get_blueprint_file(downloaded_source)
-    # TODO: Consider providing an error if the repo can't be found.
-    #     raise CloudifyCliError(
-    #         'You must either provide a path to a local blueprint file, '
-    #         'a path to a blueprint archive or a URL of a blueprint archive. '
-    #         'Archive can be of types: {0}'.format(SUPPORTED_ARCHIVE_TYPES))
 
 
 def _get_from_github(source):

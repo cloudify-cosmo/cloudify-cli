@@ -36,7 +36,6 @@ from . import init
 @cfy.options.management_password
 @cfy.options.management_port
 @cfy.options.rest_port
-@cfy.options.show_active
 @cfy.options.verbose
 def use(alias,
         management_ip,

@@ -31,7 +31,6 @@ from . import use
 
 
 @cfy.group(name='profiles')
-@cfy.options.show_active
 @cfy.options.verbose
 def profiles():
     """Handle Cloudify CLI profiles
@@ -47,20 +46,35 @@ def profiles():
         env.raise_uninitialized()
 
 
+@profiles.command(name='get-active')
+@cfy.options.verbose
+def get():
+    env.assert_manager_active()
+
+    active_profile = env.get_profile(env.get_active_profile())
+    pt = utils.table(['manager_ip', 'alias', 'ssh_user', 'ssh_key_path'],
+                     [active_profile])
+    common.print_table('Active profile:', pt)
+
+
 @profiles.command(name='list')
 @cfy.options.verbose
 def list():
     """List all profiles
     """
-    # TODO: consider saving profile information in a TinyDB json file for
-    # easy querying and management.
     logger = get_logger()
+
+    current_profile = env.get_active_profile()
 
     logger.info('Listing all profiles...')
     profiles = []
     profile_names = _get_profile_names()
     for profile in profile_names:
-        profiles.append(env.get_profile(profile))
+        profile_data = env.get_profile(profile)
+        if profile == current_profile:
+            # Show the currently active profile by appending *
+            profile_data['manager_ip'] = '*' + profile_data['manager_ip']
+        profiles.append(profile_data)
 
     pt = utils.table(['manager_ip', 'alias', 'ssh_user', 'ssh_key_path'],
                      profiles)
@@ -99,6 +113,10 @@ def delete(profile_name):
 def export_profiles(ctx, include_keys, output_path):
     """Export all profiles to a file
 
+    WARNING: Including the ssh keys of your profiles in the archive means
+    that once the profiles are imported, the ssh keys will be put back
+    in their original locations!
+
     If `-o / --output-path` is omitted, the archive's name will be
     `cfy-profiles.tar.gz`.
     """
@@ -126,10 +144,10 @@ def export_profiles(ctx, include_keys, output_path):
 def import_profiles(ctx, archive_path):
     """Import profiles from a profiles archive
 
-    `ARCHIVE_PATH` is the path to the profiles archive to import.
-
     WARNING: If a profile exists both in the archive and locally
     it will be overwritten (any other profiles will be left intact).
+
+    `ARCHIVE_PATH` is the path to the profiles archive to import.
     """
     logger = get_logger()
 
@@ -195,9 +213,14 @@ def _move_ssh_keys(ctx, direction):
     """
     assert direction in ('profile', 'origin')
 
+    logger = get_logger()
+
     current_profile = env.get_active_profile()
     profile_names = _get_profile_names()
     for profile in profile_names:
+        # TODO: Currently, this will try to connect to the manager
+        # where the profiles are being imported to get its key path.
+        # We should change that.
         ctx.invoke(use.use, management_ip=profile)
         try:
             key_filepath = env.get_management_key()
@@ -209,6 +232,9 @@ def _move_ssh_keys(ctx, direction):
             in_profile_ssh_key = os.path.join(
                 profile_path, key_filename) + '.ssh.profile'
             if direction == 'origin':
+                logger.info(
+                    'Restoring ssh key for profile {0} to {1}...'.format(
+                        profile, key_filepath))
                 shutil.move(in_profile_ssh_key, key_filepath)
             elif direction == 'profile':
                 shutil.copy2(key_filepath, in_profile_ssh_key)

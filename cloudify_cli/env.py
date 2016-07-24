@@ -20,7 +20,6 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 
 import cloudify_cli
 from . import constants
-from .config import helptexts
 from .exceptions import CloudifyCliError
 
 
@@ -324,9 +323,8 @@ def get_management_user():
     cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
     if cosmo_wd_settings.get_management_user():
         return cosmo_wd_settings.get_management_user()
-    msg = 'Management User is not set in working directory settings'
     raise CloudifyCliError(
-        '{0}\n{1}'.format(msg, helptexts.SET_MANAGEMENT_CREDS))
+        'Management User is not set in working directory settings')
 
 
 def get_management_key():
@@ -334,9 +332,8 @@ def get_management_key():
     cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
     if cosmo_wd_settings.get_management_key():
         return cosmo_wd_settings.get_management_key()
-    msg = 'Management Key is not set in working directory settings'
     raise CloudifyCliError(
-        '{0}\n{1}'.format(msg, helptexts.SET_MANAGEMENT_CREDS))
+        'Management Key is not set in working directory settings')
 
 
 def get_management_server_ip():

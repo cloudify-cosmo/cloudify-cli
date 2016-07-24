@@ -39,7 +39,7 @@ DESCRIPTION_LIMIT = 20
 def blueprints():
     """Handle blueprints on the manager
     """
-    env.assert_manager_active()
+    pass
 
 
 @blueprints.command(name='validate')
@@ -85,6 +85,8 @@ def upload(ctx,
         * A URL to a blueprint archive
         * A GitHub `organization/blueprint_repo[:tag/branch]` form
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -96,8 +98,9 @@ def upload(ctx,
     try:
         if validate:
             ctx.invoke(validate_blueprint, blueprint_path=new_path)
-        blueprint_id = blueprint_id or utils.generate_suffixed_id(
-            get_archive_id(new_path))
+        # blueprint_id = blueprint_id or utils.generate_suffixed_id(
+        #     get_archive_id(new_path))
+        blueprint_id = blueprint_id or get_archive_id(new_path)
 
         logger.info('Uploading blueprint {0}...'.format(blueprint_path))
         blueprint = client.blueprints.upload(new_path, blueprint_id)
@@ -120,6 +123,8 @@ def download(blueprint_id, output_path):
 
     `BLUEPRINT_ID` is the id of the blueprint to download.
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -134,6 +139,8 @@ def download(blueprint_id, output_path):
 def delete(blueprint_id):
     """Delete a blueprint from the manager
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -147,6 +154,8 @@ def delete(blueprint_id):
 def list():
     """List all blueprints
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -177,6 +186,8 @@ def get(blueprint_id):
 
     `BLUEPRINT_ID` is the id of the blueprint to get information on.
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -206,6 +217,8 @@ def inputs(blueprint_id):
 
     `BLUEPRINT_ID` is the path of the blueprint to get inputs for.
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -224,8 +237,39 @@ def inputs(blueprint_id):
     common.print_table('Inputs:', pt)
 
 
+@blueprints.command(name='package')
+@cfy.argument('blueprint-path')
+@cfy.options.optional_output_path
+@cfy.options.validate
+@cfy.options.verbose
+@click.pass_context
+def package(ctx, blueprint_path, output_path, validate):
+    """Create a blueprint archive
+
+    `BLUEPRINT_PATH` is either the path to the blueprint yaml itself or
+    to the directory in which the blueprint yaml files resides.
+    """
+    logger = get_logger()
+
+    destination = output_path or get_archive_id(blueprint_path) + '.tar.gz'
+
+    if validate:
+        ctx.invoke(validate_blueprint, blueprint_path=blueprint_path)
+    logger.info('Creating blueprint archive {0}...'.format(destination))
+    if os.path.isdir(blueprint_path):
+        path_to_package = blueprint_path
+    elif os.path.isfile(blueprint_path):
+        path_to_package = os.path.dirname(blueprint_path)
+    else:
+        raise CloudifyCliError(
+            "You must provide a path to a blueprint's directory or to a "
+            "blueprint yaml file residing in a blueprint's directory.")
+    utils.tar(path_to_package, destination)
+    logger.info('Packaging complete!')
+
+
 # TODO: move to utils
 def get_archive_id(archive_location):
     filename, _ = os.path.splitext(os.path.basename(archive_location))
     dirname = os.path.dirname(archive_location).split('/')[-1]
-    return dirname.replace('-', '_') + '_' + filename
+    return (dirname + '_' + filename).replace('-', '_')

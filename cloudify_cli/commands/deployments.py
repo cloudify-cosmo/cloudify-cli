@@ -166,13 +166,10 @@ def update(deployment_id,
 @cfy.options.deployment_id()
 @cfy.options.inputs
 @cfy.options.verbose
-def create(blueprint_id,
-           deployment_id,
-           inputs):
+def create(blueprint_id, deployment_id, inputs):
     """Create a deployment on the manager
 
-    `BLUEPRINT_ID` is the id of the blueprint from which to create a
-    deployment.
+    `DEPLOYMENT_ID` is the id of the deployment you'd like to create.
     """
     logger = get_logger()
     client = env.get_rest_client()
@@ -180,7 +177,8 @@ def create(blueprint_id,
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
     inputs = common.inputs_to_dict(inputs, 'inputs')
-    deployment_id = deployment_id or utils.generate_suffixed_id(blueprint_id)
+    # deployment_id = deployment_id or utils.generate_suffixed_id(blueprint_id)
+    deployment_id = deployment_id or blueprint_id
 
     try:
         deployment = client.deployments.create(

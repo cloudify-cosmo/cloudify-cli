@@ -30,7 +30,6 @@ from .. import logger
 from . import helptexts
 from .. import constants
 from ..logger import get_logger
-from ..exceptions import CloudifyCliError
 from ..exceptions import CloudifyBootstrapError
 from ..exceptions import SuppressedCloudifyCliError
 
@@ -175,31 +174,6 @@ def set_cli_except_hook(global_verbosity_level):
             recommend(getattr(value, 'possible_solutions'))
 
     sys.excepthook = new_excepthook
-
-
-def show_active_manager(ctx, param, value):
-    if not value or ctx.resilient_parsing:
-        return
-
-    env.assert_manager_active()
-    print_solution = False
-    current_management_ip = env.get_management_server_ip()
-    try:
-        current_management_user = env.get_management_user()
-    except CloudifyCliError as ex:
-        print_solution = True
-        current_management_user = str(ex)
-    try:
-        current_management_key = env.get_management_key()
-    except CloudifyCliError as ex:
-        print_solution = True
-        current_management_key = str(ex)
-    click.echo('Management IP: {0}'.format(current_management_ip))
-    click.echo('Management User: {0}'.format(current_management_user))
-    click.echo('Management Key: {0}'.format(current_management_key))
-    if print_solution:
-        click.echo(helptexts.SET_MANAGEMENT_CREDS)
-    ctx.exit()
 
 
 def group(name):
@@ -382,14 +356,6 @@ class Options(object):
             required=False,
             default=constants.DEFAULT_REST_PORT,
             help=helptexts.REST_PORT)
-
-        self.show_active = click.option(
-            '--show-active',
-            is_flag=True,
-            is_eager=True,
-            expose_value=False,
-            callback=show_active_manager,
-            help=helptexts.SHOW_ACTIVE_CONNECTION_INFORMATION)
 
         self.init_hard_reset = click.option(
             '--hard',
