@@ -163,6 +163,22 @@ def untar(archive, destination=None):
     return destination
 
 
+def zip(source, destination=None):
+    if not destination:
+        destination = tempfile.mkdtemp()
+    logger = get_logger()
+
+    logger.info('Creating zip archive: {0}...'.format(destination))
+    with closing(zipfile.ZipFile(destination, 'w')) as zip_file:
+        for root, _, files in os.walk(source):
+            for filename in files:
+                file_path = os.path.join(root, filename)
+                source_dir = os.path.dirname(source)
+                zip_file.write(
+                    file_path, os.path.relpath(file_path, source_dir))
+    return destination
+
+
 def unzip(archive, destination=None):
     if not destination:
         destination = tempfile.mkdtemp()

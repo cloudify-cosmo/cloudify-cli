@@ -251,7 +251,7 @@ def package(ctx, blueprint_path, output_path, validate):
     """
     logger = get_logger()
 
-    destination = output_path or get_archive_id(blueprint_path) + '.tar.gz'
+    destination = output_path or get_archive_id(blueprint_path)
 
     if validate:
         ctx.invoke(validate_blueprint, blueprint_path=blueprint_path)
@@ -264,7 +264,10 @@ def package(ctx, blueprint_path, output_path, validate):
         raise CloudifyCliError(
             "You must provide a path to a blueprint's directory or to a "
             "blueprint yaml file residing in a blueprint's directory.")
-    utils.tar(path_to_package, destination)
+    if os.name == 'nt':
+        utils.zip(path_to_package, destination + '.zip')
+    else:
+        utils.tar(path_to_package, destination + '.tar.gz')
     logger.info('Packaging complete!')
 
 
