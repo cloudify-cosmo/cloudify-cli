@@ -80,8 +80,8 @@ def update(deployment_id,
            include_logs,
            json):
     logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+    rest_host = utils.get_rest_host()
+    client = utils.get_rest_client(rest_host)
 
     processed_inputs = utils.inputs_to_dict(inputs, 'inputs')
 
