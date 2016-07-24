@@ -74,7 +74,7 @@ def ls(deployment_id, sort_by=None, descending=False):
     client = utils.get_rest_client(rest_host)
     try:
         if deployment_id:
-            logger.info('Listing nodes list for deployment: \'{0}\' '
+            logger.info('Listing nodes for deployment: \'{0}\' '
                         '[manager={1}]'.format(deployment_id, rest_host))
         else:
             logger.info(
