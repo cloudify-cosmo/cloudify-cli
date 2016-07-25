@@ -39,8 +39,11 @@ POLICY_ENGINE_START_TIMEOUT = 30
 
 DEFAULT_REST_PORT = 80
 SECURED_REST_PORT = 443
-DEFAULT_PROTOCOL = 'http'
-SECURED_PROTOCOL = 'https'
+DEFAULT_REST_PROTOCOL = 'http'
+SECURED_REST_PROTOCOL = 'https'
+
+REST_PORT_RUNTIME_PROPERTY = 'rest_port'
+REST_PROTOCOL_RUNTIME_PROPERTY = 'rest_protocol'
 
 CLOUDIFY_PACKAGES_PATH = '/cloudify'
 CLOUDIFY_COMPONENTS_PACKAGE_PATH = '/cloudify-components'
@@ -54,7 +57,7 @@ IGNORED_LOCAL_WORKFLOW_MODULES = (
     'cloudify_agent.operations',
     'cloudify_agent.installer.operations',
 
-    # maintained for backward compatibily with < 3.3 blueprints
+    # maintained for backward compatibility with < 3.3 blueprints
     'worker_installer.tasks',
     'plugin_installer.tasks',
     'windows_agent_installer.tasks',
@@ -65,7 +68,8 @@ CLOUDIFY_AUTHENTICATION_HEADER = 'Authorization'
 CLOUDIFY_USERNAME_ENV = 'CLOUDIFY_USERNAME'
 CLOUDIFY_PASSWORD_ENV = 'CLOUDIFY_PASSWORD'
 
-CLOUDIFY_SSL_CERT = 'CLOUDIFY_SSL_CERT'
+PUBLIC_REST_CERT = 'public_rest_cert.crt'
+LOCAL_REST_CERT_FILE = 'LOCAL_REST_CERT_FILE'
 CLOUDIFY_SSL_TRUST_ALL = 'CLOUDIFY_SSL_TRUST_ALL'
 
 SSL_ENABLED_PROPERTY_NAME = 'enabled'

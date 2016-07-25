@@ -128,7 +128,7 @@ def bootstrap(blueprint_path,
                     profile.set_management_port(details['manager_port'])
                     profile.set_provider_context(details['provider_context'])
                     profile.set_rest_port(details['rest_port'])
-                    profile.set_protocol(details['protocol'])
+                    profile.set_rest_protocol(details['rest_protocol'])
                     profile.set_bootstrap_state(True)
 
                 temp_profile = os.path.join(

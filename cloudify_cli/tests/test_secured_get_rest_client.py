@@ -20,7 +20,7 @@ import unittest
 from cloudify_rest_client.client import DEFAULT_API_VERSION
 
 from . import cfy
-from .. import utils
+from .. import env
 from .. import constants
 
 TRUST_ALL = 'non-empty-value'
@@ -35,35 +35,35 @@ class TestGetRestClient(unittest.TestCase):
         os.environ[constants.CLOUDIFY_USERNAME_ENV] = 'test_username'
         os.environ[constants.CLOUDIFY_PASSWORD_ENV] = 'test_password'
         os.environ[constants.CLOUDIFY_SSL_TRUST_ALL] = TRUST_ALL
-        os.environ[constants.CLOUDIFY_SSL_CERT] = CERT_PATH
+        os.environ[constants.LOCAL_REST_CERT_FILE] = CERT_PATH
 
     def tearDown(self):
 
         del os.environ[constants.CLOUDIFY_USERNAME_ENV]
         del os.environ[constants.CLOUDIFY_PASSWORD_ENV]
         del os.environ[constants.CLOUDIFY_SSL_TRUST_ALL]
-        del os.environ[constants.CLOUDIFY_SSL_CERT]
+        del os.environ[constants.LOCAL_REST_CERT_FILE]
 
         cfy.purge_dot_cloudify()
 
     def test_get_rest_client(self):
-        client = utils.get_rest_client(manager_ip='localhost',
-                                       skip_version_check=True)
+        client = env.get_rest_client(rest_host='localhost',
+                                     skip_version_check=True)
         self.assertIsNotNone(client._client.headers[
             constants.CLOUDIFY_AUTHENTICATION_HEADER])
 
     def test_get_secured_rest_client(self):
-        protocol = 'https'
+        rest_protocol = 'https'
         host = 'localhost'
         port = 443
         skip_version_check = True
 
-        client = utils.get_rest_client(
-            manager_ip=host, rest_port=port, protocol=protocol,
+        client = env.get_rest_client(
+            rest_host=host, rest_port=port, rest_protocol=rest_protocol,
             skip_version_check=skip_version_check)
 
         self.assertEqual(CERT_PATH, client._client.cert)
         self.assertTrue(client._client.trust_all)
         self.assertEqual('{0}://{1}:{2}/api/{3}'.format(
-            protocol, host, port, DEFAULT_API_VERSION),
+            rest_protocol, host, port, DEFAULT_API_VERSION),
             client._client.url)

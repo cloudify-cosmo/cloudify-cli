@@ -63,16 +63,16 @@ def use(alias,
         env.set_active_profile('local')
         return
 
-    logger.info('Attemping to connect...'.format(management_ip))
+    logger.info('Attempting to connect...'.format(management_ip))
     # determine SSL mode by port
     if rest_port == constants.SECURED_REST_PORT:
-        protocol = constants.SECURED_PROTOCOL
+        rest_protocol = constants.SECURED_REST_PROTOCOL
     else:
-        protocol = constants.DEFAULT_PROTOCOL
+        rest_protocol = constants.DEFAULT_REST_PROTOCOL
     client = env.get_rest_client(
-        manager_ip=management_ip,
+        rest_host=management_ip,
         rest_port=rest_port,
-        protocol=protocol,
+        rest_protocol=rest_protocol,
         skip_version_check=True)
     try:
         # first check this server is available.
@@ -105,7 +105,7 @@ def use(alias,
         wd_settings.set_management_server(management_ip)
         wd_settings.set_provider_context(provider_context)
         wd_settings.set_rest_port(rest_port)
-        wd_settings.set_protocol(protocol)
+        wd_settings.set_rest_protocol(rest_protocol)
         logger.info('Using manager {0} with port {1}'.format(
             management_ip, rest_port))
         if management_user:

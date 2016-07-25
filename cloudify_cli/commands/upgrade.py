@@ -20,10 +20,9 @@ import shutil
 import tempfile
 
 from .. import ssh
-from .. import utils
+from .. import env
 from .. import common
 from ..config import cfy
-from .. import env
 from .. import exceptions
 from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
@@ -69,7 +68,7 @@ def upgrade(blueprint_path,
     inputs = list(inputs)
 
     logger = get_logger()
-    management_ip = env.get_management_server_ip()
+    management_ip = env.get_rest_host()
 
     client = env.get_rest_client(management_ip, skip_version_check=True)
 
@@ -84,11 +83,11 @@ def upgrade(blueprint_path,
 
     env_name = 'manager-upgrade'
     # init local workflow execution environment
-    env = common.initialize_blueprint(blueprint_path,
-                                      storage=None,
-                                      install_plugins=install_plugins,
-                                      name=env_name,
-                                      inputs=json.dumps(inputs))
+    working_env = common.initialize_blueprint(blueprint_path,
+                                              storage=None,
+                                              install_plugins=install_plugins,
+                                              name=env_name,
+                                              inputs=json.dumps(inputs))
     logger.info('Upgrading manager...')
     put_workflow_state_file(is_upgrade=True,
                             key_filename=inputs['ssh_key_filename'],
@@ -96,21 +95,22 @@ def upgrade(blueprint_path,
                             port=inputs['ssh_port'])
     if not skip_validations:
         logger.info('Executing upgrade validations...')
-        env.execute(workflow='execute_operation',
-                    parameters={'operation':
-                                'cloudify.interfaces.validation.creation'},
-                    task_retries=task_retries,
-                    task_retry_interval=task_retry_interval,
-                    task_thread_pool_size=task_thread_pool_size)
+        working_env.execute(workflow='execute_operation',
+                            parameters={
+                                'operation':
+                                    'cloudify.interfaces.validation.creation'},
+                            task_retries=task_retries,
+                            task_retry_interval=task_retry_interval,
+                            task_thread_pool_size=task_thread_pool_size)
         logger.info('Upgrade validation completed successfully')
 
     if not validate_only:
         try:
             logger.info('Executing manager upgrade...')
-            env.execute('install',
-                        task_retries=task_retries,
-                        task_retry_interval=task_retry_interval,
-                        task_thread_pool_size=task_thread_pool_size)
+            working_env.execute('install',
+                                task_retries=task_retries,
+                                task_retry_interval=task_retry_interval,
+                                task_thread_pool_size=task_thread_pool_size)
         except Exception as e:
             msg = 'Upgrade failed! ({0})'.format(e)
             error = exceptions.CloudifyCliError(msg)
@@ -120,7 +120,7 @@ def upgrade(blueprint_path,
             ]
             raise error
 
-        manager_node = next(node for node in env.storage.get_nodes()
+        manager_node = next(node for node in working_env.storage.get_nodes()
                             if node.id == 'manager_configuration')
         upload_resources = \
             manager_node.properties['cloudify'].get('upload_resources', {})
@@ -152,7 +152,7 @@ def upgrade(blueprint_path,
 
     logger.info('Upgrade complete')
     logger.info('Manager is up at {0}'.format(
-        env.get_management_server_ip()))
+        env.get_rest_host()))
 
 
 def update_inputs(inputs=None):
@@ -161,7 +161,7 @@ def update_inputs(inputs=None):
     inputs.update({'ssh_key_filename': _load_management_key(inputs)})
     inputs.update({'ssh_user': _load_management_user(inputs)})
     inputs.update({'ssh_port': _load_management_port(inputs)})
-    inputs.update({'public_ip': env.get_management_server_ip()})
+    inputs.update({'public_ip': env.get_rest_host()})
     return inputs
 
 

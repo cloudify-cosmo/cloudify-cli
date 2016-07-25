@@ -38,7 +38,7 @@ def status():
             'manager or run `cfy use MANAGER_IP` to use an existing one.')
         return
 
-    management_ip = env.get_management_server_ip()
+    management_ip = env.get_rest_host()
     client = env.get_rest_client(management_ip)
 
     logger.info('Retrieving manager services status... [ip={0}]'.format(

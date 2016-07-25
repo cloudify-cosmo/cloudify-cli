@@ -263,26 +263,29 @@ def is_validate_definitions_version():
     return config.validate_definitions_version
 
 
-def get_rest_client(manager_ip=None,
+def get_rest_client(rest_host=None,
                     rest_port=None,
-                    protocol=None,
+                    rest_protocol=None,
+                    username=None,
+                    password=None,
+                    trust_all=False,
                     skip_version_check=False):
     # TODO: Go through all commands remove remove the call
     # to get_management_server_ip as it is already defaulted
     # here.
-    manager_ip = manager_ip or get_management_server_ip()
+    rest_host = rest_host or get_rest_host()
     rest_port = rest_port or get_rest_port()
-    protocol = protocol or get_protocol()
-    username = get_username()
-    password = get_password()
+    rest_protocol = rest_protocol or get_rest_protocol()
+    username = username or get_username()
+    password = password or get_password()
+    trust_all = trust_all or get_ssl_trust_all()
     headers = get_auth_header(username, password)
     cert = get_ssl_cert()
-    trust_all = get_ssl_trust_all()
 
     client = CloudifyClient(
-        host=manager_ip,
+        host=rest_host,
         port=rest_port,
-        protocol=protocol,
+        protocol=rest_protocol,
         headers=headers,
         cert=cert,
         trust_all=trust_all)
@@ -290,7 +293,7 @@ def get_rest_client(manager_ip=None,
     if skip_version_check or True:
         return client
 
-    cli_version, manager_version = get_cli_manager_versions()
+    cli_version, manager_version = get_cli_manager_versions(client)
 
     if cli_version == manager_version:
         return client
@@ -312,10 +315,10 @@ def get_rest_port():
     return cosmo_wd_settings.get_rest_port()
 
 
-def get_protocol():
+def get_rest_protocol():
     active_profile = get_active_profile()
     cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
-    return cosmo_wd_settings.get_protocol()
+    return cosmo_wd_settings.get_rest_protocol()
 
 
 def get_management_user():
@@ -345,7 +348,7 @@ def get_management_key():
         'Management Key is not set in working directory settings')
 
 
-def get_management_server_ip():
+def get_rest_host():
     active_profile = get_active_profile()
     cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
     management_ip = cosmo_wd_settings.get_management_server()
@@ -358,14 +361,14 @@ def get_management_server_ip():
 
 def build_manager_host_string(user='', ip=''):
     user = user or get_management_user()
-    ip = ip or get_management_server_ip()
+    ip = ip or get_rest_host()
     return '{0}@{1}'.format(user, ip)
 
 
 # TODO: apply to log messages if necessary or remove
 def manager_msg(message, manager_ip=None):
     return '{0} [Manager={1}]'.format(
-        message, manager_ip or get_management_server_ip())
+        message, manager_ip or get_rest_host())
 
 
 def get_username():
@@ -376,8 +379,22 @@ def get_password():
     return os.environ.get(constants.CLOUDIFY_PASSWORD_ENV)
 
 
+def get_default_rest_cert_local_path():
+    return os.path.join(get_init_path(), constants.PUBLIC_REST_CERT)
+
+
 def get_ssl_cert():
-    return os.environ.get(constants.CLOUDIFY_SSL_CERT)
+    """
+    Return the path to a local copy of the manager's public certificate.
+    :return: If the LOCAL_REST_CERT_FILE env var was set by the user - use it,
+    If it wasn't set, check if the certificate file is found in its default
+    location. If so - use it, otherwise - return None
+    """
+    if os.environ.get(constants.LOCAL_REST_CERT_FILE):
+        return os.environ.get(constants.LOCAL_REST_CERT_FILE)
+
+    default_cert_file = get_default_rest_cert_local_path()
+    return default_cert_file if os.path.isfile(default_cert_file) else None
 
 
 def get_ssl_trust_all():
@@ -410,26 +427,28 @@ def connected_to_manager(management_ip):
 
 
 # TODO: move to version.py
-def get_manager_version_data():
-    active_profile = get_active_profile()
-    dir_settings = load_cloudify_working_dir_settings(
-        active_profile, suppress_error=True)
-    if not (dir_settings and dir_settings.get_management_server()):
-        return None
-    management_ip = dir_settings.get_management_server()
-    if not connected_to_manager(management_ip):
-        return None
-    client = get_rest_client(management_ip, skip_version_check=True)
+def get_manager_version_data(rest_client=None):
+    if not rest_client:
+        # getting management ip from the working dir settings
+        dir_settings = load_cloudify_working_dir_settings(suppress_error=True)
+        if not (dir_settings and dir_settings.get_management_server()):
+            return None
+        management_ip = dir_settings.get_management_server()
+        if not connected_to_manager(management_ip):
+            return None
+        # create rest client
+        rest_client = get_rest_client(management_ip, skip_version_check=True)
+
     try:
-        version_data = client.manager.get_version()
+        version_data = rest_client.manager.get_version()
     except CloudifyClientError:
         return None
-    version_data['ip'] = management_ip
+    version_data['ip'] = rest_client.host
     return version_data
 
 
-def get_cli_manager_versions():
-    manager_version_data = get_manager_version_data()
+def get_cli_manager_versions(rest_client):
+    manager_version_data = get_manager_version_data(rest_client)
     cli_version = get_version_data().get('version')
 
     if not manager_version_data:
@@ -445,14 +464,14 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
 
     def __init__(self):
         self._bootstrap_state = None
-        self._management_ip = None
+        self._management_host = None
         self._management_key = None
         self._management_password = None
         self._management_port = None
         self._management_user = None
         self._provider_context = None
         self._rest_port = constants.DEFAULT_REST_PORT
-        self._protocol = constants.DEFAULT_PROTOCOL
+        self._rest_protocol = constants.DEFAULT_REST_PROTOCOL
 
     def get_bootstrap_state(self):
         return self._bootstrap_state
@@ -461,10 +480,10 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
         self._bootstrap_state = bootstrap_state
 
     def get_management_server(self):
-        return self._management_ip
+        return self._management_host
 
-    def set_management_server(self, management_ip):
-        self._management_ip = management_ip
+    def set_management_server(self, management_host):
+        self._management_host = management_host
 
     def get_management_key(self):
         return self._management_key
@@ -497,7 +516,7 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
         self._provider_context = provider_context
 
     def remove_management_server_context(self):
-        self._management_ip = None
+        self._management_host = None
 
     def get_rest_port(self):
         return self._rest_port
@@ -505,11 +524,11 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
     def set_rest_port(self, rest_port):
         self._rest_port = rest_port
 
-    def get_protocol(self):
-        return self._protocol
+    def get_rest_protocol(self):
+        return self._rest_protocol
 
-    def set_protocol(self, protocol):
-        self._protocol = protocol
+    def set_rest_protocol(self, rest_protocol):
+        self._rest_protocol = rest_protocol
 
 
 # TODO: get rid of this. Used only by tests

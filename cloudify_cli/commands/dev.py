@@ -44,7 +44,7 @@ def dev(tasks_file, task, args):
     """
     env.assert_manager_active()
 
-    management_ip = env.get_management_server_ip()
+    management_ip = env.get_rest_host()
     _execute(username=get_management_user(),
              port=get_management_port(),
              key=get_management_key(),
