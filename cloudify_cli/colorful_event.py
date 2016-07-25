@@ -106,6 +106,10 @@ class ColorfulEvent(Event):
         return self.TIMESTAMP_COLOR
 
     @colorful_property
+    def printable_timestamp(self):
+        return self.TIMESTAMP_COLOR
+
+    @colorful_property
     def event_type_indicator(self):
         return self.LOG_TYPE_COLOR if self.is_log_message else \
             self.EVENT_TYPE_COLOR

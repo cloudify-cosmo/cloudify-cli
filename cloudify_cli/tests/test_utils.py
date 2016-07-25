@@ -22,6 +22,7 @@ from .. import env
 from .. import utils
 from .. import common
 from .. import constants
+from ..logger import configure_loggers
 from ..exceptions import CloudifyCliError
 from ..env import CloudifyWorkingDirectorySettings
 
@@ -184,6 +185,7 @@ class CliUtilsUnitTests(unittest.TestCase):
                                 input_str)
 
     def test_inputs_to_dict_error_handling(self):
+        configure_loggers()
         input_str = "my_key1=my_value1;my_key2"
         resource_name = "my_resource_name"
 

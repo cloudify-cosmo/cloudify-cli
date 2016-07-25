@@ -107,9 +107,10 @@ def list(deployment_id):
     logger.info('Listing workflows for deployment {0}...'.format(
         deployment_id))
     deployment = client.deployments.get(deployment_id)
+    sorted_workflows = sorted(deployment.workflows, key=lambda w: w.name)
 
     pt = utils.table(['blueprint_id', 'deployment_id', 'name', 'created_at'],
-                     data=deployment.workflows,
+                     data=sorted_workflows,
                      defaults={'blueprint_id': deployment.blueprint_id,
                                'deployment_id': deployment.id})
     common.print_table('Workflows:', pt)

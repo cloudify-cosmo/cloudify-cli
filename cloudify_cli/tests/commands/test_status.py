@@ -35,10 +35,11 @@ class StatusTest(CliCommandTest):
     def test_status_no_management_server_defined(self):
         # Running a command which requires a target management server without
         # first calling "cfy use" or providing a target server explicitly
-        self.invoke('cfy status', 'Cloudify environment is not initalized')
+        self.invoke('cfy status', 'Cloudify environment is not initialized')
 
     def test_status_by_unauthorized_user(self):
-        with patch('cloudify_cli.utils.get_management_server_ip'):
+        self.create_cosmo_wd_settings()
+        with patch('cloudify_cli.env.get_management_server_ip'):
             with patch.object(self.client.manager, 'get_status') as mock:
                 mock.side_effect = UserUnauthorizedError('Unauthorized user')
                 outcome = self.invoke('cfy status')

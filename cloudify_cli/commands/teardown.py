@@ -15,7 +15,7 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import utils
+from .. import env
 from ..config import cfy
 from .. import exceptions
 from ..config import helptexts
@@ -43,7 +43,7 @@ def teardown(force,
     env.assert_manager_active()
 
     try:
-        management_ip = env.get_management_server_ip()
+        management_ip = env.get_rest_host()
     except exceptions.CloudifyCliError:
         # management ip does not exist in the local context
         # this can mean one of two things:
@@ -93,7 +93,7 @@ def teardown(force,
 def _update_local_provider_context(management_ip):
     logger = get_logger()
     try:
-        use(management_ip, utils.get_rest_port())
+        use(management_ip, env.get_rest_port())
     except BaseException as e:
         logger.warning('Failed to retrieve provider context: {0}. This '
                        'may cause a leaking manager '
@@ -138,12 +138,12 @@ def _assert_force(force):
 
 def _do_teardown(task_retries, task_retry_interval, task_thread_pool_size):
     # reload settings since the provider context maybe changed
-    settings = utils.load_cloudify_working_dir_settings()
+    settings = env.load_cloudify_working_dir_settings()
     provider_context = settings.get_provider_context()
     bs.read_manager_deployment_dump_if_needed(
         provider_context.get('cloudify', {}).get('manager_deployment'))
     bs.teardown(task_retries, task_retry_interval, task_thread_pool_size)
     # cleaning relevant data from working directory settings
-    with utils.update_wd_settings() as wd_settings:
+    with env.update_wd_settings() as wd_settings:
         # wd_settings.set_provider_context(provider_context)
         wd_settings.remove_management_server_context()

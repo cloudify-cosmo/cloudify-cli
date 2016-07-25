@@ -13,8 +13,8 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import datetime
 from uuid import uuid4
+from datetime import datetime
 
 from mock import patch
 from mock import MagicMock
@@ -96,6 +96,6 @@ def execution_mock(status, wf_id='mock_wf'):
         'blueprint_id': 'blueprint-id',
         'error': '',
         'id': uuid4(),
-        'created_at': datetime.datetime.now(),
+        'created_at': datetime.now().isoformat()[:-3],
         'parameters': {}
     })

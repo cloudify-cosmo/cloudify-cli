@@ -101,10 +101,23 @@ def table(cols, data, defaults=None):
 
     """
 
+    def get_values_per_column(column, row_data):
+        if column in row_data:
+            if column == 'created_at':
+                if row_data[column]:
+                    row_data[column] = \
+                        row_data[column].replace('T', ' ').replace('Z', ' ')
+            return row_data[column]
+        else:
+            return defaults[column]
+
     pt = PrettyTable([col for col in cols])
 
     for d in data:
-        pt.add_row(map(lambda c: d[c] if c in d else defaults[c], cols))
+        values_row = []
+        for c in cols:
+            values_row.append(get_values_per_column(c, d))
+        pt.add_row(values_row)
 
     return pt
 
@@ -205,3 +218,9 @@ def download_file(url, destination=None):
         raise CloudifyCliError(
             'Failed to download {0}. ({1})'.format(url, str(ex)))
     return destination
+
+
+def get_archive_id(archive_location):
+    filename, _ = os.path.splitext(os.path.basename(archive_location))
+    dirname = os.path.dirname(archive_location).split('/')[-1]
+    return (dirname + '_' + filename).replace('-', '_')

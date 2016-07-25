@@ -436,6 +436,13 @@ class Options(object):
             '--alias',
             help=helptexts.PROFILE_ALIAS)
 
+        self.descending = click.option(
+            '--descending',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.DESCENDING)
+
     @staticmethod
     def force(help):
         return click.option(
@@ -475,6 +482,14 @@ class Options(object):
             type=int,
             default=default,
             help=helptexts.TASK_RETRIES.format(default))
+
+    @staticmethod
+    def sort_by(default='created_at'):
+        return click.option(
+            '--sort-by',
+            required=False,
+            default=default,
+            help=helptexts.SORT_BY)
 
     @staticmethod
     def task_retry_interval(default=1):

@@ -53,8 +53,10 @@ def _print_deployment_inputs(client, blueprint_id):
 
 @deployments.command(name='list')
 @cfy.options.blueprint_id()
+@cfy.options.sort_by()
+@cfy.options.descending
 @cfy.options.verbose
-def list(blueprint_id):
+def list(blueprint_id, sort_by=None, descending=False):
     """List deployments
 
     If `--blueprint-id` is provided, list deployments for that blueprint.
@@ -69,7 +71,8 @@ def list(blueprint_id):
     else:
         logger.info('Listing all deployments...')
 
-    deployments = client.deployments.list()
+    deployments = client.deployments.list(sort=sort_by,
+                                          is_descending=descending)
     if blueprint_id:
         deployments = filter(lambda deployment:
                              deployment['blueprint_id'] == blueprint_id,

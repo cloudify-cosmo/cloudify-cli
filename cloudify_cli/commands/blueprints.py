@@ -99,7 +99,8 @@ def upload(ctx,
             ctx.invoke(
                 validate_blueprint,
                 blueprint_path=processed_blueprint_path)
-        blueprint_id = blueprint_id or get_archive_id(processed_blueprint_path)
+        blueprint_id = blueprint_id or utils.get_archive_id(
+            processed_blueprint_path)
 
         logger.info('Uploading blueprint {0}...'.format(blueprint_path))
         blueprint = client.blueprints.upload(
@@ -151,8 +152,10 @@ def delete(blueprint_id):
 
 
 @blueprints.command(name='list')
+@cfy.options.sort_by()
+@cfy.options.descending
 @cfy.options.verbose
-def list():
+def list(sort_by=None, descending=False):
     """List all blueprints
     """
     env.assert_manager_active()
@@ -170,7 +173,8 @@ def list():
         return blueprint
 
     logger.info('Listing all blueprints...')
-    blueprints = [trim_description(b) for b in client.blueprints.list()]
+    blueprints = [trim_description(b) for b in client.blueprints.list(
+        sort=sort_by, is_descending=descending)]
 
     pt = utils.table(['id', 'description', 'main_file_name',
                       'created_at', 'updated_at'],
@@ -253,7 +257,7 @@ def package(ctx, blueprint_path, output_path, validate):
     logger = get_logger()
 
     blueprint_path = os.path.abspath(blueprint_path)
-    destination = output_path or get_archive_id(blueprint_path)
+    destination = output_path or utils.get_archive_id(blueprint_path)
 
     if validate:
         ctx.invoke(validate_blueprint, blueprint_path=blueprint_path)
@@ -271,10 +275,3 @@ def package(ctx, blueprint_path, output_path, validate):
     else:
         utils.tar(path_to_package, destination + '.tar.gz')
     logger.info('Packaging complete!')
-
-
-# TODO: move to utils
-def get_archive_id(archive_location):
-    filename, _ = os.path.splitext(os.path.basename(archive_location))
-    dirname = os.path.dirname(archive_location).split('/')[-1]
-    return (dirname + '_' + filename).replace('-', '_')

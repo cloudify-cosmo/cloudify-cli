@@ -13,7 +13,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from ... import utils
+from ... import env
 
 from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 
@@ -21,15 +21,16 @@ from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 class LogsTest(CliCommandTest):
 
     def test_with_empty_config(self):
-        settings = utils.CloudifyWorkingDirectorySettings()
+        settings = env.CloudifyWorkingDirectorySettings()
         self.create_cosmo_wd_settings(settings)
         self.invoke('cfy logs download',
                     'Management User is not set '
                     'in working directory settings')
 
     def test_with_no_key(self):
-        settings = utils.CloudifyWorkingDirectorySettings()
+        settings = env.CloudifyWorkingDirectorySettings()
         settings.set_management_user('test')
+        settings.set_management_port('22')
         settings.set_management_server('127.0.0.1')
         self.create_cosmo_wd_settings(settings)
         self.invoke('cfy logs download',
@@ -37,7 +38,7 @@ class LogsTest(CliCommandTest):
                     'in working directory settings')
 
     def test_with_no_user(self):
-        settings = utils.CloudifyWorkingDirectorySettings()
+        settings = env.CloudifyWorkingDirectorySettings()
         settings.set_management_server('127.0.0.1')
         settings.set_management_key('/tmp/test.pem')
         self.create_cosmo_wd_settings(settings)
@@ -45,8 +46,18 @@ class LogsTest(CliCommandTest):
                     'Management User is not set '
                     'in working directory settings')
 
+    def test_with_no_port(self):
+        settings = env.CloudifyWorkingDirectorySettings()
+        settings.set_management_user('test')
+        settings.set_management_server('127.0.0.1')
+        settings.set_management_key('/tmp/test.pem')
+        self.create_cosmo_wd_settings(settings)
+        self._assert_ex('cfy logs download',
+                        'Management Port is not set '
+                        'in working directory settings')
+
     def test_with_no_server(self):
-        settings = utils.CloudifyWorkingDirectorySettings()
+        settings = env.CloudifyWorkingDirectorySettings()
         settings.set_management_user('test')
         settings.set_management_key('/tmp/test.pem')
         self.create_cosmo_wd_settings(settings)

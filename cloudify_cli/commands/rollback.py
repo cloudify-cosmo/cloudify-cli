@@ -49,9 +49,7 @@ def rollback(blueprint_path,
     env.assert_manager_active()
 
     logger = get_logger()
-    management_ip = env.get_management_server_ip()
-
-    client = env.get_rest_client(management_ip, skip_version_check=True)
+    client = env.get_rest_client(skip_version_check=True)
 
     verify_and_wait_for_maintenance_mode_activation(client)
 
@@ -68,7 +66,8 @@ def rollback(blueprint_path,
     logger.info('Starting Manager rollback process...')
     put_workflow_state_file(is_upgrade=False,
                             key_filename=inputs['ssh_key_filename'],
-                            user=inputs['ssh_user'])
+                            user=inputs['ssh_user'],
+                            port=inputs['ssh_port'])
 
     logger.info('Executing Manager rollback...')
     try:
