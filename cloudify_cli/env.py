@@ -82,7 +82,7 @@ def get_active_profile():
         with open(ACTIVE_PRO_FILE) as active_profile:
             return active_profile.read().strip()
     else:
-        return None
+        return ''
 
 
 def assert_manager_active():
@@ -161,7 +161,7 @@ def get_init_path(profile_name=None):
     """
     profile_name = profile_name or get_active_profile()
     path = os.path.join(PROFILES_DIR, profile_name)
-    return path if os.path.isdir(path) else None
+    return path if os.path.isdir(path) else ''
 
 
 def dump_configuration_file():
