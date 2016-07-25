@@ -38,11 +38,11 @@ def status():
             'manager or run `cfy use MANAGER_IP` to use an existing one.')
         return
 
-    management_ip = env.get_rest_host()
-    client = env.get_rest_client(management_ip)
+    rest_host = env.get_rest_host()
+    client = env.get_rest_client(rest_host)
 
     logger.info('Retrieving manager services status... [ip={0}]'.format(
-        management_ip))
+        rest_host))
     try:
         status_result = client.manager.get_status()
         maintenance_response = client.maintenance_mode.status()
@@ -52,7 +52,7 @@ def status():
         return False
     except CloudifyClientError:
         logger.info('REST service at manager {0} is not responding!'.format(
-            management_ip))
+            rest_host))
         return False
 
     services = []
