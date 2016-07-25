@@ -90,7 +90,7 @@ def upload(ctx,
     client = env.get_rest_client()
 
     # TODO: Consider using client.blueprints.publish_archive if the
-    # path is an achive. This requires additional logic when identifying
+    # path is an archive. This requires additional logic when identifying
     # the source.
     processed_blueprint_path = common.get_blueprint(
         blueprint_path, blueprint_filename)

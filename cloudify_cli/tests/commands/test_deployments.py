@@ -39,7 +39,7 @@ class DeploymentsTest(CliCommandTest):
 
         self.client.deployments.create = MagicMock(return_value=deployment)
         self.invoke(
-            'cfy deployments create a-blueprint-id -d deployment')
+            'cfy deployments create -b a-blueprint-id -d deployment')
 
     def test_deployments_delete(self):
         self.client.deployments.delete = MagicMock()
@@ -105,7 +105,7 @@ class DeploymentsTest(CliCommandTest):
         ]
 
         self.client.deployments.list = MagicMock(return_value=deployments)
-        outcome = self.invoke('cfy deployments list b1_blueprint -v')
+        outcome = self.invoke('cfy deployments list -b b1_blueprint -v')
         self.assertNotIn('b2_blueprint', outcome.logs)
         self.assertIn('b1_blueprint', outcome.logs)
 

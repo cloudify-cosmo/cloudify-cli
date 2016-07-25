@@ -14,13 +14,11 @@
 #    * limitations under the License.
 
 import json
-
 import mock
 
-from cloudify_cli import common
-from cloudify_cli.bootstrap import bootstrap
-from cloudify_cli.tests.commands.test_cli_command import \
-    CliCommandTest, BLUEPRINTS_DIR
+from ... import common
+from ...bootstrap import bootstrap
+from .test_cli_command import CliCommandTest, BLUEPRINTS_DIR
 
 
 class BootstrapTest(CliCommandTest):

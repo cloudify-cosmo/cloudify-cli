@@ -16,7 +16,7 @@
 import yaml
 from mock import MagicMock, patch
 
-from ... import utils
+from ... import env
 from .test_cli_command import CliCommandTest
 from .test_cli_command import BLUEPRINTS_DIR
 
@@ -63,33 +63,35 @@ class BlueprintsTest(CliCommandTest):
             should_fail=True)
 
     def test_blueprints_publish_archive(self):
-        self.client.blueprints.publish_archive = MagicMock()
+        self.client.blueprints.upload = MagicMock()
         self.invoke(
             'cfy blueprints upload {0}/helloworld.zip '
             '-b my_blueprint_id --blueprint-filename blueprint.yaml'
             .format(BLUEPRINTS_DIR))
 
     def test_blueprints_publish_unsupported_archive_type(self):
-        self.client.blueprints.publish_archive = MagicMock()
+        self.client.blueprints.upload = MagicMock()
         # passing in a directory instead of a valid archive type
         self.invoke(
             'cfy blueprints upload {0}/helloworld -b my_blueprint_id'.format(
                 BLUEPRINTS_DIR),
-            'You must either provide a path to a local blueprint file')
+            'You must provide either a path to a local file')
 
     def test_blueprints_publish_archive_bad_file_path(self):
-        self.client.blueprints.publish_archive = MagicMock()
+        self.client.blueprints.upload = MagicMock()
         self.invoke(
             'cfy blueprints upload {0}/helloworld.tar.gz -n blah'
             .format(BLUEPRINTS_DIR),
-            err_str_segment="not a valid URL nor a path")
+            err_str_segment="You must provide either a path to a local file")
 
     def test_blueprints_publish_archive_no_filename(self):
-        self.client.blueprints.publish_archive = MagicMock()
+        # TODO: The error message here should be different - something to
+        # do with the filename provided being incorrect
+        self.client.blueprints.upload = MagicMock()
         self.invoke(
             'cfy blueprints upload {0}/helloworld.tar.gz -b my_blueprint_id'
             .format(BLUEPRINTS_DIR),
-            err_str_segment="Supplying an archive requires that the name of")
+            err_str_segment="You must provide either a path to a local file")
 
     def test_blueprint_validate(self):
         self.invoke(
@@ -97,9 +99,9 @@ class BlueprintsTest(CliCommandTest):
                 BLUEPRINTS_DIR))
 
     def test_blueprint_validate_definitions_version_false(self):
-        with open(utils.CLOUDIFY_CONFIG_PATH) as f:
+        with open(env.CLOUDIFY_CONFIG_PATH) as f:
             config = yaml.safe_load(f.read())
-        with open(utils.CLOUDIFY_CONFIG_PATH, 'w') as f:
+        with open(env.CLOUDIFY_CONFIG_PATH, 'w') as f:
             config['validate_definitions_version'] = False
             f.write(yaml.safe_dump(config))
         self.invoke(
@@ -164,7 +166,7 @@ class BlueprintsTest(CliCommandTest):
             self.assertEqual(input['default'], '-')
             self.assertEqual(input['description'], description)
 
-        with patch('cloudify_cli.utils.get_rest_client',
+        with patch('cloudify_cli.env.get_rest_client',
                    get_rest_client_mock),\
                 patch('cloudify_cli.utils.table', table_mock):
             self.invoke('cfy blueprints inputs {0}'.format(blueprint_id))
