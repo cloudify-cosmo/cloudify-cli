@@ -125,6 +125,7 @@ def bootstrap(blueprint_path,
                     profile.set_management_server(manager_ip)
                     profile.set_management_key(details['manager_key_path'])
                     profile.set_management_user(details['manager_user'])
+                    profile.set_management_port(details['manager_port'])
                     profile.set_provider_context(details['provider_context'])
                     profile.set_rest_port(details['rest_port'])
                     profile.set_protocol(details['protocol'])

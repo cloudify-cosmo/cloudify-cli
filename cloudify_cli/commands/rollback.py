@@ -68,7 +68,8 @@ def rollback(blueprint_path,
     logger.info('Starting Manager rollback process...')
     put_workflow_state_file(is_upgrade=False,
                             key_filename=inputs['ssh_key_filename'],
-                            user=inputs['ssh_user'])
+                            user=inputs['ssh_user'],
+                            port=inputs['ssh_port'])
 
     logger.info('Executing Manager rollback...')
     try:

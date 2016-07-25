@@ -46,6 +46,7 @@ from ..exceptions import CloudifyBootstrapError
 PROVIDER_RUNTIME_PROPERTY = 'provider'
 MANAGER_IP_RUNTIME_PROPERTY = 'manager_ip'
 MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
+MANAGER_PORT_RUNTIME_PROPERTY = 'manager_port'
 MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
 REST_PORT = 'rest_port'
 
@@ -172,7 +173,7 @@ def bootstrap_validation(blueprint_path,
                         task_thread_pool_size=task_thread_pool_size)
 
 
-def _perform_sanity(env,
+def _perform_sanity(working_env,
                     manager_ip,
                     fabric_env,
                     task_retries=5,
@@ -276,7 +277,7 @@ def bootstrap(blueprint_path,
             next(node_instance for node_instance in node_instances if
                  'cloudify.nodes.MyCloudifyManager' in
                  nodes_by_id[node_instance.node_id].type_hierarchy)
-        manager_node = nodes_by_id['manager_configuration']
+    manager_node = nodes_by_id['manager_configuration']
 
     if manager_node_instance.runtime_properties.get('provider'):
         provider_context = \
@@ -288,6 +289,9 @@ def bootstrap(blueprint_path,
         manager_user = \
             manager_node_instance.runtime_properties[
                 MANAGER_USER_RUNTIME_PROPERTY]
+        manager_port = \
+            manager_node_instance.runtime_properties[
+                MANAGER_PORT_RUNTIME_PROPERTY]
         manager_key_path = manager_node_instance.runtime_properties[
             MANAGER_KEY_PATH_RUNTIME_PROPERTY]
         rest_port = \
@@ -296,15 +300,15 @@ def bootstrap(blueprint_path,
     else:
         manager_ip = working_env.outputs()['manager_ip']
         manager_user = manager_node.properties['ssh_user']
+        manager_port = manager_node.properties['ssh_port']
         manager_key_path = manager_node.properties['ssh_key_filename']
         rest_port = manager_node_instance.runtime_properties[REST_PORT]
         protocol = get_protocol(rest_port)
 
-        fabric_env = {
-            "host_string": manager_ip,
-            "user": manager_user,
-            "key_filename": manager_key_path
-        }
+        fabric_env = build_fabric_env(manager_ip,
+                                      manager_user,
+                                      manager_port,
+                                      manager_key_path)
 
         agent_remote_key_path = _handle_agent_key_file(fabric_env,
                                                        manager_node)
@@ -327,7 +331,7 @@ def bootstrap(blueprint_path,
             task_retry_interval)
 
         if skip_sanity:
-            _perform_sanity(env=env,
+            _perform_sanity(working_env=env,
                             manager_ip=manager_ip,
                             fabric_env=fabric_env,
                             task_retries=task_retries,
@@ -339,6 +343,7 @@ def bootstrap(blueprint_path,
         'provider_context': provider_context,
         'manager_ip': manager_ip,
         'manager_user': manager_user,
+        'manager_port': manager_port,
         'manager_key_path': manager_key_path,
         'rest_port': rest_port,
         'protocol': protocol
@@ -380,9 +385,13 @@ def recover(snapshot_path,
     manager_node_instance = working_env.storage.get_node_instance(
         manager_node_instance_id)
     manager_user = manager_node.properties['ssh_user']
+    manager_port = manager_node.properties['ssh_port']
     manager_key_path = manager_node.properties['ssh_key_filename']
 
-    fabric_env = build_fabric_env(manager_ip, manager_user, manager_key_path)
+    fabric_env = build_fabric_env(manager_ip,
+                                  manager_user,
+                                  manager_port,
+                                  manager_key_path)
 
     agent_remote_key_path = _handle_agent_key_file(fabric_env,
                                                    manager_node)
@@ -434,10 +443,11 @@ def recover(snapshot_path,
     client.snapshots.delete(snapshot_id)
 
 
-def build_fabric_env(manager_ip, manager_user, manager_key_path):
+def build_fabric_env(manager_ip, manager_user, manager_port, manager_key_path):
     return {
         "host_string": manager_ip,
         "user": manager_user,
+        "port": manager_port,
         "key_filename": manager_key_path
     }
 

@@ -24,6 +24,7 @@ from ..config import cfy
 from ..config import helptexts
 from ..env import get_management_key
 from ..env import get_management_user
+from ..env import get_management_port
 from ..exceptions import CloudifyCliError
 
 
@@ -45,6 +46,7 @@ def dev(tasks_file, task, args):
 
     management_ip = env.get_management_server_ip()
     _execute(username=get_management_user(),
+             port=get_management_port(),
              key=get_management_key(),
              ip=management_ip,
              task=task,
@@ -52,14 +54,15 @@ def dev(tasks_file, task, args):
              args=args)
 
 
-def _execute(username, key, ip, task, tasks_file, args):
-    _setup_fabric_env(username=username, key=key)
+def _execute(username, port, key, ip, task, tasks_file, args):
+    _setup_fabric_env(username=username, port=port, key=key)
     tasks = exec_tasks_file(tasks_file=tasks_file)
     _execute_task(ip=ip, task=task, tasks=tasks, task_args=args)
 
 
-def _setup_fabric_env(username, key):
+def _setup_fabric_env(username, port, key):
     fabric_env.user = username
+    fabric_env.port = port
     fabric_env.key_filename = key
     fabric_env.warn_only = True
     fabric_env.abort_on_prompts = False

@@ -327,6 +327,15 @@ def get_management_user():
         'Management User is not set in working directory settings')
 
 
+def get_management_port():
+    active_profile = get_active_profile()
+    cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
+    if cosmo_wd_settings.get_management_port():
+        return cosmo_wd_settings.get_management_port()
+    raise CloudifyCliError(
+        'Management User is not set in working directory settings')
+
+
 def get_management_key():
     active_profile = get_active_profile()
     cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
