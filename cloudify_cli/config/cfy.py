@@ -30,6 +30,7 @@ from .. import logger
 from . import helptexts
 from .. import constants
 from ..logger import get_logger
+from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import CloudifyBootstrapError
 from ..exceptions import SuppressedCloudifyCliError
 
@@ -448,6 +449,7 @@ class Options(object):
         return click.option(
             '-n',
             '--blueprint-filename',
+            default=DEFAULT_BLUEPRINT_PATH,
             help=helptexts.BLUEPRINT_FILENAME)
 
     @staticmethod

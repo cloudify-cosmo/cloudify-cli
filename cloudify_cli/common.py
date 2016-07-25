@@ -180,9 +180,8 @@ def inputs_to_dict(resources, resource_name):
                     # parse resource content as yaml
                     content = yaml.load(resource)
             except yaml.error.YAMLError as e:
-                msg = ("'{0}' is not a valid YAML. {1}".format(
+                raise CloudifyCliError("'{0}' is not a valid YAML. {1}".format(
                     resource, str(e)))
-                raise CloudifyCliError(msg)
 
         if isinstance(content, dict):
             parsed_dict.update(content)
@@ -235,9 +234,9 @@ def plain_string_to_dict(input_string):
             value = split_mapping[1].strip()
             input_dict[key] = value
         else:
-            msg = "Invalid input format: {0}, the expected format is: " \
-                  "key1=value1;key2=value2".format(input_string)
-            raise CloudifyCliError(msg)
+            raise CloudifyCliError(
+                "Invalid input format: {0}, the expected format is: "
+                "key1=value1;key2=value2".format(input_string))
 
     return input_dict
 
@@ -267,6 +266,7 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
                 .format(blueprint_filename))
         return blueprint_file
 
+    # TODO: Verify this supports file://
     if '://' in source:
         downloaded_source = utils.download_file(source)
         return get_blueprint_file(downloaded_source)
@@ -276,10 +276,14 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
         else:
             # Maybe check if yaml. If not, verified by dsl parser
             return source
-    else:
+    elif len(source.split('/')) == 2:
         downloaded_source = _get_from_github(source)
         # GitHub archives provide an inner folder with each archive.
         return get_blueprint_file(downloaded_source)
+    else:
+        raise CloudifyCliError(
+            'You must provide either a path to a local file, a remote URL '
+            'or a GitHub `organization/repository[:tag/branch]`')
 
 
 def _get_from_github(source):

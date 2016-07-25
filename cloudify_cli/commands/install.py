@@ -21,7 +21,8 @@ import click
 from .. import utils
 from .. import common
 from ..config import cfy
-from ..constants import DEFAULT_BLUEPRINT_PATH
+from ..logger import get_logger
+from ..exceptions import CloudifyCliError
 from ..constants import DEFAULT_INSTALL_WORKFLOW
 from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
@@ -33,7 +34,7 @@ from . import deployments
 
 
 @cfy.command(name='install')
-@cfy.argument('blueprint-path')
+@cfy.argument('blueprint-path', required=False)
 @cfy.options.blueprint_id()
 @cfy.options.blueprint_filename()
 @cfy.options.validate
@@ -62,30 +63,48 @@ def manager(ctx,
             json):
     """Install an application via the manager
 
-    `BLUEPRINT_PATH` is the path to the blueprint to install.
+    `BLUEPRINT_PATH` can be either a local blueprint yaml file or
+    blueprint archive; a url to a blueprint archive or an
+    `organization/blueprint_repo[:tag/branch]` (to be
+    retrieved from GitHub)
 
     This will upload the blueprint, create a deployment and execute the
     `install` workflow.
     """
-    blueprint_id = blueprint_id or utils.generate_suffixed_id(
-        blueprints.get_archive_id(blueprint_path))
-    deployment_id = deployment_id or utils.generate_suffixed_id(blueprint_id)
+    if not blueprint_path:
+        processed_blueprint_path = _get_default_blueprint_path(
+            blueprint_path, blueprint_filename)
+    else:
+        processed_blueprint_path = common.get_blueprint(
+            blueprint_path, blueprint_filename)
+
+    blueprint_id = blueprint_id or get_archive_id(processed_blueprint_path)
+    deployment_id = deployment_id or blueprint_id
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
     if not inputs and os.path.isfile(os.path.join(
             utils.get_cwd(), DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)):
         inputs = DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
+
     # Although the `install` command does not need the `force` argument,
     # we *are* using the `executions start` handler as a part of it.
     # as a result, we need to provide it with a `force` argument, which is
     # defined below.
     force = False
 
-    ctx.invoke(
-        blueprints.upload,
-        blueprint_path=blueprint_path,
-        blueprint_id=blueprint_id,
-        blueprint_filename=blueprint_filename,
-        validate=validate)
+    try:
+        ctx.invoke(
+            blueprints.upload,
+            blueprint_path=processed_blueprint_path,
+            blueprint_id=blueprint_id,
+            blueprint_filename=blueprint_filename,
+            validate=validate)
+    finally:
+        # Every situation other than the user providing a path of a local
+        # yaml means a temp folder will be created that should be later
+        # removed.
+        if processed_blueprint_path != blueprint_path:
+            shutil.rmtree(os.path.dirname(os.path.dirname(
+                processed_blueprint_path)))
     ctx.invoke(
         deployments.create,
         blueprint_id=blueprint_id,
@@ -104,7 +123,7 @@ def manager(ctx,
 
 
 @cfy.command(name='install')
-@cfy.argument('blueprint-path')
+@cfy.argument('blueprint-path', required=False)
 @cfy.options.blueprint_filename()
 @cfy.options.inputs
 @cfy.options.validate
@@ -131,36 +150,40 @@ def local(ctx,
           task_thread_pool_size):
     """Install an application
 
-    `BLUEPRINT_PATH` can be one of:
-        * A local blueprint yaml file
-        * A local blueprint archive
-        * A URL to a blueprint archive
-        * A GitHub `organization/blueprint_repo[:tag/branch]` form
+    `BLUEPRINT_PATH` can be either a local blueprint yaml file or
+    blueprint archive; a url to a blueprint archive or an
+    `organization/blueprint_repo[:tag/branch]` (to be
+    retrieved from GitHub)
     """
-    blueprint_path = blueprint_path or DEFAULT_BLUEPRINT_PATH
+    if not blueprint_path:
+        processed_blueprint_path = _get_default_blueprint_path(
+            blueprint_path, blueprint_filename)
+    else:
+        processed_blueprint_path = common.get_blueprint(
+            blueprint_path, blueprint_filename)
+
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
     if not inputs and os.path.isfile(os.path.join(
             utils.get_cwd(), DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)):
         inputs = DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
-    blueprint_filename = blueprint_filename or 'blueprint.yaml'
 
-    new_path = common.get_blueprint(blueprint_path, blueprint_filename)
     try:
-        ctx.invoke(
-            init.init,
-            blueprint_path=new_path,
-            inputs=inputs,
-            install_plugins=install_plugins)
         if validate:
             ctx.invoke(
                 blueprints.validate_blueprint,
-                blueprint_path=new_path)
+                blueprint_path=processed_blueprint_path)
+        ctx.invoke(
+            init.init,
+            blueprint_path=processed_blueprint_path,
+            inputs=inputs,
+            install_plugins=install_plugins)
     finally:
         # Every situation other than the user providing a path of a local
         # yaml means a temp folder will be created that should be later
         # removed.
-        if new_path != blueprint_path:
-            shutil.rmtree(os.path.dirname(new_path))
+        if processed_blueprint_path != blueprint_path:
+            shutil.rmtree(os.path.dirname(os.path.dirname(
+                processed_blueprint_path)))
     ctx.invoke(
         execute.execute,
         workflow_id=workflow_id,
@@ -169,3 +192,15 @@ def local(ctx,
         task_retries=task_retries,
         task_retry_interval=task_retry_interval,
         task_thread_pool_size=task_thread_pool_size)
+
+
+def _get_default_blueprint_path(blueprint_path, blueprint_filename):
+    logger = get_logger()
+    logger.info('No blueprint path provided. Looking for {0} in the '
+                'cwd.'.format(blueprint_filename))
+    blueprint_path = os.path.abspath(blueprint_filename)
+    if not os.path.isfile(blueprint_path):
+        raise CloudifyCliError(
+            'Could not find `{0}` in the cwd. Please provide a path to a '
+            'blueprint yaml file using the `-n/--blueprint-filename` flag '
+            'or a path to a blueprint file.'.format(blueprint_filename))

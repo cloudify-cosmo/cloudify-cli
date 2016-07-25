@@ -79,39 +79,40 @@ def upload(ctx,
            validate):
     """Upload a blueprint to the manager
 
-    `BLUEPRINT_PATH` can be one of:
-        * A local blueprint yaml file
-        * A local blueprint archive
-        * A URL to a blueprint archive
-        * A GitHub `organization/blueprint_repo[:tag/branch]` form
+    `BLUEPRINT_PATH` can be either a local blueprint yaml file or
+    blueprint archive; a url to a blueprint archive or an
+    `organization/blueprint_repo[:tag/branch]` (to be
+    retrieved from GitHub)
     """
     env.assert_manager_active()
 
     logger = get_logger()
     client = env.get_rest_client()
 
-    blueprint_filename = blueprint_filename or 'blueprint.yaml'
     # TODO: Consider using client.blueprints.publish_archive if the
     # path is an achive. This requires additional logic when identifying
     # the source.
-    new_path = common.get_blueprint(blueprint_path, blueprint_filename)
+    processed_blueprint_path = common.get_blueprint(
+        blueprint_path, blueprint_filename)
     try:
         if validate:
-            ctx.invoke(validate_blueprint, blueprint_path=new_path)
-        # blueprint_id = blueprint_id or utils.generate_suffixed_id(
-        #     get_archive_id(new_path))
-        blueprint_id = blueprint_id or get_archive_id(new_path)
+            ctx.invoke(
+                validate_blueprint,
+                blueprint_path=processed_blueprint_path)
+        blueprint_id = blueprint_id or get_archive_id(processed_blueprint_path)
 
         logger.info('Uploading blueprint {0}...'.format(blueprint_path))
-        blueprint = client.blueprints.upload(new_path, blueprint_id)
+        blueprint = client.blueprints.upload(
+            processed_blueprint_path, blueprint_id)
         logger.info("Blueprint uploaded. The blueprint's id is {0}".format(
             blueprint.id))
     finally:
         # Every situation other than the user providing a path of a local
         # yaml means a temp folder will be created that should be later
         # removed.
-        if new_path != blueprint_path:
-            shutil.rmtree(os.path.dirname(new_path))
+        if processed_blueprint_path != blueprint_path:
+            shutil.rmtree(os.path.dirname(os.path.dirname(
+                processed_blueprint_path)))
 
 
 @blueprints.command(name='download')
@@ -251,6 +252,7 @@ def package(ctx, blueprint_path, output_path, validate):
     """
     logger = get_logger()
 
+    blueprint_path = os.path.abspath(blueprint_path)
     destination = output_path or get_archive_id(blueprint_path)
 
     if validate:

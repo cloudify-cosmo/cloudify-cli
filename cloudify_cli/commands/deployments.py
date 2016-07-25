@@ -177,7 +177,6 @@ def create(blueprint_id, deployment_id, inputs):
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
     inputs = common.inputs_to_dict(inputs, 'inputs')
-    # deployment_id = deployment_id or utils.generate_suffixed_id(blueprint_id)
     deployment_id = deployment_id or blueprint_id
 
     try:
