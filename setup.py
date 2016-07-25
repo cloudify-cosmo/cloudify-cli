@@ -56,5 +56,6 @@ setup(
         'cloudify-script-plugin==1.4',
         'cloudify-rest-client==3.5a1',
         'cloudify-plugins-common==3.5a1',
+        'backports.shutil_get_terminal_size==1.0.0',
     ]
 )

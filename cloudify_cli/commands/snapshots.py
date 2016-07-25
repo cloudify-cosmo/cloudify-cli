@@ -104,7 +104,10 @@ def upload(snapshot_path, snapshot_id):
     snapshot_id = snapshot_id or utils.generate_suffixed_id('snapshot')
 
     logger.info('Uploading snapshot {0}...'.format(snapshot_path))
-    snapshot = client.snapshots.upload(snapshot_path, snapshot_id)
+    progress_handler = utils.generate_progress_handler(snapshot_path, '')
+    snapshot = client.snapshots.upload(snapshot_path,
+                                       snapshot_id,
+                                       progress_handler)
     logger.info("Snapshot uploaded. The snapshot's id is {0}".format(
         snapshot.id))
 
@@ -122,7 +125,10 @@ def download(snapshot_id, output_path):
     client = env.get_rest_client()
 
     logger.info('Downloading snapshot {0}...'.format(snapshot_id))
-    target_file = client.snapshots.download(snapshot_id, output_path)
+    progress_handler = utils.generate_progress_handler(output_path, '')
+    target_file = client.snapshots.download(snapshot_id,
+                                            output_path,
+                                            progress_handler)
     logger.info('Snapshot downloaded as {0}'.format(target_file))
 
 

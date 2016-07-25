@@ -25,6 +25,7 @@ import tarfile
 import zipfile
 import tempfile
 from contextlib import closing
+from backports.shutil_get_terminal_size import get_terminal_size
 
 from prettytable import PrettyTable
 
@@ -224,3 +225,52 @@ def get_archive_id(archive_location):
     filename, _ = os.path.splitext(os.path.basename(archive_location))
     dirname = os.path.dirname(archive_location).split('/')[-1]
     return (dirname + '_' + filename).replace('-', '_')
+
+def generate_progress_handler(file_path, action='', max_bar_length=80):
+    """Returns a function that prints a progress bar in the terminal
+
+    :param file_path: The name of the file being transferred
+    :param action: Uploading/Downloading
+    :param max_bar_length: Maximum allowed length of the bar. Default: 80
+    :return: The configured print_progress function
+    """
+    # We want to limit the maximum line length to 80, but allow for a smaller
+    # terminal size. We also include the action string, and some extra chars
+    terminal_width = get_terminal_size().columns
+
+    # This takes care of the case where there is no terminal (e.g. unittest)
+    terminal_width = terminal_width if terminal_width else max_bar_length
+    bar_length = min(max_bar_length, terminal_width) - len(action) - 12
+
+    # Shorten the file name if it's too long
+    file_name = os.path.basename(file_path)
+    if len(file_name) > (bar_length / 4) + 3:
+        file_name = file_name[:bar_length / 4] + '...'
+
+    bar_length -= len(file_name)
+
+    def print_progress(read_bytes, total_bytes):
+        """Print upload/download progress on a single line
+
+        Call this function in a loop to create a progress bar in the terminal
+
+        :param read_bytes: Number of bytes already processed
+        :param total_bytes: Total number of bytes in the file
+        """
+
+        filled_length = min(bar_length, int(round(bar_length * read_bytes /
+                                                  float(total_bytes))))
+        percents = min(100.00, round(100.00 * (read_bytes / float(total_bytes)),
+                                     2))
+        bar = '#' * filled_length + '-' * (bar_length - filled_length)
+
+        # The \r caret makes sure the cursor moves back to the beginning of
+        # the line
+        sys.stdout.write('\r{0} {1} |{2}| {3}%'.format(action,
+                                                       file_name,
+                                                       bar,
+                                                       percents))
+        if read_bytes >= total_bytes:
+            sys.stdout.write('\n')
+
+    return print_progress
