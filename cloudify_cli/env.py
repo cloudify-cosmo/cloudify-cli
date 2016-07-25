@@ -280,14 +280,14 @@ def get_rest_client(rest_host=None,
     password = password or get_password()
     trust_all = trust_all or get_ssl_trust_all()
     headers = get_auth_header(username, password)
-    cert = get_ssl_cert()
+    # cert = get_ssl_cert()
 
     client = CloudifyClient(
         host=rest_host,
         port=rest_port,
         protocol=rest_protocol,
         headers=headers,
-        cert=cert,
+        # cert=cert,
         trust_all=trust_all)
 
     if skip_version_check or True:
