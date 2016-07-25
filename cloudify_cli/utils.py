@@ -226,6 +226,7 @@ def get_archive_id(archive_location):
     dirname = os.path.dirname(archive_location).split('/')[-1]
     return (dirname + '_' + filename).replace('-', '_')
 
+
 def generate_progress_handler(file_path, action='', max_bar_length=80):
     """Returns a function that prints a progress bar in the terminal
 

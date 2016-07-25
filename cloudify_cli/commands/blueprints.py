@@ -133,7 +133,8 @@ def download(blueprint_id, output_path):
     client = env.get_rest_client()
 
     logger.info('Downloading blueprint {0}...'.format(blueprint_id))
-    progress_handler = utils.generate_progress_handler(output_path, '')
+    blueprint_name = output_path if output_path else blueprint_id
+    progress_handler = utils.generate_progress_handler(blueprint_name, '')
     target_file = client.blueprints.download(blueprint_id,
                                              output_path,
                                              progress_handler)

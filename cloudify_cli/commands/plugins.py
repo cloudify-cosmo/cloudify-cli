@@ -140,7 +140,8 @@ def download(plugin_id, output_path):
     client = env.get_rest_client()
 
     logger.info('Downloading plugin {0}...'.format(plugin_id))
-    progress_handler = utils.generate_progress_handler(output_path, '')
+    plugin_name = output_path if output_path else plugin_id
+    progress_handler = utils.generate_progress_handler(plugin_name, '')
     target_file = client.plugins.download(plugin_id,
                                           output_path,
                                           progress_handler)

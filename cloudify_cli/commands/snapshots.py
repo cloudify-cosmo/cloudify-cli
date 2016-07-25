@@ -125,7 +125,8 @@ def download(snapshot_id, output_path):
     client = env.get_rest_client()
 
     logger.info('Downloading snapshot {0}...'.format(snapshot_id))
-    progress_handler = utils.generate_progress_handler(output_path, '')
+    snapshot_name = output_path if output_path else snapshot_id
+    progress_handler = utils.generate_progress_handler(snapshot_name, '')
     target_file = client.snapshots.download(snapshot_id,
                                             output_path,
                                             progress_handler)
