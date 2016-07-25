@@ -78,7 +78,8 @@ def manager(ctx,
         processed_blueprint_path = common.get_blueprint(
             blueprint_path, blueprint_filename)
 
-    blueprint_id = blueprint_id or get_archive_id(processed_blueprint_path)
+    blueprint_id = blueprint_id or utils.get_archive_id(
+        processed_blueprint_path)
     deployment_id = deployment_id or blueprint_id
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
     if not inputs and os.path.isfile(os.path.join(

@@ -218,3 +218,9 @@ def download_file(url, destination=None):
         raise CloudifyCliError(
             'Failed to download {0}. ({1})'.format(url, str(ex)))
     return destination
+
+
+def get_archive_id(archive_location):
+    filename, _ = os.path.splitext(os.path.basename(archive_location))
+    dirname = os.path.dirname(archive_location).split('/')[-1]
+    return (dirname + '_' + filename).replace('-', '_')
