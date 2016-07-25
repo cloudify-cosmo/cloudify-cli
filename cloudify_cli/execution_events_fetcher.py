@@ -46,11 +46,12 @@ class ExecutionEventsFetcher(object):
         return len(events)
 
     def _fetch_events_batch(self):
-        events, _ = self._client.events.get(
-            self._execution_id,
-            from_event=self._from_event,
-            batch_size=self._batch_size,
-            include_logs=self._include_logs)
+        events = self._client.events.list(
+            execution_id=self._execution_id,
+            _offset=self._from_event,
+            _size=self._batch_size,
+            include_logs=self._include_logs,
+            sort='@timestamp').items
         self._from_event += len(events)
         return events
 

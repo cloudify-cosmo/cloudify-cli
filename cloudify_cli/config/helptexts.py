@@ -10,7 +10,7 @@ INPUTS_PARAMS_USAGE = (
     '(*.yaml, /my_inputs/, etc..) to YAML files, a JSON string or as '
     'key1=value1;key2=value2). This argument can be used multiple times'
 )
-WORKFLOW_TO_EXECUTE = "The workflow to execute [(default: {0}]"
+WORKFLOW_TO_EXECUTE = "The workflow to execute [default: {0}]"
 
 BLUEPRINT_PATH = "The path to the application's blueprint file"
 BLUEPRINT_ID = "The unique identifier for the blueprint"
@@ -146,3 +146,6 @@ MANAGEMENT_PORT = 'The port to use when connecting to the manager'
 REST_PORT = "The REST server's port"
 
 INCLUDE_SSH_KEYS = 'Include ssh key files in archive'
+
+SORT_BY = "Key for sorting the list"
+DESCENDING = "Sort list in descending order [default: False]"

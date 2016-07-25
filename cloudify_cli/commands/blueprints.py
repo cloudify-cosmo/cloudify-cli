@@ -151,8 +151,10 @@ def delete(blueprint_id):
 
 
 @blueprints.command(name='list')
+@cfy.options.sort_by()
+@cfy.options.descending
 @cfy.options.verbose
-def list():
+def list(sort_by=None, descending=False):
     """List all blueprints
     """
     env.assert_manager_active()
@@ -170,7 +172,8 @@ def list():
         return blueprint
 
     logger.info('Listing all blueprints...')
-    blueprints = [trim_description(b) for b in client.blueprints.list()]
+    blueprints = [trim_description(b) for b in client.blueprints.list(
+        sort=sort_by, is_descending=descending)]
 
     pt = utils.table(['id', 'description', 'main_file_name',
                       'created_at', 'updated_at'],

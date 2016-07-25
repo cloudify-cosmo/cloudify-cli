@@ -80,8 +80,13 @@ def get(execution_id):
 @executions.command(name='list')
 @cfy.options.deployment_id(required=False)
 @cfy.options.include_system_workflows
+@cfy.options.sort_by()
+@cfy.options.descending
 @cfy.options.verbose
-def list(deployment_id, include_system_workflows):
+def list(deployment_id,
+         include_system_workflows,
+         sort_by=None,
+         descending=False):
     """List executions
 
     If `DEPLOYMENT_ID` is provided, list executions for that deployment.
@@ -98,7 +103,10 @@ def list(deployment_id, include_system_workflows):
             logger.info('Listing all executions...')
         executions = client.executions.list(
             deployment_id=deployment_id,
-            include_system_workflows=include_system_workflows)
+            include_system_workflows=include_system_workflows,
+            sort=sort_by,
+            is_descending=descending)
+
     except exceptions.CloudifyClientError as e:
         if e.status_code != 404:
             raise

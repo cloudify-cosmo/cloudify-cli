@@ -49,7 +49,52 @@ class WorkflowsTest(CliCommandTest):
         })
 
         self.client.deployments.get = MagicMock(return_value=deployment)
-        self.invoke('cfy workflows list a-deployment-id')
+        self.invoke('cfy workflows list -d a-deployment-id')
+
+    def test_workflows_sort_list(self):
+
+        deployment = Deployment({
+            'blueprint_id': 'mock_blueprint_id',
+            'workflows': [
+                {
+                    'created_at': None,
+                    'name': 'my_workflow_1',
+                    'parameters': {
+                        'test-key': {
+                            'default': 'test-value'
+                        },
+                        'test-mandatory-key': {},
+                        'test-nested-key': {
+                            'default': {
+                                'key': 'val'
+                            }
+                        }
+                    }
+                },
+                {
+                    'created_at': None,
+                    'name': 'my_workflow_0',
+                    'parameters': {
+                        'test-key': {
+                            'default': 'test-value'
+                        },
+                        'test-mandatory-key': {},
+                        'test-nested-key': {
+                            'default': {
+                                'key': 'val'
+                            }
+                        }
+                    }
+                }
+            ]
+        })
+
+        self.client.deployments.get = MagicMock(return_value=deployment)
+
+        output = self.invoke('cfy workflows list -d a-deployment-id').logs
+        first = output.find('my_workflow_0')
+        second = output.find('my_workflow_1')
+        self.assertTrue(0 < first < second)
 
     def test_workflows_get(self):
         deployment = Deployment({
@@ -78,7 +123,7 @@ class WorkflowsTest(CliCommandTest):
 
     def test_workflows_get_nonexistent_workflow(self):
 
-        expected_message = ('Workflow nonexistent_workflow not found')
+        expected_message = 'Workflow nonexistent_workflow not found'
         deployment = Deployment({
             'blueprint_id': 'mock_blueprint_id',
             'workflows': [

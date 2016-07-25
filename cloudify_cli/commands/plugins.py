@@ -158,15 +158,19 @@ def get(plugin_id):
 
 
 @plugins.command(name='list')
+@cfy.options.sort_by('uploaded_at')
+@cfy.options.descending
 @cfy.options.verbose
-def list():
+def list(sort_by=None, descending=False):
     """List all plugins on the manager
     """
     logger = get_logger()
     client = env.get_rest_client()
 
     logger.info('Listing all plugins...')
-    plugins = client.plugins.list(_include=fields)
+    plugins = client.plugins.list(_include=fields,
+                                  sort=sort_by,
+                                  is_descending=descending)
 
     pt = utils.table(fields, data=plugins)
     common.print_table('Plugins:', pt)

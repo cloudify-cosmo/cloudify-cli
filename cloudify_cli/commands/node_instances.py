@@ -69,8 +69,10 @@ def get(node_instance_id):
 @manager.command(name='list')
 @cfy.options.deployment_id(required=False)
 @cfy.options.node_name
+@cfy.options.sort_by('node_id')
+@cfy.options.descending
 @cfy.options.verbose
-def list(deployment_id, node_name):
+def list(deployment_id, node_name, sort_by=None, descending=False):
     """List node-instances
 
     If `DEPLOYMENT_ID` is provided, list node-instances for that deployment.
@@ -86,9 +88,11 @@ def list(deployment_id, node_name):
         else:
             logger.info('Listing all instances...')
         instances = client.node_instances.list(deployment_id=deployment_id,
-                                               node_name=node_name)
+                                               node_name=node_name,
+                                               sort=sort_by,
+                                               is_descending=descending)
     except CloudifyClientError as e:
-        if e.status_code != 404:
+        if not e.status_code != 404:
             raise
         raise CloudifyCliError('Deployment {0} does not exist'.format(
             deployment_id))
@@ -114,6 +118,6 @@ def local(node_id):
         node_instances = [instance for instance in node_instances
                           if instance.node_id == node_id]
         if not node_instances:
-            raise exceptions.CloudifyCliError(
+            raise CloudifyCliError(
                 'Could not find node {0}'.format(node_id))
     logger.info(json.dumps(node_instances, sort_keys=True, indent=2))

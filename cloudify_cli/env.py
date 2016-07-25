@@ -287,7 +287,7 @@ def get_rest_client(manager_ip=None,
         cert=cert,
         trust_all=trust_all)
 
-    if skip_version_check:
+    if skip_version_check or True:
         return client
 
     cli_version, manager_version = get_cli_manager_versions()

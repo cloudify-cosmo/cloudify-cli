@@ -60,7 +60,7 @@ def list(deployment_id):
             deployment.id))
     else:
         logger.info("Groups: {0}".format(deployment.id))
-        for group_name, group in groups.items():
+        for group_name, group in sorted(groups.items()):
             logger.info('  - Name: {0}'.format(group_name))
             logger.info('    Members: {0}'.format(
                 json.dumps(group['members'])))
