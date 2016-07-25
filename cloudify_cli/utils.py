@@ -29,6 +29,7 @@ from backports.shutil_get_terminal_size import get_terminal_size
 
 from prettytable import PrettyTable
 
+
 from .logger import get_logger
 from .exceptions import CloudifyCliError
 
@@ -221,12 +222,6 @@ def download_file(url, destination=None):
     return destination
 
 
-def get_archive_id(archive_location):
-    filename, _ = os.path.splitext(os.path.basename(archive_location))
-    dirname = os.path.dirname(archive_location).split('/')[-1]
-    return (dirname + '_' + filename).replace('-', '_')
-
-
 def generate_progress_handler(file_path, action='', max_bar_length=80):
     """Returns a function that prints a progress bar in the terminal
 
@@ -261,8 +256,8 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
 
         filled_length = min(bar_length, int(round(bar_length * read_bytes /
                                                   float(total_bytes))))
-        percents = min(100.00, round(100.00 * (read_bytes / float(total_bytes)),
-                                     2))
+        percents = min(100.00, round(
+            100.00 * (read_bytes / float(total_bytes)), 2))
         bar = '#' * filled_length + '-' * (bar_length - filled_length)
 
         # The \r caret makes sure the cursor moves back to the beginning of

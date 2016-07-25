@@ -32,6 +32,7 @@ from . import constants
 from . import exceptions
 from .logger import get_logger
 from .exceptions import CloudifyCliError
+from .constants import DEFAULT_BLUEPRINT_PATH
 
 
 _ENV_NAME = 'local'
@@ -292,3 +293,14 @@ def _get_from_github(source):
     tag = source_parts[1] if len(source_parts) == 2 else 'master'
     url = 'https://github.com/{0}/archive/{1}.tar.gz'.format(repo, tag)
     return utils.download_file(url)
+
+
+def set_blueprint_id(blueprint_folder,
+                     blueprint_filename=DEFAULT_BLUEPRINT_PATH):
+    # If you provided a folder, take the name of the folder.
+    # If you provided a blueprint via the -n flag, append that to the folder
+    blueprint_id = os.path.dirname(blueprint_folder).split('/')[-1]
+    if not blueprint_filename == DEFAULT_BLUEPRINT_PATH:
+        filename, _ = os.path.splitext(os.path.basename(blueprint_filename))
+        blueprint_id = (blueprint_id + '.' + filename)
+    return blueprint_id.replace('_', '-')

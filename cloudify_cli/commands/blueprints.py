@@ -30,6 +30,8 @@ from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
+# TODO: We currently only support zip and tar.gz.
+# We need to add tar and tar.gz2 back.
 SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
 DESCRIPTION_LIMIT = 20
 
@@ -92,15 +94,19 @@ def upload(ctx,
     # TODO: Consider using client.blueprints.publish_archive if the
     # path is an archive. This requires additional logic when identifying
     # the source.
+    # TODO: If not providing an archive, but a path to a local yaml,
+    # blueprint_filename is only relevant for the naming of the blueprint
+    # and not for the actual location. This is.. weird behavior.
     processed_blueprint_path = common.get_blueprint(
         blueprint_path, blueprint_filename)
+
     try:
         if validate:
             ctx.invoke(
                 validate_blueprint,
                 blueprint_path=processed_blueprint_path)
-        blueprint_id = blueprint_id or utils.get_archive_id(
-            processed_blueprint_path)
+        blueprint_id = blueprint_id or common.set_blueprint_id(
+            processed_blueprint_path, blueprint_filename)
 
         progress_handler = utils.generate_progress_handler(blueprint_path, '')
         logger.info('Uploading blueprint {0}...'.format(blueprint_path))
@@ -263,7 +269,8 @@ def package(ctx, blueprint_path, output_path, validate):
     logger = get_logger()
 
     blueprint_path = os.path.abspath(blueprint_path)
-    destination = output_path or utils.get_archive_id(blueprint_path)
+    # TODO: Should we add blueprint_filename here?
+    destination = output_path or common.set_blueprint_id(blueprint_path)
 
     if validate:
         ctx.invoke(validate_blueprint, blueprint_path=blueprint_path)
