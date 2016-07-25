@@ -13,9 +13,9 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import tarfile
-
 import click
+import tarfile
+from urlparse import urlparse
 
 from .. import env
 from .. import utils
@@ -63,7 +63,7 @@ def validate(plugin_path):
     if not tarfile.is_tarfile(plugin_path):
         raise CloudifyCliError(
             'Archive {0} is of an unsupported type. Only '
-            'tar.gz is allowed'.format(plugin_path))
+            'tar.gz/wgn is allowed'.format(plugin_path))
     with tarfile.open(plugin_path) as tar:
         tar_members = tar.getmembers()
         package_json_path = "{0}/{1}".format(
@@ -112,10 +112,14 @@ def upload(ctx, plugin_path):
 
     `PLUGIN_PATH` is the path to wagon archive to upload.
     """
-    ctx.invoke(validate, plugin_path=plugin_path)
-
     logger = get_logger()
     client = env.get_rest_client()
+
+    # Test whether the path is a valid URL. If it is, no point in doing local
+    # validations - it will be validated on the server side anyway
+    parsed_url = urlparse(plugin_path)
+    if not parsed_url.scheme or not parsed_url.netloc:
+        ctx.invoke(validate, plugin_path=plugin_path)
 
     progress_handler = utils.generate_progress_handler(plugin_path, '')
     logger.info('Uploading plugin {0}...'.format(plugin_path))
