@@ -231,7 +231,7 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
     terminal_width = get_terminal_size().columns
 
     # This takes care of the case where there is no terminal (e.g. unittest)
-    terminal_width = terminal_width if terminal_width else max_bar_length
+    terminal_width = terminal_width or max_bar_length
     bar_length = min(max_bar_length, terminal_width) - len(action) - 12
 
     # Shorten the file name if it's too long
@@ -258,10 +258,8 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
 
         # The \r caret makes sure the cursor moves back to the beginning of
         # the line
-        sys.stdout.write('\r{0} {1} |{2}| {3}%'.format(action,
-                                                       file_name,
-                                                       bar,
-                                                       percents))
+        sys.stdout.write('\r{0} {1} |{2}| {3}%'.format(
+            action, file_name, bar, percents))
         if read_bytes >= total_bytes:
             sys.stdout.write('\n')
 
