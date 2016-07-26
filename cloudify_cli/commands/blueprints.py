@@ -105,7 +105,7 @@ def upload(ctx,
             ctx.invoke(
                 validate_blueprint,
                 blueprint_path=processed_blueprint_path)
-        blueprint_id = blueprint_id or common.set_blueprint_id(
+        blueprint_id = blueprint_id or common.get_blueprint_id(
             processed_blueprint_path, blueprint_filename)
 
         progress_handler = utils.generate_progress_handler(blueprint_path, '')
@@ -270,7 +270,7 @@ def package(ctx, blueprint_path, output_path, validate):
 
     blueprint_path = os.path.abspath(blueprint_path)
     # TODO: Should we add blueprint_filename here?
-    destination = output_path or common.set_blueprint_id(blueprint_path)
+    destination = output_path or common.get_blueprint_id(blueprint_path)
 
     if validate:
         ctx.invoke(validate_blueprint, blueprint_path=blueprint_path)
