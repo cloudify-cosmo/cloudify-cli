@@ -159,7 +159,7 @@ def extract_archive(source):
         'Unsupported archive type provided or archive is not valid.')
 
 
-def tar(source, destination=None):
+def tar(source, destination):
     logger = get_logger()
     logger.debug('Creating tgz archive: {0}...'.format(destination))
     with closing(tarfile.open(destination, 'w:gz')) as tar:
@@ -176,7 +176,7 @@ def untar(archive, destination=None):
     return destination
 
 
-def zip(source, destination=None):
+def zip(source, destination):
     logger = get_logger()
 
     logger.info('Creating zip archive: {0}...'.format(destination))
