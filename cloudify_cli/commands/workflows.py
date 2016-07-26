@@ -57,10 +57,12 @@ def get(workflow_id, deployment_id):
         raise CloudifyCliError('Deployment {0} not found'.format(
             deployment_id))
 
-    pt = utils.table(['blueprint_id', 'deployment_id', 'name', 'created_at'],
-                     data=[workflow],
-                     defaults={'blueprint_id': deployment.blueprint_id,
-                               'deployment_id': deployment.id})
+    columns = ['blueprint_id', 'deployment_id', 'name', 'created_at']
+    defaults = {
+        'blueprint_id': deployment.blueprint_id,
+        'deployment_id': deployment.id
+    }
+    pt = utils.table(columns, data=[workflow], defaults=defaults)
 
     common.print_table('Workflows:', pt)
 
@@ -109,8 +111,10 @@ def list(deployment_id):
     deployment = client.deployments.get(deployment_id)
     sorted_workflows = sorted(deployment.workflows, key=lambda w: w.name)
 
-    pt = utils.table(['blueprint_id', 'deployment_id', 'name', 'created_at'],
-                     data=sorted_workflows,
-                     defaults={'blueprint_id': deployment.blueprint_id,
-                               'deployment_id': deployment.id})
+    columns = ['blueprint_id', 'deployment_id', 'name', 'created_at']
+    defaults = {
+        'blueprint_id': deployment.blueprint_id,
+        'deployment_id': deployment.id
+    }
+    pt = utils.table(columns, data=sorted_workflows, defaults=defaults)
     common.print_table('Workflows:', pt)

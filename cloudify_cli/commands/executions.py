@@ -61,11 +61,11 @@ def get(execution_id):
             raise
         raise CloudifyCliError('Execution {0} not found'.format(execution_id))
 
-    pt = utils.table(['id', 'workflow_id', 'status', 'deployment_id',
-                      'created_at', 'error'],
-                     [execution])
+    columns = \
+        ['id', 'workflow_id', 'status', 'deployment_id', 'created_at', 'error']
+    pt = utils.table(columns, data=[execution])
     pt.max_width = 50
-    common.print_table('Executions:', pt)
+    common.print_table('Execution:', pt)
 
     # print execution parameters
     logger.info('Execution Parameters:')
@@ -83,10 +83,7 @@ def get(execution_id):
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.verbose
-def list(deployment_id,
-         include_system_workflows,
-         sort_by=None,
-         descending=False):
+def list(deployment_id, include_system_workflows, sort_by, descending):
     """List executions
 
     If `DEPLOYMENT_ID` is provided, list executions for that deployment.
@@ -114,12 +111,12 @@ def list(deployment_id,
             deployment_id))
 
     columns = ['id', 'workflow_id', 'deployment_id', 'status', 'created_at']
-    pt = utils.table(columns, executions)
+    pt = utils.table(columns, data=executions)
     common.print_table('Executions:', pt)
 
-    if any(execution.status in (execution.CANCELLING,
-                                execution.FORCE_CANCELLING)
-           for execution in executions):
+    if any(execution.status in (
+            execution.CANCELLING, execution.FORCE_CANCELLING)
+            for execution in executions):
         logger.info(_STATUS_CANCELING_MESSAGE)
 
 

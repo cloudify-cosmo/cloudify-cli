@@ -147,9 +147,7 @@ def generate_suffixed_id(id):
 
 
 def is_archive(source):
-    if tarfile.is_tarfile(source) or zipfile.is_zipfile(source):
-        return True
-    return False
+    return tarfile.is_tarfile(source) or zipfile.is_zipfile(source)
 
 
 def extract_archive(source):
@@ -161,7 +159,7 @@ def extract_archive(source):
         'Unsupported archive type provided or archive is not valid.')
 
 
-def tar(source, destination):
+def tar(source, destination=None):
     logger = get_logger()
     logger.debug('Creating tgz archive: {0}...'.format(destination))
     with closing(tarfile.open(destination, 'w:gz')) as tar:
@@ -179,8 +177,6 @@ def untar(archive, destination=None):
 
 
 def zip(source, destination=None):
-    if not destination:
-        destination = tempfile.mkdtemp()
     logger = get_logger()
 
     logger.info('Creating zip archive: {0}...'.format(destination))

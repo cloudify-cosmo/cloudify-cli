@@ -86,22 +86,25 @@ def list(execution_id, include_logs, json, tail):
 
 
 @events.command(name='delete')
+@cfy.argument('deployment-id')
 @cfy.options.include_logs
 @cfy.options.verbose
-@cfy.argument('deployment-id', required=True)
 def delete(deployment_id, include_logs):
     """Delete events attached to a deployment
     """
     logger = get_logger()
-    logger.info('Deleting events for deployment id {0} '
-                '[include_logs={1}]'.format(deployment_id, include_logs))
+    logger.info(
+        'Deleting events for deployment id {0} [include_logs={1}]'.format(
+            deployment_id, include_logs))
     client = env.get_rest_client()
 
     # Make sure the deployment exists - raise 404 otherwise
     client.deployments.get(deployment_id)
-    deleted_events = client.events.delete(deployment_id,
-                                          include_logs=include_logs)
+    deleted_events = client.events.delete(
+        deployment_id, include_logs=include_logs)
     deleted_events = deleted_events.items[0]
+    # TODO: There might be tens of thousands of events. We should probably
+    # not print all of them.
     if deleted_events:
         logger.info('\nDeleted {0} events'.format(deleted_events))
     else:

@@ -137,14 +137,15 @@ def download(snapshot_id, output_path):
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.verbose
-def list(sort_by=None, descending=False):
+def list(sort_by, descending):
     """List all snapshots on the manager
     """
     logger = get_logger()
     client = env.get_rest_client()
 
     logger.info('Listing snapshots...')
-    pt = utils.table(['id', 'created_at', 'status', 'error'],
-                     data=client.snapshots.list(sort=sort_by,
-                                                is_descending=descending))
+    snapshots = client.snapshots.list(sort=sort_by, is_descending=descending)
+
+    columns = ['id', 'created_at', 'status', 'error']
+    pt = utils.table(columns, data=snapshots)
     common.print_table('Snapshots:', pt)

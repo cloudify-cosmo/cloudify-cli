@@ -167,7 +167,7 @@ def delete(blueprint_id):
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.verbose
-def list(sort_by=None, descending=False):
+def list(sort_by, descending):
     """List all blueprints
     """
     env.assert_manager_active()
@@ -188,11 +188,10 @@ def list(sort_by=None, descending=False):
     blueprints = [trim_description(b) for b in client.blueprints.list(
         sort=sort_by, is_descending=descending)]
 
-    pt = utils.table(['id', 'description', 'main_file_name',
-                      'created_at', 'updated_at'],
-                     data=blueprints)
-
-    common.print_table('Available blueprints:', pt)
+    columns = [
+        'id', 'description', 'main_file_name', 'created_at', 'updated_at']
+    pt = utils.table(columns, data=blueprints)
+    common.print_table('Blueprints:', pt)
 
 
 @blueprints.command(name='get')
@@ -214,8 +213,9 @@ def get(blueprint_id):
                                           blueprint_id=blueprint_id)
     blueprint['#deployments'] = len(deployments)
 
-    pt = utils.table(['id', 'main_file_name', 'created_at', 'updated_at',
-                      '#deployments'], [blueprint])
+    columns = \
+        ['id', 'main_file_name', 'created_at', 'updated_at', '#deployments']
+    pt = utils.table(columns, data=[blueprint])
     pt.max_width = 50
     common.print_table('Blueprint:', pt)
 

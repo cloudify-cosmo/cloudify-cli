@@ -63,7 +63,7 @@ def get(node_id, deployment_id):
     # print node parameters
     columns = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                'number_of_instances', 'planned_number_of_instances']
-    pt = utils.table(columns, [node])
+    pt = utils.table(columns, data=[node])
     pt.max_width = 50
     common.print_table('Node:', pt)
 
@@ -88,7 +88,7 @@ def get(node_id, deployment_id):
 @cfy.options.sort_by('deployment_id')
 @cfy.options.descending
 @cfy.options.verbose
-def list(deployment_id, sort_by=None, descending=False):
+def list(deployment_id, sort_by, descending):
     """List nodes
 
     If `DEPLOYMENT_ID` is provided, list nodes for that deployment.
@@ -103,9 +103,10 @@ def list(deployment_id, sort_by=None, descending=False):
                 deployment_id))
         else:
             logger.info('Listing all nodes...')
-        nodes = client.nodes.list(deployment_id=deployment_id,
-                                  sort=sort_by,
-                                  is_descending=descending)
+        nodes = client.nodes.list(
+            deployment_id=deployment_id,
+            sort=sort_by,
+            is_descending=descending)
     except CloudifyClientError as e:
         if not e.status_code != 404:
             raise
@@ -114,5 +115,5 @@ def list(deployment_id, sort_by=None, descending=False):
 
     columns = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                'number_of_instances', 'planned_number_of_instances']
-    pt = utils.table(columns, nodes)
+    pt = utils.table(columns, data=nodes)
     common.print_table('Nodes:', pt)
