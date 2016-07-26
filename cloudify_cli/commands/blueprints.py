@@ -288,3 +288,52 @@ def package(ctx, blueprint_path, output_path, validate):
     else:
         utils.tar(path_to_package, destination + '.tar.gz')
     logger.info('Packaging complete!')
+
+
+@blueprints.command(name='create-requirements')
+@cfy.argument('blueprint-path', type=click.Path(exists=True))
+@cfy.options.optional_output_path
+@cfy.options.verbose
+def create_requirements(blueprint_path, output_path):
+    """Generate a pip-compliant requirements file for a given blueprint
+
+    `BLUEPRINT_PATH` is the path to the blueprint for which the file
+    will be generated.
+    """
+    logger = get_logger()
+    if output_path and os.path.exists(output_path):
+        raise exceptions.CloudifyCliError(
+            'Path {0} already exists'.format(output_path))
+
+    # TODO: this might show duplicates when wprinting.
+    # `dump_to_file` removes duplicates. We need to fix it here.
+    requirements = common.create_requirements(blueprint_path=blueprint_path)
+
+    if output_path:
+        utils.dump_to_file(requirements, output_path)
+        logger.info('Requirements file created successfully --> {0}'
+                    .format(output_path))
+    else:
+        # We don't want to use just logger
+        # since we want this output to be prefix free.
+        # this will make it possible to pipe the
+        # output directly to pip
+        for requirement in requirements:
+            print(requirement)
+            logger.info(requirement)
+
+
+@blueprints.command(name='install-plugins')
+@cfy.argument('blueprint-path', type=click.Path(exists=True))
+@cfy.options.verbose
+def install_plugins(blueprint_path):
+    """Install the necessary plugins for a given blueprint in the
+    local environment.
+
+    Currently only supports passing the YAML of the blueprint directly.
+
+    `BLUEPRINT_PATH` is the path to the blueprint to install plugins for.
+    """
+    env.assert_local_active()
+
+    common.install_blueprint_plugins(blueprint_path=blueprint_path)
