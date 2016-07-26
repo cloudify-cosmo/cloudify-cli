@@ -24,7 +24,7 @@ from .test_cli_command import CliCommandTest
 class WorkflowsTest(CliCommandTest):
     def setUp(self):
         super(WorkflowsTest, self).setUp()
-        self.create_cosmo_wd_settings()
+        self.use_manager()
 
     def test_workflows_list(self):
         deployment = Deployment({

@@ -31,7 +31,7 @@ class ExecutionsTest(CliCommandTest):
 
     def setUp(self):
         super(ExecutionsTest, self).setUp()
-        self.create_cosmo_wd_settings()
+        self.use_manager()
 
     def test_executions_get(self):
         execution = execution_mock('terminated')

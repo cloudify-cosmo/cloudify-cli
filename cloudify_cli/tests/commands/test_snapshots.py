@@ -26,7 +26,7 @@ class SnapshotsTest(CliCommandTest):
 
     def setUp(self):
         super(SnapshotsTest, self).setUp()
-        self.create_cosmo_wd_settings()
+        self.use_manager()
 
     def test_snapshots_list(self):
         self.client.snapshots.list = MagicMock(return_value=[])

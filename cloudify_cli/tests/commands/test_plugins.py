@@ -29,7 +29,7 @@ class PluginsTest(CliCommandTest):
 
     def setUp(self):
         super(PluginsTest, self).setUp()
-        self.create_cosmo_wd_settings()
+        self.use_manager()
 
     def test_plugins_list(self):
         self.client.plugins.list = MagicMock(return_value=[])

@@ -19,7 +19,7 @@ class ManagerUpgradeTest(BaseUpgradeTest):
 
     def setUp(self):
         super(ManagerUpgradeTest, self).setUp()
-        self.create_cosmo_wd_settings()
+        self.use_manager()
 
     def test_not_in_maintenance_upgrade(self):
         self._test_not_in_maintenance(action='upgrade')

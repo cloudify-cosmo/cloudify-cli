@@ -26,7 +26,7 @@ class GroupsTest(CliCommandTest):
 
     def setUp(self):
         super(GroupsTest, self).setUp()
-        self.create_cosmo_wd_settings()
+        self.use_manager()
 
     def test_groups_list(self):
         deployment = Deployment({

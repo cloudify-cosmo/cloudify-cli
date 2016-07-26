@@ -29,7 +29,7 @@ class DeploymentsTest(CliCommandTest):
 
     def setUp(self):
         super(DeploymentsTest, self).setUp()
-        self.create_cosmo_wd_settings()
+        self.use_manager()
 
     def test_deployment_create(self):
 

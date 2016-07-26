@@ -21,7 +21,7 @@ from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
 class InitTest(CliCommandTest):
 
     def test_init_initialized_directory(self):
-        self.create_cosmo_wd_settings()
+        self.use_manager()
         self.invoke(
             'cfy init',
             err_str_segment='Environment is already initialized')

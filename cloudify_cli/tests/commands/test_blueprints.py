@@ -25,7 +25,7 @@ class BlueprintsTest(CliCommandTest):
 
     def setUp(self):
         super(BlueprintsTest, self).setUp()
-        self.create_cosmo_wd_settings()
+        self.use_manager()
 
     def test_blueprints_list(self):
         self.client.blueprints.list = MagicMock(return_value=[])

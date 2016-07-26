@@ -17,8 +17,6 @@ from mock import patch
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from ... import utils
-
 from .test_blueprints import MagicMock
 from .test_cli_command import CliCommandTest
 
@@ -40,7 +38,11 @@ class TeardownTest(CliCommandTest):
         self.invoke('cfy teardown -f --ignore-deployments')
         # TODO: The values are the values of the task-retry flags.
         # These should be retrieved from somewhere else.
-        mock_teardown.assert_called_once_with(0, 1, 1)
+        mock_teardown.assert_called_once_with(
+            task_retries=0,
+            task_retry_interval=1,
+            task_thread_pool_size=1
+        )
 
     def test_teardown_has_existing_deployments_dont_ignore_deployments(self):
         self.client.manager.get_status = MagicMock()
@@ -68,7 +70,6 @@ class TeardownTest(CliCommandTest):
 
     @patch('cloudify_cli.bootstrap.bootstrap.teardown')
     def test_teardown_manager_down_ignore_deployments(self, mock_teardown):
-
         def raise_client_error():
             raise CloudifyClientError('this is an IOError')
 
@@ -77,24 +78,30 @@ class TeardownTest(CliCommandTest):
             return_value={'name': 'mock_provider', 'context': {'key': 'value'}}
         )
 
-        self.invoke('cfy init -r')
-
-        with utils.update_wd_settings() as wd:
-            wd.set_management_server('10.0.0.1')
-            wd.set_provider_context({})
+        self.use_manager(host='10.0.0.1')
 
         self.invoke('cfy teardown -f --ignore-deployments')
-        mock_teardown.assert_called_once_with()
+        mock_teardown.assert_called_once_with(
+            task_retries=0,
+            task_retry_interval=1,
+            task_thread_pool_size=1
+        )
 
+    # TODO: Not sure we're checking the right things here
     @patch('cloudify_cli.bootstrap.bootstrap.teardown')
-    @patch('cloudify_cli.bootstrap.bootstrap.load_env')
     def test_teardown_no_management_ip_in_context_right_directory(
-            self, mock_load_env, mock_teardown):  # NOQA
-        self.invoke('cfy init')
+            self, mock_teardown):  # NOQA
 
-        with utils.update_wd_settings() as wd:
-            wd.set_provider_context({})
+        def mock_client_list():
+            return list()
+
+        self.client.deployments.list = mock_client_list
+
+        self.use_manager(host='10.0.0.1')
 
         self.invoke('cfy teardown -f')
-        mock_teardown.assert_called_once_with()
-        mock_load_env.assert_called_once_with()
+        mock_teardown.assert_called_once_with(
+            task_retries=0,
+            task_retry_interval=1,
+            task_thread_pool_size=1
+        )

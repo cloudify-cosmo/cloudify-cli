@@ -32,8 +32,9 @@ class BaseUpgradeTest(CliCommandTest):
     def _test_no_bp(self, action):
         self.client.maintenance_mode.status = MagicMock(
             return_value=Maintenance({'status': 'active'}))
-        self.invoke('cfy {0} path --inputs private_ip=localhost;'
-                    'ssh_key_filename=key_path;ssh_port=22'.format(action),
+        self.invoke('cfy {0} path -i private_ip=localhost '
+                    '-i ssh_key_filename=key_path -i ssh_port=22'
+                    .format(action),
                     "No such file or directory: u'path'",
                     exception=IOError)
 
@@ -41,7 +42,8 @@ class BaseUpgradeTest(CliCommandTest):
         self.client.maintenance_mode.status = MagicMock(
             return_value=Maintenance({'status': 'active'}))
         self.invoke('cfy {0} path'.format(action),
-                    'Private IP must be provided for the upgrade process')
+                    'Private IP must be provided for the '
+                    'upgrade/rollback process')
 
     def _test_no_inputs(self, action):
         self.client.maintenance_mode.status = MagicMock(

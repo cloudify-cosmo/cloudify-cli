@@ -461,7 +461,7 @@ class InstallTest(CliCommandTest):
 
     @patch('cloudify_cli.commands.executions.start')
     @patch('cloudify_cli.commands.deployments.create')
-    @patch('cloudify_cli.commands.blueprints.publish_archive')
+    @patch('cloudify_cli.commands.blueprints.upload')
     def test_auto_generate_ids_generates_suffixed_ids_in_publish_archive_mode(
             self,
             blueprints_publish_archive_mock,
@@ -469,7 +469,7 @@ class InstallTest(CliCommandTest):
             *_):
 
         publish_archive_mode_command = \
-            'cfy install -b bid -d did -g -l {0}'.format(STUB_ARCHIVE_LOCATION)
+            'cfy install -d did -b bid {0}'.format(STUB_ARCHIVE_LOCATION)
 
         self.invoke(publish_archive_mode_command)
 

@@ -18,11 +18,11 @@ import os
 from mock import patch
 from mock import MagicMock
 
-from ...utils import update_wd_settings
+from ...env import update_wd_settings
 from ...exceptions import CloudifyValidationError
 
-from cloudify_cli.tests.commands.test_cli_command import TEST_WORK_DIR
-from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
+from .test_cli_command import TEST_WORK_DIR
+from .test_cli_command import CliCommandTest
 
 
 class RecoverTest(CliCommandTest):

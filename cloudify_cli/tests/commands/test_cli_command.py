@@ -186,16 +186,31 @@ class CliCommandTest(unittest.TestCase):
                 self.logger.info(e.message)
             self.assertFalse(mock.called)
 
-    def create_cosmo_wd_settings(self, settings=None):
-        directory_settings = env.CloudifyWorkingDirectorySettings()
-        directory_settings.set_management_server('localhost')
-        directory_settings.set_management_key('key')
-        directory_settings.set_management_user('user')
-        env.delete_cloudify_working_dir_settings()
+    def use_manager(self,
+                    profile_name='test',
+                    host='localhost',
+                    key='key',
+                    user='key',
+                    port='22',
+                    provider_context=None):
+
+        if not provider_context:
+            provider_context = dict()
+
+        settings = env.CloudifyWorkingDirectorySettings()
+        settings.set_management_server(host)
+        settings.set_management_key(key)
+        settings.set_management_user(user)
+        settings.set_management_port(port)
+        settings.set_provider_context(provider_context)
+
+        cfy.purge_profile(profile_name)
         env.dump_cloudify_working_dir_settings(
-            settings or directory_settings,
+            profile_name=profile_name,
+            cosmo_wd_settings=settings,
             update=False)
         env.dump_configuration_file()
+        env.set_active_profile(profile_name)
 
     def _read_cosmo_wd_settings(self):
         return env.load_cloudify_working_dir_settings()

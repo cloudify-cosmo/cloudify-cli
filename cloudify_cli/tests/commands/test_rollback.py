@@ -19,7 +19,7 @@ class ManagerRollbackTest(BaseUpgradeTest):
 
     def setUp(self):
         super(ManagerRollbackTest, self).setUp()
-        self.create_cosmo_wd_settings()
+        self.use_manager()
 
     def test_not_in_maintenance_rollback(self):
         self._test_not_in_maintenance(action='rollback')
@@ -27,8 +27,8 @@ class ManagerRollbackTest(BaseUpgradeTest):
     def test_rollback_no_bp(self):
         self._test_no_bp(action='rollback')
 
-    def _test_rollback_no_private_ip(self):
+    def test_rollback_no_private_ip(self):
         self._test_no_private_ip(action='rollback')
 
-    def _test_rollback_no_inputs(self):
+    def test_rollback_no_inputs(self):
         self._test_no_inputs(action='rollback')

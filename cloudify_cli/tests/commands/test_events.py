@@ -35,7 +35,7 @@ class EventsTest(CliCommandTest):
     def setUp(self):
         super(EventsTest, self).setUp()
         self.events = []
-        self.create_cosmo_wd_settings()
+        self.use_manager()
         # Execution will terminate after 10 seconds
         self.execution_start_time = time.time()
         self.execution_termination_time = self.execution_start_time + 10

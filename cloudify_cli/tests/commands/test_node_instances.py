@@ -26,7 +26,7 @@ class InstancesTest(CliCommandTest):
 
     def setUp(self):
         super(InstancesTest, self).setUp()
-        self.create_cosmo_wd_settings()
+        self.use_manager()
 
     def test_instances_get(self):
         self.client.node_instances.get = \
@@ -41,7 +41,7 @@ class InstancesTest(CliCommandTest):
         self.client.node_instances.list = MagicMock(
             return_value=[node_instance_get_mock(), node_instance_get_mock()])
         self.invoke('cfy node-instances list', context='manager')
-        self.invoke('cfy node-instances list nodecellar', context='manager')
+        self.invoke('cfy node-instances list -d nodecellar', context='manager')
 
 
 def node_instance_get_mock():

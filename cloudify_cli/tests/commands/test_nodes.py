@@ -27,7 +27,7 @@ class NodesTest(CliCommandTest):
 
     def setUp(self):
         super(NodesTest, self).setUp()
-        self.create_cosmo_wd_settings()
+        self.use_manager()
 
     def test_nodes_get(self):
         self.client.nodes.get = MagicMock(return_value=node_get_mock())
@@ -45,7 +45,7 @@ class NodesTest(CliCommandTest):
         self.client.nodes.list = MagicMock(
             return_value=[node_get_mock(), node_get_mock()])
         self.invoke('cfy nodes list')
-        self.invoke('cfy nodes list nodecellar')
+        self.invoke('cfy nodes list -d nodecellar')
 
 
 def node_get_mock():

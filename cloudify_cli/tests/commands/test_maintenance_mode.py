@@ -26,7 +26,7 @@ class MaintenanceModeTest(CliCommandTest):
 
     def setUp(self):
         super(MaintenanceModeTest, self).setUp()
-        self.create_cosmo_wd_settings()
+        self.use_manager()
         self.client.maintenance_mode.deactivate = MagicMock()
         self.client.maintenance_mode.activate = MagicMock()
 
@@ -52,7 +52,7 @@ class MaintenanceModeTest(CliCommandTest):
                    new=mock_is_timeout):
             self.invoke(
                 'cfy maintenance-mode activate --wait',
-                err_str_segment='Maintenance mode timed out while waiting')
+                err_str_segment='Timed out while entering maintenance mode')
 
     def test_activate_maintenance_timeout_no_wait(self):
         self.invoke('cfy maintenance-mode activate --timeout 5',
