@@ -54,9 +54,9 @@ def get(node_instance_id):
             node_instance_id))
 
     columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
-    pt = utils.table(columns, [node_instance])
+    pt = utils.table(columns, data=[node_instance])
     pt.max_width = 50
-    common.print_table('Instance:', pt)
+    common.print_table('Node-instance:', pt)
 
     # print node instance runtime properties
     logger.info('Instance runtime properties:')
@@ -72,7 +72,7 @@ def get(node_instance_id):
 @cfy.options.sort_by('node_id')
 @cfy.options.descending
 @cfy.options.verbose
-def list(deployment_id, node_name, sort_by=None, descending=False):
+def list(deployment_id, node_name, sort_by, descending):
     """List node-instances
 
     If `DEPLOYMENT_ID` is provided, list node-instances for that deployment.
@@ -87,10 +87,11 @@ def list(deployment_id, node_name, sort_by=None, descending=False):
                 deployment_id))
         else:
             logger.info('Listing all instances...')
-        instances = client.node_instances.list(deployment_id=deployment_id,
-                                               node_name=node_name,
-                                               sort=sort_by,
-                                               is_descending=descending)
+        node_instances = client.node_instances.list(
+            deployment_id=deployment_id,
+            node_name=node_name,
+            sort=sort_by,
+            is_descending=descending)
     except CloudifyClientError as e:
         if not e.status_code != 404:
             raise
@@ -98,8 +99,8 @@ def list(deployment_id, node_name, sort_by=None, descending=False):
             deployment_id))
 
     columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
-    pt = utils.table(columns, instances)
-    common.print_table('Instances:', pt)
+    pt = utils.table(columns, data=node_instances)
+    common.print_table('Node-instances:', pt)
 
 
 @cfy.command(name='node-instances')

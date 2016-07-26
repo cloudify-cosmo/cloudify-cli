@@ -52,8 +52,9 @@ def get():
     env.assert_manager_active()
 
     active_profile = env.get_profile(env.get_active_profile())
-    pt = utils.table(['manager_ip', 'alias', 'ssh_user', 'ssh_key_path'],
-                     [active_profile])
+
+    columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path']
+    pt = utils.table(columns, data=[active_profile])
     common.print_table('Active profile:', pt)
 
 
@@ -76,8 +77,8 @@ def list():
             profile_data['manager_ip'] = '*' + profile_data['manager_ip']
         profiles.append(profile_data)
 
-    pt = utils.table(['manager_ip', 'alias', 'ssh_user', 'ssh_key_path'],
-                     profiles)
+    columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path']
+    pt = utils.table(columns, data=profiles)
     common.print_table('Profiles:', pt)
 
     if not profile_names:

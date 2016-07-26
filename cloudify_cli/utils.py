@@ -29,6 +29,7 @@ from backports.shutil_get_terminal_size import get_terminal_size
 
 from prettytable import PrettyTable
 
+
 from .logger import get_logger
 from .exceptions import CloudifyCliError
 
@@ -146,9 +147,7 @@ def generate_suffixed_id(id):
 
 
 def is_archive(source):
-    if tarfile.is_tarfile(source) or zipfile.is_zipfile(source):
-        return True
-    return False
+    return tarfile.is_tarfile(source) or zipfile.is_zipfile(source)
 
 
 def extract_archive(source):
@@ -177,9 +176,7 @@ def untar(archive, destination=None):
     return destination
 
 
-def zip(source, destination=None):
-    if not destination:
-        destination = tempfile.mkdtemp()
+def zip(source, destination):
     logger = get_logger()
 
     logger.info('Creating zip archive: {0}...'.format(destination))
@@ -221,12 +218,6 @@ def download_file(url, destination=None):
     return destination
 
 
-def get_archive_id(archive_location):
-    filename, _ = os.path.splitext(os.path.basename(archive_location))
-    dirname = os.path.dirname(archive_location).split('/')[-1]
-    return (dirname + '_' + filename).replace('-', '_')
-
-
 def generate_progress_handler(file_path, action='', max_bar_length=80):
     """Returns a function that prints a progress bar in the terminal
 
@@ -240,7 +231,7 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
     terminal_width = get_terminal_size().columns
 
     # This takes care of the case where there is no terminal (e.g. unittest)
-    terminal_width = terminal_width if terminal_width else max_bar_length
+    terminal_width = terminal_width or max_bar_length
     bar_length = min(max_bar_length, terminal_width) - len(action) - 12
 
     # Shorten the file name if it's too long
@@ -261,16 +252,14 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
 
         filled_length = min(bar_length, int(round(bar_length * read_bytes /
                                                   float(total_bytes))))
-        percents = min(100.00, round(100.00 * (read_bytes / float(total_bytes)),
-                                     2))
+        percents = min(100.00, round(
+            100.00 * (read_bytes / float(total_bytes)), 2))
         bar = '#' * filled_length + '-' * (bar_length - filled_length)
 
         # The \r caret makes sure the cursor moves back to the beginning of
         # the line
-        sys.stdout.write('\r{0} {1} |{2}| {3}%'.format(action,
-                                                       file_name,
-                                                       bar,
-                                                       percents))
+        sys.stdout.write('\r{0} {1} |{2}| {3}%'.format(
+            action, file_name, bar, percents))
         if read_bytes >= total_bytes:
             sys.stdout.write('\n')
 
