@@ -103,3 +103,9 @@ def purge_dot_cloudify():
     dot_cloudify_dir = env.CLOUDIFY_WORKDIR
     if os.path.isdir(dot_cloudify_dir):
         shutil.rmtree(dot_cloudify_dir)
+
+
+def purge_profile(profile_name='test'):
+    profile_path = os.path.join(env.CLOUDIFY_WORKDIR, profile_name)
+    if os.path.isdir(profile_path):
+        shutil.rmtree(profile_path)

@@ -13,8 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import json
-
 from .upgrade import update_inputs
 from .upgrade import put_workflow_state_file
 from .upgrade import verify_and_wait_for_maintenance_mode_activation
@@ -61,7 +59,7 @@ def rollback(blueprint_path,
                                               storage=None,
                                               install_plugins=install_plugins,
                                               name=env_name,
-                                              inputs=json.dumps(inputs))
+                                              inputs=inputs)
 
     logger.info('Starting Manager rollback process...')
     put_workflow_state_file(is_upgrade=False,

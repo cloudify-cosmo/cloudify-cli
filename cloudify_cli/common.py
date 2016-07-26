@@ -164,6 +164,11 @@ def inputs_to_dict(resources, resource_name):
     logger = get_logger()
     if not resources:
         return None
+
+    # Avoid going through the params more than once
+    if isinstance(resources, dict):
+        return resources
+
     parsed_dict = {}
 
     def handle_inputs_source(resource):
@@ -202,7 +207,7 @@ def inputs_to_dict(resources, resource_name):
             raise CloudifyCliError(msg)
 
     if not isinstance(resources, list):
-        resources = [resources]
+        resources = list(resources)
 
     for resource in resources:
         # workflow parameters always pass an empty dictionary.

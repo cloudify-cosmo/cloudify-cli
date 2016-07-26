@@ -18,6 +18,7 @@ import sys
 import shutil
 
 from .. import env
+from .. import utils
 from .. import common
 from ..config import cfy
 from ..logger import get_logger
@@ -73,7 +74,7 @@ def bootstrap(blueprint_path,
     temp_profile_active = False
     active_profile = env.get_active_profile()
     if not active_profile or active_profile == 'local':
-        active_profile = env.generate_random_string()
+        active_profile = utils.generate_random_string()
         temp_profile_active = True
         init_profile(profile_name=active_profile)
 

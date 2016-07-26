@@ -87,7 +87,7 @@ def upgrade(blueprint_path,
                                               storage=None,
                                               install_plugins=install_plugins,
                                               name=env_name,
-                                              inputs=json.dumps(inputs))
+                                              inputs=inputs)
     logger.info('Upgrading manager...')
     put_workflow_state_file(is_upgrade=True,
                             key_filename=inputs['ssh_key_filename'],

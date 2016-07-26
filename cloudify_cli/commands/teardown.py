@@ -142,7 +142,10 @@ def _do_teardown(task_retries, task_retry_interval, task_thread_pool_size):
     provider_context = settings.get_provider_context()
     bs.read_manager_deployment_dump_if_needed(
         provider_context.get('cloudify', {}).get('manager_deployment'))
-    bs.teardown(task_retries, task_retry_interval, task_thread_pool_size)
+    bs.teardown(
+        task_retries=task_retries,
+        task_retry_interval=task_retry_interval,
+        task_thread_pool_size=task_thread_pool_size)
     # cleaning relevant data from working directory settings
     with env.update_wd_settings() as wd_settings:
         # wd_settings.set_provider_context(provider_context)

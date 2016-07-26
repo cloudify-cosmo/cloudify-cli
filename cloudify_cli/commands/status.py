@@ -32,11 +32,7 @@ def status():
     """
     logger = get_logger()
 
-    if not env.is_manager_active():
-        logger.info(
-            'No manager is currently being used. You can either bootstrap a '
-            'manager or run `cfy use MANAGER_IP` to use an existing one.')
-        return
+    env.assert_manager_active()
 
     rest_host = env.get_rest_host()
     client = env.get_rest_client(rest_host)

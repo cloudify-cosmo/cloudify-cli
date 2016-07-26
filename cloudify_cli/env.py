@@ -34,6 +34,8 @@ CLOUDIFY_CONFIG_PATH = os.path.join(CLOUDIFY_WORKDIR, 'config.yaml')
 PROFILES_DIR = os.path.join(CLOUDIFY_WORKDIR, 'profiles')
 ACTIVE_PRO_FILE = os.path.join(CLOUDIFY_WORKDIR, 'active.profile')
 
+_local_settings = None
+
 
 def delete_profile(profile_name):
     profile_dir = os.path.join(PROFILES_DIR, profile_name)
@@ -113,9 +115,27 @@ def is_manager_active():
     return True
 
 
+def _get_local_settings():
+    if not _local_settings:
+        _set_local_settings()
+
+    return _local_settings
+
+
+def _set_local_settings(cosmo_wd_settings=None):
+    global _local_settings
+
+    if not cosmo_wd_settings:
+        _local_settings = CloudifyWorkingDirectorySettings()
+    else:
+        _local_settings = cosmo_wd_settings
+
+
 def load_cloudify_working_dir_settings(profile_name=None,
                                        suppress_error=False):
     profile_name = profile_name or get_active_profile()
+    if profile_name == 'local':
+        return _get_local_settings()
     try:
         path = get_context_path(profile_name)
         with open(path) as f:
@@ -183,6 +203,10 @@ def dump_cloudify_working_dir_settings(cosmo_wd_settings=None,
     if not profile_name:
         raise CloudifyCliError(
             'Either provide a profile name or activate a profile')
+    if profile_name == 'local':
+        _set_local_settings(cosmo_wd_settings)
+        return
+
     workdir = os.path.join(PROFILES_DIR, profile_name)
     if cosmo_wd_settings is None:
         cosmo_wd_settings = CloudifyWorkingDirectorySettings()
@@ -214,9 +238,7 @@ def raise_uninitialized():
 
 @contextmanager
 def profile(profile_name=None):
-    active_profile = get_active_profile()
-    profile = load_cloudify_working_dir_settings(active_profile)
-    yield profile
+    yield load_cloudify_working_dir_settings(profile_name)
 
 
 @contextmanager
@@ -310,20 +332,17 @@ def get_rest_client(rest_host=None,
 
 
 def get_rest_port():
-    active_profile = get_active_profile()
-    cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
+    cosmo_wd_settings = load_cloudify_working_dir_settings()
     return cosmo_wd_settings.get_rest_port()
 
 
 def get_rest_protocol():
-    active_profile = get_active_profile()
-    cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
+    cosmo_wd_settings = load_cloudify_working_dir_settings()
     return cosmo_wd_settings.get_rest_protocol()
 
 
 def get_management_user():
-    active_profile = get_active_profile()
-    cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
+    cosmo_wd_settings = load_cloudify_working_dir_settings()
     if cosmo_wd_settings.get_management_user():
         return cosmo_wd_settings.get_management_user()
     raise CloudifyCliError(
@@ -331,8 +350,7 @@ def get_management_user():
 
 
 def get_management_port():
-    active_profile = get_active_profile()
-    cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
+    cosmo_wd_settings = load_cloudify_working_dir_settings()
     if cosmo_wd_settings.get_management_port():
         return cosmo_wd_settings.get_management_port()
     raise CloudifyCliError(
@@ -340,8 +358,7 @@ def get_management_port():
 
 
 def get_management_key():
-    active_profile = get_active_profile()
-    cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
+    cosmo_wd_settings = load_cloudify_working_dir_settings()
     if cosmo_wd_settings.get_management_key():
         return cosmo_wd_settings.get_management_key()
     raise CloudifyCliError(
@@ -349,8 +366,7 @@ def get_management_key():
 
 
 def get_rest_host():
-    active_profile = get_active_profile()
-    cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
+    cosmo_wd_settings = load_cloudify_working_dir_settings()
     management_ip = cosmo_wd_settings.get_management_server()
     if management_ip:
         return management_ip
@@ -529,15 +545,6 @@ class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
 
     def set_rest_protocol(self, rest_protocol):
         self._rest_protocol = rest_protocol
-
-
-# TODO: get rid of this. Used only by tests
-def delete_cloudify_working_dir_settings():
-    target_file_path = os.path.join(
-        os.path.expanduser('~'), constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME,
-        constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
-    if os.path.exists(target_file_path):
-        os.remove(target_file_path)
 
 
 class CloudifyConfig(object):
