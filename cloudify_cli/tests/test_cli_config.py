@@ -21,10 +21,10 @@ import tempfile
 import mock
 import yaml
 
-from cloudify_cli import utils
+from .. import env
 
 
-@mock.patch('cloudify_cli.utils.is_initialized', lambda: True)
+@mock.patch('cloudify_cli.env.is_initialized', lambda: True)
 class TestCLIConfig(unittest.TestCase):
 
     def setUp(self):
@@ -33,7 +33,7 @@ class TestCLIConfig(unittest.TestCase):
         with open(self.config_file_path, 'w') as f:
             yaml.dump({'colors': True, 'auto_generate_ids': True}, f)
 
-        patcher = mock.patch('cloudify_cli.utils.CLOUDIFY_CONFIG_PATH',
+        patcher = mock.patch('cloudify_cli.env.CLOUDIFY_CONFIG_PATH',
                              self.config_file_path)
         self.addCleanup(patcher.stop)
         patcher.start()
@@ -42,20 +42,20 @@ class TestCLIConfig(unittest.TestCase):
         os.remove(self.config_file_path)
 
     def test_colors_configuration(self):
-        self.assertTrue(utils.is_use_colors())
+        self.assertTrue(env.is_use_colors())
 
     def test_missing_colors_configuration(self):
         # when colors configuration is missing, default should be false
         with open(self.config_file_path, 'w') as f:
             yaml.dump({}, f)
-        self.assertFalse(utils.is_use_colors())
+        self.assertFalse(env.is_use_colors())
 
     def test_auto_generate_ids_configuration(self):
-        self.assertTrue(utils.is_auto_generate_ids())
+        self.assertTrue(env.is_auto_generate_ids())
 
     def test_missing_auto_generate_ids_configuration(self):
         # when auto_generate_ids configuration is missing,
         # default should be false
         with open(self.config_file_path, 'w') as f:
             yaml.dump({}, f)
-        self.assertFalse(utils.is_auto_generate_ids())
+        self.assertFalse(env.is_auto_generate_ids())

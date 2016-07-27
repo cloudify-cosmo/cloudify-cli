@@ -24,7 +24,7 @@ from mock import patch
 from cloudify.exceptions import NonRecoverableError
 
 from . import cfy
-from .. import utils
+from .. import env
 from .. import constants
 from ..bootstrap import tasks
 from ..bootstrap import bootstrap
@@ -37,7 +37,7 @@ class CliBootstrapUnitTests(unittest.TestCase):
     def setUp(self):
         # TODO: create an actual non-local profile here.
         self.bootstrap_dir = os.path.join(
-            utils.PROFILES_DIR, 'local', 'bootstrap')
+            env.PROFILES_DIR, 'local', 'bootstrap')
         self.manager_dir = os.path.join(self.bootstrap_dir, 'manager')
         os.makedirs(self.bootstrap_dir)
 

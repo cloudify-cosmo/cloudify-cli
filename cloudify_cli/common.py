@@ -123,6 +123,10 @@ def _plugins_to_requirements(blueprint_path, plugins):
 
 
 def add_ignore_bootstrap_validations_input(inputs):
+    """This is used when passing the `--skip-validations` flag as we
+    also want to skip bootstrap validations, not just `creation_validation`
+    operations.
+    """
     inputs['ignore_bootstrap_validations'] = True
 
 
@@ -193,6 +197,10 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
 
 
 def _get_from_github(source):
+    """Returns a path to a downloaded github archive.
+
+    Source to download should be in the format of `org/repo[:tag/branch]`.
+    """
     source_parts = source.split(':', 1)
     repo = source_parts[0]
     tag = source_parts[1] if len(source_parts) == 2 else 'master'
@@ -202,8 +210,10 @@ def _get_from_github(source):
 
 def get_blueprint_id(blueprint_folder,
                      blueprint_filename=DEFAULT_BLUEPRINT_PATH):
-    # If you provided a folder, take the name of the folder.
-    # If you provided a blueprint via the -n flag, append that to the folder
+    """The name of the blueprint will be the name of the folder.
+    If blueprint_filename is provided, it will be appended to the
+    folder.
+    """
     blueprint_id = os.path.dirname(blueprint_folder).split('/')[-1]
     if not blueprint_filename == DEFAULT_BLUEPRINT_PATH:
         filename, _ = os.path.splitext(os.path.basename(blueprint_filename))

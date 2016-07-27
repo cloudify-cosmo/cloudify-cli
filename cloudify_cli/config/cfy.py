@@ -43,6 +43,14 @@ CLICK_CONTEXT_SETTINGS = dict(
 
 
 class MutuallyExclusiveOption(click.Option):
+    """Makes options mutually exclusive. The option must pass a `cls` argument
+    with this class name and a `mutually_exclusive` argument with a list of
+    argument names it is mutually exclusive with.
+
+    NOTE: All mutually exclusive options must use this. It's not enough to
+    use it in just one of the options.
+    """
+
     def __init__(self, *args, **kwargs):
         self.mutually_exclusive = set(kwargs.pop('mutually_exclusive', []))
         self.mutuality_error_message = \
@@ -86,9 +94,6 @@ def _format_version_data(version_data,
 
 
 def show_version(ctx, param, value):
-    # The callback in the `main` group is called regardless of whether
-    # the --version flag was set or not so we need to return to main
-    # in case it wasn't called.
     if not value or ctx.resilient_parsing:
         return
 
@@ -107,11 +112,20 @@ def show_version(ctx, param, value):
             prefix='Cloudify Manager ',
             infix=' ',
             suffix=' [ip={ip}]\n'.format(**rest_version_data))
+    # TODO: Use logger instead
     click.echo('{0}{1}'.format(cli_version, rest_version))
     ctx.exit()
 
 
 def inputs_callback(ctx, param, value):
+    """Allows to pass any inputs we provide a command as
+    processed inputs instead of having to call `inputs_to_dict`
+    inside the command.
+
+    `@cfy.options.inputs` already calls this callback so that
+    everytime you use the option it returns the inputs as a
+    dictionary.
+    """
     if not value or ctx.resilient_parsing:
         return
 
@@ -186,6 +200,8 @@ def set_cli_except_hook(global_verbosity_level):
 
 
 def assert_manager_active(func):
+    """Wraps the command so that it can only run when a manager is active
+    """
     # Wraps here makes sure the original docstring propagates to click
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -196,8 +212,9 @@ def assert_manager_active(func):
 
 
 def assert_local_active(func):
-    """Decorator that asserts that a local profile is active
+    """Wraps the command so that it can only run when in local context
     """
+    @wraps(func)
     def wrapper(*args, **kwargs):
         env.assert_local_active()
         return func(*args, **kwargs)
@@ -205,7 +222,11 @@ def assert_local_active(func):
     return wrapper
 
 
+# TODO: Maybe call it `pass_logger` so that it correspond's with click's
+# pass_context? If so, should be the same for add_client.
 def add_logger(func):
+    """Simply passes the logger to a command.
+    """
     # Wraps here makes sure the original docstring propagates to click
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -216,6 +237,8 @@ def add_logger(func):
 
 
 def add_client(*args, **kwargs):
+    """Simply passes the rest client to a command.
+    """
     def add_client_inner(func):
         # Wraps here makes sure the original docstring propagates to click
         @wraps(func)
@@ -229,6 +252,10 @@ def add_client(*args, **kwargs):
 
 
 def group(name):
+    """Allows to create a group with a default click context
+    and a cls for click's `didyoueamn` without having to repeat
+    it for every group.
+    """
     return click.group(
         name=name,
         context_settings=CLICK_CONTEXT_SETTINGS,
@@ -236,15 +263,31 @@ def group(name):
 
 
 def command(*args, **kwargs):
+    """This exists purely for aesthetical reasons, otherwise
+    Some decorators are called `@click.something` instead of
+    `@cfy.something`
+    """
     return click.command(*args, **kwargs)
 
 
 def argument(*args, **kwargs):
+    """This exists purely for aesthetical reasons, otherwise
+    Some decorators are called `@click.something` instead of
+    `@cfy.something`
+    """
     return click.argument(*args, **kwargs)
 
 
 class Options(object):
     def __init__(self):
+        """The options api is nicer when you use each option by calling
+        `@cfy.options.some_option` instead of `@cfy.some_option`.
+
+        Note that some options are attributes and some are static methods.
+        The reason for that is that we want to be explicit regarding how
+        a developer sees an option. It it can receive arguments, it's a
+        method - if not, it's an attribute.
+        """
 
         # TODO: Convert verbose to a function which allows to pass
         # whether the value is exposed or not as an argument.

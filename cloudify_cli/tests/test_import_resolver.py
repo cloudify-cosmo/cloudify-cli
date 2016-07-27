@@ -27,7 +27,7 @@ from dsl_parser.constants import IMPORT_RESOLVER_KEY, \
 from dsl_parser.import_resolver.default_import_resolver import \
     DefaultImportResolver
 
-from .. import utils
+from .. import env
 from . import cli_runner
 from ..bootstrap import bootstrap
 from .commands.test_cli_command import \
@@ -42,7 +42,7 @@ class CustomImportResolver(DefaultImportResolver):
 
 
 def update_config_file(resolver_configuration):
-    config_path = utils.CLOUDIFY_CONFIG_PATH
+    config_path = env.CLOUDIFY_CONFIG_PATH
     with open(config_path, 'a') as f:
         yaml.dump(resolver_configuration, f)
 
@@ -70,9 +70,9 @@ class GetImportResolverTests(CliCommandTest):
             implementation='mock implementation',
             parameters='mock parameters')
         update_config_file(resolver_configuration=resolver_configuration)
-        with mock.patch('dsl_parser.utils.create_import_resolver') as \
+        with mock.patch('dsl_parser.env.create_import_resolver') as \
                 mock_create_import_resolver:
-            utils.get_import_resolver()
+            env.get_import_resolver()
             mock_create_import_resolver.assert_called_once_with(
                 resolver_configuration[IMPORT_RESOLVER_KEY])
 
@@ -84,7 +84,7 @@ class GetImportResolverTests(CliCommandTest):
         import_resolver_config = create_resolver_configuration(
             implementation=custom_resolver_class_path, parameters=parameters)
         update_config_file(resolver_configuration=import_resolver_config)
-        resolver = utils.get_import_resolver()
+        resolver = env.get_import_resolver()
         self.assertEqual(type(resolver), CustomImportResolver)
         self.assertEqual(resolver.param, 'custom-parameter')
 
@@ -95,7 +95,7 @@ class ImportResolverLocalUseTests(CliCommandTest):
         super(ImportResolverLocalUseTests, self).setUp()
         self._create_cosmo_wd_settings()
 
-    @mock.patch('cloudify_cli.utils.get_import_resolver')
+    @mock.patch('cloudify_cli.env.get_import_resolver')
     def _test_using_import_resolver(self,
                                     command,
                                     blueprint_path,

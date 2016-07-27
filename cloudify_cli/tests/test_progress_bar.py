@@ -1,5 +1,6 @@
 import sys
 import unittest
+# TODO: Use io instead and fix unicode
 from cStringIO import StringIO
 
 from .. import utils
@@ -16,8 +17,8 @@ class TestProgressBar(unittest.TestCase):
             '\r test |########################| 100.0%\n')
 
         try:
-            progress_func = utils.generate_progress_handler('test',
-                                                            max_bar_length=40)
+            progress_func = utils.generate_progress_handler(
+                file_path='test', max_bar_length=40)
             total_size = 5
             for iteration in xrange(6):
                 sys.stdout = captured = StringIO()
@@ -41,8 +42,8 @@ class TestProgressBar(unittest.TestCase):
         increments = (0, 123, 1230, 12300, 12600, 20000, 32000)
 
         try:
-            progress_func = utils.generate_progress_handler('test',
-                                                            max_bar_length=50)
+            progress_func = utils.generate_progress_handler(
+                file_path='test', max_bar_length=50)
             for iteration in xrange(7):
                 sys.stdout = captured = StringIO()
                 progress_func(increments[iteration], total_size)

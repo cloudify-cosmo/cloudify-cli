@@ -131,6 +131,7 @@ def _set_local_settings(cosmo_wd_settings=None):
         _local_settings = CloudifyWorkingDirectorySettings()
 
 
+# TODO: Change name to something human
 def load_cloudify_working_dir_settings(profile_name=None,
                                        suppress_error=False):
     profile_name = profile_name or get_active_profile()
@@ -196,6 +197,7 @@ def dump_configuration_file():
         f.write(os.linesep)
 
 
+# TODO: Change name to something human
 def dump_cloudify_working_dir_settings(cosmo_wd_settings=None,
                                        update=False,
                                        profile_name=None):
@@ -236,6 +238,8 @@ def raise_uninitialized():
     raise error
 
 
+# TODO: Currently unused, but should be ASAP. This will provide a much
+# nicer experience in getting a profile's properties
 @contextmanager
 def profile(profile_name=None):
     yield load_cloudify_working_dir_settings(profile_name)
@@ -302,6 +306,8 @@ def get_rest_client(rest_host=None,
     password = password or get_password()
     trust_all = trust_all or get_ssl_trust_all()
     headers = get_auth_header(username, password)
+
+    # TODO: PUT BACK SSL CERT!!!!!!!!!!!!!!!!!!!!!!!!!
     # cert = get_ssl_cert()
 
     client = CloudifyClient(
@@ -325,10 +331,10 @@ def get_rest_client(rest_host=None,
         # and logger which we need to solve.
         return client
     else:
-        message = ('CLI and manager versions do not match\n'
-                   'CLI Version: {0}\n'
-                   'Manager Version: {1}').format(cli_version, manager_version)
-        raise CloudifyCliError(message)
+        raise CloudifyCliError(
+            'CLI and manager versions do not match\n'
+            'CLI Version: {0}\n'
+            'Manager Version: {1}'.format(cli_version, manager_version))
 
 
 def get_rest_port():
@@ -341,6 +347,7 @@ def get_rest_protocol():
     return cosmo_wd_settings.get_rest_protocol()
 
 
+# TODO: Replace all `management` with `manager` for consistency
 def get_management_user():
     cosmo_wd_settings = load_cloudify_working_dir_settings()
     if cosmo_wd_settings.get_management_user():
@@ -400,8 +407,8 @@ def get_default_rest_cert_local_path():
 
 
 def get_ssl_cert():
-    """
-    Return the path to a local copy of the manager's public certificate.
+    """Return the path to a local copy of the manager's public certificate.
+
     :return: If the LOCAL_REST_CERT_FILE env var was set by the user - use it,
     If it wasn't set, check if the certificate file is found in its default
     location. If so - use it, otherwise - return None
@@ -430,6 +437,7 @@ def get_version_data():
     return json.loads(data)
 
 
+# TODO: Check if this is at all used
 def connected_to_manager(management_ip):
     port = get_rest_port()
     try:

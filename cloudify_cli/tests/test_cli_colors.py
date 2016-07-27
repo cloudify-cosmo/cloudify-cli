@@ -24,11 +24,11 @@ from cloudify_cli import logger
 from cloudify_cli.colorful_event import ColorfulEvent
 
 
-@mock.patch('cloudify_cli.utils.is_initialized', lambda: True)
+@mock.patch('cloudify_cli.env.is_initialized', lambda: True)
 class TestCLIColors(unittest.TestCase):
 
     @mock.patch('cloudify_cli.logger._configure_from_file', mock.MagicMock())
-    @mock.patch('cloudify_cli.utils.is_use_colors', lambda: True)
+    @mock.patch('cloudify_cli.env.is_use_colors', lambda: True)
     def test_configure_colors_for_events_and_logs(self):
         self.assertNotEquals(ColorfulEvent, logs.EVENT_CLASS)
 
