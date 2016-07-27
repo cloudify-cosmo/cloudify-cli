@@ -28,9 +28,6 @@ from .commands import agents
 from .commands import events
 from .commands import groups
 from .commands import status
-from .commands import inputs
-from .commands import outputs
-from .commands import execute
 from .commands import recover
 from .commands import plugins
 from .commands import upgrade
@@ -46,9 +43,7 @@ from .commands import blueprints
 from .commands import executions
 from .commands import deployments
 from .commands import node_instances
-from .commands import install_plugins
 from .commands import maintenance_mode
-from .commands import create_requirements
 
 
 @cfy.group(name='cfy')
@@ -94,10 +89,9 @@ def _register_commands():
     _cfy.add_command(use.use)
     _cfy.add_command(init.init)
     _cfy.add_command(status.status)
-    _cfy.add_command(recover.recover)
+    _cfy.add_command(recover.recover)  # Recovers a manager. Doesn't require it
     _cfy.add_command(profiles.profiles)
     _cfy.add_command(bootstrap.bootstrap)
-    _cfy.add_command(create_requirements.create_requirements)
 
     # Manager only commands
     _cfy.add_command(dev.dev)
@@ -120,23 +114,37 @@ def _register_commands():
     _cfy.add_command(executions.executions)
     _cfy.add_command(deployments.deployments)
 
-    # TODO: consolidate with `manager` of the same type
-    _cfy.add_command(inputs.inputs)  # cfy deployments inputs
-    _cfy.add_command(outputs.outputs)  # cfy deployments outputs
-    _cfy.add_command(execute.execute)  # cfy executions start
-    # Add nodes and groups and see about the rest.
+    # TODO: Add nodes and groups to local.
 
-    is_manager_active = env.is_manager_active()
-    if is_manager_active:
+    deployments.deployments.add_command(deployments.manager_create)
+    deployments.deployments.add_command(deployments.manager_delete)
+    deployments.deployments.add_command(deployments.manager_update)
+    deployments.deployments.add_command(deployments.manager_list)
+
+    executions.executions.add_command(executions.manager_cancel)
+    executions.executions.add_command(executions.manager_list)
+    executions.executions.add_command(executions.manager_get)
+
+    # Commands which should be both in manager and local context
+    # But change depending on the context.
+    if env.is_manager_active():
         _cfy.add_command(install.manager)
         _cfy.add_command(uninstall.manager)
         _cfy.add_command(node_instances.manager)
+
+        deployments.deployments.add_command(deployments.manager_inputs)
+        deployments.deployments.add_command(deployments.manager_outputs)
+
+        executions.executions.add_command(executions.manager_start)
     else:
         _cfy.add_command(install.local)
         _cfy.add_command(uninstall.local)
         _cfy.add_command(node_instances.local)
 
-    _cfy.add_command(install_plugins.install_plugins)
+        deployments.deployments.add_command(deployments.local_inputs)
+        deployments.deployments.add_command(deployments.local_outputs)
+
+        executions.executions.add_command(executions.local_start)
 
 _register_commands()
 

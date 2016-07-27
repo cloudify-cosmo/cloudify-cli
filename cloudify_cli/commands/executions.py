@@ -39,17 +39,19 @@ _STATUS_CANCELING_MESSAGE = (
 def executions():
     """Handle workflow executions
     """
-    env.assert_manager_active()
+    pass
 
 
-@executions.command(name='get')
+@cfy.command(name='get')
 @cfy.argument('execution-id')
 @cfy.options.verbose
-def get(execution_id):
+def manager_get(execution_id):
     """Retrieve information for a specific execution
 
     `EXECUTION_ID` is the execution to get information on.
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -77,18 +79,20 @@ def get(execution_id):
     logger.info('')
 
 
-@executions.command(name='list')
+@cfy.command(name='list')
 @cfy.options.deployment_id(required=False)
 @cfy.options.include_system_workflows
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.verbose
-def list(deployment_id, include_system_workflows, sort_by, descending):
+def manager_list(deployment_id, include_system_workflows, sort_by, descending):
     """List executions
 
     If `DEPLOYMENT_ID` is provided, list executions for that deployment.
     Otherwise, list executions for all deployments.
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -120,7 +124,7 @@ def list(deployment_id, include_system_workflows, sort_by, descending):
         logger.info(_STATUS_CANCELING_MESSAGE)
 
 
-@executions.command(name='start')
+@cfy.command(name='start')
 @cfy.argument('workflow-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.parameters
@@ -130,18 +134,20 @@ def list(deployment_id, include_system_workflows, sort_by, descending):
 @cfy.options.include_logs
 @cfy.options.json
 @cfy.options.verbose
-def start(workflow_id,
-          deployment_id,
-          parameters,
-          allow_custom_parameters,
-          force,
-          timeout,
-          include_logs,
-          json):
+def manager_start(workflow_id,
+                  deployment_id,
+                  parameters,
+                  allow_custom_parameters,
+                  force,
+                  timeout,
+                  include_logs,
+                  json):
     """Execute a workflow on a given deployment
 
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
+    env.assert_manager_active()
+
     logger = get_logger()
 
     events_logger = get_events_logger(json)
@@ -231,13 +237,15 @@ def start(workflow_id,
         raise SuppressedCloudifyCliError()
 
 
-@executions.command(name='cancel')
+@cfy.command(name='cancel')
 @cfy.argument('execution-id')
 @cfy.options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
 @cfy.options.verbose
-def cancel(execution_id, force):
+def manager_cancel(execution_id, force):
     """Cancel a workflow's execution
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -258,3 +266,34 @@ def _get_deployment_environment_creation_execution(client, deployment_id):
     raise RuntimeError('Failed to get create_deployment_environment '
                        'workflow execution.'
                        'Available executions: {0}'.format(executions))
+
+
+@cfy.command(name='start')
+@cfy.argument('workflow-id')
+@cfy.options.parameters
+@cfy.options.allow_custom_parameters
+@cfy.options.task_retries()
+@cfy.options.task_retry_interval()
+@cfy.options.task_thread_pool_size()
+@cfy.options.verbose
+def local_start(workflow_id,
+                parameters,
+                allow_custom_parameters,
+                task_retries,
+                task_retry_interval,
+                task_thread_pool_size):
+    """Execute a workflow
+
+    `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
+    """
+    logger = get_logger()
+    parameters = common.inputs_to_dict(parameters, 'parameters')
+    env = common.load_env()
+    result = env.execute(workflow=workflow_id,
+                         parameters=parameters,
+                         allow_custom_parameters=allow_custom_parameters,
+                         task_retries=task_retries,
+                         task_retry_interval=task_retry_interval,
+                         task_thread_pool_size=task_thread_pool_size)
+    if result is not None:
+        logger.info(json.dumps(result, sort_keys=True, indent=2))

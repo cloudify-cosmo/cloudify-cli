@@ -125,10 +125,10 @@ def _get_local_settings():
 def _set_local_settings(cosmo_wd_settings=None):
     global _local_settings
 
-    if not cosmo_wd_settings:
-        _local_settings = CloudifyWorkingDirectorySettings()
-    else:
+    if cosmo_wd_settings:
         _local_settings = cosmo_wd_settings
+    else:
+        _local_settings = CloudifyWorkingDirectorySettings()
 
 
 def load_cloudify_working_dir_settings(profile_name=None,

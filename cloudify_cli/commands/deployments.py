@@ -14,6 +14,7 @@
 #    * limitations under the License.
 
 import os
+import json
 from StringIO import StringIO
 
 from cloudify_rest_client.exceptions import UnknownDeploymentInputError
@@ -34,7 +35,7 @@ from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 def deployments():
     """Handle deployments on the Manager
     """
-    env.assert_manager_active()
+    pass
 
 
 def _print_deployment_inputs(client, blueprint_id):
@@ -51,17 +52,19 @@ def _print_deployment_inputs(client, blueprint_id):
     logger.info(inputs_output.getvalue())
 
 
-@deployments.command(name='list')
+@cfy.command(name='list')
 @cfy.options.blueprint_id()
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.verbose
-def list(blueprint_id, sort_by, descending):
+def manager_list(blueprint_id, sort_by, descending):
     """List deployments
 
     If `--blueprint-id` is provided, list deployments for that blueprint.
     Otherwise, list deployments for all blueprints.
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -83,7 +86,7 @@ def list(blueprint_id, sort_by, descending):
     common.print_table('Deployments:', pt)
 
 
-@deployments.command(name='update')
+@cfy.command(name='update')
 @cfy.argument('deployment-id')
 @cfy.options.blueprint_path(required=True)
 @cfy.options.inputs
@@ -95,20 +98,22 @@ def list(blueprint_id, sort_by, descending):
 @cfy.options.include_logs
 @cfy.options.json
 @cfy.options.verbose
-def update(deployment_id,
-           blueprint_path,
-           inputs,
-           blueprint_filename,
-           skip_install,
-           skip_uninstall,
-           workflow_id,
-           force,
-           include_logs,
-           json):
+def manager_update(deployment_id,
+                   blueprint_path,
+                   inputs,
+                   blueprint_filename,
+                   skip_install,
+                   skip_uninstall,
+                   workflow_id,
+                   force,
+                   include_logs,
+                   json):
     """Update a specified deployment according to the specified blueprint
 
     `DEPLOYMENT_ID` is the deployment's id to update.
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -159,17 +164,19 @@ def update(deployment_id,
                             exec_id=execution.id))
 
 
-@deployments.command(name='create')
+@cfy.command(name='create')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.blueprint_id(required=True)
 @cfy.options.deployment_id()
 @cfy.options.inputs
 @cfy.options.verbose
-def create(blueprint_id, deployment_id, inputs):
+def manager_create(blueprint_id, deployment_id, inputs):
     """Create a deployment on the manager
 
     `DEPLOYMENT_ID` is the id of the deployment you'd like to create.
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -196,15 +203,17 @@ def create(blueprint_id, deployment_id, inputs):
         deployment.id))
 
 
-@deployments.command(name='delete')
+@cfy.command(name='delete')
 @cfy.argument('deployment-id')
 @cfy.options.force(help=helptexts.IGNORE_LIVE_NODES)
 @cfy.options.verbose
-def delete(deployment_id, force):
+def manager_delete(deployment_id, force):
     """Delete a deployment from the manager
 
     `DEPLOYMENT_ID` is the id of the deployment to delete.
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -213,14 +222,16 @@ def delete(deployment_id, force):
     logger.info("Deployment deleted")
 
 
-@deployments.command(name='outputs')
+@cfy.command(name='outputs')
 @cfy.argument('deployment-id')
 @cfy.options.verbose
-def outputs(deployment_id):
+def manager_outputs(deployment_id):
     """Retrieve outputs for a specific deployment
 
     `DEPLOYMENT_ID` is the id of the deployment to print outputs for.
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -239,14 +250,16 @@ def outputs(deployment_id):
     logger.info(outputs_.getvalue())
 
 
-@deployments.command(name='inputs')
+@cfy.command(name='inputs')
 @cfy.argument('deployment-id')
 @cfy.options.verbose
-def inputs(deployment_id):
+def manager_inputs(deployment_id):
     """Retrieve inputs for a specific deployment
 
     `DEPLOYMENT_ID` is the id of the deployment to print inputs for.
     """
+    env.assert_manager_active()
+
     logger = get_logger()
     client = env.get_rest_client()
 
@@ -258,3 +271,23 @@ def inputs(deployment_id):
         inputs_.write(' - "{0}":{1}'.format(input_name, os.linesep))
         inputs_.write('     Value: {0}{1}'.format(input, os.linesep))
     logger.info(inputs_.getvalue())
+
+
+@cfy.command(name='inputs')
+@cfy.options.verbose
+def local_inputs():
+    """Display inputs for the execution
+    """
+    logger = get_logger()
+    env = common.load_env()
+    logger.info(json.dumps(env.inputs() or {}, sort_keys=True, indent=2))
+
+
+@cfy.command(name='outputs')
+@cfy.options.verbose
+def local_outputs():
+    """Display outputs for the execution
+    """
+    logger = get_logger()
+    env = common.load_env()
+    logger.info(json.dumps(env.outputs() or {}, sort_keys=True, indent=2))

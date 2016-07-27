@@ -162,7 +162,10 @@ def inputs_to_dict(resources, resource_name):
     - Wildcard based string (e.g. *-inputs.yaml)
     """
     logger = get_logger()
+
     if not resources:
+        # TODO: This means that the function either returns a dictionary
+        # or None. We should probably return an empty dict here?
         return None
 
     # Avoid going through the params more than once
@@ -171,8 +174,11 @@ def inputs_to_dict(resources, resource_name):
 
     parsed_dict = {}
 
+    # TODO: We should separate this entire thing into functions where
+    # each function deals with a different format of inputs.
+    # This is just nasty.
     def handle_inputs_source(resource):
-        logger.info('Processing inputs source: {0}'.format(resource))
+        logger.debug('Processing inputs source: {0}'.format(resource))
         try:
             # parse resource as string representation of a dictionary
             content = plain_string_to_dict(resource)
@@ -195,19 +201,21 @@ def inputs_to_dict(resources, resource_name):
             # emtpy file should be handled as no input.
             pass
         else:
-            msg = ("Invalid input: {0}. {1} must represent a dictionary. "
-                   "Valid values can be one of:\n "
-                   "- a path to a YAML file\n "
-                   "- a path to a directory containing YAML files\n "
-                   "- a single quoted wildcard based path "
-                   "(e.g. '*-inputs.yaml')\n "
-                   "- a string formatted as JSON\n "
-                   "- a string formatted as key1=value1;key2=value2").format(
-                       resource, resource_name)
-            raise CloudifyCliError(msg)
+            raise CloudifyCliError(
+                "Invalid input: {0}. {1} must represent a dictionary. "
+                "Valid values can be one of:\n "
+                "- A path to a YAML file\n "
+                "- A path to a directory containing YAML files\n "
+                "- A single quoted wildcard based path "
+                "(e.g. '*-inputs.yaml')\n "
+                "- A string formatted as JSON\n "
+                "- A string formatted as key1=value1;key2=value2".format(
+                    resource, resource_name))
 
     if not isinstance(resources, list):
-        resources = list(resources)
+        # TODO: Anyone who uses `inputs_to_dict` should always send a list.
+        # Doing this here is unhealthy.
+        resources = [resources]
 
     for resource in resources:
         # workflow parameters always pass an empty dictionary.
@@ -240,6 +248,7 @@ def plain_string_to_dict(input_string):
             value = split_mapping[1].strip()
             input_dict[key] = value
         else:
+            # TODO: This should happen in the calling function.
             raise CloudifyCliError(
                 "Invalid input format: {0}, the expected format is: "
                 "key1=value1;key2=value2".format(input_string))
@@ -300,7 +309,7 @@ def _get_from_github(source):
     return utils.download_file(url)
 
 
-def set_blueprint_id(blueprint_folder,
+def get_blueprint_id(blueprint_folder,
                      blueprint_filename=DEFAULT_BLUEPRINT_PATH):
     # If you provided a folder, take the name of the folder.
     # If you provided a blueprint via the -n flag, append that to the folder
