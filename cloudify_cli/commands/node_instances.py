@@ -29,6 +29,7 @@ from ..exceptions import CloudifyCliError
 def manager():
     """Handle a deployment's node-instances
     """
+    pass
 
 
 @manager.command(name='get')

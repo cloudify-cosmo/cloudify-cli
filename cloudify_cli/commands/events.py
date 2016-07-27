@@ -28,6 +28,7 @@ from ..execution_events_fetcher import ExecutionEventsFetcher, \
 def events():
     """Show events from workflow executions
     """
+    pass
 
 
 @events.command(name='list')

@@ -27,6 +27,7 @@ from ..exceptions import CloudifyCliError
 def groups():
     """Handle deployment groups
     """
+    pass
 
 
 @groups.command(name='list')

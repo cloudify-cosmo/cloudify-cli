@@ -32,6 +32,7 @@ MAINTENANCE_MODE_ACTIVE = 'activated'
 def maintenance_mode():
     """Handle the manager's maintenance-mode
     """
+    pass
 
 
 @maintenance_mode.command(name='status')

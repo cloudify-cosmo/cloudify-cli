@@ -25,6 +25,7 @@ from ..config import helptexts
 def snapshots():
     """Handle manager snapshots
     """
+    pass
 
 
 @snapshots.command(name='restore')

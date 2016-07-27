@@ -28,6 +28,7 @@ from ..exceptions import CloudifyCliError
 def logs():
     """Handle manager service logs
     """
+    pass
 
 
 @cfy.add_logger

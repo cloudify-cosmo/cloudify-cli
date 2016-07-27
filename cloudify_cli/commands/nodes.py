@@ -27,6 +27,7 @@ from ..exceptions import CloudifyCliError
 def nodes():
     """Handle a deployment's nodes
     """
+    pass
 
 
 @nodes.command(name='get')

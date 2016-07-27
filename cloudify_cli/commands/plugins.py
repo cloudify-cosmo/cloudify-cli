@@ -41,6 +41,7 @@ columns = [
 def plugins():
     """Handle plugins on the manager
     """
+    pass
 
 
 @plugins.command(name='validate')

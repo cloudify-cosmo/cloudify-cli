@@ -16,7 +16,7 @@
 import sys
 import StringIO
 import traceback
-
+from functools import wraps
 import click
 from click_didyoumean import DYMGroup
 
@@ -197,8 +197,8 @@ def command(name):
 
 
 def assert_manager_active(func):
-    """Decorator that asserts that a manager is active
-    """
+    # Wraps here makes sure the original docstring propagates to click
+    @wraps(func)
     def wrapper(*args, **kwargs):
         env.assert_manager_active()
         return func(*args, **kwargs)
@@ -217,6 +217,8 @@ def assert_local_active(func):
 
 
 def add_logger(func):
+    # Wraps here makes sure the original docstring propagates to click
+    @wraps(func)
     def wrapper(*args, **kwargs):
         new_logger = get_logger()
         return func(logger=new_logger, *args, **kwargs)
@@ -226,6 +228,8 @@ def add_logger(func):
 
 def add_client(*args, **kwargs):
     def add_client_inner(func):
+        # Wraps here makes sure the original docstring propagates to click
+        @wraps(func)
         def wrapper(*wrapper_args, **wrapper_kwargs):
             client = env.get_rest_client(*args, **kwargs)
             return func(client=client, *wrapper_args, **wrapper_kwargs)

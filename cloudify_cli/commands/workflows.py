@@ -26,6 +26,7 @@ from ..exceptions import CloudifyCliError
 def workflows():
     """Handle deployment workflows
     """
+    pass
 
 
 @workflows.command(name='get')

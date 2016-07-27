@@ -34,6 +34,7 @@ _NODE_INSTANCE_STATE_STARTED = 'started'
 def agents():
     """Handle a deployment's agents
     """
+    pass
 
 
 def _is_deployment_installed(client, deployment_id):
