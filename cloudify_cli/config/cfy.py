@@ -30,6 +30,7 @@ from .. import logger
 from . import helptexts
 from .. import constants
 from ..logger import get_logger
+from ..inputs import inputs_to_dict
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import CloudifyBootstrapError
 from ..exceptions import SuppressedCloudifyCliError
@@ -110,6 +111,13 @@ def show_version(ctx, param, value):
     ctx.exit()
 
 
+def inputs_callback(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+
+    return inputs_to_dict(value)
+
+
 def set_verbosity_level(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
@@ -186,14 +194,6 @@ def group(name):
 
 def command(name):
     return click.command(name=name)
-
-
-def multiple_option(func):
-    def wrapper(*args, **kwargs):
-        result = func(*args, **kwargs)
-        return list(result)
-
-    return wrapper
 
 
 def assert_manager_active(func):
@@ -274,12 +274,14 @@ class Options(object):
             '-i',
             '--inputs',
             multiple=True,
+            callback=inputs_callback,
             help=helptexts.INPUTS)
 
         self.parameters = click.option(
             '-p',
             '--parameters',
             multiple=True,
+            callback=inputs_callback,
             help=helptexts.PARAMETERS)
 
         self.output_path = click.option(

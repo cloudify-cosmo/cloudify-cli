@@ -118,13 +118,11 @@ def manager_update(deployment_id,
     logger.info('Updating deployment {0} using blueprint {1}'.format(
         deployment_id, blueprint_or_archive_path))
 
-    processed_inputs = common.inputs_to_dict(inputs, 'inputs')
-
     deployment_update = client.deployment_updates.update(
         deployment_id,
         blueprint_or_archive_path,
         application_file_name=blueprint_filename,
-        inputs=processed_inputs,
+        inputs=inputs,
         workflow_id=workflow_id,
         skip_install=skip_install,
         skip_uninstall=skip_uninstall,
@@ -177,7 +175,6 @@ def manager_create(blueprint_id, deployment_id, inputs, logger, client):
     """
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
-    inputs = common.inputs_to_dict(inputs, 'inputs')
     deployment_id = deployment_id or blueprint_id
 
     try:

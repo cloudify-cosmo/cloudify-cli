@@ -20,7 +20,7 @@ import unittest
 
 from .. import env
 from .. import utils
-from .. import common
+from .. import inputs
 from .. import constants
 from ..logger import configure_loggers
 from ..exceptions import CloudifyCliError
@@ -110,38 +110,38 @@ class CliUtilsUnitTests(unittest.TestCase):
 
     def test_parsing_input_as_string(self):
 
-        self.assertEqual(common.plain_string_to_dict(""), {})
+        self.assertEqual(inputs.plain_string_to_dict(""), {})
 
-        self.assertEqual(common.plain_string_to_dict(" "), {})
+        self.assertEqual(inputs.plain_string_to_dict(" "), {})
 
-        self.assertEqual(common.plain_string_to_dict(";"), {})
+        self.assertEqual(inputs.plain_string_to_dict(";"), {})
 
-        self.assertEqual(common.plain_string_to_dict(" ; "), {})
+        self.assertEqual(inputs.plain_string_to_dict(" ; "), {})
 
         expected_dict = dict(my_key1="my_value1", my_key2="my_value2")
 
-        parsed_dict = common.plain_string_to_dict(
+        parsed_dict = inputs.plain_string_to_dict(
             "my_key1=my_value1;my_key2=my_value2")
         self.assertEqual(parsed_dict, expected_dict)
 
-        parsed_dict = common.plain_string_to_dict(
+        parsed_dict = inputs.plain_string_to_dict(
             " my_key1 = my_value1 ;my_key2=my_value2; ")
         self.assertEqual(parsed_dict, expected_dict)
 
-        parsed_dict = common.plain_string_to_dict(
+        parsed_dict = inputs.plain_string_to_dict(
             " my_key1 = my_value1 ;my_key2=my_value2; ")
         self.assertEqual(parsed_dict, expected_dict)
 
         expected_dict = dict(my_key1="")
-        parsed_dict = common.plain_string_to_dict(" my_key1=")
+        parsed_dict = inputs.plain_string_to_dict(" my_key1=")
         self.assertEqual(parsed_dict, expected_dict)
 
-        parsed_dict = common.plain_string_to_dict(" my_key1=;")
+        parsed_dict = inputs.plain_string_to_dict(" my_key1=;")
         self.assertEqual(parsed_dict, expected_dict)
 
         expected_dict = dict(my_key1="my_value1",
                              my_key2="my_value2,my_other_value2")
-        parsed_dict = common.plain_string_to_dict(
+        parsed_dict = inputs.plain_string_to_dict(
             " my_key1 = my_value1 ;my_key2=my_value2,my_other_value2; ")
         self.assertEqual(parsed_dict, expected_dict)
 
@@ -153,52 +153,53 @@ class CliUtilsUnitTests(unittest.TestCase):
         input_str = "my_key1"
         self.assertRaisesRegexp(CloudifyCliError,
                                 expected_err_msg.format(input_str),
-                                common.plain_string_to_dict, input_str)
+                                inputs.plain_string_to_dict, input_str)
 
         input_str = "my_key1;"
         self.assertRaisesRegexp(CloudifyCliError,
                                 expected_err_msg.format(input_str),
-                                common.plain_string_to_dict, input_str)
+                                inputs.plain_string_to_dict, input_str)
 
         input_str = "my_key1=my_value1;myvalue2;"
         self.assertRaisesRegexp(CloudifyCliError,
                                 expected_err_msg.format(input_str),
-                                common.plain_string_to_dict,
+                                inputs.plain_string_to_dict,
                                 input_str)
 
         input_str = "my_key1=my_value1;my_key2=myvalue2;my_other_value2;"
         self.assertRaisesRegexp(CloudifyCliError,
                                 expected_err_msg.format(input_str),
-                                common.plain_string_to_dict,
+                                inputs.plain_string_to_dict,
                                 input_str)
 
         input_str = "my_key1=my_value1;my_key2=myvalue2;my_other_value2;"
         self.assertRaisesRegexp(CloudifyCliError,
                                 expected_err_msg.format(input_str),
-                                common.plain_string_to_dict,
+                                inputs.plain_string_to_dict,
                                 input_str)
 
         input_str = "my_key1:my_value1;my_key2:my_value2"
         self.assertRaisesRegexp(CloudifyCliError,
                                 expected_err_msg.format(input_str),
-                                common.plain_string_to_dict,
+                                inputs.plain_string_to_dict,
                                 input_str)
 
+    # TODO: Add several other input tests (e.g. wildcard, paths, etc)
     def test_inputs_to_dict_error_handling(self):
         configure_loggers()
-        input_str = "my_key1=my_value1;my_key2"
+        input_list = ["my_key1=my_value1;my_key2"]
         resource_name = "my_resource_name"
 
         expected_err_msg = \
             ("Invalid input: {0}. {1} must represent a dictionary. "
              "Valid values can be one of:\n "
-             "- a path to a YAML file\n "
-             "- a path to a directory containing YAML files\n "
-             "- a single quoted wildcard based path ")
+             "- A path to a YAML file\n "
+             "- A path to a directory containing YAML files\n "
+             "- A single quoted wildcard based path ")
 
         self.assertRaisesRegexp(
             CloudifyCliError,
-            expected_err_msg.format(input_str, resource_name),
-            common.inputs_to_dict,
-            input_str,
+            expected_err_msg.format(input_list[0], resource_name),
+            inputs.inputs_to_dict,
+            input_list,
             resource_name)

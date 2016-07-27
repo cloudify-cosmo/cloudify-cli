@@ -156,7 +156,6 @@ def manager_start(workflow_id,
     events_message = "* Run 'cfy events list {0}' to retrieve the " \
                      "execution's events/logs"
     original_timeout = timeout
-    parameters = common.inputs_to_dict(parameters, 'parameters')
     logger.info('Executing workflow {0} on deployment {1} '
                 '[timeout={2} seconds]'.format(
                     workflow_id,
@@ -288,7 +287,6 @@ def local_start(workflow_id,
 
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
-    parameters = common.inputs_to_dict(parameters, 'parameters')
     env = common.load_env()
     result = env.execute(workflow=workflow_id,
                          parameters=parameters,

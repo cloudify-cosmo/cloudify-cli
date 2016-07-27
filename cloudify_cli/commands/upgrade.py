@@ -66,8 +66,6 @@ def upgrade(blueprint_path,
 
     `BLUEPRINT_PATH` is the path of the manager blueprint to use for upgrade.
     """
-    # This must be a list so that we can append to it if necessary.
-    inputs = list(inputs)
 
     management_ip = env.get_rest_host()
     verify_and_wait_for_maintenance_mode_activation(client)
@@ -154,7 +152,7 @@ def upgrade(blueprint_path,
 
 
 def update_inputs(inputs=None):
-    inputs = common.inputs_to_dict(inputs, 'inputs') or {}
+    inputs = inputs or dict()
     inputs.update({'private_ip': _load_private_ip(inputs)})
     inputs.update({'ssh_key_filename': _load_management_key(inputs)})
     inputs.update({'ssh_user': _load_management_user(inputs)})
