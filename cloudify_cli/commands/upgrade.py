@@ -36,7 +36,8 @@ MAINTENANCE_MODE_ACTIVATING = 'activating'
 REMOTE_WORKFLOW_STATE_PATH = '/opt/cloudify/_workflow_state.json'
 
 
-@cfy.command(name='upgrade')
+@cfy.command(name='upgrade',
+             short_help='Upgrade a manager to a new version [manager only]')
 @cfy.argument('blueprint-path')
 @cfy.options.inputs
 @cfy.options.validate_only

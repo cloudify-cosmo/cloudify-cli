@@ -27,7 +27,8 @@ from ..exceptions import CloudifyCliError
 from . import init
 
 
-@cfy.command(name='use')
+@cfy.command(name='use',
+             short_help='Control a specific manager')
 @cfy.argument('management-ip')
 @cfy.options.profile_alias
 @cfy.options.management_user

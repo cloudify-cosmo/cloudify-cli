@@ -22,7 +22,7 @@ from .. import common
 from ..config import cfy
 
 
-@cfy.command(name='status')
+@cfy.command(name='status', short_help="Show manager status [manager only]")
 @cfy.options.verbose
 @cfy.add_logger
 @cfy.add_client()

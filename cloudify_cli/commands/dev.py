@@ -28,7 +28,7 @@ from ..env import get_management_port
 from ..exceptions import CloudifyCliError
 
 
-@cfy.command(name='dev')
+@cfy.command(name='dev', short_help='Run fabric tasks [manager only]')
 @cfy.argument('task', required=True)
 @click.option('-t',
               'tasks-file',

@@ -52,7 +52,8 @@ def _deployment_exists(client, deployment_id):
     return True
 
 
-@agents.command(name='install')
+@agents.command(name='install',
+                short_help='Install deployment agents [manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
 @cfy.add_logger

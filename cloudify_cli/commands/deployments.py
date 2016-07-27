@@ -51,7 +51,7 @@ def _print_deployment_inputs(client, blueprint_id, logger):
     logger.info(inputs_output.getvalue())
 
 
-@cfy.command(name='list')
+@cfy.command(name='list', short_help='List deployments [manager only]')
 @cfy.options.blueprint_id()
 @cfy.options.sort_by()
 @cfy.options.descending
@@ -83,7 +83,7 @@ def manager_list(blueprint_id, sort_by, descending, logger, client):
     common.print_table('Deployments:', pt)
 
 
-@cfy.command(name='update')
+@cfy.command(name='update', short_help='Update a deployment [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.blueprint_path(required=True)
 @cfy.options.inputs
@@ -159,7 +159,8 @@ def manager_update(deployment_id,
                             exec_id=execution.id))
 
 
-@cfy.command(name='create')
+@cfy.command(name='create',
+             short_help='Create a deployment [manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.blueprint_id(required=True)
 @cfy.options.deployment_id()
@@ -195,7 +196,8 @@ def manager_create(blueprint_id, deployment_id, inputs, logger, client):
         deployment.id))
 
 
-@cfy.command(name='delete')
+@cfy.command(name='delete',
+             short_help='Delete a deployment [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.force(help=helptexts.IGNORE_LIVE_NODES)
 @cfy.options.verbose
@@ -212,7 +214,8 @@ def manager_delete(deployment_id, force, logger, client):
     logger.info("Deployment deleted")
 
 
-@cfy.command(name='outputs')
+@cfy.command(name='outputs',
+             short_help='Show deployment outputs [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.verbose
 @cfy.add_logger
@@ -238,7 +241,8 @@ def manager_outputs(deployment_id, logger, client):
     logger.info(outputs_.getvalue())
 
 
-@cfy.command(name='inputs')
+@cfy.command(name='inputs',
+             short_help='Show deployment inputs [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.verbose
 @cfy.add_logger
@@ -259,7 +263,7 @@ def manager_inputs(deployment_id, logger, client):
     logger.info(inputs_.getvalue())
 
 
-@cfy.command(name='inputs')
+@cfy.command(name='inputs', short_help='Show deployment inputs [locally]')
 @cfy.options.verbose
 @cfy.add_logger
 def local_inputs(logger):
@@ -269,7 +273,7 @@ def local_inputs(logger):
     logger.info(json.dumps(env.inputs() or {}, sort_keys=True, indent=2))
 
 
-@cfy.command(name='outputs')
+@cfy.command(name='outputs', short_help='Show deployment outputs [locally]')
 @cfy.options.verbose
 @cfy.add_logger
 def local_outputs(logger):

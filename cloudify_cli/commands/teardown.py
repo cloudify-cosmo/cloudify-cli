@@ -24,7 +24,7 @@ from ..bootstrap import bootstrap as bs
 from .use import use
 
 
-@cfy.command(name='teardown')
+@cfy.command(name='teardown', short_help='Teardown a manager [manager only]')
 @cfy.options.force(help=helptexts.FORCE_TEARDOWN)
 @cfy.options.ignore_deployments
 @cfy.options.task_retries()

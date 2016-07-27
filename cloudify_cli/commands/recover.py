@@ -25,7 +25,8 @@ from ..bootstrap import bootstrap as bs
 CLOUDIFY_MANAGER_PK_PATH_ENVAR = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
 
 
-@cfy.command(name='recover')
+@cfy.command(name='recover',
+             short_help='Recover a manager')
 @cfy.argument('snapshot-path')
 @cfy.options.force(help=helptexts.FORCE_RECOVER)
 @cfy.options.task_retries()

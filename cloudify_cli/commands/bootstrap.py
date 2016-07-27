@@ -26,7 +26,7 @@ from ..bootstrap import bootstrap as bs
 from .init import init_profile
 
 
-@cfy.command(name='bootstrap')
+@cfy.command(name='bootstrap', short_help='Bootstrap a manager')
 @cfy.argument('blueprint-path')
 @cfy.options.inputs
 @cfy.options.validate_only
@@ -50,7 +50,7 @@ def bootstrap(blueprint_path,
               task_thread_pool_size,
               keep_up_on_failure,
               logger):
-    """Bootstrap a manager
+    """Bootstrap a Cloudify manager
 
     `BLUEPRINT_PATH` is a path to the manager-blueprint used to bootstrap
     the manager.

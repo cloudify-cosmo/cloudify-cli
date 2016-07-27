@@ -45,7 +45,8 @@ def profiles():
         env.raise_uninitialized()
 
 
-@profiles.command(name='get-active')
+@profiles.command(name='get-active',
+                  short_help='Retrieve profile information')
 @cfy.options.verbose
 @cfy.assert_manager_active
 def get():
@@ -56,7 +57,8 @@ def get():
     common.print_table('Active profile:', pt)
 
 
-@profiles.command(name='list')
+@profiles.command(name='list',
+                  short_help='List profiles')
 @cfy.options.verbose
 @cfy.add_logger
 def list(logger):
@@ -85,7 +87,8 @@ def list(logger):
             'existing manager via the `cfy use` command')
 
 
-@profiles.command(name='delete')
+@profiles.command(name='delete',
+                  short_help='Delete a profile')
 @cfy.argument('profile-name')
 @cfy.options.verbose
 @cfy.add_logger
@@ -102,7 +105,8 @@ def delete(profile_name, logger):
         logger.info('Profile does not exist')
 
 
-@profiles.command(name='export')
+@profiles.command(name='export',
+                  short_help='Export all profiles to an archive')
 @cfy.options.include_keys
 @cfy.options.optional_output_path
 @cfy.options.verbose
@@ -133,7 +137,8 @@ def export_profiles(ctx, include_keys, output_path, logger):
         '`cfy profiles import PROFILES_ARCHIVE`')
 
 
-@profiles.command(name='import')
+@profiles.command(name='import',
+                  short_help='Import profiles from an archive')
 @cfy.argument('archive-path')
 @cfy.options.verbose
 @click.pass_context

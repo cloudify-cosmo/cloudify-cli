@@ -44,7 +44,8 @@ def blueprints():
     pass
 
 
-@blueprints.command(name='validate')
+@blueprints.command(name='validate',
+                    short_help='Validate a blueprint')
 @cfy.argument('blueprint-path')
 @cfy.options.verbose
 @cfy.add_logger
@@ -66,16 +67,17 @@ def validate_blueprint(blueprint_path, logger):
     logger.info('Blueprint validated successfully')
 
 
-@blueprints.command(name='upload')
+@blueprints.command(name='upload',
+                    short_help='Upload a blueprint [manager only]')
 @cfy.argument('blueprint-path')
 @cfy.options.blueprint_id()
 @cfy.options.blueprint_filename()
 @cfy.options.validate
 @cfy.options.verbose
-@click.pass_context
 @cfy.add_logger
 @cfy.add_client()
 @cfy.assert_manager_active
+@click.pass_context
 def upload(ctx,
            blueprint_path,
            blueprint_id,
@@ -123,7 +125,8 @@ def upload(ctx,
                 processed_blueprint_path)))
 
 
-@blueprints.command(name='download')
+@blueprints.command(name='download',
+                    short_help='Download a blueprint [manager only]')
 @cfy.argument('blueprint-id')
 @cfy.options.output_path
 @cfy.options.verbose
@@ -144,7 +147,8 @@ def download(blueprint_id, output_path, logger, client):
     logger.info('Blueprint downloaded as {0}'.format(target_file))
 
 
-@blueprints.command(name='delete')
+@blueprints.command(name='delete',
+                    short_help='Delete a blueprint [manager only]')
 @cfy.argument('blueprint-id')
 @cfy.options.verbose
 @cfy.add_logger
@@ -158,7 +162,8 @@ def delete(blueprint_id, logger, client):
     logger.info('Blueprint deleted')
 
 
-@blueprints.command(name='list')
+@blueprints.command(name='list',
+                    short_help='List blueprints [manager only]')
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.verbose
@@ -187,7 +192,8 @@ def list(sort_by, descending, logger, client):
     common.print_table('Blueprints:', pt)
 
 
-@blueprints.command(name='get')
+@blueprints.command(name='get',
+                    short_help='Retrieve blueprint information [manager only]')
 @cfy.argument('blueprint-id')
 @cfy.options.verbose
 @cfy.add_logger
@@ -217,7 +223,8 @@ def get(blueprint_id, logger, client):
     logger.info('{0}\n'.format(json.dumps([d['id'] for d in deployments])))
 
 
-@blueprints.command(name='inputs')
+@blueprints.command(name='inputs',
+                    short_help='Retrieve blueprint inputs [manager only]')
 @cfy.argument('blueprint-id')
 @cfy.options.verbose
 @cfy.add_logger
@@ -243,7 +250,8 @@ def inputs(blueprint_id, logger, client):
     common.print_table('Inputs:', pt)
 
 
-@blueprints.command(name='package')
+@blueprints.command(name='package',
+                    short_help='Create a blueprint archive')
 @cfy.argument('blueprint-path')
 @cfy.options.optional_output_path
 @cfy.options.validate
@@ -278,7 +286,8 @@ def package(ctx, blueprint_path, output_path, validate, logger):
     logger.info('Packaging complete!')
 
 
-@blueprints.command(name='create-requirements')
+@blueprints.command(name='create-requirements',
+                    short_help='Create pip-requirements')
 @cfy.argument('blueprint-path', type=click.Path(exists=True))
 @cfy.options.optional_output_path
 @cfy.options.verbose
@@ -311,7 +320,8 @@ def create_requirements(blueprint_path, output_path, logger):
             logger.info(requirement)
 
 
-@blueprints.command(name='install-plugins')
+@blueprints.command(name='install-plugins',
+                    short_help='Install plugins locally [locally]')
 @cfy.argument('blueprint-path', type=click.Path(exists=True))
 @cfy.options.verbose
 @cfy.assert_local_active

@@ -55,7 +55,8 @@ def _archive_logs(logger):
     return archive_path
 
 
-@logs.command(name='download')
+@logs.command(name='download',
+              short_help='Download manager service logs [manager only]')
 @cfy.options.output_path
 @cfy.options.verbose
 @cfy.add_logger
@@ -70,7 +71,8 @@ def download(output_path, logger):
         'rm {0}'.format(archive_path_on_manager), use_sudo=True)
 
 
-@logs.command(name='purge')
+@logs.command(name='purge',
+              short_help='Purge manager service logs [manager only]')
 @cfy.options.force(help=helptexts.FORCE_PURGE_LOGS)
 @cfy.options.backup_first
 @cfy.options.verbose
@@ -100,7 +102,8 @@ def purge(force, backup_first, logger):
         'done', use_sudo=True)
 
 
-@logs.command(name='backup')
+@logs.command(name='backup',
+              short_help='Backup manager service logs [manager only]')
 @cfy.options.verbose
 @cfy.add_logger
 def backup(logger):

@@ -26,7 +26,8 @@ from . import executions
 from . import deployments
 
 
-@cfy.command(name='uninstall')
+@cfy.command(name='uninstall',
+             short_help='Uninstall an application blueprint [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.workflow_id('uninstall')
 @cfy.options.parameters
@@ -88,7 +89,8 @@ def manager(ctx,
         blueprint_id=blueprint_id)
 
 
-@cfy.command(name='uninstall')
+@cfy.command(name='uninstall',
+             short_help='Uninstall an application blueprint')
 @cfy.options.workflow_id('uninstall')
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters

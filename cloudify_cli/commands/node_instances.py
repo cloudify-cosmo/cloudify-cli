@@ -32,7 +32,9 @@ def manager():
     pass
 
 
-@manager.command(name='get')
+@manager.command(name='get',
+                 short_help='Retrieve node-instance information '
+                 '[manager only]')
 @cfy.argument('node_instance_id')
 @cfy.options.verbose
 @cfy.add_logger
@@ -64,7 +66,9 @@ def get(node_instance_id, logger, client):
     logger.info('')
 
 
-@manager.command(name='list')
+@manager.command(name='list',
+                 short_help='List node-instances for a deployment '
+                 '[manager only]')
 @cfy.options.deployment_id(required=False)
 @cfy.options.node_name
 @cfy.options.sort_by('node_id')
@@ -100,7 +104,8 @@ def list(deployment_id, node_name, sort_by, descending, logger, client):
     common.print_table('Node-instances:', pt)
 
 
-@cfy.command(name='node-instances')
+@cfy.command(name='node-instances',
+             short_help='Show node-instance information [manager only]')
 @cfy.argument('node-id', required=False)
 @cfy.options.verbose
 @cfy.add_logger

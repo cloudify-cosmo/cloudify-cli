@@ -32,7 +32,8 @@ from . import executions
 from . import deployments
 
 
-@cfy.command(name='install')
+@cfy.command(name='install',
+             short_help='Install an application blueprint [manager only]')
 @cfy.argument('blueprint-path', required=False)
 @cfy.options.blueprint_id()
 @cfy.options.blueprint_filename()
@@ -122,7 +123,8 @@ def manager(ctx,
         json=json)
 
 
-@cfy.command(name='install')
+@cfy.command(name='install',
+             short_help='Install an application blueprint [locally]')
 @cfy.argument('blueprint-path', required=False)
 @cfy.options.blueprint_filename()
 @cfy.options.inputs

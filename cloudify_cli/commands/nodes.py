@@ -30,7 +30,8 @@ def nodes():
     pass
 
 
-@nodes.command(name='get')
+@nodes.command(name='get',
+               short_help='Retrieve node information [manager only]')
 @cfy.argument('node-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose
@@ -81,7 +82,9 @@ def get(node_id, deployment_id, logger, client):
         logger.info('\tNo node instances')
 
 
-@nodes.command(name='list')
+@nodes.command(name='list',
+               short_help='List nodes for a deployment '
+               '[manager only]')
 @cfy.options.deployment_id()
 @cfy.options.sort_by('deployment_id')
 @cfy.options.descending

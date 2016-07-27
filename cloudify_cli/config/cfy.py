@@ -185,17 +185,6 @@ def set_cli_except_hook(global_verbosity_level):
     sys.excepthook = new_excepthook
 
 
-def group(name):
-    return click.group(
-        name=name,
-        context_settings=CLICK_CONTEXT_SETTINGS,
-        cls=DYMGroup)
-
-
-def command(name):
-    return click.command(name=name)
-
-
 def assert_manager_active(func):
     # Wraps here makes sure the original docstring propagates to click
     @wraps(func)
@@ -239,8 +228,19 @@ def add_client(*args, **kwargs):
     return add_client_inner
 
 
-def argument(name, type=click.STRING, required=True):
-    return click.argument(name, required=required, type=type)
+def group(name):
+    return click.group(
+        name=name,
+        context_settings=CLICK_CONTEXT_SETTINGS,
+        cls=DYMGroup)
+
+
+def command(*args, **kwargs):
+    return click.command(*args, **kwargs)
+
+
+def argument(*args, **kwargs):
+    return click.argument(*args, **kwargs)
 
 
 class Options(object):

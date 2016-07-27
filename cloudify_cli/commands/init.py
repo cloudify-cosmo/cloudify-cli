@@ -26,7 +26,7 @@ from ..bootstrap import bootstrap as bs
 from ..exceptions import CloudifyCliError
 
 
-@cfy.command(name='init')
+@cfy.command(name='init', short_help='Initialize a working env')
 @cfy.argument('blueprint-path', required=False)
 @cfy.options.reset_context
 @cfy.options.inputs
