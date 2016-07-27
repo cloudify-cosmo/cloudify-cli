@@ -415,8 +415,7 @@ def recover(snapshot_path,
     client = utils.get_rest_client(manager_ip)
     _handle_provider_context(
         rest_client=client,
-        agent_remote_key_path=agent_remote_key_path,
-        fabric_env=fabric_env,
+        remote_agents_private_key_path=agent_remote_key_path,
         manager_node=manager_node,
         manager_node_instance=manager_node_instance)
     snapshot_id = 'restored-snapshot'
