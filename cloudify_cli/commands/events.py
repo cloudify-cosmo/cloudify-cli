@@ -30,7 +30,8 @@ def events():
     """
 
 
-@events.command(name='list')
+@events.command(name='list',
+                short_help='List deployments events [manager only]')
 @cfy.argument('execution-id')
 @cfy.options.include_logs
 @cfy.options.json
@@ -82,7 +83,8 @@ def list(execution_id, include_logs, json, tail, logger, client):
         raise CloudifyCliError('Execution {0} not found'.format(execution_id))
 
 
-@events.command(name='delete')
+@events.command(name='delete',
+                short_help='Delete deployment events [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.include_logs
 @cfy.options.verbose

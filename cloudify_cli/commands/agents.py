@@ -34,6 +34,7 @@ _NODE_INSTANCE_STATE_STARTED = 'started'
 def agents():
     """Handle a deployment's agents
     """
+    pass
 
 
 def _is_deployment_installed(client, deployment_id):
@@ -51,7 +52,8 @@ def _deployment_exists(client, deployment_id):
     return True
 
 
-@agents.command(name='install')
+@agents.command(name='install',
+                short_help='Install deployment agents [manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
 @cfy.add_logger

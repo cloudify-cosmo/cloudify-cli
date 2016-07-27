@@ -28,7 +28,8 @@ def workflows():
     """
 
 
-@workflows.command(name='get')
+@workflows.command(name='get',
+                   short_help='Retrieve workflow information [manager only]')
 @cfy.argument('workflow-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose
@@ -92,7 +93,8 @@ def get(workflow_id, deployment_id, logger, client):
     logger.info('')
 
 
-@workflows.command(name='list')
+@workflows.command(name='list',
+                   short_help='List workflows for a deployment [manager only]')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose
 @cfy.add_logger

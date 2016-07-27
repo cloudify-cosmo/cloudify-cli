@@ -22,7 +22,8 @@ from ..config import cfy
 from .. import exceptions
 
 
-@cfy.command(name='rollback')
+@cfy.command(name='rollback',
+             short_help='Rollback a manager to a previous version')
 @cfy.argument('blueprint-path')
 @cfy.options.inputs
 @cfy.options.install_plugins

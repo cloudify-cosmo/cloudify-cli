@@ -29,7 +29,8 @@ def groups():
     """
 
 
-@groups.command(name='list')
+@groups.command(name='list',
+                short_help='List groups for a deployment [manager only]')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose
 @cfy.add_logger

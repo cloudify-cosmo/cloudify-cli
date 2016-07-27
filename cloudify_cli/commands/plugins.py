@@ -43,7 +43,8 @@ def plugins():
     """
 
 
-@plugins.command(name='validate')
+@plugins.command(name='validate',
+                 short_help='Validate a plugin')
 @cfy.argument('plugin-path')
 @cfy.options.verbose
 @cfy.add_logger
@@ -84,7 +85,8 @@ def validate(plugin_path, logger):
     logger.info('Plugin validated successfully')
 
 
-@plugins.command(name='delete')
+@plugins.command(name='delete',
+                 short_help='Delete a plugin [manager only]')
 @cfy.argument('plugin-id')
 @cfy.options.force(help=helptexts.FORCE_DELETE_PLUGIN)
 @cfy.options.verbose
@@ -100,7 +102,8 @@ def delete(plugin_id, force, logger, client):
     logger.info('Plugin deleted')
 
 
-@plugins.command(name='upload')
+@plugins.command(name='upload',
+                 short_help='Upload a plugin [manager only]')
 @cfy.argument('plugin-path')
 @cfy.options.verbose
 @click.pass_context
@@ -123,7 +126,8 @@ def upload(ctx, plugin_path, logger, client):
     logger.info("Plugin uploaded. The plugin's id is {0}".format(plugin.id))
 
 
-@plugins.command(name='download')
+@plugins.command(name='download',
+                 short_help='Download a plugin [manager only]')
 @cfy.argument('plugin-id')
 @cfy.options.output_path
 @cfy.options.verbose
@@ -143,7 +147,8 @@ def download(plugin_id, output_path, logger, client):
     logger.info('Plugin downloaded as {0}'.format(target_file))
 
 
-@plugins.command(name='get')
+@plugins.command(name='get',
+                 short_help='Retrieve plugin information [manager only]')
 @cfy.argument('plugin-id')
 @cfy.options.verbose
 @cfy.add_logger
@@ -160,7 +165,8 @@ def get(plugin_id, logger, client):
     common.print_table('Plugin:', pt)
 
 
-@plugins.command(name='list')
+@plugins.command(name='list',
+                 short_help='List plugins [manager only]')
 @cfy.options.sort_by('uploaded_at')
 @cfy.options.descending
 @cfy.options.verbose

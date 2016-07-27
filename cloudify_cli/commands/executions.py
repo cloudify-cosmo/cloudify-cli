@@ -43,7 +43,8 @@ def executions():
     pass
 
 
-@cfy.command(name='get')
+@cfy.command(name='get',
+             short_help='Retrieve execution information [manager only]')
 @cfy.argument('execution-id')
 @cfy.options.verbose
 @cfy.add_logger
@@ -78,7 +79,8 @@ def manager_get(execution_id, logger, client):
     logger.info('')
 
 
-@cfy.command(name='list')
+@cfy.command(name='list',
+             short_help='List deployment executions [manager only]')
 @cfy.options.deployment_id(required=False)
 @cfy.options.include_system_workflows
 @cfy.options.sort_by()
@@ -127,7 +129,8 @@ def manager_list(
         logger.info(_STATUS_CANCELING_MESSAGE)
 
 
-@cfy.command(name='start')
+@cfy.command(name='start',
+             short_help='Execute a workflow [manager only]')
 @cfy.argument('workflow-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.parameters
@@ -238,7 +241,8 @@ def manager_start(workflow_id,
         raise SuppressedCloudifyCliError()
 
 
-@cfy.command(name='cancel')
+@cfy.command(name='cancel',
+             short_help='Cancel a workflow execution [manager only]')
 @cfy.argument('execution-id')
 @cfy.options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
 @cfy.options.verbose
@@ -267,7 +271,8 @@ def _get_deployment_environment_creation_execution(client, deployment_id):
                        'Available executions: {0}'.format(executions))
 
 
-@cfy.command(name='start')
+@cfy.command(name='start',
+             short_help='Execute a workflow')
 @cfy.argument('workflow-id')
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters

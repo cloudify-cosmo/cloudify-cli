@@ -27,7 +27,9 @@ def snapshots():
     """
 
 
-@snapshots.command(name='restore')
+@snapshots.command(name='restore',
+                   short_help='Restore a manager from a snapshot '
+                   '[manager only]')
 @cfy.argument('snapshot-id')
 @cfy.options.without_deployment_envs
 @cfy.options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
@@ -46,7 +48,8 @@ def restore(snapshot_id, without_deployment_envs, force, logger, client):
         execution.id))
 
 
-@snapshots.command(name='create')
+@snapshots.command(name='create',
+                   short_help='Create a snapshot [manager only]')
 @cfy.argument('snapshot-id', required=False)
 @cfy.options.include_metrics
 @cfy.options.exclude_credentials
@@ -71,7 +74,8 @@ def create(snapshot_id, include_metrics, exclude_credentials, logger, client):
         execution.id))
 
 
-@snapshots.command(name='delete')
+@snapshots.command(name='delete',
+                   short_help='Delete a snapshot [manager only]')
 @cfy.argument('snapshot-id')
 @cfy.options.verbose
 @cfy.add_logger
@@ -84,7 +88,8 @@ def delete(snapshot_id, logger, client):
     logger.info('Snapshot deleted successfully')
 
 
-@snapshots.command(name='upload')
+@snapshots.command(name='upload',
+                   short_help='Upload a snapshot [manager only]')
 @cfy.argument('snapshot_path')
 @cfy.options.snapshot_id
 @cfy.options.verbose
@@ -106,7 +111,8 @@ def upload(snapshot_path, snapshot_id, logger, client):
         snapshot.id))
 
 
-@snapshots.command(name='download')
+@snapshots.command(name='download',
+                   short_help='Download a snapshot [manager only]')
 @cfy.argument('snapshot-id')
 @cfy.options.output_path
 @cfy.options.verbose
@@ -126,7 +132,8 @@ def download(snapshot_id, output_path, logger, client):
     logger.info('Snapshot downloaded as {0}'.format(target_file))
 
 
-@snapshots.command(name='list')
+@snapshots.command(name='list',
+                   short_help='List snapshots [manager only]')
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.verbose

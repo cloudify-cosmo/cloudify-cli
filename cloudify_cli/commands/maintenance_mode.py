@@ -34,7 +34,9 @@ def maintenance_mode():
     """
 
 
-@maintenance_mode.command(name='status')
+@maintenance_mode.command(name='status',
+                          short_help='Show maintenance-mode status '
+                          '[manager only]')
 @cfy.options.verbose
 @cfy.add_client()
 def status(client):
@@ -80,7 +82,9 @@ def _print_maintenance_mode_status(client, logger):
                     'mode. Most requests will be blocked.\n')
 
 
-@maintenance_mode.command(name='activate')
+@maintenance_mode.command(name='activate',
+                          short_help='Activate maintenance-mode '
+                          '[manager only]')
 @cfy.options.wait
 @cfy.options.timeout(default=0)
 @cfy.options.verbose
@@ -123,7 +127,9 @@ def activate(wait, timeout, logger, client):
                 "maintenance mode's status.\n")
 
 
-@maintenance_mode.command(name='deactivate')
+@maintenance_mode.command(name='deactivate',
+                          short_help='Deactivate maintenance-mode '
+                          '[manager only]')
 @cfy.options.verbose
 @cfy.add_logger
 @cfy.add_client()
