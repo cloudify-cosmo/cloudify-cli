@@ -13,20 +13,18 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
 from ..config import helptexts
-from ..logger import get_logger
 
 
 @cfy.group(name='snapshots')
 @cfy.options.verbose
+@cfy.assert_manager_active
 def snapshots():
     """Handle manager snapshots
     """
-    env.assert_manager_active()
 
 
 @snapshots.command(name='restore')
@@ -34,14 +32,13 @@ def snapshots():
 @cfy.options.without_deployment_envs
 @cfy.options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
 @cfy.options.verbose
-def restore(snapshot_id, without_deployment_envs, force):
+@cfy.add_logger
+@cfy.add_client()
+def restore(snapshot_id, without_deployment_envs, force, logger, client):
     """Restore a manager to its previous state
 
     `SNAPSHOT_ID` is the id of the snapshot to use for restoration.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     logger.info('Restoring snapshot {0}...'.format(snapshot_id))
     execution = client.snapshots.restore(
         snapshot_id, not without_deployment_envs, force)
@@ -54,7 +51,9 @@ def restore(snapshot_id, without_deployment_envs, force):
 @cfy.options.include_metrics
 @cfy.options.exclude_credentials
 @cfy.options.verbose
-def create(snapshot_id, include_metrics, exclude_credentials):
+@cfy.add_logger
+@cfy.add_client()
+def create(snapshot_id, include_metrics, exclude_credentials, logger, client):
     """Create a snapshot on the manager
 
     The snapshot will contain the relevant data to restore a manager to
@@ -62,9 +61,6 @@ def create(snapshot_id, include_metrics, exclude_credentials):
 
     `SNAPSHOT_ID` is the id to attach to the snapshot.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     snapshot_id = snapshot_id or utils.generate_suffixed_id('snapshot')
     logger.info('Creating snapshot {0}...'.format(snapshot_id))
 
@@ -78,12 +74,11 @@ def create(snapshot_id, include_metrics, exclude_credentials):
 @snapshots.command(name='delete')
 @cfy.argument('snapshot-id')
 @cfy.options.verbose
-def delete(snapshot_id):
+@cfy.add_logger
+@cfy.add_client()
+def delete(snapshot_id, logger, client):
     """Delete a snapshot from the manager
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     logger.info('Deleting snapshot {0}...'.format(snapshot_id))
     client.snapshots.delete(snapshot_id)
     logger.info('Snapshot deleted successfully')
@@ -93,14 +88,13 @@ def delete(snapshot_id):
 @cfy.argument('snapshot_path')
 @cfy.options.snapshot_id
 @cfy.options.verbose
-def upload(snapshot_path, snapshot_id):
+@cfy.add_logger
+@cfy.add_client()
+def upload(snapshot_path, snapshot_id, logger, client):
     """Upload a snapshot to the manager
 
     `SNAPSHOT_PATH` is the path to the snapshot to upload.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     snapshot_id = snapshot_id or utils.generate_suffixed_id('snapshot')
 
     logger.info('Uploading snapshot {0}...'.format(snapshot_path))
@@ -116,14 +110,13 @@ def upload(snapshot_path, snapshot_id):
 @cfy.argument('snapshot-id')
 @cfy.options.output_path
 @cfy.options.verbose
-def download(snapshot_id, output_path):
+@cfy.add_logger
+@cfy.add_client()
+def download(snapshot_id, output_path, logger, client):
     """Download a snapshot from the manager
 
     `SNAPSHOT_ID` is the id of the snapshot to download.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     logger.info('Downloading snapshot {0}...'.format(snapshot_id))
     snapshot_name = output_path if output_path else snapshot_id
     progress_handler = utils.generate_progress_handler(snapshot_name, '')
@@ -137,12 +130,11 @@ def download(snapshot_id, output_path):
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.verbose
-def list(sort_by, descending):
+@cfy.add_logger
+@cfy.add_client()
+def list(sort_by, descending, logger, client):
     """List all snapshots on the manager
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     logger.info('Listing snapshots...')
     snapshots = client.snapshots.list(sort=sort_by, is_descending=descending)
 

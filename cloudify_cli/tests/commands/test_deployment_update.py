@@ -15,9 +15,9 @@
 
 from mock import MagicMock, patch
 
-from cloudify_cli.exceptions import SuppressedCloudifyCliError
-from cloudify_cli.tests.commands.test_cli_command import CliCommandTest
-from cloudify_cli.tests.commands.test_cli_command import BLUEPRINTS_DIR
+from .test_cli_command import CliCommandTest
+from .test_cli_command import BLUEPRINTS_DIR
+from ...exceptions import SuppressedCloudifyCliError
 
 
 class DeploymentUpdatesTest(CliCommandTest):
@@ -36,7 +36,8 @@ class DeploymentUpdatesTest(CliCommandTest):
 
         patcher = patch(
             'cloudify_cli.execution_events_fetcher.wait_for_execution',
-            wait_for_execution_mock)
+            wait_for_execution_mock
+        )
         self.addCleanup(patcher.stop)
         patcher.start()
 
@@ -111,7 +112,7 @@ class DeploymentUpdatesTest(CliCommandTest):
     def test_dep_update_archive_loc_and_bp_path_parameters_exclusion(self):
         self.invoke(
             'cfy deployments update -p '
-            '{0}/helloworld.zip -p {0}/helloworld/'
+            '{0}/helloworld/blueprint.yaml -n {0}/helloworld/'
             'blueprint.yaml my_deployment'.format(BLUEPRINTS_DIR),
             should_fail=True)
 

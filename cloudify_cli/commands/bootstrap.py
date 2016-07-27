@@ -21,7 +21,6 @@ from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
-from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 
 from .init import init_profile
@@ -39,6 +38,7 @@ from .init import init_profile
 @cfy.options.task_thread_pool_size()
 @cfy.options.keep_up_on_failure
 @cfy.options.verbose
+@cfy.add_logger
 def bootstrap(blueprint_path,
               inputs,
               validate_only,
@@ -48,7 +48,8 @@ def bootstrap(blueprint_path,
               task_retries,
               task_retry_interval,
               task_thread_pool_size,
-              keep_up_on_failure):
+              keep_up_on_failure,
+              logger):
     """Bootstrap a manager
 
     `BLUEPRINT_PATH` is a path to the manager-blueprint used to bootstrap
@@ -67,7 +68,6 @@ def bootstrap(blueprint_path,
     # TODO: use `common.get_blueprint` to allow to bootstrap from an archive,
     # github, etc..
 
-    logger = get_logger()
     env_name = 'manager'
 
     # TODO: allow to skip sanity

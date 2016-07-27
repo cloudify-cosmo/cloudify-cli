@@ -15,13 +15,11 @@
 
 import time
 
-from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
 from .. import exceptions
 from ..logger import NO_VERBOSE
-from ..logger import get_logger
 from ..logger import get_global_verbosity
 
 DEFAULT_TIMEOUT_INTERVAL = 5
@@ -30,22 +28,21 @@ MAINTENANCE_MODE_ACTIVE = 'activated'
 
 @cfy.group(name='maintenance-mode')
 @cfy.options.verbose
+@cfy.assert_manager_active
 def maintenance_mode():
     """Handle the manager's maintenance-mode
     """
-    env.assert_manager_active()
 
 
 @maintenance_mode.command(name='status')
 @cfy.options.verbose
-def status():
-    client = env.get_rest_client()
+@cfy.add_client()
+def status(client):
     _print_maintenance_mode_status(client)
 
 
-def _print_maintenance_mode_status(client):
-    logger = get_logger()
-
+@cfy.add_logger
+def _print_maintenance_mode_status(client, logger):
     status_response = client.maintenance_mode.status()
 
     logger.info('\nMaintenance Mode Status:')
@@ -87,9 +84,9 @@ def _print_maintenance_mode_status(client):
 @cfy.options.wait
 @cfy.options.timeout(default=0)
 @cfy.options.verbose
-def activate(wait, timeout):
-    logger = get_logger()
-    client = env.get_rest_client()
+@cfy.add_logger
+@cfy.add_client()
+def activate(wait, timeout, logger, client):
 
     if timeout and not wait:
         msg = "'--timeout' was used without '--wait'."
@@ -128,10 +125,9 @@ def activate(wait, timeout):
 
 @maintenance_mode.command(name='deactivate')
 @cfy.options.verbose
-def deactivate():
-    logger = get_logger()
-    client = env.get_rest_client()
-
+@cfy.add_logger
+@cfy.add_client()
+def deactivate(logger, client):
     logger.info('Turning off maintenance mode...')
     client.maintenance_mode.deactivate()
     logger.info('Maintenance mode is off.')

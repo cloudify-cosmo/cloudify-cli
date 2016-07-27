@@ -39,11 +39,10 @@ from ..exceptions import CloudifyCliError
               multiple=True,
               help=helptexts.DEV_TASK_ARGS)
 @cfy.options.verbose
+@cfy.assert_manager_active
 def dev(tasks_file, task, args):
     """Run fabric tasks on the manager
     """
-    env.assert_manager_active()
-
     management_ip = env.get_rest_host()
     _execute(username=get_management_user(),
              port=get_management_port(),

@@ -24,7 +24,6 @@ from .. import env
 from .. import common
 from ..config import cfy
 from .. import exceptions
-from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 from ..bootstrap.bootstrap import load_env
 
@@ -47,6 +46,9 @@ REMOTE_WORKFLOW_STATE_PATH = '/opt/cloudify/_workflow_state.json'
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose
+@cfy.add_logger
+@cfy.add_client(skip_version_check=True)
+@cfy.assert_manager_active
 def upgrade(blueprint_path,
             inputs,
             validate_only,
@@ -54,7 +56,9 @@ def upgrade(blueprint_path,
             install_plugins,
             task_retries,
             task_retry_interval,
-            task_thread_pool_size):
+            task_thread_pool_size,
+            logger,
+            client):
     """Upgrade a manager to a newer version
 
     Note that you must supply a simple-manager-blueprint to perform
@@ -62,16 +66,10 @@ def upgrade(blueprint_path,
 
     `BLUEPRINT_PATH` is the path of the manager blueprint to use for upgrade.
     """
-    env.assert_manager_active()
-
     # This must be a list so that we can append to it if necessary.
     inputs = list(inputs)
 
-    logger = get_logger()
     management_ip = env.get_rest_host()
-
-    client = env.get_rest_client(management_ip, skip_version_check=True)
-
     verify_and_wait_for_maintenance_mode_activation(client)
 
     if skip_validations:
@@ -198,8 +196,8 @@ def _load_management_port(inputs):
                                           'the upgrade/rollback process')
 
 
-def verify_and_wait_for_maintenance_mode_activation(client):
-    logger = get_logger()
+@cfy.add_logger
+def verify_and_wait_for_maintenance_mode_activation(client, logger):
     curr_status = client.maintenance_mode.status().status
     if curr_status == MAINTENANCE_MODE_DEACTIVATED:
         error = exceptions.CloudifyCliError(

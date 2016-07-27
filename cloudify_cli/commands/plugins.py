@@ -17,12 +17,10 @@ import click
 import tarfile
 from urlparse import urlparse
 
-from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
 from ..config import helptexts
-from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
@@ -39,16 +37,17 @@ columns = [
 
 @cfy.group(name='plugins')
 @cfy.options.verbose
+@cfy.assert_manager_active
 def plugins():
     """Handle plugins on the manager
     """
-    env.assert_manager_active()
 
 
 @plugins.command(name='validate')
 @cfy.argument('plugin-path')
 @cfy.options.verbose
-def validate(plugin_path):
+@cfy.add_logger
+def validate(plugin_path, logger):
     """Validate a plugin
 
     This will try to validate the plugin's archive is not corrupted.
@@ -57,7 +56,6 @@ def validate(plugin_path):
 
     `PLUGIN_PATH` is the path to wagon archive to validate.
     """
-    logger = get_logger()
     logger.info('Validating plugin {0}...'.format(plugin_path))
 
     if not tarfile.is_tarfile(plugin_path):
@@ -90,14 +88,13 @@ def validate(plugin_path):
 @cfy.argument('plugin-id')
 @cfy.options.force(help=helptexts.FORCE_DELETE_PLUGIN)
 @cfy.options.verbose
-def delete(plugin_id, force):
+@cfy.add_logger
+@cfy.add_client()
+def delete(plugin_id, force, logger, client):
     """Delete a plugin from the manager
 
     `PLUGIN_ID` is the id of the plugin to delete.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     logger.info('Deleting plugin {0}...'.format(plugin_id))
     client.plugins.delete(plugin_id=plugin_id, force=force)
     logger.info('Plugin deleted')
@@ -107,14 +104,13 @@ def delete(plugin_id, force):
 @cfy.argument('plugin-path')
 @cfy.options.verbose
 @click.pass_context
-def upload(ctx, plugin_path):
+@cfy.add_logger
+@cfy.add_client()
+def upload(ctx, plugin_path, logger, client):
     """Upload a plugin to the manager
 
     `PLUGIN_PATH` is the path to wagon archive to upload.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     # Test whether the path is a valid URL. If it is, no point in doing local
     # validations - it will be validated on the server side anyway
     parsed_url = urlparse(plugin_path)
@@ -131,14 +127,13 @@ def upload(ctx, plugin_path):
 @cfy.argument('plugin-id')
 @cfy.options.output_path
 @cfy.options.verbose
-def download(plugin_id, output_path):
+@cfy.add_logger
+@cfy.add_client()
+def download(plugin_id, output_path, logger, client):
     """Download a plugin from the manager
 
     `PLUGIN_ID` is the id of the plugin to download.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     logger.info('Downloading plugin {0}...'.format(plugin_id))
     plugin_name = output_path if output_path else plugin_id
     progress_handler = utils.generate_progress_handler(plugin_name, '')
@@ -151,14 +146,13 @@ def download(plugin_id, output_path):
 @plugins.command(name='get')
 @cfy.argument('plugin-id')
 @cfy.options.verbose
-def get(plugin_id):
+@cfy.add_logger
+@cfy.add_client()
+def get(plugin_id, logger, client):
     """Retrieve information for a specific plugin
 
     `PLUGIN_ID` is the id of the plugin to get information on.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     logger.info('Retrieving plugin {0}...'.format(plugin_id))
     plugin = client.plugins.get(plugin_id, _include=columns)
 
@@ -170,12 +164,11 @@ def get(plugin_id):
 @cfy.options.sort_by('uploaded_at')
 @cfy.options.descending
 @cfy.options.verbose
-def list(sort_by, descending):
+@cfy.add_logger
+@cfy.add_client()
+def list(sort_by, descending, logger, client):
     """List all plugins on the manager
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     logger.info('Listing all plugins...')
     plugins = client.plugins.list(
         _include=columns,

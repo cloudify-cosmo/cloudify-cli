@@ -19,7 +19,6 @@ from .. import env
 from ..config import cfy
 from .. import exceptions
 from ..config import helptexts
-from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 
 from .use import use
@@ -32,6 +31,7 @@ from .use import use
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose
+@cfy.assert_manager_active
 def teardown(force,
              ignore_deployments,
              task_retries,
@@ -40,7 +40,6 @@ def teardown(force,
     """Teardown the manager
     """
     _assert_force(force)
-    env.assert_manager_active()
 
     try:
         management_ip = env.get_rest_host()
@@ -90,8 +89,8 @@ def teardown(force,
 
 # TODO: do we need this if the `teardown` only appears in the context of a
 # manager?
-def _update_local_provider_context(management_ip):
-    logger = get_logger()
+@cfy.add_logger
+def _update_local_provider_context(management_ip, logger):
     try:
         use(management_ip, env.get_rest_port())
     except BaseException as e:

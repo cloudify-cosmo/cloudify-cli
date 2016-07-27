@@ -18,9 +18,7 @@ import threading
 
 from cloudify import logs
 
-from .. import env
 from ..config import cfy
-from ..logger import get_logger
 from ..exceptions import ExecutionTimeoutError
 from ..exceptions import SuppressedCloudifyCliError
 from ..execution_events_fetcher import wait_for_execution, \
@@ -32,10 +30,10 @@ _NODE_INSTANCE_STATE_STARTED = 'started'
 
 @cfy.group(name='agents')
 @cfy.options.verbose
+@cfy.assert_manager_active
 def agents():
     """Handle a deployment's agents
     """
-    env.assert_manager_active()
 
 
 def _is_deployment_installed(client, deployment_id):
@@ -56,15 +54,15 @@ def _deployment_exists(client, deployment_id):
 @agents.command(name='install')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
-def install(deployment_id, include_logs):
+@cfy.add_logger
+@cfy.add_client()
+def install(deployment_id, include_logs, logger, client):
     """Install agents on the hosts of existing deployments
 
     See Cloudify's documentation at http://docs.getcloudify.org for more
     information.
     """
     workflow_id = 'install_new_agents'
-    logger = get_logger()
-    client = env.get_rest_client()
 
     if deployment_id:
         deps = [deployment_id]

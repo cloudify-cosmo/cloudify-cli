@@ -19,7 +19,6 @@ from .. import env
 from .. import exceptions
 from ..config import cfy
 from ..config import helptexts
-from ..logger import get_logger
 from ..bootstrap import bootstrap as bs
 
 
@@ -33,16 +32,17 @@ CLOUDIFY_MANAGER_PK_PATH_ENVAR = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose
+@cfy.add_logger
 def recover(snapshot_path,
             force,
             task_retries,
             task_retry_interval,
-            task_thread_pool_size):
+            task_thread_pool_size,
+            logger):
     """Recover a manager to a previous state
 
     `SNAPSHOT_PATH` is the path of the snapshot to use for recovery.
     """
-    logger = get_logger()
     if not force:
         raise exceptions.CloudifyCliError(
             "This action requires additional "

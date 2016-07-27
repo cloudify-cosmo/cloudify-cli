@@ -17,11 +17,9 @@ from .upgrade import update_inputs
 from .upgrade import put_workflow_state_file
 from .upgrade import verify_and_wait_for_maintenance_mode_activation
 
-from .. import env
 from .. import common
 from ..config import cfy
 from .. import exceptions
-from ..logger import get_logger
 
 
 @cfy.command(name='rollback')
@@ -32,23 +30,23 @@ from ..logger import get_logger
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose
+@cfy.add_logger
+@cfy.add_client(skip_version_check=True)
+@cfy.assert_manager_active
 def rollback(blueprint_path,
              inputs,
              install_plugins,
              task_retries,
              task_retry_interval,
-             task_thread_pool_size):
+             task_thread_pool_size,
+             logger,
+             client):
     """Rollback a manager to its previous version
 
     Note that you can only rollback to the last version you upgraded from.
 
     `BLUEPRINT_PATH` is the path of the manager blueprint to use for rollback.
     """
-    env.assert_manager_active()
-
-    logger = get_logger()
-    client = env.get_rest_client(skip_version_check=True)
-
     verify_and_wait_for_maintenance_mode_activation(client)
 
     inputs = update_inputs(inputs)

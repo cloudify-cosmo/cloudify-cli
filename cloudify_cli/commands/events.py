@@ -15,21 +15,19 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import env
 from ..config import cfy
-from ..exceptions import CloudifyCliError, \
-    SuppressedCloudifyCliError
-from ..logger import get_logger, get_events_logger
+from ..logger import get_events_logger
+from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 from ..execution_events_fetcher import ExecutionEventsFetcher, \
     wait_for_execution
 
 
 @cfy.group(name='events')
 @cfy.options.verbose
+@cfy.assert_manager_active
 def events():
     """Show events from workflow executions
     """
-    env.assert_manager_active()
 
 
 @events.command(name='list')
@@ -38,14 +36,13 @@ def events():
 @cfy.options.json
 @cfy.options.tail
 @cfy.options.verbose
-def list(execution_id, include_logs, json, tail):
+@cfy.add_logger
+@cfy.add_client()
+def list(execution_id, include_logs, json, tail, logger, client):
     """Display events for an execution
 
     `EXECUTION_ID` is the execution to list events for.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     logger.info('Listing events for execution id {0} '
                 '[include_logs={1}]'.format(execution_id, include_logs))
     try:
@@ -89,14 +86,14 @@ def list(execution_id, include_logs, json, tail):
 @cfy.argument('deployment-id')
 @cfy.options.include_logs
 @cfy.options.verbose
-def delete(deployment_id, include_logs):
+@cfy.add_logger
+@cfy.add_client()
+def delete(deployment_id, include_logs, logger, client):
     """Delete events attached to a deployment
     """
-    logger = get_logger()
     logger.info(
         'Deleting events for deployment id {0} [include_logs={1}]'.format(
             deployment_id, include_logs))
-    client = env.get_rest_client()
 
     # Make sure the deployment exists - raise 404 otherwise
     client.deployments.get(deployment_id)

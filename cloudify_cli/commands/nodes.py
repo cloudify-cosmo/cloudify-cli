@@ -15,34 +15,31 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
-from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='nodes')
 @cfy.options.verbose
+@cfy.assert_manager_active
 def nodes():
     """Handle a deployment's nodes
     """
-    env.assert_manager_active()
 
 
 @nodes.command(name='get')
 @cfy.argument('node-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose
-def get(node_id, deployment_id):
+@cfy.add_logger
+@cfy.add_client()
+def get(node_id, deployment_id, logger, client):
     """Retrieve information for a specific node of a specific deployment
 
     `NODE_ID` is the node id to get information on.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     logger.info('Retrieving node {0} for deployment {1}'.format(
         node_id, deployment_id))
     try:
@@ -88,15 +85,14 @@ def get(node_id, deployment_id):
 @cfy.options.sort_by('deployment_id')
 @cfy.options.descending
 @cfy.options.verbose
-def list(deployment_id, sort_by, descending):
+@cfy.add_logger
+@cfy.add_client()
+def list(deployment_id, sort_by, descending, logger, client):
     """List nodes
 
     If `DEPLOYMENT_ID` is provided, list nodes for that deployment.
     Otherwise, list nodes for all deployments.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     try:
         if deployment_id:
             logger.info('Listing nodes for deployment {0}...'.format(

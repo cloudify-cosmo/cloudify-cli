@@ -15,33 +15,30 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
-from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='workflows')
+@cfy.assert_manager_active
 def workflows():
     """Handle deployment workflows
     """
-    env.assert_manager_active()
 
 
 @workflows.command(name='get')
 @cfy.argument('workflow-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose
-def get(workflow_id, deployment_id):
+@cfy.add_logger
+@cfy.add_client()
+def get(workflow_id, deployment_id, logger, client):
     """Retrieve information for a specific workflow of a specific deployment
 
     `WORKFLOW_ID` is the id of the workflow to get information on.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     try:
         logger.info('Retrieving workflow {0} for deployment {1}'.format(
             workflow_id, deployment_id))
@@ -98,14 +95,13 @@ def get(workflow_id, deployment_id):
 @workflows.command(name='list')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose
-def list(deployment_id):
+@cfy.add_logger
+@cfy.add_client()
+def list(deployment_id, logger, client):
     """List all workflows on the manager
 
     `DEPLOYMENT_ID` is the id of the deployment to list workflows for.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     logger.info('Listing workflows for deployment {0}...'.format(
         deployment_id))
     deployment = client.deployments.get(deployment_id)

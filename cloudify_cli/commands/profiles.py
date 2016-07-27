@@ -24,7 +24,6 @@ from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
-from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 from . import use
@@ -48,9 +47,8 @@ def profiles():
 
 @profiles.command(name='get-active')
 @cfy.options.verbose
+@cfy.assert_manager_active
 def get():
-    env.assert_manager_active()
-
     active_profile = env.get_profile(env.get_active_profile())
 
     columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path']
@@ -60,11 +58,10 @@ def get():
 
 @profiles.command(name='list')
 @cfy.options.verbose
-def list():
+@cfy.add_logger
+def list(logger):
     """List all profiles
     """
-    logger = get_logger()
-
     current_profile = env.get_active_profile()
 
     logger.info('Listing all profiles...')
@@ -91,13 +88,12 @@ def list():
 @profiles.command(name='delete')
 @cfy.argument('profile-name')
 @cfy.options.verbose
-def delete(profile_name):
+@cfy.add_logger
+def delete(profile_name, logger):
     """Delete a profile
 
     `PROFILE_NAME` is the IP of the manager the profile manages.
     """
-    logger = get_logger()
-
     logger.info('Deleting profile {0}...'.format(profile_name))
     if env.is_profile_exists(profile_name):
         env.delete_profile(profile_name)
@@ -111,7 +107,8 @@ def delete(profile_name):
 @cfy.options.optional_output_path
 @cfy.options.verbose
 @click.pass_context
-def export_profiles(ctx, include_keys, output_path):
+@cfy.add_logger
+def export_profiles(ctx, include_keys, output_path, logger):
     """Export all profiles to a file
 
     WARNING: Including the ssh keys of your profiles in the archive means
@@ -121,8 +118,6 @@ def export_profiles(ctx, include_keys, output_path):
     If `-o / --output-path` is omitted, the archive's name will be
     `cfy-profiles.tar.gz`.
     """
-    logger = get_logger()
-
     _assert_profiles_exist()
 
     destination = output_path or \
@@ -142,7 +137,8 @@ def export_profiles(ctx, include_keys, output_path):
 @cfy.argument('archive-path')
 @cfy.options.verbose
 @click.pass_context
-def import_profiles(ctx, archive_path):
+@cfy.add_logger
+def import_profiles(ctx, archive_path, logger):
     """Import profiles from a profiles archive
 
     WARNING: If a profile exists both in the archive and locally
@@ -150,8 +146,6 @@ def import_profiles(ctx, archive_path):
 
     `ARCHIVE_PATH` is the path to the profiles archive to import.
     """
-    logger = get_logger()
-
     _assert_is_tarfile(archive_path)
     _assert_profiles_archive(archive_path)
 
@@ -192,19 +186,20 @@ def _get_profile_names():
 # TODO: add `cfy profiles configure` to attach key, user, etc to a profile
 
 
-def _backup_ssh_keys(ctx):
-    logger = get_logger()
+@cfy.add_logger
+def _backup_ssh_keys(ctx, logger):
     logger.info('Backing up profile ssh keys...')
     _move_ssh_keys(ctx, direction='profile')
 
 
-def _restore_ssh_keys(ctx):
-    logger = get_logger()
+@cfy.add_logger
+def _restore_ssh_keys(ctx, logger):
     logger.info('Restoring profile ssh keys...')
     _move_ssh_keys(ctx, direction='origin')
 
 
-def _move_ssh_keys(ctx, direction):
+@cfy.add_logger
+def _move_ssh_keys(ctx, direction, logger):
     """Iterate through all profiles and move their ssh keys
 
     If the direction is `profile` - move to the profile directory.
@@ -213,8 +208,6 @@ def _move_ssh_keys(ctx, direction):
     This is how we backup and restore ssh keys.
     """
     assert direction in ('profile', 'origin')
-
-    logger = get_logger()
 
     current_profile = env.get_active_profile()
     profile_names = _get_profile_names()

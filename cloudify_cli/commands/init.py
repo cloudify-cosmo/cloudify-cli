@@ -21,7 +21,6 @@ from .. import common
 from .. import constants
 from .. import exceptions
 from ..config import cfy
-from ..logger import get_logger
 from ..logger import configure_loggers
 from ..bootstrap import bootstrap as bs
 from ..exceptions import CloudifyCliError
@@ -34,11 +33,13 @@ from ..exceptions import CloudifyCliError
 @cfy.options.install_plugins
 @cfy.options.init_hard_reset
 @cfy.options.verbose
+@cfy.add_logger
 def init(blueprint_path,
          reset_context,
          inputs,
          install_plugins,
-         hard):
+         hard,
+         logger):
     """Initialize a Cloudify environment.
 
     This is required to perform many actions and should be the first
@@ -54,8 +55,6 @@ def init(blueprint_path,
     ~/.cloudify/config.yaml. For more information refer to the docs
     at http://docs.getcloudify.org
     """
-
-    logger = get_logger()
     profile_name = 'local'
 
     # TODO: enable `cfy init --enable-colors`
@@ -109,9 +108,9 @@ def init(blueprint_path,
         env.set_active_profile(profile_name)
 
 
-def init_profile(profile_name, reset_context=False, hard=False):
+@cfy.add_logger
+def init_profile(profile_name, reset_context=False, hard=False, logger=None):
     # TODO: support profile aliases
-    logger = get_logger()
     logger.info('Initializing profile {0}...'.format(profile_name))
 
     context_file_path = os.path.join(

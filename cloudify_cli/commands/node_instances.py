@@ -17,33 +17,30 @@ import json
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import env
 from .. import utils
 from .. import common
 from ..config import cfy
-from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='node-instances')
 @cfy.options.verbose
+@cfy.assert_manager_active
 def manager():
     """Handle a deployment's node-instances
     """
-    env.assert_manager_active()
 
 
 @manager.command(name='get')
 @cfy.argument('node_instance_id')
 @cfy.options.verbose
-def get(node_instance_id):
+@cfy.add_logger
+@cfy.add_client()
+def get(node_instance_id, logger, client):
     """Retrieve information for a specific node-instance
 
     `NODE_INSTANCE_ID` is the id of the node-instance to get information on.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     logger.info('Retrieving node instance {0}'.format(node_instance_id))
     try:
         node_instance = client.node_instances.get(node_instance_id)
@@ -72,15 +69,14 @@ def get(node_instance_id):
 @cfy.options.sort_by('node_id')
 @cfy.options.descending
 @cfy.options.verbose
-def list(deployment_id, node_name, sort_by, descending):
+@cfy.add_logger
+@cfy.add_client()
+def list(deployment_id, node_name, sort_by, descending, logger, client):
     """List node-instances
 
     If `DEPLOYMENT_ID` is provided, list node-instances for that deployment.
     Otherwise, list node-instances for all deployments.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     try:
         if deployment_id:
             logger.info('Listing instances for deployment {0}...'.format(
@@ -106,13 +102,12 @@ def list(deployment_id, node_name, sort_by, descending):
 @cfy.command(name='node-instances')
 @cfy.argument('node-id', required=False)
 @cfy.options.verbose
-def local(node_id):
+@cfy.add_logger
+def local(node_id, logger):
     """Display node-instances for the execution
 
     `NODE_ID` is id of the node to list instances for.
     """
-    logger = get_logger()
-
     env = common.load_env()
     node_instances = env.storage.get_node_instances()
     if node_id:

@@ -19,23 +19,22 @@ from .. import ssh
 from .. import env
 from ..config import cfy
 from ..config import helptexts
-from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='logs')
 @cfy.options.verbose
+@cfy.assert_manager_active
 def logs():
     """Handle manager service logs
     """
-    env.assert_manager_active()
 
 
-def _archive_logs():
+@cfy.add_logger
+def _archive_logs(logger):
     """Creates an archive of all logs found under /var/log/cloudify plus
     journalctl.
     """
-    logger = get_logger()
     archive_filename = 'cloudify-manager-logs_{0}_{1}.tar.gz'.format(
         ssh.get_manager_date(), env.get_rest_host())
     archive_path = os.path.join('/tmp', archive_filename)
@@ -58,10 +57,10 @@ def _archive_logs():
 @logs.command(name='download')
 @cfy.options.output_path
 @cfy.options.verbose
-def download(output_path):
+@cfy.add_logger
+def download(output_path, logger):
     """Download an archive containing all of the manager's service logs
     """
-    logger = get_logger()
     archive_path_on_manager = _archive_logs()
     logger.info('Downloading archive to: {0}'.format(output_path))
     ssh.get_file_from_manager(archive_path_on_manager, output_path)
@@ -74,7 +73,8 @@ def download(output_path):
 @cfy.options.force(help=helptexts.FORCE_PURGE_LOGS)
 @cfy.options.backup_first
 @cfy.options.verbose
-def purge(force, backup_first):
+@cfy.add_logger
+def purge(force, backup_first, logger):
     """Truncate all logs files under /var/log/cloudify.
 
     This allows the user to take extreme measures to clean up data from the
@@ -86,7 +86,6 @@ def purge(force, backup_first):
     if not force:
         raise CloudifyCliError(
             'You must supply the `-f, --force` flag to perform the purge')
-    logger = get_logger()
     if backup_first:
         backup()
 
@@ -102,11 +101,11 @@ def purge(force, backup_first):
 
 @logs.command(name='backup')
 @cfy.options.verbose
-def backup():
+@cfy.add_logger
+def backup(logger):
     """Create a backup of all logs under a single archive and save it
     on the manager under /var/log.
     """
-    logger = get_logger()
     archive_path_on_manager = _archive_logs()
     logger.info('Backing up manager logs to /var/log/{0}'.format(
         os.path.basename(archive_path_on_manager)))

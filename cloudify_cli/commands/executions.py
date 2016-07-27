@@ -14,6 +14,7 @@
 #    * limitations under the License.
 
 import time
+import json
 
 from cloudify_rest_client import exceptions
 
@@ -24,7 +25,7 @@ from ..config import cfy
 from ..config import helptexts
 from ..exceptions import CloudifyCliError
 from ..exceptions import ExecutionTimeoutError
-from ..logger import get_logger, get_events_logger
+from ..logger import get_events_logger
 from ..exceptions import SuppressedCloudifyCliError
 from ..execution_events_fetcher import wait_for_execution
 
@@ -45,16 +46,14 @@ def executions():
 @cfy.command(name='get')
 @cfy.argument('execution-id')
 @cfy.options.verbose
-def manager_get(execution_id):
+@cfy.add_logger
+@cfy.add_client()
+@cfy.assert_manager_active
+def manager_get(execution_id, logger, client):
     """Retrieve information for a specific execution
 
     `EXECUTION_ID` is the execution to get information on.
     """
-    env.assert_manager_active()
-
-    logger = get_logger()
-    client = env.get_rest_client()
-
     try:
         logger.info('Retrieving execution {0}'.format(execution_id))
         execution = client.executions.get(execution_id)
@@ -85,17 +84,21 @@ def manager_get(execution_id):
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.verbose
-def manager_list(deployment_id, include_system_workflows, sort_by, descending):
+@cfy.add_logger
+@cfy.add_client()
+@cfy.assert_manager_active
+def manager_list(
+        deployment_id,
+        include_system_workflows,
+        sort_by,
+        descending,
+        logger,
+        client):
     """List executions
 
     If `DEPLOYMENT_ID` is provided, list executions for that deployment.
     Otherwise, list executions for all deployments.
     """
-    env.assert_manager_active()
-
-    logger = get_logger()
-    client = env.get_rest_client()
-
     try:
         if deployment_id:
             logger.info('Listing executions for deployment {0}...'.format(
@@ -134,6 +137,8 @@ def manager_list(deployment_id, include_system_workflows, sort_by, descending):
 @cfy.options.include_logs
 @cfy.options.json
 @cfy.options.verbose
+@cfy.add_logger
+@cfy.assert_manager_active
 def manager_start(workflow_id,
                   deployment_id,
                   parameters,
@@ -141,15 +146,12 @@ def manager_start(workflow_id,
                   force,
                   timeout,
                   include_logs,
-                  json):
+                  json,
+                  logger):
     """Execute a workflow on a given deployment
 
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
-    env.assert_manager_active()
-
-    logger = get_logger()
-
     events_logger = get_events_logger(json)
     events_message = "* Run 'cfy events list {0}' to retrieve the " \
                      "execution's events/logs"
@@ -241,14 +243,12 @@ def manager_start(workflow_id,
 @cfy.argument('execution-id')
 @cfy.options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
 @cfy.options.verbose
-def manager_cancel(execution_id, force):
+@cfy.add_logger
+@cfy.add_client()
+@cfy.assert_manager_active
+def manager_cancel(execution_id, force, logger, client):
     """Cancel a workflow's execution
     """
-    env.assert_manager_active()
-
-    logger = get_logger()
-    client = env.get_rest_client()
-
     logger.info('{0}Cancelling execution {1}'.format(
         'Force-' if force else '', execution_id))
     client.executions.cancel(execution_id, force)
@@ -276,17 +276,18 @@ def _get_deployment_environment_creation_execution(client, deployment_id):
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose
+@cfy.add_logger
 def local_start(workflow_id,
                 parameters,
                 allow_custom_parameters,
                 task_retries,
                 task_retry_interval,
-                task_thread_pool_size):
+                task_thread_pool_size,
+                logger):
     """Execute a workflow
 
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
-    logger = get_logger()
     parameters = common.inputs_to_dict(parameters, 'parameters')
     env = common.load_env()
     result = env.execute(workflow=workflow_id,

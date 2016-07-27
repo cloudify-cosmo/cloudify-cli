@@ -188,6 +188,53 @@ def command(name):
     return click.command(name=name)
 
 
+def multiple_option(func):
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        return list(result)
+
+    return wrapper
+
+
+def assert_manager_active(func):
+    """Decorator that asserts that a manager is active
+    """
+    def wrapper(*args, **kwargs):
+        env.assert_manager_active()
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def assert_local_active(func):
+    """Decorator that asserts that a local profile is active
+    """
+    def wrapper(*args, **kwargs):
+        env.assert_local_active()
+        return func(*args, **kwargs)
+
+    return wrapper
+
+
+def add_logger(func):
+    def wrapper(*args, **kwargs):
+        new_logger = get_logger()
+        return func(logger=new_logger, *args, **kwargs)
+
+    return wrapper
+
+
+def add_client(*args, **kwargs):
+    def add_client_inner(func):
+        def wrapper(*wrapper_args, **wrapper_kwargs):
+            client = env.get_rest_client(*args, **kwargs)
+            return func(client=client, *wrapper_args, **wrapper_kwargs)
+
+        return wrapper
+
+    return add_client_inner
+
+
 def argument(name, type=click.STRING, required=True):
     return click.argument(name, required=required, type=type)
 

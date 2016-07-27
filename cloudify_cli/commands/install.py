@@ -27,7 +27,6 @@ from ..constants import DEFAULT_INSTALL_WORKFLOW
 from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
 from . import init
-from . import execute
 from . import blueprints
 from . import executions
 from . import deployments
@@ -107,12 +106,12 @@ def manager(ctx,
             shutil.rmtree(os.path.dirname(os.path.dirname(
                 processed_blueprint_path)))
     ctx.invoke(
-        deployments.create,
+        deployments.manager_create,
         blueprint_id=blueprint_id,
         deployment_id=deployment_id,
         inputs=inputs)
     ctx.invoke(
-        executions.start,
+        executions.manager_start,
         workflow_id=workflow_id,
         deployment_id=deployment_id,
         timeout=timeout,
@@ -186,7 +185,7 @@ def local(ctx,
             shutil.rmtree(os.path.dirname(os.path.dirname(
                 processed_blueprint_path)))
     ctx.invoke(
-        execute.execute,
+        executions.local_start,
         workflow_id=workflow_id,
         parameters=parameters,
         allow_custom_parameters=allow_custom_parameters,

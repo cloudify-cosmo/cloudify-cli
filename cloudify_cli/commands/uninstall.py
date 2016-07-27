@@ -21,7 +21,6 @@ from .. import common
 from ..config import cfy
 from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 
-from . import execute
 from . import blueprints
 from . import executions
 from . import deployments
@@ -64,7 +63,7 @@ def manager(ctx,
     workflow_id = workflow_id or DEFAULT_UNINSTALL_WORKFLOW
 
     ctx.invoke(
-        executions.start,
+        executions.manager_start,
         workflow_id=workflow_id,
         deployment_id=deployment_id,
         timeout=timeout,
@@ -81,7 +80,7 @@ def manager(ctx,
         deployment_id, _include=['blueprint_id'])
     blueprint_id = deployment.blueprint_id
     ctx.invoke(
-        deployments.delete,
+        deployments.manager_delete,
         deployment_id=deployment_id,
         ignore_live_nodes=False)
     ctx.invoke(
@@ -110,7 +109,7 @@ def local(ctx,
     workflow_id = workflow_id or DEFAULT_UNINSTALL_WORKFLOW
 
     ctx.invoke(
-        execute.execute,
+        executions.local_start,
         workflow_id=workflow_id,
         parameters=parameters,
         allow_custom_parameters=allow_custom_parameters,

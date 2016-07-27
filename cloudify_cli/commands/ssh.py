@@ -22,7 +22,6 @@ from distutils import spawn
 from .. import env
 from .. import utils
 from ..config import cfy
-from ..logger import get_logger
 from ..ssh import run_command_on_manager
 from ..exceptions import CloudifyCliError
 
@@ -33,7 +32,9 @@ from ..exceptions import CloudifyCliError
 @cfy.options.session_id
 @cfy.options.list_sessions
 @cfy.options.verbose
-def ssh(command, host, sid, list_sessions):
+@cfy.add_logger
+@cfy.assert_manager_active
+def ssh(command, host, sid, list_sessions, logger):
     """Connects to a running manager via SSH.
 
     `host` starts a tmux session (e.g. tmux new -s
@@ -51,14 +52,11 @@ def ssh(command, host, sid, list_sessions):
     Passing an `command` will simply execute it on the manager while
     omitting a command will connect to an interactive shell.
     """
-    env.assert_manager_active()
-
     _validate_env(command, host, sid, list_sessions)
     host_string = env.build_manager_host_string()
     if host or sid or list_sessions:
         _verify_tmux_exists_on_manager(host_string)
 
-    logger = get_logger()
     logger.info('Connecting to {0}...'.format(host_string))
     if host:
         sid = 'ssh_session_' + utils.generate_random_string()

@@ -17,31 +17,28 @@ import json
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import env
 from ..config import cfy
-from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='groups')
 @cfy.options.verbose
+@cfy.assert_manager_active
 def groups():
     """Handle deployment groups
     """
-    env.assert_manager_active()
 
 
 @groups.command(name='list')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose
-def list(deployment_id):
+@cfy.add_logger
+@cfy.add_client()
+def list(deployment_id, logger, client):
     """List all groups for a deployment
 
     `DEPLOYMENT_ID` is the id of the deployment to list groups for.
     """
-    logger = get_logger()
-    client = env.get_rest_client()
-
     logger.info("Listing groups for deployment {0}...".format(
         deployment_id))
     try:
