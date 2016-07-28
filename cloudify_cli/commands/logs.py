@@ -31,7 +31,6 @@ def logs():
     pass
 
 
-@cfy.add_logger
 def _archive_logs(logger):
     """Creates an archive of all logs found under /var/log/cloudify plus
     journalctl.
@@ -63,7 +62,7 @@ def _archive_logs(logger):
 def download(output_path, logger):
     """Download an archive containing all of the manager's service logs
     """
-    archive_path_on_manager = _archive_logs()
+    archive_path_on_manager = _archive_logs(logger)
     logger.info('Downloading archive to: {0}'.format(output_path))
     ssh.get_file_from_manager(archive_path_on_manager, output_path)
     logger.info('Removing archive from manager...')
@@ -110,7 +109,7 @@ def backup(logger):
     """Create a backup of all logs under a single archive and save it
     on the manager under /var/log.
     """
-    archive_path_on_manager = _archive_logs()
+    archive_path_on_manager = _archive_logs(logger)
     logger.info('Backing up manager logs to /var/log/{0}'.format(
         os.path.basename(archive_path_on_manager)))
     ssh.run_command_on_manager('mv {0} {1}'.format(

@@ -26,7 +26,7 @@ archive_files_completer = FilesCompleter(
 
 def objects_args_completer_maker(objects_type, **kw):
     def _objects_args_completer(prefix, **kwargs):
-        cosmo_wd_settings = env.load_cloudify_working_dir_settings(
+        cosmo_wd_settings = env.get_profile_context(
             suppress_error=True)
         if not cosmo_wd_settings:
             return []
@@ -45,7 +45,7 @@ def workflow_id_completer(prefix, parsed_args, **kwargs):
     if not parsed_args.deployment_id:
         return []
 
-    cosmo_wd_settings = env.load_cloudify_working_dir_settings(
+    cosmo_wd_settings = env.get_profile_context(
         suppress_error=True)
     if not cosmo_wd_settings:
         return []

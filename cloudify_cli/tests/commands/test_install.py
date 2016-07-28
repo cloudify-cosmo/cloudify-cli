@@ -48,31 +48,32 @@ SAMPLE_ARCHIVE_URL = 'http://example.com/path/archive.zip'
 SAMPLE_ARCHIVE_PATH = os.path.join(BLUEPRINTS_DIR, 'helloworld.zip')
 
 
+# TODO: Add local tests
 class InstallTest(CliCommandTest):
 
-    @patch('cloudify_cli.commands.executions.start')
+    @patch('cloudify_cli.commands.executions.manager_start')
     @patch('cloudify_cli.commands.blueprints.upload')
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     def test_use_blueprints_upload_mode(self,
                                         executions_start_mock,
                                         blueprints_upload_mock,
                                         deployments_create_mock):
-        self.invoke('cfy install {0}'.format(SAMPLE_BLUEPRINT_PATH))
+        self.invoke('cfy install {0}'.format(SAMPLE_BLUEPRINT_PATH), context='manager')
 
         self.assertTrue(executions_start_mock.called)
         self.assertTrue(blueprints_upload_mock.called)
         self.assertTrue(deployments_create_mock.called)
 
-    @patch('cloudify_cli.commands.executions.start')
+    @patch('cloudify_cli.commands.executions.manager_start')
     @patch('cloudify_cli.commands.blueprints.upload')
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     def test_blueprint_filename_default_value(self, *_):
         publish_archive_command = \
             'cfy install --archive-location={0} --blueprint-id={1}'\
             .format(STUB_ARCHIVE_LOCATION, STUB_BLUEPRINT_ID)
 
         self.assert_method_called(
-            cli_command=publish_archive_command,
+            command=publish_archive_command,
             module=commands.blueprints,
             function_name='publish_archive',
             args=[STUB_ARCHIVE_LOCATION, DEFAULT_BLUEPRINT_FILE_NAME,
@@ -80,22 +81,21 @@ class InstallTest(CliCommandTest):
                   ]
         )
 
-    @patch('cloudify_cli.commands.executions.start')
-    @patch('cloudify_cli.commands.deployments.create')
-    @patch('cloudify_cli.commands.blueprints.publish_archive')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     @patch('cloudify_cli.commands.blueprints.upload')
     def test_blueprint_path_default_value(self, blueprints_upload_mock, *_):
 
         install_upload_mode_command = \
             'cfy install --blueprint-id={0}'.format(STUB_BLUEPRINT_ID)
 
-        tmp_blueprint_path = os.path.join(self.original_utils_get_cwd(),
+        tmp_blueprint_path = os.path.join(os.getcwdu(),
                                           DEFAULT_BLUEPRINT_PATH)
 
         # create a tmp file representing a blueprint to upload
         open(tmp_blueprint_path, 'w+').close()
 
-        self.invoke(install_upload_mode_command)
+        self.invoke(install_upload_mode_command, context='manager')
 
         blueprint_path_argument_from_upload = \
             blueprints_upload_mock.call_args_list[0][0][0]
@@ -106,8 +106,8 @@ class InstallTest(CliCommandTest):
                          tmp_blueprint_path
                          )
 
-    @patch('cloudify_cli.commands.executions.start')
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     @patch('cloudify_cli.commands.blueprints.upload')
     def test_blueprint_id_default_publish_archive_mode_local_path(self, *_):
 
@@ -125,8 +125,8 @@ class InstallTest(CliCommandTest):
                   STUB_BLUEPRINT_FILENAME,
                   archive_name])
 
-    @patch('cloudify_cli.commands.executions.start')
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     @patch('cloudify_cli.commands.blueprints.upload')
     def test_blueprint_id_default_publish_archive_mode_url(self, *_):
 
@@ -145,8 +145,8 @@ class InstallTest(CliCommandTest):
                   archive_name]
         )
 
-    @patch('cloudify_cli.commands.executions.start')
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     @patch('cloudify_cli.commands.blueprints.upload')
     def test_blueprint_id_default_upload_mode(self, blueprints_upload_mock,
                                               *_):
@@ -156,7 +156,7 @@ class InstallTest(CliCommandTest):
 
         directory_name = 'helloworld'
 
-        self.invoke(install_upload_mode_command)
+        self.invoke(install_upload_mode_command, context='manager')
 
         blueprint_id_argument_from_upload = \
             blueprints_upload_mock.call_args_list[0][0][1]
@@ -169,7 +169,7 @@ class InstallTest(CliCommandTest):
                          )
 
     @patch('cloudify_cli.commands.blueprints.publish_archive')
-    @patch('cloudify_cli.commands.executions.start')
+    @patch('cloudify_cli.commands.executions.manager_start')
     def test_default_deployment_id(self, *_):
 
         command = \
@@ -185,7 +185,7 @@ class InstallTest(CliCommandTest):
         )
 
     @patch('cloudify_cli.commands.blueprints.publish_archive')
-    @patch('cloudify_cli.commands.executions.start')
+    @patch('cloudify_cli.commands.executions.manager_start')
     def test_custom_deployment_id(self, *_):
 
         command = \
@@ -203,7 +203,7 @@ class InstallTest(CliCommandTest):
         )
 
     @patch('cloudify_cli.commands.blueprints.publish_archive')
-    @patch('cloudify_cli.commands.executions.start')
+    @patch('cloudify_cli.commands.executions.manager_start')
     def test_default_inputs_file_path(self, *_):
 
         # create an `inputs.yaml` file in the cwd.
@@ -226,7 +226,7 @@ class InstallTest(CliCommandTest):
         )
 
     @patch('cloudify_cli.commands.blueprints.publish_archive')
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     def test_default_workflow_name(self, *_):
 
         command = \
@@ -251,8 +251,8 @@ class InstallTest(CliCommandTest):
                     }
         )
 
-    @patch('cloudify_cli.commands.executions.start')
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     @patch('cloudify_cli.commands.blueprints.upload')
     def test_blueprints_upload_custom_arguments(self,
                                                 blueprints_upload_mock,
@@ -262,7 +262,7 @@ class InstallTest(CliCommandTest):
             .format(SAMPLE_BLUEPRINT_PATH,
                     STUB_BLUEPRINT_ID)
 
-        self.invoke(command)
+        self.invoke(command, context='manager')
 
         blueprint_path_argument_from_upload = \
             blueprints_upload_mock.call_args_list[0][0][0]
@@ -281,8 +281,8 @@ class InstallTest(CliCommandTest):
              True]
         )
 
-    @patch('cloudify_cli.commands.executions.start')
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     @patch('cloudify_cli.commands.blueprints.publish_archive')
     def test_blueprints_publish_archive_custom_arguments(
             self,
@@ -295,7 +295,7 @@ class InstallTest(CliCommandTest):
                     STUB_BLUEPRINT_FILENAME,
                     STUB_BLUEPRINT_ID)
 
-        self.invoke(command)
+        self.invoke(command, context='manager')
 
         blueprints_publish_archive_mock.assert_called_with(
             STUB_ARCHIVE_LOCATION,
@@ -303,9 +303,9 @@ class InstallTest(CliCommandTest):
             STUB_BLUEPRINT_ID
         )
 
-    @patch('cloudify_cli.commands.executions.start')
+    @patch('cloudify_cli.commands.executions.manager_start')
     @patch('cloudify_cli.commands.blueprints.publish_archive')
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     def test_deployments_create_custom_arguments(self,
                                                  deployments_create_mock,
                                                  *_):
@@ -319,7 +319,7 @@ class InstallTest(CliCommandTest):
                     STUB_DEPLOYMENT_ID,
                     STUB_INPUTS)
 
-        self.invoke(command)
+        self.invoke(command, context='manager')
 
         deployments_create_mock.assert_called_with(
             STUB_BLUEPRINT_ID,
@@ -327,9 +327,9 @@ class InstallTest(CliCommandTest):
             [STUB_INPUTS]
         )
 
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     @patch('cloudify_cli.commands.blueprints.publish_archive')
-    @patch('cloudify_cli.commands.executions.start')
+    @patch('cloudify_cli.commands.executions.manager_start')
     def test_executions_start_custom_parameters(self,
                                                 executions_start_mock,
                                                 *_):
@@ -352,7 +352,7 @@ class InstallTest(CliCommandTest):
                     STUB_PARAMETERS
                     )
 
-        self.invoke(command)
+        self.invoke(command, context='manager')
 
         executions_start_mock.assert_called_with(
             workflow_id=STUB_WORKFLOW,
@@ -370,7 +370,7 @@ class InstallTest(CliCommandTest):
 
         install_command = 'cfy install'
 
-        self.invoke(install_command)
+        self.invoke(install_command, context='manager')
 
         install_command_arguments = \
             install_mock.call_args_list[0][1]
@@ -395,8 +395,8 @@ class InstallTest(CliCommandTest):
         self.assertEqual(install_command_arguments,
                          expected_install_command_arguments)
 
-    @patch('cloudify_cli.commands.executions.start')
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     @patch('cloudify_cli.commands.blueprints.publish_archive')
     @patch('cloudify_cli.commands.blueprints.upload')
     def test_mutually_exclusive_arguments(self, *_):
@@ -429,8 +429,8 @@ class InstallTest(CliCommandTest):
                           path_and_filename_and_archive_cmd
                           )
 
-    @patch('cloudify_cli.commands.executions.start')
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     @patch('cloudify_cli.commands.blueprints.upload')
     def test_auto_generate_ids_generates_suffixed_ids_in_upload_mode(
             self,
@@ -446,7 +446,7 @@ class InstallTest(CliCommandTest):
         # create a tmp file representing a blueprint to upload
         open(tmp_blueprint_path, 'w+').close()
 
-        self.invoke(upload_mode_command)
+        self.invoke(upload_mode_command, context='manager')
 
         blueprints_upload_blueprint_id_argument = \
             blueprints_upload_mock.call_args_list[0][0][1]
@@ -459,8 +459,8 @@ class InstallTest(CliCommandTest):
         self.assertTrue(deployments_create_deployment_id_argument
                         .startswith('did_'))
 
-    @patch('cloudify_cli.commands.executions.start')
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     @patch('cloudify_cli.commands.blueprints.upload')
     def test_auto_generate_ids_generates_suffixed_ids_in_publish_archive_mode(
             self,
@@ -471,7 +471,7 @@ class InstallTest(CliCommandTest):
         publish_archive_mode_command = \
             'cfy install -d did -b bid {0}'.format(STUB_ARCHIVE_LOCATION)
 
-        self.invoke(publish_archive_mode_command)
+        self.invoke(publish_archive_mode_command, context='manager')
 
         blueprints_publish_archive_blueprint_id_argument = \
             blueprints_publish_archive_mock.call_args_list[0][0][2]
@@ -484,8 +484,8 @@ class InstallTest(CliCommandTest):
         self.assertTrue(deployments_create_deployment_id_argument
                         .startswith('did_'))
 
-    @patch('cloudify_cli.commands.executions.start')
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     @patch('cloudify_cli.commands.blueprints.publish_archive')
     @patch('cloudify_cli.commands.install_module._generate_suffixed_id')
     @patch('cloudify_cli.utils.is_auto_generate_ids')
@@ -501,18 +501,18 @@ class InstallTest(CliCommandTest):
 
         mock_is_auto_generate_ids.return_value = False
 
-        self.invoke(auto_generate_ids_command)
+        self.invoke(auto_generate_ids_command, context='manager')
         self.assertEqual(mock_generate_suffixed_id.call_count, 2)
 
-        self.invoke(dont_auto_generate_ids_command)
+        self.invoke(dont_auto_generate_ids_command, context='manager')
         self.assertEqual(mock_generate_suffixed_id.call_count, 2)
 
         mock_is_auto_generate_ids.return_value = True
 
-        self.invoke(auto_generate_ids_command)
+        self.invoke(auto_generate_ids_command, context='manager')
         self.assertEqual(mock_generate_suffixed_id.call_count, 4)
 
-        self.invoke(dont_auto_generate_ids_command)
+        self.invoke(dont_auto_generate_ids_command, context='manager')
         self.assertEqual(mock_generate_suffixed_id.call_count, 6)
 
     @patch('cloudify_cli.utils.is_auto_generate_ids')
@@ -526,8 +526,8 @@ class InstallTest(CliCommandTest):
         self.assertTrue(commands.install_module._auto_generate_ids(False))
         self.assertTrue(commands.install_module._auto_generate_ids(True))
 
-    @patch('cloudify_cli.commands.executions.start')
-    @patch('cloudify_cli.commands.deployments.create')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_create')
     def test_default_blueprint_path_does_not_exist(self, *_):
 
         start_of_file_does_not_exist_message = \

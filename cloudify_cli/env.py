@@ -49,7 +49,7 @@ def get_profile(profile_name):
     set_active_profile(profile_name)
 
     # TODO: add rest port and protocol, ssh port and ssh password
-    cosmo_wd_settings = load_cloudify_working_dir_settings(profile_name)
+    cosmo_wd_settings = get_profile_context(profile_name)
     ssh_key_path = cosmo_wd_settings.get_management_key() or 'Not Set'
     ssh_user = cosmo_wd_settings.get_management_user() or 'Not Set'
     manager_ip = cosmo_wd_settings.get_management_server() or 'Not Set'
@@ -108,35 +108,18 @@ def is_manager_active():
     if not active_profile:
         return False
 
-    profile = load_cloudify_working_dir_settings(
+    profile = get_profile_context(
         active_profile, suppress_error=True)
     if not (profile and profile.get_management_server()):
         return False
     return True
 
 
-def _get_local_settings():
-    if not _local_settings:
-        _set_local_settings()
-
-    return _local_settings
-
-
-def _set_local_settings(cosmo_wd_settings=None):
-    global _local_settings
-
-    if cosmo_wd_settings:
-        _local_settings = cosmo_wd_settings
-    else:
-        _local_settings = CloudifyWorkingDirectorySettings()
-
-
-# TODO: Change name to something human
-def load_cloudify_working_dir_settings(profile_name=None,
-                                       suppress_error=False):
+def get_profile_context(profile_name=None,
+                        suppress_error=False):
     profile_name = profile_name or get_active_profile()
     if profile_name == 'local':
-        return _get_local_settings()
+        return None
     try:
         path = get_context_path(profile_name)
         with open(path) as f:
@@ -185,7 +168,7 @@ def get_init_path(profile_name=None):
     return path if os.path.isdir(path) else ''
 
 
-def dump_configuration_file():
+def set_cfy_config():
     config = pkg_resources.resource_string(
         cloudify_cli.__name__,
         'resources/config.yaml')
@@ -197,17 +180,13 @@ def dump_configuration_file():
         f.write(os.linesep)
 
 
-# TODO: Change name to something human
-def dump_cloudify_working_dir_settings(cosmo_wd_settings=None,
-                                       update=False,
-                                       profile_name=None):
+def set_profile_context(cosmo_wd_settings=None,
+                        update=False,
+                        profile_name=None):
     profile_name = profile_name or get_active_profile()
-    if not profile_name:
+    if not profile_name or profile_name == 'local':
         raise CloudifyCliError(
             'Either provide a profile name or activate a profile')
-    if profile_name == 'local':
-        _set_local_settings(cosmo_wd_settings)
-        return
 
     workdir = os.path.join(PROFILES_DIR, profile_name)
     if cosmo_wd_settings is None:
@@ -242,15 +221,15 @@ def raise_uninitialized():
 # nicer experience in getting a profile's properties
 @contextmanager
 def profile(profile_name=None):
-    yield load_cloudify_working_dir_settings(profile_name)
+    yield get_profile_context(profile_name)
 
 
 @contextmanager
-def update_wd_settings(profile_name=None):
+def update_profile_context(profile_name=None):
     active_profile = get_active_profile()
-    cosmo_wd_settings = load_cloudify_working_dir_settings(active_profile)
+    cosmo_wd_settings = get_profile_context(active_profile)
     yield cosmo_wd_settings
-    dump_cloudify_working_dir_settings(
+    set_profile_context(
         cosmo_wd_settings,
         update=True,
         profile_name=profile_name)
@@ -338,18 +317,18 @@ def get_rest_client(rest_host=None,
 
 
 def get_rest_port():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
+    cosmo_wd_settings = get_profile_context()
     return cosmo_wd_settings.get_rest_port()
 
 
 def get_rest_protocol():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
+    cosmo_wd_settings = get_profile_context()
     return cosmo_wd_settings.get_rest_protocol()
 
 
 # TODO: Replace all `management` with `manager` for consistency
 def get_management_user():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
+    cosmo_wd_settings = get_profile_context()
     if cosmo_wd_settings.get_management_user():
         return cosmo_wd_settings.get_management_user()
     raise CloudifyCliError(
@@ -357,15 +336,15 @@ def get_management_user():
 
 
 def get_management_port():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
+    cosmo_wd_settings = get_profile_context()
     if cosmo_wd_settings.get_management_port():
         return cosmo_wd_settings.get_management_port()
     raise CloudifyCliError(
-        'Management User is not set in working directory settings')
+        'Management Port is not set in working directory settings')
 
 
 def get_management_key():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
+    cosmo_wd_settings = get_profile_context()
     if cosmo_wd_settings.get_management_key():
         return cosmo_wd_settings.get_management_key()
     raise CloudifyCliError(
@@ -373,7 +352,7 @@ def get_management_key():
 
 
 def get_rest_host():
-    cosmo_wd_settings = load_cloudify_working_dir_settings()
+    cosmo_wd_settings = get_profile_context()
     management_ip = cosmo_wd_settings.get_management_server()
     if management_ip:
         return management_ip
@@ -454,7 +433,7 @@ def connected_to_manager(management_ip):
 def get_manager_version_data(rest_client=None):
     if not rest_client:
         # getting management ip from the working dir settings
-        dir_settings = load_cloudify_working_dir_settings(suppress_error=True)
+        dir_settings = get_profile_context(suppress_error=True)
         if not (dir_settings and dir_settings.get_management_server()):
             return None
         management_ip = dir_settings.get_management_server()

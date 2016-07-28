@@ -55,7 +55,6 @@ def use(alias,
     """
     # TODO: add support for setting the ssh port and password
 
-    management_ip = management_ip or 'local'
     if management_ip == 'local':
         logger.info('Using local environment...')
         if not env.is_profile_exists(management_ip):
@@ -101,7 +100,7 @@ def use(alias,
     except CloudifyClientError:
         provider_context = None
 
-    with env.update_wd_settings(management_ip) as wd_settings:
+    with env.update_profile_context(management_ip) as wd_settings:
         wd_settings.set_management_server(management_ip)
         wd_settings.set_provider_context(provider_context)
         wd_settings.set_rest_port(rest_port)

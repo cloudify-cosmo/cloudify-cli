@@ -122,7 +122,7 @@ def bootstrap(blueprint_path,
                     skip_sanity=skip_sanity)
 
                 manager_ip = details['manager_ip']
-                with env.update_wd_settings(active_profile) as profile:
+                with env.update_profile_context(active_profile) as profile:
                     profile.set_management_server(manager_ip)
                     profile.set_management_key(details['manager_key_path'])
                     profile.set_management_user(details['manager_user'])

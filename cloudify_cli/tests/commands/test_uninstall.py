@@ -29,61 +29,60 @@ from ...constants import DEFAULT_UNINSTALL_WORKFLOW
 
 
 class UninstallTest(CliCommandTest):
-    def __init__(self):
-        super(UninstallTest, self).__init__()
+    def setUp(self):
+        super(UninstallTest, self).setUp()
         self.use_manager()
 
     @patch('cloudify_cli.commands.blueprints.delete')
-    @patch('cloudify_cli.commands.deployments.delete')
+    @patch('cloudify_cli.commands.deployments.manager_delete')
     @patch('cloudify_cli.env.get_rest_client')
-    @patch('cloudify_cli.commands.executions.start')
+    @patch('cloudify_cli.commands.executions.manager_start')
     def test_default_executions_start_arguments(self, executions_start_mock,
                                                 *_):
-        uninstall_command = 'cfy uninstall did'
-        self.invoke(uninstall_command)
+        self.invoke('cfy uninstall did', context='manager')
 
         executions_start_mock.assert_called_with(
             workflow_id=DEFAULT_UNINSTALL_WORKFLOW,
-            deployment_id='did',
+            deployment_id=u'did',
             timeout=DEFAULT_TIMEOUT,
             force=False,
-            include_logs=False,
+            include_logs=True,
             allow_custom_parameters=False,
             parameters=DEFAULT_PARAMETERS,
             json=False
         )
 
     @patch('cloudify_cli.commands.blueprints.delete')
-    @patch('cloudify_cli.commands.deployments.delete')
+    @patch('cloudify_cli.commands.deployments.manager_delete')
     @patch('cloudify_cli.env.get_rest_client')
-    @patch('cloudify_cli.commands.executions.start')
+    @patch('cloudify_cli.commands.executions.manager_start')
     def test_custom_executions_start_arguments(self,
                                                executions_start_mock, *_
                                                ):
         uninstall_command = 'cfy uninstall ' \
                             '-w my_uninstall ' \
-                            '-d did ' \
+                            'did ' \
                             '--timeout 1987 ' \
                             '--allow-custom-parameters ' \
                             '--include-logs ' \
                             '--parameters key=value ' \
                             '--json'
 
-        self.invoke(uninstall_command)
+        self.invoke(uninstall_command, context='manager')
 
         executions_start_mock.assert_called_with(
-            workflow_id='my_uninstall',
-            deployment_id='did',
+            workflow_id=u'my_uninstall',
+            deployment_id=u'did',
             timeout=1987,
             force=False,
             include_logs=True,
             allow_custom_parameters=True,
-            parameters=["key=value"],
+            parameters={'key': 'value'},
             json=True
         )
 
-    @patch('cloudify_cli.commands.executions.start')
-    @patch('cloudify_cli.commands.deployments.delete')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_delete')
     @patch('cloudify_cli.commands.blueprints.delete')
     def test_getting_blueprint_id_from_deployment(self,
                                                   mock_blueprints_delete,
@@ -94,23 +93,25 @@ class UninstallTest(CliCommandTest):
 
         self.client.deployments.get = mock_deployments_get
 
-        self.invoke('cfy uninstall did')
-        mock_blueprints_delete.assert_called_with('bid')
+        self.invoke('cfy uninstall did', context='manager')
+        mock_blueprints_delete.assert_called_with(blueprint_id=u'bid')
 
     @patch('cloudify_cli.commands.blueprints.delete')
     @patch('cloudify_cli.env.get_rest_client')
-    @patch('cloudify_cli.commands.executions.start')
-    @patch('cloudify_cli.commands.deployments.delete')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_delete')
     def test_deployments_delete_arguments(self, deployments_delete_mock, *_):
 
-        self.invoke('cfy uninstall did')
+        self.invoke('cfy uninstall did', context='manager')
 
-        deployments_delete_mock.assert_called_with('did',
-                                                   ignore_live_nodes=False)
+        deployments_delete_mock.assert_called_with(
+            deployment_id=u'did',
+            ignore_live_nodes=False
+        )
 
     @patch('cloudify_cli.env.get_rest_client')
-    @patch('cloudify_cli.commands.executions.start')
-    @patch('cloudify_cli.commands.deployments.delete')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_delete')
     @patch('cloudify_cli.commands.blueprints.delete')
     def test_blueprint_is_deleted(self, blueprints_delete_mock, *_):
 

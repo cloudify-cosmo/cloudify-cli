@@ -137,7 +137,7 @@ def _assert_force(force):
 
 def _do_teardown(task_retries, task_retry_interval, task_thread_pool_size):
     # reload settings since the provider context maybe changed
-    settings = env.load_cloudify_working_dir_settings()
+    settings = env.get_profile_context()
     provider_context = settings.get_provider_context()
     bs.read_manager_deployment_dump_if_needed(
         provider_context.get('cloudify', {}).get('manager_deployment'))
@@ -146,6 +146,6 @@ def _do_teardown(task_retries, task_retry_interval, task_thread_pool_size):
         task_retry_interval=task_retry_interval,
         task_thread_pool_size=task_thread_pool_size)
     # cleaning relevant data from working directory settings
-    with env.update_wd_settings() as wd_settings:
+    with env.update_profile_context() as wd_settings:
         # wd_settings.set_provider_context(provider_context)
         wd_settings.remove_management_server_context()

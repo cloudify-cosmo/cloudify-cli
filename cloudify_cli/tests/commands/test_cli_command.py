@@ -50,7 +50,7 @@ class CliCommandTest(unittest.TestCase):
 
     @classmethod
     def tearDownClass(cls):
-        shutil.rmtree(TEST_DIR)
+        shutil.rmtree(TEST_DIR, ignore_errors=True)
 
     def setUp(self):
         logdir = os.path.dirname(env.DEFAULT_LOG_FILE)
@@ -205,12 +205,12 @@ class CliCommandTest(unittest.TestCase):
         settings.set_provider_context(provider_context)
 
         cfy.purge_profile(profile_name)
-        env.dump_cloudify_working_dir_settings(
+        env.set_profile_context(
             profile_name=profile_name,
             cosmo_wd_settings=settings,
             update=False)
-        env.dump_configuration_file()
+        env.set_cfy_config()
         env.set_active_profile(profile_name)
 
     def _read_cosmo_wd_settings(self):
-        return env.load_cloudify_working_dir_settings()
+        return env.get_profile_context()

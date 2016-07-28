@@ -93,18 +93,18 @@ class CliUtilsUnitTests(unittest.TestCase):
     # def test_dump_cosmo_working_dir_settings_update(self):
 
     #     self.assertRaises(CloudifyCliError,
-    #                       env.dump_cloudify_working_dir_settings,
+    #                       env.set_profile_context,
     #                       cosmo_wd_settings=CloudifyWorkingDirectorySettings(),
     #                       update=True)
 
     def test_dump_cosmo_working_dir_settings_create(self):
 
         directory_settings = CloudifyWorkingDirectorySettings()
-        env.dump_cloudify_working_dir_settings(
+        env.set_profile_context(
             cosmo_wd_settings=directory_settings,
             update=False)
 
-        env.load_cloudify_working_dir_settings()
+        env.get_profile_context()
 
     def test_parsing_input_as_string(self):
 

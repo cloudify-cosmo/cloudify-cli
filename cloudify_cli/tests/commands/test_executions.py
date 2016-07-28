@@ -19,6 +19,7 @@ from datetime import datetime
 from mock import patch
 from mock import MagicMock
 
+from cloudify_cli.tests.cfy import ClickInvocationException
 from cloudify_rest_client import exceptions
 from cloudify_rest_client.executions import Execution
 
@@ -52,7 +53,7 @@ class ExecutionsTest(CliCommandTest):
         self.client.executions.start = MagicMock(return_value=execution)
         with patch('cloudify_cli.execution_events_fetcher.wait_for_execution',
                    return_value=execution):
-            self.invoke('cfy executions start mock_wf -d dep --json')
+            self.invoke('cfy executions start mock_wf -d dep')
         get_events_logger_mock.assert_called_with(True)
 
     def test_executions_start_dep_env_pending(self):
@@ -64,8 +65,10 @@ class ExecutionsTest(CliCommandTest):
             ex=exceptions.DeploymentEnvironmentCreationInProgressError('m'))
 
     def test_executions_start_dep_other_ex_sanity(self):
-        self.assertRaises(RuntimeError, self._test_executions_start_dep_env,
-                          ex=RuntimeError)
+        try:
+            self._test_executions_start_dep_env(ex=RuntimeError)
+        except ClickInvocationException, e:
+            self.assertEqual(str(RuntimeError), e.exception)
 
     def _test_executions_start_dep_env(self, ex):
         start_mock = MagicMock(side_effect=[ex, execution_mock('started')])

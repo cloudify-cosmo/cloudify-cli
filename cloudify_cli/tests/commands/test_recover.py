@@ -18,7 +18,7 @@ import os
 from mock import patch
 from mock import MagicMock
 
-from ...env import update_wd_settings
+from ...env import update_profile_context
 from ...exceptions import CloudifyValidationError
 
 from .test_cli_command import TEST_WORK_DIR
@@ -49,7 +49,7 @@ class RecoverTest(CliCommandTest):
         key_path = os.path.join(TEST_WORK_DIR, 'key.pem')
         open(key_path, 'w').close()
 
-        with update_wd_settings() as wd:
+        with update_profile_context() as wd:
             wd.set_management_key(key_path)
             wd.set_provider_context({})
 
@@ -73,7 +73,7 @@ class RecoverTest(CliCommandTest):
         fake_snapshot_path = os.path.join(TEST_WORK_DIR, 'sn.zip')
         open(fake_snapshot_path, 'w').close()
 
-        with update_wd_settings() as wd:
+        with update_profile_context() as wd:
             wd.set_management_key(key_path)
             wd.set_provider_context({})
 
@@ -132,7 +132,7 @@ class RecoverTest(CliCommandTest):
         open(key_path, 'w').close()
 
         # mock provider context
-        with update_wd_settings() as wd:
+        with update_profile_context() as wd:
             wd.set_provider_context({})
 
         try:

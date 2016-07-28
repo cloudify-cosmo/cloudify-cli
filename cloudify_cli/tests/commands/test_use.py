@@ -20,7 +20,7 @@ from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import UserUnauthorizedError
 from cloudify_rest_client.client import DEFAULT_API_VERSION as API_VERSION
 
-from ... import utils
+from ... import env
 
 from .test_cli_command import CliCommandTest
 
@@ -37,7 +37,6 @@ class UseTest(CliCommandTest):
                 'name': 'name',
                 'context': {}}
         )
-        self.create_cosmo_wd_settings()
         self.invoke('cfy use 127.0.0.1')
         cwds = self._read_cosmo_wd_settings()
         self.assertEquals("127.0.0.1", cwds.get_management_server())
@@ -61,7 +60,7 @@ class UseTest(CliCommandTest):
 
     def test_use_with_authorization(self):
         host = '127.0.0.1'
-        auth_header = utils.get_auth_header('test_username', 'test_password')
+        auth_header = env.get_auth_header('test_username', 'test_password')
         self.client = CloudifyClient(host=host, headers=auth_header)
 
         self._test_use()

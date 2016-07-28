@@ -137,12 +137,12 @@ def init_profile(profile_name, reset_context=False, hard=False, logger=None):
         os.makedirs(env.PROFILES_DIR)
     env.set_active_profile(profile_name)
     if not os.path.isfile(env.CLOUDIFY_CONFIG_PATH) or hard:
-        env.dump_configuration_file()
+        env.set_cfy_config()
 
     # TODO: Verify that we don't break anything!
     if not profile_name == 'local':
         settings = env.CloudifyWorkingDirectorySettings()
-        env.dump_cloudify_working_dir_settings(
+        env.set_profile_context(
             settings, profile_name=profile_name)
 
     configure_loggers()

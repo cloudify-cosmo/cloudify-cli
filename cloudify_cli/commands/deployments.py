@@ -26,6 +26,7 @@ from ..config import cfy
 from ..config import helptexts
 from ..logger import get_events_logger
 from .. import execution_events_fetcher
+from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 
 
@@ -114,6 +115,13 @@ def manager_update(deployment_id,
 
     `DEPLOYMENT_ID` is the deployment's id to update.
     """
+    if not utils.is_archive(blueprint_path) and \
+            blueprint_filename not in (DEFAULT_BLUEPRINT_PATH, blueprint_path):
+        raise CloudifyCliError(
+            '--blueprint-filename param should be passed '
+            'only when updating from an archive'
+        )
+
     blueprint_or_archive_path = blueprint_path
     logger.info('Updating deployment {0} using blueprint {1}'.format(
         deployment_id, blueprint_or_archive_path))

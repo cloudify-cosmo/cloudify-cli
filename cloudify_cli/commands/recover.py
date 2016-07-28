@@ -91,7 +91,7 @@ def recover(snapshot_path,
             )
 
     logger.info('Recovering manager...')
-    settings = env.load_cloudify_working_dir_settings()
+    settings = env.get_profile_context()
     provider_context = settings.get_provider_context()
     bs.read_manager_deployment_dump_if_needed(
         provider_context.get('cloudify', {}).get('manager_deployment'))

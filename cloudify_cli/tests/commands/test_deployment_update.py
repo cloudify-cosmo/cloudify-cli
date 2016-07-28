@@ -13,7 +13,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from mock import MagicMock, patch
+from mock import MagicMock, patch, PropertyMock
 
 from .test_cli_command import CliCommandTest
 from .test_cli_command import BLUEPRINTS_DIR
@@ -21,27 +21,24 @@ from ...exceptions import SuppressedCloudifyCliError
 
 
 class DeploymentUpdatesTest(CliCommandTest):
+    def _mock_wait_for_executions(self, value):
+        patcher = patch(
+            'cloudify_cli.execution_events_fetcher.wait_for_execution',
+            MagicMock(return_value=PropertyMock(error=value))
+        )
+        self.addCleanup(patcher.stop)
+        patcher.start()
 
     def setUp(self):
         super(DeploymentUpdatesTest, self).setUp()
         self.use_manager()
 
-        self._is_update_execution_error = False
-
-        def wait_for_execution_mock(*args, **kwargs):
-            return MagicMock(error=self._is_update_execution_error)
-
         self.client.deployment_updates.update = MagicMock()
         self.client.executions = MagicMock()
 
-        patcher = patch(
-            'cloudify_cli.execution_events_fetcher.wait_for_execution',
-            wait_for_execution_mock
-        )
-        self.addCleanup(patcher.stop)
-        patcher.start()
+        self._mock_wait_for_executions(False)
 
-        patcher = patch('cloudify_cli.common.inputs_to_dict', MagicMock())
+        patcher = patch('cloudify_cli.inputs.inputs_to_dict', MagicMock())
         self.addCleanup(patcher.stop)
         patcher.start()
 
@@ -55,17 +52,21 @@ class DeploymentUpdatesTest(CliCommandTest):
             'Successfully updated deployment my_deployment', outcome.logs)
 
     def test_deployment_update_failure(self):
-        self._is_update_execution_error = True
+        self._mock_wait_for_executions(True)
 
-        with self.assertRaises(SuppressedCloudifyCliError):
-            outcome = self.invoke(
-                'cfy deployments update -p '
-                '{0}/helloworld/blueprint.yaml '
-                'my_deployment'.format(BLUEPRINTS_DIR))
-            self.assertIn('Updating deployment my_deployment', outcome.logs[2])
-            self.assertIn('Finished executing workflow', outcome.logs)
-            self.assertIn(
-                'Failed updating deployment my_deployment', outcome.logs)
+        outcome = self.invoke(
+            'cfy deployments update -p '
+            '{0}/helloworld/blueprint.yaml '
+            'my_deployment'.format(BLUEPRINTS_DIR),
+            should_fail=True,
+            exception=SuppressedCloudifyCliError)
+
+        logs = outcome.logs.split('\n')
+        self.assertIn('Updating deployment my_deployment', logs[-3])
+        self.assertIn('Execution of workflow', logs[-2])
+        self.assertIn('failed', logs[-2])
+        self.assertIn(
+            'Failed updating deployment my_deployment', logs[-1])
 
     def test_deployment_update_json_parameter(self):
         self.invoke(
@@ -113,7 +114,7 @@ class DeploymentUpdatesTest(CliCommandTest):
         self.invoke(
             'cfy deployments update -p '
             '{0}/helloworld/blueprint.yaml -n {0}/helloworld/'
-            'blueprint.yaml my_deployment'.format(BLUEPRINTS_DIR),
+            'blueprint2.yaml my_deployment'.format(BLUEPRINTS_DIR),
             should_fail=True)
 
     def test_deployment_update_blueprint_filename_parameter(self):
@@ -125,14 +126,15 @@ class DeploymentUpdatesTest(CliCommandTest):
     def test_deployment_update_inputs_parameter(self):
         self.invoke(
             'cfy deployments update -p '
-            '{0}/helloworld.zip -i inputs.yaml '
+            '{0}/helloworld.zip -i {0}/helloworld/inputs.yaml '
             'my_deployment'.format(BLUEPRINTS_DIR))
 
     def test_deployment_update_multiple_inputs_parameter(self):
         self.invoke(
             'cfy deployments update -p '
-            '{0}/helloworld.zip -i inputs1.yaml -i inputs2.yaml '
-            'my_deployment'.format(BLUEPRINTS_DIR))
+            '{0}/helloworld.zip -i {0}/helloworld/inputs.yaml '
+            '-i {0}/helloworld/inputs.yaml my_deployment'
+            .format(BLUEPRINTS_DIR))
 
     def test_deployment_update_no_deployment_id_parameter(self):
         self.invoke(
