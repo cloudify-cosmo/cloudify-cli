@@ -412,38 +412,38 @@ class Options(object):
             is_flag=True,
             help=helptexts.BACKUP_LOGS_FIRST)
 
-        self.management_ip = click.option(
+        self.manager_ip = click.option(
             '-t',
-            '--management-ip',
+            '--manager-ip',
             required=False,
             help=helptexts.MANAGEMENT_IP)
 
-        self.management_user = click.option(
+        self.manager_user = click.option(
             '-u',
-            '--management-user',
+            '--manager-user',
             required=False,
             help=helptexts.MANAGEMENT_USER)
 
-        self.management_key = click.option(
+        self.manager_key = click.option(
             '-k',
-            '--management-key',
+            '--manager-key',
             required=False,
             cls=MutuallyExclusiveOption,
-            mutually_exclusive=['management_password'],
+            mutually_exclusive=['manager_password'],
             mutuality_error_message=helptexts.MUTUAL_SSH_KEY_AND_PASSWORD,
             help=helptexts.MANAGEMENT_KEY)
 
-        self.management_password = click.option(
+        self.manager_password = click.option(
             '-p',
-            '--management-password',
+            '--manager-password',
             required=False,
             cls=MutuallyExclusiveOption,
-            mutually_exclusive=['management_key'],
+            mutually_exclusive=['manager_key'],
             mutuality_error_message=helptexts.MUTUAL_SSH_KEY_AND_PASSWORD,
             help=helptexts.MANAGEMENT_PASSWORD)
 
-        self.management_port = click.option(
-            '--management-port',
+        self.manager_port = click.option(
+            '--manager-port',
             required=False,
             default=constants.REMOTE_EXECUTION_PORT,
             help=helptexts.MANAGEMENT_PORT)

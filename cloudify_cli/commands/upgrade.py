@@ -68,7 +68,7 @@ def upgrade(blueprint_path,
     `BLUEPRINT_PATH` is the path of the manager blueprint to use for upgrade.
     """
 
-    management_ip = env.get_rest_host()
+    manager_ip = env.get_rest_host()
     verify_and_wait_for_maintenance_mode_activation(client)
 
     if skip_validations:
@@ -125,7 +125,7 @@ def upgrade(blueprint_path,
         if dsl_resources:
             fetch_timeout = upload_resources.get('parameters', {}) \
                 .get('fetch_timeout', 30)
-            fabric_env = bs.build_fabric_env(management_ip,
+            fabric_env = bs.build_fabric_env(manager_ip,
                                              inputs['ssh_user'],
                                              inputs['ssh_key_filename'],
                                              inputs['ssh_port'])
@@ -155,9 +155,9 @@ def upgrade(blueprint_path,
 def update_inputs(inputs=None):
     inputs = inputs or dict()
     inputs.update({'private_ip': _load_private_ip(inputs)})
-    inputs.update({'ssh_key_filename': _load_management_key(inputs)})
-    inputs.update({'ssh_user': _load_management_user(inputs)})
-    inputs.update({'ssh_port': _load_management_port(inputs)})
+    inputs.update({'ssh_key_filename': _load_manager_key(inputs)})
+    inputs.update({'ssh_user': _load_manager_user(inputs)})
+    inputs.update({'ssh_port': _load_manager_port(inputs)})
     inputs.update({'public_ip': env.get_rest_host()})
     return inputs
 
@@ -170,26 +170,26 @@ def _load_private_ip(inputs):
                                           'the upgrade/rollback process')
 
 
-def _load_management_key(inputs):
+def _load_manager_key(inputs):
     try:
-        key_path = inputs.get('ssh_key_filename') or env.get_management_key()
+        key_path = inputs.get('ssh_key_filename') or env.get_manager_key()
         return os.path.expanduser(key_path)
     except Exception:
         raise exceptions.CloudifyCliError('Manager key must be provided for '
                                           'the upgrade/rollback process')
 
 
-def _load_management_user(inputs):
+def _load_manager_user(inputs):
     try:
-        return inputs.get('ssh_user') or env.get_management_user()
+        return inputs.get('ssh_user') or env.get_manager_user()
     except Exception:
         raise exceptions.CloudifyCliError('Manager user must be provided for '
                                           'the upgrade/rollback process')
 
 
-def _load_management_port(inputs):
+def _load_manager_port(inputs):
     try:
-        return inputs.get('ssh_port') or env.get_management_port()
+        return inputs.get('ssh_port') or env.get_manager_port()
     except Exception:
         raise exceptions.CloudifyCliError('Manager port must be provided for '
                                           'the upgrade/rollback process')

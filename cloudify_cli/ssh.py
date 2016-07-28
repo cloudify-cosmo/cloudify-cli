@@ -30,12 +30,12 @@ def get_manager_date():
 
 
 def get_file_from_manager(remote_source_path, destination_path):
-    key_filename = os.path.expanduser(env.get_management_key())
+    key_filename = os.path.expanduser(env.get_manager_key())
     with fab.settings(
             fab.hide('running', 'stdout'),
             host_string=env.build_manager_host_string(),
             key_filename=key_filename,
-            port=env.get_management_port()):
+            port=env.get_manager_port()):
         fab.get(remote_source_path, destination_path)
 
 
@@ -45,9 +45,9 @@ def put_file_in_manager(source_path,
                         key_filename=None,
                         user=None,
                         port=''):
-    port = port or env.get_management_port()
+    port = port or env.get_manager_port()
     if not key_filename:
-        key_filename = os.path.expanduser(env.get_management_key())
+        key_filename = os.path.expanduser(env.get_manager_key())
     with fab.settings(
             fab.hide('running', 'stdout'),
             host_string=env.build_manager_host_string(user=user),
@@ -70,10 +70,10 @@ def run_command_on_manager(command,
     `force_output` forces all output as if running in verbose.
     """
     host_string = host_string or env.build_manager_host_string()
-    port = env.get_management_port()
+    port = env.get_manager_port()
 
     def execute():
-        key_filename = os.path.expanduser(env.get_management_key())
+        key_filename = os.path.expanduser(env.get_manager_key())
         with fab.settings(
                 host_string=host_string,
                 key_filename=key_filename,

@@ -89,7 +89,7 @@ class TeardownTest(CliCommandTest):
 
     # TODO: Not sure we're checking the right things here
     @patch('cloudify_cli.bootstrap.bootstrap.teardown')
-    def test_teardown_no_management_ip_in_context_right_directory(
+    def test_teardown_no_manager_ip_in_context_right_directory(
             self, mock_teardown):  # NOQA
 
         def mock_client_list():

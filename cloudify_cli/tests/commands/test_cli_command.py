@@ -199,10 +199,10 @@ class CliCommandTest(unittest.TestCase):
             provider_context = dict()
 
         settings = env.ProfileContext()
-        settings.set_management_server(host)
-        settings.set_management_key(key)
-        settings.set_management_user(user)
-        settings.set_management_port(port)
+        settings.set_manager_ip(host)
+        settings.set_manager_key(key)
+        settings.set_manager_user(user)
+        settings.set_manager_port(port)
         settings.set_provider_context(provider_context)
 
         cfy.purge_profile(profile_name)

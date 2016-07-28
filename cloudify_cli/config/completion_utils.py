@@ -31,7 +31,7 @@ def objects_args_completer_maker(objects_type, **kw):
         if not cosmo_wd_settings:
             return []
 
-        mgmt_ip = cosmo_wd_settings.get_management_server()
+        mgmt_ip = cosmo_wd_settings.get_manager_ip()
         rest_client = env.get_rest_client(mgmt_ip)
         objs_ids_list = getattr(rest_client, objects_type).list(
             _include=['id'])
@@ -50,7 +50,7 @@ def workflow_id_completer(prefix, parsed_args, **kwargs):
     if not cosmo_wd_settings:
         return []
 
-    mgmt_ip = cosmo_wd_settings.get_management_server()
+    mgmt_ip = cosmo_wd_settings.get_manager_ip()
     rest_client = env.get_rest_client(mgmt_ip)
 
     deployment_id = parsed_args.deployment_id

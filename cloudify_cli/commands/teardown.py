@@ -42,9 +42,9 @@ def teardown(force,
     _assert_force(force)
 
     try:
-        management_ip = env.get_rest_host()
+        manager_ip = env.get_rest_host()
     except exceptions.CloudifyCliError:
-        # management ip does not exist in the local context
+        # manager ip does not exist in the local context
         # this can mean one of two things:
         # 1. bootstrap was unsuccessful
         # 2. we are in the wrong directory
@@ -74,11 +74,11 @@ def teardown(force,
     else:
         # make sure we don't teardown the manager if there are running
         # deployments, unless the user explicitly specified it.
-        _validate_deployments(ignore_deployments, management_ip)
+        _validate_deployments(ignore_deployments, manager_ip)
 
         # update local provider context since the server id might have
         # changed in case it has gone through a recovery process.
-        _update_local_provider_context(management_ip)
+        _update_local_provider_context(manager_ip)
 
         # execute teardown
         _do_teardown(
@@ -90,9 +90,9 @@ def teardown(force,
 # TODO: do we need this if the `teardown` only appears in the context of a
 # manager?
 @cfy.add_logger
-def _update_local_provider_context(management_ip, logger):
+def _update_local_provider_context(manager_ip, logger):
     try:
-        use(management_ip, env.get_rest_port())
+        use(manager_ip, env.get_rest_port())
     except BaseException as e:
         logger.warning('Failed to retrieve provider context: {0}. This '
                        'may cause a leaking manager '
@@ -100,8 +100,8 @@ def _update_local_provider_context(management_ip, logger):
                        'recovery process'.format(str(e)))
 
 
-def _get_number_of_deployments(management_ip):
-    client = env.get_rest_client(management_ip)
+def _get_number_of_deployments(manager_ip):
+    client = env.get_rest_client(manager_ip)
     try:
         return len(client.deployments.list())
     except CloudifyClientError:
@@ -111,19 +111,19 @@ def _get_number_of_deployments(management_ip):
             "skip this check, you may use the "'--ignore-deployments'" "
             "flag, in which case teardown will occur regardless of "
             "the deployment's status."
-            .format(management_ip))
+            .format(manager_ip))
 
 
-def _validate_deployments(ignore_deployments, management_ip):
+def _validate_deployments(ignore_deployments, manager_ip):
     if ignore_deployments:
         return
-    if _get_number_of_deployments(management_ip) > 0:
+    if _get_number_of_deployments(manager_ip) > 0:
         raise exceptions.CloudifyCliError(
             "Manager {0} has existing deployments. Delete "
             "all deployments first or add the "
             "'--ignore-deployments' flag to your command to ignore "
             "these deployments and execute teardown."
-            .format(management_ip)
+            .format(manager_ip)
         )
 
 
@@ -148,4 +148,4 @@ def _do_teardown(task_retries, task_retry_interval, task_thread_pool_size):
     # cleaning relevant data from working directory settings
     with env.update_profile_context() as wd_settings:
         # wd_settings.set_provider_context(provider_context)
-        wd_settings.remove_management_server_context()
+        wd_settings.remove_manager_server_context()

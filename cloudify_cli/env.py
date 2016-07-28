@@ -52,10 +52,10 @@ def get_profile(profile_name):
 
     # TODO: add rest port and protocol, ssh port and ssh password
     context = get_profile_context(profile_name)
-    manager_ip = context.get_management_server() or 'Not Set'
-    ssh_key_path = context.get_management_key() or 'Not Set'
-    ssh_user = context.get_management_user() or 'Not Set'
-    ssh_port = context.get_management_port() or 'Not Set'
+    manager_ip = context.get_manager_ip() or 'Not Set'
+    ssh_key_path = context.get_manager_key() or 'Not Set'
+    ssh_user = context.get_manager_user() or 'Not Set'
+    ssh_port = context.get_manager_port() or 'Not Set'
     rest_port = context.get_rest_port() or 'Not Set'
     rest_protocol = context.get_rest_protocol() or 'Not Set'
 
@@ -117,7 +117,7 @@ def is_manager_active():
         return False
 
     profile = get_profile_context(active_profile, suppress_error=True)
-    if not (profile and profile.get_management_server()):
+    if not (profile and profile.get_manager_ip()):
         return False
     return True
 
@@ -191,7 +191,7 @@ def raise_uninitialized():
     raise error
 
 
-def set_profile_context(cosmo_wd_settings=None,
+def set_profile_context(context=None,
                         update=False,
                         profile_name=None):
     profile_name = profile_name or get_active_profile()
@@ -200,8 +200,8 @@ def set_profile_context(cosmo_wd_settings=None,
             'Either provide a profile name or activate a profile')
 
     workdir = os.path.join(PROFILES_DIR, profile_name)
-    if cosmo_wd_settings is None:
-        cosmo_wd_settings = ProfileContext()
+    if context is None:
+        context = ProfileContext()
     if update:
         # locate existing file
         # this will raise an error if the file doesn't exist.
@@ -216,27 +216,27 @@ def set_profile_context(cosmo_wd_settings=None,
             constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
 
     with open(target_file_path, 'w') as f:
-        f.write(yaml.dump(cosmo_wd_settings))
+        f.write(yaml.dump(context))
 
 
-def update_profile_context(management_ip,
-                           management_key=None,
-                           management_password=None,
-                           management_user=None,
-                           management_port='22',
+def update_profile_context(manager_ip,
+                           manager_key=None,
+                           manager_password=None,
+                           manager_user=None,
+                           manager_port='22',
                            rest_port='80',
                            rest_protocol='http',
                            provider_context=None,
                            bootstrap_state=None):
 
-    set_active_profile(management_ip)
+    set_active_profile(manager_ip)
     provider_context = provider_context or {}
     settings = ProfileContext()
-    settings.set_management_server(management_ip)
-    settings.set_management_key(management_key)
-    settings.set_management_password(management_password)
-    settings.set_management_user(management_user)
-    settings.set_management_port(management_port)
+    settings.set_manager_ip(manager_ip)
+    settings.set_manager_key(manager_key)
+    settings.set_manager_password(manager_password)
+    settings.set_manager_user(manager_user)
+    settings.set_manager_port(manager_port)
     settings.set_rest_port(rest_port)
     settings.set_rest_protocol(rest_protocol)
     # TODO: add ssh port and password
@@ -244,8 +244,8 @@ def update_profile_context(management_ip,
     settings.set_bootstrap_state(bootstrap_state)
 
     set_profile_context(
-        profile_name=management_ip,
-        cosmo_wd_settings=settings,
+        profile_name=manager_ip,
+        context=settings,
         update=False)
 
 
@@ -290,7 +290,7 @@ def get_rest_client(rest_host=None,
                     trust_all=False,
                     skip_version_check=False):
     # TODO: Go through all commands remove remove the call
-    # to get_management_server_ip as it is already defaulted
+    # to get_manager_ip_ip as it is already defaulted
     # here.
     rest_host = rest_host or get_rest_host()
     rest_port = rest_port or get_rest_port()
@@ -340,43 +340,43 @@ def get_rest_protocol():
     return context.get_rest_protocol()
 
 
-# TODO: Replace all `management` with `manager` for consistency
-def get_management_user():
+# TODO: Replace all `manager` with `manager` for consistency
+def get_manager_user():
     context = get_profile_context()
-    if context.get_management_user():
-        return context.get_management_user()
+    if context.get_manager_user():
+        return context.get_manager_user()
     raise CloudifyCliError(
         'Management User is not set in working directory settings')
 
 
-def get_management_port():
+def get_manager_port():
     context = get_profile_context()
-    if context.get_management_port():
-        return context.get_management_port()
+    if context.get_manager_port():
+        return context.get_manager_port()
     raise CloudifyCliError(
         'Management Port is not set in working directory settings')
 
 
-def get_management_key():
+def get_manager_key():
     context = get_profile_context()
-    if context.get_management_key():
-        return context.get_management_key()
+    if context.get_manager_key():
+        return context.get_manager_key()
     raise CloudifyCliError(
         'Management Key is not set in working directory settings')
 
 
 def get_rest_host():
     context = get_profile_context()
-    management_ip = context.get_management_server()
-    if management_ip:
-        return management_ip
+    manager_ip = context.get_manager_ip()
+    if manager_ip:
+        return manager_ip
     raise CloudifyCliError(
         "You must being using a manager to perform this action. "
         "You can run `cfy use MANAGER_IP` to use a manager.")
 
 
 def build_manager_host_string(user='', ip=''):
-    user = user or get_management_user()
+    user = user or get_manager_user()
     ip = ip or get_rest_host()
     return '{0}@{1}'.format(user, ip)
 
@@ -431,10 +431,10 @@ def get_version_data():
 
 
 # TODO: Check if this is at all used
-def connected_to_manager(management_ip):
+def connected_to_manager(manager_ip):
     port = get_rest_port()
     try:
-        sock = socket.create_connection((str(management_ip), int(port)), 5)
+        sock = socket.create_connection((str(manager_ip), int(port)), 5)
         sock.close()
         return True
     except ValueError:
@@ -446,12 +446,12 @@ def connected_to_manager(management_ip):
 def get_manager_version_data(rest_client=None):
     if not rest_client:
         context = get_profile_context(suppress_error=True)
-        if not (context and context.get_management_server()):
+        if not (context and context.get_manager_ip()):
             return None
-        management_ip = context.get_management_server()
-        if not connected_to_manager(management_ip):
+        manager_ip = context.get_manager_ip()
+        if not connected_to_manager(manager_ip):
             return None
-        rest_client = get_rest_client(management_ip, skip_version_check=True)
+        rest_client = get_rest_client(manager_ip, skip_version_check=True)
 
     try:
         version_data = rest_client.manager.get_version()
@@ -478,11 +478,11 @@ class ProfileContext(yaml.YAMLObject):
 
     def __init__(self):
         self._bootstrap_state = None
-        self._management_host = None
-        self._management_key = None
-        self._management_password = None
-        self._management_port = None
-        self._management_user = None
+        self._manager_host = None
+        self._manager_key = None
+        self._manager_password = None
+        self._manager_port = None
+        self._manager_user = None
         self._provider_context = None
         self._rest_port = constants.DEFAULT_REST_PORT
         self._rest_protocol = constants.DEFAULT_REST_PROTOCOL
@@ -493,35 +493,35 @@ class ProfileContext(yaml.YAMLObject):
     def set_bootstrap_state(self, bootstrap_state):
         self._bootstrap_state = bootstrap_state
 
-    def get_management_server(self):
-        return self._management_host
+    def get_manager_ip(self):
+        return self._manager_host
 
-    def set_management_server(self, management_host):
-        self._management_host = management_host
+    def set_manager_ip(self, manager_host):
+        self._manager_host = manager_host
 
-    def get_management_key(self):
-        return self._management_key
+    def get_manager_key(self):
+        return self._manager_key
 
-    def set_management_key(self, management_key):
-        self._management_key = management_key
+    def set_manager_key(self, manager_key):
+        self._manager_key = manager_key
 
-    def get_management_password(self):
-        return self._management_password
+    def get_manager_password(self):
+        return self._manager_password
 
-    def set_management_password(self, management_password):
-        self._management_password = management_password
+    def set_manager_password(self, manager_password):
+        self._manager_password = manager_password
 
-    def get_management_port(self):
-        return self._management_port
+    def get_manager_port(self):
+        return self._manager_port
 
-    def set_management_port(self, management_port):
-        self._management_port = management_port
+    def set_manager_port(self, manager_port):
+        self._manager_port = manager_port
 
-    def get_management_user(self):
-        return self._management_user
+    def get_manager_user(self):
+        return self._manager_user
 
-    def set_management_user(self, _management_user):
-        self._management_user = _management_user
+    def set_manager_user(self, _manager_user):
+        self._manager_user = _manager_user
 
     def get_provider_context(self):
         return self._provider_context
@@ -529,8 +529,8 @@ class ProfileContext(yaml.YAMLObject):
     def set_provider_context(self, provider_context):
         self._provider_context = provider_context
 
-    def remove_management_server_context(self):
-        self._management_host = None
+    def remove_manager_server_context(self):
+        self._manager_host = None
 
     def get_rest_port(self):
         return self._rest_port

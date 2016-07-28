@@ -222,9 +222,9 @@ def _move_ssh_keys(ctx, direction, logger):
         # TODO: Currently, this will try to connect to the manager
         # where the profiles are being imported to get its key path.
         # We should change that.
-        ctx.invoke(use.use, management_ip=profile)
+        ctx.invoke(use.use, manager_ip=profile)
         try:
-            key_filepath = env.get_management_key()
+            key_filepath = env.get_manager_key()
         except CloudifyCliError:
             key_filepath = None
         if key_filepath:

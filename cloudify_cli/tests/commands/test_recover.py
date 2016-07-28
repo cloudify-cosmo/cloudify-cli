@@ -44,13 +44,13 @@ class RecoverTest(CliCommandTest):
            '.read_manager_deployment_dump_if_needed')
     @patch('cloudify_cli.bootstrap.bootstrap.recover')
     def test_recover_from_same_directory_as_bootstrap(self, *_):
-        # mock bootstrap behavior by setting the management key path
+        # mock bootstrap behavior by setting the manager key path
         # in the local context
         key_path = os.path.join(TEST_WORK_DIR, 'key.pem')
         open(key_path, 'w').close()
 
         with update_profile_context() as wd:
-            wd.set_management_key(key_path)
+            wd.set_manager_key(key_path)
             wd.set_provider_context({})
 
         # now run recovery and make sure no exception was raised
@@ -67,14 +67,14 @@ class RecoverTest(CliCommandTest):
     @patch('cloudify_cli.bootstrap.bootstrap.recover')
     def test_recover_from_same_directory_as_bootstrap_missing_key(self, *_):
 
-        # mock bootstrap behavior by setting the management key path
+        # mock bootstrap behavior by setting the manager key path
         # in the local context. however, don't actually create the key file
         key_path = os.path.join(TEST_WORK_DIR, 'key.pem')
         fake_snapshot_path = os.path.join(TEST_WORK_DIR, 'sn.zip')
         open(fake_snapshot_path, 'w').close()
 
         with update_profile_context() as wd:
-            wd.set_management_key(key_path)
+            wd.set_manager_key(key_path)
             wd.set_provider_context({})
 
         # recovery command should not fail because the key file specified in

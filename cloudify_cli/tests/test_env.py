@@ -64,10 +64,10 @@ class CliEnvTests(testtools.TestCase):
 
     def _set_manager(self):
         env.update_profile_context(
-            management_ip='10.10.1.10',
-            management_user='test',
-            management_key='~/.my_key',
-            management_port='22',
+            manager_ip='10.10.1.10',
+            manager_user='test',
+            manager_key='~/.my_key',
+            manager_port='22',
             rest_port='80',
             rest_protocol='http',
             provider_context='abc')
@@ -155,8 +155,8 @@ class CliEnvTests(testtools.TestCase):
     def test_get_profile_context(self):
         self._set_manager()
         context = env.get_profile_context()
-        self.assertTrue(hasattr(context, 'get_management_server'))
-        self.assertEqual(context.get_management_server(), '10.10.1.10')
+        self.assertTrue(hasattr(context, 'get_manager_ip'))
+        self.assertEqual(context.get_manager_ip(), '10.10.1.10')
 
     def test_get_profile_context_for_local(self):
         context = env.get_profile_context()
@@ -208,14 +208,14 @@ class CliEnvTests(testtools.TestCase):
     def test_set_empty_profile_context(self):
         env.set_profile_context(profile_name='10.10.1.10')
         context = env.get_profile_context('10.10.1.10')
-        self.assertEqual(context.get_management_server(), None)
+        self.assertEqual(context.get_manager_ip(), None)
 
     def test_set_profile_context_with_settings(self):
         settings = env.ProfileContext()
-        settings.set_management_server('10.10.1.10')
+        settings.set_manager_ip('10.10.1.10')
         env.set_profile_context(settings, profile_name='10.10.1.10')
         context = env.get_profile_context('10.10.1.10')
-        self.assertEqual(context.get_management_server(), '10.10.1.10')
+        self.assertEqual(context.get_manager_ip(), '10.10.1.10')
 
     def test_raise_uninitialized(self):
         ex = self.assertRaises(
@@ -225,20 +225,20 @@ class CliEnvTests(testtools.TestCase):
 
     def test_update_profile_context(self):
         profile_data = dict(
-            management_ip='10.10.1.10',
-            management_key='~/.my_key',
-            management_user='test_user',
-            management_port=24,
+            manager_ip='10.10.1.10',
+            manager_key='~/.my_key',
+            manager_user='test_user',
+            manager_port=24,
             rest_port=80,
             rest_protocol='http',
             provider_context='provider_context',
             bootstrap_state=True)
         env.update_profile_context(**profile_data)
         context = env.get_profile_context('10.10.1.10')
-        self.assertEqual(context.get_management_server(), '10.10.1.10')
-        self.assertEqual(context.get_management_key(), '~/.my_key')
-        self.assertEqual(context.get_management_user(), 'test_user')
-        self.assertEqual(context.get_management_port(), 24)
+        self.assertEqual(context.get_manager_ip(), '10.10.1.10')
+        self.assertEqual(context.get_manager_key(), '~/.my_key')
+        self.assertEqual(context.get_manager_user(), 'test_user')
+        self.assertEqual(context.get_manager_port(), 24)
         self.assertEqual(context.get_rest_port(), 80)
         self.assertEqual(context.get_rest_protocol(), 'http')
         self.assertEqual(context.get_provider_context(), 'provider_context')
@@ -246,10 +246,10 @@ class CliEnvTests(testtools.TestCase):
 
     def test_get_profile(self):
         profile_input = dict(
-            management_ip='10.10.1.10',
-            management_key='~/.my_key',
-            management_user='test_user',
-            management_port=24,
+            manager_ip='10.10.1.10',
+            manager_key='~/.my_key',
+            manager_user='test_user',
+            manager_port=24,
             rest_port=80,
             rest_protocol='http',
             provider_context='provider_context',
@@ -257,16 +257,16 @@ class CliEnvTests(testtools.TestCase):
         env.update_profile_context(**profile_input)
         profile_output = env.get_profile('10.10.1.10')
         self.assertEqual(
-            profile_input['management_ip'],
+            profile_input['manager_ip'],
             profile_output['manager_ip'])
         self.assertEqual(
-            profile_input['management_key'],
+            profile_input['manager_key'],
             profile_output['ssh_key_path'])
         self.assertEqual(
-            profile_input['management_user'],
+            profile_input['manager_user'],
             profile_output['ssh_user'])
         self.assertEqual(
-            profile_input['management_port'],
+            profile_input['manager_port'],
             profile_output['ssh_port'])
         self.assertEqual(
             profile_input['rest_port'],
