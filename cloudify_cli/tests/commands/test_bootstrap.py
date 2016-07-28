@@ -13,7 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import json
 import mock
 
 from ... import common
@@ -51,7 +50,7 @@ class BootstrapTest(CliCommandTest):
 
     def test_bootstrap_no_validations_add_ignore_bootstrap_validations(self):
 
-        blueprint_path = '{0}/local/{1}.yaml'.format(
+        blueprint_path = '{0}/helloworld/{1}.yaml'.format(
             BLUEPRINTS_DIR, 'blueprint')
         command = ('cfy bootstrap --skip-validations {0} '
                    '-i "some_input=some_value"'.format(blueprint_path))
@@ -60,14 +59,13 @@ class BootstrapTest(CliCommandTest):
             command=command,
             module=common,
             function_name='add_ignore_bootstrap_validations_input',
-            args=[[u'some_input=some_value']]
+            args=[{u'some_input': u'some_value'}]
         )
 
     def test_viable_ignore_bootstrap_validations_input(self):
-        inputs = []
-        inputs = common.add_ignore_bootstrap_validations_input(inputs)
-        ignore_input = json.loads(inputs[0])
-        self.assertTrue(ignore_input['ignore_bootstrap_validations'])
+        inputs = dict()
+        common.add_ignore_bootstrap_validations_input(inputs)
+        self.assertTrue(inputs['ignore_bootstrap_validations'])
 
     def test_bootstrap_missing_plugin(self):
 

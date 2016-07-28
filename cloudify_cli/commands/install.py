@@ -206,3 +206,4 @@ def _get_default_blueprint_path(blueprint_path, blueprint_filename):
             'Could not find `{0}` in the cwd. Please provide a path to a '
             'blueprint yaml file using the `-n/--blueprint-filename` flag '
             'or a path to a blueprint file.'.format(blueprint_filename))
+    return blueprint_path

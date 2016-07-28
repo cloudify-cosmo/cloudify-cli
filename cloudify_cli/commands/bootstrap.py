@@ -63,8 +63,6 @@ def bootstrap(blueprint_path,
     creation validation AND any additional validations done on the host
     once it is up.
     """
-    # This must be a list so that we can append to it if necessary.
-    inputs = list(inputs)
     # TODO: use `common.get_blueprint` to allow to bootstrap from an archive,
     # github, etc..
 
@@ -106,7 +104,7 @@ def bootstrap(blueprint_path,
         elif inputs:
             # The user expects that `--skip-validations` will also ignore
             # bootstrap validations and not only creation_validations
-            inputs = common.add_ignore_bootstrap_validations_input(inputs)
+            common.add_ignore_bootstrap_validations_input(inputs)
 
         if not validate_only:
             try:
@@ -126,7 +124,7 @@ def bootstrap(blueprint_path,
                     management_ip=manager_ip,
                     management_key=details['manager_key_path'],
                     management_user=details['manager_user'],
-                    port=details['manager_port'],
+                    management_port=details['manager_port'],
                     rest_port=details['rest_port'],
                     rest_protocol=details['rest_protocol'],
                     provider_context=details['provider_context'],

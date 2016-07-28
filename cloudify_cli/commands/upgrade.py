@@ -74,7 +74,7 @@ def upgrade(blueprint_path,
     if skip_validations:
         # The user expects that `--skip-validations` will also ignore
         # bootstrap validations and not only creation_validations
-        inputs = common.add_ignore_bootstrap_validations_input(inputs)
+        common.add_ignore_bootstrap_validations_input(inputs)
 
     inputs = update_inputs(inputs)
 

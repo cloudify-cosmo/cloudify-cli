@@ -25,6 +25,7 @@ from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import cfy
+from ... import cli
 from ... import env
 from ... import utils
 from ... import exceptions
@@ -211,6 +212,7 @@ class CliCommandTest(unittest.TestCase):
             update=False)
         env.set_cfy_config()
         env.set_active_profile(profile_name)
+        cli._register_commands()
 
     def _read_cosmo_wd_settings(self):
         return env.get_profile_context()
