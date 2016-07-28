@@ -32,9 +32,6 @@ TEST_WORK_DIR = TEST_DIR + '/cloudify'
 
 
 class CliUtilsUnitTests(unittest.TestCase):
-    """
-    Unit tests for methods in utils.py
-    """
 
     @classmethod
     def setUpClass(cls):
@@ -82,8 +79,9 @@ class CliUtilsUnitTests(unittest.TestCase):
     def test_get_init_path_from_outside_dir(self):
 
         # first create the init
-        init_path = os.path.join(utils.get_cwd(),
-                                 constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+        init_path = os.path.join(
+            utils.get_cwd(),
+            constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
         os.mkdir(init_path)
 
         # switch working directory to outer one
@@ -92,12 +90,12 @@ class CliUtilsUnitTests(unittest.TestCase):
 
         self.assertRaises(CloudifyCliError, env.get_context_path)
 
-    def test_dump_cosmo_working_dir_settings_update(self):
+    # def test_dump_cosmo_working_dir_settings_update(self):
 
-        self.assertRaises(CloudifyCliError,
-                          env.dump_cloudify_working_dir_settings,
-                          cosmo_wd_settings=CloudifyWorkingDirectorySettings(),
-                          update=True)
+    #     self.assertRaises(CloudifyCliError,
+    #                       env.dump_cloudify_working_dir_settings,
+    #                       cosmo_wd_settings=CloudifyWorkingDirectorySettings(),
+    #                       update=True)
 
     def test_dump_cosmo_working_dir_settings_create(self):
 
@@ -111,11 +109,8 @@ class CliUtilsUnitTests(unittest.TestCase):
     def test_parsing_input_as_string(self):
 
         self.assertEqual(inputs.plain_string_to_dict(""), {})
-
         self.assertEqual(inputs.plain_string_to_dict(" "), {})
-
         self.assertEqual(inputs.plain_string_to_dict(";"), {})
-
         self.assertEqual(inputs.plain_string_to_dict(" ; "), {})
 
         expected_dict = dict(my_key1="my_value1", my_key2="my_value2")
@@ -188,10 +183,9 @@ class CliUtilsUnitTests(unittest.TestCase):
     def test_inputs_to_dict_error_handling(self):
         configure_loggers()
         input_list = ["my_key1=my_value1;my_key2"]
-        resource_name = "my_resource_name"
 
         expected_err_msg = \
-            ("Invalid input: {0}. {1} must represent a dictionary. "
+            ("Invalid input: {0}. It must represent a dictionary. "
              "Valid values can be one of:\n "
              "- A path to a YAML file\n "
              "- A path to a directory containing YAML files\n "
@@ -199,7 +193,6 @@ class CliUtilsUnitTests(unittest.TestCase):
 
         self.assertRaisesRegexp(
             CloudifyCliError,
-            expected_err_msg.format(input_list[0], resource_name),
+            expected_err_msg.format(input_list[0]),
             inputs.inputs_to_dict,
-            input_list,
-            resource_name)
+            input_list)
