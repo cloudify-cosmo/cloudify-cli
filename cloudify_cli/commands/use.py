@@ -84,9 +84,9 @@ def use(alias,
     # any problem raised by the rest client will trigger this.
     # Triggering a CloudifyClientError only doesn't actually deal
     # with situations like No route to host and the likes.
-    except Exception as e:
+    except Exception as ex:
         raise CloudifyCliError(
-            "Can't use manager {0}: {1}".format(management_ip, str(e)))
+            "Can't use manager {0}: {1}".format(management_ip, str(ex)))
 
     if not env.is_profile_exists(management_ip):
         init.init_profile(profile_name=management_ip)
@@ -100,20 +100,15 @@ def use(alias,
     except CloudifyClientError:
         provider_context = None
 
-    with env.update_profile_context(management_ip) as wd_settings:
-        wd_settings.set_management_server(management_ip)
-        wd_settings.set_provider_context(provider_context)
-        wd_settings.set_rest_port(rest_port)
-        wd_settings.set_rest_protocol(rest_protocol)
-        logger.info('Using manager {0} with port {1}'.format(
-            management_ip, rest_port))
-        if management_user:
-            wd_settings.set_management_user(management_user)
-        if management_key:
-            wd_settings.set_management_key(management_key)
-        if management_password:
-            wd_settings.set_management_password(management_password)
-        if management_port:
-            wd_settings.set_management_port(management_port)
+    logger.info('Using manager {0} with port {1}'.format(
+        management_ip, rest_port))
+    env.update_profile_context(
+        management_ip=management_ip,
+        management_key=management_key,
+        management_user=management_user,
+        management_port=management_port,
+        rest_port=rest_port,
+        rest_protocol=rest_protocol,
+        provider_context=provider_context)
     # delete the previous manager deployment if exists.
     bs.delete_workdir()

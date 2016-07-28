@@ -24,7 +24,7 @@ from .. import inputs
 from .. import constants
 from ..logger import configure_loggers
 from ..exceptions import CloudifyCliError
-from ..env import CloudifyWorkingDirectorySettings
+from ..env import ProfileContext
 
 
 TEST_DIR = '/tmp/cloudify-cli-unit-tests'
@@ -94,12 +94,12 @@ class CliUtilsUnitTests(unittest.TestCase):
 
     #     self.assertRaises(CloudifyCliError,
     #                       env.set_profile_context,
-    #                       cosmo_wd_settings=CloudifyWorkingDirectorySettings(),
+    #                       cosmo_wd_settings=ProfileContext(),
     #                       update=True)
 
     def test_dump_cosmo_working_dir_settings_create(self):
 
-        directory_settings = CloudifyWorkingDirectorySettings()
+        directory_settings = ProfileContext()
         env.set_profile_context(
             cosmo_wd_settings=directory_settings,
             update=False)
