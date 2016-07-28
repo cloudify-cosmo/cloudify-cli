@@ -5,7 +5,6 @@ import shutil
 import pkgutil
 import getpass
 import tempfile
-from contextlib import contextmanager
 
 import yaml
 import pkg_resources
@@ -190,7 +189,7 @@ def set_profile_context(cosmo_wd_settings=None,
 
     workdir = os.path.join(PROFILES_DIR, profile_name)
     if cosmo_wd_settings is None:
-        cosmo_wd_settings = CloudifyWorkingDirectorySettings()
+        cosmo_wd_settings = ProfileContext()
     if update:
         # locate existing file
         # this will raise an error if the file doesn't exist.
@@ -217,22 +216,35 @@ def raise_uninitialized():
     raise error
 
 
-# TODO: Currently unused, but should be ASAP. This will provide a much
-# nicer experience in getting a profile's properties
-@contextmanager
-def profile(profile_name=None):
-    yield get_profile_context(profile_name)
+def update_profile_context(management_ip,
+                           profile_name=get_active_profile(),
+                           management_key=None,
+                           management_password=None,
+                           management_user=None,
+                           management_port='22',
+                           rest_port='80',
+                           rest_protocol='http',
+                           provider_context=None,
+                           bootstrap_state=None):
 
+    provider_context = provider_context or {}
 
-@contextmanager
-def update_profile_context(profile_name=None):
-    active_profile = get_active_profile()
-    cosmo_wd_settings = get_profile_context(active_profile)
-    yield cosmo_wd_settings
+    settings = ProfileContext()
+    settings.set_management_server(management_ip)
+    settings.set_management_key(management_key)
+    settings.set_management_password(management_password)
+    settings.set_management_user(management_user)
+    settings.set_management_port(management_port)
+    settings.set_rest_port(rest_port)
+    settings.set_rest_protocol(rest_protocol)
+    # TODO: add ssh port and password
+    settings.set_provider_context(provider_context)
+    settings.set_bootstrap_state(bootstrap_state)
+
     set_profile_context(
-        cosmo_wd_settings,
-        update=True,
-        profile_name=profile_name)
+        profile_name=profile_name,
+        cosmo_wd_settings=settings,
+        update=False)
 
 
 def is_use_colors():
@@ -461,7 +473,7 @@ def get_cli_manager_versions(rest_client):
         return cli_version, manager_version
 
 
-class CloudifyWorkingDirectorySettings(yaml.YAMLObject):
+class ProfileContext(yaml.YAMLObject):
     yaml_tag = u'!WD_Settings'
     yaml_loader = yaml.Loader
 

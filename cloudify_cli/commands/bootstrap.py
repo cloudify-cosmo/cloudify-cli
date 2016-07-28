@@ -122,21 +122,22 @@ def bootstrap(blueprint_path,
                     skip_sanity=skip_sanity)
 
                 manager_ip = details['manager_ip']
-                with env.update_profile_context(active_profile) as profile:
-                    profile.set_management_server(manager_ip)
-                    profile.set_management_key(details['manager_key_path'])
-                    profile.set_management_user(details['manager_user'])
-                    profile.set_management_port(details['manager_port'])
-                    profile.set_provider_context(details['provider_context'])
-                    profile.set_rest_port(details['rest_port'])
-                    profile.set_rest_protocol(details['rest_protocol'])
-                    profile.set_bootstrap_state(True)
+                env.update_profile_context(
+                    management_ip=manager_ip,
+                    management_key=details['manager_key_path'],
+                    management_user=details['manager_user'],
+                    port=details['manager_port'],
+                    rest_port=details['rest_port'],
+                    rest_protocol=details['rest_protocol'],
+                    provider_context=details['provider_context'],
+                    bootstrap_state=True)
 
                 temp_profile = os.path.join(
                     env.PROFILES_DIR, active_profile)
                 new_profile = os.path.join(
                     env.PROFILES_DIR, manager_ip)
                 shutil.move(temp_profile, new_profile)
+                temp_profile_active = False
                 env.set_active_profile(new_profile)
 
                 logger.info('Bootstrap complete')

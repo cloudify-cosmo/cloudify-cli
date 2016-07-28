@@ -197,7 +197,7 @@ class CliCommandTest(unittest.TestCase):
         if not provider_context:
             provider_context = dict()
 
-        settings = env.CloudifyWorkingDirectorySettings()
+        settings = env.ProfileContext()
         settings.set_management_server(host)
         settings.set_management_key(key)
         settings.set_management_user(user)
