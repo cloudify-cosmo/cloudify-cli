@@ -153,7 +153,7 @@ class InstallTest(CliCommandTest):
 
         blueprint_upload_args = blueprints_upload_mock.call_args_list[0][1]
 
-        self.assertDictEqual(
+        self.assertEqual(
             blueprint_upload_args['blueprint_filename'],
             unicode(DEFAULT_BLUEPRINT_FILE_NAME)
         )
@@ -183,71 +183,90 @@ class InstallTest(CliCommandTest):
                                      {'key1': 'val1', 'key2': 'val2'}}
                              )
 
-    @patch('cloudify_cli.commands.blueprints.publish_archive')
+    @patch('cloudify_cli.commands.blueprints.upload')
     @patch('cloudify_cli.commands.executions.manager_start')
-    def test_custom_deployment_id(self, *_):
+    @patch('cloudify_cli.commands.deployments.manager_create')
+    def test_custom_deployment_id(self, deployment_create_mock, *_):
 
-        command = \
-            'cfy install -n {0} --archive-location={1} ' \
-            '--inputs={2} -b {3} -d {4}' \
-            .format(STUB_BLUEPRINT_FILENAME, STUB_ARCHIVE_LOCATION,
-                    STUB_INPUTS, STUB_BLUEPRINT_ID,
-                    STUB_DEPLOYMENT_ID)
+        command = 'cfy install -n {0} {1} --inputs={2} -b {3} -d {4}' \
+                .format(
+                    STUB_BLUEPRINT_FILENAME,
+                    SAMPLE_BLUEPRINT_PATH,
+                    SAMPLE_INPUTS_PATH,
+                    STUB_BLUEPRINT_ID,
+                    STUB_DEPLOYMENT_ID
+                )
 
-        self.assert_method_called(
-            command=command,
-            module=deployments,
-            function_name='create',
-            args=[STUB_BLUEPRINT_ID, STUB_DEPLOYMENT_ID, [STUB_INPUTS]]
-        )
+        self.invoke(command, context='manager')
+        deployment_create_args = deployment_create_mock.call_args_list[0][1]
 
-    @patch('cloudify_cli.commands.blueprints.publish_archive')
+        self.assertDictEqual(deployment_create_args,
+                             {
+                                 'blueprint_id': unicode(STUB_BLUEPRINT_ID),
+                                 'deployment_id': unicode(STUB_DEPLOYMENT_ID),
+                                 'inputs':
+                                     {'key1': 'val1', 'key2': 'val2'}}
+                             )
+
+    @patch('cloudify_cli.commands.blueprints.upload')
     @patch('cloudify_cli.commands.executions.manager_start')
-    def test_default_inputs_file_path(self, *_):
+    @patch('cloudify_cli.commands.deployments.manager_create')
+    def test_default_inputs_file_path(self, deployment_create_mock, *_):
 
         # create an `inputs.yaml` file in the cwd.
         inputs_path = os.path.join(utils.get_cwd(), 'inputs.yaml')
-        os.mknod(inputs_path)
+        open(inputs_path, 'w').close()
 
-        command = \
-            'cfy install -n {0} --archive-location={1} ' \
-            '-b {2} -d {3}' \
-            .format(STUB_BLUEPRINT_FILENAME, STUB_ARCHIVE_LOCATION,
-                    STUB_BLUEPRINT_ID, STUB_DEPLOYMENT_ID)
+        command = 'cfy install -n {0} {1} -b {2} -d {3}'\
+            .format(
+                DEFAULT_BLUEPRINT_FILE_NAME,
+                SAMPLE_ARCHIVE_PATH,
+                STUB_BLUEPRINT_ID,
+                STUB_DEPLOYMENT_ID
+            )
 
-        self.assert_method_called(
-            command=command,
-            module=deployments,
-            function_name='create',
-            args=[STUB_BLUEPRINT_ID,
-                  STUB_DEPLOYMENT_ID,
-                  DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND]
+        self.invoke(command, context='manager')
+        deployment_create_args = deployment_create_mock.call_args_list[0][1]
+
+        self.assertDictEqual(
+            deployment_create_args,
+            {
+                'blueprint_id': unicode(STUB_BLUEPRINT_ID),
+                'deployment_id': unicode(STUB_DEPLOYMENT_ID),
+                'inputs': DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
+            }
         )
 
-    @patch('cloudify_cli.commands.blueprints.publish_archive')
+    @patch('cloudify_cli.commands.blueprints.upload')
     @patch('cloudify_cli.commands.deployments.manager_create')
-    def test_default_workflow_name(self, *_):
+    @patch('cloudify_cli.commands.executions.manager_start')
+    def test_default_workflow_name(self, executions_start_mock, *_):
 
-        command = \
-            'cfy install -n {0} --archive-location={1} ' \
-            '--inputs={2} -d {3} --parameters {4}' \
-            .format(STUB_BLUEPRINT_FILENAME, SAMPLE_ARCHIVE_PATH,
-                    STUB_INPUTS, STUB_DEPLOYMENT_ID, STUB_PARAMETERS)
+        command = 'cfy install -n {0} {1} --inputs={2} ' \
+                  '-d {3} --parameters {4}'\
+            .format(
+                DEFAULT_BLUEPRINT_FILE_NAME,
+                SAMPLE_ARCHIVE_PATH,
+                SAMPLE_INPUTS_PATH,
+                STUB_DEPLOYMENT_ID,
+                STUB_PARAMETERS
+            )
 
-        self.assert_method_called(
-            command=command,
-            module=executions,
-            function_name='start',
-            kwargs={'workflow_id': DEFAULT_INSTALL_WORKFLOW,
-                    'deployment_id': STUB_DEPLOYMENT_ID,
-                    'timeout': STUB_TIMEOUT,
-                    'force': STUB_FORCE,
-                    'allow_custom_parameters':
-                        STUB_ALLOW_CUSTOM_PARAMETERS,
-                    'include_logs': STUB_INCLUDE_LOGS,
-                    'parameters': [STUB_PARAMETERS],
-                    'json': False
-                    }
+        self.invoke(command, context='manager')
+        executions_start_args = executions_start_mock.call_args_list[0][1]
+
+        self.assertDictEqual(
+            executions_start_args,
+            {
+                'allow_custom_parameters': False,
+                'deployment_id': unicode(STUB_DEPLOYMENT_ID),
+                'force': False,
+                'include_logs': True,
+                'json': False,
+                'parameters': {u'key': u'value'},
+                'workflow_id': u'install',
+                'timeout': 900
+            }
         )
 
     @patch('cloudify_cli.commands.executions.manager_start')
