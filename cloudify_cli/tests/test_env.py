@@ -257,11 +257,20 @@ class CliEnvTests(testtools.TestCase):
         env.update_profile_context(**profile_input)
         profile_output = env.get_profile('10.10.1.10')
         self.assertEqual(
-            profile_input['manager_ip'],
-            profile_output['management_ip'])
+            profile_input['management_ip'],
+            profile_output['manager_ip'])
         self.assertEqual(
             profile_input['management_key'],
             profile_output['ssh_key_path'])
         self.assertEqual(
             profile_input['management_user'],
             profile_output['ssh_user'])
+        self.assertEqual(
+            profile_input['management_port'],
+            profile_output['ssh_port'])
+        self.assertEqual(
+            profile_input['rest_port'],
+            profile_output['rest_port'])
+        self.assertEqual(
+            profile_input['rest_protocol'],
+            profile_output['rest_protocol'])
