@@ -127,7 +127,8 @@ def add_ignore_bootstrap_validations_input(inputs):
     also want to skip bootstrap validations, not just `creation_validation`
     operations.
     """
-    inputs['ignore_bootstrap_validations'] = True
+    assert isinstance(inputs, dict)
+    inputs.update({'ignore_bootstrap_validations': True})
 
 
 def storage_dir():

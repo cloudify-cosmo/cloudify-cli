@@ -50,11 +50,15 @@ class ExecutionsTest(CliCommandTest):
     @patch('cloudify_cli.logger.get_events_logger')
     def test_executions_start_json(self, get_events_logger_mock):
         execution = execution_mock('started')
-        self.client.executions.start = MagicMock(return_value=execution)
-        with patch('cloudify_cli.execution_events_fetcher.wait_for_execution',
-                   return_value=execution):
-            self.invoke('cfy executions start mock_wf -d dep')
-        get_events_logger_mock.assert_called_with(True)
+        original = self.client.executions.start
+        try:
+            self.client.executions.start = MagicMock(return_value=execution)
+            with patch('cloudify_cli.execution_events_fetcher.wait_for_execution',
+                       return_value=execution):
+                self.invoke('cfy executions start mock_wf -d dep --json')
+            get_events_logger_mock.assert_called_with(True)
+        finally:
+            self.client.executions.start = original
 
     def test_executions_start_dep_env_pending(self):
         self._test_executions_start_dep_env(
