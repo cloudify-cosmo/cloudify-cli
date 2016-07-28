@@ -208,11 +208,11 @@ class CliCommandTest(unittest.TestCase):
         cfy.purge_profile(profile_name)
         env.set_profile_context(
             profile_name=profile_name,
-            cosmo_wd_settings=settings,
+            context=settings,
             update=False)
         env.set_cfy_config()
         env.set_active_profile(profile_name)
         cli._register_commands()
 
-    def _read_cosmo_wd_settings(self):
+    def _read_context(self):
         return env.get_profile_context()

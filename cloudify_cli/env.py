@@ -220,23 +220,25 @@ def set_profile_context(context=None,
 
 
 def update_profile_context(manager_ip,
-                           manager_key=None,
-                           manager_password=None,
-                           manager_user=None,
-                           manager_port='22',
+                           ssh_key_path=None,
+                           ssh_password=None,
+                           ssh_user=None,
+                           ssh_port='22',
                            rest_port='80',
                            rest_protocol='http',
                            provider_context=None,
-                           bootstrap_state=None):
+                           bootstrap_state=None,
+                           alias=None):
 
     set_active_profile(manager_ip)
     provider_context = provider_context or {}
     settings = ProfileContext()
+
     settings.set_manager_ip(manager_ip)
-    settings.set_manager_key(manager_key)
-    settings.set_manager_password(manager_password)
-    settings.set_manager_user(manager_user)
-    settings.set_manager_port(manager_port)
+    settings.set_manager_key(ssh_key_path)
+    settings.set_manager_password(ssh_password)
+    settings.set_manager_user(ssh_user)
+    settings.set_manager_port(ssh_port)
     settings.set_rest_port(rest_port)
     settings.set_rest_protocol(rest_protocol)
     # TODO: add ssh port and password

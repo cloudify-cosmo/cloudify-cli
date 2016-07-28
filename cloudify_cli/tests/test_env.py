@@ -40,20 +40,13 @@ class CliEnvTests(testtools.TestCase):
         env.ACTIVE_PRO_FILE = os.path.join(
             env.CLOUDIFY_WORKDIR, 'active.profile')
 
-    @classmethod
-    def tearDownClass(cls):
-        if os.path.isdir(env.CLOUDIFY_WORKDIR):
-            # shutil.rmtree(env.CLOUDIFY_WORKDIR)
-            pass
-
     def setUp(self):
         super(CliEnvTests, self).setUp()
         cfy.invoke('init -r')
 
     def tearDown(self):
         super(CliEnvTests, self).tearDown()
-        if os.path.isdir(env.CLOUDIFY_WORKDIR):
-            shutil.rmtree(env.CLOUDIFY_WORKDIR)
+        cfy.purge_dot_cloudify()
 
     def _make_mock_profile(self, profile_name='10.10.1.10'):
         profile_path = os.path.join(env.PROFILES_DIR, profile_name)
@@ -65,9 +58,9 @@ class CliEnvTests(testtools.TestCase):
     def _set_manager(self):
         env.update_profile_context(
             manager_ip='10.10.1.10',
-            manager_user='test',
-            manager_key='~/.my_key',
-            manager_port='22',
+            ssh_key_path='test',
+            ssh_user='~/.my_key',
+            ssh_port='22',
             rest_port='80',
             rest_protocol='http',
             provider_context='abc')
@@ -226,9 +219,9 @@ class CliEnvTests(testtools.TestCase):
     def test_update_profile_context(self):
         profile_data = dict(
             manager_ip='10.10.1.10',
-            manager_key='~/.my_key',
-            manager_user='test_user',
-            manager_port=24,
+            ssh_key_path='~/.my_key',
+            ssh_user='test_user',
+            ssh_port=24,
             rest_port=80,
             rest_protocol='http',
             provider_context='provider_context',
@@ -247,30 +240,12 @@ class CliEnvTests(testtools.TestCase):
     def test_get_profile(self):
         profile_input = dict(
             manager_ip='10.10.1.10',
-            manager_key='~/.my_key',
-            manager_user='test_user',
-            manager_port=24,
+            ssh_key_path='~/.my_key',
+            ssh_user='test_user',
+            ssh_port=24,
             rest_port=80,
             rest_protocol='http',
-            provider_context='provider_context',
-            bootstrap_state=True)
+            alias=None)
         env.update_profile_context(**profile_input)
         profile_output = env.get_profile('10.10.1.10')
-        self.assertEqual(
-            profile_input['manager_ip'],
-            profile_output['manager_ip'])
-        self.assertEqual(
-            profile_input['manager_key'],
-            profile_output['ssh_key_path'])
-        self.assertEqual(
-            profile_input['manager_user'],
-            profile_output['ssh_user'])
-        self.assertEqual(
-            profile_input['manager_port'],
-            profile_output['ssh_port'])
-        self.assertEqual(
-            profile_input['rest_port'],
-            profile_output['rest_port'])
-        self.assertEqual(
-            profile_input['rest_protocol'],
-            profile_output['rest_protocol'])
+        self.assertDictEqual(profile_output, profile_input)

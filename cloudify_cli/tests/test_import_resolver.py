@@ -62,7 +62,7 @@ class GetImportResolverTests(CliCommandTest):
 
     def setUp(self):
         super(GetImportResolverTests, self).setUp()
-        self._create_cosmo_wd_settings()
+        self._create_context()
 
     def test_get_resolver(self):
         cli_runner.run_cli('cfy init -r')
@@ -93,7 +93,7 @@ class ImportResolverLocalUseTests(CliCommandTest):
 
     def setUp(self):
         super(ImportResolverLocalUseTests, self).setUp()
-        self._create_cosmo_wd_settings()
+        self._create_context()
 
     @mock.patch('cloudify_cli.env.get_import_resolver')
     def _test_using_import_resolver(self,

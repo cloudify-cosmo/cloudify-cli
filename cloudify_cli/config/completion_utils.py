@@ -26,12 +26,12 @@ archive_files_completer = FilesCompleter(
 
 def objects_args_completer_maker(objects_type, **kw):
     def _objects_args_completer(prefix, **kwargs):
-        cosmo_wd_settings = env.get_profile_context(
+        context = env.get_profile_context(
             suppress_error=True)
-        if not cosmo_wd_settings:
+        if not context:
             return []
 
-        mgmt_ip = cosmo_wd_settings.get_manager_ip()
+        mgmt_ip = context.get_manager_ip()
         rest_client = env.get_rest_client(mgmt_ip)
         objs_ids_list = getattr(rest_client, objects_type).list(
             _include=['id'])
@@ -45,12 +45,12 @@ def workflow_id_completer(prefix, parsed_args, **kwargs):
     if not parsed_args.deployment_id:
         return []
 
-    cosmo_wd_settings = env.get_profile_context(
+    context = env.get_profile_context(
         suppress_error=True)
-    if not cosmo_wd_settings:
+    if not context:
         return []
 
-    mgmt_ip = cosmo_wd_settings.get_manager_ip()
+    mgmt_ip = context.get_manager_ip()
     rest_client = env.get_rest_client(mgmt_ip)
 
     deployment_id = parsed_args.deployment_id
