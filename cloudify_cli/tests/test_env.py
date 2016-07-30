@@ -845,7 +845,7 @@ class GetImportResolverTests(CliCommandTest):
     def setUp(self):
         super(GetImportResolverTests, self).setUp()
         cfy.invoke('cfy init -r')
-        self._create_context()
+        self.use_manager()
 
     def tearDown(self):
         super(GetImportResolverTests, self).tearDown()
@@ -856,7 +856,7 @@ class GetImportResolverTests(CliCommandTest):
             implementation='mock implementation',
             parameters='mock parameters')
         update_config_file(resolver_configuration=resolver_configuration)
-        with mock.patch('dsl_parser.env.create_import_resolver') as \
+        with mock.patch('dsl_parser.utils.create_import_resolver') as \
                 mock_create_import_resolver:
             env.get_import_resolver()
             mock_create_import_resolver.assert_called_once_with(
@@ -878,7 +878,7 @@ class ImportResolverLocalUseTests(CliCommandTest):
 
     def setUp(self):
         super(ImportResolverLocalUseTests, self).setUp()
-        self._create_context()
+        self.use_manager()
 
     @mock.patch('cloudify_cli.env.get_import_resolver')
     def _test_using_import_resolver(self,
@@ -901,7 +901,7 @@ class ImportResolverLocalUseTests(CliCommandTest):
 
         # run the cli command and check that
         # parse_from_path was called with the expected resolver
-        cli_command = 'cfy {0} -p {1}'.format(command, blueprint_path)
+        cli_command = 'cfy {0} {1}'.format(command, blueprint_path)
         kwargs = {
             'dsl_file_path': blueprint_path,
             'resolver': resolver,
@@ -973,11 +973,11 @@ class ImportResolverLocalUseTests(CliCommandTest):
             cloudify.workflows.local.FileStorage.get_node_instances = \
                 old_get_node_instances
 
-    @mock.patch('.commands.local._storage', new=mock.MagicMock)
+    @mock.patch('cloudify_cli.common.storage', new=mock.MagicMock)
     @mock.patch('cloudify.workflows.local._prepare_nodes_and_instances')
     @mock.patch('dsl_parser.tasks.prepare_deployment_plan')
     def test_local_init(self, *_):
-        blueprint_path = '{0}/local/{1}.yaml'.format(BLUEPRINTS_DIR,
-                                                     'blueprint')
+        blueprint_path = '{0}/local/{1}.yaml'.format(
+            BLUEPRINTS_DIR, 'blueprint')
         self._test_using_import_resolver(
-            'local init', blueprint_path, dsl_parser.parser)
+            'init', blueprint_path, dsl_parser.parser)
