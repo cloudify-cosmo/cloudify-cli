@@ -28,53 +28,67 @@ import yaml
 import testtools
 from mock import MagicMock, patch
 
+import cloudify
+import dsl_parser
 from cloudify import logs
+from cloudify.workflows import local
+from cloudify_rest_client.nodes import Node
 from cloudify_rest_client.executions import Execution
 from cloudify_rest_client.client import CloudifyClient
+from dsl_parser.constants import IMPORT_RESOLVER_KEY, \
+    RESOLVER_IMPLEMENTATION_KEY, RESLOVER_PARAMETERS_KEY
+from cloudify_rest_client.node_instances import NodeInstance
+from dsl_parser.import_resolver.default_import_resolver import \
+    DefaultImportResolver
+
 
 from .. import env
 from .. import utils
 from .. import inputs
 from .. import logger
+from ..bootstrap import bootstrap
 from ..logger import configure_loggers
 from ..exceptions import CloudifyCliError
 from ..colorful_event import ColorfulEvent
-from ..exceptions import EventProcessingTimeoutError, \
-    ExecutionTimeoutError
-from ..execution_events_fetcher import ExecutionEventsFetcher, \
-    wait_for_execution
+from ..exceptions import ExecutionTimeoutError
+from ..exceptions import EventProcessingTimeoutError
+from ..execution_events_fetcher import wait_for_execution
+from ..execution_events_fetcher import ExecutionEventsFetcher
 
 from . import cfy
 from .commands import utils as test_utils
 from .resources.mocks.mock_list_response import MockListResponse
+from .commands.test_cli_command import CliCommandTest, BLUEPRINTS_DIR
 
 
 class TestCLIBase(testtools.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        env.CLOUDIFY_WORKDIR = '/tmp/.cloudify-test'
+        env.CLOUDIFY_CONFIG_PATH = os.path.join(
+            env.CLOUDIFY_WORKDIR, 'config.yaml')
+        env.PROFILES_DIR = os.path.join(
+            env.CLOUDIFY_WORKDIR, 'profiles')
+        env.ACTIVE_PRO_FILE = os.path.join(
+            env.CLOUDIFY_WORKDIR, 'active.profile')
+
+    def setUp(self):
+        super(TestCLIBase, self).setUp()
+        cfy.invoke('init -r')
 
     def tearDown(self):
+        super(TestCLIBase, self).tearDown()
         self._reset_verbosity_and_loggers()
-
-    @patch('argparse.ArgumentParser.print_help')
-    def test_help_shows_if_no_cli_arguments(self, print_help_mock):
-
-        # SystemExit is raised when sys.exit is called
-        self.assertRaises(SystemExit, cli_runner.run_cli, 'cfy')
-        self.assertTrue(print_help_mock.called)
-
-    def test_longest_longest_command_length(self):
-
-        sample_dict = {'a': 'v1', 'ab': 'v2'}
-
-        self.assertEqual(longest_command_length(sample_dict), 2)
+        cfy.purge_dot_cloudify()
 
     def test_verbosity(self):
         def test(flag, expected):
             self._reset_verbosity_and_loggers()
             with patch('cloudify_cli.commands.status'):
-                cli_runner.run_cli('cfy status {0}'.format(flag))
-            self.assertEqual(cli.verbosity_level, expected)
+                cfy.invoke('cfy status {0}'.format(flag))
+            self.assertEqual(logger.verbosity_level, expected)
             self.assertEqual(logs.EVENT_VERBOSITY_LEVEL, expected)
-            if expected >= cli.HIGH_VERBOSE:
+            if expected >= logger.HIGH_VERBOSE:
                 expected_logging_level = logging.DEBUG
             else:
                 expected_logging_level = logging.INFO
@@ -83,16 +97,14 @@ class TestCLIBase(testtools.TestCase):
                 log = logging.getLogger(logger_name)
                 self.assertEqual(log.level, expected_logging_level)
 
-        test('', cli.NO_VERBOSE)
-        test('-v', cli.LOW_VERBOSE)
-        test('-vv', cli.MEDIUM_VERBOSE)
-        test('-vvv', cli.HIGH_VERBOSE)
-        test('--debug', cli.HIGH_VERBOSE)
-        test('--debug -v', cli.HIGH_VERBOSE)
+        test('', logger.NO_VERBOSE)
+        test('-v', logger.LOW_VERBOSE)
+        test('-vv', logger.MEDIUM_VERBOSE)
+        test('-vvv', logger.HIGH_VERBOSE)
 
     def _reset_verbosity_and_loggers(self):
-        cli.verbosity_level = cli.NO_VERBOSE
-        logs.EVENT_VERBOSITY_LEVEL = cli.NO_VERBOSE
+        logger.verbosity_level = logger.NO_VERBOSE
+        logs.EVENT_VERBOSITY_LEVEL = logger.NO_VERBOSE
         logger.configure_loggers()
 
 
@@ -802,3 +814,170 @@ class TestCLIColorfulEvent(testtools.TestCase):
                 node_id=node_id,
                 op=operation),
             operation_info_out)
+
+
+class CustomImportResolver(DefaultImportResolver):
+    def __init__(self, param):
+        if not param:
+            raise ValueError('failed to initialize resolver')
+        self.param = param
+
+
+def update_config_file(resolver_configuration):
+    config_path = env.CLOUDIFY_CONFIG_PATH
+    with open(config_path, 'a') as f:
+        yaml.dump(resolver_configuration, f)
+
+
+def create_resolver_configuration(implementation=None, parameters=None):
+    import_resolver_config = {IMPORT_RESOLVER_KEY: {}}
+    if implementation:
+        import_resolver_config[IMPORT_RESOLVER_KEY][
+            RESOLVER_IMPLEMENTATION_KEY] = implementation
+    if parameters:
+        import_resolver_config[IMPORT_RESOLVER_KEY][
+            RESLOVER_PARAMETERS_KEY] = parameters
+    return import_resolver_config
+
+
+class GetImportResolverTests(CliCommandTest):
+
+    def setUp(self):
+        super(GetImportResolverTests, self).setUp()
+        cfy.invoke('cfy init -r')
+        self._create_context()
+
+    def tearDown(self):
+        super(GetImportResolverTests, self).tearDown()
+        cfy.purge_dot_cloudify()
+
+    def test_get_resolver(self):
+        resolver_configuration = create_resolver_configuration(
+            implementation='mock implementation',
+            parameters='mock parameters')
+        update_config_file(resolver_configuration=resolver_configuration)
+        with mock.patch('dsl_parser.env.create_import_resolver') as \
+                mock_create_import_resolver:
+            env.get_import_resolver()
+            mock_create_import_resolver.assert_called_once_with(
+                resolver_configuration[IMPORT_RESOLVER_KEY])
+
+    def test_get_custom_resolver(self):
+        parameters = {'param': 'custom-parameter'}
+        custom_resolver_class_path = "%s:%s" % (
+            CustomImportResolver.__module__, CustomImportResolver.__name__)
+        import_resolver_config = create_resolver_configuration(
+            implementation=custom_resolver_class_path, parameters=parameters)
+        update_config_file(resolver_configuration=import_resolver_config)
+        resolver = env.get_import_resolver()
+        self.assertEqual(type(resolver), CustomImportResolver)
+        self.assertEqual(resolver.param, 'custom-parameter')
+
+
+class ImportResolverLocalUseTests(CliCommandTest):
+
+    def setUp(self):
+        super(ImportResolverLocalUseTests, self).setUp()
+        self._create_context()
+
+    @mock.patch('cloudify_cli.env.get_import_resolver')
+    def _test_using_import_resolver(self,
+                                    command,
+                                    blueprint_path,
+                                    mocked_module,
+                                    mock_get_resolver):
+        cfy.invoke('cfy init -r')
+
+        # create an import resolver
+        parameters = {
+            'rules':
+                [{'rule1prefix': 'rule1replacement'}]
+        }
+        resolver = DefaultImportResolver(**parameters)
+        # set the return value of mock_get_resolver -
+        # this is the resolver we expect to be passed to
+        # the parse_from_path method.
+        mock_get_resolver.return_value = resolver
+
+        # run the cli command and check that
+        # parse_from_path was called with the expected resolver
+        cli_command = 'cfy {0} -p {1}'.format(command, blueprint_path)
+        kwargs = {
+            'dsl_file_path': blueprint_path,
+            'resolver': resolver,
+            'validate_version': True
+        }
+        self.assert_method_called(
+            cli_command, mocked_module, 'parse_from_path', kwargs=kwargs)
+        cfy.purge_dot_cloudify()
+
+    def test_validate_blueprint_uses_import_resolver(self):
+        from cloudify_cli.commands import blueprints
+        blueprint_path = '{0}/local/blueprint.yaml'.format(BLUEPRINTS_DIR)
+        self._test_using_import_resolver(
+            'blueprints validate', blueprint_path, blueprints)
+
+    @mock.patch.object(local._Environment, 'execute')
+    @mock.patch.object(dsl_parser.tasks, 'prepare_deployment_plan')
+    def test_bootstrap_uses_import_resolver_for_parsing(self, *_):
+        blueprint_path = '{0}/local/{1}.yaml'.format(
+            BLUEPRINTS_DIR, 'blueprint')
+
+        old_validate_dep_size = bootstrap.validate_manager_deployment_size
+        old_load_env = bootstrap.load_env
+        old_init = cloudify.workflows.local.FileStorage.init
+        old_get_nodes = cloudify.workflows.local.FileStorage.get_nodes
+        old_get_node_instances = \
+            cloudify.workflows.local.FileStorage.get_node_instances
+
+        bootstrap.validate_manager_deployment_size =\
+            lambda blueprint_path: None
+
+        def mock_load_env(name):
+            raise IOError('mock load env')
+        bootstrap.load_env = mock_load_env
+
+        def mock_init(self, name, plan, nodes, node_instances, blueprint_path,
+                      provider_context):
+            return 'mock init'
+        bootstrap.local.FileStorage.init = mock_init
+
+        def mock_get_nodes(self):
+            return [
+                Node({'id': 'mock_node',
+                      'type_hierarchy': 'cloudify.nodes.CloudifyManager'})
+            ]
+        cloudify.workflows.local.FileStorage.get_nodes = mock_get_nodes
+
+        def mock_get_node_instances(self):
+            return [
+                NodeInstance({'node_id': 'mock_node',
+                              'runtime_properties': {
+                                  'provider': 'mock_provider',
+                                  'manager_ip': 'mock_manager_ip',
+                                  'manager_user': 'mock_manager_user',
+                                  'manager_key_path': 'mock_manager_key_path',
+                                  'rest_port': 'mock_rest_port'}})
+            ]
+        cloudify.workflows.local.FileStorage.get_node_instances = \
+            mock_get_node_instances
+
+        try:
+            self._test_using_import_resolver(
+                'bootstrap', blueprint_path, dsl_parser.parser)
+        finally:
+            bootstrap.validate_manager_deployment_size = old_validate_dep_size
+            bootstrap.load_env = old_load_env
+            bootstrap.local.FileStorage.init = old_init
+            cloudify.workflows.local.FileStorage.get_nodes = old_get_nodes
+            cloudify.workflows.local.FileStorage.get_node_instances = \
+                old_get_node_instances
+
+    @mock.patch('.commands.local._storage', new=mock.MagicMock)
+    @mock.patch('cloudify.workflows.local._prepare_nodes_and_instances')
+    @mock.patch('dsl_parser.tasks.prepare_deployment_plan')
+    def test_local_init(self, *_):
+        blueprint_path = '{0}/local/{1}.yaml'.format(BLUEPRINTS_DIR,
+                                                     'blueprint')
+        self._test_using_import_resolver(
+            'local init', blueprint_path, dsl_parser.parser)
