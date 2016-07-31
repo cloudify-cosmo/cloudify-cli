@@ -62,9 +62,10 @@ from ..execution_events_fetcher import wait_for_execution
 from ..execution_events_fetcher import ExecutionEventsFetcher
 
 from . import cfy
-from .commands import utils as test_utils
-from .resources.mocks.mock_list_response import MockListResponse
-from .commands.test_cli_command import CliCommandTest, BLUEPRINTS_DIR
+
+from .commands.constants import BLUEPRINTS_DIR
+from .commands.test_base import CliCommandTest
+from .commands.mocks import mock_logger, mock_stdout, MockListResponse
 
 
 env.CLOUDIFY_WORKDIR = '/tmp/.cloudify-test'
@@ -153,9 +154,9 @@ class CliEnvTests(testtools.TestCase):
     def _set_manager(self):
         env.update_profile_context(
             manager_ip='10.10.1.10',
-            ssh_key_path='test',
-            ssh_user='~/.my_key',
-            ssh_port='22',
+            manager_key='test',
+            manager_user='~/.my_key',
+            manager_port='22',
             rest_port='80',
             rest_protocol='http',
             provider_context='abc')
@@ -497,7 +498,7 @@ class TestLogger(testtools.TestCase):
         def mock_create_message(event):
             return None if event['key'] == 'hide' else event['key']
 
-        with test_utils.mock_logger('cloudify_cli.logger._lgr') as output:
+        with mock_logger('cloudify_cli.logger._lgr') as output:
             with patch('cloudify.logs.create_event_message_prefix',
                        mock_create_message):
                 events_logger(events)
@@ -506,7 +507,7 @@ class TestLogger(testtools.TestCase):
     def test_json_events_logger(self):
         events_logger = logger.get_events_logger(json_output=True)
         events = [{'key': 'value1'}, {'key': 'value2'}]
-        with test_utils.mock_stdout() as output:
+        with mock_stdout() as output:
             events_logger(events)
         self.assertEqual('{0}\n{1}\n'.format(json.dumps(events[0]),
                                              json.dumps(events[1])),
@@ -1158,7 +1159,7 @@ class CliBootstrapUnitTests(testtools.TestCase):
         agents_pkg_path = '/tmp/work_dir'
         agents_dest_dir = '/opt/manager/resources/packages'
 
-        command = tasks._get_install_agent_pkgs_cmd(
+        command = self._get_install_agent_pkgs_cmd(
             agent_packages, agents_pkg_path, agents_dest_dir)
 
         self.assertIn('curl -O agent.tar.gz', command)
@@ -1176,7 +1177,7 @@ class CliBootstrapUnitTests(testtools.TestCase):
         agents_pkg_path = '/tmp/work_dir'
         agents_dest_dir = '/opt/manager/resources/packages'
 
-        command = tasks._get_install_agent_pkgs_cmd(
+        command = self._get_install_agent_pkgs_cmd(
             agent_packages, agents_pkg_path, agents_dest_dir)
 
         self.assertIn('curl -O agent1.tar.gz', command)
@@ -1194,7 +1195,7 @@ class CliBootstrapUnitTests(testtools.TestCase):
         agents_pkg_path = '/tmp/work_dir'
         agents_dest_dir = '/opt/manager/resources/packages'
 
-        command = tasks._get_install_agent_pkgs_cmd(
+        command = self._get_install_agent_pkgs_cmd(
             agent_packages, agents_pkg_path, agents_dest_dir)
 
         self.assertIn('curl -O agent1.deb', command)
