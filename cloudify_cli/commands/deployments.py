@@ -278,7 +278,7 @@ def local_inputs(logger):
     """Display inputs for the execution
     """
     env = common.load_env()
-    logger.info(json.dumps(env.inputs() or {}, sort_keys=True, indent=2))
+    logger.info(json.dumps(env.plan['inputs'] or {}, sort_keys=True, indent=2))
 
 
 @cfy.command(name='outputs', short_help='Show deployment outputs [locally]')

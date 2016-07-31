@@ -172,10 +172,12 @@ class InitTest(CliCommandTest):
         )
 
         self.invoke(command)
-        output = self.invoke('cfy deployments outputs', context='local').logs.split('\n')
+        self.register_commands()
+
+        output = self.invoke('cfy deployments inputs').logs.split('\n')
         self.assertIn('  "key1": "val1", ', output)
         self.assertIn('  "key2": "val2", ', output)
-        self.assertIn('  "key3": "val3", ', output)
+        self.assertIn('  "key3": "val3"', output)
 
     def test_no_init(self):
         cfy.purge_dot_cloudify()

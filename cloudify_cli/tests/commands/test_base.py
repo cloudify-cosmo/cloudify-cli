@@ -20,7 +20,7 @@ import unittest
 from mock import patch, MagicMock
 
 from cloudify.utils import setup_logger
-from cloudify_cli import env, utils, exceptions, cli
+from cloudify_cli import env, utils, exceptions
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.tests import cfy
 from cloudify_cli.tests.commands.constants import TEST_DIR, TEST_WORK_DIR
@@ -198,7 +198,11 @@ class CliCommandTest(unittest.TestCase):
             update=False)
         env.set_cfy_config()
         env.set_active_profile(host)
-        cli._register_commands()
+        self.register_commands()
+
+    def register_commands(self):
+        from cloudify_cli.cli import _register_commands
+        _register_commands()
 
     def _read_context(self):
         return env.get_profile_context()

@@ -1,3 +1,4 @@
+import os
 import json
 import time
 from StringIO import StringIO
@@ -9,6 +10,7 @@ from ... import cfy
 from ..mocks import execution_mock, MockListResponse, \
     mock_log_message_prefix
 from ..test_base import CliCommandTest
+from ..constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
 from cloudify_rest_client import deployments, executions
 from cloudify_rest_client.exceptions import CloudifyClientError, \
     DeploymentEnvironmentCreationPendingError, \
@@ -80,6 +82,21 @@ class ExecutionsTest(CliCommandTest):
                              'mock_wf')
         finally:
             execution_events_fetcher.wait_for_execution = original_wait_for
+
+    def test_local_execution(self):
+        blueprint_path = os.path.join(
+            BLUEPRINTS_DIR,
+            'local',
+            DEFAULT_BLUEPRINT_FILE_NAME
+        )
+
+        self.invoke('cfy init {0}'.format(blueprint_path))
+        self.register_commands()
+        output = self.invoke('cfy deployments outputs').logs.split('\n')
+        self.assertIn('  "param": null, ', output)
+        self.invoke('cfy executions start {0}'.format('run_test_op_on_nodes'))
+        output = self.invoke('cfy deployments outputs').logs.split('\n')
+        self.assertIn('  "param": "default_param", ', output)
 
 
 class WorkflowsTest(CliCommandTest):
