@@ -213,9 +213,9 @@ class BlueprintsTest(CliCommandTest):
                 patch('cloudify_cli.utils.table', table_mock):
             self.invoke('cfy blueprints inputs {0}'.format(blueprint_id))
 
+
 # TODO: Test outputs
 # TODO: Test profiles
-
 class BootstrapTest(CliCommandTest):
 
     def test_bootstrap_install_plugins(self):
@@ -2000,25 +2000,25 @@ class LogsTest(CliCommandTest):
     def test_with_empty_config(self):
         self.use_manager(user=None, port=None, key=None)
         self.invoke('cfy logs download',
-                    'Management User is not set '
+                    'Manager User is not set '
                     'in working directory settings')
 
     def test_with_no_key(self):
         self.use_manager(user='test', port='22', host='127.0.0.1', key=None)
         self.invoke('cfy logs download',
-                    'Management Key is not set '
+                    'Manager Key is not set '
                     'in working directory settings')
 
     def test_with_no_user(self):
         self.use_manager(port='22', key='/tmp/test.pem', user=None)
         self.invoke('cfy logs download',
-                    'Management User is not set '
+                    'Manager User is not set '
                     'in working directory settings')
 
     def test_with_no_port(self):
         self.use_manager(user='test', key='/tmp/test.pem', host='127.0.0.1', port=None)
         self.invoke('cfy logs download',
-                    'Management Port is not set '
+                    'Manager Port is not set '
                     'in working directory settings')
 
     def test_with_no_server(self):
@@ -2199,7 +2199,7 @@ class RecoverTest(CliCommandTest):
            '.read_manager_deployment_dump_if_needed')
     @patch('cloudify_cli.bootstrap.bootstrap.recover')
     def test_recover_from_same_directory_as_bootstrap(self, *_):
-        # mock bootstrap behavior by setting the management key path
+        # mock bootstrap behavior by setting the manager key path
         # in the local context
         key_path = os.path.join(TEST_WORK_DIR, 'key.pem')
         open(key_path, 'w').close()
@@ -2220,7 +2220,7 @@ class RecoverTest(CliCommandTest):
     @patch('cloudify_cli.bootstrap.bootstrap.recover')
     def test_recover_from_same_directory_as_bootstrap_missing_key(self, *_):
 
-        # mock bootstrap behavior by setting the management key path
+        # mock bootstrap behavior by setting the manager key path
         # in the local context. however, don't actually create the key file
         key_path = os.path.join(TEST_WORK_DIR, 'key.pem')
         fake_snapshot_path = os.path.join(TEST_WORK_DIR, 'sn.zip')
@@ -2357,19 +2357,19 @@ class SshTest(CliCommandTest):
     def test_ssh_with_empty_config(self):
         self.use_manager(user=None)
         self.invoke('cfy ssh',
-                    'Management User is not set '
+                    'Manager User is not set '
                     'in working directory settings')
 
     def test_ssh_with_no_key(self):
         self.use_manager(user='test', host='127.0.0.1', key=None)
         self.invoke('cfy ssh',
-                    'Management Key is not set '
+                    'Manager Key is not set '
                     'in working directory settings')
 
     def test_ssh_with_no_user(self):
         self.use_manager(key='/tmp/test.pem', host='127.0.0.1', user=None)
         self.invoke('cfy ssh',
-                    'Management User is not set '
+                    'Manager User is not set '
                     'in working directory settings')
 
     def test_ssh_with_no_server(self):
@@ -2417,8 +2417,8 @@ class StatusTest(CliCommandTest):
         self.use_manager()
         self.invoke('cfy status')
 
-    def test_status_no_management_server_defined(self):
-        # Running a command which requires a target management server without
+    def test_status_no_manager_server_defined(self):
+        # Running a command which requires a target manager server without
         # first calling "cfy use" or providing a target server explicitly
         self.invoke(
             'cfy status',
@@ -2502,7 +2502,7 @@ class TeardownTest(CliCommandTest):
 
     # TODO: Not sure we're checking the right things here
     @patch('cloudify_cli.bootstrap.bootstrap.teardown')
-    def test_teardown_no_management_ip_in_context_right_directory(
+    def test_teardown_no_manager_ip_in_context_right_directory(
             self, mock_teardown):  # NOQA
 
         def mock_client_list():
@@ -2640,8 +2640,8 @@ class UseTest(CliCommandTest):
                 'context': {}}
         )
         self.invoke('cfy use 127.0.0.1')
-        cwds = self._read_cosmo_wd_settings()
-        self.assertEquals("127.0.0.1", cwds.get_management_server())
+        context = self._read_context()
+        self.assertEquals("127.0.0.1", context.get_manager_ip())
 
     def test_use_attempt_by_unauthorized_user(self):
         with patch.object(self.client.manager, 'get_status') as mock:
@@ -2657,8 +2657,8 @@ class UseTest(CliCommandTest):
             }
         )
         self.invoke('cfy use 127.0.0.1')
-        cwds = self._read_cosmo_wd_settings()
-        self.assertEquals('127.0.0.1', cwds.get_management_server())
+        context = self._read_context()
+        self.assertEquals('127.0.0.1', context.get_manager_ip())
 
     def test_use_with_authorization(self):
         host = '127.0.0.1'
@@ -2854,7 +2854,7 @@ class WorkflowsTest(CliCommandTest):
     def test_workflows_get_nonexistent_deployment(self):
 
         expected_message = \
-            "Deployment 'nonexistent-dep' not found on management server"
+            "Deployment 'nonexistent-dep' not found on manager server"
 
         self.client.deployments.get = MagicMock(
             side_effect=CloudifyClientError(expected_message))
