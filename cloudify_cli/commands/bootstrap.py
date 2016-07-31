@@ -121,10 +121,10 @@ def bootstrap(blueprint_path,
 
                 manager_ip = details['manager_ip']
                 env.update_profile_context(
-                    management_ip=manager_ip,
-                    management_key=details['manager_key_path'],
-                    management_user=details['manager_user'],
-                    management_port=details['manager_port'],
+                    manager_ip=manager_ip,
+                    manager_key=details['manager_key_path'],
+                    manager_user=details['manager_user'],
+                    manager_port=details['manager_port'],
                     rest_port=details['rest_port'],
                     rest_protocol=details['rest_protocol'],
                     provider_context=details['provider_context'],

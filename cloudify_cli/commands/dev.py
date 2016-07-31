@@ -22,9 +22,9 @@ from .. import env
 from .. import exec_env
 from ..config import cfy
 from ..config import helptexts
-from ..env import get_management_key
-from ..env import get_management_user
-from ..env import get_management_port
+from ..env import get_manager_key
+from ..env import get_manager_user
+from ..env import get_manager_port
 from ..exceptions import CloudifyCliError
 
 
@@ -43,11 +43,11 @@ from ..exceptions import CloudifyCliError
 def dev(tasks_file, task, args):
     """Run fabric tasks on the manager
     """
-    management_ip = env.get_rest_host()
-    _execute(username=get_management_user(),
-             port=get_management_port(),
-             key=get_management_key(),
-             ip=management_ip,
+    manager_ip = env.get_rest_host()
+    _execute(username=get_manager_user(),
+             port=get_manager_port(),
+             key=get_manager_key(),
+             ip=manager_ip,
              task=task,
              tasks_file=tasks_file,
              args=args)

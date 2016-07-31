@@ -32,8 +32,8 @@ class StatusTest(CliCommandTest):
         self.use_manager()
         self.invoke('cfy status')
 
-    def test_status_no_management_server_defined(self):
-        # Running a command which requires a target management server without
+    def test_status_no_manager_server_defined(self):
+        # Running a command which requires a target manager server without
         # first calling "cfy use" or providing a target server explicitly
         self.invoke(
             'cfy status',

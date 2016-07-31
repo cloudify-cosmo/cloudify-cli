@@ -199,20 +199,20 @@ class CliCommandTest(unittest.TestCase):
             provider_context = dict()
 
         settings = env.ProfileContext()
-        settings.set_management_server(host)
-        settings.set_management_key(key)
-        settings.set_management_user(user)
-        settings.set_management_port(port)
+        settings.set_manager_ip(host)
+        settings.set_manager_key(key)
+        settings.set_manager_user(user)
+        settings.set_manager_port(port)
         settings.set_provider_context(provider_context)
 
         cfy.purge_profile(profile_name)
         env.set_profile_context(
             profile_name=profile_name,
-            cosmo_wd_settings=settings,
+            context=settings,
             update=False)
         env.set_cfy_config()
         env.set_active_profile(profile_name)
         cli._register_commands()
 
-    def _read_cosmo_wd_settings(self):
+    def _read_context(self):
         return env.get_profile_context()

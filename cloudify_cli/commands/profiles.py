@@ -52,7 +52,8 @@ def profiles():
 def get():
     active_profile = env.get_profile(env.get_active_profile())
 
-    columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path']
+    columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path',
+               'ssh_port', 'rest_port', 'rest_protocol']
     pt = utils.table(columns, data=[active_profile])
     common.print_table('Active profile:', pt)
 
@@ -76,7 +77,8 @@ def list(logger):
             profile_data['manager_ip'] = '*' + profile_data['manager_ip']
         profiles.append(profile_data)
 
-    columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path']
+    columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path',
+               'ssh_port', 'rest_port', 'rest_protocol']
     pt = utils.table(columns, data=profiles)
     common.print_table('Profiles:', pt)
 
@@ -220,9 +222,9 @@ def _move_ssh_keys(ctx, direction, logger):
         # TODO: Currently, this will try to connect to the manager
         # where the profiles are being imported to get its key path.
         # We should change that.
-        ctx.invoke(use.use, management_ip=profile)
+        ctx.invoke(use.use, manager_ip=profile)
         try:
-            key_filepath = env.get_management_key()
+            key_filepath = env.get_manager_key()
         except CloudifyCliError:
             key_filepath = None
         if key_filepath:

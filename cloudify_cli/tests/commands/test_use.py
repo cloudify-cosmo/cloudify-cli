@@ -38,8 +38,8 @@ class UseTest(CliCommandTest):
                 'context': {}}
         )
         self.invoke('cfy use 127.0.0.1')
-        cwds = self._read_cosmo_wd_settings()
-        self.assertEquals("127.0.0.1", cwds.get_management_server())
+        cwds = self._read_context()
+        self.assertEquals("127.0.0.1", cwds.get_manager_ip())
 
     def test_use_attempt_by_unauthorized_user(self):
         with patch.object(self.client.manager, 'get_status') as mock:
@@ -55,8 +55,8 @@ class UseTest(CliCommandTest):
             }
         )
         self.invoke('cfy use 127.0.0.1')
-        cwds = self._read_cosmo_wd_settings()
-        self.assertEquals('127.0.0.1', cwds.get_management_server())
+        cwds = self._read_context()
+        self.assertEquals('127.0.0.1', cwds.get_manager_ip())
 
     def test_use_with_authorization(self):
         host = '127.0.0.1'

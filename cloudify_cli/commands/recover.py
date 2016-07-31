@@ -66,7 +66,7 @@ def recover(snapshot_path,
     else:
         # try retrieving the key file from the local context
         try:
-            key_path = os.path.expanduser(env.get_management_key())
+            key_path = os.path.expanduser(env.get_manager_key())
             if not os.path.isfile(key_path):
                 # manager key file path exists in context but does not exist
                 # in the file system. fail now.

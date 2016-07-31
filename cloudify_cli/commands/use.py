@@ -29,21 +29,21 @@ from . import init
 
 @cfy.command(name='use',
              short_help='Control a specific manager')
-@cfy.argument('management-ip')
+@cfy.argument('manager-ip')
 @cfy.options.profile_alias
-@cfy.options.management_user
-@cfy.options.management_key
-@cfy.options.management_password
-@cfy.options.management_port
+@cfy.options.manager_user
+@cfy.options.manager_key
+@cfy.options.manager_password
+@cfy.options.manager_port
 @cfy.options.rest_port
 @cfy.options.verbose
 @cfy.add_logger
 def use(alias,
-        management_ip,
-        management_user,
-        management_key,
-        management_password,
-        management_port,
+        manager_ip,
+        manager_user,
+        manager_key,
+        manager_password,
+        manager_port,
         rest_port,
         logger):
     """Control a specific manager
@@ -55,21 +55,21 @@ def use(alias,
     """
     # TODO: add support for setting the ssh port and password
 
-    if management_ip == 'local':
+    if manager_ip == 'local':
         logger.info('Using local environment...')
-        if not env.is_profile_exists(management_ip):
-            init.init_profile(profile_name=management_ip)
+        if not env.is_profile_exists(manager_ip):
+            init.init_profile(profile_name=manager_ip)
         env.set_active_profile('local')
         return
 
-    logger.info('Attempting to connect...'.format(management_ip))
+    logger.info('Attempting to connect...'.format(manager_ip))
     # determine SSL mode by port
     if rest_port == constants.SECURED_REST_PORT:
         rest_protocol = constants.SECURED_REST_PROTOCOL
     else:
         rest_protocol = constants.DEFAULT_REST_PROTOCOL
     client = env.get_rest_client(
-        rest_host=management_ip,
+        rest_host=manager_ip,
         rest_port=rest_port,
         rest_protocol=rest_protocol,
         skip_version_check=True)
@@ -79,19 +79,19 @@ def use(alias,
     except UserUnauthorizedError:
         raise CloudifyCliError(
             "Can't use manager {0}: User is unauthorized.".format(
-                management_ip))
+                manager_ip))
     # TODO: Be more specific. The problem here is that, for instance,
     # any problem raised by the rest client will trigger this.
     # Triggering a CloudifyClientError only doesn't actually deal
     # with situations like No route to host and the likes.
     except Exception as ex:
         raise CloudifyCliError(
-            "Can't use manager {0}: {1}".format(management_ip, str(ex)))
+            "Can't use manager {0}: {1}".format(manager_ip, str(ex)))
 
-    if not env.is_profile_exists(management_ip):
-        init.init_profile(profile_name=management_ip)
-    env.set_active_profile(management_ip)
-    if management_ip == 'local':
+    if not env.is_profile_exists(manager_ip):
+        init.init_profile(profile_name=manager_ip)
+    env.set_active_profile(manager_ip)
+    if manager_ip == 'local':
         return
 
     try:
@@ -101,12 +101,12 @@ def use(alias,
         provider_context = None
 
     logger.info('Using manager {0} with port {1}'.format(
-        management_ip, rest_port))
+        manager_ip, rest_port))
     env.update_profile_context(
-        management_ip=management_ip,
-        management_key=management_key,
-        management_user=management_user,
-        management_port=management_port,
+        manager_ip=manager_ip,
+        manager_key=manager_key,
+        manager_user=manager_user,
+        manager_port=manager_port,
         rest_port=rest_port,
         rest_protocol=rest_protocol,
         provider_context=provider_context)

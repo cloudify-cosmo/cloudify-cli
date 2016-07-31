@@ -40,6 +40,9 @@ def delete_profile(profile_name):
     profile_dir = os.path.join(PROFILES_DIR, profile_name)
     if os.path.isdir(profile_dir):
         shutil.rmtree(profile_dir)
+    else:
+        raise CloudifyCliError(
+            'Profile {0} does not exist'.format(profile_name))
 
 
 # TODO: Consider moving to profiles.py
@@ -48,10 +51,13 @@ def get_profile(profile_name):
     set_active_profile(profile_name)
 
     # TODO: add rest port and protocol, ssh port and ssh password
-    cosmo_wd_settings = get_profile_context(profile_name)
-    ssh_key_path = cosmo_wd_settings.get_management_key() or 'Not Set'
-    ssh_user = cosmo_wd_settings.get_management_user() or 'Not Set'
-    manager_ip = cosmo_wd_settings.get_management_server() or 'Not Set'
+    context = get_profile_context(profile_name)
+    manager_ip = context.get_manager_ip() or 'Not Set'
+    ssh_key_path = context.get_manager_key() or 'Not Set'
+    ssh_user = context.get_manager_user() or 'Not Set'
+    ssh_port = context.get_manager_port() or 'Not Set'
+    rest_port = context.get_rest_port() or 'Not Set'
+    rest_protocol = context.get_rest_protocol() or 'Not Set'
 
     set_active_profile(current_profile)
 
@@ -59,14 +65,17 @@ def get_profile(profile_name):
         manager_ip=manager_ip,
         alias=None,
         ssh_key_path=ssh_key_path,
-        ssh_user=ssh_user)
+        ssh_user=ssh_user,
+        ssh_port=ssh_port,
+        rest_port=rest_port,
+        rest_protocol=rest_protocol)
 
 
 def is_profile_exists(profile_name):
     return os.path.isfile(os.path.join(PROFILES_DIR, profile_name, 'context'))
 
 
-def assert_profile_exists(profile_name=None):
+def assert_profile_exists(profile_name):
     if not is_profile_exists(profile_name):
         raise CloudifyCliError(
             'Profile {0} does not exist. You can run `cfy init {0}` to '
@@ -83,12 +92,12 @@ def get_active_profile():
         with open(ACTIVE_PRO_FILE) as active_profile:
             return active_profile.read().strip()
     else:
+        # TODO: Don't quite understand this. If the active profile
+        # file doesn't exist.. something fundemental is broken.
         return ''
 
 
 def assert_manager_active():
-    # TODO: https://github.com/pallets/click/pull/500 implements hidden
-    # options in click. This will allow us to replace this function.
     if not is_manager_active():
         raise CloudifyCliError(
             'This command is only available when using a manager. '
@@ -107,15 +116,13 @@ def is_manager_active():
     if not active_profile:
         return False
 
-    profile = get_profile_context(
-        active_profile, suppress_error=True)
-    if not (profile and profile.get_management_server()):
+    profile = get_profile_context(active_profile, suppress_error=True)
+    if not (profile and profile.get_manager_ip()):
         return False
     return True
 
 
-def get_profile_context(profile_name=None,
-                        suppress_error=False):
+def get_profile_context(profile_name=None, suppress_error=False):
     profile_name = profile_name or get_active_profile()
     if profile_name == 'local':
         return None
@@ -129,42 +136,38 @@ def get_profile_context(profile_name=None,
         raise
 
 
-def get_context_path(profile_name=None):
-    profile_name = profile_name or get_active_profile()
-    if not profile_name:
-        raise CloudifyCliError(
-            'No profile name provided and there is no '
-            'currently active profile. Please initialize '
-            'and try again.')
-    init_path = get_init_path(profile_name)
-    if init_path is None:
-        raise_uninitialized()
-    context_path = os.path.join(
-        init_path,
-        constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
-    if not os.path.isfile(context_path):
-        raise CloudifyCliError('File {0} does not exist'.format(context_path))
-    return context_path
-
-
 def is_initialized(profile_name=None):
+    """Checks if a profile or an environment is initialized.
+
+    If profile_name is provided, it will check if the profile
+    is initialzed. If not, it will just check that the `local`
+    profile is.
+    """
     if profile_name:
         return get_init_path(profile_name) is not None
     else:
         return os.path.isfile(CLOUDIFY_CONFIG_PATH)
 
 
-def get_init_path(profile_name=None):
-    """
-    Returns the path of the .cloudify dir
-
-    search in each directory up the cwd directory tree for the existence of the
-    Cloudify settings directory (`.cloudify`).
-    :return: if we found it, return it's path. else, return None
-    """
+def get_context_path(profile_name=None):
     profile_name = profile_name or get_active_profile()
-    path = os.path.join(PROFILES_DIR, profile_name)
-    return path if os.path.isdir(path) else ''
+    if profile_name == 'local':
+        raise CloudifyCliError('Local profile does not contain context')
+    init_path = get_init_path(profile_name)
+    context_path = os.path.join(
+        init_path,
+        constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
+    return context_path
+
+
+# TODO: Change name to get_profile_dir
+def get_init_path(profile_name=None):
+    active_profile = profile_name or get_active_profile()
+    if active_profile and os.path.isdir(
+            os.path.join(PROFILES_DIR, active_profile)):
+        return os.path.join(PROFILES_DIR, active_profile)
+    else:
+        raise CloudifyCliError('Profile directory does not exist')
 
 
 def set_cfy_config():
@@ -179,7 +182,16 @@ def set_cfy_config():
         f.write(os.linesep)
 
 
-def set_profile_context(cosmo_wd_settings=None,
+def raise_uninitialized():
+    error = CloudifyCliError(
+        'Cloudify environment is not initalized')
+    error.possible_solutions = [
+        "Run 'cfy init'"
+    ]
+    raise error
+
+
+def set_profile_context(context=None,
                         update=False,
                         profile_name=None):
     profile_name = profile_name or get_active_profile()
@@ -188,8 +200,8 @@ def set_profile_context(cosmo_wd_settings=None,
             'Either provide a profile name or activate a profile')
 
     workdir = os.path.join(PROFILES_DIR, profile_name)
-    if cosmo_wd_settings is None:
-        cosmo_wd_settings = ProfileContext()
+    if context is None:
+        context = ProfileContext()
     if update:
         # locate existing file
         # this will raise an error if the file doesn't exist.
@@ -204,37 +216,29 @@ def set_profile_context(cosmo_wd_settings=None,
             constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
 
     with open(target_file_path, 'w') as f:
-        f.write(yaml.dump(cosmo_wd_settings))
+        f.write(yaml.dump(context))
 
 
-def raise_uninitialized():
-    error = CloudifyCliError(
-        'Cloudify environment is not initalized')
-    error.possible_solutions = [
-        "Run 'cfy init'"
-    ]
-    raise error
-
-
-def update_profile_context(management_ip,
-                           profile_name=get_active_profile(),
-                           management_key=None,
-                           management_password=None,
-                           management_user=None,
-                           management_port='22',
+def update_profile_context(manager_ip,
+                           ssh_key_path=None,
+                           ssh_password=None,
+                           ssh_user=None,
+                           ssh_port='22',
                            rest_port='80',
                            rest_protocol='http',
                            provider_context=None,
-                           bootstrap_state=None):
+                           bootstrap_state=None,
+                           alias=None):
 
+    set_active_profile(manager_ip)
     provider_context = provider_context or {}
-
     settings = ProfileContext()
-    settings.set_management_server(management_ip)
-    settings.set_management_key(management_key)
-    settings.set_management_password(management_password)
-    settings.set_management_user(management_user)
-    settings.set_management_port(management_port)
+
+    settings.set_manager_ip(manager_ip)
+    settings.set_manager_key(ssh_key_path)
+    settings.set_manager_password(ssh_password)
+    settings.set_manager_user(ssh_user)
+    settings.set_manager_port(ssh_port)
     settings.set_rest_port(rest_port)
     settings.set_rest_protocol(rest_protocol)
     # TODO: add ssh port and password
@@ -242,8 +246,8 @@ def update_profile_context(management_ip,
     settings.set_bootstrap_state(bootstrap_state)
 
     set_profile_context(
-        profile_name=profile_name,
-        cosmo_wd_settings=settings,
+        profile_name=manager_ip,
+        context=settings,
         update=False)
 
 
@@ -288,7 +292,7 @@ def get_rest_client(rest_host=None,
                     trust_all=False,
                     skip_version_check=False):
     # TODO: Go through all commands remove remove the call
-    # to get_management_server_ip as it is already defaulted
+    # to get_manager_ip_ip as it is already defaulted
     # here.
     rest_host = rest_host or get_rest_host()
     rest_port = rest_port or get_rest_port()
@@ -329,52 +333,52 @@ def get_rest_client(rest_host=None,
 
 
 def get_rest_port():
-    cosmo_wd_settings = get_profile_context()
-    return cosmo_wd_settings.get_rest_port()
+    context = get_profile_context()
+    return context.get_rest_port()
 
 
 def get_rest_protocol():
-    cosmo_wd_settings = get_profile_context()
-    return cosmo_wd_settings.get_rest_protocol()
+    context = get_profile_context()
+    return context.get_rest_protocol()
 
 
-# TODO: Replace all `management` with `manager` for consistency
-def get_management_user():
-    cosmo_wd_settings = get_profile_context()
-    if cosmo_wd_settings.get_management_user():
-        return cosmo_wd_settings.get_management_user()
+# TODO: Replace all `manager` with `manager` for consistency
+def get_manager_user():
+    context = get_profile_context()
+    if context.get_manager_user():
+        return context.get_manager_user()
     raise CloudifyCliError(
         'Management User is not set in working directory settings')
 
 
-def get_management_port():
-    cosmo_wd_settings = get_profile_context()
-    if cosmo_wd_settings.get_management_port():
-        return cosmo_wd_settings.get_management_port()
+def get_manager_port():
+    context = get_profile_context()
+    if context.get_manager_port():
+        return context.get_manager_port()
     raise CloudifyCliError(
         'Management Port is not set in working directory settings')
 
 
-def get_management_key():
-    cosmo_wd_settings = get_profile_context()
-    if cosmo_wd_settings.get_management_key():
-        return cosmo_wd_settings.get_management_key()
+def get_manager_key():
+    context = get_profile_context()
+    if context.get_manager_key():
+        return context.get_manager_key()
     raise CloudifyCliError(
         'Management Key is not set in working directory settings')
 
 
 def get_rest_host():
-    cosmo_wd_settings = get_profile_context()
-    management_ip = cosmo_wd_settings.get_management_server()
-    if management_ip:
-        return management_ip
+    context = get_profile_context()
+    manager_ip = context.get_manager_ip()
+    if manager_ip:
+        return manager_ip
     raise CloudifyCliError(
         "You must being using a manager to perform this action. "
         "You can run `cfy use MANAGER_IP` to use a manager.")
 
 
 def build_manager_host_string(user='', ip=''):
-    user = user or get_management_user()
+    user = user or get_manager_user()
     ip = ip or get_rest_host()
     return '{0}@{1}'.format(user, ip)
 
@@ -429,10 +433,10 @@ def get_version_data():
 
 
 # TODO: Check if this is at all used
-def connected_to_manager(management_ip):
+def connected_to_manager(manager_ip):
     port = get_rest_port()
     try:
-        sock = socket.create_connection((str(management_ip), int(port)), 5)
+        sock = socket.create_connection((str(manager_ip), int(port)), 5)
         sock.close()
         return True
     except ValueError:
@@ -441,18 +445,15 @@ def connected_to_manager(management_ip):
         return False
 
 
-# TODO: move to version.py
 def get_manager_version_data(rest_client=None):
     if not rest_client:
-        # getting management ip from the working dir settings
-        dir_settings = get_profile_context(suppress_error=True)
-        if not (dir_settings and dir_settings.get_management_server()):
+        context = get_profile_context(suppress_error=True)
+        if not (context and context.get_manager_ip()):
             return None
-        management_ip = dir_settings.get_management_server()
-        if not connected_to_manager(management_ip):
+        manager_ip = context.get_manager_ip()
+        if not connected_to_manager(manager_ip):
             return None
-        # create rest client
-        rest_client = get_rest_client(management_ip, skip_version_check=True)
+        rest_client = get_rest_client(manager_ip, skip_version_check=True)
 
     try:
         version_data = rest_client.manager.get_version()
@@ -479,11 +480,11 @@ class ProfileContext(yaml.YAMLObject):
 
     def __init__(self):
         self._bootstrap_state = None
-        self._management_host = None
-        self._management_key = None
-        self._management_password = None
-        self._management_port = None
-        self._management_user = None
+        self._manager_host = None
+        self._manager_key = None
+        self._manager_password = None
+        self._manager_port = None
+        self._manager_user = None
         self._provider_context = None
         self._rest_port = constants.DEFAULT_REST_PORT
         self._rest_protocol = constants.DEFAULT_REST_PROTOCOL
@@ -494,35 +495,35 @@ class ProfileContext(yaml.YAMLObject):
     def set_bootstrap_state(self, bootstrap_state):
         self._bootstrap_state = bootstrap_state
 
-    def get_management_server(self):
-        return self._management_host
+    def get_manager_ip(self):
+        return self._manager_host
 
-    def set_management_server(self, management_host):
-        self._management_host = management_host
+    def set_manager_ip(self, manager_host):
+        self._manager_host = manager_host
 
-    def get_management_key(self):
-        return self._management_key
+    def get_manager_key(self):
+        return self._manager_key
 
-    def set_management_key(self, management_key):
-        self._management_key = management_key
+    def set_manager_key(self, manager_key):
+        self._manager_key = manager_key
 
-    def get_management_password(self):
-        return self._management_password
+    def get_manager_password(self):
+        return self._manager_password
 
-    def set_management_password(self, management_password):
-        self._management_password = management_password
+    def set_manager_password(self, manager_password):
+        self._manager_password = manager_password
 
-    def get_management_port(self):
-        return self._management_port
+    def get_manager_port(self):
+        return self._manager_port
 
-    def set_management_port(self, management_port):
-        self._management_port = management_port
+    def set_manager_port(self, manager_port):
+        self._manager_port = manager_port
 
-    def get_management_user(self):
-        return self._management_user
+    def get_manager_user(self):
+        return self._manager_user
 
-    def set_management_user(self, _management_user):
-        self._management_user = _management_user
+    def set_manager_user(self, _manager_user):
+        self._manager_user = _manager_user
 
     def get_provider_context(self):
         return self._provider_context
@@ -530,8 +531,8 @@ class ProfileContext(yaml.YAMLObject):
     def set_provider_context(self, provider_context):
         self._provider_context = provider_context
 
-    def remove_management_server_context(self):
-        self._management_host = None
+    def remove_manager_server_context(self):
+        self._manager_host = None
 
     def get_rest_port(self):
         return self._rest_port

@@ -141,9 +141,7 @@ def init_profile(profile_name, reset_context=False, hard=False, logger=None):
 
     # TODO: Verify that we don't break anything!
     if not profile_name == 'local':
-        settings = env.ProfileContext()
-        env.set_profile_context(
-            settings, profile_name=profile_name)
+        env.set_profile_context(profile_name=profile_name)
 
     configure_loggers()
     logger.info('Initialization completed successfully')
