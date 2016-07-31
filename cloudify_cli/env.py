@@ -116,6 +116,9 @@ def is_manager_active():
     if not active_profile:
         return False
 
+    if active_profile == 'local':
+        return False
+
     profile = get_profile_context(active_profile, suppress_error=True)
     if not (profile and profile.get_manager_ip()):
         return False
@@ -125,7 +128,7 @@ def is_manager_active():
 def get_profile_context(profile_name=None, suppress_error=False):
     profile_name = profile_name or get_active_profile()
     if profile_name == 'local':
-        return None
+        raise CloudifyCliError('Local profile does not have context')
     try:
         path = get_context_path(profile_name)
         with open(path) as f:
