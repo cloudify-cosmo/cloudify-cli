@@ -581,6 +581,7 @@ class CloudifyConfig(object):
     def logging(self):
         return self.Logging(self._config.get('logging', {}))
 
+    # TODO: check if this is being used somewhere
     @property
     def local_provider_context(self):
         return self._config.get('local_provider_context', {})

@@ -179,6 +179,43 @@ class InitTest(CliCommandTest):
         self.assertIn('  "key2": "val2", ', output)
         self.assertIn('  "key3": "val3"', output)
 
+    @patch('cloudify.workflows.local.init_env')
+    @patch('cloudify_cli.common.install_blueprint_plugins')
+    def test_init_install_plugins(self, install_plugins_mock, *_):
+        blueprint_path = os.path.join(
+            BLUEPRINTS_DIR,
+            'local',
+            'blueprint_with_plugins.yaml'
+        )
+        command = 'cfy init {0} --install-plugins'.format(blueprint_path)
+
+        self.invoke(command)
+        install_plugins_mock.assert_called_with(blueprint_path=blueprint_path)
+
+    @patch('cloudify.workflows.local.init_env')
+    def test_init_with_empty_requirements(self, *_):
+        blueprint_path = os.path.join(
+            BLUEPRINTS_DIR,
+            'local',
+            'blueprint_without_plugins.yaml'
+        )
+        command = 'cfy init {0} --install-plugins'.format(blueprint_path)
+
+        self.invoke(command)
+
+    def test_init_missing_plugins(self):
+        # TODO: this test was supposed to check possible solutions as well
+        blueprint_path = os.path.join(
+            BLUEPRINTS_DIR,
+            'local',
+            'blueprint_with_plugins.yaml'
+        )
+        command = 'cfy init {0}'.format(blueprint_path)
+
+        # Expecting to fail with an ImportError - when trying to access "tasks"
+        output = self.invoke(command, should_fail=True)
+        self.assertEqual(type(output.exception), ImportError)
+
     def test_no_init(self):
         cfy.purge_dot_cloudify()
         self.invoke('cfy profiles list',

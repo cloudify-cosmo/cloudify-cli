@@ -104,6 +104,7 @@ def list(deployment_id, node_name, sort_by, descending, logger, client):
     common.print_table('Node-instances:', pt)
 
 
+# TODO: perhaps should be local_list (however, the API differs from the manager)
 @cfy.command(name='node-instances',
              short_help='Show node-instance information [manager only]')
 @cfy.argument('node-id', required=False)

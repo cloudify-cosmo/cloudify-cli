@@ -83,7 +83,51 @@ class ExecutionsTest(CliCommandTest):
         finally:
             execution_events_fetcher.wait_for_execution = original_wait_for
 
-    def test_local_execution(self):
+    def test_local_execution_default_param(self):
+        self._init_local_env()
+        self._assert_outputs({'param': 'null'})
+        self.invoke('cfy executions start {0}'.format('run_test_op_on_nodes'))
+        self._assert_outputs({'param': 'default_param'})
+
+    def test_local_execution_custom_param_value(self):
+        self._init_local_env()
+        self.invoke('cfy executions start {0} -p param=custom_value'.format(
+            'run_test_op_on_nodes')
+        )
+        self._assert_outputs({'param': 'custom_value'})
+
+    def test_local_execution_allow_custom_params(self):
+        self._init_local_env()
+        self.invoke('cfy executions start {0} '
+                    '-p custom_param=custom_value --allow-custom-parameters'
+                    ''.format('run_test_op_on_nodes')
+                    )
+        self._assert_outputs(
+            {'param': 'default_param', 'custom_param': 'custom_value'}
+        )
+
+    def test_local_execution_dont_allow_custom_params(self):
+        self._init_local_env()
+        self.invoke(
+            'cfy executions start {0} -p custom_param=custom_value'.format(
+                'run_test_op_on_nodes'
+            ),
+            err_str_segment='Workflow "run_test_op_on_nodes" does not '
+                            'have the following parameters declared: '
+                            'custom_param',
+            exception=ValueError
+        )
+
+    def _assert_outputs(self, expected_outputs):
+        output = self.invoke('cfy deployments outputs').logs.split('\n')
+        for key, value in expected_outputs.iteritems():
+            if value == 'null':
+                key_val_string = '  "{0}": {1}, '.format(key, value)
+            else:
+                key_val_string = '  "{0}": "{1}", '.format(key, value)
+            self.assertIn(key_val_string, output)
+
+    def _init_local_env(self):
         blueprint_path = os.path.join(
             BLUEPRINTS_DIR,
             'local',
@@ -92,11 +136,6 @@ class ExecutionsTest(CliCommandTest):
 
         self.invoke('cfy init {0}'.format(blueprint_path))
         self.register_commands()
-        output = self.invoke('cfy deployments outputs').logs.split('\n')
-        self.assertIn('  "param": null, ', output)
-        self.invoke('cfy executions start {0}'.format('run_test_op_on_nodes'))
-        output = self.invoke('cfy deployments outputs').logs.split('\n')
-        self.assertIn('  "param": "default_param", ', output)
 
 
 class WorkflowsTest(CliCommandTest):
