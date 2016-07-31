@@ -37,6 +37,7 @@ from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.nodes import Node
 from cloudify_rest_client.executions import Execution
 from cloudify_rest_client.client import CloudifyClient
+from cloudify_rest_client.client import DEFAULT_API_VERSION
 from cloudify_rest_client.node_instances import NodeInstance
 
 import dsl_parser
@@ -49,6 +50,7 @@ from .. import env
 from .. import utils
 from .. import inputs
 from .. import logger
+from .. import constants
 from ..bootstrap import bootstrap
 from ..logger import configure_loggers
 from ..exceptions import CloudifyCliError
@@ -1211,3 +1213,50 @@ class CliBootstrapUnitTests(testtools.TestCase):
                   os.path.join(self.manager_dir, '.git'))
 
         return manager1_original_dir
+
+
+TRUST_ALL = 'non-empty-value'
+CERT_PATH = 'path-to-certificate'
+
+
+class TestGetRestClient(testtools.TestCase):
+
+    def setUp(self):
+        super(TestGetRestClient, self).setUp()
+        cfy.invoke('init -r')
+
+        os.environ[constants.CLOUDIFY_USERNAME_ENV] = 'test_username'
+        os.environ[constants.CLOUDIFY_PASSWORD_ENV] = 'test_password'
+        os.environ[constants.CLOUDIFY_SSL_TRUST_ALL] = TRUST_ALL
+        os.environ[constants.LOCAL_REST_CERT_FILE] = CERT_PATH
+
+    def tearDown(self):
+        super(TestGetRestClient, self).tearDown()
+        del os.environ[constants.CLOUDIFY_USERNAME_ENV]
+        del os.environ[constants.CLOUDIFY_PASSWORD_ENV]
+        del os.environ[constants.CLOUDIFY_SSL_TRUST_ALL]
+        del os.environ[constants.LOCAL_REST_CERT_FILE]
+
+        cfy.purge_dot_cloudify()
+
+    def test_get_rest_client(self):
+        client = env.get_rest_client(rest_host='localhost',
+                                     skip_version_check=True)
+        self.assertIsNotNone(client._client.headers[
+            constants.CLOUDIFY_AUTHENTICATION_HEADER])
+
+    def test_get_secured_rest_client(self):
+        rest_protocol = 'https'
+        host = 'localhost'
+        port = 443
+        skip_version_check = True
+
+        client = env.get_rest_client(
+            rest_host=host, rest_port=port, rest_protocol=rest_protocol,
+            skip_version_check=skip_version_check)
+
+        self.assertEqual(CERT_PATH, client._client.cert)
+        self.assertTrue(client._client.trust_all)
+        self.assertEqual('{0}://{1}:{2}/api/{3}'.format(
+            rest_protocol, host, port, DEFAULT_API_VERSION),
+            client._client.url)
