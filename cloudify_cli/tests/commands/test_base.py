@@ -174,15 +174,15 @@ class CliCommandTest(unittest.TestCase):
             self.assertFalse(mock.called)
 
     def use_manager(self,
-                    profile_name='test',
                     host='localhost',
                     key='key',
                     user='key',
                     port='22',
                     provider_context=None):
 
-        if not provider_context:
-            provider_context = dict()
+        provider_context = provider_context or dict()
+        if not host:
+            return
 
         settings = env.ProfileContext()
         settings.set_manager_ip(host)
@@ -191,13 +191,13 @@ class CliCommandTest(unittest.TestCase):
         settings.set_manager_port(port)
         settings.set_provider_context(provider_context)
 
-        cfy.purge_profile(profile_name)
+        cfy.purge_profile(host)
         env.set_profile_context(
-            profile_name=profile_name,
+            profile_name=host,
             context=settings,
             update=False)
         env.set_cfy_config()
-        env.set_active_profile(profile_name)
+        env.set_active_profile(host)
         cli._register_commands()
 
     def _read_context(self):

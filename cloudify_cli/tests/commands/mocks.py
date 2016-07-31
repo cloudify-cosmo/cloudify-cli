@@ -153,7 +153,7 @@ def node_get_mock():
     })
 
 
-def _make_tarfile(output_filename, source_dir, write_type='w'):
+def make_tarfile(output_filename, source_dir, write_type='w'):
     with tarfile.open(output_filename, write_type) as tar:
         tar.add(source_dir, arcname=os.path.basename(source_dir))
 
