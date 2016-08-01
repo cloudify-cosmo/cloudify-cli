@@ -222,6 +222,7 @@ def set_profile_context(context=None,
         f.write(yaml.dump(context))
 
 
+<<<<<<< c467f9e382c48b6760d0b29a40a9180bdfe34be4
 # @contextmanager
 # def update_profile_context:
 #     context = get_profile_context()
@@ -265,6 +266,53 @@ def update_profile_context(manager_ip,
         profile_name=manager_ip,
         context=settings,
         update=False)
+=======
+@contextmanager
+def update_profile_context(profile_name=None):
+    profile_name = profile_name or get_active_profile()
+    context = get_profile_context(profile_name)
+    yield context
+    set_profile_context(context, profile_name, update=True)
+
+
+# def update_profile_context(manager_ip,
+#                            manager_key=None,
+#                            manager_password=None,
+#                            manager_user=None,
+#                            manager_port='22',
+#                            rest_port='80',
+#                            rest_protocol='http',
+#                            provider_context=None,
+#                            bootstrap_state=None,
+#                            alias=None):
+
+#     set_active_profile(manager_ip)
+#     provider_context = provider_context or {}
+#     settings = ProfileContext()
+
+#     settings.set_manager_ip(manager_ip)
+#     if manager_key:
+#         settings.set_manager_key(manager_key)
+#     if manager_password:
+#         settings.set_manager_password(manager_password)
+#     if manager_user:
+#         raise
+#         settings.set_manager_user(manager_user)
+#     if manager_port:
+#         settings.set_manager_port(manager_port)
+#     if bootstrap_state is not None:
+#         settings.set_bootstrap_state(bootstrap_state)
+#     # TODO: These should be optional as well
+#     settings.set_rest_port(rest_port)
+#     settings.set_rest_protocol(rest_protocol)
+
+#     settings.set_provider_context(provider_context)
+
+#     set_profile_context(
+#         profile_name=manager_ip,
+#         context=settings,
+#         update=True)
+>>>>>>> x
 
 
 def is_use_colors():
