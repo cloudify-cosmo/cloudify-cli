@@ -104,6 +104,14 @@ class BlueprintsTest(CliCommandTest):
             '{0}/local/blueprint_validate_definitions_version.yaml'
             .format(BLUEPRINTS_DIR))
 
+    def test_blueprint_validate_definitions_version_true(self):
+        self.invoke(
+            'cfy blueprints validate '
+            '{0}/local/blueprint_validate_definitions_version.yaml'
+            .format(BLUEPRINTS_DIR),
+            err_str_segment='Failed to validate blueprint description'
+        )
+
     def test_validate_bad_blueprint(self):
         self.invoke(
             'cfy blueprints validate {0}/bad_blueprint/blueprint.yaml'
@@ -165,6 +173,9 @@ class BlueprintsTest(CliCommandTest):
                    get_rest_client_mock),\
                 patch('cloudify_cli.utils.table', table_mock):
             self.invoke('cfy blueprints inputs {0}'.format(blueprint_id))
+
+    def test_create_requirements(self):
+        pass
 
 
 class InstallTest(CliCommandTest):

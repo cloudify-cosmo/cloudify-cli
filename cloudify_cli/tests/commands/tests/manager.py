@@ -1,4 +1,5 @@
 import os
+import yaml
 import platform
 from distutils import spawn
 from mock import patch, MagicMock, call
@@ -17,6 +18,7 @@ from ..test_base import CliCommandTest, \
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import UserUnauthorizedError, \
     CloudifyClientError
+from dsl_parser.exceptions import DSLParsingLogicException
 
 
 class BootstrapTest(CliCommandTest):
@@ -160,6 +162,25 @@ class InitTest(CliCommandTest):
             should_fail=True
         )
 
+    def test_init_default_outputs(self):
+        blueprint_path = os.path.join(
+            BLUEPRINTS_DIR,
+            'local',
+            DEFAULT_BLUEPRINT_FILE_NAME
+        )
+        command = 'cfy init {0}'.format(blueprint_path)
+
+        self.invoke(command)
+        self.register_commands()
+
+        output = self.invoke('cfy deployments outputs').logs.split('\n')
+        self.assertIn('  "key1": "default_val1", ', output)
+        self.assertIn('  "key2": "default_val2", ', output)
+        self.assertIn('  "key3": "default_val3", ', output)
+        self.assertIn('  "param": null, ', output)
+        self.assertIn('  "custom_param": null, ', output)
+        self.assertIn('  "provider_context": null', output)
+
     def test_init_with_inputs(self):
         blueprint_path = os.path.join(
             BLUEPRINTS_DIR,
@@ -178,6 +199,25 @@ class InitTest(CliCommandTest):
         self.assertIn('  "key1": "val1", ', output)
         self.assertIn('  "key2": "val2", ', output)
         self.assertIn('  "key3": "val3"', output)
+
+    def test_init_validate_definitions_version_false(self):
+        with open(env.CLOUDIFY_CONFIG_PATH) as f:
+            config = yaml.safe_load(f.read())
+        with open(env.CLOUDIFY_CONFIG_PATH, 'w') as f:
+            config['validate_definitions_version'] = False
+            f.write(yaml.safe_dump(config))
+        self.invoke(
+            'cfy init {0}/local/blueprint_validate_definitions_version.yaml'
+            .format(BLUEPRINTS_DIR)
+        )
+
+    def test_init_validate_definitions_version_true(self):
+        self.invoke(
+            'cfy init {0}/local/blueprint_validate_definitions_version.yaml'
+            .format(BLUEPRINTS_DIR),
+            err_str_segment='description not supported in version',
+            exception=DSLParsingLogicException
+        )
 
     @patch('cloudify.workflows.local.init_env')
     @patch('cloudify_cli.common.install_blueprint_plugins')
