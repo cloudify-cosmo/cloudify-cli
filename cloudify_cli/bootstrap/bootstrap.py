@@ -180,7 +180,11 @@ def bootstrap_validation(blueprint_path,
                             'cloudify.interfaces.validation.creation'},
                 task_retries=task_retries,
                 task_retry_interval=task_retry_interval,
-                task_thread_pool_size=task_thread_pool_size)
+                task_thread_pool_size=task_thread_pool_size,
+                additional_context={
+                    'rest_username': utils.get_username(),
+                    'rest_password': utils.get_password()
+                })
 
 
 def _perform_sanity(env,
@@ -275,7 +279,11 @@ def bootstrap(blueprint_path,
     env.execute(workflow='install',
                 task_retries=task_retries,
                 task_retry_interval=task_retry_interval,
-                task_thread_pool_size=task_thread_pool_size)
+                task_thread_pool_size=task_thread_pool_size,
+                additional_context={
+                    'rest_username': utils.get_username(),
+                    'rest_password': utils.get_password()
+                })
 
     nodes = env.storage.get_nodes()
     node_instances = env.storage.get_node_instances()
