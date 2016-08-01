@@ -145,7 +145,6 @@ def _do_teardown(task_retries, task_retry_interval, task_thread_pool_size):
         task_retries=task_retries,
         task_retry_interval=task_retry_interval,
         task_thread_pool_size=task_thread_pool_size)
-    # cleaning relevant data from working directory settings
-    with env.update_profile_context() as wd_settings:
-        # wd_settings.set_provider_context(provider_context)
-        wd_settings.remove_manager_server_context()
+
+    env.delete_profile(settings.get_manager_ip())
+

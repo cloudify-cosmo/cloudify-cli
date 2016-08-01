@@ -48,7 +48,6 @@ def profiles():
 @profiles.command(name='get-active',
                   short_help='Retrieve profile information')
 @cfy.options.verbose
-@cfy.assert_manager_active
 def get():
     active_profile = env.get_profile(env.get_active_profile())
 

@@ -20,7 +20,7 @@ import unittest
 from mock import patch, MagicMock
 
 from cloudify.utils import setup_logger
-from cloudify_cli import env, utils, exceptions, cli
+from cloudify_cli import env, utils, exceptions
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.tests import cfy
 from cloudify_cli.tests.commands.constants import TEST_DIR, TEST_WORK_DIR
@@ -174,15 +174,15 @@ class CliCommandTest(unittest.TestCase):
             self.assertFalse(mock.called)
 
     def use_manager(self,
-                    profile_name='test',
                     host='localhost',
                     key='key',
                     user='key',
                     port='22',
                     provider_context=None):
 
-        if not provider_context:
-            provider_context = dict()
+        provider_context = provider_context or dict()
+        if not host:
+            return
 
         settings = env.ProfileContext()
         settings.set_manager_ip(host)
@@ -191,14 +191,18 @@ class CliCommandTest(unittest.TestCase):
         settings.set_manager_port(port)
         settings.set_provider_context(provider_context)
 
-        cfy.purge_profile(profile_name)
+        cfy.purge_profile(host)
         env.set_profile_context(
-            profile_name=profile_name,
+            profile_name=host,
             context=settings,
             update=False)
         env.set_cfy_config()
-        env.set_active_profile(profile_name)
-        cli._register_commands()
+        env.set_active_profile(host)
+        self.register_commands()
+
+    def register_commands(self):
+        from cloudify_cli.cli import _register_commands
+        _register_commands()
 
     def _read_context(self):
         return env.get_profile_context()
