@@ -38,6 +38,19 @@ class UseTest(CliCommandTest):
         context = self._read_context()
         self.assertEquals('127.0.0.1', context.get_manager_ip())
 
+    def test_use_with_user_and_port(self):
+        self.client.manager.get_status = MagicMock()
+        self.client.manager.get_context = MagicMock(
+            return_value={
+                'name': 'name', 'context': {}
+            }
+        )
+        self.invoke('cfy use 127.0.0.1 -u test_user --manager-port 22222')
+        context = self._read_context()
+        self.assertEquals('127.0.0.1', context.get_manager_ip())
+        self.assertEquals('22222', context.get_manager_port())
+        self.assertEquals('test_user', context.get_manager_user())
+
     def test_use_with_authorization(self):
         host = '127.0.0.1'
         auth_header = env.get_auth_header('test_username', 'test_password')

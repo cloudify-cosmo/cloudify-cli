@@ -1,4 +1,4 @@
-from cloudify_cli.tests.commands.test_base import CliCommandTest
+from ..test_base import CliCommandTest
 
 
 class VersionTest(CliCommandTest):

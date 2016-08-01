@@ -50,14 +50,14 @@ class BlueprintsTest(CliCommandTest):
             err_str_segment='Failed to validate blueprint',
             should_fail=True)
 
-    def test_blueprints_publish_archive(self):
+    def test_blueprints_upload_archive(self):
         self.client.blueprints.upload = MagicMock()
         self.invoke(
             'cfy blueprints upload {0}/helloworld.zip '
             '-b my_blueprint_id --blueprint-filename blueprint.yaml'
             .format(BLUEPRINTS_DIR))
 
-    def test_blueprints_publish_unsupported_archive_type(self):
+    def test_blueprints_upload_unsupported_archive_type(self):
         self.client.blueprints.upload = MagicMock()
         # passing in a directory instead of a valid archive type
         self.invoke(
@@ -65,14 +65,14 @@ class BlueprintsTest(CliCommandTest):
                 BLUEPRINTS_DIR),
             'You must provide either a path to a local file')
 
-    def test_blueprints_publish_archive_bad_file_path(self):
+    def test_blueprints_upload_archive_bad_file_path(self):
         self.client.blueprints.upload = MagicMock()
         self.invoke(
             'cfy blueprints upload {0}/helloworld.tar.gz -n blah'
             .format(BLUEPRINTS_DIR),
             err_str_segment="You must provide either a path to a local file")
 
-    def test_blueprints_publish_archive_no_filename(self):
+    def test_blueprints_upload_archive_no_filename(self):
         # TODO: The error message here should be different - something to
         # do with the filename provided being incorrect
         self.client.blueprints.upload = MagicMock()

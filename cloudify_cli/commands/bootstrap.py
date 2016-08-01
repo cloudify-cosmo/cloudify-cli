@@ -77,9 +77,9 @@ def bootstrap(blueprint_path,
         temp_profile_active = True
         init_profile(profile_name=active_profile)
 
-    unclean_env_message = 'Can\'t bootstrap because the environment is not ' \
-                          'clean. Clean the environment by calling teardown ' \
-                          'or reset it using the "cfy init -r" command'
+    unclean_env_message = "Can't bootstrap because the environment is not " \
+                          "clean. Clean the environment by calling teardown " \
+                          "or reset it using the `cfy init -r` command"
     # verifying no environment exists from a previous bootstrap
     try:
         bs.load_env(env_name)
