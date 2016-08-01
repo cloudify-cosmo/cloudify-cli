@@ -1,181 +1,17 @@
 import os
-import yaml
 
-from mock import MagicMock, patch
+from mock import patch
 
+
+from .... import utils, exceptions
 from ..test_base import CliCommandTest
-from cloudify_rest_client import deployments
-from cloudify_cli import env, utils, exceptions
-from cloudify_cli.constants import DEFAULT_BLUEPRINT_FILE_NAME, \
-    DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND, DEFAULT_TIMEOUT, \
-    DEFAULT_UNINSTALL_WORKFLOW, DEFAULT_PARAMETERS
-from ..constants import BLUEPRINTS_DIR, \
-    SAMPLE_BLUEPRINT_PATH, SAMPLE_ARCHIVE_PATH, STUB_BLUEPRINT_ID, \
-    STUB_DIRECTORY_NAME, SAMPLE_ARCHIVE_URL, STUB_BLUEPRINT_FILENAME, \
-    SAMPLE_INPUTS_PATH, STUB_DEPLOYMENT_ID, STUB_PARAMETERS, STUB_WORKFLOW, \
-    STUB_TIMEOUT
-
-
-class BlueprintsTest(CliCommandTest):
-
-    def setUp(self):
-        super(BlueprintsTest, self).setUp()
-        self.use_manager()
-
-    def test_blueprints_list(self):
-        self.client.blueprints.list = MagicMock(return_value=[])
-        self.invoke('blueprints list')
-
-    def test_blueprints_delete(self):
-        self.client.blueprints.delete = MagicMock()
-        self.invoke('blueprints delete a-blueprint-id')
-
-    @patch('cloudify_cli.utils.table', autospec=True)
-    @patch('cloudify_cli.common.print_table', autospec=True)
-    def test_blueprints_get(self, *args):
-        self.client.blueprints.get = MagicMock()
-        self.client.deployments.list = MagicMock()
-        self.invoke('blueprints get a-blueprint-id')
-
-    def test_blueprints_upload(self):
-        self.client.blueprints.upload = MagicMock()
-        self.invoke(
-            'blueprints upload {0}/helloworld/blueprint.yaml'.format(
-                BLUEPRINTS_DIR))
-
-    def test_blueprints_upload_invalid(self):
-        self.client.blueprints.upload = MagicMock()
-        self.invoke(
-            'cfy blueprints upload {0}/bad_blueprint/blueprint.yaml '
-            '-b my_blueprint_id'.format(BLUEPRINTS_DIR))
-
-    def test_blueprints_upload_invalid_validate(self):
-        self.client.blueprints.upload = MagicMock()
-        self.invoke(
-            'cfy blueprints upload {0}/bad_blueprint/blueprint.yaml '
-            '-b my_blueprint_id --validate'.format(BLUEPRINTS_DIR),
-            err_str_segment='Failed to validate blueprint',
-            should_fail=True)
-
-    def test_blueprints_publish_archive(self):
-        self.client.blueprints.upload = MagicMock()
-        self.invoke(
-            'cfy blueprints upload {0}/helloworld.zip '
-            '-b my_blueprint_id --blueprint-filename blueprint.yaml'
-            .format(BLUEPRINTS_DIR))
-
-    def test_blueprints_publish_unsupported_archive_type(self):
-        self.client.blueprints.upload = MagicMock()
-        # passing in a directory instead of a valid archive type
-        self.invoke(
-            'cfy blueprints upload {0}/helloworld -b my_blueprint_id'.format(
-                BLUEPRINTS_DIR),
-            'You must provide either a path to a local file')
-
-    def test_blueprints_publish_archive_bad_file_path(self):
-        self.client.blueprints.upload = MagicMock()
-        self.invoke(
-            'cfy blueprints upload {0}/helloworld.tar.gz -n blah'
-            .format(BLUEPRINTS_DIR),
-            err_str_segment="You must provide either a path to a local file")
-
-    def test_blueprints_publish_archive_no_filename(self):
-        # TODO: The error message here should be different - something to
-        # do with the filename provided being incorrect
-        self.client.blueprints.upload = MagicMock()
-        self.invoke(
-            'cfy blueprints upload {0}/helloworld.tar.gz -b my_blueprint_id'
-            .format(BLUEPRINTS_DIR),
-            err_str_segment="You must provide either a path to a local file")
-
-    def test_blueprint_validate(self):
-        self.invoke(
-            'cfy blueprints validate {0}/helloworld/blueprint.yaml'.format(
-                BLUEPRINTS_DIR))
-
-    def test_blueprint_validate_definitions_version_false(self):
-        with open(env.CLOUDIFY_CONFIG_PATH) as f:
-            config = yaml.safe_load(f.read())
-        with open(env.CLOUDIFY_CONFIG_PATH, 'w') as f:
-            config['validate_definitions_version'] = False
-            f.write(yaml.safe_dump(config))
-        self.invoke(
-            'cfy blueprints validate '
-            '{0}/local/blueprint_validate_definitions_version.yaml'
-            .format(BLUEPRINTS_DIR))
-
-    def test_blueprint_validate_definitions_version_true(self):
-        self.invoke(
-            'cfy blueprints validate '
-            '{0}/local/blueprint_validate_definitions_version.yaml'
-            .format(BLUEPRINTS_DIR),
-            err_str_segment='Failed to validate blueprint description'
-        )
-
-    def test_validate_bad_blueprint(self):
-        self.invoke(
-            'cfy blueprints validate {0}/bad_blueprint/blueprint.yaml'
-            .format(BLUEPRINTS_DIR),
-            err_str_segment='Failed to validate blueprint')
-
-    def test_blueprint_inputs(self):
-
-        blueprint_id = 'a-blueprint-id'
-        name = 'test_input'
-        type = 'string'
-        description = 'Test input.'
-
-        blueprint = {
-            'plan': {
-                'inputs': {
-                    name: {
-                        'type': type,
-                        'description': description
-                        # field 'default' intentionally omitted
-                    }
-                }
-            }
-        }
-
-        assert_equal = self.assertEqual
-
-        class RestClientMock(object):
-            class BlueprintsClientMock(object):
-                def __init__(self, blueprint_id, blueprint):
-                    self.blueprint_id = blueprint_id
-                    self.blueprint = blueprint
-
-                def get(self, blueprint_id):
-                    assert_equal(blueprint_id, self.blueprint_id)
-                    return self.blueprint
-
-            def __init__(self, blueprint_id, blueprint):
-                self.blueprints = self.BlueprintsClientMock(blueprint_id,
-                                                            blueprint)
-
-        def get_rest_client_mock(*args, **kwargs):
-            return RestClientMock(blueprint_id, blueprint)
-
-        def table_mock(fields, data, *args, **kwargs):
-            self.assertEqual(len(data), 1)
-            input = data[0]
-            self.assertIn('name', input)
-            self.assertIn('type', input)
-            self.assertIn('default', input)
-            self.assertIn('description', input)
-
-            self.assertEqual(input['name'], name)
-            self.assertEqual(input['type'], type)
-            self.assertEqual(input['default'], '-')
-            self.assertEqual(input['description'], description)
-
-        with patch('cloudify_cli.env.get_rest_client',
-                   get_rest_client_mock),\
-                patch('cloudify_cli.utils.table', table_mock):
-            self.invoke('cfy blueprints inputs {0}'.format(blueprint_id))
-
-    def test_create_requirements(self):
-        pass
+from ..constants import SAMPLE_BLUEPRINT_PATH, \
+    SAMPLE_ARCHIVE_PATH, STUB_BLUEPRINT_ID, STUB_DIRECTORY_NAME, \
+    SAMPLE_ARCHIVE_URL, STUB_BLUEPRINT_FILENAME, SAMPLE_INPUTS_PATH, \
+    STUB_DEPLOYMENT_ID, STUB_PARAMETERS, STUB_WORKFLOW, STUB_TIMEOUT, \
+    BLUEPRINTS_DIR
+from ....constants import DEFAULT_BLUEPRINT_FILE_NAME, \
+    DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND, DEFAULT_TIMEOUT
 
 
 class InstallTest(CliCommandTest):
@@ -545,7 +381,8 @@ class InstallTest(CliCommandTest):
     @patch('cloudify_cli.commands.deployments.manager_create')
     @patch('cloudify_cli.commands.blueprints.upload')
     def test_mutually_exclusive_arguments(self, *_):
-
+        # TODO: supposed to fail, because we're providing a YAML path
+        # and a filename - should be mutually exclusive
         path_and_filename_cmd = 'cfy install {0} -n {1}'.format(
             SAMPLE_BLUEPRINT_PATH,
             STUB_BLUEPRINT_FILENAME
@@ -586,116 +423,120 @@ class InstallTest(CliCommandTest):
     @patch('cloudify_cli.commands.executions.manager_start')
     @patch('cloudify_cli.commands.deployments.manager_create')
     def test_default_blueprint_path_does_not_exist(self, *_):
+        self.invoke(
+            'cfy install',
+            context='manager',
+            err_str_segment='Could not find `blueprint.yaml` in the cwd'
+        )
 
-        start_of_file_does_not_exist_message = \
-            'Your blueprint was not found in the path:'
+        self.invoke(
+            'cfy install',
+            context='local',
+            err_str_segment='Could not find `blueprint.yaml` in the cwd'
+        )
 
-        self.assertRaisesRegexp(exceptions.CloudifyCliError,
-                                start_of_file_does_not_exist_message,
-                                self.invoke,
-                                'cfy install')
+    @patch('cloudify_cli.commands.executions.manager_start')
+    @patch('cloudify_cli.commands.deployments.manager_create')
+    def test_default_blueprint_path_bad_blueprint(self, *_):
 
+        # TODO: This doesn't really put the blueprint in the same folder
+        # and trying to put it there is dangerous (as cfy install uses
+        # shutil.rmtree to clean up, and will likely remove actual code)
         tmp_blueprint_path = os.path.join(utils.get_cwd(),
                                           DEFAULT_BLUEPRINT_FILE_NAME)
-
-        start_of_permission_denied_message = \
-            'A problem was encountered while trying to open'
-
         open(tmp_blueprint_path, 'w').close()
         os.chmod(tmp_blueprint_path, 0)
 
-        self.assertRaisesRegexp(exceptions.CloudifyCliError,
-                                start_of_permission_denied_message,
-                                self.invoke,
-                                'cfy install')
-
-
-class UninstallTest(CliCommandTest):
-    def setUp(self):
-        super(UninstallTest, self).setUp()
-        self.use_manager()
-
-    @patch('cloudify_cli.commands.blueprints.delete')
-    @patch('cloudify_cli.commands.deployments.manager_delete')
-    @patch('cloudify_cli.env.get_rest_client')
-    @patch('cloudify_cli.commands.executions.manager_start')
-    def test_default_executions_start_arguments(self, executions_start_mock,
-                                                *_):
-        self.invoke('cfy uninstall did', context='manager')
-
-        executions_start_mock.assert_called_with(
-            workflow_id=DEFAULT_UNINSTALL_WORKFLOW,
-            deployment_id=u'did',
-            timeout=DEFAULT_TIMEOUT,
-            force=False,
-            include_logs=True,
-            allow_custom_parameters=False,
-            parameters=DEFAULT_PARAMETERS,
-            json=False
+        self.invoke(
+            'cfy install',
+            context='manager',
+            err_str_segment='A problem was encountered while trying to open'
         )
 
-    @patch('cloudify_cli.commands.blueprints.delete')
-    @patch('cloudify_cli.commands.deployments.manager_delete')
-    @patch('cloudify_cli.env.get_rest_client')
-    @patch('cloudify_cli.commands.executions.manager_start')
-    def test_custom_executions_start_arguments(self,
-                                               executions_start_mock, *_
-                                               ):
-        uninstall_command = 'cfy uninstall ' \
-                            '-w my_uninstall ' \
-                            'did ' \
-                            '--timeout 1987 ' \
-                            '--allow-custom-parameters ' \
-                            '--include-logs ' \
-                            '--parameters key=value ' \
-                            '--json'
-
-        self.invoke(uninstall_command, context='manager')
-
-        executions_start_mock.assert_called_with(
-            workflow_id=u'my_uninstall',
-            deployment_id=u'did',
-            timeout=1987,
-            force=False,
-            include_logs=True,
-            allow_custom_parameters=True,
-            parameters={'key': 'value'},
-            json=True
+        self.invoke(
+            'cfy install',
+            context='local',
+            err_str_segment='A problem was encountered while trying to open'
         )
 
-    @patch('cloudify_cli.commands.executions.manager_start')
-    @patch('cloudify_cli.commands.deployments.manager_delete')
-    @patch('cloudify_cli.commands.blueprints.delete')
-    def test_getting_blueprint_id_from_deployment(self,
-                                                  mock_blueprints_delete,
-                                                  *_):
+    @patch('cloudify_cli.commands.executions.local_start')
+    def test_local_install_default_start_values(self, local_start_mock):
+        blueprint_path = os.path.join(
+            BLUEPRINTS_DIR,
+            'local',
+            DEFAULT_BLUEPRINT_FILE_NAME
+        )
+        self.invoke('cfy install {0}'.format(blueprint_path), context='local')
 
-        def mock_deployments_get(*args, **kwargs):
-            return deployments.Deployment({'blueprint_id': 'bid'})
-
-        self.client.deployments.get = mock_deployments_get
-
-        self.invoke('cfy uninstall did', context='manager')
-        mock_blueprints_delete.assert_called_with(blueprint_id=u'bid')
-
-    @patch('cloudify_cli.commands.blueprints.delete')
-    @patch('cloudify_cli.env.get_rest_client')
-    @patch('cloudify_cli.commands.executions.manager_start')
-    @patch('cloudify_cli.commands.deployments.manager_delete')
-    def test_deployments_delete_arguments(self, deployments_delete_mock, *_):
-
-        self.invoke('cfy uninstall did', context='manager')
-
-        deployments_delete_mock.assert_called_with(
-            deployment_id=u'did',
-            ignore_live_nodes=False
+        args = local_start_mock.call_args_list[0][1]
+        self.assertDictEqual(
+            args,
+            {
+                'parameters': None,
+                'allow_custom_parameters': False,
+                'workflow_id': u'install',
+                'task_retries': 5,
+                'task_retry_interval': 3,
+                'task_thread_pool_size': 1
+            }
         )
 
-    @patch('cloudify_cli.env.get_rest_client')
-    @patch('cloudify_cli.commands.executions.manager_start')
-    @patch('cloudify_cli.commands.deployments.manager_delete')
-    @patch('cloudify_cli.commands.blueprints.delete')
-    def test_blueprint_is_deleted(self, blueprints_delete_mock, *_):
+    @patch('cloudify_cli.commands.executions.local_start')
+    def test_local_install_custom_start_values(self, local_start_mock):
+        blueprint_path = os.path.join(
+            BLUEPRINTS_DIR,
+            'local',
+            DEFAULT_BLUEPRINT_FILE_NAME
+        )
+        self.invoke('cfy install {0}'
+                    ' -w my_install'
+                    ' --parameters key=value'
+                    ' --allow-custom-parameters'
+                    ' --task-retries 14'
+                    ' --task-retry-interval 7'
+                    ' --task-thread-pool-size 87'
+                    .format(blueprint_path), context='local')
 
-        self.invoke('cfy uninstall did', context='manager')
-        self.assertTrue(blueprints_delete_mock.called)
+        args = local_start_mock.call_args_list[0][1]
+        self.assertDictEqual(
+            args,
+            {
+                'parameters': {u'key': u'value'},
+                'allow_custom_parameters': True,
+                'workflow_id': u'my_install',
+                'task_retries': 14,
+                'task_retry_interval': 7,
+                'task_thread_pool_size': 87
+            }
+        )
+
+    @patch('cloudify_cli.commands.executions.local_start')
+    @patch('cloudify_cli.commands.init.init')
+    def test_local_install_default_values(self, init_mock, _):
+        blueprint_path = os.path.join(
+            BLUEPRINTS_DIR,
+            'local',
+            DEFAULT_BLUEPRINT_FILE_NAME
+        )
+        self.invoke('cfy install {0}'.format(blueprint_path), context='local')
+
+        args = init_mock.call_args_list[0][1]
+        self.assertDictEqual(
+            args,
+            {
+                'inputs': None,
+                'blueprint_path': unicode(blueprint_path),
+                'install_plugins': False
+            }
+        )
+
+    @patch('cloudify_cli.commands.executions.local_start')
+    @patch('cloudify_cli.commands.init.init')
+    def test_local_install_custom_values(self, init_mock, _):
+        self.invoke(
+            'cfy install {0} -i key=value --install-plugins'
+            .format(SAMPLE_ARCHIVE_PATH), context='local')
+
+        args = init_mock.call_args_list[0][1]
+        self.assertEqual(args['inputs'], {u'key': u'value'})
+        self.assertEqual(args['install_plugins'], True)
