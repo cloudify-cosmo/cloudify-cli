@@ -26,8 +26,6 @@ from .. import common
 from ..config import cfy
 from ..exceptions import CloudifyCliError
 
-from . import use
-
 
 @cfy.group(name='profiles')
 @cfy.options.verbose
@@ -48,7 +46,14 @@ def profiles():
 @profiles.command(name='get-active',
                   short_help='Retrieve profile information')
 @cfy.options.verbose
-def get():
+@cfy.add_logger
+def get(logger):
+    active_profile_name = env.get_active_profile()
+    if active_profile_name == 'local':
+        # TODO: Maybe add.. "to use a manager... bla bla bla"
+        logger.info("You're currently working in local mode")
+        return
+
     active_profile = env.get_profile(env.get_active_profile())
 
     columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path',
@@ -194,13 +199,11 @@ def _get_profile_names():
 
 @cfy.add_logger
 def _backup_ssh_keys(ctx, logger):
-    logger.info('Backing up profile ssh keys...')
     _move_ssh_keys(ctx, direction='profile')
 
 
 @cfy.add_logger
 def _restore_ssh_keys(ctx, logger):
-    logger.info('Restoring profile ssh keys...')
     _move_ssh_keys(ctx, direction='origin')
 
 
@@ -221,9 +224,9 @@ def _move_ssh_keys(ctx, direction, logger):
         # TODO: Currently, this will try to connect to the manager
         # where the profiles are being imported to get its key path.
         # We should change that.
-        ctx.invoke(use.use, manager_ip=profile)
+        context = env.get_profile_context(profile)
         try:
-            key_filepath = env.get_manager_key()
+            key_filepath = context.get_manager_key()
         except CloudifyCliError:
             key_filepath = None
         if key_filepath:
@@ -231,11 +234,14 @@ def _move_ssh_keys(ctx, direction, logger):
             key_filename = os.path.basename(key_filepath)
             in_profile_ssh_key = os.path.join(
                 profile_path, key_filename) + '.ssh.profile'
-            if direction == 'origin':
-                logger.info(
-                    'Restoring ssh key for profile {0} to {1}...'.format(
-                        profile, key_filepath))
-                shutil.move(in_profile_ssh_key, key_filepath)
-            elif direction == 'profile':
+            if direction == 'profile':
+                logger.info('Copying ssh key {0} to profile {1}...'.format(
+                    key_filepath, profile))
                 shutil.copy2(key_filepath, in_profile_ssh_key)
+            elif direction == 'origin':
+                if os.path.isfile(in_profile_ssh_key):
+                    logger.info(
+                        'Restoring ssh key for profile {0} to {1}...'.format(
+                            profile, key_filepath))
+                    shutil.move(in_profile_ssh_key, key_filepath)
     env.set_active_profile(current_profile)

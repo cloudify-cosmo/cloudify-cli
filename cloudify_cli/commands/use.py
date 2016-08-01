@@ -102,6 +102,8 @@ def use(alias,
 
     logger.info('Using manager {0} with port {1}'.format(
         manager_ip, rest_port))
+    # with env.update_profile_context:
+
     env.update_profile_context(
         manager_ip=manager_ip,
         manager_key=manager_key,

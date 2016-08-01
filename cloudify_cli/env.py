@@ -5,6 +5,7 @@ import shutil
 import pkgutil
 import getpass
 import tempfile
+from contextlib import contextmanager
 
 import yaml
 import pkg_resources
@@ -52,12 +53,12 @@ def get_profile(profile_name):
 
     # TODO: add rest port and protocol, ssh port and ssh password
     context = get_profile_context(profile_name)
-    manager_ip = context.get_manager_ip() or 'Not Set'
-    ssh_key_path = context.get_manager_key() or 'Not Set'
-    ssh_user = context.get_manager_user() or 'Not Set'
-    ssh_port = context.get_manager_port() or 'Not Set'
-    rest_port = context.get_rest_port() or 'Not Set'
-    rest_protocol = context.get_rest_protocol() or 'Not Set'
+    manager_ip = context.get_manager_ip() or None
+    ssh_key_path = context.get_manager_key() or None
+    ssh_user = context.get_manager_user() or None
+    ssh_port = context.get_manager_port() or None
+    rest_port = context.get_rest_port() or None
+    rest_protocol = context.get_rest_protocol() or None
 
     set_active_profile(current_profile)
 
@@ -186,7 +187,7 @@ def set_cfy_config():
 
 def raise_uninitialized():
     error = CloudifyCliError(
-        'Cloudify environment is not initalized')
+        'Cloudify environment is not initialized')
     error.possible_solutions = [
         "Run 'cfy init'"
     ]
@@ -221,6 +222,13 @@ def set_profile_context(context=None,
         f.write(yaml.dump(context))
 
 
+# @contextmanager
+# def update_profile_context:
+#     context = get_profile_context()
+#     yield context
+#     set_profile_context(context, update=True)
+
+
 def update_profile_context(manager_ip,
                            manager_key=None,
                            manager_password=None,
@@ -237,15 +245,21 @@ def update_profile_context(manager_ip,
     settings = ProfileContext()
 
     settings.set_manager_ip(manager_ip)
-    settings.set_manager_key(manager_key)
-    settings.set_manager_password(manager_password)
-    settings.set_manager_user(manager_user)
-    settings.set_manager_port(manager_port)
+    if manager_key:
+        settings.set_manager_key(manager_key)
+    if manager_password:
+        settings.set_manager_password(manager_password)
+    if manager_user:
+        settings.set_manager_user(manager_user)
+    if manager_port:
+        settings.set_manager_port(manager_port)
+    if bootstrap_state is not None:
+        settings.set_bootstrap_state(bootstrap_state)
+    # TODO: These should be optional as well
     settings.set_rest_port(rest_port)
     settings.set_rest_protocol(rest_protocol)
-    # TODO: add ssh port and password
+
     settings.set_provider_context(provider_context)
-    settings.set_bootstrap_state(bootstrap_state)
 
     set_profile_context(
         profile_name=manager_ip,
