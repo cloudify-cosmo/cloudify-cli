@@ -55,7 +55,7 @@ _ENV_NAME = 'manager'
 
 def _workdir():
     active_profile = env.get_active_profile()
-    profile_dir = env.get_init_path(active_profile)
+    profile_dir = env.get_profile_dir(active_profile)
     workdir = os.path.join(profile_dir, 'bootstrap')
     if not os.path.isdir(workdir):
         os.makedirs(workdir)
@@ -64,7 +64,7 @@ def _workdir():
 
 def delete_workdir():
     active_profile = env.get_active_profile()
-    profile_dir = env.get_init_path(active_profile)
+    profile_dir = env.get_profile_dir(active_profile)
     workdir = os.path.join(profile_dir, 'bootstrap')
     if os.path.isdir(workdir):
         shutil.rmtree(workdir)

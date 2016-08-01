@@ -228,7 +228,7 @@ def _move_ssh_keys(ctx, direction, logger):
         except CloudifyCliError:
             key_filepath = None
         if key_filepath:
-            profile_path = env.get_init_path()
+            profile_path = env.get_profile_dir()
             key_filename = os.path.basename(key_filepath)
             in_profile_ssh_key = os.path.join(
                 profile_path, key_filename) + '.ssh.profile'

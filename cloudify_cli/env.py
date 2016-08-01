@@ -147,7 +147,7 @@ def is_initialized(profile_name=None):
     profile is.
     """
     if profile_name:
-        return get_init_path(profile_name) is not None
+        return get_profile_dir(profile_name) is not None
     else:
         return os.path.isfile(CLOUDIFY_CONFIG_PATH)
 
@@ -156,15 +156,14 @@ def get_context_path(profile_name=None):
     profile_name = profile_name or get_active_profile()
     if profile_name == 'local':
         raise CloudifyCliError('Local profile does not contain context')
-    init_path = get_init_path(profile_name)
+    init_path = get_profile_dir(profile_name)
     context_path = os.path.join(
         init_path,
         constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
     return context_path
 
 
-# TODO: Change name to get_profile_dir
-def get_init_path(profile_name=None):
+def get_profile_dir(profile_name=None):
     active_profile = profile_name or get_active_profile()
     if active_profile and os.path.isdir(
             os.path.join(PROFILES_DIR, active_profile)):
@@ -345,7 +344,6 @@ def get_rest_protocol():
     return context.get_rest_protocol()
 
 
-# TODO: Replace all `manager` with `manager` for consistency
 def get_manager_user():
     context = get_profile_context()
     if context.get_manager_user():
@@ -401,7 +399,7 @@ def get_password():
 
 
 def get_default_rest_cert_local_path():
-    return os.path.join(get_init_path(), constants.PUBLIC_REST_CERT)
+    return os.path.join(get_profile_dir(), constants.PUBLIC_REST_CERT)
 
 
 def get_ssl_cert():
@@ -520,7 +518,7 @@ class ProfileContext(yaml.YAMLObject):
         return self._manager_port
 
     def set_manager_port(self, manager_port):
-        self._manager_port = manager_port
+        self._manager_port = str(manager_port)
 
     def get_manager_user(self):
         return self._manager_user

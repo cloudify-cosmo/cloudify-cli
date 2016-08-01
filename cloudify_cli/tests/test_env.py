@@ -273,7 +273,7 @@ class CliEnvTests(testtools.TestCase):
 
     def test_get_profile_dir(self):
         self._set_manager()
-        profile_dir = env.get_init_path()
+        profile_dir = env.get_profile_dir()
         self.assertEqual(
             profile_dir,
             os.path.join(env.PROFILES_DIR, '10.10.1.10'))
@@ -282,7 +282,7 @@ class CliEnvTests(testtools.TestCase):
     def test_get_non_existing_profile_dir(self):
         ex = self.assertRaises(
             CloudifyCliError,
-            env.get_init_path)
+            env.get_profile_dir)
         self.assertEqual('Profile directory does not exist', str(ex))
 
     def test_set_cfy_config(self):
