@@ -105,7 +105,8 @@ def _open_interactive_shell(host_string, command=''):
     (Disfigures coloring and such...)
     """
     ssh_key_path = os.path.expanduser(env.get_manager_key())
-    cmd = ['ssh', '-t', host_string, '-i', ssh_key_path]
+    port = env.get_manager_port()
+    cmd = ['ssh', '-t', host_string, '-i', ssh_key_path, '-p', port]
     if command:
         cmd.append(command)
     subprocess.call(cmd)

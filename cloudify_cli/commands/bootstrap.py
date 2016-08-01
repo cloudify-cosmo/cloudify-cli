@@ -22,6 +22,7 @@ from .. import utils
 from .. import common
 from ..config import cfy
 from ..bootstrap import bootstrap as bs
+from ..exceptions import CloudifyCliError
 
 from .init import init_profile
 
@@ -76,17 +77,20 @@ def bootstrap(blueprint_path,
         temp_profile_active = True
         init_profile(profile_name=active_profile)
 
+    unclean_env_message = 'Can\'t bootstrap because the environment is not ' \
+                          'clean. Clean the environment by calling teardown ' \
+                          'or reset it using the "cfy init -r" command'
     # verifying no environment exists from a previous bootstrap
     try:
         bs.load_env(env_name)
     except IOError:
         # Environment is clean
         pass
+    except CloudifyCliError:
+        # Will be raised if `get_profile_dir` gets called
+        raise RuntimeError(unclean_env_message)
     else:
-        raise RuntimeError(
-            "Can't bootstrap because the environment is not clean. Clean the "
-            'environment by calling teardown or reset it using the "cfy init '
-            '-r" command')
+        raise RuntimeError(unclean_env_message)
 
     try:
         if not skip_validations:
