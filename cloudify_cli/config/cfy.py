@@ -429,18 +429,7 @@ class Options(object):
             '--manager-key',
             required=False,
             cls=MutuallyExclusiveOption,
-            mutually_exclusive=['manager_password'],
-            mutuality_error_message=helptexts.MUTUAL_SSH_KEY_AND_PASSWORD,
             help=helptexts.MANAGEMENT_KEY)
-
-        self.manager_password = click.option(
-            '-p',
-            '--manager-password',
-            required=False,
-            cls=MutuallyExclusiveOption,
-            mutually_exclusive=['manager_key'],
-            mutuality_error_message=helptexts.MUTUAL_SSH_KEY_AND_PASSWORD,
-            help=helptexts.MANAGEMENT_PASSWORD)
 
         self.manager_port = click.option(
             '--manager-port',
