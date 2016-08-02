@@ -31,8 +31,7 @@ def objects_args_completer_maker(objects_type, **kw):
         if not context:
             return []
 
-        mgmt_ip = context.get_manager_ip()
-        rest_client = env.get_rest_client(mgmt_ip)
+        rest_client = env.get_rest_client()
         objs_ids_list = getattr(rest_client, objects_type).list(
             _include=['id'])
         return (obj.id for obj in objs_ids_list if obj.id.startswith(prefix))
@@ -50,8 +49,7 @@ def workflow_id_completer(prefix, parsed_args, **kwargs):
     if not context:
         return []
 
-    mgmt_ip = context.get_manager_ip()
-    rest_client = env.get_rest_client(mgmt_ip)
+    rest_client = env.get_rest_client()
 
     deployment_id = parsed_args.deployment_id
     workflows = rest_client.deployments.get(

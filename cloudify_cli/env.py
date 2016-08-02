@@ -1,6 +1,5 @@
 import os
 import json
-import socket
 import shutil
 import pkgutil
 import getpass
@@ -51,7 +50,6 @@ def get_profile(profile_name):
     current_profile = get_active_profile()
     set_active_profile(profile_name)
 
-    # TODO: add rest port and protocol, ssh port
     context = get_profile_context(profile_name)
     manager_ip = context.get_manager_ip() or None
     ssh_key_path = context.get_manager_key() or None
@@ -276,10 +274,6 @@ def get_rest_client(rest_host=None,
                     password=None,
                     trust_all=False,
                     skip_version_check=False):
-    # TODO: Go through all commands remove remove the call
-    # to get_manager_ip as it is already defaulted
-    # here.
-
     rest_host = rest_host or get_rest_host()
     rest_port = rest_port or get_rest_port()
     rest_protocol = rest_protocol or get_rest_protocol()
@@ -417,29 +411,14 @@ def get_version_data():
     return json.loads(data)
 
 
-# TODO: Check if this is at all used
-def connected_to_manager(manager_ip):
-    port = get_rest_port()
-    try:
-        sock = socket.create_connection((str(manager_ip), int(port)), 5)
-        sock.close()
-        return True
-    except ValueError:
-        return False
-    except socket.error:
-        return False
-
-
 def get_manager_version_data(rest_client=None):
     if not rest_client:
-        context = get_profile_context(suppress_error=True)
-        if not (context and context.get_manager_ip()):
+        if not get_profile_context(suppress_error=True):
             return None
-        manager_ip = context.get_manager_ip()
-        if not connected_to_manager(manager_ip):
+        try:
+            rest_client = get_rest_client(skip_version_check=True)
+        except CloudifyCliError:
             return None
-        rest_client = get_rest_client(manager_ip, skip_version_check=True)
-
     try:
         version_data = rest_client.manager.get_version()
     except CloudifyClientError:
