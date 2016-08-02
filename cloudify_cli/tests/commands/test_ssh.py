@@ -33,14 +33,6 @@ class SshTest(CliCommandTest):
                     'Manager User is not set '
                     'in working directory settings')
 
-    def test_ssh_with_no_server(self):
-        # TODO: This fails in use manager
-        self.use_manager(manager_ip=None)
-        self.invoke(
-            'cfy ssh',
-            'This command is only available when using a manager'
-        )
-
     def test_ssh_without_ssh_windows(self):
         platform.system = lambda: 'Windows'
         if os.name != 'nt':

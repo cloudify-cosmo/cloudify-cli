@@ -53,7 +53,6 @@ from ..bootstrap import bootstrap
 from ..exceptions import CloudifyCliError
 from ..colorful_event import ColorfulEvent
 from ..exceptions import ExecutionTimeoutError
-from ..exceptions import CloudifyBootstrapError
 from ..exceptions import EventProcessingTimeoutError
 from ..execution_events_fetcher import wait_for_execution
 from ..execution_events_fetcher import ExecutionEventsFetcher
@@ -97,7 +96,7 @@ class TestCLIBase(CliCommandTest):
     def test_verbosity(self):
         def test(flag, expected):
             self._reset_verbosity_and_loggers()
-            cfy.invoke('cfy profiles list {0}'.format(flag))
+            self.invoke('cfy profiles list {0}'.format(flag))
             self.assertEqual(logger.verbosity_level, expected)
             self.assertEqual(logs.EVENT_VERBOSITY_LEVEL, expected)
             if expected >= logger.HIGH_VERBOSE:
@@ -109,9 +108,7 @@ class TestCLIBase(CliCommandTest):
                 log = logging.getLogger(logger_name)
                 self.assertEqual(log.level, expected_logging_level)
 
-        # TODO: Fix. Returns True for some reason.
-        # test('', logger.NO_VERBOSE)
-        test('', True)
+        test('', logger.NO_VERBOSE)
         test('-v', logger.LOW_VERBOSE)
         test('-vv', logger.MEDIUM_VERBOSE)
         test('-vvv', logger.HIGH_VERBOSE)
@@ -228,6 +225,9 @@ class CliEnvTests(CliCommandTest):
     def test_manager_is_active(self):
         self.use_manager()
         self.assertTrue(env.is_manager_active())
+
+    def test_use_manager_fails_without_profile(self):
+        self.assertRaises(CloudifyCliError, self.use_manager, manager_ip=None)
 
     def test_get_profile_context(self):
         self.use_manager()
@@ -999,113 +999,6 @@ class ImportResolverLocalUseTests(CliCommandTest):
             BLUEPRINTS_DIR, 'blueprint')
         self._test_using_import_resolver(
             'init', blueprint_path, dsl_parser.parser)
-
-
-# TODO: Move to commands
-class CliBootstrapUnitTests(CliCommandTest):
-    """Unit tests for functions in bootstrap/bootstrap.py"""
-
-    def setUp(self):
-        super(CliBootstrapUnitTests, self).setUp()
-        # TODO: create an actual non-local profile here.
-        self.bootstrap_dir = os.path.join(
-            env.PROFILES_DIR, 'local', 'bootstrap')
-        self.manager_dir = os.path.join(self.bootstrap_dir, 'manager')
-        os.makedirs(self.bootstrap_dir)
-
-        cfy.invoke('init -r')
-
-    def tearDown(self):
-        super(CliBootstrapUnitTests, self).tearDown()
-        cfy.purge_dot_cloudify()
-
-    def test_manager_deployment_dump(self, remove_deployment=True):
-        manager1_original_dir = self._copy_manager1_dir_to_manager_dir()
-        result = bootstrap.dump_manager_deployment()
-        if remove_deployment:
-            shutil.rmtree(self.manager_dir)
-            self.assertTrue(
-                bootstrap.read_manager_deployment_dump_if_needed(result))
-        else:
-            # simulating existing read manager deployment dump - .git folder
-            # shouldn't appear there, so removing it alone
-            shutil.rmtree(os.path.join(self.manager_dir, '.git'))
-            self.assertFalse(
-                bootstrap.read_manager_deployment_dump_if_needed(result))
-        comparison = filecmp.dircmp(manager1_original_dir,
-                                    self.manager_dir)
-        self.assertIn('dir1', comparison.common)
-        self.assertIn('dir2', comparison.common)
-        self.assertIn('file1', comparison.common)
-        self.assertIn('file2', comparison.common)
-        self.assertEqual([], comparison.common_funny)
-        self.assertEqual([], comparison.diff_files)
-        self.assertEqual([], comparison.funny_files)
-        self.assertEqual([], comparison.right_only)
-        # .git folder is ignored when archiving manager deployment, and should
-        # not appear in the new manager dir, only in the original one;
-        # (however, since in the original dir it's named "dotgit" rather than
-        # ".git", we check for that instead - yet neither should be in the
-        # manager deployment either way)
-        self.assertEqual(['dotgit'], comparison.left_only)
-
-    def test_manager_deployment_dump_read_empty(self):
-        self.assertFalse(
-            bootstrap.read_manager_deployment_dump_if_needed(''))
-        self.assertFalse(os.path.exists(self.manager_dir))
-
-    def test_manager_deployment_dump_read_already_exists(self):
-        self.test_manager_deployment_dump(remove_deployment=False)
-
-    def test_validate_manager_deployment_size_success(self):
-        # reusing the copying code, but actually there's no significance for
-        # the directory being the "manager_dir" one; it's simply a directory
-        # containing a "blueprint" (in this case, "file1")
-        self._copy_manager1_dir_to_manager_dir()
-        bootstrap.validate_manager_deployment_size(
-            os.path.join(self.manager_dir, 'file1'))
-
-    def test_validate_manager_deployment_size_failure(self):
-        self._copy_manager1_dir_to_manager_dir()
-        # setting max deployment size to be very small, so the validation fails
-        with patch.object(bootstrap, 'MAX_MANAGER_DEPLOYMENT_SIZE', 10):
-            self.assertRaisesRegexp(
-                CloudifyBootstrapError,
-                "The manager blueprint's folder is above the maximum allowed "
-                "size when archived",
-                bootstrap.validate_manager_deployment_size,
-                blueprint_path=os.path.join(self.manager_dir, 'file1'))
-
-    def test_validate_manager_deployment_size_ignore_gitfile_success(self):
-        # this test checks that the validation of the manager deployment size
-        # also ignores the .git folder
-        self._copy_manager1_dir_to_manager_dir()
-        # getting the archive's size when compressed with the .git folder
-        # included in the archive
-        with patch.object(bootstrap, 'blueprint_archive_filter_func',
-                          lambda tarinfo: tarinfo):
-            archive_obj = bootstrap.tar_manager_deployment()
-            manager_dep_size = len(archive_obj.getvalue())
-        # setting the limit to be smaller than the archive's size when
-        # compressed with the .git folder included in the archive
-        with patch.object(bootstrap, 'MAX_MANAGER_DEPLOYMENT_SIZE',
-                          manager_dep_size - 1):
-            # validation should pass as the limit is still bigger than
-            # the size of the archive when the .git folder is excluded
-            bootstrap.validate_manager_deployment_size(
-                os.path.join(self.manager_dir, 'file1'))
-
-    def _copy_manager1_dir_to_manager_dir(self):
-        manager1_original_dir = os.path.join(
-            os.path.dirname(__file__),
-            'resources', 'storage', 'manager1')
-        shutil.copytree(manager1_original_dir, self.manager_dir)
-
-        # renaming git folder to be under its proper name
-        os.rename(os.path.join(self.manager_dir, 'dotgit'),
-                  os.path.join(self.manager_dir, '.git'))
-
-        return manager1_original_dir
 
 
 TRUST_ALL = 'non-empty-value'

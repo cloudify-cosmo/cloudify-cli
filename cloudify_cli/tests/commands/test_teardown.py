@@ -21,8 +21,6 @@ class TeardownTest(CliCommandTest):
         )
         self.invoke('cfy use 10.0.0.1')
         self.invoke('cfy teardown -f --ignore-deployments')
-        # TODO: The values are the values of the task-retry flags.
-        # These should be retrieved from somewhere else.
         mock_teardown.assert_called_once_with(
             task_retries=0,
             task_retry_interval=1,

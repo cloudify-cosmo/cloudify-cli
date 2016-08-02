@@ -58,7 +58,7 @@ def invoke(command, capture, context=None):
         env.CLOUDIFY_WORKDIR, 'active.profile')
 
     logger.configure_loggers()
-    logger.set_global_verbosity_level(verbose=True)
+    logger.set_global_verbosity_level(verbose=logger.NO_VERBOSE)
 
     cfy = clicktest.CliRunner()
 
