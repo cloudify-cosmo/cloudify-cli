@@ -6,7 +6,7 @@ from mock import MagicMock, patch
 
 from .... import env
 from ..test_base import CliCommandTest
-from ..constants import BLUEPRINTS_DIR, TEST_WORK_DIR
+from ..constants import BLUEPRINTS_DIR
 
 
 class BlueprintsTest(CliCommandTest):

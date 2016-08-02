@@ -31,7 +31,7 @@ class RecoverTest(CliCommandTest):
         key_path = os.path.join(TEST_WORK_DIR, 'key.pem')
         open(key_path, 'w').close()
 
-        self.use_manager(key=key_path, provider_context={})
+        self.use_manager(ssh_key_path=key_path)
 
         # now run recovery and make sure no exception was raised
         self.invoke('cfy recover -f {0}'.format(key_path))
@@ -53,7 +53,7 @@ class RecoverTest(CliCommandTest):
         fake_snapshot_path = os.path.join(TEST_WORK_DIR, 'sn.zip')
         open(fake_snapshot_path, 'w').close()
 
-        self.use_manager(key=key_path, provider_context={})
+        self.use_manager(ssh_key_path=key_path)
 
         # recovery command should not fail because the key file specified in
         # the context file does not exist
@@ -109,7 +109,7 @@ class RecoverTest(CliCommandTest):
         key_path = os.path.join(TEST_WORK_DIR, 'key.pem')
         open(key_path, 'w').close()
 
-        self.use_manager(key=key_path, provider_context={})
+        self.use_manager(ssh_key_path=key_path)
 
         try:
             os.environ['CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'] = key_path

@@ -16,6 +16,7 @@ import os
 import os as utils_os
 
 import testtools
+import unittest  # TODO: replace after we're done testing
 from mock import patch, MagicMock
 
 from cloudify.utils import setup_logger
@@ -28,7 +29,7 @@ from ... import utils
 from ...exceptions import CloudifyCliError
 
 
-class CliCommandTest(testtools.TestCase):
+class CliCommandTest(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -127,9 +128,9 @@ class CliCommandTest(testtools.TestCase):
                 self.logger.info(e.message)
             self.assertFalse(mock.called)
 
-    def use_manager(self, **default_manager_params):
-        if not default_manager_params:
-            default_manager_params = cfy.default_manager_params
+    def use_manager(self, **manager_params):
+        default_manager_params = cfy.default_manager_params.copy()
+        default_manager_params.update(manager_params)
         cfy.use_manager(**default_manager_params)
 
     def _read_context(self):

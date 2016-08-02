@@ -16,25 +16,26 @@ class SshTest(CliCommandTest):
         )
 
     def test_ssh_with_empty_config(self):
-        self.use_manager(user=None)
+        self.use_manager(ssh_user=None)
         self.invoke('cfy ssh',
                     'Manager User is not set '
                     'in working directory settings')
 
     def test_ssh_with_no_key(self):
-        self.use_manager(user='test', host='127.0.0.1', key=None)
+        self.use_manager(ssh_key_path=None)
         self.invoke('cfy ssh',
                     'Manager Key is not set '
                     'in working directory settings')
 
     def test_ssh_with_no_user(self):
-        self.use_manager(key='/tmp/test.pem', host='127.0.0.1', user=None)
+        self.use_manager(ssh_user=None)
         self.invoke('cfy ssh',
                     'Manager User is not set '
                     'in working directory settings')
 
     def test_ssh_with_no_server(self):
-        self.use_manager(key='/tmp/test.pem', user='test', host=None)
+        # TODO: This fails in use manager
+        self.use_manager(manager_ip=None)
         self.invoke(
             'cfy ssh',
             'This command is only available when using a manager'
@@ -44,7 +45,7 @@ class SshTest(CliCommandTest):
         platform.system = lambda: 'Windows'
         if os.name != 'nt':
             self.skipTest('Irrelevant on Linux')
-        self.use_manager(key='/tmp/test.pem', user='test', host='127.0.0.1')
+        self.use_manager()
         spawn.find_executable = lambda x: None
         self.invoke('cfy ssh', 'ssh.exe not found')
 
@@ -52,7 +53,7 @@ class SshTest(CliCommandTest):
         platform.system = lambda: 'Linux'
         if os.name == 'nt':
             self.skipTest('Irrelevant on Windows')
-        self.use_manager(key='/tmp/test.pem', user='test', host='127.0.0.1')
+        self.use_manager()
         spawn.find_executable = lambda x: None
         self.invoke('cfy ssh', 'ssh not found')
 

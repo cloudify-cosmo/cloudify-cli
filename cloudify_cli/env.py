@@ -468,7 +468,10 @@ class ProfileContext(yaml.YAMLObject):
         return self._manager_port
 
     def set_manager_port(self, manager_port):
-        self._manager_port = str(manager_port)
+        # If the port is int, we want to change it to a string. Otherwise,
+        # leave None as is
+        manager_port = str(manager_port) if manager_port else None
+        self._manager_port = manager_port
 
     def get_manager_user(self):
         return self._manager_user
