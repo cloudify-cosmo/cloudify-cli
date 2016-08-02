@@ -173,13 +173,17 @@ def get_profile_dir(profile_name=None):
         raise CloudifyCliError('Profile directory does not exist')
 
 
-def set_cfy_config():
+def set_cfy_config(enable_colors=False):
     config = pkg_resources.resource_string(
         cloudify_cli.__name__,
         'resources/config.yaml')
 
+    enable_colors = str(enable_colors).lower()
     template = Template(config)
-    rendered = template.render(log_path=DEFAULT_LOG_FILE)
+    rendered = template.render(
+        log_path=DEFAULT_LOG_FILE,
+        enable_colors=enable_colors
+    )
     with open(CLOUDIFY_CONFIG_PATH, 'w') as f:
         f.write(rendered)
         f.write(os.linesep)

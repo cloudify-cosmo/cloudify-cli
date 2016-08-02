@@ -32,6 +32,7 @@ from ..exceptions import CloudifyCliError
 @cfy.options.inputs
 @cfy.options.install_plugins
 @cfy.options.init_hard_reset
+@cfy.options.enable_colors
 @cfy.options.verbose
 @cfy.add_logger
 def init(blueprint_path,
@@ -39,6 +40,7 @@ def init(blueprint_path,
          inputs,
          install_plugins,
          hard,
+         enable_colors,
          logger):
     """Initialize a Cloudify environment.
 
@@ -57,8 +59,6 @@ def init(blueprint_path,
     """
     profile_name = 'local'
 
-    # TODO: enable `cfy init --enable-colors`
-
     # TODO: Consider replacing `cfy init BLUEPRINT_PATH` with
     # `cfy blueprints init BLUEPRINT_PATH` for local.
 
@@ -66,8 +66,14 @@ def init(blueprint_path,
         if reset_context or hard:
             logger.warning(
                 'The `--reset-context` and `--hard` flags are ignored '
-                'when initalizing a blueprint')
-        init_profile(profile_name, reset_context=True, hard=False)
+                'when initializing a blueprint')
+
+        init_profile(
+            profile_name,
+            reset_context=True,
+            hard=False,
+            enable_colors=enable_colors
+        )
         env.set_active_profile(profile_name)
 
         if os.path.isdir(common.storage_dir()):
@@ -104,12 +110,17 @@ def init(blueprint_path,
             raise CloudifyCliError(
                 'Environment is already initialized. '
                 'You can reset the environment by running `cfy init -r`')
-        init_profile(profile_name, reset_context, hard)
+        init_profile(profile_name, reset_context, hard, enable_colors)
         env.set_active_profile(profile_name)
 
 
 @cfy.add_logger
-def init_profile(profile_name, reset_context=False, hard=False, logger=None):
+def init_profile(
+        profile_name,
+        reset_context=False,
+        hard=False,
+        enable_colors=False,
+        logger=None):
     # TODO: support profile aliases
     logger.info('Initializing profile {0}...'.format(profile_name))
 
@@ -137,7 +148,7 @@ def init_profile(profile_name, reset_context=False, hard=False, logger=None):
         os.makedirs(env.PROFILES_DIR)
     env.set_active_profile(profile_name)
     if not os.path.isfile(env.CLOUDIFY_CONFIG_PATH) or hard:
-        env.set_cfy_config()
+        env.set_cfy_config(enable_colors=enable_colors)
 
     # TODO: Verify that we don't break anything!
     if not profile_name == 'local':

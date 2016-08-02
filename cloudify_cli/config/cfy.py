@@ -451,9 +451,14 @@ class Options(object):
         self.reset_context = click.option(
             '-r',
             '--reset-context',
-            # TODO: Change name. This is not true. It only resets the context
             is_flag=True,
             help=helptexts.RESET_CONTEXT)
+
+        self.enable_colors = click.option(
+            '--enable-colors',
+            is_flag=True,
+            default=False,
+            help=helptexts.ENABLE_COLORS)
 
         self.wait = click.option(
             '--wait',
