@@ -15,7 +15,7 @@
 import os
 import os as utils_os
 
-import testtools
+# import testtools
 import unittest  # TODO: replace after we're done testing
 from mock import patch, MagicMock
 
@@ -51,9 +51,9 @@ class CliCommandTest(unittest.TestCase):
         self.original_utils_get_rest_client = env.get_rest_client
         env.get_rest_client = get_mock_rest_client
         self.original_utils_get_cwd = utils.get_cwd
-        utils.get_cwd = lambda: TEST_WORK_DIR
+        utils.get_cwd = lambda: env.CLOUDIFY_WORKDIR
         self.original_utils_os_getcwd = utils_os.getcwd
-        utils_os.getcwd = lambda: TEST_WORK_DIR
+        utils_os.getcwd = lambda: env.CLOUDIFY_WORKDIR
 
     def tearDown(self):
         super(CliCommandTest, self).tearDown()

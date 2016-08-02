@@ -175,7 +175,7 @@ class BlueprintsTest(CliCommandTest):
             os.path.join(local_dir, 'plugins', 'local_plugin'),
             'http://localhost/host_plugin.zip'
         }
-        tmp_requirements_path = os.path.join(TEST_WORK_DIR, 'requirements.txt')
+        tmp_requirements_path = os.path.join(env.CLOUDIFY_WORKDIR, 'requirements.txt')
 
         self.invoke('cfy blueprints create-requirements {0} -o {1}'
                     .format(blueprint_path, tmp_requirements_path))
