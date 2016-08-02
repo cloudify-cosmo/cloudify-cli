@@ -93,7 +93,9 @@ class ProfilesTest(CliCommandTest):
         os.close(fd2)
         with open(key, 'w') as f:
             f.write('aaa')
-        self.use_manager(key=key)
+        manager_params = cfy.default_manager_params.copy()
+        manager_params.update({'ssh_key_path': key})
+        self.use_manager(**manager_params)
         self.invoke('profiles list')
         try:
             self.invoke('cfy profiles export -o {0} --include-keys'.format(

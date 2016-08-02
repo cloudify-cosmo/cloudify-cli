@@ -49,7 +49,7 @@ default_manager_params = dict(
 def invoke(command, capture, context=None):
     # For each invocation we should use a temporary directory
     # for the cfy workdir.
-    env.CLOUDIFY_WORKDIR = '/tmp/.cloudify'
+    env.CLOUDIFY_WORKDIR = '/tmp/.cloudify-test'
     env.CLOUDIFY_CONFIG_PATH = os.path.join(
         env.CLOUDIFY_WORKDIR, 'config.yaml')
     env.PROFILES_DIR = os.path.join(

@@ -967,6 +967,7 @@ class CliBootstrapUnitTests(CliCommandTest):
     """Unit tests for functions in bootstrap/bootstrap.py"""
 
     def setUp(self):
+        super(CliBootstrapUnitTests, self).setUp()
         # TODO: create an actual non-local profile here.
         self.bootstrap_dir = os.path.join(
             env.PROFILES_DIR, 'local', 'bootstrap')
@@ -976,6 +977,7 @@ class CliBootstrapUnitTests(CliCommandTest):
         cfy.invoke('init -r')
 
     def tearDown(self):
+        super(CliBootstrapUnitTests, self).tearDown()
         cfy.purge_dot_cloudify()
 
     def test_manager_deployment_dump(self, remove_deployment=True):
