@@ -84,7 +84,6 @@ class CliCommandTest(unittest.TestCase):
                should_fail=None,
                exception=CloudifyCliError,
                context=None):
-
         if err_str_segment and should_fail is None:
             should_fail = True
         outcome = cfy.invoke(command, context=context)
@@ -174,30 +173,31 @@ class CliCommandTest(unittest.TestCase):
             self.assertFalse(mock.called)
 
     def use_manager(self,
-                    host='localhost',
+                    profile_name='10.10.1.10',
                     key='key',
                     user='key',
                     port='22',
-                    provider_context=None):
+                    provider_context=None,
+                    rest_port=80,
+                    rest_protocol='http'):
 
         provider_context = provider_context or dict()
-        if not host:
-            return
-
         settings = env.ProfileContext()
-        settings.set_manager_ip(host)
+        settings.set_manager_ip(profile_name)
         settings.set_manager_key(key)
         settings.set_manager_user(user)
         settings.set_manager_port(port)
+        settings.set_rest_port(rest_port)
+        settings.set_rest_protocol(rest_protocol)
         settings.set_provider_context(provider_context)
 
-        cfy.purge_profile(host)
+        cfy.purge_profile(profile_name)
         env.set_profile_context(
-            profile_name=host,
+            profile_name=profile_name,
             context=settings,
             update=False)
         env.set_cfy_config()
-        env.set_active_profile(host)
+        env.set_active_profile(profile_name)
         self.register_commands()
 
     def register_commands(self):

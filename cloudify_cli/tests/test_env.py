@@ -26,7 +26,6 @@ from itertools import chain, repeat, count
 
 import mock
 import yaml
-import testtools
 from mock import MagicMock, patch
 
 import cloudify
@@ -77,7 +76,7 @@ env.ACTIVE_PRO_FILE = os.path.join(
     env.CLOUDIFY_WORKDIR, 'active.profile')
 
 
-class TestCLIBase(testtools.TestCase):
+class TestCLIBase(CliCommandTest):
     @classmethod
     def setUpClass(cls):
         env.CLOUDIFY_WORKDIR = '/tmp/.cloudify-test'
@@ -124,7 +123,7 @@ class TestCLIBase(testtools.TestCase):
         logger.configure_loggers()
 
 
-class CliEnvTests(testtools.TestCase):
+class CliEnvTests(CliCommandTest):
 
     @classmethod
     def setUpClass(cls):
@@ -152,14 +151,14 @@ class CliEnvTests(testtools.TestCase):
         return profile_path
 
     def _set_manager(self):
-        env.update_profile_context(
-            manager_ip='10.10.1.10',
-            manager_key='test',
-            manager_user='~/.my_key',
-            manager_port='22',
-            rest_port='80',
-            rest_protocol='http',
-            provider_context='abc')
+        self.use_manager(
+            profile_name='10.10.1.10',
+            key='~/.my_key',
+            user='test',
+            port='22',
+            provider_context='abc',
+            rest_port=80,
+            rest_protocol='http')
 
     def test_delete_profile(self):
         profile_path = self._make_mock_profile()
@@ -310,19 +309,18 @@ class CliEnvTests(testtools.TestCase):
         ex = self.assertRaises(
             CloudifyCliError,
             env.raise_uninitialized)
-        self.assertEqual('Cloudify environment is not initalized', str(ex))
+        self.assertEqual('Cloudify environment is not initialized', str(ex))
 
     def test_update_profile_context(self):
-        profile_data = dict(
-            manager_ip='10.10.1.10',
-            ssh_key_path='~/.my_key',
-            ssh_user='test_user',
-            ssh_port=24,
-            rest_port=80,
-            rest_protocol='http',
-            provider_context='provider_context',
-            bootstrap_state=True)
-        env.update_profile_context(**profile_data)
+        with env.update_profile_context('10.10.1.10') as context:
+            context.set_manager_ip('10.10.1.10')
+            context.set_rest_port('80')
+            context.set_rest_protocol('http')
+            context.set_provider_context('provider_context')
+            context.set_manager_key('~/.my_key')
+            context.set_manager_user('test_user')
+            context.set_manager_port(24)
+            context.set_bootstrap_state(True)
         context = env.get_profile_context('10.10.1.10')
         self.assertEqual(context.get_manager_ip(), '10.10.1.10')
         self.assertEqual(context.get_manager_key(), '~/.my_key')
@@ -342,12 +340,19 @@ class CliEnvTests(testtools.TestCase):
             rest_port=80,
             rest_protocol='http',
             alias=None)
+        with env.update_profile_context(manager_ip) as context:
+            context.set_manager_ip(profile_input['manager_ip'])
+            context.set_rest_port(profile_input['rest_port'])
+            context.set_rest_protocol(profile_input['rest_protocol'])
+            context.set_manager_key(profile_input['ssh_key_path'])
+            context.set_manager_user(profile_input['ssh_user'])
+            context.set_manager_port(profile_input['ssh_port'])
         env.update_profile_context(**profile_input)
         profile_output = env.get_profile('10.10.1.10')
         self.assertDictEqual(profile_output, profile_input)
 
 
-class CliInputsTests(testtools.TestCase):
+class CliInputsTests(CliCommandTest):
 
     # TODO: Test inputs_to_dict
     def test_parsing_input_as_string(self):
@@ -442,7 +447,7 @@ class CliInputsTests(testtools.TestCase):
             input_list)
 
 
-class TestProgressBar(testtools.TestCase):
+class TestProgressBar(CliCommandTest):
     def test_progress_bar_1(self):
         results = (
             '\r test |------------------------| 0.0%',
@@ -489,7 +494,7 @@ class TestProgressBar(testtools.TestCase):
             sys.stdout = sys.__stdout__
 
 
-class TestLogger(testtools.TestCase):
+class TestLogger(CliCommandTest):
 
     def test_text_events_logger(self):
         events_logger = logger.get_events_logger(json_output=False)
@@ -514,7 +519,7 @@ class TestLogger(testtools.TestCase):
                          output.getvalue())
 
 
-class ExecutionEventsFetcherTest(testtools.TestCase):
+class ExecutionEventsFetcherTest(CliCommandTest):
 
     events = []
 
@@ -664,7 +669,7 @@ class ExecutionEventsFetcherTest(testtools.TestCase):
                           timeout=2)
 
 
-class WaitForExecutionTests(testtools.TestCase):
+class WaitForExecutionTests(CliCommandTest):
 
     def setUp(self):
         super(WaitForExecutionTests, self).setUp()
@@ -739,7 +744,7 @@ class WaitForExecutionTests(testtools.TestCase):
 
 
 @mock.patch('cloudify_cli.env.is_initialized', lambda: True)
-class TestCLIConfig(testtools.TestCase):
+class TestCLIConfig(CliCommandTest):
 
     def setUp(self):
         super(TestCLIConfig, self).setUp()
@@ -778,7 +783,7 @@ class TestCLIConfig(testtools.TestCase):
 
 
 @mock.patch('cloudify_cli.env.is_initialized', lambda: True)
-class TestCLIColors(testtools.TestCase):
+class TestCLIColors(CliCommandTest):
 
     @mock.patch('cloudify_cli.logger._configure_from_file', mock.MagicMock())
     @mock.patch('cloudify_cli.env.is_use_colors', lambda: True)
@@ -794,7 +799,7 @@ class TestCLIColors(testtools.TestCase):
             m.assert_called_once_with(autoreset=True)
 
 
-class TestCLIColorfulEvent(testtools.TestCase):
+class TestCLIColorfulEvent(CliCommandTest):
 
     def test_simple_property_color(self):
         event = {
@@ -1000,7 +1005,7 @@ class ImportResolverLocalUseTests(CliCommandTest):
 
 
 # TODO: Move to commands
-class CliBootstrapUnitTests(testtools.TestCase):
+class CliBootstrapUnitTests(CliCommandTest):
     """Unit tests for functions in bootstrap/bootstrap.py"""
 
     def setUp(self):
@@ -1220,7 +1225,7 @@ TRUST_ALL = 'non-empty-value'
 CERT_PATH = 'path-to-certificate'
 
 
-class TestGetRestClient(testtools.TestCase):
+class TestGetRestClient(CliCommandTest):
 
     def setUp(self):
         super(TestGetRestClient, self).setUp()
