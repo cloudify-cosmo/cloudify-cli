@@ -312,7 +312,6 @@ def get_rest_client(rest_host=None,
     # TODO: Go through all commands remove remove the call
     # to get_manager_ip_ip as it is already defaulted
     # here.
-    assert_manager_active()
 
     rest_host = rest_host or get_rest_host()
     rest_port = rest_port or get_rest_port()

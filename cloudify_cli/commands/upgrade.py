@@ -48,8 +48,8 @@ REMOTE_WORKFLOW_STATE_PATH = '/opt/cloudify/_workflow_state.json'
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose
 @cfy.add_logger
-@cfy.add_client(skip_version_check=True)
 @cfy.assert_manager_active
+@cfy.add_client(skip_version_check=True)
 def upgrade(blueprint_path,
             inputs,
             validate_only,

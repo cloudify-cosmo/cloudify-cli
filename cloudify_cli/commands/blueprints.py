@@ -75,8 +75,8 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.options.validate
 @cfy.options.verbose
 @cfy.add_logger
-@cfy.add_client()
 @cfy.assert_manager_active
+@cfy.add_client()
 @click.pass_context
 def upload(ctx,
            blueprint_path,
@@ -131,8 +131,8 @@ def upload(ctx,
 @cfy.options.output_path
 @cfy.options.verbose
 @cfy.add_logger
-@cfy.add_client()
 @cfy.assert_manager_active
+@cfy.add_client()
 def download(blueprint_id, output_path, logger, client):
     """Download a blueprint from the manager
 
@@ -152,8 +152,8 @@ def download(blueprint_id, output_path, logger, client):
 @cfy.argument('blueprint-id')
 @cfy.options.verbose
 @cfy.add_logger
-@cfy.add_client()
 @cfy.assert_manager_active
+@cfy.add_client()
 def delete(blueprint_id, logger, client):
     """Delete a blueprint from the manager
     """
@@ -168,8 +168,8 @@ def delete(blueprint_id, logger, client):
 @cfy.options.descending
 @cfy.options.verbose
 @cfy.add_logger
-@cfy.add_client()
 @cfy.assert_manager_active
+@cfy.add_client()
 def list(sort_by, descending, logger, client):
     """List all blueprints
     """
@@ -197,8 +197,8 @@ def list(sort_by, descending, logger, client):
 @cfy.argument('blueprint-id')
 @cfy.options.verbose
 @cfy.add_logger
-@cfy.add_client()
 @cfy.assert_manager_active
+@cfy.add_client()
 def get(blueprint_id, logger, client):
     """Retrieve information for a specific blueprint
 
@@ -228,8 +228,8 @@ def get(blueprint_id, logger, client):
 @cfy.argument('blueprint-id')
 @cfy.options.verbose
 @cfy.add_logger
-@cfy.add_client()
 @cfy.assert_manager_active
+@cfy.add_client()
 def inputs(blueprint_id, logger, client):
     """Retrieve inputs for a specific blueprint
 

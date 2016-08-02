@@ -25,8 +25,8 @@ from ..config import cfy
 @cfy.command(name='status', short_help="Show manager status [manager only]")
 @cfy.options.verbose
 @cfy.add_logger
-@cfy.add_client()
 @cfy.assert_manager_active
+@cfy.add_client()
 def status(logger, client):
     """Show the status of the manager
     """

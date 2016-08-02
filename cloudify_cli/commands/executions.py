@@ -48,8 +48,8 @@ def executions():
 @cfy.argument('execution-id')
 @cfy.options.verbose
 @cfy.add_logger
-@cfy.add_client()
 @cfy.assert_manager_active
+@cfy.add_client()
 def manager_get(execution_id, logger, client):
     """Retrieve information for a specific execution
 
@@ -87,8 +87,8 @@ def manager_get(execution_id, logger, client):
 @cfy.options.descending
 @cfy.options.verbose
 @cfy.add_logger
-@cfy.add_client()
 @cfy.assert_manager_active
+@cfy.add_client()
 def manager_list(
         deployment_id,
         include_system_workflows,
@@ -247,8 +247,8 @@ def manager_start(workflow_id,
 @cfy.options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
 @cfy.options.verbose
 @cfy.add_logger
-@cfy.add_client()
 @cfy.assert_manager_active
+@cfy.add_client()
 def manager_cancel(execution_id, force, logger, client):
     """Cancel a workflow's execution
     """

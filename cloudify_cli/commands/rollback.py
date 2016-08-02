@@ -32,8 +32,8 @@ from .. import exceptions
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose
 @cfy.add_logger
-@cfy.add_client(skip_version_check=True)
 @cfy.assert_manager_active
+@cfy.add_client(skip_version_check=True)
 def rollback(blueprint_path,
              inputs,
              install_plugins,
