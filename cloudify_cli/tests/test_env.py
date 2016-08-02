@@ -31,7 +31,6 @@ from mock import MagicMock, patch
 import cloudify
 from cloudify import logs
 from cloudify.workflows import local
-from cloudify.exceptions import NonRecoverableError
 
 from cloudify_rest_client.nodes import Node
 from cloudify_rest_client.executions import Execution
@@ -1055,118 +1054,6 @@ class CliBootstrapUnitTests(CliCommandTest):
             # the size of the archive when the .git folder is excluded
             bootstrap.validate_manager_deployment_size(
                 os.path.join(self.manager_dir, 'file1'))
-
-    def test_ssl_configuration_without_cert_path(self):
-        configurations = {
-            constants.SSL_ENABLED_PROPERTY_NAME: True,
-            constants.SSL_CERTIFICATE_PATH_PROPERTY_NAME: '',
-            constants.SSL_PRIVATE_KEY_PROPERTY_NAME: ''
-        }
-        self.assertRaisesRegexp(
-            NonRecoverableError,
-            'SSL is enabled => certificate path must be provided',
-            tasks._handle_ssl_configuration,
-            configurations)
-
-    def test_ssl_configuration_wrong_cert_path(self):
-        configurations = {
-            constants.SSL_ENABLED_PROPERTY_NAME: True,
-            constants.SSL_CERTIFICATE_PATH_PROPERTY_NAME: 'wrong-path',
-            constants.SSL_PRIVATE_KEY_PROPERTY_NAME: ''
-        }
-        self.assertRaisesRegexp(
-            NonRecoverableError,
-            'The certificate path \[wrong-path\] does not exist',
-            tasks._handle_ssl_configuration,
-            configurations)
-
-    def test_ssl_configuration_without_key_path(self):
-        this_dir = os.path.dirname(os.path.dirname(__file__))
-        cert_path = os.path.join(this_dir, 'cert.file')
-        open(cert_path, 'a+').close()
-        configurations = {
-            constants.SSL_ENABLED_PROPERTY_NAME: True,
-            constants.SSL_CERTIFICATE_PATH_PROPERTY_NAME: cert_path,
-            constants.SSL_PRIVATE_KEY_PROPERTY_NAME: ''
-        }
-        try:
-            self.assertRaisesRegexp(
-                NonRecoverableError,
-                'SSL is enabled => private key path must be provided',
-                tasks._handle_ssl_configuration,
-                configurations)
-        finally:
-            os.remove(cert_path)
-
-    def test_ssl_configuration_wrong_key_path(self):
-        this_dir = os.path.dirname(os.path.dirname(__file__))
-        cert_path = os.path.join(this_dir, 'cert.file')
-        open(cert_path, 'a+').close()
-        configurations = {
-            constants.SSL_ENABLED_PROPERTY_NAME: True,
-            constants.SSL_CERTIFICATE_PATH_PROPERTY_NAME: cert_path,
-            constants.SSL_PRIVATE_KEY_PROPERTY_NAME: 'wrong-path'
-        }
-        try:
-            self.assertRaisesRegexp(
-                NonRecoverableError,
-                'The private key path \[wrong-path\] does not exist',
-                tasks._handle_ssl_configuration,
-                configurations)
-        finally:
-            os.remove(cert_path)
-
-    def test_get_install_agent_pkgs_cmd(self):
-        agent_packages = {
-            'agent_tar': 'agent.tar.gz',
-            'agent_deb': 'agent.deb'
-        }
-        agents_pkg_path = '/tmp/work_dir'
-        agents_dest_dir = '/opt/manager/resources/packages'
-
-        command = self._get_install_agent_pkgs_cmd(
-            agent_packages, agents_pkg_path, agents_dest_dir)
-
-        self.assertIn('curl -O agent.tar.gz', command)
-        self.assertIn('curl -O agent.deb', command)
-        self.assertIn('dpkg -i {1}/*.deb && '
-                      'mkdir -p {0}/agents && '
-                      'mv {1}/agent.tar.gz {0}/agents/agent_tar.tar.gz'.format(
-                          agents_dest_dir, agents_pkg_path), command)
-
-    def test_get_install_agent_pkgs_cmd_tars_only(self):
-        agent_packages = {
-            'agent_tar1': 'agent1.tar.gz',
-            'agent_tar2': 'agent2.tar.gz',
-        }
-        agents_pkg_path = '/tmp/work_dir'
-        agents_dest_dir = '/opt/manager/resources/packages'
-
-        command = self._get_install_agent_pkgs_cmd(
-            agent_packages, agents_pkg_path, agents_dest_dir)
-
-        self.assertIn('curl -O agent1.tar.gz', command)
-        self.assertIn('curl -O agent2.tar.gz', command)
-        self.assertIn('mv {1}/agent1.tar.gz {0}/agents/agent_tar1.tar.gz'
-                      .format(agents_dest_dir, agents_pkg_path), command)
-        self.assertIn('mv {1}/agent2.tar.gz {0}/agents/agent_tar2.tar.gz'
-                      .format(agents_dest_dir, agents_pkg_path), command)
-
-    def test_get_install_agent_pkgs_cmd_debs_only(self):
-        agent_packages = {
-            'agent_deb1': 'agent1.deb',
-            'agent_deb2': 'agent2.deb',
-        }
-        agents_pkg_path = '/tmp/work_dir'
-        agents_dest_dir = '/opt/manager/resources/packages'
-
-        command = self._get_install_agent_pkgs_cmd(
-            agent_packages, agents_pkg_path, agents_dest_dir)
-
-        self.assertIn('curl -O agent1.deb', command)
-        self.assertIn('curl -O agent2.deb', command)
-        self.assertIn('dpkg -i {1}/*.deb'.format(
-            agents_dest_dir, agents_pkg_path), command)
 
     def _copy_manager1_dir_to_manager_dir(self):
         manager1_original_dir = os.path.join(
