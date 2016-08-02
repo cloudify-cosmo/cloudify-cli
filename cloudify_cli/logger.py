@@ -44,6 +44,8 @@ _all_loggers = set()
 
 
 def get_logger():
+    if not _lgr:
+        configure_loggers()
     return _lgr
 
 

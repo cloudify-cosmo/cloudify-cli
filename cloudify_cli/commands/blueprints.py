@@ -48,7 +48,7 @@ def blueprints():
                     short_help='Validate a blueprint')
 @cfy.argument('blueprint-path')
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def validate_blueprint(blueprint_path, logger):
     """Validate a blueprint
 
@@ -74,9 +74,9 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.options.blueprint_filename()
 @cfy.options.validate
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 @cfy.assert_manager_active
-@cfy.add_client()
+@cfy.pass_client()
 @click.pass_context
 def upload(ctx,
            blueprint_path,
@@ -130,9 +130,9 @@ def upload(ctx,
 @cfy.argument('blueprint-id')
 @cfy.options.output_path
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 @cfy.assert_manager_active
-@cfy.add_client()
+@cfy.pass_client()
 def download(blueprint_id, output_path, logger, client):
     """Download a blueprint from the manager
 
@@ -151,9 +151,9 @@ def download(blueprint_id, output_path, logger, client):
                     short_help='Delete a blueprint [manager only]')
 @cfy.argument('blueprint-id')
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 @cfy.assert_manager_active
-@cfy.add_client()
+@cfy.pass_client()
 def delete(blueprint_id, logger, client):
     """Delete a blueprint from the manager
     """
@@ -167,9 +167,9 @@ def delete(blueprint_id, logger, client):
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 @cfy.assert_manager_active
-@cfy.add_client()
+@cfy.pass_client()
 def list(sort_by, descending, logger, client):
     """List all blueprints
     """
@@ -196,9 +196,9 @@ def list(sort_by, descending, logger, client):
                     short_help='Retrieve blueprint information [manager only]')
 @cfy.argument('blueprint-id')
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 @cfy.assert_manager_active
-@cfy.add_client()
+@cfy.pass_client()
 def get(blueprint_id, logger, client):
     """Retrieve information for a specific blueprint
 
@@ -227,9 +227,9 @@ def get(blueprint_id, logger, client):
                     short_help='Retrieve blueprint inputs [manager only]')
 @cfy.argument('blueprint-id')
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 @cfy.assert_manager_active
-@cfy.add_client()
+@cfy.pass_client()
 def inputs(blueprint_id, logger, client):
     """Retrieve inputs for a specific blueprint
 
@@ -257,7 +257,7 @@ def inputs(blueprint_id, logger, client):
 @cfy.options.validate
 @cfy.options.verbose
 @click.pass_context
-@cfy.add_logger
+@cfy.pass_logger
 def package(ctx, blueprint_path, output_path, validate, logger):
     """Create a blueprint archive
 
@@ -291,7 +291,7 @@ def package(ctx, blueprint_path, output_path, validate, logger):
 @cfy.argument('blueprint-path', type=click.Path(exists=True))
 @cfy.options.optional_output_path
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def create_requirements(blueprint_path, output_path, logger):
     """Generate a pip-compliant requirements file for a given blueprint
 

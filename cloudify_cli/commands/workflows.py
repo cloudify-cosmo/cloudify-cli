@@ -34,8 +34,8 @@ def workflows():
 @cfy.argument('workflow-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def get(workflow_id, deployment_id, logger, client):
     """Retrieve information for a specific workflow of a specific deployment
 
@@ -98,8 +98,8 @@ def get(workflow_id, deployment_id, logger, client):
                    short_help='List workflows for a deployment [manager only]')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def list(deployment_id, logger, client):
     """List all workflows on the manager
 

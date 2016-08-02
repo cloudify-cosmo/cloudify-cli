@@ -39,7 +39,7 @@ from .init import init_profile
 @cfy.options.task_thread_pool_size()
 @cfy.options.keep_up_on_failure
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def bootstrap(blueprint_path,
               inputs,
               validate_only,

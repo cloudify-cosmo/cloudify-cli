@@ -48,7 +48,7 @@ def plugins():
                  short_help='Validate a plugin')
 @cfy.argument('plugin-path')
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def validate(plugin_path, logger):
     """Validate a plugin
 
@@ -91,8 +91,8 @@ def validate(plugin_path, logger):
 @cfy.argument('plugin-id')
 @cfy.options.force(help=helptexts.FORCE_DELETE_PLUGIN)
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def delete(plugin_id, force, logger, client):
     """Delete a plugin from the manager
 
@@ -108,8 +108,8 @@ def delete(plugin_id, force, logger, client):
 @cfy.argument('plugin-path')
 @cfy.options.verbose
 @click.pass_context
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def upload(ctx, plugin_path, logger, client):
     """Upload a plugin to the manager
 
@@ -132,8 +132,8 @@ def upload(ctx, plugin_path, logger, client):
 @cfy.argument('plugin-id')
 @cfy.options.output_path
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def download(plugin_id, output_path, logger, client):
     """Download a plugin from the manager
 
@@ -152,8 +152,8 @@ def download(plugin_id, output_path, logger, client):
                  short_help='Retrieve plugin information [manager only]')
 @cfy.argument('plugin-id')
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def get(plugin_id, logger, client):
     """Retrieve information for a specific plugin
 
@@ -171,8 +171,8 @@ def get(plugin_id, logger, client):
 @cfy.options.sort_by('uploaded_at')
 @cfy.options.descending
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def list(sort_by, descending, logger, client):
     """List all plugins on the manager
     """

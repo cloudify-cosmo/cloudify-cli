@@ -14,7 +14,6 @@
 # limitations under the License.
 ############
 
-import logger
 from . import env
 from .config import cfy
 
@@ -69,8 +68,8 @@ def _cfy(verbose):
     # to another blueprint: `cfy use BLUEPRINT_ID`. If they want to switch
     # to a particular deployment, `cfy use BLUEPRINT_ID -d DEPLOYMENT_ID`
 
-    logger.configure_loggers()
     # cfy.set_cli_except_hook(verbose)
+    pass
 
 
 def _register_commands():

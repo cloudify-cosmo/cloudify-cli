@@ -50,7 +50,6 @@ from .. import inputs
 from .. import logger
 from .. import constants
 from ..bootstrap import bootstrap
-from ..logger import configure_loggers
 from ..exceptions import CloudifyCliError
 from ..colorful_event import ColorfulEvent
 from ..exceptions import ExecutionTimeoutError
@@ -355,11 +354,9 @@ class CliInputsTests(CliCommandTest):
                                 input_str)
 
     def test_inputs_to_dict_strings(self):
-        logger.configure_loggers()
         self._test_string_inputs(test_inputs_to_dict=True)
 
     def test_inputs_to_dict_directory(self):
-        logger.configure_loggers()
         input_files_directory, expected_dict = \
             self._generate_multiple_input_files()
 
@@ -369,7 +366,6 @@ class CliInputsTests(CliCommandTest):
         )
 
     def test_inputs_to_dict_wildcard(self):
-        logger.configure_loggers()
         input_files_directory, expected_dict = \
             self._generate_multiple_input_files()
 
@@ -437,11 +433,7 @@ class CliInputsTests(CliCommandTest):
         }
         return input_files_directory, expected_dict
 
-
-
-    # TODO: Add several other input tests (e.g. wildcard, paths, etc)
     def test_inputs_to_dict_error_handling(self):
-        configure_loggers()
         input_list = ["my_key1=my_value1;my_key2"]
 
         expected_err_msg = \

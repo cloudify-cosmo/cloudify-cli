@@ -39,12 +39,12 @@ def maintenance_mode():
                           short_help='Show maintenance-mode status '
                           '[manager only]')
 @cfy.options.verbose
-@cfy.add_client()
+@cfy.pass_client()
 def status(client):
     _print_maintenance_mode_status(client)
 
 
-@cfy.add_logger
+@cfy.pass_logger
 def _print_maintenance_mode_status(client, logger):
     status_response = client.maintenance_mode.status()
 
@@ -89,8 +89,8 @@ def _print_maintenance_mode_status(client, logger):
 @cfy.options.wait
 @cfy.options.timeout(default=0)
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def activate(wait, timeout, logger, client):
 
     if timeout and not wait:
@@ -132,8 +132,8 @@ def activate(wait, timeout, logger, client):
                           short_help='Deactivate maintenance-mode '
                           '[manager only]')
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def deactivate(logger, client):
     logger.info('Turning off maintenance mode...')
     client.maintenance_mode.deactivate()

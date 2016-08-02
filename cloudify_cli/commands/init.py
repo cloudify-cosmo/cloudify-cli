@@ -34,7 +34,7 @@ from ..exceptions import CloudifyCliError
 @cfy.options.init_hard_reset
 @cfy.options.enable_colors
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def init(blueprint_path,
          reset_context,
          inputs,
@@ -114,7 +114,7 @@ def init(blueprint_path,
         env.set_active_profile(profile_name)
 
 
-@cfy.add_logger
+@cfy.pass_logger
 def init_profile(
         profile_name,
         reset_context=False,

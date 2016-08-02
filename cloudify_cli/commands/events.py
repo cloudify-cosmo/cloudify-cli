@@ -38,8 +38,8 @@ def events():
 @cfy.options.json
 @cfy.options.tail
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def list(execution_id, include_logs, json, tail, logger, client):
     """Display events for an execution
 
@@ -89,8 +89,8 @@ def list(execution_id, include_logs, json, tail, logger, client):
 @cfy.argument('deployment-id')
 @cfy.options.include_logs
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def delete(deployment_id, include_logs, logger, client):
     """Delete events attached to a deployment
     """
@@ -100,12 +100,11 @@ def delete(deployment_id, include_logs, logger, client):
 
     # Make sure the deployment exists - raise 404 otherwise
     client.deployments.get(deployment_id)
-    deleted_events = client.events.delete(
-        deployment_id, include_logs=include_logs)
-    deleted_events = deleted_events.items[0]
-    # TODO: There might be tens of thousands of events. We should probably
-    # not print all of them.
-    if deleted_events:
-        logger.info('\nDeleted {0} events'.format(deleted_events))
+    deleted_events_count = client.events.delete(
+        deployment_id, include_logs=include_logs
+    )
+    deleted_events_count = deleted_events_count.items[0]
+    if deleted_events_count:
+        logger.info('\nDeleted {0} events'.format(deleted_events_count))
     else:
         logger.info('\nNo events to delete')

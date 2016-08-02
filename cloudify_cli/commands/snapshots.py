@@ -35,8 +35,8 @@ def snapshots():
 @cfy.options.without_deployment_envs
 @cfy.options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def restore(snapshot_id, without_deployment_envs, force, logger, client):
     """Restore a manager to its previous state
 
@@ -55,8 +55,8 @@ def restore(snapshot_id, without_deployment_envs, force, logger, client):
 @cfy.options.include_metrics
 @cfy.options.exclude_credentials
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def create(snapshot_id, include_metrics, exclude_credentials, logger, client):
     """Create a snapshot on the manager
 
@@ -79,8 +79,8 @@ def create(snapshot_id, include_metrics, exclude_credentials, logger, client):
                    short_help='Delete a snapshot [manager only]')
 @cfy.argument('snapshot-id')
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def delete(snapshot_id, logger, client):
     """Delete a snapshot from the manager
     """
@@ -94,8 +94,8 @@ def delete(snapshot_id, logger, client):
 @cfy.argument('snapshot_path')
 @cfy.options.snapshot_id
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def upload(snapshot_path, snapshot_id, logger, client):
     """Upload a snapshot to the manager
 
@@ -117,8 +117,8 @@ def upload(snapshot_path, snapshot_id, logger, client):
 @cfy.argument('snapshot-id')
 @cfy.options.output_path
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def download(snapshot_id, output_path, logger, client):
     """Download a snapshot from the manager
 
@@ -138,8 +138,8 @@ def download(snapshot_id, output_path, logger, client):
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def list(sort_by, descending, logger, client):
     """List all snapshots on the manager
     """

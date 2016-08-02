@@ -35,8 +35,8 @@ def nodes():
 @cfy.argument('node-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def get(node_id, deployment_id, logger, client):
     """Retrieve information for a specific node of a specific deployment
 
@@ -89,8 +89,8 @@ def get(node_id, deployment_id, logger, client):
 @cfy.options.sort_by('deployment_id')
 @cfy.options.descending
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def list(deployment_id, sort_by, descending, logger, client):
     """List nodes
 

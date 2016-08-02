@@ -89,7 +89,7 @@ def teardown(force,
 
 # TODO: do we need this if the `teardown` only appears in the context of a
 # manager?
-@cfy.add_logger
+@cfy.pass_logger
 def _update_local_provider_context(manager_ip, logger):
     try:
         use(manager_ip, env.get_rest_port())
