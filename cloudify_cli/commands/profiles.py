@@ -243,7 +243,6 @@ def _move_ssh_key(profile, direction, logger):
                 shutil.move(backup_path, key_filepath)
 
 
-# TODO: Consider moving to profiles.py
 def get_profile(profile_name):
     current_profile = env.get_active_profile()
     env.set_active_profile(profile_name)
