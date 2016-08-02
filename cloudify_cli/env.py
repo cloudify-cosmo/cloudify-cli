@@ -362,12 +362,6 @@ def build_manager_host_string(user='', ip=''):
     return '{0}@{1}'.format(user, ip)
 
 
-# TODO: apply to log messages if necessary or remove
-def manager_msg(message, manager_ip=None):
-    return '{0} [Manager={1}]'.format(
-        message, manager_ip or get_rest_host())
-
-
 def get_username():
     return os.environ.get(constants.CLOUDIFY_USERNAME_ENV)
 
