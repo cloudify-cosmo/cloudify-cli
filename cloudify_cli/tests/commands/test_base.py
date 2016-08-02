@@ -16,7 +16,6 @@ import os
 import os as utils_os
 
 import testtools
-import unittest
 from mock import patch, MagicMock
 
 from cloudify.utils import setup_logger
@@ -29,7 +28,7 @@ from ... import utils
 from ...exceptions import CloudifyCliError
 
 
-class CliCommandTest(unittest.TestCase):
+class CliCommandTest(testtools.TestCase):
 
     @classmethod
     def setUpClass(cls):
