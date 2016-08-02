@@ -92,7 +92,7 @@ class InitTest(CliCommandTest):
         command = 'cfy init {0}'.format(blueprint_path)
 
         self.invoke(command)
-        self.register_commands()
+        cfy.register_commands()
 
         output = self.invoke('cfy deployments inputs').logs.split('\n')
         self.assertIn('  "key1": "default_val1", ', output)
