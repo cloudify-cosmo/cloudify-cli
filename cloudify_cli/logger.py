@@ -171,5 +171,4 @@ def set_global_verbosity_level(verbose):
 def get_global_verbosity():
     """Returns the globally set verbosity
     """
-    global verbosity_level
     return verbosity_level

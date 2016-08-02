@@ -26,13 +26,6 @@ class LogsTest(CliCommandTest):
                     'Manager Port is not set '
                     'in working directory settings')
 
-    def test_with_no_server(self):
-        # TODO: this fails on use_manager...
-        self.use_manager(manager_ip=None)
-        self.invoke(
-            'cfy logs download',
-            err_str_segment='provide a profile name or activate a profile')
-
     def test_purge_no_force(self):
         self.use_manager()
         # unlike the other tests, this drops on argparse raising

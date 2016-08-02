@@ -73,7 +73,6 @@ def list(logger):
     """
     current_profile = env.get_active_profile()
 
-    logger.info('Listing all profiles...')
     profiles = []
     profile_names = _get_profile_names()
     for profile in profile_names:
@@ -83,10 +82,12 @@ def list(logger):
             profile_data['manager_ip'] = '*' + profile_data['manager_ip']
         profiles.append(profile_data)
 
-    columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path',
-               'ssh_port', 'rest_port', 'rest_protocol']
-    pt = utils.table(columns, data=profiles)
-    common.print_table('Profiles:', pt)
+    if profiles:
+        logger.info('Listing all profiles...')
+        columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path',
+                   'ssh_port', 'rest_port', 'rest_protocol']
+        pt = utils.table(columns, data=profiles)
+        common.print_table('Profiles:', pt)
 
     if not profile_names:
         logger.info(
