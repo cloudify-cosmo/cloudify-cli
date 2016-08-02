@@ -150,16 +150,6 @@ class CliEnvTests(CliCommandTest):
             profile.write('nothing_for_now')
         return profile_path
 
-    def _set_manager(self):
-        self.use_manager(
-            profile_name='10.10.1.10',
-            key='~/.my_key',
-            user='test',
-            port='22',
-            provider_context='abc',
-            rest_port=80,
-            rest_protocol='http')
-
     def test_delete_profile(self):
         profile_path = self._make_mock_profile()
         env.delete_profile('10.10.1.10')
@@ -212,7 +202,7 @@ class CliEnvTests(CliCommandTest):
             str(ex))
 
     def test_assert_manager_is_active(self):
-        self._set_manager()
+        self.use_manager()
         env.assert_manager_active()
 
     def test_assert_manager_is_active_not_init(self):
@@ -222,7 +212,7 @@ class CliEnvTests(CliCommandTest):
         self.assertFalse(env.is_manager_active())
 
     def test_assert_local_is_active(self):
-        self._set_manager()
+        self.use_manager()
         ex = self.assertRaises(
             CloudifyCliError,
             env.assert_local_active)
@@ -237,21 +227,23 @@ class CliEnvTests(CliCommandTest):
         self.assertFalse(env.is_manager_active())
 
     def test_manager_is_active(self):
-        self._set_manager()
+        self.use_manager()
         self.assertTrue(env.is_manager_active())
 
     def test_get_profile_context(self):
-        self._set_manager()
+        self.use_manager()
         context = env.get_profile_context()
         self.assertTrue(hasattr(context, 'get_manager_ip'))
         self.assertEqual(context.get_manager_ip(), '10.10.1.10')
 
     def test_get_profile_context_for_local(self):
-        context = env.get_profile_context()
-        self.assertIsNone(context)
+        ex = self.assertRaises(
+            CloudifyCliError,
+            env.get_profile_context)
+        self.assertEqual('Local profile does not have context', str(ex))
 
     def test_get_context_path(self):
-        self._set_manager()
+        self.use_manager()
         context_path = env.get_context_path()
         self.assertEqual(
             context_path,
@@ -271,7 +263,7 @@ class CliEnvTests(CliCommandTest):
         self.assertEqual('Profile directory does not exist', str(ex))
 
     def test_get_profile_dir(self):
-        self._set_manager()
+        self.use_manager()
         profile_dir = env.get_profile_dir()
         self.assertEqual(
             profile_dir,
@@ -311,45 +303,11 @@ class CliEnvTests(CliCommandTest):
             env.raise_uninitialized)
         self.assertEqual('Cloudify environment is not initialized', str(ex))
 
-    def test_update_profile_context(self):
-        with env.update_profile_context('10.10.1.10') as context:
-            context.set_manager_ip('10.10.1.10')
-            context.set_rest_port('80')
-            context.set_rest_protocol('http')
-            context.set_provider_context('provider_context')
-            context.set_manager_key('~/.my_key')
-            context.set_manager_user('test_user')
-            context.set_manager_port(24)
-            context.set_bootstrap_state(True)
-        context = env.get_profile_context('10.10.1.10')
-        self.assertEqual(context.get_manager_ip(), '10.10.1.10')
-        self.assertEqual(context.get_manager_key(), '~/.my_key')
-        self.assertEqual(context.get_manager_user(), 'test_user')
-        self.assertEqual(context.get_manager_port(), 24)
-        self.assertEqual(context.get_rest_port(), 80)
-        self.assertEqual(context.get_rest_protocol(), 'http')
-        self.assertEqual(context.get_provider_context(), 'provider_context')
-        self.assertEqual(context.get_bootstrap_state(), True)
-
     def test_get_profile(self):
-        profile_input = dict(
-            manager_ip='10.10.1.10',
-            ssh_key_path='~/.my_key',
-            ssh_user='test_user',
-            ssh_port=24,
-            rest_port=80,
-            rest_protocol='http',
-            alias=None)
-        with env.update_profile_context(manager_ip) as context:
-            context.set_manager_ip(profile_input['manager_ip'])
-            context.set_rest_port(profile_input['rest_port'])
-            context.set_rest_protocol(profile_input['rest_protocol'])
-            context.set_manager_key(profile_input['ssh_key_path'])
-            context.set_manager_user(profile_input['ssh_user'])
-            context.set_manager_port(profile_input['ssh_port'])
-        env.update_profile_context(**profile_input)
+        self.use_manager()
         profile_output = env.get_profile('10.10.1.10')
-        self.assertDictEqual(profile_output, profile_input)
+        self.assertDictContainsSubset(
+            profile_output, cfy.default_manager_params)
 
 
 class CliInputsTests(CliCommandTest):

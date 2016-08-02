@@ -128,10 +128,6 @@ SET_MANAGEMENT_CREDS = (
 )
 
 DEFAULT_MUTUALITY_MESSAGE = 'Cannot be used simultaneously'
-MUTUAL_SSH_KEY_AND_PASSWORD = (
-    'You cannot use both an SSH key and password at the same time. '
-    'Please only provide one of them'
-)
 
 PROFILE_ALIAS = (
     'An alias to assign to the profile. This allows you to use '
@@ -141,7 +137,6 @@ PROFILE_ALIAS = (
 MANAGEMENT_IP = 'The IP of the host machine on which you bootstrapped'
 MANAGEMENT_USER = 'The user on the host machine with which you bootstrapped'
 MANAGEMENT_KEY = 'The path to the ssh key-file to use when connecting'
-MANAGEMENT_PASSWORD = 'The password to use when connecting to the manager'
 MANAGEMENT_PORT = 'The port to use when connecting to the manager'
 REST_PORT = "The REST server's port"
 

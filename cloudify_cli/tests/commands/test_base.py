@@ -14,41 +14,33 @@
 #    * limitations under the License.
 import os
 import os as utils_os
-import shutil
-import unittest
 
+import testtools
 from mock import patch, MagicMock
 
 from cloudify.utils import setup_logger
-from cloudify_cli import env, utils, exceptions
-from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.tests import cfy
-from cloudify_cli.tests.commands.constants import TEST_DIR, TEST_WORK_DIR
 from cloudify_rest_client import CloudifyClient
-from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.maintenance import Maintenance
 
+from .. import cfy
+from ... import env
+from ... import utils
+from ...exceptions import CloudifyCliError
 
-class CliCommandTest(unittest.TestCase):
+
+class CliCommandTest(testtools.TestCase):
 
     @classmethod
     def setUpClass(cls):
         cls.logger = setup_logger('CliCommandTest')
 
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(TEST_DIR, ignore_errors=True)
-
     def setUp(self):
+        super(CliCommandTest, self).setUp()
         logdir = os.path.dirname(env.DEFAULT_LOG_FILE)
         cfy.invoke('init -r')
         # create log folder
         if not os.path.exists(logdir):
             os.makedirs(logdir)
-
-        # create test working directory
-        if not os.path.exists(TEST_WORK_DIR):
-            os.makedirs(TEST_WORK_DIR)
 
         self.client = CloudifyClient()
 
@@ -63,6 +55,7 @@ class CliCommandTest(unittest.TestCase):
         utils_os.getcwd = lambda: TEST_WORK_DIR
 
     def tearDown(self):
+        super(CliCommandTest, self).tearDown()
         cfy.purge_dot_cloudify()
         # remove mocks
         env.get_rest_client = self.original_utils_get_rest_client
@@ -73,10 +66,6 @@ class CliCommandTest(unittest.TestCase):
         if os.path.exists(env.DEFAULT_LOG_FILE):
             with open(env.DEFAULT_LOG_FILE, 'w') as f:
                 f.write('')
-
-        # delete test working directory
-        if os.path.exists(TEST_WORK_DIR):
-            shutil.rmtree(TEST_WORK_DIR)
 
     def invoke(self,
                command,
@@ -108,40 +97,6 @@ class CliCommandTest(unittest.TestCase):
             self.assertEqual(exception, type(outcome.exception))
         return outcome
 
-    def _assert_ex(self,
-                   cli_cmd,
-                   err_str_segment,
-                   possible_solutions=None):
-
-        def _assert():
-            self.assertIn(err_str_segment, str(ex))
-            if possible_solutions:
-                if hasattr(ex, 'possible_solutions'):
-                    self.assertEqual(ex.possible_solutions,
-                                     possible_solutions)
-                else:
-                    self.fail('Exception should have '
-                              'declared possible solutions')
-
-        try:
-            cfy.invoke(cli_cmd)
-            self.fail('Expected error {0} was not raised for command {1}'
-                      .format(err_str_segment, cli_cmd))
-        except SystemExit as ex:
-            _assert()
-        except exceptions.CloudifyCliError as ex:
-            _assert()
-        except exceptions.CloudifyValidationError as ex:
-            _assert()
-        except CloudifyClientError as ex:
-            _assert()
-        except ValueError as ex:
-            _assert()
-        except IOError as ex:
-            _assert()
-        except ImportError as ex:
-            _assert()
-
     def assert_method_called(self,
                              command,
                              module,
@@ -172,37 +127,10 @@ class CliCommandTest(unittest.TestCase):
                 self.logger.info(e.message)
             self.assertFalse(mock.called)
 
-    def use_manager(self,
-                    profile_name='10.10.1.10',
-                    key='key',
-                    user='key',
-                    port='22',
-                    provider_context=None,
-                    rest_port=80,
-                    rest_protocol='http'):
-
-        provider_context = provider_context or dict()
-        settings = env.ProfileContext()
-        settings.set_manager_ip(profile_name)
-        settings.set_manager_key(key)
-        settings.set_manager_user(user)
-        settings.set_manager_port(port)
-        settings.set_rest_port(rest_port)
-        settings.set_rest_protocol(rest_protocol)
-        settings.set_provider_context(provider_context)
-
-        cfy.purge_profile(profile_name)
-        env.set_profile_context(
-            profile_name=profile_name,
-            context=settings,
-            update=False)
-        env.set_cfy_config()
-        env.set_active_profile(profile_name)
-        self.register_commands()
-
-    def register_commands(self):
-        from cloudify_cli.cli import _register_commands
-        _register_commands()
+    def use_manager(self, **default_manager_params):
+        if not default_manager_params:
+            default_manager_params = cfy.default_manager_params
+        cfy.use_manager(**default_manager_params)
 
     def _read_context(self):
         return env.get_profile_context()

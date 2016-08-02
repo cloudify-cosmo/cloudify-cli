@@ -33,7 +33,6 @@ from . import init
 @cfy.options.profile_alias
 @cfy.options.manager_user
 @cfy.options.manager_key
-@cfy.options.manager_password
 @cfy.options.manager_port
 @cfy.options.rest_port
 @cfy.options.verbose
@@ -42,7 +41,6 @@ def use(alias,
         manager_ip,
         manager_user,
         manager_key,
-        manager_password,
         manager_port,
         rest_port,
         logger):
@@ -53,7 +51,7 @@ def use(alias,
     Additional CLI commands will be added after a manager is used.
     To stop using a manager, you can run `cfy init -r`.
     """
-    # TODO: add support for setting the ssh port and password
+    # TODO: add support for setting the ssh port
 
     if manager_ip == 'local':
         logger.info('Using local environment...')
@@ -105,8 +103,6 @@ def use(alias,
 
     with env.update_profile_context(manager_ip) as context:
         context.set_manager_ip(manager_ip)
-        context.set_rest_port(rest_port)
-        context.set_rest_protocol(rest_protocol)
         context.set_provider_context(provider_context)
         if manager_key:
             context.set_manager_key(manager_key)
@@ -114,6 +110,9 @@ def use(alias,
             context.set_manager_user(manager_user)
         if manager_port:
             context.set_manager_port(manager_port)
+        if rest_port:
+            context.set_rest_port(rest_port)
+        context.set_rest_protocol(rest_protocol)
 
     # delete the previous manager deployment if exists.
     bs.delete_workdir()

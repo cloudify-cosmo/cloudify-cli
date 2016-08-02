@@ -51,7 +51,7 @@ def get_profile(profile_name):
     current_profile = get_active_profile()
     set_active_profile(profile_name)
 
-    # TODO: add rest port and protocol, ssh port and ssh password
+    # TODO: add rest port and protocol, ssh port
     context = get_profile_context(profile_name)
     manager_ip = context.get_manager_ip() or None
     ssh_key_path = context.get_manager_key() or None
@@ -170,8 +170,7 @@ def get_profile_dir(profile_name=None):
             os.path.join(PROFILES_DIR, active_profile)):
         return os.path.join(PROFILES_DIR, active_profile)
     else:
-        raise CloudifyCliError('Profile {0} does not exist'.format(
-            profile_name))
+        raise CloudifyCliError('Profile directory does not exist')
 
 
 def set_cfy_config():
@@ -223,44 +222,6 @@ def set_profile_context(context=None,
         f.write(yaml.dump(context))
 
 
-# def update_profile_context(manager_ip,
-#                            manager_key=None,
-#                            manager_password=None,
-#                            manager_user=None,
-#                            manager_port='22',
-#                            rest_port='80',
-#                            rest_protocol='http',
-#                            provider_context=None,
-#                            bootstrap_state=None,
-#                            alias=None):
-
-#     set_active_profile(manager_ip)
-#     provider_context = provider_context or {}
-#     settings = ProfileContext()
-
-#     settings.set_manager_ip(manager_ip)
-#     if manager_key:
-#         settings.set_manager_key(manager_key)
-#     if manager_password:
-#         settings.set_manager_password(manager_password)
-#     if manager_user:
-#         settings.set_manager_user(manager_user)
-#     if manager_port:
-#         settings.set_manager_port(manager_port)
-#     if bootstrap_state is not None:
-#         settings.set_bootstrap_state(bootstrap_state)
-#     # TODO: These should be optional as well
-#     settings.set_rest_port(rest_port)
-#     settings.set_rest_protocol(rest_protocol)
-
-#     settings.set_provider_context(provider_context)
-
-#     set_profile_context(
-#         profile_name=manager_ip,
-#         context=settings,
-#         update=False)
-
-
 @contextmanager
 def update_profile_context(profile_name=None):
     profile_name = profile_name or get_active_profile()
@@ -310,9 +271,8 @@ def get_rest_client(rest_host=None,
                     trust_all=False,
                     skip_version_check=False):
     # TODO: Go through all commands remove remove the call
-    # to get_manager_ip_ip as it is already defaulted
+    # to get_manager_ip as it is already defaulted
     # here.
-    assert_manager_active()
 
     rest_host = rest_host or get_rest_host()
     rest_port = rest_port or get_rest_port()
@@ -501,7 +461,6 @@ class ProfileContext(yaml.YAMLObject):
         self._bootstrap_state = None
         self._manager_host = None
         self._manager_key = None
-        self._manager_password = None
         self._manager_port = None
         self._manager_user = None
         self._provider_context = None
@@ -525,12 +484,6 @@ class ProfileContext(yaml.YAMLObject):
 
     def set_manager_key(self, manager_key):
         self._manager_key = manager_key
-
-    def get_manager_password(self):
-        return self._manager_password
-
-    def set_manager_password(self, manager_password):
-        self._manager_password = manager_password
 
     def get_manager_port(self):
         return self._manager_port

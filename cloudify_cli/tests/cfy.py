@@ -34,6 +34,17 @@ WORKDIR = os.path.join(tempfile.gettempdir(), '.cloudify-tests')
 runner_lgr = setup_logger('cli_runner')
 
 
+default_manager_params = dict(
+    manager_ip='10.10.1.10',
+    alias=None,
+    ssh_key_path='key',
+    ssh_user='key',
+    ssh_port='22',
+    provider_context='provider_context',
+    rest_port=80,
+    rest_protocol='http')
+
+
 @log_capture()
 def invoke(command, capture, context=None):
     # For each invocation we should use a temporary directory
@@ -109,3 +120,29 @@ def purge_profile(profile_name='test'):
     profile_path = os.path.join(env.CLOUDIFY_WORKDIR, profile_name)
     if os.path.isdir(profile_path):
         shutil.rmtree(profile_path)
+
+
+def use_manager(**default_manager_params):
+    provider_context = default_manager_params['provider_context'] or {}
+    settings = env.ProfileContext()
+    settings.set_manager_ip(default_manager_params['manager_ip'])
+    settings.set_manager_key(default_manager_params['ssh_key_path'])
+    settings.set_manager_user(default_manager_params['ssh_user'])
+    settings.set_manager_port(default_manager_params['ssh_port'])
+    settings.set_rest_port(default_manager_params['rest_port'])
+    settings.set_rest_protocol(default_manager_params['rest_protocol'])
+    settings.set_provider_context(provider_context)
+
+    purge_profile(default_manager_params['manager_ip'])
+    env.set_profile_context(
+        profile_name=default_manager_params['manager_ip'],
+        context=settings,
+        update=False)
+    env.set_cfy_config()
+    env.set_active_profile(default_manager_params['manager_ip'])
+    register_commands()
+
+
+def register_commands():
+    from cloudify_cli.cli import _register_commands
+    _register_commands()
