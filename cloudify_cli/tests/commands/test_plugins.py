@@ -4,8 +4,8 @@ import tempfile
 
 from mock import MagicMock
 
-from ..mocks import make_tarfile
-from ..test_base import CliCommandTest
+from .mocks import make_tarfile
+from .test_base import CliCommandTest
 
 from cloudify_rest_client import plugins
 

@@ -1,6 +1,6 @@
 from mock import patch, MagicMock
 
-from ..test_base import CliCommandTest
+from .test_base import CliCommandTest
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 

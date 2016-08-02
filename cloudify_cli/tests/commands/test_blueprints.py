@@ -4,9 +4,9 @@ import tempfile
 import yaml
 from mock import MagicMock, patch
 
-from .... import env
-from ..test_base import CliCommandTest
-from ..constants import BLUEPRINTS_DIR
+from ... import env
+from .test_base import CliCommandTest
+from .constants import BLUEPRINTS_DIR
 
 
 class BlueprintsTest(CliCommandTest):

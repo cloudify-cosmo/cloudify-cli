@@ -1,4 +1,4 @@
-from ..test_base import CliCommandTest
+from .test_base import CliCommandTest
 
 
 class LogsTest(CliCommandTest):

@@ -2,9 +2,9 @@ import os
 import platform
 from distutils import spawn
 
-from .... import exceptions
-from ..test_base import CliCommandTest
-from ....commands.ssh import _validate_env
+from ... import exceptions
+from .test_base import CliCommandTest
+from ...commands.ssh import _validate_env
 
 
 class SshTest(CliCommandTest):

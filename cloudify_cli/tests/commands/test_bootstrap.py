@@ -1,9 +1,9 @@
 from mock import patch
 
-from .... import common
-from ....bootstrap import bootstrap
-from ..test_base import CliCommandTest
-from ..constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH
+from ... import common
+from ...bootstrap import bootstrap
+from .test_base import CliCommandTest
+from .constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH
 
 
 class BootstrapTest(CliCommandTest):

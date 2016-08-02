@@ -6,11 +6,11 @@ from contextlib import closing
 
 from mock import MagicMock
 
-from ... import cfy
-from ....import env
-from ....import utils
-from ....commands import profiles
-from ..test_base import CliCommandTest
+from .. import cfy
+from ... import env
+from ... import utils
+from ...commands import profiles
+from .test_base import CliCommandTest
 
 
 class ProfilesTest(CliCommandTest):

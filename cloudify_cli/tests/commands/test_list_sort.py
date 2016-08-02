@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from ..test_base import CliCommandTest
+from .test_base import CliCommandTest
 
 
 class ListSortTest(CliCommandTest):

@@ -2,8 +2,8 @@ import os
 
 from mock import MagicMock, patch
 
-from .... import exceptions, env
-from ..test_base import CliCommandTest
+from ... import exceptions, env
+from .test_base import CliCommandTest
 
 
 class RecoverTest(CliCommandTest):

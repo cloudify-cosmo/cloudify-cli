@@ -1,7 +1,7 @@
 from mock import MagicMock, patch, call
 
-from ..test_base import CliCommandTest
-from ..mocks import mock_activated_status, mock_is_timeout
+from .test_base import CliCommandTest
+from .mocks import mock_activated_status, mock_is_timeout
 
 
 class MaintenanceModeTest(CliCommandTest):

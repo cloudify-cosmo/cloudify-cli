@@ -5,11 +5,11 @@ from mock import patch
 
 from dsl_parser.exceptions import DSLParsingLogicException
 
-from ... import cfy
-from .... import env
-from ..test_base import CliCommandTest
-from ....constants import DEFAULT_BLUEPRINT_FILE_NAME
-from ..constants import BLUEPRINTS_DIR, SAMPLE_INPUTS_PATH
+from .. import cfy
+from ... import env
+from .test_base import CliCommandTest
+from .constants import BLUEPRINTS_DIR, SAMPLE_INPUTS_PATH, \
+    DEFAULT_BLUEPRINT_FILE_NAME
 
 
 class InitTest(CliCommandTest):

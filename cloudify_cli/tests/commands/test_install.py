@@ -3,15 +3,15 @@ import os
 from mock import patch
 
 
-from .... import utils, exceptions
-from ..test_base import CliCommandTest
-from ..constants import SAMPLE_BLUEPRINT_PATH, \
+from ... import utils, exceptions
+from .test_base import CliCommandTest
+from .constants import SAMPLE_BLUEPRINT_PATH, \
     SAMPLE_ARCHIVE_PATH, STUB_BLUEPRINT_ID, STUB_DIRECTORY_NAME, \
     SAMPLE_ARCHIVE_URL, STUB_BLUEPRINT_FILENAME, SAMPLE_INPUTS_PATH, \
     STUB_DEPLOYMENT_ID, STUB_PARAMETERS, STUB_WORKFLOW, STUB_TIMEOUT, \
-    BLUEPRINTS_DIR
-from ....constants import DEFAULT_BLUEPRINT_FILE_NAME, \
-    DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND, DEFAULT_TIMEOUT
+    BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
+from ...constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND, \
+    DEFAULT_TIMEOUT
 
 
 class InstallTest(CliCommandTest):

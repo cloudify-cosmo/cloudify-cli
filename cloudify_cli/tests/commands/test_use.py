@@ -1,9 +1,10 @@
 from mock import MagicMock, patch
 
-from cloudify_cli import env
-from cloudify_cli.constants import API_VERSION
-from cloudify_cli.tests.commands.constants import SSL_PORT
-from cloudify_cli.tests.commands.test_base import CliCommandTest
+from ... import env
+from .constants import SSL_PORT
+from ...constants import API_VERSION
+from .test_base import CliCommandTest
+
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import UserUnauthorizedError
 

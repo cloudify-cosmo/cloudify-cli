@@ -4,8 +4,8 @@ from StringIO import StringIO
 
 from mock import patch
 
-from ..test_base import CliCommandTest
-from ..mocks import MockListResponse, mock_log_message_prefix
+from .test_base import CliCommandTest
+from .mocks import MockListResponse, mock_log_message_prefix
 
 from cloudify_rest_client import executions, deployments
 

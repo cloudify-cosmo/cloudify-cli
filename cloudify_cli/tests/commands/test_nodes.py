@@ -1,7 +1,7 @@
 from mock import MagicMock
 
-from ..test_base import CliCommandTest
-from ..mocks import node_get_mock, node_instance_get_mock
+from .test_base import CliCommandTest
+from .mocks import node_get_mock, node_instance_get_mock
 
 
 class NodesTest(CliCommandTest):

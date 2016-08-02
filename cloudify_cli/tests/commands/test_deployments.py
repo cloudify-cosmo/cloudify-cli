@@ -5,10 +5,10 @@ from mock import patch, MagicMock, PropertyMock
 from cloudify_rest_client import deployments, executions
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .... import exceptions
-from ..mocks import MockListResponse
-from ..constants import BLUEPRINTS_DIR
-from ..test_base import CliCommandTest
+from ... import exceptions
+from .mocks import MockListResponse
+from .constants import BLUEPRINTS_DIR
+from .test_base import CliCommandTest
 
 
 class DeploymentUpdatesTest(CliCommandTest):

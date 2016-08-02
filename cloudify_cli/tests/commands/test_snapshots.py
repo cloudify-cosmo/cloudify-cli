@@ -1,7 +1,7 @@
 from mock import MagicMock
 
-from ..constants import SNAPSHOTS_DIR
-from ..test_base import CliCommandTest
+from .constants import SNAPSHOTS_DIR
+from .test_base import CliCommandTest
 
 from cloudify_rest_client import snapshots, executions
 
