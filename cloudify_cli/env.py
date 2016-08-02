@@ -45,31 +45,6 @@ def delete_profile(profile_name):
             'Profile {0} does not exist'.format(profile_name))
 
 
-# TODO: Consider moving to profiles.py
-def get_profile(profile_name):
-    current_profile = get_active_profile()
-    set_active_profile(profile_name)
-
-    context = get_profile_context(profile_name)
-    manager_ip = context.get_manager_ip() or None
-    ssh_key_path = context.get_manager_key() or None
-    ssh_user = context.get_manager_user() or None
-    ssh_port = context.get_manager_port() or None
-    rest_port = context.get_rest_port() or None
-    rest_protocol = context.get_rest_protocol() or None
-
-    set_active_profile(current_profile)
-
-    return dict(
-        manager_ip=manager_ip,
-        alias=None,
-        ssh_key_path=ssh_key_path,
-        ssh_user=ssh_user,
-        ssh_port=ssh_port,
-        rest_port=rest_port,
-        rest_protocol=rest_protocol)
-
-
 def is_profile_exists(profile_name):
     return os.path.isfile(os.path.join(PROFILES_DIR, profile_name, 'context'))
 
@@ -91,9 +66,8 @@ def get_active_profile():
         with open(ACTIVE_PRO_FILE) as active_profile:
             return active_profile.read().strip()
     else:
-        # TODO: Don't quite understand this. If the active profile
-        # file doesn't exist.. something fundemental is broken.
-        return ''
+        # We return None explicitly as no profile is active.
+        return None
 
 
 def assert_manager_active():
@@ -293,6 +267,8 @@ def get_rest_client(rest_host=None,
         # cert=cert,
         trust_all=trust_all)
 
+    # TODO: Put back version check after we've solved the problem where
+    # a new CLI is used with an older manager on `cfy upgrade`.
     if skip_version_check or True:
         return client
 
@@ -301,9 +277,6 @@ def get_rest_client(rest_host=None,
     if cli_version == manager_version:
         return client
     elif not manager_version:
-        # TODO: log that: Version compatibility check could not be performed
-        # the current problem is that there's a circular import between utils
-        # and logger which we need to solve.
         return client
     else:
         raise CloudifyCliError(
@@ -532,7 +505,6 @@ class CloudifyConfig(object):
     def logging(self):
         return self.Logging(self._config.get('logging', {}))
 
-    # TODO: check if this is being used somewhere
     @property
     def local_provider_context(self):
         return self._config.get('local_provider_context', {})

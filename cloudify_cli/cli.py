@@ -79,11 +79,6 @@ def _register_commands():
     and which don't. We should decide that according to whether
     a manager is currently `use`d or not.
     """
-    # TODO: Instead of manually stating each module,
-    # we might want to try importing all modules in the `commands`
-    # package recursively and check if they have a certain attribute
-    # which indicates they belong to `manager` and which don't.
-
     # Manager agnostic commands
     _cfy.add_command(use.use)
     _cfy.add_command(init.init)
@@ -105,15 +100,14 @@ def _register_commands():
     _cfy.add_command(snapshots.snapshots)
     _cfy.add_command(maintenance_mode.maintenance_mode)
 
-    # TODO: consolidate with `local` of the same type
+    # TODO: Add nodes and groups to local.
     _cfy.add_command(nodes.nodes)
     _cfy.add_command(groups.groups)
+
     _cfy.add_command(workflows.workflows)
     _cfy.add_command(blueprints.blueprints)
     _cfy.add_command(executions.executions)
     _cfy.add_command(deployments.deployments)
-
-    # TODO: Add nodes and groups to local.
 
     deployments.deployments.add_command(deployments.manager_create)
     deployments.deployments.add_command(deployments.manager_delete)

@@ -20,13 +20,19 @@ class ProfilesTest(CliCommandTest):
             'profiles list',
             err_str_segment='Cloudify environment is not initialized')
 
-    def test_get_profile(self):
+    def test_get_active_profile(self):
         self.use_manager()
         outcome = self.invoke('profiles get-active')
         self.assertIn('manager_ip', outcome.logs)
         self.assertIn('10.10.1.10', outcome.logs)
         self.assertIn('rest_port', outcome.logs)
         self.assertIn('80', outcome.logs)
+
+    def test_get_profile(self):
+        self.use_manager()
+        profile_output = profiles.get_profile('10.10.1.10')
+        self.assertDictContainsSubset(
+            profile_output, cfy.default_manager_params)
 
     def test_get_profile_no_active_manager(self):
         outcome = self.invoke('profiles get-active')

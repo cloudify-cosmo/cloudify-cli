@@ -286,9 +286,11 @@ class Options(object):
         method - if not, it's an attribute.
         """
 
-        # TODO: Convert verbose to a function which allows to pass
-        # whether the value is exposed or not as an argument.
-        # Then, remove `verbose_exposed`.
+        # Exposing the verbosity value is done once under cli.py.
+        # Instead of creating two functions, one exposed, one not,
+        # we could write a single verbose method to receive an arg
+        # for exposing the value.. but it would be misleading
+        # as exposing the value is not relevant in any other case.
         self.verbose = click.option(
             '-v',
             '--verbose',
