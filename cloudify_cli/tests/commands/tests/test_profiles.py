@@ -6,10 +6,11 @@ from contextlib import closing
 
 from mock import MagicMock
 
-from ..test_base import CliCommandTest
 from ... import cfy
 from ....import env
 from ....import utils
+from ....commands import profiles
+from ..test_base import CliCommandTest
 
 
 class ProfilesTest(CliCommandTest):
@@ -90,16 +91,20 @@ class ProfilesTest(CliCommandTest):
         fd2, key = tempfile.mkstemp()
         os.close(fd1)
         os.close(fd2)
+        with open(key, 'w') as f:
+            f.write('aaa')
         self.use_manager(key=key)
+        self.invoke('profiles list')
         try:
             self.invoke('cfy profiles export -o {0} --include-keys'.format(
                 profiles_archive))
             with closing(tarfile.open(name=profiles_archive)) as tar:
                 members = [member.name for member in tar.getmembers()]
             self.assertIn('profiles/10.10.1.10/context', members)
-            self.assertIn('profiles/10.10.1.10/{0}.ssh.profile'.format(
-                os.path.basename(key)), members)
+            self.assertIn('profiles/{0}/{1}.10.10.1.10.profile'.format(
+                profiles.PROFILE_DIRNAME, os.path.basename(key)), members)
             cfy.purge_dot_cloudify()
+            os.remove(key)
             self.assertFalse(os.path.isdir(env.PROFILES_DIR))
             self.invoke('cfy init')
             self.invoke('cfy profiles import {0}'.format(profiles_archive))

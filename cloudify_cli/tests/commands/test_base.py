@@ -177,7 +177,9 @@ class CliCommandTest(unittest.TestCase):
                     key='key',
                     user='key',
                     port='22',
-                    provider_context=None):
+                    provider_context=None,
+                    rest_port=80,
+                    rest_protocol='http'):
 
         provider_context = provider_context or dict()
         settings = env.ProfileContext()
@@ -185,6 +187,8 @@ class CliCommandTest(unittest.TestCase):
         settings.set_manager_key(key)
         settings.set_manager_user(user)
         settings.set_manager_port(port)
+        settings.set_rest_port(rest_port)
+        settings.set_rest_protocol(rest_protocol)
         settings.set_provider_context(provider_context)
 
         cfy.purge_profile(profile_name)

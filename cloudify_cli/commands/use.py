@@ -102,15 +102,18 @@ def use(alias,
 
     logger.info('Using manager {0} with port {1}'.format(
         manager_ip, rest_port))
-    # with env.update_profile_context:
 
-    env.update_profile_context(
-        manager_ip=manager_ip,
-        manager_key=manager_key,
-        manager_user=manager_user,
-        manager_port=manager_port,
-        rest_port=rest_port,
-        rest_protocol=rest_protocol,
-        provider_context=provider_context)
+    with env.update_profile_context(manager_ip) as context:
+        context.set_manager_ip(manager_ip)
+        context.set_rest_port(rest_port)
+        context.set_rest_protocol(rest_protocol)
+        context.set_provider_context(provider_context)
+        if manager_key:
+            context.set_manager_key(manager_key)
+        if manager_user:
+            context.set_manager_user(manager_user)
+        if manager_port:
+            context.set_manager_port(manager_port)
+
     # delete the previous manager deployment if exists.
     bs.delete_workdir()
