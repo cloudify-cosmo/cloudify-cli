@@ -72,16 +72,10 @@ class TeardownTest(CliCommandTest):
             task_thread_pool_size=1
         )
 
-    # TODO: Not sure we're checking the right things here
     @patch('cloudify_cli.bootstrap.bootstrap.teardown')
-    def test_teardown_no_manager_ip_in_context_right_directory(
-            self, mock_teardown):  # NOQA
+    def test_teardown_default_values(self, mock_teardown):
 
-        def mock_client_list():
-            return list()
-
-        self.client.deployments.list = mock_client_list
-
+        self.client.deployments.list = MagicMock(return_value=[])
         self.use_manager(host='10.0.0.1')
 
         self.invoke('cfy teardown -f')
@@ -89,4 +83,20 @@ class TeardownTest(CliCommandTest):
             task_retries=0,
             task_retry_interval=1,
             task_thread_pool_size=1
+        )
+
+    @patch('cloudify_cli.bootstrap.bootstrap.teardown')
+    def test_teardown_custom_values(self, mock_teardown):
+
+        self.client.deployments.list = MagicMock(return_value=[])
+        self.use_manager(host='10.0.0.1')
+
+        self.invoke('cfy teardown -f '
+                    '--task-retries 7 '
+                    '--task-retry-interval 14 '
+                    '--task-thread-pool-size 87')
+        mock_teardown.assert_called_once_with(
+            task_retries=7,
+            task_retry_interval=14,
+            task_thread_pool_size=87
         )

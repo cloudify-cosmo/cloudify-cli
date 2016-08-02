@@ -1,4 +1,4 @@
-from cloudify_cli.tests.commands.test_base import BaseUpgradeTest
+from ..test_base import BaseUpgradeTest
 
 
 class UpgradeTest(BaseUpgradeTest):

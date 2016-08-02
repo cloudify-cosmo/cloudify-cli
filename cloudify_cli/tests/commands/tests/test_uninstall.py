@@ -2,12 +2,12 @@ import os
 
 from mock import patch
 
-from cloudify_cli import common
-from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW, DEFAULT_TIMEOUT, \
-    DEFAULT_PARAMETERS, DEFAULT_BLUEPRINT_FILE_NAME
-from cloudify_cli.tests.commands.constants import BLUEPRINTS_DIR
-from cloudify_cli.tests.commands.test_base import CliCommandTest
+from .... import common
+from ..constants import BLUEPRINTS_DIR
+from ..test_base import CliCommandTest
 from cloudify_rest_client import deployments
+from ....constants import DEFAULT_UNINSTALL_WORKFLOW, \
+    DEFAULT_TIMEOUT, DEFAULT_PARAMETERS, DEFAULT_BLUEPRINT_FILE_NAME
 
 
 class UninstallTest(CliCommandTest):

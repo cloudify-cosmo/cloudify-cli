@@ -21,8 +21,36 @@ class InitTest(CliCommandTest):
             err_str_segment='Environment is already initialized')
 
     def test_init_overwrite(self):
-        # Ensuring the init with overwrite command works
+        # Config values shouldn't change between init resets
+        with open(env.CLOUDIFY_CONFIG_PATH) as f:
+            config = yaml.safe_load(f.read())
+
+        self.assertFalse(config['colors'])
+        with open(env.CLOUDIFY_CONFIG_PATH, 'w') as f:
+            config['colors'] = True
+            f.write(yaml.safe_dump(config))
+
         self.invoke('cfy init -r')
+        with open(env.CLOUDIFY_CONFIG_PATH) as f:
+            config = yaml.safe_load(f.read())
+
+        self.assertTrue(config['colors'])
+
+    def test_init_overwrite_hard(self):
+        # Config values should change between hard init resets
+        with open(env.CLOUDIFY_CONFIG_PATH) as f:
+            config = yaml.safe_load(f.read())
+
+        self.assertFalse(config['colors'])
+        with open(env.CLOUDIFY_CONFIG_PATH, 'w') as f:
+            config['colors'] = True
+            f.write(yaml.safe_dump(config))
+
+        self.invoke('cfy init -r --hard')
+        with open(env.CLOUDIFY_CONFIG_PATH) as f:
+            config = yaml.safe_load(f.read())
+
+        self.assertFalse(config['colors'])
 
     def test_init_overwrite_on_initial_init(self):
         # Simply verifying the overwrite flag doesn't break the first init
@@ -54,6 +82,22 @@ class InitTest(CliCommandTest):
         self.assertIn('  "param": null, ', output)
         self.assertIn('  "custom_param": null, ', output)
         self.assertIn('  "provider_context": null', output)
+
+    def test_init_default_inputs(self):
+        blueprint_path = os.path.join(
+            BLUEPRINTS_DIR,
+            'local',
+            DEFAULT_BLUEPRINT_FILE_NAME
+        )
+        command = 'cfy init {0}'.format(blueprint_path)
+
+        self.invoke(command)
+        self.register_commands()
+
+        output = self.invoke('cfy deployments inputs').logs.split('\n')
+        self.assertIn('  "key1": "default_val1", ', output)
+        self.assertIn('  "key2": "default_val2", ', output)
+        self.assertIn('  "key3": "default_val3"', output)
 
     def test_init_with_inputs(self):
         blueprint_path = os.path.join(
@@ -133,7 +177,7 @@ class InitTest(CliCommandTest):
     def test_no_init(self):
         cfy.purge_dot_cloudify()
         self.invoke('cfy profiles list',
-                    err_str_segment='Cloudify environment is not initalized',
+                    err_str_segment='Cloudify environment is not initialized',
                     # TODO: put back
                     # possible_solutions=[
                     #     "Run 'cfy init' in this directory"

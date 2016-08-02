@@ -255,7 +255,7 @@ class CliEnvTests(CliCommandTest):
             env.get_context_path)
         self.assertEqual('Local profile does not contain context', str(ex))
 
-    def test_fail_get_context_not_initalized(self):
+    def test_fail_get_context_not_initialized(self):
         shutil.rmtree(env.CLOUDIFY_WORKDIR)
         ex = self.assertRaises(
             CloudifyCliError,
