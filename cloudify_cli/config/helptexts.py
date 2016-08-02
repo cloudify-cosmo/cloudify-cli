@@ -20,6 +20,8 @@ RESET_CONTEXT = "Reset the working environment"
 HARD_RESET = "Hard reset the configuration, including coloring and loggers"
 SHOW_ACTIVE_CONNECTION_INFORMATION = \
     "Show connection information for the active manager"
+ENABLE_COLORS = "Enable colors in logger (use --hard when working with" \
+                " an initialized environment) [default: False]"
 
 OUTPUT_PATH = "The local path to download to"
 BLUEPRINT_FILENAME = (

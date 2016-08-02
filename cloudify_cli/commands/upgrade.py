@@ -47,9 +47,9 @@ REMOTE_WORKFLOW_STATE_PATH = '/opt/cloudify/_workflow_state.json'
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 @cfy.assert_manager_active
-@cfy.add_client(skip_version_check=True)
+@cfy.pass_client(skip_version_check=True)
 def upgrade(blueprint_path,
             inputs,
             validate_only,
@@ -195,7 +195,7 @@ def _load_manager_port(inputs):
                                           'the upgrade/rollback process')
 
 
-@cfy.add_logger
+@cfy.pass_logger
 def verify_and_wait_for_maintenance_mode_activation(client, logger):
     curr_status = client.maintenance_mode.status().status
     if curr_status == MAINTENANCE_MODE_DEACTIVATED:

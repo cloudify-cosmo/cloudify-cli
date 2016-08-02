@@ -131,4 +131,4 @@ class ExecutionsTest(CliCommandTest):
         )
 
         self.invoke('cfy init {0}'.format(blueprint_path))
-        self.register_commands()
+        cfy.register_commands()

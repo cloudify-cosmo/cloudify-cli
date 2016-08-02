@@ -58,7 +58,7 @@ def _archive_logs(logger):
               short_help='Download manager service logs [manager only]')
 @cfy.options.output_path
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def download(output_path, logger):
     """Download an archive containing all of the manager's service logs
     """
@@ -75,7 +75,7 @@ def download(output_path, logger):
 @cfy.options.force(help=helptexts.FORCE_PURGE_LOGS)
 @cfy.options.backup_first
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def purge(force, backup_first, logger):
     """Truncate all logs files under /var/log/cloudify.
 
@@ -104,7 +104,7 @@ def purge(force, backup_first, logger):
 @logs.command(name='backup',
               short_help='Backup manager service logs [manager only]')
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def backup(logger):
     """Create a backup of all logs under a single archive and save it
     on the manager under /var/log.

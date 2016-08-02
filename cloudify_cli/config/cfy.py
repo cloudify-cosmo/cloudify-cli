@@ -26,14 +26,13 @@ from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
 from .. import env
-from .. import logger
 from . import helptexts
 from .. import constants
-from ..logger import get_logger
 from ..inputs import inputs_to_dict
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import CloudifyBootstrapError
 from ..exceptions import SuppressedCloudifyCliError
+from ..logger import get_logger, set_global_verbosity_level
 
 
 CLICK_CONTEXT_SETTINGS = dict(
@@ -112,8 +111,8 @@ def show_version(ctx, param, value):
             prefix='Cloudify Manager ',
             infix=' ',
             suffix=' [ip={ip}]\n'.format(**rest_version_data))
-    # TODO: Use logger instead
-    click.echo('{0}{1}'.format(cli_version, rest_version))
+
+    get_logger().info('{0}{1}'.format(cli_version, rest_version))
     ctx.exit()
 
 
@@ -123,7 +122,7 @@ def inputs_callback(ctx, param, value):
     inside the command.
 
     `@cfy.options.inputs` already calls this callback so that
-    everytime you use the option it returns the inputs as a
+    every time you use the option it returns the inputs as a
     dictionary.
     """
     if not value or ctx.resilient_parsing:
@@ -136,7 +135,7 @@ def set_verbosity_level(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
 
-    logger.set_global_verbosity_level(value)
+    set_global_verbosity_level(value)
 
 
 def set_cli_except_hook(global_verbosity_level):
@@ -222,9 +221,7 @@ def assert_local_active(func):
     return wrapper
 
 
-# TODO: Maybe call it `pass_logger` so that it correspond's with click's
-# pass_context? If so, should be the same for add_client.
-def add_logger(func):
+def pass_logger(func):
     """Simply passes the logger to a command.
     """
     # Wraps here makes sure the original docstring propagates to click
@@ -236,7 +233,7 @@ def add_logger(func):
     return wrapper
 
 
-def add_client(*args, **kwargs):
+def pass_client(*args, **kwargs):
     """Simply passes the rest client to a command.
     """
     def add_client_inner(func):
@@ -451,9 +448,14 @@ class Options(object):
         self.reset_context = click.option(
             '-r',
             '--reset-context',
-            # TODO: Change name. This is not true. It only resets the context
             is_flag=True,
             help=helptexts.RESET_CONTEXT)
+
+        self.enable_colors = click.option(
+            '--enable-colors',
+            is_flag=True,
+            default=False,
+            help=helptexts.ENABLE_COLORS)
 
         self.wait = click.option(
             '--wait',

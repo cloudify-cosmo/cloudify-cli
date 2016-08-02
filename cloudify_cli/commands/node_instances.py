@@ -37,8 +37,8 @@ def manager():
                  '[manager only]')
 @cfy.argument('node_instance_id')
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def get(node_instance_id, logger, client):
     """Retrieve information for a specific node-instance
 
@@ -74,8 +74,8 @@ def get(node_instance_id, logger, client):
 @cfy.options.sort_by('node_id')
 @cfy.options.descending
 @cfy.options.verbose
-@cfy.add_logger
-@cfy.add_client()
+@cfy.pass_logger
+@cfy.pass_client()
 def list(deployment_id, node_name, sort_by, descending, logger, client):
     """List node-instances
 
@@ -109,7 +109,7 @@ def list(deployment_id, node_name, sort_by, descending, logger, client):
              short_help='Show node-instance information [manager only]')
 @cfy.argument('node-id', required=False)
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def local(node_id, logger):
     """Display node-instances for the execution
 

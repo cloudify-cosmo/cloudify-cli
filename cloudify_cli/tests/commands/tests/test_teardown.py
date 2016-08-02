@@ -63,7 +63,7 @@ class TeardownTest(CliCommandTest):
             return_value={'name': 'mock_provider', 'context': {'key': 'value'}}
         )
 
-        self.use_manager(host='10.0.0.1')
+        self.use_manager(manager_ip='10.0.0.1')
 
         self.invoke('cfy teardown -f --ignore-deployments')
         mock_teardown.assert_called_once_with(
@@ -76,7 +76,7 @@ class TeardownTest(CliCommandTest):
     def test_teardown_default_values(self, mock_teardown):
 
         self.client.deployments.list = MagicMock(return_value=[])
-        self.use_manager(host='10.0.0.1')
+        self.use_manager(manager_ip='10.0.0.1')
 
         self.invoke('cfy teardown -f')
         mock_teardown.assert_called_once_with(

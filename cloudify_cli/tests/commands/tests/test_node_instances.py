@@ -2,6 +2,7 @@ import os
 
 from mock import MagicMock
 
+from ... import cfy
 from ..test_base import CliCommandTest
 from ..constants import BLUEPRINTS_DIR
 from ..mocks import node_instance_get_mock
@@ -54,7 +55,7 @@ class NodeInstancesTest(CliCommandTest):
         )
 
         self.invoke('cfy init {0}'.format(blueprint_path))
-        self.register_commands()
+        cfy.register_commands()
         self.invoke('cfy executions start {0}'.format('run_test_op_on_nodes'))
 
     def _assert_outputs(self, output, expected_outputs):

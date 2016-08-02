@@ -47,12 +47,13 @@ def profiles():
 @profiles.command(name='get-active',
                   short_help='Retrieve profile information')
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def get(logger):
     active_profile_name = env.get_active_profile()
     if active_profile_name == 'local':
-        # TODO: Maybe add.. "to use a manager... bla bla bla"
-        logger.info("You're currently working in local mode")
+        logger.info("You're currently working in local mode. "
+                    "To use a manager run `cfy use MANAGER_IP`"
+                    " or bootstrap one")
         return
 
     active_profile = env.get_profile(env.get_active_profile())
@@ -66,7 +67,7 @@ def get(logger):
 @profiles.command(name='list',
                   short_help='List profiles')
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def list(logger):
     """List all profiles
     """
@@ -98,7 +99,7 @@ def list(logger):
                   short_help='Delete a profile')
 @cfy.argument('profile-name')
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def delete(profile_name, logger):
     """Delete a profile
 
@@ -117,7 +118,7 @@ def delete(profile_name, logger):
 @cfy.options.include_keys
 @cfy.options.optional_output_path
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def export_profiles(include_keys, output_path, logger):
     """Export all profiles to a file
 
@@ -150,7 +151,7 @@ def export_profiles(include_keys, output_path, logger):
                   short_help='Import profiles from an archive')
 @cfy.argument('archive-path')
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def import_profiles(archive_path, logger):
     """Import profiles from a profiles archive
 
@@ -211,7 +212,7 @@ def _restore_ssh_key(profile):
     return _move_ssh_key(profile, direction='origin')
 
 
-@cfy.add_logger
+@cfy.pass_logger
 def _move_ssh_key(profile, direction, logger):
     """Iterate through all profiles and move their ssh keys
 

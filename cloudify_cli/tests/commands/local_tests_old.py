@@ -26,42 +26,9 @@ from .constants import BLUEPRINTS_DIR
 from .test_base import CliCommandTest
 
 
-@unittest.skip('Local')
 class LocalTest(CliCommandTest):
-    def _assert_multiple_outputs(self):
-        output = self.invoke('cfy local outputs')
-        self.assertIn('"input1": "new_input1"', output)
-        self.assertIn('"input2": "new_input2"', output)
-        self.assertIn('"input3": "new_input3"', output)
 
-    def _generate_multiple_input_files(self):
-        input_files_directory = tempfile.mkdtemp()
-        with open(os.path.join(input_files_directory, 'f1.yaml'), 'w') as f:
-            f.write('input1: new_input1\ninput2: new_input2')
-        with open(os.path.join(input_files_directory, 'f2.yaml'), 'w') as f:
-            f.write('input3: new_input3')
-        return input_files_directory
-
-    # TODO: Move it to test_env (to CliInputsTests)
-    def test_local_init_with_directory_inputs(self):
-        input_files_directory = self._generate_multiple_input_files()
-        try:
-            self._local_init(inputs=[input_files_directory])
-            self._assert_multiple_outputs()
-        finally:
-            shutil.rmtree(input_files_directory)
-
-    # TODO: Move it to test_env (to CliInputsTests)
-    def test_local_init_with_wildcard_inputs(self):
-        input_files_directory = self._generate_multiple_input_files()
-        try:
-            self._local_init(
-                inputs=[os.path.join(input_files_directory, 'f*.yaml')])
-            self._assert_multiple_outputs()
-        finally:
-            shutil.rmtree(input_files_directory)
-
-    # TODO: is this still relevant
+    # TODO: is this still relevant?
     def test_local_provider_context(self):
         self._init()
         with open(utils.get_configuration_path()) as f:
@@ -121,7 +88,7 @@ class LocalTest(CliCommandTest):
             .format(BLUEPRINTS_DIR)
         self.invoke('cfy local init -p {0}'.format(blueprint_path))
 
-    # TODO: Move it to test_env (to TestLogger?)
+    # TODO: Move it to test_env (to TestLogger?) or to tests/logs
     def test_verbose_logging(self):
         def run(level=None, message=None, error=None, user_cause=None,
                 verbose_flag=''):

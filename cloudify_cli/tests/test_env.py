@@ -50,7 +50,6 @@ from .. import inputs
 from .. import logger
 from .. import constants
 from ..bootstrap import bootstrap
-from ..logger import configure_loggers
 from ..exceptions import CloudifyCliError
 from ..colorful_event import ColorfulEvent
 from ..exceptions import ExecutionTimeoutError
@@ -312,40 +311,8 @@ class CliEnvTests(CliCommandTest):
 
 class CliInputsTests(CliCommandTest):
 
-    # TODO: Test inputs_to_dict
     def test_parsing_input_as_string(self):
-
-        self.assertEqual(inputs.plain_string_to_dict(""), {})
-        self.assertEqual(inputs.plain_string_to_dict(" "), {})
-        self.assertEqual(inputs.plain_string_to_dict(";"), {})
-        self.assertEqual(inputs.plain_string_to_dict(" ; "), {})
-
-        expected_dict = dict(my_key1="my_value1", my_key2="my_value2")
-
-        parsed_dict = inputs.plain_string_to_dict(
-            "my_key1=my_value1;my_key2=my_value2")
-        self.assertEqual(parsed_dict, expected_dict)
-
-        parsed_dict = inputs.plain_string_to_dict(
-            " my_key1 = my_value1 ;my_key2=my_value2; ")
-        self.assertEqual(parsed_dict, expected_dict)
-
-        parsed_dict = inputs.plain_string_to_dict(
-            " my_key1 = my_value1 ;my_key2=my_value2; ")
-        self.assertEqual(parsed_dict, expected_dict)
-
-        expected_dict = dict(my_key1="")
-        parsed_dict = inputs.plain_string_to_dict(" my_key1=")
-        self.assertEqual(parsed_dict, expected_dict)
-
-        parsed_dict = inputs.plain_string_to_dict(" my_key1=;")
-        self.assertEqual(parsed_dict, expected_dict)
-
-        expected_dict = dict(my_key1="my_value1",
-                             my_key2="my_value2,my_other_value2")
-        parsed_dict = inputs.plain_string_to_dict(
-            " my_key1 = my_value1 ;my_key2=my_value2,my_other_value2; ")
-        self.assertEqual(parsed_dict, expected_dict)
+        self._test_string_inputs(test_inputs_to_dict=False)
 
     def test_string_to_dict_error_handling(self):
 
@@ -386,9 +353,87 @@ class CliInputsTests(CliCommandTest):
                                 inputs.plain_string_to_dict,
                                 input_str)
 
-    # TODO: Add several other input tests (e.g. wildcard, paths, etc)
+    def test_inputs_to_dict_strings(self):
+        self._test_string_inputs(test_inputs_to_dict=True)
+
+    def test_inputs_to_dict_directory(self):
+        input_files_directory, expected_dict = \
+            self._generate_multiple_input_files()
+
+        self.assertEqual(
+            inputs.inputs_to_dict([input_files_directory]),
+            expected_dict
+        )
+
+    def test_inputs_to_dict_wildcard(self):
+        input_files_directory, expected_dict = \
+            self._generate_multiple_input_files()
+
+        wildcard_string = '{0}/f*.yaml'.format(input_files_directory)
+        self.assertEqual(
+            inputs.inputs_to_dict([wildcard_string]),
+            expected_dict
+        )
+
+    def _test_string_inputs(self, test_inputs_to_dict=False):
+        self._test_multiple_inputs(
+            ('', ' ', ';', ' ; '),
+            {},
+            test_inputs_to_dict
+        )
+
+        self._test_multiple_inputs(
+            (
+                "my_key1=my_value1;my_key2=my_value2",
+                " my_key1 = my_value1 ;my_key2=my_value2; ",
+                " my_key1 = my_value1 ;my_key2=my_value2; "
+            ),
+            dict(my_key1="my_value1", my_key2="my_value2"),
+            test_inputs_to_dict
+        )
+
+        self._test_multiple_inputs(
+            (" my_key1=", " my_key1=;"),
+            dict(my_key1=""),
+            test_inputs_to_dict
+        )
+
+        self._test_multiple_inputs(
+            (" my_key1 = my_value1 ;my_key2=my_value2,my_other_value2; ", ),
+            dict(my_key1="my_value1", my_key2="my_value2,my_other_value2"),
+            test_inputs_to_dict
+        )
+
+    def _test_multiple_inputs(
+            self,
+            test_inputs,
+            expected_dict,
+            test_inputs_to_dict
+    ):
+        if test_inputs_to_dict:
+            func_to_test = inputs.inputs_to_dict
+        else:
+            func_to_test = inputs.plain_string_to_dict
+
+        for test_input in test_inputs:
+            if test_inputs_to_dict:
+                test_input = [test_input]
+            self.assertEqual(func_to_test(test_input), expected_dict)
+
+    def _generate_multiple_input_files(self):
+        input_files_directory = tempfile.mkdtemp()
+        with open(os.path.join(input_files_directory, 'f1.yaml'), 'w') as f:
+            f.write('input1: new_input1\ninput2: new_input2')
+        with open(os.path.join(input_files_directory, 'f2.yaml'), 'w') as f:
+            f.write('input3: new_input3')
+        expected_dict = {
+            'input1': 'new_input1',
+            'input2': 'new_input2',
+            'input3': 'new_input3'
+        }
+        return input_files_directory, expected_dict
+
     def test_inputs_to_dict_error_handling(self):
-        configure_loggers()
         input_list = ["my_key1=my_value1;my_key2"]
 
         expected_err_msg = \

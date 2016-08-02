@@ -36,7 +36,7 @@ from . import init
 @cfy.options.manager_port
 @cfy.options.rest_port
 @cfy.options.verbose
-@cfy.add_logger
+@cfy.pass_logger
 def use(alias,
         manager_ip,
         manager_user,
@@ -51,8 +51,6 @@ def use(alias,
     Additional CLI commands will be added after a manager is used.
     To stop using a manager, you can run `cfy init -r`.
     """
-    # TODO: add support for setting the ssh port
-
     if manager_ip == 'local':
         logger.info('Using local environment...')
         if not env.is_profile_exists(manager_ip):

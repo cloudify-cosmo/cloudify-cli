@@ -50,9 +50,9 @@ class CliCommandTest(testtools.TestCase):
         self.original_utils_get_rest_client = env.get_rest_client
         env.get_rest_client = get_mock_rest_client
         self.original_utils_get_cwd = utils.get_cwd
-        utils.get_cwd = lambda: TEST_WORK_DIR
+        utils.get_cwd = lambda: env.CLOUDIFY_WORKDIR
         self.original_utils_os_getcwd = utils_os.getcwd
-        utils_os.getcwd = lambda: TEST_WORK_DIR
+        utils_os.getcwd = lambda: env.CLOUDIFY_WORKDIR
 
     def tearDown(self):
         super(CliCommandTest, self).tearDown()
@@ -127,9 +127,9 @@ class CliCommandTest(testtools.TestCase):
                 self.logger.info(e.message)
             self.assertFalse(mock.called)
 
-    def use_manager(self, **default_manager_params):
-        if not default_manager_params:
-            default_manager_params = cfy.default_manager_params
+    def use_manager(self, **manager_params):
+        default_manager_params = cfy.default_manager_params.copy()
+        default_manager_params.update(manager_params)
         cfy.use_manager(**default_manager_params)
 
     def _read_context(self):

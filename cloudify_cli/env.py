@@ -1,6 +1,5 @@
 import os
 import json
-import socket
 import shutil
 import pkgutil
 import getpass
@@ -51,7 +50,6 @@ def get_profile(profile_name):
     current_profile = get_active_profile()
     set_active_profile(profile_name)
 
-    # TODO: add rest port and protocol, ssh port
     context = get_profile_context(profile_name)
     manager_ip = context.get_manager_ip() or None
     ssh_key_path = context.get_manager_key() or None
@@ -129,6 +127,8 @@ def is_manager_active():
 def get_profile_context(profile_name=None, suppress_error=False):
     profile_name = profile_name or get_active_profile()
     if profile_name == 'local':
+        if suppress_error:
+            return None
         raise CloudifyCliError('Local profile does not have context')
     try:
         path = get_context_path(profile_name)
@@ -173,13 +173,17 @@ def get_profile_dir(profile_name=None):
         raise CloudifyCliError('Profile directory does not exist')
 
 
-def set_cfy_config():
+def set_cfy_config(enable_colors=False):
     config = pkg_resources.resource_string(
         cloudify_cli.__name__,
         'resources/config.yaml')
 
+    enable_colors = str(enable_colors).lower()
     template = Template(config)
-    rendered = template.render(log_path=DEFAULT_LOG_FILE)
+    rendered = template.render(
+        log_path=DEFAULT_LOG_FILE,
+        enable_colors=enable_colors
+    )
     with open(CLOUDIFY_CONFIG_PATH, 'w') as f:
         f.write(rendered)
         f.write(os.linesep)
@@ -270,10 +274,6 @@ def get_rest_client(rest_host=None,
                     password=None,
                     trust_all=False,
                     skip_version_check=False):
-    # TODO: Go through all commands remove remove the call
-    # to get_manager_ip as it is already defaulted
-    # here.
-
     rest_host = rest_host or get_rest_host()
     rest_port = rest_port or get_rest_port()
     rest_protocol = rest_protocol or get_rest_protocol()
@@ -362,12 +362,6 @@ def build_manager_host_string(user='', ip=''):
     return '{0}@{1}'.format(user, ip)
 
 
-# TODO: apply to log messages if necessary or remove
-def manager_msg(message, manager_ip=None):
-    return '{0} [Manager={1}]'.format(
-        message, manager_ip or get_rest_host())
-
-
 def get_username():
     return os.environ.get(constants.CLOUDIFY_USERNAME_ENV)
 
@@ -411,29 +405,14 @@ def get_version_data():
     return json.loads(data)
 
 
-# TODO: Check if this is at all used
-def connected_to_manager(manager_ip):
-    port = get_rest_port()
-    try:
-        sock = socket.create_connection((str(manager_ip), int(port)), 5)
-        sock.close()
-        return True
-    except ValueError:
-        return False
-    except socket.error:
-        return False
-
-
 def get_manager_version_data(rest_client=None):
     if not rest_client:
-        context = get_profile_context(suppress_error=True)
-        if not (context and context.get_manager_ip()):
+        if not get_profile_context(suppress_error=True):
             return None
-        manager_ip = context.get_manager_ip()
-        if not connected_to_manager(manager_ip):
+        try:
+            rest_client = get_rest_client(skip_version_check=True)
+        except CloudifyCliError:
             return None
-        rest_client = get_rest_client(manager_ip, skip_version_check=True)
-
     try:
         version_data = rest_client.manager.get_version()
     except CloudifyClientError:
@@ -489,7 +468,10 @@ class ProfileContext(yaml.YAMLObject):
         return self._manager_port
 
     def set_manager_port(self, manager_port):
-        self._manager_port = str(manager_port)
+        # If the port is int, we want to change it to a string. Otherwise,
+        # leave None as is
+        manager_port = str(manager_port) if manager_port else None
+        self._manager_port = manager_port
 
     def get_manager_user(self):
         return self._manager_user

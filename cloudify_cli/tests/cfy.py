@@ -40,7 +40,7 @@ default_manager_params = dict(
     ssh_key_path='key',
     ssh_user='key',
     ssh_port='22',
-    provider_context='provider_context',
+    provider_context={},
     rest_port=80,
     rest_protocol='http')
 
@@ -117,29 +117,31 @@ def purge_dot_cloudify():
 
 
 def purge_profile(profile_name='test'):
+    if not profile_name:
+        return
     profile_path = os.path.join(env.CLOUDIFY_WORKDIR, profile_name)
     if os.path.isdir(profile_path):
         shutil.rmtree(profile_path)
 
 
-def use_manager(**default_manager_params):
-    provider_context = default_manager_params['provider_context'] or {}
+def use_manager(**manager_params):
+    provider_context = manager_params['provider_context'] or {}
     settings = env.ProfileContext()
-    settings.set_manager_ip(default_manager_params['manager_ip'])
-    settings.set_manager_key(default_manager_params['ssh_key_path'])
-    settings.set_manager_user(default_manager_params['ssh_user'])
-    settings.set_manager_port(default_manager_params['ssh_port'])
-    settings.set_rest_port(default_manager_params['rest_port'])
-    settings.set_rest_protocol(default_manager_params['rest_protocol'])
+    settings.set_manager_ip(manager_params['manager_ip'])
+    settings.set_manager_key(manager_params['ssh_key_path'])
+    settings.set_manager_user(manager_params['ssh_user'])
+    settings.set_manager_port(manager_params['ssh_port'])
+    settings.set_rest_port(manager_params['rest_port'])
+    settings.set_rest_protocol(manager_params['rest_protocol'])
     settings.set_provider_context(provider_context)
 
-    purge_profile(default_manager_params['manager_ip'])
+    purge_profile(manager_params['manager_ip'])
     env.set_profile_context(
-        profile_name=default_manager_params['manager_ip'],
+        profile_name=manager_params['manager_ip'],
         context=settings,
         update=False)
     env.set_cfy_config()
-    env.set_active_profile(default_manager_params['manager_ip'])
+    env.set_active_profile(manager_params['manager_ip'])
     register_commands()
 
 
