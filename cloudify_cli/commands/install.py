@@ -14,9 +14,8 @@
 #    * limitations under the License.
 
 import os
-import shutil
-
 import click
+import shutil
 
 from .. import utils
 from .. import common
@@ -24,6 +23,7 @@ from ..config import cfy
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
 from ..constants import DEFAULT_INSTALL_WORKFLOW
+from ..constants import DEFAULT_BLUEPRINT_FILE_NAME
 from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
 from . import init
@@ -71,13 +71,11 @@ def manager(ctx,
     This will upload the blueprint, create a deployment and execute the
     `install` workflow.
     """
-    if not blueprint_path:
-        processed_blueprint_path = _get_default_blueprint_path(
-            blueprint_path, blueprint_filename)
-    else:
-        processed_blueprint_path = common.get_blueprint(
-            blueprint_path, blueprint_filename)
-
+    processed_blueprint_path = _get_processed_blueprint_path(
+        blueprint_path,
+        blueprint_filename
+    )
+    blueprint_filename = blueprint_filename or DEFAULT_BLUEPRINT_FILE_NAME
     blueprint_id = blueprint_id or common.get_blueprint_id(
         processed_blueprint_path, blueprint_filename)
     deployment_id = deployment_id or blueprint_id
@@ -157,12 +155,11 @@ def local(ctx,
     `organization/blueprint_repo[:tag/branch]` (to be
     retrieved from GitHub)
     """
-    if not blueprint_path:
-        processed_blueprint_path = _get_default_blueprint_path(
-            blueprint_path, blueprint_filename)
-    else:
-        processed_blueprint_path = common.get_blueprint(
-            blueprint_path, blueprint_filename)
+
+    processed_blueprint_path = _get_processed_blueprint_path(
+        blueprint_path,
+        blueprint_filename
+    )
 
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
     if not inputs and os.path.isfile(os.path.join(
@@ -196,7 +193,21 @@ def local(ctx,
         task_thread_pool_size=task_thread_pool_size)
 
 
-def _get_default_blueprint_path(blueprint_path, blueprint_filename):
+def _get_processed_blueprint_path(blueprint_path, blueprint_filename):
+    is_url = utils.is_url(blueprint_path)
+    if not is_url and not utils.is_archive(blueprint_path) and blueprint_filename:
+            raise CloudifyCliError('Supplying a blueprint name is only '
+                                   'supported when installing an archive')
+
+    if not blueprint_path:
+        return _get_default_blueprint_path(blueprint_filename)
+    else:
+        return common.get_blueprint(
+            blueprint_path, blueprint_filename)
+
+
+def _get_default_blueprint_path(blueprint_filename):
+    blueprint_filename = blueprint_filename or DEFAULT_BLUEPRINT_FILE_NAME
     logger = get_logger()
     logger.info('No blueprint path provided. Looking for {0} in the '
                 'cwd.'.format(blueprint_filename))

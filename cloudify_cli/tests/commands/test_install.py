@@ -3,7 +3,7 @@ import os
 from mock import patch
 
 
-from ... import utils, exceptions
+from ... import utils
 from .test_base import CliCommandTest
 from .constants import SAMPLE_BLUEPRINT_PATH, \
     SAMPLE_ARCHIVE_PATH, STUB_BLUEPRINT_ID, STUB_DIRECTORY_NAME, \
@@ -48,37 +48,6 @@ class InstallTest(CliCommandTest):
             blueprint_upload_args['blueprint_id'],
             unicode(STUB_BLUEPRINT_ID)
         )
-
-    @patch('cloudify_cli.commands.executions.manager_start')
-    @patch('cloudify_cli.commands.deployments.manager_create')
-    @patch('cloudify_cli.commands.blueprints.upload')
-    def test_blueprint_path_default_value(
-            self, blueprints_upload_mock,
-            *_):
-
-        install_upload_mode_command = \
-            'cfy install -n {0}'.format(DEFAULT_BLUEPRINT_FILE_NAME)
-
-        tmp_blueprint_path = os.path.join('/tmp',
-                                          DEFAULT_BLUEPRINT_FILE_NAME)
-
-        try:
-            # create a tmp file representing a blueprint to upload
-            open(tmp_blueprint_path, 'w+').close()
-
-            self.invoke(install_upload_mode_command, context='manager')
-
-            blueprint_path_argument_from_upload = \
-                blueprints_upload_mock.call_args_list[0][0][0]
-
-            # check that the blueprint path value that was assigned in `install`
-            # is indeed the default blueprint file path
-            self.assertEqual(blueprint_path_argument_from_upload.name,
-                             tmp_blueprint_path
-                             )
-        finally:
-            print tmp_blueprint_path
-            # os.remove(tmp_blueprint_path)
 
     @patch('cloudify_cli.commands.executions.manager_start')
     @patch('cloudify_cli.commands.deployments.manager_create')
@@ -134,9 +103,12 @@ class InstallTest(CliCommandTest):
     def test_default_deployment_id(self, deployment_create_mock, *_):
 
         install_command = \
-            'cfy install -n {0} {1} --inputs={2} -b {3}'\
-            .format(STUB_BLUEPRINT_FILENAME, SAMPLE_BLUEPRINT_PATH,
-                    SAMPLE_INPUTS_PATH, STUB_BLUEPRINT_ID)
+            'cfy install {0} --inputs={1} -b {2}'\
+            .format(
+                SAMPLE_BLUEPRINT_PATH,
+                SAMPLE_INPUTS_PATH,
+                STUB_BLUEPRINT_ID
+            )
 
         self.invoke(install_command, context='manager')
         deployment_create_args = deployment_create_mock.call_args_list[0][1]
@@ -154,14 +126,13 @@ class InstallTest(CliCommandTest):
     @patch('cloudify_cli.commands.deployments.manager_create')
     def test_custom_deployment_id(self, deployment_create_mock, *_):
 
-        command = 'cfy install -n {0} {1} --inputs={2} -b {3} -d {4}' \
-                .format(
-                STUB_BLUEPRINT_FILENAME,
+        command = 'cfy install {0} --inputs={1} -b {2} -d {3}'\
+            .format(
                 SAMPLE_BLUEPRINT_PATH,
                 SAMPLE_INPUTS_PATH,
                 STUB_BLUEPRINT_ID,
                 STUB_DEPLOYMENT_ID
-                )
+            )
 
         self.invoke(command, context='manager')
         deployment_create_args = deployment_create_mock.call_args_list[0][1]
@@ -350,7 +321,7 @@ class InstallTest(CliCommandTest):
     @patch('cloudify_cli.commands.install.manager')
     def test_parser_config_passes_expected_values(self, install_mock):
 
-        install_command = 'cfy install'
+        install_command = 'cfy install {0}'.format(SAMPLE_BLUEPRINT_PATH)
 
         self.invoke(install_command, context='manager')
 
@@ -388,10 +359,10 @@ class InstallTest(CliCommandTest):
             STUB_BLUEPRINT_FILENAME
         )
 
-        self.assertRaises(
-            exceptions.CloudifyCliError,
-            self.invoke,
+        self.invoke(
             path_and_filename_cmd,
+            err_str_segment='Supplying a blueprint name is only '
+                            'supported when installing an archive',
             context='manager'
         )
 
