@@ -56,7 +56,7 @@ def get(logger):
                     " or bootstrap one")
         return
 
-    active_profile = env.get_profile(env.get_active_profile())
+    active_profile = get_profile(env.get_active_profile())
 
     columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path',
                'ssh_port', 'rest_port', 'rest_protocol']
@@ -77,7 +77,7 @@ def list(logger):
     profiles = []
     profile_names = _get_profile_names()
     for profile in profile_names:
-        profile_data = env.get_profile(profile)
+        profile_data = get_profile(profile)
         if profile == current_profile:
             # Show the currently active profile by appending *
             profile_data['manager_ip'] = '*' + profile_data['manager_ip']
@@ -241,3 +241,27 @@ def _move_ssh_key(profile, direction, logger):
                     'Restoring ssh key for profile {0} to {1}...'.format(
                         profile, key_filepath))
                 shutil.move(backup_path, key_filepath)
+
+
+def get_profile(profile_name):
+    current_profile = env.get_active_profile()
+    env.set_active_profile(profile_name)
+
+    context = env.get_profile_context(profile_name)
+    manager_ip = context.get_manager_ip() or None
+    ssh_key_path = context.get_manager_key() or None
+    ssh_user = context.get_manager_user() or None
+    ssh_port = context.get_manager_port() or None
+    rest_port = context.get_rest_port() or None
+    rest_protocol = context.get_rest_protocol() or None
+
+    env.set_active_profile(current_profile)
+
+    return dict(
+        manager_ip=manager_ip,
+        alias=None,
+        ssh_key_path=ssh_key_path,
+        ssh_user=ssh_user,
+        ssh_port=ssh_port,
+        rest_port=rest_port,
+        rest_protocol=rest_protocol)

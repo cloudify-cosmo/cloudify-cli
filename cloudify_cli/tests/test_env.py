@@ -302,12 +302,6 @@ class CliEnvTests(CliCommandTest):
             env.raise_uninitialized)
         self.assertEqual('Cloudify environment is not initialized', str(ex))
 
-    def test_get_profile(self):
-        self.use_manager()
-        profile_output = env.get_profile('10.10.1.10')
-        self.assertDictContainsSubset(
-            profile_output, cfy.default_manager_params)
-
 
 class CliInputsTests(CliCommandTest):
 

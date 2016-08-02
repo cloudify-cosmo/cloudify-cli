@@ -161,14 +161,9 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
     else turn to github and try to get it.
     else should implicitly fail.
     """
-    def get_blueprint_file(final_source, nest_one=True):
-        blueprint = utils.extract_archive(final_source)
-        # TODO: To support cases in which the blueprint is not nested
-        # within the archive, we need to allow this to be false.
-        # This will currently not work as nothing calls this with false.
-        # We need to add a check for that or something.
-        if nest_one:
-            blueprint = os.path.join(blueprint, os.listdir(blueprint)[0])
+    def get_blueprint_file(final_source):
+        archive_root = utils.extract_archive(final_source)
+        blueprint = os.path.join(archive_root, os.listdir(archive_root)[0])
         blueprint_file = os.path.join(blueprint, blueprint_filename)
         if not os.path.isfile(blueprint_file):
             raise CloudifyCliError(
@@ -177,7 +172,6 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
                 .format(blueprint_filename))
         return blueprint_file
 
-    # TODO: Verify this supports file://
     if '://' in source:
         downloaded_source = utils.download_file(source)
         return get_blueprint_file(downloaded_source)
