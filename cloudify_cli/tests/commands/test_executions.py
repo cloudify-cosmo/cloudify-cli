@@ -4,9 +4,10 @@ from mock import MagicMock, patch
 
 from .. import cfy
 from .mocks import execution_mock
-from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
+from .constants import BLUEPRINTS_DIR
 from .test_base import CliCommandTest
 from ... import execution_events_fetcher
+from ...constants import DEFAULT_BLUEPRINT_FILE_NAME
 from cloudify_rest_client.exceptions import \
     DeploymentEnvironmentCreationPendingError, \
     DeploymentEnvironmentCreationInProgressError

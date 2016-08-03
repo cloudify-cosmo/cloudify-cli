@@ -15,8 +15,6 @@
 
 import os
 
-from cloudify_cli.constants import DEFAULT_BLUEPRINT_FILE_NAME
-
 
 STUB_TIMEOUT = 900
 STUB_FORCE = False
@@ -27,7 +25,6 @@ STUB_BLUEPRINT_ID = 'blueprint_id'
 STUB_DIRECTORY_NAME = 'helloworld'
 STUB_DEPLOYMENT_ID = 'deployment_id'
 STUB_ALLOW_CUSTOM_PARAMETERS = False
-STUB_ARCHIVE_LOCATION = 'archive.zip'
 STUB_BLUEPRINT_FILENAME = 'my_blueprint.yaml'
 SSL_PORT = '443'
 THIS_DIR = os.path.dirname(os.path.dirname(__file__))
@@ -36,7 +33,10 @@ SNAPSHOTS_DIR = os.path.join(THIS_DIR, 'resources', 'snapshots')
 SAMPLE_INPUTS_PATH = os.path.join(
     BLUEPRINTS_DIR, STUB_DIRECTORY_NAME, 'inputs.yaml')
 SAMPLE_BLUEPRINT_PATH = os.path.join(
-    BLUEPRINTS_DIR, STUB_DIRECTORY_NAME, DEFAULT_BLUEPRINT_FILE_NAME)
+    BLUEPRINTS_DIR, STUB_DIRECTORY_NAME, 'simple_blueprint.yaml')
 SAMPLE_ARCHIVE_URL = 'https://github.com/cloudify-cosmo/' \
                      'cloudify-hello-world-example/archive/master.zip'
-SAMPLE_ARCHIVE_PATH = os.path.join(BLUEPRINTS_DIR, 'helloworld.zip')
+SAMPLE_ARCHIVE_PATH = os.path.join(BLUEPRINTS_DIR, 'blueprint.zip')
+SAMPLE_CUSTOM_NAME_ARCHIVE = os.path.join(
+    BLUEPRINTS_DIR, 'custom_name_blueprint.zip'
+)

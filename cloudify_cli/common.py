@@ -177,6 +177,7 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
         return blueprint_file
 
     if '://' in source:
+        # TODO: Shouldn't we delete the archive afterwards?
         downloaded_source = utils.download_file(source)
         return get_blueprint_file(downloaded_source)
     elif os.path.isfile(source):
@@ -186,6 +187,7 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
             # Maybe check if yaml. If not, verified by dsl parser
             return source
     elif len(source.split('/')) == 2:
+        # TODO: Shouldn't we delete the archive afterwards?
         downloaded_source = _get_from_github(source)
         # GitHub archives provide an inner folder with each archive.
         return get_blueprint_file(downloaded_source)

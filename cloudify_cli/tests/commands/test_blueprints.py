@@ -6,7 +6,8 @@ from mock import MagicMock, patch
 
 from ... import env
 from .test_base import CliCommandTest
-from .constants import BLUEPRINTS_DIR
+from .constants import BLUEPRINTS_DIR, SAMPLE_ARCHIVE_PATH, \
+    SAMPLE_BLUEPRINT_PATH
 
 
 class BlueprintsTest(CliCommandTest):
@@ -32,9 +33,7 @@ class BlueprintsTest(CliCommandTest):
 
     def test_blueprints_upload(self):
         self.client.blueprints.upload = MagicMock()
-        self.invoke(
-            'blueprints upload {0}/helloworld/blueprint.yaml'.format(
-                BLUEPRINTS_DIR))
+        self.invoke('blueprints upload {0}'.format(SAMPLE_BLUEPRINT_PATH))
 
     def test_blueprints_upload_invalid(self):
         self.client.blueprints.upload = MagicMock()
@@ -53,9 +52,9 @@ class BlueprintsTest(CliCommandTest):
     def test_blueprints_upload_archive(self):
         self.client.blueprints.upload = MagicMock()
         self.invoke(
-            'cfy blueprints upload {0}/helloworld.zip '
+            'cfy blueprints upload {0} '
             '-b my_blueprint_id --blueprint-filename blueprint.yaml'
-            .format(BLUEPRINTS_DIR))
+            .format(SAMPLE_ARCHIVE_PATH))
 
     def test_blueprints_upload_unsupported_archive_type(self):
         self.client.blueprints.upload = MagicMock()
@@ -73,8 +72,6 @@ class BlueprintsTest(CliCommandTest):
             err_str_segment="You must provide either a path to a local file")
 
     def test_blueprints_upload_archive_no_filename(self):
-        # TODO: The error message here should be different - something to
-        # do with the filename provided being incorrect
         self.client.blueprints.upload = MagicMock()
         self.invoke(
             'cfy blueprints upload {0}/helloworld.tar.gz -b my_blueprint_id'
@@ -82,9 +79,8 @@ class BlueprintsTest(CliCommandTest):
             err_str_segment="You must provide either a path to a local file")
 
     def test_blueprint_validate(self):
-        self.invoke(
-            'cfy blueprints validate {0}/helloworld/blueprint.yaml'.format(
-                BLUEPRINTS_DIR))
+        self.invoke('cfy blueprints validate {0}'
+                    .format(SAMPLE_BLUEPRINT_PATH))
 
     def test_blueprint_validate_definitions_version_false(self):
         with open(env.CLOUDIFY_CONFIG_PATH) as f:

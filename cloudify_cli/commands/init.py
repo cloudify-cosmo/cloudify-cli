@@ -28,6 +28,7 @@ from ..exceptions import CloudifyCliError
 
 @cfy.command(name='init', short_help='Initialize a working env')
 @cfy.argument('blueprint-path', required=False)
+@cfy.options.blueprint_filename()
 @cfy.options.reset_context
 @cfy.options.inputs
 @cfy.options.install_plugins
@@ -36,6 +37,7 @@ from ..exceptions import CloudifyCliError
 @cfy.options.verbose
 @cfy.pass_logger
 def init(blueprint_path,
+         blueprint_filename,
          reset_context,
          inputs,
          install_plugins,
@@ -77,8 +79,12 @@ def init(blueprint_path,
             shutil.rmtree(common.storage_dir())
 
         try:
+            processed_blueprint_path = common.get_blueprint(
+                blueprint_path,
+                blueprint_filename
+            )
             common.initialize_blueprint(
-                blueprint_path=blueprint_path,
+                blueprint_path=processed_blueprint_path,
                 name='local',
                 inputs=inputs,
                 storage=common.storage(),

@@ -4,7 +4,8 @@ from mock import MagicMock
 
 from .. import cfy
 from .test_base import CliCommandTest
-from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
+from .constants import BLUEPRINTS_DIR
+from ...constants import DEFAULT_BLUEPRINT_FILE_NAME
 from .mocks import node_instance_get_mock
 
 

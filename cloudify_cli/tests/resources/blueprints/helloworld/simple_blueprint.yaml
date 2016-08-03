@@ -1,0 +1,40 @@
+tosca_definitions_version: cloudify_dsl_1_2
+
+node_types:
+    type1:
+        properties:
+            prop1:
+                default: true
+            prop2:
+                default: {}
+            prop3:
+                default: ''
+
+    type2:
+        derived_from: type1
+        properties:
+            prop1:
+                default: true
+            prop2:
+                default:
+                    sub_prop1: val1
+                    sub_prop2: val2
+    type3:
+        derived_from: type2
+
+inputs:
+    key1:
+        default: default_val1
+    key2:
+        default: default_val2
+    key3:
+        default: default_val3
+
+node_templates:
+    node1:
+        type: type1
+
+    node2:
+        type: type2
+        properties:
+            prop3: 8080

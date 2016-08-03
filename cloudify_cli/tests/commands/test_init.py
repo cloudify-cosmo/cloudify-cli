@@ -8,8 +8,9 @@ from dsl_parser.exceptions import DSLParsingLogicException
 from .. import cfy
 from ... import env
 from .test_base import CliCommandTest
+from ...constants import DEFAULT_BLUEPRINT_FILE_NAME
 from .constants import BLUEPRINTS_DIR, SAMPLE_INPUTS_PATH, \
-    DEFAULT_BLUEPRINT_FILE_NAME
+    SAMPLE_CUSTOM_NAME_ARCHIVE
 
 
 class InitTest(CliCommandTest):
@@ -89,9 +90,8 @@ class InitTest(CliCommandTest):
             'local',
             DEFAULT_BLUEPRINT_FILE_NAME
         )
-        command = 'cfy init {0}'.format(blueprint_path)
 
-        self.invoke(command)
+        self.invoke('cfy init {0}'.format(blueprint_path))
         cfy.register_commands()
 
         output = self.invoke('cfy deployments inputs').logs.split('\n')
@@ -183,3 +183,21 @@ class InitTest(CliCommandTest):
                     #     "Run 'cfy init' in this directory"
                     # ]
                     )
+
+    def test_init_blueprint_archive_default_name(self):
+        self.invoke(
+            'cfy init {0}'.format(SAMPLE_CUSTOM_NAME_ARCHIVE),
+            err_str_segment='Could not find `blueprint.yaml`'
+        )
+
+    def test_init_blueprint_archive(self):
+        self.invoke(
+            'cfy init {0} -n simple_blueprint.yaml'
+            .format(SAMPLE_CUSTOM_NAME_ARCHIVE)
+        )
+        cfy.register_commands()
+
+        output = self.invoke('cfy deployments inputs').logs.split('\n')
+        self.assertIn('  "key1": "default_val1", ', output)
+        self.assertIn('  "key2": "default_val2", ', output)
+        self.assertIn('  "key3": "default_val3"', output)
