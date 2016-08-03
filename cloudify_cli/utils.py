@@ -24,6 +24,7 @@ import urllib
 import tarfile
 import zipfile
 import tempfile
+from urlparse import urlparse
 from contextlib import closing
 from backports.shutil_get_terminal_size import get_terminal_size
 
@@ -147,6 +148,8 @@ def generate_suffixed_id(id):
 
 
 def is_archive(source):
+    if not source:
+        return False
     return tarfile.is_tarfile(source) or zipfile.is_zipfile(source)
 
 
@@ -264,3 +267,11 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
             sys.stdout.write('\n')
 
     return print_progress
+
+
+def is_url(path):
+    try:
+        parsed_url = urlparse(path)
+        return parsed_url.scheme and parsed_url.netloc
+    except AttributeError:
+        return False

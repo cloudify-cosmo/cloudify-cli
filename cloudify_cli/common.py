@@ -152,7 +152,7 @@ def print_table(title, tb):
     logger.info('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
 
 
-def get_blueprint(source, blueprint_filename='blueprint.yaml'):
+def get_blueprint(source, blueprint_filename):
     """Get a source and return a directory containing the blueprint
 
     if it's a URL of an archive, download and extract it.
@@ -161,6 +161,9 @@ def get_blueprint(source, blueprint_filename='blueprint.yaml'):
     else turn to github and try to get it.
     else should implicitly fail.
     """
+    # Using it this way instead of a default value, because None may be passed
+    blueprint_filename = blueprint_filename or DEFAULT_BLUEPRINT_PATH
+
     def get_blueprint_file(final_source):
         archive_root = utils.extract_archive(final_source)
         blueprint = os.path.join(archive_root, os.listdir(archive_root)[0])
@@ -209,6 +212,7 @@ def get_blueprint_id(blueprint_folder,
     If blueprint_filename is provided, it will be appended to the
     folder.
     """
+    blueprint_filename = blueprint_filename or DEFAULT_BLUEPRINT_PATH
     blueprint_id = os.path.dirname(blueprint_folder).split('/')[-1]
     if not blueprint_filename == DEFAULT_BLUEPRINT_PATH:
         filename, _ = os.path.splitext(os.path.basename(blueprint_filename))
