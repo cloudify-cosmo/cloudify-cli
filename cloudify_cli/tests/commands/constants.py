@@ -25,7 +25,6 @@ STUB_BLUEPRINT_ID = 'blueprint_id'
 STUB_DIRECTORY_NAME = 'helloworld'
 STUB_DEPLOYMENT_ID = 'deployment_id'
 STUB_ALLOW_CUSTOM_PARAMETERS = False
-STUB_ARCHIVE_LOCATION = 'archive.zip'
 STUB_BLUEPRINT_FILENAME = 'my_blueprint.yaml'
 SSL_PORT = '443'
 THIS_DIR = os.path.dirname(os.path.dirname(__file__))

@@ -6,9 +6,9 @@ from cloudify_rest_client import deployments
 
 from ... import common
 from .test_base import CliCommandTest
-from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
+from .constants import BLUEPRINTS_DIR
 from ...constants import DEFAULT_UNINSTALL_WORKFLOW, \
-    DEFAULT_TIMEOUT, DEFAULT_PARAMETERS
+    DEFAULT_TIMEOUT, DEFAULT_PARAMETERS, DEFAULT_BLUEPRINT_FILE_NAME
 
 
 class UninstallTest(CliCommandTest):
