@@ -24,7 +24,7 @@ from .. import common
 from ..config import cfy
 from ..exceptions import CloudifyCliError
 
-EXPORTED_KEYS_DIRNAME = 'exported-ssh-keys'
+EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
 EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
 
 
