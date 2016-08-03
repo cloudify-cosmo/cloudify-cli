@@ -65,6 +65,7 @@ def validate_blueprint(blueprint_path, logger):
     logger.info('Blueprint validated successfully')
 
 
+# TODO: Organize decorators in all commands
 @blueprints.command(name='upload',
                     short_help='Upload a blueprint [manager only]')
 @cfy.argument('blueprint-path')
