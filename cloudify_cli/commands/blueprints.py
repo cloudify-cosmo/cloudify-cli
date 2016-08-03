@@ -14,20 +14,25 @@
 #    * limitations under the License.
 
 import os
+import sys
 import json
 import shutil
+import tempfile
 
 import click
 
+from cloudify.utils import LocalCommandRunner
 from dsl_parser.parser import parse_from_path
+from dsl_parser import constants as dsl_constants
 from dsl_parser.exceptions import DSLParsingException
 
 from .. import env
 from .. import utils
-from .. import common
+from .. import table
 from .. import exceptions
 from ..config import cfy
 from ..exceptions import CloudifyCliError
+from ..constants import DEFAULT_BLUEPRINT_PATH
 
 
 SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
@@ -35,7 +40,7 @@ DESCRIPTION_LIMIT = 20
 
 
 @cfy.group(name='blueprints')
-@cfy.options.verbose
+@cfy.options.verbose()
 def blueprints():
     """Handle blueprints on the manager
     """
@@ -45,7 +50,7 @@ def blueprints():
 @blueprints.command(name='validate',
                     short_help='Validate a blueprint')
 @cfy.argument('blueprint-path')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def validate_blueprint(blueprint_path, logger):
     """Validate a blueprint
@@ -65,17 +70,16 @@ def validate_blueprint(blueprint_path, logger):
     logger.info('Blueprint validated successfully')
 
 
-# TODO: Organize decorators in all commands
 @blueprints.command(name='upload',
                     short_help='Upload a blueprint [manager only]')
 @cfy.argument('blueprint-path')
 @cfy.options.blueprint_id()
 @cfy.options.blueprint_filename()
 @cfy.options.validate
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 @click.pass_context
 def upload(ctx,
            blueprint_path,
@@ -91,7 +95,7 @@ def upload(ctx,
     `organization/blueprint_repo[:tag/branch]` (to be
     retrieved from GitHub)
     """
-    processed_blueprint_path = common.get_blueprint(
+    processed_blueprint_path = get_blueprint(
         blueprint_path, blueprint_filename)
 
     try:
@@ -99,7 +103,7 @@ def upload(ctx,
             ctx.invoke(
                 validate_blueprint,
                 blueprint_path=processed_blueprint_path)
-        blueprint_id = blueprint_id or common.get_blueprint_id(
+        blueprint_id = blueprint_id or get_blueprint_id(
             processed_blueprint_path, blueprint_filename)
 
         progress_handler = utils.generate_progress_handler(blueprint_path, '')
@@ -122,10 +126,10 @@ def upload(ctx,
                     short_help='Download a blueprint [manager only]')
 @cfy.argument('blueprint-id')
 @cfy.options.output_path
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def download(blueprint_id, output_path, logger, client):
     """Download a blueprint from the manager
 
@@ -143,10 +147,10 @@ def download(blueprint_id, output_path, logger, client):
 @blueprints.command(name='delete',
                     short_help='Delete a blueprint [manager only]')
 @cfy.argument('blueprint-id')
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def delete(blueprint_id, logger, client):
     """Delete a blueprint from the manager
     """
@@ -159,10 +163,10 @@ def delete(blueprint_id, logger, client):
                     short_help='List blueprints [manager only]')
 @cfy.options.sort_by()
 @cfy.options.descending
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def list(sort_by, descending, logger, client):
     """List all blueprints
     """
@@ -181,17 +185,17 @@ def list(sort_by, descending, logger, client):
 
     columns = [
         'id', 'description', 'main_file_name', 'created_at', 'updated_at']
-    pt = utils.table(columns, data=blueprints)
-    common.print_table('Blueprints:', pt)
+    pt = table.generate(columns, data=blueprints)
+    table.log('Blueprints:', pt)
 
 
 @blueprints.command(name='get',
                     short_help='Retrieve blueprint information [manager only]')
 @cfy.argument('blueprint-id')
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def get(blueprint_id, logger, client):
     """Retrieve information for a specific blueprint
 
@@ -205,9 +209,9 @@ def get(blueprint_id, logger, client):
 
     columns = \
         ['id', 'main_file_name', 'created_at', 'updated_at', '#deployments']
-    pt = utils.table(columns, data=[blueprint])
+    pt = table.generate(columns, data=[blueprint])
     pt.max_width = 50
-    common.print_table('Blueprint:', pt)
+    table.log('Blueprint:', pt)
 
     logger.info('Description:')
     logger.info('{0}\n'.format(blueprint['description'] or ''))
@@ -219,10 +223,10 @@ def get(blueprint_id, logger, client):
 @blueprints.command(name='inputs',
                     short_help='Retrieve blueprint inputs [manager only]')
 @cfy.argument('blueprint-id')
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def inputs(blueprint_id, logger, client):
     """Retrieve inputs for a specific blueprint
 
@@ -237,10 +241,9 @@ def inputs(blueprint_id, logger, client):
              'description': input.get('description', '-')}
             for name, input in inputs.iteritems()]
 
-    pt = utils.table(['name', 'type', 'default', 'description'],
-                     data=data)
-
-    common.print_table('Inputs:', pt)
+    columns = ['name', 'type', 'default', 'description']
+    pt = table.generate(columns, data=data)
+    table.log('Inputs:', pt)
 
 
 @blueprints.command(name='package',
@@ -248,9 +251,9 @@ def inputs(blueprint_id, logger, client):
 @cfy.argument('blueprint-path')
 @cfy.options.optional_output_path
 @cfy.options.validate
-@cfy.options.verbose
-@click.pass_context
+@cfy.options.verbose()
 @cfy.pass_logger
+@click.pass_context
 def package(ctx, blueprint_path, output_path, validate, logger):
     """Create a blueprint archive
 
@@ -258,7 +261,7 @@ def package(ctx, blueprint_path, output_path, validate, logger):
     to the directory in which the blueprint yaml files resides.
     """
     blueprint_path = os.path.abspath(blueprint_path)
-    destination = output_path or common.get_blueprint_id(blueprint_path)
+    destination = output_path or get_blueprint_id(blueprint_path)
 
     if validate:
         ctx.invoke(validate_blueprint, blueprint_path=blueprint_path)
@@ -282,7 +285,7 @@ def package(ctx, blueprint_path, output_path, validate, logger):
                     short_help='Create pip-requirements')
 @cfy.argument('blueprint-path', type=click.Path(exists=True))
 @cfy.options.optional_output_path
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def create_requirements(blueprint_path, output_path, logger):
     """Generate a pip-compliant requirements file for a given blueprint
@@ -294,7 +297,7 @@ def create_requirements(blueprint_path, output_path, logger):
         raise exceptions.CloudifyCliError(
             'Path {0} already exists'.format(output_path))
 
-    requirements = common.create_requirements(blueprint_path=blueprint_path)
+    requirements = _create_requirements(blueprint_path=blueprint_path)
 
     if output_path:
         utils.dump_to_file(requirements, output_path)
@@ -308,9 +311,10 @@ def create_requirements(blueprint_path, output_path, logger):
 @blueprints.command(name='install-plugins',
                     short_help='Install plugins locally [locally]')
 @cfy.argument('blueprint-path', type=click.Path(exists=True))
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.assert_local_active
-def install_plugins(blueprint_path):
+@cfy.pass_logger
+def install_plugins(blueprint_path, logger):
     """Install the necessary plugins for a given blueprint in the
     local environment.
 
@@ -318,4 +322,124 @@ def install_plugins(blueprint_path):
 
     `BLUEPRINT_PATH` is the path to the blueprint to install plugins for.
     """
-    common.install_blueprint_plugins(blueprint_path=blueprint_path)
+    logger.info('Installing plugins...')
+    requirements = _create_requirements(blueprint_path=blueprint_path)
+
+    if requirements:
+        # Validate we are inside a virtual env
+        if not utils.is_virtual_env():
+            raise exceptions.CloudifyCliError(
+                'You must be running inside a '
+                'virtualenv to install blueprint plugins')
+
+        runner = LocalCommandRunner(logger)
+        # Dump the requirements to a file and let pip install it.
+        # This will utilize pip's mechanism of cleanup in case an installation
+        # fails.
+        tmp_path = tempfile.mkstemp(suffix='.txt', prefix='requirements_')[1]
+        utils.dump_to_file(collection=requirements, file_path=tmp_path)
+        command_parts = [sys.executable, '-m', 'pip', 'install', '-r',
+                         tmp_path]
+        runner.run(command=' '.join(command_parts), stdout_pipe=False)
+    else:
+        logger.info('There are no plugins to install')
+
+
+def _create_requirements(blueprint_path):
+
+    parsed_dsl = parse_from_path(dsl_file_path=blueprint_path)
+
+    requirements = _plugins_to_requirements(
+        blueprint_path=blueprint_path,
+        plugins=parsed_dsl[dsl_constants.DEPLOYMENT_PLUGINS_TO_INSTALL])
+
+    for node in parsed_dsl['nodes']:
+        requirements.update(_plugins_to_requirements(
+            blueprint_path=blueprint_path,
+            plugins=node['plugins']))
+    return requirements
+
+
+def _plugins_to_requirements(blueprint_path, plugins):
+
+    sources = set()
+    for plugin in plugins:
+        if plugin[dsl_constants.PLUGIN_INSTALL_KEY]:
+            source = plugin[dsl_constants.PLUGIN_SOURCE_KEY]
+            if not source:
+                continue
+            if '://' in source:
+                # URL
+                sources.add(source)
+            else:
+                # Local plugin (should reside under the 'plugins' dir)
+                plugin_path = os.path.join(
+                    os.path.abspath(os.path.dirname(blueprint_path)),
+                    'plugins',
+                    source)
+                sources.add(plugin_path)
+    return sources
+
+
+def get_blueprint(source, blueprint_filename='blueprint.yaml'):
+    """Get a source and return a directory containing the blueprint
+
+    if it's a URL of an archive, download and extract it.
+    if it's a local archive, extract it.
+    if it's a local yaml, return it.
+    else turn to github and try to get it.
+    else should implicitly fail.
+    """
+    def get_blueprint_file(final_source):
+        archive_root = utils.extract_archive(final_source)
+        blueprint = os.path.join(archive_root, os.listdir(archive_root)[0])
+        blueprint_file = os.path.join(blueprint, blueprint_filename)
+        if not os.path.isfile(blueprint_file):
+            raise CloudifyCliError(
+                'Could not find `{0}`. Please provide the name of the main '
+                'blueprint file by using the `-n/--blueprint-filename` flag'
+                .format(blueprint_filename))
+        return blueprint_file
+
+    if '://' in source:
+        downloaded_source = utils.download_file(source)
+        return get_blueprint_file(downloaded_source)
+    elif os.path.isfile(source):
+        if utils.is_archive(source):
+            return get_blueprint_file(source)
+        else:
+            # Maybe check if yaml. If not, verified by dsl parser
+            return source
+    elif len(source.split('/')) == 2:
+        downloaded_source = _get_from_github(source)
+        # GitHub archives provide an inner folder with each archive.
+        return get_blueprint_file(downloaded_source)
+    else:
+        raise CloudifyCliError(
+            'You must provide either a path to a local file, a remote URL '
+            'or a GitHub `organization/repository[:tag/branch]`')
+
+
+def _get_from_github(source):
+    """Returns a path to a downloaded github archive.
+
+    Source to download should be in the format of `org/repo[:tag/branch]`.
+    """
+    source_parts = source.split(':', 1)
+    repo = source_parts[0]
+    tag = source_parts[1] if len(source_parts) == 2 else 'master'
+    url = 'https://github.com/{0}/archive/{1}.tar.gz'.format(repo, tag)
+    return utils.download_file(url)
+
+
+def get_blueprint_id(blueprint_folder,
+                     blueprint_filename=DEFAULT_BLUEPRINT_PATH):
+    """The name of the blueprint will be the name of the folder.
+    If blueprint_filename is provided, it will be appended to the
+    folder.
+    """
+    blueprint_id = os.path.dirname(blueprint_folder).split('/')[-1]
+    if not blueprint_filename == DEFAULT_BLUEPRINT_PATH:
+        filename, _ = os.path.splitext(os.path.basename(blueprint_filename))
+        blueprint_id = (blueprint_id + '.' + filename)
+    return blueprint_id.replace('_', '-')

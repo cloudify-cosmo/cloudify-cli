@@ -27,9 +27,6 @@ import tempfile
 from contextlib import closing
 from backports.shutil_get_terminal_size import get_terminal_size
 
-from prettytable import PrettyTable
-
-
 from .logger import get_logger
 from .exceptions import CloudifyCliError
 
@@ -77,51 +74,6 @@ def decode_dict(data):
             value = decode_dict(value)
         rv[key] = value
     return rv
-
-
-def table(cols, data, defaults=None):
-    """
-    Return a new PrettyTable instance representing the list.
-
-    Arguments:
-
-        cols - An iterable of strings that specify what
-               are the columns of the table.
-
-               for example: ['id','name']
-
-        data - An iterable of dictionaries, each dictionary must
-               have key's corresponding to the cols items.
-
-               for example: [{'id':'123', 'name':'Pete']
-
-        defaults - A dictionary specifying default values for
-                   key's that don't exist in the data itself.
-
-                   for example: {'deploymentId':'123'} will set the
-                   deploymentId value for all rows to '123'.
-
-    """
-
-    def get_values_per_column(column, row_data):
-        if column in row_data:
-            if column == 'created_at':
-                if row_data[column]:
-                    row_data[column] = \
-                        row_data[column].replace('T', ' ').replace('Z', ' ')
-            return row_data[column]
-        else:
-            return defaults[column]
-
-    pt = PrettyTable([col for col in cols])
-
-    for d in data:
-        values_row = []
-        for c in cols:
-            values_row.append(get_values_per_column(c, d))
-        pt.add_row(values_row)
-
-    return pt
 
 
 def remove_if_exists(path):

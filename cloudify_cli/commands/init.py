@@ -33,7 +33,7 @@ from ..exceptions import CloudifyCliError
 @cfy.options.install_plugins
 @cfy.options.init_hard_reset
 @cfy.options.enable_colors
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def init(blueprint_path,
          reset_context,

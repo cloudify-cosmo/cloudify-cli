@@ -23,8 +23,8 @@ class BlueprintsTest(CliCommandTest):
         self.client.blueprints.delete = MagicMock()
         self.invoke('blueprints delete a-blueprint-id')
 
-    @patch('cloudify_cli.utils.table', autospec=True)
-    @patch('cloudify_cli.common.print_table', autospec=True)
+    @patch('cloudify_cli.table.generate', autospec=True)
+    @patch('cloudify_cli.table.log', autospec=True)
     def test_blueprints_get(self, *args):
         self.client.blueprints.get = MagicMock()
         self.client.deployments.list = MagicMock()
@@ -164,7 +164,7 @@ class BlueprintsTest(CliCommandTest):
 
         with patch('cloudify_cli.env.get_rest_client',
                    get_rest_client_mock),\
-                patch('cloudify_cli.utils.table', table_mock):
+                patch('cloudify_cli.table.generate', table_mock):
             self.invoke('cfy blueprints inputs {0}'.format(blueprint_id))
 
     def test_create_requirements(self):
@@ -175,7 +175,8 @@ class BlueprintsTest(CliCommandTest):
             os.path.join(local_dir, 'plugins', 'local_plugin'),
             'http://localhost/host_plugin.zip'
         }
-        tmp_requirements_path = os.path.join(env.CLOUDIFY_WORKDIR, 'requirements.txt')
+        tmp_requirements_path = os.path.join(
+            env.CLOUDIFY_WORKDIR, 'requirements.txt')
 
         self.invoke('cfy blueprints create-requirements {0} -o {1}'
                     .format(blueprint_path, tmp_requirements_path))
@@ -226,5 +227,5 @@ class BlueprintsTest(CliCommandTest):
             should_fail=True
         )
 
-        print output.exception.command
+        print(output.exception.command)
         self.assertIn('pip install -r', output.exception.command)

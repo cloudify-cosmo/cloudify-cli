@@ -16,7 +16,7 @@
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
-from .. import common
+from .. import table
 from ..config import cfy
 from ..exceptions import CloudifyCliError
 
@@ -33,7 +33,7 @@ def workflows():
                    short_help='Retrieve workflow information [manager only]')
 @cfy.argument('workflow-id')
 @cfy.options.deployment_id(required=True)
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 @cfy.pass_client()
 def get(workflow_id, deployment_id, logger, client):
@@ -61,9 +61,8 @@ def get(workflow_id, deployment_id, logger, client):
         'blueprint_id': deployment.blueprint_id,
         'deployment_id': deployment.id
     }
-    pt = utils.table(columns, data=[workflow], defaults=defaults)
-
-    common.print_table('Workflows:', pt)
+    pt = table.generate(columns, data=[workflow], defaults=defaults)
+    table.log('Workflows:', pt)
 
     # print workflow parameters
     mandatory_params = dict()
@@ -97,7 +96,7 @@ def get(workflow_id, deployment_id, logger, client):
 @workflows.command(name='list',
                    short_help='List workflows for a deployment [manager only]')
 @cfy.options.deployment_id(required=True)
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 @cfy.pass_client()
 def list(deployment_id, logger, client):
@@ -115,5 +114,5 @@ def list(deployment_id, logger, client):
         'blueprint_id': deployment.blueprint_id,
         'deployment_id': deployment.id
     }
-    pt = utils.table(columns, data=sorted_workflows, defaults=defaults)
-    common.print_table('Workflows:', pt)
+    pt = table.generate(columns, data=sorted_workflows, defaults=defaults)
+    table.log('Workflows:', pt)

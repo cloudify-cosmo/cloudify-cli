@@ -29,7 +29,7 @@ _NODE_INSTANCE_STATE_STARTED = 'started'
 
 
 @cfy.group(name='agents')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.assert_manager_active
 def agents():
     """Handle a deployment's agents
@@ -56,6 +56,7 @@ def _deployment_exists(client, deployment_id):
                 short_help='Install deployment agents [manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
+@cfy.options.verbose()
 @cfy.pass_logger
 @cfy.pass_client()
 def install(deployment_id, include_logs, logger, client):

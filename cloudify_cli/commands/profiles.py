@@ -20,7 +20,7 @@ from contextlib import closing
 
 from .. import env
 from .. import utils
-from .. import common
+from .. import table
 from ..config import cfy
 from ..exceptions import CloudifyCliError
 
@@ -29,7 +29,7 @@ EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
 
 
 @cfy.group(name='profiles')
-@cfy.options.verbose
+@cfy.options.verbose()
 def profiles():
     """Handle Cloudify CLI profiles
 
@@ -46,7 +46,7 @@ def profiles():
 
 @profiles.command(name='get-active',
                   short_help='Retrieve profile information')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def get(logger):
     active_profile_name = env.get_active_profile()
@@ -60,13 +60,13 @@ def get(logger):
 
     columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path',
                'ssh_port', 'rest_port', 'rest_protocol']
-    pt = utils.table(columns, data=[active_profile])
-    common.print_table('Active profile:', pt)
+    pt = table.generate(columns, data=[active_profile])
+    table.log('Active profile:', pt)
 
 
 @profiles.command(name='list',
                   short_help='List profiles')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def list(logger):
     """List all profiles
@@ -86,8 +86,8 @@ def list(logger):
         logger.info('Listing all profiles...')
         columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path',
                    'ssh_port', 'rest_port', 'rest_protocol']
-        pt = utils.table(columns, data=profiles)
-        common.print_table('Profiles:', pt)
+        pt = table.generate(columns, data=profiles)
+        table.log('Profiles:', pt)
 
     if not profile_names:
         logger.info(
@@ -99,7 +99,7 @@ def list(logger):
 @profiles.command(name='delete',
                   short_help='Delete a profile')
 @cfy.argument('profile-name')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def delete(profile_name, logger):
     """Delete a profile
@@ -118,7 +118,7 @@ def delete(profile_name, logger):
                   short_help='Export all profiles to an archive')
 @cfy.options.include_keys
 @cfy.options.optional_output_path
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def export_profiles(include_keys, output_path, logger):
     """Export all profiles to a file
@@ -151,7 +151,7 @@ def export_profiles(include_keys, output_path, logger):
 @profiles.command(name='import',
                   short_help='Import profiles from an archive')
 @cfy.argument('archive-path')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def import_profiles(archive_path, logger):
     """Import profiles from a profiles archive

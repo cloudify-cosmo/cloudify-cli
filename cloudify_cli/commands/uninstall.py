@@ -35,7 +35,7 @@ from . import deployments
 @cfy.options.timeout()
 @cfy.options.include_logs
 @cfy.options.json
-@cfy.options.verbose
+@cfy.options.verbose()
 @click.pass_context
 def manager(ctx,
             deployment_id,
@@ -97,7 +97,7 @@ def manager(ctx,
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
-@cfy.options.verbose
+@cfy.options.verbose()
 @click.pass_context
 def local(ctx,
           workflow_id,

@@ -46,7 +46,7 @@ from .commands import maintenance_mode
 
 
 @cfy.group(name='cfy')
-@cfy.options.verbose_exposed
+@cfy.options.verbose(expose_value=True)
 @cfy.options.version
 def _cfy(verbose):
     """Cloudify's Command Line Interface

@@ -21,6 +21,7 @@ from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 
 from .. import utils
+from .. import table
 from .. import common
 from ..config import cfy
 from ..config import helptexts
@@ -31,7 +32,7 @@ from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 
 
 @cfy.group(name='deployments')
-@cfy.options.verbose
+@cfy.options.verbose()
 def deployments():
     """Handle deployments on the Manager
     """
@@ -56,10 +57,10 @@ def _print_deployment_inputs(client, blueprint_id, logger):
 @cfy.options.blueprint_id()
 @cfy.options.sort_by()
 @cfy.options.descending
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def manager_list(blueprint_id, sort_by, descending, logger, client):
     """List deployments
 
@@ -80,8 +81,8 @@ def manager_list(blueprint_id, sort_by, descending, logger, client):
                              deployments)
 
     columns = ['id', 'blueprint_id', 'created_at', 'updated_at']
-    pt = utils.table(columns, data=deployments)
-    common.print_table('Deployments:', pt)
+    pt = table.generate(columns, data=deployments)
+    table.log('Deployments:', pt)
 
 
 @cfy.command(name='update', short_help='Update a deployment [manager only]')
@@ -95,10 +96,10 @@ def manager_list(blueprint_id, sort_by, descending, logger, client):
 @cfy.options.force(help=helptexts.FORCE_UPDATE)
 @cfy.options.include_logs
 @cfy.options.json
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def manager_update(deployment_id,
                    blueprint_path,
                    inputs,
@@ -173,10 +174,10 @@ def manager_update(deployment_id,
 @cfy.options.blueprint_id(required=True)
 @cfy.options.deployment_id()
 @cfy.options.inputs
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def manager_create(blueprint_id, deployment_id, inputs, logger, client):
     """Create a deployment on the manager
 
@@ -208,10 +209,10 @@ def manager_create(blueprint_id, deployment_id, inputs, logger, client):
              short_help='Delete a deployment [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.force(help=helptexts.IGNORE_LIVE_NODES)
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def manager_delete(deployment_id, force, logger, client):
     """Delete a deployment from the manager
 
@@ -225,10 +226,10 @@ def manager_delete(deployment_id, force, logger, client):
 @cfy.command(name='outputs',
              short_help='Show deployment outputs [manager only]')
 @cfy.argument('deployment-id')
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def manager_outputs(deployment_id, logger, client):
     """Retrieve outputs for a specific deployment
 
@@ -252,10 +253,10 @@ def manager_outputs(deployment_id, logger, client):
 @cfy.command(name='inputs',
              short_help='Show deployment inputs [manager only]')
 @cfy.argument('deployment-id')
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def manager_inputs(deployment_id, logger, client):
     """Retrieve inputs for a specific deployment
 
@@ -272,7 +273,7 @@ def manager_inputs(deployment_id, logger, client):
 
 
 @cfy.command(name='inputs', short_help='Show deployment inputs [locally]')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def local_inputs(logger):
     """Display inputs for the execution
@@ -282,7 +283,7 @@ def local_inputs(logger):
 
 
 @cfy.command(name='outputs', short_help='Show deployment outputs [locally]')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def local_outputs(logger):
     """Display outputs for the execution

@@ -46,9 +46,9 @@ REMOTE_WORKFLOW_STATE_PATH = '/opt/cloudify/_workflow_state.json'
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
+@cfy.pass_logger
 @cfy.pass_client(skip_version_check=True)
 def upgrade(blueprint_path,
             inputs,

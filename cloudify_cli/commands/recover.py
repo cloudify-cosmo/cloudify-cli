@@ -32,7 +32,7 @@ CLOUDIFY_MANAGER_PK_PATH_ENVAR = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def recover(snapshot_path,
             force,

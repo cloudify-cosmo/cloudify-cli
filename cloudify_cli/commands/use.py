@@ -35,7 +35,7 @@ from . import init
 @cfy.options.manager_key
 @cfy.options.manager_port
 @cfy.options.rest_port
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def use(alias,
         manager_ip,

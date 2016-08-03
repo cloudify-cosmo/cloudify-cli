@@ -25,7 +25,7 @@ import colorama
 
 from cloudify import logs
 
-import env
+from . import env
 from .config import logger_config
 from .colorful_event import ColorfulEvent
 

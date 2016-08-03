@@ -36,11 +36,9 @@ from ..exceptions import SuppressedCloudifyCliError
 from ..logger import get_logger, set_global_verbosity_level
 
 
-# TODO: Check why we use ignore_unknown_options
 CLICK_CONTEXT_SETTINGS = dict(
     help_option_names=['-h', '--help'],
-    token_normalize_func=lambda param: param.lower(),
-    ignore_unknown_options=True)
+    token_normalize_func=lambda param: param.lower())
 
 
 class MutuallyExclusiveOption(click.Option):
@@ -287,28 +285,6 @@ class Options(object):
         a developer sees an option. It it can receive arguments, it's a
         method - if not, it's an attribute.
         """
-        # TODO: Exposing the verbosity value is done once under cli.py.
-        # Instead of creating two functions, one exposed, one not,
-        # we could write a single verbose method to receive an arg
-        # for exposing the value.. but it would be misleading
-        # as exposing the value is not relevant in any other case.
-        self.verbose = click.option(
-            '-v',
-            '--verbose',
-            count=True,
-            callback=set_verbosity_level,
-            expose_value=False,
-            is_eager=True,
-            help=helptexts.VERBOSE)
-
-        self.verbose_exposed = click.option(
-            '-v',
-            '--verbose',
-            count=True,
-            callback=set_verbosity_level,
-            is_eager=True,
-            help=helptexts.VERBOSE)
-
         self.version = click.option(
             '--version',
             is_flag=True,
@@ -322,7 +298,6 @@ class Options(object):
             '--inputs',
             multiple=True,
             callback=inputs_callback,
-            # TODO: should be eager?
             help=helptexts.INPUTS)
 
         self.parameters = click.option(
@@ -533,6 +508,17 @@ class Options(object):
             is_flag=True,
             default=False,
             help=helptexts.DESCENDING)
+
+    @staticmethod
+    def verbose(expose_value=False):
+        return click.option(
+            '-v',
+            '--verbose',
+            count=True,
+            callback=set_verbosity_level,
+            expose_value=expose_value,
+            is_eager=True,
+            help=helptexts.VERBOSE)
 
     @staticmethod
     def force(help):
