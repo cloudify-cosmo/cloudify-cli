@@ -30,8 +30,6 @@ from ..config import cfy
 from ..exceptions import CloudifyCliError
 
 
-# TODO: We currently only support zip and tar.gz.
-# We need to add tar and tar.gz2 back.
 SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
 DESCRIPTION_LIMIT = 20
 
@@ -92,12 +90,6 @@ def upload(ctx,
     `organization/blueprint_repo[:tag/branch]` (to be
     retrieved from GitHub)
     """
-    # TODO: Consider using client.blueprints.publish_archive if the
-    # path is an archive. This requires additional logic when identifying
-    # the source.
-    # TODO: If not providing an archive, but a path to a local yaml,
-    # blueprint_filename is only relevant for the naming of the blueprint
-    # and not for the actual location. This is.. weird behavior.
     processed_blueprint_path = common.get_blueprint(
         blueprint_path, blueprint_filename)
 
@@ -265,7 +257,6 @@ def package(ctx, blueprint_path, output_path, validate, logger):
     to the directory in which the blueprint yaml files resides.
     """
     blueprint_path = os.path.abspath(blueprint_path)
-    # TODO: Should we add blueprint_filename here?
     destination = output_path or common.get_blueprint_id(blueprint_path)
 
     if validate:
@@ -302,8 +293,6 @@ def create_requirements(blueprint_path, output_path, logger):
         raise exceptions.CloudifyCliError(
             'Path {0} already exists'.format(output_path))
 
-    # TODO: this might show duplicates when printing.
-    # `dump_to_file` removes duplicates. We need to fix it here.
     requirements = common.create_requirements(blueprint_path=blueprint_path)
 
     if output_path:
@@ -311,12 +300,7 @@ def create_requirements(blueprint_path, output_path, logger):
         logger.info('Requirements file created successfully --> {0}'
                     .format(output_path))
     else:
-        # We don't want to use just logger
-        # since we want this output to be prefix free.
-        # this will make it possible to pipe the
-        # output directly to pip
         for requirement in requirements:
-            print(requirement)
             logger.info(requirement)
 
 

@@ -71,17 +71,11 @@ def validate(plugin_path, logger):
         # TODO: Find a better way to validate a plugin.
         # This is.. bad.
         try:
-            package_member = tar.getmember(package_json_path)
+            tar.getmember(package_json_path)
         except KeyError:
             raise CloudifyCliError(
                 'Failed to validate plugin {0} '
                 '(package.json was not found in archive)'.format(plugin_path))
-        try:
-            tar.extractfile(package_member).read()
-        except:
-            raise CloudifyCliError(
-                'Failed to validate plugin {0} '
-                '(unable to read package.json)'.format(plugin_path))
 
     logger.info('Plugin validated successfully')
 
@@ -184,8 +178,3 @@ def list(sort_by, descending, logger, client):
 
     pt = utils.table(columns, data=plugins)
     common.print_table('Plugins:', pt)
-
-
-# TODO: Add plugins install for local. Currently, we use wagon for that.
-# We should transparently pass all wagon args to wagon from an install
-# command like `cfy plugins install`

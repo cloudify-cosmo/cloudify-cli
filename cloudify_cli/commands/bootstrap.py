@@ -64,12 +64,8 @@ def bootstrap(blueprint_path,
     creation validation AND any additional validations done on the host
     once it is up.
     """
-    # TODO: use `common.get_blueprint` to allow to bootstrap from an archive,
-    # github, etc..
-
     env_name = 'manager'
 
-    # TODO: allow to skip sanity
     temp_profile_active = False
     active_profile = env.get_active_profile()
     if not active_profile or active_profile == 'local':
@@ -157,7 +153,6 @@ def bootstrap(blueprint_path,
                     else:
                         logger.info(
                             'Executing teardown due to failed bootstrap...')
-                        # TODO: why are we not propagating to this one?
                         bs.teardown(name=env_name,
                                     task_retries=5,
                                     task_retry_interval=30,

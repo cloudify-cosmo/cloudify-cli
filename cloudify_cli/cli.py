@@ -100,7 +100,6 @@ def _register_commands():
     _cfy.add_command(snapshots.snapshots)
     _cfy.add_command(maintenance_mode.maintenance_mode)
 
-    # TODO: Add nodes and groups to local.
     _cfy.add_command(nodes.nodes)
     _cfy.add_command(groups.groups)
 

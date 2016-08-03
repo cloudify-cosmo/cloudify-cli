@@ -87,8 +87,6 @@ def teardown(force,
             task_thread_pool_size)
 
 
-# TODO: do we need this if the `teardown` only appears in the context of a
-# manager?
 @cfy.pass_logger
 def _update_local_provider_context(manager_ip, logger):
     try:
