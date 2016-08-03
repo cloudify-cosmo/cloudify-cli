@@ -13,8 +13,6 @@ from ...commands.init import init_profile
 from ...exceptions import CloudifyBootstrapError
 from .constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH
 
-from dsl_parser.exceptions import MissingRequiredInputError
-
 
 class BootstrapTest(CliCommandTest):
 
