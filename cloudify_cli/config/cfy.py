@@ -36,6 +36,7 @@ from ..exceptions import SuppressedCloudifyCliError
 from ..logger import get_logger, set_global_verbosity_level
 
 
+# TODO: Check why we use ignore_unknown_options
 CLICK_CONTEXT_SETTINGS = dict(
     help_option_names=['-h', '--help'],
     token_normalize_func=lambda param: param.lower(),
