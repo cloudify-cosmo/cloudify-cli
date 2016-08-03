@@ -67,6 +67,8 @@ class CliCommandTest(testtools.TestCase):
             with open(env.DEFAULT_LOG_FILE, 'w') as f:
                 f.write('')
 
+    # TODO: Remove should_fail
+    # TODO: Consider separating
     def invoke(self,
                command,
                err_str_segment=None,
@@ -77,6 +79,7 @@ class CliCommandTest(testtools.TestCase):
             should_fail = True
         outcome = cfy.invoke(command, context=context)
         if should_fail and outcome.exit_code == 0:
+            # TODO: Consolidate
             raise cfy.ClickInvocationException(
                 'Command {0} should have failed'.format(outcome.command),
                 output=outcome.output,

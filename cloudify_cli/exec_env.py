@@ -14,6 +14,8 @@
 #    * limitations under the License.
 
 
+# TODO: Check what this is used for an consolidate
+
 def exec_globals(tasks_file):
     copied_globals = globals().copy()
     del copied_globals['exec_globals']

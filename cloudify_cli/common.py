@@ -18,7 +18,6 @@ import os
 import sys
 import tempfile
 
-
 from cloudify.workflows import local
 from cloudify.utils import LocalCommandRunner
 from dsl_parser.parser import parse_from_path
@@ -35,6 +34,10 @@ from .constants import DEFAULT_BLUEPRINT_PATH
 
 _ENV_NAME = 'local'
 _STORAGE_DIR_NAME = 'local-storage'
+
+
+# TODO: Create tables module
+# TODO: Consolidate utils/common
 
 
 def initialize_blueprint(blueprint_path,
@@ -152,6 +155,7 @@ def print_table(title, tb):
     logger.info('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
 
 
+# TODO: Move to dedicated module or fitting location
 def get_blueprint(source, blueprint_filename='blueprint.yaml'):
     """Get a source and return a directory containing the blueprint
 

@@ -42,6 +42,8 @@ _lgr = None
 
 _all_loggers = set()
 
+# TODO: Move all env related stuff to another module.
+
 
 def get_logger():
     if not _lgr:

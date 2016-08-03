@@ -474,6 +474,7 @@ class ProfileContext(yaml.YAMLObject):
         self._rest_protocol = rest_protocol
 
 
+# TODO: Move to config
 class CloudifyConfig(object):
 
     class Logging(object):

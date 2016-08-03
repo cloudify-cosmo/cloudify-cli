@@ -17,6 +17,7 @@ import sys
 import StringIO
 import traceback
 from functools import wraps
+
 import click
 from click_didyoumean import DYMGroup
 
@@ -285,8 +286,7 @@ class Options(object):
         a developer sees an option. It it can receive arguments, it's a
         method - if not, it's an attribute.
         """
-
-        # Exposing the verbosity value is done once under cli.py.
+        # TODO: Exposing the verbosity value is done once under cli.py.
         # Instead of creating two functions, one exposed, one not,
         # we could write a single verbose method to receive an arg
         # for exposing the value.. but it would be misleading
@@ -321,6 +321,7 @@ class Options(object):
             '--inputs',
             multiple=True,
             callback=inputs_callback,
+            # TODO: should be eager?
             help=helptexts.INPUTS)
 
         self.parameters = click.option(
