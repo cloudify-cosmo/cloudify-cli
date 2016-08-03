@@ -24,8 +24,8 @@ from .. import common
 from ..config import cfy
 from ..exceptions import CloudifyCliError
 
-PROFILE_DIRNAME = 'exported-ssh-keys'
-EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, PROFILE_DIRNAME)
+EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
+EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
 
 
 @cfy.group(name='profiles')
@@ -195,14 +195,11 @@ def _get_profile_names():
     # TODO: Remove after deciding whether `local` at all exists or not.
     # TODO: This is too.. ambiguous. We should change it so there are
     # no exclusions.
-    excluded = ['local', PROFILE_DIRNAME]
+    excluded = ['local', EXPORTED_KEYS_DIRNAME]
     profile_names = [item for item in os.listdir(env.PROFILES_DIR)
                      if item not in excluded]
 
     return profile_names
-
-# TODO: add `cfy profiles init`
-# TODO: add `cfy profiles configure` to attach key, user, etc to a profile
 
 
 def _backup_ssh_key(profile):

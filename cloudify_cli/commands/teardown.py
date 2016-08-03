@@ -147,4 +147,3 @@ def _do_teardown(task_retries, task_retry_interval, task_thread_pool_size):
         task_thread_pool_size=task_thread_pool_size)
 
     env.delete_profile(settings.get_manager_ip())
-

@@ -170,7 +170,6 @@ def _join_session(logger, sid, host_string):
 def _get_all_sessions(logger, host_string):
     logger.info('Retrieving list of existing sessions...')
     try:
-        # TODO: apply tmux formatting
         output = run_command_on_manager(
             'tmux list-sessions',
             host_string=host_string)

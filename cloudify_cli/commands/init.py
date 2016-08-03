@@ -59,9 +59,6 @@ def init(blueprint_path,
     """
     profile_name = 'local'
 
-    # TODO: Consider replacing `cfy init BLUEPRINT_PATH` with
-    # `cfy blueprints init BLUEPRINT_PATH` for local.
-
     if blueprint_path:
         if reset_context or hard:
             logger.warning(
@@ -89,13 +86,6 @@ def init(blueprint_path,
                 resolver=env.get_import_resolver()
             )
         except ImportError as e:
-
-            # ImportError indicates
-            # some plugin modules are missing
-
-            # TODO: consider adding an error code to
-            # all of our exceptions. so that we
-            # easily identify them here
             e.possible_solutions = [
                 "Run `cfy init {0} --install-plugins`".format(blueprint_path),
                 "Run `cfy install-plugins {0}`".format(blueprint_path)
@@ -121,7 +111,6 @@ def init_profile(
         hard=False,
         enable_colors=False,
         logger=None):
-    # TODO: support profile aliases
     logger.info('Initializing profile {0}...'.format(profile_name))
 
     context_file_path = os.path.join(
@@ -150,7 +139,6 @@ def init_profile(
     if not os.path.isfile(env.CLOUDIFY_CONFIG_PATH) or hard:
         env.set_cfy_config(enable_colors=enable_colors)
 
-    # TODO: Verify that we don't break anything!
     if not profile_name == 'local':
         env.set_profile_context(profile_name=profile_name)
 

@@ -70,13 +70,13 @@ def use(alias,
         rest_protocol=rest_protocol,
         skip_version_check=True)
     try:
-        # first check this server is available.
+        # First check this server is available.
         client.manager.get_status()
     except UserUnauthorizedError:
         raise CloudifyCliError(
             "Can't use manager {0}: User is unauthorized.".format(
                 manager_ip))
-    # TODO: Be more specific. The problem here is that, for instance,
+    # The problem here is that, for instance,
     # any problem raised by the rest client will trigger this.
     # Triggering a CloudifyClientError only doesn't actually deal
     # with situations like No route to host and the likes.
