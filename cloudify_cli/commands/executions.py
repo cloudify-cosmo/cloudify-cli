@@ -222,7 +222,6 @@ def manager_start(workflow_id,
                         '{1}'.format(workflow_id, deployment_id))
             logger.info(events_message.format(execution.id))
     except ExecutionTimeoutError as e:
-        # TODO: check if `cfy executions list` works with `execution_id`
         logger.info(
             "Timed out waiting for workflow '{0}' of deployment '{1}' to "
             "end. The execution may still be running properly; however, "
