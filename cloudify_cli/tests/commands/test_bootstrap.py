@@ -13,6 +13,8 @@ from ...commands.init import init_profile
 from ...exceptions import CloudifyBootstrapError
 from .constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH
 
+from dsl_parser.exceptions import MissingRequiredInputError
+
 
 class BootstrapTest(CliCommandTest):
 
@@ -141,7 +143,11 @@ class BootstrapTest(CliCommandTest):
 
         # Should pass the initialization of the blueprint, and only fail on
         # missing inputs
-        self.invoke(command, err_str_segment='Required inputs')
+        self.invoke(
+            command,
+            err_str_segment='Required inputs',
+            exception=MissingRequiredInputError
+        )
 
     def test_bootstrap_no_validations_install_plugins(self):
         blueprint_path = '{0}/local/{1}.yaml'.format(
