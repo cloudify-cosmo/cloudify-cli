@@ -29,6 +29,7 @@ from .init import init_profile
 
 @cfy.command(name='bootstrap', short_help='Bootstrap a manager')
 @cfy.argument('blueprint-path')
+@cfy.options.blueprint_filename()
 @cfy.options.inputs
 @cfy.options.validate_only
 @cfy.options.skip_validations
@@ -41,6 +42,7 @@ from .init import init_profile
 @cfy.options.verbose
 @cfy.pass_logger
 def bootstrap(blueprint_path,
+              blueprint_filename,
               inputs,
               validate_only,
               skip_validations,
@@ -73,6 +75,9 @@ def bootstrap(blueprint_path,
         temp_profile_active = True
         init_profile(profile_name=active_profile)
 
+    processed_blueprint_path = common.get_blueprint(
+        blueprint_path, blueprint_filename)
+
     unclean_env_message = "Can't bootstrap because the environment is not " \
                           "clean. Clean the environment by calling teardown " \
                           "or reset it using the `cfy init -r` command"
@@ -92,7 +97,7 @@ def bootstrap(blueprint_path,
         if not skip_validations:
             logger.info('Executing bootstrap validation...')
             bs.bootstrap_validation(
-                blueprint_path,
+                processed_blueprint_path,
                 name=env_name,
                 inputs=inputs,
                 task_retries=task_retries,
@@ -110,7 +115,7 @@ def bootstrap(blueprint_path,
             try:
                 logger.info('Executing manager bootstrap...')
                 details = bs.bootstrap(
-                    blueprint_path,
+                    processed_blueprint_path,
                     name=env_name,
                     inputs=inputs,
                     task_retries=task_retries,

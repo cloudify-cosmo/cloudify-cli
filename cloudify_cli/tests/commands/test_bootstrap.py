@@ -127,6 +127,22 @@ class BootstrapTest(CliCommandTest):
                 function_name='install_blueprint_plugins',
                 kwargs=dict(blueprint_path=blueprint_path))
 
+    def test_bootstrap_archive_default_filename(self):
+        blueprint_path = '{0}/{1}'.format(
+            BLUEPRINTS_DIR, 'simple_manager_blueprint.tar.gz')
+        command = 'cfy bootstrap {0}'.format(blueprint_path)
+        self.invoke(command, err_str_segment='Could not find `blueprint.yaml`')
+
+    def test_bootstrap_archive_with_filename(self):
+        blueprint_path = '{0}/{1}'.format(
+            BLUEPRINTS_DIR, 'simple_manager_blueprint.tar.gz')
+        command = 'cfy bootstrap {0} -n simple-manager-blueprint.yaml'\
+            .format(blueprint_path)
+
+        # Should pass the initialization of the blueprint, and only fail on
+        # missing inputs
+        self.invoke(command, err_str_segment='Required inputs')
+
     def test_bootstrap_no_validations_install_plugins(self):
         blueprint_path = '{0}/local/{1}.yaml'.format(
             BLUEPRINTS_DIR, 'blueprint_with_plugins')
