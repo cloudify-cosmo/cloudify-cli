@@ -13,23 +13,23 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import os
 import json
+import os
 import shutil
 
 import click
 
-from dsl_parser.parser import parse_from_path
+from cloudify_cli.cli import cfy
 from dsl_parser.exceptions import DSLParsingException
+from dsl_parser.parser import parse_from_path
 
 from .. import env
-from .. import utils
 from .. import local
 from .. import table
+from .. import utils
+from .. import blueprint
 from .. import exceptions
-from ..config import cfy
 from ..exceptions import CloudifyCliError
-
 
 SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
 DESCRIPTION_LIMIT = 20
@@ -91,7 +91,7 @@ def upload(ctx,
     `organization/blueprint_repo[:tag/branch]` (to be
     retrieved from GitHub)
     """
-    processed_blueprint_path = get_blueprint(
+    processed_blueprint_path = blueprint.get(
         blueprint_path, blueprint_filename)
 
     try:
@@ -99,16 +99,16 @@ def upload(ctx,
             ctx.invoke(
                 validate_blueprint,
                 blueprint_path=processed_blueprint_path)
-        blueprint_id = blueprint_id or get_blueprint_id(
+        blueprint_id = blueprint_id or blueprint.get_id(
             processed_blueprint_path, blueprint_filename)
 
         progress_handler = utils.generate_progress_handler(blueprint_path, '')
         logger.info('Uploading blueprint {0}...'.format(blueprint_path))
-        blueprint = client.blueprints.upload(processed_blueprint_path,
+        blueprint_obj = client.blueprints.upload(processed_blueprint_path,
                                              blueprint_id,
                                              progress_handler)
         logger.info("Blueprint uploaded. The blueprint's id is {0}".format(
-            blueprint.id))
+            blueprint_obj.id))
     finally:
         # Every situation other than the user providing a path of a local
         # yaml means a temp folder will be created that should be later
@@ -198,19 +198,19 @@ def get(blueprint_id, logger, client):
     `BLUEPRINT_ID` is the id of the blueprint to get information on.
     """
     logger.info('Retrieving blueprint {0}...'.format(blueprint_id))
-    blueprint = client.blueprints.get(blueprint_id)
+    blueprint_dict = client.blueprints.get(blueprint_id)
     deployments = client.deployments.list(_include=['id'],
                                           blueprint_id=blueprint_id)
-    blueprint['#deployments'] = len(deployments)
+    blueprint_dict['#deployments'] = len(deployments)
 
     columns = \
         ['id', 'main_file_name', 'created_at', 'updated_at', '#deployments']
-    pt = table.generate(columns, data=[blueprint])
+    pt = table.generate(columns, data=[blueprint_dict])
     pt.max_width = 50
     table.log('Blueprint:', pt)
 
     logger.info('Description:')
-    logger.info('{0}\n'.format(blueprint['description'] or ''))
+    logger.info('{0}\n'.format(blueprint_dict['description'] or ''))
 
     logger.info('Existing deployments:')
     logger.info('{0}\n'.format(json.dumps([d['id'] for d in deployments])))
@@ -229,8 +229,8 @@ def inputs(blueprint_id, logger, client):
     `BLUEPRINT_ID` is the path of the blueprint to get inputs for.
     """
     logger.info('Retrieving inputs for blueprint {0}...'.format(blueprint_id))
-    blueprint = client.blueprints.get(blueprint_id)
-    inputs = blueprint['plan']['inputs']
+    blueprint_dict = client.blueprints.get(blueprint_id)
+    inputs = blueprint_dict['plan']['inputs']
     data = [{'name': name,
              'type': input.get('type', '-'),
              'default': input.get('default', '-'),
@@ -257,7 +257,7 @@ def package(ctx, blueprint_path, output_path, validate, logger):
     to the directory in which the blueprint yaml files resides.
     """
     blueprint_path = os.path.abspath(blueprint_path)
-    destination = output_path or get_blueprint_id(blueprint_path)
+    destination = output_path or blueprint.get_id(blueprint_path)
 
     if validate:
         ctx.invoke(validate_blueprint, blueprint_path=blueprint_path)
@@ -319,4 +319,4 @@ def install_plugins(blueprint_path, logger):
     `BLUEPRINT_PATH` is the path to the blueprint to install plugins for.
     """
     logger.info('Installing plugins...')
-    local.install_plugins(blueprint_path=blueprint_path)
+    local._install_plugins(blueprint_path=blueprint_path)

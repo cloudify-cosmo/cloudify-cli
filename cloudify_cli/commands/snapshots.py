@@ -13,10 +13,9 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from .. import utils
 from .. import table
-from ..config import cfy
-from ..config import helptexts
+from .. import utils
+from ..cli import helptexts, cfy
 
 
 @cfy.group(name='snapshots')

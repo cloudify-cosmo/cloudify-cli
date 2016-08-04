@@ -227,5 +227,4 @@ class BlueprintsTest(CliCommandTest):
             should_fail=True
         )
 
-        print(output.exception.command)
         self.assertIn('pip install -r', output.exception.command)

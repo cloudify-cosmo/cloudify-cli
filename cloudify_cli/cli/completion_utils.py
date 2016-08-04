@@ -14,10 +14,10 @@
 #    * limitations under the License.
 
 
-from argcomplete .completers import FilesCompleter
+from argcomplete.completers import FilesCompleter
 
-from cloudify_cli import env
-from cloudify_cli.commands import dev
+from .. import env
+from ..commands import dev
 
 yaml_files_completer = FilesCompleter(['*.yml', '*.yaml'])
 archive_files_completer = FilesCompleter(

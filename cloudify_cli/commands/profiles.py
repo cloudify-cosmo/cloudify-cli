@@ -19,9 +19,9 @@ import tarfile
 from contextlib import closing
 
 from .. import env
-from .. import utils
 from .. import table
-from ..config import cfy
+from .. import utils
+from ..cli import cfy
 from ..exceptions import CloudifyCliError
 
 EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
@@ -222,7 +222,7 @@ def _move_ssh_key(profile, direction, logger):
     assert direction in ('profile', 'origin')
 
     context = env.get_profile_context(profile)
-    key_filepath = context.get_manager_key()
+    key_filepath = context.manager_key
     if key_filepath:
         backup_path = os.path.join(
             EXPORTED_SSH_KEYS_DIR, os.path.basename(key_filepath)) + \
@@ -246,12 +246,12 @@ def get_profile(profile_name):
     env.set_active_profile(profile_name)
 
     context = env.get_profile_context(profile_name)
-    manager_ip = context.get_manager_ip() or None
-    ssh_key_path = context.get_manager_key() or None
-    ssh_user = context.get_manager_user() or None
-    ssh_port = context.get_manager_port() or None
-    rest_port = context.get_rest_port() or None
-    rest_protocol = context.get_rest_protocol() or None
+    manager_ip = context.manager_ip or None
+    ssh_key_path = context.manager_key or None
+    ssh_user = context.manager_user or None
+    ssh_port = context.manager_port or None
+    rest_port = context.rest_port or None
+    rest_protocol = context.rest_protocol or None
 
     env.set_active_profile(current_profile)
 

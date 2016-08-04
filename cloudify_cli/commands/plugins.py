@@ -13,16 +13,15 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import click
 import tarfile
 from urlparse import urlparse
 
-from .. import utils
-from .. import table
-from ..config import cfy
-from ..config import helptexts
-from ..exceptions import CloudifyCliError
+import click
 
+from .. import table
+from .. import utils
+from ..cli import helptexts, cfy
+from ..exceptions import CloudifyCliError
 
 columns = [
     'id',

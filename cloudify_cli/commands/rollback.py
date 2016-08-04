@@ -13,13 +13,11 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from .upgrade import update_inputs
-from .upgrade import put_workflow_state_file
-from .upgrade import verify_and_wait_for_maintenance_mode_activation
-
 from .. import local
-from ..config import cfy
+from ..cli import cfy
 from .. import exceptions
+from .upgrade import put_workflow_state_file, update_inputs, \
+    verify_and_wait_for_maintenance_mode_activation
 
 
 @cfy.command(name='rollback',

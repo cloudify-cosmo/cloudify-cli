@@ -13,18 +13,17 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import os
 import json
+import os
 from StringIO import StringIO
 
-from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
+from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 
-from .. import utils
 from .. import table
-from ..config import cfy
+from .. import utils
 from ..local import load_env
-from ..config import helptexts
+from ..cli import cfy, helptexts
 from ..logger import get_events_logger
 from .. import execution_events_fetcher
 from ..constants import DEFAULT_BLUEPRINT_PATH

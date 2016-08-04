@@ -14,16 +14,11 @@
 #    * limitations under the License.
 
 import click
-
 from fabric.api import env as fabric_env
 from fabric.context_managers import settings
 
-from .. import env
-from ..config import cfy
-from ..config import helptexts
-from ..env import get_manager_key
-from ..env import get_manager_user
-from ..env import get_manager_port
+from ..env import profile
+from ..cli import cfy, helptexts
 from ..exceptions import CloudifyCliError
 
 
@@ -42,11 +37,10 @@ from ..exceptions import CloudifyCliError
 def dev(tasks_file, task, args):
     """Run fabric tasks on the manager
     """
-    manager_ip = env.get_rest_host()
-    _execute(username=get_manager_user(),
-             port=get_manager_port(),
-             key=get_manager_key(),
-             ip=manager_ip,
+    _execute(username=profile.manager_user,
+             port=profile.manager_port,
+             key=profile.manager_key,
+             ip=profile.manager_ip,
              task=task,
              tasks_file=tasks_file,
              args=args)

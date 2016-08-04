@@ -19,7 +19,6 @@ import shutil
 import pkgutil
 import getpass
 import tempfile
-from contextlib import contextmanager
 
 import yaml
 import pkg_resources
@@ -107,8 +106,8 @@ def is_manager_active():
     if active_profile == 'local':
         return False
 
-    profile = get_profile_context(active_profile, suppress_error=True)
-    if not (profile and profile.get_manager_ip()):
+    p = get_profile_context(active_profile, suppress_error=True)
+    if not (p and p.manager_ip):
         return False
     return True
 
@@ -117,7 +116,7 @@ def get_profile_context(profile_name=None, suppress_error=False):
     profile_name = profile_name or get_active_profile()
     if profile_name == 'local':
         if suppress_error:
-            return None
+            return ProfileContext()
         raise CloudifyCliError('Local profile does not have context')
     try:
         path = get_context_path(profile_name)
@@ -125,7 +124,7 @@ def get_profile_context(profile_name=None, suppress_error=False):
             return yaml.load(f.read())
     except CloudifyCliError:
         if suppress_error:
-            return None
+            return ProfileContext()
         raise
 
 
@@ -142,10 +141,7 @@ def is_initialized(profile_name=None):
         return os.path.isfile(CLOUDIFY_CONFIG_PATH)
 
 
-def get_context_path(profile_name=None):
-    profile_name = profile_name or get_active_profile()
-    if profile_name == 'local':
-        raise CloudifyCliError('Local profile does not contain context')
+def get_context_path(profile_name):
     init_path = get_profile_dir(profile_name)
     context_path = os.path.join(
         init_path,
@@ -185,42 +181,6 @@ def raise_uninitialized():
         "Run 'cfy init'"
     ]
     raise error
-
-
-def set_profile_context(context=None,
-                        update=False,
-                        profile_name=None):
-    profile_name = profile_name or get_active_profile()
-    if not profile_name or profile_name == 'local':
-        raise CloudifyCliError(
-            'Either provide a profile name or activate a profile')
-
-    workdir = os.path.join(PROFILES_DIR, profile_name)
-    if context is None:
-        context = ProfileContext()
-    if update:
-        # locate existing file
-        # this will raise an error if the file doesn't exist.
-        target_file_path = get_context_path(profile_name)
-    else:
-
-        # create a new file
-        if not os.path.exists(workdir):
-            os.mkdir(workdir)
-        target_file_path = os.path.join(
-            workdir,
-            constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
-
-    with open(target_file_path, 'w') as f:
-        f.write(yaml.dump(context))
-
-
-@contextmanager
-def update_profile_context(profile_name=None):
-    profile_name = profile_name or get_active_profile()
-    context = get_profile_context(profile_name)
-    yield context
-    set_profile_context(context, update=True, profile_name=profile_name)
 
 
 def is_use_colors():
@@ -263,9 +223,9 @@ def get_rest_client(rest_host=None,
                     password=None,
                     trust_all=False,
                     skip_version_check=False):
-    rest_host = rest_host or get_rest_host()
-    rest_port = rest_port or get_rest_port()
-    rest_protocol = rest_protocol or get_rest_protocol()
+    rest_host = rest_host or profile.manager_ip
+    rest_port = rest_port or profile.rest_port
+    rest_protocol = rest_protocol or profile.rest_protocol
     username = username or get_username()
     password = password or get_password()
     trust_all = trust_all or get_ssl_trust_all()
@@ -300,53 +260,12 @@ def get_rest_client(rest_host=None,
             'Manager Version: {1}'.format(cli_version, manager_version))
 
 
-def get_rest_port():
-    context = get_profile_context()
-    return context.get_rest_port()
-
-
-def get_rest_protocol():
-    context = get_profile_context()
-    return context.get_rest_protocol()
-
-
-def get_manager_user():
-    context = get_profile_context()
-    if context.get_manager_user():
-        return context.get_manager_user()
-    raise CloudifyCliError(
-        'Manager User is not set in working directory settings')
-
-
-def get_manager_port():
-    context = get_profile_context()
-    if context.get_manager_port():
-        return context.get_manager_port()
-    raise CloudifyCliError(
-        'Manager Port is not set in working directory settings')
-
-
-def get_manager_key():
-    context = get_profile_context()
-    if context.get_manager_key():
-        return context.get_manager_key()
-    raise CloudifyCliError(
-        'Manager Key is not set in working directory settings')
-
-
-def get_rest_host():
-    context = get_profile_context()
-    manager_ip = context.get_manager_ip()
-    if manager_ip:
-        return manager_ip
-    raise CloudifyCliError(
-        "You must being using a manager to perform this action. "
-        "You can run `cfy use MANAGER_IP` to use a manager.")
-
-
 def build_manager_host_string(user='', ip=''):
-    user = user or get_manager_user()
-    ip = ip or get_rest_host()
+    user = user or profile.manager_user
+    if not user:
+        raise CloudifyCliError('Manager User is not set in '
+                               'working directory settings')
+    ip = ip or profile.manager_ip
     return '{0}@{1}'.format(user, ip)
 
 
@@ -424,9 +343,9 @@ class ProfileContext(yaml.YAMLObject):
     yaml_tag = u'!WD_Settings'
     yaml_loader = yaml.Loader
 
-    def __init__(self):
+    def __init__(self, profile_name=None):
         self._bootstrap_state = None
-        self._manager_host = None
+        self._manager_ip = profile_name
         self._manager_key = None
         self._manager_port = None
         self._manager_user = None
@@ -434,59 +353,94 @@ class ProfileContext(yaml.YAMLObject):
         self._rest_port = constants.DEFAULT_REST_PORT
         self._rest_protocol = constants.DEFAULT_REST_PROTOCOL
 
-    def get_bootstrap_state(self):
+    @property
+    def bootstrap_state(self):
         return self._bootstrap_state
 
-    def set_bootstrap_state(self, bootstrap_state):
+    @bootstrap_state.setter
+    def bootstrap_state(self, bootstrap_state):
         self._bootstrap_state = bootstrap_state
 
-    def get_manager_ip(self):
-        return self._manager_host
+    @property
+    def manager_ip(self):
+        return self._manager_ip
 
-    def set_manager_ip(self, manager_host):
-        self._manager_host = manager_host
+    @manager_ip.setter
+    def manager_ip(self, manager_host):
+        self._manager_ip = manager_host
 
-    def get_manager_key(self):
+    @property
+    def manager_key(self):
         return self._manager_key
 
-    def set_manager_key(self, manager_key):
+    @manager_key.setter
+    def manager_key(self, manager_key):
         self._manager_key = manager_key
 
-    def get_manager_port(self):
+    @property
+    def manager_port(self):
         return self._manager_port
 
-    def set_manager_port(self, manager_port):
+    @manager_port.setter
+    def manager_port(self, manager_port):
         # If the port is int, we want to change it to a string. Otherwise,
         # leave None as is
         manager_port = str(manager_port) if manager_port else None
         self._manager_port = manager_port
 
-    def get_manager_user(self):
+    @property
+    def manager_user(self):
         return self._manager_user
 
-    def set_manager_user(self, _manager_user):
+    @manager_user.setter
+    def manager_user(self, _manager_user):
         self._manager_user = _manager_user
 
-    def get_provider_context(self):
+    @property
+    def provider_context(self):
         return self._provider_context
 
-    def set_provider_context(self, provider_context):
+    @provider_context.setter
+    def provider_context(self, provider_context):
         self._provider_context = provider_context
 
     def remove_manager_server_context(self):
-        self._manager_host = None
+        self._manager_ip = None
 
-    def get_rest_port(self):
+    @property
+    def rest_port(self):
         return self._rest_port
 
-    def set_rest_port(self, rest_port):
+    @rest_port.setter
+    def rest_port(self, rest_port):
         self._rest_port = rest_port
 
-    def get_rest_protocol(self):
+    @property
+    def rest_protocol(self):
         return self._rest_protocol
 
-    def set_rest_protocol(self, rest_protocol):
+    @rest_protocol.setter
+    def rest_protocol(self, rest_protocol):
         self._rest_protocol = rest_protocol
+
+    def _get_context_path(self):
+        init_path = get_profile_dir(self.manager_ip)
+        context_path = os.path.join(
+            init_path,
+            constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
+        return context_path
+
+    def save(self):
+        workdir = os.path.join(PROFILES_DIR, self.manager_ip)
+        # create a new file
+        if not os.path.exists(workdir):
+            os.mkdir(workdir)
+        target_file_path = os.path.join(
+            workdir,
+            constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
+
+        with open(target_file_path, 'w') as f:
+            f.write(yaml.dump(self))
 
 
 # TODO: Move to config
@@ -544,3 +498,5 @@ def get_auth_header(username, password):
                 constants.BASIC_AUTH_PREFIX + ' ' + base64_encode(credentials)}
 
     return header
+
+profile = get_profile_context(suppress_error=True)

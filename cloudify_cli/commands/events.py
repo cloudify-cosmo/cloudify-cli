@@ -15,7 +15,7 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from ..config import cfy
+from ..cli import cfy
 from ..logger import get_events_logger
 from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 from ..execution_events_fetcher import ExecutionEventsFetcher, \

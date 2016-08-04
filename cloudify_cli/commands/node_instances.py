@@ -17,9 +17,9 @@ import json
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import utils
 from .. import table
-from ..config import cfy
+from .. import utils
+from ..cli import cfy
 from ..local import load_env
 from ..exceptions import CloudifyCliError
 

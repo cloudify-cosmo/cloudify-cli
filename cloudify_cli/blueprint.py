@@ -1,7 +1,8 @@
 import os
 
-from .. import utils
-from ..constants import DEFAULT_BLUEPRINT_PATH
+from . import utils
+from .exceptions import CloudifyCliError
+from .constants import DEFAULT_BLUEPRINT_PATH
 
 
 def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH):

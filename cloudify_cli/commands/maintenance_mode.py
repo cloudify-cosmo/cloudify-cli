@@ -15,11 +15,10 @@
 
 import time
 
-from .. import utils
 from .. import table
+from .. import utils
+from ..cli import cfy
 from .. import exceptions
-
-from ..config import cfy
 from ..logger import NO_VERBOSE
 from ..logger import get_global_verbosity
 

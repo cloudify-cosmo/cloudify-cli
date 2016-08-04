@@ -17,13 +17,12 @@ import click
 
 from .. import env
 from .. import utils
-from ..config import cfy
-from ..local import storage_dir
-from ..constants import DEFAULT_UNINSTALL_WORKFLOW
-
+from ..cli import cfy
 from . import blueprints
 from . import executions
 from . import deployments
+from ..local import storage_dir
+from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 
 
 @cfy.command(name='uninstall',

@@ -18,9 +18,9 @@ import os
 
 import fabric.api as fab
 
-from . import env
 from .logger import get_global_verbosity
 from .exceptions import CloudifyCliError
+from .env import profile, build_manager_host_string
 
 
 def get_manager_date():
@@ -30,12 +30,12 @@ def get_manager_date():
 
 
 def get_file_from_manager(remote_source_path, destination_path):
-    key_filename = os.path.expanduser(env.get_manager_key())
+    key_filename = os.path.expanduser(profile.manager_key)
     with fab.settings(
             fab.hide('running', 'stdout'),
-            host_string=env.build_manager_host_string(),
+            host_string=build_manager_host_string(),
             key_filename=key_filename,
-            port=env.get_manager_port()):
+            port=profile.manager_port):
         fab.get(remote_source_path, destination_path)
 
 
@@ -45,12 +45,12 @@ def put_file_in_manager(source_path,
                         key_filename=None,
                         user=None,
                         port=''):
-    port = port or env.get_manager_port()
+    port = port or profile.manager_port
     if not key_filename:
-        key_filename = os.path.expanduser(env.get_manager_key())
+        key_filename = os.path.expanduser(profile.manager_key)
     with fab.settings(
             fab.hide('running', 'stdout'),
-            host_string=env.build_manager_host_string(user=user),
+            host_string=build_manager_host_string(user=user),
             key_filename=key_filename,
             port=port):
         fab.put(use_sudo=use_sudo,
@@ -69,11 +69,13 @@ def run_command_on_manager(command,
     `host_string` can be explicitly provided to save on REST calls.
     `force_output` forces all output as if running in verbose.
     """
-    host_string = host_string or env.build_manager_host_string()
-    port = env.get_manager_port()
+    test_profile()
+
+    host_string = host_string or build_manager_host_string()
+    port = int(profile.manager_port)
 
     def execute():
-        key_filename = os.path.expanduser(env.get_manager_key())
+        key_filename = os.path.expanduser(profile.manager_key)
         with fab.settings(
                 host_string=host_string,
                 key_filename=key_filename,
@@ -97,3 +99,22 @@ def run_command_on_manager(command,
     else:
         with fab.hide('running', 'stdout', 'stderr', 'warnings'):
             return execute()
+
+
+def test_profile():
+    msg = 'Manager {0} is not set in working directory settings'
+    missing_config = False
+    missing_part = ''
+
+    if not profile.manager_user:
+        missing_config = True
+        missing_part = 'User'
+    elif not profile.manager_key:
+        missing_config = True
+        missing_part = 'Key'
+    elif not profile.manager_port:
+        missing_config = True
+        missing_part = 'Port'
+
+    if missing_config:
+        raise CloudifyCliError(msg.format(missing_part))

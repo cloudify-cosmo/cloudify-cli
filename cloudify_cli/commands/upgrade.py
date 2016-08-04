@@ -13,23 +13,21 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import os
-import time
 import json
+import os
 import shutil
 import tempfile
+import time
 
 from .. import ssh
-from .. import env
 from .. import local
 from .. import utils
-from ..config import cfy
+from ..cli import cfy
 from .. import exceptions
+from ..env import profile
+from . import maintenance_mode
 from ..bootstrap import bootstrap as bs
 from ..bootstrap.bootstrap import load_env
-
-from . import maintenance_mode
-
 
 MAINTENANCE_MODE_DEACTIVATED = 'deactivated'
 MAINTENANCE_MODE_ACTIVATING = 'activating'
@@ -69,7 +67,7 @@ def upgrade(blueprint_path,
     `BLUEPRINT_PATH` is the path of the manager blueprint to use for upgrade.
     """
 
-    manager_ip = env.get_rest_host()
+    manager_ip = profile.manager_ip
     verify_and_wait_for_maintenance_mode_activation(client)
 
     if skip_validations:
@@ -150,7 +148,7 @@ def upgrade(blueprint_path,
 
     logger.info('Upgrade complete')
     logger.info('Manager is up at {0}'.format(
-        env.get_rest_host()))
+        profile.manager_ip))
 
 
 def update_inputs(inputs=None):
@@ -159,7 +157,7 @@ def update_inputs(inputs=None):
     inputs.update({'ssh_key_filename': _load_manager_key(inputs)})
     inputs.update({'ssh_user': _load_manager_user(inputs)})
     inputs.update({'ssh_port': _load_manager_port(inputs)})
-    inputs.update({'public_ip': env.get_rest_host()})
+    inputs.update({'public_ip': profile.manager_ip})
     return inputs
 
 
@@ -173,7 +171,7 @@ def _load_private_ip(inputs):
 
 def _load_manager_key(inputs):
     try:
-        key_path = inputs.get('ssh_key_filename') or env.get_manager_key()
+        key_path = inputs.get('ssh_key_filename') or profile.manager_key
         return os.path.expanduser(key_path)
     except Exception:
         raise exceptions.CloudifyCliError('Manager key must be provided for '
@@ -182,7 +180,7 @@ def _load_manager_key(inputs):
 
 def _load_manager_user(inputs):
     try:
-        return inputs.get('ssh_user') or env.get_manager_user()
+        return inputs.get('ssh_user') or profile.manager_user
     except Exception:
         raise exceptions.CloudifyCliError('Manager user must be provided for '
                                           'the upgrade/rollback process')
@@ -190,7 +188,7 @@ def _load_manager_user(inputs):
 
 def _load_manager_port(inputs):
     try:
-        return inputs.get('ssh_port') or env.get_manager_port()
+        return inputs.get('ssh_port') or profile.manager_port
     except Exception:
         raise exceptions.CloudifyCliError('Manager port must be provided for '
                                           'the upgrade/rollback process')

@@ -15,11 +15,10 @@
 ############
 
 from . import env
-from .config import cfy
-
-from .commands import use
+from .cli import cfy
 from .commands import dev
 from .commands import ssh
+from .commands import use
 from .commands import init
 from .commands import logs
 from .commands import nodes
@@ -27,17 +26,17 @@ from .commands import agents
 from .commands import events
 from .commands import groups
 from .commands import status
-from .commands import recover
-from .commands import plugins
-from .commands import upgrade
 from .commands import install
+from .commands import plugins
+from .commands import recover
+from .commands import upgrade
 from .commands import teardown
-from .commands import rollback
 from .commands import profiles
-from .commands import workflows
-from .commands import uninstall
-from .commands import snapshots
+from .commands import rollback
 from .commands import bootstrap
+from .commands import snapshots
+from .commands import uninstall
+from .commands import workflows
 from .commands import blueprints
 from .commands import executions
 from .commands import deployments

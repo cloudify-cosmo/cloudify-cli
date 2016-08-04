@@ -13,22 +13,19 @@
 # * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import time
 import json
+import time
 
 from cloudify_rest_client import exceptions
 
-from .. import utils
-from .. import table
 from .. import local
-from ..config import cfy
-from ..config import helptexts
-from ..exceptions import CloudifyCliError
-from ..exceptions import ExecutionTimeoutError
+from .. import table
+from .. import utils
+from ..cli import cfy, helptexts
 from ..logger import get_events_logger
-from ..exceptions import SuppressedCloudifyCliError
 from ..execution_events_fetcher import wait_for_execution
-
+from ..exceptions import CloudifyCliError, ExecutionTimeoutError, \
+    SuppressedCloudifyCliError
 
 _STATUS_CANCELING_MESSAGE = (
     'NOTE: Executions currently in a "canceling/force-canceling" status '

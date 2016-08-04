@@ -14,16 +14,16 @@
 #    * limitations under the License.
 
 import os
-import re
 import platform
+import re
 import subprocess
 from distutils import spawn
 
 from .. import env
 from .. import utils
-from ..config import cfy
-from ..ssh import run_command_on_manager
+from ..cli import cfy
 from ..exceptions import CloudifyCliError
+from ..ssh import run_command_on_manager, test_profile
 
 
 @cfy.command(name='ssh', short_help='Connect using SSH [manager only]')
@@ -104,8 +104,9 @@ def _open_interactive_shell(host_string, command=''):
     """Used as fabric's open_shell=True doesn't work well.
     (Disfigures coloring and such...)
     """
-    ssh_key_path = os.path.expanduser(env.get_manager_key())
-    port = env.get_manager_port()
+    profile = env.profile
+    ssh_key_path = os.path.expanduser(profile.manager_key)
+    port = profile.manager_port
     cmd = ['ssh', '-t', host_string, '-i', ssh_key_path, '-p', port]
     if command:
         cmd.append(command)
@@ -133,7 +134,6 @@ def _send_keys(logger, command, sid, host_string):
 
 
 def _validate_env(command, host, sid, list_sessions):
-
     ssh_path = spawn.find_executable('ssh')
     if not ssh_path:
         raise CloudifyCliError(
@@ -155,6 +155,8 @@ def _validate_env(command, host, sid, list_sessions):
             sid and list_sessions]):
         raise CloudifyCliError(
             'Choose one of --host, --list-sessions, --sid arguments.')
+
+    test_profile()
 
 
 def _join_session(logger, sid, host_string):

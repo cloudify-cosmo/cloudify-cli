@@ -125,7 +125,7 @@ class BootstrapTest(CliCommandTest):
             self.assert_method_called(
                 command=command,
                 module=local,
-                function_name='install_plugins',
+                function_name='_install_plugins',
                 kwargs=dict(blueprint_path=blueprint_path))
 
     def test_bootstrap_no_validations_install_plugins(self):
@@ -137,7 +137,7 @@ class BootstrapTest(CliCommandTest):
         self.assert_method_called(
             command=command,
             module=local,
-            function_name='install_plugins',
+            function_name='_install_plugins',
             kwargs=dict(blueprint_path=blueprint_path)
         )
 

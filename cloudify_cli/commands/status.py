@@ -13,12 +13,12 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify_rest_client.exceptions import UserUnauthorizedError
+from cloudify_rest_client.exceptions import CloudifyClientError, \
+    UserUnauthorizedError
 
-from .. import env
 from .. import table
-from ..config import cfy
+from ..cli import cfy
+from ..env import profile
 
 
 @cfy.command(name='status', short_help="Show manager status [manager only]")
@@ -29,7 +29,7 @@ from ..config import cfy
 def status(logger, client):
     """Show the status of the manager
     """
-    rest_host = env.get_rest_host()
+    rest_host = profile.manager_ip
 
     logger.info('Retrieving manager services status... [ip={0}]'.format(
         rest_host))

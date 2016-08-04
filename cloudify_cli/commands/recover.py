@@ -15,12 +15,10 @@
 
 import os
 
-from .. import env
 from .. import exceptions
-from ..config import cfy
-from ..config import helptexts
+from ..cli import helptexts, cfy
 from ..bootstrap import bootstrap as bs
-
+from ..env import profile, get_profile_context
 
 CLOUDIFY_MANAGER_PK_PATH_ENVAR = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
 
@@ -64,35 +62,28 @@ def recover(snapshot_path,
                 "exist: {1}".format(CLOUDIFY_MANAGER_PK_PATH_ENVAR, key_path)
             )
     else:
-        # try retrieving the key file from the local context
-        try:
-            key_path = os.path.expanduser(env.get_manager_key())
-            if not os.path.isfile(key_path):
-                # manager key file path exists in context but does not exist
-                # in the file system. fail now.
-                raise exceptions.CloudifyValidationError(
-                    "Cannot perform recovery. manager key file does not "
-                    "exist: {0}. Set the manager private key path via the {1} "
-                    "environment variable"
-                    .format(key_path, CLOUDIFY_MANAGER_PK_PATH_ENVAR)
-                )
-            # in this case, the recovery is executed from the same directory
-            # that the bootstrap was executed from. we should not have
-            # problems
-        except exceptions.CloudifyCliError:
-            # manager key file path does not exist in the context. this
-            # means the recovery is executed from a different directory than
-            # the bootstrap one. is this case the user must set the
-            # environment variable to continue.
+        if not profile.manager_key:
             raise exceptions.CloudifyValidationError(
                 "Cannot perform recovery. manager key file not found. Set "
                 "the manager private key path via the {0} environment "
                 "variable".format(CLOUDIFY_MANAGER_PK_PATH_ENVAR)
             )
+        key_path = os.path.expanduser(profile.manager_key)
+        if not os.path.isfile(key_path):
+            # manager key file path exists in context but does not exist
+            # in the file system. fail now.
+            raise exceptions.CloudifyValidationError(
+                "Cannot perform recovery. manager key file does not "
+                "exist: {0}. Set the manager private key path via the {1} "
+                "environment variable"
+                .format(key_path, CLOUDIFY_MANAGER_PK_PATH_ENVAR)
+            )
+            # in this case, the recovery is executed from the same directory
+            # that the bootstrap was executed from. we should not have
+            # problems
 
     logger.info('Recovering manager...')
-    settings = env.get_profile_context()
-    provider_context = settings.get_provider_context()
+    provider_context = get_profile_context().provider_context
     bs.read_manager_deployment_dump_if_needed(
         provider_context.get('cloudify', {}).get('manager_deployment'))
     bs.recover(task_retries=task_retries,

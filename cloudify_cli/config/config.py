@@ -1,6 +1,9 @@
+import os
 import yaml
 
 from dsl_parser.constants import IMPORT_RESOLVER_KEY
+
+from ..env import CLOUDIFY_WORKDIR
 
 CLOUDIFY_CONFIG_PATH = os.path.join(CLOUDIFY_WORKDIR, 'config.yaml')
 

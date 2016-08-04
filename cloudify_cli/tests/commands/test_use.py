@@ -20,7 +20,7 @@ class UseTest(CliCommandTest):
         )
         self.invoke('cfy use 127.0.0.1')
         context = self._read_context()
-        self.assertEquals("127.0.0.1", context.get_manager_ip())
+        self.assertEquals("127.0.0.1", context.manager_ip)
 
     def test_use_attempt_by_unauthorized_user(self):
         with patch.object(self.client.manager, 'get_status') as mock:
@@ -37,7 +37,7 @@ class UseTest(CliCommandTest):
         )
         self.invoke('cfy use 127.0.0.1')
         context = self._read_context()
-        self.assertEquals('127.0.0.1', context.get_manager_ip())
+        self.assertEquals('127.0.0.1', context.manager_ip)
 
     def test_use_with_user_and_port(self):
         self.client.manager.get_status = MagicMock()
@@ -48,9 +48,9 @@ class UseTest(CliCommandTest):
         )
         self.invoke('cfy use 127.0.0.1 -u test_user --manager-port 22222')
         context = self._read_context()
-        self.assertEquals('127.0.0.1', context.get_manager_ip())
-        self.assertEquals('22222', context.get_manager_port())
-        self.assertEquals('test_user', context.get_manager_user())
+        self.assertEquals('127.0.0.1', context.manager_ip)
+        self.assertEquals('22222', context.manager_port)
+        self.assertEquals('test_user', context.manager_user)
 
     def test_use_with_authorization(self):
         host = '127.0.0.1'

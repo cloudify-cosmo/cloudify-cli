@@ -1,33 +1,39 @@
+from ... import ssh
 from .test_base import CliCommandTest
 
 
 class LogsTest(CliCommandTest):
     def test_with_empty_config(self):
-        self.use_manager(ssh_user=None, ssh_port=None, ssh_key_path=None)
+        profile = self.use_manager(ssh_user=None, ssh_port=None, ssh_key_path=None)
+        ssh.profile = profile
         self.invoke('cfy logs download',
                     'Manager User is not set '
                     'in working directory settings')
 
     def test_with_no_key(self):
-        self.use_manager(ssh_key_path=None)
+        profile = self.use_manager(ssh_key_path=None)
+        ssh.profile = profile
         self.invoke('cfy logs download',
                     'Manager Key is not set '
                     'in working directory settings')
 
     def test_with_no_user(self):
-        self.use_manager(ssh_user=None)
+        profile = self.use_manager(ssh_user=None)
+        ssh.profile = profile
         self.invoke('cfy logs download',
                     'Manager User is not set '
                     'in working directory settings')
 
     def test_with_no_port(self):
-        self.use_manager(ssh_port=None)
+        profile = self.use_manager(ssh_port=None)
+        ssh.profile = profile
         self.invoke('cfy logs download',
                     'Manager Port is not set '
                     'in working directory settings')
 
     def test_purge_no_force(self):
-        self.use_manager()
+        profile = self.use_manager()
+        ssh.profile = profile
         # unlike the other tests, this drops on argparse raising
         # that the `-f` flag is required for purge, which is why
         # the exception message is actually the returncode from argparse.

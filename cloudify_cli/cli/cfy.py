@@ -13,28 +13,27 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import sys
 import StringIO
+import sys
 import traceback
 from functools import wraps
 
 import click
 from click_didyoumean import DYMGroup
 
-from cloudify_rest_client.exceptions import NotModifiedError
-from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify_rest_client.exceptions import MaintenanceModeActiveError
-from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
-
 from .. import env
-from . import helptexts
 from .. import constants
+from ..cli import helptexts
 from ..inputs import inputs_to_dict
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import CloudifyBootstrapError
 from ..exceptions import SuppressedCloudifyCliError
 from ..logger import get_logger, set_global_verbosity_level
 
+from cloudify_rest_client.exceptions import NotModifiedError
+from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify_rest_client.exceptions import MaintenanceModeActiveError
+from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
 CLICK_CONTEXT_SETTINGS = dict(
     help_option_names=['-h', '--help'],

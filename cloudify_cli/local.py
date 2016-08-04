@@ -45,14 +45,14 @@ def initialize_blueprint(blueprint_path,
 
     logger.info('Initializing blueprint...')
     if install_plugins:
-        install_plugins(blueprint_path=blueprint_path)
+        _install_plugins(blueprint_path=blueprint_path)
 
     config = env.CloudifyConfig()
     return local.init_env(
         blueprint_path=blueprint_path,
         name=name,
         inputs=inputs,
-        storage=storage or storage(),
+        storage=storage or _storage(),
         ignored_modules=constants.IGNORED_LOCAL_WORKFLOW_MODULES,
         provider_context=config.local_provider_context,
         resolver=resolver,
@@ -63,7 +63,7 @@ def storage_dir():
     return os.path.join(env.PROFILES_DIR, _ENV_NAME, _STORAGE_DIR_NAME)
 
 
-def storage():
+def _storage():
     return local.FileStorage(storage_dir=storage_dir())
 
 
@@ -72,11 +72,12 @@ def load_env():
         error = exceptions.CloudifyCliError('Please initialize a blueprint')
         error.possible_solutions = ["Run `cfy init BLUEPRINT_PATH`"]
         raise error
-    return local.load_env(name=_ENV_NAME, storage=storage())
+    return local.load_env(name=_ENV_NAME, storage=_storage())
 
 
-def install_plugins(blueprint_path):
+def _install_plugins(blueprint_path):
     requirements = create_requirements(blueprint_path=blueprint_path)
+    logger = get_logger()
 
     if requirements:
         # Validate we are inside a virtual env
@@ -85,7 +86,7 @@ def install_plugins(blueprint_path):
                 'You must be running inside a '
                 'virtualenv to install blueprint plugins')
 
-        runner = LocalCommandRunner(get_logger())
+        runner = LocalCommandRunner(logger)
         # Dump the requirements to a file and let pip install it.
         # This will utilize pip's mechanism of cleanup in case an installation
         # fails.

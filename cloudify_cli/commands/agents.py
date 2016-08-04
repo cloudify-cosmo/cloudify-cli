@@ -13,17 +13,16 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import time
 import threading
+import time
 
 from cloudify import logs
 
-from ..config import cfy
+from ..cli import cfy
 from ..exceptions import ExecutionTimeoutError
 from ..exceptions import SuppressedCloudifyCliError
 from ..execution_events_fetcher import wait_for_execution, \
     WAIT_FOR_EXECUTION_SLEEP_INTERVAL
-
 
 _NODE_INSTANCE_STATE_STARTED = 'started'
 

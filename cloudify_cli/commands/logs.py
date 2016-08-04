@@ -17,8 +17,7 @@ import os
 
 from .. import ssh
 from .. import env
-from ..config import cfy
-from ..config import helptexts
+from ..cli import helptexts, cfy
 from ..exceptions import CloudifyCliError
 
 
@@ -36,7 +35,7 @@ def _archive_logs(logger):
     journalctl.
     """
     archive_filename = 'cloudify-manager-logs_{0}_{1}.tar.gz'.format(
-        ssh.get_manager_date(), env.get_rest_host())
+        ssh.get_manager_date(), env.profile.manager_ip)
     archive_path = os.path.join('/tmp', archive_filename)
     journalctl_destination_path = '/var/log/cloudify/journalctl.log'
 

@@ -2,6 +2,7 @@ import os
 
 from mock import MagicMock, patch
 
+from ...commands import recover 
 from ... import exceptions, env
 from .test_base import CliCommandTest
 
@@ -30,7 +31,8 @@ class RecoverTest(CliCommandTest):
         key_path = os.path.join(env.CLOUDIFY_WORKDIR, 'key.pem')
         open(key_path, 'w').close()
 
-        self.use_manager(ssh_key_path=key_path)
+        profile = self.use_manager(ssh_key_path=key_path)
+        recover.profile = profile
 
         # now run recovery and make sure no exception was raised
         self.invoke('cfy recover -f {0}'.format(key_path))
