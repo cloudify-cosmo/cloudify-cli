@@ -19,7 +19,6 @@ import shutil
 
 from .. import env
 from .. import utils
-from .. import common
 from ..config import cfy
 from ..bootstrap import bootstrap as bs
 from ..exceptions import CloudifyCliError
@@ -104,7 +103,7 @@ def bootstrap(blueprint_path,
         elif inputs:
             # The user expects that `--skip-validations` will also ignore
             # bootstrap validations and not only creation_validations
-            common.add_ignore_bootstrap_validations_input(inputs)
+            utils.add_ignore_bootstrap_validations_input(inputs)
 
         if not validate_only:
             try:

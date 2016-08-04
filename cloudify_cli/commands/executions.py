@@ -20,7 +20,7 @@ from cloudify_rest_client import exceptions
 
 from .. import utils
 from .. import table
-from .. import common
+from .. import local
 from ..config import cfy
 from ..config import helptexts
 from ..exceptions import CloudifyCliError
@@ -292,7 +292,7 @@ def local_start(workflow_id,
 
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
-    env = common.load_env()
+    env = local.load_env()
     result = env.execute(workflow=workflow_id,
                          parameters=parameters,
                          allow_custom_parameters=allow_custom_parameters,

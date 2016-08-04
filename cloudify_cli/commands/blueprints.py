@@ -14,20 +14,17 @@
 #    * limitations under the License.
 
 import os
-import sys
 import json
 import shutil
-import tempfile
 
 import click
 
-from cloudify.utils import LocalCommandRunner
 from dsl_parser.parser import parse_from_path
-from dsl_parser import constants as dsl_constants
 from dsl_parser.exceptions import DSLParsingException
 
 from .. import env
 from .. import utils
+from .. import local
 from .. import table
 from .. import exceptions
 from ..config import cfy
@@ -297,7 +294,7 @@ def create_requirements(blueprint_path, output_path, logger):
         raise exceptions.CloudifyCliError(
             'Path {0} already exists'.format(output_path))
 
-    requirements = _create_requirements(blueprint_path=blueprint_path)
+    requirements = local.create_requirements(blueprint_path=blueprint_path)
 
     if output_path:
         utils.dump_to_file(requirements, output_path)
@@ -309,7 +306,7 @@ def create_requirements(blueprint_path, output_path, logger):
 
 
 @blueprints.command(name='install-plugins',
-                    short_help='Install plugins locally [locally]')
+                    short_help='Install plugins [locally]')
 @cfy.argument('blueprint-path', type=click.Path(exists=True))
 @cfy.options.verbose()
 @cfy.assert_local_active
@@ -323,62 +320,7 @@ def install_plugins(blueprint_path, logger):
     `BLUEPRINT_PATH` is the path to the blueprint to install plugins for.
     """
     logger.info('Installing plugins...')
-    requirements = _create_requirements(blueprint_path=blueprint_path)
-
-    if requirements:
-        # Validate we are inside a virtual env
-        if not utils.is_virtual_env():
-            raise exceptions.CloudifyCliError(
-                'You must be running inside a '
-                'virtualenv to install blueprint plugins')
-
-        runner = LocalCommandRunner(logger)
-        # Dump the requirements to a file and let pip install it.
-        # This will utilize pip's mechanism of cleanup in case an installation
-        # fails.
-        tmp_path = tempfile.mkstemp(suffix='.txt', prefix='requirements_')[1]
-        utils.dump_to_file(collection=requirements, file_path=tmp_path)
-        command_parts = [sys.executable, '-m', 'pip', 'install', '-r',
-                         tmp_path]
-        runner.run(command=' '.join(command_parts), stdout_pipe=False)
-    else:
-        logger.info('There are no plugins to install')
-
-
-def _create_requirements(blueprint_path):
-
-    parsed_dsl = parse_from_path(dsl_file_path=blueprint_path)
-
-    requirements = _plugins_to_requirements(
-        blueprint_path=blueprint_path,
-        plugins=parsed_dsl[dsl_constants.DEPLOYMENT_PLUGINS_TO_INSTALL])
-
-    for node in parsed_dsl['nodes']:
-        requirements.update(_plugins_to_requirements(
-            blueprint_path=blueprint_path,
-            plugins=node['plugins']))
-    return requirements
-
-
-def _plugins_to_requirements(blueprint_path, plugins):
-
-    sources = set()
-    for plugin in plugins:
-        if plugin[dsl_constants.PLUGIN_INSTALL_KEY]:
-            source = plugin[dsl_constants.PLUGIN_SOURCE_KEY]
-            if not source:
-                continue
-            if '://' in source:
-                # URL
-                sources.add(source)
-            else:
-                # Local plugin (should reside under the 'plugins' dir)
-                plugin_path = os.path.join(
-                    os.path.abspath(os.path.dirname(blueprint_path)),
-                    'plugins',
-                    source)
-                sources.add(plugin_path)
-    return sources
+    local.install_plugins(blueprint_path=blueprint_path)
 
 
 def get_blueprint(source, blueprint_filename='blueprint.yaml'):

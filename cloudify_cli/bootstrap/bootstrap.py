@@ -34,9 +34,9 @@ from cloudify.workflows import local
 from cloudify.exceptions import RecoverableError
 
 from .. import env
-from .. import common
 from .. import constants
 from ..logger import get_logger
+from ..local import initialize_blueprint
 from ..exceptions import CloudifyBootstrapError
 
 PROVIDER_RUNTIME_PROPERTY = 'provider'
@@ -138,8 +138,8 @@ def _validate_credentials_are_set():
     if not set(cred_env_vars).issubset(os.environ.keys()):
         raise CloudifyBootstrapError(
             'The following environment variables must be set before '
-            'bootstrapping a secured manager: {0}'
-                .format(', '.join(cred_env_vars)))
+            'bootstrapping a secured manager: {0}'.format(
+                ', '.join(cred_env_vars)))
 
 
 def bootstrap_validation(blueprint_path,
@@ -153,7 +153,7 @@ def bootstrap_validation(blueprint_path,
     validate_manager_deployment_size(blueprint_path=blueprint_path)
 
     try:
-        working_env = common.initialize_blueprint(
+        working_env = initialize_blueprint(
             blueprint_path,
             name=name,
             inputs=inputs,
@@ -163,10 +163,10 @@ def bootstrap_validation(blueprint_path,
         )
     except ImportError as e:
         e.possible_solutions = [
-            "Run 'cfy local install-plugins -p {0}'"
-                .format(blueprint_path),
-            "Run 'cfy bootstrap --install-plugins -p {0}'"
-                .format(blueprint_path)
+            "Run 'cfy local install-plugins -p {0}'".format(
+                blueprint_path),
+            "Run 'cfy bootstrap --install-plugins -p {0}'".format(
+                blueprint_path)
         ]
         raise
 
@@ -192,7 +192,7 @@ def _perform_sanity(working_env,
                     task_thread_pool_size=1):
     working_env.execute(workflow='execute_operation',
                         parameters={'operation':
-                                        'cloudify.interfaces.lifecycle.start',
+                                    'cloudify.interfaces.lifecycle.start',
                                     'node_ids': ['sanity'],
                                     'allow_kwargs_override': 'true',
                                     'operation_kwargs':
@@ -254,7 +254,7 @@ def bootstrap(blueprint_path,
               skip_sanity=False):
     storage = local.FileStorage(storage_dir=_workdir())
     try:
-        working_env = common.initialize_blueprint(
+        working_env = initialize_blueprint(
             blueprint_path,
             name=name,
             inputs=inputs,
@@ -568,8 +568,8 @@ def upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
                 missing_fields.append('destination_path')
 
             raise CloudifyBootstrapError(
-                'The following fields are missing: {0}.'
-                    .format(','.join(missing_fields)))
+                'The following fields are missing: {0}.'.format(
+                    ','.join(missing_fields)))
 
         if destination_plugin_yaml_path.startswith('/'):
             destination_plugin_yaml_path = destination_plugin_yaml_path[1:]

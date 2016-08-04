@@ -17,8 +17,8 @@ import click
 
 from .. import env
 from .. import utils
-from .. import common
 from ..config import cfy
+from ..local import storage_dir
 from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 
 from . import blueprints
@@ -120,4 +120,4 @@ def local(ctx,
         task_thread_pool_size=task_thread_pool_size)
 
     # Remove the local-storage dir
-    utils.remove_if_exists(common.storage_dir())
+    utils.remove_if_exists(storage_dir())

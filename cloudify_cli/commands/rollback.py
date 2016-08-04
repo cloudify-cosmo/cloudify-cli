@@ -17,7 +17,7 @@ from .upgrade import update_inputs
 from .upgrade import put_workflow_state_file
 from .upgrade import verify_and_wait_for_maintenance_mode_activation
 
-from .. import common
+from .. import local
 from ..config import cfy
 from .. import exceptions
 
@@ -54,11 +54,11 @@ def rollback(blueprint_path,
 
     env_name = 'manager-rollback'
     # init local workflow execution environment
-    working_env = common.initialize_blueprint(blueprint_path,
-                                              storage=None,
-                                              install_plugins=install_plugins,
-                                              name=env_name,
-                                              inputs=inputs)
+    working_env = local.initialize_blueprint(blueprint_path,
+                                             storage=None,
+                                             install_plugins=install_plugins,
+                                             name=env_name,
+                                             inputs=inputs)
 
     logger.info('Starting Manager rollback process...')
     put_workflow_state_file(is_upgrade=False,

@@ -6,7 +6,8 @@ from mock import patch
 
 from .. import cfy
 from ... import env
-from ... import common
+from ... import local
+from ... import utils
 from ...bootstrap import bootstrap
 from .test_base import CliCommandTest
 from ...commands.init import init_profile
@@ -120,11 +121,11 @@ class BootstrapTest(CliCommandTest):
         command = 'cfy bootstrap --install-plugins {0}'.format(blueprint_path)
 
         with patch('cloudify_cli.bootstrap.bootstrap.'
-                        'validate_manager_deployment_size'):
+                   'validate_manager_deployment_size'):
             self.assert_method_called(
                 command=command,
-                module=common,
-                function_name='install_blueprint_plugins',
+                module=local,
+                function_name='install_plugins',
                 kwargs=dict(blueprint_path=blueprint_path))
 
     def test_bootstrap_no_validations_install_plugins(self):
@@ -135,19 +136,19 @@ class BootstrapTest(CliCommandTest):
 
         self.assert_method_called(
             command=command,
-            module=common,
-            function_name='install_blueprint_plugins',
+            module=local,
+            function_name='install_plugins',
             kwargs=dict(blueprint_path=blueprint_path)
         )
 
     def test_bootstrap_no_validations_add_ignore_bootstrap_validations(self):
         command = ('cfy bootstrap --skip-validations {0} '
                    '-i "some_input=some_value"'.format(
-                    SAMPLE_BLUEPRINT_PATH))
+                       SAMPLE_BLUEPRINT_PATH))
 
         self.assert_method_called(
             command=command,
-            module=common,
+            module=utils,
             function_name='add_ignore_bootstrap_validations_input',
             args=[{
                 u'some_input': u'some_value',
@@ -159,7 +160,7 @@ class BootstrapTest(CliCommandTest):
 
     def test_viable_ignore_bootstrap_validations_input(self):
         inputs = dict()
-        common.add_ignore_bootstrap_validations_input(inputs)
+        utils.add_ignore_bootstrap_validations_input(inputs)
         self.assertTrue(inputs['ignore_bootstrap_validations'])
 
     def test_bootstrap_missing_plugin(self):
@@ -169,7 +170,7 @@ class BootstrapTest(CliCommandTest):
         command = 'cfy bootstrap {0}'.format(blueprint_path)
 
         with patch('cloudify_cli.bootstrap.bootstrap.'
-                        'validate_manager_deployment_size'):
+                   'validate_manager_deployment_size'):
             self.invoke(
                 command=command,
                 err_str_segment='No module named tasks',

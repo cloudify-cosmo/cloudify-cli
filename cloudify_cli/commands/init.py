@@ -17,7 +17,7 @@ import os
 import shutil
 
 from .. import env
-from .. import common
+from .. import local
 from .. import constants
 from .. import exceptions
 from ..config import cfy
@@ -73,15 +73,15 @@ def init(blueprint_path,
         )
         env.set_active_profile(profile_name)
 
-        if os.path.isdir(common.storage_dir()):
-            shutil.rmtree(common.storage_dir())
+        if os.path.isdir(local.storage_dir()):
+            shutil.rmtree(local.storage_dir())
 
         try:
-            common.initialize_blueprint(
+            local.initialize_blueprint(
                 blueprint_path=blueprint_path,
                 name='local',
                 inputs=inputs,
-                storage=common.storage(),
+                storage=local.storage(),
                 install_plugins=install_plugins,
                 resolver=env.get_import_resolver()
             )

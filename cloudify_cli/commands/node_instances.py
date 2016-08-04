@@ -19,8 +19,8 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
 from .. import table
-from .. import common
 from ..config import cfy
+from ..local import load_env
 from ..exceptions import CloudifyCliError
 
 
@@ -115,7 +115,7 @@ def local(node_id, logger):
 
     `NODE_ID` is id of the node to list instances for.
     """
-    env = common.load_env()
+    env = load_env()
     node_instances = env.storage.get_node_instances()
     if node_id:
         node_instances = [instance for instance in node_instances

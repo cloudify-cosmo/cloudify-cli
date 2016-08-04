@@ -21,7 +21,8 @@ import tempfile
 
 from .. import ssh
 from .. import env
-from .. import common
+from .. import local
+from .. import utils
 from ..config import cfy
 from .. import exceptions
 from ..bootstrap import bootstrap as bs
@@ -74,17 +75,17 @@ def upgrade(blueprint_path,
     if skip_validations:
         # The user expects that `--skip-validations` will also ignore
         # bootstrap validations and not only creation_validations
-        common.add_ignore_bootstrap_validations_input(inputs)
+        utils.add_ignore_bootstrap_validations_input(inputs)
 
     inputs = update_inputs(inputs)
 
     env_name = 'manager-upgrade'
     # init local workflow execution environment
-    working_env = common.initialize_blueprint(blueprint_path,
-                                              storage=None,
-                                              install_plugins=install_plugins,
-                                              name=env_name,
-                                              inputs=inputs)
+    working_env = local.initialize_blueprint(blueprint_path,
+                                             storage=None,
+                                             install_plugins=install_plugins,
+                                             name=env_name,
+                                             inputs=inputs)
     logger.info('Upgrading manager...')
     put_workflow_state_file(is_upgrade=True,
                             key_filename=inputs['ssh_key_filename'],

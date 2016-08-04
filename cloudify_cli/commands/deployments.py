@@ -22,8 +22,8 @@ from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 
 from .. import utils
 from .. import table
-from .. import common
 from ..config import cfy
+from ..local import load_env
 from ..config import helptexts
 from ..logger import get_events_logger
 from .. import execution_events_fetcher
@@ -278,7 +278,7 @@ def manager_inputs(deployment_id, logger, client):
 def local_inputs(logger):
     """Display inputs for the execution
     """
-    env = common.load_env()
+    env = load_env()
     logger.info(json.dumps(env.plan['inputs'] or {}, sort_keys=True, indent=2))
 
 
@@ -288,5 +288,5 @@ def local_inputs(logger):
 def local_outputs(logger):
     """Display outputs for the execution
     """
-    env = common.load_env()
+    env = load_env()
     logger.info(json.dumps(env.outputs() or {}, sort_keys=True, indent=2))
