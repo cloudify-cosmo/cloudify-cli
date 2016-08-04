@@ -29,8 +29,7 @@ setup(
     package_data={
         'cloudify_cli': [
             'VERSION',
-            'resources/config.yaml',
-            'resources/getdocker.sh',
+            'config/config_template.yaml',
             'bootstrap/resources/install_plugins.sh.template'
         ],
     },
@@ -38,7 +37,7 @@ setup(
     description="Cloudify's Command Line Interface",
     entry_points={
         'console_scripts': [
-            'cfy = cloudify_cli.cli:_cfy'
+            'cfy = cloudify_cli.main:_cfy'
         ]
     },
     install_requires=[

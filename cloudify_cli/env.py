@@ -165,7 +165,7 @@ def get_profile_dir(profile_name=None):
 def set_cfy_config(enable_colors=False):
     config = pkg_resources.resource_string(
         cloudify_cli.__name__,
-        'resources/config.yaml')
+        'config/config_template.yaml')
 
     enable_colors = str(enable_colors).lower()
     template = Template(config)
