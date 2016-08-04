@@ -17,13 +17,12 @@ import os
 
 from .. import ssh
 from .. import env
-from ..config import cfy
-from ..config import helptexts
+from ..cli import helptexts, cfy
 from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='logs')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.assert_manager_active
 def logs():
     """Handle manager service logs
@@ -36,7 +35,7 @@ def _archive_logs(logger):
     journalctl.
     """
     archive_filename = 'cloudify-manager-logs_{0}_{1}.tar.gz'.format(
-        ssh.get_manager_date(), env.get_rest_host())
+        ssh.get_manager_date(), env.profile.manager_ip)
     archive_path = os.path.join('/tmp', archive_filename)
     journalctl_destination_path = '/var/log/cloudify/journalctl.log'
 
@@ -57,7 +56,7 @@ def _archive_logs(logger):
 @logs.command(name='download',
               short_help='Download manager service logs [manager only]')
 @cfy.options.output_path
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def download(output_path, logger):
     """Download an archive containing all of the manager's service logs
@@ -74,7 +73,7 @@ def download(output_path, logger):
               short_help='Purge manager service logs [manager only]')
 @cfy.options.force(help=helptexts.FORCE_PURGE_LOGS)
 @cfy.options.backup_first
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def purge(force, backup_first, logger):
     """Truncate all logs files under /var/log/cloudify.
@@ -103,7 +102,7 @@ def purge(force, backup_first, logger):
 
 @logs.command(name='backup',
               short_help='Backup manager service logs [manager only]')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def backup(logger):
     """Create a backup of all logs under a single archive and save it

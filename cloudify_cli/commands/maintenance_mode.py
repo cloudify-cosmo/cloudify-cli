@@ -15,19 +15,20 @@
 
 import time
 
+from .. import table
 from .. import utils
-from .. import common
-from ..config import cfy
+from ..cli import cfy
 from .. import exceptions
 from ..logger import NO_VERBOSE
 from ..logger import get_global_verbosity
+
 
 DEFAULT_TIMEOUT_INTERVAL = 5
 MAINTENANCE_MODE_ACTIVE = 'activated'
 
 
 @cfy.group(name='maintenance-mode')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.assert_manager_active
 def maintenance_mode():
     """Handle the manager's maintenance-mode
@@ -38,7 +39,7 @@ def maintenance_mode():
 @maintenance_mode.command(name='status',
                           short_help='Show maintenance-mode status '
                           '[manager only]')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_client()
 def status(client):
     _print_maintenance_mode_status(client)
@@ -73,10 +74,10 @@ def _print_maintenance_mode_status(client, logger):
                     len(remaining_executions)))
 
         if get_global_verbosity() != NO_VERBOSE:
-            pt = utils.table(['id', 'deployment_id', 'workflow_id', 'status'],
-                             remaining_executions)
+            columns = ['id', 'deployment_id', 'workflow_id', 'status']
+            pt = table.generate(columns, remaining_executions)
             pt.max_width = 50
-            common.print_table('Remaining executions:', pt)
+            table.log('Remaining executions:', pt)
 
     if status_response.status == MAINTENANCE_MODE_ACTIVE:
         logger.info('INFO - Cloudify Manager is currently in maintenance '
@@ -88,9 +89,9 @@ def _print_maintenance_mode_status(client, logger):
                           '[manager only]')
 @cfy.options.wait
 @cfy.options.timeout(default=0)
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.pass_client()
+@cfy.pass_logger
 def activate(wait, timeout, logger, client):
 
     if timeout and not wait:
@@ -131,9 +132,9 @@ def activate(wait, timeout, logger, client):
 @maintenance_mode.command(name='deactivate',
                           short_help='Deactivate maintenance-mode '
                           '[manager only]')
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.pass_client()
+@cfy.pass_logger
 def deactivate(logger, client):
     logger.info('Turning off maintenance mode...')
     client.maintenance_mode.deactivate()

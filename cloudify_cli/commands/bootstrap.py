@@ -14,17 +14,15 @@
 #    * limitations under the License.
 
 import os
-import sys
 import shutil
+import sys
 
 from .. import env
 from .. import utils
-from .. import common
-from ..config import cfy
+from ..cli import cfy
+from .init import init_profile
 from ..bootstrap import bootstrap as bs
 from ..exceptions import CloudifyCliError
-
-from .init import init_profile
 
 
 @cfy.command(name='bootstrap', short_help='Bootstrap a manager')
@@ -38,7 +36,7 @@ from .init import init_profile
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 @cfy.options.keep_up_on_failure
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def bootstrap(blueprint_path,
               inputs,
@@ -104,7 +102,7 @@ def bootstrap(blueprint_path,
         elif inputs:
             # The user expects that `--skip-validations` will also ignore
             # bootstrap validations and not only creation_validations
-            common.add_ignore_bootstrap_validations_input(inputs)
+            utils.add_ignore_bootstrap_validations_input(inputs)
 
         if not validate_only:
             try:
@@ -120,15 +118,16 @@ def bootstrap(blueprint_path,
                     skip_sanity=skip_sanity)
 
                 manager_ip = details['manager_ip']
-                with env.update_profile_context(manager_ip) as context:
-                    context.set_manager_ip(manager_ip)
-                    context.set_rest_port(details['rest_port'])
-                    context.set_rest_protocol(details['rest_protocol'])
-                    context.set_provider_context(details['provider_context'])
-                    context.set_manager_key(details['manager_key_path'])
-                    context.set_manager_user(details['manager_user'])
-                    context.set_manager_port(details['manager_port'])
-                    context.set_bootstrap_state(True)
+                profile = env.profile
+                profile.manager_ip = manager_ip
+                profile.rest_port = details['rest_port']
+                profile.rest_protocol = details['rest_protocol']
+                profile.provider_context = details['provider_context']
+                profile.manager_key = details['manager_key_path']
+                profile.manager_user = details['manager_user']
+                profile.manager_port = details['manager_port']
+                profile.bootstrap_state = True
+                profile.save()
 
                 temp_profile = os.path.join(
                     env.PROFILES_DIR, active_profile)

@@ -17,14 +17,15 @@ import json
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
+from .. import table
 from .. import utils
-from .. import common
-from ..config import cfy
+from ..cli import cfy
+from ..local import load_env
 from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='node-instances')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.assert_manager_active
 def manager():
     """Handle a deployment's node-instances
@@ -36,7 +37,7 @@ def manager():
                  short_help='Retrieve node-instance information '
                  '[manager only]')
 @cfy.argument('node_instance_id')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 @cfy.pass_client()
 def get(node_instance_id, logger, client):
@@ -54,9 +55,9 @@ def get(node_instance_id, logger, client):
             node_instance_id))
 
     columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
-    pt = utils.table(columns, data=[node_instance])
+    pt = table.generate(columns, data=[node_instance])
     pt.max_width = 50
-    common.print_table('Node-instance:', pt)
+    table.log('Node-instance:', pt)
 
     # print node instance runtime properties
     logger.info('Instance runtime properties:')
@@ -73,7 +74,7 @@ def get(node_instance_id, logger, client):
 @cfy.options.node_name
 @cfy.options.sort_by('node_id')
 @cfy.options.descending
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 @cfy.pass_client()
 def list(deployment_id, node_name, sort_by, descending, logger, client):
@@ -100,21 +101,21 @@ def list(deployment_id, node_name, sort_by, descending, logger, client):
             deployment_id))
 
     columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
-    pt = utils.table(columns, data=node_instances)
-    common.print_table('Node-instances:', pt)
+    pt = table.generate(columns, data=node_instances)
+    table.log('Node-instances:', pt)
 
 
 @cfy.command(name='node-instances',
              short_help='Show node-instance information [manager only]')
 @cfy.argument('node-id', required=False)
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def local(node_id, logger):
     """Display node-instances for the execution
 
     `NODE_ID` is id of the node to list instances for.
     """
-    env = common.load_env()
+    env = load_env()
     node_instances = env.storage.get_node_instances()
     if node_id:
         node_instances = [instance for instance in node_instances

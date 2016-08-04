@@ -13,18 +13,15 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from cloudify_rest_client.exceptions import (
-    CloudifyClientError,
+from cloudify_rest_client.exceptions import  CloudifyClientError,\
     UserUnauthorizedError
-)
-
-from .. import env
-from .. import constants
-from ..config import cfy
-from ..bootstrap import bootstrap as bs
-from ..exceptions import CloudifyCliError
 
 from . import init
+from .. import env
+from ..cli import cfy
+from .. import constants
+from ..bootstrap import bootstrap as bs
+from ..exceptions import CloudifyCliError
 
 
 @cfy.command(name='use',
@@ -35,7 +32,7 @@ from . import init
 @cfy.options.manager_key
 @cfy.options.manager_port
 @cfy.options.rest_port
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def use(alias,
         manager_ip,
@@ -99,18 +96,20 @@ def use(alias,
     logger.info('Using manager {0} with port {1}'.format(
         manager_ip, rest_port))
 
-    with env.update_profile_context(manager_ip) as context:
-        context.set_manager_ip(manager_ip)
-        context.set_provider_context(provider_context)
-        if manager_key:
-            context.set_manager_key(manager_key)
-        if manager_user:
-            context.set_manager_user(manager_user)
-        if manager_port:
-            context.set_manager_port(manager_port)
-        if rest_port:
-            context.set_rest_port(rest_port)
-        context.set_rest_protocol(rest_protocol)
+    profile = env.profile
+    profile.manager_ip = manager_ip
+    profile.provider_context = provider_context
+    if manager_key:
+        profile.manager_key = manager_key
+    if manager_user:
+        profile.manager_user = manager_user
+    if manager_port:
+        profile.manager_port = manager_port
+    if rest_port:
+        profile.rest_port = rest_port
+    profile.rest_protocol = rest_protocol
+
+    profile.save()
 
     # delete the previous manager deployment if exists.
     bs.delete_workdir()

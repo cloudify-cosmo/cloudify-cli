@@ -14,17 +14,11 @@
 #    * limitations under the License.
 
 import click
-
 from fabric.api import env as fabric_env
 from fabric.context_managers import settings
 
-from .. import env
-from .. import exec_env
-from ..config import cfy
-from ..config import helptexts
-from ..env import get_manager_key
-from ..env import get_manager_user
-from ..env import get_manager_port
+from ..env import profile
+from ..cli import cfy, helptexts
 from ..exceptions import CloudifyCliError
 
 
@@ -38,16 +32,15 @@ from ..exceptions import CloudifyCliError
               '--args',
               multiple=True,
               help=helptexts.DEV_TASK_ARGS)
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.assert_manager_active
 def dev(tasks_file, task, args):
     """Run fabric tasks on the manager
     """
-    manager_ip = env.get_rest_host()
-    _execute(username=get_manager_user(),
-             port=get_manager_port(),
-             key=get_manager_key(),
-             ip=manager_ip,
+    _execute(username=profile.manager_user,
+             port=profile.manager_port,
+             key=profile.manager_key,
+             ip=profile.manager_ip,
              task=task,
              tasks_file=tasks_file,
              args=args)
@@ -78,7 +71,7 @@ def _setup_fabric_env(username, port, key):
 
 def exec_tasks_file(tasks_file=None):
     tasks_file = tasks_file or 'tasks.py'
-    exec_globals = exec_env.exec_globals(tasks_file)
+    exec_globals = get_exec_globals(tasks_file)
     try:
         execfile(tasks_file, exec_globals)
     except Exception as e:
@@ -124,3 +117,13 @@ def _parse_task_args(task_args):
         else:
             args.append(task_arg)
     return args, kwargs
+
+
+def get_exec_globals(tasks_file):
+    copied_globals = globals().copy()
+    del copied_globals['exec_globals']
+    copied_globals['__doc__'] = 'empty globals for exec'
+    copied_globals['__file__'] = tasks_file
+    copied_globals['__name__'] = 'cli_dev_tasks'
+    copied_globals['__package__'] = None
+    return copied_globals

@@ -13,14 +13,13 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+from .. import table
 from .. import utils
-from .. import common
-from ..config import cfy
-from ..config import helptexts
+from ..cli import helptexts, cfy
 
 
 @cfy.group(name='snapshots')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.assert_manager_active
 def snapshots():
     """Handle manager snapshots
@@ -34,9 +33,9 @@ def snapshots():
 @cfy.argument('snapshot-id')
 @cfy.options.without_deployment_envs
 @cfy.options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.pass_client()
+@cfy.pass_logger
 def restore(snapshot_id, without_deployment_envs, force, logger, client):
     """Restore a manager to its previous state
 
@@ -54,9 +53,9 @@ def restore(snapshot_id, without_deployment_envs, force, logger, client):
 @cfy.argument('snapshot-id', required=False)
 @cfy.options.include_metrics
 @cfy.options.exclude_credentials
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.pass_client()
+@cfy.pass_logger
 def create(snapshot_id, include_metrics, exclude_credentials, logger, client):
     """Create a snapshot on the manager
 
@@ -78,9 +77,9 @@ def create(snapshot_id, include_metrics, exclude_credentials, logger, client):
 @snapshots.command(name='delete',
                    short_help='Delete a snapshot [manager only]')
 @cfy.argument('snapshot-id')
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.pass_client()
+@cfy.pass_logger
 def delete(snapshot_id, logger, client):
     """Delete a snapshot from the manager
     """
@@ -93,9 +92,9 @@ def delete(snapshot_id, logger, client):
                    short_help='Upload a snapshot [manager only]')
 @cfy.argument('snapshot_path')
 @cfy.options.snapshot_id
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.pass_client()
+@cfy.pass_logger
 def upload(snapshot_path, snapshot_id, logger, client):
     """Upload a snapshot to the manager
 
@@ -116,9 +115,9 @@ def upload(snapshot_path, snapshot_id, logger, client):
                    short_help='Download a snapshot [manager only]')
 @cfy.argument('snapshot-id')
 @cfy.options.output_path
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.pass_client()
+@cfy.pass_logger
 def download(snapshot_id, output_path, logger, client):
     """Download a snapshot from the manager
 
@@ -137,9 +136,9 @@ def download(snapshot_id, output_path, logger, client):
                    short_help='List snapshots [manager only]')
 @cfy.options.sort_by()
 @cfy.options.descending
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.pass_client()
+@cfy.pass_logger
 def list(sort_by, descending, logger, client):
     """List all snapshots on the manager
     """
@@ -147,5 +146,5 @@ def list(sort_by, descending, logger, client):
     snapshots = client.snapshots.list(sort=sort_by, is_descending=descending)
 
     columns = ['id', 'created_at', 'status', 'error']
-    pt = utils.table(columns, data=snapshots)
-    common.print_table('Snapshots:', pt)
+    pt = table.generate(columns, data=snapshots)
+    table.log('Snapshots:', pt)

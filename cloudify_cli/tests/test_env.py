@@ -18,7 +18,6 @@ import os
 import sys
 import json
 import shutil
-import filecmp
 import logging
 import tempfile
 from cStringIO import StringIO
@@ -991,7 +990,7 @@ class ImportResolverLocalUseTests(CliCommandTest):
             cloudify.workflows.local.FileStorage.get_node_instances = \
                 old_get_node_instances
 
-    @mock.patch('cloudify_cli.common.storage', new=mock.MagicMock)
+    @mock.patch('cloudify_cli.local.storage', new=mock.MagicMock)
     @mock.patch('cloudify.workflows.local._prepare_nodes_and_instances')
     @mock.patch('dsl_parser.tasks.prepare_deployment_plan')
     def test_local_init(self, *_):

@@ -13,29 +13,30 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import os
 import json
+import os
 import shutil
 
 import click
 
-from dsl_parser.parser import parse_from_path
+from cloudify_cli.cli import cfy
 from dsl_parser.exceptions import DSLParsingException
+from dsl_parser.parser import parse_from_path
 
 from .. import env
+from .. import local
+from .. import table
 from .. import utils
-from .. import common
+from .. import blueprint
 from .. import exceptions
-from ..config import cfy
 from ..exceptions import CloudifyCliError
-
 
 SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
 DESCRIPTION_LIMIT = 20
 
 
 @cfy.group(name='blueprints')
-@cfy.options.verbose
+@cfy.options.verbose()
 def blueprints():
     """Handle blueprints on the manager
     """
@@ -45,7 +46,7 @@ def blueprints():
 @blueprints.command(name='validate',
                     short_help='Validate a blueprint')
 @cfy.argument('blueprint-path')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def validate_blueprint(blueprint_path, logger):
     """Validate a blueprint
@@ -65,17 +66,16 @@ def validate_blueprint(blueprint_path, logger):
     logger.info('Blueprint validated successfully')
 
 
-# TODO: Organize decorators in all commands
 @blueprints.command(name='upload',
                     short_help='Upload a blueprint [manager only]')
 @cfy.argument('blueprint-path')
 @cfy.options.blueprint_id()
 @cfy.options.blueprint_filename()
 @cfy.options.validate
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 @click.pass_context
 def upload(ctx,
            blueprint_path,
@@ -91,7 +91,7 @@ def upload(ctx,
     `organization/blueprint_repo[:tag/branch]` (to be
     retrieved from GitHub)
     """
-    processed_blueprint_path = common.get_blueprint(
+    processed_blueprint_path = blueprint.get(
         blueprint_path, blueprint_filename)
 
     try:
@@ -99,16 +99,16 @@ def upload(ctx,
             ctx.invoke(
                 validate_blueprint,
                 blueprint_path=processed_blueprint_path)
-        blueprint_id = blueprint_id or common.get_blueprint_id(
+        blueprint_id = blueprint_id or blueprint.get_id(
             processed_blueprint_path, blueprint_filename)
 
         progress_handler = utils.generate_progress_handler(blueprint_path, '')
         logger.info('Uploading blueprint {0}...'.format(blueprint_path))
-        blueprint = client.blueprints.upload(processed_blueprint_path,
+        blueprint_obj = client.blueprints.upload(processed_blueprint_path,
                                              blueprint_id,
                                              progress_handler)
         logger.info("Blueprint uploaded. The blueprint's id is {0}".format(
-            blueprint.id))
+            blueprint_obj.id))
     finally:
         # Every situation other than the user providing a path of a local
         # yaml means a temp folder will be created that should be later
@@ -122,10 +122,10 @@ def upload(ctx,
                     short_help='Download a blueprint [manager only]')
 @cfy.argument('blueprint-id')
 @cfy.options.output_path
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def download(blueprint_id, output_path, logger, client):
     """Download a blueprint from the manager
 
@@ -143,10 +143,10 @@ def download(blueprint_id, output_path, logger, client):
 @blueprints.command(name='delete',
                     short_help='Delete a blueprint [manager only]')
 @cfy.argument('blueprint-id')
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def delete(blueprint_id, logger, client):
     """Delete a blueprint from the manager
     """
@@ -159,10 +159,10 @@ def delete(blueprint_id, logger, client):
                     short_help='List blueprints [manager only]')
 @cfy.options.sort_by()
 @cfy.options.descending
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def list(sort_by, descending, logger, client):
     """List all blueprints
     """
@@ -181,36 +181,36 @@ def list(sort_by, descending, logger, client):
 
     columns = [
         'id', 'description', 'main_file_name', 'created_at', 'updated_at']
-    pt = utils.table(columns, data=blueprints)
-    common.print_table('Blueprints:', pt)
+    pt = table.generate(columns, data=blueprints)
+    table.log('Blueprints:', pt)
 
 
 @blueprints.command(name='get',
                     short_help='Retrieve blueprint information [manager only]')
 @cfy.argument('blueprint-id')
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def get(blueprint_id, logger, client):
     """Retrieve information for a specific blueprint
 
     `BLUEPRINT_ID` is the id of the blueprint to get information on.
     """
     logger.info('Retrieving blueprint {0}...'.format(blueprint_id))
-    blueprint = client.blueprints.get(blueprint_id)
+    blueprint_dict = client.blueprints.get(blueprint_id)
     deployments = client.deployments.list(_include=['id'],
                                           blueprint_id=blueprint_id)
-    blueprint['#deployments'] = len(deployments)
+    blueprint_dict['#deployments'] = len(deployments)
 
     columns = \
         ['id', 'main_file_name', 'created_at', 'updated_at', '#deployments']
-    pt = utils.table(columns, data=[blueprint])
+    pt = table.generate(columns, data=[blueprint_dict])
     pt.max_width = 50
-    common.print_table('Blueprint:', pt)
+    table.log('Blueprint:', pt)
 
     logger.info('Description:')
-    logger.info('{0}\n'.format(blueprint['description'] or ''))
+    logger.info('{0}\n'.format(blueprint_dict['description'] or ''))
 
     logger.info('Existing deployments:')
     logger.info('{0}\n'.format(json.dumps([d['id'] for d in deployments])))
@@ -219,28 +219,27 @@ def get(blueprint_id, logger, client):
 @blueprints.command(name='inputs',
                     short_help='Retrieve blueprint inputs [manager only]')
 @cfy.argument('blueprint-id')
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def inputs(blueprint_id, logger, client):
     """Retrieve inputs for a specific blueprint
 
     `BLUEPRINT_ID` is the path of the blueprint to get inputs for.
     """
     logger.info('Retrieving inputs for blueprint {0}...'.format(blueprint_id))
-    blueprint = client.blueprints.get(blueprint_id)
-    inputs = blueprint['plan']['inputs']
+    blueprint_dict = client.blueprints.get(blueprint_id)
+    inputs = blueprint_dict['plan']['inputs']
     data = [{'name': name,
              'type': input.get('type', '-'),
              'default': input.get('default', '-'),
              'description': input.get('description', '-')}
             for name, input in inputs.iteritems()]
 
-    pt = utils.table(['name', 'type', 'default', 'description'],
-                     data=data)
-
-    common.print_table('Inputs:', pt)
+    columns = ['name', 'type', 'default', 'description']
+    pt = table.generate(columns, data=data)
+    table.log('Inputs:', pt)
 
 
 @blueprints.command(name='package',
@@ -248,9 +247,9 @@ def inputs(blueprint_id, logger, client):
 @cfy.argument('blueprint-path')
 @cfy.options.optional_output_path
 @cfy.options.validate
-@cfy.options.verbose
-@click.pass_context
+@cfy.options.verbose()
 @cfy.pass_logger
+@click.pass_context
 def package(ctx, blueprint_path, output_path, validate, logger):
     """Create a blueprint archive
 
@@ -258,7 +257,7 @@ def package(ctx, blueprint_path, output_path, validate, logger):
     to the directory in which the blueprint yaml files resides.
     """
     blueprint_path = os.path.abspath(blueprint_path)
-    destination = output_path or common.get_blueprint_id(blueprint_path)
+    destination = output_path or blueprint.get_id(blueprint_path)
 
     if validate:
         ctx.invoke(validate_blueprint, blueprint_path=blueprint_path)
@@ -282,7 +281,7 @@ def package(ctx, blueprint_path, output_path, validate, logger):
                     short_help='Create pip-requirements')
 @cfy.argument('blueprint-path', type=click.Path(exists=True))
 @cfy.options.optional_output_path
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def create_requirements(blueprint_path, output_path, logger):
     """Generate a pip-compliant requirements file for a given blueprint
@@ -294,7 +293,7 @@ def create_requirements(blueprint_path, output_path, logger):
         raise exceptions.CloudifyCliError(
             'Path {0} already exists'.format(output_path))
 
-    requirements = common.create_requirements(blueprint_path=blueprint_path)
+    requirements = local.create_requirements(blueprint_path=blueprint_path)
 
     if output_path:
         utils.dump_to_file(requirements, output_path)
@@ -306,11 +305,12 @@ def create_requirements(blueprint_path, output_path, logger):
 
 
 @blueprints.command(name='install-plugins',
-                    short_help='Install plugins locally [locally]')
+                    short_help='Install plugins [locally]')
 @cfy.argument('blueprint-path', type=click.Path(exists=True))
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.assert_local_active
-def install_plugins(blueprint_path):
+@cfy.pass_logger
+def install_plugins(blueprint_path, logger):
     """Install the necessary plugins for a given blueprint in the
     local environment.
 
@@ -318,4 +318,5 @@ def install_plugins(blueprint_path):
 
     `BLUEPRINT_PATH` is the path to the blueprint to install plugins for.
     """
-    common.install_blueprint_plugins(blueprint_path=blueprint_path)
+    logger.info('Installing plugins...')
+    local._install_plugins(blueprint_path=blueprint_path)

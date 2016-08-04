@@ -18,18 +18,17 @@ import shutil
 
 import click
 
+from . import init
 from .. import utils
-from .. import common
-from ..config import cfy
+from ..cli import cfy
+from . import executions
+from . import blueprints
+from .. import blueprint
+from . import deployments
 from ..logger import get_logger
 from ..exceptions import CloudifyCliError
-from ..constants import DEFAULT_INSTALL_WORKFLOW
-from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
-
-from . import init
-from . import blueprints
-from . import executions
-from . import deployments
+from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND, \
+    DEFAULT_INSTALL_WORKFLOW
 
 
 @cfy.command(name='install',
@@ -46,7 +45,7 @@ from . import deployments
 @cfy.options.timeout()
 @cfy.options.include_logs
 @cfy.options.json
-@cfy.options.verbose
+@cfy.options.verbose()
 @click.pass_context
 def manager(ctx,
             blueprint_path,
@@ -75,10 +74,10 @@ def manager(ctx,
         processed_blueprint_path = _get_default_blueprint_path(
             blueprint_path, blueprint_filename)
     else:
-        processed_blueprint_path = common.get_blueprint(
+        processed_blueprint_path = blueprint.get(
             blueprint_path, blueprint_filename)
 
-    blueprint_id = blueprint_id or common.get_blueprint_id(
+    blueprint_id = blueprint_id or blueprint.get_id(
         processed_blueprint_path, blueprint_filename)
     deployment_id = deployment_id or blueprint_id
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
@@ -136,7 +135,7 @@ def manager(ctx,
 @cfy.options.task_retries(5)
 @cfy.options.task_retry_interval(3)
 @cfy.options.task_thread_pool_size()
-@cfy.options.verbose
+@cfy.options.verbose()
 @click.pass_context
 def local(ctx,
           blueprint_path,
@@ -161,7 +160,7 @@ def local(ctx,
         processed_blueprint_path = _get_default_blueprint_path(
             blueprint_path, blueprint_filename)
     else:
-        processed_blueprint_path = common.get_blueprint(
+        processed_blueprint_path = blueprint.get(
             blueprint_path, blueprint_filename)
 
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW

@@ -133,7 +133,7 @@ class CliCommandTest(testtools.TestCase):
     def use_manager(self, **manager_params):
         default_manager_params = cfy.default_manager_params.copy()
         default_manager_params.update(manager_params)
-        cfy.use_manager(**default_manager_params)
+        return cfy.use_manager(**default_manager_params)
 
     def _read_context(self):
         return env.get_profile_context()

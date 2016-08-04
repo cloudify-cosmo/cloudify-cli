@@ -24,7 +24,7 @@ from testfixtures import log_capture
 
 from cloudify.utils import setup_logger
 
-from .. import cli  # NOQA
+from .. import main  # NOQA
 from .. import env
 from .. import logger
 from .. import commands
@@ -38,7 +38,7 @@ default_manager_params = dict(
     manager_ip='10.10.1.10',
     alias=None,
     ssh_key_path='key',
-    ssh_user='key',
+    ssh_user='test',
     ssh_port='22',
     provider_context={},
     rest_port=80,
@@ -127,25 +127,25 @@ def purge_profile(profile_name='test'):
 
 def use_manager(**manager_params):
     provider_context = manager_params['provider_context'] or {}
-    settings = env.ProfileContext()
-    settings.set_manager_ip(manager_params['manager_ip'])
-    settings.set_manager_key(manager_params['ssh_key_path'])
-    settings.set_manager_user(manager_params['ssh_user'])
-    settings.set_manager_port(manager_params['ssh_port'])
-    settings.set_rest_port(manager_params['rest_port'])
-    settings.set_rest_protocol(manager_params['rest_protocol'])
-    settings.set_provider_context(provider_context)
+    profile = env.ProfileContext()
+    profile.manager_ip = manager_params['manager_ip']
+    profile.manager_key = manager_params['ssh_key_path']
+    profile.manager_user = manager_params['ssh_user']
+    profile.manager_port = manager_params['ssh_port']
+    profile.rest_port = manager_params['rest_port']
+    profile.rest_protocol = manager_params['rest_protocol']
+    profile.provider_context = provider_context
 
     purge_profile(manager_params['manager_ip'])
-    env.set_profile_context(
-        profile_name=manager_params['manager_ip'],
-        context=settings,
-        update=False)
+    profile.save()
+
     env.set_cfy_config()
     env.set_active_profile(manager_params['manager_ip'])
     register_commands()
 
+    return profile
+
 
 def register_commands():
-    from cloudify_cli.cli import _register_commands
+    from cloudify_cli.main import _register_commands
     _register_commands()

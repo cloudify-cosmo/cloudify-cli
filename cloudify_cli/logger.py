@@ -25,8 +25,7 @@ import colorama
 
 from cloudify import logs
 
-import env
-from .config import logger_config
+from . import env
 from .colorful_event import ColorfulEvent
 
 
@@ -43,6 +42,31 @@ _lgr = None
 _all_loggers = set()
 
 # TODO: Move all env related stuff to another module.
+
+LOGGER = {
+    "version": 1,
+    "formatters": {
+        "file": {
+            "format": "%(asctime)s [%(levelname)s] %(message)s"
+        },
+        "console": {
+            "format": "%(message)s"
+        }
+    },
+    "handlers": {
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "file",
+            "maxBytes": "5000000",
+            "backupCount": "20"
+        },
+        "console": {
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+            "formatter": "console"
+        }
+    }
+}
 
 
 def get_logger():
@@ -81,7 +105,7 @@ def configure_loggers():
 def _configure_defaults():
 
     # add handlers to the main logger
-    logger_dict = copy.deepcopy(logger_config.LOGGER)
+    logger_dict = copy.deepcopy(LOGGER)
     logger_dict['loggers'] = {
         'cloudify.cli.main': {
             'handlers': list(logger_dict['handlers'].keys())
@@ -105,7 +129,7 @@ def _configure_from_file():
     logfile = logging_config.filename
 
     # set filename on file handler
-    logger_dict = copy.deepcopy(logger_config.LOGGER)
+    logger_dict = copy.deepcopy(LOGGER)
     logger_dict['handlers']['file']['filename'] = logfile
     logfile_dir = os.path.dirname(logfile)
     if not os.path.exists(logfile_dir):

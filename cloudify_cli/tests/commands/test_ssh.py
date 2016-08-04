@@ -2,6 +2,7 @@ import os
 import platform
 from distutils import spawn
 
+from ... import ssh
 from ... import exceptions
 from .test_base import CliCommandTest
 from ...commands.ssh import _validate_env
@@ -16,19 +17,26 @@ class SshTest(CliCommandTest):
         )
 
     def test_ssh_with_empty_config(self):
-        self.use_manager(ssh_user=None)
+        profile = self.use_manager(
+            ssh_user=None,
+            ssh_key_path=None,
+            ssh_port=None
+        )
+        ssh.profile = profile
         self.invoke('cfy ssh',
                     'Manager User is not set '
                     'in working directory settings')
 
     def test_ssh_with_no_key(self):
-        self.use_manager(ssh_key_path=None)
+        profile = self.use_manager(ssh_key_path=None)
+        ssh.profile = profile
         self.invoke('cfy ssh',
                     'Manager Key is not set '
                     'in working directory settings')
 
     def test_ssh_with_no_user(self):
-        self.use_manager(ssh_user=None)
+        profile = self.use_manager(ssh_user=None)
+        ssh.profile = profile
         self.invoke('cfy ssh',
                     'Manager User is not set '
                     'in working directory settings')

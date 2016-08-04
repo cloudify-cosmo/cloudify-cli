@@ -13,16 +13,15 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import click
 import tarfile
 from urlparse import urlparse
 
-from .. import utils
-from .. import common
-from ..config import cfy
-from ..config import helptexts
-from ..exceptions import CloudifyCliError
+import click
 
+from .. import table
+from .. import utils
+from ..cli import helptexts, cfy
+from ..exceptions import CloudifyCliError
 
 columns = [
     'id',
@@ -36,8 +35,7 @@ columns = [
 
 
 @cfy.group(name='plugins')
-@cfy.options.verbose
-@cfy.assert_manager_active
+@cfy.options.verbose()
 def plugins():
     """Handle plugins on the manager
     """
@@ -47,7 +45,7 @@ def plugins():
 @plugins.command(name='validate',
                  short_help='Validate a plugin')
 @cfy.argument('plugin-path')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def validate(plugin_path, logger):
     """Validate a plugin
@@ -84,9 +82,10 @@ def validate(plugin_path, logger):
                  short_help='Delete a plugin [manager only]')
 @cfy.argument('plugin-id')
 @cfy.options.force(help=helptexts.FORCE_DELETE_PLUGIN)
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
+@cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def delete(plugin_id, force, logger, client):
     """Delete a plugin from the manager
 
@@ -100,10 +99,11 @@ def delete(plugin_id, force, logger, client):
 @plugins.command(name='upload',
                  short_help='Upload a plugin [manager only]')
 @cfy.argument('plugin-path')
-@cfy.options.verbose
+@cfy.options.verbose()
 @click.pass_context
-@cfy.pass_logger
+@cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def upload(ctx, plugin_path, logger, client):
     """Upload a plugin to the manager
 
@@ -125,7 +125,7 @@ def upload(ctx, plugin_path, logger, client):
                  short_help='Download a plugin [manager only]')
 @cfy.argument('plugin-id')
 @cfy.options.output_path
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 @cfy.pass_client()
 def download(plugin_id, output_path, logger, client):
@@ -145,9 +145,10 @@ def download(plugin_id, output_path, logger, client):
 @plugins.command(name='get',
                  short_help='Retrieve plugin information [manager only]')
 @cfy.argument('plugin-id')
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
+@cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def get(plugin_id, logger, client):
     """Retrieve information for a specific plugin
 
@@ -156,17 +157,18 @@ def get(plugin_id, logger, client):
     logger.info('Retrieving plugin {0}...'.format(plugin_id))
     plugin = client.plugins.get(plugin_id, _include=columns)
 
-    pt = utils.table(columns, data=[plugin])
-    common.print_table('Plugin:', pt)
+    pt = table.generate(columns, data=[plugin])
+    table.log('Plugin:', pt)
 
 
 @plugins.command(name='list',
                  short_help='List plugins [manager only]')
 @cfy.options.sort_by('uploaded_at')
 @cfy.options.descending
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
+@cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def list(sort_by, descending, logger, client):
     """List all plugins on the manager
     """
@@ -176,5 +178,5 @@ def list(sort_by, descending, logger, client):
         sort=sort_by,
         is_descending=descending)
 
-    pt = utils.table(columns, data=plugins)
-    common.print_table('Plugins:', pt)
+    pt = table.generate(columns, data=plugins)
+    table.log('Plugins:', pt)

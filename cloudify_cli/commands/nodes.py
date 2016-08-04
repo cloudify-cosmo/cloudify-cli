@@ -15,14 +15,14 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
+from .. import table
 from .. import utils
-from .. import common
-from ..config import cfy
+from ..cli import cfy
 from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='nodes')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.assert_manager_active
 def nodes():
     """Handle a deployment's nodes
@@ -34,7 +34,7 @@ def nodes():
                short_help='Retrieve node information [manager only]')
 @cfy.argument('node-id')
 @cfy.options.deployment_id(required=True)
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 @cfy.pass_client()
 def get(node_id, deployment_id, logger, client):
@@ -62,9 +62,9 @@ def get(node_id, deployment_id, logger, client):
     # print node parameters
     columns = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                'number_of_instances', 'planned_number_of_instances']
-    pt = utils.table(columns, data=[node])
+    pt = table.generate(columns, data=[node])
     pt.max_width = 50
-    common.print_table('Node:', pt)
+    table.log('Node:', pt)
 
     # print node properties
     logger.info('Node properties:')
@@ -88,7 +88,7 @@ def get(node_id, deployment_id, logger, client):
 @cfy.options.deployment_id()
 @cfy.options.sort_by('deployment_id')
 @cfy.options.descending
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 @cfy.pass_client()
 def list(deployment_id, sort_by, descending, logger, client):
@@ -115,5 +115,5 @@ def list(deployment_id, sort_by, descending, logger, client):
 
     columns = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                'number_of_instances', 'planned_number_of_instances']
-    pt = utils.table(columns, data=nodes)
-    common.print_table('Nodes:', pt)
+    pt = table.generate(columns, data=nodes)
+    table.log('Nodes:', pt)

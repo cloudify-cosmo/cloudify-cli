@@ -13,23 +13,22 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import time
 import threading
+import time
 
 from cloudify import logs
 
-from ..config import cfy
+from ..cli import cfy
 from ..exceptions import ExecutionTimeoutError
 from ..exceptions import SuppressedCloudifyCliError
 from ..execution_events_fetcher import wait_for_execution, \
     WAIT_FOR_EXECUTION_SLEEP_INTERVAL
 
-
 _NODE_INSTANCE_STATE_STARTED = 'started'
 
 
 @cfy.group(name='agents')
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.assert_manager_active
 def agents():
     """Handle a deployment's agents
@@ -56,6 +55,7 @@ def _deployment_exists(client, deployment_id):
                 short_help='Install deployment agents [manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
+@cfy.options.verbose()
 @cfy.pass_logger
 @cfy.pass_client()
 def install(deployment_id, include_logs, logger, client):

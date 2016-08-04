@@ -13,24 +13,23 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify_rest_client.exceptions import UserUnauthorizedError
+from cloudify_rest_client.exceptions import CloudifyClientError, \
+    UserUnauthorizedError
 
-from .. import env
-from .. import utils
-from .. import common
-from ..config import cfy
+from .. import table
+from ..cli import cfy
+from ..env import profile
 
 
 @cfy.command(name='status', short_help="Show manager status [manager only]")
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def status(logger, client):
     """Show the status of the manager
     """
-    rest_host = env.get_rest_host()
+    rest_host = profile.manager_ip
 
     logger.info('Retrieving manager services status... [ip={0}]'.format(
         rest_host))
@@ -55,8 +54,8 @@ def status(logger, client):
             'service': service['display_name'].ljust(30),
             'status': state
         })
-    pt = utils.table(['service', 'status'], data=services)
-    common.print_table('Services:', pt)
+    pt = table.generate(['service', 'status'], data=services)
+    table.log('Services:', pt)
 
     maintenance_status = maintenance_response.status
     if maintenance_status != 'deactivated':

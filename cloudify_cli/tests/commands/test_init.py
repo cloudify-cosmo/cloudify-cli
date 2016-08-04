@@ -138,7 +138,7 @@ class InitTest(CliCommandTest):
         )
 
     @patch('cloudify.workflows.local.init_env')
-    @patch('cloudify_cli.common.install_blueprint_plugins')
+    @patch('cloudify_cli.local._install_plugins')
     def test_init_install_plugins(self, install_plugins_mock, *_):
         blueprint_path = os.path.join(
             BLUEPRINTS_DIR,

@@ -13,13 +13,11 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from .upgrade import update_inputs
-from .upgrade import put_workflow_state_file
-from .upgrade import verify_and_wait_for_maintenance_mode_activation
-
-from .. import common
-from ..config import cfy
+from .. import local
+from ..cli import cfy
 from .. import exceptions
+from .upgrade import put_workflow_state_file, update_inputs, \
+    verify_and_wait_for_maintenance_mode_activation
 
 
 @cfy.command(name='rollback',
@@ -30,10 +28,10 @@ from .. import exceptions
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client(skip_version_check=True)
+@cfy.pass_logger
 def rollback(blueprint_path,
              inputs,
              install_plugins,
@@ -54,11 +52,11 @@ def rollback(blueprint_path,
 
     env_name = 'manager-rollback'
     # init local workflow execution environment
-    working_env = common.initialize_blueprint(blueprint_path,
-                                              storage=None,
-                                              install_plugins=install_plugins,
-                                              name=env_name,
-                                              inputs=inputs)
+    working_env = local.initialize_blueprint(blueprint_path,
+                                             storage=None,
+                                             install_plugins=install_plugins,
+                                             name=env_name,
+                                             inputs=inputs)
 
     logger.info('Starting Manager rollback process...')
     put_workflow_state_file(is_upgrade=False,

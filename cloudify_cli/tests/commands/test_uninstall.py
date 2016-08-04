@@ -4,11 +4,11 @@ from mock import patch
 
 from cloudify_rest_client import deployments
 
-from ... import common
+from ... import local
 from .test_base import CliCommandTest
-from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
 from ...constants import DEFAULT_UNINSTALL_WORKFLOW, \
     DEFAULT_TIMEOUT, DEFAULT_PARAMETERS
+from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
 
 
 class UninstallTest(CliCommandTest):
@@ -167,7 +167,7 @@ class UninstallTest(CliCommandTest):
             'cfy install {0} -w run_test_op_on_nodes'.format(blueprint_path),
             context='local'
         )
-        self.assertTrue(os.path.isdir(common.storage_dir()))
+        self.assertTrue(os.path.isdir(local.storage_dir()))
 
         self.invoke('cfy uninstall -w run_test_op_on_nodes', context='local')
-        self.assertFalse(os.path.isdir(common.storage_dir()))
+        self.assertFalse(os.path.isdir(local.storage_dir()))

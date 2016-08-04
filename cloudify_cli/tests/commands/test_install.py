@@ -56,11 +56,11 @@ class InstallTest(CliCommandTest):
             self, blueprints_upload_mock,
             *_):
 
-        install_upload_mode_command = \
-            'cfy install -n {0}'.format(DEFAULT_BLUEPRINT_FILE_NAME)
-
         tmp_blueprint_path = os.path.join('/tmp',
                                           DEFAULT_BLUEPRINT_FILE_NAME)
+
+        install_upload_mode_command = \
+            'cfy install -n {0}'.format(DEFAULT_BLUEPRINT_FILE_NAME)
 
         try:
             # create a tmp file representing a blueprint to upload

@@ -17,13 +17,12 @@ import click
 
 from .. import env
 from .. import utils
-from .. import common
-from ..config import cfy
-from ..constants import DEFAULT_UNINSTALL_WORKFLOW
-
+from ..cli import cfy
 from . import blueprints
 from . import executions
 from . import deployments
+from ..local import storage_dir
+from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 
 
 @cfy.command(name='uninstall',
@@ -35,7 +34,7 @@ from . import deployments
 @cfy.options.timeout()
 @cfy.options.include_logs
 @cfy.options.json
-@cfy.options.verbose
+@cfy.options.verbose()
 @click.pass_context
 def manager(ctx,
             deployment_id,
@@ -97,7 +96,7 @@ def manager(ctx,
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
-@cfy.options.verbose
+@cfy.options.verbose()
 @click.pass_context
 def local(ctx,
           workflow_id,
@@ -120,4 +119,4 @@ def local(ctx,
         task_thread_pool_size=task_thread_pool_size)
 
     # Remove the local-storage dir
-    utils.remove_if_exists(common.storage_dir())
+    utils.remove_if_exists(storage_dir())

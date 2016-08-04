@@ -13,22 +13,19 @@
 # * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import time
 import json
+import time
 
 from cloudify_rest_client import exceptions
 
-from .. import env
+from .. import local
+from .. import table
 from .. import utils
-from .. import common
-from ..config import cfy
-from ..config import helptexts
-from ..exceptions import CloudifyCliError
-from ..exceptions import ExecutionTimeoutError
+from ..cli import cfy, helptexts
 from ..logger import get_events_logger
-from ..exceptions import SuppressedCloudifyCliError
 from ..execution_events_fetcher import wait_for_execution
-
+from ..exceptions import CloudifyCliError, ExecutionTimeoutError, \
+    SuppressedCloudifyCliError
 
 _STATUS_CANCELING_MESSAGE = (
     'NOTE: Executions currently in a "canceling/force-canceling" status '
@@ -36,7 +33,7 @@ _STATUS_CANCELING_MESSAGE = (
 
 
 @cfy.group(name='executions')
-@cfy.options.verbose
+@cfy.options.verbose()
 def executions():
     """Handle workflow executions
     """
@@ -46,10 +43,10 @@ def executions():
 @cfy.command(name='get',
              short_help='Retrieve execution information [manager only]')
 @cfy.argument('execution-id')
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def manager_get(execution_id, logger, client):
     """Retrieve information for a specific execution
 
@@ -65,9 +62,9 @@ def manager_get(execution_id, logger, client):
 
     columns = \
         ['id', 'workflow_id', 'status', 'deployment_id', 'created_at', 'error']
-    pt = utils.table(columns, data=[execution])
+    pt = table.generate(columns, data=[execution])
     pt.max_width = 50
-    common.print_table('Execution:', pt)
+    table.log('Execution:', pt)
 
     # print execution parameters
     logger.info('Execution Parameters:')
@@ -85,10 +82,10 @@ def manager_get(execution_id, logger, client):
 @cfy.options.include_system_workflows
 @cfy.options.sort_by()
 @cfy.options.descending
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def manager_list(
         deployment_id,
         include_system_workflows,
@@ -120,8 +117,8 @@ def manager_list(
             deployment_id))
 
     columns = ['id', 'workflow_id', 'deployment_id', 'status', 'created_at']
-    pt = utils.table(columns, data=executions)
-    common.print_table('Executions:', pt)
+    pt = table.generate(columns, data=executions)
+    table.log('Executions:', pt)
 
     if any(execution.status in (
             execution.CANCELLING, execution.FORCE_CANCELLING)
@@ -139,9 +136,10 @@ def manager_list(
 @cfy.options.timeout()
 @cfy.options.include_logs
 @cfy.options.json
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
+@cfy.pass_client()
+@cfy.pass_logger
 def manager_start(workflow_id,
                   deployment_id,
                   parameters,
@@ -150,7 +148,8 @@ def manager_start(workflow_id,
                   timeout,
                   include_logs,
                   json,
-                  logger):
+                  logger,
+                  client):
     """Execute a workflow on a given deployment
 
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
@@ -165,7 +164,6 @@ def manager_start(workflow_id,
                     deployment_id,
                     timeout))
     try:
-        client = env.get_rest_client()
         try:
             execution = client.executions.start(
                 deployment_id,
@@ -244,10 +242,10 @@ def manager_start(workflow_id,
              short_help='Cancel a workflow execution [manager only]')
 @cfy.argument('execution-id')
 @cfy.options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
-@cfy.options.verbose
-@cfy.pass_logger
+@cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
+@cfy.pass_logger
 def manager_cancel(execution_id, force, logger, client):
     """Cancel a workflow's execution
     """
@@ -278,7 +276,7 @@ def _get_deployment_environment_creation_execution(client, deployment_id):
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
-@cfy.options.verbose
+@cfy.options.verbose()
 @cfy.pass_logger
 def local_start(workflow_id,
                 parameters,
@@ -291,7 +289,7 @@ def local_start(workflow_id,
 
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
-    env = common.load_env()
+    env = local.load_env()
     result = env.execute(workflow=workflow_id,
                          parameters=parameters,
                          allow_custom_parameters=allow_custom_parameters,

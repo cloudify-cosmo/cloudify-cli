@@ -26,8 +26,7 @@ class StatusTest(CliCommandTest):
 
     def test_status_by_unauthorized_user(self):
         self.use_manager()
-        with patch('cloudify_cli.env.get_rest_host'):
-            with patch.object(self.client.manager, 'get_status') as mock:
-                mock.side_effect = UserUnauthorizedError('Unauthorized user')
-                outcome = self.invoke('cfy status')
-                self.assertIn('User is unauthorized', outcome.logs)
+        with patch.object(self.client.manager, 'get_status') as mock:
+            mock.side_effect = UserUnauthorizedError('Unauthorized user')
+            outcome = self.invoke('cfy status')
+            self.assertIn('User is unauthorized', outcome.logs)
