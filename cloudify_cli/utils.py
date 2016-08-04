@@ -26,6 +26,7 @@ import shutil
 import pkgutil
 import getpass
 import tempfile
+from datetime import datetime
 from contextlib import contextmanager
 
 import yaml
@@ -574,10 +575,14 @@ def table(cols, data, defaults=None):
 
     def get_values_per_column(column, row_data):
         if column in row_data:
-            if column == 'created_at':
-                if row_data[column]:
+            if row_data[column] and isinstance(row_data[column], basestring):
+                try:
+                    datetime.strptime(row_data[column][:10], '%Y-%m-%d')
                     row_data[column] = \
                         row_data[column].replace('T', ' ').replace('Z', ' ')
+                except ValueError:
+                    # not a timestamp
+                    pass
             return row_data[column]
         else:
             return defaults[column]
