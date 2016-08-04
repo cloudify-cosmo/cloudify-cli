@@ -19,6 +19,7 @@ import shutil
 from .. import env
 from .. import local
 from ..cli import cfy
+from .. import blueprint
 from .. import constants
 from .. import exceptions
 from ..logger import configure_loggers
@@ -28,6 +29,7 @@ from ..exceptions import CloudifyCliError
 
 @cfy.command(name='init', short_help='Initialize a working env')
 @cfy.argument('blueprint-path', required=False)
+@cfy.options.blueprint_filename()
 @cfy.options.reset_context
 @cfy.options.inputs
 @cfy.options.install_plugins
@@ -36,6 +38,7 @@ from ..exceptions import CloudifyCliError
 @cfy.options.verbose()
 @cfy.pass_logger
 def init(blueprint_path,
+         blueprint_filename,
          reset_context,
          inputs,
          install_plugins,
@@ -76,9 +79,14 @@ def init(blueprint_path,
         if os.path.isdir(local.storage_dir()):
             shutil.rmtree(local.storage_dir())
 
+        processed_blueprint_path = blueprint.get(
+            blueprint_path,
+            blueprint_filename
+        )
+
         try:
             local.initialize_blueprint(
-                blueprint_path=blueprint_path,
+                blueprint_path=processed_blueprint_path,
                 name='local',
                 inputs=inputs,
                 install_plugins=install_plugins,

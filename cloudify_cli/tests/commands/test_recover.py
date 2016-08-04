@@ -2,7 +2,7 @@ import os
 
 from mock import MagicMock, patch
 
-from ...commands import recover 
+from ...commands import recover
 from ... import exceptions, env
 from .test_base import CliCommandTest
 
@@ -95,6 +95,7 @@ class RecoverTest(CliCommandTest):
         # set
         fake_snapshot_path = os.path.join(env.CLOUDIFY_WORKDIR, 'sn.zip')
         open(fake_snapshot_path, 'w').close()
+        recover.profile = env.ProfileContext()
         self.invoke('cfy recover -f {0}'.format(fake_snapshot_path),
                     'Cannot perform recovery. manager key file not found. '
                     'Set the manager private key path via the '

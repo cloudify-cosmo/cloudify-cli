@@ -349,7 +349,7 @@ class ProfileContext(yaml.YAMLObject):
         self._manager_key = None
         self._manager_port = None
         self._manager_user = None
-        self._provider_context = None
+        self._provider_context = dict()
         self._rest_port = constants.DEFAULT_REST_PORT
         self._rest_protocol = constants.DEFAULT_REST_PROTOCOL
 
@@ -434,7 +434,7 @@ class ProfileContext(yaml.YAMLObject):
         workdir = os.path.join(PROFILES_DIR, self.manager_ip)
         # create a new file
         if not os.path.exists(workdir):
-            os.mkdir(workdir)
+            os.makedirs(workdir)
         target_file_path = os.path.join(
             workdir,
             constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)

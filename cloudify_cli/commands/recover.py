@@ -83,7 +83,8 @@ def recover(snapshot_path,
             # problems
 
     logger.info('Recovering manager...')
-    provider_context = get_profile_context().provider_context
+    provider_context = get_profile_context(
+        suppress_error=True).provider_context
     bs.read_manager_deployment_dump_if_needed(
         provider_context.get('cloudify', {}).get('manager_deployment'))
     bs.recover(task_retries=task_retries,
