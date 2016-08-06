@@ -48,6 +48,7 @@ from .. import utils
 from .. import inputs
 from .. import logger
 from .. import constants
+from .. import blueprint
 from ..bootstrap import bootstrap
 from ..exceptions import CloudifyCliError
 from ..colorful_event import ColorfulEvent
@@ -58,9 +59,10 @@ from ..execution_events_fetcher import ExecutionEventsFetcher
 
 from . import cfy
 
-from .commands.constants import BLUEPRINTS_DIR
 from .commands.test_base import CliCommandTest
 from .commands.mocks import mock_logger, mock_stdout, MockListResponse
+from .commands.constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH, \
+    SAMPLE_ARCHIVE_PATH, SAMPLE_CUSTOM_NAME_ARCHIVE, SAMPLE_ARCHIVE_URL
 
 
 env.CLOUDIFY_WORKDIR = '/tmp/.cloudify-test'
@@ -231,8 +233,8 @@ class CliEnvTests(CliCommandTest):
     def test_get_profile_context(self):
         self.use_manager()
         context = env.get_profile_context()
-        self.assertTrue(hasattr(context, 'get_manager_ip'))
-        self.assertEqual(context.get_manager_ip(), '10.10.1.10')
+        self.assertTrue(hasattr(context, 'manager_ip'))
+        self.assertEqual(context.manager_ip, '10.10.1.10')
 
     def test_get_profile_context_for_local(self):
         ex = self.assertRaises(
@@ -241,8 +243,8 @@ class CliEnvTests(CliCommandTest):
         self.assertEqual('Local profile does not have context', str(ex))
 
     def test_get_context_path(self):
-        self.use_manager()
-        context_path = env.get_context_path()
+        profile = self.use_manager()
+        context_path = env.get_context_path(profile.manager_ip)
         self.assertEqual(
             context_path,
             os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context'))
@@ -250,14 +252,16 @@ class CliEnvTests(CliCommandTest):
     def test_fail_get_context_for_local_profile(self):
         ex = self.assertRaises(
             CloudifyCliError,
-            env.get_context_path)
-        self.assertEqual('Local profile does not contain context', str(ex))
+            env.get_profile_context)
+        self.assertEqual('Local profile does not have context', str(ex))
 
     def test_fail_get_context_not_initialized(self):
         shutil.rmtree(env.CLOUDIFY_WORKDIR)
         ex = self.assertRaises(
             CloudifyCliError,
-            env.get_context_path)
+            env.get_context_path,
+            'test'
+        )
         self.assertEqual('Profile directory does not exist', str(ex))
 
     def test_get_profile_dir(self):
@@ -284,16 +288,22 @@ class CliEnvTests(CliCommandTest):
             os.path.join(env.CLOUDIFY_WORKDIR, 'config.yaml')))
 
     def test_set_empty_profile_context(self):
-        env.set_profile_context(profile_name='10.10.1.10')
-        context = env.get_profile_context('10.10.1.10')
-        self.assertEqual(context.get_manager_ip(), None)
+        manager_ip = '10.10.1.10'
+        profile = env.ProfileContext()
+        profile.manager_ip = manager_ip
+        profile.save()
+
+        context = env.get_profile_context(manager_ip)
+        self.assertEqual(context.manager_user, None)
 
     def test_set_profile_context_with_settings(self):
-        settings = env.ProfileContext()
-        settings.set_manager_ip('10.10.1.10')
-        env.set_profile_context(settings, profile_name='10.10.1.10')
-        context = env.get_profile_context('10.10.1.10')
-        self.assertEqual(context.get_manager_ip(), '10.10.1.10')
+        manager_ip = '10.10.1.10'
+        profile = env.ProfileContext()
+        profile.manager_ip = manager_ip
+        profile.save()
+
+        context = env.get_profile_context(manager_ip)
+        self.assertEqual(context.manager_ip, manager_ip)
 
     def test_raise_uninitialized(self):
         ex = self.assertRaises(
@@ -990,7 +1000,7 @@ class ImportResolverLocalUseTests(CliCommandTest):
             cloudify.workflows.local.FileStorage.get_node_instances = \
                 old_get_node_instances
 
-    @mock.patch('cloudify_cli.local.storage', new=mock.MagicMock)
+    @mock.patch('cloudify_cli.local._storage', new=mock.MagicMock)
     @mock.patch('cloudify.workflows.local._prepare_nodes_and_instances')
     @mock.patch('dsl_parser.tasks.prepare_deployment_plan')
     def test_local_init(self, *_):
@@ -1025,8 +1035,10 @@ class TestGetRestClient(CliCommandTest):
         cfy.purge_dot_cloudify()
 
     def test_get_rest_client(self):
-        client = env.get_rest_client(rest_host='localhost',
-                                     skip_version_check=True)
+        client = self.original_utils_get_rest_client(
+            rest_host='localhost',
+            skip_version_check=True
+        )
         self.assertIsNotNone(client._client.headers[
             constants.CLOUDIFY_AUTHENTICATION_HEADER])
 
@@ -1036,12 +1048,97 @@ class TestGetRestClient(CliCommandTest):
         port = 443
         skip_version_check = True
 
-        client = env.get_rest_client(
-            rest_host=host, rest_port=port, rest_protocol=rest_protocol,
-            skip_version_check=skip_version_check)
+        client = self.original_utils_get_rest_client(
+            rest_host=host,
+            rest_port=port,
+            rest_protocol=rest_protocol,
+            skip_version_check=skip_version_check
+        )
 
         self.assertEqual(CERT_PATH, client._client.cert)
         self.assertTrue(client._client.trust_all)
         self.assertEqual('{0}://{1}:{2}/api/{3}'.format(
             rest_protocol, host, port, DEFAULT_API_VERSION),
             client._client.url)
+
+
+class TestGetBlueprint(CliCommandTest):
+    def test_yaml_path(self):
+        self.assertEqual(
+            SAMPLE_BLUEPRINT_PATH,
+            blueprint.get(SAMPLE_BLUEPRINT_PATH)
+        )
+
+    def test_folder_path_default_name(self):
+        # TODO: Why isn't OK to pass a dir and a filename?
+        test_dir = os.path.join(BLUEPRINTS_DIR, 'helloworld')
+        self.assertEqual(
+            os.path.join(test_dir, 'blueprint.yaml'),
+            blueprint.get(test_dir)
+        )
+
+    def test_archive_default_name(self):
+        # Can't check the whole path here, as it's a randomly generated temp
+        self.assertIn(
+            'helloworld/blueprint.yaml',
+            blueprint.get(SAMPLE_ARCHIVE_PATH)
+        )
+
+    def test_archive_custom_name(self):
+        # Can't check the whole path here, as it's a randomly generated temp
+        self.assertIn(
+            'helloworld/simple_blueprint.yaml',
+            blueprint.get(SAMPLE_CUSTOM_NAME_ARCHIVE, 'simple_blueprint.yaml')
+        )
+
+    def test_archive_custom_name_no_default(self):
+        # There's no `blueprint.yaml` in the archive, so it should fail here
+        self.assertRaises(
+            CloudifyCliError,
+            blueprint.get,
+            SAMPLE_CUSTOM_NAME_ARCHIVE
+        )
+
+    def test_url_default_name(self):
+        # Can't check the whole path here, as it's a randomly generated temp
+        self.assertTrue(
+            blueprint.get(SAMPLE_ARCHIVE_URL).endswith(
+                'cloudify-hello-world-example-master/blueprint.yaml',
+            )
+        )
+
+    def test_url_custom_name(self):
+        # Can't check the whole path here, as it's a randomly generated temp
+        self.assertTrue(
+            blueprint.get(SAMPLE_ARCHIVE_URL, 'ec2-blueprint.yaml').endswith(
+                'cloudify-hello-world-example-master/ec2-blueprint.yaml',
+            )
+        )
+
+    def test_bad_filename(self):
+        self.assertRaises(
+            CloudifyCliError,
+            blueprint.get,
+            'bad_filename.yaml'
+        )
+
+    def test_github_path(self):
+        # Can't check the whole path here, as it's a randomly generated temp
+        self.assertTrue(
+            blueprint.get(
+                'cloudify-cosmo/cloudify-hello-world-example'
+            ).endswith(
+                'cloudify-hello-world-example-master/blueprint.yaml',
+            )
+        )
+
+    def test_github_path_custom_name(self):
+        # Can't check the whole path here, as it's a randomly generated temp
+        self.assertTrue(
+            blueprint.get(
+                'cloudify-cosmo/cloudify-hello-world-example',
+                'ec2-blueprint.yaml'
+            ).endswith(
+                'cloudify-hello-world-example-master/ec2-blueprint.yaml',
+            )
+        )

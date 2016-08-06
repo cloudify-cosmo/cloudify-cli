@@ -40,3 +40,7 @@ SAMPLE_BLUEPRINT_PATH = os.path.join(
 SAMPLE_ARCHIVE_URL = 'https://github.com/cloudify-cosmo/' \
                      'cloudify-hello-world-example/archive/master.zip'
 SAMPLE_ARCHIVE_PATH = os.path.join(BLUEPRINTS_DIR, 'helloworld.zip')
+SAMPLE_CUSTOM_NAME_ARCHIVE = os.path.join(
+    BLUEPRINTS_DIR,
+    'helloworld_custom_name.zip'
+)
