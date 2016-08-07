@@ -5,6 +5,7 @@ import yaml
 from mock import MagicMock, patch
 
 from ... import env
+from ...config import config
 from .test_base import CliCommandTest
 from .constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH, \
     SAMPLE_ARCHIVE_PATH
@@ -87,11 +88,11 @@ class BlueprintsTest(CliCommandTest):
                 SAMPLE_BLUEPRINT_PATH))
 
     def test_blueprint_validate_definitions_version_false(self):
-        with open(env.CLOUDIFY_CONFIG_PATH) as f:
-            config = yaml.safe_load(f.read())
-        with open(env.CLOUDIFY_CONFIG_PATH, 'w') as f:
-            config['validate_definitions_version'] = False
-            f.write(yaml.safe_dump(config))
+        with open(config.CLOUDIFY_CONFIG_PATH) as f:
+            conf = yaml.safe_load(f.read())
+        with open(config.CLOUDIFY_CONFIG_PATH, 'w') as f:
+            conf['validate_definitions_version'] = False
+            f.write(yaml.safe_dump(conf))
         self.invoke(
             'cfy blueprints validate '
             '{0}/local/blueprint_validate_definitions_version.yaml'

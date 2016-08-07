@@ -19,6 +19,8 @@ import sys
 import copy
 import json
 import logging
+import getpass
+import tempfile
 import logging.config
 
 import colorama
@@ -26,8 +28,14 @@ import colorama
 from cloudify import logs
 
 from . import env
+from .config.config import is_use_colors
+from .config.config import CloudifyConfig
 from .colorful_event import ColorfulEvent
 
+
+DEFAULT_LOG_FILE = os.path.expanduser(
+    '{0}/cloudify-{1}/cloudify-cli.log'.format(
+        tempfile.gettempdir(), getpass.getuser()))
 
 HIGH_VERBOSE = 3
 MEDIUM_VERBOSE = 2
@@ -96,7 +104,7 @@ def configure_loggers():
     # configuring events/logs loggers
     # (this will also affect local workflow loggers, which don't use
     # the get_events_logger method of this module)
-    if env.is_use_colors():
+    if is_use_colors():
         logs.EVENT_CLASS = ColorfulEvent
         # refactor this elsewhere if colorama is further used in CLI
         colorama.init(autoreset=True)
@@ -111,8 +119,8 @@ def _configure_defaults():
             'handlers': list(logger_dict['handlers'].keys())
         }
     }
-    logger_dict['handlers']['file']['filename'] = env.DEFAULT_LOG_FILE
-    logfile_dir = os.path.dirname(env.DEFAULT_LOG_FILE)
+    logger_dict['handlers']['file']['filename'] = DEFAULT_LOG_FILE
+    logfile_dir = os.path.dirname(DEFAULT_LOG_FILE)
     if not os.path.exists(logfile_dir):
         os.makedirs(logfile_dir)
 
@@ -123,7 +131,7 @@ def _configure_defaults():
 
 def _configure_from_file():
 
-    config = env.CloudifyConfig()
+    config = CloudifyConfig()
     logging_config = config.logging
     loggers_config = logging_config.loggers
     logfile = logging_config.filename

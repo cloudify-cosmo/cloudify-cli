@@ -1,4 +1,5 @@
 import os
+# import shutil
 
 import yaml
 from mock import patch
@@ -6,10 +7,21 @@ from mock import patch
 from dsl_parser.exceptions import DSLParsingLogicException
 
 from .. import cfy
-from ... import env
+# from ... import env
+# from ...commands import init
+from ...config import config
 from .test_base import CliCommandTest
 from .constants import BLUEPRINTS_DIR, SAMPLE_INPUTS_PATH, \
     DEFAULT_BLUEPRINT_FILE_NAME, SAMPLE_CUSTOM_NAME_ARCHIVE
+
+
+# env.CLOUDIFY_WORKDIR = '/tmp/.cloudify-test'
+# config.CLOUDIFY_CONFIG_PATH = os.path.join(
+#     env.CLOUDIFY_WORKDIR, 'config.yaml')
+# env.PROFILES_DIR = os.path.join(
+#     env.CLOUDIFY_WORKDIR, 'profiles')
+# env.ACTIVE_PRO_FILE = os.path.join(
+#     env.CLOUDIFY_WORKDIR, 'active.profile')
 
 
 class InitTest(CliCommandTest):
@@ -22,35 +34,35 @@ class InitTest(CliCommandTest):
 
     def test_init_overwrite(self):
         # Config values shouldn't change between init resets
-        with open(env.CLOUDIFY_CONFIG_PATH) as f:
-            config = yaml.safe_load(f.read())
+        with open(config.CLOUDIFY_CONFIG_PATH) as f:
+            conf = yaml.safe_load(f.read())
 
-        self.assertFalse(config['colors'])
-        with open(env.CLOUDIFY_CONFIG_PATH, 'w') as f:
-            config['colors'] = True
-            f.write(yaml.safe_dump(config))
+        self.assertFalse(conf['colors'])
+        with open(config.CLOUDIFY_CONFIG_PATH, 'w') as f:
+            conf['colors'] = True
+            f.write(yaml.safe_dump(conf))
 
-        self.invoke('cfy init -r')
-        with open(env.CLOUDIFY_CONFIG_PATH) as f:
-            config = yaml.safe_load(f.read())
+        cfy.invoke('init -r')
+        with open(config.CLOUDIFY_CONFIG_PATH) as f:
+            conf = yaml.safe_load(f.read())
 
-        self.assertTrue(config['colors'])
+        self.assertTrue(conf['colors'])
 
     def test_init_overwrite_hard(self):
         # Config values should change between hard init resets
-        with open(env.CLOUDIFY_CONFIG_PATH) as f:
-            config = yaml.safe_load(f.read())
+        with open(config.CLOUDIFY_CONFIG_PATH) as f:
+            conf = yaml.safe_load(f.read())
 
-        self.assertFalse(config['colors'])
-        with open(env.CLOUDIFY_CONFIG_PATH, 'w') as f:
-            config['colors'] = True
-            f.write(yaml.safe_dump(config))
+        self.assertFalse(conf['colors'])
+        with open(config.CLOUDIFY_CONFIG_PATH, 'w') as f:
+            conf['colors'] = True
+            f.write(yaml.safe_dump(conf))
 
         self.invoke('cfy init -r --hard')
-        with open(env.CLOUDIFY_CONFIG_PATH) as f:
-            config = yaml.safe_load(f.read())
+        with open(config.CLOUDIFY_CONFIG_PATH) as f:
+            conf = yaml.safe_load(f.read())
 
-        self.assertFalse(config['colors'])
+        self.assertFalse(conf['colors'])
 
     def test_init_overwrite_on_initial_init(self):
         # Simply verifying the overwrite flag doesn't break the first init
@@ -117,11 +129,11 @@ class InitTest(CliCommandTest):
         self.assertIn('  "key3": "val3"', output)
 
     def test_init_validate_definitions_version_false(self):
-        with open(env.CLOUDIFY_CONFIG_PATH) as f:
-            config = yaml.safe_load(f.read())
-        with open(env.CLOUDIFY_CONFIG_PATH, 'w') as f:
-            config['validate_definitions_version'] = False
-            f.write(yaml.safe_dump(config))
+        with open(config.CLOUDIFY_CONFIG_PATH) as f:
+            conf = yaml.safe_load(f.read())
+        with open(config.CLOUDIFY_CONFIG_PATH, 'w') as f:
+            conf['validate_definitions_version'] = False
+            f.write(yaml.safe_dump(conf))
         self.invoke(
             'cfy init {0}/local/blueprint_validate_definitions_version.yaml'
             .format(BLUEPRINTS_DIR)
@@ -199,3 +211,12 @@ class InitTest(CliCommandTest):
         self.assertIn('  "key1": "default_val1", ', output)
         self.assertIn('  "key2": "default_val2", ', output)
         self.assertIn('  "key3": "default_val3"', output)
+
+    def test_set_config(self):
+        shutil.rmtree(env.CLOUDIFY_WORKDIR)
+        os.makedirs(env.CLOUDIFY_WORKDIR)
+        self.assertFalse(os.path.isfile(
+            os.path.join(env.CLOUDIFY_WORKDIR, 'config.yaml')))
+        init.set_config()
+        self.assertTrue(os.path.isfile(
+            os.path.join(env.CLOUDIFY_WORKDIR, 'config.yaml')))

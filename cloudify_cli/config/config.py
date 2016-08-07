@@ -1,11 +1,12 @@
 import os
 import yaml
 
+from dsl_parser import utils as dsl_parser_utils
 from dsl_parser.constants import IMPORT_RESOLVER_KEY
 
-from ..env import CLOUDIFY_WORKDIR
+from .. import env
 
-CLOUDIFY_CONFIG_PATH = os.path.join(CLOUDIFY_WORKDIR, 'config.yaml')
+CLOUDIFY_CONFIG_PATH = os.path.join(env.CLOUDIFY_WORKDIR, 'config.yaml')
 
 
 class CloudifyConfig(object):
@@ -50,3 +51,36 @@ class CloudifyConfig(object):
     @property
     def validate_definitions_version(self):
         return self._config.get('validate_definitions_version', True)
+
+
+def is_use_colors():
+    if not env.is_initialized():
+        return False
+
+    config = CloudifyConfig()
+    return config.colors
+
+
+def is_auto_generate_ids():
+    if not env.is_initialized():
+        return False
+
+    config = CloudifyConfig()
+    return config.auto_generate_ids
+
+
+def get_import_resolver():
+    if not env.is_initialized():
+        return None
+
+    config = CloudifyConfig()
+    # get the resolver configuration from the config file
+    local_import_resolver = config.local_import_resolver
+    return dsl_parser_utils.create_import_resolver(local_import_resolver)
+
+
+def is_validate_definitions_version():
+    if not env.is_initialized():
+        return True
+    config = CloudifyConfig()
+    return config.validate_definitions_version

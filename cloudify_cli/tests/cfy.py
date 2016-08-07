@@ -47,15 +47,6 @@ default_manager_params = dict(
 
 @log_capture()
 def invoke(command, capture, context=None):
-    # For each invocation we should use a temporary directory
-    # for the cfy workdir.
-    env.CLOUDIFY_WORKDIR = '/tmp/.cloudify-test'
-    env.CLOUDIFY_CONFIG_PATH = os.path.join(
-        env.CLOUDIFY_WORKDIR, 'config.yaml')
-    env.PROFILES_DIR = os.path.join(
-        env.CLOUDIFY_WORKDIR, 'profiles')
-    env.ACTIVE_PRO_FILE = os.path.join(
-        env.CLOUDIFY_WORKDIR, 'active.profile')
 
     logger.configure_loggers()
     logger.set_global_verbosity_level(verbose=logger.NO_VERBOSE)
@@ -139,7 +130,7 @@ def use_manager(**manager_params):
     purge_profile(manager_params['manager_ip'])
     profile.save()
 
-    env.set_cfy_config()
+    commands.init.set_config()
     env.set_active_profile(manager_params['manager_ip'])
     register_commands()
 
