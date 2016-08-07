@@ -29,6 +29,7 @@ from . import utils
 from . import constants
 from . import exceptions
 from .logger import get_logger
+from .config.config import CloudifyConfig
 
 
 _ENV_NAME = 'local'
@@ -47,7 +48,7 @@ def initialize_blueprint(blueprint_path,
     if install_plugins:
         _install_plugins(blueprint_path=blueprint_path)
 
-    config = env.CloudifyConfig()
+    config = CloudifyConfig()
     return local.init_env(
         blueprint_path=blueprint_path,
         name=name,

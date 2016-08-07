@@ -21,17 +21,11 @@ import getpass
 import tempfile
 
 import yaml
-import pkg_resources
 from itsdangerous import base64_encode
-from jinja2.environment import Template
-
-from dsl_parser import utils as dsl_parser_utils
-from dsl_parser.constants import IMPORT_RESOLVER_KEY
 
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-import cloudify_cli
 from . import constants
 from .exceptions import CloudifyCliError
 
@@ -43,7 +37,6 @@ DEFAULT_LOG_FILE = os.path.expanduser(
 CLOUDIFY_WORKDIR = os.path.join(
     os.environ.get('CFY_WORKDIR', os.path.expanduser('~')),
     constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
-CLOUDIFY_CONFIG_PATH = os.path.join(CLOUDIFY_WORKDIR, 'config.yaml')
 PROFILES_DIR = os.path.join(CLOUDIFY_WORKDIR, 'profiles')
 ACTIVE_PRO_FILE = os.path.join(CLOUDIFY_WORKDIR, 'active.profile')
 
@@ -138,7 +131,7 @@ def is_initialized(profile_name=None):
     if profile_name:
         return get_profile_dir(profile_name) is not None
     else:
-        return os.path.isfile(CLOUDIFY_CONFIG_PATH)
+        return os.path.isdir(CLOUDIFY_WORKDIR)
 
 
 def get_context_path(profile_name):
@@ -158,22 +151,6 @@ def get_profile_dir(profile_name=None):
         raise CloudifyCliError('Profile directory does not exist')
 
 
-def set_cfy_config(enable_colors=False):
-    config = pkg_resources.resource_string(
-        cloudify_cli.__name__,
-        'config/config_template.yaml')
-
-    enable_colors = str(enable_colors).lower()
-    template = Template(config)
-    rendered = template.render(
-        log_path=DEFAULT_LOG_FILE,
-        enable_colors=enable_colors
-    )
-    with open(CLOUDIFY_CONFIG_PATH, 'w') as f:
-        f.write(rendered)
-        f.write(os.linesep)
-
-
 def raise_uninitialized():
     error = CloudifyCliError(
         'Cloudify environment is not initialized')
@@ -181,39 +158,6 @@ def raise_uninitialized():
         "Run 'cfy init'"
     ]
     raise error
-
-
-def is_use_colors():
-    if not is_initialized():
-        return False
-
-    config = CloudifyConfig()
-    return config.colors
-
-
-def is_auto_generate_ids():
-    if not is_initialized():
-        return False
-
-    config = CloudifyConfig()
-    return config.auto_generate_ids
-
-
-def get_import_resolver():
-    if not is_initialized():
-        return None
-
-    config = CloudifyConfig()
-    # get the resolver configuration from the config file
-    local_import_resolver = config.local_import_resolver
-    return dsl_parser_utils.create_import_resolver(local_import_resolver)
-
-
-def is_validate_definitions_version():
-    if not is_initialized():
-        return True
-    config = CloudifyConfig()
-    return config.validate_definitions_version
 
 
 def get_rest_client(rest_host=None,
@@ -445,51 +389,6 @@ class ProfileContext(yaml.YAMLObject):
 
         with open(target_file_path, 'w') as f:
             f.write(yaml.dump(self))
-
-
-# TODO: Move to config
-class CloudifyConfig(object):
-
-    class Logging(object):
-
-        def __init__(self, logging):
-            self._logging = logging or {}
-
-        @property
-        def filename(self):
-            return self._logging.get('filename')
-
-        @property
-        def loggers(self):
-            return self._logging.get('loggers', {})
-
-    def __init__(self):
-        with open(CLOUDIFY_CONFIG_PATH) as f:
-            self._config = yaml.safe_load(f.read())
-
-    @property
-    def colors(self):
-        return self._config.get('colors', False)
-
-    @property
-    def auto_generate_ids(self):
-        return self._config.get('auto_generate_ids', False)
-
-    @property
-    def logging(self):
-        return self.Logging(self._config.get('logging', {}))
-
-    @property
-    def local_provider_context(self):
-        return self._config.get('local_provider_context', {})
-
-    @property
-    def local_import_resolver(self):
-        return self._config.get(IMPORT_RESOLVER_KEY, {})
-
-    @property
-    def validate_definitions_version(self):
-        return self._config.get('validate_definitions_version', True)
 
 
 def get_auth_header(username, password):

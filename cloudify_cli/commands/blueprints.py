@@ -23,12 +23,12 @@ from cloudify_cli.cli import cfy
 from dsl_parser.exceptions import DSLParsingException
 from dsl_parser.parser import parse_from_path
 
-from .. import env
 from .. import local
 from .. import table
 from .. import utils
 from .. import blueprint
 from .. import exceptions
+from ..config import config
 from ..exceptions import CloudifyCliError
 
 SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
@@ -55,8 +55,8 @@ def validate_blueprint(blueprint_path, logger):
     """
     logger.info('Validating blueprint: {0}'.format(blueprint_path))
     try:
-        resolver = env.get_import_resolver()
-        validate_version = env.is_validate_definitions_version()
+        resolver = config.get_import_resolver()
+        validate_version = config.is_validate_definitions_version()
         parse_from_path(
             dsl_file_path=blueprint_path,
             resolver=resolver,
@@ -105,8 +105,8 @@ def upload(ctx,
         progress_handler = utils.generate_progress_handler(blueprint_path, '')
         logger.info('Uploading blueprint {0}...'.format(blueprint_path))
         blueprint_obj = client.blueprints.upload(processed_blueprint_path,
-                                             blueprint_id,
-                                             progress_handler)
+                                                 blueprint_id,
+                                                 progress_handler)
         logger.info("Blueprint uploaded. The blueprint's id is {0}".format(
             blueprint_obj.id))
     finally:

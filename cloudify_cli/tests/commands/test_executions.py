@@ -55,7 +55,7 @@ class ExecutionsTest(CliCommandTest):
     def test_executions_start_dep_other_ex_sanity(self):
         try:
             self._test_executions_start_dep_env(ex=RuntimeError)
-        except cfy.ClickInvocationException, e:
+        except cfy.ClickInvocationException as e:
             self.assertEqual(str(RuntimeError), e.exception)
 
     def _test_executions_start_dep_env(self, ex):

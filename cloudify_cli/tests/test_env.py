@@ -49,6 +49,7 @@ from .. import inputs
 from .. import logger
 from .. import constants
 from .. import blueprint
+from ..config import config
 from ..bootstrap import bootstrap
 from ..exceptions import CloudifyCliError
 from ..colorful_event import ColorfulEvent
@@ -65,25 +66,7 @@ from .commands.constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH, \
     SAMPLE_ARCHIVE_PATH, SAMPLE_CUSTOM_NAME_ARCHIVE, SAMPLE_ARCHIVE_URL
 
 
-env.CLOUDIFY_WORKDIR = '/tmp/.cloudify-test'
-env.CLOUDIFY_CONFIG_PATH = os.path.join(
-    env.CLOUDIFY_WORKDIR, 'config.yaml')
-env.PROFILES_DIR = os.path.join(
-    env.CLOUDIFY_WORKDIR, 'profiles')
-env.ACTIVE_PRO_FILE = os.path.join(
-    env.CLOUDIFY_WORKDIR, 'active.profile')
-
-
 class TestCLIBase(CliCommandTest):
-    @classmethod
-    def setUpClass(cls):
-        env.CLOUDIFY_WORKDIR = '/tmp/.cloudify-test'
-        env.CLOUDIFY_CONFIG_PATH = os.path.join(
-            env.CLOUDIFY_WORKDIR, 'config.yaml')
-        env.PROFILES_DIR = os.path.join(
-            env.CLOUDIFY_WORKDIR, 'profiles')
-        env.ACTIVE_PRO_FILE = os.path.join(
-            env.CLOUDIFY_WORKDIR, 'active.profile')
 
     def setUp(self):
         super(TestCLIBase, self).setUp()
@@ -121,16 +104,6 @@ class TestCLIBase(CliCommandTest):
 
 
 class CliEnvTests(CliCommandTest):
-
-    @classmethod
-    def setUpClass(cls):
-        env.CLOUDIFY_WORKDIR = '/tmp/.cloudify-test'
-        env.CLOUDIFY_CONFIG_PATH = os.path.join(
-            env.CLOUDIFY_WORKDIR, 'config.yaml')
-        env.PROFILES_DIR = os.path.join(
-            env.CLOUDIFY_WORKDIR, 'profiles')
-        env.ACTIVE_PRO_FILE = os.path.join(
-            env.CLOUDIFY_WORKDIR, 'active.profile')
 
     def setUp(self):
         super(CliEnvTests, self).setUp()
@@ -277,15 +250,6 @@ class CliEnvTests(CliCommandTest):
             CloudifyCliError,
             env.get_profile_dir)
         self.assertEqual('Profile directory does not exist', str(ex))
-
-    def test_set_cfy_config(self):
-        shutil.rmtree(env.CLOUDIFY_WORKDIR)
-        os.makedirs(env.CLOUDIFY_WORKDIR)
-        self.assertFalse(os.path.isfile(
-            os.path.join(env.CLOUDIFY_WORKDIR, 'config.yaml')))
-        env.set_cfy_config()
-        self.assertTrue(os.path.isfile(
-            os.path.join(env.CLOUDIFY_WORKDIR, 'config.yaml')))
 
     def test_set_empty_profile_context(self):
         manager_ip = '10.10.1.10'
@@ -759,7 +723,7 @@ class TestCLIConfig(CliCommandTest):
         with open(self.config_file_path, 'w') as f:
             yaml.dump({'colors': True, 'auto_generate_ids': True}, f)
 
-        patcher = mock.patch('cloudify_cli.env.CLOUDIFY_CONFIG_PATH',
+        patcher = mock.patch('cloudify_cli.config.config.CLOUDIFY_CONFIG_PATH',
                              self.config_file_path)
         self.addCleanup(patcher.stop)
         patcher.start()
@@ -769,30 +733,30 @@ class TestCLIConfig(CliCommandTest):
         os.remove(self.config_file_path)
 
     def test_colors_configuration(self):
-        self.assertTrue(env.is_use_colors())
+        self.assertTrue(config.is_use_colors())
 
     def test_missing_colors_configuration(self):
         # when colors configuration is missing, default should be false
         with open(self.config_file_path, 'w') as f:
             yaml.dump({}, f)
-        self.assertFalse(env.is_use_colors())
+        self.assertFalse(config.is_use_colors())
 
     def test_auto_generate_ids_configuration(self):
-        self.assertTrue(env.is_auto_generate_ids())
+        self.assertTrue(config.is_auto_generate_ids())
 
     def test_missing_auto_generate_ids_configuration(self):
         # when auto_generate_ids configuration is missing,
         # default should be false
         with open(self.config_file_path, 'w') as f:
             yaml.dump({}, f)
-        self.assertFalse(env.is_auto_generate_ids())
+        self.assertFalse(config.is_auto_generate_ids())
 
 
 @mock.patch('cloudify_cli.env.is_initialized', lambda: True)
 class TestCLIColors(CliCommandTest):
 
     @mock.patch('cloudify_cli.logger._configure_from_file', mock.MagicMock())
-    @mock.patch('cloudify_cli.env.is_use_colors', lambda: True)
+    @mock.patch('cloudify_cli.config.config.is_use_colors', lambda: True)
     def test_configure_colors_for_events_and_logs(self):
         self.assertNotEquals(ColorfulEvent, logs.EVENT_CLASS)
 
@@ -851,7 +815,7 @@ class CustomImportResolver(DefaultImportResolver):
 
 
 def update_config_file(resolver_configuration):
-    config_path = env.CLOUDIFY_CONFIG_PATH
+    config_path = config.CLOUDIFY_CONFIG_PATH
     with open(config_path, 'a') as f:
         yaml.dump(resolver_configuration, f)
 
@@ -885,7 +849,7 @@ class GetImportResolverTests(CliCommandTest):
         update_config_file(resolver_configuration=resolver_configuration)
         with mock.patch('dsl_parser.utils.create_import_resolver') as \
                 mock_create_import_resolver:
-            env.get_import_resolver()
+            config.get_import_resolver()
             mock_create_import_resolver.assert_called_once_with(
                 resolver_configuration[IMPORT_RESOLVER_KEY])
 
@@ -896,7 +860,7 @@ class GetImportResolverTests(CliCommandTest):
         import_resolver_config = create_resolver_configuration(
             implementation=custom_resolver_class_path, parameters=parameters)
         update_config_file(resolver_configuration=import_resolver_config)
-        resolver = env.get_import_resolver()
+        resolver = config.get_import_resolver()
         self.assertEqual(type(resolver), CustomImportResolver)
         self.assertEqual(resolver.param, 'custom-parameter')
 
@@ -907,7 +871,7 @@ class ImportResolverLocalUseTests(CliCommandTest):
         super(ImportResolverLocalUseTests, self).setUp()
         self.use_manager()
 
-    @mock.patch('cloudify_cli.env.get_import_resolver')
+    @mock.patch('cloudify_cli.config.config.get_import_resolver')
     def _test_using_import_resolver(self,
                                     command,
                                     blueprint_path,

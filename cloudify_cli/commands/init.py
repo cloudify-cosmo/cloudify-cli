@@ -15,6 +15,11 @@
 
 import os
 import shutil
+import pkg_resources
+
+from jinja2.environment import Template
+
+import cloudify_cli
 
 from .. import env
 from .. import local
@@ -22,9 +27,12 @@ from ..cli import cfy
 from .. import blueprint
 from .. import constants
 from .. import exceptions
+from ..logger import DEFAULT_LOG_FILE
 from ..logger import configure_loggers
 from ..bootstrap import bootstrap as bs
 from ..exceptions import CloudifyCliError
+from ..config.config import get_import_resolver
+from ..config.config import CLOUDIFY_CONFIG_PATH
 
 
 @cfy.command(name='init', short_help='Initialize a working env')
@@ -90,7 +98,7 @@ def init(blueprint_path,
                 name='local',
                 inputs=inputs,
                 install_plugins=install_plugins,
-                resolver=env.get_import_resolver()
+                resolver=get_import_resolver()
             )
         except ImportError as e:
             e.possible_solutions = [
@@ -128,7 +136,7 @@ def init_profile(
     if os.path.isfile(context_file_path):
         if reset_context:
             if hard:
-                os.remove(env.CLOUDIFY_CONFIG_PATH)
+                os.remove(CLOUDIFY_CONFIG_PATH)
             else:
                 os.remove(context_file_path)
             bs.delete_workdir()
@@ -143,8 +151,8 @@ def init_profile(
     if not os.path.isdir(env.PROFILES_DIR):
         os.makedirs(env.PROFILES_DIR)
     env.set_active_profile(profile_name)
-    if not os.path.isfile(env.CLOUDIFY_CONFIG_PATH) or hard:
-        env.set_cfy_config(enable_colors=enable_colors)
+    if not os.path.isfile(CLOUDIFY_CONFIG_PATH) or hard:
+        set_config(enable_colors=enable_colors)
 
     if not profile_name == 'local':
         profile = env.ProfileContext()
@@ -154,3 +162,19 @@ def init_profile(
 
     configure_loggers()
     logger.info('Initialization completed successfully')
+
+
+def set_config(enable_colors=False):
+    config = pkg_resources.resource_string(
+        cloudify_cli.__name__,
+        'config/config_template.yaml')
+
+    enable_colors = str(enable_colors).lower()
+    template = Template(config)
+    rendered = template.render(
+        log_path=DEFAULT_LOG_FILE,
+        enable_colors=enable_colors
+    )
+    with open(CLOUDIFY_CONFIG_PATH, 'w') as f:
+        f.write(rendered)
+        f.write(os.linesep)

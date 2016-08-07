@@ -21,6 +21,7 @@ from .. import env
 from .. import utils
 from ..cli import cfy
 from .. import blueprint
+from ..config import config
 from .init import init_profile
 from ..bootstrap import bootstrap as bs
 from ..exceptions import CloudifyCliError
@@ -105,7 +106,7 @@ def bootstrap(blueprint_path,
                 task_retry_interval=task_retry_interval,
                 task_thread_pool_size=task_thread_pool_size,
                 install_plugins=install_plugins,
-                resolver=env.get_import_resolver())
+                resolver=config.get_import_resolver())
             logger.info('Bootstrap validation completed successfully')
         elif inputs:
             # The user expects that `--skip-validations` will also ignore

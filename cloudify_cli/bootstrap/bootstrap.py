@@ -35,6 +35,7 @@ from cloudify.exceptions import RecoverableError
 
 from .. import env
 from .. import constants
+from ..config import config
 from ..logger import get_logger
 from ..local import initialize_blueprint
 from ..exceptions import CloudifyBootstrapError
@@ -260,7 +261,7 @@ def bootstrap(blueprint_path,
             inputs=inputs,
             storage=storage,
             install_plugins=install_plugins,
-            resolver=env.get_import_resolver()
+            resolver=config.get_import_resolver()
         )
     except ImportError as e:
         e.possible_solutions = [
