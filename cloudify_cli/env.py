@@ -374,7 +374,6 @@ class ProfileContext(yaml.YAMLObject):
         return context_path
 
     def save(self):
-        # TODO: Rethink the wording of the exception
         if not self.manager_ip:
             raise CloudifyCliError('No Manager IP set')
 

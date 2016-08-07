@@ -49,7 +49,6 @@ _lgr = None
 
 _all_loggers = set()
 
-# TODO: Move all env related stuff to another module.
 
 LOGGER = {
     "version": 1,
