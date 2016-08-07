@@ -46,7 +46,7 @@ from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND, \
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.verbose()
-# TODO: add assert_manager_active
+@cfy.assert_manager_active
 @click.pass_context
 def manager(ctx,
             blueprint_path,
@@ -79,7 +79,7 @@ def manager(ctx,
         processed_blueprint_path = blueprint.get(
             blueprint_path, blueprint_filename)
 
-    blueprint_id = blueprint_id or blueprint.get_id(
+    blueprint_id = blueprint_id or blueprint.generate_id(
         processed_blueprint_path, blueprint_filename)
     deployment_id = deployment_id or blueprint_id
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
@@ -169,7 +169,7 @@ def local(ctx,
         processed_blueprint_path = blueprint.get(
             blueprint_path, blueprint_filename)
 
-    blueprint_id = blueprint_id or blueprint.get_id(
+    blueprint_id = blueprint_id or blueprint.generate_id(
         processed_blueprint_path,
         blueprint_filename
     )

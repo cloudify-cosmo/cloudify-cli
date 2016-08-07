@@ -99,7 +99,7 @@ def upload(ctx,
             ctx.invoke(
                 validate_blueprint,
                 blueprint_path=processed_blueprint_path)
-        blueprint_id = blueprint_id or blueprint.get_id(
+        blueprint_id = blueprint_id or blueprint.generate_id(
             processed_blueprint_path, blueprint_filename)
 
         progress_handler = utils.generate_progress_handler(blueprint_path, '')
@@ -257,7 +257,7 @@ def package(ctx, blueprint_path, output_path, validate, logger):
     to the directory in which the blueprint yaml files resides.
     """
     blueprint_path = os.path.abspath(blueprint_path)
-    destination = output_path or blueprint.get_id(blueprint_path)
+    destination = output_path or blueprint.generate_id(blueprint_path)
 
     if validate:
         ctx.invoke(validate_blueprint, blueprint_path=blueprint_path)

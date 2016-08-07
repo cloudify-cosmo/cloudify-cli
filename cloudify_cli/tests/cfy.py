@@ -109,7 +109,6 @@ class ClickInvocationException(Exception):
         return string
 
 
-# TODO: Use a tempdir under /tmp/ for .cloudify-something
 def purge_dot_cloudify():
     dot_cloudify_dir = env.CLOUDIFY_WORKDIR
     if os.path.isdir(dot_cloudify_dir):

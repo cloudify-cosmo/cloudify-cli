@@ -13,8 +13,8 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-CLOUDIFY_WD_SETTINGS_FILE_NAME = 'context'
-CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME = '.cloudify'
+CLOUDIFY_PROFILE_CONTEXT_FILE_NAME = 'context'
+CLOUDIFY_BASE_DIRECTORY_NAME = '.cloudify'
 CONFIG_FILE_NAME = 'cloudify-config.yaml'
 DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 DEFAULT_BLUEPRINT_FILE_NAME = 'blueprint.yaml'

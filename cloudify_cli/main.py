@@ -59,14 +59,6 @@ def _cfy(verbose):
     Cloudify's working directory resides in ~/.cloudify. To change it, set
     the variable `CFY_WORKDIR` to something else (e.g. /tmp/).
     """
-    # TODO: Multiple blueprints and deloyments:
-    # In the "local" profile, create a directory per blueprint and in it
-    # an id per deployment.
-    # `cfy init BLUEPRINT_PATH` will initalize a directory for the blueprint
-    # and within it a folder for that deployment. If a user wants to switch
-    # to another blueprint: `cfy use BLUEPRINT_ID`. If they want to switch
-    # to a particular deployment, `cfy use BLUEPRINT_ID -d DEPLOYMENT_ID`
-
     # cfy.set_cli_except_hook(verbose)
     pass
 

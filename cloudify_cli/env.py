@@ -36,7 +36,7 @@ DEFAULT_LOG_FILE = os.path.expanduser(
 
 CLOUDIFY_WORKDIR = os.path.join(
     os.environ.get('CFY_WORKDIR', os.path.expanduser('~')),
-    constants.CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME)
+    constants.CLOUDIFY_BASE_DIRECTORY_NAME)
 PROFILES_DIR = os.path.join(CLOUDIFY_WORKDIR, 'profiles')
 ACTIVE_PRO_FILE = os.path.join(CLOUDIFY_WORKDIR, 'active.profile')
 MULTIPLE_LOCAL_BLUEPRINTS = os.environ.get('CFY_MULTIPLE_BLUEPRINTS') == 'true'
@@ -137,7 +137,7 @@ def get_context_path(profile_name):
     init_path = get_profile_dir(profile_name)
     context_path = os.path.join(
         init_path,
-        constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
+        constants.CLOUDIFY_PROFILE_CONTEXT_FILE_NAME)
     return context_path
 
 
@@ -370,7 +370,7 @@ class ProfileContext(yaml.YAMLObject):
         init_path = get_profile_dir(self.manager_ip)
         context_path = os.path.join(
             init_path,
-            constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
+            constants.CLOUDIFY_PROFILE_CONTEXT_FILE_NAME)
         return context_path
 
     def save(self):
@@ -384,7 +384,7 @@ class ProfileContext(yaml.YAMLObject):
             os.makedirs(workdir)
         target_file_path = os.path.join(
             workdir,
-            constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
+            constants.CLOUDIFY_PROFILE_CONTEXT_FILE_NAME)
 
         with open(target_file_path, 'w') as f:
             f.write(yaml.dump(self))
