@@ -26,18 +26,14 @@ from ..exceptions import CloudifyCliError
 
 @cfy.command(name='use',
              short_help='Control a specific manager')
-@cfy.argument('manager-ip')
-# TODO: remove
-@cfy.options.profile_alias
+@cfy.argument('profile-name')
 @cfy.options.manager_user
 @cfy.options.manager_key
 @cfy.options.manager_port
 @cfy.options.rest_port
 @cfy.options.verbose()
 @cfy.pass_logger
-# TODO: Shorten function
-def use(alias,
-        manager_ip,
+def use(profile_name,
         manager_user,
         manager_key,
         manager_port,
@@ -50,58 +46,88 @@ def use(alias,
     Additional CLI commands will be added after a manager is used.
     To stop using a manager, you can run `cfy init -r`.
     """
-    # TODO: manager_ip -> profile_name
-    if manager_ip == 'local':
+    if profile_name == 'local':
         logger.info('Using local environment...')
-        if not env.is_profile_exists(manager_ip):
-            init.init_profile(profile_name=manager_ip)
+        if not env.is_profile_exists(profile_name):
+            init.init_profile(profile_name=profile_name)
         env.set_active_profile('local')
         return
 
-    logger.info('Attempting to connect...'.format(manager_ip))
+    logger.info('Attempting to connect...'.format(profile_name))
     # determine SSL mode by port
     if rest_port == constants.SECURED_REST_PORT:
         rest_protocol = constants.SECURED_REST_PROTOCOL
     else:
         rest_protocol = constants.DEFAULT_REST_PROTOCOL
-    client = env.get_rest_client(
-        rest_host=manager_ip,
-        rest_port=rest_port,
-        rest_protocol=rest_protocol,
-        skip_version_check=True)
+
+    if not env.is_profile_exists(profile_name):
+        init.init_profile(profile_name=profile_name)
+
+    env.set_active_profile(profile_name)
+    provider_context = _get_provider_context(
+        profile_name,
+        rest_port,
+        rest_protocol
+    )
+
+    logger.info('Using manager {0} with port {1}'.format(
+        profile_name, rest_port))
+
+    _set_profile_context(
+        profile_name,
+        provider_context,
+        manager_key,
+        manager_user,
+        manager_port,
+        rest_port,
+        rest_protocol
+    )
+
+    # delete the previous manager deployment if exists.
+    bs.delete_workdir()
+
+
+def _assert_manager_available(client, profile_name):
     try:
-        # First check this server is available.
         client.manager.get_status()
     except UserUnauthorizedError:
         raise CloudifyCliError(
             "Can't use manager {0}: User is unauthorized.".format(
-                manager_ip))
+                profile_name))
     # The problem here is that, for instance,
     # any problem raised by the rest client will trigger this.
     # Triggering a CloudifyClientError only doesn't actually deal
     # with situations like No route to host and the likes.
     except Exception as ex:
         raise CloudifyCliError(
-            "Can't use manager {0}: {1}".format(manager_ip, str(ex)))
+            "Can't use manager {0}: {1}".format(profile_name, str(ex)))
 
-    if not env.is_profile_exists(manager_ip):
-        init.init_profile(profile_name=manager_ip)
-    env.set_active_profile(manager_ip)
-    # TODO: Remove
-    if manager_ip == 'local':
-        return
+
+def _get_provider_context(profile_name, rest_port, rest_protocol):
+    client = env.get_rest_client(
+        rest_host=profile_name,
+        rest_port=rest_port,
+        rest_protocol=rest_protocol,
+        skip_version_check=True)
+
+    _assert_manager_available(client, profile_name)
 
     try:
         response = client.manager.get_context()
-        provider_context = response['context']
+        return response['context']
     except CloudifyClientError:
-        provider_context = None
+        return None
 
-    logger.info('Using manager {0} with port {1}'.format(
-        manager_ip, rest_port))
 
+def _set_profile_context(profile_name,
+                         provider_context,
+                         manager_key,
+                         manager_user,
+                         manager_port,
+                         rest_port,
+                         rest_protocol):
     profile = env.profile
-    profile.manager_ip = manager_ip
+    profile.manager_ip = profile_name
     profile.provider_context = provider_context
     if manager_key:
         profile.manager_key = manager_key
@@ -114,6 +140,3 @@ def use(alias,
     profile.rest_protocol = rest_protocol
 
     profile.save()
-
-    # delete the previous manager deployment if exists.
-    bs.delete_workdir()
