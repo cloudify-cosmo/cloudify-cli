@@ -57,7 +57,7 @@ def get(logger):
         return
 
     active_profile = get_profile(env.get_active_profile())
-
+    # TODO: replace WDSettings in profile context object
     columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path',
                'ssh_port', 'rest_port', 'rest_protocol']
     pt = table.generate(columns, data=[active_profile])
@@ -110,6 +110,7 @@ def delete(profile_name, logger):
     if env.is_profile_exists(profile_name):
         env.delete_profile(profile_name)
         logger.info('Profile deleted')
+    # TODO: This happens under `env.delete_profile`
     else:
         logger.info('Profile does not exist')
 
@@ -135,6 +136,7 @@ def export_profiles(include_keys, output_path, logger):
     destination = output_path or \
         os.path.join(os.getcwd(), 'cfy-profiles.tar.gz')
 
+    # TODO: Copy exported ssh keys to each profile's directory
     logger.info('Exporting profiles to {0}...'.format(destination))
     if include_keys:
         for profile in _get_profile_names():
@@ -168,12 +170,18 @@ def import_profiles(archive_path, logger):
     utils.untar(archive_path, os.path.dirname(env.PROFILES_DIR))
 
     for profile in _get_profile_names():
+        # TODO: Add a flag to explicitly restore keys to their
+        # original location. If the user chose not to pass the flag,
+        # they will be notified that there are existing keys under
+        # ~/.cloudify/profiles/.exported_ssh_keys and that they can
+        # copy them manually.
         _restore_ssh_key(profile)
     logger.info('Import complete!')
     logger.info('You can list profiles using `cfy profiles list`')
 
 
 def _assert_profiles_exist():
+    # TODO: get_profile_names instead
     if not os.listdir(env.PROFILES_DIR):
         raise CloudifyCliError('No profiles to export.')
 
@@ -203,6 +211,7 @@ def _get_profile_names():
 
 
 def _backup_ssh_key(profile):
+    # TODO: is_backup flag instead
     return _move_ssh_key(profile, direction='profile')
 
 

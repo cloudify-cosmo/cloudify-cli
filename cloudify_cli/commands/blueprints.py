@@ -13,19 +13,19 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import json
 import os
+import json
 import shutil
 
 import click
 
-from cloudify_cli.cli import cfy
-from dsl_parser.exceptions import DSLParsingException
 from dsl_parser.parser import parse_from_path
+from dsl_parser.exceptions import DSLParsingException
 
 from .. import local
 from .. import table
 from .. import utils
+from ..cli import cfy
 from .. import blueprint
 from .. import exceptions
 from ..config import config
