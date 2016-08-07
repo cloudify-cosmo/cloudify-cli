@@ -10,7 +10,7 @@ from ... import local
 from ... import utils
 from ...bootstrap import bootstrap
 from .test_base import CliCommandTest
-from ...commands.init import init_profile
+from ...commands.init import init_manager_profile
 from ...exceptions import CloudifyBootstrapError
 from .constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH
 
@@ -25,7 +25,7 @@ class BootstrapTest(CliCommandTest):
         os.makedirs(self.bootstrap_dir)
 
         cfy.invoke('init -r')
-        init_profile(profile_name='test')
+        init_manager_profile(profile_name='test')
 
     def test_manager_deployment_dump(self, remove_deployment=True):
         manager1_original_dir = self._copy_manager1_dir_to_manager_dir()

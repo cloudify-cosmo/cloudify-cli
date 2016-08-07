@@ -49,7 +49,7 @@ def use(profile_name,
     if profile_name == 'local':
         logger.info('Using local environment...')
         if not env.is_profile_exists(profile_name):
-            init.init_profile(profile_name=profile_name)
+            init.init_local_profile()
         env.set_active_profile('local')
         return
 
@@ -61,7 +61,7 @@ def use(profile_name,
         rest_protocol = constants.DEFAULT_REST_PROTOCOL
 
     if not env.is_profile_exists(profile_name):
-        init.init_profile(profile_name=profile_name)
+        init.init_manager_profile(profile_name=profile_name)
 
     env.set_active_profile(profile_name)
     provider_context = _get_provider_context(
