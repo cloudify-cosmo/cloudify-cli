@@ -708,7 +708,15 @@ class CloudifyConfig(object):
             return self._logging.get('loggers', {})
 
     def __init__(self):
-        with open(get_configuration_path()) as f:
+
+        config_path = get_configuration_path()
+        if not os.path.exists(config_path):
+            raise CloudifyCliError(
+                'File {0} does not exist'
+                .format(config_path)
+            )
+
+        with open(config_path, 'r') as f:
             self._config = yaml.safe_load(f.read())
 
     @property
