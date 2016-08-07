@@ -45,9 +45,17 @@ function download_resources() {
         curl -L http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/components/Python279_x32.tar.gz -o /tmp/Python279_x32.tar.gz
         tar -zxvf /tmp/Python279_x32.tar.gz --strip-components=1
     popd
+    echo "TELCO_MODE = $TELCO_MODE"
     pushd packaging/source/blueprints
         curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/${CORE_TAG_NAME}.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
         tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1
+        if [ "$TELCO_MODE" == "true" ]; then
+            echo "TELCO_MODE = $TELCO_MODE"
+            pip install repex &&
+            for file_name in *-blueprint.yaml; do
+                rpx repl --path $file_name --replace " telecom_edition:\n    description: >\n      Set this to true if you want Telecom Edition\n    type: boolean\n    default: false" --rwith " telecom_edition:\n    description: >\n      Set this to true if you want Telecom Edition\n    type: boolean\n    default: true"
+            done
+        fi
     popd
 
     # Downloading types.yaml
@@ -98,7 +106,14 @@ GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
+export TELCO_MODE=$5
 
+
+if [ "$TELCO_MODE" == "true" ];then
+	export PREFIX_NAME="cloudify-telecom"
+else
+	export PREFIX_NAME="cloudify"
+fi
 
 install_requirements &&
 download_wheels $GITHUB_USERNAME $GITHUB_PASSWORD &&

@@ -4,7 +4,17 @@
 # All Rights Reserved.
 #
 
-name "cloudify"
+
+ENV['TELCO_MODE'] || raise('TELCO_MODE environment variable not set')
+telco_mode=ENV['TELCO_MODE']
+puts "telco_mode = #{telco_mode}"
+
+if telco_mode=="true"
+    name "cloudify-telco"
+else
+    name "cloudify"
+end
+
 maintainer "Gigaspaces"
 homepage "http://getcloudify.org/"
 
@@ -34,6 +44,25 @@ dependency "openstack-plugin"
 dependency "diamond-plugin"
 dependency "tosca-vcloud-plugin"
 dependency "vsphere-plugin"
+
+# Updates telecom_edition to 'true' in all blueprints, according to env var - not working according to Nirc the simple blueprint will move the cloudify-cli repo
+#if telco_mode=="true"
+#  puts "Telco mode - changing telecom_edition to 'true'"
+#  Dir["/opt/cfy/cloudify-manager-blueprints/*"]
+#  file_names = Dir.glob("/opt/cloudify-manager-blueprints/*-blueprint.yaml")
+  #file_names = ["aws-ec2-manager-blueprint.yaml", "azure-manager-blueprint.yaml", "vcloud-manager-blueprint.yaml", "simple-manager-blueprint.yaml", "openstack-manager-blueprint.yaml", "vsphere-manager-blueprint.yaml"]
+#  puts "file_names = #{file_names}"
+
+#  file_names.each do |file_name|
+#    puts "file_name = #{file_name}"
+#    text = File.read(file_name)
+#    new_contents = text.gsub(/  telecom_edition:\n    description: >\n      Set this to true if you want Telecom Edition\n    type: boolean\n    default: false/, "  telecom_edition:\n    description: >\n      Set this to true if you want Telecom Edition\n    type: boolean\n    default: true")
+#    # print the contents of the file, use:
+#    puts "new_contents = #{new_contents}"
+    # write changes to the file, use:
+#    File.open(file_name, "w") {|file| file.puts new_contents }
+#  end
+#end
 
 # cloudify dependencies/components
 dependency "python"

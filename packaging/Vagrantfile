@@ -25,6 +25,8 @@ GITHUB_USERNAME = ENV['GITHUB_USERNAME']
 GITHUB_PASSWORD = ENV['GITHUB_PASSWORD']
 CLI_BRANCH = ENV['tag']
 PACKAGER_BRANCH = ENV['PACKAGER_BRANCH']
+TELCO_MODE = ENV['TELCO_MODE']
+PREFIX_NAME = ENV['PREFIX_NAME']
 
 Vagrant.configure('2') do |config|
   config.vm.define "centos65x64" do |centos65x64|
@@ -47,7 +49,7 @@ Vagrant.configure('2') do |config|
     end
     centos65x64.vm.provision "shell" do |s|
       s.path = "linux/provision.sh"
-      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID_UPLOAD_TEMP} #{AWS_ACCESS_KEY_UPLOAD_TEMP} #{CLI_BRANCH} #{PACKAGER_BRANCH}"
+      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID_UPLOAD_TEMP} #{AWS_ACCESS_KEY_UPLOAD_TEMP} #{CLI_BRANCH} #{PACKAGER_BRANCH} #{TELCO_MODE}"
       s.privileged = false
     end
   end
@@ -72,7 +74,7 @@ Vagrant.configure('2') do |config|
     end
     debian_wheezy_x64.vm.provision "shell" do |s|
       s.path = "linux/provision.sh"
-      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID_UPLOAD_TEMP} #{AWS_ACCESS_KEY_UPLOAD_TEMP} #{CLI_BRANCH} #{PACKAGER_BRANCH}"
+      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID_UPLOAD_TEMP} #{AWS_ACCESS_KEY_UPLOAD_TEMP} #{CLI_BRANCH} #{PACKAGER_BRANCH} #{TELCO_MODE}"
       s.privileged = false
     end
   end
@@ -100,7 +102,7 @@ Vagrant.configure('2') do |config|
     # shell provisioning uses bash, so use cmd to run batch script
     windows.vm.provision "shell" do |shell|
       shell.path = 'windows/provision.sh'
-      shell.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID_UPLOAD_TEMP} #{AWS_ACCESS_KEY_UPLOAD_TEMP}"
+      shell.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID_UPLOAD_TEMP} #{AWS_ACCESS_KEY_UPLOAD_TEMP} #{TELCO_MODE} #{PREFIX_NAME}"
       shell.privileged = false
     end
   end
