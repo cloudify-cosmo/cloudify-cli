@@ -135,9 +135,9 @@ def init_local_profile(reset_context=False,
     if reset_context:
         if hard:
             os.remove(config.CLOUDIFY_CONFIG_PATH)
-    else:
-        # TODO: Is this check even necessary?
-        _raise_initialized_error('local')
+    # else:
+    #     TODO: Is this check necessary?
+        # _raise_initialized_error('local')
 
     _create_profiles_dir_and_config('local', hard, enable_colors)
     logger.info('Initialization completed successfully')

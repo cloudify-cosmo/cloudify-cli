@@ -165,7 +165,7 @@ class EventsTest(CliCommandTest):
         self.client.events.list = self._mock_events_list
         outcome = self.invoke('cfy events list execution-id {0}'.format(
             flag))
-        if flag == '--json':
+        if flag == '--json-output':
             return outcome.output
         return outcome.logs
 
