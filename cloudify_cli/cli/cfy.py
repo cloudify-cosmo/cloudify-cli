@@ -5,21 +5,27 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
-import StringIO
 import sys
+import StringIO
 import traceback
 from functools import wraps
 
 import click
 from click_didyoumean import DYMGroup
+
+from cloudify_rest_client.exceptions import NotModifiedError
+from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify_rest_client.exceptions import MaintenanceModeActiveError
+from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
 from .. import env
 from .. import constants
@@ -30,10 +36,6 @@ from ..exceptions import CloudifyBootstrapError
 from ..exceptions import SuppressedCloudifyCliError
 from ..logger import get_logger, set_global_verbosity_level
 
-from cloudify_rest_client.exceptions import NotModifiedError
-from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify_rest_client.exceptions import MaintenanceModeActiveError
-from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
 CLICK_CONTEXT_SETTINGS = dict(
     help_option_names=['-h', '--help'],
@@ -317,11 +319,6 @@ class Options(object):
             '--output-path',
             help=helptexts.OUTPUT_PATH)
 
-        self.include_keys = click.option(
-            '--include-keys',
-            is_flag=True,
-            help=helptexts.INCLUDE_SSH_KEYS)
-
         self.allow_custom_parameters = click.option(
             '--allow-custom-parameters',
             is_flag=True,
@@ -508,6 +505,13 @@ class Options(object):
             is_flag=True,
             default=False,
             help=helptexts.DESCENDING)
+
+    @staticmethod
+    def include_keys(help):
+        return click.option(
+            '--include-keys',
+            is_flag=True,
+            help=help)
 
     @staticmethod
     def verbose(expose_value=False):
