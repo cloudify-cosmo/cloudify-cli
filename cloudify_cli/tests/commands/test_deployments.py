@@ -62,7 +62,7 @@ class DeploymentUpdatesTest(CliCommandTest):
     def test_deployment_update_json_parameter(self):
         self.invoke(
             'cfy deployments update -p '
-            '{0} my_deployment --json'
+            '{0} my_deployment --json-output'
             .format(SAMPLE_BLUEPRINT_PATH))
 
     def test_deployment_update_include_logs_parameter(self):

@@ -228,7 +228,7 @@ class InstallTest(CliCommandTest):
                 'deployment_id': unicode(STUB_DEPLOYMENT_ID),
                 'force': False,
                 'include_logs': True,
-                'json': False,
+                'json_output': False,
                 'parameters': {u'key': u'value'},
                 'workflow_id': u'install',
                 'timeout': 900
@@ -326,7 +326,7 @@ class InstallTest(CliCommandTest):
             '--parameters {4} ' \
             '--allow-custom-parameters ' \
             '--include-logs ' \
-            '--json' \
+            '--json-output' \
             .format(SAMPLE_ARCHIVE_PATH,
                     STUB_WORKFLOW,
                     STUB_DEPLOYMENT_ID,
@@ -344,7 +344,7 @@ class InstallTest(CliCommandTest):
             allow_custom_parameters=True,
             include_logs=True,
             parameters={'key': 'value'},
-            json=True
+            json_output=True
         )
 
     @patch('cloudify_cli.commands.install.manager')
@@ -371,7 +371,7 @@ class InstallTest(CliCommandTest):
              'timeout': DEFAULT_TIMEOUT,
              'include_logs': False,
              'auto_generate_ids': False,
-             'json': False
+             'json_output': False
              }
 
         self.assertEqual(install_command_arguments,

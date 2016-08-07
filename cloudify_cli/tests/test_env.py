@@ -756,7 +756,7 @@ class TestCLIConfig(CliCommandTest):
 class TestCLIColors(CliCommandTest):
 
     @mock.patch('cloudify_cli.logger._configure_from_file', mock.MagicMock())
-    @mock.patch('cloudify_cli.config.config.is_use_colors', lambda: True)
+    @mock.patch('cloudify_cli.logger.is_use_colors', lambda: True)
     def test_configure_colors_for_events_and_logs(self):
         self.assertNotEquals(ColorfulEvent, logs.EVENT_CLASS)
 
@@ -871,7 +871,7 @@ class ImportResolverLocalUseTests(CliCommandTest):
         super(ImportResolverLocalUseTests, self).setUp()
         self.use_manager()
 
-    @mock.patch('cloudify_cli.config.config.get_import_resolver')
+    @mock.patch('cloudify_cli.commands.init.get_import_resolver')
     def _test_using_import_resolver(self,
                                     command,
                                     blueprint_path,
@@ -1031,14 +1031,6 @@ class TestGetBlueprint(CliCommandTest):
         self.assertEqual(
             SAMPLE_BLUEPRINT_PATH,
             blueprint.get(SAMPLE_BLUEPRINT_PATH)
-        )
-
-    def test_folder_path_default_name(self):
-        # TODO: Why isn't OK to pass a dir and a filename?
-        test_dir = os.path.join(BLUEPRINTS_DIR, 'helloworld')
-        self.assertEqual(
-            os.path.join(test_dir, 'blueprint.yaml'),
-            blueprint.get(test_dir)
         )
 
     def test_archive_default_name(self):

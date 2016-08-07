@@ -6,7 +6,7 @@ from .. import cfy
 from .mocks import execution_mock
 from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
 from .test_base import CliCommandTest
-from ... import execution_events_fetcher
+from ...commands import executions
 from cloudify_rest_client.exceptions import \
     DeploymentEnvironmentCreationPendingError, \
     DeploymentEnvironmentCreationInProgressError
@@ -31,18 +31,19 @@ class ExecutionsTest(CliCommandTest):
         self.client.executions.cancel = MagicMock()
         self.invoke('cfy executions cancel e_id')
 
-    @patch('cloudify_cli.logger.get_events_logger')
+    @patch('cloudify_cli.commands.executions.get_events_logger')
     def test_executions_start_json(self, get_events_logger_mock):
         execution = execution_mock('started')
-        original = self.client.executions.start
+        original_client_execution_start = self.client.executions.start
+        original_wait_for_executions = executions.wait_for_execution
         try:
             self.client.executions.start = MagicMock(return_value=execution)
-            with patch('cloudify_cli.execution_events_fetcher.wait_for_execution',
-                       return_value=execution):
-                self.invoke('cfy executions start mock_wf -d dep --json')
+            executions.wait_for_execution = MagicMock(return_value=execution)
+            self.invoke('cfy executions start mock_wf -d dep --json-output')
             get_events_logger_mock.assert_called_with(True)
         finally:
-            self.client.executions.start = original
+            self.client.executions.start = original_client_execution_start
+            executions.wait_for_execution = original_wait_for_executions
 
     def test_executions_start_dep_env_pending(self):
         self._test_executions_start_dep_env(
@@ -67,16 +68,16 @@ class ExecutionsTest(CliCommandTest):
         self.client.executions.list = list_mock
 
         wait_for_mock = MagicMock(return_value=execution_mock('terminated'))
-        original_wait_for = execution_events_fetcher.wait_for_execution
+        original_wait_for = executions.wait_for_execution
         try:
-            execution_events_fetcher.wait_for_execution = wait_for_mock
+            executions.wait_for_execution = wait_for_mock
             self.invoke('cfy executions start mock_wf -d dep')
             self.assertEqual(wait_for_mock.mock_calls[0][1][1].workflow_id,
                              'create_deployment_environment')
             self.assertEqual(wait_for_mock.mock_calls[1][1][1].workflow_id,
                              'mock_wf')
         finally:
-            execution_events_fetcher.wait_for_execution = original_wait_for
+            executions.wait_for_execution = original_wait_for
 
     def test_local_execution_default_param(self):
         self._init_local_env()
