@@ -96,7 +96,8 @@ def show_version(ctx, param, value):
         return
 
     cli_version_data = env.get_version_data()
-    rest_version_data = env.get_manager_version_data()
+    rest_version_data = env.get_manager_version_data() \
+        if env.is_manager_active() else None
 
     cli_version = _format_version_data(
         cli_version_data,

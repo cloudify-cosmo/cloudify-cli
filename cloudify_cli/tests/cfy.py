@@ -59,7 +59,12 @@ def invoke(command, capture, context=None):
     if lexed_command[0] == 'cfy':
         del lexed_command[0]
     # For commands which contain a dash (like maintenance-mode)
-    func = lexed_command[0].replace('-', '_')
+    if lexed_command[0] == '--version':
+        func = lexed_command[0]
+        is_version = True
+    else:
+        func = lexed_command[0].replace('-', '_')
+        is_version = False
     params = lexed_command[1:]
 
     sub_func = context or func
@@ -67,7 +72,10 @@ def invoke(command, capture, context=None):
     # If we call `cfy init`, what we actually want to do is get the
     # init module from `commands` and then get the `init` command
     # from that module, hence the attribute getting.
-    outcome = cfy.invoke(getattr(getattr(commands, func), sub_func), params)
+    if is_version:
+        outcome = cfy.invoke(getattr(main, '_cfy'), ['--version'])
+    else:
+        outcome = cfy.invoke(getattr(getattr(commands, func), sub_func), params)
     outcome.command = command
 
     logs = [capture.records[m].msg for m in range(len(capture.records))]
