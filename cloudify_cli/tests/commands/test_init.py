@@ -1,5 +1,5 @@
 import os
-# import shutil
+import shutil
 
 import yaml
 from mock import patch
@@ -7,21 +7,10 @@ from mock import patch
 from dsl_parser.exceptions import DSLParsingLogicException
 
 from .. import cfy
-# from ... import env
-# from ...commands import init
 from ...config import config
 from .test_base import CliCommandTest
 from .constants import BLUEPRINTS_DIR, SAMPLE_INPUTS_PATH, \
     DEFAULT_BLUEPRINT_FILE_NAME, SAMPLE_CUSTOM_NAME_ARCHIVE
-
-
-# env.CLOUDIFY_WORKDIR = '/tmp/.cloudify-test'
-# config.CLOUDIFY_CONFIG_PATH = os.path.join(
-#     env.CLOUDIFY_WORKDIR, 'config.yaml')
-# env.PROFILES_DIR = os.path.join(
-#     env.CLOUDIFY_WORKDIR, 'profiles')
-# env.ACTIVE_PRO_FILE = os.path.join(
-#     env.CLOUDIFY_WORKDIR, 'active.profile')
 
 
 class InitTest(CliCommandTest):

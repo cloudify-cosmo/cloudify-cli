@@ -110,7 +110,8 @@ class ProfilesTest(CliCommandTest):
                 members = [member.name for member in tar.getmembers()]
             self.assertIn('profiles/10.10.1.10/context', members)
             self.assertIn('profiles/{0}/{1}.10.10.1.10.profile'.format(
-                profiles.PROFILE_DIRNAME, os.path.basename(key)), members)
+                profiles.EXPORTED_KEYS_DIRNAME,
+                os.path.basename(key)), members)
             cfy.purge_dot_cloudify()
             os.remove(key)
             self.assertFalse(os.path.isdir(env.PROFILES_DIR))
