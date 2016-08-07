@@ -350,9 +350,7 @@ class InstallTest(CliCommandTest):
     @patch('cloudify_cli.commands.install.manager')
     def test_parser_config_passes_expected_values(self, install_mock):
 
-        install_command = 'cfy install'
-
-        self.invoke(install_command, context='manager')
+        self.invoke('cfy install', context='manager')
 
         install_command_arguments = \
             install_mock.call_args_list[0][1]

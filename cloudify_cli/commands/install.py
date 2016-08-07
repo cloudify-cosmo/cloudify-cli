@@ -46,6 +46,7 @@ from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND, \
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.verbose()
+# TODO: add assert_manager_active
 @click.pass_context
 def manager(ctx,
             blueprint_path,
@@ -70,6 +71,7 @@ def manager(ctx,
     This will upload the blueprint, create a deployment and execute the
     `install` workflow.
     """
+    # TODO: remove default blueprint.yaml EVERYWHERE
     if not blueprint_path:
         processed_blueprint_path = _get_default_blueprint_path(
             blueprint_filename)
@@ -81,6 +83,7 @@ def manager(ctx,
         processed_blueprint_path, blueprint_filename)
     deployment_id = deployment_id or blueprint_id
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
+    # TODO: Remove EVERYWHERE
     if not inputs and os.path.isfile(os.path.join(
             utils.get_cwd(), DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)):
         inputs = DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
@@ -121,6 +124,7 @@ def manager(ctx,
         parameters=parameters,
         json_output=json_output)
 
+# TODO: verify licenses in all files
 
 @cfy.command(name='install',
              short_help='Install an application blueprint [locally]')

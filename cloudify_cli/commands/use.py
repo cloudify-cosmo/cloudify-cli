@@ -27,6 +27,7 @@ from ..exceptions import CloudifyCliError
 @cfy.command(name='use',
              short_help='Control a specific manager')
 @cfy.argument('manager-ip')
+# TODO: remove
 @cfy.options.profile_alias
 @cfy.options.manager_user
 @cfy.options.manager_key
@@ -34,6 +35,7 @@ from ..exceptions import CloudifyCliError
 @cfy.options.rest_port
 @cfy.options.verbose()
 @cfy.pass_logger
+# TODO: Shorten function
 def use(alias,
         manager_ip,
         manager_user,
@@ -48,6 +50,7 @@ def use(alias,
     Additional CLI commands will be added after a manager is used.
     To stop using a manager, you can run `cfy init -r`.
     """
+    # TODO: manager_ip -> profile_name
     if manager_ip == 'local':
         logger.info('Using local environment...')
         if not env.is_profile_exists(manager_ip):
@@ -84,6 +87,7 @@ def use(alias,
     if not env.is_profile_exists(manager_ip):
         init.init_profile(profile_name=manager_ip)
     env.set_active_profile(manager_ip)
+    # TODO: Remove
     if manager_ip == 'local':
         return
 
