@@ -94,7 +94,7 @@ def manager_list(blueprint_id, sort_by, descending, logger, client):
 @cfy.options.skip_uninstall
 @cfy.options.force(help=helptexts.FORCE_UPDATE)
 @cfy.options.include_logs
-@cfy.options.json
+@cfy.options.json_output
 @cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
@@ -108,7 +108,7 @@ def manager_update(deployment_id,
                    workflow_id,
                    force,
                    include_logs,
-                   json,
+                   json_output,
                    logger,
                    client):
     """Update a specified deployment according to the specified blueprint
@@ -135,7 +135,7 @@ def manager_update(deployment_id,
         skip_install=skip_install,
         skip_uninstall=skip_uninstall,
         force=force)
-    events_logger = get_events_logger(json)
+    events_logger = get_events_logger(json_output)
 
     execution = execution_events_fetcher.wait_for_execution(
         client,

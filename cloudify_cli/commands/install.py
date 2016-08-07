@@ -44,7 +44,7 @@ from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND, \
 @cfy.options.allow_custom_parameters
 @cfy.options.timeout()
 @cfy.options.include_logs
-@cfy.options.json
+@cfy.options.json_output
 @cfy.options.verbose()
 @click.pass_context
 def manager(ctx,
@@ -59,7 +59,7 @@ def manager(ctx,
             allow_custom_parameters,
             timeout,
             include_logs,
-            json):
+            json_output):
     """Install an application via the manager
 
     `BLUEPRINT_PATH` can be either a local blueprint yaml file or
@@ -119,7 +119,7 @@ def manager(ctx,
         allow_custom_parameters=allow_custom_parameters,
         include_logs=include_logs,
         parameters=parameters,
-        json=json)
+        json_output=json_output)
 
 
 @cfy.command(name='install',

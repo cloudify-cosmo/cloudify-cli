@@ -336,8 +336,8 @@ class Options(object):
             default=True,
             help=helptexts.INCLUDE_LOGS)
 
-        self.json = click.option(
-            '--json',
+        self.json_output = click.option(
+            '--json-output',
             is_flag=True,
             help=helptexts.JSON_OUTPUT)
 

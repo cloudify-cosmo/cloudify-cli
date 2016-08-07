@@ -154,7 +154,7 @@ class EventsTest(CliCommandTest):
         self._assert_events_displayed(expected_events, output)
 
     def test_event_json(self):
-        output = self._test_events(flag='--json')
+        output = self._test_events(flag='--json-output')
         expected_events = self._get_events_before(time.time())
         self._assert_events_displayed(expected_events, output)
         for event in expected_events:

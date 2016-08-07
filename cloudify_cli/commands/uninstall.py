@@ -33,7 +33,7 @@ from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 @cfy.options.allow_custom_parameters
 @cfy.options.timeout()
 @cfy.options.include_logs
-@cfy.options.json
+@cfy.options.json_output
 @cfy.options.verbose()
 @click.pass_context
 def manager(ctx,
@@ -43,7 +43,7 @@ def manager(ctx,
             allow_custom_parameters,
             timeout,
             include_logs,
-            json):
+            json_output):
     """Uninstall an application via the manager
 
     This will execute the `uninstall` workflow, delete the deployment and
@@ -71,7 +71,7 @@ def manager(ctx,
         allow_custom_parameters=allow_custom_parameters,
         include_logs=include_logs,
         parameters=parameters,
-        json=json)
+        json_output=json_output)
 
     # before deleting the deployment, save its blueprint_id, so we will be able
     # to delete the blueprint after deleting the deployment

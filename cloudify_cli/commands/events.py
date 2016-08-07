@@ -35,12 +35,12 @@ def events():
                 short_help='List deployments events [manager only]')
 @cfy.argument('execution-id')
 @cfy.options.include_logs
-@cfy.options.json
+@cfy.options.json_output
 @cfy.options.tail
 @cfy.options.verbose()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(execution_id, include_logs, json, tail, logger, client):
+def list(execution_id, include_logs, json_output, tail, logger, client):
     """Display events for an execution
 
     `EXECUTION_ID` is the execution to list events for.
@@ -53,7 +53,7 @@ def list(execution_id, include_logs, json, tail, logger, client):
             execution_id,
             include_logs=include_logs)
 
-        events_logger = get_events_logger(json)
+        events_logger = get_events_logger(json_output)
 
         if tail:
             execution = wait_for_execution(client,

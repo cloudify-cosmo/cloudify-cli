@@ -135,7 +135,7 @@ def manager_list(
 @cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
 @cfy.options.timeout()
 @cfy.options.include_logs
-@cfy.options.json
+@cfy.options.json_output
 @cfy.options.verbose()
 @cfy.assert_manager_active
 @cfy.pass_client()
@@ -147,14 +147,14 @@ def manager_start(workflow_id,
                   force,
                   timeout,
                   include_logs,
-                  json,
+                  json_output,
                   logger,
                   client):
     """Execute a workflow on a given deployment
 
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
-    events_logger = get_events_logger(json)
+    events_logger = get_events_logger(json_output)
     events_message = "* Run 'cfy events list {0}' to retrieve the " \
                      "execution's events/logs"
     original_timeout = timeout
