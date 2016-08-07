@@ -116,6 +116,7 @@ class UninstallTest(CliCommandTest):
             args,
             {
                 'parameters': None,
+                'blueprint_id': None,
                 'allow_custom_parameters': False,
                 'workflow_id': u'uninstall',
                 'task_retries': 0,
@@ -146,6 +147,7 @@ class UninstallTest(CliCommandTest):
             args,
             {
                 'parameters': {u'key': u'value'},
+                'blueprint_id': None,
                 'allow_custom_parameters': True,
                 'workflow_id': u'my_uninstall',
                 'task_retries': 14,

@@ -38,6 +38,7 @@ from ..config.config import CLOUDIFY_CONFIG_PATH
 @cfy.command(name='init', short_help='Initialize a working env')
 @cfy.argument('blueprint-path', required=False)
 @cfy.options.blueprint_filename()
+@cfy.options.blueprint_id(required=False, multiple_blueprints=True)
 @cfy.options.reset_context
 @cfy.options.inputs
 @cfy.options.install_plugins
@@ -47,6 +48,7 @@ from ..config.config import CLOUDIFY_CONFIG_PATH
 @cfy.pass_logger
 def init(blueprint_path,
          blueprint_filename,
+         blueprint_id,
          reset_context,
          inputs,
          install_plugins,
@@ -84,18 +86,24 @@ def init(blueprint_path,
         )
         env.set_active_profile(profile_name)
 
-        if os.path.isdir(local.storage_dir()):
-            shutil.rmtree(local.storage_dir())
-
         processed_blueprint_path = blueprint.get(
             blueprint_path,
             blueprint_filename
         )
 
+        if env.MULTIPLE_LOCAL_BLUEPRINTS:
+            blueprint_id = blueprint_id or blueprint.get_id(
+                processed_blueprint_path,
+                blueprint_filename
+            )
+
+        if os.path.isdir(local.storage_dir(blueprint_id)):
+            shutil.rmtree(local.storage_dir(blueprint_id))
+
         try:
             local.initialize_blueprint(
                 blueprint_path=processed_blueprint_path,
-                name='local',
+                name=blueprint_id or 'local',
                 inputs=inputs,
                 install_plugins=install_plugins,
                 resolver=get_import_resolver()
@@ -158,7 +166,6 @@ def init_profile(
         profile = env.ProfileContext()
         profile.manager_ip = profile_name
         profile.save()
-        # env.set_profile_context(profile_name=profile_name)
 
     configure_loggers()
     logger.info('Initialization completed successfully')

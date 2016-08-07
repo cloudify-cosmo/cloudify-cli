@@ -72,7 +72,7 @@ def manager(ctx,
     """
     if not blueprint_path:
         processed_blueprint_path = _get_default_blueprint_path(
-            blueprint_path, blueprint_filename)
+            blueprint_filename)
     else:
         processed_blueprint_path = blueprint.get(
             blueprint_path, blueprint_filename)
@@ -126,6 +126,7 @@ def manager(ctx,
              short_help='Install an application blueprint [locally]')
 @cfy.argument('blueprint-path', required=False)
 @cfy.options.blueprint_filename()
+@cfy.options.blueprint_id(required=False, multiple_blueprints=True)
 @cfy.options.inputs
 @cfy.options.validate
 @cfy.options.install_plugins
@@ -140,6 +141,7 @@ def manager(ctx,
 def local(ctx,
           blueprint_path,
           blueprint_filename,
+          blueprint_id,
           inputs,
           validate,
           install_plugins,
@@ -158,10 +160,15 @@ def local(ctx,
     """
     if not blueprint_path:
         processed_blueprint_path = _get_default_blueprint_path(
-            blueprint_path, blueprint_filename)
+            blueprint_filename)
     else:
         processed_blueprint_path = blueprint.get(
             blueprint_path, blueprint_filename)
+
+    blueprint_id = blueprint_id or blueprint.get_id(
+        processed_blueprint_path,
+        blueprint_filename
+    )
 
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
     if not inputs and os.path.isfile(os.path.join(
@@ -175,6 +182,7 @@ def local(ctx,
                 blueprint_path=processed_blueprint_path)
         ctx.invoke(
             init.init,
+            blueprint_id=blueprint_id,
             blueprint_path=processed_blueprint_path,
             inputs=inputs,
             install_plugins=install_plugins)
@@ -188,6 +196,7 @@ def local(ctx,
     ctx.invoke(
         executions.local_start,
         workflow_id=workflow_id,
+        blueprint_id=blueprint_id,
         parameters=parameters,
         allow_custom_parameters=allow_custom_parameters,
         task_retries=task_retries,
@@ -195,7 +204,7 @@ def local(ctx,
         task_thread_pool_size=task_thread_pool_size)
 
 
-def _get_default_blueprint_path(blueprint_path, blueprint_filename):
+def _get_default_blueprint_path(blueprint_filename):
     logger = get_logger()
     logger.info('No blueprint path provided. Looking for {0} in the '
                 'cwd.'.format(blueprint_filename))

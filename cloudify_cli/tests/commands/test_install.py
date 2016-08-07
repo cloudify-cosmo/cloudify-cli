@@ -473,6 +473,7 @@ class InstallTest(CliCommandTest):
             args,
             {
                 'parameters': None,
+                'blueprint_id': u'local',
                 'allow_custom_parameters': False,
                 'workflow_id': u'install',
                 'task_retries': 5,
@@ -502,6 +503,7 @@ class InstallTest(CliCommandTest):
             args,
             {
                 'parameters': {u'key': u'value'},
+                'blueprint_id': u'local',
                 'allow_custom_parameters': True,
                 'workflow_id': u'my_install',
                 'task_retries': 14,
@@ -525,6 +527,7 @@ class InstallTest(CliCommandTest):
             args,
             {
                 'inputs': None,
+                'blueprint_id': u'local',
                 'blueprint_path': unicode(blueprint_path),
                 'install_plugins': False
             }

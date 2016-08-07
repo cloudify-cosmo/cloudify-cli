@@ -91,6 +91,7 @@ def manager(ctx,
 @cfy.command(name='uninstall',
              short_help='Uninstall an application blueprint')
 @cfy.options.workflow_id('uninstall')
+@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
 @cfy.options.task_retries()
@@ -100,6 +101,7 @@ def manager(ctx,
 @click.pass_context
 def local(ctx,
           workflow_id,
+          blueprint_id,
           parameters,
           allow_custom_parameters,
           task_retries,
@@ -111,6 +113,7 @@ def local(ctx,
 
     ctx.invoke(
         executions.local_start,
+        blueprint_id=blueprint_id,
         workflow_id=workflow_id,
         parameters=parameters,
         allow_custom_parameters=allow_custom_parameters,
@@ -119,4 +122,4 @@ def local(ctx,
         task_thread_pool_size=task_thread_pool_size)
 
     # Remove the local-storage dir
-    utils.remove_if_exists(storage_dir())
+    utils.remove_if_exists(storage_dir(blueprint_id))

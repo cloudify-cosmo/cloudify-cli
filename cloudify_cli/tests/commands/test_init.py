@@ -7,7 +7,9 @@ from mock import patch
 from dsl_parser.exceptions import DSLParsingLogicException
 
 from .. import cfy
+from ... import env
 from ...config import config
+from ...commands import init
 from .test_base import CliCommandTest
 from .constants import BLUEPRINTS_DIR, SAMPLE_INPUTS_PATH, \
     DEFAULT_BLUEPRINT_FILE_NAME, SAMPLE_CUSTOM_NAME_ARCHIVE
