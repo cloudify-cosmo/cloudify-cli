@@ -91,6 +91,7 @@ def init(blueprint_path,
         )
 
         if env.MULTIPLE_LOCAL_BLUEPRINTS:
+            # TODO: get_id -> generate_id
             blueprint_id = blueprint_id or blueprint.get_id(
                 processed_blueprint_path,
                 blueprint_filename
@@ -127,6 +128,7 @@ def init(blueprint_path,
 
 
 @cfy.pass_logger
+# TODO: Try to separate to local and manager
 def init_profile(
         profile_name,
         reset_context=False,
@@ -140,6 +142,7 @@ def init_profile(
         profile_name,
         constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
 
+    # TODO: Make this work in local as well
     if os.path.isfile(context_file_path):
         if reset_context:
             if hard:
