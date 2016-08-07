@@ -19,7 +19,6 @@ CONFIG_FILE_NAME = 'cloudify-config.yaml'
 DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 DEFAULT_BLUEPRINT_FILE_NAME = 'blueprint.yaml'
 DEFAULT_BLUEPRINT_PATH = 'blueprint.yaml'
-DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND = 'inputs.yaml'
 DEFAULT_PARAMETERS = None
 DEFAULT_TIMEOUT = 900
 DEFAULT_INSTALL_WORKFLOW = 'install'

@@ -19,21 +19,17 @@ import shutil
 import click
 
 from . import init
-from .. import utils
 from ..cli import cfy
 from . import executions
 from . import blueprints
 from .. import blueprint
 from . import deployments
-from ..logger import get_logger
-from ..exceptions import CloudifyCliError
-from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND, \
-    DEFAULT_INSTALL_WORKFLOW
+from ..constants import DEFAULT_INSTALL_WORKFLOW
 
 
 @cfy.command(name='install',
              short_help='Install an application blueprint [manager only]')
-@cfy.argument('blueprint-path', required=False)
+@cfy.argument('blueprint-path')
 @cfy.options.blueprint_id()
 @cfy.options.blueprint_filename()
 @cfy.options.validate
@@ -46,7 +42,6 @@ from ..constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND, \
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.verbose()
-@cfy.assert_manager_active
 @click.pass_context
 def manager(ctx,
             blueprint_path,
@@ -71,22 +66,13 @@ def manager(ctx,
     This will upload the blueprint, create a deployment and execute the
     `install` workflow.
     """
-    # TODO: remove default blueprint.yaml EVERYWHERE
-    if not blueprint_path:
-        processed_blueprint_path = _get_default_blueprint_path(
-            blueprint_filename)
-    else:
-        processed_blueprint_path = blueprint.get(
-            blueprint_path, blueprint_filename)
-
-    blueprint_id = blueprint_id or blueprint.generate_id(
-        processed_blueprint_path, blueprint_filename)
+    processed_blueprint_path, blueprint_id = _get_blueprint_path_and_id(
+        blueprint_path,
+        blueprint_filename,
+        blueprint_id
+    )
     deployment_id = deployment_id or blueprint_id
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
-    # TODO: Remove EVERYWHERE
-    if not inputs and os.path.isfile(os.path.join(
-            utils.get_cwd(), DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)):
-        inputs = DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
     # Although the `install` command does not need the `force` argument,
     # we *are* using the `executions start` handler as a part of it.
@@ -124,11 +110,10 @@ def manager(ctx,
         parameters=parameters,
         json_output=json_output)
 
-# TODO: verify licenses in all files
 
 @cfy.command(name='install',
              short_help='Install an application blueprint [locally]')
-@cfy.argument('blueprint-path', required=False)
+@cfy.argument('blueprint-path')
 @cfy.options.blueprint_filename()
 @cfy.options.blueprint_id(required=False, multiple_blueprints=True)
 @cfy.options.inputs
@@ -162,22 +147,13 @@ def local(ctx,
     `organization/blueprint_repo[:tag/branch]` (to be
     retrieved from GitHub)
     """
-    if not blueprint_path:
-        processed_blueprint_path = _get_default_blueprint_path(
-            blueprint_filename)
-    else:
-        processed_blueprint_path = blueprint.get(
-            blueprint_path, blueprint_filename)
-
-    blueprint_id = blueprint_id or blueprint.generate_id(
-        processed_blueprint_path,
-        blueprint_filename
+    processed_blueprint_path, blueprint_id = _get_blueprint_path_and_id(
+        blueprint_path,
+        blueprint_filename,
+        blueprint_id
     )
 
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
-    if not inputs and os.path.isfile(os.path.join(
-            utils.get_cwd(), DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND)):
-        inputs = DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
 
     try:
         if validate:
@@ -208,14 +184,17 @@ def local(ctx,
         task_thread_pool_size=task_thread_pool_size)
 
 
-def _get_default_blueprint_path(blueprint_filename):
-    logger = get_logger()
-    logger.info('No blueprint path provided. Looking for {0} in the '
-                'cwd.'.format(blueprint_filename))
-    blueprint_path = os.path.abspath(blueprint_filename)
-    if not os.path.isfile(blueprint_path):
-        raise CloudifyCliError(
-            'Could not find `{0}` in the cwd. Please provide a path to a '
-            'blueprint yaml file using the `-n/--blueprint-filename` flag '
-            'or a path to a blueprint file.'.format(blueprint_filename))
-    return blueprint_path
+def _get_blueprint_path_and_id(blueprint_path,
+                               blueprint_filename,
+                               blueprint_id):
+    processed_blueprint_path = blueprint.get(
+        blueprint_path,
+        blueprint_filename
+    )
+
+    blueprint_id = blueprint_id or blueprint.generate_id(
+        processed_blueprint_path,
+        blueprint_filename
+    )
+
+    return processed_blueprint_path, blueprint_id

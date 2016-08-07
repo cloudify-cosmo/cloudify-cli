@@ -3,15 +3,14 @@ import os
 from mock import patch
 
 
-from ... import utils, exceptions
+from ... import exceptions
 from .test_base import CliCommandTest
 from .constants import SAMPLE_BLUEPRINT_PATH, \
     SAMPLE_ARCHIVE_PATH, STUB_BLUEPRINT_ID, STUB_DIRECTORY_NAME, \
     SAMPLE_ARCHIVE_URL, STUB_BLUEPRINT_FILENAME, SAMPLE_INPUTS_PATH, \
     STUB_DEPLOYMENT_ID, STUB_PARAMETERS, STUB_WORKFLOW, STUB_TIMEOUT, \
     BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
-from ...constants import DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND, \
-    DEFAULT_TIMEOUT
+from ...constants import DEFAULT_TIMEOUT
 
 
 class InstallTest(CliCommandTest):
@@ -48,37 +47,6 @@ class InstallTest(CliCommandTest):
             blueprint_upload_args['blueprint_id'],
             unicode(STUB_BLUEPRINT_ID)
         )
-
-    @patch('cloudify_cli.commands.executions.manager_start')
-    @patch('cloudify_cli.commands.deployments.manager_create')
-    @patch('cloudify_cli.commands.blueprints.upload')
-    def test_blueprint_path_default_value(
-            self, blueprints_upload_mock,
-            *_):
-
-        tmp_blueprint_path = os.path.join('/tmp',
-                                          DEFAULT_BLUEPRINT_FILE_NAME)
-
-        install_upload_mode_command = \
-            'cfy install -n {0}'.format(DEFAULT_BLUEPRINT_FILE_NAME)
-
-        try:
-            # create a tmp file representing a blueprint to upload
-            open(tmp_blueprint_path, 'w+').close()
-
-            self.invoke(install_upload_mode_command, context='manager')
-
-            blueprint_path_argument_from_upload = \
-                blueprints_upload_mock.call_args_list[0][0][0]
-
-            # check that the blueprint path value that was assigned in `install`
-            # is indeed the default blueprint file path
-            self.assertEqual(blueprint_path_argument_from_upload.name,
-                             tmp_blueprint_path
-                             )
-        finally:
-            print tmp_blueprint_path
-            # os.remove(tmp_blueprint_path)
 
     @patch('cloudify_cli.commands.executions.manager_start')
     @patch('cloudify_cli.commands.deployments.manager_create')
@@ -173,35 +141,6 @@ class InstallTest(CliCommandTest):
                                  'inputs':
                                      {'key1': 'val1', 'key2': 'val2'}}
                              )
-
-    @patch('cloudify_cli.commands.blueprints.upload')
-    @patch('cloudify_cli.commands.executions.manager_start')
-    @patch('cloudify_cli.commands.deployments.manager_create')
-    def test_default_inputs_file_path(self, deployment_create_mock, *_):
-
-        # create an `inputs.yaml` file in the cwd.
-        inputs_path = os.path.join(utils.get_cwd(), 'inputs.yaml')
-        open(inputs_path, 'w').close()
-
-        command = 'cfy install -n {0} {1} -b {2} -d {3}'\
-            .format(
-                DEFAULT_BLUEPRINT_FILE_NAME,
-                SAMPLE_ARCHIVE_PATH,
-                STUB_BLUEPRINT_ID,
-                STUB_DEPLOYMENT_ID
-            )
-
-        self.invoke(command, context='manager')
-        deployment_create_args = deployment_create_mock.call_args_list[0][1]
-
-        self.assertDictEqual(
-            deployment_create_args,
-            {
-                'blueprint_id': unicode(STUB_BLUEPRINT_ID),
-                'deployment_id': unicode(STUB_DEPLOYMENT_ID),
-                'inputs': DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND
-            }
-        )
 
     @patch('cloudify_cli.commands.blueprints.upload')
     @patch('cloudify_cli.commands.deployments.manager_create')
@@ -349,8 +288,9 @@ class InstallTest(CliCommandTest):
 
     @patch('cloudify_cli.commands.install.manager')
     def test_parser_config_passes_expected_values(self, install_mock):
-
-        self.invoke('cfy install', context='manager')
+        # TODO: The patch doesn't work here. Probably because of click.
+        self.invoke('cfy install {0}'.format(SAMPLE_BLUEPRINT_PATH),
+                    context='manager')
 
         install_command_arguments = \
             install_mock.call_args_list[0][1]
@@ -416,45 +356,6 @@ class InstallTest(CliCommandTest):
         self.assertEqual(
             deployments_create_mock.call_args_list[0][1]['deployment_id'],
             STUB_DIRECTORY_NAME
-        )
-
-    @patch('cloudify_cli.commands.executions.manager_start')
-    @patch('cloudify_cli.commands.deployments.manager_create')
-    def test_default_blueprint_path_does_not_exist(self, *_):
-        self.invoke(
-            'cfy install',
-            context='manager',
-            err_str_segment='Could not find `blueprint.yaml` in the cwd'
-        )
-
-        self.invoke(
-            'cfy install',
-            context='local',
-            err_str_segment='Could not find `blueprint.yaml` in the cwd'
-        )
-
-    @patch('cloudify_cli.commands.executions.manager_start')
-    @patch('cloudify_cli.commands.deployments.manager_create')
-    def test_default_blueprint_path_bad_blueprint(self, *_):
-
-        # TODO: This doesn't really put the blueprint in the same folder
-        # and trying to put it there is dangerous (as cfy install uses
-        # shutil.rmtree to clean up, and will likely remove actual code)
-        tmp_blueprint_path = os.path.join(utils.get_cwd(),
-                                          DEFAULT_BLUEPRINT_FILE_NAME)
-        open(tmp_blueprint_path, 'w').close()
-        os.chmod(tmp_blueprint_path, 0)
-
-        self.invoke(
-            'cfy install',
-            context='manager',
-            err_str_segment='A problem was encountered while trying to open'
-        )
-
-        self.invoke(
-            'cfy install',
-            context='local',
-            err_str_segment='A problem was encountered while trying to open'
         )
 
     @patch('cloudify_cli.commands.executions.local_start')
