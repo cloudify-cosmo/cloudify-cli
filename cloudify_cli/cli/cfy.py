@@ -267,7 +267,7 @@ def command(*args, **kwargs):
 
 
 def argument(*args, **kwargs):
-    """This exists purely for aesthetical reasons, otherwise
+    """This exists purely for aesthetic reasons, otherwise
     Some decorators are called `@click.something` instead of
     `@cfy.something`
     """
@@ -592,12 +592,23 @@ class Options(object):
             help=helptexts.DEPLOYMENT_ID)
 
     @staticmethod
-    def blueprint_id(required=False):
-        return click.option(
-            '-b',
-            '--blueprint-id',
-            required=required,
-            help=helptexts.BLUEPRINT_ID)
+    def blueprint_id(required=False, multiple_blueprints=False):
+        def pass_empty_blueprint_id(func):
+            @wraps(func)
+            def wrapper(*args, **kwargs):
+                kwargs['blueprint_id'] = None
+                return func(*args, **kwargs)
+
+            return wrapper
+
+        if multiple_blueprints and not env.MULTIPLE_LOCAL_BLUEPRINTS:
+            return pass_empty_blueprint_id
+        else:
+            return click.option(
+                '-b',
+                '--blueprint-id',
+                required=required,
+                help=helptexts.BLUEPRINT_ID)
 
     @staticmethod
     def blueprint_path(required=False):

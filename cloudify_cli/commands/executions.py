@@ -271,6 +271,7 @@ def _get_deployment_environment_creation_execution(client, deployment_id):
 @cfy.command(name='start',
              short_help='Execute a workflow')
 @cfy.argument('workflow-id')
+@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
 @cfy.options.task_retries()
@@ -279,6 +280,7 @@ def _get_deployment_environment_creation_execution(client, deployment_id):
 @cfy.options.verbose()
 @cfy.pass_logger
 def local_start(workflow_id,
+                blueprint_id,
                 parameters,
                 allow_custom_parameters,
                 task_retries,
@@ -289,7 +291,7 @@ def local_start(workflow_id,
 
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
-    env = local.load_env()
+    env = local.load_env(blueprint_id)
     result = env.execute(workflow=workflow_id,
                          parameters=parameters,
                          allow_custom_parameters=allow_custom_parameters,

@@ -106,16 +106,17 @@ def list(deployment_id, node_name, sort_by, descending, logger, client):
 
 
 @cfy.command(name='node-instances',
-             short_help='Show node-instance information [manager only]')
+             short_help='Show node-instance information [locally]')
 @cfy.argument('node-id', required=False)
+@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
 @cfy.options.verbose()
 @cfy.pass_logger
-def local(node_id, logger):
+def local(node_id, blueprint_id, logger):
     """Display node-instances for the execution
 
     `NODE_ID` is id of the node to list instances for.
     """
-    env = load_env()
+    env = load_env(blueprint_id)
     node_instances = env.storage.get_node_instances()
     if node_id:
         node_instances = [instance for instance in node_instances

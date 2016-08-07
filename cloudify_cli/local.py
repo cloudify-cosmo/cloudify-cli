@@ -33,7 +33,7 @@ from .config.config import CloudifyConfig
 
 
 _ENV_NAME = 'local'
-_STORAGE_DIR_NAME = 'local-storage'
+_STORAGE_DIR_NAME = '' if env.MULTIPLE_LOCAL_BLUEPRINTS else 'local-storage'
 
 
 def initialize_blueprint(blueprint_path,
@@ -60,20 +60,28 @@ def initialize_blueprint(blueprint_path,
         validate_version=config.validate_definitions_version)
 
 
-def storage_dir():
-    return os.path.join(env.PROFILES_DIR, _ENV_NAME, _STORAGE_DIR_NAME)
+def storage_dir(blueprint_id=None):
+    if blueprint_id:
+        return os.path.join(
+            env.PROFILES_DIR,
+            _ENV_NAME,
+            _STORAGE_DIR_NAME,
+            blueprint_id
+        )
+    else:
+        return os.path.join(env.PROFILES_DIR, _ENV_NAME, _STORAGE_DIR_NAME)
 
 
 def _storage():
     return local.FileStorage(storage_dir=storage_dir())
 
 
-def load_env():
+def load_env(blueprint_id=None):
     if not os.path.isdir(storage_dir()):
         error = exceptions.CloudifyCliError('Please initialize a blueprint')
         error.possible_solutions = ["Run `cfy init BLUEPRINT_PATH`"]
         raise error
-    return local.load_env(name=_ENV_NAME, storage=_storage())
+    return local.load_env(name=blueprint_id or 'local', storage=_storage())
 
 
 def _install_plugins(blueprint_path):

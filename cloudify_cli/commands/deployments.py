@@ -273,19 +273,21 @@ def manager_inputs(deployment_id, logger, client):
 
 @cfy.command(name='inputs', short_help='Show deployment inputs [locally]')
 @cfy.options.verbose()
+@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
 @cfy.pass_logger
-def local_inputs(logger):
+def local_inputs(blueprint_id, logger):
     """Display inputs for the execution
     """
-    env = load_env()
+    env = load_env(blueprint_id)
     logger.info(json.dumps(env.plan['inputs'] or {}, sort_keys=True, indent=2))
 
 
 @cfy.command(name='outputs', short_help='Show deployment outputs [locally]')
 @cfy.options.verbose()
+@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
 @cfy.pass_logger
-def local_outputs(logger):
+def local_outputs(blueprint_id, logger):
     """Display outputs for the execution
     """
-    env = load_env()
+    env = load_env(blueprint_id)
     logger.info(json.dumps(env.outputs() or {}, sort_keys=True, indent=2))
