@@ -22,7 +22,7 @@ from .. import utils
 from ..cli import cfy
 from .. import blueprint
 from ..config import config
-from .init import init_profile
+from .init import init_manager_profile
 from ..bootstrap import bootstrap as bs
 from ..exceptions import CloudifyCliError
 
@@ -73,7 +73,7 @@ def bootstrap(blueprint_path,
     if not active_profile or active_profile == 'local':
         active_profile = utils.generate_random_string()
         temp_profile_active = True
-        init_profile(profile_name=active_profile)
+        init_manager_profile(profile_name=active_profile)
 
     processed_blueprint_path = blueprint.get(
         blueprint_path,

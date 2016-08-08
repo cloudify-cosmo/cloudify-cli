@@ -77,8 +77,7 @@ def init(blueprint_path,
                 'The `--reset-context` and `--hard` flags are ignored '
                 'when initializing a blueprint')
 
-        init_profile(
-            profile_name,
+        init_local_profile(
             reset_context=True,
             hard=False,
             enable_colors=enable_colors
@@ -91,8 +90,7 @@ def init(blueprint_path,
         )
 
         if env.MULTIPLE_LOCAL_BLUEPRINTS:
-            # TODO: get_id -> generate_id
-            blueprint_id = blueprint_id or blueprint.get_id(
+            blueprint_id = blueprint_id or blueprint.generate_id(
                 processed_blueprint_path,
                 blueprint_filename
             )
@@ -123,26 +121,41 @@ def init(blueprint_path,
             raise CloudifyCliError(
                 'Environment is already initialized. '
                 'You can reset the environment by running `cfy init -r`')
-        init_profile(profile_name, reset_context, hard, enable_colors)
+        init_local_profile(reset_context, hard, enable_colors)
         env.set_active_profile(profile_name)
 
 
 @cfy.pass_logger
-# TODO: Try to separate to local and manager
-def init_profile(
-        profile_name,
-        reset_context=False,
-        hard=False,
-        enable_colors=False,
-        logger=None):
+def init_local_profile(reset_context=False,
+                       hard=False,
+                       enable_colors=False,
+                       logger=None):
+    logger.info('Initializing local profile ...')
+
+    if reset_context:
+        if hard:
+            os.remove(config.CLOUDIFY_CONFIG_PATH)
+    # else:
+    #     TODO: Is this check necessary?
+        # _raise_initialized_error('local')
+
+    _create_profiles_dir_and_config('local', hard, enable_colors)
+    logger.info('Initialization completed successfully')
+
+
+@cfy.pass_logger
+def init_manager_profile(profile_name,
+                         reset_context=False,
+                         hard=False,
+                         enable_colors=False,
+                         logger=None):
     logger.info('Initializing profile {0}...'.format(profile_name))
 
     context_file_path = os.path.join(
         env.PROFILES_DIR,
         profile_name,
-        constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
+        constants.CLOUDIFY_PROFILE_CONTEXT_FILE_NAME)
 
-    # TODO: Make this work in local as well
     if os.path.isfile(context_file_path):
         if reset_context:
             if hard:
@@ -151,26 +164,34 @@ def init_profile(
                 os.remove(context_file_path)
             bs.delete_workdir()
         else:
-            error = exceptions.CloudifyCliError(
-                '{0} profile already initialized'.format(profile_name))
-            error.possible_solutions = [
-                "Run 'cfy init -r' to force re-initialization "
-            ]
-            raise error
+            _raise_initialized_error(profile_name)
 
+    _create_profiles_dir_and_config(profile_name, hard, enable_colors)
+
+    profile = env.ProfileContext()
+    profile.manager_ip = profile_name
+    profile.save()
+
+    logger.info('Initialization completed successfully')
+
+
+def _create_profiles_dir_and_config(profile_name, hard, enable_colors):
     if not os.path.isdir(env.PROFILES_DIR):
         os.makedirs(env.PROFILES_DIR)
     env.set_active_profile(profile_name)
     if not os.path.isfile(config.CLOUDIFY_CONFIG_PATH) or hard:
         set_config(enable_colors=enable_colors)
 
-    if not profile_name == 'local':
-        profile = env.ProfileContext()
-        profile.manager_ip = profile_name
-        profile.save()
-
     configure_loggers()
-    logger.info('Initialization completed successfully')
+
+
+def _raise_initialized_error(profile_name):
+    error = exceptions.CloudifyCliError(
+        '{0} profile already initialized'.format(profile_name))
+    error.possible_solutions = [
+        "Run 'cfy init -r' to force re-initialization "
+    ]
+    raise error
 
 
 def set_config(enable_colors=False):

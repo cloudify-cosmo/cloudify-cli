@@ -32,7 +32,7 @@ class UninstallTest(CliCommandTest):
             include_logs=True,
             allow_custom_parameters=False,
             parameters=DEFAULT_PARAMETERS,
-            json=False
+            json_output=False
         )
 
     @patch('cloudify_cli.commands.blueprints.delete')
@@ -61,7 +61,7 @@ class UninstallTest(CliCommandTest):
             include_logs=True,
             allow_custom_parameters=True,
             parameters={'key': 'value'},
-            json=True
+            json_output=True
         )
 
     @patch('cloudify_cli.commands.executions.manager_start')
