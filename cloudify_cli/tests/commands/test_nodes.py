@@ -17,10 +17,25 @@ class NodesTest(CliCommandTest):
         self.invoke('cfy nodes get mongod -d nodecellar')
 
     def test_node_get_no_node_id(self):
-        self.invoke('cfy nodes get -d nodecellar', should_fail=True)
+        outcome = self.invoke(
+            'cfy nodes get -d nodecellar',
+            err_str_segment='2',  # Exit code
+            exception=SystemExit
+        )
+
+        self.assertIn('Missing argument "node-id"', outcome.output)
 
     def test_node_get_no_deployment_id(self):
-        self.invoke('cfy nodes get --node-id mongod', should_fail=True)
+        outcome = self.invoke(
+            'cfy nodes get mongod',
+            err_str_segment='2',  # Exit code
+            exception=SystemExit,
+        )
+
+        self.assertIn(
+            'Missing option "-d" / "--deployment-id"',
+            outcome.output
+        )
 
     def test_nodes_list(self):
         self.client.nodes.list = MagicMock(

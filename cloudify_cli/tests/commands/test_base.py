@@ -67,35 +67,33 @@ class CliCommandTest(testtools.TestCase):
             with open(env.DEFAULT_LOG_FILE, 'w') as f:
                 f.write('')
 
-    # TODO: Remove should_fail
     # TODO: Consider separating
     def invoke(self,
                command,
                err_str_segment=None,
-               should_fail=None,
                exception=CloudifyCliError,
                context=None):
-        if err_str_segment and should_fail is None:
-            should_fail = True
         outcome = cfy.invoke(command, context=context)
+
+        # An empty string might be passed, so it's best to check against None
+        should_fail = err_str_segment is not None
+
+        message_to_raise = None
         if should_fail and outcome.exit_code == 0:
-            # TODO: Consolidate
-            raise cfy.ClickInvocationException(
-                'Command {0} should have failed'.format(outcome.command),
-                output=outcome.output,
-                logs=outcome.logs,
-                exit_code=outcome.exit_code,
-                exception=str(type(outcome.exception)),
-                exc_info=str(outcome.exception))
+            message_to_raise = 'Command {0} should have failed'
         elif not should_fail and outcome.exit_code != 0:
+            message_to_raise = 'Command {0} should not have failed'
+
+        if message_to_raise:
             raise cfy.ClickInvocationException(
-                'Command {0} should not have failed'.format(outcome.command),
+                message_to_raise.format(outcome.command),
                 output=outcome.output,
                 logs=outcome.logs,
                 exit_code=outcome.exit_code,
                 exception=str(type(outcome.exception)),
                 exc_info=str(outcome.exception))
-        if err_str_segment:
+
+        if should_fail:
             self.assertIn(err_str_segment, str(outcome.exception))
             self.assertEqual(exception, type(outcome.exception))
         return outcome

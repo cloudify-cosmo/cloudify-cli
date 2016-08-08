@@ -20,8 +20,14 @@ class NodeInstancesTest(CliCommandTest):
         self.invoke('cfy node-instances get instance_id', context='manager')
 
     def test_instance_get_no_instance_id(self):
-        self.invoke(
-            'cfy node-instances get', should_fail=True, context='manager')
+        outcome = self.invoke(
+            'cfy node-instances get',
+            err_str_segment='2',  # Exit code
+            exception=SystemExit,
+            context='manager'
+        )
+
+        self.assertIn('Missing argument "node_instance_id"', outcome.output)
 
     def test_instances_list(self):
         self.client.node_instances.list = MagicMock(

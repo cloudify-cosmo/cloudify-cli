@@ -63,8 +63,7 @@ class InitTest(CliCommandTest):
     def test_init_invalid_blueprint_path(self):
         self.invoke(
             'cfy init idonotexist.yaml',
-            exception=IOError,
-            should_fail=True
+            err_str_segment='You must provide either a path to a local file',
         )
 
     def test_init_default_outputs(self):
@@ -163,17 +162,18 @@ class InitTest(CliCommandTest):
         self.invoke(command)
 
     def test_init_missing_plugins(self):
-        # TODO: this test was supposed to check possible solutions as well
+        # TODO: put back possible solutions
         blueprint_path = os.path.join(
             BLUEPRINTS_DIR,
             'local',
             'blueprint_with_plugins.yaml'
         )
-        command = 'cfy init {0}'.format(blueprint_path)
 
-        # Expecting to fail with an ImportError - when trying to access "tasks"
-        output = self.invoke(command, should_fail=True)
-        self.assertEqual(type(output.exception), ImportError)
+        self.invoke(
+            'cfy init {0}'.format(blueprint_path),
+            err_str_segment='mapping error: No module named tasks',
+            exception=ImportError
+        )
 
     def test_no_init(self):
         cfy.purge_dot_cloudify()

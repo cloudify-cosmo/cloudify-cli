@@ -1,8 +1,9 @@
 import os
-import tempfile
-
 import yaml
+import tempfile
 from mock import MagicMock, patch
+
+from cloudify.exceptions import CommandExecutionException
 
 from ... import env
 from ...config import config
@@ -48,8 +49,8 @@ class BlueprintsTest(CliCommandTest):
         self.invoke(
             'cfy blueprints upload {0}/bad_blueprint/blueprint.yaml '
             '-b my_blueprint_id --validate'.format(BLUEPRINTS_DIR),
-            err_str_segment='Failed to validate blueprint',
-            should_fail=True)
+            err_str_segment='Failed to validate blueprint'
+        )
 
     def test_blueprints_upload_archive(self):
         self.client.blueprints.upload = MagicMock()
@@ -225,7 +226,8 @@ class BlueprintsTest(CliCommandTest):
 
         output = self.invoke(
             'cfy blueprints install-plugins {0}'.format(blueprint_path),
-            should_fail=True
+            err_str_segment='Invalid requirement',
+            exception=CommandExecutionException
         )
 
         self.assertIn('pip install -r', output.exception.command)

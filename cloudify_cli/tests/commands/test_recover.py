@@ -41,7 +41,13 @@ class RecoverTest(CliCommandTest):
            '.read_manager_deployment_dump_if_needed')
     @patch('cloudify_cli.bootstrap.bootstrap.recover')
     def test_recover_without_snapshot_flag(self, *_):
-        self.invoke('cfy recover -f', should_fail=True)
+        outcome = self.invoke(
+            'cfy recover -f',
+            err_str_segment='2',  # Exit code
+            exception=SystemExit
+        )
+
+        self.assertIn('Missing argument "snapshot-path"', outcome.output)
 
     @patch('cloudify_cli.bootstrap.bootstrap'
            '.read_manager_deployment_dump_if_needed')

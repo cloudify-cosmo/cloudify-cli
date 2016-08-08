@@ -49,7 +49,7 @@ class DeploymentUpdatesTest(CliCommandTest):
         outcome = self.invoke(
             'cfy deployments update -p {0} my_deployment'
             .format(SAMPLE_BLUEPRINT_PATH),
-            should_fail=True,
+            err_str_segment='',
             exception=exceptions.SuppressedCloudifyCliError)
 
         logs = outcome.logs.split('\n')
@@ -106,7 +106,9 @@ class DeploymentUpdatesTest(CliCommandTest):
             '{0} -n {1}/helloworld/'
             'blueprint2.yaml my_deployment'
             .format(SAMPLE_BLUEPRINT_PATH, BLUEPRINTS_DIR),
-            should_fail=True)
+            err_str_segment='param should be passed only when updating'
+                            ' from an archive'
+        )
 
     def test_deployment_update_blueprint_filename_parameter(self):
         self.invoke(
@@ -127,18 +129,25 @@ class DeploymentUpdatesTest(CliCommandTest):
             .format(SAMPLE_ARCHIVE_PATH, SAMPLE_INPUTS_PATH))
 
     def test_deployment_update_no_deployment_id_parameter(self):
-        self.invoke(
+        outcome = self.invoke(
             'cfy deployments update -p '
             '{0}'.format(SAMPLE_ARCHIVE_PATH),
-            should_fail=True,
+            err_str_segment='2',  # Exit code
             exception=SystemExit)
 
+        self.assertIn('Missing argument "deployment-id"', outcome.output)
+
     def test_deployment_update_no_bp_path_nor_archive_loc_parameters(self):
-        self.invoke(
+        outcome = self.invoke(
             'cfy deployments update my_deployment'.format(
                 BLUEPRINTS_DIR),
-            should_fail=True,
+            err_str_segment='2',  # Exit code
             exception=SystemExit)
+
+        self.assertIn(
+            'Missing option "-p" / "--blueprint-path"',
+            outcome.output
+        )
 
 
 class DeploymentsTest(CliCommandTest):

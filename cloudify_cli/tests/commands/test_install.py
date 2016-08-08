@@ -288,7 +288,7 @@ class InstallTest(CliCommandTest):
 
     @patch('cloudify_cli.commands.install.manager')
     def test_parser_config_passes_expected_values(self, install_mock):
-        # TODO: The patch doesn't work here. Probably because of click.
+        # TODO: The patch doesn't work here, because click can't invoke a mock
         self.invoke('cfy install {0}'.format(SAMPLE_BLUEPRINT_PATH),
                     context='manager')
 
