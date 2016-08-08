@@ -58,8 +58,8 @@ def get(logger):
                     " or bootstrap one")
         return
 
-    active_profile = get_profile(env.get_active_profile())
-    columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path',
+    active_profile = _get_profile(env.get_active_profile())
+    columns = ['manager_ip', 'ssh_user', 'ssh_key_path',
                'ssh_port', 'rest_port', 'rest_protocol']
     pt = table.generate(columns, data=[active_profile])
     table.log('Active profile:', pt)
@@ -77,7 +77,7 @@ def list(logger):
     profiles = []
     profile_names = _get_profile_names()
     for profile in profile_names:
-        profile_data = get_profile(profile)
+        profile_data = _get_profile(profile)
         if profile == current_profile:
             # Show the currently active profile by appending *
             profile_data['manager_ip'] = '*' + profile_data['manager_ip']
@@ -85,7 +85,7 @@ def list(logger):
 
     if profiles:
         logger.info('Listing all profiles...')
-        columns = ['manager_ip', 'alias', 'ssh_user', 'ssh_key_path',
+        columns = ['manager_ip', 'ssh_user', 'ssh_key_path',
                    'ssh_port', 'rest_port', 'rest_protocol']
         pt = table.generate(columns, data=profiles)
         table.log('Profiles:', pt)
@@ -186,7 +186,7 @@ def import_profiles(archive_path, include_keys, logger):
 
 def _assert_profiles_exist():
     if not _get_profile_names():
-        raise CloudifyCliError('No profiles to export.')
+        raise CloudifyCliError('No profiles to export')
 
 
 def _assert_profiles_archive(archive_path):
@@ -194,7 +194,7 @@ def _assert_profiles_archive(archive_path):
         if not tar.getmembers()[0].name == 'profiles':
             raise CloudifyCliError(
                 'The archive provided does not seem to be a valid '
-                'Cloudify profiles archive.')
+                'Cloudify profiles archive')
 
 
 def _assert_is_tarfile(archive_path):
@@ -221,7 +221,7 @@ def _restore_ssh_key(profile):
 
 
 @cfy.pass_logger
-def _move_ssh_key(profile, logger, is_backup=True):
+def _move_ssh_key(profile, logger, is_backup):
     """Iterate through all profiles and move their ssh keys
 
     This is how we backup and restore ssh keys.
@@ -246,7 +246,7 @@ def _move_ssh_key(profile, logger, is_backup=True):
                 shutil.move(backup_path, key_filepath)
 
 
-def get_profile(profile_name):
+def _get_profile(profile_name):
     current_profile = env.get_active_profile()
     env.set_active_profile(profile_name)
 
@@ -262,7 +262,6 @@ def get_profile(profile_name):
 
     return dict(
         manager_ip=manager_ip,
-        alias=None,
         ssh_key_path=ssh_key_path,
         ssh_user=ssh_user,
         ssh_port=ssh_port,

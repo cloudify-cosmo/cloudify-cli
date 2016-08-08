@@ -30,7 +30,7 @@ class ProfilesTest(CliCommandTest):
 
     def test_get_profile(self):
         self.use_manager()
-        profile_output = profiles.get_profile('10.10.1.10')
+        profile_output = profiles._get_profile('10.10.1.10')
         self.assertDictContainsSubset(
             profile_output, cfy.default_manager_params)
 

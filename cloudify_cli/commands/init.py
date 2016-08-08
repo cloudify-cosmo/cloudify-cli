@@ -139,7 +139,7 @@ def init_profile(
     context_file_path = os.path.join(
         env.PROFILES_DIR,
         profile_name,
-        constants.CLOUDIFY_WD_SETTINGS_FILE_NAME)
+        constants.CLOUDIFY_PROFILE_CONTEXT_FILE_NAME)
 
     # TODO: Make this work in local as well
     if os.path.isfile(context_file_path):

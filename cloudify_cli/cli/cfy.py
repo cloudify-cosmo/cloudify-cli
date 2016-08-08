@@ -495,10 +495,6 @@ class Options(object):
             is_flag=True,
             help=helptexts.INCLUDE_SYSTEM_WORKFLOWS)
 
-        self.profile_alias = click.option(
-            '--alias',
-            help=helptexts.PROFILE_ALIAS)
-
         self.descending = click.option(
             '--descending',
             required=False,
