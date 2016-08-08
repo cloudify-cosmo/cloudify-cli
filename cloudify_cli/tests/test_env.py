@@ -16,16 +16,18 @@
 
 import os
 import sys
+import mock
 import json
+import yaml
 import shutil
 import logging
+import tarfile
+import zipfile
 import tempfile
+from contextlib import closing
 from cStringIO import StringIO
-from itertools import chain, repeat, count
-
-import mock
-import yaml
 from mock import MagicMock, patch
+from itertools import chain, repeat, count
 
 import cloudify
 from cloudify import logs
@@ -1098,3 +1100,43 @@ class TestGetBlueprint(CliCommandTest):
                 'cloudify-hello-world-example-master/ec2-blueprint.yaml',
             )
         )
+
+
+class TestUtils(CliCommandTest):
+    _TAR_TYPES_TO_FLAGS = {'tar': 'w', 'tar.gz': 'w:gz', 'tar.bz2': 'w:bz2'}
+
+    def _create_archive_types(self):
+        self.destination = dict()
+        for arch_type in utils.SUPPORTED_ARCHIVE_TYPES:
+            _, self.destination[arch_type] = tempfile.mkstemp()
+            if arch_type == 'zip':
+                with closing(
+                        zipfile.ZipFile(self.destination[arch_type],
+                                        'w')
+                ) as zip_file:
+                    zip_file.write(SAMPLE_BLUEPRINT_PATH, arcname='test')
+
+            else:
+                flag = TestUtils._TAR_TYPES_TO_FLAGS[arch_type]
+                with closing(
+                        tarfile.open(self.destination[arch_type], flag)
+                ) as tar:
+                    tar.add(SAMPLE_BLUEPRINT_PATH, arcname='test')
+
+    def test_is_archive(self):
+        self._create_archive_types()
+
+        for arch_type in utils.SUPPORTED_ARCHIVE_TYPES:
+            self.assertTrue(utils.is_archive(self.destination[arch_type]))
+
+    def test_extract_archive(self):
+        self._create_archive_types()
+
+        with open(SAMPLE_BLUEPRINT_PATH, 'r') as f:
+            test_file = f.read()
+
+        for arch_type in utils.SUPPORTED_ARCHIVE_TYPES:
+            temp_dest = utils.extract_archive(self.destination[arch_type])
+            temp_dest = os.path.join(temp_dest, 'test')
+            with open(temp_dest, 'r') as f:
+                self.assertEqual(test_file, f.read())
