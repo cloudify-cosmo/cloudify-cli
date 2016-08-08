@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2013 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -49,7 +49,6 @@ _lgr = None
 
 _all_loggers = set()
 
-# TODO: Move all env related stuff to another module.
 
 LOGGER = {
     "version": 1,

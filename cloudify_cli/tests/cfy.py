@@ -36,7 +36,6 @@ runner_lgr = setup_logger('cli_runner')
 
 default_manager_params = dict(
     manager_ip='10.10.1.10',
-    alias=None,
     ssh_key_path='key',
     ssh_user='test',
     ssh_port='22',
@@ -75,7 +74,8 @@ def invoke(command, capture, context=None):
     if is_version:
         outcome = cfy.invoke(getattr(main, '_cfy'), ['--version'])
     else:
-        outcome = cfy.invoke(getattr(getattr(commands, func), sub_func), params)
+        outcome = cfy.invoke(getattr(
+            getattr(commands, func), sub_func), params)
     outcome.command = command
 
     logs = [capture.records[m].msg for m in range(len(capture.records))]

@@ -1,3 +1,19 @@
+########
+# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
+
 VERBOSE = \
     "Show verbose output. You can supply this up to three times (i.e. -vvv)"
 VERSION = (
@@ -131,18 +147,14 @@ SET_MANAGEMENT_CREDS = (
 
 DEFAULT_MUTUALITY_MESSAGE = 'Cannot be used simultaneously'
 
-PROFILE_ALIAS = (
-    'An alias to assign to the profile. This allows you to use '
-    '`cfy use PROFILE_ALIAS` on top of `cfy use MANAGER_IP`'
-)
-
 MANAGEMENT_IP = 'The IP of the host machine on which you bootstrapped'
 MANAGEMENT_USER = 'The user on the host machine with which you bootstrapped'
 MANAGEMENT_KEY = 'The path to the ssh key-file to use when connecting'
 MANAGEMENT_PORT = 'The port to use when connecting to the manager'
 REST_PORT = "The REST server's port"
 
-INCLUDE_SSH_KEYS = 'Include ssh key files in archive'
+EXPORT_SSH_KEYS = 'Include ssh key files in archive'
+IMPORT_SSH_KEYS = 'WARNING: Import exported keys to their original locations'
 
 SORT_BY = "Key for sorting the list"
 DESCENDING = "Sort list in descending order [default: False]"

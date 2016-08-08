@@ -1,17 +1,18 @@
 ########
-# Copyright (c) 2015 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
 import os
 import json
@@ -43,8 +44,7 @@ MULTIPLE_LOCAL_BLUEPRINTS = os.environ.get('CFY_MULTIPLE_BLUEPRINTS') == 'true'
 
 
 def delete_profile(profile_name):
-    profile_dir = os.path.join(PROFILES_DIR, profile_name)
-    if os.path.isdir(profile_dir):
+    if is_profile_exists(profile_name):
         shutil.rmtree(profile_dir)
     else:
         raise CloudifyCliError(
@@ -283,7 +283,7 @@ def get_cli_manager_versions(rest_client):
 
 
 class ProfileContext(yaml.YAMLObject):
-    yaml_tag = u'!WD_Settings'
+    yaml_tag = u'!CloudifyProfileContext'
     yaml_loader = yaml.Loader
 
     def __init__(self, profile_name=None):
@@ -374,7 +374,6 @@ class ProfileContext(yaml.YAMLObject):
         return context_path
 
     def save(self):
-        # TODO: Rethink the wording of the exception
         if not self.manager_ip:
             raise CloudifyCliError('No Manager IP set')
 
