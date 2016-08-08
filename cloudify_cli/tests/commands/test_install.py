@@ -3,7 +3,6 @@ import os
 from mock import patch
 
 
-from ... import exceptions
 from .test_base import CliCommandTest
 from .constants import SAMPLE_BLUEPRINT_PATH, \
     SAMPLE_ARCHIVE_PATH, STUB_BLUEPRINT_ID, STUB_DIRECTORY_NAME, \
@@ -22,7 +21,10 @@ class InstallTest(CliCommandTest):
                                         executions_start_mock,
                                         blueprints_upload_mock,
                                         deployments_create_mock):
-        self.invoke('cfy install {0}'.format(SAMPLE_BLUEPRINT_PATH), context='manager')
+        self.invoke(
+            'cfy install {0}'.format(SAMPLE_BLUEPRINT_PATH),
+            context='manager'
+        )
 
         self.assertTrue(executions_start_mock.called)
         self.assertTrue(blueprints_upload_mock.called)
@@ -122,14 +124,14 @@ class InstallTest(CliCommandTest):
     @patch('cloudify_cli.commands.deployments.manager_create')
     def test_custom_deployment_id(self, deployment_create_mock, *_):
 
-        command = 'cfy install -n {0} {1} --inputs={2} -b {3} -d {4}' \
-                .format(
+        command = 'cfy install -n {0} {1} --inputs={2} -b {3} -d {4}'\
+            .format(
                 STUB_BLUEPRINT_FILENAME,
                 SAMPLE_BLUEPRINT_PATH,
                 SAMPLE_INPUTS_PATH,
                 STUB_BLUEPRINT_ID,
                 STUB_DEPLOYMENT_ID
-                )
+            )
 
         self.invoke(command, context='manager')
         deployment_create_args = deployment_create_mock.call_args_list[0][1]
@@ -314,24 +316,6 @@ class InstallTest(CliCommandTest):
 
         self.assertEqual(install_command_arguments,
                          expected_install_command_arguments)
-
-    @patch('cloudify_cli.commands.executions.manager_start')
-    @patch('cloudify_cli.commands.deployments.manager_create')
-    @patch('cloudify_cli.commands.blueprints.upload')
-    def test_mutually_exclusive_arguments(self, *_):
-        # TODO: supposed to fail, because we're providing a YAML path
-        # and a filename - should be mutually exclusive
-        path_and_filename_cmd = 'cfy install {0} -n {1}'.format(
-            SAMPLE_BLUEPRINT_PATH,
-            STUB_BLUEPRINT_FILENAME
-        )
-
-        self.assertRaises(
-            exceptions.CloudifyCliError,
-            self.invoke,
-            path_and_filename_cmd,
-            context='manager'
-        )
 
     @patch('cloudify_cli.commands.executions.manager_start')
     @patch('cloudify_cli.commands.deployments.manager_create')

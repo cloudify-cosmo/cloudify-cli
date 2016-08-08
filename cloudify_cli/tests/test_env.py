@@ -873,7 +873,7 @@ class ImportResolverLocalUseTests(CliCommandTest):
         super(ImportResolverLocalUseTests, self).setUp()
         self.use_manager()
 
-    @mock.patch('cloudify_cli.commands.init.get_import_resolver')
+    @mock.patch('cloudify_cli.config.config.get_import_resolver')
     def _test_using_import_resolver(self,
                                     command,
                                     blueprint_path,
@@ -1099,6 +1099,18 @@ class TestGetBlueprint(CliCommandTest):
             ).endswith(
                 'cloudify-hello-world-example-master/ec2-blueprint.yaml',
             )
+        )
+
+    def test_generate_id_default(self):
+        self.assertEqual(
+            'helloworld',
+            blueprint.generate_id(SAMPLE_BLUEPRINT_PATH)
+        )
+
+    def test_generate_id_custom(self):
+        self.assertEqual(
+            'helloworld.test',
+            blueprint.generate_id(SAMPLE_BLUEPRINT_PATH, 'test')
         )
 
 

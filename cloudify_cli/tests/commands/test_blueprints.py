@@ -22,9 +22,36 @@ class BlueprintsTest(CliCommandTest):
         self.client.blueprints.list = MagicMock(return_value=[])
         self.invoke('blueprints list')
 
+    @patch('cloudify_cli.table.generate')
+    def test_blueprints_list_with_values(self, table_generate_mock):
+        self.client.blueprints.list = MagicMock(
+            return_value=[
+                {'description': '12345678901234567890123'},
+                {'description': 'abcdefg'}
+            ]
+        )
+        self.invoke('blueprints list')
+
+        table_generate_mock.assert_called_with(
+            [
+                'id',
+                'description',
+                'main_file_name',
+                'created_at',
+                'updated_at'
+            ],
+            data=[{'description': '123456789012345678..'},
+                  {'description': 'abcdefg'}]
+        )
+
     def test_blueprints_delete(self):
         self.client.blueprints.delete = MagicMock()
         self.invoke('blueprints delete a-blueprint-id')
+
+    def test_blueprints_download(self):
+        self.client.blueprints.download = MagicMock(return_value='test')
+        outcome = self.invoke('blueprints download a-blueprint-id')
+        self.assertIn('Blueprint downloaded as test', outcome.logs)
 
     @patch('cloudify_cli.table.generate', autospec=True)
     @patch('cloudify_cli.table.log', autospec=True)
