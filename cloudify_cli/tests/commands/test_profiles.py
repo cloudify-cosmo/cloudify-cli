@@ -65,8 +65,10 @@ class ProfilesTest(CliCommandTest):
         # self.assertNotIn('localhost', outcome.logs)
 
     def test_delete_non_existing_profile(self):
-        outcome = self.invoke('cfy profiles delete 10.10.1.10')
-        self.assertIn('Profile does not exist', outcome.logs)
+        manager_ip = '10.10.1.10'
+        outcome = self.invoke('cfy profiles delete {0}'.format(manager_ip))
+        self.assertIn('Profile {0} does not exist'.format(manager_ip),
+                      outcome.logs)
 
     def test_export_import_profiles(self):
         fd, profiles_archive = tempfile.mkstemp()
@@ -99,9 +101,7 @@ class ProfilesTest(CliCommandTest):
         os.close(fd2)
         with open(key, 'w') as f:
             f.write('aaa')
-        manager_params = cfy.default_manager_params.copy()
-        manager_params.update({'ssh_key_path': key})
-        self.use_manager(**manager_params)
+        self.use_manager(ssh_key_path=key)
         self.invoke('profiles list')
         try:
             self.invoke('cfy profiles export -o {0} --include-keys'.format(
@@ -116,7 +116,10 @@ class ProfilesTest(CliCommandTest):
             os.remove(key)
             self.assertFalse(os.path.isdir(env.PROFILES_DIR))
             self.invoke('cfy init')
-            self.invoke('cfy profiles import {0}'.format(profiles_archive))
+            self.invoke(
+                'cfy profiles import {0} --include-keys'
+                .format(profiles_archive)
+            )
             self.assertTrue(os.path.isfile(
                 os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context')))
             self.assertTrue(os.path.isfile(key))

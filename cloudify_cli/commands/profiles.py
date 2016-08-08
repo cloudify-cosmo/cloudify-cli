@@ -174,7 +174,7 @@ def import_profiles(archive_path, include_keys, logger):
         for profile in _get_profile_names():
             _restore_ssh_key(profile)
     else:
-        if os.listdir(EXPORTED_SSH_KEYS_DIR):
+        if EXPORTED_KEYS_DIRNAME in os.listdir(env.PROFILES_DIR):
             logger.info("The profiles archive you provided contains ssh keys "
                         "for one or more profiles. To restore those keys to "
                         "their original locations, you can use the "

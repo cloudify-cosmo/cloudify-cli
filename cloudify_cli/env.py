@@ -45,6 +45,7 @@ MULTIPLE_LOCAL_BLUEPRINTS = os.environ.get('CFY_MULTIPLE_BLUEPRINTS') == 'true'
 
 def delete_profile(profile_name):
     if is_profile_exists(profile_name):
+        profile_dir = os.path.join(PROFILES_DIR, profile_name)
         shutil.rmtree(profile_dir)
     else:
         raise CloudifyCliError(
@@ -174,15 +175,14 @@ def get_rest_client(rest_host=None,
     trust_all = trust_all or get_ssl_trust_all()
     headers = get_auth_header(username, password)
 
-    # TODO: PUT BACK SSL CERT!!!!!!!!!!!!!!!!!!!!!!!!!
-    # cert = get_ssl_cert()
+    cert = get_ssl_cert()
 
     client = CloudifyClient(
         host=rest_host,
         port=rest_port,
         protocol=rest_protocol,
         headers=headers,
-        # cert=cert,
+        cert=cert,
         trust_all=trust_all)
 
     # TODO: Put back version check after we've solved the problem where
