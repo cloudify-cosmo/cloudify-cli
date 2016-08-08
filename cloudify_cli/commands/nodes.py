@@ -59,6 +59,8 @@ def get(node_id, deployment_id, logger, client):
     except CloudifyClientError as e:
         if e.status_code != 404:
             raise
+        raise CloudifyCliError('No node instances were found for '
+                               'node {0}'.format(node_id))
 
     # print node parameters
     columns = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',

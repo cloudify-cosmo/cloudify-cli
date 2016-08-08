@@ -115,11 +115,26 @@ class ProfilesTest(CliCommandTest):
             cfy.purge_dot_cloudify()
             os.remove(key)
             self.assertFalse(os.path.isdir(env.PROFILES_DIR))
+
+            # First make sure that the ssh keys message is being logged
+            self.invoke('cfy init')
+            outcome = self.invoke(
+                'cfy profiles import {0}'
+                .format(profiles_archive)
+            )
+            self.assertIn(
+                'The profiles archive you provided contains ssh keys',
+                outcome.logs
+            )
+
+            # Then actually import the profile with the keys
+            cfy.purge_dot_cloudify()
             self.invoke('cfy init')
             self.invoke(
                 'cfy profiles import {0} --include-keys'
                 .format(profiles_archive)
             )
+
             self.assertTrue(os.path.isfile(
                 os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context')))
             self.assertTrue(os.path.isfile(key))

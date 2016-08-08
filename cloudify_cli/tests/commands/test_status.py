@@ -30,3 +30,29 @@ class StatusTest(CliCommandTest):
             mock.side_effect = UserUnauthorizedError('Unauthorized user')
             outcome = self.invoke('cfy status')
             self.assertIn('User is unauthorized', outcome.logs)
+
+    def test_status_result_services(self):
+        self.use_manager()
+
+        status_result = {
+            'services': [{
+                'instances': [{'state': 'state1'}],
+                'display_name': 'name1'
+            }, {
+                'instances': [{'state': 'state2'}],
+                'display_name': 'name2'
+            }]
+        }
+
+        self.client.manager.get_status = MagicMock(return_value=status_result)
+
+        outcome = self.invoke('cfy status')
+        outcome = [o.strip() for o in outcome.logs.split('\n')]
+
+        expected_outputs = [
+            '| name1                          | state1 |',
+            '| name2                          | state2 |',
+            ]
+
+        for output in expected_outputs:
+            self.assertIn(output, outcome)

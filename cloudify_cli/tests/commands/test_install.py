@@ -418,6 +418,22 @@ class InstallTest(CliCommandTest):
 
     @patch('cloudify_cli.commands.executions.local_start')
     @patch('cloudify_cli.commands.init.init')
+    def test_local_install_validate(self, *_):
+        blueprint_path = os.path.join(
+            BLUEPRINTS_DIR,
+            'local',
+            DEFAULT_BLUEPRINT_FILE_NAME
+        )
+        outcome = self.invoke(
+            'cfy install {0} --validate'.format(blueprint_path),
+            context='local'
+        )
+
+        outcome = [o.strip() for o in outcome.logs.split('\n')]
+        self.assertIn('Blueprint validated successfully', outcome)
+
+    @patch('cloudify_cli.commands.executions.local_start')
+    @patch('cloudify_cli.commands.init.init')
     def test_local_install_custom_values(self, init_mock, _):
         self.invoke(
             'cfy install {0} -i key=value --install-plugins'

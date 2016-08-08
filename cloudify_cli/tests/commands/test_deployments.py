@@ -2,8 +2,10 @@ import datetime
 
 from mock import patch, MagicMock, PropertyMock
 
-from cloudify_rest_client import deployments, executions
-from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify_rest_client import deployments, executions, blueprints
+from cloudify_rest_client.exceptions import CloudifyClientError, \
+    MissingRequiredDeploymentInputError, UnknownDeploymentInputError
+
 
 from ... import exceptions
 from .mocks import MockListResponse
@@ -207,8 +209,7 @@ class DeploymentsTest(CliCommandTest):
         self.invoke('cfy deployments list')
 
     def test_deployments_list_of_blueprint(self):
-
-        deployments = [
+        deps = [
             {
                 'blueprint_id': 'b1_blueprint',
                 'created_at': 'now',
@@ -229,7 +230,7 @@ class DeploymentsTest(CliCommandTest):
             }
         ]
 
-        self.client.deployments.list = MagicMock(return_value=deployments)
+        self.client.deployments.list = MagicMock(return_value=deps)
         outcome = self.invoke('cfy deployments list -b b1_blueprint -v')
         self.assertNotIn('b2_blueprint', outcome.logs)
         self.assertIn('b1_blueprint', outcome.logs)
@@ -271,4 +272,71 @@ class DeploymentsTest(CliCommandTest):
         self.client.deployments.outputs.get = MagicMock(return_value=outputs)
         self.invoke('cfy deployments outputs dep1')
 
+    def test_deployments_inputs(self):
+        deployment = deployments.Deployment({
+            'deployment_id': 'deployment_id',
+            'inputs': {'key1': 'val1', 'key2': 'val2'}
+        })
 
+        expected_outputs = [
+            'Retrieving inputs for deployment deployment_id...',
+            '- "key1":',
+            'Value: val1',
+            '- "key2":',
+            'Value: val2',
+        ]
+
+        self.client.deployments.get = MagicMock(return_value=deployment)
+        outcome = self.invoke('cfy deployments inputs deployment_id')
+        outcome = [o.strip() for o in outcome.logs.split('\n')]
+
+        for output in expected_outputs:
+            self.assertIn(output, outcome)
+
+    def test_missing_required_inputs(self):
+        self._test_deployment_inputs(
+            MissingRequiredDeploymentInputError,
+            'Unable to create deployment. Not all '
+            'required inputs have been specified...'
+        )
+
+    def test_invalid_input(self):
+        self._test_deployment_inputs(
+            UnknownDeploymentInputError,
+            'Unable to create deployment, an unknown input was specified...'
+        )
+
+    def _test_deployment_inputs(self, exception_type, error_msg):
+        def raise_error(*args, **kwargs):
+            raise exception_type('no inputs')
+
+        blueprint = blueprints.Blueprint({
+            'plan': {
+                'inputs': {
+                    'input1': {'description': 'val1'},
+                    'input2': {'description': 'val2'}
+                }
+            }
+        })
+
+        self.client.blueprints.get = MagicMock(return_value=blueprint)
+        self.client.deployments.create = raise_error
+
+        outcome = self.invoke(
+            'cfy deployments create -b a-blueprint-id -d deployment',
+            err_str_segment='no inputs'
+        )
+        outcome = [o.strip() for o in outcome.logs.split('\n')]
+
+        expected_outputs = [
+            'Deployment inputs:',
+            'input1:',
+            'description: val1',
+            'input2:',
+            'description: val2',
+        ]
+
+        for output in expected_outputs:
+            self.assertIn(output, outcome)
+
+        self.assertIn(error_msg, outcome)
