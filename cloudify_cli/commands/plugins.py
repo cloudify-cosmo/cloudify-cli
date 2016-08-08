@@ -17,8 +17,6 @@
 import tarfile
 from urlparse import urlparse
 
-import click
-
 from .. import table
 from .. import utils
 from ..cli import helptexts, cfy
@@ -101,7 +99,7 @@ def delete(plugin_id, force, logger, client):
                  short_help='Upload a plugin [manager only]')
 @cfy.argument('plugin-path')
 @cfy.options.verbose()
-@click.pass_context
+@cfy.pass_context
 @cfy.assert_manager_active
 @cfy.pass_client()
 @cfy.pass_logger

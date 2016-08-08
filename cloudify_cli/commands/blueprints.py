@@ -32,7 +32,7 @@ from .. import exceptions
 from ..config import config
 from ..exceptions import CloudifyCliError
 
-SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
+
 DESCRIPTION_LIMIT = 20
 
 
@@ -77,7 +77,7 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.assert_manager_active
 @cfy.pass_client()
 @cfy.pass_logger
-@click.pass_context
+@cfy.pass_context
 def upload(ctx,
            blueprint_path,
            blueprint_id,
@@ -90,7 +90,8 @@ def upload(ctx,
     `BLUEPRINT_PATH` can be either a local blueprint yaml file or
     blueprint archive; a url to a blueprint archive or an
     `organization/blueprint_repo[:tag/branch]` (to be
-    retrieved from GitHub)
+    retrieved from GitHub).
+    Supported archive types are: zip, tar, tar.gz and tar.bz2
     """
     processed_blueprint_path = blueprint.get(
         blueprint_path, blueprint_filename)
@@ -250,7 +251,7 @@ def inputs(blueprint_id, logger, client):
 @cfy.options.validate
 @cfy.options.verbose()
 @cfy.pass_logger
-@click.pass_context
+@cfy.pass_context
 def package(ctx, blueprint_path, output_path, validate, logger):
     """Create a blueprint archive
 

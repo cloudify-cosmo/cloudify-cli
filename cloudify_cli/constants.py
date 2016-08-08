@@ -77,3 +77,5 @@ BASIC_AUTH_PREFIX = 'Basic'
 API_VERSION = 'v2.1'
 
 HELP_TEXT_COLUMN_BUFFER = 5
+
+SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')

@@ -250,6 +250,14 @@ def pass_client(*args, **kwargs):
     return add_client_inner
 
 
+def pass_context(func):
+    """This exists purely for aesthetic reasons, otherwise
+    Some decorators are called `@click.something` instead of
+    `@cfy.something`
+    """
+    return click.pass_context(func)
+
+
 def group(name):
     """Allows to create a group with a default click context
     and a cls for click's `didyoueamn` without having to repeat

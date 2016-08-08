@@ -14,8 +14,6 @@
 # limitations under the License.
 ############
 
-import click
-
 from .. import env
 from .. import utils
 from ..cli import cfy
@@ -36,7 +34,7 @@ from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.verbose()
-@click.pass_context
+@cfy.pass_context
 def manager(ctx,
             deployment_id,
             workflow_id,
@@ -99,7 +97,7 @@ def manager(ctx,
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose()
-@click.pass_context
+@cfy.pass_context
 def local(ctx,
           workflow_id,
           blueprint_id,

@@ -17,8 +17,6 @@
 import os
 import shutil
 
-import click
-
 from . import init
 from ..cli import cfy
 from . import executions
@@ -43,7 +41,7 @@ from ..constants import DEFAULT_INSTALL_WORKFLOW
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.verbose()
-@click.pass_context
+@cfy.pass_context
 def manager(ctx,
             blueprint_path,
             blueprint_id,
@@ -62,7 +60,8 @@ def manager(ctx,
     `BLUEPRINT_PATH` can be either a local blueprint yaml file or
     blueprint archive; a url to a blueprint archive or an
     `organization/blueprint_repo[:tag/branch]` (to be
-    retrieved from GitHub)
+    retrieved from GitHub).
+    Supported archive types are: zip, tar, tar.gz and tar.bz2
 
     This will upload the blueprint, create a deployment and execute the
     `install` workflow.
@@ -127,7 +126,7 @@ def manager(ctx,
 @cfy.options.task_retry_interval(3)
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose()
-@click.pass_context
+@cfy.pass_context
 def local(ctx,
           blueprint_path,
           blueprint_filename,
@@ -146,7 +145,8 @@ def local(ctx,
     `BLUEPRINT_PATH` can be either a local blueprint yaml file or
     blueprint archive; a url to a blueprint archive or an
     `organization/blueprint_repo[:tag/branch]` (to be
-    retrieved from GitHub)
+    retrieved from GitHub).
+    Supported archive types are: zip, tar, tar.gz and tar.bz2
     """
     processed_blueprint_path, blueprint_id = _get_blueprint_path_and_id(
         blueprint_path,

@@ -29,6 +29,7 @@ from backports.shutil_get_terminal_size import get_terminal_size
 
 from .logger import get_logger
 from .exceptions import CloudifyCliError
+from .constants import SUPPORTED_ARCHIVE_TYPES
 
 
 def dump_to_file(collection, file_path):
@@ -108,7 +109,10 @@ def extract_archive(source):
     elif zipfile.is_zipfile(source):
         return unzip(source)
     raise CloudifyCliError(
-        'Unsupported archive type provided or archive is not valid.')
+        'Unsupported archive type provided or archive is not valid: {0}.'
+        ' Supported archive types are: {1}'
+        .format(source, SUPPORTED_ARCHIVE_TYPES)
+    )
 
 
 def tar(source, destination):
@@ -122,7 +126,8 @@ def untar(archive, destination=None):
     if not destination:
         destination = tempfile.mkdtemp()
     logger = get_logger()
-    logger.debug('Extracting tgz {0} to {1}...'.format(archive, destination))
+    logger.debug('Extracting tar archive {0} to {1}...'
+                 .format(archive, destination))
     with closing(tarfile.open(name=archive)) as tar:
         tar.extractall(path=destination, members=tar.getmembers())
     return destination
