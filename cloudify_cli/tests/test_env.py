@@ -277,6 +277,33 @@ class CliEnvTests(CliCommandTest):
             env.raise_uninitialized)
         self.assertEqual('Cloudify environment is not initialized', str(ex))
 
+    def test_build_manager_host_string(self):
+        self.assertRaises(CloudifyCliError, env.build_manager_host_string)
+
+        self.assertTrue(
+            env.build_manager_host_string('user'),
+            'user@'
+        )
+
+        self.assertTrue(
+            env.build_manager_host_string('user', 'ip'),
+            'user@ip'
+        )
+
+        self.use_manager(ssh_user='host_string_test')
+
+        self.assertTrue(
+            env.build_manager_host_string(ip='ip'),
+            'host_string_test@ip'
+        )
+
+        self.use_manager(ssh_user='host_string_test', manager_ip='test_ip')
+
+        self.assertTrue(
+            env.build_manager_host_string(),
+            'host_string_test@test_ip'
+        )
+
 
 class CliInputsTests(CliCommandTest):
 

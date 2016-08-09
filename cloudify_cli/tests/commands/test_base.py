@@ -37,6 +37,7 @@ class CliCommandTest(testtools.TestCase):
     def setUp(self):
         super(CliCommandTest, self).setUp()
         logdir = os.path.dirname(env.DEFAULT_LOG_FILE)
+        env.profile = env.ProfileContext()
         cfy.invoke('init -r')
         # create log folder
         if not os.path.exists(logdir):

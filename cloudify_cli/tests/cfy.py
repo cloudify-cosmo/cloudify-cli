@@ -136,6 +136,7 @@ def use_manager(**manager_params):
 
     purge_profile(manager_params['manager_ip'])
     profile.save()
+    env.profile = profile
 
     commands.init.set_config()
     env.set_active_profile(manager_params['manager_ip'])
