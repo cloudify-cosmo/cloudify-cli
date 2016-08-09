@@ -52,6 +52,7 @@ from .. import logger
 from .. import constants
 from .. import blueprint
 from ..config import config
+from .. import local as cli_local
 from ..bootstrap import bootstrap
 from ..exceptions import CloudifyCliError
 from ..colorful_event import ColorfulEvent
@@ -1179,3 +1180,84 @@ class TestUtils(CliCommandTest):
             temp_dest = os.path.join(temp_dest, 'test')
             with open(temp_dest, 'r') as f:
                 self.assertEqual(test_file, f.read())
+
+
+class TestLocal(CliCommandTest):
+    _BLUEPRINT_PATH = os.path.join(
+        BLUEPRINTS_DIR,
+        'helloworld',
+        'simple_blueprint.yaml'
+    )
+
+    _DEFAULT_INPUTS = {
+        'key1': 'default_val1',
+        'key2': 'default_val2',
+        'key3': 'default_val3'
+    }
+
+    def test_storage_dir(self):
+        self.assertEqual(
+            cli_local.storage_dir(),
+            '/tmp/.cloudify-test/profiles/local/local-storage'
+        )
+
+        self.assertEqual(
+            cli_local.storage_dir('blueprint_id'),
+            '/tmp/.cloudify-test/profiles/local/blueprint_id'
+        )
+
+    def test_initialize_blueprint_default_single_env(self):
+        self._test_initialize_blueprint(
+            name='local',
+            custom_inputs={},
+            expected_inputs=TestLocal._DEFAULT_INPUTS,
+            expected_storage_dir='/tmp/.cloudify-test/profiles/local/'
+                                 'local-storage/local'
+        )
+
+    def test_initialize_blueprint_custom_single_env(self):
+
+        custom_inputs = {
+            'key1': 'val1',
+            'key2': 'val2',
+            'key3': 'val3'
+        }
+
+        self._test_initialize_blueprint(
+            name='temp',
+            custom_inputs=custom_inputs,
+            expected_inputs=custom_inputs,
+            expected_storage_dir='/tmp/.cloudify-test/profiles/local/'
+                                 'local-storage/temp'
+        )
+
+    def test_initialize_blueprint_default_multi_env(self):
+        # Simulate the case when env.MULTIPLE_LOCAL_BLUEPRINTS == True
+        original_storage_dir = cli_local._STORAGE_DIR_NAME
+        cli_local._STORAGE_DIR_NAME = ''
+        self._test_initialize_blueprint(
+            name='test',
+            custom_inputs={},
+            expected_inputs=TestLocal._DEFAULT_INPUTS,
+            expected_storage_dir='/tmp/.cloudify-test/profiles/local/test'
+        )
+        cli_local._STORAGE_DIR_NAME = original_storage_dir
+
+    def _test_initialize_blueprint(self,
+                                   name,
+                                   custom_inputs,
+                                   expected_inputs,
+                                   expected_storage_dir
+                                   ):
+        environment = cli_local.initialize_blueprint(
+            TestLocal._BLUEPRINT_PATH,
+            name,
+            inputs=custom_inputs
+        )
+        self.assertEqual(environment.name, name)
+        self.assertEqual(environment.plan['inputs'], expected_inputs)
+        self.assertIn('mock_workflow', environment.plan['workflows'])
+        self.assertEqual(
+            environment.storage._storage_dir,
+            expected_storage_dir
+        )

@@ -65,7 +65,6 @@ def storage_dir(blueprint_id=None):
         return os.path.join(
             env.PROFILES_DIR,
             _ENV_NAME,
-            _STORAGE_DIR_NAME,
             blueprint_id
         )
     else:

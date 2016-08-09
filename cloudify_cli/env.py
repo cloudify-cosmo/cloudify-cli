@@ -245,11 +245,6 @@ def get_ssl_trust_all():
     return False
 
 
-def get_version():
-    version_data = get_version_data()
-    return version_data['version']
-
-
 def get_version_data():
     data = pkgutil.get_data('cloudify_cli', 'VERSION')
     return json.loads(data)
