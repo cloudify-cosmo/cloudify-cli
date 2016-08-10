@@ -4,7 +4,7 @@
 # All Rights Reserved.
 #
 
-name "cloudify"
+name "cloudify-telco"
 maintainer "Gigaspaces"
 homepage "http://getcloudify.org/"
 
