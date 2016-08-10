@@ -46,7 +46,7 @@ def _deployment_exists(client, deployment_id):
     return True
 
 
-def install(deployment_id, include_logs):
+def install(deployment_id, include_logs, install_script=None):
     workflow_id = 'install_new_agents'
     logger = get_logger()
     client = utils.get_rest_client()
@@ -95,9 +95,18 @@ def install(deployment_id, include_logs):
         timeout = 900
 
         try:
+            kwargs = {}
+            if install_script is not None:
+                kwargs = {
+                    'parameters': {
+                        'install_script': install_script
+                    },
+                    'allow_custom_parameters': True
+                }
             execution = client.executions.start(
                 dep_id,
                 workflow_id,
+                **kwargs
             )
 
             execution = wait_for_execution(
