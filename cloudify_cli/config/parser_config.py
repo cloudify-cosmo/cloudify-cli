@@ -610,7 +610,12 @@ def parser_config():
                                     'agents for. If omitted, this will '
                                     'install agents for all deployments'
                             ),
-                            '-l,--include-logs': include_logs_argument()
+                            '-l,--include-logs': include_logs_argument(),
+                            '-s,--install-script': {
+                                'dest': 'install_script',
+                                'help': 'Alternative location of the '
+                                        '"install_agents.py" script.'
+                            }
                         },
                         'help':'Install agents for existing deployments',
                         'handler': cfy.agents.install
