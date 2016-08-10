@@ -12,17 +12,17 @@ function download_wheels() {
     curl -LO https://pypi.python.org/packages/2.7/l/lxml/lxml-3.5.0.win32-py2.7.exe
     wheel convert lxml-3.5.0.win32-py2.7.exe --dest-dir packaging/source/wheels
 
-    PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/3.4.0.1-telco/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
-    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/3.4.0.1-telco.zip
-    unzip -q -o 3.4.0.1-telco.zip
-    [[ -f 3.4.0.1-telco.zip ]] && rm -f 3.4.0.1-telco.zip
-    curl -sL "${PATCH_URL}" -o cloudify-cli-3.4.0.1-telco/cloudify_cli.patch
-    patch -p1 -d cloudify-cli-3.4.0.1-telco < cloudify-cli-3.4.0.1-telco/cloudify_cli.patch
-    rm -f cloudify-cli-3.4.0.1-telco/cloudify_cli.patch
-    zip -q -r cloudify-cli-3.4.0.1-telco.zip cloudify-cli-3.4.0.1-telco
-    [[ $? -eq 0 ]] && rm -rf cloudify-cli-3.4.0.1-telco
+    PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/3.4.0.1/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
+    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/3.4.0.1.zip
+    unzip -q -o 3.4.0.1.zip
+    [[ -f 3.4.0.1.zip ]] && rm -f 3.4.0.1.zip
+    curl -sL "${PATCH_URL}" -o cloudify-cli-3.4.0.1/cloudify_cli.patch
+    patch -p1 -d cloudify-cli-3.4.0.1 < cloudify-cli-3.4.0.1/cloudify_cli.patch
+    rm -f cloudify-cli-3.4.0.1/cloudify_cli.patch
+    zip -q -r cloudify-cli-3.4.0.1.zip cloudify-cli-3.4.0.1
+    [[ $? -eq 0 ]] && rm -rf cloudify-cli-3.4.0.1
 
-    pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-3.4.0.1-telco.zip \
+    pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-3.4.0.1.zip \
     https://github.com/cloudify-cosmo/cloudify-rest-client/archive/${CORE_TAG_NAME}.zip#egg=cloudify-rest-client \
     https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/${CORE_TAG_NAME}.zip#egg=cloudify-dsl-parser \
     https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/${CORE_TAG_NAME}.zip#egg=cloudify-plugins-common \
