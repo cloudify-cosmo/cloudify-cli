@@ -13,16 +13,16 @@ function download_wheels() {
     wheel convert lxml-3.5.0.win32-py2.7.exe --dest-dir packaging/source/wheels
 
     PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/${CORE_TAG_NAME}/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
-    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/${CORE_TAG_NAME}.zip
-    unzip -q -o ${CORE_TAG_NAME}.zip
-    [[ -f ${CORE_TAG_NAME}.zip ]] && rm -f ${CORE_TAG_NAME}.zip
+    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/3.4.0.1-telco.zip
+    unzip -q -o 3.4.0.1-telco.zip
+    [[ -f 3.4.0.1-telco.zip ]] && rm -f 3.4.0.1-telco.zip
     curl -sL "${PATCH_URL}" -o cloudify-cli-${CORE_TAG_NAME}/cloudify_cli.patch
     patch -p1 -d cloudify-cli-${CORE_TAG_NAME} < cloudify-cli-${CORE_TAG_NAME}/cloudify_cli.patch
     rm -f cloudify-cli-${CORE_TAG_NAME}/cloudify_cli.patch
     zip -q -r cloudify-cli-${CORE_TAG_NAME}.zip cloudify-cli-${CORE_TAG_NAME}
     [[ $? -eq 0 ]] && rm -rf cloudify-cli-${CORE_TAG_NAME}
 
-    pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-${CORE_TAG_NAME}.zip \
+    pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-3.4.0.1-telco.zip \
     https://github.com/cloudify-cosmo/cloudify-rest-client/archive/${CORE_TAG_NAME}.zip#egg=cloudify-rest-client \
     https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/${CORE_TAG_NAME}.zip#egg=cloudify-dsl-parser \
     https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/${CORE_TAG_NAME}.zip#egg=cloudify-plugins-common \
@@ -46,7 +46,7 @@ function download_resources() {
         tar -zxvf /tmp/Python279_x32.tar.gz --strip-components=1
     popd
     pushd packaging/source/blueprints
-        curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/${CORE_TAG_NAME}.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
+        curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/3.4.0.1-telco.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
         tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1
     popd
 
