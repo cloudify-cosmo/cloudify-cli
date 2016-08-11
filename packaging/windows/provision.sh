@@ -7,6 +7,7 @@ function install_requirements() {
 function download_wheels() {
     GITHUB_USERNAME=$1
     GITHUB_PASSWORD=$2
+    TELCO_MODE=$3
 
     mkdir -p packaging/source/wheels
     curl -LO https://pypi.python.org/packages/2.7/l/lxml/lxml-3.5.0.win32-py2.7.exe
@@ -46,7 +47,11 @@ function download_resources() {
         tar -zxvf /tmp/Python279_x32.tar.gz --strip-components=1
     popd
     pushd packaging/source/blueprints
-        curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/3.4.0.1-telco.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
+        if [ TELCO_MODE == "true" ]; then
+            curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/3.4.0.1-telco.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
+        else
+            curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/3.4.0.1.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
+        fi
         tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1
     popd
 
@@ -98,11 +103,11 @@ GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
-
+TELCO_MODE=$5
 
 install_requirements &&
 download_wheels $GITHUB_USERNAME $GITHUB_PASSWORD &&
-download_resources $GITHUB_USERNAME $GITHUB_PASSWORD &&
+download_resources $GITHUB_USERNAME $GITHUB_PASSWORD $TELCO_MODE &&
 update_remote_to_local_links &&
 iscc packaging/create_install_wizard.iss &&
 cd /home/Administrator/packaging/output/ && create_md5 "exe"  &&

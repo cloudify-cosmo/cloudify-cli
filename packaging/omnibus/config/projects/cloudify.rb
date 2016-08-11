@@ -4,7 +4,14 @@
 # All Rights Reserved.
 #
 
-name "cloudify-telecom"
+ENV['TELCO_MODE'] || raise('TELCO_MODE environment variable not set')
+telco_mode=ENV['TELCO_MODE']
+if telco_mode=="true"
+    name "cloudify-telecom"
+else
+    name "cloudify"
+end
+
 maintainer "Gigaspaces"
 homepage "http://getcloudify.org/"
 
