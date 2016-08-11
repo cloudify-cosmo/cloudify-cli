@@ -104,11 +104,11 @@ GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
-TELCO_MODE=$5
+export TELCO_MODE=$5
 
 install_requirements &&
 download_wheels $GITHUB_USERNAME $GITHUB_PASSWORD &&
-download_resources $GITHUB_USERNAME $GITHUB_PASSWORD $TELCO_MODE &&
+download_resources $GITHUB_USERNAME $GITHUB_PASSWORD &&
 update_remote_to_local_links &&
 iscc packaging/create_install_wizard.iss &&
 cd /home/Administrator/packaging/output/ && create_md5 "exe"  &&
