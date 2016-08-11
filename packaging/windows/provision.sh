@@ -47,6 +47,7 @@ function download_resources() {
         tar -zxvf /tmp/Python279_x32.tar.gz --strip-components=1
     popd
     pushd packaging/source/blueprints
+        echo "TELCO_MODE=$TELCO_MODE"
         if [ TELCO_MODE == "true" ]; then
             curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/3.4.0.1-telco.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
         else
