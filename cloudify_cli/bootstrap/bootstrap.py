@@ -379,7 +379,7 @@ def teardown(name='manager',
                 task_thread_pool_size=task_thread_pool_size)
 
     # deleting local environment data
-    shutil.rmtree(_workdir())
+    delete_workdir()
 
 
 def recover(snapshot_path,
