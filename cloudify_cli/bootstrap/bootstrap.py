@@ -493,13 +493,15 @@ def _copy_agent_key(agent_local_key_path, agent_remote_key_path,
 def _upload_resources(manager_node, fabric_env, rest_client, retries,
                       wait_interval):
     """
-    Uploads resources supplied in the manager blueprint. uses both fabric for
+    Upload resources supplied in the manager blueprint. It uses both fabric for
     the dsl_resources, and the upload plugins mechanism for plugin_resources.
 
-    :param manager_node: The manager node from which to retrieve the
+    :param manager_node: the manager node from which to retrieve the
     properties from.
     :param fabric_env: fabric env in order to upload the dsl_resources.
     :param rest_client: the rest client to use to upload plugins.
+    :param retries: number of retries per resource download.
+    :param wait_interval: interval between download retries.
     """
 
     upload_resources = \
@@ -525,7 +527,8 @@ def _upload_plugins(plugin_resources, temp_dir, rest_client, retries,
     """
     Uploads plugins to the manager.
 
-    :param temp_dir:
+    :param plugin_resources: all of the plugin resources.
+    :param temp_dir: every resource is first moved/downloaded to this temp dir
     :param rest_client: The rest client to the manager.
     :param retries: number of retries per resource download/upload to the mgr.
     :param wait_interval: interval between download (and upload
@@ -570,7 +573,7 @@ def upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
     """
     Uploads dsl resources to the manager.
 
-    :param dsl_resources: all of the dsl_resources.
+    :param dsl_resources: all of the dsl resources.
     :param temp_dir: the dir to push the resources to.
     :param fabric_env: fabric env in order to upload the dsl_resources.
     :param retries: number of retries per resource download.
@@ -629,11 +632,14 @@ def upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
 def _get_resource_into_dir(destination_dir, resource_source_path, retries,
                            wait_interval, timeout):
     """
-    Copies a given path into the destination dir. The path could refer to
-    a local file or a remote url. NOTE: If two files shares the same name,
+    Copy a given path into the destination dir. The path could refer to
+    a local file or a remote url. NOTE: If two files share the same name,
     the old file would be overwritten.
-    :param destination_dir: The dir to write the resource into.
-    :param resource_source_path: A path to the resource.
+    :param destination_dir: the dir to write the resource into.
+    :param resource_source_path: a path to the resource.
+    :param retries: total number of retries.
+    :param wait_interval: wait time between attempts.
+    :param timeout: timeout for downloading resource.
     :return: the path to the newly copied resource.
     """
     logger = get_logger()
@@ -654,7 +660,7 @@ def _get_resource_into_dir(destination_dir, resource_source_path, retries,
                     resource_request.raw.decode_content = True
                     shutil.copyfileobj(resource_request.raw, f)
                 resource_request.close()
-                logger.info('Download complete')
+                logger.info('Download completely')
                 return dest_path
             else:
                 msg = "The resource {0} failed to download. Error {1}." \
@@ -686,7 +692,6 @@ def _stop_retries(retries, wait_interval, attempt, *args, **kwargs):
     A wrapper function which enables logging for the retry mechanism.
     :param retries: Total number of retries.
     :param wait_interval: wait time between attempts.
-    :param self: will be used by the retry decorator.
     :param attempt: will be used by the retry decorator.
     :param args: any args passed by the decorator.
     :param kwargs: any kwargs passed by the decorator.
