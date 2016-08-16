@@ -46,7 +46,12 @@ function download_resources() {
         tar -zxvf /tmp/Python279_x32.tar.gz --strip-components=1
     popd
     pushd packaging/source/blueprints
-        curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/${CORE_TAG_NAME}.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
+        echo "TELCO_MODE=$TELCO_MODE"
+        if [ "$TELCO_MODE" == "true" ]; then
+            curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/3.4.1-telco.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
+        else
+            curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/${CORE_TAG_NAME}.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
+        fi
         tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1
     popd
 
@@ -98,7 +103,13 @@ GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
+export TELCO_MODE=$5
 
+if [ "$TELCO_MODE" == "true" ];then
+	export PREFIX_NAME="cloudify-telecom"
+else
+	export PREFIX_NAME="cloudify"
+fi
 
 install_requirements &&
 download_wheels $GITHUB_USERNAME $GITHUB_PASSWORD &&

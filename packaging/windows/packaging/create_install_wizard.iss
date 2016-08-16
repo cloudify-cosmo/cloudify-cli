@@ -6,6 +6,7 @@
 #define AppURL "http://getcloudify.org/"
 #define PluginsTagName GetEnv('PLUGINS_TAG_NAME')
 #define CoreTagName GetEnv('CORE_TAG_NAME')
+#define PrefixPkgName GetEnv('PREFIX_NAME')
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -19,7 +20,7 @@ AppPublisherURL={#AppURL}
 AppSupportURL={#AppURL}
 AppUpdatesURL={#AppURL}
 DefaultDirName={sd}\Cloudify
-OutputBaseFilename=cloudify-windows-cli_{#AppVersion}-{#AppMilestone}-b{#AppBuild}
+OutputBaseFilename={#PrefixPkgName}-windows-cli_{#AppVersion}-{#AppMilestone}-b{#AppBuild}
 Compression=lzma
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=
