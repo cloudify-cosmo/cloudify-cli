@@ -9,7 +9,7 @@ telco_mode=ENV['TELCO_MODE']
 puts "telco_mode = #{telco_mode}"
 
 if telco_mode=="true"
-    name "cloudify-telco"
+    name "cloudify-telecom"
 else
     name "cloudify"
 end
