@@ -31,5 +31,3 @@ deploy:
 after_deploy:
   - git clone https://github.com/cloudify-cosmo/travis-utils.git
   - python travis-utils/validate_pypi.py -v -b $TRAVIS_BRANCH || exit 1
-notifications:
-  flowdock: a73d66c41c6e4406e1c47e042dfd2b59

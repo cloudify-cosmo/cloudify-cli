@@ -9,31 +9,42 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
-
-"""
-Handles 'cfy teardown'
-"""
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from cloudify_cli import utils
-from cloudify_cli import exceptions
-from cloudify_cli.commands.use import use
-from cloudify_cli.logger import get_logger
-from cloudify_cli.bootstrap import bootstrap as bs
+from .. import env
+from .use import use
+from .. import exceptions
+from ..env import profile
+from ..cli import cfy, helptexts
+from ..bootstrap import bootstrap as bs
 
 
-def teardown(force, ignore_deployments):
-
-    _validate_force(force)
+@cfy.command(name='teardown', short_help='Teardown a manager [manager only]')
+@cfy.options.force(help=helptexts.FORCE_TEARDOWN)
+@cfy.options.ignore_deployments
+@cfy.options.task_retries()
+@cfy.options.task_retry_interval()
+@cfy.options.task_thread_pool_size()
+@cfy.options.verbose()
+@cfy.assert_manager_active
+def teardown(force,
+             ignore_deployments,
+             task_retries,
+             task_retry_interval,
+             task_thread_pool_size):
+    """Teardown the manager
+    """
+    _assert_force(force)
 
     try:
-        management_ip = utils.get_rest_host()
+        manager_ip = profile.manager_ip
     except exceptions.CloudifyCliError:
-        # management ip does not exist in the local context
+        # manager ip does not exist in the local context
         # this can mean one of two things:
         # 1. bootstrap was unsuccessful
         # 2. we are in the wrong directory
@@ -56,24 +67,30 @@ def teardown(force, ignore_deployments):
                 "directory you initially bootstrapped from, or from the last "
                 "directory a `cfy use` command was executed on this manager.")
         else:
-            _do_teardown()
+            _do_teardown(
+                task_retries,
+                task_retry_interval,
+                task_thread_pool_size)
     else:
         # make sure we don't teardown the manager if there are running
         # deployments, unless the user explicitly specified it.
-        _validate_deployments(ignore_deployments, management_ip)
+        _validate_deployments(ignore_deployments, manager_ip)
 
         # update local provider context since the server ip might have
         # changed in case it has gone through a recovery process.
-        _update_local_provider_context(management_ip)
+        _update_local_provider_context(manager_ip)
 
         # execute teardown
-        _do_teardown()
+        _do_teardown(
+            task_retries,
+            task_retry_interval,
+            task_thread_pool_size)
 
 
-def _update_local_provider_context(management_ip):
-    logger = get_logger()
+@cfy.pass_logger
+def _update_local_provider_context(manager_ip, logger):
     try:
-        use(management_ip, utils.get_rest_port())
+        use(manager_ip, profile.rest_port)
     except BaseException as e:
         logger.warning('Failed to retrieve provider context: {0}. This '
                        'may cause a leaking manager '
@@ -81,8 +98,8 @@ def _update_local_provider_context(management_ip):
                        'recovery process'.format(str(e)))
 
 
-def _get_number_of_deployments(management_ip):
-    client = utils.get_rest_client(management_ip)
+def _get_number_of_deployments(manager_ip):
+    client = env.get_rest_client(manager_ip)
     try:
         return len(client.deployments.list())
     except CloudifyClientError:
@@ -92,23 +109,23 @@ def _get_number_of_deployments(management_ip):
             "skip this check, you may use the "'--ignore-deployments'" "
             "flag, in which case teardown will occur regardless of "
             "the deployment's status."
-            .format(management_ip))
+            .format(manager_ip))
 
 
-def _validate_deployments(ignore_deployments, management_ip):
+def _validate_deployments(ignore_deployments, manager_ip):
     if ignore_deployments:
         return
-    if _get_number_of_deployments(management_ip) > 0:
+    if _get_number_of_deployments(manager_ip) > 0:
         raise exceptions.CloudifyCliError(
             "Manager {0} has existing deployments. Delete "
             "all deployments first or add the "
             "'--ignore-deployments' flag to your command to ignore "
             "these deployments and execute teardown."
-            .format(management_ip)
+            .format(manager_ip)
         )
 
 
-def _validate_force(force):
+def _assert_force(force):
     if not force:
         raise exceptions.CloudifyCliError(
             "This action requires additional confirmation. Add the "
@@ -116,14 +133,15 @@ def _validate_force(force):
             "command should be executed.")
 
 
-def _do_teardown():
+def _do_teardown(task_retries, task_retry_interval, task_thread_pool_size):
     # reload settings since the provider context maybe changed
-    settings = utils.load_cloudify_working_dir_settings()
-    provider_context = settings.get_provider_context()
+    p = env.get_profile_context()
+    provider_context = p.provider_context
     bs.read_manager_deployment_dump_if_needed(
         provider_context.get('cloudify', {}).get('manager_deployment'))
-    bs.teardown()
-    # cleaning relevant data from working directory settings
-    with utils.update_wd_settings() as wd_settings:
-        # wd_settings.set_provider_context(provider_context)
-        wd_settings.remove_management_server_context()
+    bs.teardown(
+        task_retries=task_retries,
+        task_retry_interval=task_retry_interval,
+        task_thread_pool_size=task_thread_pool_size)
+
+    env.delete_profile(p.manager_ip)

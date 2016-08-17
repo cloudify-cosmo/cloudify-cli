@@ -9,20 +9,19 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
-CLOUDIFY_WD_SETTINGS_FILE_NAME = 'context'
-CLOUDIFY_WD_SETTINGS_DIRECTORY_NAME = '.cloudify'
+CLOUDIFY_PROFILE_CONTEXT_FILE_NAME = 'context'
+CLOUDIFY_BASE_DIRECTORY_NAME = '.cloudify'
 CONFIG_FILE_NAME = 'cloudify-config.yaml'
 DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
 DEFAULT_BLUEPRINT_FILE_NAME = 'blueprint.yaml'
 DEFAULT_BLUEPRINT_PATH = 'blueprint.yaml'
-DEFAULT_INPUTS_PATH_FOR_INSTALL_COMMAND = 'inputs.yaml'
 DEFAULT_PARAMETERS = None
 DEFAULT_TIMEOUT = 900
-DEFAULT_TASK_THREAD_POOL_SIZE = 1
 DEFAULT_INSTALL_WORKFLOW = 'install'
 DEFAULT_UNINSTALL_WORKFLOW = 'uninstall'
 
@@ -32,15 +31,15 @@ AGENT_KEY_PATH = '~/.ssh/cloudify-agents-kp.pem'
 AGENT_REMOTE_KEY_PATH = '~/.ssh/agent_key.pem'
 REMOTE_EXECUTION_PORT = 22
 
-WORKFLOW_TASK_RETRIES = -1
-WORKFLOW_TASK_RETRY_INTERVAL = 30
-
 POLICY_ENGINE_START_TIMEOUT = 30
 
 DEFAULT_REST_PORT = 80
 SECURED_REST_PORT = 443
-DEFAULT_PROTOCOL = 'http'
-SECURED_PROTOCOL = 'https'
+DEFAULT_REST_PROTOCOL = 'http'
+SECURED_REST_PROTOCOL = 'https'
+
+REST_PORT_RUNTIME_PROPERTY = 'rest_port'
+REST_PROTOCOL_RUNTIME_PROPERTY = 'rest_protocol'
 
 REST_PORT_RUNTIME_PROPERTY = 'rest_port'
 REST_PROTOCOL_RUNTIME_PROPERTY = 'rest_protocol'
@@ -78,6 +77,8 @@ SSL_PRIVATE_KEY_PROPERTY_NAME = 'private_key_path'
 
 BASIC_AUTH_PREFIX = 'Basic'
 
-API_VERSION = 'v2'
+API_VERSION = 'v2.1'
 
 HELP_TEXT_COLUMN_BUFFER = 5
+
+SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')

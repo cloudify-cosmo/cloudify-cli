@@ -1,34 +1,47 @@
 ########
-# Copyright (c) 2016 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# * See the License for the specific language governing permissions and
-#    * limitations under the License.
-
-"""
-Handles all commands that start with 'cfy groups'
-"""
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
 import json
 
-from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
-from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_rest_client.exceptions import CloudifyClientError
 
+from ..cli import cfy
+from ..exceptions import CloudifyCliError
 
-def ls(deployment_id):
-    logger = get_logger()
-    management_ip = utils.get_management_server_ip()
-    client = utils.get_rest_client(management_ip)
+
+@cfy.group(name='groups')
+@cfy.options.verbose()
+@cfy.assert_manager_active
+def groups():
+    """Handle deployment groups
+    """
+    pass
+
+
+@groups.command(name='list',
+                short_help='List groups for a deployment [manager only]')
+@cfy.options.deployment_id(required=True)
+@cfy.options.verbose()
+@cfy.pass_client()
+@cfy.pass_logger
+def list(deployment_id, logger, client):
+    """List all groups for a deployment
+
+    `DEPLOYMENT_ID` is the id of the deployment to list groups for.
+    """
     logger.info("Listing groups for deployment {0}...".format(
         deployment_id))
     try:

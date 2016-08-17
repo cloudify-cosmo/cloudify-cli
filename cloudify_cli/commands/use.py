@@ -9,66 +9,137 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
-"""
-Handles 'cfy use'
-"""
-
-from cloudify_rest_client.exceptions import (
-    CloudifyClientError,
+from cloudify_rest_client.exceptions import CloudifyClientError,\
     UserUnauthorizedError
-)
 
-from cloudify_cli import utils
-from cloudify_cli import constants
-from cloudify_cli.logger import get_logger
-from cloudify_cli.bootstrap import bootstrap as bs
-from cloudify_cli.exceptions import CloudifyCliError
+from . import init
+from .. import env
+from ..cli import cfy
+from .. import constants
+from ..bootstrap import bootstrap as bs
+from ..exceptions import CloudifyCliError
 
 
-def use(management_ip, rest_port):
-    logger = get_logger()
+@cfy.command(name='use',
+             short_help='Control a specific manager')
+@cfy.argument('profile-name')
+@cfy.options.manager_user
+@cfy.options.manager_key
+@cfy.options.manager_port
+@cfy.options.rest_port
+@cfy.options.verbose()
+@cfy.pass_logger
+def use(profile_name,
+        manager_user,
+        manager_key,
+        manager_port,
+        rest_port,
+        logger):
+    """Control a specific manager
 
-    # check if cloudify was initialized.
-    if not utils.is_initialized():
-        utils.dump_cloudify_working_dir_settings()
-        utils.dump_configuration_file()
+    `MANAGEMENT_IP` is the IP of the manager to use.
 
+    Additional CLI commands will be added after a manager is used.
+    To stop using a manager, you can run `cfy init -r`.
+    """
+    if profile_name == 'local':
+        logger.info('Using local environment...')
+        if not env.is_profile_exists(profile_name):
+            init.init_local_profile()
+        env.set_active_profile('local')
+        return
+
+    logger.info('Attempting to connect...'.format(profile_name))
     # determine SSL mode by port
     if rest_port == constants.SECURED_REST_PORT:
-        protocol = constants.SECURED_PROTOCOL
+        rest_protocol = constants.SECURED_REST_PROTOCOL
     else:
-        protocol = constants.DEFAULT_PROTOCOL
-    client = utils.get_rest_client(
-        rest_host=management_ip, rest_port=rest_port, rest_protocol=protocol,
-        skip_version_check=True)
-    try:
-        # first check this server is available.
-        client.manager.get_status()
-    except UserUnauthorizedError:
-        msg = "Can't use manager {0}: User is unauthorized.".format(
-            management_ip)
-        raise CloudifyCliError(msg)
-    except CloudifyClientError as e:
-        msg = "Can't use manager {0}: {1}".format(management_ip, str(e))
-        raise CloudifyCliError(msg)
+        rest_protocol = constants.DEFAULT_REST_PROTOCOL
 
-    try:
-        response = client.manager.get_context()
-        provider_context = response['context']
-    except CloudifyClientError:
-        provider_context = None
+    # First, attempt to get the provider from the manager - should it fail,
+    # the manager's profile directory won't be created
+    provider_context = _get_provider_context(
+        profile_name,
+        rest_port,
+        rest_protocol
+    )
 
-    with utils.update_wd_settings() as wd_settings:
-        wd_settings.set_management_server(management_ip)
-        wd_settings.set_provider_context(provider_context)
-        wd_settings.set_rest_port(rest_port)
-        wd_settings.set_rest_protocol(protocol)
-        logger.info('Using management server {0} with port {1}'
-                    .format(management_ip, rest_port))
+    if not env.is_profile_exists(profile_name):
+        init.init_manager_profile(profile_name=profile_name)
+
+    env.set_active_profile(profile_name)
+
+    logger.info('Using manager {0} with port {1}'.format(
+        profile_name, rest_port))
+
+    _set_profile_context(
+        profile_name,
+        provider_context,
+        manager_key,
+        manager_user,
+        manager_port,
+        rest_port,
+        rest_protocol
+    )
 
     # delete the previous manager deployment if exists.
     bs.delete_workdir()
+
+
+def _assert_manager_available(client, profile_name):
+    try:
+        client.manager.get_status()
+    except UserUnauthorizedError:
+        raise CloudifyCliError(
+            "Can't use manager {0}: User is unauthorized.".format(
+                profile_name))
+    # The problem here is that, for instance,
+    # any problem raised by the rest client will trigger this.
+    # Triggering a CloudifyClientError only doesn't actually deal
+    # with situations like No route to host and the likes.
+    except Exception as ex:
+        raise CloudifyCliError(
+            "Can't use manager {0}: {1}".format(profile_name, str(ex)))
+
+
+def _get_provider_context(profile_name, rest_port, rest_protocol):
+    client = env.get_rest_client(
+        rest_host=profile_name,
+        rest_port=rest_port,
+        rest_protocol=rest_protocol,
+        skip_version_check=True)
+
+    _assert_manager_available(client, profile_name)
+
+    try:
+        response = client.manager.get_context()
+        return response['context']
+    except CloudifyClientError:
+        return None
+
+
+def _set_profile_context(profile_name,
+                         provider_context,
+                         manager_key,
+                         manager_user,
+                         manager_port,
+                         rest_port,
+                         rest_protocol):
+    profile = env.get_profile_context(profile_name)
+    profile.provider_context = provider_context
+    if manager_key:
+        profile.manager_key = manager_key
+    if manager_user:
+        profile.manager_user = manager_user
+    if manager_port:
+        profile.manager_port = manager_port
+    if rest_port:
+        profile.rest_port = rest_port
+    profile.rest_protocol = rest_protocol
+
+    profile.save()

@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2016 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -9,46 +9,55 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
-"""
-Handles 'cfy rollback command'
-"""
-import json
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
-from cloudify_cli import utils
-from cloudify_cli import common
-from cloudify_cli import exceptions
-from cloudify_cli.logger import get_logger
-from cloudify_cli.commands.upgrade import update_inputs
-from cloudify_cli.commands.upgrade import put_workflow_state_file
-from cloudify_cli.commands.upgrade import \
+from .. import local
+from ..cli import cfy
+from .. import exceptions
+from .upgrade import put_workflow_state_file, update_inputs, \
     verify_and_wait_for_maintenance_mode_activation
 
 
+@cfy.command(name='rollback',
+             short_help='Rollback a manager to a previous version')
+@cfy.argument('blueprint-path')
+@cfy.options.inputs
+@cfy.options.install_plugins
+@cfy.options.task_retries()
+@cfy.options.task_retry_interval()
+@cfy.options.task_thread_pool_size()
+@cfy.options.verbose()
+@cfy.assert_manager_active
+@cfy.pass_client(skip_version_check=True)
+@cfy.pass_logger
 def rollback(blueprint_path,
              inputs,
              install_plugins,
              task_retries,
-             task_retry_interval):
+             task_retry_interval,
+             task_thread_pool_size,
+             logger,
+             client):
+    """Rollback a manager to its previous version
 
-    logger = get_logger()
-    management_ip = utils.get_management_server_ip()
+    Note that you can only rollback to the last version you upgraded from.
 
-    client = utils.get_rest_client(management_ip, skip_version_check=True)
-
+    `BLUEPRINT_PATH` is the path of the manager blueprint to use for rollback.
+    """
     verify_and_wait_for_maintenance_mode_activation(client)
 
     inputs = update_inputs(inputs)
 
     env_name = 'manager-rollback'
     # init local workflow execution environment
-    env = common.initialize_blueprint(blueprint_path,
-                                      storage=None,
-                                      install_plugins=install_plugins,
-                                      name=env_name,
-                                      inputs=json.dumps(inputs))
+    working_env = local.initialize_blueprint(blueprint_path,
+                                             storage=None,
+                                             install_plugins=install_plugins,
+                                             name=env_name,
+                                             inputs=inputs)
 
     logger.info('Starting Manager rollback process...')
     put_workflow_state_file(is_upgrade=False,
@@ -58,9 +67,10 @@ def rollback(blueprint_path,
 
     logger.info('Executing Manager rollback...')
     try:
-        env.execute('install',
-                    task_retries=task_retries,
-                    task_retry_interval=task_retry_interval)
+        working_env.execute('install',
+                            task_retries=task_retries,
+                            task_retry_interval=task_retry_interval,
+                            task_thread_pool_size=task_thread_pool_size)
     except Exception as e:
         msg = 'Failed to rollback Manager upgrade. Error: {0}'.format(e)
         raise exceptions.CloudifyCliError(msg)
