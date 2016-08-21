@@ -5,55 +5,67 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#        http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
 
-"""
-Handles all commands that start with 'cfy executions'
-"""
-
+import json
 import time
 
-from cloudify_cli import utils
-from cloudify_cli.logger import get_logger
 from cloudify_rest_client import exceptions
-from cloudify_cli.logger import get_events_logger
-from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.exceptions import ExecutionTimeoutError
-from cloudify_cli.exceptions import SuppressedCloudifyCliError
-from cloudify_cli.execution_events_fetcher import wait_for_execution
 
+from .. import local
+from .. import table
+from .. import utils
+from ..cli import cfy, helptexts
+from ..logger import get_events_logger
+from ..execution_events_fetcher import wait_for_execution
+from ..exceptions import CloudifyCliError, ExecutionTimeoutError, \
+    SuppressedCloudifyCliError
 
 _STATUS_CANCELING_MESSAGE = (
     'NOTE: Executions currently in a "canceling/force-canceling" status '
     'may take a while to change into "cancelled"')
 
 
-def get(execution_id):
-    logger = get_logger()
-    rest_host = utils.get_rest_host()
-    client = utils.get_rest_client(rest_host)
+@cfy.group(name='executions')
+@cfy.options.verbose()
+def executions():
+    """Handle workflow executions
+    """
+    pass
 
+
+@cfy.command(name='get',
+             short_help='Retrieve execution information [manager only]')
+@cfy.argument('execution-id')
+@cfy.options.verbose()
+@cfy.assert_manager_active
+@cfy.pass_client()
+@cfy.pass_logger
+def manager_get(execution_id, logger, client):
+    """Retrieve information for a specific execution
+
+    `EXECUTION_ID` is the execution to get information on.
+    """
     try:
-        logger.info('Getting execution: '
-                    '\'{0}\' [manager={1}]'
-                    .format(execution_id, rest_host))
+        logger.info('Retrieving execution {0}'.format(execution_id))
         execution = client.executions.get(execution_id)
     except exceptions.CloudifyClientError as e:
         if e.status_code != 404:
             raise
         raise CloudifyCliError('Execution {0} not found'.format(execution_id))
 
-    pt = utils.table(['id', 'workflow_id', 'status', 'deployment_id',
-                      'created_at', 'error'],
-                     [execution])
+    columns = \
+        ['id', 'workflow_id', 'status', 'deployment_id', 'created_at', 'error']
+    pt = table.generate(columns, data=[execution])
     pt.max_width = 50
-    utils.print_table('Executions:', pt)
+    table.log('Execution:', pt)
 
     # print execution parameters
     logger.info('Execution Parameters:')
@@ -65,24 +77,40 @@ def get(execution_id):
     logger.info('')
 
 
-def ls(deployment_id, include_system_workflows,
-       sort_by=None, descending=False):
-    logger = get_logger()
-    rest_host = utils.get_rest_host()
-    client = utils.get_rest_client(rest_host)
+@cfy.command(name='list',
+             short_help='List deployment executions [manager only]')
+@cfy.options.deployment_id(required=False)
+@cfy.options.include_system_workflows
+@cfy.options.sort_by()
+@cfy.options.descending
+@cfy.options.verbose()
+@cfy.assert_manager_active
+@cfy.pass_client()
+@cfy.pass_logger
+def manager_list(
+        deployment_id,
+        include_system_workflows,
+        sort_by,
+        descending,
+        logger,
+        client):
+    """List executions
+
+    If `DEPLOYMENT_ID` is provided, list executions for that deployment.
+    Otherwise, list executions for all deployments.
+    """
     try:
         if deployment_id:
-            logger.info('Listing executions for deployment: \'{0}\' '
-                        '[manager={1}]'.format(deployment_id, rest_host))
+            logger.info('Listing executions for deployment {0}...'.format(
+                deployment_id))
         else:
-            logger.info(
-                'Listing all executions: [manager={0}]'.format(
-                    rest_host))
+            logger.info('Listing all executions...')
         executions = client.executions.list(
             deployment_id=deployment_id,
             include_system_workflows=include_system_workflows,
             sort=sort_by,
             is_descending=descending)
+
     except exceptions.CloudifyClientError as e:
         if e.status_code != 404:
             raise
@@ -90,36 +118,53 @@ def ls(deployment_id, include_system_workflows,
             deployment_id))
 
     columns = ['id', 'workflow_id', 'deployment_id', 'status', 'created_at']
-    pt = utils.table(columns, executions)
-    utils.print_table('Executions:', pt)
+    pt = table.generate(columns, data=executions)
+    table.log('Executions:', pt)
 
-    if any(execution.status in (execution.CANCELLING,
-                                execution.FORCE_CANCELLING)
-           for execution in executions):
+    if any(execution.status in (
+            execution.CANCELLING, execution.FORCE_CANCELLING)
+            for execution in executions):
         logger.info(_STATUS_CANCELING_MESSAGE)
 
 
-def start(workflow_id, deployment_id, timeout, force,
-          allow_custom_parameters, include_logs, parameters, json):
-    logger = get_logger()
-    parameters = utils.inputs_to_dict(parameters, 'parameters')
-    rest_host = utils.get_rest_host()
-    logger.info("Executing workflow '{0}' on deployment '{1}' at"
-                " management server {2} [timeout={3} seconds]"
-                .format(workflow_id,
-                        deployment_id,
-                        rest_host,
-                        timeout))
+@cfy.command(name='start',
+             short_help='Execute a workflow [manager only]')
+@cfy.argument('workflow-id')
+@cfy.options.deployment_id(required=True)
+@cfy.options.parameters
+@cfy.options.allow_custom_parameters
+@cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
+@cfy.options.timeout()
+@cfy.options.include_logs
+@cfy.options.json_output
+@cfy.options.verbose()
+@cfy.assert_manager_active
+@cfy.pass_client()
+@cfy.pass_logger
+def manager_start(workflow_id,
+                  deployment_id,
+                  parameters,
+                  allow_custom_parameters,
+                  force,
+                  timeout,
+                  include_logs,
+                  json_output,
+                  logger,
+                  client):
+    """Execute a workflow on a given deployment
 
-    events_logger = get_events_logger(json)
-
-    events_message = "* Run 'cfy events list --include-logs " \
-                     "--execution-id {0}' to retrieve the " \
+    `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
+    """
+    events_logger = get_events_logger(json_output)
+    events_message = "* Run 'cfy events list {0}' to retrieve the " \
                      "execution's events/logs"
     original_timeout = timeout
-
+    logger.info('Executing workflow {0} on deployment {1} '
+                '[timeout={2} seconds]'.format(
+                    workflow_id,
+                    deployment_id,
+                    timeout))
     try:
-        client = utils.get_rest_client(rest_host)
         try:
             execution = client.executions.start(
                 deployment_id,
@@ -183,7 +228,7 @@ def start(workflow_id, deployment_id, timeout, force,
             "seconds for its completion.\n\n"
             "* Run 'cfy executions list' to determine the execution's "
             "status.\n"
-            "* Run 'cfy executions cancel --execution-id {2}' to cancel"
+            "* Run 'cfy executions cancel {2}' to cancel"
             " the running workflow.".format(
                 workflow_id, deployment_id, e.execution_id, original_timeout))
 
@@ -194,19 +239,24 @@ def start(workflow_id, deployment_id, timeout, force,
         raise SuppressedCloudifyCliError()
 
 
-def cancel(execution_id, force):
-    logger = get_logger()
-    rest_host = utils.get_rest_host()
-    client = utils.get_rest_client(rest_host)
-    logger.info(
-        '{0}Cancelling execution {1} on management server {2}'
-        .format('Force-' if force else '', execution_id, rest_host))
+@cfy.command(name='cancel',
+             short_help='Cancel a workflow execution [manager only]')
+@cfy.argument('execution-id')
+@cfy.options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
+@cfy.options.verbose()
+@cfy.assert_manager_active
+@cfy.pass_client()
+@cfy.pass_logger
+def manager_cancel(execution_id, force, logger, client):
+    """Cancel a workflow's execution
+    """
+    logger.info('{0}Cancelling execution {1}'.format(
+        'Force-' if force else '', execution_id))
     client.executions.cancel(execution_id, force)
     logger.info(
-        'A cancel request for execution {0} has been sent to management '
-        "server {1}. To track the execution's status, use:\n"
-        "cfy executions get -e {0}"
-        .format(execution_id, rest_host))
+        "A cancel request for execution {0} has been sent. "
+        "To track the execution's status, use:\n"
+        "cfy executions get -e {0}".format(execution_id))
 
 
 def _get_deployment_environment_creation_execution(client, deployment_id):
@@ -217,3 +267,37 @@ def _get_deployment_environment_creation_execution(client, deployment_id):
     raise RuntimeError('Failed to get create_deployment_environment '
                        'workflow execution.'
                        'Available executions: {0}'.format(executions))
+
+
+@cfy.command(name='start',
+             short_help='Execute a workflow')
+@cfy.argument('workflow-id')
+@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
+@cfy.options.parameters
+@cfy.options.allow_custom_parameters
+@cfy.options.task_retries()
+@cfy.options.task_retry_interval()
+@cfy.options.task_thread_pool_size()
+@cfy.options.verbose()
+@cfy.pass_logger
+def local_start(workflow_id,
+                blueprint_id,
+                parameters,
+                allow_custom_parameters,
+                task_retries,
+                task_retry_interval,
+                task_thread_pool_size,
+                logger):
+    """Execute a workflow
+
+    `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
+    """
+    env = local.load_env(blueprint_id)
+    result = env.execute(workflow=workflow_id,
+                         parameters=parameters,
+                         allow_custom_parameters=allow_custom_parameters,
+                         task_retries=task_retries,
+                         task_retry_interval=task_retry_interval,
+                         task_thread_pool_size=task_thread_pool_size)
+    if result is not None:
+        logger.info(json.dumps(result, sort_keys=True, indent=2))

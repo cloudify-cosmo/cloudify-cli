@@ -9,13 +9,18 @@
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-#    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-#    * See the License for the specific language governing permissions and
-#    * limitations under the License.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
+
+
 import time
-from cloudify_cli.exceptions import ExecutionTimeoutError, \
-    EventProcessingTimeoutError
+
 from cloudify_rest_client.executions import Execution
+
+from .exceptions import (ExecutionTimeoutError,
+                         EventProcessingTimeoutError)
 
 
 WAIT_FOR_EXECUTION_SLEEP_INTERVAL = 3
@@ -83,9 +88,9 @@ def get_deployment_environment_creation_execution(client, deployment_id):
     for e in executions:
         if e.workflow_id == 'create_deployment_environment':
             return e
-    raise RuntimeError('Failed to get create_deployment_environment workflow '
-                       'execution. Available executions: {0}'.format(
-                           executions))
+    raise RuntimeError(
+        'Failed to get create_deployment_environment workflow '
+        'execution. Available executions: {0}'.format(executions))
 
 
 class EventsWatcher(object):

@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2013 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,13 +19,30 @@ import sys
 import copy
 import json
 import logging
+import getpass
+import tempfile
 import logging.config
 
 import colorama
 
 from cloudify import logs
-from cloudify_cli.config import logger_config
-from cloudify_cli.colorful_event import ColorfulEvent
+
+from . import env
+from .config.config import is_use_colors
+from .config.config import CloudifyConfig
+from .colorful_event import ColorfulEvent
+
+
+DEFAULT_LOG_FILE = os.path.expanduser(
+    '{0}/cloudify-{1}/cloudify-cli.log'.format(
+        tempfile.gettempdir(), getpass.getuser()))
+
+HIGH_VERBOSE = 3
+MEDIUM_VERBOSE = 2
+LOW_VERBOSE = 1
+NO_VERBOSE = 0
+
+verbosity_level = NO_VERBOSE
 
 
 _lgr = None
@@ -33,7 +50,35 @@ _lgr = None
 _all_loggers = set()
 
 
+LOGGER = {
+    "version": 1,
+    "formatters": {
+        "file": {
+            "format": "%(asctime)s [%(levelname)s] %(message)s"
+        },
+        "console": {
+            "format": "%(message)s"
+        }
+    },
+    "handlers": {
+        "file": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "formatter": "file",
+            "maxBytes": "5000000",
+            "backupCount": "20"
+        },
+        "console": {
+            "class": "logging.StreamHandler",
+            "stream": "ext://sys.stdout",
+            "formatter": "console"
+        }
+    }
+}
+
+
 def get_logger():
+    if not _lgr:
+        configure_loggers()
     return _lgr
 
 
@@ -47,8 +92,7 @@ def configure_loggers():
     # even before the init was executed.
     _configure_defaults()
 
-    from cloudify_cli import utils
-    if utils.is_initialized():
+    if env.is_initialized():
         # init was already called
         # use the configuration file.
         _configure_from_file()
@@ -59,7 +103,7 @@ def configure_loggers():
     # configuring events/logs loggers
     # (this will also affect local workflow loggers, which don't use
     # the get_events_logger method of this module)
-    if utils.is_use_colors():
+    if is_use_colors():
         logs.EVENT_CLASS = ColorfulEvent
         # refactor this elsewhere if colorama is further used in CLI
         colorama.init(autoreset=True)
@@ -68,15 +112,14 @@ def configure_loggers():
 def _configure_defaults():
 
     # add handlers to the main logger
-    logger_dict = copy.deepcopy(logger_config.LOGGER)
+    logger_dict = copy.deepcopy(LOGGER)
     logger_dict['loggers'] = {
         'cloudify.cli.main': {
             'handlers': list(logger_dict['handlers'].keys())
         }
     }
-    from cloudify_cli import utils
-    logger_dict['handlers']['file']['filename'] = utils.DEFAULT_LOG_FILE
-    logfile_dir = os.path.dirname(utils.DEFAULT_LOG_FILE)
+    logger_dict['handlers']['file']['filename'] = DEFAULT_LOG_FILE
+    logfile_dir = os.path.dirname(DEFAULT_LOG_FILE)
     if not os.path.exists(logfile_dir):
         os.makedirs(logfile_dir)
 
@@ -87,14 +130,13 @@ def _configure_defaults():
 
 def _configure_from_file():
 
-    from cloudify_cli import utils
-    config = utils.CloudifyConfig()
+    config = CloudifyConfig()
     logging_config = config.logging
     loggers_config = logging_config.loggers
     logfile = logging_config.filename
 
     # set filename on file handler
-    logger_dict = copy.deepcopy(logger_config.LOGGER)
+    logger_dict = copy.deepcopy(LOGGER)
     logger_dict['handlers']['file']['filename'] = logfile
     logfile_dir = os.path.dirname(logfile)
     if not os.path.exists(logfile_dir):
@@ -122,19 +164,21 @@ def _configure_from_file():
 def get_events_logger(json_output):
 
     def json_events_logger(events):
-        """
-        The json events logger prints events as consumable JSON formatted
+        """The json events logger prints events as consumable JSON formatted
         entries. Each event appears in its own line.
+
         :param events: The events to print.
         :return:
         """
+        # TODO: Why we're writing directly to stdout here
+        # but use the logger when the --json-output flag isn't passed.
         for event in events:
             sys.stdout.write('{}\n'.format(json.dumps(event)))
             sys.stdout.flush()
 
     def text_events_logger(events):
-        """
-        The default events logger prints events as short messages.
+        """The default events logger prints events as short messages.
+
         :param events: The events to print.
         :return:
         """
@@ -143,7 +187,21 @@ def get_events_logger(json_output):
             if output:
                 _lgr.info(output)
 
-    if json_output:
-        return json_events_logger
-    else:
-        return text_events_logger
+    return json_events_logger if json_output else text_events_logger
+
+
+def set_global_verbosity_level(verbose):
+    """Sets the global verbosity level.
+    """
+    global verbosity_level
+    verbosity_level = verbose
+    logs.EVENT_VERBOSITY_LEVEL = verbosity_level
+    if verbosity_level >= HIGH_VERBOSE:
+        for logger_name in all_loggers():
+            logging.getLogger(logger_name).setLevel(logging.DEBUG)
+
+
+def get_global_verbosity():
+    """Returns the globally set verbosity
+    """
+    return verbosity_level
