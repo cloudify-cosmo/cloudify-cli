@@ -91,4 +91,4 @@ class GroupsTest(CliCommandTest):
         error = CloudifyClientError('')
         error.status_code = 404
         self.client.deployments.get = MagicMock(side_effect=error)
-        self.invoke("cfy groups list -d nonexistent-dep", expected_message)
+        self.invoke("cfy groups list nonexistent-dep", expected_message)

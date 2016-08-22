@@ -104,7 +104,7 @@ class WorkflowsTest(CliCommandTest):
         })
 
         self.client.deployments.get = MagicMock(return_value=deployment)
-        self.invoke('cfy workflows get mock_workflow dep_id')
+        self.invoke('cfy workflows get mock_workflow -d dep_id')
 
     def test_workflows_get_nonexistent_workflow(self):
 
@@ -131,7 +131,7 @@ class WorkflowsTest(CliCommandTest):
         })
 
         self.client.deployments.get = MagicMock(return_value=deployment)
-        self.invoke('cfy workflows get nonexistent_workflow dep_id',
+        self.invoke('cfy workflows get nonexistent_workflow -d dep_id',
                     expected_message)
 
     def test_workflows_get_nonexistent_deployment(self):
@@ -141,6 +141,6 @@ class WorkflowsTest(CliCommandTest):
 
         self.client.deployments.get = MagicMock(
             side_effect=CloudifyClientError(expected_message))
-        self.invoke('cfy workflows get wf nonexistent-dep -v',
+        self.invoke('cfy workflows get wf -d nonexistent-dep -v',
                     err_str_segment=expected_message,
                     exception=CloudifyClientError)
