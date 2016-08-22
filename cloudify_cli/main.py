@@ -59,7 +59,7 @@ def _cfy(verbose):
     Cloudify's working directory resides in ~/.cloudify. To change it, set
     the variable `CFY_WORKDIR` to something else (e.g. /tmp/).
     """
-    # cfy.set_cli_except_hook(verbose)
+    cfy.set_cli_except_hook(verbose)
     pass
 
 

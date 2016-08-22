@@ -94,6 +94,8 @@ def list(execution_id, include_logs, json_output, tail, logger, client):
 @cfy.pass_logger
 def delete(deployment_id, include_logs, logger, client):
     """Delete events attached to a deployment
+
+    `EXECUTION_ID` is the execution events to delete.
     """
     logger.info(
         'Deleting events for deployment id {0} [include_logs={1}]'.format(

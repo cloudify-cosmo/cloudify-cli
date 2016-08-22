@@ -83,6 +83,8 @@ def create(snapshot_id, include_metrics, exclude_credentials, logger, client):
 @cfy.pass_logger
 def delete(snapshot_id, logger, client):
     """Delete a snapshot from the manager
+
+    `SNAPSHOT_ID` is the id of the snapshot to download.
     """
     logger.info('Deleting snapshot {0}...'.format(snapshot_id))
     client.snapshots.delete(snapshot_id)

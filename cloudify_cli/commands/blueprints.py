@@ -151,6 +151,8 @@ def download(blueprint_id, output_path, logger, client):
 @cfy.pass_logger
 def delete(blueprint_id, logger, client):
     """Delete a blueprint from the manager
+
+    `BLUEPRINT_ID` is the id of the blueprint to delete.
     """
     logger.info('Deleting blueprint {0}...'.format(blueprint_id))
     client.blueprints.delete(blueprint_id)
