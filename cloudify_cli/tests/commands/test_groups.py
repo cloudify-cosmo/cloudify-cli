@@ -52,7 +52,7 @@ class GroupsTest(CliCommandTest):
             }
         })
         self.client.deployments.get = MagicMock(return_value=deployment)
-        self.invoke('cfy groups list -d a-deployment-id')
+        self.invoke('cfy groups list a-deployment-id')
 
     def test_groups_sort_list(self):
         deployment = deployments.Deployment({
@@ -80,7 +80,7 @@ class GroupsTest(CliCommandTest):
             }
         })
         self.client.deployments.get = MagicMock(return_value=deployment)
-        output = self.invoke('cfy groups list -d a-deployment-id').logs
+        output = self.invoke('cfy groups list a-deployment-id').logs
         first = output.find('group1')
         second = output.find('group2')
         third = output.find('group3')
