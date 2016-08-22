@@ -43,6 +43,8 @@ def maintenance_mode():
 @cfy.options.verbose()
 @cfy.pass_client()
 def status(client):
+    """Retrieve the current maintenance-mode status.
+    """
     _print_maintenance_mode_status(client)
 
 
@@ -94,6 +96,8 @@ def _print_maintenance_mode_status(client, logger):
 @cfy.pass_client()
 @cfy.pass_logger
 def activate(wait, timeout, logger, client):
+    """Enter maintenance-mode on the manager rejecting further REST requests.
+    """
 
     if timeout and not wait:
         msg = "'--timeout' was used without '--wait'."
@@ -137,6 +141,8 @@ def activate(wait, timeout, logger, client):
 @cfy.pass_client()
 @cfy.pass_logger
 def deactivate(logger, client):
+    """Deactivate maintenance-mode on the manager to accept REST requests.
+    """
     logger.info('Turning off maintenance mode...')
     client.maintenance_mode.deactivate()
     logger.info('Maintenance mode is off.')

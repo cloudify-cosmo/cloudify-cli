@@ -51,6 +51,8 @@ def profiles():
 @cfy.options.verbose()
 @cfy.pass_logger
 def get(logger):
+    """Gets your current active profile
+    """
     active_profile_name = env.get_active_profile()
     if active_profile_name == 'local':
         logger.info("You're currently working in local mode. "

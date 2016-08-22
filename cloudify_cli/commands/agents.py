@@ -63,6 +63,9 @@ def _deployment_exists(client, deployment_id):
 def install(deployment_id, include_logs, install_script, logger, client):
     """Install agents on the hosts of existing deployments
 
+    `DEPLOYMENT_ID` - The ID of the deployment you would like to
+    install agents for.
+
     See Cloudify's documentation at http://docs.getcloudify.org for more
     information.
     """
