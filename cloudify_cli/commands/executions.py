@@ -249,6 +249,8 @@ def manager_start(workflow_id,
 @cfy.pass_logger
 def manager_cancel(execution_id, force, logger, client):
     """Cancel a workflow's execution
+
+    `EXECUTION_ID` is the ID of the execution to cancel.
     """
     logger.info('{0}Cancelling execution {1}'.format(
         'Force-' if force else '', execution_id))
@@ -256,7 +258,7 @@ def manager_cancel(execution_id, force, logger, client):
     logger.info(
         "A cancel request for execution {0} has been sent. "
         "To track the execution's status, use:\n"
-        "cfy executions get -e {0}".format(execution_id))
+        "cfy executions get {0}".format(execution_id))
 
 
 def _get_deployment_environment_creation_execution(client, deployment_id):

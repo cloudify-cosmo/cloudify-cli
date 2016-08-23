@@ -33,7 +33,7 @@ def groups():
 
 @groups.command(name='list',
                 short_help='List groups for a deployment [manager only]')
-@cfy.options.deployment_id(required=True)
+@cfy.argument('deployment-id')
 @cfy.options.verbose()
 @cfy.pass_client()
 @cfy.pass_logger
