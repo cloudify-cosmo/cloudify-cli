@@ -15,6 +15,7 @@
 ############
 
 from . import env
+from . import logger
 from .cli import cfy
 from .commands import dev
 from .commands import ssh
@@ -130,7 +131,7 @@ def _register_commands():
         executions.executions.add_command(executions.local_start)
 
 _register_commands()
-
+logger.configure_loggers()
 
 if __name__ == '__main__':
     _cfy()
