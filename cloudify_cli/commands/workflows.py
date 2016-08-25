@@ -96,14 +96,12 @@ def get(workflow_id, deployment_id, logger, client):
 
 @workflows.command(name='list',
                    short_help='List workflows for a deployment [manager only]')
-@cfy.argument('deployment-id')
+@cfy.options.deployment_id(required=True)
 @cfy.options.verbose()
 @cfy.pass_logger
 @cfy.pass_client()
 def list(deployment_id, logger, client):
     """List all workflows on the manager
-
-    `DEPLOYMENT_ID` is the id of the deployment to list workflows for.
     """
     logger.info('Listing workflows for deployment {0}...'.format(
         deployment_id))

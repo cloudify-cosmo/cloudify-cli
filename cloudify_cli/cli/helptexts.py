@@ -75,6 +75,7 @@ FORCE_UPDATE = (
 )
 
 DEPLOYMENT_ID = "The unique identifier for the deployment"
+EXECUTION_ID = "The unique identifier for the execution"
 IGNORE_LIVE_NODES = (
     "Delete the deployment even if there are existing live nodes for it"
 )
