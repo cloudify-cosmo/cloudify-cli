@@ -52,7 +52,7 @@ class GroupsTest(CliCommandTest):
             }
         })
         self.client.deployments.get = MagicMock(return_value=deployment)
-        self.invoke('cfy groups list a-deployment-id')
+        self.invoke('cfy groups list -d a-deployment-id')
 
     def test_groups_sort_list(self):
         deployment = deployments.Deployment({
@@ -80,15 +80,15 @@ class GroupsTest(CliCommandTest):
             }
         })
         self.client.deployments.get = MagicMock(return_value=deployment)
-        output = self.invoke('cfy groups list a-deployment-id').logs
+        output = self.invoke('cfy groups list -d a-deployment-id').logs
         first = output.find('group1')
         second = output.find('group2')
         third = output.find('group3')
         self.assertTrue(0 < first < second < third)
 
     def test_groups_list_nonexistent_deployment(self):
-        expected_message = ('Deployment nonexistent-dep not found')
+        expected_message = 'Deployment nonexistent-dep not found'
         error = CloudifyClientError('')
         error.status_code = 404
         self.client.deployments.get = MagicMock(side_effect=error)
-        self.invoke("cfy groups list nonexistent-dep", expected_message)
+        self.invoke("cfy groups list -d nonexistent-dep", expected_message)

@@ -133,7 +133,7 @@ class EventsTest(CliCommandTest):
         # Can't just read the output once.
         stdout = StringIO()
         with patch('sys.stdout', stdout):
-            self.invoke('cfy events list execution-id --tail')
+            self.invoke('cfy events list -e execution-id --tail')
         output = stdout.getvalue()
         expected_events = self._get_events_before(
             self.execution_termination_time)
@@ -165,7 +165,7 @@ class EventsTest(CliCommandTest):
     def _test_events(self, flag=''):
         self.client.executions.get = self._mock_executions_get
         self.client.events.list = self._mock_events_list
-        outcome = self.invoke('cfy events list execution-id {0}'.format(
+        outcome = self.invoke('cfy events list -e execution-id {0}'.format(
             flag))
         if flag == '--json-output':
             return outcome.output
