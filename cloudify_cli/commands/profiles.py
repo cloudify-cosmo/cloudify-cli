@@ -61,8 +61,15 @@ def get(logger):
         return
 
     active_profile = _get_profile(env.get_active_profile())
-    columns = ['manager_ip', 'ssh_user', 'ssh_key_path',
-               'ssh_port', 'rest_port', 'rest_protocol']
+    columns = [
+        'manager_ip',
+        'ssh_user',
+        'ssh_key_path',
+        'ssh_port',
+        'rest_port',
+        'rest_protocol',
+        'bootstrap_state'
+    ]
     pt = table.generate(columns, data=[active_profile])
     table.log('Active profile:', pt)
 
@@ -87,8 +94,15 @@ def list(logger):
 
     if profiles:
         logger.info('Listing all profiles...')
-        columns = ['manager_ip', 'ssh_user', 'ssh_key_path',
-                   'ssh_port', 'rest_port', 'rest_protocol']
+        columns = [
+            'manager_ip',
+            'ssh_user',
+            'ssh_key_path',
+            'ssh_port',
+            'rest_port',
+            'rest_protocol',
+            'bootstrap_state'
+        ]
         pt = table.generate(columns, data=profiles)
         table.log('Profiles:', pt)
 
@@ -97,6 +111,23 @@ def list(logger):
             'No profiles found. You can create a new profile '
             'by bootstrapping a manager via `cfy bootstrap` or using an '
             'existing manager via the `cfy use` command')
+
+
+@profiles.command(name='purge-incomplete',
+                  short_help='Purge profiles in incomplete bootstrap state')
+@cfy.options.verbose()
+@cfy.pass_logger
+def purge_incomplete(logger):
+    """Purge all profiles for which the bootstrap state is incomplete
+    """
+    logger.info('Purging incomplete bootstrap profiles...')
+    profile_names = _get_profile_names()
+    for profile in profile_names:
+        context = env.get_profile_context(profile)
+        if context.bootstrap_state == 'Incomplete':
+            logger.debug('Deleteing profiles {0}...'.format(profile))
+            env.delete_profile(profile)
+    logger.info('Purge complete')
 
 
 @profiles.command(name='delete',
@@ -259,6 +290,7 @@ def _get_profile(profile_name):
     ssh_port = context.manager_port or None
     rest_port = context.rest_port or None
     rest_protocol = context.rest_protocol or None
+    bootstrap_state = context.bootstrap_state or 'Incomplete'
 
     env.set_active_profile(current_profile)
 
@@ -268,4 +300,5 @@ def _get_profile(profile_name):
         ssh_user=ssh_user,
         ssh_port=ssh_port,
         rest_port=rest_port,
-        rest_protocol=rest_protocol)
+        rest_protocol=rest_protocol,
+        bootstrap_state=bootstrap_state)

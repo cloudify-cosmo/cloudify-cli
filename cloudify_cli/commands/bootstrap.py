@@ -69,33 +69,11 @@ def bootstrap(blueprint_path,
     """
     env_name = 'manager'
 
-    temp_profile_active = False
-    active_profile = env.get_active_profile()
-    if not active_profile or active_profile == 'local':
-        active_profile = utils.generate_random_string()
-        temp_profile_active = True
-        init_manager_profile(profile_name=active_profile)
-        env.set_active_profile(active_profile)
+    temp_profile_active = True
+    active_profile = _create_temp_profile()
 
     processed_blueprint_path = blueprint.get(
-        blueprint_path,
-        blueprint_filename
-    )
-
-    unclean_env_message = "Can't bootstrap because the environment is not " \
-                          "clean. Clean the environment by calling teardown " \
-                          "or reset it using the `cfy init -r` command"
-    # verifying no environment exists from a previous bootstrap
-    try:
-        bs.load_env(env_name)
-    except IOError:
-        # Environment is clean
-        pass
-    except CloudifyCliError:
-        # Will be raised if `get_profile_dir` gets called
-        pass
-    else:
-        raise RuntimeError(unclean_env_message)
+        blueprint_path, blueprint_filename)
 
     try:
         if not skip_validations:
@@ -127,33 +105,12 @@ def bootstrap(blueprint_path,
                     task_thread_pool_size=task_thread_pool_size,
                     install_plugins=install_plugins,
                     skip_sanity=skip_sanity)
-
-                # TODO: Move these two parts to a separate function?
-
                 manager_ip = details['manager_ip']
 
-                temp_profile = os.path.join(
-                    env.PROFILES_DIR, active_profile)
-                new_profile = os.path.join(
-                    env.PROFILES_DIR, manager_ip)
-                shutil.move(temp_profile, new_profile)
+                _set_new_profile(active_profile, manager_ip)
                 temp_profile_active = False
-                env.set_active_profile(new_profile)
-
-                profile = env.profile
-                profile.manager_ip = manager_ip
-                profile.rest_port = details['rest_port']
-                profile.rest_protocol = details['rest_protocol']
-                profile.provider_context = details['provider_context']
-                profile.manager_key = details['manager_key_path']
-                profile.manager_user = details['manager_user']
-                profile.manager_port = details['manager_port']
-                profile.bootstrap_state = True
-
-                # Save creates a profile folder, if it doesn't exist, so it's
-                # important to do that *after* the temp profile folder was
-                # moved to the real one
-                profile.save()
+                env.set_active_profile(manager_ip)
+                _set_profile_details(details)
 
                 logger.info('Bootstrap complete')
                 logger.info('Manager is up at {0}'.format(manager_ip))
@@ -178,4 +135,32 @@ def bootstrap(blueprint_path,
     finally:
         if temp_profile_active:
             env.set_active_profile('local')
-            env.delete_profile(active_profile)
+
+
+def _create_temp_profile():
+    active_profile = 'temp-' + utils.generate_random_string()
+    init_manager_profile(profile_name=active_profile)
+    env.set_active_profile(active_profile)
+    return active_profile
+
+
+def _set_new_profile(active_profile, manager_ip):
+    temp_profile = os.path.join(env.PROFILES_DIR, active_profile)
+    new_profile = os.path.join(env.PROFILES_DIR, manager_ip)
+    if env.is_profile_exists(manager_ip):
+        env.delete_profile(manager_ip)
+    shutil.move(temp_profile, new_profile)
+
+
+def _set_profile_details(details):
+    profile = env.profile
+    profile.manager_ip = details['manager_ip']
+    profile.rest_port = details['rest_port']
+    profile.rest_protocol = details['rest_protocol']
+    profile.provider_context = details['provider_context']
+    profile.manager_key = details['manager_key_path']
+    profile.manager_user = details['manager_user']
+    profile.manager_port = details['manager_port']
+
+    profile.bootstrap_state = 'Complete'
+    profile.save()

@@ -41,7 +41,8 @@ default_manager_params = dict(
     ssh_port='22',
     provider_context={},
     rest_port=80,
-    rest_protocol='http')
+    rest_protocol='http',
+    bootstrap_state='Complete')
 
 
 @log_capture()
@@ -133,6 +134,7 @@ def use_manager(**manager_params):
     profile.rest_port = manager_params['rest_port']
     profile.rest_protocol = manager_params['rest_protocol']
     profile.provider_context = provider_context
+    profile.bootstrap_state = 'Complete'
 
     purge_profile(manager_params['manager_ip'])
     profile.save()
