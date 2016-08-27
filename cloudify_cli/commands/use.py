@@ -42,7 +42,7 @@ def use(profile_name,
         logger):
     """Control a specific manager
 
-    `PROFILE_NAME` can be either a manager IP or `local`.
+    `MANAGEMENT_IP` is the IP of the manager to use.
 
     Additional CLI commands will be added after a manager is used.
     To stop using a manager, you can run `cfy init -r`.

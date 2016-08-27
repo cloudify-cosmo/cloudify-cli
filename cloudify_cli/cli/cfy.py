@@ -606,14 +606,6 @@ class Options(object):
             help=helptexts.DEPLOYMENT_ID)
 
     @staticmethod
-    def execution_id(required=False):
-        return click.option(
-            '-e',
-            '--execution-id',
-            required=required,
-            help=helptexts.EXECUTION_ID)
-
-    @staticmethod
     def blueprint_id(required=False, multiple_blueprints=False):
         def pass_empty_blueprint_id(func):
             @wraps(func)

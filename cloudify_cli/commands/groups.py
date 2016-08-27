@@ -33,12 +33,14 @@ def groups():
 
 @groups.command(name='list',
                 short_help='List groups for a deployment [manager only]')
-@cfy.options.deployment_id(required=True)
+@cfy.argument('deployment-id')
 @cfy.options.verbose()
 @cfy.pass_client()
 @cfy.pass_logger
 def list(deployment_id, logger, client):
     """List all groups for a deployment
+
+    `DEPLOYMENT_ID` is the id of the deployment to list groups for.
     """
     logger.info("Listing groups for deployment {0}...".format(
         deployment_id))
