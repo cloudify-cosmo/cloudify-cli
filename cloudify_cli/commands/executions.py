@@ -156,7 +156,7 @@ def manager_start(workflow_id,
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
     events_logger = get_events_logger(json_output)
-    events_message = "* Run 'cfy events list {0}' to retrieve the " \
+    events_message = "* Run 'cfy events list -e {0}' to retrieve the " \
                      "execution's events/logs"
     original_timeout = timeout
     logger.info('Executing workflow {0} on deployment {1} '

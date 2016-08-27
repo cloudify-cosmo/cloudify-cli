@@ -34,7 +34,7 @@ def events():
 
 @events.command(name='list',
                 short_help='List deployments events [manager only]')
-@cfy.argument('execution-id')
+@cfy.options.execution_id(required=True)
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.tail
@@ -43,8 +43,6 @@ def events():
 @cfy.pass_logger
 def list(execution_id, include_logs, json_output, tail, logger, client):
     """Display events for an execution
-
-    `EXECUTION_ID` is the execution to list events for.
     """
     logger.info('Listing events for execution id {0} '
                 '[include_logs={1}]'.format(execution_id, include_logs))
