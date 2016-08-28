@@ -1145,6 +1145,11 @@ class TestGetBlueprint(CliCommandTest):
             blueprint.generate_id(SAMPLE_BLUEPRINT_PATH, 'test')
         )
 
+    def test_generate_id_in_blueprint_folder(self):
+        self.assertEqual(
+            'helloworld',
+            blueprint.generate_id(os.path.join('.', SAMPLE_BLUEPRINT_PATH)))
+
 
 class TestUtils(CliCommandTest):
     _TAR_TYPES_TO_FLAGS = {'tar': 'w', 'tar.gz': 'w:gz', 'tar.bz2': 'w:bz2'}
