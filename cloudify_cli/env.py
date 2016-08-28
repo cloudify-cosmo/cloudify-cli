@@ -287,7 +287,7 @@ class ProfileContext(yaml.YAMLObject):
     yaml_loader = yaml.Loader
 
     def __init__(self, profile_name=None):
-        self._bootstrap_state = None
+        self._bootstrap_state = 'Incomplete'
         self._manager_ip = profile_name
         self._manager_key = None
         self._manager_port = None
@@ -373,12 +373,12 @@ class ProfileContext(yaml.YAMLObject):
             constants.CLOUDIFY_PROFILE_CONTEXT_FILE_NAME)
         return context_path
 
-    def save(self):
+    def save(self, destination=None):
         if not self.manager_ip:
             raise CloudifyCliError('No Manager IP set')
 
-        workdir = os.path.join(PROFILES_DIR, self.manager_ip)
-        # create a new file
+        workdir = destination or os.path.join(PROFILES_DIR, self.manager_ip)
+        # Create a new file
         if not os.path.exists(workdir):
             os.makedirs(workdir)
         target_file_path = os.path.join(

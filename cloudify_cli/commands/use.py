@@ -141,5 +141,6 @@ def _set_profile_context(profile_name,
     if rest_port:
         profile.rest_port = rest_port
     profile.rest_protocol = rest_protocol
+    profile.bootstrap_state = 'Complete'
 
     profile.save()

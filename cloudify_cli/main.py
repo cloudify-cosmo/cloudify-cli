@@ -61,7 +61,6 @@ def _cfy(verbose):
     the variable `CFY_WORKDIR` to something else (e.g. /tmp/).
     """
     cfy.set_cli_except_hook(verbose)
-    pass
 
 
 def _register_commands():
