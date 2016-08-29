@@ -72,12 +72,13 @@ def _get_from_github(source):
     return utils.download_file(url)
 
 
-def generate_id(blueprint_folder, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
+def generate_id(blueprint_path, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
     """The name of the blueprint will be the name of the folder.
     If blueprint_filename is provided, it will be appended to the
     folder.
     """
-    blueprint_id = os.path.dirname(blueprint_folder).split('/')[-1]
+    blueprint_id = os.path.split(os.path.dirname(os.path.abspath(
+        blueprint_path)))[-1]
     if not blueprint_filename == DEFAULT_BLUEPRINT_PATH:
         filename, _ = os.path.splitext(os.path.basename(blueprint_filename))
         blueprint_id = (blueprint_id + '.' + filename)
