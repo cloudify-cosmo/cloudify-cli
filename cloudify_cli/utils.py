@@ -230,3 +230,12 @@ def add_ignore_bootstrap_validations_input(inputs):
     """
     assert isinstance(inputs, dict)
     inputs.update({'ignore_bootstrap_validations': True})
+
+
+def add_verbosity_level_input(inputs, verbosity_level):
+    """This is used when using the `-v` flag(s). It will propagate
+    the input to the manager-blueprint which will then printout
+    log messages according to the chosen verbosity level.
+    """
+    assert isinstance(inputs, dict)
+    inputs.update({'bootstrap_verbosity_level': verbosity_level})

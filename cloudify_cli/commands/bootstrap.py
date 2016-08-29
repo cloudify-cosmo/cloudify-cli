@@ -40,7 +40,7 @@ from ..exceptions import CloudifyCliError
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 @cfy.options.keep_up_on_failure
-@cfy.options.verbose()
+@cfy.options.verbose(expose_value=True)
 @cfy.pass_logger
 def bootstrap(blueprint_path,
               blueprint_filename,
@@ -53,6 +53,7 @@ def bootstrap(blueprint_path,
               task_retry_interval,
               task_thread_pool_size,
               keep_up_on_failure,
+              verbose,
               logger):
     """Bootstrap a Cloudify manager
 
@@ -92,6 +93,8 @@ def bootstrap(blueprint_path,
             # The user expects that `--skip-validations` will also ignore
             # bootstrap validations and not only creation_validations
             utils.add_ignore_bootstrap_validations_input(inputs)
+        if verbose:
+            utils.add_verbosity_level_input(inputs, verbose)
 
         if not validate_only:
             try:
