@@ -26,8 +26,8 @@ from .upgrade import put_workflow_state_file, update_inputs, \
 @cfy.argument('blueprint-path')
 @cfy.options.inputs
 @cfy.options.install_plugins
-@cfy.options.task_retries()
-@cfy.options.task_retry_interval()
+@cfy.options.task_retries(5)
+@cfy.options.task_retry_interval(30)
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose()
 @cfy.assert_manager_active

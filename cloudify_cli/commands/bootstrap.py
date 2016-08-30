@@ -36,8 +36,8 @@ from ..exceptions import CloudifyCliError
 @cfy.options.skip_validations
 @cfy.options.skip_sanity
 @cfy.options.install_plugins
-@cfy.options.task_retries()
-@cfy.options.task_retry_interval()
+@cfy.options.task_retries(5)
+@cfy.options.task_retry_interval(30)
 @cfy.options.task_thread_pool_size()
 @cfy.options.keep_up_on_failure
 @cfy.options.verbose()
