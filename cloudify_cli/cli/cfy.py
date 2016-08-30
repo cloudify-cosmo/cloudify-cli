@@ -34,7 +34,7 @@ from ..inputs import inputs_to_dict
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import CloudifyBootstrapError
 from ..exceptions import SuppressedCloudifyCliError
-from ..logger import get_logger, set_global_verbosity_level
+from ..logger import get_logger, set_global_verbosity_level, DEFAULT_LOG_FILE
 
 
 CLICK_CONTEXT_SETTINGS = dict(
@@ -150,11 +150,19 @@ def set_cli_except_hook(global_verbosity_level):
             logger.info('  - {0}'.format(solution))
 
     def new_excepthook(tpe, value, tb):
+        with open(DEFAULT_LOG_FILE, 'a') as log_file:
+            traceback.print_exception(
+                etype=tpe,
+                value=value,
+                tb=tb,
+                file=log_file)
+
         logger = get_logger()
 
         prefix = None
         server_traceback = None
         output_message = True
+
         if issubclass(tpe, CloudifyClientError):
             server_traceback = value.server_traceback
             if not issubclass(
