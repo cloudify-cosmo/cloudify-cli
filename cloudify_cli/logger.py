@@ -19,8 +19,6 @@ import sys
 import copy
 import json
 import logging
-import getpass
-import tempfile
 import logging.config
 
 import colorama
@@ -32,10 +30,7 @@ from .config.config import is_use_colors
 from .config.config import CloudifyConfig
 from .colorful_event import ColorfulEvent
 
-
-DEFAULT_LOG_FILE = os.path.expanduser(
-    '{0}/cloudify-{1}/cloudify-cli.log'.format(
-        tempfile.gettempdir(), getpass.getuser()))
+DEFAULT_LOG_FILE = os.path.join(env.CLOUDIFY_WORKDIR, 'logs', 'cli.log')
 
 HIGH_VERBOSE = 3
 MEDIUM_VERBOSE = 2
