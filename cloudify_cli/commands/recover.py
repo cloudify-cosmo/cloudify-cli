@@ -28,8 +28,8 @@ CLOUDIFY_MANAGER_PK_PATH_ENVAR = 'CLOUDIFY_MANAGER_PRIVATE_KEY_PATH'
              short_help='Recover a manager')
 @cfy.argument('snapshot-path')
 @cfy.options.force(help=helptexts.FORCE_RECOVER)
-@cfy.options.task_retries()
-@cfy.options.task_retry_interval()
+@cfy.options.task_retries(5)
+@cfy.options.task_retry_interval(30)
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose()
 @cfy.pass_logger

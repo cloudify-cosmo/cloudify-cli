@@ -43,8 +43,8 @@ REMOTE_WORKFLOW_STATE_PATH = '/opt/cloudify/_workflow_state.json'
 @cfy.options.validate_only
 @cfy.options.skip_validations
 @cfy.options.install_plugins
-@cfy.options.task_retries()
-@cfy.options.task_retry_interval()
+@cfy.options.task_retries(5)
+@cfy.options.task_retry_interval(30)
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose()
 @cfy.assert_manager_active
