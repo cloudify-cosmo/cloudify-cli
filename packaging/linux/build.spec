@@ -40,7 +40,7 @@ alias python=python2.7
 
 pip wheel virtualenv==13.1.0 --wheel-dir %{buildroot}/var/wheels/%{name} &&
 pip wheel git+https://github.com/cloudify-cosmo/cloudify-rest-client@%{CORE_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
-pip wheel git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@%{CORE_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
+pip wheel git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@3.4.0.2 --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
 pip wheel git+https://github.com/cloudify-cosmo/cloudify-plugins-common@%{CORE_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
 pip wheel git+https://github.com/cloudify-cosmo/cloudify-script-plugin@1.4 --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} --pre &&
 pip wheel git+https://github.com/cloudify-cosmo/cloudify-fabric-plugin@1.4 --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} --pre &&

@@ -24,7 +24,7 @@ function download_wheels() {
 
     pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-3.4.0.2.zip \
     https://github.com/cloudify-cosmo/cloudify-rest-client/archive/${CORE_TAG_NAME}.zip#egg=cloudify-rest-client \
-    https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/${CORE_TAG_NAME}.zip#egg=cloudify-dsl-parser \
+    https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/3.4.0.2.zip#egg=cloudify-dsl-parser \
     https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/${CORE_TAG_NAME}.zip#egg=cloudify-plugins-common \
     https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.4.zip#egg=cloudify-script-plugin \
     https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.4.1.zip#egg=cloudify-fabric-plugin \
