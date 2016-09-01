@@ -10,7 +10,7 @@ export TELCO_MODE=$7
 
 CORE_TAG_NAME="3.4"
 
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/3.4.0.1/common/provision.sh -o ./common-provision.sh &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/3.4.0.2/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
 
 install_common_prereqs &&

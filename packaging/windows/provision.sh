@@ -12,17 +12,17 @@ function download_wheels() {
     curl -LO https://pypi.python.org/packages/2.7/l/lxml/lxml-3.5.0.win32-py2.7.exe
     wheel convert lxml-3.5.0.win32-py2.7.exe --dest-dir packaging/source/wheels
 
-    PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/3.4.0.1/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
-    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/3.4.0.1.zip
-    unzip -q -o 3.4.0.1.zip
-    [[ -f 3.4.0.1.zip ]] && rm -f 3.4.0.1.zip
-    curl -sL "${PATCH_URL}" -o cloudify-cli-3.4.0.1/cloudify_cli.patch
-    patch -p1 -d cloudify-cli-3.4.0.1 < cloudify-cli-3.4.0.1/cloudify_cli.patch
-    rm -f cloudify-cli-3.4.0.1/cloudify_cli.patch
-    zip -q -r cloudify-cli-3.4.0.1.zip cloudify-cli-3.4.0.1
-    [[ $? -eq 0 ]] && rm -rf cloudify-cli-3.4.0.1
+    PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/3.4.0.2/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
+    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/3.4.0.2.zip
+    unzip -q -o 3.4.0.2.zip
+    [[ -f 3.4.0.2.zip ]] && rm -f 3.4.0.2.zip
+    curl -sL "${PATCH_URL}" -o cloudify-cli-3.4.0.2/cloudify_cli.patch
+    patch -p1 -d cloudify-cli-3.4.0.2 < cloudify-cli-3.4.0.2/cloudify_cli.patch
+    rm -f cloudify-cli-3.4.0.2/cloudify_cli.patch
+    zip -q -r cloudify-cli-3.4.0.2.zip cloudify-cli-3.4.0.2
+    [[ $? -eq 0 ]] && rm -rf cloudify-cli-3.4.0.2
 
-    pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-3.4.0.1.zip \
+    pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-3.4.0.2.zip \
     https://github.com/cloudify-cosmo/cloudify-rest-client/archive/${CORE_TAG_NAME}.zip#egg=cloudify-rest-client \
     https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/${CORE_TAG_NAME}.zip#egg=cloudify-dsl-parser \
     https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/${CORE_TAG_NAME}.zip#egg=cloudify-plugins-common \
@@ -49,9 +49,9 @@ function download_resources() {
     pushd packaging/source/blueprints
         echo "TELCO_MODE=$TELCO_MODE"
         if [ "$TELCO_MODE" == "true" ]; then
-            curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/3.4.0.1-telco.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
+            curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/3.4.0.2-telco.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
         else
-            curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/3.4.0.1.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
+            curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/3.4.0.2.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
         fi
         tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1
     popd
@@ -97,7 +97,7 @@ function update_remote_to_local_links() {
 # VERSION/PRERELEASE/BUILD/CORE_TAG_NAME/PLUGINS_TAG_NAME must be exported as they are being read as an env var by the install wizard
 
 CORE_TAG_NAME="3.4"
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/3.4.0.1/common/provision.sh -o ./common-provision.sh &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/3.4.0.2/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
 
 GITHUB_USERNAME=$1
