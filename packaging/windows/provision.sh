@@ -106,9 +106,15 @@ AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
 TELCO_MODE=$5
 
+if [ "$TELCO_MODE" == "true" ];then
+    export PREFIX_NAME="cloudify-telecom"
+else
+	export PREFIX_NAME="cloudify"
+fi
+
 install_requirements &&
 download_wheels $GITHUB_USERNAME $GITHUB_PASSWORD &&
-download_resources $GITHUB_USERNAME $GITHUB_PASSWORD $TELCO_MODE &&
+download_resources $GITHUB_USERNAME $GITHUB_PASSWORD &&
 update_remote_to_local_links &&
 iscc packaging/create_install_wizard.iss &&
 cd /home/Administrator/packaging/output/ && create_md5 "exe"  &&
