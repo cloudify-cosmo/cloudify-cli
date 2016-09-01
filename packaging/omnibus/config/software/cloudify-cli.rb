@@ -52,7 +52,7 @@ build do
              "install", "--build=#{project_dir}/openstack-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-openstack-plugin/archive/1.4.zip"]
 
     command ["#{install_dir}/embedded/bin/pip",
-             "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.4.1.zip"]
+             "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.4.2.zip"]
 
     command ["#{install_dir}/embedded/bin/pip",
              "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.4.zip"]
