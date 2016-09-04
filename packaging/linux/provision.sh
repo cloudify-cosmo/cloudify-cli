@@ -17,8 +17,8 @@ install_common_prereqs &&
 rm -rf cloudify-cli
 git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd cloudify-cli/packaging/omnibus
-git checkout ${CLI_BRANCH-$CORE_TAG_NAME}
-git tag -d $CORE_TAG_NAME
+git checkout 3.4.0.2
+git tag -d 3.4.0.2
 NEW_TAG_NAME="${VERSION}.${PRERELEASE}"
 git -d tag $NEW_TAG_NAME
 git tag $NEW_TAG_NAME
