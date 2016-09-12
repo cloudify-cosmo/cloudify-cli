@@ -49,7 +49,6 @@ setup(
         'jinja2==2.7.2',
         'retrying==1.3.3',
         'colorama==0.3.3',
-        'itsdangerous==0.24',
         'PrettyTable>=0.7,<0.8',
         'click_didyoumean==0.0.3',
         'cloudify-dsl-parser==4.0a2',
