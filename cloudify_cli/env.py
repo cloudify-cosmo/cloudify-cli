@@ -22,7 +22,7 @@ import getpass
 import tempfile
 
 import yaml
-from itsdangerous import base64_encode
+from base64 import urlsafe_b64encode
 
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import CloudifyClientError
@@ -395,7 +395,8 @@ def get_auth_header(username, password):
         credentials = '{0}:{1}'.format(username, password)
         header = {
             constants.CLOUDIFY_AUTHENTICATION_HEADER:
-                constants.BASIC_AUTH_PREFIX + ' ' + base64_encode(credentials)}
+                constants.BASIC_AUTH_PREFIX + ' '
+                + urlsafe_b64encode(credentials)}
 
     return header
 
