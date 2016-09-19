@@ -614,7 +614,7 @@ class Options(object):
             help=helptexts.TASK_THREAD_POOL_SIZE.format(default))
 
     @staticmethod
-    def task_retries(default=0):
+    def task_retries(default=10):
         return click.option(
             '--task-retries',
             type=int,
@@ -630,7 +630,7 @@ class Options(object):
             help=helptexts.SORT_BY)
 
     @staticmethod
-    def task_retry_interval(default=1):
+    def task_retry_interval(default=10):
         return click.option(
             '--task-retry-interval',
             type=int,
