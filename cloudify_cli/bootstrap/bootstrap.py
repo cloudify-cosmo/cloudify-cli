@@ -134,15 +134,6 @@ def validate_manager_deployment_size(blueprint_path):
                                     MAX_MANAGER_DEPLOYMENT_SIZE))
 
 
-def _validate_credentials_are_set():
-    cred_env_vars = (CLOUDIFY_USERNAME_ENV_VAR, CLOUDIFY_PASSWORD_ENV_VAR)
-    if not set(cred_env_vars).issubset(os.environ.keys()):
-        raise CloudifyBootstrapError(
-            'The following environment variables must be set before '
-            'bootstrapping a secured manager: {0}'.format(
-                ', '.join(cred_env_vars)))
-
-
 def bootstrap_validation(blueprint_path,
                          name='manager',
                          inputs=None,
@@ -170,11 +161,6 @@ def bootstrap_validation(blueprint_path,
                 blueprint_path)
         ]
         raise
-
-    manager_config_node = working_env.storage.get_node('manager_configuration')
-    security_enabled = manager_config_node.properties['security']['enabled']
-    if security_enabled:
-        _validate_credentials_are_set()
 
     working_env.execute(workflow='execute_operation',
                         parameters={
@@ -333,11 +319,12 @@ def bootstrap(blueprint_path,
             with open(cert_path, 'w') as cert_file:
                 cert_file.write(rest_public_cert)
 
+        security = manager_node.properties['security']
         rest_client = env.get_rest_client(rest_host=manager_ip,
                                           rest_port=rest_port,
                                           rest_protocol=rest_protocol,
-                                          username=env.get_username(),
-                                          password=env.get_password(),
+                                          username=security['rest_username'],
+                                          password=security['rest_password'],
                                           skip_version_check=True)
 
         provider_context = _handle_provider_context(
