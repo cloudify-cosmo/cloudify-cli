@@ -14,6 +14,8 @@
 # limitations under the License.
 ############
 
+import sys
+import traceback
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import env
@@ -32,7 +34,9 @@ from ..bootstrap import bootstrap as bs
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose()
 @cfy.assert_manager_active
-def teardown(force,
+@cfy.pass_context
+def teardown(ctx,
+             force,
              ignore_deployments,
              task_retries,
              task_retry_interval,
@@ -78,7 +82,7 @@ def teardown(force,
 
         # update local provider context since the server ip might have
         # changed in case it has gone through a recovery process.
-        _update_local_provider_context(manager_ip)
+        _update_local_provider_context(ctx, manager_ip)
 
         # execute teardown
         _do_teardown(
@@ -88,14 +92,19 @@ def teardown(force,
 
 
 @cfy.pass_logger
-def _update_local_provider_context(manager_ip, logger):
+def _update_local_provider_context(ctx, manager_ip, logger):
     try:
-        use(manager_ip, profile.rest_port)
+        ctx.invoke(
+            use,
+            profile_name=manager_ip,
+            rest_port=profile.rest_port)
     except BaseException as e:
+        desired_trace = traceback.format_exc(sys.exc_info())
         logger.warning('Failed to retrieve provider context: {0}. This '
                        'may cause a leaking manager '
                        'in case it has gone through a '
-                       'recovery process'.format(str(e)))
+                       'recovery process. stack trace: {1}'
+                       .format(str(e), desired_trace))
 
 
 def _get_number_of_deployments(manager_ip):
