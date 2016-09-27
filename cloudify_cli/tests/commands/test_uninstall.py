@@ -26,7 +26,7 @@ class UninstallTest(CliCommandTest):
 
         executions_start_mock.assert_called_with(
             workflow_id=DEFAULT_UNINSTALL_WORKFLOW,
-            deployment_id=u'did',
+            deployment_id='did',
             timeout=DEFAULT_TIMEOUT,
             force=False,
             include_logs=True,
@@ -115,10 +115,10 @@ class UninstallTest(CliCommandTest):
         self.assertDictEqual(
             args,
             {
-                'parameters': None,
+                'parameters': DEFAULT_PARAMETERS,
                 'blueprint_id': None,
                 'allow_custom_parameters': False,
-                'workflow_id': u'uninstall',
+                'workflow_id': 'uninstall',
                 'task_retries': 0,
                 'task_retry_interval': 1,
                 'task_thread_pool_size': 1

@@ -30,7 +30,7 @@ _NODE_INSTANCE_STATE_STARTED = 'started'
 
 @cfy.group(name='agents')
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 def agents():
     """Handle a deployment's agents
     """

@@ -259,7 +259,7 @@ class CliEnvTests(CliCommandTest):
         profile.save()
 
         context = env.get_profile_context(manager_ip)
-        self.assertEqual(context.manager_user, None)
+        self.assertEqual(context.ssh_user, None)
 
     def test_set_profile_context_with_settings(self):
         manager_ip = '10.10.1.10'
@@ -978,8 +978,8 @@ class ImportResolverLocalUseTests(CliCommandTest):
                               'runtime_properties': {
                                   'provider': 'mock_provider',
                                   'manager_ip': 'mock_manager_ip',
-                                  'manager_user': 'mock_manager_user',
-                                  'manager_key_path': 'mock_manager_key_path',
+                                  'ssh_user': 'mock_ssh_user',
+                                  'ssh_key_path': 'mock_ssh_key_path',
                                   'rest_port': 'mock_rest_port'}})
             ]
         cloudify.workflows.local.FileStorage.get_node_instances = \

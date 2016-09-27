@@ -25,6 +25,7 @@ from cloudify_rest_client.maintenance import Maintenance
 from .. import cfy
 from ... import env
 from ... import utils
+from ...commands import upgrade
 from ...exceptions import CloudifyCliError
 
 
@@ -150,6 +151,7 @@ class BaseUpgradeTest(CliCommandTest):
     def _test_no_bp(self, action):
         self.client.maintenance_mode.status = MagicMock(
             return_value=Maintenance({'status': 'active'}))
+        upgrade.profile = env.profile
         self.invoke('cfy {0} path -i private_ip=localhost '
                     '-i ssh_key_filename=key_path -i ssh_port=22'
                     .format(action),

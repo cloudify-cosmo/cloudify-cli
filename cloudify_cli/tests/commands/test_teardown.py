@@ -1,5 +1,6 @@
 from mock import patch, MagicMock
 
+from .. import env
 from .test_base import CliCommandTest
 
 from cloudify_rest_client.exceptions import CloudifyClientError
@@ -19,7 +20,8 @@ class TeardownTest(CliCommandTest):
         self.client.manager.get_context = MagicMock(
             return_value={'name': 'mock_provider', 'context': {'key': 'value'}}
         )
-        self.invoke('cfy use 10.0.0.1')
+        self.invoke('cfy use 10.0.0.1 -m admin -p admin')
+        env.profile = env.get_profile_context(suppress_error=True)
         self.invoke('cfy teardown -f --ignore-deployments')
         mock_teardown.assert_called_once_with(
             task_retries=0,
@@ -33,7 +35,8 @@ class TeardownTest(CliCommandTest):
         self.client.manager.get_context = MagicMock(
             return_value={'name': 'mock_provider', 'context': {'key': 'value'}}
         )
-        self.invoke('cfy use 10.0.0.1')
+        self.invoke('cfy use 10.0.0.1 -m admin -p admin')
+        env.profile = env.get_profile_context(suppress_error=True)
         self.invoke('cfy teardown -f',
                     'has existing deployments')
 
@@ -47,7 +50,8 @@ class TeardownTest(CliCommandTest):
         self.client.manager.get_context = MagicMock(
             return_value={'name': 'mock_provider', 'context': {'key': 'value'}}
         )
-        self.invoke('cfy use 10.0.0.1')
+        self.invoke('cfy use 10.0.0.1 -m admin -p admin')
+        env.profile = env.get_profile_context(suppress_error=True)
         self.invoke('cfy teardown -f',
                     'The manager may be down')
 
@@ -62,7 +66,7 @@ class TeardownTest(CliCommandTest):
         )
 
         self.use_manager(manager_ip='10.0.0.1')
-
+        env.profile = env.get_profile_context(suppress_error=True)
         self.invoke('cfy teardown -f --ignore-deployments')
         mock_teardown.assert_called_once_with(
             task_retries=0,

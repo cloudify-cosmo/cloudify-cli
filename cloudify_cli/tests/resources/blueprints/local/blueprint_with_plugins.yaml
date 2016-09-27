@@ -1,5 +1,11 @@
 tosca_definitions_version: cloudify_dsl_1_2
 
+inputs:
+    admin_username:
+        default: admin
+    admin_password:
+        default: ''
+
 plugins:
     plugin:
         executor: central_deployment_agent

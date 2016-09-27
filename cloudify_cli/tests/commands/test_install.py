@@ -326,10 +326,10 @@ class InstallTest(CliCommandTest):
         self.assertDictEqual(
             args,
             {
-                'parameters': None,
-                'blueprint_id': u'local',
+                'parameters': {},
+                'blueprint_id': 'local',
                 'allow_custom_parameters': False,
-                'workflow_id': u'install',
+                'workflow_id': 'install',
                 'task_retries': 5,
                 'task_retry_interval': 3,
                 'task_thread_pool_size': 1
@@ -380,8 +380,8 @@ class InstallTest(CliCommandTest):
         self.assertDictEqual(
             args,
             {
-                'inputs': None,
-                'blueprint_id': u'local',
+                'inputs': {},
+                'blueprint_id': 'local',
                 'blueprint_path': unicode(blueprint_path),
                 'install_plugins': False
             }

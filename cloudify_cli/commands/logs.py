@@ -24,7 +24,7 @@ from ..exceptions import CloudifyCliError
 
 @cfy.group(name='logs')
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 def logs():
     """Handle manager service logs
     """

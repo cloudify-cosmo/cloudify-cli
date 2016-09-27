@@ -30,7 +30,7 @@ MAINTENANCE_MODE_ACTIVE = 'activated'
 
 @cfy.group(name='maintenance-mode')
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 def maintenance_mode():
     """Handle the manager's maintenance-mode
     """

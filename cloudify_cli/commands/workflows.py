@@ -23,7 +23,7 @@ from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='workflows')
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 def workflows():
     """Handle deployment workflows
     """

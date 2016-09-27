@@ -94,6 +94,16 @@ def assert_local_active():
             'You can run `cfy use local` to stop using a manager.')
 
 
+def assert_credentials_set():
+    if not is_credentials_set():
+        raise CloudifyCliError(
+            'A password must be set in order to use a manager, along with '
+            'the username set in the profile.\n'
+            'You can run `cfy use <profile_name> --manager-password <pass>` '
+            'to store the password in the profile, or set the '
+            '`CLOUDIFY_PASSWORD` environment variable.')
+
+
 def is_manager_active():
     active_profile = get_active_profile()
     if not active_profile:
@@ -104,6 +114,12 @@ def is_manager_active():
 
     p = get_profile_context(active_profile, suppress_error=True)
     if not (p and p.manager_ip):
+        return False
+    return True
+
+
+def is_credentials_set():
+    if not get_username() or not get_password():
         return False
     return True
 
@@ -128,7 +144,7 @@ def is_initialized(profile_name=None):
     """Checks if a profile or an environment is initialized.
 
     If profile_name is provided, it will check if the profile
-    is initialzed. If not, it will just check that workenv is.
+    is initialized. If not, it will just check that workenv is.
     """
     if profile_name:
         return get_profile_dir(profile_name) is not None
@@ -213,21 +229,27 @@ def get_rest_client(rest_host=None,
             'Manager Version: {1}'.format(cli_version, manager_version))
 
 
-def build_manager_host_string(user='', ip=''):
-    user = user or profile.manager_user
-    if not user:
+def build_manager_host_string(ssh_user='', ip=''):
+    ssh_user = ssh_user or profile.ssh_user
+    if not ssh_user:
         raise CloudifyCliError('Manager User is not set in '
                                'working directory settings')
     ip = ip or profile.manager_ip
-    return '{0}@{1}'.format(user, ip)
+    return '{0}@{1}'.format(ssh_user, ip)
 
 
 def get_username():
-    return os.environ.get(constants.CLOUDIFY_USERNAME_ENV)
+    return os.environ.get(
+        constants.CLOUDIFY_USERNAME_ENV,
+        profile.manager_username
+    )
 
 
 def get_password():
-    return os.environ.get(constants.CLOUDIFY_PASSWORD_ENV)
+    return os.environ.get(
+        constants.CLOUDIFY_PASSWORD_ENV,
+        profile.manager_password
+    )
 
 
 def get_tenant_name():
@@ -301,12 +323,27 @@ class ProfileContext(yaml.YAMLObject):
     def __init__(self, profile_name=None):
         self._bootstrap_state = 'Incomplete'
         self._manager_ip = profile_name
-        self._manager_key = None
-        self._manager_port = None
-        self._manager_user = None
+        self._ssh_key = None
+        self._ssh_port = None
+        self._ssh_user = None
         self._provider_context = dict()
+        self._manager_username = None
+        self._manager_password = None
         self._rest_port = constants.DEFAULT_REST_PORT
         self._rest_protocol = constants.DEFAULT_REST_PROTOCOL
+
+    def to_dict(self):
+        return dict(
+            bootstrap_state=self.bootstrap_state,
+            manager_ip=self.manager_ip,
+            ssh_key_path=self.ssh_key,
+            ssh_port=self.ssh_port,
+            ssh_user=self.ssh_user,
+            provider_context=self.provider_context,
+            manager_username=self.manager_username,
+            rest_port=self.rest_port,
+            rest_protocol=self.rest_protocol
+        )
 
     @property
     def bootstrap_state(self):
@@ -325,31 +362,47 @@ class ProfileContext(yaml.YAMLObject):
         self._manager_ip = manager_host
 
     @property
-    def manager_key(self):
-        return self._manager_key
+    def ssh_key(self):
+        return self._ssh_key
 
-    @manager_key.setter
-    def manager_key(self, manager_key):
-        self._manager_key = manager_key
+    @ssh_key.setter
+    def ssh_key(self, manager_key):
+        self._ssh_key = manager_key
 
     @property
-    def manager_port(self):
-        return self._manager_port
+    def ssh_port(self):
+        return self._ssh_port
 
-    @manager_port.setter
-    def manager_port(self, manager_port):
+    @ssh_port.setter
+    def ssh_port(self, ssh_port):
         # If the port is int, we want to change it to a string. Otherwise,
         # leave None as is
-        manager_port = str(manager_port) if manager_port else None
-        self._manager_port = manager_port
+        ssh_port = str(ssh_port) if ssh_port else None
+        self._ssh_port = ssh_port
 
     @property
-    def manager_user(self):
-        return self._manager_user
+    def ssh_user(self):
+        return self._ssh_user
 
-    @manager_user.setter
-    def manager_user(self, _manager_user):
-        self._manager_user = _manager_user
+    @ssh_user.setter
+    def ssh_user(self, _manager_user):
+        self._ssh_user = _manager_user
+
+    @property
+    def manager_username(self):
+        return self._manager_username
+
+    @manager_username.setter
+    def manager_username(self, manager_username):
+        self._manager_username = manager_username
+
+    @property
+    def manager_password(self):
+        return self._manager_password
+
+    @manager_password.setter
+    def manager_password(self, admin_password):
+        self._manager_password = admin_password
 
     @property
     def provider_context(self):

@@ -63,13 +63,13 @@ def recover(snapshot_path,
                 "exist: {1}".format(CLOUDIFY_MANAGER_PK_PATH_ENVAR, key_path)
             )
     else:
-        if not profile.manager_key:
+        if not profile.ssh_key:
             raise exceptions.CloudifyValidationError(
                 "Cannot perform recovery. manager key file not found. Set "
                 "the manager private key path via the {0} environment "
                 "variable".format(CLOUDIFY_MANAGER_PK_PATH_ENVAR)
             )
-        key_path = os.path.expanduser(profile.manager_key)
+        key_path = os.path.expanduser(profile.ssh_key)
         if not os.path.isfile(key_path):
             # manager key file path exists in context but does not exist
             # in the file system. fail now.

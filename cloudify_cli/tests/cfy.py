@@ -42,7 +42,10 @@ default_manager_params = dict(
     provider_context={},
     rest_port=80,
     rest_protocol='http',
-    bootstrap_state='Complete')
+    bootstrap_state='Complete',
+    manager_username='admin',
+    manager_password='admin'
+)
 
 
 @log_capture()
@@ -128,11 +131,13 @@ def use_manager(**manager_params):
     provider_context = manager_params['provider_context'] or {}
     profile = env.ProfileContext()
     profile.manager_ip = manager_params['manager_ip']
-    profile.manager_key = manager_params['ssh_key_path']
-    profile.manager_user = manager_params['ssh_user']
-    profile.manager_port = manager_params['ssh_port']
+    profile.ssh_key = manager_params['ssh_key_path']
+    profile.ssh_user = manager_params['ssh_user']
+    profile.ssh_port = manager_params['ssh_port']
     profile.rest_port = manager_params['rest_port']
     profile.rest_protocol = manager_params['rest_protocol']
+    profile.manager_username = manager_params['manager_username']
+    profile.manager_password = manager_params['manager_password']
     profile.provider_context = provider_context
     profile.bootstrap_state = 'Complete'
 

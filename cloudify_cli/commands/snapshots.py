@@ -21,7 +21,7 @@ from ..cli import helptexts, cfy
 
 @cfy.group(name='snapshots')
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 def snapshots():
     """Handle manager snapshots
     """

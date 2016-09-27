@@ -144,8 +144,8 @@ class BootstrapTest(CliCommandTest):
 
     def test_bootstrap_no_validations_add_ignore_bootstrap_validations(self):
         command = ('cfy bootstrap --skip-validations {0} '
-                   '-i "some_input=some_value"'.format(
-                       SAMPLE_BLUEPRINT_PATH))
+                   '-i "some_input=some_value" '
+                   '-i "admin_password=admin"'.format(SAMPLE_BLUEPRINT_PATH))
 
         self.assert_method_called(
             command=command,
@@ -153,6 +153,7 @@ class BootstrapTest(CliCommandTest):
             function_name='add_ignore_bootstrap_validations_input',
             args=[{
                 u'some_input': u'some_value',
+                u'admin_password': u'admin',
                 'key1': 'default_val1',
                 'key2': 'default_val2',
                 'key3': 'default_val3'
@@ -229,3 +230,30 @@ class BootstrapTest(CliCommandTest):
             command=command,
             module=bootstrap,
             function_name='validate_manager_deployment_size')
+
+    def test_password_auto_generated(self):
+        blueprint_path = os.path.join(
+            BLUEPRINTS_DIR,
+            'local',
+            'blueprint.yaml'
+        )
+        command = 'cfy bootstrap {0} --skip-validations'.format(blueprint_path)
+        self.assert_method_called(
+            command=command,
+            module=bootstrap,
+            function_name='generate_password'
+        )
+
+    def test_password_does_not_auto_generate(self):
+        blueprint_path = os.path.join(
+            BLUEPRINTS_DIR,
+            'local',
+            'blueprint.yaml'
+        )
+        command = ('cfy bootstrap {0} '
+                   '-i admin_password=admin'.format(blueprint_path))
+        self.assert_method_not_called(
+            command=command,
+            module=bootstrap,
+            function_name='generate_password'
+        )

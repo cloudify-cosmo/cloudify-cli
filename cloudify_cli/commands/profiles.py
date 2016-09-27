@@ -61,17 +61,7 @@ def get(logger):
         return
 
     active_profile = _get_profile(env.get_active_profile())
-    columns = [
-        'manager_ip',
-        'ssh_user',
-        'ssh_key_path',
-        'ssh_port',
-        'rest_port',
-        'rest_protocol',
-        'bootstrap_state'
-    ]
-    pt = table.generate(columns, data=[active_profile])
-    table.log('Active profile:', pt)
+    _print_profiles([active_profile], 'Active profile:')
 
 
 @profiles.command(name='list',
@@ -94,17 +84,7 @@ def list(logger):
 
     if profiles:
         logger.info('Listing all profiles...')
-        columns = [
-            'manager_ip',
-            'ssh_user',
-            'ssh_key_path',
-            'ssh_port',
-            'rest_port',
-            'rest_protocol',
-            'bootstrap_state'
-        ]
-        pt = table.generate(columns, data=profiles)
-        table.log('Profiles:', pt)
+        _print_profiles(profiles, 'Profiles:')
 
     if not profile_names:
         logger.info(
@@ -260,7 +240,7 @@ def _move_ssh_key(profile, logger, is_backup):
     This is how we backup and restore ssh keys.
     """
     context = env.get_profile_context(profile)
-    key_filepath = context.manager_key
+    key_filepath = context.ssh_key
     if key_filepath:
         backup_path = os.path.join(
             EXPORTED_SSH_KEYS_DIR, os.path.basename(key_filepath)) + \
@@ -282,23 +262,22 @@ def _move_ssh_key(profile, logger, is_backup):
 def _get_profile(profile_name):
     current_profile = env.get_active_profile()
     env.set_active_profile(profile_name)
-
     context = env.get_profile_context(profile_name)
-    manager_ip = context.manager_ip or None
-    ssh_key_path = context.manager_key or None
-    ssh_user = context.manager_user or None
-    ssh_port = context.manager_port or None
-    rest_port = context.rest_port or None
-    rest_protocol = context.rest_protocol or None
-    bootstrap_state = context.bootstrap_state or 'Incomplete'
-
     env.set_active_profile(current_profile)
 
-    return dict(
-        manager_ip=manager_ip,
-        ssh_key_path=ssh_key_path,
-        ssh_user=ssh_user,
-        ssh_port=ssh_port,
-        rest_port=rest_port,
-        rest_protocol=rest_protocol,
-        bootstrap_state=bootstrap_state)
+    return context.to_dict()
+
+
+def _print_profiles(profiles, header):
+    columns = [
+            'manager_ip',
+            'ssh_user',
+            'ssh_key_path',
+            'ssh_port',
+            'rest_port',
+            'rest_protocol',
+            'manager_username',
+            'bootstrap_state'
+        ]
+    pt = table.generate(columns, data=profiles)
+    table.log(header, pt)

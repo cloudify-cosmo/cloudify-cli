@@ -24,7 +24,7 @@ from ..env import profile
 
 @cfy.command(name='status', short_help="Show manager status [manager only]")
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def status(logger, client):

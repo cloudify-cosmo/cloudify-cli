@@ -27,7 +27,7 @@ from ..exceptions import CloudifyCliError
 
 @cfy.group(name='node-instances')
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 def manager():
     """Handle a deployment's node-instances
     """

@@ -128,7 +128,7 @@ def inputs_callback(ctx, param, value):
     dictionary.
     """
     if not value or ctx.resilient_parsing:
-        return
+        return {}
 
     return inputs_to_dict(value)
 
@@ -208,16 +208,22 @@ def set_cli_except_hook(global_verbosity_level):
     sys.excepthook = new_excepthook
 
 
-def assert_manager_active(func):
+def assert_manager_active(require_creds=True):
     """Wraps the command so that it can only run when a manager is active
+    :param require_creds: If set to True, the wrapped method will fail if no
+    admin password was set either in the profile, or in the env variable
     """
-    # Wraps here makes sure the original docstring propagates to click
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        env.assert_manager_active()
-        return func(*args, **kwargs)
+    def decorator(func):
+        # Wraps here makes sure the original docstring propagates to click
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            env.assert_manager_active()
+            if require_creds:
+                env.assert_credentials_set()
+            return func(*args, **kwargs)
 
-    return wrapper
+        return wrapper
+    return decorator
 
 
 def assert_local_active(func):
@@ -421,6 +427,12 @@ class Options(object):
             is_flag=True,
             help=helptexts.KEEP_UP_ON_FAILURE)
 
+        self.dont_save_password_in_profile = click.option(
+            '--dont-save-password-in-profile',
+            is_flag=True,
+            default=False,
+            help=helptexts.DONT_SAVE_PASSWORD_IN_PROFILE)
+
         self.validate = click.option(
             '--validate',
             is_flag=True,
@@ -447,24 +459,36 @@ class Options(object):
             required=False,
             help=helptexts.MANAGEMENT_IP)
 
-        self.manager_user = click.option(
+        self.ssh_user = click.option(
             '-u',
-            '--manager-user',
+            '--ssh-user',
             required=False,
             help=helptexts.MANAGEMENT_USER)
 
-        self.manager_key = click.option(
+        self.ssh_key = click.option(
             '-k',
-            '--manager-key',
+            '--ssh-key',
             required=False,
             cls=MutuallyExclusiveOption,
-            help=helptexts.MANAGEMENT_KEY)
+            help=helptexts.SSH_KEY)
 
-        self.manager_port = click.option(
-            '--manager-port',
+        self.manager_username = click.option(
+            '-m',
+            '--manager-username',
+            required=False,
+            help=helptexts.MANAGER_USERNAME)
+
+        self.manager_password = click.option(
+            '-p',
+            '--manager-password',
+            required=False,
+            help=helptexts.MANAGER_PASSWORD)
+
+        self.ssh_port = click.option(
+            '--ssh-port',
             required=False,
             default=constants.REMOTE_EXECUTION_PORT,
-            help=helptexts.MANAGEMENT_PORT)
+            help=helptexts.SSH_PORT)
 
         self.rest_port = click.option(
             '--rest-port',

@@ -45,7 +45,7 @@ def executions():
              short_help='Retrieve execution information [manager only]')
 @cfy.argument('execution-id')
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def manager_get(execution_id, logger, client):
@@ -84,7 +84,7 @@ def manager_get(execution_id, logger, client):
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def manager_list(
@@ -138,7 +138,7 @@ def manager_list(
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def manager_start(workflow_id,
@@ -244,7 +244,7 @@ def manager_start(workflow_id,
 @cfy.argument('execution-id')
 @cfy.options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def manager_cancel(execution_id, force, logger, client):

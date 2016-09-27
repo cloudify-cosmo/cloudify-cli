@@ -40,6 +40,7 @@ from ..exceptions import CloudifyCliError
 @cfy.options.task_retry_interval(30)
 @cfy.options.task_thread_pool_size()
 @cfy.options.keep_up_on_failure
+@cfy.options.dont_save_password_in_profile
 @cfy.options.verbose()
 @cfy.pass_logger
 def bootstrap(blueprint_path,
@@ -53,6 +54,7 @@ def bootstrap(blueprint_path,
               task_retry_interval,
               task_thread_pool_size,
               keep_up_on_failure,
+              dont_save_password_in_profile,
               logger):
     """Bootstrap a Cloudify manager
 
@@ -94,6 +96,8 @@ def bootstrap(blueprint_path,
             utils.add_ignore_bootstrap_validations_input(inputs)
 
         if not validate_only:
+            if not inputs.get('admin_password'):
+                inputs['admin_password'] = bs.generate_password()
             try:
                 logger.info('Executing manager bootstrap...')
                 details = bs.bootstrap(
@@ -110,10 +114,13 @@ def bootstrap(blueprint_path,
                 _set_new_profile(active_profile, manager_ip)
                 temp_profile_active = False
                 env.set_active_profile(manager_ip)
-                _set_profile_details(details)
-
+                _set_profile_details(
+                    details,
+                    inputs,
+                    dont_save_password_in_profile
+                )
                 logger.info('Bootstrap complete')
-                logger.info('Manager is up at {0}'.format(manager_ip))
+                _print_finish_message(logger, manager_ip, inputs)
             except Exception as ex:
                 tpe, value, traceback = sys.exc_info()
                 logger.error('Bootstrap failed! ({0})'.format(str(ex)))
@@ -137,6 +144,13 @@ def bootstrap(blueprint_path,
             env.set_active_profile('local')
 
 
+def _print_finish_message(logger, manager_ip, inputs):
+    logger.info('Manager is up at {0}'.format(manager_ip))
+    logger.info('#' * 50)
+    logger.info('Manager password is {0}'.format(inputs['admin_password']))
+    logger.info('#' * 50)
+
+
 def _create_temp_profile():
     active_profile = 'temp-' + utils.generate_random_string()
     init_manager_profile(profile_name=active_profile)
@@ -152,15 +166,18 @@ def _set_new_profile(active_profile, manager_ip):
     shutil.move(temp_profile, new_profile)
 
 
-def _set_profile_details(details):
+def _set_profile_details(details, inputs, dont_save_password):
     profile = env.profile
     profile.manager_ip = details['manager_ip']
     profile.rest_port = details['rest_port']
     profile.rest_protocol = details['rest_protocol']
     profile.provider_context = details['provider_context']
-    profile.manager_key = details['manager_key_path']
-    profile.manager_user = details['manager_user']
-    profile.manager_port = details['manager_port']
+    profile.ssh_key = details['ssh_key_path']
+    profile.ssh_user = details['ssh_user']
+    profile.ssh_port = details['ssh_port']
+    profile.manager_username = inputs['admin_username']
+    if not dont_save_password:
+        profile.manager_password = inputs['admin_password']
 
     profile.bootstrap_state = 'Complete'
     profile.save()

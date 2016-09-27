@@ -19,6 +19,8 @@ import time
 import copy
 import shutil
 import base64
+import random
+import string
 import tarfile
 import tempfile
 import urlparse
@@ -42,9 +44,9 @@ from ..exceptions import CloudifyBootstrapError
 
 PROVIDER_RUNTIME_PROPERTY = 'provider'
 MANAGER_IP_RUNTIME_PROPERTY = 'manager_ip'
-MANAGER_USER_RUNTIME_PROPERTY = 'manager_user'
-MANAGER_PORT_RUNTIME_PROPERTY = 'manager_port'
-MANAGER_KEY_PATH_RUNTIME_PROPERTY = 'manager_key_path'
+SSH_USER_RUNTIME_PROPERTY = 'ssh_user'
+SSH_PORT_RUNTIME_PROPERTY = 'ssh_port'
+SSH_KEY_PATH_RUNTIME_PROPERTY = 'ssh_key_path'
 
 MANAGER_DEPLOYMENT_ARCHIVE_IGNORED_FILES = ['.git']
 MAX_MANAGER_DEPLOYMENT_SIZE = 50 * (10 ** 6)  # 50MB
@@ -289,24 +291,24 @@ def bootstrap(blueprint_path,
         manager_ip = \
             manager_node_instance.runtime_properties[
                 MANAGER_IP_RUNTIME_PROPERTY]
-        manager_user = \
+        ssh_user = \
             manager_node_instance.runtime_properties[
-                MANAGER_USER_RUNTIME_PROPERTY]
-        manager_port = \
+                SSH_USER_RUNTIME_PROPERTY]
+        ssh_port = \
             manager_node_instance.runtime_properties[
-                MANAGER_PORT_RUNTIME_PROPERTY]
-        manager_key_path = manager_node_instance.runtime_properties[
-            MANAGER_KEY_PATH_RUNTIME_PROPERTY]
+                SSH_PORT_RUNTIME_PROPERTY]
+        ssh_key_path = manager_node_instance.runtime_properties[
+            SSH_KEY_PATH_RUNTIME_PROPERTY]
     else:
         manager_ip = working_env.outputs()['manager_ip']
-        manager_user = manager_node.properties['ssh_user']
-        manager_port = manager_node.properties['ssh_port']
-        manager_key_path = manager_node.properties['ssh_key_filename']
+        ssh_user = manager_node.properties['ssh_user']
+        ssh_port = manager_node.properties['ssh_port']
+        ssh_key_path = manager_node.properties['ssh_key_filename']
 
         fabric_env = build_fabric_env(manager_ip,
-                                      manager_user,
-                                      manager_port,
-                                      manager_key_path)
+                                      ssh_user,
+                                      ssh_port,
+                                      ssh_key_path)
 
         agent_remote_key_path = _handle_agent_key_file(fabric_env,
                                                        manager_node)
@@ -352,9 +354,9 @@ def bootstrap(blueprint_path,
         'provider_name': 'provider',
         'provider_context': provider_context,
         'manager_ip': manager_ip,
-        'manager_user': manager_user,
-        'manager_port': manager_port,
-        'manager_key_path': manager_key_path,
+        'ssh_user': ssh_user,
+        'ssh_port': ssh_port,
+        'ssh_key_path': ssh_key_path,
         'rest_port': rest_port,
         'rest_protocol': rest_protocol
     }
@@ -395,14 +397,14 @@ def recover(snapshot_path,
     manager_node = working_env.storage.get_node('manager_configuration')
     manager_node_instance = working_env.storage.get_node_instance(
         manager_node_instance_id)
-    manager_user = manager_node.properties['ssh_user']
-    manager_port = manager_node.properties['ssh_port']
-    manager_key_path = manager_node.properties['ssh_key_filename']
+    ssh_user = manager_node.properties['ssh_user']
+    ssh_port = manager_node.properties['ssh_port']
+    ssh_key_path = manager_node.properties['ssh_key_filename']
 
     fabric_env = build_fabric_env(manager_ip,
-                                  manager_user,
-                                  manager_port,
-                                  manager_key_path)
+                                  ssh_user,
+                                  ssh_port,
+                                  ssh_key_path)
 
     agent_remote_key_path = _handle_agent_key_file(fabric_env,
                                                    manager_node)
@@ -453,12 +455,12 @@ def recover(snapshot_path,
     client.snapshots.delete(snapshot_id)
 
 
-def build_fabric_env(manager_ip, manager_user, manager_port, manager_key_path):
+def build_fabric_env(manager_ip, ssh_user, ssh_port, ssh_key_path):
     return {
         "host_string": manager_ip,
-        "user": manager_user,
-        "port": manager_port,
-        "key_filename": manager_key_path
+        "user": ssh_user,
+        "port": ssh_port,
+        "key_filename": ssh_key_path
     }
 
 
@@ -650,3 +652,11 @@ def _stop_retries(retries, wait_interval, attempt, *args, **kwargs):
         'Attempt {0} out of {1} failed. Waiting for {2} seconds and trying '
         'again...'.format(attempt, retries, wait_interval))
     return retries != -1 and attempt >= retries
+
+
+def generate_password(length=12):
+    logger = get_logger()
+    chars = string.ascii_lowercase + string.ascii_uppercase + string.digits
+    password = ''.join(random.choice(chars) for _ in range(length))
+    logger.info('Generated password: {0}'.format(password))
+    return password
