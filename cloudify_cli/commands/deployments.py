@@ -58,7 +58,7 @@ def _print_deployment_inputs(client, blueprint_id, logger):
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def manager_list(blueprint_id, sort_by, descending, logger, client):
@@ -97,7 +97,7 @@ def manager_list(blueprint_id, sort_by, descending, logger, client):
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def manager_update(deployment_id,
@@ -174,7 +174,7 @@ def manager_update(deployment_id,
 @cfy.options.blueprint_id(required=True)
 @cfy.options.inputs
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def manager_create(blueprint_id, deployment_id, inputs, logger, client):
@@ -210,7 +210,7 @@ def manager_create(blueprint_id, deployment_id, inputs, logger, client):
 @cfy.argument('deployment-id')
 @cfy.options.force(help=helptexts.IGNORE_LIVE_NODES)
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def manager_delete(deployment_id, force, logger, client):
@@ -227,7 +227,7 @@ def manager_delete(deployment_id, force, logger, client):
              short_help='Show deployment outputs [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def manager_outputs(deployment_id, logger, client):
@@ -254,7 +254,7 @@ def manager_outputs(deployment_id, logger, client):
              short_help='Show deployment inputs [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def manager_inputs(deployment_id, logger, client):

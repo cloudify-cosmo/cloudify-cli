@@ -25,7 +25,7 @@ from ..execution_events_fetcher import ExecutionEventsFetcher, \
 
 @cfy.group(name='events')
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 def events():
     """Show events from workflow executions
     """

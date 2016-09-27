@@ -46,11 +46,11 @@ class UseTest(CliCommandTest):
                 'name': 'name', 'context': {}
             }
         )
-        self.invoke('cfy use 127.0.0.1 -u test_user --manager-port 22222')
+        self.invoke('cfy use 127.0.0.1 -u test_user --ssh-port 22222')
         context = self._read_context()
         self.assertEquals('127.0.0.1', context.manager_ip)
-        self.assertEquals('22222', context.manager_port)
-        self.assertEquals('test_user', context.manager_user)
+        self.assertEquals('22222', context.ssh_port)
+        self.assertEquals('test_user', context.ssh_user)
 
     def test_use_with_authorization(self):
         host = '127.0.0.1'

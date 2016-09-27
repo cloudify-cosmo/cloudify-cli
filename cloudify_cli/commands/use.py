@@ -28,16 +28,20 @@ from ..exceptions import CloudifyCliError
 @cfy.command(name='use',
              short_help='Control a specific manager')
 @cfy.argument('profile-name')
-@cfy.options.manager_user
-@cfy.options.manager_key
-@cfy.options.manager_port
+@cfy.options.ssh_user
+@cfy.options.ssh_key
+@cfy.options.ssh_port
+@cfy.options.manager_username
+@cfy.options.manager_password
 @cfy.options.rest_port
 @cfy.options.verbose()
 @cfy.pass_logger
 def use(profile_name,
-        manager_user,
-        manager_key,
-        manager_port,
+        ssh_user,
+        ssh_key,
+        ssh_port,
+        manager_username,
+        manager_password,
         rest_port,
         logger):
     """Control a specific manager
@@ -66,7 +70,9 @@ def use(profile_name,
     provider_context = _get_provider_context(
         profile_name,
         rest_port,
-        rest_protocol
+        rest_protocol,
+        manager_username,
+        manager_password
     )
 
     if not env.is_profile_exists(profile_name):
@@ -80,9 +86,11 @@ def use(profile_name,
     _set_profile_context(
         profile_name,
         provider_context,
-        manager_key,
-        manager_user,
-        manager_port,
+        ssh_key,
+        ssh_user,
+        ssh_port,
+        manager_username,
+        manager_password,
         rest_port,
         rest_protocol
     )
@@ -107,12 +115,27 @@ def _assert_manager_available(client, profile_name):
             "Can't use manager {0}: {1}".format(profile_name, str(ex)))
 
 
-def _get_provider_context(profile_name, rest_port, rest_protocol):
+def _get_provider_context(
+        profile_name,
+        rest_port,
+        rest_protocol,
+        manager_username,
+        manager_password
+):
+    # Getting here an existing profile context, if one was available,
+    # in case the user didn't pass username/password, and was expecting the
+    profile = env.get_profile_context(profile_name, suppress_error=True)
+    username = manager_username or profile.manager_username
+    password = manager_password or profile.manager_password
+
     client = env.get_rest_client(
         rest_host=profile_name,
         rest_port=rest_port,
         rest_protocol=rest_protocol,
-        skip_version_check=True)
+        skip_version_check=True,
+        username=username,
+        password=password
+    )
 
     _assert_manager_available(client, profile_name)
 
@@ -125,21 +148,27 @@ def _get_provider_context(profile_name, rest_port, rest_protocol):
 
 def _set_profile_context(profile_name,
                          provider_context,
-                         manager_key,
-                         manager_user,
-                         manager_port,
+                         ssh_key,
+                         ssh_user,
+                         ssh_port,
+                         manager_username,
+                         manager_password,
                          rest_port,
                          rest_protocol):
     profile = env.get_profile_context(profile_name)
     profile.provider_context = provider_context
-    if manager_key:
-        profile.manager_key = manager_key
-    if manager_user:
-        profile.manager_user = manager_user
-    if manager_port:
-        profile.manager_port = manager_port
+    if ssh_key:
+        profile.ssh_key = ssh_key
+    if ssh_user:
+        profile.ssh_user = ssh_user
+    if ssh_port:
+        profile.ssh_port = ssh_port
     if rest_port:
         profile.rest_port = rest_port
+    if manager_username:
+        profile.manager_username = manager_username
+    if manager_password:
+        profile.manager_password = manager_password
     profile.rest_protocol = rest_protocol
     profile.bootstrap_state = 'Complete'
 

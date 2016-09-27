@@ -109,6 +109,10 @@ EXCLUDE_CREDENTIALS_IN_SNAPSHOT = "Exclude credentials in the snapshot"
 SNAPSHOT_ID = "The unique identifier for the snapshot"
 
 KEEP_UP_ON_FAILURE = "Do not teardown the manager even if the bootstrap fails"
+DONT_SAVE_PASSWORD_IN_PROFILE = "After the bootstrap is complete, don't " \
+                                "save the password in the profile context. " \
+                                "Regardless, the password will *always* be " \
+                                "printed to the console [default: False]"
 VALIDATE_ONLY = (
     "Only perform resource creation validation without actually bootstrapping"
 )
@@ -150,8 +154,10 @@ DEFAULT_MUTUALITY_MESSAGE = 'Cannot be used simultaneously'
 
 MANAGEMENT_IP = 'The IP of the host machine on which you bootstrapped'
 MANAGEMENT_USER = 'The user on the host machine with which you bootstrapped'
-MANAGEMENT_KEY = 'The path to the ssh key-file to use when connecting'
-MANAGEMENT_PORT = 'The port to use when connecting to the manager'
+SSH_KEY = 'The path to the ssh key-file to use when connecting'
+SSH_PORT = 'The SSH port to use when connecting to the manager'
+MANAGER_USERNAME = 'Manager username used to run commands on the manager'
+MANAGER_PASSWORD = 'Manager password used to run commands on the manager'
 REST_PORT = "The REST server's port"
 
 EXPORT_SSH_KEYS = 'Include ssh key files in archive'

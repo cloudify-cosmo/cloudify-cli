@@ -47,7 +47,7 @@ REMOTE_WORKFLOW_STATE_PATH = '/opt/cloudify/_workflow_state.json'
 @cfy.options.task_retry_interval(30)
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_logger
 @cfy.pass_client(skip_version_check=True)
 def upgrade(blueprint_path,
@@ -155,9 +155,9 @@ def upgrade(blueprint_path,
 def update_inputs(inputs=None):
     inputs = inputs or dict()
     inputs.update({'private_ip': _load_private_ip(inputs)})
-    inputs.update({'ssh_key_filename': _load_manager_key(inputs)})
-    inputs.update({'ssh_user': _load_manager_user(inputs)})
-    inputs.update({'ssh_port': _load_manager_port(inputs)})
+    inputs.update({'ssh_key_filename': _load_ssh_key(inputs)})
+    inputs.update({'ssh_user': _load_ssh_user(inputs)})
+    inputs.update({'ssh_port': _load_ssh_port(inputs)})
     inputs.update({'public_ip': profile.manager_ip})
     return inputs
 
@@ -170,28 +170,28 @@ def _load_private_ip(inputs):
                                           'the upgrade/rollback process')
 
 
-def _load_manager_key(inputs):
+def _load_ssh_key(inputs):
     try:
-        key_path = inputs.get('ssh_key_filename') or profile.manager_key
+        key_path = inputs.get('ssh_key_filename') or profile.ssh_key
         return os.path.expanduser(key_path)
     except Exception:
-        raise exceptions.CloudifyCliError('Manager key must be provided for '
+        raise exceptions.CloudifyCliError('SSH key must be provided for '
                                           'the upgrade/rollback process')
 
 
-def _load_manager_user(inputs):
+def _load_ssh_user(inputs):
     try:
-        return inputs.get('ssh_user') or profile.manager_user
+        return inputs.get('ssh_user') or profile.ssh_user
     except Exception:
-        raise exceptions.CloudifyCliError('Manager user must be provided for '
+        raise exceptions.CloudifyCliError('SSH user must be provided for '
                                           'the upgrade/rollback process')
 
 
-def _load_manager_port(inputs):
+def _load_ssh_port(inputs):
     try:
-        return inputs.get('ssh_port') or profile.manager_port
+        return inputs.get('ssh_port') or profile.ssh_port
     except Exception:
-        raise exceptions.CloudifyCliError('Manager port must be provided for '
+        raise exceptions.CloudifyCliError('SSH port must be provided for '
                                           'the upgrade/rollback process')
 
 

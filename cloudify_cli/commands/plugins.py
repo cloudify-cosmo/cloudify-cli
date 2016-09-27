@@ -82,7 +82,7 @@ def validate(plugin_path, logger):
 @cfy.argument('plugin-id')
 @cfy.options.force(help=helptexts.FORCE_DELETE_PLUGIN)
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def delete(plugin_id, force, logger, client):
@@ -100,7 +100,7 @@ def delete(plugin_id, force, logger, client):
 @cfy.argument('plugin-path')
 @cfy.options.verbose()
 @cfy.pass_context
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def upload(ctx, plugin_path, logger, client):
@@ -145,7 +145,7 @@ def download(plugin_id, output_path, logger, client):
                  short_help='Retrieve plugin information [manager only]')
 @cfy.argument('plugin-id')
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def get(plugin_id, logger, client):
@@ -165,7 +165,7 @@ def get(plugin_id, logger, client):
 @cfy.options.sort_by('uploaded_at')
 @cfy.options.descending
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def list(sort_by, descending, logger, client):

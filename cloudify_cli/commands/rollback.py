@@ -30,7 +30,7 @@ from .upgrade import put_workflow_state_file, update_inputs, \
 @cfy.options.task_retry_interval(30)
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client(skip_version_check=True)
 @cfy.pass_logger
 def rollback(blueprint_path,

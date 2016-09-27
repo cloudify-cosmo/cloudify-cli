@@ -33,7 +33,7 @@ from ..ssh import run_command_on_manager, test_profile
 @cfy.options.session_id
 @cfy.options.list_sessions
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_logger
 def ssh(command, host, sid, list_sessions, logger):
     """Connects to a running manager via SSH.
@@ -106,8 +106,8 @@ def _open_interactive_shell(host_string, command=''):
     (Disfigures coloring and such...)
     """
     profile = env.profile
-    ssh_key_path = os.path.expanduser(profile.manager_key)
-    port = profile.manager_port
+    ssh_key_path = os.path.expanduser(profile.ssh_key)
+    port = profile.ssh_port
     cmd = ['ssh', '-t', host_string, '-i', ssh_key_path, '-p', port]
     if command:
         cmd.append(command)
