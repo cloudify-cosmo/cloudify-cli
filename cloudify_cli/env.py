@@ -166,6 +166,7 @@ def get_rest_client(rest_host=None,
                     rest_protocol=None,
                     username=None,
                     password=None,
+                    tenant_name=None,
                     trust_all=False,
                     skip_version_check=False):
     rest_host = rest_host or profile.manager_ip
@@ -173,8 +174,16 @@ def get_rest_client(rest_host=None,
     rest_protocol = rest_protocol or profile.rest_protocol
     username = username or get_username()
     password = password or get_password()
+    tenant_name = tenant_name or get_tenant_name()
     trust_all = trust_all or get_ssl_trust_all()
     headers = get_auth_header(username, password)
+    headers[constants.CLOUDIFY_TENANT_HEADER] = tenant_name
+
+    if not username:
+        raise CloudifyCliError('Command failed: Missing Username')
+
+    if not password:
+        raise CloudifyCliError('Command failed: Missing password')
 
     cert = get_ssl_cert()
 
@@ -219,6 +228,10 @@ def get_username():
 
 def get_password():
     return os.environ.get(constants.CLOUDIFY_PASSWORD_ENV)
+
+
+def get_tenant_name():
+    return os.environ.get(constants.CLOUDIFY_TENANT_ENV)
 
 
 def get_default_rest_cert_local_path():
@@ -389,14 +402,14 @@ class ProfileContext(yaml.YAMLObject):
 
 
 def get_auth_header(username, password):
-    header = None
+    header = {}
 
     if username and password:
         credentials = '{0}:{1}'.format(username, password)
+        encoded_credentials = urlsafe_b64encode(credentials)
         header = {
             constants.CLOUDIFY_AUTHENTICATION_HEADER:
-                constants.BASIC_AUTH_PREFIX + ' '
-                + urlsafe_b64encode(credentials)}
+                constants.BASIC_AUTH_PREFIX + ' ' + encoded_credentials}
 
     return header
 

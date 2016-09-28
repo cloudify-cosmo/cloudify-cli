@@ -31,6 +31,7 @@ from .commands import install
 from .commands import plugins
 from .commands import recover
 from .commands import upgrade
+from .commands import tenants
 from .commands import teardown
 from .commands import profiles
 from .commands import rollback
@@ -40,6 +41,7 @@ from .commands import uninstall
 from .commands import workflows
 from .commands import blueprints
 from .commands import executions
+from .commands import user_groups
 from .commands import deployments
 from .commands import node_instances
 from .commands import maintenance_mode
@@ -86,9 +88,11 @@ def _register_commands():
     _cfy.add_command(events.events)
     _cfy.add_command(plugins.plugins)
     _cfy.add_command(upgrade.upgrade)
+    _cfy.add_command(tenants.tenants)
     _cfy.add_command(teardown.teardown)
     _cfy.add_command(rollback.rollback)
     _cfy.add_command(snapshots.snapshots)
+    _cfy.add_command(user_groups.user_groups)
     _cfy.add_command(maintenance_mode.maintenance_mode)
 
     _cfy.add_command(nodes.nodes)

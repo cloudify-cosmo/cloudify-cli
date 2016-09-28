@@ -525,6 +525,17 @@ class Options(object):
             '--command',
             help=helptexts.SSH_COMMAND)
 
+        self.tenant_name = click.option(
+            '-t',
+            '--tenant-name',
+            required=True,
+            help=helptexts.TENANT)
+
+        self.group_name = click.option(
+            '-g',
+            '--group-name',
+            help=helptexts.GROUP)
+
         self.host_session = click.option(
             '--host',
             is_flag=True,
