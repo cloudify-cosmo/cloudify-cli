@@ -39,7 +39,7 @@ function download_resources() {
 
     GITHUB_USERNAME=$1
     GITHUB_PASSWORD=$2
-    TELCO_MODE=$3
+  
     
     mkdir -p packaging/source/{python,blueprints,types,scripts,plugins}
     pushd packaging/source/python
@@ -104,7 +104,7 @@ GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
-TELCO_MODE=$5
+export TELCO_MODE=$5
 
 if [ "$TELCO_MODE" == "true" ];then
     export PREFIX_NAME="cloudify-telecom"
