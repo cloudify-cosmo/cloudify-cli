@@ -55,6 +55,11 @@ def generate(cols, data, defaults=None):
                 except ValueError:
                     # not a timestamp
                     pass
+            elif row_data[column] and isinstance(row_data[column], list):
+                row_data[column] = ','.join(row_data[column])
+            elif not row_data[column]:
+                # if it's empty list, don't print []
+                row_data[column] = ''
             return row_data[column]
         else:
             return defaults[column]
