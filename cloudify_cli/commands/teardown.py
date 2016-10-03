@@ -90,7 +90,13 @@ def teardown(force,
 @cfy.pass_logger
 def _update_local_provider_context(manager_ip, logger):
     try:
-        use(manager_ip, profile.rest_port)
+        use.callback(
+            profile_name=manager_ip,
+            manager_user=None,
+            manager_key=None,
+            manager_port=None,
+            rest_port=profile.rest_port,
+        )
     except BaseException as e:
         logger.warning('Failed to retrieve provider context: {0}. This '
                        'may cause a leaking manager '
