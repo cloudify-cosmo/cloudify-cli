@@ -31,8 +31,10 @@ from ..bootstrap import bootstrap as bs
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose()
+@cfy.pass_context
 @cfy.assert_manager_active()
-def teardown(force,
+def teardown(ctx,
+             force,
              ignore_deployments,
              task_retries,
              task_retry_interval,
@@ -78,7 +80,7 @@ def teardown(force,
 
         # update local provider context since the server ip might have
         # changed in case it has gone through a recovery process.
-        _update_local_provider_context(manager_ip)
+        _update_local_provider_context(ctx, manager_ip)
 
         # execute teardown
         _do_teardown(
@@ -88,13 +90,11 @@ def teardown(force,
 
 
 @cfy.pass_logger
-def _update_local_provider_context(manager_ip, logger):
+def _update_local_provider_context(ctx, manager_ip, logger):
     try:
-        use.callback(
+        ctx.invoke(
+            use,
             profile_name=manager_ip,
-            manager_user=None,
-            manager_key=None,
-            manager_port=None,
             rest_port=profile.rest_port,
         )
     except BaseException as e:
