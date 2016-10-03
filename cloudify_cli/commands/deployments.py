@@ -170,7 +170,6 @@ def manager_update(deployment_id,
 
 @cfy.command(name='create',
              short_help='Create a deployment [manager only]')
-@cfy.argument('deployment-id', required=False)
 @cfy.options.blueprint_id(required=True)
 @cfy.options.deployment_id()
 @cfy.options.inputs
@@ -179,10 +178,7 @@ def manager_update(deployment_id,
 @cfy.pass_client()
 @cfy.pass_logger
 def manager_create(blueprint_id, deployment_id, inputs, logger, client):
-    """Create a deployment on the manager
-
-    `DEPLOYMENT_ID` is the id of the deployment you'd like to create.
-    """
+    """Create a deployment on the manager."""
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
     deployment_id = deployment_id or blueprint_id
