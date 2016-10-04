@@ -42,10 +42,6 @@ class DownloadFileTest(TestCase):
         tempfile.mkstemp.side_effect = [('<fd>', self.expected_destination)]
         self.addCleanup(tempfile_patcher.stop)
 
-        os_patcher = patch('cloudify_cli.utils.os')
-        os_patcher.start()
-        self.addCleanup(os_patcher.stop)
-
         get_patcher = patch('cloudify_cli.utils.requests.get')
         self.get = get_patcher.start()
         self.addCleanup(get_patcher.stop)
@@ -54,6 +50,11 @@ class DownloadFileTest(TestCase):
             'cloudify_cli.utils.open', mock_open(), create=True)
         self.open = open_patcher.start()
         self.addCleanup(open_patcher.stop)
+
+        # Avoid errors when os.close(fd) is called
+        os_patcher = patch('cloudify_cli.utils.os')
+        os_patcher.start()
+        self.addCleanup(os_patcher.stop)
 
         # Disable logger output when running test cases
         logger_patcher = patch('cloudify_cli.utils.get_logger')
