@@ -180,9 +180,9 @@ def download_file(url, destination=None):
 
     try:
         response = requests.get(url, stream=True)
-    except requests.exceptions.RequestException as exception:
+    except requests.exceptions.RequestException as ex:
         raise CloudifyCliError(
-            'Failed to download {0}. ({1})'.format(url, str(exception)))
+            'Failed to download {0}. ({1})'.format(url, str(ex)))
 
     final_url = response.url
     if final_url != url:
@@ -192,9 +192,9 @@ def download_file(url, destination=None):
         with open(destination, 'wb') as destination_file:
             for chunk in response.iter_content(CHUNK_SIZE):
                 destination_file.write(chunk)
-    except IOError as exception:
+    except IOError as ex:
         raise CloudifyCliError(
-            'Failed to download {0}. ({1})'.format(url, str(exception)))
+            'Failed to download {0}. ({1})'.format(url, str(ex)))
 
     return destination
 
