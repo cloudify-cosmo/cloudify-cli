@@ -18,7 +18,7 @@ from setuptools import setup
 
 setup(
     name='cloudify',
-    version='4.0a4',
+    version='4.0a5',
     author='Gigaspaces',
     author_email='cosmo-admin@gigaspaces.com',
     packages=['cloudify_cli',
@@ -52,10 +52,10 @@ setup(
         'requests==2.7.0',
         'PrettyTable>=0.7,<0.8',
         'click_didyoumean==0.0.3',
-        'cloudify-dsl-parser==4.0a4',
+        'cloudify-dsl-parser==4.0a5',
         'cloudify-script-plugin==1.4',
-        'cloudify-rest-client==4.0a4',
-        'cloudify-plugins-common==4.0a4',
+        'cloudify-rest-client==4.0a5',
+        'cloudify-plugins-common==4.0a5',
         'backports.shutil_get_terminal_size==1.0.0',
     ]
 )
