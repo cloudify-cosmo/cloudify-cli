@@ -166,7 +166,7 @@ class DeploymentsTest(CliCommandTest):
 
         self.client.deployments.create = MagicMock(return_value=deployment)
         self.invoke(
-            'cfy deployments create -b a-blueprint-id -d deployment')
+            'cfy deployments create deployment -b a-blueprint-id')
 
     def test_deployments_delete(self):
         self.client.deployments.delete = MagicMock()
@@ -323,7 +323,7 @@ class DeploymentsTest(CliCommandTest):
         self.client.deployments.create = raise_error
 
         outcome = self.invoke(
-            'cfy deployments create -b a-blueprint-id -d deployment',
+            'cfy deployments create deployment -b a-blueprint-id',
             err_str_segment='no inputs'
         )
         outcome = [o.strip() for o in outcome.logs.split('\n')]
