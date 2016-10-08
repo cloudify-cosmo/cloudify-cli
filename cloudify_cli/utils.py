@@ -179,7 +179,12 @@ def download_file(url, destination=None):
     logger.info('Downloading {0} to {1}...'.format(url, destination))
 
     try:
-        response = requests.get(url, stream=True)
+        try:
+            response = requests.get(url, stream=True)
+        except requests.exceptions.SSLError as ex:
+            logger.warning('SSL problem: %s', str(ex))
+            logger.info('Retrying without certificate verification...')
+            response = requests.get(url, stream=True, verify=False)
     except requests.exceptions.RequestException as ex:
         raise CloudifyCliError(
             'Failed to download {0}. ({1})'.format(url, str(ex)))

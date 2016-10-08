@@ -18,10 +18,14 @@ from testtools import TestCase
 from testtools.matchers import Equals
 
 from mock import (
+    MagicMock as Mock,
     mock_open,
     patch,
 )
-from requests.exceptions import ConnectionError
+from requests.exceptions import (
+    ConnectionError,
+    SSLError,
+)
 
 from ..exceptions import CloudifyCliError
 from ..utils import download_file
@@ -64,6 +68,15 @@ class DownloadFileTest(TestCase):
     def test_download_success(self):
         """Download file successfully."""
         destination = download_file('some_url')
+        self.assertThat(destination, Equals(self.expected_destination))
+
+    def test_ssl_error(self):
+        """Download is retried without verification on SSL error."""
+        url = 'some_url'
+        response = Mock()
+        response.url = url
+        self.get.side_effect = [SSLError, response]
+        destination = download_file(url)
         self.assertThat(destination, Equals(self.expected_destination))
 
     def test_download_connection_error(self):
