@@ -50,7 +50,6 @@ from .. import utils
 from .. import inputs
 from .. import logger
 from .. import constants
-from .. import blueprint
 from ..config import config
 from .. import local as cli_local
 from ..bootstrap import bootstrap
@@ -65,8 +64,7 @@ from . import cfy
 
 from .commands.test_base import CliCommandTest
 from .commands.mocks import mock_logger, mock_stdout, MockListResponse
-from .commands.constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH, \
-    SAMPLE_ARCHIVE_PATH, SAMPLE_CUSTOM_NAME_ARCHIVE, SAMPLE_ARCHIVE_URL
+from .commands.constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH
 
 
 class TestCLIBase(CliCommandTest):
@@ -1058,97 +1056,6 @@ class TestGetRestClient(CliCommandTest):
         self.assertEqual('{0}://{1}:{2}/api/{3}'.format(
             rest_protocol, host, port, DEFAULT_API_VERSION),
             client._client.url)
-
-
-class TestGetBlueprint(CliCommandTest):
-    def test_yaml_path(self):
-        self.assertEqual(
-            SAMPLE_BLUEPRINT_PATH,
-            blueprint.get(SAMPLE_BLUEPRINT_PATH)
-        )
-
-    def test_archive_default_name(self):
-        # Can't check the whole path here, as it's a randomly generated temp
-        self.assertIn(
-            'helloworld/blueprint.yaml',
-            blueprint.get(SAMPLE_ARCHIVE_PATH)
-        )
-
-    def test_archive_custom_name(self):
-        # Can't check the whole path here, as it's a randomly generated temp
-        self.assertIn(
-            'helloworld/simple_blueprint.yaml',
-            blueprint.get(SAMPLE_CUSTOM_NAME_ARCHIVE, 'simple_blueprint.yaml')
-        )
-
-    def test_archive_custom_name_no_default(self):
-        # There's no `blueprint.yaml` in the archive, so it should fail here
-        self.assertRaises(
-            CloudifyCliError,
-            blueprint.get,
-            SAMPLE_CUSTOM_NAME_ARCHIVE
-        )
-
-    def test_url_default_name(self):
-        # Can't check the whole path here, as it's a randomly generated temp
-        self.assertTrue(
-            blueprint.get(SAMPLE_ARCHIVE_URL).endswith(
-                'cloudify-hello-world-example-master/blueprint.yaml',
-            )
-        )
-
-    def test_url_custom_name(self):
-        # Can't check the whole path here, as it's a randomly generated temp
-        self.assertTrue(
-            blueprint.get(SAMPLE_ARCHIVE_URL, 'ec2-blueprint.yaml').endswith(
-                'cloudify-hello-world-example-master/ec2-blueprint.yaml',
-            )
-        )
-
-    def test_bad_filename(self):
-        self.assertRaises(
-            CloudifyCliError,
-            blueprint.get,
-            'bad_filename.yaml'
-        )
-
-    def test_github_path(self):
-        # Can't check the whole path here, as it's a randomly generated temp
-        self.assertTrue(
-            blueprint.get(
-                'cloudify-cosmo/cloudify-hello-world-example'
-            ).endswith(
-                'cloudify-hello-world-example-master/blueprint.yaml',
-            )
-        )
-
-    def test_github_path_custom_name(self):
-        # Can't check the whole path here, as it's a randomly generated temp
-        self.assertTrue(
-            blueprint.get(
-                'cloudify-cosmo/cloudify-hello-world-example',
-                'ec2-blueprint.yaml'
-            ).endswith(
-                'cloudify-hello-world-example-master/ec2-blueprint.yaml',
-            )
-        )
-
-    def test_generate_id_default(self):
-        self.assertEqual(
-            'helloworld',
-            blueprint.generate_id(SAMPLE_BLUEPRINT_PATH)
-        )
-
-    def test_generate_id_custom(self):
-        self.assertEqual(
-            'helloworld.test',
-            blueprint.generate_id(SAMPLE_BLUEPRINT_PATH, 'test')
-        )
-
-    def test_generate_id_in_blueprint_folder(self):
-        self.assertEqual(
-            'helloworld',
-            blueprint.generate_id(os.path.join('.', SAMPLE_BLUEPRINT_PATH)))
 
 
 class TestUtils(CliCommandTest):
