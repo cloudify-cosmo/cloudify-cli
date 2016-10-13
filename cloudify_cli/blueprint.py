@@ -15,6 +15,7 @@
 ############
 
 import os
+from urlparse import urlparse
 
 from . import utils
 from .exceptions import CloudifyCliError
@@ -41,7 +42,7 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
                 .format(blueprint_filename))
         return blueprint_file
 
-    if '://' in source:
+    if urlparse(source).scheme:
         downloaded_source = utils.download_file(source)
         return get_blueprint_file(downloaded_source)
     elif os.path.isfile(source):
