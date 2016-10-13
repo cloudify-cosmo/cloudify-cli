@@ -43,8 +43,7 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
         return blueprint_file
 
     if urlparse(source).scheme:
-        downloaded_source = utils.download_file(source)
-        return get_blueprint_file(downloaded_source)
+        return source
     elif os.path.isfile(source):
         if utils.is_archive(source):
             return get_blueprint_file(source)
