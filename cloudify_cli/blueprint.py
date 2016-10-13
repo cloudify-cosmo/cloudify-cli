@@ -33,8 +33,11 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
     """
     def get_blueprint_file(final_source):
         archive_root = utils.extract_archive(final_source)
-        blueprint = os.path.join(archive_root, os.listdir(archive_root)[0])
-        blueprint_file = os.path.join(blueprint, blueprint_filename)
+        blueprint_directory = os.path.join(
+            archive_root,
+            os.listdir(archive_root)[0],
+        )
+        blueprint_file = os.path.join(blueprint_directory, blueprint_filename)
         if not os.path.isfile(blueprint_file):
             raise CloudifyCliError(
                 'Could not find `{0}`. Please provide the name of the main '
