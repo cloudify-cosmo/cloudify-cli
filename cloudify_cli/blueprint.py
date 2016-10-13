@@ -54,25 +54,24 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
             # Maybe check if yaml. If not, verified by dsl parser
             return source
     elif len(source.split('/')) == 2:
-        downloaded_source = _get_from_github(source)
-        # GitHub archives provide an inner folder with each archive.
-        return get_blueprint_file(downloaded_source)
+        return _map_to_github_url(source)
     else:
         raise CloudifyCliError(
             'You must provide either a path to a local file, a remote URL '
             'or a GitHub `organization/repository[:tag/branch]`')
 
 
-def _get_from_github(source):
+def _map_to_github_url(source):
     """Returns a path to a downloaded github archive.
 
     Source to download should be in the format of `org/repo[:tag/branch]`.
+
     """
     source_parts = source.split(':', 1)
     repo = source_parts[0]
     tag = source_parts[1] if len(source_parts) == 2 else 'master'
     url = 'https://github.com/{0}/archive/{1}.tar.gz'.format(repo, tag)
-    return utils.download_file(url)
+    return url
 
 
 def generate_id(blueprint_path, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
