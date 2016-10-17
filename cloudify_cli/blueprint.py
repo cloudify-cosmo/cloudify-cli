@@ -22,20 +22,26 @@ from .exceptions import CloudifyCliError
 from .constants import DEFAULT_BLUEPRINT_PATH
 
 
-def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
+def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH, download=False):
     """Get a source and return a directory containing the blueprint
 
     The behavior based on then source argument content is:
         - local archive (.zip, .tar.gz):
             extract it locally and return path blueprint file
         - local yaml file: return the file
-        - URL: return it (let the manager download the blueprint later)
-        - github repo: map it to a URL and return it
+        - URL:
+            - return it (download=False)
+            - download and get blueprint from downloaded file (download=True)
+        - github repo:
+            - map it to a URL and return it (download=False)
+            - download and get blueprint from downloaded file (download=True)
 
     :param source: Path/URL/github repo to archive/blueprint file
     :type source: str
     :param blueprint_filename: Path to blueprint (if source is an archive file)
     :type blueprint_filename: str
+    :param download: Download blueprint file if source is URL/github repo
+    :type download: bool
     :return: Path to file (if archive/blueprint file passsed) or url
     :rtype: str
 
@@ -55,6 +61,9 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
         return blueprint_file
 
     if urlparse(source).scheme:
+        if download:
+            downloaded_file = utils.download_file(source)
+            return get_blueprint_file(downloaded_file)
         return source
     elif os.path.isfile(source):
         if utils.is_archive(source):
@@ -63,7 +72,11 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
             # Maybe check if yaml. If not, verified by dsl parser
             return source
     elif len(source.split('/')) == 2:
-        return _map_to_github_url(source)
+        url = _map_to_github_url(source)
+        if download:
+            downloaded_file = utils.download_file(source)
+            return get_blueprint_file(downloaded_file)
+        return url
     else:
         raise CloudifyCliError(
             'You must provide either a path to a local file, a remote URL '
