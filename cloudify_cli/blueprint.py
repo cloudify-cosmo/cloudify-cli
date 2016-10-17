@@ -48,28 +48,15 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH, download=False):
     :rtype: str
 
     """
-    def get_blueprint_file(final_source):
-        archive_root = utils.extract_archive(final_source)
-        blueprint_directory = os.path.join(
-            archive_root,
-            os.listdir(archive_root)[0],
-        )
-        blueprint_file = os.path.join(blueprint_directory, blueprint_filename)
-        if not os.path.isfile(blueprint_file):
-            raise CloudifyCliError(
-                'Could not find `{0}`. Please provide the name of the main '
-                'blueprint file by using the `-n/--blueprint-filename` flag'
-                .format(blueprint_filename))
-        return blueprint_file
-
     if urlparse(source).scheme:
         if download:
             downloaded_file = utils.download_file(source)
-            return get_blueprint_file(downloaded_file)
+            return _get_blueprint_file_from_archive(
+                downloaded_file, blueprint_filename)
         return source
     elif os.path.isfile(source):
         if utils.is_archive(source):
-            return get_blueprint_file(source)
+            return _get_blueprint_file_from_archive(source, blueprint_filename)
         else:
             # Maybe check if yaml. If not, verified by dsl parser
             return source
@@ -77,12 +64,38 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH, download=False):
         url = _map_to_github_url(source)
         if download:
             downloaded_file = utils.download_file(source)
-            return get_blueprint_file(downloaded_file)
+            return _get_blueprint_file_from_archive(
+                downloaded_file, blueprint_filename)
         return url
     else:
         raise CloudifyCliError(
             'You must provide either a path to a local file, a remote URL '
             'or a GitHub `organization/repository[:tag/branch]`')
+
+
+def _get_blueprint_file_from_archive(archive, blueprint_filename):
+    """Extract archive to temporary location and get path to blueprint file.
+
+    :param archive: Path to archive file
+    :type archive: str
+    :param blueprint_filename: Path to blueprint file relative to archive
+    :type blueprint_filename: str
+    :return: Absolute path to blueprint file
+    :rtype: str
+
+    """
+    extract_directory = utils.extract_archive(archive)
+    blueprint_directory = os.path.join(
+        extract_directory,
+        os.listdir(extract_directory)[0],
+    )
+    blueprint_file = os.path.join(blueprint_directory, blueprint_filename)
+    if not os.path.isfile(blueprint_file):
+        raise CloudifyCliError(
+            'Could not find `{0}`. Please provide the name of the main '
+            'blueprint file by using the `-n/--blueprint-filename` flag'
+            .format(blueprint_filename))
+    return blueprint_file
 
 
 def _map_to_github_url(source):
