@@ -26,9 +26,10 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
     """Get a source and return a directory containing the blueprint
 
     The behavior based on then source argument content is:
-        - URL: return it (let the manager download the blueprint later)
-        - local archive (.zip, .tar.gz): extract it and return blueprint file
+        - local archive (.zip, .tar.gz):
+            extract it locally and return path blueprint file
         - local yaml file: return the file
+        - URL: return it (let the manager download the blueprint later)
         - github repo: map it to a URL and return it
 
     :param source: Path/URL/github repo to archive/blueprint file
