@@ -26,7 +26,7 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH, download=False):
     """Get a source and return a directory containing the blueprint
 
     The behavior based on then source argument content is:
-        - local archive (.zip, .tar.gz):
+        - local archive:
             extract it locally and return path blueprint file
         - local yaml file: return the file
         - URL:
@@ -35,6 +35,8 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH, download=False):
         - github repo:
             - map it to a URL and return it (download=False)
             - download and get blueprint from downloaded file (download=True)
+
+    Supported archive types are: zip, tar, tar.gz and tar.bz2
 
     :param source: Path/URL/github repo to archive/blueprint file
     :type source: str

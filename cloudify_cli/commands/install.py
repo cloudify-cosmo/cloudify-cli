@@ -142,11 +142,14 @@ def local(ctx,
           task_thread_pool_size):
     """Install an application
 
-    `BLUEPRINT_PATH` can be either a local blueprint yaml file or
-    blueprint archive; a url to a blueprint archive or an
-    `organization/blueprint_repo[:tag/branch]` (to be
-    retrieved from GitHub).
+    `BLUEPRINT_PATH` can be a:
+        - local blueprint yaml file
+        - blueprint archive
+        - url to a blueprint archive
+        - github repo (`organization/blueprint_repo[:tag/branch]`)
+
     Supported archive types are: zip, tar, tar.gz and tar.bz2
+
     """
     processed_blueprint_path, blueprint_id = _get_blueprint_path_and_id(
         blueprint_path,
