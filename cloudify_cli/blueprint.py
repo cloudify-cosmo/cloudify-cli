@@ -101,7 +101,10 @@ def _get_blueprint_file_from_archive(archive, blueprint_filename):
 def _map_to_github_url(source):
     """Returns a path to a downloaded github archive.
 
-    Source to download should be in the format of `org/repo[:tag/branch]`.
+    :param source: github repo in the format of `org/repo[:tag/branch]`.
+    :type source: str
+    :return: URL to the archive file for the given repo in github
+    :rtype: str
 
     """
     source_parts = source.split(':', 1)
