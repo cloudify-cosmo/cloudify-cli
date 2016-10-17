@@ -31,6 +31,13 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
         - local yaml file: return the file
         - github repo: map it to a URL and return it
 
+    :param source: Path/URL/github repo to archive/blueprint file
+    :type source: str
+    :param blueprint_filename: Path to blueprint (if source is an archive file)
+    :type blueprint_filename: str
+    :return: Path to file (if archive/blueprint file passsed) or url
+    :rtype: str
+
     """
     def get_blueprint_file(final_source):
         archive_root = utils.extract_archive(final_source)
