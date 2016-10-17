@@ -190,7 +190,8 @@ def _get_blueprint_path_and_id(blueprint_path,
                                blueprint_id):
     processed_blueprint_path = blueprint.get(
         blueprint_path,
-        blueprint_filename
+        blueprint_filename,
+        download=True,
     )
 
     blueprint_id = blueprint_id or blueprint.generate_id(
