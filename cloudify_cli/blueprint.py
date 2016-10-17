@@ -25,11 +25,12 @@ from .constants import DEFAULT_BLUEPRINT_PATH
 def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
     """Get a source and return a directory containing the blueprint
 
-    if it's a URL of an archive, download and extract it.
-    if it's a local archive, extract it.
-    if it's a local yaml, return it.
-    else turn to github and try to get it.
-    else should implicitly fail.
+    The behavior based on then source argument content is:
+        - URL: return it (let the manager download the blueprint later)
+        - local archive (.zip, .tar.gz): extract it and return blueprint file
+        - local yaml file: return the file
+        - github repo: map it to a URL and return it
+
     """
     def get_blueprint_file(final_source):
         archive_root = utils.extract_archive(final_source)
