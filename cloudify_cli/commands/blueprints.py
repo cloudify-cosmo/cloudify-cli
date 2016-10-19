@@ -18,6 +18,8 @@ import os
 import json
 import shutil
 
+from urlparse import urlparse
+
 import click
 
 from dsl_parser.parser import parse_from_path
@@ -96,19 +98,34 @@ def upload(ctx,
     processed_blueprint_path = blueprint.get(
         blueprint_path, blueprint_filename)
 
-    try:
-        if validate:
-            ctx.invoke(
-                validate_blueprint,
-                blueprint_path=processed_blueprint_path)
-        blueprint_id = blueprint_id or blueprint.generate_id(
-            processed_blueprint_path, blueprint_filename)
+    is_url = bool(urlparse(processed_blueprint_path).scheme)
 
-        progress_handler = utils.generate_progress_handler(blueprint_path, '')
-        logger.info('Uploading blueprint {0}...'.format(blueprint_path))
-        blueprint_obj = client.blueprints.upload(processed_blueprint_path,
-                                                 blueprint_id,
-                                                 progress_handler)
+    progress_handler = utils.generate_progress_handler(blueprint_path, '')
+    blueprint_id = blueprint_id or blueprint.generate_id(
+        processed_blueprint_path, blueprint_filename)
+
+    try:
+        if is_url:
+            logger.info('Publishing blueprint archive %s...', blueprint_path)
+            client.blueprints.publish_archive(
+                blueprint_path,
+                blueprint_id,
+                blueprint_filename,
+                progress_handler,
+            )
+        else:
+            if validate:
+                ctx.invoke(
+                    validate_blueprint,
+                    blueprint_path=processed_blueprint_path,
+                )
+
+            logger.info('Uploading blueprint %s...', blueprint_path)
+            blueprint_obj = client.blueprints.upload(
+                processed_blueprint_path,
+                blueprint_id,
+                progress_handler,
+            )
         logger.info("Blueprint uploaded. The blueprint's id is {0}".format(
             blueprint_obj.id))
     finally:
