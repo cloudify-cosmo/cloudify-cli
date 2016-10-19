@@ -134,9 +134,9 @@ def upload(ctx,
                 progress_handler,
             )
         finally:
-            # Every situation other than the user providing a path of a local
-            # yaml means a temp folder will be created that should be later
-            # removed.
+            # When an archive file is passed, it's extracted to a temporary
+            # directory to get the blueprint file. Once the blueprint has been
+            # uploaded, the temporary directory needs to be cleaned up.
             if processed_blueprint_path != blueprint_path:
                 temp_directory = os.path.dirname(
                     os.path.dirname(processed_blueprint_path)
