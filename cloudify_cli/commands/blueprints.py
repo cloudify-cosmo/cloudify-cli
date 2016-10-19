@@ -98,6 +98,8 @@ def upload(ctx,
     processed_blueprint_path = blueprint.get(
         blueprint_path, blueprint_filename)
 
+    # Take into account that `blueprint.get` might not return a URL
+    # instead of a blueprint file (archive files are not locally downloaded)
     is_url = bool(urlparse(processed_blueprint_path).scheme)
 
     progress_handler = utils.generate_progress_handler(blueprint_path, '')
@@ -106,6 +108,9 @@ def upload(ctx,
 
     try:
         if is_url:
+            # When a URL is passed it's assumed to be pointing to an archive
+            # file that contains the blueprint. Hence, the `publish_archive`
+            # API call is the one that should be used.
             logger.info('Publishing blueprint archive %s...', blueprint_path)
             client.blueprints.publish_archive(
                 blueprint_path,
@@ -120,6 +125,8 @@ def upload(ctx,
                     blueprint_path=processed_blueprint_path,
                 )
 
+            # When the blueprint file is already available locally, it can be
+            # uploaded directly using the `upload` API call.
             logger.info('Uploading blueprint %s...', blueprint_path)
             blueprint_obj = client.blueprints.upload(
                 processed_blueprint_path,
