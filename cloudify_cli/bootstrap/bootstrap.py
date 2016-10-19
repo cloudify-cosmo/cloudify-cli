@@ -321,12 +321,11 @@ def bootstrap(blueprint_path,
             with open(cert_path, 'w') as cert_file:
                 cert_file.write(rest_public_cert)
 
-        security = manager_node.properties['security']
         rest_client = env.get_rest_client(rest_host=manager_ip,
                                           rest_port=rest_port,
                                           rest_protocol=rest_protocol,
-                                          username=security['rest_username'],
-                                          password=security['rest_password'],
+                                          username=inputs['admin_username'],
+                                          password=inputs['admin_password'],
                                           skip_version_check=True)
 
         provider_context = _handle_provider_context(

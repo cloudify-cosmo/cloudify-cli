@@ -253,7 +253,10 @@ def get_password():
 
 
 def get_tenant_name():
-    return os.environ.get(constants.CLOUDIFY_TENANT_ENV)
+    return os.environ.get(
+        constants.CLOUDIFY_TENANT_ENV,
+        profile.manager_tenant
+    )
 
 
 def get_default_rest_cert_local_path():
@@ -321,16 +324,17 @@ class ProfileContext(yaml.YAMLObject):
     yaml_loader = yaml.Loader
 
     def __init__(self, profile_name=None):
-        self._bootstrap_state = 'Incomplete'
-        self._manager_ip = profile_name
-        self._ssh_key = None
+        self.bootstrap_state = 'Incomplete'
+        self.manager_ip = profile_name
+        self.ssh_key = None
         self._ssh_port = None
-        self._ssh_user = None
-        self._provider_context = dict()
-        self._manager_username = None
-        self._manager_password = None
-        self._rest_port = constants.DEFAULT_REST_PORT
-        self._rest_protocol = constants.DEFAULT_REST_PROTOCOL
+        self.ssh_user = None
+        self.provider_context = dict()
+        self.manager_username = None
+        self.manager_password = None
+        self.manager_tenant = constants.DEFAULT_TENANT_NAME
+        self.rest_port = constants.DEFAULT_REST_PORT
+        self.rest_protocol = constants.DEFAULT_REST_PROTOCOL
 
     def to_dict(self):
         return dict(
@@ -341,33 +345,10 @@ class ProfileContext(yaml.YAMLObject):
             ssh_user=self.ssh_user,
             provider_context=self.provider_context,
             manager_username=self.manager_username,
+            manager_tenant=self.manager_tenant,
             rest_port=self.rest_port,
             rest_protocol=self.rest_protocol
         )
-
-    @property
-    def bootstrap_state(self):
-        return self._bootstrap_state
-
-    @bootstrap_state.setter
-    def bootstrap_state(self, bootstrap_state):
-        self._bootstrap_state = bootstrap_state
-
-    @property
-    def manager_ip(self):
-        return self._manager_ip
-
-    @manager_ip.setter
-    def manager_ip(self, manager_host):
-        self._manager_ip = manager_host
-
-    @property
-    def ssh_key(self):
-        return self._ssh_key
-
-    @ssh_key.setter
-    def ssh_key(self, manager_key):
-        self._ssh_key = manager_key
 
     @property
     def ssh_port(self):
@@ -379,57 +360,6 @@ class ProfileContext(yaml.YAMLObject):
         # leave None as is
         ssh_port = str(ssh_port) if ssh_port else None
         self._ssh_port = ssh_port
-
-    @property
-    def ssh_user(self):
-        return self._ssh_user
-
-    @ssh_user.setter
-    def ssh_user(self, _manager_user):
-        self._ssh_user = _manager_user
-
-    @property
-    def manager_username(self):
-        return self._manager_username
-
-    @manager_username.setter
-    def manager_username(self, manager_username):
-        self._manager_username = manager_username
-
-    @property
-    def manager_password(self):
-        return self._manager_password
-
-    @manager_password.setter
-    def manager_password(self, admin_password):
-        self._manager_password = admin_password
-
-    @property
-    def provider_context(self):
-        return self._provider_context
-
-    @provider_context.setter
-    def provider_context(self, provider_context):
-        self._provider_context = provider_context
-
-    def remove_manager_server_context(self):
-        self._manager_ip = None
-
-    @property
-    def rest_port(self):
-        return self._rest_port
-
-    @rest_port.setter
-    def rest_port(self, rest_port):
-        self._rest_port = rest_port
-
-    @property
-    def rest_protocol(self):
-        return self._rest_protocol
-
-    @rest_protocol.setter
-    def rest_protocol(self, rest_protocol):
-        self._rest_protocol = rest_protocol
 
     def _get_context_path(self):
         init_path = get_profile_dir(self.manager_ip)

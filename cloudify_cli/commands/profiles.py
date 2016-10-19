@@ -277,6 +277,7 @@ def _print_profiles(profiles, header):
             'rest_port',
             'rest_protocol',
             'manager_username',
+            'manager_tenant',
             'bootstrap_state'
         ]
     pt = table.generate(columns, data=profiles)

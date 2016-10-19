@@ -40,11 +40,9 @@ def list(sort_by, descending, logger, client):
     """List all tenants
     """
     logger.info('Listing all tenants...')
-    tenants_data = client.tenants.list(sort=sort_by, is_descending=descending)
+    tenants_list = client.tenants.list(sort=sort_by, is_descending=descending)
 
-    columns = ['name', 'groups', 'users']
-    pt = table.generate(columns, data=tenants_data)
-    table.log('Tenants:', pt)
+    _print_tenants(tenants_list, 'Tenants:')
 
 
 @tenants.command(name='create',
@@ -128,8 +126,31 @@ def add_group(group_name, tenant_name, logger, client):
 def remove_group(group_name, tenant_name, logger, client):
     """Remove a group from a tenant
 
-    `USERNAME` is the name of the group to add to the tenant
+    `GROUP_NAME` is the name of the group to add to the tenant
     """
     client.tenants.remove_group(group_name, tenant_name)
     logger.info('User `{0}` removed successfully from tenant '
                 '`{1}`'.format(group_name, tenant_name))
+
+
+@tenants.command(name='get',
+                 short_help='Get details for a single tenant [manager only]')
+@cfy.argument('tenant-name')
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def get(tenant_name, logger, client):
+    """Get details for a single tenant
+
+    `TENANT_NAME` is the name of the tenant
+    """
+    logger.info('Getting info for tenant `{0}`...'.format(tenant_name))
+    tenant_details = client.tenants.get(tenant_name)
+    _print_tenants([tenant_details], 'Requested tenant info:')
+
+
+def _print_tenants(tenants_list, header_text):
+    columns = ['name', 'groups', 'users']
+    pt = table.generate(columns, data=tenants_list)
+    table.log(header_text, pt)

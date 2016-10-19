@@ -26,7 +26,7 @@ class UseTest(CliCommandTest):
         with patch.object(self.client.manager, 'get_status') as mock:
             mock.side_effect = UserUnauthorizedError('Unauthorized user')
             self.invoke('cfy use 127.0.0.1',
-                        err_str_segment='User is unauthorized')
+                        err_str_segment='Unauthorized user')
 
     def test_use_command_no_prior_init(self):
         self.client.manager.get_status = MagicMock()

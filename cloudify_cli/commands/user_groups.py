@@ -40,12 +40,9 @@ def list(sort_by, descending, logger, client):
     """List all groups
     """
     logger.info('Listing all groups...')
-    groups_data = client.user_groups.list(sort=sort_by,
-                                          is_descending=descending)
-
-    columns = ['name']
-    pt = table.generate(columns, data=groups_data)
-    table.log('Groups:', pt)
+    user_groups_list = client.user_groups.list(sort=sort_by,
+                                               is_descending=descending)
+    _print_user_groups(user_groups_list, 'Groups:')
 
 
 @user_groups.command(name='create',
@@ -58,7 +55,31 @@ def list(sort_by, descending, logger, client):
 def create(group_name, logger, client):
     """Create a new group on the manager
 
-    `TENANT_NAME` is the name of the new group
+    `GROUP_NAME` is the name of the new group
     """
     client.user_groups.create(group_name)
     logger.info('Group `{0}` created'.format(group_name))
+
+
+@user_groups.command(name='get',
+                     short_help='Get details for a single '
+                                'user group [manager only]')
+@cfy.argument('group-name')
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def get(group_name, logger, client):
+    """Get details for a single user group
+
+    `GROUP_NAME` is the name of the group
+    """
+    logger.info('Getting info for user group `{0}`...'.format(group_name))
+    user_group_details = client.user_groups.get(group_name)
+    _print_user_groups([user_group_details], 'Requested user group info:')
+
+
+def _print_user_groups(user_groups_list, header_text):
+    columns = ['name', 'tenants', 'users']
+    pt = table.generate(columns, data=user_groups_list)
+    table.log(header_text, pt)
