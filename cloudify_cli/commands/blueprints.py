@@ -106,19 +106,19 @@ def upload(ctx,
     blueprint_id = blueprint_id or blueprint.generate_id(
         processed_blueprint_path, blueprint_filename)
 
-    try:
-        if is_url:
-            # When a URL is passed it's assumed to be pointing to an archive
-            # file that contains the blueprint. Hence, the `publish_archive`
-            # API call is the one that should be used.
-            logger.info('Publishing blueprint archive %s...', blueprint_path)
-            client.blueprints.publish_archive(
-                blueprint_path,
-                blueprint_id,
-                blueprint_filename,
-                progress_handler,
-            )
-        else:
+    if is_url:
+        # When a URL is passed it's assumed to be pointing to an archive
+        # file that contains the blueprint. Hence, the `publish_archive`
+        # API call is the one that should be used.
+        logger.info('Publishing blueprint archive %s...', blueprint_path)
+        client.blueprints.publish_archive(
+            blueprint_path,
+            blueprint_id,
+            blueprint_filename,
+            progress_handler,
+        )
+    else:
+        try:
             if validate:
                 ctx.invoke(
                     validate_blueprint,
@@ -133,15 +133,18 @@ def upload(ctx,
                 blueprint_id,
                 progress_handler,
             )
-        logger.info("Blueprint uploaded. The blueprint's id is {0}".format(
-            blueprint_obj.id))
-    finally:
-        # Every situation other than the user providing a path of a local
-        # yaml means a temp folder will be created that should be later
-        # removed.
-        if processed_blueprint_path != blueprint_path:
-            shutil.rmtree(os.path.dirname(os.path.dirname(
-                processed_blueprint_path)))
+        finally:
+            # Every situation other than the user providing a path of a local
+            # yaml means a temp folder will be created that should be later
+            # removed.
+            if processed_blueprint_path != blueprint_path:
+                temp_directory = os.path.dirname(
+                    os.path.dirname(processed_blueprint_path)
+                )
+                shutil.rmtree(temp_directory)
+
+    logger.info("Blueprint uploaded. The blueprint's id is {0}".format(
+        blueprint_obj.id))
 
 
 @blueprints.command(name='download',
