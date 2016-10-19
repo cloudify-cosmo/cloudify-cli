@@ -153,11 +153,13 @@ SET_MANAGEMENT_CREDS = (
 DEFAULT_MUTUALITY_MESSAGE = 'Cannot be used simultaneously'
 
 MANAGEMENT_IP = 'The IP of the host machine on which you bootstrapped'
-MANAGEMENT_USER = 'The user on the host machine with which you bootstrapped'
+SSH_USER = 'The SSH user on the host machine with which you bootstrapped'
 SSH_KEY = 'The path to the ssh key-file to use when connecting'
 SSH_PORT = 'The SSH port to use when connecting to the manager'
 MANAGER_USERNAME = 'Manager username used to run commands on the manager'
 MANAGER_PASSWORD = 'Manager password used to run commands on the manager'
+MANAGER_TENANT = 'The tenant associated with the current user operating the ' \
+                 'manager'
 REST_PORT = "The REST server's port"
 
 EXPORT_SSH_KEYS = 'Include ssh key files in archive'

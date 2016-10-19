@@ -463,7 +463,7 @@ class Options(object):
             '-u',
             '--ssh-user',
             required=False,
-            help=helptexts.MANAGEMENT_USER)
+            help=helptexts.SSH_USER)
 
         self.ssh_key = click.option(
             '-k',
@@ -483,6 +483,12 @@ class Options(object):
             '--manager-password',
             required=False,
             help=helptexts.MANAGER_PASSWORD)
+
+        self.manager_tenant = click.option(
+            '-t',
+            '--manager-tenant',
+            required=False,
+            help=helptexts.MANAGER_TENANT)
 
         self.ssh_port = click.option(
             '--ssh-port',
@@ -558,6 +564,7 @@ class Options(object):
         self.group_name = click.option(
             '-g',
             '--group-name',
+            required=True,
             help=helptexts.GROUP)
 
         self.host_session = click.option(

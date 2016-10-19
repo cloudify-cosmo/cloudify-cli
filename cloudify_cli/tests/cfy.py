@@ -28,6 +28,7 @@ from .. import main  # NOQA
 from .. import env
 from .. import logger
 from .. import commands
+from .. import constants
 
 
 WORKDIR = os.path.join(tempfile.gettempdir(), '.cloudify-tests')
@@ -44,7 +45,8 @@ default_manager_params = dict(
     rest_protocol='http',
     bootstrap_state='Complete',
     manager_username='admin',
-    manager_password='admin'
+    manager_password='admin',
+    manager_tenant=constants.DEFAULT_TENANT_NAME
 )
 
 
@@ -138,6 +140,7 @@ def use_manager(**manager_params):
     profile.rest_protocol = manager_params['rest_protocol']
     profile.manager_username = manager_params['manager_username']
     profile.manager_password = manager_params['manager_password']
+    profile.manager_tenant = manager_params['manager_tenant']
     profile.provider_context = provider_context
     profile.bootstrap_state = 'Complete'
 

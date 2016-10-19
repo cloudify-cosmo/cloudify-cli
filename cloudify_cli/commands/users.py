@@ -39,18 +39,8 @@ def list(sort_by, descending, logger, client):
     """List all users
     """
     logger.info('Listing all users...')
-    users_data = client.users.list(sort=sort_by, is_descending=descending)
-
-    columns = [
-        'username',
-        'groups',
-        'role',
-        'tenants',
-        'active',
-        'last_login_at'
-    ]
-    pt = table.generate(columns, data=users_data)
-    table.log('Users:', pt)
+    users_list = client.users.list(sort=sort_by, is_descending=descending)
+    _print_users(users_list, 'Users:')
 
 
 @users.command(name='create', short_help='Create a user [manager only]')
@@ -78,7 +68,7 @@ def create(username, security_role, password, logger, client):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def add_group(username, group_name, logger, client):
+def add_to_group(username, group_name, logger, client):
     """Add a user to a group
 
     `USERNAME` is the username of the user
@@ -96,7 +86,7 @@ def add_group(username, group_name, logger, client):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def remove_group(username, group_name, logger, client):
+def remove_from_group(username, group_name, logger, client):
     """Remove a user from a group
 
     `USERNAME` is the username of the user
@@ -104,23 +94,6 @@ def remove_group(username, group_name, logger, client):
     client.users.remove_from_group(username, group_name)
     logger.info('User `{0}` removed successfully from group '
                 '`{1}`'.format(username, group_name))
-
-
-@users.command(name='delete',
-               short_help='Delete a user [manager only]')
-@cfy.argument('username')
-@cfy.options.verbose()
-@cfy.assert_manager_active()
-@cfy.pass_client()
-@cfy.pass_logger
-def delete(username, logger, client):
-    """Delete a user from the manager
-
-    `USERNAME` is the username of the user
-    """
-    logger.info('Deleting user {0}...'.format(username))
-    client.users.delete(username)
-    logger.info('User deleted')
 
 
 @users.command(name='set-password',
@@ -138,7 +111,7 @@ def set_password(username, password, logger, client):
     """
     logger.info('Setting new password for user {0}...'.format(username))
     client.users.set_password(username, password)
-    logger.info('User deleted')
+    logger.info('New password set')
 
 
 @users.command(name='set-role',
@@ -156,4 +129,34 @@ def set_role(username, security_role, logger, client):
     """
     logger.info('Setting new role for user {0}...'.format(username))
     client.users.set_role(username, security_role)
-    logger.info('User deleted')
+    logger.info('New role `{0}` set'.format(security_role))
+
+
+@users.command(name='get',
+               short_help='Get details for a single user [manager only]')
+@cfy.argument('username')
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def get(username, logger, client):
+    """Get details for a single user
+
+    `USERNAME` is the username of the user
+    """
+    logger.info('Getting info for user `{0}`...'.format(username))
+    user_details = client.users.get(username)
+    _print_users([user_details], 'Requested user info:')
+
+
+def _print_users(users_list, header_text):
+    columns = [
+        'username',
+        'groups',
+        'role',
+        'tenants',
+        'active',
+        'last_login_at'
+    ]
+    pt = table.generate(columns, data=users_list)
+    table.log(header_text, pt)

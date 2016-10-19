@@ -33,6 +33,7 @@ from ..exceptions import CloudifyCliError
 @cfy.options.ssh_port
 @cfy.options.manager_username
 @cfy.options.manager_password
+@cfy.options.manager_tenant
 @cfy.options.rest_port
 @cfy.options.verbose()
 @cfy.pass_logger
@@ -42,6 +43,7 @@ def use(profile_name,
         ssh_port,
         manager_username,
         manager_password,
+        manager_tenant,
         rest_port,
         logger):
     """Control a specific manager
@@ -72,7 +74,8 @@ def use(profile_name,
         rest_port,
         rest_protocol,
         manager_username,
-        manager_password
+        manager_password,
+        manager_tenant
     )
 
     if not env.is_profile_exists(profile_name):
@@ -91,6 +94,7 @@ def use(profile_name,
         ssh_port,
         manager_username,
         manager_password,
+        manager_tenant,
         rest_port,
         rest_protocol
     )
@@ -102,10 +106,13 @@ def use(profile_name,
 def _assert_manager_available(client, profile_name):
     try:
         client.manager.get_status()
-    except UserUnauthorizedError:
+    except UserUnauthorizedError, e:
         raise CloudifyCliError(
-            "Can't use manager {0}: User is unauthorized.".format(
-                profile_name))
+            "Can't use manager {0}\n{1}.".format(
+                profile_name,
+                str(e)
+            )
+        )
     # The problem here is that, for instance,
     # any problem raised by the rest client will trigger this.
     # Triggering a CloudifyClientError only doesn't actually deal
@@ -120,22 +127,22 @@ def _get_provider_context(
         rest_port,
         rest_protocol,
         manager_username,
-        manager_password
+        manager_password,
+        manager_tenant
 ):
-    # Getting here an existing profile context, if one was available,
-    # in case the user didn't pass username/password, and was expecting the
-    # username/password to be taken from the old profile
-    profile = env.get_profile_context(profile_name, suppress_error=True)
-    username = manager_username or profile.manager_username
-    password = manager_password or profile.manager_password
+    # Attempt to update the profile with an existing profile context, if one
+    # is available. This is relevant in case the user didn't pass a username
+    # or a password, and was expecting them to be taken from the old profile
+    env.profile = env.get_profile_context(profile_name, suppress_error=True)
 
     client = env.get_rest_client(
         rest_host=profile_name,
         rest_port=rest_port,
         rest_protocol=rest_protocol,
         skip_version_check=True,
-        username=username,
-        password=password
+        username=manager_username,
+        password=manager_password,
+        tenant_name=manager_tenant
     )
 
     _assert_manager_available(client, profile_name)
@@ -154,6 +161,7 @@ def _set_profile_context(profile_name,
                          ssh_port,
                          manager_username,
                          manager_password,
+                         manager_tenant,
                          rest_port,
                          rest_protocol):
     profile = env.get_profile_context(profile_name)
@@ -170,6 +178,8 @@ def _set_profile_context(profile_name,
         profile.manager_username = manager_username
     if manager_password:
         profile.manager_password = manager_password
+    if manager_tenant:
+        profile.manager_tenant = manager_tenant
     profile.rest_protocol = rest_protocol
     profile.bootstrap_state = 'Complete'
 
