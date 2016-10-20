@@ -1,3 +1,5 @@
+import sys
+
 from mock import patch, MagicMock
 
 from .. import env
@@ -22,6 +24,7 @@ class TeardownTest(CliCommandTest):
         )
         self.invoke('cfy use 10.0.0.1 -m admin -p admin')
         env.profile = env.get_profile_context(suppress_error=True)
+        sys.modules['cloudify_cli.commands.teardown'].profile = env.profile
         self.invoke('cfy teardown -f --ignore-deployments')
         mock_teardown.assert_called_once_with(
             task_retries=0,
