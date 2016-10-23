@@ -170,3 +170,7 @@ INSTALL_SCRIPT_LOCATION = \
     'Alternative location of the `install_agents.py` script'
 TENANT = 'The name of the tenant'
 GROUP = 'The name of the user group'
+
+SECURITY_ROLE = "A role to determine the user's permissions on the manager " \
+                "[administrator|default|viewer|suspended] (default: default)"
+PASSWORD = 'Cloudify manager password'

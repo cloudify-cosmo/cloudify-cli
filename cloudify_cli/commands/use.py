@@ -124,6 +124,7 @@ def _get_provider_context(
 ):
     # Getting here an existing profile context, if one was available,
     # in case the user didn't pass username/password, and was expecting the
+    # username/password to be taken from the old profile
     profile = env.get_profile_context(profile_name, suppress_error=True)
     username = manager_username or profile.manager_username
     password = manager_password or profile.manager_password
