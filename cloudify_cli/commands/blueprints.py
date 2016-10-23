@@ -111,12 +111,11 @@ def upload(ctx,
         # file that contains the blueprint. Hence, the `publish_archive`
         # API call is the one that should be used.
         logger.info('Publishing blueprint archive %s...', blueprint_path)
-        client.blueprints.publish_archive(
-            blueprint_path,
-            blueprint_id,
-            blueprint_filename,
-            progress_handler,
-        )
+        blueprint_obj = client.blueprints.publish_archive(
+                blueprint_path,
+                blueprint_id,
+                blueprint_filename,
+                progress_handler)
     else:
         try:
             if validate:

@@ -110,6 +110,12 @@ class BlueprintsTest(CliCommandTest):
             .format(BLUEPRINTS_DIR),
             err_str_segment="You must provide either a path to a local file")
 
+    def test_blueprints_upload_from_url(self):
+        self.client.blueprints.publish_archive = MagicMock()
+        self.invoke(
+                'cfy blueprints upload https://aaa.com/maste.tar.gz -n b.yaml '
+                '-b blueprint3')
+
     def test_blueprint_validate(self):
         self.invoke(
             'cfy blueprints validate {0}'.format(
