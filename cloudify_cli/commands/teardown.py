@@ -19,7 +19,6 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from .. import env
 from .use import use
 from .. import exceptions
-from ..env import profile
 from ..cli import cfy, helptexts
 from ..bootstrap import bootstrap as bs
 
@@ -44,7 +43,7 @@ def teardown(ctx,
     _assert_force(force)
 
     try:
-        manager_ip = profile.manager_ip
+        manager_ip = env.profile.manager_ip
     except exceptions.CloudifyCliError:
         # manager ip does not exist in the local context
         # this can mean one of two things:
@@ -95,7 +94,7 @@ def _update_local_provider_context(ctx, manager_ip, logger):
         ctx.invoke(
             use,
             profile_name=manager_ip,
-            rest_port=profile.rest_port,
+            rest_port=env.profile.rest_port,
         )
     except BaseException as e:
         logger.warning('Failed to retrieve provider context: {0}. This '
