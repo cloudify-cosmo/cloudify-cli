@@ -33,7 +33,7 @@ def tenants():
 @cfy.options.sort_by('name')
 @cfy.options.descending
 @cfy.options.verbose()
-@cfy.assert_manager_active
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def list(sort_by, descending, logger, client):
@@ -51,6 +51,7 @@ def list(sort_by, descending, logger, client):
                  short_help='Create a tenant [manager only]')
 @cfy.argument('tenant-name')
 @cfy.options.verbose()
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def create(tenant_name, logger, client):
@@ -67,6 +68,7 @@ def create(tenant_name, logger, client):
 @cfy.argument('username')
 @cfy.options.tenant_name
 @cfy.options.verbose()
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def add_user(username, tenant_name, logger, client):
@@ -84,6 +86,7 @@ def add_user(username, tenant_name, logger, client):
 @cfy.argument('username')
 @cfy.options.tenant_name
 @cfy.options.verbose()
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def remove_user(username, tenant_name, logger, client):
@@ -101,6 +104,7 @@ def remove_user(username, tenant_name, logger, client):
 @cfy.argument('group-name')
 @cfy.options.tenant_name
 @cfy.options.verbose()
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def add_group(group_name, tenant_name, logger, client):
@@ -118,6 +122,7 @@ def add_group(group_name, tenant_name, logger, client):
 @cfy.argument('group-name')
 @cfy.options.tenant_name
 @cfy.options.verbose()
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def remove_group(group_name, tenant_name, logger, client):

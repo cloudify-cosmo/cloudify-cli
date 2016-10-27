@@ -598,6 +598,21 @@ class Options(object):
             '--install-script',
             help=helptexts.INSTALL_SCRIPT_LOCATION)
 
+        self.security_role = click.option(
+            '-r',
+            '--security-role',
+            required=False,
+            type=click.Choice(['administrator', 'default',
+                               'viewer', 'suspended']),
+            default='default',
+            help=helptexts.SECURITY_ROLE)
+
+        self.password = click.option(
+            '-p',
+            '--password',
+            required=True,
+            help=helptexts.PASSWORD)
+
     @staticmethod
     def include_keys(help):
         return click.option(
