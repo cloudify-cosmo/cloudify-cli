@@ -19,7 +19,6 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from .. import env
 from .use import use
 from .. import exceptions
-from ..env import profile
 from ..cli import cfy, helptexts
 from ..bootstrap import bootstrap as bs
 
@@ -31,8 +30,10 @@ from ..bootstrap import bootstrap as bs
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
 @cfy.options.verbose()
+@cfy.pass_context
 @cfy.assert_manager_active()
-def teardown(force,
+def teardown(ctx,
+             force,
              ignore_deployments,
              task_retries,
              task_retry_interval,
@@ -42,7 +43,7 @@ def teardown(force,
     _assert_force(force)
 
     try:
-        manager_ip = profile.manager_ip
+        manager_ip = env.profile.manager_ip
     except exceptions.CloudifyCliError:
         # manager ip does not exist in the local context
         # this can mean one of two things:
@@ -78,7 +79,7 @@ def teardown(force,
 
         # update local provider context since the server ip might have
         # changed in case it has gone through a recovery process.
-        _update_local_provider_context(manager_ip)
+        _update_local_provider_context(ctx, manager_ip)
 
         # execute teardown
         _do_teardown(
@@ -88,9 +89,13 @@ def teardown(force,
 
 
 @cfy.pass_logger
-def _update_local_provider_context(manager_ip, logger):
+def _update_local_provider_context(ctx, manager_ip, logger):
     try:
-        use(manager_ip, profile.rest_port)
+        ctx.invoke(
+            use,
+            profile_name=manager_ip,
+            rest_port=env.profile.rest_port,
+        )
     except BaseException as e:
         logger.warning('Failed to retrieve provider context: {0}. This '
                        'may cause a leaking manager '
