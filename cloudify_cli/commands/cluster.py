@@ -97,6 +97,49 @@ def start(client,
                 .format(cluster_host_ip, cluster_encryption_key))
 
 
+@cluster.command(name='join',
+                 short_help='Join a HA manager cluster [manager only]')
+@cfy.pass_client()
+@cfy.pass_logger
+@cfy.options.timeout()
+@cfy.options.cluster_host_ip
+@cfy.options.cluster_node_name
+@cfy.options.cluster_join
+@cfy.options.cluster_encryption_key(with_default=True)
+def join(client,
+         logger,
+         timeout,
+         cluster_host_ip,
+         cluster_node_name,
+         cluster_encryption_key,
+         cluster_join):
+    """Join a HA cluster on this manager.
+
+    A HA cluster with at least one machine needs to already exist.
+    Pass the address of at least one member of the cluster as --cluster-join
+    Specifying multiple addresses - even all members of the cluster - is
+    encouraged, as it will allow to join the cluster even if some of the
+    current members are unreachable, but is not required.
+    """
+    _verify_not_in_cluster(client)
+
+    logger.info('Joining the Cloudify HA cluster: {0}'.format(cluster_join))
+
+    client.cluster.join(config={
+        'host_ip': cluster_host_ip,
+        'node_name': cluster_node_name,
+        'consul_key': cluster_encryption_key,
+        'join_addrs': cluster_join
+    })
+    status = _wait_for_cluster_initialized(client, logger)
+
+    if status.error:
+        logger.error('Error while joining the HA cluster')
+        raise CloudifyCliError(status.error)
+
+    logger.info('HA cluster joined successfully!')
+
+
 def _wait_for_cluster_initialized(client, logger=None, timeout=900):
     # this is similar to how an execution's logs and status are fetched,
     # but is using a different backend mechanism
