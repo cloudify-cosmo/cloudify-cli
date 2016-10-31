@@ -18,6 +18,7 @@ import time
 from datetime import datetime
 
 from .. import env
+from .. import table
 from ..cli import cfy
 from ..exceptions import CloudifyCliError
 from ..execution_events_fetcher import WAIT_FOR_EXECUTION_SLEEP_INTERVAL
@@ -138,6 +139,26 @@ def join(client,
         raise CloudifyCliError(status.error)
 
     logger.info('HA cluster joined successfully!')
+
+
+@cluster.group(name='nodes')
+def nodes():
+    pass
+
+
+@nodes.command(name='list',
+               short_help='List the nodes in the cluster [cluster only]')
+@cfy.pass_client()
+@cfy.pass_logger
+def list_nodes(client, logger):
+    """Display a table with basic information about the nodes in the cluster
+    """
+    response = client.cluster.nodes.list()
+    nodes_table = table.generate(
+        ['name', 'host_ip', 'master', 'online'],
+        response,
+        {'master': False, 'online': False})
+    table.log('HA Cluster nodes', nodes_table)
 
 
 def _wait_for_cluster_initialized(client, logger=None, timeout=900):

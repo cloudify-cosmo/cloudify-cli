@@ -17,7 +17,7 @@
 import mock
 import unittest
 
-from cloudify_rest_client.cluster import ClusterState
+from cloudify_rest_client.cluster import ClusterState, ClusterNode
 
 from .test_base import CliCommandTest
 from ...exceptions import CloudifyCliError
@@ -135,3 +135,12 @@ class ClusterStartTest(CliCommandTest):
         self.client.cluster.start = mock.Mock()
         self.invoke('cfy cluster start --cluster-host-ip 1.2.3.4',
                     'some error happened')
+
+
+class ClusterNodesTest(CliCommandTest):
+    def test_list_nodes(self):
+        self.client.cluster.nodes.list = mock.Mock(return_value=[
+            ClusterNode({'name': 'node name 1', 'host_ip': '1.2.3.4'})
+        ])
+        outcome = self.invoke('cfy cluster nodes list')
+        self.assertIn('node name 1', outcome.logs)
