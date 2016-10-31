@@ -95,13 +95,22 @@ def assert_local_active():
 
 
 def assert_credentials_set():
-    if not is_credentials_set():
+    error_msg = 'Manager {0} must be set in order to use a manager.\n' \
+                'You can set it in the profile by running ' \
+                '`cfy profiles set-{1}`, or you can set the `CLOUDIFY_{2}` ' \
+                'environment variable.'
+    if not get_username():
         raise CloudifyCliError(
-            'A password must be set in order to use a manager, along with '
-            'the username set in the profile.\n'
-            'You can run `cfy use <profile_name> --manager-password <pass>` '
-            'to store the password in the profile, or set the '
-            '`CLOUDIFY_PASSWORD` environment variable.')
+            error_msg.format('Username', 'username', 'USERNAME')
+        )
+    if not get_password():
+        raise CloudifyCliError(
+            error_msg.format('Password', 'password', 'PASSWORD')
+        )
+    if not get_tenant_name():
+        raise CloudifyCliError(
+            error_msg.format('Tenant', 'tenant', 'TENANT')
+        )
 
 
 def is_manager_active():
@@ -114,12 +123,6 @@ def is_manager_active():
 
     p = get_profile_context(active_profile, suppress_error=True)
     if not (p and p.manager_ip):
-        return False
-    return True
-
-
-def is_credentials_set():
-    if not get_username() or not get_password():
         return False
     return True
 
@@ -239,24 +242,36 @@ def build_manager_host_string(ssh_user='', ip=''):
 
 
 def get_username():
-    return os.environ.get(
-        constants.CLOUDIFY_USERNAME_ENV,
-        profile.manager_username
-    )
+    username = os.environ.get(constants.CLOUDIFY_USERNAME_ENV)
+    if username and profile.manager_username:
+        raise CloudifyCliError('Manager Username is set in profile *and* in '
+                               'the `CLOUDIFY_USERNAME` env variable. Resolve '
+                               'the conflict before continuing.\n'
+                               'Either unset the env variable, or run '
+                               '`cfy profiles unset-username`')
+    return username or profile.manager_username
 
 
 def get_password():
-    return os.environ.get(
-        constants.CLOUDIFY_PASSWORD_ENV,
-        profile.manager_password
-    )
+    password = os.environ.get(constants.CLOUDIFY_PASSWORD_ENV)
+    if password and profile.manager_password:
+        raise CloudifyCliError('Manager Password is set in profile *and* in '
+                               'the `CLOUDIFY_PASSWORD` env variable. Resolve '
+                               'the conflict before continuing.\n'
+                               'Either unset the env variable, or run '
+                               '`cfy profiles unset-password`')
+    return password or profile.manager_password
 
 
 def get_tenant_name():
-    return os.environ.get(
-        constants.CLOUDIFY_TENANT_ENV,
-        profile.manager_tenant
-    )
+    tenant = os.environ.get(constants.CLOUDIFY_TENANT_ENV)
+    if tenant and profile.manager_tenant:
+        raise CloudifyCliError('Manager Tenant is set in profile *and* in '
+                               'the `CLOUDIFY_TENANT` env variable. Resolve '
+                               'the conflict before continuing.\n'
+                               'Either unset the env variable, or run '
+                               '`cfy profiles unset-tenant`')
+    return tenant or profile.manager_tenant
 
 
 def get_default_rest_cert_local_path():

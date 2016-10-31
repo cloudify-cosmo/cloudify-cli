@@ -194,3 +194,35 @@ class ProfilesTest(CliCommandTest):
                 'archive')
         finally:
             os.remove(profiles_archive)
+
+    def _test_conflict(self, variable):
+        env_var = 'CLOUDIFY_{0}'.format(variable).upper()
+        error_msg = 'Manager {0} is set in profile '.format(variable.title())
+        temp_value = 'value'
+        self.use_manager()
+
+        # Setting the env variable should cause the invocation to fail
+        os.environ[env_var] = temp_value
+        self.client.blueprints.list = MagicMock(return_value=[])
+        self.invoke('blueprints list', err_str_segment=error_msg)
+
+        # Unsetting the variable in the profile should fix this
+        self.invoke('profiles unset-{0}'.format(variable))
+        self.invoke('blueprints list')
+
+        # Setting the variable in the profile should cause it to fail again
+        self.invoke('profiles set-{0} {1}'.format(variable, temp_value))
+        self.invoke('blueprints list', err_str_segment=error_msg)
+
+        # Finally, unsetting the env variable should fix this
+        os.environ[env_var] = ''
+        self.invoke('blueprints list')
+
+    def test_conflict_manager_username(self):
+        self._test_conflict('username')
+
+    def test_conflict_manager_password(self):
+        self._test_conflict('password')
+
+    def test_conflict_manager_tenant(self):
+        self._test_conflict('tenant')
