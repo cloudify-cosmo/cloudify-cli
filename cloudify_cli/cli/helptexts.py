@@ -184,5 +184,6 @@ CLUSTER_ENCRYPTION_KEY = (
 
 CLUSTER_HOST_IP = \
     'The IP of this machine to use for advertising to the cluster'
+CLUSTER_JOIN = 'Address of one of the cluster members to join'
 CLUSTER_NODE_NAME = \
     'Name of this manager machine to be used internally in the cluster'

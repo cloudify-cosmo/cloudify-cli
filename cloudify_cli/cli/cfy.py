@@ -628,6 +628,12 @@ class Options(object):
             required=True,
             help=helptexts.CLUSTER_HOST_IP)
 
+        self.cluster_join = click.option(
+            '--cluster-join',
+            required=True,
+            multiple=True,
+            help=helptexts.CLUSTER_JOIN)
+
         self.cluster_node_name = click.option(
             '--cluster-node-name',
             default=lambda: 'cloudify_manager_' + generate_random_string(),
