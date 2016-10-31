@@ -28,6 +28,7 @@ from .commands import agents
 from .commands import events
 from .commands import groups
 from .commands import status
+from .commands import cluster
 from .commands import install
 from .commands import plugins
 from .commands import recover
@@ -88,6 +89,7 @@ def _register_commands():
     _cfy.add_command(users.users)
     _cfy.add_command(agents.agents)
     _cfy.add_command(events.events)
+    _cfy.add_command(cluster.cluster)
     _cfy.add_command(plugins.plugins)
     _cfy.add_command(upgrade.upgrade)
     _cfy.add_command(tenants.tenants)
