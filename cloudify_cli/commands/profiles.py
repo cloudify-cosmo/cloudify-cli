@@ -128,6 +128,99 @@ def delete(profile_name, logger):
         logger.info(str(ex))
 
 
+@profiles.command(name='set-username',
+                  short_help='Set manager username in profile')
+@cfy.argument('username')
+@cfy.options.verbose()
+@cfy.pass_logger
+def set_username(username, logger):
+    """Set the manager username in the *current* profile
+
+    `USERNAME` is the username of the manager user
+    """
+    if not username:
+        raise CloudifyCliError("Can't pass an empty username. "
+                               "Use the `cfy profiles unset-username` command "
+                               "for that")
+    env.profile.manager_username = username
+    env.profile.save()
+    logger.info('Manager username set to `{0}`'.format(username))
+
+
+@profiles.command(name='set-password',
+                  short_help='Set manager password in profile')
+@cfy.argument('password')
+@cfy.options.verbose()
+@cfy.pass_logger
+def set_password(password, logger):
+    """Set the manager password in the *current* profile
+
+    `PASSWORD` is the password of the manager user
+    """
+    if not password:
+        raise CloudifyCliError("Can't pass an empty password. "
+                               "Use the `cfy profiles unset-password` command "
+                               "for that")
+    env.profile.manager_password = password
+    env.profile.save()
+    logger.info('Manager password set')
+
+
+@profiles.command(name='set-tenant',
+                  short_help='Set manager tenant in profile')
+@cfy.argument('tenant-name')
+@cfy.options.verbose()
+@cfy.pass_logger
+def set_tenant(tenant_name, logger):
+    """Set the manager tenant in the *current* profile
+
+    `TENANT_NAME` is the name of the manager tenant
+    """
+    if not tenant_name:
+        raise CloudifyCliError("Can't pass an empty tenant name. "
+                               "Use the `cfy profiles unset-tenant` command "
+                               "for that")
+    env.profile.manager_tenant = tenant_name
+    env.profile.save()
+    logger.info('Manager tenant set to `{0}`'.format(tenant_name))
+
+
+@profiles.command(name='unset-username',
+                  short_help='Clear manager username from profile')
+@cfy.options.verbose()
+@cfy.pass_logger
+def unset_username(logger):
+    """Clear the manager username from the *current* profile
+    """
+    env.profile.manager_username = None
+    env.profile.save()
+    logger.info('Manager username was cleared')
+
+
+@profiles.command(name='unset-password',
+                  short_help='Clear manager password from profile')
+@cfy.options.verbose()
+@cfy.pass_logger
+def unset_password(logger):
+    """Clear the manager password from the *current* profile
+    """
+    env.profile.manager_password = None
+    env.profile.save()
+    logger.info('Manager password was cleared')
+
+
+@profiles.command(name='unset-tenant',
+                  short_help='Clear manager tenant from profile')
+@cfy.options.verbose()
+@cfy.pass_logger
+def unset_tenant(logger):
+    """Clear the manager tenant from the *current* profile
+    """
+    env.profile.manager_tenant = None
+    env.profile.save()
+    logger.info('Manager tenant was cleared')
+
+
 @profiles.command(name='export',
                   short_help='Export all profiles to an archive')
 @cfy.options.include_keys(helptexts.EXPORT_SSH_KEYS)
