@@ -14,11 +14,13 @@
 # limitations under the License.
 ############
 
+import os
 import sys
 import difflib
 import StringIO
 import traceback
 from functools import wraps
+from base64 import standard_b64encode
 
 import click
 
@@ -35,6 +37,7 @@ from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import CloudifyBootstrapError
 from ..exceptions import SuppressedCloudifyCliError
 from ..logger import get_logger, set_global_verbosity_level, DEFAULT_LOG_FILE
+from ..utils import generate_random_string
 
 
 CLICK_CONTEXT_SETTINGS = dict(
@@ -620,6 +623,23 @@ class Options(object):
             required=True,
             help=helptexts.PASSWORD)
 
+        self.cluster_host_ip = click.option(
+            '--cluster-host-ip',
+            required=True,
+            help=helptexts.CLUSTER_HOST_IP)
+
+        self.cluster_join = click.option(
+            '--cluster-join',
+            required=True,
+            multiple=True,
+            help=helptexts.CLUSTER_JOIN)
+
+        self.cluster_node_name = click.option(
+            '--cluster-node-name',
+            default=lambda: 'cloudify_manager_' + generate_random_string(),
+            help=helptexts.CLUSTER_NODE_NAME
+        )
+
     @staticmethod
     def include_keys(help):
         return click.option(
@@ -744,6 +764,19 @@ class Options(object):
             '--blueprint-path',
             required=required,
             type=click.Path(exists=True))
+
+    @staticmethod
+    def cluster_encryption_key(with_default=False):
+        if with_default:
+            def default():
+                return standard_b64encode(os.urandom(16))
+        else:
+            default = None
+
+        return click.option(
+            '--cluster-encryption-key',
+            default=default,
+            help=helptexts.CLUSTER_ENCRYPTION_KEY)
 
 
 options = Options()
