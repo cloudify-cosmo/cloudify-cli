@@ -614,9 +614,8 @@ def _get_resource_into_dir(destination_dir, resource_source_path, retries,
                     .format(source_path,
                             resource_request.status_code)
                 raise CloudifyBootstrapError(msg)
-        except requests.RequestException:
-            msg = '{0} is neither a valid local path nor a valid url' \
-                .format(source_path)
+        except requests.RequestException as ex:
+            msg = 'Failed accessing {0}: {1}'.format(source_path, str(ex))
             raise CloudifyBootstrapError(msg)
 
     if not parts.scheme or not parts.netloc:
