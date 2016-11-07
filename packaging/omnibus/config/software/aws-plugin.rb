@@ -1,7 +1,7 @@
 name "aws-plugin"
 
 
-plugin_version = "aws-plugin/1.4.1"
+plugin_version = "aws-plugin/1.4.3"
 default_version plugin_version.sub! "aws-plugin/", ""
 
 source :git => "https://github.com/cloudify-cosmo/cloudify-aws-plugin"
