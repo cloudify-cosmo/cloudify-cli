@@ -27,11 +27,11 @@ function download_wheels() {
     https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/${CORE_TAG_NAME}.zip#egg=cloudify-dsl-parser \
     https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/${CORE_TAG_NAME}.zip#egg=cloudify-plugins-common \
     https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.4.zip#egg=cloudify-script-plugin \
-    https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.4.1.zip#egg=cloudify-fabric-plugin \
-    https://github.com/cloudify-cosmo/cloudify-openstack-plugin/archive/1.4.zip#egg=cloudify-openstack-plugin \
-    https://github.com/cloudify-cosmo/cloudify-aws-plugin/archive/1.4.1.zip#egg=cloudify-aws-plugin \
+    https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.4.2.zip#egg=cloudify-fabric-plugin \
+    https://github.com/cloudify-cosmo/cloudify-openstack-plugin/archive/1.5.zip#egg=cloudify-openstack-plugin \
+    https://github.com/cloudify-cosmo/cloudify-aws-plugin/archive/1.4.3.zip#egg=cloudify-aws-plugin \
     https://github.com/cloudify-cosmo/tosca-vcloud-plugin/archive/1.3.1.zip#egg=cloudify-vcloud-plugin \
-    https://github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/2.0.zip#egg=cloudify-vsphere-plugin \
+    https://github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/2.0.1.zip#egg=cloudify-vsphere-plugin \
     https://$GITHUB_USERNAME:$GITHUB_PASSWORD@github.com/cloudify-cosmo/cloudify-softlayer-plugin/archive/1.3.1.zip#egg=cloudify-softlayer-plugin
 }
 
