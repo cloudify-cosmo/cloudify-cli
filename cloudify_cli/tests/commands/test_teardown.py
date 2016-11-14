@@ -20,7 +20,7 @@ class TeardownTest(CliCommandTest):
         self.client.manager.get_context = MagicMock(
             return_value={'name': 'mock_provider', 'context': {'key': 'value'}}
         )
-        self.invoke('cfy use 10.0.0.1 -m admin -p admin')
+        self.invoke('cfy use 10.0.0.1 -u admin -p admin')
         env.profile = env.get_profile_context(suppress_error=True)
         self.invoke('cfy teardown -f --ignore-deployments')
         mock_teardown.assert_called_once_with(
@@ -35,7 +35,7 @@ class TeardownTest(CliCommandTest):
         self.client.manager.get_context = MagicMock(
             return_value={'name': 'mock_provider', 'context': {'key': 'value'}}
         )
-        self.invoke('cfy use 10.0.0.1 -m admin -p admin')
+        self.invoke('cfy use 10.0.0.1 -u admin -p admin')
         env.profile = env.get_profile_context(suppress_error=True)
         self.invoke('cfy teardown -f',
                     'has existing deployments')
@@ -50,7 +50,7 @@ class TeardownTest(CliCommandTest):
         self.client.manager.get_context = MagicMock(
             return_value={'name': 'mock_provider', 'context': {'key': 'value'}}
         )
-        self.invoke('cfy use 10.0.0.1 -m admin -p admin')
+        self.invoke('cfy use 10.0.0.1 -u admin -p admin')
         env.profile = env.get_profile_context(suppress_error=True)
         self.invoke('cfy teardown -f',
                     'The manager may be down')

@@ -173,11 +173,17 @@ def manager_update(deployment_id,
 @cfy.argument('deployment-id', required=False)
 @cfy.options.blueprint_id(required=True)
 @cfy.options.inputs
+@cfy.options.private_resource
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def manager_create(blueprint_id, deployment_id, inputs, logger, client):
+def manager_create(blueprint_id,
+                   deployment_id,
+                   inputs,
+                   private_resource,
+                   logger,
+                   client):
     """Create a deployment on the manager.
 
     `DEPLOYMENT_ID` is the id of the deployment you'd like to create.
@@ -189,7 +195,11 @@ def manager_create(blueprint_id, deployment_id, inputs, logger, client):
 
     try:
         deployment = client.deployments.create(
-            blueprint_id, deployment_id, inputs=inputs)
+            blueprint_id,
+            deployment_id,
+            inputs=inputs,
+            private_resource=private_resource
+        )
     except MissingRequiredDeploymentInputError as e:
         logger.info('Unable to create deployment. Not all '
                     'required inputs have been specified...')
@@ -292,3 +302,43 @@ def local_outputs(blueprint_id, logger):
     """
     env = load_env(blueprint_id)
     logger.info(json.dumps(env.outputs() or {}, sort_keys=True, indent=2))
+
+
+@deployments.command(name='add-permission',
+                     short_help='Add permissions to users')
+@cfy.argument('deployment-id')
+@cfy.options.users
+@cfy.options.permission
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def add_permission(deployment_id, users, permission, client, logger):
+    """Add `viewer`/`owner` permissions to users on a certain deployment
+
+    `DEPLOYMENT_ID` is the ID of the deployment to set permissions on
+    """
+    logger.info('Adding permission `{0}`...'.format(permission))
+    client.deployments.add_permission(deployment_id, users, permission)
+    logger.info('Permissions updated for deployment '
+                '`{0}`'.format(deployment_id))
+
+
+@deployments.command(name='remove-permission',
+                     short_help='Remove permissions from users')
+@cfy.argument('deployment-id')
+@cfy.options.users
+@cfy.options.permission
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def remove_permission(deployment_id, users, permission, client, logger):
+    """Remove `viewer`/`owner` permissions from users on a certain deployment
+
+    `DEPLOYMENT_ID` is the ID of the deployment to set permissions on
+    """
+    logger.info('Removing permission `{0}`...'.format(permission))
+    client.deployments.remove_permission(deployment_id, users, permission)
+    logger.info('Permissions updated for deployment '
+                '`{0}`'.format(deployment_id))

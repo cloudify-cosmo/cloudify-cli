@@ -98,12 +98,13 @@ def delete(plugin_id, force, logger, client):
 @plugins.command(name='upload',
                  short_help='Upload a plugin [manager only]')
 @cfy.argument('plugin-path')
+@cfy.options.private_resource
 @cfy.options.verbose()
 @cfy.pass_context
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def upload(ctx, plugin_path, logger, client):
+def upload(ctx, plugin_path, private_resource, logger, client):
     """Upload a plugin to the manager
 
     `PLUGIN_PATH` is the path to wagon archive to upload.
@@ -116,7 +117,9 @@ def upload(ctx, plugin_path, logger, client):
 
     progress_handler = utils.generate_progress_handler(plugin_path, '')
     logger.info('Uploading plugin {0}...'.format(plugin_path))
-    plugin = client.plugins.upload(plugin_path, progress_handler)
+    plugin = client.plugins.upload(plugin_path,
+                                   private_resource,
+                                   progress_handler)
     logger.info("Plugin uploaded. The plugin's id is {0}".format(plugin.id))
 
 
@@ -179,3 +182,40 @@ def list(sort_by, descending, logger, client):
 
     pt = table.generate(columns, data=plugins)
     table.log('Plugins:', pt)
+
+
+@plugins.command(name='add-permission', short_help='Add permissions to users')
+@cfy.argument('plugin-id')
+@cfy.options.users
+@cfy.options.permission
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def add_permission(plugin_id, users, permission, client, logger):
+    """Add `viewer`/`owner` permissions to users on a certain plugin
+
+    `PLUGIN_ID` is the ID of the plugin to set permissions on
+    """
+    logger.info('Adding permission `{0}`...'.format(permission))
+    client.plugins.add_permission(plugin_id, users, permission)
+    logger.info('Permissions updated for plugin `{0}`'.format(plugin_id))
+
+
+@plugins.command(name='remove-permission',
+                 short_help='Remove permissions from users')
+@cfy.argument('plugin-id')
+@cfy.options.users
+@cfy.options.permission
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def remove_permission(plugin_id, users, permission, client, logger):
+    """Remove `viewer`/`owner` permissions from users on a certain plugin
+
+    `PLUGIN_ID` is the ID of the plugin to set permissions on
+    """
+    logger.info('Removing permission `{0}`...'.format(permission))
+    client.plugins.remove_permission(plugin_id, users, permission)
+    logger.info('Permissions updated for plugin `{0}`'.format(plugin_id))

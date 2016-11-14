@@ -46,7 +46,7 @@ class UseTest(CliCommandTest):
                 'name': 'name', 'context': {}
             }
         )
-        self.invoke('cfy use 127.0.0.1 -u test_user --ssh-port 22222')
+        self.invoke('cfy use 127.0.0.1 -s test_user --ssh-port 22222')
         context = self._read_context()
         self.assertEquals('127.0.0.1', context.manager_ip)
         self.assertEquals('22222', context.ssh_port)

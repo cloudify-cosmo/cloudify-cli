@@ -54,10 +54,16 @@ def restore(snapshot_id, without_deployment_envs, force, logger, client):
 @cfy.argument('snapshot-id', required=False)
 @cfy.options.include_metrics
 @cfy.options.exclude_credentials
+@cfy.options.private_resource
 @cfy.options.verbose()
 @cfy.pass_client()
 @cfy.pass_logger
-def create(snapshot_id, include_metrics, exclude_credentials, logger, client):
+def create(snapshot_id,
+           include_metrics,
+           exclude_credentials,
+           private_resource,
+           logger,
+           client):
     """Create a snapshot on the manager
 
     The snapshot will contain the relevant data to restore a manager to
@@ -70,7 +76,8 @@ def create(snapshot_id, include_metrics, exclude_credentials, logger, client):
 
     execution = client.snapshots.create(snapshot_id,
                                         include_metrics,
-                                        not exclude_credentials)
+                                        not exclude_credentials,
+                                        private_resource)
     logger.info("Started workflow execution. The execution's id is {0}".format(
         execution.id))
 
@@ -95,10 +102,11 @@ def delete(snapshot_id, logger, client):
                    short_help='Upload a snapshot [manager only]')
 @cfy.argument('snapshot_path')
 @cfy.options.snapshot_id
+@cfy.options.private_resource
 @cfy.options.verbose()
 @cfy.pass_client()
 @cfy.pass_logger
-def upload(snapshot_path, snapshot_id, logger, client):
+def upload(snapshot_path, snapshot_id, private_resource, logger, client):
     """Upload a snapshot to the manager
 
     `SNAPSHOT_PATH` is the path to the snapshot to upload.
@@ -109,6 +117,7 @@ def upload(snapshot_path, snapshot_id, logger, client):
     progress_handler = utils.generate_progress_handler(snapshot_path, '')
     snapshot = client.snapshots.upload(snapshot_path,
                                        snapshot_id,
+                                       private_resource,
                                        progress_handler)
     logger.info("Snapshot uploaded. The snapshot's id is {0}".format(
         snapshot.id))
@@ -151,3 +160,41 @@ def list(sort_by, descending, logger, client):
     columns = ['id', 'created_at', 'status', 'error']
     pt = table.generate(columns, data=snapshots)
     table.log('Snapshots:', pt)
+
+
+@snapshots.command(name='add-permission',
+                   short_help='Add permissions to users')
+@cfy.argument('snapshot-id')
+@cfy.options.users
+@cfy.options.permission
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def add_permission(snapshot_id, users, permission, client, logger):
+    """Add `viewer`/`owner` permissions to users on a certain snapshot
+
+    `SNAPSHOT_ID` is the ID of the snapshot to set permissions on
+    """
+    logger.info('Adding permission `{0}`...'.format(permission))
+    client.snapshots.add_permission(snapshot_id, users, permission)
+    logger.info('Permissions updated for snapshot `{0}`'.format(snapshot_id))
+
+
+@snapshots.command(name='remove-permission',
+                   short_help='Remove permissions from users')
+@cfy.argument('snapshot-id')
+@cfy.options.users
+@cfy.options.permission
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def remove_permission(snapshot_id, users, permission, client, logger):
+    """Remove `viewer`/`owner` permissions from users on a certain snapshot
+
+    `SNAPSHOT_ID` is the ID of the snapshot to set permissions on
+    """
+    logger.info('Removing permission `{0}`...'.format(permission))
+    client.snapshots.remove_permission(snapshot_id, users, permission)
+    logger.info('Permissions updated for snapshot `{0}`'.format(snapshot_id))
