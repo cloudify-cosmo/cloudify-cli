@@ -145,9 +145,9 @@ TAIL_OUTPUT = "Tail the events of the specified execution until it ends"
 
 
 SET_MANAGEMENT_CREDS = (
-    'You can use the `-u` and `-k` flags to set the user and '
+    'You can use the `-s` and `-k` flags to set the ssh user and '
     'key-file path respectively. '
-    '(e.g. `cfy use -u my_user -k ~/my/key/path`)'
+    '(e.g. `cfy use -s my_user -k ~/my/key/path`)'
 )
 
 DEFAULT_MUTUALITY_MESSAGE = 'Cannot be used simultaneously'
@@ -174,7 +174,7 @@ TENANT = 'The name of the tenant'
 GROUP = 'The name of the user group'
 
 SECURITY_ROLE = "A role to determine the user's permissions on the manager " \
-                "[administrator|default|viewer|suspended] (default: default)"
+                "[administrator|user|suspended] (default: user)"
 PASSWORD = 'Cloudify manager password'
 
 CLUSTER_ENCRYPTION_KEY = (
@@ -187,3 +187,13 @@ CLUSTER_HOST_IP = \
 CLUSTER_JOIN = 'Address of one of the cluster members to join'
 CLUSTER_NODE_NAME = \
     'Name of this manager machine to be used internally in the cluster'
+
+PRIVATE_RESOURCE = 'If set to True the uploaded resource will only be ' \
+                   'accessible by its creator. Otherwise, the resource is ' \
+                   'accessible by all users that belong to the same tenant. ' \
+                   '(default: False)'
+
+USER = 'Username of user to whom the permissions apply. ' \
+       'This argument can be used multiple times'
+PERMISSION = 'The permission applicable to a resource [viewer|owner] ' \
+             '(default:viewer)'

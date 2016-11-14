@@ -76,6 +76,7 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.options.blueprint_filename()
 @cfy.options.validate
 @cfy.options.verbose()
+@cfy.options.private_resource
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -85,6 +86,7 @@ def upload(ctx,
            blueprint_id,
            blueprint_filename,
            validate,
+           private_resource,
            logger,
            client):
     """Upload a blueprint to the manager
@@ -115,6 +117,7 @@ def upload(ctx,
                 blueprint_path,
                 blueprint_id,
                 blueprint_filename,
+                private_resource,
                 progress_handler)
     else:
         try:
@@ -130,7 +133,8 @@ def upload(ctx,
             blueprint_obj = client.blueprints.upload(
                 processed_blueprint_path,
                 blueprint_id,
-                progress_handler,
+                private_resource,
+                progress_handler
             )
         finally:
             # When an archive file is passed, it's extracted to a temporary
@@ -350,3 +354,41 @@ def install_plugins(blueprint_path, logger):
     """
     logger.info('Installing plugins...')
     local._install_plugins(blueprint_path=blueprint_path)
+
+
+@blueprints.command(name='add-permission',
+                    short_help='Add permissions to users')
+@cfy.argument('blueprint-id')
+@cfy.options.users
+@cfy.options.permission
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def add_permission(blueprint_id, users, permission, client, logger):
+    """Add `viewer`/`owner` permissions to users on a certain blueprint
+
+    `BLUEPRINT_ID` is the ID of the blueprint to set permissions on
+    """
+    logger.info('Adding permission `{0}`...'.format(permission))
+    client.blueprints.add_permission(blueprint_id, users, permission)
+    logger.info('Permissions updated for blueprint `{0}`'.format(blueprint_id))
+
+
+@blueprints.command(name='remove-permission',
+                    short_help='Remove permissions from users')
+@cfy.argument('blueprint-id')
+@cfy.options.users
+@cfy.options.permission
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def remove_permission(blueprint_id, users, permission, client, logger):
+    """Remove `viewer`/`owner` permissions from users on a certain blueprint
+
+    `BLUEPRINT_ID` is the ID of the blueprint to set permissions on
+    """
+    logger.info('Removing permission `{0}`...'.format(permission))
+    client.blueprints.remove_permission(blueprint_id, users, permission)
+    logger.info('Permissions updated for blueprint `{0}`'.format(blueprint_id))
