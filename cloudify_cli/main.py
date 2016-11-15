@@ -1,4 +1,4 @@
-########
+    ########
 # Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -136,6 +136,7 @@ def _register_commands():
         deployments.deployments.add_command(deployments.local_outputs)
 
         executions.executions.add_command(executions.local_start)
+
 
 _register_commands()
 logger.configure_loggers()
