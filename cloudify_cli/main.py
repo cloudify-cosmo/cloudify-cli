@@ -137,6 +137,7 @@ def _register_commands():
 
         executions.executions.add_command(executions.local_start)
 
+
 _register_commands()
 logger.configure_loggers()
 

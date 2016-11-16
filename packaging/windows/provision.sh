@@ -48,6 +48,10 @@ function download_resources() {
     pushd packaging/source/blueprints
         curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/${CORE_TAG_NAME}.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
         tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1
+        if [ "$PREMIUM" == "true" ]; then
+            echo "PREMIUM=$PREMIUM"
+            sed -i "s|cloudify-manager-resources|$PREMIUM_FOLDER\/cloudify-premium-manager-resources|g" inputs/manager-inputs.yaml *-inputs.yaml
+        fi
     popd
 
     # Downloading types.yaml
@@ -91,14 +95,20 @@ function update_remote_to_local_links() {
 # VERSION/PRERELEASE/BUILD/CORE_TAG_NAME/PLUGINS_TAG_NAME must be exported as they are being read as an env var by the install wizard
 
 CORE_TAG_NAME="4.0m7"
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${CORE_TAG_NAME}/common/provision.sh -o ./common-provision.sh &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/$CORE_TAG_NAME/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
 
 GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
+export PREMIUM=$5
 
+echo "PREMIUM=$PREMIUM"
+if [ "$PREMIUM" == "true" ]; then
+    export AWS_S3_PATH=$AWS_S3_PATH"/"$PREMIUM_FOLDER
+fi
+echo "AWS_S3_PATH=$AWS_S3_PATH"
 
 install_requirements &&
 download_wheels $GITHUB_USERNAME $GITHUB_PASSWORD &&
