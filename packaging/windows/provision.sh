@@ -95,8 +95,7 @@ function update_remote_to_local_links() {
 # VERSION/PRERELEASE/BUILD/CORE_TAG_NAME/PLUGINS_TAG_NAME must be exported as they are being read as an env var by the install wizard
 
 CORE_TAG_NAME="4.0m7"
-#curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/$CORE_TAG_NAME/common/provision.sh -o ./common-provision.sh &&
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/premium-restserivce-package/common/provision.sh -o ./common-provision.sh &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/$CORE_TAG_NAME/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
 
 GITHUB_USERNAME=$1
@@ -104,9 +103,8 @@ GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
 export PREMIUM=$5
-echo "PREMIUM=$PREMIUM"
-echo "PREMIUM_FOLDER=$PREMIUM_FOLDER"
 
+echo "PREMIUM=$PREMIUM"
 if [ "$PREMIUM" == "true" ]; then
     export AWS_S3_PATH=$AWS_S3_PATH"/"$PREMIUM_FOLDER
 fi

@@ -10,8 +10,7 @@ export PREMIUM=$7
 
 CORE_TAG_NAME="4.0m7"
 
-#curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/$CORE_TAG_NAME/common/provision.sh -o ./common-provision.sh &&
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/premium-restserivce-package/common/provision.sh -o ./common-provision.sh &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/$CORE_TAG_NAME/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
 
 if [ "$PREMIUM" == "true" ]; then
