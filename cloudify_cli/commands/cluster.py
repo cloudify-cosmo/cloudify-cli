@@ -33,13 +33,13 @@ def _verify_not_in_cluster(client):
     status = client.cluster.status()
     if status.initialized:
         raise CloudifyCliError('This manager machine is already part '
-                               'of a HA cluster')
+                               'of a Cloudify Manager cluster')
 
 
 @cfy.group(name='cluster')
 @cfy.options.verbose()
 def cluster():
-    """Handle the Manager HA Cluster
+    """Handle the Cloudify Manager cluster
     """
     if not env.is_initialized():
         env.raise_uninitialized()
@@ -50,18 +50,18 @@ def cluster():
 @cfy.pass_client()
 @cfy.pass_logger
 def status(client, logger):
-    """Display the current status of the HA cluster
+    """Display the current status of the Cloudify Manager cluster
     """
     status = client.cluster.status()
     if not status.initialized:
-        logger.error('This manager is not part of a Cloudify HA cluster')
+        logger.error('This manager is not part of a Cloudify Manager cluster')
     else:
-        logger.info('HA cluster initialized!\nEncryption key: {0}'
-                    .format(status.encryption_key))
+        logger.info('Cloudify Manager cluster initialized!\n'
+                    'Encryption key: {0}'.format(status.encryption_key))
 
 
 @cluster.command(name='start',
-                 short_help='Start a HA manager cluster [manager only]')
+                 short_help='Start a Cloudify Manager cluster [manager only]')
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.timeout()
@@ -74,16 +74,17 @@ def start(client,
           cluster_host_ip,
           cluster_node_name,
           cluster_encryption_key):
-    """Start a HA manager cluster with the current manager as the master.
+    """Start a Cloudify Manager cluster with the current manager as the master.
 
-    This will initialize all the HA cluster components on the current manager,
-    and mark it as the master. After that, other managers will be able to
-    join the cluster by passing this manager's IP address and encryption key.
+    This will initialize all the Cloudify Manager cluster components on the
+    current manager, and mark it as the master. After that, other managers
+    will be able to join the cluster by passing this manager's IP address
+    and encryption key.
     """
 
     _verify_not_in_cluster(client)
 
-    logger.info('Creating a new Cloudify HA cluster')
+    logger.info('Creating a new Cloudify Manager cluster')
 
     client.cluster.start(config={
         'host_ip': cluster_host_ip,
@@ -93,16 +94,18 @@ def start(client,
     status = _wait_for_cluster_initialized(client, logger)
 
     if status.error:
-        logger.error('Error while configuring the HA cluster')
+        logger.error('Error while configuring the Cloudify Manager cluster')
         raise CloudifyCliError(status.error)
 
-    logger.info('HA cluster started at {0}.\n'
+    _init_cluster_profile()
+
+    logger.info('Cloudify Manager cluster started at {0}.\n'
                 'Encryption key used is: {1}'
                 .format(cluster_host_ip, cluster_encryption_key))
 
 
 @cluster.command(name='join',
-                 short_help='Join a HA manager cluster [manager only]')
+                 short_help='Join a Cloudify Manager cluster [manager only]')
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.timeout()
@@ -110,24 +113,36 @@ def start(client,
 @cfy.options.cluster_node_name
 @cfy.options.cluster_join
 @cfy.options.cluster_encryption_key(with_default=True)
+@cfy.options.cluster_join_profile
 def join(client,
          logger,
          timeout,
          cluster_host_ip,
          cluster_node_name,
          cluster_encryption_key,
-         cluster_join):
-    """Join a HA cluster on this manager.
+         cluster_join,
+         cluster_join_profile):
+    """Join a Cloudify Manager cluster on this manager.
 
-    A HA cluster with at least one machine needs to already exist.
+    A cluster with at least one machine needs to already exist.
     Pass the address of at least one member of the cluster as --cluster-join
     Specifying multiple addresses - even all members of the cluster - is
     encouraged, as it will allow to join the cluster even if some of the
     current members are unreachable, but is not required.
     """
     _verify_not_in_cluster(client)
+    if cluster_join_profile:
+        if not env.is_profile_exists(cluster_join_profile):
+            raise CloudifyCliError('No such profile: {0}'
+                                   .format(cluster_join_profile))
+        joined_profile = env.get_profile_context(cluster_join_profile)
+        if not joined_profile.cluster:
+            raise CloudifyCliError('Cannot join profile {0} - that profile '
+                                   'has no cluster started'
+                                   .format(cluster_join_profile))
 
-    logger.info('Joining the Cloudify HA cluster: {0}'.format(cluster_join))
+    logger.info('Joining the Cloudify Manager cluster: {0}'
+                .format(cluster_join))
 
     client.cluster.join(config={
         'host_ip': cluster_host_ip,
@@ -138,15 +153,52 @@ def join(client,
     status = _wait_for_cluster_initialized(client, logger)
 
     if status.error:
-        logger.error('Error while joining the HA cluster')
+        logger.error('Error while joining the Cloudify Manager cluster')
         raise CloudifyCliError(status.error)
 
-    logger.info('HA cluster joined successfully!')
+    logger.info('Cloudify Manager cluster joined successfully!')
+
+    if cluster_join_profile:
+        logger.info('Joining profile: {0}'.format(cluster_join_profile))
+        node = _make_node_from_profile()
+        env.set_active_profile(cluster_join_profile)
+        joined_profile.cluster.append(node)
+        joined_profile.save()
+
+
+@cluster.command(name='update-profile',
+                 short_help='Store the cluster nodes in the CLI profile '
+                            '[cluster only')
+@cfy.pass_client()
+@cfy.pass_logger
+def update_profile(client,
+                   logger):
+    """Fetch the list of the cluster nodes and update the current profile.
+
+    Use this to update the profile if nodes are added to the cluster from
+    another machine. Only the cluster nodes that are stored in the profile
+    will be contacted in case of a cluster master failure.
+    """
+    logger.info('Fetching the cluster nodes list...')
+    nodes = client.cluster.nodes.list()
+    stored_nodes = {node['manager_ip'] for node in env.profile.cluster}
+    for node in nodes:
+        if node.host_ip not in stored_nodes:
+            logger.info('Adding cluster node: {0}'.format(node.host_ip))
+            env.profile.cluster.append({
+                # currently only the host IP is received; all other parameters
+                # will be defaulted to the ones from the last used manager
+                'manager_ip': node.host_ip
+            })
+    env.profile.save()
+    logger.info('Profile is up to date with {0} nodes'
+                .format(len(env.profile.cluster)))
 
 
 @cluster.group(name='nodes')
 def nodes():
-    pass
+    """Handle the cluster nodes [cluster only]
+    """
 
 
 @nodes.command(name='list',
@@ -159,6 +211,18 @@ def list_nodes(client, logger):
     response = client.cluster.nodes.list()
     default = {'master': False, 'online': False}
     print_data(CLUSTER_COLUMNS, response, 'HA Cluster nodes', defaults=default)
+
+
+def _make_node_from_profile():
+    return {node_attr: getattr(env.profile, node_attr)
+            for node_attr in env.CLUSTER_NODE_ATTRS}
+
+
+def _init_cluster_profile():
+    """Set the current profile as connected to a Cloudify Manager cluster.
+    """
+    env.profile.cluster = [_make_node_from_profile()]
+    env.profile.save()
 
 
 def _wait_for_cluster_initialized(client, logger=None, timeout=900):
@@ -178,8 +242,8 @@ def _wait_for_cluster_initialized(client, logger=None, timeout=900):
         if timeout is not None:
             timeout -= WAIT_FOR_EXECUTION_SLEEP_INTERVAL
             if timeout < 0:
-                raise CloudifyCliError('Timed out waiting for the HA '
-                                       'cluster to be initialized.')
+                raise CloudifyCliError('Timed out waiting for the Cloudify '
+                                       'Manager cluster to be initialized.')
 
         status = client.cluster.status(
             _include=include,

@@ -19,13 +19,16 @@ import json
 import shutil
 import pkgutil
 import getpass
+import requests
 import tempfile
 
 import yaml
 from base64 import urlsafe_b64encode
 
 from cloudify_rest_client import CloudifyClient
-from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify_rest_client.client import HTTPClient
+from cloudify_rest_client.exceptions import (CloudifyClientError,
+                                             NotClusterMaster)
 
 from . import constants
 from .exceptions import CloudifyCliError
@@ -41,6 +44,7 @@ CLOUDIFY_WORKDIR = os.path.join(
 PROFILES_DIR = os.path.join(CLOUDIFY_WORKDIR, 'profiles')
 ACTIVE_PRO_FILE = os.path.join(CLOUDIFY_WORKDIR, 'active.profile')
 MULTIPLE_LOCAL_BLUEPRINTS = os.environ.get('CFY_MULTIPLE_BLUEPRINTS') == 'true'
+CLUSTER_RETRY_INTERVAL = 5
 
 
 def delete_profile(profile_name):
@@ -188,7 +192,8 @@ def get_rest_client(rest_host=None,
                     password=None,
                     tenant_name=None,
                     trust_all=False,
-                    skip_version_check=False):
+                    skip_version_check=False,
+                    cluster=None):
     rest_host = rest_host or profile.manager_ip
     rest_port = rest_port or profile.rest_port
     rest_protocol = rest_protocol or profile.rest_protocol
@@ -198,6 +203,7 @@ def get_rest_client(rest_host=None,
     trust_all = trust_all or get_ssl_trust_all()
     headers = get_auth_header(username, password)
     headers[constants.CLOUDIFY_TENANT_HEADER] = tenant_name
+    cluster = cluster or profile.cluster
 
     if not username:
         raise CloudifyCliError('Command failed: Missing Username')
@@ -207,13 +213,24 @@ def get_rest_client(rest_host=None,
 
     cert = get_ssl_cert()
 
-    client = CloudifyClient(
-        host=rest_host,
-        port=rest_port,
-        protocol=rest_protocol,
-        headers=headers,
-        cert=cert,
-        trust_all=trust_all)
+    if cluster:
+        client = CloudifyClusterClient(
+            cluster=cluster,
+            host=rest_host,
+            port=rest_port,
+            protocol=rest_protocol,
+            headers=headers,
+            cert=cert,
+            trust_all=trust_all)
+
+    else:
+        client = CloudifyClient(
+            host=rest_host,
+            port=rest_port,
+            protocol=rest_protocol,
+            headers=headers,
+            cert=cert,
+            trust_all=trust_all)
 
     # TODO: Put back version check after we've solved the problem where
     # a new CLI is used with an older manager on `cfy upgrade`.
@@ -351,6 +368,7 @@ class ProfileContext(yaml.YAMLObject):
         self.manager_tenant = constants.DEFAULT_TENANT_NAME
         self.rest_port = constants.DEFAULT_REST_PORT
         self.rest_protocol = constants.DEFAULT_REST_PROTOCOL
+        self.cluster = []
 
     def to_dict(self):
         return dict(
@@ -363,7 +381,8 @@ class ProfileContext(yaml.YAMLObject):
             manager_username=self.manager_username,
             manager_tenant=self.manager_tenant,
             rest_port=self.rest_port,
-            rest_protocol=self.rest_protocol
+            rest_protocol=self.rest_protocol,
+            cluster=self.cluster
         )
 
     @property
@@ -411,6 +430,69 @@ def get_auth_header(username, password):
                 constants.BASIC_AUTH_PREFIX + ' ' + encoded_credentials}
 
     return header
+
+
+# attributes that can differ for each node in a cluster. Those will be updated
+# in the profile when we switch to a new master.
+# Dicts with these keys live in profile.cluster, and are added there during
+# either `cfy cluster update-profile` (in which case some of them might be
+# missing, eg. ssh_*), or during a `cfy cluster join`.
+# If a value is missing, we will use the value from the last active manager.
+# Only the IP is required.
+# Note that not all attributes are allowed - username/password will be
+# the same for every node in the cluster.
+CLUSTER_NODE_ATTRS = ['manager_ip', 'rest_port', 'rest_protocol', 'ssh_port',
+                      'ssh_user', 'ssh_key']
+
+
+class ClusterHTTPClient(HTTPClient):
+    def __init__(self, *args, **kwargs):
+        super(ClusterHTTPClient, self).__init__(*args, **kwargs)
+        if not profile.cluster:
+            raise ValueError('Cluster client invoked for an empty cluster!')
+        self._cluster = list(profile.cluster)
+
+    def do_request(self, *args, **kwargs):
+        for node in profile.cluster:
+            self._use_node(node)
+            try:
+                return super(ClusterHTTPClient, self).do_request(*args,
+                                                                 **kwargs)
+            except (NotClusterMaster, requests.exceptions.ConnectionError):
+                    continue
+
+        raise CloudifyClientError('No active node in the cluster!')
+
+    def _use_node(self, node):
+        if node['manager_ip'] == self.host:
+            return
+        self.host = node['manager_ip']
+        self.port = node.get('rest_port', self.port)
+        self.protocol = node.get('rest_protocol', self.protocol)
+        self._update_profile(node)
+
+    def _update_profile(self, node):
+        for attr in CLUSTER_NODE_ATTRS:
+            if attr in node:
+                setattr(profile, attr, node[attr])
+
+        # set node as the first one in .cluster
+        profile.cluster.remove(node)
+        profile.cluster = [node] + profile.cluster
+
+        profile.save()
+
+
+class CloudifyClusterClient(CloudifyClient):
+    """A CloudifyClient that will retry the queries with the current master.
+
+    When a request fails with a connection error, or with a "not cluster
+    master" error, this will keep trying with every node in the cluster,
+    until it finds the cluster master.
+
+    When the master is found, the profile will be updated with its address.
+    """
+    client_class = ClusterHTTPClient
 
 
 profile = get_profile_context(suppress_error=True)

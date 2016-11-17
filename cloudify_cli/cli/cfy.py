@@ -660,8 +660,11 @@ class Options(object):
         self.cluster_node_name = click.option(
             '--cluster-node-name',
             default=lambda: 'cloudify_manager_' + generate_random_string(),
-            help=helptexts.CLUSTER_NODE_NAME
-        )
+            help=helptexts.CLUSTER_NODE_NAME)
+
+        self.cluster_join_profile = click.option(
+            '--cluster-join-profile',
+            help=helptexts.CLUSTER_JOIN_PROFILE)
 
         self.private_resource = click.option(
             '--private-resource',

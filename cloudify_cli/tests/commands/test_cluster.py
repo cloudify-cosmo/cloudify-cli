@@ -19,6 +19,7 @@ import unittest
 
 from cloudify_rest_client.cluster import ClusterState, ClusterNode
 
+from ... import env
 from .test_base import CliCommandTest
 from ...exceptions import CloudifyCliError
 from ...commands.cluster import _wait_for_cluster_initialized
@@ -95,11 +96,15 @@ class WaitForClusterTest(unittest.TestCase):
 
 
 class ClusterStartTest(CliCommandTest):
+    def setUp(self):
+        super(ClusterStartTest, self).setUp()
+        self.use_manager()
+
     def test_already_in_cluster(self):
         self.client.cluster.status = mock.Mock(
             return_value=ClusterState({'initialized': True}))
         self.invoke('cfy cluster start --cluster-host-ip 1.2.3.4',
-                    'already part of a HA cluster')
+                    'already part of a Cloudify Manager cluster')
 
     def test_start_success(self):
         self.client.cluster.status = mock.Mock(side_effect=[
@@ -108,7 +113,7 @@ class ClusterStartTest(CliCommandTest):
         ])
         self.client.cluster.start = mock.Mock()
         outcome = self.invoke('cfy cluster start --cluster-host-ip 1.2.3.4')
-        self.assertIn('HA cluster started', outcome.logs)
+        self.assertIn('cluster started', outcome.logs)
 
     def test_start_success_with_logs(self):
         self.client.cluster.status = mock.Mock(side_effect=[
@@ -124,7 +129,7 @@ class ClusterStartTest(CliCommandTest):
         with mock.patch('cloudify_cli.commands.cluster.time'):
             outcome = self.invoke(
                 'cfy cluster start --cluster-host-ip 1.2.3.4')
-        self.assertIn('HA cluster started', outcome.logs)
+        self.assertIn('cluster started', outcome.logs)
         self.assertIn('one log message', outcome.logs)
 
     def test_start_error(self):
@@ -136,6 +141,18 @@ class ClusterStartTest(CliCommandTest):
         self.invoke('cfy cluster start --cluster-host-ip 1.2.3.4',
                     'some error happened')
 
+    def test_profile_updated(self):
+        self.client.cluster.status = mock.Mock(side_effect=[
+            ClusterState({'initialized': False}),
+            ClusterState({'initialized': True}),
+        ])
+        self.client.cluster.start = mock.Mock()
+        outcome = self.invoke('cfy cluster start --cluster-host-ip 1.2.3.4')
+        self.assertIn('cluster started', outcome.logs)
+        self.assertEqual(1, len(env.profile.cluster))
+        self.assertEqual(env.profile.manager_ip,
+                         env.profile.cluster[0]['manager_ip'])
+
 
 class ClusterNodesTest(CliCommandTest):
     def test_list_nodes(self):
@@ -144,3 +161,66 @@ class ClusterNodesTest(CliCommandTest):
         ])
         outcome = self.invoke('cfy cluster nodes list')
         self.assertIn('node name 1', outcome.logs)
+
+
+class ClusterJoinTest(CliCommandTest):
+    def setUp(self):
+        super(ClusterJoinTest, self).setUp()
+        self.use_manager()
+
+    def test_join_success(self):
+        self.client.cluster.status = mock.Mock(side_effect=[
+            ClusterState({'initialized': False}),
+            ClusterState({'initialized': True}),
+        ])
+        self.client.cluster.join = mock.Mock()
+        outcome = self.invoke('cfy cluster join --cluster-host-ip 10.10.10.10 '
+                              '--cluster-join 1.2.3.4')
+        self.assertIn('cluster joined', outcome.logs)
+
+    def test_join_profile_updated(self):
+        master_profile = env.ProfileContext('master_profile')
+        master_profile.cluster = [{'manager_ip': '1.2.3.4'}]
+        master_profile.save()
+
+        self.client.cluster.status = mock.Mock(side_effect=[
+            ClusterState({'initialized': False}),
+            ClusterState({'initialized': True}),
+        ])
+        self.client.cluster.join = mock.Mock()
+        outcome = self.invoke('cfy cluster join --cluster-host-ip {0} '
+                              '--cluster-join 1.2.3.4 '
+                              '--cluster-join-profile master_profile'
+                              .format(env.profile.manager_ip))
+        self.assertIn('cluster joined', outcome.logs)
+
+        master_profile = env.get_profile_context('master_profile')
+        self.assertEqual(2, len(master_profile.cluster))
+        self.assertEqual(env.profile.manager_ip,
+                         master_profile.cluster[1]['manager_ip'])
+
+
+class UpdateProfileTest(CliCommandTest):
+    def setUp(self):
+        super(UpdateProfileTest, self).setUp()
+        self.use_manager()
+        env.profile.cluster = [{'manager_ip': env.profile.manager_ip}]
+        env.profile.save()
+
+    def test_nodes_added_to_profile(self):
+        self.client.cluster.nodes.list = mock.Mock(return_value=[
+            ClusterNode({'name': 'node name 1', 'host_ip': '1.2.3.4'}),
+            ClusterNode({'name': 'node name 2', 'host_ip': '5.6.7.8'})
+        ])
+        self.client.cluster.join = mock.Mock()
+
+        outcome = self.invoke('cfy cluster update-profile')
+        self.assertIn('Adding cluster node: 1.2.3.4', outcome.logs)
+        self.assertIn('Adding cluster node: 5.6.7.8', outcome.logs)
+
+        self.assertEqual(env.profile.cluster,
+                         [
+                             {'manager_ip': env.profile.manager_ip},
+                             {'manager_ip': '1.2.3.4'},
+                             {'manager_ip': '5.6.7.8'}
+                         ])

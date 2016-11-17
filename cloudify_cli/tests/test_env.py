@@ -23,6 +23,7 @@ import shutil
 import logging
 import tarfile
 import zipfile
+import requests
 import tempfile
 from contextlib import closing
 from cStringIO import StringIO
@@ -35,6 +36,7 @@ from cloudify.workflows import local
 
 from cloudify_rest_client.nodes import Node
 from cloudify_rest_client.executions import Execution
+from cloudify_rest_client.exceptions import NotClusterMaster
 from cloudify_rest_client.client import CloudifyClient
 from cloudify_rest_client.client import DEFAULT_API_VERSION
 from cloudify_rest_client.node_instances import NodeInstance
@@ -1179,3 +1181,77 @@ class TestLocal(CliCommandTest):
         #     environment.storage._storage_dir,
         #     expected_storage_dir
         # )
+
+
+class TestClusterRestClient(CliCommandTest):
+    def _mock_get(self, master, followers, offline):
+        """Mock cloudify-rest-client's requests.get for the cluster tests.
+
+        When the rest client queries the master ip, a valid response is
+        returned.
+        When one of the ips in the followers set is queried, the
+        'not cluster master' response is returned.
+        When one of the ips in the offline set is queried, a connection
+        error is raised.
+        """
+        def _mocked_get(request_url, *args, **kwargs):
+            if master in request_url:
+                response = mock.Mock()
+                # any valid response; tests won't assert anything about its
+                # actual contents
+                response.status_code = 200
+                response.json.return_value = {'items': [], 'metadata': {}}
+                return response
+
+            if any(follower in request_url for follower in followers):
+                response = mock.Mock()
+                response.status_code = 400
+                response.json.return_value = {
+                    'message': '',
+                    'error_code': NotClusterMaster.ERROR_CODE
+                }
+                return response
+
+            if any(node in request_url for node in offline):
+                raise requests.exceptions.ConnectionError()
+
+            self.fail('Unexpected url: {0}'.format(request_url))
+
+        return mock.patch('cloudify_rest_client.client.requests.get',
+                          side_effect=_mocked_get)
+
+    def test_master_offline(self):
+        env.profile.cluster = [
+            {'manager_ip': '127.0.0.1'},
+            {'manager_ip': '127.0.0.2'}
+        ]
+        c = env.CloudifyClusterClient(host='127.0.0.1')
+
+        with self._mock_get('127.0.0.2', [], ['127.0.0.1']) as mocked_get:
+            response = c.blueprints.list()
+
+        self.assertEqual([], list(response))
+        self.assertEqual(2, len(mocked_get.mock_calls))
+        self.assertEqual('127.0.0.2', env.profile.manager_ip)
+
+    def test_master_changed(self):
+        env.profile.cluster = [
+            {'manager_ip': '127.0.0.1'},
+            {'manager_ip': '127.0.0.2'},
+            {'manager_ip': '127.0.0.3'},
+            # only those two will be called (because .4 will be the new master)
+            # for a total of 3 calls (original failed .1, then .5, then .4)
+            {'manager_ip': '127.0.0.4'},
+            {'manager_ip': '127.0.0.5'}
+        ]
+        master = '127.0.0.4'
+        followers = ['127.0.0.1', '127.0.0.5']
+        offline = ['127.0.0.2', '127.0.0.3']
+
+        c = env.CloudifyClusterClient(host='127.0.0.1')
+        with self._mock_get(master, followers, offline) as mocked_get:
+            response = c.blueprints.list()
+
+        self.assertEqual([], list(response))
+        self.assertEqual(3, len(mocked_get.mock_calls))
+        self.assertEqual('127.0.0.4', env.profile.manager_ip)

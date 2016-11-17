@@ -187,6 +187,10 @@ CLUSTER_HOST_IP = \
 CLUSTER_JOIN = 'Address of one of the cluster members to join'
 CLUSTER_NODE_NAME = \
     'Name of this manager machine to be used internally in the cluster'
+CLUSTER_JOIN_PROFILE = (
+    'After joining the cluster, add the current manager to this profile '
+    '(use when you have a profile containing the cluster master)'
+)
 
 PRIVATE_RESOURCE = 'If set to True the uploaded resource will only be ' \
                    'accessible by its creator. Otherwise, the resource is ' \
