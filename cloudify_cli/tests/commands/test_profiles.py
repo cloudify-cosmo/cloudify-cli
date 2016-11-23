@@ -22,7 +22,7 @@ class ProfilesTest(CliCommandTest):
 
     def test_get_active_profile(self):
         self.use_manager()
-        outcome = self.invoke('profiles get-active')
+        outcome = self.invoke('profiles show-current')
         self.assertIn('manager_ip', outcome.logs)
         self.assertIn('10.10.1.10', outcome.logs)
         self.assertIn('rest_port', outcome.logs)
@@ -35,7 +35,7 @@ class ProfilesTest(CliCommandTest):
             profile_output, cfy.default_manager_params)
 
     def test_get_profile_no_active_manager(self):
-        outcome = self.invoke('profiles get-active')
+        outcome = self.invoke('profiles show-current')
         self.assertIn("You're currently working in local mode", outcome.logs)
 
     def test_list_profiles(self):
@@ -207,11 +207,12 @@ class ProfilesTest(CliCommandTest):
         self.invoke('blueprints list', err_str_segment=error_msg)
 
         # Unsetting the variable in the profile should fix this
-        self.invoke('profiles unset-{0}'.format(variable))
+        self.invoke('profiles unset --manager-{0}'.format(variable))
         self.invoke('blueprints list')
 
         # Setting the variable in the profile should cause it to fail again
-        self.invoke('profiles set-{0} {1}'.format(variable, temp_value))
+        self.invoke('profiles set --manager-{0} {1}'.format(
+            variable, temp_value))
         self.invoke('blueprints list', err_str_segment=error_msg)
 
         # Finally, unsetting the env variable should fix this
@@ -226,3 +227,54 @@ class ProfilesTest(CliCommandTest):
 
     def test_conflict_manager_tenant(self):
         self._test_conflict('tenant')
+
+    def test_set_no_args(self):
+        self.invoke('profiles set',
+                    'You must supply at least one of the following')
+
+    def test_unset_no_args(self):
+        self.invoke('profiles unset',
+                    'You must choose at least one of the following')
+
+    def test_set_and_unset_combinations(self):
+        self.use_manager()
+
+        self.invoke('profiles set -u 0 -p 0 -t 0')
+        self.assertEquals('0', env.profile.manager_username)
+        self.assertEquals('0', env.profile.manager_password)
+        self.assertEquals('0', env.profile.manager_tenant)
+
+        self.invoke('profiles set -u 1 -p 1')
+        self.assertEquals('1', env.profile.manager_username)
+        self.assertEquals('1', env.profile.manager_password)
+        self.assertEquals('0', env.profile.manager_tenant)
+
+        self.invoke('profiles set -u 2 -t 2')
+        self.assertEquals('2', env.profile.manager_username)
+        self.assertEquals('1', env.profile.manager_password)
+        self.assertEquals('2', env.profile.manager_tenant)
+
+        self.invoke('profiles unset -t -p')
+        self.assertEquals('2', env.profile.manager_username)
+        self.assertEquals(None, env.profile.manager_password)
+        self.assertEquals(None, env.profile.manager_tenant)
+
+        self.invoke('profiles set -t 3')
+        self.assertEquals('2', env.profile.manager_username)
+        self.assertEquals(None, env.profile.manager_password)
+        self.assertEquals('3', env.profile.manager_tenant)
+
+        self.invoke('profiles unset -u')
+        self.assertEquals(None, env.profile.manager_username)
+        self.assertEquals(None, env.profile.manager_password)
+        self.assertEquals('3', env.profile.manager_tenant)
+
+        self.invoke('profiles set -u 7 -p blah -t -3')
+        self.assertEquals('7', env.profile.manager_username)
+        self.assertEquals('blah', env.profile.manager_password)
+        self.assertEquals('-3', env.profile.manager_tenant)
+
+        self.invoke('profiles unset -u -p -t')
+        self.assertEquals(None, env.profile.manager_username)
+        self.assertEquals(None, env.profile.manager_password)
+        self.assertEquals(None, env.profile.manager_tenant)

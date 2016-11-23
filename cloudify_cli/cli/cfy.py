@@ -481,16 +481,40 @@ class Options(object):
             required=False,
             help=helptexts.MANAGER_USERNAME)
 
+        self.manager_username_flag = click.option(
+            '-u',
+            '--manager-username',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.MANAGER_USERNAME)
+
         self.manager_password = click.option(
             '-p',
             '--manager-password',
             required=False,
             help=helptexts.MANAGER_PASSWORD)
 
+        self.manager_password_flag = click.option(
+            '-p',
+            '--manager-password',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.MANAGER_PASSWORD)
+
         self.manager_tenant = click.option(
             '-t',
             '--manager-tenant',
             required=False,
+            help=helptexts.MANAGER_TENANT)
+
+        self.manager_tenant_flag = click.option(
+            '-t',
+            '--manager-tenant',
+            required=False,
+            is_flag=True,
+            default=False,
             help=helptexts.MANAGER_TENANT)
 
         self.ssh_port = click.option(
