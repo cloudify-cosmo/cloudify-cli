@@ -116,6 +116,14 @@ class BlueprintsTest(CliCommandTest):
                 'cfy blueprints upload https://aaa.com/maste.tar.gz -n b.yaml '
                 '-b blueprint3')
 
+    def test_blueprints_upload_from_github(self):
+        mocked = MagicMock()
+        self.client.blueprints.publish_archive = mocked
+        self.invoke(
+                'cfy blueprints upload organization/repo -n b.yaml '
+                '-b blueprint3')
+        self.assertIn('github.com', mocked.call_args[0][0])
+
     def test_blueprint_validate(self):
         self.invoke(
             'cfy blueprints validate {0}'.format(

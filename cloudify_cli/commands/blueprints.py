@@ -112,9 +112,10 @@ def upload(ctx,
         # When a URL is passed it's assumed to be pointing to an archive
         # file that contains the blueprint. Hence, the `publish_archive`
         # API call is the one that should be used.
-        logger.info('Publishing blueprint archive %s...', blueprint_path)
+        logger.info('Publishing blueprint archive %s...',
+                    processed_blueprint_path)
         blueprint_obj = client.blueprints.publish_archive(
-                blueprint_path,
+                processed_blueprint_path,
                 blueprint_id,
                 blueprint_filename,
                 private_resource,
