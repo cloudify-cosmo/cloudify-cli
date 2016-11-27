@@ -21,14 +21,18 @@ from StringIO import StringIO
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 
-from .. import table
 from .. import utils
 from ..local import load_env
+from ..table import print_data
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger
 from .. import execution_events_fetcher
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
+
+
+DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
+                      'permission', 'tenant_name']
 
 
 @cfy.group(name='deployments')
@@ -79,10 +83,7 @@ def manager_list(blueprint_id, sort_by, descending, logger, client):
         deployments = filter(lambda deployment:
                              deployment['blueprint_id'] == blueprint_id,
                              deployments)
-
-    columns = ['id', 'blueprint_id', 'created_at', 'updated_at']
-    pt = table.generate(columns, data=deployments)
-    table.log('Deployments:', pt)
+    print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:')
 
 
 @cfy.command(name='update', short_help='Update a deployment [manager only]')

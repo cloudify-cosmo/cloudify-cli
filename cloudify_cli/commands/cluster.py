@@ -18,10 +18,13 @@ import time
 from datetime import datetime
 
 from .. import env
-from .. import table
 from ..cli import cfy
+from ..table import print_data
 from ..exceptions import CloudifyCliError
 from ..execution_events_fetcher import WAIT_FOR_EXECUTION_SLEEP_INTERVAL
+
+
+CLUSTER_COLUMNS = ['name', 'host_ip', 'master', 'online']
 
 
 def _verify_not_in_cluster(client):
@@ -154,11 +157,8 @@ def list_nodes(client, logger):
     """Display a table with basic information about the nodes in the cluster
     """
     response = client.cluster.nodes.list()
-    nodes_table = table.generate(
-        ['name', 'host_ip', 'master', 'online'],
-        response,
-        {'master': False, 'online': False})
-    table.log('HA Cluster nodes', nodes_table)
+    default = {'master': False, 'online': False}
+    print_data(CLUSTER_COLUMNS, response, 'HA Cluster nodes', defaults=default)
 
 
 def _wait_for_cluster_initialized(client, logger=None, timeout=900):

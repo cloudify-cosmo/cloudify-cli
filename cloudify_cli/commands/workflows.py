@@ -16,10 +16,12 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import table
+from ..table import print_data
 from .. import utils
 from ..cli import cfy
 from ..exceptions import CloudifyCliError
+
+WORKFLOW_COLUMNS = ['blueprint_id', 'deployment_id', 'name', 'created_at']
 
 
 @cfy.group(name='workflows')
@@ -57,13 +59,11 @@ def get(workflow_id, deployment_id, logger, client):
         raise CloudifyCliError('Deployment {0} not found'.format(
             deployment_id))
 
-    columns = ['blueprint_id', 'deployment_id', 'name', 'created_at']
     defaults = {
         'blueprint_id': deployment.blueprint_id,
         'deployment_id': deployment.id
     }
-    pt = table.generate(columns, data=[workflow], defaults=defaults)
-    table.log('Workflows:', pt)
+    print_data(WORKFLOW_COLUMNS, workflow, 'Workflows:', defaults=defaults)
 
     # print workflow parameters
     mandatory_params = dict()
@@ -106,12 +106,10 @@ def list(deployment_id, logger, client):
     logger.info('Listing workflows for deployment {0}...'.format(
         deployment_id))
     deployment = client.deployments.get(deployment_id)
-    sorted_workflows = sorted(deployment.workflows, key=lambda w: w.name)
+    workflows = sorted(deployment.workflows, key=lambda w: w.name)
 
-    columns = ['blueprint_id', 'deployment_id', 'name', 'created_at']
     defaults = {
         'blueprint_id': deployment.blueprint_id,
         'deployment_id': deployment.id
     }
-    pt = table.generate(columns, data=sorted_workflows, defaults=defaults)
-    table.log('Workflows:', pt)
+    print_data(WORKFLOW_COLUMNS, workflows, 'Workflows:', defaults=defaults)

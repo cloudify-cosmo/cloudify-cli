@@ -17,20 +17,15 @@
 import tarfile
 from urlparse import urlparse
 
-from .. import table
+from ..table import print_data
 from .. import utils
 from ..cli import helptexts, cfy
 from ..exceptions import CloudifyCliError
 
-columns = [
-    'id',
-    'package_name',
-    'package_version',
-    'supported_platform',
-    'distribution',
-    'distribution_release',
-    'uploaded_at'
-]
+
+INCLUDE_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
+                   'supported_platform', 'distribution_release', 'uploaded_at']
+PLUGIN_COLUMNS = INCLUDE_COLUMNS + ['permission', 'tenant_name']
 
 
 @cfy.group(name='plugins')
@@ -157,10 +152,8 @@ def get(plugin_id, logger, client):
     `PLUGIN_ID` is the id of the plugin to get information on.
     """
     logger.info('Retrieving plugin {0}...'.format(plugin_id))
-    plugin = client.plugins.get(plugin_id, _include=columns)
-
-    pt = table.generate(columns, data=[plugin])
-    table.log('Plugin:', pt)
+    plugin = client.plugins.get(plugin_id, _include=INCLUDE_COLUMNS)
+    print_data(PLUGIN_COLUMNS, plugin, 'Plugin:')
 
 
 @plugins.command(name='list',
@@ -176,12 +169,11 @@ def list(sort_by, descending, logger, client):
     """
     logger.info('Listing all plugins...')
     plugins = client.plugins.list(
-        _include=columns,
+        _include=INCLUDE_COLUMNS,
         sort=sort_by,
         is_descending=descending)
 
-    pt = table.generate(columns, data=plugins)
-    table.log('Plugins:', pt)
+    print_data(PLUGIN_COLUMNS, plugins, 'Plugins:')
 
 
 @plugins.command(name='add-permission', short_help='Add permissions to users')

@@ -18,11 +18,15 @@ import json
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import table
 from .. import utils
 from ..cli import cfy
 from ..local import load_env
+from ..table import print_data
 from ..exceptions import CloudifyCliError
+
+
+NODE_INSTANCE_COLUMNS = ['id', 'deployment_id', 'host_id', 'node_id', 'state',
+                         'permission', 'tenant_name']
 
 
 @cfy.group(name='node-instances')
@@ -55,10 +59,7 @@ def get(node_instance_id, logger, client):
         raise CloudifyCliError('Node instance {0} not found'.format(
             node_instance_id))
 
-    columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
-    pt = table.generate(columns, data=[node_instance])
-    pt.max_width = 50
-    table.log('Node-instance:', pt)
+    print_data(NODE_INSTANCE_COLUMNS, node_instance, 'Node-instance:', 50)
 
     # print node instance runtime properties
     logger.info('Instance runtime properties:')
@@ -101,9 +102,7 @@ def list(deployment_id, node_name, sort_by, descending, logger, client):
         raise CloudifyCliError('Deployment {0} does not exist'.format(
             deployment_id))
 
-    columns = ['id', 'deployment_id', 'host_id', 'node_id', 'state']
-    pt = table.generate(columns, data=node_instances)
-    table.log('Node-instances:', pt)
+    print_data(NODE_INSTANCE_COLUMNS, node_instances, 'Node-instances:')
 
 
 @cfy.command(name='node-instances',

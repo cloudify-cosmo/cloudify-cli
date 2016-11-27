@@ -38,10 +38,13 @@ class BlueprintsTest(CliCommandTest):
                 'description',
                 'main_file_name',
                 'created_at',
-                'updated_at'
+                'updated_at',
+                'permission',
+                'tenant_name'
             ],
             data=[{'description': '123456789012345678..'},
-                  {'description': 'abcdefg'}]
+                  {'description': 'abcdefg'}],
+            defaults=None
         )
 
     def test_blueprints_delete(self):

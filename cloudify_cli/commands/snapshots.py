@@ -14,9 +14,12 @@
 # limitations under the License.
 ############
 
-from .. import table
+from ..table import print_data
 from .. import utils
 from ..cli import helptexts, cfy
+
+SNAPSHOT_COLUMNS = ['id', 'created_at', 'status', 'error', 'permission'
+                    'tenant_name']
 
 
 @cfy.group(name='snapshots')
@@ -157,9 +160,7 @@ def list(sort_by, descending, logger, client):
     logger.info('Listing snapshots...')
     snapshots = client.snapshots.list(sort=sort_by, is_descending=descending)
 
-    columns = ['id', 'created_at', 'status', 'error']
-    pt = table.generate(columns, data=snapshots)
-    table.log('Snapshots:', pt)
+    print_data(SNAPSHOT_COLUMNS, snapshots, 'Snapshots:')
 
 
 @snapshots.command(name='add-permission',

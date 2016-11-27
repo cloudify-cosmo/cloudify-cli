@@ -26,16 +26,19 @@ from dsl_parser.parser import parse_from_path
 from dsl_parser.exceptions import DSLParsingException
 
 from .. import local
-from .. import table
 from .. import utils
 from ..cli import cfy
 from .. import blueprint
 from .. import exceptions
 from ..config import config
+from ..table import print_data
 from ..exceptions import CloudifyCliError
 
 
 DESCRIPTION_LIMIT = 20
+BLUEPRINT_COLUMNS = ['id', 'description', 'main_file_name', 'created_at',
+                     'updated_at', 'permission', 'tenant_name']
+INPUTS_COLUMNS = ['name', 'type', 'default', 'description']
 
 
 @cfy.group(name='blueprints')
@@ -213,11 +216,7 @@ def list(sort_by, descending, logger, client):
     logger.info('Listing all blueprints...')
     blueprints = [trim_description(b) for b in client.blueprints.list(
         sort=sort_by, is_descending=descending)]
-
-    columns = [
-        'id', 'description', 'main_file_name', 'created_at', 'updated_at']
-    pt = table.generate(columns, data=blueprints)
-    table.log('Blueprints:', pt)
+    print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
 
 @blueprints.command(name='get',
@@ -237,12 +236,8 @@ def get(blueprint_id, logger, client):
     deployments = client.deployments.list(_include=['id'],
                                           blueprint_id=blueprint_id)
     blueprint_dict['#deployments'] = len(deployments)
-
-    columns = \
-        ['id', 'main_file_name', 'created_at', 'updated_at', '#deployments']
-    pt = table.generate(columns, data=[blueprint_dict])
-    pt.max_width = 50
-    table.log('Blueprint:', pt)
+    columns = BLUEPRINT_COLUMNS + ['#deployments']
+    print_data(columns, blueprint_dict, 'Blueprint:', max_width=50)
 
     logger.info('Description:')
     logger.info('{0}\n'.format(blueprint_dict['description'] or ''))
@@ -272,9 +267,7 @@ def inputs(blueprint_id, logger, client):
              'description': input.get('description', '-')}
             for name, input in inputs.iteritems()]
 
-    columns = ['name', 'type', 'default', 'description']
-    pt = table.generate(columns, data=data)
-    table.log('Inputs:', pt)
+    print_data(INPUTS_COLUMNS, data, 'Inputs:')
 
 
 @blueprints.command(name='package',
