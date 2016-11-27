@@ -15,8 +15,10 @@
 ############
 
 from .. import env
-from .. import table
+from ..table import print_data
 from ..cli import cfy
+
+TENANT_COLUMNS = ['name', 'groups', 'users']
 
 
 @cfy.group(name='tenants')
@@ -41,8 +43,7 @@ def list(sort_by, descending, logger, client):
     """
     logger.info('Listing all tenants...')
     tenants_list = client.tenants.list(sort=sort_by, is_descending=descending)
-
-    _print_tenants(tenants_list, 'Tenants:')
+    print_data(TENANT_COLUMNS, tenants_list, 'Tenants:')
 
 
 @tenants.command(name='create',
@@ -147,10 +148,4 @@ def get(tenant_name, logger, client):
     """
     logger.info('Getting info for tenant `{0}`...'.format(tenant_name))
     tenant_details = client.tenants.get(tenant_name)
-    _print_tenants([tenant_details], 'Requested tenant info:')
-
-
-def _print_tenants(tenants_list, header_text):
-    columns = ['name', 'groups', 'users']
-    pt = table.generate(columns, data=tenants_list)
-    table.log(header_text, pt)
+    print_data(TENANT_COLUMNS, tenant_details, 'Requested tenant info:')

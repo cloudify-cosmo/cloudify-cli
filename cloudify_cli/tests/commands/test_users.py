@@ -25,6 +25,7 @@ class UsersTest(CliCommandTest):
         self.client.users = MagicMock()
 
     def test_users_list(self):
+        self.client.users.list = MagicMock(return_value=[])
         self.invoke('cfy users list')
 
     def test_create_users_missing_username(self):

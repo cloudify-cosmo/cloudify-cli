@@ -15,8 +15,11 @@
 ############
 
 from .. import env
-from .. import table
 from ..cli import cfy
+from ..table import print_data
+
+USER_COLUMNS = ['username', 'groups', 'role', 'tenants', 'active',
+                'last_login_at']
 
 
 @cfy.group(name='users')
@@ -40,7 +43,7 @@ def list(sort_by, descending, logger, client):
     """
     logger.info('Listing all users...')
     users_list = client.users.list(sort=sort_by, is_descending=descending)
-    _print_users(users_list, 'Users:')
+    print_data(USER_COLUMNS, users_list, 'Users:')
 
 
 @users.command(name='create', short_help='Create a user [manager only]')
@@ -146,17 +149,4 @@ def get(username, logger, client):
     """
     logger.info('Getting info for user `{0}`...'.format(username))
     user_details = client.users.get(username)
-    _print_users([user_details], 'Requested user info:')
-
-
-def _print_users(users_list, header_text):
-    columns = [
-        'username',
-        'groups',
-        'role',
-        'tenants',
-        'active',
-        'last_login_at'
-    ]
-    pt = table.generate(columns, data=users_list)
-    table.log(header_text, pt)
+    print_data(USER_COLUMNS, user_details, 'Requested user info:')

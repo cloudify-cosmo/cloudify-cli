@@ -15,8 +15,10 @@
 ############
 
 from .. import env
-from .. import table
+from ..table import print_data
 from ..cli import cfy
+
+GROUP_COLUMNS = ['name', 'tenants', 'users']
 
 
 @cfy.group(name='user-groups')
@@ -42,7 +44,7 @@ def list(sort_by, descending, logger, client):
     logger.info('Listing all groups...')
     user_groups_list = client.user_groups.list(sort=sort_by,
                                                is_descending=descending)
-    _print_user_groups(user_groups_list, 'Groups:')
+    print_data(GROUP_COLUMNS, user_groups_list, 'Groups:')
 
 
 @user_groups.command(name='create',
@@ -76,10 +78,4 @@ def get(group_name, logger, client):
     """
     logger.info('Getting info for user group `{0}`...'.format(group_name))
     user_group_details = client.user_groups.get(group_name)
-    _print_user_groups([user_group_details], 'Requested user group info:')
-
-
-def _print_user_groups(user_groups_list, header_text):
-    columns = ['name', 'tenants', 'users']
-    pt = table.generate(columns, data=user_groups_list)
-    table.log(header_text, pt)
+    print_data(GROUP_COLUMNS, user_group_details, 'Requested user group info:')

@@ -20,7 +20,7 @@ import tarfile
 from contextlib import closing
 
 from .. import env
-from .. import table
+from ..table import print_data
 from .. import utils
 from ..cli import cfy
 from ..cli import helptexts
@@ -28,6 +28,9 @@ from ..exceptions import CloudifyCliError
 
 EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
 EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
+PROFILE_COLUMNS = ['manager_ip', 'ssh_user', 'ssh_key_path', 'ssh_port',
+                   'rest_port', 'rest_protocol', 'manager_username',
+                   'manager_tenant', 'bootstrap_state']
 
 
 @cfy.group(name='profiles')
@@ -61,7 +64,7 @@ def show(logger):
         return
 
     active_profile = _get_profile(env.get_active_profile())
-    _print_profiles([active_profile], 'Active profile:')
+    print_data(PROFILE_COLUMNS, active_profile, 'Active profile:')
 
 
 @profiles.command(name='list',
@@ -84,7 +87,7 @@ def list(logger):
 
     if profiles:
         logger.info('Listing all profiles...')
-        _print_profiles(profiles, 'Profiles:')
+        print_data(PROFILE_COLUMNS, profiles, 'Profiles:')
 
     if not profile_names:
         logger.info(
@@ -325,19 +328,3 @@ def _get_profile(profile_name):
     env.set_active_profile(current_profile)
 
     return context.to_dict()
-
-
-def _print_profiles(profiles, header):
-    columns = [
-            'manager_ip',
-            'ssh_user',
-            'ssh_key_path',
-            'ssh_port',
-            'rest_port',
-            'rest_protocol',
-            'manager_username',
-            'manager_tenant',
-            'bootstrap_state'
-        ]
-    pt = table.generate(columns, data=profiles)
-    table.log(header, pt)

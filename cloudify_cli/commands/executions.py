@@ -20,8 +20,8 @@ import time
 from cloudify_rest_client import exceptions
 
 from .. import local
-from .. import table
 from .. import utils
+from ..table import print_data
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger
 from ..execution_events_fetcher import wait_for_execution
@@ -31,6 +31,9 @@ from ..exceptions import CloudifyCliError, ExecutionTimeoutError, \
 _STATUS_CANCELING_MESSAGE = (
     'NOTE: Executions currently in a "canceling/force-canceling" status '
     'may take a while to change into "cancelled"')
+
+EXECUTION_COLUMNS = ['id', 'workflow_id', 'status', 'deployment_id',
+                     'created_at', 'error', 'permission', 'tenant_name']
 
 
 @cfy.group(name='executions')
@@ -61,11 +64,7 @@ def manager_get(execution_id, logger, client):
             raise
         raise CloudifyCliError('Execution {0} not found'.format(execution_id))
 
-    columns = \
-        ['id', 'workflow_id', 'status', 'deployment_id', 'created_at', 'error']
-    pt = table.generate(columns, data=[execution])
-    pt.max_width = 50
-    table.log('Execution:', pt)
+    print_data(EXECUTION_COLUMNS, execution, 'Execution:', max_width=50)
 
     # print execution parameters
     logger.info('Execution Parameters:')
@@ -117,9 +116,7 @@ def manager_list(
         raise CloudifyCliError('Deployment {0} does not exist'.format(
             deployment_id))
 
-    columns = ['id', 'workflow_id', 'deployment_id', 'status', 'created_at']
-    pt = table.generate(columns, data=executions)
-    table.log('Executions:', pt)
+    print_data(EXECUTION_COLUMNS, executions, 'Executions:')
 
     if any(execution.status in (
             execution.CANCELLING, execution.FORCE_CANCELLING)

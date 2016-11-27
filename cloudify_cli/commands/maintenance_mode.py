@@ -16,16 +16,17 @@
 
 import time
 
-from .. import table
 from .. import utils
 from ..cli import cfy
 from .. import exceptions
+from ..table import print_data
 from ..logger import NO_VERBOSE
 from ..logger import get_global_verbosity
 
 
 DEFAULT_TIMEOUT_INTERVAL = 5
 MAINTENANCE_MODE_ACTIVE = 'activated'
+EXECUTION_COLUMNS = ['id', 'deployment_id', 'workflow_id', 'status']
 
 
 @cfy.group(name='maintenance-mode')
@@ -77,10 +78,12 @@ def _print_maintenance_mode_status(client, logger):
                     len(remaining_executions)))
 
         if get_global_verbosity() != NO_VERBOSE:
-            columns = ['id', 'deployment_id', 'workflow_id', 'status']
-            pt = table.generate(columns, remaining_executions)
-            pt.max_width = 50
-            table.log('Remaining executions:', pt)
+            print_data(
+                columns=EXECUTION_COLUMNS,
+                items=remaining_executions,
+                header_text='Remaining executions:',
+                max_width=50
+            )
 
     if status_response.status == MAINTENANCE_MODE_ACTIVE:
         logger.info('INFO - Cloudify Manager is currently in maintenance '

@@ -17,9 +17,11 @@
 from cloudify_rest_client.exceptions import CloudifyClientError, \
     UserUnauthorizedError
 
-from .. import table
+from ..table import print_data
 from ..cli import cfy
 from ..env import profile
+
+STATUS_COLUMNS = ['service', 'status']
 
 
 @cfy.command(name='status', short_help="Show manager status [manager only]")
@@ -55,8 +57,7 @@ def status(logger, client):
             'service': service['display_name'].ljust(30),
             'status': state
         })
-    pt = table.generate(['service', 'status'], data=services)
-    table.log('Services:', pt)
+    print_data(STATUS_COLUMNS, services, 'Services:')
 
     maintenance_status = maintenance_response.status
     if maintenance_status != 'deactivated':

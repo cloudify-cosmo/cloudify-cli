@@ -47,7 +47,9 @@ def execution_mock(status, wf_id='mock_wf'):
         'error': '',
         'id': uuid4(),
         'created_at': datetime.now().isoformat()[:-3],
-        'parameters': {}
+        'parameters': {},
+        'permission': 'creator',
+        'tenant_name': 'default_tenant'
     })
 
 
@@ -133,7 +135,9 @@ def node_instance_get_mock():
         'state': 'started',
         'runtime_properties': {
             'floating_ip': '127.0.0.1'
-        }
+        },
+        'permission': 'creator',
+        'tenant_name': 'default_tenant'
     })
 
 
@@ -148,7 +152,9 @@ def node_get_mock():
         'planned_number_of_instances': '2',
         'properties': {
             'port': '8080'
-        }
+        },
+        'permission': 'creator',
+        'tenant_name': 'default_tenant'
     })
 
 

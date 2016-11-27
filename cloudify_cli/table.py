@@ -21,6 +21,8 @@ from .logger import get_logger
 
 from prettytable import PrettyTable
 
+from cloudify_rest_client.responses import ListResponse
+
 
 def generate(cols, data, defaults=None):
     """
@@ -78,3 +80,15 @@ def generate(cols, data, defaults=None):
 def log(title, tb):
     logger = get_logger()
     logger.info('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
+
+
+def print_data(columns, items, header_text, max_width=None, defaults=None):
+    if items is None:
+        items = []
+    elif not isinstance(items, (list, ListResponse)):
+        items = [items]
+
+    pt = generate(columns, data=items, defaults=defaults)
+    if max_width:
+        pt.max_width = max_width
+    log(header_text, pt)
