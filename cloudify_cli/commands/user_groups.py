@@ -15,8 +15,8 @@
 ############
 
 from .. import env
-from ..table import print_data
 from ..cli import cfy
+from ..table import print_data
 
 GROUP_COLUMNS = ['name', 'tenants', 'users']
 
@@ -79,3 +79,41 @@ def get(group_name, logger, client):
     logger.info('Getting info for user group `{0}`...'.format(group_name))
     user_group_details = client.user_groups.get(group_name)
     print_data(GROUP_COLUMNS, user_group_details, 'Requested user group info:')
+
+
+@user_groups.command(
+    name='add-user',
+    short_help='Add a user to a users group [manager only]')
+@cfy.argument('group-name')
+@cfy.options.manager_username_required
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def add_user(group_name, manager_username, logger, client):
+    """Add a user to a group
+
+    `GROUP_NAME` is the name of the group
+    """
+    client.users.add_to_group(manager_username, group_name)
+    logger.info('User `{0}` added successfully to group '
+                '`{1}`'.format(manager_username, group_name))
+
+
+@user_groups.command(
+    name='remove-user',
+    short_help='Remove a user from a users group [manager only]')
+@cfy.argument('group-name')
+@cfy.options.manager_username_required
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def remove_user(group_name, manager_username, logger, client):
+    """Remove a user from a group
+
+    `USERNAME` is the username of the user
+    """
+    client.users.remove_from_group(manager_username, group_name)
+    logger.info('User `{0}` removed successfully from group '
+                '`{1}`'.format(manager_username, group_name))

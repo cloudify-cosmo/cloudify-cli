@@ -176,14 +176,9 @@ class InitTest(CliCommandTest):
         )
 
     def test_no_init(self):
+        # make sure no error is thrown
         cfy.purge_dot_cloudify()
-        self.invoke('cfy profiles list',
-                    err_str_segment='Cloudify environment is not initialized',
-                    # TODO: put back
-                    # possible_solutions=[
-                    #     "Run 'cfy init' in this directory"
-                    # ]
-                    )
+        self.invoke('cfy profiles list')
 
     def test_init_blueprint_archive_default_name(self):
         self.invoke(

@@ -63,42 +63,6 @@ def create(username, security_role, password, logger, client):
     logger.info('User `{0}` created'.format(username))
 
 
-@users.command(name='add-to-group',
-               short_help='Add a user to a security group [manager only]')
-@cfy.argument('username')
-@cfy.options.group_name
-@cfy.options.verbose()
-@cfy.assert_manager_active()
-@cfy.pass_client()
-@cfy.pass_logger
-def add_to_group(username, group_name, logger, client):
-    """Add a user to a group
-
-    `USERNAME` is the username of the user
-    """
-    client.users.add_to_group(username, group_name)
-    logger.info('User `{0}` added successfully to group '
-                '`{1}`'.format(username, group_name))
-
-
-@users.command(name='remove-from-group',
-               short_help='Remove a user from a security group [manager only]')
-@cfy.argument('username')
-@cfy.options.group_name
-@cfy.options.verbose()
-@cfy.assert_manager_active()
-@cfy.pass_client()
-@cfy.pass_logger
-def remove_from_group(username, group_name, logger, client):
-    """Remove a user from a group
-
-    `USERNAME` is the username of the user
-    """
-    client.users.remove_from_group(username, group_name)
-    logger.info('User `{0}` removed successfully from group '
-                '`{1}`'.format(username, group_name))
-
-
 @users.command(name='set-password',
                short_help='Set a new password for a user [manager only]')
 @cfy.argument('username')
