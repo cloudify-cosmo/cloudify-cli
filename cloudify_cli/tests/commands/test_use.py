@@ -18,14 +18,14 @@ class UseTest(CliCommandTest):
                 'name': 'name',
                 'context': {}}
         )
-        self.invoke('cfy use 127.0.0.1')
+        self.invoke('cfy profiles use 127.0.0.1')
         context = self._read_context()
         self.assertEquals("127.0.0.1", context.manager_ip)
 
     def test_use_attempt_by_unauthorized_user(self):
         with patch.object(self.client.manager, 'get_status') as mock:
             mock.side_effect = UserUnauthorizedError('Unauthorized user')
-            self.invoke('cfy use 127.0.0.1',
+            self.invoke('cfy profiles use 127.0.0.1',
                         err_str_segment='Unauthorized user')
 
     def test_use_command_no_prior_init(self):
@@ -35,7 +35,7 @@ class UseTest(CliCommandTest):
                 'name': 'name', 'context': {}
             }
         )
-        self.invoke('cfy use 127.0.0.1')
+        self.invoke('cfy profiles use 127.0.0.1')
         context = self._read_context()
         self.assertEquals('127.0.0.1', context.manager_ip)
 
@@ -46,7 +46,7 @@ class UseTest(CliCommandTest):
                 'name': 'name', 'context': {}
             }
         )
-        self.invoke('cfy use 127.0.0.1 -s test_user --ssh-port 22222')
+        self.invoke('cfy profiles use 127.0.0.1 -s test_user --ssh-port 22222')
         context = self._read_context()
         self.assertEquals('127.0.0.1', context.manager_ip)
         self.assertEquals('22222', context.ssh_port)
@@ -105,5 +105,5 @@ class UseTest(CliCommandTest):
 
         with patch('cloudify_rest_client.client.HTTPClient._do_request',
                    new=mock_do_request):
-            self.invoke('cfy use {0} --rest-port {1}'.format(
+            self.invoke('cfy profiles use {0} --rest-port {1}'.format(
                 host, self.client._client.port))

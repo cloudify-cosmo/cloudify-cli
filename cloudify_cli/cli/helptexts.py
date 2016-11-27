@@ -147,7 +147,7 @@ TAIL_OUTPUT = "Tail the events of the specified execution until it ends"
 SET_MANAGEMENT_CREDS = (
     'You can use the `-s` and `-k` flags to set the ssh user and '
     'key-file path respectively. '
-    '(e.g. `cfy use -s my_user -k ~/my/key/path`)'
+    '(e.g. `cfy profiles use -s my_user -k ~/my/key/path`)'
 )
 
 DEFAULT_MUTUALITY_MESSAGE = 'Cannot be used simultaneously'

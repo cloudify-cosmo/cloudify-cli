@@ -84,32 +84,33 @@ def assert_manager_active():
     if not is_manager_active():
         raise CloudifyCliError(
             'This command is only available when using a manager. '
-            'You can either bootstrap a manager or run `cfy use MANAGER_IP`')
+            'You can either bootstrap a manager or run `cfy profiles use'
+            'MANAGER_IP`')
 
 
 def assert_local_active():
     if is_manager_active():
         raise CloudifyCliError(
             'This command is not available when using a manager. '
-            'You can run `cfy use local` to stop using a manager.')
+            'You can run `cfy profiles use local` to stop using a manager.')
 
 
 def assert_credentials_set():
     error_msg = 'Manager {0} must be set in order to use a manager.\n' \
                 'You can set it in the profile by running ' \
-                '`cfy profiles set-{1}`, or you can set the `CLOUDIFY_{2}` ' \
+                '`cfy profiles set {1}`, or you can set the `CLOUDIFY_{2}` ' \
                 'environment variable.'
     if not get_username():
         raise CloudifyCliError(
-            error_msg.format('Username', 'username', 'USERNAME')
+            error_msg.format('Username', '--manager-username', 'USERNAME')
         )
     if not get_password():
         raise CloudifyCliError(
-            error_msg.format('Password', 'password', 'PASSWORD')
+            error_msg.format('Password', '--manager-password', 'PASSWORD')
         )
     if not get_tenant_name():
         raise CloudifyCliError(
-            error_msg.format('Tenant', 'tenant', 'TENANT')
+            error_msg.format('Tenant', '--manager-tenant', 'TENANT')
         )
 
 
@@ -248,7 +249,7 @@ def get_username():
                                'the `CLOUDIFY_USERNAME` env variable. Resolve '
                                'the conflict before continuing.\n'
                                'Either unset the env variable, or run '
-                               '`cfy profiles unset-username`')
+                               '`cfy profiles unset --manager-username`')
     return username or profile.manager_username
 
 
@@ -259,7 +260,7 @@ def get_password():
                                'the `CLOUDIFY_PASSWORD` env variable. Resolve '
                                'the conflict before continuing.\n'
                                'Either unset the env variable, or run '
-                               '`cfy profiles unset-password`')
+                               '`cfy profiles unset --manager-password`')
     return password or profile.manager_password
 
 
@@ -270,7 +271,7 @@ def get_tenant_name():
                                'the `CLOUDIFY_TENANT` env variable. Resolve '
                                'the conflict before continuing.\n'
                                'Either unset the env variable, or run '
-                               '`cfy profiles unset-tenant`')
+                               '`cfy profiles unset --manager-tenant`')
     return tenant or profile.manager_tenant
 
 

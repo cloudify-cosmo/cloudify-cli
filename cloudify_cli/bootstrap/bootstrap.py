@@ -208,7 +208,7 @@ def _handle_provider_context(rest_client,
     provider_context['cloudify'] = cloudify_configuration
     manager_node_instance.runtime_properties['manager_provider_context'] = \
         provider_context
-    # 'manager_deployment' is used when running 'cfy use ...'
+    # 'manager_deployment' is used when running 'cfy profiles use ...'
     # and then calling teardown or recover. Anyway, this code will only live
     # until we implement the fuller feature of uploading manager blueprint
     # deployments to the manager.

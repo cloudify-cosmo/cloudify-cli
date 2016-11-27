@@ -18,7 +18,7 @@ class RecoverTest(CliCommandTest):
         open(fake_snapshot_path, 'w').close()
 
         self.client.deployments.list = MagicMock(return_value=[])
-        self.invoke('cfy use 10.0.0.1')
+        self.invoke('cfy profiles use 10.0.0.1')
         self.invoke('cfy recover {0}'.format(fake_snapshot_path),
                     'This action requires additional confirmation.')
 

@@ -261,7 +261,7 @@ class BlueprintsTest(CliCommandTest):
             self.assertIn(requirement, output)
 
     def test_install_plugins(self):
-        self.invoke('cfy use local')
+        self.invoke('cfy profiles use local')
         blueprint_path = os.path.join(
             BLUEPRINTS_DIR,
             'local',
