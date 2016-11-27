@@ -16,9 +16,8 @@ from .test_base import CliCommandTest
 class ProfilesTest(CliCommandTest):
     def test_profiles_uninitialized_env(self):
         cfy.purge_dot_cloudify()
-        self.invoke(
-            'profiles list',
-            err_str_segment='Cloudify environment is not initialized')
+        result = self.invoke('profiles list')
+        self.assertIn('No profiles found', result.output)
 
     def test_get_active_profile(self):
         self.use_manager()
@@ -155,7 +154,7 @@ class ProfilesTest(CliCommandTest):
         cfy.purge_dot_cloudify()
         self.invoke(
             'cfy profiles export',
-            err_str_segment='Cloudify environment is not initialized')
+            err_str_segment='No profiles to export')
 
     def test_import_env_not_initialized(self):
         fd, profiles_archive = tempfile.mkstemp()
@@ -164,9 +163,7 @@ class ProfilesTest(CliCommandTest):
         try:
             self.invoke('cfy profiles export -o {0}'.format(profiles_archive))
             cfy.purge_dot_cloudify()
-            self.invoke(
-                'cfy profiles import {0}'.format(profiles_archive),
-                err_str_segment='Cloudify environment is not initialized')
+            self.invoke('cfy profiles import {0}'.format(profiles_archive))
         finally:
             os.remove(profiles_archive)
 

@@ -52,7 +52,7 @@ def profiles():
     Profiles are named according to the IP of the manager they manage.
     """
     if not env.is_initialized():
-        env.raise_uninitialized()
+        init.init_local_profile()
 
 
 @profiles.command(name='show-current',

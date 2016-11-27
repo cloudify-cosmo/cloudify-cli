@@ -481,6 +481,12 @@ class Options(object):
             required=False,
             help=helptexts.MANAGER_USERNAME)
 
+        self.manager_username_required = click.option(
+            '-u',
+            '--manager-username',
+            required=True,
+            help=helptexts.MANAGER_USERNAME)
+
         self.manager_username_flag = click.option(
             '-u',
             '--manager-username',

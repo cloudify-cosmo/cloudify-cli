@@ -52,6 +52,18 @@ class ListSortTest(CliCommandTest):
                 'created_at',
                 None
             ),
+            ListSortTest._resource(
+                'users',
+                self.client.users,
+                'username',
+                None
+            ),
+            ListSortTest._resource(
+                'user-groups',
+                self.client.user_groups,
+                'name',
+                None
+            ),
         ]
 
         self.count_mock_calls = 0
