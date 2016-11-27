@@ -19,7 +19,6 @@ from . import logger
 from .cli import cfy
 from .commands import dev
 from .commands import ssh
-from .commands import use
 from .commands import init
 from .commands import logs
 from .commands import users
@@ -56,8 +55,9 @@ def _cfy(verbose):
     """Cloudify's Command Line Interface
 
     Note that some commands are only available if you're using a manager.
-    You can use a manager by running the `cfy use` command and providing
-    it with the IP of your manager (and ssh credentials if applicable).
+    You can use a manager by running the `cfy profiles use` command and
+    providing it with the IP of your manager (and ssh credentials if
+    applicable).
 
     To activate bash-completion. Run: `eval "$(_CFY_COMPLETE=source cfy)"`
 
@@ -75,7 +75,6 @@ def _register_commands():
     a manager is currently `use`d or not.
     """
     # Manager agnostic commands
-    _cfy.add_command(use.use)
     _cfy.add_command(init.init)
     _cfy.add_command(status.status)
     _cfy.add_command(recover.recover)  # Recovers a manager. Doesn't require it

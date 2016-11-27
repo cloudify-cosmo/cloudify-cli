@@ -52,7 +52,7 @@ class ProfilesTest(CliCommandTest):
 
     def test_list_profiles_no_active_manager(self):
         self.use_manager()
-        self.invoke('cfy use local')
+        self.invoke('cfy profiles use local')
         self.invoke('cfy profiles list')
         # TODO: This isn't tested right due to the logs containing
         # to much ambiguous info to check for

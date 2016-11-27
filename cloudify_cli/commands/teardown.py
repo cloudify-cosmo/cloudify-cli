@@ -17,7 +17,7 @@
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import env
-from .use import use
+from .profiles import use
 from .. import exceptions
 from ..cli import cfy, helptexts
 from ..bootstrap import bootstrap as bs
@@ -62,11 +62,12 @@ def teardown(ctx,
             # directory in order to teardown
             raise exceptions.CloudifyCliError(
                 "You are attempting to teardown from an "
-                "invalid directory. Please execute `cfy use` before "
+                "invalid directory. Please execute `cfy profiles use` before "
                 "running this command. If the manager is "
                 "unavailable, you must execute this command from the "
                 "directory you initially bootstrapped from, or from the last "
-                "directory a `cfy use` command was executed on this manager.")
+                "directory a `cfy profiles use` command was executed on this"
+                "manager.")
         else:
             _do_teardown(
                 task_retries,
