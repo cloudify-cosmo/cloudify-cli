@@ -175,16 +175,6 @@ class InitTest(CliCommandTest):
             exception=ImportError
         )
 
-    def test_no_init(self):
-        cfy.purge_dot_cloudify()
-        self.invoke('cfy profiles list',
-                    err_str_segment='Cloudify environment is not initialized',
-                    # TODO: put back
-                    # possible_solutions=[
-                    #     "Run 'cfy init' in this directory"
-                    # ]
-                    )
-
     def test_init_blueprint_archive_default_name(self):
         self.invoke(
             'cfy init {0}'.format(SAMPLE_CUSTOM_NAME_ARCHIVE),
