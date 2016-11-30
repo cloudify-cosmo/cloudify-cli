@@ -201,3 +201,10 @@ USER = 'Username of user to whom the permissions apply. ' \
        'This argument can be used multiple times'
 PERMISSION = 'The permission applicable to a resource [viewer|owner] ' \
              '(default:viewer)'
+RESTORE_SNAPSHOT_TENANT_NAME = 'The name of the tenant into which the ' \
+                               'snapshot should be restored. ' \
+                               'Important - this option is required when ' \
+                               'restoring snapshots from managers of ' \
+                               'versions prior to 4.0.0. If passed when ' \
+                               'restoring newer snapshots, an error ' \
+                               'will be raised'
