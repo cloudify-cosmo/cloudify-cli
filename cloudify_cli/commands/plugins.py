@@ -23,9 +23,11 @@ from ..cli import helptexts, cfy
 from ..exceptions import CloudifyCliError
 
 
-INCLUDE_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
-                   'supported_platform', 'distribution_release', 'uploaded_at']
-PLUGIN_COLUMNS = INCLUDE_COLUMNS + ['permission', 'tenant_name']
+PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
+                  'supported_platform', 'distribution_release', 'uploaded_at',
+                  'permission', 'tenant_name']
+EXCLUDED_COLUMNS = ['archive_name', 'distribution_version', 'excluded_wheels',
+                    'package_source', 'supported_py_versions', 'wheels']
 
 
 @cfy.group(name='plugins')
@@ -152,7 +154,8 @@ def get(plugin_id, logger, client):
     `PLUGIN_ID` is the id of the plugin to get information on.
     """
     logger.info('Retrieving plugin {0}...'.format(plugin_id))
-    plugin = client.plugins.get(plugin_id, _include=INCLUDE_COLUMNS)
+    plugin = client.plugins.get(plugin_id)
+    _transform_plugin_response(plugin)
     print_data(PLUGIN_COLUMNS, plugin, 'Plugin:')
 
 
@@ -168,12 +171,10 @@ def list(sort_by, descending, logger, client):
     """List all plugins on the manager
     """
     logger.info('Listing all plugins...')
-    plugins = client.plugins.list(
-        _include=INCLUDE_COLUMNS,
-        sort=sort_by,
-        is_descending=descending)
-
-    print_data(PLUGIN_COLUMNS, plugins, 'Plugins:')
+    plugins_list = client.plugins.list(sort=sort_by, is_descending=descending)
+    for plugin in plugins_list:
+        _transform_plugin_response(plugin)
+    print_data(PLUGIN_COLUMNS, plugins_list, 'Plugins:')
 
 
 @plugins.command(name='add-permission', short_help='Add permissions to users')
@@ -211,3 +212,10 @@ def remove_permission(plugin_id, users, permission, client, logger):
     logger.info('Removing permission `{0}`...'.format(permission))
     client.plugins.remove_permission(plugin_id, users, permission)
     logger.info('Permissions updated for plugin `{0}`'.format(plugin_id))
+
+
+def _transform_plugin_response(plugin):
+    """Remove any columns that shouldn't be displayed in the CLI
+    """
+    for column in EXCLUDED_COLUMNS:
+        plugin.pop(column, None)

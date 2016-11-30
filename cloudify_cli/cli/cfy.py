@@ -582,12 +582,6 @@ class Options(object):
             '--command',
             help=helptexts.SSH_COMMAND)
 
-        self.tenant_name = click.option(
-            '-t',
-            '--tenant-name',
-            required=True,
-            help=helptexts.TENANT)
-
         self.group_name = click.option(
             '-g',
             '--group-name',
@@ -707,6 +701,14 @@ class Options(object):
             expose_value=expose_value,
             is_eager=True,
             help=helptexts.VERBOSE)
+
+    @staticmethod
+    def tenant_name(required=True, help=helptexts.TENANT):
+        return click.option(
+            '-t',
+            '--tenant-name',
+            required=required,
+            help=help)
 
     @staticmethod
     def force(help):

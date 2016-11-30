@@ -37,17 +37,29 @@ def snapshots():
 @cfy.argument('snapshot-id')
 @cfy.options.without_deployment_envs
 @cfy.options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
+@cfy.options.tenant_name(required=False,
+                         help=helptexts.RESTORE_SNAPSHOT_TENANT_NAME)
 @cfy.options.verbose()
 @cfy.pass_client()
 @cfy.pass_logger
-def restore(snapshot_id, without_deployment_envs, force, logger, client):
+def restore(snapshot_id,
+            without_deployment_envs,
+            force,
+            tenant_name,
+            logger,
+            client):
     """Restore a manager to its previous state
 
     `SNAPSHOT_ID` is the id of the snapshot to use for restoration.
     """
     logger.info('Restoring snapshot {0}...'.format(snapshot_id))
+    recreate_deployments_envs = not without_deployment_envs
     execution = client.snapshots.restore(
-        snapshot_id, not without_deployment_envs, force)
+        snapshot_id,
+        recreate_deployments_envs,
+        force,
+        tenant_name
+    )
     logger.info("Started workflow execution. The execution's id is {0}".format(
         execution.id))
 
