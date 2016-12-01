@@ -357,6 +357,9 @@ class ProfileContext(yaml.YAMLObject):
     yaml_loader = yaml.Loader
 
     def __init__(self, profile_name=None):
+        # Note that __init__ is not called when loading from yaml.
+        # When adding a new ProfileContext attribute, make sure that
+        # all methods handle the case when the attribute is missing
         self.bootstrap_state = 'Incomplete'
         self.manager_ip = profile_name
         self.ssh_key = None
@@ -368,7 +371,7 @@ class ProfileContext(yaml.YAMLObject):
         self.manager_tenant = constants.DEFAULT_TENANT_NAME
         self.rest_port = constants.DEFAULT_REST_PORT
         self.rest_protocol = constants.DEFAULT_REST_PROTOCOL
-        self.cluster = []
+        self._cluster = []
 
     def to_dict(self):
         return dict(
@@ -395,6 +398,16 @@ class ProfileContext(yaml.YAMLObject):
         # leave None as is
         ssh_port = str(ssh_port) if ssh_port else None
         self._ssh_port = ssh_port
+
+    @property
+    def cluster(self):
+        # default the .cluster attribute here, so that all callers can use it
+        # as just .cluster, even if it's not present in the source yaml
+        return getattr(self, '_cluster', [])
+
+    @cluster.setter
+    def cluster(self, cluster):
+        self._cluster = cluster
 
     def _get_context_path(self):
         init_path = get_profile_dir(self.manager_ip)
