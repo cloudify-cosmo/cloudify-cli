@@ -479,7 +479,9 @@ def _copy_agent_key(agent_local_key_path, agent_remote_key_path,
     if not agent_local_key_path:
         return None
     agent_local_key_path = os.path.expanduser(agent_local_key_path)
+    remote_dir = os.path.dirname(agent_remote_key_path)
     with fabric.settings(**fabric_env):
+        fabric.sudo('mkdir -p {0}'.format(remote_dir))
         fabric.put(agent_local_key_path, agent_remote_key_path, use_sudo=True)
     return agent_remote_key_path
 
