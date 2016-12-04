@@ -67,5 +67,6 @@ def main():
                  ' could not complete activation.'
                  .format(distro))
 
+        
 if __name__ == '__main__':
     main()
