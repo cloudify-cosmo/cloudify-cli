@@ -15,8 +15,11 @@
 
 import os
 import sys
+import shutil
 import tarfile
 import logging
+import subprocess
+
 from uuid import uuid4
 from functools import wraps
 from StringIO import StringIO
@@ -36,6 +39,14 @@ from cloudify_rest_client.nodes import Node
 from cloudify_rest_client.executions import Execution
 from cloudify_rest_client.maintenance import Maintenance
 from cloudify_rest_client.node_instances import NodeInstance
+
+
+def mock_fabric_sudo(command, *args, **kwargs):
+    subprocess.check_call(command.split(' '))
+
+
+def mock_fabric_put(local_path, remote_path, *args, **kwargs):
+    shutil.copy(local_path, remote_path)
 
 
 def execution_mock(status, wf_id='mock_wf'):

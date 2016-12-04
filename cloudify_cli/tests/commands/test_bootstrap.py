@@ -1,8 +1,13 @@
 import os
 import shutil
 import filecmp
+import tempfile
+
+import fabric.api as fabric
 
 from mock import patch
+
+import mocks
 
 from .. import cfy
 from ... import env
@@ -257,3 +262,26 @@ class BootstrapTest(CliCommandTest):
             module=bootstrap,
             function_name='generate_password'
         )
+
+    def test_copy_agent_key_no_target_dir(self):
+        original_sudo = fabric.sudo
+        fabric.sudo = mocks.mock_fabric_sudo
+        original_put = fabric.put
+        fabric.put = mocks.mock_fabric_put
+        tmp_dir = tempfile.mkdtemp()
+        local_path = os.path.join(tmp_dir, 'local')
+        os.mkdir(local_path)
+        local_path = os.path.join(local_path, 'key')
+        with open(local_path, 'w') as key:
+            key.write('key_content')
+        remote_path = os.path.join(tmp_dir, 'remote', 'key')
+        try:
+            bootstrap._copy_agent_key(local_path, remote_path,
+                                      fabric_env=bootstrap.build_fabric_env(
+                                          'local', '', '', ''
+                                      ))
+            self.assertTrue(os.path.exists(remote_path))
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+            fabric.put = original_put
+            fabric.sudo = original_sudo
