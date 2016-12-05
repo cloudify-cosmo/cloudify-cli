@@ -19,7 +19,7 @@ install_dir "#{default_root}/cfy"
 
 build_version Omnibus::BuildVersion.semver
 
-ENV['BUILD'] || raise('BUILD environment variable not set')
+#ENV['BUILD'] || raise('BUILD environment variable not set')
 #build_iteration ENV['BUILD']
 
 # Creates required build directories
