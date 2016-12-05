@@ -9,7 +9,7 @@ maintainer "Gigaspaces"
 homepage "http://getcloudify.org"
 
 build_version '1.0.0'
-build_iteration 1
+#build_iteration 1
 package_name "cloudify"
 install_dir "#{default_root}/#{package_name}"
 
