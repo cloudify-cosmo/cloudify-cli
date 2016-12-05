@@ -21,7 +21,6 @@ build_version Omnibus::BuildVersion.semver
 
 #ENV['BUILD'] || raise('BUILD environment variable not set')
 #build_iteration ENV['BUILD']
-build_iteration null
 
 # Creates required build directories
 dependency "preparation"
