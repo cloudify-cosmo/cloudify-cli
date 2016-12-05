@@ -5,7 +5,7 @@ premium=ENV['PREMIUM']
 premium_folder=ENV['PREMIUM_FOLDER']
 
 #default_version ENV['CORE_TAG_NAME']
-default_version 'new-versioning'
+default_version 'temp'
 
 source :git => "https://github.com/cloudify-cosmo/cloudify-manager-blueprints"
 puts "premium_folder=#{premium_folder}"
