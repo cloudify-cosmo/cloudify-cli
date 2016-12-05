@@ -16,15 +16,28 @@
 """
 Tests 'cfy bootstrap'
 """
+import os
 import json
+import shutil
+import tempfile
+import subprocess
 
 import mock
+import fabric.api as fabric
 
 from cloudify_cli import common
 from cloudify_cli.bootstrap import bootstrap
 from cloudify_cli.tests import cli_runner
 from cloudify_cli.tests.commands.test_cli_command import \
     CliCommandTest, BLUEPRINTS_DIR
+
+
+def mock_fabric_sudo(command, *args, **kwargs):
+    subprocess.check_call(command.split(' '))
+
+
+def mock_fabric_put(local_path, remote_path, *args, **kwargs):
+    shutil.copy(local_path, remote_path)
 
 
 class BootstrapTest(CliCommandTest):
@@ -142,3 +155,26 @@ class BootstrapTest(CliCommandTest):
                         '-p {0}'.format(blueprint_path),
             module=bootstrap,
             function_name='validate_manager_deployment_size')
+
+    def test_copy_agent_key_no_target_dir(self):
+        original_sudo = fabric.sudo
+        fabric.sudo = mock_fabric_sudo
+        original_put = fabric.put
+        fabric.put = mock_fabric_put
+        tmp_dir = tempfile.mkdtemp()
+        local_path = os.path.join(tmp_dir, 'local')
+        os.mkdir(local_path)
+        local_path = os.path.join(local_path, 'key')
+        with open(local_path, 'w') as key:
+            key.write('key_content')
+        remote_path = os.path.join(tmp_dir, 'remote', 'key')
+        try:
+            bootstrap._copy_agent_key(local_path, remote_path,
+                                      fabric_env=bootstrap.build_fabric_env(
+                                          'local', '', ''
+                                      ))
+            self.assertTrue(os.path.exists(remote_path))
+        finally:
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+            fabric.put = original_put
+            fabric.sudo = original_sudo
