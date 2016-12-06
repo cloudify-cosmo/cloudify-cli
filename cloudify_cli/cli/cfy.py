@@ -14,6 +14,7 @@
 # limitations under the License.
 ############
 
+
 import os
 import sys
 import difflib
@@ -23,7 +24,6 @@ from functools import wraps
 from base64 import standard_b64encode
 
 import click
-
 from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
@@ -33,11 +33,11 @@ from .. import env
 from .. import constants
 from ..cli import helptexts
 from ..inputs import inputs_to_dict
+from ..utils import generate_random_string
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import CloudifyBootstrapError
 from ..exceptions import SuppressedCloudifyCliError
 from ..logger import get_logger, set_global_verbosity_level, DEFAULT_LOG_FILE
-from ..utils import generate_random_string
 
 
 CLICK_CONTEXT_SETTINGS = dict(
@@ -122,7 +122,7 @@ def show_version(ctx, param, value):
 
 
 def inputs_callback(ctx, param, value):
-    """Allows to pass any inputs we provide to a command as
+    """Allow to pass any inputs we provide to a command as
     processed inputs instead of having to call `inputs_to_dict`
     inside the command.
 
@@ -212,7 +212,7 @@ def set_cli_except_hook(global_verbosity_level):
 
 
 def assert_manager_active(require_creds=True):
-    """Wraps the command so that it can only run when a manager is active
+    """Wrap the command so that it can only run when a manager is active
     :param require_creds: If set to True, the wrapped method will fail if no
     admin password was set either in the profile, or in the env variable
     """
@@ -230,7 +230,7 @@ def assert_manager_active(require_creds=True):
 
 
 def assert_local_active(func):
-    """Wraps the command so that it can only run when in local context
+    """Wrap the command so that it can only run when in local context
     """
     @wraps(func)
     def wrapper(*args, **kwargs):
@@ -269,7 +269,9 @@ def pass_client(*args, **kwargs):
 
 
 def pass_context(func):
-    """This exists purely for aesthetic reasons, otherwise
+    """Make click context Cloudify specific
+
+    This exists purely for aesthetic reasons, otherwise
     Some decorators are called `@click.something` instead of
     `@cfy.something`
     """
@@ -295,8 +297,7 @@ class AliasedGroup(click.Group):
         ctx.fail('Too many matches: {0}'.format(', '.join(sorted(matches))))
 
     def resolve_command(self, ctx, args):
-        """
-        Overrides clicks ``resolve_command`` method
+        """Override clicks ``resolve_command`` method
         and appends *Did you mean ...* suggestions
         to the raised exception message.
         """
@@ -317,7 +318,7 @@ class AliasedGroup(click.Group):
 
 
 def group(name):
-    """Allows to create a group with a default click context
+    """Allow to create a group with a default click context
     and a cls for click's `didyoueamn` without having to repeat
     it for every group.
     """
@@ -328,7 +329,9 @@ def group(name):
 
 
 def command(*args, **kwargs):
-    """This exists purely for aesthetical reasons, otherwise
+    """Make Click commands Cloudify specific
+
+    This exists purely for aesthetical reasons, otherwise
     Some decorators are called `@click.something` instead of
     `@cfy.something`
     """
@@ -336,7 +339,9 @@ def command(*args, **kwargs):
 
 
 def argument(*args, **kwargs):
-    """This exists purely for aesthetic reasons, otherwise
+    """Make Click arguments Cloudify specific
+
+    This exists purely for aesthetic reasons, otherwise
     Some decorators are called `@click.something` instead of
     `@cfy.something`
     """

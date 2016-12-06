@@ -14,6 +14,7 @@
 # limitations under the License.
 ############
 
+
 import os
 import time
 import copy
@@ -487,7 +488,7 @@ def _upload_resources(manager_node,
                       rest_client,
                       retries,
                       wait_interval):
-    """Uploads resources supplied in the manager blueprint. uses both fabric for
+    """Upload resources supplied in the manager blueprint. uses both fabric for
     the dsl_resources, and the upload plugins mechanism for plugin_resources.
 
     :param manager_node: The manager node from which to retrieve the
@@ -495,7 +496,6 @@ def _upload_resources(manager_node,
     :param fabric_env: fabric env in order to upload the dsl_resources.
     :param rest_client: the rest client to use to upload plugins
     """
-
     upload_resources = \
         manager_node.properties['cloudify'].get('upload_resources', {})
 
@@ -518,8 +518,7 @@ def _upload_resources(manager_node,
 
 def upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
                          wait_interval, timeout):
-    """
-    Uploads dsl resources to the manager.
+    """Upload dsl resources to the manager.
 
     :param dsl_resources: all of the dsl_resources.
     :param temp_dir: the dir to push the resources to.
@@ -579,10 +578,12 @@ def upload_dsl_resources(dsl_resources, temp_dir, fabric_env, retries,
 
 def _get_resource_into_dir(destination_dir, resource_source_path, retries,
                            wait_interval, timeout):
-    """
-    Copies a given path into the destination dir. The path could refer to
+    """Copy a given path into the destination dir.
+
+    The path could refer to
     a local file or a remote url. NOTE: If two files shares the same name,
     the old file would be overwritten.
+
     :param destination_dir: The dir to write the resource into.
     :param resource_source_path: A path to the resource.
     :return: the path to the newly copied resource.

@@ -14,6 +14,7 @@
 # limitations under the License.
 ############
 
+
 import os
 import yaml
 
@@ -21,6 +22,7 @@ from dsl_parser import utils as dsl_parser_utils
 from dsl_parser.constants import IMPORT_RESOLVER_KEY
 
 from .. import env
+
 
 CLOUDIFY_CONFIG_PATH = os.path.join(env.CLOUDIFY_WORKDIR, 'config.yaml')
 

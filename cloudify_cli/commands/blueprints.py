@@ -14,10 +14,10 @@
 # limitations under the License.
 ############
 
+
 import os
 import json
 import shutil
-
 from urlparse import urlparse
 
 import click
@@ -123,11 +123,11 @@ def upload(ctx,
         logger.info('Publishing blueprint archive %s...',
                     processed_blueprint_path)
         blueprint_obj = client.blueprints.publish_archive(
-                processed_blueprint_path,
-                blueprint_id,
-                blueprint_filename,
-                private_resource,
-                progress_handler)
+            processed_blueprint_path,
+            blueprint_id,
+            blueprint_filename,
+            private_resource,
+            progress_handler)
     else:
         try:
             if validate:

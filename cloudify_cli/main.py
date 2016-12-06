@@ -14,6 +14,10 @@
 # limitations under the License.
 ############
 
+
+import demandimport
+demandimport.enable()  # NOQA
+
 from . import env
 from . import logger
 from .cli import cfy
@@ -139,6 +143,7 @@ def _register_commands():
 
 _register_commands()
 logger.configure_loggers()
+
 
 if __name__ == '__main__':
     _cfy()

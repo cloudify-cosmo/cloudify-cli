@@ -14,6 +14,7 @@
 # limitations under the License.
 ############
 
+
 import os
 import sys
 import copy
@@ -186,7 +187,7 @@ def get_events_logger(json_output):
 
 
 def set_global_verbosity_level(verbose):
-    """Sets the global verbosity level.
+    """Set the global verbosity level.
     """
     global verbosity_level
     verbosity_level = verbose
@@ -197,6 +198,6 @@ def set_global_verbosity_level(verbose):
 
 
 def get_global_verbosity():
-    """Returns the globally set verbosity
+    """Return the globally set verbosity
     """
     return verbosity_level

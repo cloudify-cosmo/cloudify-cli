@@ -50,6 +50,7 @@ setup(
         'retrying==1.3.3',
         'colorama==0.3.3',
         'requests==2.7.0',
+        'demandimport==0.3.3',
         'PrettyTable>=0.7,<0.8',
         'click_didyoumean==0.0.3',
         'cloudify-dsl-parser==4.0a11',
