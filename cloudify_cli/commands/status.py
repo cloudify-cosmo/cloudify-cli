@@ -33,7 +33,6 @@ def status(logger, client):
     """Show the status of the manager
     """
     rest_host = profile.manager_ip
-
     logger.info('Retrieving manager services status... [ip={0}]'.format(
         rest_host))
     try:

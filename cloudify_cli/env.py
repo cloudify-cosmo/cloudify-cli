@@ -16,11 +16,13 @@
 
 import os
 import json
+import types
 import shutil
 import pkgutil
 import getpass
 import requests
 import tempfile
+import itertools
 
 import yaml
 from base64 import urlsafe_b64encode
@@ -215,7 +217,6 @@ def get_rest_client(rest_host=None,
 
     if cluster:
         client = CloudifyClusterClient(
-            cluster=cluster,
             host=rest_host,
             port=rest_port,
             protocol=rest_protocol,
@@ -459,6 +460,8 @@ CLUSTER_NODE_ATTRS = ['manager_ip', 'rest_port', 'rest_protocol', 'ssh_port',
 
 
 class ClusterHTTPClient(HTTPClient):
+    default_timeout_sec = 5
+
     def __init__(self, *args, **kwargs):
         super(ClusterHTTPClient, self).__init__(*args, **kwargs)
         if not profile.cluster:
@@ -466,13 +469,25 @@ class ClusterHTTPClient(HTTPClient):
         self._cluster = list(profile.cluster)
 
     def do_request(self, *args, **kwargs):
-        for node in profile.cluster:
+        # this request can be retried for each manager - if the data is
+        # a generator, we need to copy it, so we can send it more than once
+        copied_data = None
+        if isinstance(kwargs.get('data'), types.GeneratorType):
+            copied_data = itertools.tee(kwargs.pop('data'),
+                                        len(profile.cluster))
+
+        kwargs.setdefault('timeout', self.default_timeout_sec)
+
+        for node_index, node in enumerate(profile.cluster):
             self._use_node(node)
+            if copied_data is not None:
+                kwargs['data'] = copied_data[node_index]
+
             try:
                 return super(ClusterHTTPClient, self).do_request(*args,
                                                                  **kwargs)
             except (NotClusterMaster, requests.exceptions.ConnectionError):
-                    continue
+                continue
 
         raise CloudifyClientError('No active node in the cluster!')
 
@@ -485,14 +500,14 @@ class ClusterHTTPClient(HTTPClient):
         self._update_profile(node)
 
     def _update_profile(self, node):
-        for attr in CLUSTER_NODE_ATTRS:
-            if attr in node:
-                setattr(profile, attr, node[attr])
+        """Put the node at the start of the cluster list in profile.
 
-        # set node as the first one in .cluster
+        The client tries nodes in the order of the cluster list, so putting
+        the node first will make the client try it first next time. This makes
+        the client always try the last-known-master first.
+        """
         profile.cluster.remove(node)
         profile.cluster = [node] + profile.cluster
-
         profile.save()
 
 

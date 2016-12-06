@@ -1221,6 +1221,7 @@ class TestClusterRestClient(CliCommandTest):
                           side_effect=_mocked_get)
 
     def test_master_offline(self):
+        env.profile.manager_ip = '127.0.0.1'
         env.profile.cluster = [
             {'manager_ip': '127.0.0.1'},
             {'manager_ip': '127.0.0.2'}
@@ -1232,9 +1233,10 @@ class TestClusterRestClient(CliCommandTest):
 
         self.assertEqual([], list(response))
         self.assertEqual(2, len(mocked_get.mock_calls))
-        self.assertEqual('127.0.0.2', env.profile.manager_ip)
+        self.assertEqual('127.0.0.2', env.profile.cluster[0]['manager_ip'])
 
     def test_master_changed(self):
+        env.profile.manager_ip = '127.0.0.1'
         env.profile.cluster = [
             {'manager_ip': '127.0.0.1'},
             {'manager_ip': '127.0.0.2'},
@@ -1254,4 +1256,4 @@ class TestClusterRestClient(CliCommandTest):
 
         self.assertEqual([], list(response))
         self.assertEqual(3, len(mocked_get.mock_calls))
-        self.assertEqual('127.0.0.4', env.profile.manager_ip)
+        self.assertEqual('127.0.0.4', env.profile.cluster[0]['manager_ip'])

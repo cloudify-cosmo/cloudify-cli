@@ -661,23 +661,18 @@ class Options(object):
 
         self.cluster_host_ip = click.option(
             '--cluster-host-ip',
-            required=True,
+            default=lambda: env.profile.manager_ip,
             help=helptexts.CLUSTER_HOST_IP)
-
-        self.cluster_join = click.option(
-            '--cluster-join',
-            required=True,
-            multiple=True,
-            help=helptexts.CLUSTER_JOIN)
 
         self.cluster_node_name = click.option(
             '--cluster-node-name',
             default=lambda: 'cloudify_manager_' + generate_random_string(),
             help=helptexts.CLUSTER_NODE_NAME)
 
-        self.cluster_join_profile = click.option(
-            '--cluster-join-profile',
-            help=helptexts.CLUSTER_JOIN_PROFILE)
+        self.cluster_encryption_key = click.option(
+            '--cluster-encryption-key',
+            default=lambda: standard_b64encode(os.urandom(16)),
+            help=helptexts.CLUSTER_ENCRYPTION_KEY)
 
         self.private_resource = click.option(
             '--private-resource',
@@ -836,19 +831,6 @@ class Options(object):
             '--blueprint-path',
             required=required,
             type=click.Path(exists=True))
-
-    @staticmethod
-    def cluster_encryption_key(with_default=False):
-        if with_default:
-            def default():
-                return standard_b64encode(os.urandom(16))
-        else:
-            default = None
-
-        return click.option(
-            '--cluster-encryption-key',
-            default=default,
-            help=helptexts.CLUSTER_ENCRYPTION_KEY)
 
 
 options = Options()
