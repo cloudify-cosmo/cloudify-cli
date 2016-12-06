@@ -594,6 +594,12 @@ class Options(object):
             required=True,
             help=helptexts.GROUP)
 
+        self.ldap_distinguished_name = click.option(
+            '-l',
+            '--ldap-distinguished-name',
+            required=False,
+            help=helptexts.GROUP_DN)
+
         self.host_session = click.option(
             '--host',
             is_flag=True,
