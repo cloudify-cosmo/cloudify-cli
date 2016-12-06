@@ -172,6 +172,8 @@ INSTALL_SCRIPT_LOCATION = \
     'Alternative location of the `install_agents.py` script'
 TENANT = 'The name of the tenant'
 GROUP = 'The name of the user group'
+GROUP_DN = 'The ldap group\'s distinguished name. This option is required ' \
+           'when using ldap'
 
 SECURITY_ROLE = "A role to determine the user's permissions on the manager " \
                 "[administrator|user|suspended] (default: user)"

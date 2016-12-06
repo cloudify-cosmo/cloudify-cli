@@ -60,3 +60,6 @@ class UserGroupsTest(CliCommandTest):
             'remove_from_group', self.client.users.method_calls[0][0])
         self.assertEquals(('my_username', 'my_group_name',),
                           self.client.users.method_calls[0][1])
+
+    def test_group_create(self):
+        self.invoke('cfy user-groups create group1 -l ldap_dn')

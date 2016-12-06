@@ -50,17 +50,19 @@ def list(sort_by, descending, logger, client):
 @user_groups.command(name='create',
                      short_help='Create a user group [manager only]')
 @cfy.argument('user-group-name')
+@cfy.options.ldap_distinguished_name
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def create(user_group_name, logger, client):
+def create(user_group_name, ldap_distinguished_name, logger, client):
     """Create a new user group on the manager
 
     `USER_GROUP_NAME` is the name of the new user group
     """
-    client.user_groups.create(user_group_name)
-    logger.info('User group `{0}` created'.format(user_group_name))
+    client.user_groups.create(user_group_name,
+                              ldap_group_dn=ldap_distinguished_name)
+    logger.info('Group `{0}` created'.format(user_group_name))
 
 
 @user_groups.command(name='get',
