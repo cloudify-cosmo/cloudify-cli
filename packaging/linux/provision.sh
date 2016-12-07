@@ -34,6 +34,11 @@ rm -f version-manifest.json
 [ $(ls | grep rpm | sed -n 2p ) ] && FILEEXT="rpm"
 [ $(ls | grep deb | sed -n 2p ) ] && FILEEXT="deb"
 
+#remove the -1 - omnibus set the build_iteration to 1 if it null
+file=$(basename $(find . -type f -name "*.$FILEEXT"))
+file_no_build=$(echo "$file" | sed 's/\-1//')
+mv $file $file_no_build
+
 [ "$result" == "success" ] && create_md5 $FILEEXT &&
 [ -z ${AWS_ACCESS_KEY} ] || upload_to_s3 $FILEEXT && upload_to_s3 "md5" &&
 upload_to_s3 "json"

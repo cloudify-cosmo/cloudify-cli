@@ -2,7 +2,7 @@
 
 Name:           cloudify-%{DISTRO}-%{RELEASE}-cli
 Version:        %{VERSION}
-Release:        %{PRERELEASE}_b%{BUILD}
+Release:        %{PRERELEASE}
 Summary:        Cloudify's CLI
 Group:          Applications/Multimedia
 License:        Apache 2.0
