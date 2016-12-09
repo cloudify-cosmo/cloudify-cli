@@ -88,7 +88,7 @@ def assert_manager_active():
     if not is_manager_active():
         raise CloudifyCliError(
             'This command is only available when using a manager. '
-            'You can either bootstrap a manager or run `cfy profiles use'
+            'You can either bootstrap a manager or run `cfy profiles use '
             'MANAGER_IP`')
 
 
