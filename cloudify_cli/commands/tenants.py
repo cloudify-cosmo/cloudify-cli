@@ -149,3 +149,20 @@ def get(tenant_name, logger, client):
     logger.info('Getting info for tenant `{0}`...'.format(tenant_name))
     tenant_details = client.tenants.get(tenant_name)
     print_data(TENANT_COLUMNS, tenant_details, 'Requested tenant info:')
+
+
+@tenants.command(name='delete',
+                 short_help='Delete a tenant [manager only]')
+@cfy.argument('tenant-name')
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def delete(tenant_name, logger, client):
+    """Delete a tenant
+
+    `TENANT_NAME` is the name of the tenant
+    """
+    logger.info('Deleting tenant `{0}`...'.format(tenant_name))
+    client.tenants.delete(tenant_name)
+    logger.info('Tenant removed')

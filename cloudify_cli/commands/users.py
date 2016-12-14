@@ -114,3 +114,20 @@ def get(username, logger, client):
     logger.info('Getting info for user `{0}`...'.format(username))
     user_details = client.users.get(username)
     print_data(USER_COLUMNS, user_details, 'Requested user info:')
+
+
+@users.command(name='delete',
+               short_help='Delete a user [manager only]')
+@cfy.argument('username')
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def delete(username, logger, client):
+    """Delete a user
+
+    `USERNAME` is the username of the user
+    """
+    logger.info('Deleting user `{0}`...'.format(username))
+    client.users.delete(username)
+    logger.info('User removed')
