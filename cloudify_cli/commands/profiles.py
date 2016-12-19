@@ -221,27 +221,37 @@ def delete(profile_name, logger):
 @cfy.options.manager_username
 @cfy.options.manager_password
 @cfy.options.manager_tenant
+@cfy.options.skip_credentials_validation
 @cfy.options.verbose()
 @cfy.pass_logger
-def set(manager_username, manager_password, manager_tenant, logger):
+def set(manager_username,
+        manager_password,
+        manager_tenant,
+        skip_credentials_validation,
+        logger):
     """Set the manager username and/or password and/or tenant
     in the *current* profile
     """
     if not (manager_username or manager_password or manager_tenant):
         raise CloudifyCliError("You must supply at least one of the following:"
                                "  username, password, tenant")
+    username = manager_username or env.get_username()
+    password = manager_password or env.get_password()
+    tenant = manager_tenant or env.get_tenant_name()
+
+    if not skip_credentials_validation:
+        _validate_credentials(username, password, tenant)
+
     if manager_username:
-        logger.info('Setting manager username to `{0}`'.format(
-            manager_username))
+        logger.info('Setting username to `{0}`'.format(manager_username))
         env.profile.manager_username = manager_username
     if manager_password:
-        logger.info('Setting manager password to `{0}`'.format(
-            manager_password))
+        logger.info('Setting password to `{0}`'.format(manager_password))
         env.profile.manager_password = manager_password
     if manager_tenant:
-        logger.info('Setting manager tenant to `{0}`'.format(
-            manager_tenant))
+        logger.info('Setting tenant to `{0}`'.format(manager_tenant))
         env.profile.manager_tenant = manager_tenant
+
     env.profile.save()
     logger.info('Settings saved successfully')
 
@@ -252,15 +262,36 @@ def set(manager_username, manager_password, manager_tenant, logger):
 @cfy.options.manager_username_flag
 @cfy.options.manager_password_flag
 @cfy.options.manager_tenant_flag
+@cfy.options.skip_credentials_validation
 @cfy.options.verbose()
 @cfy.pass_logger
-def unset(manager_username, manager_password, manager_tenant, logger):
+def unset(manager_username,
+          manager_password,
+          manager_tenant,
+          skip_credentials_validation,
+          logger):
     """Clear the manager username and/or password and/or tenant
     from the *current* profile
     """
     if not (manager_username or manager_password or manager_tenant):
         raise CloudifyCliError("You must choose at least one of the following:"
                                "  username, password, tenant")
+    if manager_username:
+        username = os.environ.get(constants.CLOUDIFY_USERNAME_ENV)
+    else:
+        username = env.profile.manager_username
+    if manager_password:
+        password = os.environ.get(constants.CLOUDIFY_PASSWORD_ENV)
+    else:
+        password = env.profile.manager_password
+    if manager_tenant:
+        tenant = os.environ.get(constants.CLOUDIFY_TENANT_ENV)
+    else:
+        tenant = env.profile.manager_tenant
+
+    if not skip_credentials_validation:
+        _validate_credentials(username, password, tenant)
+
     if manager_username:
         logger.info('Clearing manager username')
         env.profile.manager_username = None
@@ -433,14 +464,34 @@ def _assert_manager_available(client, profile_name):
             "Can't use manager {0}: {1}".format(profile_name, str(ex)))
 
 
-def _get_provider_context(
+def _get_provider_context(profile_name,
+                          rest_port,
+                          rest_protocol,
+                          manager_username,
+                          manager_password,
+                          manager_tenant):
+
+    client = _get_client_and_assert_manager(
         profile_name,
         rest_port,
         rest_protocol,
         manager_username,
         manager_password,
         manager_tenant
-):
+    )
+    try:
+        response = client.manager.get_context()
+        return response['context']
+    except CloudifyClientError:
+        return None
+
+
+def _get_client_and_assert_manager(profile_name,
+                                   rest_port=None,
+                                   rest_protocol=None,
+                                   manager_username=None,
+                                   manager_password=None,
+                                   manager_tenant=None):
     # Attempt to update the profile with an existing profile context, if one
     # is available. This is relevant in case the user didn't pass a username
     # or a password, and was expecting them to be taken from the old profile
@@ -457,12 +508,7 @@ def _get_provider_context(
     )
 
     _assert_manager_available(client, profile_name)
-
-    try:
-        response = client.manager.get_context()
-        return response['context']
-    except CloudifyClientError:
-        return None
+    return client
 
 
 def _set_profile_context(profile_name,
@@ -495,3 +541,15 @@ def _set_profile_context(profile_name,
     profile.bootstrap_state = 'Complete'
 
     profile.save()
+
+
+@cfy.pass_logger
+def _validate_credentials(username, password, tenant, logger):
+    logger.info('Validating credentials...')
+    _get_client_and_assert_manager(
+        profile_name=env.profile.manager_ip,
+        manager_username=username,
+        manager_password=password,
+        manager_tenant=tenant
+    )
+    logger.info('Credentials validated')
