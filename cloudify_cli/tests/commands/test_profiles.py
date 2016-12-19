@@ -4,7 +4,7 @@ import tarfile
 import tempfile
 from contextlib import closing
 
-from mock import MagicMock
+from mock import MagicMock, patch
 
 from .. import cfy
 from ... import env
@@ -204,12 +204,14 @@ class ProfilesTest(CliCommandTest):
         self.invoke('blueprints list', err_str_segment=error_msg)
 
         # Unsetting the variable in the profile should fix this
-        self.invoke('profiles unset --manager-{0}'.format(variable))
+        self.invoke('profiles unset --manager-{0} '
+                    '--skip-credentials-validation'.format(variable))
         self.invoke('blueprints list')
 
         # Setting the variable in the profile should cause it to fail again
-        self.invoke('profiles set --manager-{0} {1}'.format(
-            variable, temp_value))
+        self.invoke('profiles set --manager-{0} {1} '
+                    '--skip-credentials-validation'.format(
+                        variable, temp_value))
         self.invoke('blueprints list', err_str_segment=error_msg)
 
         # Finally, unsetting the env variable should fix this
@@ -236,42 +238,61 @@ class ProfilesTest(CliCommandTest):
     def test_set_and_unset_combinations(self):
         self.use_manager()
 
-        self.invoke('profiles set -u 0 -p 0 -t 0')
+        self.invoke('profiles set -u 0 -p 0 -t 0 '
+                    '--skip-credentials-validation')
         self.assertEquals('0', env.profile.manager_username)
         self.assertEquals('0', env.profile.manager_password)
         self.assertEquals('0', env.profile.manager_tenant)
 
-        self.invoke('profiles set -u 1 -p 1')
+        self.invoke('profiles set -u 1 -p 1 --skip-credentials-validation')
         self.assertEquals('1', env.profile.manager_username)
         self.assertEquals('1', env.profile.manager_password)
         self.assertEquals('0', env.profile.manager_tenant)
 
-        self.invoke('profiles set -u 2 -t 2')
+        self.invoke('profiles set -u 2 -t 2 --skip-credentials-validation')
         self.assertEquals('2', env.profile.manager_username)
         self.assertEquals('1', env.profile.manager_password)
         self.assertEquals('2', env.profile.manager_tenant)
 
-        self.invoke('profiles unset -t -p')
+        self.invoke('profiles unset -t -p --skip-credentials-validation')
         self.assertEquals('2', env.profile.manager_username)
         self.assertEquals(None, env.profile.manager_password)
         self.assertEquals(None, env.profile.manager_tenant)
 
-        self.invoke('profiles set -t 3')
+        self.invoke('profiles set -t 3 --skip-credentials-validation')
         self.assertEquals('2', env.profile.manager_username)
         self.assertEquals(None, env.profile.manager_password)
         self.assertEquals('3', env.profile.manager_tenant)
 
-        self.invoke('profiles unset -u')
+        self.invoke('profiles unset -u --skip-credentials-validation')
         self.assertEquals(None, env.profile.manager_username)
         self.assertEquals(None, env.profile.manager_password)
         self.assertEquals('3', env.profile.manager_tenant)
 
-        self.invoke('profiles set -u 7 -p blah -t -3')
+        self.invoke('profiles set -u 7 -p blah -t -3 '
+                    '--skip-credentials-validation')
         self.assertEquals('7', env.profile.manager_username)
         self.assertEquals('blah', env.profile.manager_password)
         self.assertEquals('-3', env.profile.manager_tenant)
 
-        self.invoke('profiles unset -u -p -t')
+        self.invoke('profiles unset -u -p -t --skip-credentials-validation')
         self.assertEquals(None, env.profile.manager_username)
         self.assertEquals(None, env.profile.manager_password)
         self.assertEquals(None, env.profile.manager_tenant)
+
+    def test_set_fails_without_skip(self):
+        self.use_manager()
+        self.invoke(
+            'profiles set -u 0 -p 0 -t 0',
+            err_str_segment="Can't use manager"
+        )
+
+    @patch('cloudify_cli.commands.profiles._validate_credentials')
+    def test_set_works_without_skip(self, validate_credentials_mock):
+        self.use_manager()
+        self.invoke('profiles set -u 0 -p 0 -t 0')
+
+        validate_credentials_mock.assert_called_once_with('0', '0', '0')
+        self.assertEquals('0', env.profile.manager_username)
+        self.assertEquals('0', env.profile.manager_password)
+        self.assertEquals('0', env.profile.manager_tenant)

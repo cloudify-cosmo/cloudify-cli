@@ -210,3 +210,5 @@ RESTORE_SNAPSHOT_TENANT_NAME = 'The name of the tenant into which the ' \
                                'versions prior to 4.0.0. If passed when ' \
                                'restoring newer snapshots, an error ' \
                                'will be raised'
+SKIP_CREDENTIALS_VALIDATION = 'Do not check that the passed credentials are ' \
+                              'correct (default:False)'
