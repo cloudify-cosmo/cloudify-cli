@@ -163,14 +163,17 @@ def download(snapshot_id, output_path, logger, client):
                    short_help='List snapshots [manager only]')
 @cfy.options.sort_by()
 @cfy.options.descending
+@cfy.options.tenant_name(required=False, multiple=True)
 @cfy.options.verbose()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, logger, client):
+def list(sort_by, descending, tenant_name, logger, client):
     """List all snapshots on the manager
     """
     logger.info('Listing snapshots...')
-    snapshots = client.snapshots.list(sort=sort_by, is_descending=descending)
+    snapshots = client.snapshots.list(sort=sort_by,
+                                      is_descending=descending,
+                                      tenant_name=tenant_name)
 
     print_data(SNAPSHOT_COLUMNS, snapshots, 'Snapshots:')
 

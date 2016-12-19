@@ -82,6 +82,7 @@ def manager_get(execution_id, logger, client):
 @cfy.options.include_system_workflows
 @cfy.options.sort_by()
 @cfy.options.descending
+@cfy.options.tenant_name(required=False, multiple=True)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -91,6 +92,7 @@ def manager_list(
         include_system_workflows,
         sort_by,
         descending,
+        tenant_name,
         logger,
         client):
     """List executions
@@ -108,7 +110,8 @@ def manager_list(
             deployment_id=deployment_id,
             include_system_workflows=include_system_workflows,
             sort=sort_by,
-            is_descending=descending)
+            is_descending=descending,
+            tenant_name=tenant_name)
 
     except exceptions.CloudifyClientError as e:
         if e.status_code != 404:

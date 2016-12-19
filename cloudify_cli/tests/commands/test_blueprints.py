@@ -21,6 +21,8 @@ class BlueprintsTest(CliCommandTest):
     def test_blueprints_list(self):
         self.client.blueprints.list = MagicMock(return_value=[])
         self.invoke('blueprints list')
+        self.invoke('blueprints list -t dummy_tenant')
+        self.invoke('blueprints list -t dummy_tenant -t another_tenant')
 
     @patch('cloudify_cli.table.generate')
     def test_blueprints_list_with_values(self, table_generate_mock):

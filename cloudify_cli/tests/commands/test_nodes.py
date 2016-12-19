@@ -42,3 +42,4 @@ class NodesTest(CliCommandTest):
             return_value=[node_get_mock(), node_get_mock()])
         self.invoke('cfy nodes list')
         self.invoke('cfy nodes list -d nodecellar')
+        self.invoke('cfy nodes list -t dummy_tenant')

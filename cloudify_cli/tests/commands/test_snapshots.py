@@ -15,6 +15,7 @@ class SnapshotsTest(CliCommandTest):
     def test_snapshots_list(self):
         self.client.snapshots.list = MagicMock(return_value=[])
         self.invoke('cfy snapshots list')
+        self.invoke('cfy snapshots list -t dummy_tenant')
 
     def test_snapshots_delete(self):
         self.client.snapshots.delete = MagicMock()
