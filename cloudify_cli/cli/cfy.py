@@ -722,12 +722,13 @@ class Options(object):
             help=helptexts.VERBOSE)
 
     @staticmethod
-    def tenant_name(required=True, help=helptexts.TENANT):
+    def tenant_name(required=True, multiple=False, help=helptexts.TENANT):
         return click.option(
             '-t',
             '--tenant-name',
             required=required,
-            help=help)
+            help=help,
+            multiple=multiple)
 
     @staticmethod
     def force(help):

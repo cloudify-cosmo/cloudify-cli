@@ -26,6 +26,7 @@ class ExecutionsTest(CliCommandTest):
     def test_executions_list(self):
         self.client.executions.list = MagicMock(return_value=[])
         self.invoke('cfy executions list -d deployment-id')
+        self.invoke('cfy executions list -t dummy_tenant')
 
     def test_executions_cancel(self):
         self.client.executions.cancel = MagicMock()

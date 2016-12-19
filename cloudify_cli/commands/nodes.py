@@ -91,10 +91,11 @@ def get(node_id, deployment_id, logger, client):
 @cfy.options.deployment_id()
 @cfy.options.sort_by('deployment_id')
 @cfy.options.descending
+@cfy.options.tenant_name(required=False, multiple=True)
 @cfy.options.verbose()
 @cfy.pass_logger
 @cfy.pass_client()
-def list(deployment_id, sort_by, descending, logger, client):
+def list(deployment_id, sort_by, descending, tenant_name, logger, client):
     """List nodes
 
     If `DEPLOYMENT_ID` is provided, list nodes for that deployment.
@@ -109,7 +110,8 @@ def list(deployment_id, sort_by, descending, logger, client):
         nodes = client.nodes.list(
             deployment_id=deployment_id,
             sort=sort_by,
-            is_descending=descending)
+            is_descending=descending,
+            tenant_name=tenant_name)
     except CloudifyClientError as e:
         if not e.status_code != 404:
             raise

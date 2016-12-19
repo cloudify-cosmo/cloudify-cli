@@ -19,6 +19,7 @@ class PluginsTest(CliCommandTest):
     def test_plugins_list(self):
         self.client.plugins.list = MagicMock(return_value=[])
         self.invoke('cfy plugins list')
+        self.invoke('cfy plugins list -t dummy_tenant')
 
     def test_plugin_get(self):
         self.client.plugins.get = MagicMock(
