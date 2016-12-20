@@ -17,6 +17,7 @@
 from .. import env
 from ..cli import cfy
 from ..table import print_data
+from ..utils import handle_client_error
 
 GROUP_COLUMNS = ['name', 'tenants', 'users']
 
@@ -96,9 +97,12 @@ def add_user(user_group_name, manager_username, logger, client):
 
     `USER_GROUP_NAME` is the name of the user group
     """
-    client.users.add_to_group(manager_username, user_group_name)
-    logger.info('User `{0}` added successfully to user group '
-                '`{1}`'.format(manager_username, user_group_name))
+    graceful_msg = 'User `{0}` is already associated with ' \
+                   'user group `{1}`'.format(manager_username, user_group_name)
+    with handle_client_error(409, graceful_msg, logger):
+        client.users.add_to_group(manager_username, user_group_name)
+        logger.info('User `{0}` added successfully to user group '
+                    '`{1}`'.format(manager_username, user_group_name))
 
 
 @user_groups.command(
@@ -115,9 +119,12 @@ def remove_user(user_group_name, manager_username, logger, client):
 
     `USER_GROUP_NAME` is the name of the user group
     """
-    client.users.remove_from_group(manager_username, user_group_name)
-    logger.info('User `{0}` removed successfully from user group '
-                '`{1}`'.format(manager_username, user_group_name))
+    graceful_msg = 'User `{0}` is not associated with ' \
+                   'user group `{1}`'.format(manager_username, user_group_name)
+    with handle_client_error(404, graceful_msg, logger):
+        client.users.remove_from_group(manager_username, user_group_name)
+        logger.info('User `{0}` removed successfully from user group '
+                    '`{1}`'.format(manager_username, user_group_name))
 
 
 @user_groups.command(name='delete',

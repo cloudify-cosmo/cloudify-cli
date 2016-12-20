@@ -23,7 +23,7 @@ import shutil
 import tarfile
 import zipfile
 import tempfile
-from contextlib import closing
+from contextlib import closing, contextmanager
 from backports.shutil_get_terminal_size import get_terminal_size
 
 import requests
@@ -31,6 +31,8 @@ import requests
 from .logger import get_logger
 from .exceptions import CloudifyCliError
 from .constants import SUPPORTED_ARCHIVE_TYPES
+
+from cloudify_rest_client.exceptions import CloudifyClientError
 
 
 def dump_to_file(collection, file_path):
@@ -254,3 +256,15 @@ def add_ignore_bootstrap_validations_input(inputs):
     """
     assert isinstance(inputs, dict)
     inputs.update({'ignore_bootstrap_validations': True})
+
+
+@contextmanager
+def handle_client_error(status_code, message, logger):
+    """Gracefully handle client errors with specific status codes
+    """
+    try:
+        yield
+    except CloudifyClientError, e:
+        if e.status_code != status_code:
+            raise
+        logger.info(message)
