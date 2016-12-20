@@ -31,7 +31,7 @@ def user_groups():
 
 
 @user_groups.command(name='list',
-                     short_help='List groups [manager only]')
+                     short_help='List user groups [manager only]')
 @cfy.options.sort_by('name')
 @cfy.options.descending
 @cfy.options.verbose()
@@ -39,23 +39,23 @@ def user_groups():
 @cfy.pass_client()
 @cfy.pass_logger
 def list(sort_by, descending, logger, client):
-    """List all groups
+    """List all user groups
     """
-    logger.info('Listing all groups...')
+    logger.info('Listing all user groups...')
     user_groups_list = client.user_groups.list(sort=sort_by,
                                                is_descending=descending)
-    print_data(GROUP_COLUMNS, user_groups_list, 'Groups:')
+    print_data(GROUP_COLUMNS, user_groups_list, 'User groups:')
 
 
 @user_groups.command(name='create',
-                     short_help='Create a group [manager only]')
+                     short_help='Create a user group [manager only]')
 @cfy.argument('user-group-name')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def create(user_group_name, logger, client):
-    """Create a new group on the manager
+    """Create a new user group on the manager
 
     `USER_GROUP_NAME` is the name of the new user group
     """
@@ -82,7 +82,7 @@ def get(user_group_name, logger, client):
 
 
 @user_groups.command(name='add-user',
-                     short_help='Add a user to a users group [manager only]')
+                     short_help='Add a user to a user group [manager only]')
 @cfy.argument('user-group-name')
 @cfy.options.manager_username_required
 @cfy.options.verbose()
@@ -90,7 +90,7 @@ def get(user_group_name, logger, client):
 @cfy.pass_client()
 @cfy.pass_logger
 def add_user(user_group_name, manager_username, logger, client):
-    """Add a user to a group
+    """Add a user to a user group
 
     `USER_GROUP_NAME` is the name of the user group
     """
@@ -101,7 +101,7 @@ def add_user(user_group_name, manager_username, logger, client):
 
 @user_groups.command(
     name='remove-user',
-    short_help='Remove a user from a users group [manager only]')
+    short_help='Remove a user from a user group [manager only]')
 @cfy.argument('user-group-name')
 @cfy.options.manager_username_required
 @cfy.options.verbose()
@@ -109,7 +109,7 @@ def add_user(user_group_name, manager_username, logger, client):
 @cfy.pass_client()
 @cfy.pass_logger
 def remove_user(user_group_name, manager_username, logger, client):
-    """Remove a user from a group
+    """Remove a user from a user group
 
     `USER_GROUP_NAME` is the name of the user group
     """
@@ -119,7 +119,7 @@ def remove_user(user_group_name, manager_username, logger, client):
 
 
 @user_groups.command(name='delete',
-                     short_help='Delete a users group [manager only]')
+                     short_help='Delete a user group [manager only]')
 @cfy.argument('user_group-name')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
