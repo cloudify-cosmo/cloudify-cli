@@ -15,8 +15,9 @@
 ############
 
 from .. import env
-from ..table import print_data
 from ..cli import cfy
+from ..table import print_data
+from ..utils import handle_client_error
 
 TENANT_COLUMNS = ['name', 'groups', 'users']
 
@@ -75,9 +76,12 @@ def add_user(username, tenant_name, logger, client):
 
     `USERNAME` is the name of the user to add to the tenant
     """
-    client.tenants.add_user(username, tenant_name)
-    logger.info('User `{0}` added successfully to tenant '
-                '`{1}`'.format(username, tenant_name))
+    graceful_msg = 'User `{0}` is already associated with ' \
+                   'tenant `{1}`'.format(username, tenant_name)
+    with handle_client_error(409, graceful_msg, logger):
+        client.tenants.add_user(username, tenant_name)
+        logger.info('User `{0}` added successfully to tenant '
+                    '`{1}`'.format(username, tenant_name))
 
 
 @tenants.command(name='remove-user',
@@ -93,45 +97,54 @@ def remove_user(username, tenant_name, logger, client):
 
     `USERNAME` is the name of the user to add to the tenant
     """
-    client.tenants.remove_user(username, tenant_name)
-    logger.info('User `{0}` removed successfully from tenant '
-                '`{1}`'.format(username, tenant_name))
+    graceful_msg = 'User `{0}` is not associated with ' \
+                   'tenant `{1}`'.format(username, tenant_name)
+    with handle_client_error(404, graceful_msg, logger):
+        client.tenants.remove_user(username, tenant_name)
+        logger.info('User `{0}` removed successfully from tenant '
+                    '`{1}`'.format(username, tenant_name))
 
 
-@tenants.command(name='add-group',
-                 short_help='Add a group to a tenant [manager only]')
-@cfy.argument('group-name')
+@tenants.command(name='add-user-group',
+                 short_help='Add a user group to a tenant [manager only]')
+@cfy.argument('user-group-name')
 @cfy.options.tenant_name()
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def add_group(group_name, tenant_name, logger, client):
-    """Add a group to a tenant
+def add_group(user_group_name, tenant_name, logger, client):
+    """Add a user group to a tenant
 
-    `USERNAME` is the name of the group to add to the tenant
+    `USER_GROUP_NAME` is the name of the user group to add to the tenant
     """
-    client.tenants.add_group(group_name, tenant_name)
-    logger.info('User `{0}` added successfully to tenant '
-                '`{1}`'.format(group_name, tenant_name))
+    graceful_msg = 'User group `{0}` is already associated with ' \
+                   'tenant `{1}`'.format(user_group_name, tenant_name)
+    with handle_client_error(409, graceful_msg, logger):
+        client.tenants.add_group(user_group_name, tenant_name)
+        logger.info('User group `{0}` added successfully to tenant '
+                    '`{1}`'.format(user_group_name, tenant_name))
 
 
-@tenants.command(name='remove-group',
-                 short_help='Remove a group from a tenant [manager only]')
-@cfy.argument('group-name')
+@tenants.command(name='remove-user-group',
+                 short_help='Remove a user group from a tenant [manager only]')
+@cfy.argument('user-group-name')
 @cfy.options.tenant_name()
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def remove_group(group_name, tenant_name, logger, client):
-    """Remove a group from a tenant
+def remove_group(user_group_name, tenant_name, logger, client):
+    """Remove a user group from a tenant
 
-    `GROUP_NAME` is the name of the group to add to the tenant
+    `USER_GROUP_NAME` is the name of the user group to add to the tenant
     """
-    client.tenants.remove_group(group_name, tenant_name)
-    logger.info('User `{0}` removed successfully from tenant '
-                '`{1}`'.format(group_name, tenant_name))
+    graceful_msg = 'User group `{0}` is not associated with ' \
+                   'tenant `{1}`'.format(user_group_name, tenant_name)
+    with handle_client_error(404, graceful_msg, logger):
+        client.tenants.remove_group(user_group_name, tenant_name)
+        logger.info('User group `{0}` removed successfully from tenant '
+                    '`{1}`'.format(user_group_name, tenant_name))
 
 
 @tenants.command(name='get',
