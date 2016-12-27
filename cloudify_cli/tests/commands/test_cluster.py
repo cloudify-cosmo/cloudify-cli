@@ -18,6 +18,7 @@ import mock
 import unittest
 
 from cloudify_rest_client.cluster import ClusterState, ClusterNode
+from cloudify_rest_client.exceptions import NotClusterMaster
 
 from ... import env
 from .test_base import CliCommandTest
@@ -38,7 +39,8 @@ class WaitForClusterTest(unittest.TestCase):
             side_effect=[ClusterState({'initialized': False})] * 4 +
                         [ClusterState({'initialized': True})])
 
-        with mock.patch('cloudify_cli.commands.cluster.time'):
+        with mock.patch('cloudify_cli.commands.cluster.time') as mock_time:
+            mock_time.time.return_value = 0
             status = _wait_for_cluster_initialized(client)
         self.assertEqual(5, len(client.cluster.status.mock_calls))
         self.assertTrue(status['initialized'])
@@ -46,11 +48,21 @@ class WaitForClusterTest(unittest.TestCase):
     def test_stops_at_timeout(self):
         """If the cluster is never started, polling stops at timeout."""
         timeout = 900
+        clock = {'time': 1000}
         client = mock.Mock()
         client.cluster.status = mock.Mock(
             return_value=ClusterState({'initialized': False}))
 
+        def _mock_sleep(n):
+            clock['time'] += n
+
+        def _mock_time():
+            return clock['time']
+
         with mock.patch('cloudify_cli.commands.cluster.time') as mock_time:
+            mock_time.sleep = mock.Mock(side_effect=_mock_sleep)
+            mock_time.time = _mock_time
+
             with self.assertRaises(CloudifyCliError) as cm:
                 _wait_for_cluster_initialized(client, timeout=timeout)
 
@@ -85,7 +97,8 @@ class WaitForClusterTest(unittest.TestCase):
         client = mock.Mock()
         client.cluster.status = mock.Mock(side_effect=status_responses)
 
-        with mock.patch('cloudify_cli.commands.cluster.time'):
+        with mock.patch('cloudify_cli.commands.cluster.time') as mock_time:
+            mock_time.time.return_value = 1000
             _wait_for_cluster_initialized(client, logger=mock.Mock())
         self.assertEqual(4, len(client.cluster.status.mock_calls))
 
@@ -126,7 +139,8 @@ class ClusterStartTest(CliCommandTest):
             ClusterState({'initialized': True}),
         ])
         self.client.cluster.start = mock.Mock()
-        with mock.patch('cloudify_cli.commands.cluster.time'):
+        with mock.patch('cloudify_cli.commands.cluster.time') as mock_time:
+            mock_time.time.return_value = 1000
             outcome = self.invoke(
                 'cfy cluster start --cluster-host-ip 1.2.3.4')
         self.assertIn('cluster started', outcome.logs)
@@ -155,6 +169,10 @@ class ClusterStartTest(CliCommandTest):
 
 
 class ClusterNodesTest(CliCommandTest):
+    def setUp(self):
+        super(ClusterNodesTest, self).setUp()
+        self.use_manager()
+
     def test_list_nodes(self):
         self.client.cluster.nodes.list = mock.Mock(return_value=[
             ClusterNode({'name': 'node name 1', 'host_ip': '1.2.3.4'})
@@ -168,30 +186,38 @@ class ClusterJoinTest(CliCommandTest):
         super(ClusterJoinTest, self).setUp()
         self.use_manager()
 
+        self.master_profile = env.ProfileContext('master_profile')
+        self.master_profile.cluster = [{'manager_ip': '1.2.3.4'}]
+        self.master_profile.save()
+
     def test_join_success(self):
         self.client.cluster.status = mock.Mock(side_effect=[
             ClusterState({'initialized': False}),
-            ClusterState({'initialized': True}),
+            ClusterState({}),
+            NotClusterMaster('not cluster master')
         ])
+        self.client.cluster.nodes.list = mock.Mock(return_value=[
+            ClusterNode({'host_ip': '10.10.1.10', 'online': True})
+        ])
+
         self.client.cluster.join = mock.Mock()
-        outcome = self.invoke('cfy cluster join --cluster-host-ip 10.10.10.10 '
-                              '--cluster-join 1.2.3.4')
+        outcome = self.invoke('cfy cluster join {0}'
+                              .format(self.master_profile.manager_ip))
         self.assertIn('cluster joined', outcome.logs)
 
     def test_join_profile_updated(self):
-        master_profile = env.ProfileContext('master_profile')
-        master_profile.cluster = [{'manager_ip': '1.2.3.4'}]
-        master_profile.save()
-
         self.client.cluster.status = mock.Mock(side_effect=[
             ClusterState({'initialized': False}),
-            ClusterState({'initialized': True}),
+            ClusterState({}),
+            NotClusterMaster('not cluster master')
+        ])
+
+        self.client.cluster.nodes.list = mock.Mock(return_value=[
+            ClusterNode({'host_ip': '10.10.1.10', 'online': True})
         ])
         self.client.cluster.join = mock.Mock()
-        outcome = self.invoke('cfy cluster join --cluster-host-ip {0} '
-                              '--cluster-join 1.2.3.4 '
-                              '--cluster-join-profile master_profile'
-                              .format(env.profile.manager_ip))
+        outcome = self.invoke('cfy cluster join {0}'
+                              .format(self.master_profile.manager_ip))
         self.assertIn('cluster joined', outcome.logs)
 
         master_profile = env.get_profile_context('master_profile')
