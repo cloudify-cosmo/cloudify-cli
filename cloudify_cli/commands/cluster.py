@@ -245,6 +245,34 @@ def list_nodes(client, logger):
     print_data(CLUSTER_COLUMNS, response, 'HA Cluster nodes', defaults=default)
 
 
+@nodes.command(name='remove',
+               short_help='Remove a node from the cluster [cluster only]')
+@cfy.pass_client()
+@cfy.pass_logger
+@cfy.options.cluster_node_name
+def remove_node(client, logger, cluster_node_name):
+    """Unregister a node from the cluster.
+
+    Note that this will not teardown the removed node, only remove it from
+    the cluster. Removed replicas are not usable as Cloudify Managers,
+    so it is left to the user to examine and teardown the node.
+    """
+    cluster_nodes = {node['name']: node.host_ip
+                     for node in client.cluster.nodes.list()}
+
+    if cluster_node_name not in cluster_nodes:
+        raise CloudifyCliError('{0} is not a member of the cluster!'
+                               .format(cluster_node_name))
+    removed_ip = cluster_nodes[cluster_node_name]
+
+    client.cluster.nodes.delete(cluster_node_name)
+
+    env.profile.cluster = [node for node in env.profile.cluster
+                           if node['manager_ip'] != removed_ip]
+    env.profile.save()
+    logger.info('Node {0} was removed successfully!')
+
+
 def _make_node_from_profile():
     return {node_attr: getattr(env.profile, node_attr)
             for node_attr in env.CLUSTER_NODE_ATTRS}
