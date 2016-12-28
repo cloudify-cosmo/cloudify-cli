@@ -94,7 +94,7 @@ function update_remote_to_local_links() {
 
 # VERSION/PRERELEASE/BUILD/CORE_TAG_NAME/PLUGINS_TAG_NAME must be exported as they are being read as an env var by the install wizard
 
-CORE_TAG_NAME="4.0m10"
+CORE_TAG_NAME="4.0m11"
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/$CORE_TAG_NAME/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
 
