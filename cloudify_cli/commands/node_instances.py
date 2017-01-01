@@ -80,6 +80,7 @@ def get(node_instance_id, logger, client, tenant_name):
 @cfy.options.sort_by('node_id')
 @cfy.options.descending
 @cfy.options.tenant_name(required=False)
+@cfy.options.all_tenants
 @cfy.options.verbose()
 @cfy.pass_logger
 @cfy.pass_client()
@@ -87,6 +88,7 @@ def list(deployment_id,
          node_name,
          sort_by,
          descending,
+         all_tenants,
          logger,
          client,
          tenant_name):
@@ -107,7 +109,8 @@ def list(deployment_id,
             deployment_id=deployment_id,
             node_name=node_name,
             sort=sort_by,
-            is_descending=descending)
+            is_descending=descending,
+            _all_tenants=all_tenants)
     except CloudifyClientError as e:
         if e.status_code != 404:
             raise

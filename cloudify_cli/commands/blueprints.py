@@ -210,10 +210,11 @@ def delete(blueprint_id, logger, client, tenant_name):
 @cfy.options.descending
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False)
+@cfy.options.all_tenants
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, logger, client, tenant_name):
+def list(sort_by, descending, tenant_name, all_tenants, logger, client):
     """List all blueprints
     """
     def trim_description(blueprint):
@@ -229,7 +230,7 @@ def list(sort_by, descending, logger, client, tenant_name):
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Listing all blueprints...')
     blueprints = [trim_description(b) for b in client.blueprints.list(
-        sort=sort_by, is_descending=descending)]
+        sort=sort_by, is_descending=descending, _all_tenants=all_tenants)]
     print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
 

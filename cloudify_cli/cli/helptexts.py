@@ -171,6 +171,7 @@ DESCENDING = "Sort list in descending order [default: False]"
 INSTALL_SCRIPT_LOCATION = \
     'Alternative location of the `install_agents.py` script'
 TENANT = 'The name of the tenant'
+ALL_TENANTS = 'Include resources from all tenants associated with the user.'
 GROUP = 'The name of the user group'
 GROUP_DN = 'The ldap group\'s distinguished name. This option is required ' \
            'when using ldap'

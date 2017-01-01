@@ -43,3 +43,4 @@ class NodesTest(CliCommandTest):
         self.invoke('cfy nodes list')
         self.invoke('cfy nodes list -d nodecellar')
         self.invoke('cfy nodes list -t dummy_tenant')
+        self.invoke('cfy nodes list -a')

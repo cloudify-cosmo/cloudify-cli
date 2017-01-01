@@ -4,6 +4,7 @@ import tempfile
 from mock import MagicMock, patch
 
 from cloudify.exceptions import CommandExecutionException
+from ..cfy import ClickInvocationException
 
 from ... import env
 from ...config import config
@@ -22,6 +23,10 @@ class BlueprintsTest(CliCommandTest):
         self.client.blueprints.list = MagicMock(return_value=[])
         self.invoke('blueprints list')
         self.invoke('blueprints list -t dummy_tenant')
+        self.invoke('cfy blueprints list -a')
+        self.assertRaises(ClickInvocationException,
+                          self.invoke,
+                          'cfy blueprints list -a -t some_tenant')
 
     @patch('cloudify_cli.table.generate')
     def test_blueprints_list_with_values(self, table_generate_mock):

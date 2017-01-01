@@ -176,18 +176,20 @@ def get(plugin_id, logger, client, tenant_name):
 @cfy.options.sort_by('uploaded_at')
 @cfy.options.descending
 @cfy.options.tenant_name(required=False)
+@cfy.options.all_tenants
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, logger, client, tenant_name):
+def list(sort_by, descending, tenant_name, all_tenants, logger, client):
     """List all plugins on the manager
     """
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Listing all plugins...')
     plugins_list = client.plugins.list(sort=sort_by,
-                                       is_descending=descending)
+                                       is_descending=descending,
+                                       _all_tenants=all_tenants)
     for plugin in plugins_list:
         _transform_plugin_response(plugin)
     print_data(PLUGIN_COLUMNS, plugins_list, 'Plugins:')

@@ -208,6 +208,7 @@ class DeploymentsTest(CliCommandTest):
         self.client.deployments.list = MagicMock(return_value=[])
         self.invoke('cfy deployments list')
         self.invoke('cfy deployments list -t dummy_tenant')
+        self.invoke('cfy deployments list -a')
 
     def test_deployments_list_of_blueprint(self):
         deps = [
