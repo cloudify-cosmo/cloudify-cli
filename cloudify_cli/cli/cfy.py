@@ -400,6 +400,14 @@ class Options(object):
             is_flag=True,
             help=helptexts.INSTALL_PLUGINS)
 
+        self.all_tenants = click.option(
+            '-a',
+            '--all-tenants',
+            is_flag=True,
+            default=False,
+            help=helptexts.ALL_TENANTS,
+        )
+
         self.include_logs = click.option(
             '--include-logs/--no-logs',
             default=True,
@@ -721,9 +729,12 @@ class Options(object):
         return click.option(
             '-t',
             '--tenant-name',
+            cls=MutuallyExclusiveOption,
             required=required,
             help=help,
-            multiple=False)
+            multiple=False,
+            mutually_exclusive=['all_tenants']
+        )
 
     @staticmethod
     def force(help):

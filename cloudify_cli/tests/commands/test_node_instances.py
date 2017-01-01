@@ -34,8 +34,8 @@ class NodeInstancesTest(CliCommandTest):
             return_value=[node_instance_get_mock(), node_instance_get_mock()])
         self.invoke('cfy node-instances list', context='manager')
         self.invoke('cfy node-instances list -d nodecellar', context='manager')
-        self.invoke('cfy node-instances list -t dummy_tenant',
-                    context='manager')
+        self.invoke('cfy node-instances list -t dummy_t', context='manager')
+        self.invoke('cfy node-instances list -a', context='manager')
 
     def test_local_instances(self):
         self._create_local_env()

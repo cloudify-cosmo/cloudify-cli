@@ -182,17 +182,19 @@ def download(snapshot_id, output_path, logger, client, tenant_name):
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.tenant_name(required=False)
+@cfy.options.all_tenants
 @cfy.options.verbose()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, logger, client, tenant_name):
+def list(sort_by, descending, tenant_name, all_tenants, logger, client):
     """List all snapshots on the manager
     """
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Listing snapshots...')
     snapshots = client.snapshots.list(sort=sort_by,
-                                      is_descending=descending)
+                                      is_descending=descending,
+                                      _all_tenants=all_tenants)
 
     print_data(SNAPSHOT_COLUMNS, snapshots, 'Snapshots:')
 

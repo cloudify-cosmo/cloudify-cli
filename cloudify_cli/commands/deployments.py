@@ -62,6 +62,7 @@ def _print_deployment_inputs(client, blueprint_id, logger):
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.tenant_name(required=False)
+@cfy.options.all_tenants
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -69,6 +70,7 @@ def _print_deployment_inputs(client, blueprint_id, logger):
 def manager_list(blueprint_id,
                  sort_by,
                  descending,
+                 all_tenants,
                  logger,
                  client,
                  tenant_name):
@@ -86,7 +88,7 @@ def manager_list(blueprint_id,
         logger.info('Listing all deployments...')
 
     deployments = client.deployments.list(
-        sort=sort_by, is_descending=descending)
+        sort=sort_by, is_descending=descending, _all_tenants=all_tenants)
     if blueprint_id:
         deployments = filter(lambda deployment:
                              deployment['blueprint_id'] == blueprint_id,
