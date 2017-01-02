@@ -6,17 +6,23 @@ AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
 CLI_BRANCH=$5
 PACKAGER_BRANCH=$6
-export PREMIUM=$7
+export REPO=$7
+export CORE_TAG_NAME="4.0m11"
 
-CORE_TAG_NAME="4.0m11"
-
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/$CORE_TAG_NAME/common/provision.sh -o ./common-provision.sh &&
-source common-provision.sh
-
-if [ "$PREMIUM" == "true" ]; then
-    export AWS_S3_PATH=$AWS_S3_PATH"/"$PREMIUM_FOLDER
+if [ $REPO == "cloudify-versions" ];then
+    REPO_TAG="master"
+else
+    REPO_TAG=$CORE_TAG_NAME
 fi
-echo "AWS_S3_PATH=$AWS_S3_PATH"
+echo "REPO=${REPO} ; REPO_TAG=${REPO_TAG}"
+
+curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${REPO_TAG}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
+source common_build_env.sh &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${REPO_TAG}/common/provision.sh -o ./common-provision.sh &&
+source common-provision.sh
+curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${REPO_TAG}/packages-urls/manager-single-tar.yaml -o ./manager-single-tar.yaml &&
+export SINGLE_TAR_URL=$(cat manager-single-tar.yaml)
+
 
 install_common_prereqs &&
 rm -rf cloudify-cli
