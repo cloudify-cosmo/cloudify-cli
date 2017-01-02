@@ -26,6 +26,7 @@ from ..config import config
 from .init import init_manager_profile
 from ..bootstrap import bootstrap as bs
 from ..exceptions import CloudifyCliError
+from ..constants import DEFAULT_TENANT_NAME
 
 
 @cfy.command(name='bootstrap', short_help='Bootstrap a manager')
@@ -178,6 +179,7 @@ def _set_profile_details(details, inputs, dont_save_password):
     profile.manager_username = inputs['admin_username']
     if not dont_save_password:
         profile.manager_password = inputs['admin_password']
+    profile.manager_tenant = DEFAULT_TENANT_NAME
 
     profile.bootstrap_state = 'Complete'
     profile.save()
