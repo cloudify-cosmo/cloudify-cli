@@ -11,7 +11,7 @@ homepage "http://getcloudify.org/"
 override :cacerts, version: '2015.10.28', source: { md5: '11713bf9b8c10aca2fb4708f1ba01072' }
 override :pip, version: '7.1.2', source: { md5: '3823d2343d9f3aaab21cf9c917710196' }
 override :setuptools, version: '18.5', source: { md5: '533c868f01169a3085177dffe5e768bb' }
-override :zlib, version: '1.2.8', source: { md5: '1142191120b845f4ed8c8c17455420ac' , url: 'http://repository.cloudifysource.org/org/cloudify3/components/zlib-1.2.8.tar.gz'}
+override :zlib, version: '1.2.8', source: { md5: '1142191120b845f4ed8c8c17455420ac'}
 
 # Defaults to C:/cloudify on Windows
 # and /opt/cfy on all other platforms
