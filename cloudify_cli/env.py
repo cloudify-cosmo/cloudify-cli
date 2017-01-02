@@ -369,7 +369,7 @@ class ProfileContext(yaml.YAMLObject):
         self.provider_context = dict()
         self.manager_username = None
         self.manager_password = None
-        self.manager_tenant = constants.DEFAULT_TENANT_NAME
+        self.manager_tenant = None
         self.rest_port = constants.DEFAULT_REST_PORT
         self.rest_protocol = constants.DEFAULT_REST_PROTOCOL
         self._cluster = []
