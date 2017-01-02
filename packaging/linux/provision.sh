@@ -10,9 +10,11 @@ export REPO=$7
 export CORE_TAG_NAME="4.0m11"
 
 if [ $REPO == "cloudify-versions" ];then
-    REPO_TAG="master"
+    #REPO_TAG="master"
+    REPO_TAG="new-versioning"
 else
-    REPO_TAG=$CORE_TAG_NAME
+    #REPO_TAG=$CORE_TAG_NAME
+    REPO_TAG="new-versioning"
 fi
 echo "REPO=${REPO} ; REPO_TAG=${REPO_TAG}"
 
