@@ -155,10 +155,8 @@ def bootstrap_validation(blueprint_path,
         )
     except ImportError as e:
         e.possible_solutions = [
-            "Run 'cfy local install-plugins -p {0}'".format(
-                blueprint_path),
-            "Run 'cfy bootstrap --install-plugins -p {0}'".format(
-                blueprint_path)
+            "Run 'cfy bootstrap --install-plugins {0}'".format(blueprint_path),
+            "Run 'cfy init --install-plugins {0}'".format(blueprint_path)
         ]
         raise
 
