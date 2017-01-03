@@ -48,10 +48,7 @@ function download_resources() {
     pushd packaging/source/blueprints
         curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/${CORE_TAG_NAME}.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
         tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1
-        if [ "$PREMIUM" == "true" ]; then
-            echo "PREMIUM=$PREMIUM"
-            sed -i "s|cloudify-manager-resources|$PREMIUM_FOLDER\/cloudify-premium-manager-resources|g" inputs/manager-inputs.yaml *-inputs.yaml
-        fi
+        sed -i "s|default:.*cloudify-manager-resources.*|default: ${SINGLE_TAR_URL}|g" inputs/manager-inputs.yaml *-inputs.yaml
     popd
 
     # Downloading types.yaml
@@ -94,21 +91,24 @@ function update_remote_to_local_links() {
 
 # VERSION/PRERELEASE/BUILD/CORE_TAG_NAME/PLUGINS_TAG_NAME must be exported as they are being read as an env var by the install wizard
 
-CORE_TAG_NAME="4.0m11"
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/$CORE_TAG_NAME/common/provision.sh -o ./common-provision.sh &&
-source common-provision.sh
-
 GITHUB_USERNAME=$1
 GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
-export PREMIUM=$5
+export REPO=$5
+export CORE_TAG_NAME="4.0m11"
 
-echo "PREMIUM=$PREMIUM"
-if [ "$PREMIUM" == "true" ]; then
-    export AWS_S3_PATH=$AWS_S3_PATH"/"$PREMIUM_FOLDER
+if [ $REPO == "cloudify-versions" ];then
+    REPO_TAG="master"
+else
+    REPO_TAG=$CORE_TAG_NAME
 fi
-echo "AWS_S3_PATH=$AWS_S3_PATH"
+curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${REPO_TAG}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
+source common_build_env.sh &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${REPO_TAG}/common/provision.sh -o ./common-provision.sh &&
+source common-provision.sh
+curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${REPO_TAG}/packages-urls/manager-single-tar.yaml -o ./manager-single-tar.yaml &&
+export SINGLE_TAR_URL=$(cat manager-single-tar.yaml)
 
 install_requirements &&
 download_wheels $GITHUB_USERNAME $GITHUB_PASSWORD &&
