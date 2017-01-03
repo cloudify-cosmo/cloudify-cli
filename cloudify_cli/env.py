@@ -14,18 +14,19 @@
 # limitations under the License.
 ############
 
+
 import os
 import json
 import types
 import shutil
 import pkgutil
 import getpass
-import requests
 import tempfile
 import itertools
+from base64 import urlsafe_b64encode
 
 import yaml
-from base64 import urlsafe_b64encode
+import requests
 
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.client import HTTPClient
@@ -34,7 +35,6 @@ from cloudify_rest_client.exceptions import (CloudifyClientError,
 
 from . import constants
 from .exceptions import CloudifyCliError
-
 
 DEFAULT_LOG_FILE = os.path.expanduser(
     '{0}/cloudify-{1}/cloudify-cli.log'.format(
@@ -151,7 +151,7 @@ def get_profile_context(profile_name=None, suppress_error=False):
 
 
 def is_initialized(profile_name=None):
-    """Checks if a profile or an environment is initialized.
+    """Check if a profile or an environment is initialized.
 
     If profile_name is provided, it will check if the profile
     is initialized. If not, it will just check that workenv is.
@@ -520,6 +520,7 @@ class CloudifyClusterClient(CloudifyClient):
 
     When the master is found, the profile will be updated with its address.
     """
+
     client_class = ClusterHTTPClient
 
 

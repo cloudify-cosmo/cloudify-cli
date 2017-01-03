@@ -14,6 +14,7 @@
 # limitations under the License.
 ############
 
+
 import os
 import sys
 import tempfile
@@ -108,7 +109,6 @@ def _install_plugins(blueprint_path):
 
 
 def create_requirements(blueprint_path):
-
     parsed_dsl = parse_from_path(dsl_file_path=blueprint_path)
 
     requirements = _plugins_to_requirements(
