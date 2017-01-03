@@ -15,9 +15,6 @@
 ############
 
 
-import demandimport
-demandimport.enable()  # NOQA
-
 from . import env
 from . import logger
 from .cli import cfy
