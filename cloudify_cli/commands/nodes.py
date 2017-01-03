@@ -41,13 +41,16 @@ def nodes():
 @cfy.argument('node-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.pass_logger
 @cfy.pass_client()
-def get(node_id, deployment_id, logger, client):
+def get(node_id, deployment_id, logger, client, tenant_name):
     """Retrieve information for a specific node of a specific deployment
 
     `NODE_ID` is the node id to get information on.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Retrieving node {0} for deployment {1}'.format(
         node_id, deployment_id))
     try:
@@ -91,16 +94,18 @@ def get(node_id, deployment_id, logger, client):
 @cfy.options.deployment_id()
 @cfy.options.sort_by('deployment_id')
 @cfy.options.descending
-@cfy.options.tenant_name(required=False, multiple=True)
+@cfy.options.tenant_name(required=False)
 @cfy.options.verbose()
 @cfy.pass_logger
 @cfy.pass_client()
-def list(deployment_id, sort_by, descending, tenant_name, logger, client):
+def list(deployment_id, sort_by, descending, logger, client, tenant_name):
     """List nodes
 
     If `DEPLOYMENT_ID` is provided, list nodes for that deployment.
     Otherwise, list nodes for all deployments.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     try:
         if deployment_id:
             logger.info('Listing nodes for deployment {0}...'.format(
@@ -110,8 +115,7 @@ def list(deployment_id, sort_by, descending, tenant_name, logger, client):
         nodes = client.nodes.list(
             deployment_id=deployment_id,
             sort=sort_by,
-            is_descending=descending,
-            tenant_name=tenant_name)
+            is_descending=descending)
     except CloudifyClientError as e:
         if not e.status_code != 404:
             raise

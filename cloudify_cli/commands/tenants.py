@@ -95,7 +95,7 @@ def add_user(username, tenant_name, logger, client):
 def remove_user(username, tenant_name, logger, client):
     """Remove a user from a tenant
 
-    `USERNAME` is the name of the user to add to the tenant
+    `USERNAME` is the name of the user to remove from the tenant
     """
     graceful_msg = 'User `{0}` is not associated with ' \
                    'tenant `{1}`'.format(username, tenant_name)
@@ -137,7 +137,7 @@ def add_group(user_group_name, tenant_name, logger, client):
 def remove_group(user_group_name, tenant_name, logger, client):
     """Remove a user group from a tenant
 
-    `USER_GROUP_NAME` is the name of the user group to add to the tenant
+    `USER_GROUP_NAME` is the name of the user group to remove from the tenant
     """
     graceful_msg = 'User group `{0}` is not associated with ' \
                    'tenant `{1}`'.format(user_group_name, tenant_name)

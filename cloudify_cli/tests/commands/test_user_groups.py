@@ -44,7 +44,7 @@ class UserGroupsTest(CliCommandTest):
     def test_user_groups_add_user(self):
         self.client.user_groups = MagicMock()
         self.client.user_groups.add_user = MagicMock()
-        self.invoke('cfy user-groups add-user my_group_name -u my_username')
+        self.invoke('cfy user-groups add-user my_username -g my_group_name')
         self.assertEquals(1, len(self.client.user_groups.method_calls))
         self.assertEquals(
             'add_user', self.client.user_groups.method_calls[0][0])
@@ -54,7 +54,7 @@ class UserGroupsTest(CliCommandTest):
     def test_user_groups_remove_user(self):
         self.client.user_groups = MagicMock()
         self.client.user_groups.remove_user = MagicMock()
-        self.invoke('cfy user-groups remove-user my_group_name -u my_username')
+        self.invoke('cfy user-groups remove-user my_username -g my_group_name')
         self.assertEquals(1, len(self.client.user_groups.method_calls))
         self.assertEquals(
             'remove_user', self.client.user_groups.method_calls[0][0])

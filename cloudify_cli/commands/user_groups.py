@@ -86,45 +86,45 @@ def get(user_group_name, logger, client):
 
 @user_groups.command(name='add-user',
                      short_help='Add a user to a user group [manager only]')
-@cfy.argument('user-group-name')
-@cfy.options.manager_username_required
+@cfy.argument('username')
+@cfy.options.group_name
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def add_user(user_group_name, manager_username, logger, client):
+def add_user(username, group_name, logger, client):
     """Add a user to a user group
 
-    `USER_GROUP_NAME` is the name of the user group
+    `USERNAME` is the name of the user to add to the user group
     """
     graceful_msg = 'User `{0}` is already associated with ' \
-                   'user group `{1}`'.format(manager_username, user_group_name)
+                   'user group `{1}`'.format(username, group_name)
     with handle_client_error(409, graceful_msg, logger):
-        client.user_groups.add_user(manager_username, user_group_name)
+        client.user_groups.add_user(username, group_name)
         logger.info('User `{0}` added successfully to user group '
-                    '`{1}`'.format(manager_username, user_group_name))
+                    '`{1}`'.format(username, group_name))
 
 
 @user_groups.command(
     name='remove-user',
     short_help='Remove a user from a user group [manager only]')
-@cfy.argument('user-group-name')
-@cfy.options.manager_username_required
+@cfy.argument('username')
+@cfy.options.group_name
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def remove_user(user_group_name, manager_username, logger, client):
+def remove_user(username, group_name, logger, client):
     """Remove a user from a user group
 
-    `USER_GROUP_NAME` is the name of the user group
+    `USERNAME` is the name of the user to remove from the user group
     """
     graceful_msg = 'User `{0}` is not associated with ' \
-                   'user group `{1}`'.format(manager_username, user_group_name)
+                   'user group `{1}`'.format(username, group_name)
     with handle_client_error(404, graceful_msg, logger):
-        client.user_groups.remove_user(manager_username, user_group_name)
+        client.user_groups.remove_user(username, group_name)
         logger.info('User `{0}` removed successfully from user group '
-                    '`{1}`'.format(manager_username, user_group_name))
+                    '`{1}`'.format(username, group_name))
 
 
 @user_groups.command(name='delete',

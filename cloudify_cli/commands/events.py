@@ -39,11 +39,20 @@ def events():
 @cfy.options.json_output
 @cfy.options.tail
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.pass_client()
 @cfy.pass_logger
-def list(execution_id, include_logs, json_output, tail, logger, client):
+def list(execution_id,
+         include_logs,
+         json_output,
+         tail,
+         logger,
+         client,
+         tenant_name):
     """Display events for an execution
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Listing events for execution id {0} '
                 '[include_logs={1}]'.format(execution_id, include_logs))
     try:
@@ -88,13 +97,16 @@ def list(execution_id, include_logs, json_output, tail, logger, client):
 @cfy.argument('deployment-id')
 @cfy.options.include_logs
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.pass_client()
 @cfy.pass_logger
-def delete(deployment_id, include_logs, logger, client):
+def delete(deployment_id, include_logs, logger, client, tenant_name):
     """Delete events attached to a deployment
 
     `EXECUTION_ID` is the execution events to delete.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info(
         'Deleting events for deployment id {0} [include_logs={1}]'.format(
             deployment_id, include_logs))

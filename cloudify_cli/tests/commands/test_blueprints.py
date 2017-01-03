@@ -22,7 +22,6 @@ class BlueprintsTest(CliCommandTest):
         self.client.blueprints.list = MagicMock(return_value=[])
         self.invoke('blueprints list')
         self.invoke('blueprints list -t dummy_tenant')
-        self.invoke('blueprints list -t dummy_tenant -t another_tenant')
 
     @patch('cloudify_cli.table.generate')
     def test_blueprints_list_with_values(self, table_generate_mock):
@@ -52,6 +51,10 @@ class BlueprintsTest(CliCommandTest):
     def test_blueprints_delete(self):
         self.client.blueprints.delete = MagicMock()
         self.invoke('blueprints delete a-blueprint-id')
+
+    def test_blueprints_delete_explicit_tenant(self):
+        self.client.blueprints.delete = MagicMock()
+        self.invoke('blueprints delete a-blueprint-id -t tenant_name')
 
     def test_blueprints_download(self):
         self.client.blueprints.download = MagicMock(return_value='test')

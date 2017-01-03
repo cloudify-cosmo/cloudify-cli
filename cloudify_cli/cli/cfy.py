@@ -259,7 +259,8 @@ def pass_client(*args, **kwargs):
         # Wraps here makes sure the original docstring propagates to click
         @wraps(func)
         def wrapper(*wrapper_args, **wrapper_kwargs):
-            client = env.get_rest_client(*args, **kwargs)
+            client = env.get_rest_client(
+                tenant_name=wrapper_kwargs.get('tenant_name'), *args, **kwargs)
             return func(client=client, *wrapper_args, **wrapper_kwargs)
 
         return wrapper
@@ -479,12 +480,6 @@ class Options(object):
             '-u',
             '--manager-username',
             required=False,
-            help=helptexts.MANAGER_USERNAME)
-
-        self.manager_username_required = click.option(
-            '-u',
-            '--manager-username',
-            required=True,
             help=helptexts.MANAGER_USERNAME)
 
         self.manager_username_flag = click.option(
@@ -717,13 +712,13 @@ class Options(object):
             help=helptexts.VERBOSE)
 
     @staticmethod
-    def tenant_name(required=True, multiple=False, help=helptexts.TENANT):
+    def tenant_name(required=True, help=helptexts.TENANT):
         return click.option(
             '-t',
             '--tenant-name',
             required=required,
             help=help,
-            multiple=multiple)
+            multiple=False)
 
     @staticmethod
     def force(help):
