@@ -79,6 +79,7 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.options.blueprint_filename()
 @cfy.options.validate
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.options.private_resource
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -91,7 +92,8 @@ def upload(ctx,
            validate,
            private_resource,
            logger,
-           client):
+           client,
+           tenant_name):
     """Upload a blueprint to the manager
 
     `BLUEPRINT_PATH` can be either a local blueprint yaml file or
@@ -100,6 +102,9 @@ def upload(ctx,
     retrieved from GitHub).
     Supported archive types are: zip, tar, tar.gz and tar.bz2
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+
     processed_blueprint_path = blueprint.get(
         blueprint_path, blueprint_filename)
 
@@ -159,14 +164,17 @@ def upload(ctx,
 @cfy.argument('blueprint-id')
 @cfy.options.output_path
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def download(blueprint_id, output_path, logger, client):
+def download(blueprint_id, output_path, logger, client, tenant_name):
     """Download a blueprint from the manager
 
     `BLUEPRINT_ID` is the id of the blueprint to download.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Downloading blueprint {0}...'.format(blueprint_id))
     blueprint_name = output_path if output_path else blueprint_id
     progress_handler = utils.generate_progress_handler(blueprint_name, '')
@@ -180,14 +188,17 @@ def download(blueprint_id, output_path, logger, client):
                     short_help='Delete a blueprint [manager only]')
 @cfy.argument('blueprint-id')
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def delete(blueprint_id, logger, client):
+def delete(blueprint_id, logger, client, tenant_name):
     """Delete a blueprint from the manager
 
     `BLUEPRINT_ID` is the id of the blueprint to delete.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Deleting blueprint {0}...'.format(blueprint_id))
     client.blueprints.delete(blueprint_id)
     logger.info('Blueprint deleted')
@@ -198,11 +209,11 @@ def delete(blueprint_id, logger, client):
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False, multiple=True)
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, tenant_name, logger, client):
+def list(sort_by, descending, logger, client, tenant_name):
     """List all blueprints
     """
     def trim_description(blueprint):
@@ -214,9 +225,11 @@ def list(sort_by, descending, tenant_name, logger, client):
             blueprint['description'] = ''
         return blueprint
 
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Listing all blueprints...')
     blueprints = [trim_description(b) for b in client.blueprints.list(
-        sort=sort_by, is_descending=descending, tenant_name=tenant_name)]
+        sort=sort_by, is_descending=descending)]
     print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
 
@@ -224,14 +237,17 @@ def list(sort_by, descending, tenant_name, logger, client):
                     short_help='Retrieve blueprint information [manager only]')
 @cfy.argument('blueprint-id')
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def get(blueprint_id, logger, client):
+def get(blueprint_id, logger, client, tenant_name):
     """Retrieve information for a specific blueprint
 
     `BLUEPRINT_ID` is the id of the blueprint to get information on.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Retrieving blueprint {0}...'.format(blueprint_id))
     blueprint_dict = client.blueprints.get(blueprint_id)
     deployments = client.deployments.list(_include=['id'],
@@ -251,14 +267,17 @@ def get(blueprint_id, logger, client):
                     short_help='Retrieve blueprint inputs [manager only]')
 @cfy.argument('blueprint-id')
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def inputs(blueprint_id, logger, client):
+def inputs(blueprint_id, logger, client, tenant_name):
     """Retrieve inputs for a specific blueprint
 
     `BLUEPRINT_ID` is the path of the blueprint to get inputs for.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Retrieving inputs for blueprint {0}...'.format(blueprint_id))
     blueprint_dict = client.blueprints.get(blueprint_id)
     inputs = blueprint_dict['plan']['inputs']
@@ -356,15 +375,23 @@ def install_plugins(blueprint_path, logger):
 @cfy.argument('blueprint-id')
 @cfy.options.users
 @cfy.options.permission
+@cfy.options.tenant_name(required=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def add_permission(blueprint_id, users, permission, client, logger):
+def add_permission(blueprint_id,
+                   users,
+                   permission,
+                   client,
+                   logger,
+                   tenant_name):
     """Add `viewer`/`owner` permissions to users on a certain blueprint
 
     `BLUEPRINT_ID` is the ID of the blueprint to set permissions on
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Adding permission `{0}`...'.format(permission))
     client.blueprints.add_permission(blueprint_id, users, permission)
     logger.info('Permissions updated for blueprint `{0}`'.format(blueprint_id))
@@ -375,15 +402,23 @@ def add_permission(blueprint_id, users, permission, client, logger):
 @cfy.argument('blueprint-id')
 @cfy.options.users
 @cfy.options.permission
+@cfy.options.tenant_name(required=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def remove_permission(blueprint_id, users, permission, client, logger):
+def remove_permission(blueprint_id,
+                      users,
+                      permission,
+                      client,
+                      logger,
+                      tenant_name):
     """Remove `viewer`/`owner` permissions from users on a certain blueprint
 
     `BLUEPRINT_ID` is the ID of the blueprint to set permissions on
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Removing permission `{0}`...'.format(permission))
     client.blueprints.remove_permission(blueprint_id, users, permission)
     logger.info('Permissions updated for blueprint `{0}`'.format(blueprint_id))

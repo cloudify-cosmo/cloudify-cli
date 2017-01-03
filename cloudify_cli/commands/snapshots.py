@@ -71,6 +71,7 @@ def restore(snapshot_id,
 @cfy.options.exclude_credentials
 @cfy.options.private_resource
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.pass_client()
 @cfy.pass_logger
 def create(snapshot_id,
@@ -78,7 +79,8 @@ def create(snapshot_id,
            exclude_credentials,
            private_resource,
            logger,
-           client):
+           client,
+           tenant_name):
     """Create a snapshot on the manager
 
     The snapshot will contain the relevant data to restore a manager to
@@ -86,6 +88,8 @@ def create(snapshot_id,
 
     `SNAPSHOT_ID` is the id to attach to the snapshot.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     snapshot_id = snapshot_id or utils.generate_suffixed_id('snapshot')
     logger.info('Creating snapshot {0}...'.format(snapshot_id))
 
@@ -101,13 +105,16 @@ def create(snapshot_id,
                    short_help='Delete a snapshot [manager only]')
 @cfy.argument('snapshot-id')
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.pass_client()
 @cfy.pass_logger
-def delete(snapshot_id, logger, client):
+def delete(snapshot_id, logger, client, tenant_name):
     """Delete a snapshot from the manager
 
     `SNAPSHOT_ID` is the id of the snapshot to download.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Deleting snapshot {0}...'.format(snapshot_id))
     client.snapshots.delete(snapshot_id)
     logger.info('Snapshot deleted successfully')
@@ -119,13 +126,21 @@ def delete(snapshot_id, logger, client):
 @cfy.options.snapshot_id
 @cfy.options.private_resource
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.pass_client()
 @cfy.pass_logger
-def upload(snapshot_path, snapshot_id, private_resource, logger, client):
+def upload(snapshot_path,
+           snapshot_id,
+           private_resource,
+           logger,
+           client,
+           tenant_name):
     """Upload a snapshot to the manager
 
     `SNAPSHOT_PATH` is the path to the snapshot to upload.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     snapshot_id = snapshot_id or utils.generate_suffixed_id('snapshot')
 
     logger.info('Uploading snapshot {0}...'.format(snapshot_path))
@@ -143,13 +158,16 @@ def upload(snapshot_path, snapshot_id, private_resource, logger, client):
 @cfy.argument('snapshot-id')
 @cfy.options.output_path
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.pass_client()
 @cfy.pass_logger
-def download(snapshot_id, output_path, logger, client):
+def download(snapshot_id, output_path, logger, client, tenant_name):
     """Download a snapshot from the manager
 
     `SNAPSHOT_ID` is the id of the snapshot to download.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Downloading snapshot {0}...'.format(snapshot_id))
     snapshot_name = output_path if output_path else snapshot_id
     progress_handler = utils.generate_progress_handler(snapshot_name, '')
@@ -163,17 +181,18 @@ def download(snapshot_id, output_path, logger, client):
                    short_help='List snapshots [manager only]')
 @cfy.options.sort_by()
 @cfy.options.descending
-@cfy.options.tenant_name(required=False, multiple=True)
+@cfy.options.tenant_name(required=False)
 @cfy.options.verbose()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, tenant_name, logger, client):
+def list(sort_by, descending, logger, client, tenant_name):
     """List all snapshots on the manager
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Listing snapshots...')
     snapshots = client.snapshots.list(sort=sort_by,
-                                      is_descending=descending,
-                                      tenant_name=tenant_name)
+                                      is_descending=descending)
 
     print_data(SNAPSHOT_COLUMNS, snapshots, 'Snapshots:')
 
@@ -184,14 +203,22 @@ def list(sort_by, descending, tenant_name, logger, client):
 @cfy.options.users
 @cfy.options.permission
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def add_permission(snapshot_id, users, permission, client, logger):
+def add_permission(snapshot_id,
+                   users,
+                   permission,
+                   client,
+                   logger,
+                   tenant_name):
     """Add `viewer`/`owner` permissions to users on a certain snapshot
 
     `SNAPSHOT_ID` is the ID of the snapshot to set permissions on
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Adding permission `{0}`...'.format(permission))
     client.snapshots.add_permission(snapshot_id, users, permission)
     logger.info('Permissions updated for snapshot `{0}`'.format(snapshot_id))
@@ -203,14 +230,22 @@ def add_permission(snapshot_id, users, permission, client, logger):
 @cfy.options.users
 @cfy.options.permission
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def remove_permission(snapshot_id, users, permission, client, logger):
+def remove_permission(snapshot_id,
+                      users,
+                      permission,
+                      client,
+                      logger,
+                      tenant_name):
     """Remove `viewer`/`owner` permissions from users on a certain snapshot
 
     `SNAPSHOT_ID` is the ID of the snapshot to set permissions on
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Removing permission `{0}`...'.format(permission))
     client.snapshots.remove_permission(snapshot_id, users, permission)
     logger.info('Permissions updated for snapshot `{0}`'.format(snapshot_id))

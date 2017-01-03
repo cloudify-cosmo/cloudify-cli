@@ -79,14 +79,17 @@ def validate(plugin_path, logger):
 @cfy.argument('plugin-id')
 @cfy.options.force(help=helptexts.FORCE_DELETE_PLUGIN)
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def delete(plugin_id, force, logger, client):
+def delete(plugin_id, force, logger, client, tenant_name):
     """Delete a plugin from the manager
 
     `PLUGIN_ID` is the id of the plugin to delete.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Deleting plugin {0}...'.format(plugin_id))
     client.plugins.delete(plugin_id=plugin_id, force=force)
     logger.info('Plugin deleted')
@@ -97,17 +100,20 @@ def delete(plugin_id, force, logger, client):
 @cfy.argument('plugin-path')
 @cfy.options.private_resource
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.pass_context
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def upload(ctx, plugin_path, private_resource, logger, client):
+def upload(ctx, plugin_path, private_resource, logger, client, tenant_name):
     """Upload a plugin to the manager
 
     `PLUGIN_PATH` is the path to wagon archive to upload.
     """
     # Test whether the path is a valid URL. If it is, no point in doing local
     # validations - it will be validated on the server side anyway
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     parsed_url = urlparse(plugin_path)
     if not parsed_url.scheme or not parsed_url.netloc:
         ctx.invoke(validate, plugin_path=plugin_path)
@@ -125,13 +131,16 @@ def upload(ctx, plugin_path, private_resource, logger, client):
 @cfy.argument('plugin-id')
 @cfy.options.output_path
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.pass_logger
 @cfy.pass_client()
-def download(plugin_id, output_path, logger, client):
+def download(plugin_id, output_path, logger, client, tenant_name):
     """Download a plugin from the manager
 
     `PLUGIN_ID` is the id of the plugin to download.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Downloading plugin {0}...'.format(plugin_id))
     plugin_name = output_path if output_path else plugin_id
     progress_handler = utils.generate_progress_handler(plugin_name, '')
@@ -145,14 +154,17 @@ def download(plugin_id, output_path, logger, client):
                  short_help='Retrieve plugin information [manager only]')
 @cfy.argument('plugin-id')
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def get(plugin_id, logger, client):
+def get(plugin_id, logger, client, tenant_name):
     """Retrieve information for a specific plugin
 
     `PLUGIN_ID` is the id of the plugin to get information on.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Retrieving plugin {0}...'.format(plugin_id))
     plugin = client.plugins.get(plugin_id)
     _transform_plugin_response(plugin)
@@ -163,18 +175,19 @@ def get(plugin_id, logger, client):
                  short_help='List plugins [manager only]')
 @cfy.options.sort_by('uploaded_at')
 @cfy.options.descending
-@cfy.options.tenant_name(required=False, multiple=True)
+@cfy.options.tenant_name(required=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, tenant_name, logger, client):
+def list(sort_by, descending, logger, client, tenant_name):
     """List all plugins on the manager
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Listing all plugins...')
     plugins_list = client.plugins.list(sort=sort_by,
-                                       is_descending=descending,
-                                       tenant_name=tenant_name)
+                                       is_descending=descending)
     for plugin in plugins_list:
         _transform_plugin_response(plugin)
     print_data(PLUGIN_COLUMNS, plugins_list, 'Plugins:')
@@ -185,14 +198,17 @@ def list(sort_by, descending, tenant_name, logger, client):
 @cfy.options.users
 @cfy.options.permission
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def add_permission(plugin_id, users, permission, client, logger):
+def add_permission(plugin_id, users, permission, client, logger, tenant_name):
     """Add `viewer`/`owner` permissions to users on a certain plugin
 
     `PLUGIN_ID` is the ID of the plugin to set permissions on
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Adding permission `{0}`...'.format(permission))
     client.plugins.add_permission(plugin_id, users, permission)
     logger.info('Permissions updated for plugin `{0}`'.format(plugin_id))
@@ -204,14 +220,22 @@ def add_permission(plugin_id, users, permission, client, logger):
 @cfy.options.users
 @cfy.options.permission
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def remove_permission(plugin_id, users, permission, client, logger):
+def remove_permission(plugin_id,
+                      users,
+                      permission,
+                      client,
+                      logger,
+                      tenant_name):
     """Remove `viewer`/`owner` permissions from users on a certain plugin
 
     `PLUGIN_ID` is the ID of the plugin to set permissions on
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Removing permission `{0}`...'.format(permission))
     client.plugins.remove_permission(plugin_id, users, permission)
     logger.info('Permissions updated for plugin `{0}`'.format(plugin_id))

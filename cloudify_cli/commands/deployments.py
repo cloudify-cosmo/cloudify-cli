@@ -61,7 +61,7 @@ def _print_deployment_inputs(client, blueprint_id, logger):
 @cfy.options.blueprint_id()
 @cfy.options.sort_by()
 @cfy.options.descending
-@cfy.options.tenant_name(required=False, multiple=True)
+@cfy.options.tenant_name(required=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -69,14 +69,16 @@ def _print_deployment_inputs(client, blueprint_id, logger):
 def manager_list(blueprint_id,
                  sort_by,
                  descending,
-                 tenant_name,
                  logger,
-                 client):
+                 client,
+                 tenant_name):
     """List deployments
 
     If `--blueprint-id` is provided, list deployments for that blueprint.
     Otherwise, list deployments for all blueprints.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     if blueprint_id:
         logger.info('Listing deployments for blueprint {0}...'.format(
             blueprint_id))
@@ -84,7 +86,7 @@ def manager_list(blueprint_id,
         logger.info('Listing all deployments...')
 
     deployments = client.deployments.list(
-        sort=sort_by, is_descending=descending, tenant_name=tenant_name)
+        sort=sort_by, is_descending=descending)
     if blueprint_id:
         deployments = filter(lambda deployment:
                              deployment['blueprint_id'] == blueprint_id,
@@ -104,6 +106,7 @@ def manager_list(blueprint_id,
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -118,7 +121,8 @@ def manager_update(deployment_id,
                    include_logs,
                    json_output,
                    logger,
-                   client):
+                   client,
+                   tenant_name):
     """Update a specified deployment according to the specified blueprint
 
     `DEPLOYMENT_ID` is the deployment's id to update.
@@ -130,6 +134,8 @@ def manager_update(deployment_id,
             'only when updating from an archive'
         )
 
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     blueprint_or_archive_path = blueprint_path
     logger.info('Updating deployment {0} using blueprint {1}'.format(
         deployment_id, blueprint_or_archive_path))
@@ -182,6 +188,7 @@ def manager_update(deployment_id,
 @cfy.options.inputs
 @cfy.options.private_resource
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -190,12 +197,15 @@ def manager_create(blueprint_id,
                    inputs,
                    private_resource,
                    logger,
-                   client):
+                   client,
+                   tenant_name):
     """Create a deployment on the manager.
 
     `DEPLOYMENT_ID` is the id of the deployment you'd like to create.
 
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
     deployment_id = deployment_id or blueprint_id
@@ -227,14 +237,17 @@ def manager_create(blueprint_id,
 @cfy.argument('deployment-id')
 @cfy.options.force(help=helptexts.IGNORE_LIVE_NODES)
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def manager_delete(deployment_id, force, logger, client):
+def manager_delete(deployment_id, force, logger, client, tenant_name):
     """Delete a deployment from the manager
 
     `DEPLOYMENT_ID` is the id of the deployment to delete.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Deleting deployment {0}...'.format(deployment_id))
     client.deployments.delete(deployment_id, force)
     logger.info("Deployment deleted")
@@ -244,14 +257,17 @@ def manager_delete(deployment_id, force, logger, client):
              short_help='Show deployment outputs [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def manager_outputs(deployment_id, logger, client):
+def manager_outputs(deployment_id, logger, client, tenant_name):
     """Retrieve outputs for a specific deployment
 
     `DEPLOYMENT_ID` is the id of the deployment to print outputs for.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Retrieving outputs for deployment {0}...'.format(
         deployment_id))
     dep = client.deployments.get(deployment_id, _include=['outputs'])
@@ -271,14 +287,17 @@ def manager_outputs(deployment_id, logger, client):
              short_help='Show deployment inputs [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def manager_inputs(deployment_id, logger, client):
+def manager_inputs(deployment_id, logger, client, tenant_name):
     """Retrieve inputs for a specific deployment
 
     `DEPLOYMENT_ID` is the id of the deployment to print inputs for.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Retrieving inputs for deployment {0}...'.format(
         deployment_id))
     dep = client.deployments.get(deployment_id, _include=['inputs'])
@@ -317,14 +336,22 @@ def local_outputs(blueprint_id, logger):
 @cfy.options.users
 @cfy.options.permission
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def add_permission(deployment_id, users, permission, client, logger):
+def add_permission(deployment_id,
+                   users,
+                   permission,
+                   client,
+                   logger,
+                   tenant_name):
     """Add `viewer`/`owner` permissions to users on a certain deployment
 
     `DEPLOYMENT_ID` is the ID of the deployment to set permissions on
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Adding permission `{0}`...'.format(permission))
     client.deployments.add_permission(deployment_id, users, permission)
     logger.info('Permissions updated for deployment '
@@ -337,14 +364,22 @@ def add_permission(deployment_id, users, permission, client, logger):
 @cfy.options.users
 @cfy.options.permission
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def remove_permission(deployment_id, users, permission, client, logger):
+def remove_permission(deployment_id,
+                      users,
+                      permission,
+                      client,
+                      logger,
+                      tenant_name):
     """Remove `viewer`/`owner` permissions from users on a certain deployment
 
     `DEPLOYMENT_ID` is the ID of the deployment to set permissions on
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Removing permission `{0}`...'.format(permission))
     client.deployments.remove_permission(deployment_id, users, permission)
     logger.info('Permissions updated for deployment '

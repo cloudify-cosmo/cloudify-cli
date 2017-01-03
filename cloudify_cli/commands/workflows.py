@@ -37,13 +37,16 @@ def workflows():
 @cfy.argument('workflow-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.pass_logger
 @cfy.pass_client()
-def get(workflow_id, deployment_id, logger, client):
+def get(workflow_id, deployment_id, logger, client, tenant_name):
     """Retrieve information for a specific workflow of a specific deployment
 
     `WORKFLOW_ID` is the id of the workflow to get information on.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     try:
         logger.info('Retrieving workflow {0} for deployment {1}'.format(
             workflow_id, deployment_id))
@@ -98,11 +101,14 @@ def get(workflow_id, deployment_id, logger, client):
                    short_help='List workflows for a deployment [manager only]')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.pass_logger
 @cfy.pass_client()
-def list(deployment_id, logger, client):
+def list(deployment_id, logger, client, tenant_name):
     """List all workflows on the manager
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Listing workflows for deployment {0}...'.format(
         deployment_id))
     deployment = client.deployments.get(deployment_id)

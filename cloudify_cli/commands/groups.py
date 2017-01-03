@@ -35,11 +35,14 @@ def groups():
                 short_help='List groups for a deployment [manager only]')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False)
 @cfy.pass_client()
 @cfy.pass_logger
-def list(deployment_id, logger, client):
+def list(deployment_id, logger, client, tenant_name):
     """List all groups for a deployment
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info("Listing groups for deployment {0}...".format(
         deployment_id))
     try:
