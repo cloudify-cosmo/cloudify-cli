@@ -52,7 +52,7 @@ def list(sort_by, descending, logger, client):
 @cfy.argument('tenant-name')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
-@cfy.pass_client()
+@cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
 def create(tenant_name, logger, client):
     """Create a new tenant on the manager

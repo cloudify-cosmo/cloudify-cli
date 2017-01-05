@@ -252,15 +252,16 @@ def pass_logger(func):
     return wrapper
 
 
-def pass_client(*args, **kwargs):
+def pass_client(use_tenant_in_header=True, *args, **kwargs):
     """Simply passes the rest client to a command.
     """
     def add_client_inner(func):
         # Wraps here makes sure the original docstring propagates to click
         @wraps(func)
         def wrapper(*wrapper_args, **wrapper_kwargs):
-            client = env.get_rest_client(
-                tenant_name=wrapper_kwargs.get('tenant_name'), *args, **kwargs)
+            tenant = wrapper_kwargs.get('tenant_name') \
+                if use_tenant_in_header else None
+            client = env.get_rest_client(tenant_name=tenant, *args, **kwargs)
             return func(client=client, *wrapper_args, **wrapper_kwargs)
 
         return wrapper
