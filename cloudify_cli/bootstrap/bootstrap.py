@@ -318,12 +318,14 @@ def bootstrap(blueprint_path,
             with open(cert_path, 'w') as cert_file:
                 cert_file.write(rest_public_cert)
 
-        rest_client = env.get_rest_client(rest_host=manager_ip,
-                                          rest_port=rest_port,
-                                          rest_protocol=rest_protocol,
-                                          username=inputs['admin_username'],
-                                          password=inputs['admin_password'],
-                                          skip_version_check=True)
+        rest_client = env.get_rest_client(
+            rest_host=manager_ip,
+            rest_port=rest_port,
+            rest_protocol=rest_protocol,
+            username=inputs['admin_username'],
+            password=inputs['admin_password'],
+            skip_version_check=True,
+            tenant_name=constants.DEFAULT_TENANT_NAME)
 
         provider_context = _handle_provider_context(
             rest_client=rest_client,
