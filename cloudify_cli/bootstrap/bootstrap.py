@@ -183,7 +183,6 @@ def _perform_sanity(working_env,
                                     'allow_kwargs_override': 'true',
                                     'operation_kwargs':
                                         {'run_sanity': 'true',
-                                         'manager_ip': manager_ip,
                                          'fabric_env': fabric_env}},
                         allow_custom_parameters=True,
                         task_retries=task_retries,
