@@ -6,12 +6,15 @@ from cloudify_rest_client import deployments, executions, blueprints
 from cloudify_rest_client.exceptions import CloudifyClientError, \
     MissingRequiredDeploymentInputError, UnknownDeploymentInputError
 
+from cloudify_cli.constants import DEFAULT_TENANT_NAME
 
 from ... import exceptions
 from .mocks import MockListResponse
 from .test_base import CliCommandTest
-from .constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH, \
-    SAMPLE_ARCHIVE_PATH, SAMPLE_INPUTS_PATH
+from .constants import (BLUEPRINTS_DIR,
+                        SAMPLE_BLUEPRINT_PATH,
+                        SAMPLE_ARCHIVE_PATH,
+                        SAMPLE_INPUTS_PATH)
 
 
 class DeploymentUpdatesTest(CliCommandTest):
@@ -218,7 +221,7 @@ class DeploymentsTest(CliCommandTest):
                 'updated_at': 'now',
                 'id': 'id',
                 'permission': 'creator',
-                'tenant_name': 'default_tenant'
+                'tenant_name': DEFAULT_TENANT_NAME
             },
             {
                 'blueprint_id': 'b1_blueprint',
@@ -226,7 +229,7 @@ class DeploymentsTest(CliCommandTest):
                 'updated_at': 'now',
                 'id': 'id',
                 'permission': 'creator',
-                'tenant_name': 'default_tenant'
+                'tenant_name': DEFAULT_TENANT_NAME
             },
             {
                 'blueprint_id': 'b2_blueprint',
@@ -234,7 +237,7 @@ class DeploymentsTest(CliCommandTest):
                 'updated_at': 'now',
                 'id': 'id',
                 'permission': 'creator',
-                'tenant_name': 'default_tenant'
+                'tenant_name': DEFAULT_TENANT_NAME
             }
         ]
 
