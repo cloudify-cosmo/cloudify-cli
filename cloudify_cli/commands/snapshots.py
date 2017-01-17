@@ -18,7 +18,7 @@ from ..table import print_data
 from .. import utils
 from ..cli import helptexts, cfy
 
-SNAPSHOT_COLUMNS = ['id', 'created_at', 'status', 'error', 'permission'
+SNAPSHOT_COLUMNS = ['id', 'created_at', 'status', 'error', 'permission',
                     'tenant_name']
 
 
