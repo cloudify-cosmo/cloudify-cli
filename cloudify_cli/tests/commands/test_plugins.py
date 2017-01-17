@@ -7,6 +7,8 @@ from mock import MagicMock
 from .mocks import make_tarfile
 from .test_base import CliCommandTest
 
+from cloudify_cli.constants import DEFAULT_TENANT_NAME
+
 from cloudify_rest_client import plugins
 
 
@@ -32,7 +34,7 @@ class PluginsTest(CliCommandTest):
                                          'distribution': 'ubuntu',
                                          'uploaded_at': 'now',
                                          'permission': 'creator',
-                                         'tenant_name': 'default_tenant'}))
+                                         'tenant_name': DEFAULT_TENANT_NAME}))
 
         self.invoke('cfy plugins get some_id')
 
