@@ -58,9 +58,16 @@ def _deployment_exists(client, deployment_id):
 @cfy.options.include_logs
 @cfy.options.install_script
 @cfy.options.verbose()
+@cfy.options.tenant_name(
+    required=False, resource_name_for_help='relevant deployment(s)')
 @cfy.pass_logger
 @cfy.pass_client()
-def install(deployment_id, include_logs, install_script, logger, client):
+def install(deployment_id,
+            include_logs,
+            install_script,
+            tenant_name,
+            logger,
+            client):
     """Install agents on the hosts of existing deployments
 
     `DEPLOYMENT_ID` - The ID of the deployment you would like to
@@ -69,6 +76,8 @@ def install(deployment_id, include_logs, install_script, logger, client):
     See Cloudify's documentation at http://docs.getcloudify.org for more
     information.
     """
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     workflow_id = 'install_new_agents'
 
     if deployment_id:

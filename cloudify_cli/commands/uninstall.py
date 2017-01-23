@@ -34,6 +34,7 @@ from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_context
 def manager(ctx,
             deployment_id,
@@ -42,7 +43,8 @@ def manager(ctx,
             allow_custom_parameters,
             timeout,
             include_logs,
-            json_output):
+            json_output,
+            tenant_name):
     """Uninstall an application via the manager
 
     This will execute the `uninstall` workflow, delete the deployment and
@@ -70,21 +72,24 @@ def manager(ctx,
         allow_custom_parameters=allow_custom_parameters,
         include_logs=include_logs,
         parameters=parameters,
-        json_output=json_output)
+        json_output=json_output,
+        tenant_name=tenant_name)
 
     # before deleting the deployment, save its blueprint_id, so we will be able
     # to delete the blueprint after deleting the deployment
-    client = env.get_rest_client()
+    client = env.get_rest_client(tenant_name=tenant_name)
     deployment = client.deployments.get(
         deployment_id, _include=['blueprint_id'])
     blueprint_id = deployment.blueprint_id
     ctx.invoke(
         deployments.manager_delete,
         deployment_id=deployment_id,
-        force=False)
+        force=False,
+        tenant_name=tenant_name)
     ctx.invoke(
         blueprints.delete,
-        blueprint_id=blueprint_id)
+        blueprint_id=blueprint_id,
+        tenant_name=tenant_name)
 
 
 @cfy.command(name='uninstall',

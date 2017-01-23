@@ -43,7 +43,8 @@ def manager():
                  '[manager only]')
 @cfy.argument('node_instance_id')
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(
+    required=False, resource_name_for_help='node-instance')
 @cfy.pass_logger
 @cfy.pass_client()
 def get(node_instance_id, logger, client, tenant_name):
@@ -79,7 +80,8 @@ def get(node_instance_id, logger, client, tenant_name):
 @cfy.options.node_name
 @cfy.options.sort_by('node_id')
 @cfy.options.descending
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name_for_list(
+    required=False, resource_name_for_help='node-instance')
 @cfy.options.all_tenants
 @cfy.options.verbose()
 @cfy.pass_logger

@@ -39,7 +39,7 @@ def events():
 @cfy.options.json_output
 @cfy.options.tail
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.pass_client()
 @cfy.pass_logger
 def list(execution_id,
@@ -97,7 +97,7 @@ def list(execution_id,
 @cfy.argument('deployment-id')
 @cfy.options.include_logs
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_client()
 @cfy.pass_logger
 def delete(deployment_id, include_logs, logger, client, tenant_name):
