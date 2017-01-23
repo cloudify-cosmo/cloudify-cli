@@ -32,7 +32,8 @@ class UninstallTest(CliCommandTest):
             include_logs=True,
             allow_custom_parameters=False,
             parameters=DEFAULT_PARAMETERS,
-            json_output=False
+            json_output=False,
+            tenant_name=None
         )
 
     @patch('cloudify_cli.commands.blueprints.delete')
@@ -49,7 +50,8 @@ class UninstallTest(CliCommandTest):
                             '--allow-custom-parameters ' \
                             '--include-logs ' \
                             '--parameters key=value ' \
-                            '--json-output'
+                            '--json-output ' \
+                            '--tenant-name tenant_name'
 
         self.invoke(uninstall_command, context='manager')
 
@@ -61,7 +63,8 @@ class UninstallTest(CliCommandTest):
             include_logs=True,
             allow_custom_parameters=True,
             parameters={'key': 'value'},
-            json_output=True
+            json_output=True,
+            tenant_name='tenant_name'
         )
 
     @patch('cloudify_cli.commands.executions.manager_start')
@@ -77,7 +80,8 @@ class UninstallTest(CliCommandTest):
         self.client.deployments.get = mock_deployments_get
 
         self.invoke('cfy uninstall did', context='manager')
-        mock_blueprints_delete.assert_called_with(blueprint_id=u'bid')
+        mock_blueprints_delete.assert_called_with(blueprint_id=u'bid',
+                                                  tenant_name=None)
 
     @patch('cloudify_cli.commands.blueprints.delete')
     @patch('cloudify_cli.env.get_rest_client')
@@ -89,7 +93,8 @@ class UninstallTest(CliCommandTest):
 
         deployments_delete_mock.assert_called_with(
             deployment_id=u'did',
-            force=False
+            force=False,
+            tenant_name=None
         )
 
     @patch('cloudify_cli.env.get_rest_client')

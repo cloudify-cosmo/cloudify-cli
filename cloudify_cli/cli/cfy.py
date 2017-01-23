@@ -96,6 +96,14 @@ def _format_version_data(version_data,
     return output.getvalue()
 
 
+def _tenant_help_message(message, message_template, resource_name):
+    if message is not None:
+        return message
+    if resource_name is not None:
+        return message_template.format(resource_name)
+    return helptexts.TENANT
+
+
 def show_version(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
@@ -726,16 +734,36 @@ class Options(object):
             help=helptexts.VERBOSE)
 
     @staticmethod
-    def tenant_name(required=True, help=helptexts.TENANT):
-        return click.option(
-            '-t',
-            '--tenant-name',
-            cls=MutuallyExclusiveOption,
-            required=required,
-            help=help,
-            multiple=False,
-            mutually_exclusive=['all_tenants']
-        )
+    def tenant_name(required=True,
+                    mutually_exclusive_with=None,
+                    help=None,
+                    resource_name_for_help=None,
+                    show_default_in_help=True):
+        args = ['-t', '--tenant-name']
+        kwargs = {
+            'required': required,
+            'multiple': False,
+            'help': _tenant_help_message(
+                help, helptexts.TENANT_TEMPLATE, resource_name_for_help)
+        }
+        if show_default_in_help:
+            kwargs['help'] += \
+                '. If not specified, the current tenant will be used'
+        if mutually_exclusive_with:
+            kwargs['cls'] = MutuallyExclusiveOption
+            kwargs['mutually_exclusive'] = mutually_exclusive_with
+        return click.option(*args, **kwargs)
+
+    @staticmethod
+    def tenant_name_for_list(*args, **kwargs):
+        if 'mutually_exclusive_with' not in kwargs:
+            kwargs['mutually_exclusive_with'] = ['all_tenants']
+        kwargs['help'] = _tenant_help_message(
+            kwargs.get('help'),
+            helptexts.TENANT_LIST_TEMPLATE,
+            kwargs.get('resource_name_for_help'))
+        return Options.tenant_name(
+            *args, **kwargs)
 
     @staticmethod
     def force(help):

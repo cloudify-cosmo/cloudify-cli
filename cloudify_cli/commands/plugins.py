@@ -79,7 +79,7 @@ def validate(plugin_path, logger):
 @cfy.argument('plugin-id')
 @cfy.options.force(help=helptexts.FORCE_DELETE_PLUGIN)
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -100,7 +100,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
 @cfy.argument('plugin-path')
 @cfy.options.private_resource
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.pass_context
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -131,7 +131,7 @@ def upload(ctx, plugin_path, private_resource, logger, client, tenant_name):
 @cfy.argument('plugin-id')
 @cfy.options.output_path
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.pass_logger
 @cfy.pass_client()
 def download(plugin_id, output_path, logger, client, tenant_name):
@@ -154,7 +154,7 @@ def download(plugin_id, output_path, logger, client, tenant_name):
                  short_help='Retrieve plugin information [manager only]')
 @cfy.argument('plugin-id')
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -175,7 +175,8 @@ def get(plugin_id, logger, client, tenant_name):
                  short_help='List plugins [manager only]')
 @cfy.options.sort_by('uploaded_at')
 @cfy.options.descending
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name_for_list(
+    required=False, resource_name_for_help='plugin')
 @cfy.options.all_tenants
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -200,7 +201,7 @@ def list(sort_by, descending, tenant_name, all_tenants, logger, client):
 @cfy.options.users
 @cfy.options.permission
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -222,7 +223,7 @@ def add_permission(plugin_id, users, permission, client, logger, tenant_name):
 @cfy.options.users
 @cfy.options.permission
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -234,7 +235,7 @@ def remove_permission(plugin_id,
                       tenant_name):
     """Remove `viewer`/`owner` permissions from users on a certain plugin
 
-    `PLUGIN_ID` is the ID of the plugin to set permissions on
+    `PLUGIN_ID` is the ID of the plugin to remove permissions from
     """
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))

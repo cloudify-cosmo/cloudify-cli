@@ -37,7 +37,7 @@ def workflows():
 @cfy.argument('workflow-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_logger
 @cfy.pass_client()
 def get(workflow_id, deployment_id, logger, client, tenant_name):
@@ -101,11 +101,11 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
                    short_help='List workflows for a deployment [manager only]')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_logger
 @cfy.pass_client()
 def list(deployment_id, logger, client, tenant_name):
-    """List all workflows on the manager
+    """List all workflows on the manager for a specific deployment
     """
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))

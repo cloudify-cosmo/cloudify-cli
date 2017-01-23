@@ -35,7 +35,7 @@ def groups():
                 short_help='List groups for a deployment [manager only]')
 @cfy.options.deployment_id(required=True)
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_client()
 @cfy.pass_logger
 def list(deployment_id, logger, client, tenant_name):
