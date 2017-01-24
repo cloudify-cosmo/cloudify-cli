@@ -152,7 +152,7 @@ def remove_group(user_group_name, tenant_name, logger, client):
 @cfy.argument('tenant-name')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
-@cfy.pass_client()
+@cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
 def get(tenant_name, logger, client):
     """Get details for a single tenant
@@ -169,7 +169,7 @@ def get(tenant_name, logger, client):
 @cfy.argument('tenant-name')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
-@cfy.pass_client()
+@cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
 def delete(tenant_name, logger, client):
     """Delete a tenant
