@@ -38,7 +38,8 @@ def snapshots():
 @cfy.options.without_deployment_envs
 @cfy.options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
 @cfy.options.tenant_name(required=False,
-                         help=helptexts.RESTORE_SNAPSHOT_TENANT_NAME)
+                         help=helptexts.RESTORE_SNAPSHOT_TENANT_NAME,
+                         show_default_in_help=False)
 @cfy.options.verbose()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -71,7 +72,7 @@ def restore(snapshot_id,
 @cfy.options.exclude_credentials
 @cfy.options.private_resource
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.pass_client()
 @cfy.pass_logger
 def create(snapshot_id,
@@ -105,7 +106,7 @@ def create(snapshot_id,
                    short_help='Delete a snapshot [manager only]')
 @cfy.argument('snapshot-id')
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.pass_client()
 @cfy.pass_logger
 def delete(snapshot_id, logger, client, tenant_name):
@@ -126,7 +127,7 @@ def delete(snapshot_id, logger, client, tenant_name):
 @cfy.options.snapshot_id
 @cfy.options.private_resource
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.pass_client()
 @cfy.pass_logger
 def upload(snapshot_path,
@@ -158,7 +159,7 @@ def upload(snapshot_path,
 @cfy.argument('snapshot-id')
 @cfy.options.output_path
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.pass_client()
 @cfy.pass_logger
 def download(snapshot_id, output_path, logger, client, tenant_name):
@@ -181,7 +182,8 @@ def download(snapshot_id, output_path, logger, client, tenant_name):
                    short_help='List snapshots [manager only]')
 @cfy.options.sort_by()
 @cfy.options.descending
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name_for_list(
+    required=False, resource_name_for_help='snapshot')
 @cfy.options.all_tenants
 @cfy.options.verbose()
 @cfy.pass_client()
@@ -205,7 +207,7 @@ def list(sort_by, descending, tenant_name, all_tenants, logger, client):
 @cfy.options.users
 @cfy.options.permission
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -232,7 +234,7 @@ def add_permission(snapshot_id,
 @cfy.options.users
 @cfy.options.permission
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -244,7 +246,7 @@ def remove_permission(snapshot_id,
                       tenant_name):
     """Remove `viewer`/`owner` permissions from users on a certain snapshot
 
-    `SNAPSHOT_ID` is the ID of the snapshot to set permissions on
+    `SNAPSHOT_ID` is the ID of the snapshot to remove permissions from
     """
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
