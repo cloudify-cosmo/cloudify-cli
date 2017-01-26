@@ -24,6 +24,7 @@ from .. import utils
 from ..table import print_data
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger
+from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 from ..execution_events_fetcher import wait_for_execution
 from ..exceptions import CloudifyCliError, ExecutionTimeoutError, \
     SuppressedCloudifyCliError
@@ -223,6 +224,14 @@ def manager_start(workflow_id,
                             deployment_id,
                             execution.error))
             logger.info(events_message.format(execution.id))
+            if workflow_id == DEFAULT_UNINSTALL_WORKFLOW and not str(
+                    parameters.get('ignore_failure')).lower() == 'true':
+                logger.info(
+                    'Note that for the {0} workflow you can use the '
+                    '`ignore_failure` parameter to ignore operation failures '
+                    'and continue the workflow. I.E: cfy executions start {0} '
+                    '-d {1} -p ignore_failure=true'.format(
+                        workflow_id, deployment_id))
             raise SuppressedCloudifyCliError()
         else:
             logger.info('Finished executing workflow {0} on deployment '
