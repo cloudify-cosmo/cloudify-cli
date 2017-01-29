@@ -217,3 +217,10 @@ RESTORE_SNAPSHOT_TENANT_NAME = 'The name of the tenant into which the ' \
                                'will be raised'
 SKIP_CREDENTIALS_VALIDATION = 'Do not check that the passed credentials are ' \
                               'correct (default:False)'
+LDAP_SERVER = 'The LDAP server address to authenticate against'
+LDAP_USERNAME = 'The LDAP admin username to be set on the Cloudify manager'
+LDAP_PASSWORD = 'The LDAP admin password to be set on the Cloudify manager'
+LDAP_DOMAIN = 'The LDAP domain to be used by the server'
+LDAP_IS_ACTIVE_DIRECTORY = 'Specify whether the LDAP used for authentication' \
+                           ' is Active-Directory.'
+LDAP_DN_EXTRA = 'Extra LDAP DN options.'

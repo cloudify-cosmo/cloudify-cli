@@ -22,6 +22,7 @@ from .commands import dev
 from .commands import ssh
 from .commands import init
 from .commands import logs
+from .commands import ldap
 from .commands import users
 from .commands import nodes
 from .commands import agents
@@ -86,6 +87,7 @@ def _register_commands():
     _cfy.add_command(dev.dev)
     _cfy.add_command(ssh.ssh)
     _cfy.add_command(logs.logs)
+    _cfy.add_command(ldap.ldap)
     _cfy.add_command(users.users)
     _cfy.add_command(agents.agents)
     _cfy.add_command(events.events)
