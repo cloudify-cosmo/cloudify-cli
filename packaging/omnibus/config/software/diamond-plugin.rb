@@ -1,6 +1,6 @@
 name "diamond-plugin"
 
-plugin_version = "diamond-plugin/1.3.3"
+plugin_version = "diamond-plugin/1.3.5"
 default_version plugin_version.sub! "diamond-plugin/", ""
 
 
