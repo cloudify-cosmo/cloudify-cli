@@ -143,7 +143,9 @@ def join(client,
     cluster_client = env.get_rest_client(
         rest_host=joined_profile.manager_ip,
         rest_port=joined_profile.rest_port,
-        rest_protocol=joined_profile.rest_protocol)
+        rest_protocol=joined_profile.rest_protocol,
+        username=joined_profile.manager_username,
+        password=joined_profile.manager_password)
     cluster_status = cluster_client.cluster.status()
 
     encryption_key = cluster_status.encryption_key
