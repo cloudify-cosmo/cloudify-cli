@@ -92,11 +92,13 @@ def status(client, logger):
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.timeout()
+@cfy.options.inputs
 @cfy.options.cluster_host_ip
 @cfy.options.cluster_node_name
 def start(client,
           logger,
           timeout,
+          inputs,
           cluster_host_ip,
           cluster_node_name):
     """Start a Cloudify Manager cluster with the current manager as the master.
@@ -112,7 +114,8 @@ def start(client,
 
     client.cluster.start(
         host_ip=cluster_host_ip,
-        node_name=cluster_node_name
+        node_name=cluster_node_name,
+        options=inputs
     )
     status = _wait_for_cluster_initialized(client, logger, timeout=timeout)
 
@@ -133,12 +136,14 @@ def start(client,
 @cfy.pass_logger
 @cfy.argument('join_profile')
 @cfy.options.timeout()
+@cfy.options.inputs
 @cfy.options.cluster_host_ip
 @cfy.options.cluster_node_name
 def join(client,
          logger,
          join_profile,
          timeout,
+         inputs,
          cluster_host_ip,
          cluster_node_name):
     """Join a Cloudify Manager cluster on this manager.
@@ -176,7 +181,8 @@ def join(client,
         host_ip=cluster_host_ip,
         node_name=cluster_node_name,
         credentials=new_cluster_node.credentials,
-        join_addrs=join
+        join_addrs=join,
+        options=inputs
     )
     timeout_left = deadline - time.time()
     try:
