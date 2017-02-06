@@ -1226,7 +1226,7 @@ class TestClusterRestClient(CliCommandTest):
             {'manager_ip': '127.0.0.1'},
             {'manager_ip': '127.0.0.2'}
         ]
-        c = env.CloudifyClusterClient(host='127.0.0.1')
+        c = env.CloudifyClusterClient(env.profile, host='127.0.0.1')
 
         with self._mock_get('127.0.0.2', [], ['127.0.0.1']) as mocked_get:
             response = c.blueprints.list()
@@ -1250,10 +1250,10 @@ class TestClusterRestClient(CliCommandTest):
         followers = ['127.0.0.1', '127.0.0.5']
         offline = ['127.0.0.2', '127.0.0.3']
 
-        c = env.CloudifyClusterClient(host='127.0.0.1')
+        c = env.CloudifyClusterClient(env.profile, host='127.0.0.1')
         with self._mock_get(master, followers, offline) as mocked_get:
             response = c.blueprints.list()
 
         self.assertEqual([], list(response))
-        self.assertEqual(3, len(mocked_get.mock_calls))
+        self.assertEqual(4, len(mocked_get.mock_calls))
         self.assertEqual('127.0.0.4', env.profile.cluster[0]['manager_ip'])

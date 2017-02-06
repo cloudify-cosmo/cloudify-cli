@@ -187,7 +187,8 @@ def raise_uninitialized():
     raise error
 
 
-def get_rest_client(rest_host=None,
+def get_rest_client(client_profile=None,
+                    rest_host=None,
                     rest_port=None,
                     rest_protocol=None,
                     username=None,
@@ -196,16 +197,18 @@ def get_rest_client(rest_host=None,
                     trust_all=False,
                     skip_version_check=False,
                     cluster=None):
-    rest_host = rest_host or profile.manager_ip
-    rest_port = rest_port or profile.rest_port
-    rest_protocol = rest_protocol or profile.rest_protocol
-    username = username or get_username()
-    password = password or get_password()
-    tenant_name = tenant_name or get_tenant_name()
+    if client_profile is None:
+        client_profile = profile
+    rest_host = rest_host or client_profile.manager_ip
+    rest_port = rest_port or client_profile.rest_port
+    rest_protocol = rest_protocol or client_profile.rest_protocol
+    username = username or get_username(client_profile)
+    password = password or get_password(client_profile)
+    tenant_name = tenant_name or get_tenant_name(client_profile)
     trust_all = trust_all or get_ssl_trust_all()
     headers = get_auth_header(username, password)
     headers[constants.CLOUDIFY_TENANT_HEADER] = tenant_name
-    cluster = cluster or profile.cluster
+    cluster = cluster or client_profile.cluster
 
     if not username:
         raise CloudifyCliError('Command failed: Missing Username')
@@ -214,7 +217,6 @@ def get_rest_client(rest_host=None,
         raise CloudifyCliError('Command failed: Missing password')
 
     cert = get_ssl_cert()
-
     if cluster:
         client = CloudifyClusterClient(
             host=rest_host,
@@ -222,7 +224,8 @@ def get_rest_client(rest_host=None,
             protocol=rest_protocol,
             headers=headers,
             cert=cert,
-            trust_all=trust_all)
+            trust_all=trust_all,
+            profile=client_profile)
 
     else:
         client = CloudifyClient(
@@ -260,37 +263,43 @@ def build_manager_host_string(ssh_user='', ip=''):
     return '{0}@{1}'.format(ssh_user, ip)
 
 
-def get_username():
+def get_username(from_profile=None):
+    if from_profile is None:
+        from_profile = profile
     username = os.environ.get(constants.CLOUDIFY_USERNAME_ENV)
-    if username and profile.manager_username:
+    if username and from_profile.manager_username:
         raise CloudifyCliError('Manager Username is set in profile *and* in '
                                'the `CLOUDIFY_USERNAME` env variable. Resolve '
                                'the conflict before continuing.\n'
                                'Either unset the env variable, or run '
                                '`cfy profiles unset --manager-username`')
-    return username or profile.manager_username
+    return username or from_profile.manager_username
 
 
-def get_password():
+def get_password(from_profile=None):
+    if from_profile is None:
+        from_profile = profile
     password = os.environ.get(constants.CLOUDIFY_PASSWORD_ENV)
-    if password and profile.manager_password:
+    if password and from_profile.manager_password:
         raise CloudifyCliError('Manager Password is set in profile *and* in '
                                'the `CLOUDIFY_PASSWORD` env variable. Resolve '
                                'the conflict before continuing.\n'
                                'Either unset the env variable, or run '
                                '`cfy profiles unset --manager-password`')
-    return password or profile.manager_password
+    return password or from_profile.manager_password
 
 
-def get_tenant_name():
+def get_tenant_name(from_profile=None):
+    if from_profile is None:
+        from_profile = profile
     tenant = os.environ.get(constants.CLOUDIFY_TENANT_ENV)
-    if tenant and profile.manager_tenant:
+    if tenant and from_profile.manager_tenant:
         raise CloudifyCliError('Manager Tenant is set in profile *and* in '
                                'the `CLOUDIFY_TENANT` env variable. Resolve '
                                'the conflict before continuing.\n'
                                'Either unset the env variable, or run '
                                '`cfy profiles unset --manager-tenant`')
-    return tenant or profile.manager_tenant
+    return tenant or from_profile.manager_tenant
 
 
 def get_default_rest_cert_local_path():
@@ -428,11 +437,15 @@ class ProfileContext(yaml.YAMLObject):
             constants.CLOUDIFY_PROFILE_CONTEXT_FILE_NAME)
         return context_path
 
+    @property
+    def workdir(self):
+        return os.path.join(PROFILES_DIR, self.profile_name)
+
     def save(self, destination=None):
         if not self.profile_name:
             raise CloudifyCliError('No profile name or Manager IP set')
 
-        workdir = destination or os.path.join(PROFILES_DIR, self.profile_name)
+        workdir = destination or self.workdir
         # Create a new file
         if not os.path.exists(workdir):
             os.makedirs(workdir)
@@ -474,10 +487,15 @@ class ClusterHTTPClient(HTTPClient):
     default_timeout_sec = 5
 
     def __init__(self, *args, **kwargs):
+        profile = kwargs.pop('profile')
         super(ClusterHTTPClient, self).__init__(*args, **kwargs)
         if not profile.cluster:
             raise ValueError('Cluster client invoked for an empty cluster!')
         self._cluster = list(profile.cluster)
+        self._profile = profile
+        first_node = self._cluster[0]
+        self.cert = first_node.get('cert') or self.cert
+        self.trust_all = first_node.get('trust_all') or self.trust_all
 
     def do_request(self, *args, **kwargs):
         # this request can be retried for each manager - if the data is
@@ -485,11 +503,11 @@ class ClusterHTTPClient(HTTPClient):
         copied_data = None
         if isinstance(kwargs.get('data'), types.GeneratorType):
             copied_data = itertools.tee(kwargs.pop('data'),
-                                        len(profile.cluster))
+                                        len(self._cluster))
 
         kwargs.setdefault('timeout', self.default_timeout_sec)
 
-        for node_index, node in enumerate(profile.cluster):
+        for node_index, node in list(enumerate(self._profile.cluster)):
             self._use_node(node)
             if copied_data is not None:
                 kwargs['data'] = copied_data[node_index]
@@ -506,8 +524,10 @@ class ClusterHTTPClient(HTTPClient):
         if node['manager_ip'] == self.host:
             return
         self.host = node['manager_ip']
-        self.port = node.get('rest_port', self.port)
-        self.protocol = node.get('rest_protocol', self.protocol)
+        for attr in ['rest_port', 'rest_protocol', 'trust_all', 'cert']:
+            new_value = node.get(attr)
+            if new_value:
+                setattr(self, attr, new_value)
         self._update_profile(node)
 
     def _update_profile(self, node):
@@ -517,9 +537,12 @@ class ClusterHTTPClient(HTTPClient):
         the node first will make the client try it first next time. This makes
         the client always try the last-known-master first.
         """
-        profile.cluster.remove(node)
-        profile.cluster = [node] + profile.cluster
-        profile.save()
+        self._profile.cluster.remove(node)
+        self._profile.cluster = [node] + self._profile.cluster
+        for node_attr in CLUSTER_NODE_ATTRS:
+            if node_attr in node:
+                setattr(self._profile, node_attr, node[node_attr])
+        self._profile.save()
 
 
 class CloudifyClusterClient(CloudifyClient):
@@ -531,8 +554,13 @@ class CloudifyClusterClient(CloudifyClient):
 
     When the master is found, the profile will be updated with its address.
     """
+    def __init__(self, profile, *args, **kwargs):
+        self._profile = profile
+        super(CloudifyClusterClient, self).__init__(*args, **kwargs)
 
-    client_class = ClusterHTTPClient
+    def client_class(self, *args, **kwargs):
+        kwargs.setdefault('profile', self._profile)
+        return ClusterHTTPClient(*args, **kwargs)
 
 
 profile = get_profile_context(suppress_error=True)

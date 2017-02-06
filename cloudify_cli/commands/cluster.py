@@ -14,14 +14,15 @@
 # limitations under the License.
 ############
 
-
+import os
 import time
+import shutil
 from datetime import datetime
 
 from cloudify_rest_client.exceptions import (CloudifyClientError,
                                              NotClusterMaster)
 
-from .. import env
+from .. import constants, env
 from ..cli import cfy
 from ..table import print_data
 from ..exceptions import CloudifyCliError
@@ -101,7 +102,8 @@ def start(client,
         logger.error('Error while configuring the Cloudify Manager cluster')
         raise CloudifyCliError(status.error)
 
-    _init_cluster_profile()
+    env.profile.profile_name = env.profile.manager_ip
+    _join_node_to_profile(env.profile)
 
     logger.info('Cloudify Manager cluster started at {0}.\n'
                 .format(cluster_host_ip))
@@ -140,12 +142,7 @@ def join(client,
                                .format(join_profile))
 
     deadline = time.time() + timeout
-    cluster_client = env.get_rest_client(
-        rest_host=joined_profile.manager_ip,
-        rest_port=joined_profile.rest_port,
-        rest_protocol=joined_profile.rest_protocol,
-        username=joined_profile.manager_username,
-        password=joined_profile.manager_password)
+    cluster_client = env.get_rest_client(client_profile=joined_profile)
     cluster_status = cluster_client.cluster.status()
 
     encryption_key = cluster_status.encryption_key
@@ -182,17 +179,12 @@ def join(client,
         # find the current node in the cluster nodes list, and check if it
         # reports being online
         nodes = cluster_client.cluster.nodes.list()
-        joined_node = next((
-            n for n in nodes
-            if n.host_ip == cluster_host_ip), None)
-        if joined_node is not None and joined_node.online:
+        if any(n.host_ip == cluster_host_ip for n in nodes if n.online):
             break
         else:
             time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
 
-    node = _make_node_from_profile()
-    joined_profile.cluster.append(node)
-    joined_profile.save()
+    _join_node_to_profile(env.profile, joined_profile=joined_profile)
 
     logger.info('Cloudify Manager cluster joined successfully!')
     logger.info('Switching to the cluster profile: {0}'.format(join_profile))
@@ -275,23 +267,47 @@ def remove_node(client, logger, cluster_node_name):
     logger.info('Node {0} was removed successfully!')
 
 
-def _make_node_from_profile():
-    return {node_attr: getattr(env.profile, node_attr)
+def _join_node_to_profile(from_profile, joined_profile=None):
+    if joined_profile is None:
+        joined_profile = from_profile
+    node = {node_attr: getattr(from_profile, node_attr)
             for node_attr in env.CLUSTER_NODE_ATTRS}
+    cert_file = env.get_ssl_cert()
+    if cert_file:
+        profile_cert = os.path.join(
+            joined_profile.workdir,
+            '{0}_{1}'.format(constants.PUBLIC_REST_CERT, node['manager_ip']))
+        shutil.copy(cert_file, profile_cert)
+    else:
+        profile_cert = None
 
+    if from_profile.ssh_key:
+        ssh_key = os.path.join(
+            joined_profile.workdir,
+            'ssh_{0}'.format(node['manager_ip']))
+        try:
+            shutil.copy(from_profile.ssh_key, ssh_key)
+        except IOError:
+            # even if the key file doesn't exist, it's sometimes set in the
+            # profile
+            ssh_key = None
+    else:
+        ssh_key = None
 
-def _init_cluster_profile():
-    """Set the current profile as connected to a Cloudify Manager cluster.
-    """
-    env.profile.cluster = [_make_node_from_profile()]
-    env.profile.save()
+    node.update({
+        'cert': profile_cert,
+        'trust_all': env.get_ssl_trust_all(),
+        'ssh_key': ssh_key
+    })
+    joined_profile.cluster.append(node)
+    joined_profile.save()
 
 
 def _display_logs(logger, logs):
     for log in logs:
         timestamp = datetime.utcfromtimestamp(log['timestamp'] // 1e6)
-        logger.info('{0} {1}'.format(timestamp.isoformat(),
-                                     log['message']))
+        logger.info(u'{0} {1}'.format(timestamp.isoformat(),
+                                      log['message']))
 
 
 def _wait_for_cluster_initialized(client, logger=None, timeout=900):
@@ -323,8 +339,8 @@ def _wait_for_cluster_initialized(client, logger=None, timeout=900):
             # during cluster initialization, we restart the database, nginx,
             # and the rest service; while that happens, the server might
             # return intermittent 500 errors
-            logger.info('Error while fetching cluster status: {0}'
-                        .format(e))
+            logger.debug('Error while fetching cluster status: {0}'
+                         .format(e))
         else:
             if logger and status.logs:
                 last_log = status.logs[-1]['cursor']
