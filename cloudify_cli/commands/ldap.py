@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ############
-from ..cli import cfy
+from ..cli import cfy, helptexts
 
 
 @cfy.group(name='ldap')
@@ -51,3 +51,15 @@ def set(ldap_server,
                     ldap_domain=ldap_domain,
                     ldap_dn_extra=ldap_dn_extra)
     logger.info('LDAP authentication set successfully')
+
+
+@ldap.command(name='unset',
+              short_help='Unset the manager\'s LDAP authenticator and fallback'
+                         ' to the default http authentication.')
+@cfy.options.force(help=helptexts.FORCE_LDAP_UNSET)
+@cfy.pass_client()
+@cfy.pass_logger
+def unset(force, client, logger):
+    logger.info('Un-setting the Cloudify manager\'s LDAP authenticator..')
+    client.ldap.unset(force=force)
+    logger.info('LDAP authentication unset successfully')

@@ -27,3 +27,7 @@ class LdapTest(CliCommandTest):
         self.client.ldap.set = MagicMock(return_value='')
         self.invoke('ldap set -s server -u user -p pass -d name -a '
                     '-e extra')
+
+    def test_ldap_unset(self):
+        self.client.ldap.unset = MagicMock(return_value='')
+        self.invoke('ldap unset -f')

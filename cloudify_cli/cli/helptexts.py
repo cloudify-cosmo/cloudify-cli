@@ -224,3 +224,5 @@ LDAP_DOMAIN = 'The LDAP domain to be used by the server'
 LDAP_IS_ACTIVE_DIRECTORY = 'Specify whether the LDAP used for authentication' \
                            ' is Active-Directory.'
 LDAP_DN_EXTRA = 'Extra LDAP DN options.'
+FORCE_LDAP_UNSET = 'Unset the LDAP authenticator while and removed any ' \
+                   'existing LDAP users from the Cloudify manager. '
