@@ -90,11 +90,11 @@ def start(client,
 
     logger.info('Creating a new Cloudify Manager cluster')
 
-    client.cluster.start(config={
-        'host_ip': cluster_host_ip,
-        'node_name': cluster_node_name,
-        'encryption_key': cluster_encryption_key
-    })
+    client.cluster.start(
+        host_ip=cluster_host_ip,
+        node_name=cluster_node_name,
+        encryption_key=cluster_encryption_key
+    )
     status = _wait_for_cluster_initialized(client, logger, timeout=timeout)
 
     if status.error:
@@ -153,12 +153,12 @@ def join(client,
     logger.info('Joining the Cloudify Manager cluster: {0}'
                 .format(join))
 
-    client.cluster.join(config={
-        'host_ip': cluster_host_ip,
-        'node_name': cluster_node_name,
-        'encryption_key': encryption_key,
-        'join_addrs': join
-    })
+    client.cluster.join(
+        host_ip=cluster_host_ip,
+        node_name=cluster_node_name,
+        encryption_key=encryption_key,
+        join_addrs=join
+    )
     timeout_left = deadline - time.time()
     try:
         status = _wait_for_cluster_initialized(client, logger,
