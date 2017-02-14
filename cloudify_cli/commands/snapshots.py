@@ -41,7 +41,7 @@ def snapshots():
                          help=helptexts.RESTORE_SNAPSHOT_TENANT_NAME,
                          show_default_in_help=False)
 @cfy.options.verbose()
-@cfy.pass_client()
+@cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
 def restore(snapshot_id,
             without_deployment_envs,
