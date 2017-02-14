@@ -715,6 +715,13 @@ class Options(object):
             help=helptexts.PERMISSION
         )
 
+        self.get_data = click.option(
+            '--get-data',
+            is_flag=True,
+            default=False,
+            help=helptexts.GET_DATA
+        )
+
     @staticmethod
     def include_keys(help):
         return click.option(
