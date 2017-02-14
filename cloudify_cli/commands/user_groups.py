@@ -36,15 +36,19 @@ def user_groups():
 @cfy.options.sort_by('name')
 @cfy.options.descending
 @cfy.options.verbose()
+@cfy.options.get_data
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, logger, client):
+def list(sort_by, descending, get_data, logger, client):
     """List all user groups
     """
     logger.info('Listing all user groups...')
-    user_groups_list = client.user_groups.list(sort=sort_by,
-                                               is_descending=descending)
+    user_groups_list = client.user_groups.list(
+        sort=sort_by,
+        is_descending=descending,
+        _get_data=get_data
+    )
     print_data(GROUP_COLUMNS, user_groups_list, 'User groups:')
 
 
@@ -71,16 +75,20 @@ def create(user_group_name, ldap_distinguished_name, logger, client):
                                 'user group [manager only]')
 @cfy.argument('user-group-name')
 @cfy.options.verbose()
+@cfy.options.get_data
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def get(user_group_name, logger, client):
+def get(user_group_name, get_data, logger, client):
     """Get details for a single user group
 
     `USER_GROUP_NAME` is the name of the user group
     """
     logger.info('Getting info for user group `{0}`...'.format(user_group_name))
-    user_group_details = client.user_groups.get(user_group_name)
+    user_group_details = client.user_groups.get(
+        user_group_name,
+        _get_data=get_data
+    )
     print_data(GROUP_COLUMNS, user_group_details, 'Requested user group info:')
 
 

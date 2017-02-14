@@ -36,14 +36,19 @@ def tenants():
 @cfy.options.sort_by('name')
 @cfy.options.descending
 @cfy.options.verbose()
+@cfy.options.get_data
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, logger, client):
+def list(sort_by, descending, get_data, logger, client):
     """List all tenants
     """
     logger.info('Listing all tenants...')
-    tenants_list = client.tenants.list(sort=sort_by, is_descending=descending)
+    tenants_list = client.tenants.list(
+        sort=sort_by,
+        is_descending=descending,
+        _get_data=get_data
+    )
     print_data(TENANT_COLUMNS, tenants_list, 'Tenants:')
 
 
@@ -152,15 +157,16 @@ def remove_group(user_group_name, tenant_name, logger, client):
 @cfy.argument('tenant-name')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
+@cfy.options.get_data
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
-def get(tenant_name, logger, client):
+def get(tenant_name, get_data, logger, client):
     """Get details for a single tenant
 
     `TENANT_NAME` is the name of the tenant
     """
     logger.info('Getting info for tenant `{0}`...'.format(tenant_name))
-    tenant_details = client.tenants.get(tenant_name)
+    tenant_details = client.tenants.get(tenant_name, _get_data=get_data)
     print_data(TENANT_COLUMNS, tenant_details, 'Requested tenant info:')
 
 

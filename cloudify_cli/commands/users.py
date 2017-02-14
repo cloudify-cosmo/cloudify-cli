@@ -35,14 +35,19 @@ def users():
 @cfy.options.sort_by('username')
 @cfy.options.descending
 @cfy.options.verbose()
+@cfy.options.get_data
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, logger, client):
+def list(sort_by, descending, get_data, logger, client):
     """List all users
     """
     logger.info('Listing all users...')
-    users_list = client.users.list(sort=sort_by, is_descending=descending)
+    users_list = client.users.list(
+        sort=sort_by,
+        is_descending=descending,
+        _get_data=get_data
+    )
     print_data(USER_COLUMNS, users_list, 'Users:')
 
 
@@ -103,16 +108,17 @@ def set_role(username, security_role, logger, client):
                short_help='Get details for a single user [manager only]')
 @cfy.argument('username')
 @cfy.options.verbose()
+@cfy.options.get_data
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def get(username, logger, client):
+def get(username, get_data, logger, client):
     """Get details for a single user
 
     `USERNAME` is the username of the user
     """
     logger.info('Getting info for user `{0}`...'.format(username))
-    user_details = client.users.get(username)
+    user_details = client.users.get(username, _get_data=get_data)
     print_data(USER_COLUMNS, user_details, 'Requested user info:')
 
 

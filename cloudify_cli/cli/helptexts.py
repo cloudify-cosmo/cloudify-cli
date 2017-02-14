@@ -224,3 +224,8 @@ LDAP_DOMAIN = 'The LDAP domain to be used by the server'
 LDAP_IS_ACTIVE_DIRECTORY = 'Specify whether the LDAP used for authentication' \
                            ' is Active-Directory.'
 LDAP_DN_EXTRA = 'Extra LDAP DN options.'
+
+GET_DATA = 'When set to True, displays the full list of connected resources ' \
+           '(users/tenants/user-groups), for each listed resource. When set ' \
+           'to False displays the total number of connected resources. ' \
+           '(default:False)'
