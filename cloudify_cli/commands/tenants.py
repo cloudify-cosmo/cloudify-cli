@@ -54,7 +54,7 @@ def list(sort_by, descending, get_data, logger, client):
 
 @tenants.command(name='create',
                  short_help='Create a tenant [manager only]')
-@cfy.argument('tenant-name')
+@cfy.argument('tenant-name', callback=cfy.validate_name)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=False)
@@ -70,7 +70,7 @@ def create(tenant_name, logger, client):
 
 @tenants.command(name='add-user',
                  short_help='Add a user to a tenant [manager only]')
-@cfy.argument('username')
+@cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.tenant_name(show_default_in_help=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -91,7 +91,7 @@ def add_user(username, tenant_name, logger, client):
 
 @tenants.command(name='remove-user',
                  short_help='Remove a user from a tenant [manager only]')
-@cfy.argument('username')
+@cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.tenant_name(show_default_in_help=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -112,7 +112,7 @@ def remove_user(username, tenant_name, logger, client):
 
 @tenants.command(name='add-user-group',
                  short_help='Add a user group to a tenant [manager only]')
-@cfy.argument('user-group-name')
+@cfy.argument('user-group-name', callback=cfy.validate_name)
 @cfy.options.tenant_name(show_default_in_help=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -133,7 +133,7 @@ def add_group(user_group_name, tenant_name, logger, client):
 
 @tenants.command(name='remove-user-group',
                  short_help='Remove a user group from a tenant [manager only]')
-@cfy.argument('user-group-name')
+@cfy.argument('user-group-name', callback=cfy.validate_name)
 @cfy.options.tenant_name(show_default_in_help=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -154,7 +154,7 @@ def remove_group(user_group_name, tenant_name, logger, client):
 
 @tenants.command(name='get',
                  short_help='Get details for a single tenant [manager only]')
-@cfy.argument('tenant-name')
+@cfy.argument('tenant-name', callback=cfy.validate_name)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.options.get_data
@@ -172,7 +172,7 @@ def get(tenant_name, get_data, logger, client):
 
 @tenants.command(name='delete',
                  short_help='Delete a tenant [manager only]')
-@cfy.argument('tenant-name')
+@cfy.argument('tenant-name', callback=cfy.validate_name)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=False)

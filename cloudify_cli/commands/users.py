@@ -52,7 +52,7 @@ def list(sort_by, descending, get_data, logger, client):
 
 
 @users.command(name='create', short_help='Create a user [manager only]')
-@cfy.argument('username')
+@cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.verbose()
 @cfy.options.security_role
 @cfy.options.password
@@ -70,7 +70,7 @@ def create(username, security_role, password, logger, client):
 
 @users.command(name='set-password',
                short_help='Set a new password for a user [manager only]')
-@cfy.argument('username')
+@cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.password
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -88,7 +88,7 @@ def set_password(username, password, logger, client):
 
 @users.command(name='set-role',
                short_help='Set a new role for a user [manager only]')
-@cfy.argument('username')
+@cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.security_role
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -106,7 +106,7 @@ def set_role(username, security_role, logger, client):
 
 @users.command(name='get',
                short_help='Get details for a single user [manager only]')
-@cfy.argument('username')
+@cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.verbose()
 @cfy.options.get_data
 @cfy.assert_manager_active()
@@ -124,7 +124,7 @@ def get(username, get_data, logger, client):
 
 @users.command(name='delete',
                short_help='Delete a user [manager only]')
-@cfy.argument('username')
+@cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()

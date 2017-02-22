@@ -16,6 +16,7 @@
 from mock import MagicMock
 
 from .test_base import CliCommandTest
+from cloudify_cli.exceptions import CloudifyValidationError
 
 
 class UserGroupsTest(CliCommandTest):
@@ -63,3 +64,18 @@ class UserGroupsTest(CliCommandTest):
 
     def test_group_create(self):
         self.invoke('cfy user-groups create group1 -l ldap_dn')
+
+    def test_empty_user_group_name(self):
+        self.invoke(
+            'cfy user-groups create ""',
+            err_str_segment='ERROR: The `user_group_name` argument is empty',
+            exception=CloudifyValidationError
+        )
+
+    def test_illegal_characters_in_user_group_name(self):
+        self.invoke(
+            'cfy user-groups create "#&*"',
+            err_str_segment='ERROR: The `user_group_name` argument contains '
+                            'illegal characters',
+            exception=CloudifyValidationError
+        )
