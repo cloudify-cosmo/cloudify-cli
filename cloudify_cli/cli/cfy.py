@@ -111,21 +111,24 @@ def show_version(ctx, param, value):
     cli_version_data = env.get_version_data()
     rest_version_data = env.get_manager_version_data() \
         if env.is_manager_active() else None
+    output = ''
+    if rest_version_data:
+        edition = rest_version_data['edition'].title()
+        output += '{0} edition\n\n'.format(edition)
 
-    cli_version = _format_version_data(
+    output += _format_version_data(
         cli_version_data,
         prefix='Cloudify CLI ',
         infix=' ' * 5,
         suffix='\n')
-    rest_version = ''
     if rest_version_data:
-        rest_version = _format_version_data(
+        output += _format_version_data(
             rest_version_data,
             prefix='Cloudify Manager ',
             infix=' ',
             suffix=' [ip={ip}]\n'.format(**rest_version_data))
 
-    get_logger().info('{0}{1}'.format(cli_version, rest_version))
+    get_logger().info(output)
     ctx.exit()
 
 

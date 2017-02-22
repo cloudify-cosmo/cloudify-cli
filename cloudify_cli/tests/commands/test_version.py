@@ -8,7 +8,8 @@ def manager_data():
         'date': '', 'commit': '',
         'version': '3.4.0',
         'build': '85',
-        'ip': '10.10.1.10'
+        'ip': '10.10.1.10',
+        'edition': 'community'
     }
 
 
