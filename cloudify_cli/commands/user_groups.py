@@ -54,7 +54,7 @@ def list(sort_by, descending, get_data, logger, client):
 
 @user_groups.command(name='create',
                      short_help='Create a user group [manager only]')
-@cfy.argument('user-group-name')
+@cfy.argument('user-group-name', callback=cfy.validate_name)
 @cfy.options.ldap_distinguished_name
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -73,7 +73,7 @@ def create(user_group_name, ldap_distinguished_name, logger, client):
 @user_groups.command(name='get',
                      short_help='Get details for a single '
                                 'user group [manager only]')
-@cfy.argument('user-group-name')
+@cfy.argument('user-group-name', callback=cfy.validate_name)
 @cfy.options.verbose()
 @cfy.options.get_data
 @cfy.assert_manager_active()
@@ -94,7 +94,7 @@ def get(user_group_name, get_data, logger, client):
 
 @user_groups.command(name='add-user',
                      short_help='Add a user to a user group [manager only]')
-@cfy.argument('username')
+@cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.group_name
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -116,7 +116,7 @@ def add_user(username, group_name, logger, client):
 @user_groups.command(
     name='remove-user',
     short_help='Remove a user from a user group [manager only]')
-@cfy.argument('username')
+@cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.group_name
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -137,7 +137,7 @@ def remove_user(username, group_name, logger, client):
 
 @user_groups.command(name='delete',
                      short_help='Delete a user group [manager only]')
-@cfy.argument('user_group-name')
+@cfy.argument('user_group-name', callback=cfy.validate_name)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
