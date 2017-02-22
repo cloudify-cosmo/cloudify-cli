@@ -32,7 +32,6 @@ from .commands import status
 from .commands import cluster
 from .commands import install
 from .commands import plugins
-from .commands import recover
 from .commands import upgrade
 from .commands import tenants
 from .commands import teardown
@@ -79,7 +78,6 @@ def _register_commands():
     # Manager agnostic commands
     _cfy.add_command(init.init)
     _cfy.add_command(status.status)
-    _cfy.add_command(recover.recover)  # Recovers a manager. Doesn't require it
     _cfy.add_command(profiles.profiles)
     _cfy.add_command(bootstrap.bootstrap)
 
