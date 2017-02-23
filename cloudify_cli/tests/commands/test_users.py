@@ -47,9 +47,9 @@ class UsersTest(CliCommandTest):
         self.assertEqual(call_list, ('username', 'password', 'user'))
 
     def test_create_users_custom_role(self):
-        self.invoke('cfy users create username -p password -r suspended')
+        self.invoke('cfy users create username -p password -r admin')
         call_list = self.client.users.method_calls[0][1]
-        self.assertEqual(call_list, ('username', 'password', 'suspended'))
+        self.assertEqual(call_list, ('username', 'password', 'admin'))
 
     def test_create_users_invalid_role(self):
         outcome = self.invoke(

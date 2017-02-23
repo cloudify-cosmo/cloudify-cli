@@ -689,7 +689,7 @@ class Options(object):
             '-r',
             '--security-role',
             required=False,
-            type=click.Choice(['admin', 'user', 'suspended']),
+            type=click.Choice(['admin', 'user']),
             default='user',
             help=helptexts.SECURITY_ROLE)
 
