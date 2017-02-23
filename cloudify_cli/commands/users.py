@@ -17,6 +17,7 @@
 from .. import env
 from ..cli import cfy
 from ..table import print_data
+from ..utils import handle_client_error
 
 USER_COLUMNS = ['username', 'groups', 'role', 'tenants', 'active',
                 'last_login_at']
@@ -137,3 +138,41 @@ def delete(username, logger, client):
     logger.info('Deleting user `{0}`...'.format(username))
     client.users.delete(username)
     logger.info('User removed')
+
+
+@users.command(name='activate',
+               short_help='Make an inactive user active [manager only]')
+@cfy.argument('username')
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def activate(username, logger, client):
+    """Activate a user
+
+    `USERNAME` is the username of the user
+    """
+    graceful_msg = 'User `{0}` is already active'.format(username)
+    logger.info('Activating user `{0}`...'.format(username))
+    with handle_client_error(409, graceful_msg, logger):
+        client.users.activate(username)
+        logger.info('User activated')
+
+
+@users.command(name='deactivate',
+               short_help='Make an active user inactive [manager only]')
+@cfy.argument('username')
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def deactivate(username, logger, client):
+    """Deactivate a user
+
+    `USERNAME` is the username of the user
+    """
+    graceful_msg = 'User `{0}` is already inactive'.format(username)
+    logger.info('Deactivating user `{0}`...'.format(username))
+    with handle_client_error(409, graceful_msg, logger):
+        client.users.deactivate(username)
+        logger.info('User deactivated')
