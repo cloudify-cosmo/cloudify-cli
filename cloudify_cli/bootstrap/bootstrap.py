@@ -95,7 +95,7 @@ def tar_manager_deployment(manager_deployment_path=None):
     return file_obj
 
 
-# Temp workaround to allow teardown and recovery on different clients
+# Temp workaround to allow teardown on different clients
 # assumes deployment name is manager
 def dump_manager_deployment():
     archive_obj = tar_manager_deployment()
@@ -205,7 +205,7 @@ def _handle_provider_context(rest_client,
     manager_node_instance.runtime_properties['manager_provider_context'] = \
         provider_context
     # 'manager_deployment' is used when running 'cfy profiles use ...'
-    # and then calling teardown or recover. Anyway, this code will only live
+    # and then calling teardown. Anyway, this code will only live
     # until we implement the fuller feature of uploading manager blueprint
     # deployments to the manager.
     cloudify_configuration['manager_deployment'] = \
