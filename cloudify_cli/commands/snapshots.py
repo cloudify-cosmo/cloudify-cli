@@ -19,7 +19,7 @@ from .. import utils
 from ..cli import helptexts, cfy
 
 SNAPSHOT_COLUMNS = ['id', 'created_at', 'status', 'error', 'permission',
-                    'tenant_name']
+                    'tenant_name', 'created_by']
 
 
 @cfy.group(name='snapshots')

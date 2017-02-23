@@ -218,6 +218,7 @@ class DeploymentsTest(CliCommandTest):
             {
                 'blueprint_id': 'b1_blueprint',
                 'created_at': 'now',
+                'created_by': 'admin',
                 'updated_at': 'now',
                 'id': 'id',
                 'permission': 'creator',
@@ -226,6 +227,7 @@ class DeploymentsTest(CliCommandTest):
             {
                 'blueprint_id': 'b1_blueprint',
                 'created_at': 'now',
+                'created_by': 'admin',
                 'updated_at': 'now',
                 'id': 'id',
                 'permission': 'creator',
@@ -234,6 +236,7 @@ class DeploymentsTest(CliCommandTest):
             {
                 'blueprint_id': 'b2_blueprint',
                 'created_at': 'now',
+                'created_by': 'admin',
                 'updated_at': 'now',
                 'id': 'id',
                 'permission': 'creator',

@@ -25,7 +25,7 @@ from ..exceptions import CloudifyCliError
 
 PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
                   'supported_platform', 'distribution_release', 'uploaded_at',
-                  'permission', 'tenant_name']
+                  'permission', 'tenant_name', 'created_by']
 EXCLUDED_COLUMNS = ['archive_name', 'distribution_version', 'excluded_wheels',
                     'package_source', 'supported_py_versions', 'wheels']
 
