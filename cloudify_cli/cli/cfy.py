@@ -522,6 +522,10 @@ class Options(object):
             cls=MutuallyExclusiveOption,
             help=helptexts.SSH_KEY)
 
+        self.profile_name = click.option(
+            '--profile-name',
+            required=False)
+
         self.manager_username = click.option(
             '-u',
             '--manager-username',

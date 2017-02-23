@@ -296,3 +296,37 @@ class ProfilesTest(CliCommandTest):
         self.assertEquals('0', env.profile.manager_username)
         self.assertEquals('0', env.profile.manager_password)
         self.assertEquals('0', env.profile.manager_tenant)
+
+    def test_cannot_set_name_local(self):
+        self.use_manager()
+        self.invoke('profiles set --profile-name local '
+                    '--skip-credentials-validation',
+                    err_str_segment='reserved')
+
+    def test_cannot_set_taken_name(self):
+        self.use_manager()
+        self.invoke('profiles set --profile-name a '
+                    '--skip-credentials-validation')
+
+        self.use_manager()
+        self.invoke('profiles set --profile-name a '
+                    '--skip-credentials-validation',
+                    err_str_segment='already exists')
+
+    def test_set_assigns_profile_name(self):
+        self.invoke('profiles set --profile-name some-profile '
+                    '--skip-credentials-validation')
+        self.assertEquals('some-profile', env.profile.profile_name)
+
+    def test_profile_name_defaults_to_ip(self):
+        p = env.ProfileContext()
+        p.manager_ip = '1.2.3.4'
+        self.assertEquals('1.2.3.4', p.profile_name)
+
+        # pyyaml creates the object like that - skipping __init__; check that
+        # this doesn't break to allow correct handling pre-profile_name
+        # profiles
+        p = env.ProfileContext.__new__(env.ProfileContext)
+        self.assertIs(None, p.profile_name)
+        p.manager_ip = '1.2.3.4'
+        self.assertEquals('1.2.3.4', p.profile_name)

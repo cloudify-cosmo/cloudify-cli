@@ -34,9 +34,9 @@ from ..exceptions import CloudifyCliError
 
 EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
 EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
-PROFILE_COLUMNS = ['manager_ip', 'ssh_user', 'ssh_key_path', 'ssh_port',
-                   'rest_port', 'rest_protocol', 'manager_username',
-                   'manager_tenant', 'bootstrap_state']
+PROFILE_COLUMNS = ['name', 'manager_ip', 'ssh_user', 'ssh_key_path',
+                   'ssh_port', 'rest_port', 'rest_protocol',
+                   'manager_username', 'manager_tenant', 'bootstrap_state']
 
 
 @cfy.group(name='profiles')
@@ -105,6 +105,7 @@ def list(logger):
 @profiles.command(name='use',
                   short_help='Control a specific manager')
 @cfy.argument('profile-name')
+@cfy.options.manager_ip
 @cfy.options.ssh_user
 @cfy.options.ssh_key
 @cfy.options.ssh_port
@@ -115,6 +116,7 @@ def list(logger):
 @cfy.options.verbose()
 @cfy.pass_logger
 def use(profile_name,
+        manager_ip,
         ssh_user,
         ssh_key,
         ssh_port,
@@ -148,6 +150,7 @@ def use(profile_name,
     # the manager's profile directory won't be created
     provider_context = _get_provider_context(
         profile_name,
+        manager_ip,
         rest_port,
         rest_protocol,
         manager_username,
@@ -166,6 +169,7 @@ def use(profile_name,
     _set_profile_context(
         profile_name,
         provider_context,
+        manager_ip,
         ssh_key,
         ssh_user,
         ssh_port,
@@ -217,24 +221,27 @@ def delete(profile_name, logger):
 
 @profiles.command(
     name='set',
-    short_help='Set manager username/password/tenant in current profile')
+    short_help='Set name/manager username/password/tenant in current profile')
+@cfy.options.profile_name
 @cfy.options.manager_username
 @cfy.options.manager_password
 @cfy.options.manager_tenant
 @cfy.options.skip_credentials_validation
 @cfy.options.verbose()
 @cfy.pass_logger
-def set(manager_username,
+def set(profile_name,
+        manager_username,
         manager_password,
         manager_tenant,
         skip_credentials_validation,
         logger):
-    """Set the manager username and/or password and/or tenant
+    """Set the profile name, manager username and/or password and/or tenant
     in the *current* profile
     """
-    if not (manager_username or manager_password or manager_tenant):
+    if not any([profile_name, manager_username,
+                manager_password, manager_tenant]):
         raise CloudifyCliError("You must supply at least one of the following:"
-                               "  username, password, tenant")
+                               "  profile name, username, password, tenant")
     username = manager_username or env.get_username()
     password = manager_password or env.get_password()
     tenant = manager_tenant or env.get_tenant_name()
@@ -242,6 +249,16 @@ def set(manager_username,
     if not skip_credentials_validation:
         _validate_credentials(username, password, tenant)
 
+    old_name = None
+    if profile_name:
+        if profile_name == 'local':
+            raise CloudifyCliError('Cannot use the reserved name "local"')
+        if env.is_profile_exists(profile_name):
+            raise CloudifyCliError('Profile {0} already exists'
+                                   .format(profile_name))
+        old_name = env.profile.profile_name
+        env.profile.profile_name = profile_name
+        env.set_active_profile(profile_name)
     if manager_username:
         logger.info('Setting username to `{0}`'.format(manager_username))
         env.profile.manager_username = manager_username
@@ -253,6 +270,8 @@ def set(manager_username,
         env.profile.manager_tenant = manager_tenant
 
     env.profile.save()
+    if old_name is not None:
+        env.delete_profile(old_name)
     logger.info('Settings saved successfully')
 
 
@@ -465,6 +484,7 @@ def _assert_manager_available(client, profile_name):
 
 
 def _get_provider_context(profile_name,
+                          manager_ip,
                           rest_port,
                           rest_protocol,
                           manager_username,
@@ -473,6 +493,7 @@ def _get_provider_context(profile_name,
 
     client = _get_client_and_assert_manager(
         profile_name,
+        manager_ip,
         rest_port,
         rest_protocol,
         manager_username,
@@ -487,6 +508,7 @@ def _get_provider_context(profile_name,
 
 
 def _get_client_and_assert_manager(profile_name,
+                                   manager_ip=None,
                                    rest_port=None,
                                    rest_protocol=None,
                                    manager_username=None,
@@ -498,7 +520,7 @@ def _get_client_and_assert_manager(profile_name,
     env.profile = env.get_profile_context(profile_name, suppress_error=True)
 
     client = env.get_rest_client(
-        rest_host=profile_name,
+        rest_host=manager_ip,
         rest_port=rest_port,
         rest_protocol=rest_protocol,
         skip_version_check=True,
@@ -513,6 +535,7 @@ def _get_client_and_assert_manager(profile_name,
 
 def _set_profile_context(profile_name,
                          provider_context,
+                         manager_ip,
                          ssh_key,
                          ssh_user,
                          ssh_port,
@@ -523,6 +546,8 @@ def _set_profile_context(profile_name,
                          rest_protocol):
     profile = env.get_profile_context(profile_name)
     profile.provider_context = provider_context
+    if manager_ip:
+        profile.manager_ip = manager_ip
     if ssh_key:
         profile.ssh_key = ssh_key
     if ssh_user:
@@ -547,7 +572,7 @@ def _set_profile_context(profile_name,
 def _validate_credentials(username, password, tenant, logger):
     logger.info('Validating credentials...')
     _get_client_and_assert_manager(
-        profile_name=env.profile.manager_ip,
+        profile_name=env.profile.profile_name,
         manager_username=username,
         manager_password=password,
         manager_tenant=tenant

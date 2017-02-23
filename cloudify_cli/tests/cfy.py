@@ -36,6 +36,7 @@ runner_lgr = setup_logger('cli_runner')
 
 
 default_manager_params = dict(
+    name='10.10.1.10',
     manager_ip='10.10.1.10',
     ssh_key_path='key',
     ssh_user='test',
