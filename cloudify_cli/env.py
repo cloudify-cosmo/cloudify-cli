@@ -362,7 +362,8 @@ class ProfileContext(yaml.YAMLObject):
         # When adding a new ProfileContext attribute, make sure that
         # all methods handle the case when the attribute is missing
         self.bootstrap_state = 'Incomplete'
-        self.manager_ip = profile_name
+        self._profile_name = profile_name
+        self.manager_ip = None
         self.ssh_key = None
         self._ssh_port = None
         self.ssh_user = None
@@ -376,6 +377,7 @@ class ProfileContext(yaml.YAMLObject):
 
     def to_dict(self):
         return dict(
+            name=self.profile_name,
             bootstrap_state=self.bootstrap_state,
             manager_ip=self.manager_ip,
             ssh_key_path=self.ssh_key,
@@ -401,6 +403,15 @@ class ProfileContext(yaml.YAMLObject):
         self._ssh_port = ssh_port
 
     @property
+    def profile_name(self):
+        return getattr(self, '_profile_name', None) \
+            or getattr(self, 'manager_ip', None)
+
+    @profile_name.setter
+    def profile_name(self, profile_name):
+        self._profile_name = profile_name
+
+    @property
     def cluster(self):
         # default the .cluster attribute here, so that all callers can use it
         # as just .cluster, even if it's not present in the source yaml
@@ -411,17 +422,17 @@ class ProfileContext(yaml.YAMLObject):
         self._cluster = cluster
 
     def _get_context_path(self):
-        init_path = get_profile_dir(self.manager_ip)
+        init_path = get_profile_dir(self.profile_name)
         context_path = os.path.join(
             init_path,
             constants.CLOUDIFY_PROFILE_CONTEXT_FILE_NAME)
         return context_path
 
     def save(self, destination=None):
-        if not self.manager_ip:
-            raise CloudifyCliError('No Manager IP set')
+        if not self.profile_name:
+            raise CloudifyCliError('No profile name or Manager IP set')
 
-        workdir = destination or os.path.join(PROFILES_DIR, self.manager_ip)
+        workdir = destination or os.path.join(PROFILES_DIR, self.profile_name)
         # Create a new file
         if not os.path.exists(workdir):
             os.makedirs(workdir)

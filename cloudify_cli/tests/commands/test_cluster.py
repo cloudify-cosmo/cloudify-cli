@@ -186,7 +186,8 @@ class ClusterJoinTest(CliCommandTest):
         super(ClusterJoinTest, self).setUp()
         self.use_manager()
 
-        self.master_profile = env.ProfileContext('master_profile')
+        self.master_profile = env.ProfileContext()
+        self.master_profile.manager_ip = 'master_profile'
         self.master_profile.cluster = [{'manager_ip': '1.2.3.4'}]
         self.master_profile.save()
 
