@@ -37,7 +37,7 @@ from ..exceptions import CloudifyCliError
 
 DESCRIPTION_LIMIT = 20
 BLUEPRINT_COLUMNS = ['id', 'description', 'main_file_name', 'created_at',
-                     'updated_at', 'permission', 'tenant_name']
+                     'updated_at', 'permission', 'tenant_name', 'created_by']
 INPUTS_COLUMNS = ['name', 'type', 'default', 'description']
 
 

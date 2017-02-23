@@ -34,7 +34,8 @@ _STATUS_CANCELING_MESSAGE = (
     'may take a while to change into "cancelled"')
 
 EXECUTION_COLUMNS = ['id', 'workflow_id', 'status', 'deployment_id',
-                     'created_at', 'error', 'permission', 'tenant_name']
+                     'created_at', 'error', 'permission', 'tenant_name',
+                     'created_by']
 
 
 @cfy.group(name='executions')

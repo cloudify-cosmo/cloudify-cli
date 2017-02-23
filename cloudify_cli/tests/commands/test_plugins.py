@@ -34,6 +34,7 @@ class PluginsTest(CliCommandTest):
                                          'distribution': 'ubuntu',
                                          'uploaded_at': 'now',
                                          'permission': 'creator',
+                                         'created_by': 'admin',
                                          'tenant_name': DEFAULT_TENANT_NAME}))
 
         self.invoke('cfy plugins get some_id')

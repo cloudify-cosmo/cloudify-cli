@@ -24,7 +24,7 @@ from ..exceptions import CloudifyCliError
 
 NODE_COLUMNS = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                 'number_of_instances', 'planned_number_of_instances',
-                'permission', 'tenant_name']
+                'permission', 'tenant_name', 'created_by']
 
 
 @cfy.group(name='nodes')

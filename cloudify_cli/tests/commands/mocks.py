@@ -62,6 +62,7 @@ def execution_mock(status, wf_id='mock_wf'):
         'created_at': datetime.now().isoformat()[:-3],
         'parameters': {},
         'permission': 'creator',
+        'created_by': 'admin',
         'tenant_name': DEFAULT_TENANT_NAME
     })
 
@@ -150,6 +151,7 @@ def node_instance_get_mock():
             'floating_ip': '127.0.0.1'
         },
         'permission': 'creator',
+        'created_by': 'admin',
         'tenant_name': DEFAULT_TENANT_NAME
     })
 
@@ -167,6 +169,7 @@ def node_get_mock():
             'port': '8080'
         },
         'permission': 'creator',
+        'created_by': 'admin',
         'tenant_name': DEFAULT_TENANT_NAME
     })
 

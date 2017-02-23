@@ -32,7 +32,7 @@ from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 
 
 DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
-                      'permission', 'tenant_name']
+                      'permission', 'tenant_name', 'created_by']
 TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
 
 

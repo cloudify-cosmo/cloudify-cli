@@ -26,7 +26,7 @@ from ..exceptions import CloudifyCliError
 
 
 NODE_INSTANCE_COLUMNS = ['id', 'deployment_id', 'host_id', 'node_id', 'state',
-                         'permission', 'tenant_name']
+                         'permission', 'tenant_name', 'created_by']
 
 
 @cfy.group(name='node-instances')
