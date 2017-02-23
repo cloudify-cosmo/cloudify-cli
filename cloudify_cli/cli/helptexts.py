@@ -134,8 +134,6 @@ FORCE_DELETE_PLUGIN = (
     "using it"
 )
 
-FORCE_RECOVER = "This is mandatory for performing the recovery"
-
 FORCE_TEARDOWN = "This is mandatory for performing the teardown"
 
 IGNORE_DEPLOYMENTS = \

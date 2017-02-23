@@ -16,7 +16,6 @@
 
 
 import os
-import time
 import copy
 import shutil
 import base64
@@ -96,7 +95,7 @@ def tar_manager_deployment(manager_deployment_path=None):
     return file_obj
 
 
-# Temp workaround to allow teardown and recovery on different clients
+# Temp workaround to allow teardown on different clients
 # assumes deployment name is manager
 def dump_manager_deployment():
     archive_obj = tar_manager_deployment()
@@ -206,7 +205,7 @@ def _handle_provider_context(rest_client,
     manager_node_instance.runtime_properties['manager_provider_context'] = \
         provider_context
     # 'manager_deployment' is used when running 'cfy profiles use ...'
-    # and then calling teardown or recover. Anyway, this code will only live
+    # and then calling teardown. Anyway, this code will only live
     # until we implement the fuller feature of uploading manager blueprint
     # deployments to the manager.
     cloudify_configuration['manager_deployment'] = \
@@ -372,85 +371,6 @@ def teardown(name='manager',
 
     # deleting local environment data
     shutil.rmtree(_workdir())
-
-
-def recover(snapshot_path,
-            name='manager',
-            task_retries=5,
-            task_retry_interval=30,
-            task_thread_pool_size=1):
-    working_env = load_env(name)
-    with working_env.storage.payload() as payload:
-        manager_node_instance_id = payload['manager_node_instance_id']
-
-    working_env.execute('heal',
-                        parameters={
-                            'node_instance_id':
-                                manager_node_instance_id},
-                        task_retries=task_retries,
-                        task_retry_interval=task_retry_interval,
-                        task_thread_pool_size=task_thread_pool_size)
-
-    manager_ip = working_env.outputs()['manager_ip']
-    manager_node = working_env.storage.get_node('manager_configuration')
-    manager_node_instance = working_env.storage.get_node_instance(
-        manager_node_instance_id)
-    ssh_user = manager_node.properties['ssh_user']
-    ssh_port = manager_node.properties['ssh_port']
-    ssh_key_path = manager_node.properties['ssh_key_filename']
-
-    fabric_env = build_fabric_env(manager_ip,
-                                  ssh_user,
-                                  ssh_port,
-                                  ssh_key_path)
-
-    agent_remote_key_path = _handle_agent_key_file(fabric_env,
-                                                   manager_node)
-
-    logger = get_logger()
-    client = env.get_rest_client(manager_ip)
-    _handle_provider_context(
-        rest_client=client,
-        remote_agents_private_key_path=agent_remote_key_path,
-        manager_node=manager_node,
-        manager_node_instance=manager_node_instance)
-    snapshot_id = 'restored-snapshot'
-    logger.info("Uploading snapshot '{0}' to "
-                "management server {1} as {2}"
-                .format(snapshot_path.name, manager_ip, snapshot_id))
-    client.snapshots.upload(snapshot_path.name, snapshot_id)
-
-    logger.info("Restoring snapshot '{0}'..."
-                .format(snapshot_id))
-    execution = client.snapshots.restore(snapshot_id, True)
-
-    # waiting for snapshot restoration
-    attempts = 5
-    start_time = time.time()
-    wait_time = 60 * 1
-    while client.executions.get(
-            execution.id).status not in execution.END_STATES:
-        if time.time() > start_time + wait_time:
-            if attempts == 0:
-                raise RuntimeError('Failed to restore snapshot '
-                                   'after {0} attempts'.format(attempts))
-            attempts -= 1
-            start_time = time.time()
-            wait_time *= 2
-            logger.info('Waiting {0} seconds for '
-                        'snapshot restoration'.format(wait_time))
-        time.sleep(5)
-    execution = client.executions.get(execution.id)
-    if execution.status == execution.FAILED:
-        raise RuntimeError('Failed to restore '
-                           'snapshot {0}'.format(snapshot_id))
-    elif execution.status == execution.TERMINATED:
-        logger.info('Successfully restored snapshot {0}'.format(snapshot_id))
-    else:
-        raise RuntimeError('Failed to restore snapshot {0}, '
-                           'Unexpected snapshot status: {1}'
-                           .format(snapshot_id, execution.status))
-    client.snapshots.delete(snapshot_id)
 
 
 def build_fabric_env(manager_ip, ssh_user, ssh_port, ssh_key_path):
