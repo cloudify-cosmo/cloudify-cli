@@ -88,7 +88,7 @@ def list(logger):
         profile_data = _get_profile(profile)
         if profile == current_profile:
             # Show the currently active profile by appending *
-            profile_data['manager_ip'] = '*' + profile_data['manager_ip']
+            profile_data['name'] = '*' + profile_data['name']
         profiles.append(profile_data)
 
     if profiles:
@@ -104,8 +104,8 @@ def list(logger):
 
 @profiles.command(name='use',
                   short_help='Control a specific manager')
-@cfy.argument('profile-name')
-@cfy.options.manager_ip
+@cfy.argument('manager-ip')
+@cfy.options.profile_name
 @cfy.options.ssh_user
 @cfy.options.ssh_key
 @cfy.options.ssh_port
@@ -115,14 +115,14 @@ def list(logger):
 @cfy.options.rest_port
 @cfy.options.verbose()
 @cfy.pass_logger
-def use(profile_name,
-        manager_ip,
+def use(manager_ip,
         ssh_user,
         ssh_key,
         ssh_port,
         manager_username,
         manager_password,
         manager_tenant,
+        profile_name,
         rest_port,
         logger):
     """Control a specific manager
@@ -132,6 +132,8 @@ def use(profile_name,
     Additional CLI commands will be added after a manager is used.
     To stop using a manager, you can run `cfy init -r`.
     """
+    if not profile_name:
+        profile_name = manager_ip
     if profile_name == 'local':
         logger.info('Using local environment...')
         if not env.is_profile_exists(profile_name):
@@ -139,7 +141,7 @@ def use(profile_name,
         env.set_active_profile('local')
         return
 
-    logger.info('Attempting to connect...'.format(profile_name))
+    logger.info('Attempting to connect...'.format(manager_ip))
     # determine SSL mode by port
     if rest_port == constants.SECURED_REST_PORT:
         rest_protocol = constants.SECURED_REST_PROTOCOL
@@ -157,14 +159,13 @@ def use(profile_name,
         manager_password,
         manager_tenant
     )
-
     if not env.is_profile_exists(profile_name):
         init.init_manager_profile(profile_name=profile_name)
 
     env.set_active_profile(profile_name)
 
     logger.info('Using manager {0} with port {1}'.format(
-        profile_name, rest_port))
+        manager_ip, rest_port))
 
     _set_profile_context(
         profile_name,
@@ -248,7 +249,6 @@ def set(profile_name,
 
     if not skip_credentials_validation:
         _validate_credentials(username, password, tenant)
-
     old_name = None
     if profile_name:
         if profile_name == 'local':
@@ -544,8 +544,11 @@ def _set_profile_context(profile_name,
                          manager_tenant,
                          rest_port,
                          rest_protocol):
+
     profile = env.get_profile_context(profile_name)
     profile.provider_context = provider_context
+    if profile_name:
+        profile.profile_name = profile_name
     if manager_ip:
         profile.manager_ip = manager_ip
     if ssh_key:

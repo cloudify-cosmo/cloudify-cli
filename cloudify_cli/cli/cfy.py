@@ -168,6 +168,13 @@ def validate_name(ctx, param, value):
     return value
 
 
+def validate_profile_name(ctx, param, value):
+    if value and '.' in value:
+        raise CloudifyValidationError('ERROR: `{0}` must not contain dots'
+                                      .format(param.name))
+    return value
+
+
 def set_verbosity_level(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
@@ -524,7 +531,9 @@ class Options(object):
 
         self.profile_name = click.option(
             '--profile-name',
-            required=False)
+            required=False,
+            callback=validate_profile_name,
+            help=helptexts.PROFILE_NAME)
 
         self.manager_username = click.option(
             '-u',
