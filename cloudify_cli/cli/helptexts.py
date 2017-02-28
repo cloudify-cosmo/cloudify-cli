@@ -227,3 +227,4 @@ GET_DATA = 'When set to True, displays the full list of connected resources ' \
            '(users/tenants/user-groups), for each listed resource. When set ' \
            'to False displays the total number of connected resources. ' \
            '(default:False)'
+PROFILE_NAME = 'Name of the profile to use'

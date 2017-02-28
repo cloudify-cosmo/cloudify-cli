@@ -9,6 +9,7 @@ from mock import MagicMock, patch
 from .. import cfy
 from ... import env
 from ... import utils
+from ... import exceptions
 from ...commands import profiles
 from .test_base import CliCommandTest
 
@@ -330,3 +331,27 @@ class ProfilesTest(CliCommandTest):
         self.assertIs(None, p.profile_name)
         p.manager_ip = '1.2.3.4'
         self.assertEquals('1.2.3.4', p.profile_name)
+
+    def test_use_defaults_ip_to_profile_name(self):
+        with patch('cloudify_cli.commands.profiles._get_provider_context',
+                   return_value={}):
+            outcome = self.invoke('profiles use 1.2.3.4')
+        self.assertIn('Using manager 1.2.3.4', outcome.logs)
+        added_profile = env.get_profile_context('1.2.3.4')
+        self.assertEqual('1.2.3.4', added_profile.profile_name)
+        self.assertEqual('1.2.3.4', added_profile.manager_ip)
+
+    def test_use_sets_provided_manager_ip(self):
+        with patch('cloudify_cli.commands.profiles._get_provider_context',
+                   return_value={}):
+            outcome = self.invoke('profiles use 1.2.3.4 '
+                                  '--profile-name hello')
+        self.assertIn('Using manager 1.2.3.4', outcome.logs)
+        added_profile = env.get_profile_context('hello')
+        self.assertEqual('1.2.3.4', added_profile.manager_ip)
+        self.assertEqual('hello', added_profile.profile_name)
+
+    def test_cant_use_profile_name_with_dots(self):
+        self.invoke('profiles use 1.2.3.4 --profile-name 5.6.7.8',
+                    err_str_segment='must not contain dots',
+                    exception=exceptions.CloudifyValidationError)
