@@ -197,8 +197,7 @@ def join(client,
                             '[cluster only')
 @cfy.pass_client()
 @cfy.pass_logger
-def update_profile(client,
-                   logger):
+def update_profile(client, logger):
     """Fetch the list of the cluster nodes and update the current profile.
 
     Use this to update the profile if nodes are added to the cluster from
@@ -219,6 +218,33 @@ def update_profile(client,
     env.profile.save()
     logger.info('Profile is up to date with {0} nodes'
                 .format(len(env.profile.cluster)))
+
+
+@cluster.command(name='set-active',
+                 short_help='Set one of the cluster nodes as the new active '
+                            '[cluster only]')
+@cfy.argument('node_name')
+@cfy.pass_client()
+@cfy.pass_logger
+def set_active(client, logger, node_name):
+    nodes = client.cluster.nodes.list()
+    for node in nodes:
+        if node['name'] != node_name:
+            continue
+        if not node['online']:
+            raise CloudifyCliError("Can't set node {0} as the active, "
+                                   "it's offline".format(node_name))
+        if node['master']:
+            raise CloudifyCliError('{0} is already the current active node!'
+                                   .format(node_name))
+        break
+    else:
+        raise CloudifyCliError("Can't set node {0} as the active, "
+                               "it's not a member of the cluster"
+                               .format(node_name))
+
+    client.cluster.update(master=node_name)
+    logger.info('{0} set as the new active node'.format(node_name))
 
 
 @cluster.group(name='nodes')
