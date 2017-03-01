@@ -546,6 +546,8 @@ def _get_resource_into_dir(destination_dir, resource_source_path, retries,
                     .format(resource_source_path, temp_file_path))
         shutil.copyfile(resource_source_path, temp_file_path)
         logger.info('Done copying')
+
+        return temp_file_path
     else:
         logger.info('Downloading from {0} to {1}'
                     .format(resource_source_path, temp_file_path))
