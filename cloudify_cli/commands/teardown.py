@@ -94,7 +94,7 @@ def _update_local_provider_context(ctx, manager_ip, logger):
     try:
         ctx.invoke(
             use,
-            profile_name=manager_ip,
+            manager_ip=manager_ip,
             rest_port=env.profile.rest_port,
         )
     except BaseException as e:
@@ -105,7 +105,7 @@ def _update_local_provider_context(ctx, manager_ip, logger):
 
 
 def _get_number_of_deployments(manager_ip):
-    client = env.get_rest_client(manager_ip)
+    client = env.get_rest_client(rest_host=manager_ip)
     try:
         return len(client.deployments.list())
     except CloudifyClientError:
