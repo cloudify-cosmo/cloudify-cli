@@ -45,7 +45,7 @@ setup(
         'click==4.0',
         'wagon==0.3.2',
         'pyyaml==3.10',
-        'fabric==1.8.3',
+        'fabric==1.13.1',
         'jinja2==2.7.2',
         'retrying==1.3.3',
         'colorama==0.3.3',
