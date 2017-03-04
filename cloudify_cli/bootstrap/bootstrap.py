@@ -168,7 +168,6 @@ def bootstrap_validation(blueprint_path,
 
 
 def _perform_sanity(env,
-                    manager_ip,
                     fabric_env,
                     task_retries=5,
                     task_retry_interval=30,
@@ -181,7 +180,6 @@ def _perform_sanity(env,
                             'allow_kwargs_override': 'true',
                             'operation_kwargs':
                                 {'run_sanity': 'true',
-                                 'manager_ip': manager_ip,
                                  'fabric_env': fabric_env}},
                 allow_custom_parameters=True,
                 task_retries=task_retries,
@@ -318,7 +316,6 @@ def bootstrap(blueprint_path,
                           task_retries, task_retry_interval)
 
         _perform_sanity(env=env,
-                        manager_ip=manager_ip,
                         fabric_env=fabric_env,
                         task_retries=task_retries,
                         task_retry_interval=task_retry_interval,
