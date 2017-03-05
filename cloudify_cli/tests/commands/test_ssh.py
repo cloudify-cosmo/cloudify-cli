@@ -24,29 +24,29 @@ class SshTest(CliCommandTest):
         )
         ssh.profile = profile
         self.invoke('cfy ssh',
-                    'Manager User is not set '
-                    'in working directory settings')
+                    'Manager `ssh_user` is not set '
+                    'in Cloudify CLI settings')
 
     def test_ssh_with_no_key(self):
         profile = self.use_manager(ssh_key_path=None)
         ssh.profile = profile
         self.invoke('cfy ssh',
-                    'Manager Key is not set '
-                    'in working directory settings')
+                    'Manager `ssh_key` is not set '
+                    'in Cloudify CLI settings')
 
     def test_ssh_with_no_port(self):
         profile = self.use_manager(ssh_port=None)
         ssh.profile = profile
         self.invoke('cfy ssh',
-                    'Manager Port is not set '
-                    'in working directory settings')
+                    'Manager `ssh_port` is not set '
+                    'in Cloudify CLI settings')
 
     def test_ssh_with_no_user(self):
         profile = self.use_manager(ssh_user=None)
         ssh.profile = profile
         self.invoke('cfy ssh',
-                    'Manager User is not set '
-                    'in working directory settings')
+                    'Manager `ssh_user` is not set '
+                    'in Cloudify CLI settings')
 
     def test_ssh_without_ssh_windows(self):
         platform.system = lambda: 'Windows'

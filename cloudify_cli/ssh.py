@@ -102,19 +102,19 @@ def run_command_on_manager(command,
 
 
 def test_profile():
-    msg = 'Manager {0} is not set in working directory settings'
+    msg = 'Manager `ssh_{0}` is not set in Cloudify CLI settings'
     missing_config = False
     missing_part = ''
 
     if not profile.ssh_user:
         missing_config = True
-        missing_part = 'User'
+        missing_part = 'user'
     elif not profile.ssh_key:
         missing_config = True
-        missing_part = 'Key'
+        missing_part = 'key'
     elif not profile.ssh_port:
         missing_config = True
-        missing_part = 'Port'
+        missing_part = 'port'
 
     if missing_config:
         raise CloudifyCliError(msg.format(missing_part))

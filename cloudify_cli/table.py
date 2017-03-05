@@ -47,6 +47,8 @@ def generate(cols, data, defaults=None):
                    deploymentId value for all rows to '123'.
 
     """
+    defaults = defaults or {}
+
     def get_values_per_column(column, row_data):
         if column in row_data:
             if row_data[column] and isinstance(row_data[column], basestring):
@@ -66,7 +68,7 @@ def generate(cols, data, defaults=None):
                 row_data[column] = ''
             return row_data[column]
         else:
-            return defaults[column]
+            return defaults.get(column)
 
     pt = PrettyTable([col for col in cols])
 
