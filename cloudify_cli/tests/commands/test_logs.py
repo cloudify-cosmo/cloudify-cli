@@ -8,29 +8,29 @@ class LogsTest(CliCommandTest):
             ssh_user=None, ssh_port=None, ssh_key_path=None)
         ssh.profile = profile
         self.invoke('cfy logs download',
-                    'Manager User is not set '
-                    'in working directory settings')
+                    'Manager `ssh_user` is not set '
+                    'in Cloudify CLI settings')
 
     def test_with_no_key(self):
         profile = self.use_manager(ssh_key_path=None)
         ssh.profile = profile
         self.invoke('cfy logs download',
-                    'Manager Key is not set '
-                    'in working directory settings')
+                    'Manager `ssh_key` is not set '
+                    'in Cloudify CLI settings')
 
     def test_with_no_user(self):
         profile = self.use_manager(ssh_user=None)
         ssh.profile = profile
         self.invoke('cfy logs download',
-                    'Manager User is not set '
-                    'in working directory settings')
+                    'Manager `ssh_user` is not set '
+                    'in Cloudify CLI settings')
 
     def test_with_no_port(self):
         profile = self.use_manager(ssh_port=None)
         ssh.profile = profile
         self.invoke('cfy logs download',
-                    'Manager Port is not set '
-                    'in working directory settings')
+                    'Manager `ssh_port` is not set '
+                    'in Cloudify CLI settings')
 
     def test_purge_no_force(self):
         profile = self.use_manager()
