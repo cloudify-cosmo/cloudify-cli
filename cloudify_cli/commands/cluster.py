@@ -290,7 +290,8 @@ def remove_node(client, logger, cluster_node_name):
     env.profile.cluster = [node for node in env.profile.cluster
                            if node['manager_ip'] != removed_ip]
     env.profile.save()
-    logger.info('Node {0} was removed successfully!')
+    logger.info('Node {0} was removed successfully!'
+                .format(cluster_node_name))
 
 
 def _join_node_to_profile(from_profile, joined_profile=None):
