@@ -168,6 +168,16 @@ def validate_name(ctx, param, value):
     return value
 
 
+def validate_password(ctx, param, value):
+    if value is None or ctx.resilient_parsing:
+        return
+
+    if not value:
+        raise CloudifyValidationError('ERROR: The password is empty')
+
+    return value
+
+
 def set_verbosity_level(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
@@ -547,7 +557,8 @@ class Options(object):
             '-p',
             '--manager-password',
             required=False,
-            help=helptexts.MANAGER_PASSWORD)
+            help=helptexts.MANAGER_PASSWORD,
+            callback=validate_password)
 
         self.manager_password_flag = click.option(
             '-p',
@@ -702,7 +713,8 @@ class Options(object):
             '-p',
             '--password',
             required=True,
-            help=helptexts.PASSWORD)
+            help=helptexts.PASSWORD,
+            callback=validate_password)
 
         self.skip_credentials_validation = click.option(
             '--skip-credentials-validation',

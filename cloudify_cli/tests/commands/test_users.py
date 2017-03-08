@@ -64,15 +64,22 @@ class UsersTest(CliCommandTest):
 
     def test_empty_username(self):
         self.invoke(
-            'cfy users create "" -p ""',
+            'cfy users create "" -p password',
             err_str_segment='ERROR: The `username` argument is empty',
             exception=CloudifyValidationError
         )
 
     def test_illegal_characters_in_username(self):
         self.invoke(
-            'cfy users create "#&*" -p ""',
+            'cfy users create "#&*" -p password',
             err_str_segment='ERROR: The `username` argument contains '
                             'illegal characters',
+            exception=CloudifyValidationError
+        )
+
+    def test_empty_password(self):
+        self.invoke(
+            'cfy users create user -p ""',
+            err_str_segment='ERROR: The password is empty',
             exception=CloudifyValidationError
         )
