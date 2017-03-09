@@ -286,7 +286,7 @@ def list_nodes(client, logger):
                short_help='Remove a node from the cluster [cluster only]')
 @pass_cluster_client()
 @cfy.pass_logger
-@cfy.options.cluster_node_name
+@cfy.argument('cluster-node-name')
 def remove_node(client, logger, cluster_node_name):
     """Unregister a node from the cluster.
 
@@ -298,8 +298,8 @@ def remove_node(client, logger, cluster_node_name):
                      for node in client.cluster.nodes.list()}
 
     if cluster_node_name not in cluster_nodes:
-        raise CloudifyCliError('{0} is not a member of the cluster!'
-                               .format(cluster_node_name))
+        raise CloudifyCliError('Invalid command. {0} is not a member of '
+                               'the cluster.'.format(cluster_node_name))
     removed_ip = cluster_nodes[cluster_node_name]
 
     client.cluster.nodes.delete(cluster_node_name)
