@@ -23,7 +23,8 @@ from cloudify_rest_client.exceptions import NotClusterMaster
 from ... import env
 from .test_base import CliCommandTest
 from ...exceptions import CloudifyCliError
-from ...commands.cluster import _wait_for_cluster_initialized
+from ...commands.cluster import (_wait_for_cluster_initialized,
+                                 pass_cluster_client)
 from ...execution_events_fetcher import WAIT_FOR_EXECUTION_SLEEP_INTERVAL
 
 
@@ -174,11 +175,19 @@ class ClusterNodesTest(CliCommandTest):
         self.use_manager()
 
     def test_list_nodes(self):
+        self.client.cluster.status = mock.Mock(
+            return_value=ClusterState({'initialized': True}))
         self.client.cluster.nodes.list = mock.Mock(return_value=[
             ClusterNode({'name': 'node name 1', 'host_ip': '1.2.3.4'})
         ])
         outcome = self.invoke('cfy cluster nodes list')
         self.assertIn('node name 1', outcome.logs)
+
+    def test_list_not_initialized(self):
+        self.client.cluster.status = mock.Mock(
+            return_value=ClusterState({'initialized': False}))
+        self.invoke('cfy cluster nodes list',
+                    'not part of a Cloudify Manager cluster')
 
 
 class ClusterJoinTest(CliCommandTest):
@@ -235,6 +244,8 @@ class UpdateProfileTest(CliCommandTest):
         env.profile.save()
 
     def test_nodes_added_to_profile(self):
+        self.client.cluster.status = mock.Mock(
+            return_value=ClusterState({'initialized': True}))
         self.client.cluster.nodes.list = mock.Mock(return_value=[
             ClusterNode({'name': 'node name 1', 'host_ip': '1.2.3.4'}),
             ClusterNode({'name': 'node name 2', 'host_ip': '5.6.7.8'})
@@ -251,3 +262,34 @@ class UpdateProfileTest(CliCommandTest):
                              {'manager_ip': '1.2.3.4'},
                              {'manager_ip': '5.6.7.8'}
                          ])
+
+
+class PassClusterClientTest(unittest.TestCase):
+    def test_pass_cluster_client_not_initialized(self):
+        @pass_cluster_client()
+        def _f(client):
+            pass
+
+        mock_client = mock.Mock()
+        mock_client.cluster.status.return_value = \
+            ClusterState({'initialized': False})
+        with mock.patch('cloudify_cli.env.get_rest_client',
+                        return_value=mock_client):
+            with self.assertRaises(CloudifyCliError) as cm:
+                _f()
+        mock_client.cluster.status.assert_any_call()
+        self.assertIn('not part of a Cloudify Manager cluster',
+                      str(cm.exception))
+
+    def test_pass_cluster_client_initialized(self):
+        @pass_cluster_client()
+        def _f(client):
+            pass
+
+        mock_client = mock.Mock()
+        mock_client.cluster.status.return_value = \
+            ClusterState({'initialized': True})
+        with mock.patch('cloudify_cli.env.get_rest_client',
+                        return_value=mock_client):
+            _f()
+        mock_client.cluster.status.assert_any_call()

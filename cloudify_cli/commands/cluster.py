@@ -17,6 +17,7 @@
 import os
 import time
 import shutil
+from functools import wraps
 from datetime import datetime
 
 from cloudify_rest_client.exceptions import (CloudifyClientError,
@@ -41,6 +42,25 @@ def _verify_not_in_cluster(client):
                                'of a Cloudify Manager cluster')
 
 
+def pass_cluster_client(*client_args, **client_kwargs):
+    """Pass the REST client, and assert that it is connected to a cluster.
+
+    Instead of using `@cfy.pass_client()`, use this function for an automatic
+    check that we're using a cluster.
+    """
+    def _deco(f):
+        @cfy.pass_client(*client_args, **client_kwargs)
+        @wraps(f)
+        def _inner(client, *args, **kwargs):
+            status = client.cluster.status()
+            if not status.initialized:
+                raise CloudifyCliError('This manager is not part of a '
+                                       'Cloudify Manager cluster')
+            return f(client=client, *args, **kwargs)
+        return _inner
+    return _deco
+
+
 @cfy.group(name='cluster')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -53,17 +73,14 @@ def cluster():
 
 @cluster.command(name='status',
                  short_help='Show the current cluster status [cluster only]')
-@cfy.pass_client()
+@pass_cluster_client()
 @cfy.pass_logger
 def status(client, logger):
     """Display the current status of the Cloudify Manager cluster
     """
     status = client.cluster.status()
-    if not status.initialized:
-        logger.error('This manager is not part of a Cloudify Manager cluster')
-    else:
-        logger.info('Cloudify Manager cluster initialized!\n'
-                    'Encryption key: {0}'.format(status.encryption_key))
+    logger.info('Cloudify Manager cluster initialized!\n'
+                'Encryption key: {0}'.format(status.encryption_key))
 
 
 @cluster.command(name='start',
@@ -195,7 +212,7 @@ def join(client,
 @cluster.command(name='update-profile',
                  short_help='Store the cluster nodes in the CLI profile '
                             '[cluster only')
-@cfy.pass_client()
+@pass_cluster_client()
 @cfy.pass_logger
 def update_profile(client, logger):
     """Fetch the list of the cluster nodes and update the current profile.
@@ -224,7 +241,7 @@ def update_profile(client, logger):
                  short_help='Set one of the cluster nodes as the new active '
                             '[cluster only]')
 @cfy.argument('node_name')
-@cfy.pass_client()
+@pass_cluster_client()
 @cfy.pass_logger
 def set_active(client, logger, node_name):
     nodes = client.cluster.nodes.list()
@@ -255,7 +272,7 @@ def nodes():
 
 @nodes.command(name='list',
                short_help='List the nodes in the cluster [cluster only]')
-@cfy.pass_client()
+@pass_cluster_client()
 @cfy.pass_logger
 def list_nodes(client, logger):
     """Display a table with basic information about the nodes in the cluster
@@ -267,7 +284,7 @@ def list_nodes(client, logger):
 
 @nodes.command(name='remove',
                short_help='Remove a node from the cluster [cluster only]')
-@cfy.pass_client()
+@pass_cluster_client()
 @cfy.pass_logger
 @cfy.options.cluster_node_name
 def remove_node(client, logger, cluster_node_name):
