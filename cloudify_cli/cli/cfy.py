@@ -769,6 +769,13 @@ class Options(object):
             help=helptexts.GET_DATA
         )
 
+        self.secret_value = click.option(
+            '-s',
+            '--secret_value',
+            required=True,
+            help=helptexts.SECRET_VALUE,
+            callback=validate_name)
+
     @staticmethod
     def include_keys(help):
         return click.option(

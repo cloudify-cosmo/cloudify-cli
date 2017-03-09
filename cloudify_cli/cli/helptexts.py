@@ -228,3 +228,4 @@ GET_DATA = 'When set to True, displays the full list of connected resources ' \
            'to False displays the total number of connected resources. ' \
            '(default:False)'
 PROFILE_NAME = 'Name of the profile to use'
+SECRET_VALUE = "The secret's value to be set"
