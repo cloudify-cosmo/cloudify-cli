@@ -505,7 +505,8 @@ class ClusterHTTPClient(HTTPClient):
             copied_data = itertools.tee(kwargs.pop('data'),
                                         len(self._cluster))
 
-        kwargs.setdefault('timeout', self.default_timeout_sec)
+        if kwargs.get('timeout') is None:
+            kwargs['timeout'] = self.default_timeout_sec
 
         for node_index, node in list(enumerate(self._profile.cluster)):
             self._use_node(node)
