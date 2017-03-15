@@ -121,7 +121,7 @@ def list(deployment_id, sort_by, descending, tenant_name, all_tenants,
             is_descending=descending,
             _all_tenants=all_tenants)
     except CloudifyClientError as e:
-        if not e.status_code != 404:
+        if e.status_code != 404:
             raise
         raise CloudifyCliError('Deployment {0} does not exist'.format(
             deployment_id))
