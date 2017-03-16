@@ -19,7 +19,8 @@ from ..cli import cfy
 from ..table import print_data
 from ..utils import handle_client_error
 
-SECRETS_COLUMNS = ['key', 'value', 'created_at', 'updated_at']
+SECRETS_COLUMNS = ['key', 'value', 'created_at', 'updated_at', 'permission',
+                   'tenant_name', 'created_by']
 
 
 @cfy.group(name='secrets')
@@ -92,3 +93,52 @@ def update(key, secret_value, logger, client):
     with handle_client_error(404, graceful_msg, logger):
         client.secrets.update(key, secret_value)
         logger.info('Secret `{0}` updated'.format(key))
+
+
+@secrets.command(name='list', short_help="List all secrets")
+@cfy.options.sort_by('key')
+@cfy.options.descending
+@cfy.options.verbose()
+@cfy.options.tenant_name_for_list(required=False,
+                                  resource_name_for_help='secret')
+@cfy.options.all_tenants
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def list(sort_by, descending, tenant_name, all_tenants, logger, client):
+    """List all secrets
+    """
+
+    columns = SECRETS_COLUMNS
+    columns.remove('value')
+
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+
+    logger.info('Listing all secrets...')
+    secrets_list = client.secrets.list(
+        sort=sort_by,
+        is_descending=descending,
+        _all_tenants=all_tenants
+    )
+    print_data(columns, secrets_list, 'Secrets:')
+
+
+@secrets.command(name='delete', short_help='Delete a secret')
+@cfy.argument('key', callback=cfy.validate_name)
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def delete(key, logger, client):
+    """Delete a secret
+
+    `KEY` is the secret's key
+    """
+
+    graceful_msg = 'Requested secret with key `{0}` was not found'.format(key)
+
+    with handle_client_error(404, graceful_msg, logger):
+        logger.info('Deleting secret `{0}`...'.format(key))
+        client.secrets.delete(key)
+        logger.info('Secret removed')

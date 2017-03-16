@@ -773,8 +773,7 @@ class Options(object):
             '-s',
             '--secret_value',
             required=True,
-            help=helptexts.SECRET_VALUE,
-            callback=validate_name)
+            help=helptexts.SECRET_VALUE)
 
     @staticmethod
     def include_keys(help):

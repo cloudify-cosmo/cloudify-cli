@@ -45,11 +45,3 @@ class SecretsTest(CliCommandTest):
             exception=SystemExit
         )
         self.assertIn('Missing option "-s" / "--secret_value"', outcome.output)
-
-    def test_create_secrets_invalid_value(self):
-        self.invoke(
-            "cfy secrets create key -s ' ' ",
-            err_str_segment='ERROR: The `secret_value` argument contains '
-                            'illegal characters',
-            exception=CloudifyValidationError
-        )
