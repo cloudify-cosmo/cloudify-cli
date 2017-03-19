@@ -362,12 +362,14 @@ def bootstrap(blueprint_path,
 def teardown(name='manager',
              task_retries=5,
              task_retry_interval=30,
-             task_thread_pool_size=1):
+             task_thread_pool_size=1,
+             ignore_failure=True):
     working_env = load_env(name)
     working_env.execute('uninstall',
                         task_retries=task_retries,
                         task_retry_interval=task_retry_interval,
-                        task_thread_pool_size=task_thread_pool_size)
+                        task_thread_pool_size=task_thread_pool_size,
+                        parameters={'ignore_failure': ignore_failure})
 
     # deleting local environment data
     shutil.rmtree(_workdir())
