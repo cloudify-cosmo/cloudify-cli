@@ -286,13 +286,15 @@ def list_nodes(client, logger):
                short_help='Remove a node from the cluster [cluster only]')
 @pass_cluster_client()
 @cfy.pass_logger
-@cfy.options.cluster_node_name
+@cfy.argument('cluster-node-name')
 def remove_node(client, logger, cluster_node_name):
     """Unregister a node from the cluster.
 
     Note that this will not teardown the removed node, only remove it from
     the cluster. Removed replicas are not usable as Cloudify Managers,
     so it is left to the user to examine and teardown the node.
+
+    `CLUSTER_NODE_NAME` is the name of the cluster node to remove.
     """
     cluster_nodes = {node['name']: node.host_ip
                      for node in client.cluster.nodes.list()}
