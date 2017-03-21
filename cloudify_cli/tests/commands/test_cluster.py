@@ -213,7 +213,7 @@ class ClusterJoinTest(CliCommandTest):
         self.client.cluster.join = mock.Mock()
         outcome = self.invoke('cfy cluster join {0}'
                               .format(self.master_profile.manager_ip))
-        self.assertIn('cluster joined', outcome.logs)
+        self.assertIn('joined cluster', outcome.logs)
 
     def test_join_profile_updated(self):
         self.client.cluster.status = mock.Mock(side_effect=[
@@ -228,7 +228,7 @@ class ClusterJoinTest(CliCommandTest):
         self.client.cluster.join = mock.Mock()
         outcome = self.invoke('cfy cluster join {0}'
                               .format(self.master_profile.manager_ip))
-        self.assertIn('cluster joined', outcome.logs)
+        self.assertIn('joined cluster', outcome.logs)
 
         master_profile = env.get_profile_context('master_profile')
         self.assertEqual(2, len(master_profile.cluster))

@@ -203,8 +203,9 @@ def join(client,
 
     _join_node_to_profile(env.profile, joined_profile=joined_profile)
 
-    logger.info('Cloudify Manager cluster joined successfully!')
-    logger.info('Switching to the cluster profile: {0}'.format(join_profile))
+    logger.info('Cloudify Manager joined cluster successfully.')
+    logger.info('Switching to the active manager, cluster profile: {0}'
+                .format(join_profile))
 
     env.set_active_profile(join_profile)
 
