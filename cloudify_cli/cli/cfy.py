@@ -872,9 +872,9 @@ class Options(object):
     def ldap_dn_extra():
         return click.option(
             '-e',
-            '--ldap_dn_extra',
+            '--ldap-dn-extra',
             required=False,
-            help=helptexts.LDAP_IS_ACTIVE_DIRECTORY)
+            help=helptexts.LDAP_DN_EXTRA)
 
     @staticmethod
     def force(help):
