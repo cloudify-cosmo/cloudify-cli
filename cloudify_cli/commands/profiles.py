@@ -480,7 +480,7 @@ def _assert_manager_available(client, profile_name):
     # with situations like No route to host and the likes.
     except Exception as ex:
         raise CloudifyCliError(
-            "Can't use manager {0}: {1}".format(profile_name, str(ex)))
+            "Can't use manager {0}. {1}".format(profile_name, str(ex.message)))
 
 
 def _get_provider_context(profile_name,
