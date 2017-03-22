@@ -32,7 +32,6 @@ from .commands import status
 from .commands import cluster
 from .commands import install
 from .commands import plugins
-from .commands import upgrade
 from .commands import tenants
 from .commands import secrets
 from .commands import teardown
@@ -92,7 +91,6 @@ def _register_commands():
     _cfy.add_command(events.events)
     _cfy.add_command(cluster.cluster)
     _cfy.add_command(plugins.plugins)
-    _cfy.add_command(upgrade.upgrade)
     _cfy.add_command(tenants.tenants)
     _cfy.add_command(teardown.teardown)
     _cfy.add_command(rollback.rollback)
