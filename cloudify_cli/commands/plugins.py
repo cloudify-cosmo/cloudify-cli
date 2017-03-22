@@ -196,54 +196,6 @@ def list(sort_by, descending, tenant_name, all_tenants, logger, client):
     print_data(PLUGIN_COLUMNS, plugins_list, 'Plugins:')
 
 
-@plugins.command(name='add-permission', short_help='Add permissions to users')
-@cfy.argument('plugin-id')
-@cfy.options.users
-@cfy.options.permission
-@cfy.options.verbose()
-@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
-@cfy.assert_manager_active()
-@cfy.pass_client()
-@cfy.pass_logger
-def add_permission(plugin_id, users, permission, client, logger, tenant_name):
-    """Add `viewer`/`owner` permissions to users on a certain plugin
-
-    `PLUGIN_ID` is the ID of the plugin to set permissions on
-    """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
-    logger.info('Adding permission `{0}`...'.format(permission))
-    client.plugins.add_permission(plugin_id, users, permission)
-    logger.info('Permissions updated for plugin `{0}`'.format(plugin_id))
-
-
-@plugins.command(name='remove-permission',
-                 short_help='Remove permissions from users')
-@cfy.argument('plugin-id')
-@cfy.options.users
-@cfy.options.permission
-@cfy.options.verbose()
-@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
-@cfy.assert_manager_active()
-@cfy.pass_client()
-@cfy.pass_logger
-def remove_permission(plugin_id,
-                      users,
-                      permission,
-                      client,
-                      logger,
-                      tenant_name):
-    """Remove `viewer`/`owner` permissions from users on a certain plugin
-
-    `PLUGIN_ID` is the ID of the plugin to remove permissions from
-    """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
-    logger.info('Removing permission `{0}`...'.format(permission))
-    client.plugins.remove_permission(plugin_id, users, permission)
-    logger.info('Permissions updated for plugin `{0}`'.format(plugin_id))
-
-
 def _transform_plugin_response(plugin):
     """Remove any columns that shouldn't be displayed in the CLI
     """
