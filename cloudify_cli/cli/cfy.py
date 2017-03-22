@@ -771,7 +771,7 @@ class Options(object):
 
         self.secret_value = click.option(
             '-s',
-            '--secret_value',
+            '--secret-value',
             required=True,
             help=helptexts.SECRET_VALUE)
 

@@ -44,4 +44,4 @@ class SecretsTest(CliCommandTest):
             err_str_segment='2',  # Exit code
             exception=SystemExit
         )
-        self.assertIn('Missing option "-s" / "--secret_value"', outcome.output)
+        self.assertIn('Missing option "-s" / "--secret-value"', outcome.output)
