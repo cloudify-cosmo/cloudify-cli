@@ -14,7 +14,9 @@
 # limitations under the License.
 ############
 
+import os
 import mock
+import tempfile
 import unittest
 
 from cloudify_rest_client.cluster import ClusterState, ClusterNode
@@ -234,6 +236,37 @@ class ClusterJoinTest(CliCommandTest):
         self.assertEqual(2, len(master_profile.cluster))
         self.assertEqual(env.profile.manager_ip,
                          master_profile.cluster[1]['manager_ip'])
+
+    def test_join_origin_profile_updated(self):
+        self.client.cluster.status = mock.Mock(side_effect=[
+            ClusterState({'initialized': False}),
+            ClusterState({}),
+            NotClusterMaster('not cluster master')
+        ])
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            f.write('cert or key here\n')
+        self.addCleanup(os.unlink, f.name)
+        self.master_profile.cluster[0]['ssh_key'] = f.name
+        self.master_profile.save()
+
+        self.client.cluster.nodes.list = mock.Mock(return_value=[
+            ClusterNode({'host_ip': '10.10.1.10', 'online': True})
+        ])
+        self.client.cluster.join = mock.Mock()
+        outcome = self.invoke('cfy cluster join {0}'
+                              .format(self.master_profile.manager_ip))
+        self.assertIn('joined cluster', outcome.logs)
+
+        self.assertEqual(2, len(env.profile.cluster))
+
+        joined_node = env.profile.cluster[1]
+        self.assertEqual('10.10.1.10', joined_node['manager_ip'])
+
+        master_node = env.profile.cluster[0]
+        self.assertIn('ssh_key', master_node)
+        # check that the master's ssh key was copied to the local profile's
+        # workdir
+        self.assertTrue(master_node['ssh_key'].startswith(env.profile.workdir))
 
 
 class UpdateProfileTest(CliCommandTest):
