@@ -14,7 +14,7 @@
 #    * limitations under the License.
 
 from .test_base import CliCommandTest
-from cloudify_cli.exceptions import CloudifyValidationError
+from cloudify_cli.exceptions import CloudifyValidationError, CloudifyCliError
 
 
 class SecretsTest(CliCommandTest):
@@ -39,9 +39,9 @@ class SecretsTest(CliCommandTest):
         )
 
     def test_create_secrets_missing_value(self):
-        outcome = self.invoke(
+        self.invoke(
             'cfy secrets create key',
-            err_str_segment='2',  # Exit code
-            exception=SystemExit
+            err_str_segment='Failed to create secret key. '
+                            'Missing option --secret-string or secret-file.',
+            exception=CloudifyCliError
         )
-        self.assertIn('Missing option "-s" / "--secret-value"', outcome.output)

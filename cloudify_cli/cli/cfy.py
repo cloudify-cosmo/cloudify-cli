@@ -769,11 +769,17 @@ class Options(object):
             help=helptexts.GET_DATA
         )
 
-        self.secret_value = click.option(
+        self.secret_string = click.option(
             '-s',
-            '--secret-value',
-            required=True,
-            help=helptexts.SECRET_VALUE)
+            '--secret-string',
+            required=False,
+            help=helptexts.SECRET_STRING)
+
+        self.secret_file = click.option(
+            '-f',
+            '--secret-file',
+            required=False,
+            help=helptexts.SECRET_FILE)
 
     @staticmethod
     def include_keys(help):

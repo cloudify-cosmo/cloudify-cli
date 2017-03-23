@@ -13,11 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ############
+import os
 
 from .. import env
 from ..cli import cfy
 from ..table import print_data
 from ..utils import handle_client_error
+from ..exceptions import CloudifyCliError
 
 SECRETS_COLUMNS = ['key', 'value', 'created_at', 'updated_at', 'permission',
                    'tenant_name', 'created_by']
@@ -35,22 +37,38 @@ def secrets():
 @secrets.command(name='create', short_help='Create a new secret '
                                            '(key-value pair)')
 @cfy.argument('key', callback=cfy.validate_name)
-@cfy.options.secret_value
+@cfy.options.secret_string
+@cfy.options.secret_file
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def create(key, secret_value, logger, client):
+def create(key, secret_string, secret_file, logger, client):
     """Create a new secret (key-value pair)
 
     `KEY` is the new secret's key
     """
 
+    if secret_string and secret_file:
+        raise CloudifyCliError('Failed to create secret key. '
+                               'The command can only accept either'
+                               ' --secret-string or secret-file.')
+    if secret_file:
+        if not os.path.exists(secret_file):
+            raise CloudifyCliError('Failed to create secret key. '
+                                   'File does not exist: '
+                                   '{0}'.format(secret_file))
+        with open(secret_file, 'r') as secret_file:
+            secret_string = secret_file.read()
+    if not secret_string:
+        raise CloudifyCliError('Failed to create secret key. '
+                               'Missing option '
+                               '--secret-string or secret-file.')
     graceful_msg = 'Secret with key `{0}` is already exist in this current ' \
                    'tenant'.format(key)
 
     with handle_client_error(409, graceful_msg, logger):
-        client.secrets.create(key, secret_value)
+        client.secrets.create(key, secret_string)
         logger.info('Secret `{0}` created'.format(key))
 
 
@@ -77,12 +95,12 @@ def get(key, logger, client):
 
 @secrets.command(name='update', short_help='Update an existing secret')
 @cfy.argument('key', callback=cfy.validate_name)
-@cfy.options.secret_value
+@cfy.options.secret_string
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def update(key, secret_value, logger, client):
+def update(key, secret_string, logger, client):
     """Update an existing secret
 
     `KEY` is the secret's key
@@ -91,7 +109,7 @@ def update(key, secret_value, logger, client):
     graceful_msg = 'Requested secret with key `{0}` was not found'.format(key)
 
     with handle_client_error(404, graceful_msg, logger):
-        client.secrets.update(key, secret_value)
+        client.secrets.update(key, secret_string)
         logger.info('Secret `{0}` updated'.format(key))
 
 
