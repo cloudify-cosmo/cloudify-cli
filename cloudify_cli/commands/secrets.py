@@ -17,11 +17,11 @@ import os
 
 from .. import env
 from ..cli import cfy
-from ..table import print_data
+from ..table import print_data, print_details
 from ..utils import handle_client_error
 from ..exceptions import CloudifyCliError
 
-SECRETS_COLUMNS = ['key', 'value', 'created_at', 'updated_at', 'permission',
+SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'permission',
                    'tenant_name', 'created_by']
 
 
@@ -90,7 +90,7 @@ def get(key, logger, client):
     with handle_client_error(404, graceful_msg, logger):
         logger.info('Getting info for secret `{0}`...'.format(key))
         secret_details = client.secrets.get(key)
-        print_data(SECRETS_COLUMNS, secret_details, 'Requested secret info:')
+        print_details(secret_details, 'Requested secret info:')
 
 
 @secrets.command(name='update', short_help='Update an existing secret')
@@ -127,9 +127,6 @@ def list(sort_by, descending, tenant_name, all_tenants, logger, client):
     """List all secrets
     """
 
-    columns = SECRETS_COLUMNS
-    columns.remove('value')
-
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
 
@@ -139,7 +136,8 @@ def list(sort_by, descending, tenant_name, all_tenants, logger, client):
         is_descending=descending,
         _all_tenants=all_tenants
     )
-    print_data(columns, secrets_list, 'Secrets:')
+
+    print_data(SECRETS_COLUMNS, secrets_list, 'Secrets:')
 
 
 @secrets.command(name='delete', short_help='Delete a secret')

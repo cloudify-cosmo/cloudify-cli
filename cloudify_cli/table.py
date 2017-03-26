@@ -52,13 +52,8 @@ def generate(cols, data, defaults=None):
     def get_values_per_column(column, row_data):
         if column in row_data:
             if row_data[column] and isinstance(row_data[column], basestring):
-                try:
-                    datetime.strptime(row_data[column][:10], '%Y-%m-%d')
-                    row_data[column] = \
-                        row_data[column].replace('T', ' ').replace('Z', ' ')
-                except ValueError:
-                    # not a timestamp
-                    pass
+                row_data[column] = get_timestamp(row_data[column]) \
+                                   or row_data[column]
             elif row_data[column] and isinstance(row_data[column], list):
                 row_data[column] = ','.join(row_data[column])
             elif isinstance(row_data[column], bool):
@@ -96,3 +91,23 @@ def print_data(columns, items, header_text, max_width=None, defaults=None):
     if max_width:
         pt.max_width = max_width
     log(header_text, pt)
+
+
+def print_details(data, title):
+    logger = get_logger()
+    logger.info(title)
+
+    for item in data.items():
+        field_name = str(item[0]) + ':'
+        field_value = str(item[1])
+        field_value = get_timestamp(field_value) or field_value
+        logger.info('{0} {1}'.format(field_name.ljust(15), field_value))
+
+
+def get_timestamp(data):
+    try:
+        datetime.strptime(data[:10], '%Y-%m-%d')
+        return data.replace('T', ' ').replace('Z', ' ')
+    except ValueError:
+        # not a timestamp
+        return None
