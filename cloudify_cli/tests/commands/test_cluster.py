@@ -268,6 +268,20 @@ class ClusterJoinTest(CliCommandTest):
         # workdir
         self.assertTrue(master_node['ssh_key'].startswith(env.profile.workdir))
 
+    def test_join_duplicate_name(self):
+        self.client.cluster.status = mock.Mock(side_effect=[
+            ClusterState({'initialized': False}),
+            ClusterState({}),
+        ])
+        self.client.cluster.nodes.list = mock.Mock(return_value=[
+            ClusterNode({'host_ip': '10.10.1.10', 'online': True, 'name': 'n'})
+        ])
+
+        self.client.cluster.join = mock.Mock()
+        self.invoke('cfy cluster join {0} --cluster-node-name n'
+                    .format(self.master_profile.manager_ip),
+                    'is already a member of the cluster')
+
 
 class UpdateProfileTest(CliCommandTest):
     def setUp(self):
