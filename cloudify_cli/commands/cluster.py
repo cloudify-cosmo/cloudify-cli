@@ -163,7 +163,11 @@ def join(client,
     cluster_status = cluster_client.cluster.status()
 
     encryption_key = cluster_status.encryption_key
-    join = [n.host_ip for n in cluster_client.cluster.nodes.list()]
+    cluster_nodes = cluster_client.cluster.nodes.list()
+    if any(n.name == cluster_node_name for n in cluster_nodes):
+        raise CloudifyCliError('Node {0} is already a member of the cluster'
+                               .format(cluster_node_name))
+    join = [n.host_ip for n in cluster_nodes]
     logger.info('Joining the Cloudify Manager cluster: {0}'
                 .format(join))
 
