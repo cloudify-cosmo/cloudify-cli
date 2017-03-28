@@ -42,7 +42,9 @@ rm -f version-manifest.json
 
 #remove the -1 - omnibus set the build_iteration to 1 if it null
 file=$(basename $(find . -type f -name "*.$FILEEXT"))
-file_no_build=$(echo "$file" | rev | sed 's/\-1//' | rev)
+echo "file=$file"
+file_no_build=$(echo "$file" | sed 's/\(.*\)-1/\1/')
+echo "file_no_build=$file_no_build"
 mv $file $file_no_build
 
 [ "$result" == "success" ] && create_md5 $FILEEXT &&
