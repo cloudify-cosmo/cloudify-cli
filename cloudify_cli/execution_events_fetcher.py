@@ -30,6 +30,14 @@ WORKFLOW_END_TYPES = {u'workflow_succeeded', u'workflow_failed',
 
 class ExecutionEventsFetcher(object):
 
+    CONTEXT_FIELDS = [
+        'deployment_id',
+        'execution_id',
+        'node_name',
+        'operation',
+        'workflow_id',
+    ]
+
     def __init__(self, client, execution_id, batch_size=100,
                  include_logs=False):
         self._client = client
@@ -56,7 +64,39 @@ class ExecutionEventsFetcher(object):
             include_logs=self._include_logs,
             sort='@timestamp').items
         self._from_event += len(events)
-        return events
+        return [
+            self._map_api_event_to_internal_event(event)
+            for event in events
+        ]
+
+    def _map_api_event_to_internal_event(self, event):
+        """Map data structure from API to internal.
+
+        This method adapts the data structure returend by the events API
+        endpoint to the structure expected by `cloudify.event.Event`.
+
+        Note: the event is modified in place, so even though the value is
+        returned, the original data structure is not preserved.
+
+        :param event: Event in API format
+        :type event: dict(str)
+        :return: Event in internal format
+        :rtype: dict(str)
+
+        """
+        event['context'] = {
+            context_field: event[context_field]
+            for context_field in self.CONTEXT_FIELDS
+        }
+        for context_field in self.CONTEXT_FIELDS:
+            del event[context_field]
+        event['context']['node_id'] = event['node_instance_id']
+        del event['node_instance_id']
+        event['message'] = {
+            'arguments': None,
+            'text': event['message'],
+        }
+        return event
 
     def fetch_and_process_events(self, events_handler=None, timeout=60):
         total_events_count = 0
