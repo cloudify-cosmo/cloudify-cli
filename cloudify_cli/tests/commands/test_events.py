@@ -36,7 +36,13 @@ class EventsTest(CliCommandTest):
             event = {
                 'event_name': 'test_event_{0}'.format(event_time),
                 'deployment_id': deployment_id,
-                'type': event_type
+                'execution_id': '<execution_id>',
+                'node_instance_id': '<node_instance_id>',
+                'node_name': '<node_name>',
+                'operation': '<operation>',
+                'workflow_id': '<workflow_id>',
+                'type': event_type,
+                'message': '<message>',
             }
             events.append((event_time, event))
             event_time += 0.3
@@ -46,7 +52,13 @@ class EventsTest(CliCommandTest):
             'event_name': 'test_event_{0}'.format(end_time),
             'event_type': 'workflow_succeeded',
             'deployment_id': 'deployment_id_{0}'.format(0),
-            'type': 'cloudify_event'
+            'execution_id': '<execution_id>',
+            'node_instance_id': '<node_instance_id>',
+            'node_name': '<node_name>',
+            'operation': '<operation>',
+            'workflow_id': '<workflow_id>',
+            'type': 'cloudify_event',
+            'message': '<message>',
         }
         events.append((end_time, success_event))
         return events

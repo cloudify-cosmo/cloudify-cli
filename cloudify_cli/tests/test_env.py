@@ -540,6 +540,29 @@ class ExecutionEventsFetcherTest(CliCommandTest):
         return MockListResponse(
             self.events[from_event:until_event], len(self.events))
 
+    def _generate_events(self, count):
+        """Generate mock events to use them for testing.
+
+        :param count: How many events to generate
+        :type count: int
+        :return: Generated events
+        :rtype: list(dict(str))
+
+        """
+        events = [
+            {
+                'deployment_id': '<deployment_id>',
+                'execution_id': '<execution_id>',
+                'node_name': '<node_name>',
+                'operation': '<operation>',
+                'workflow_id': '<workflow_id>',
+                'node_instance_id': '<node_instance_id>',
+                'message': '<message>',
+            }
+            for _ in xrange(count)
+        ]
+        return events
+
     def test_no_events(self):
         events_fetcher = ExecutionEventsFetcher(self.client,
                                                 'execution_id',
@@ -548,16 +571,16 @@ class ExecutionEventsFetcherTest(CliCommandTest):
         self.assertEqual(0, events_count)
 
     def test_new_events_after_fetched_all(self):
-        self.events = range(0, 10)
+        self.events = self._generate_events(10)
         events_fetcher = ExecutionEventsFetcher(self.client, 'execution_id')
         events_fetcher.fetch_and_process_events()
-        added_events = range(20, 25)
+        added_events = self._generate_events(5)
         self.events.extend(added_events)
         added_events_count = events_fetcher.fetch_and_process_events()
         self.assertEqual(len(added_events), added_events_count)
 
     def test_fetch_and_process_events_implicit_single_batch(self):
-        self.events = range(0, 10)
+        self.events = self._generate_events(10)
         events_fetcher = ExecutionEventsFetcher(self.client, 'execution_id',
                                                 batch_size=100)
         events_count = events_fetcher.fetch_and_process_events()
@@ -566,12 +589,12 @@ class ExecutionEventsFetcherTest(CliCommandTest):
     def test_fetch_and_process_events_implicit_several_batches(self):
         event_log = {}
         self.batch_counter = 0
-        self.events = range(0, 5)
+        self.events = self._generate_events(5)
 
         def test_events_logger(events):
             self.batch_counter += 1
             for index in range(0, len(events)):
-                event_log[events[index]] = 'event {0} of {1} in batch {2}'.\
+                event_log[index] = 'event {0} of {1} in batch {2}'.\
                     format(index + 1, len(events), self.batch_counter)
 
         events_fetcher = ExecutionEventsFetcher(self.client,
@@ -584,18 +607,18 @@ class ExecutionEventsFetcherTest(CliCommandTest):
         # assert all events were handled
         self.assertEqual(len(self.events), events_count)
         # assert batching was as expected (2*2, 1*1)
-        event_log[self.events[0]] = 'event 1 of 2 in batch 1'
-        event_log[self.events[1]] = 'event 2 of 2 in batch 1'
-        event_log[self.events[2]] = 'event 1 of 2 in batch 2'
-        event_log[self.events[3]] = 'event 2 of 2 in batch 2'
-        event_log[self.events[4]] = 'event 1 of 1 in batch 3'
+        event_log[0] = 'event 1 of 2 in batch 1'
+        event_log[1] = 'event 2 of 2 in batch 1'
+        event_log[2] = 'event 1 of 2 in batch 2'
+        event_log[3] = 'event 2 of 2 in batch 2'
+        event_log[4] = 'event 1 of 1 in batch 3'
         # there shouldn't be any remaining events, verify that
         remaining_events_count = events_fetcher.fetch_and_process_events()
         self.assertEqual(0, remaining_events_count)
 
     def test_fetch_and_process_events_explicit_several_batches(self):
             total_events_count = 0
-            self.events = range(0, 9)
+            self.events = self._generate_events(9)
             batch_size = 2
             events_fetcher = ExecutionEventsFetcher(self.client,
                                                     'execution_id',
@@ -612,7 +635,7 @@ class ExecutionEventsFetcherTest(CliCommandTest):
             self.assertEqual(len(self.events), total_events_count)
 
     def test_fetch_events_explicit_single_batch(self):
-        self.events = range(0, 10)
+        self.events = self._generate_events(10)
         events_fetcher = ExecutionEventsFetcher(self.client, 'execution_id',
                                                 batch_size=100)
         batch_events = events_fetcher._fetch_events_batch()
@@ -620,7 +643,7 @@ class ExecutionEventsFetcherTest(CliCommandTest):
 
     def test_fetch_events_explicit_several_batches(self):
         all_fetched_events = []
-        self.events = range(0, 9)
+        self.events = self._generate_events(9)
         batch_size = 2
         events_fetcher = ExecutionEventsFetcher(self.client,
                                                 'execution_id',
@@ -637,7 +660,7 @@ class ExecutionEventsFetcherTest(CliCommandTest):
         self.assertEqual(self.events, all_fetched_events)
 
     def test_fetch_and_process_events_timeout(self):
-        self.events = range(0, 2000000)
+        self.events = self._generate_events(2000000)
         events_fetcher = ExecutionEventsFetcher(self.client,
                                                 'execution_id',
                                                 batch_size=1)
@@ -645,24 +668,24 @@ class ExecutionEventsFetcherTest(CliCommandTest):
                           events_fetcher.fetch_and_process_events, timeout=2)
 
     def test_events_processing_progress(self):
-        events_bulk1 = range(0, 5)
+        events_bulk1 = self._generate_events(5)
         self.events = events_bulk1
         events_fetcher = ExecutionEventsFetcher(self.client,
                                                 'execution_id',
                                                 batch_size=100)
         events_count = events_fetcher.fetch_and_process_events()
         self.assertEqual(len(events_bulk1), events_count)
-        events_bulk2 = range(0, 10)
+        events_bulk2 = self._generate_events(10)
         self.events.extend(events_bulk2)
         events_count = events_fetcher.fetch_and_process_events()
         self.assertEqual(len(events_bulk2), events_count)
-        events_bulk3 = range(0, 7)
+        events_bulk3 = self._generate_events(7)
         self.events.extend(events_bulk3)
         events_count = events_fetcher.fetch_and_process_events()
         self.assertEqual(len(events_bulk3), events_count)
 
     def test_wait_for_execution_timeout(self):
-        self.events = [{'id': num} for num in range(0, 5)]
+        self.events = self._generate_events(5)
         mock_execution = self.client.executions.get('deployment_id')
         self.assertRaises(ExecutionTimeoutError, wait_for_execution,
                           self.client, mock_execution,
@@ -697,7 +720,16 @@ class WaitForExecutionTests(CliCommandTest):
         # times and only then return a 'workflow_succeeded' event
         events = chain(
             repeat(MockListResponse([], 0), 100),
-            [MockListResponse([{'event_type': 'workflow_succeeded'}], 1)],
+            [MockListResponse([{
+                'deployment_id': '<deployment_id>',
+                'execution_id': '<execution_id>',
+                'node_name': '<node_name>',
+                'operation': '<operation>',
+                'workflow_id': '<workflow_id>',
+                'node_instance_id': '<node_instance_id>',
+                'message': '<message>',
+                'event_type': 'workflow_succeeded',
+            }], 1)],
             repeat(MockListResponse([], 0))
         )
 
@@ -727,7 +759,16 @@ class WaitForExecutionTests(CliCommandTest):
         # prepare mock events.get() calls - return a 'workflow_succeeded'
         # immediately, and there's no events after that
         events = chain(
-            [MockListResponse([{'event_type': 'workflow_succeeded'}], 1)],
+            [MockListResponse([{
+                'deployment_id': '<deployment_id>',
+                'execution_id': '<execution_id>',
+                'node_name': '<node_name>',
+                'operation': '<operation>',
+                'workflow_id': '<workflow_id>',
+                'node_instance_id': '<node_instance_id>',
+                'message': '<message>',
+                'event_type': 'workflow_succeeded',
+            }], 1)],
             repeat(MockListResponse([], 0))
         )
 
