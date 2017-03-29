@@ -28,10 +28,14 @@ install_common_prereqs &&
 rm -rf cloudify-cli
 git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd cloudify-cli/packaging/omnibus
-git checkout ${CLI_BRANCH-$CORE_TAG_NAME}
+if [ "$CLI_BRANCH" != "master" ]; then
+    git checkout -b ${CLI_BRANCH-$CORE_TAG_NAME}
+else
+    git checkout ${CLI_BRANCH-$CORE_TAG_NAME}
+fi
 git tag -d $CORE_TAG_NAME
 NEW_TAG_NAME="${VERSION}.${PRERELEASE}"
-git -d tag $NEW_TAG_NAME
+git tag -d $NEW_TAG_NAME
 git tag $NEW_TAG_NAME
 omnibus build cloudify && result="success"
 cd pkg
