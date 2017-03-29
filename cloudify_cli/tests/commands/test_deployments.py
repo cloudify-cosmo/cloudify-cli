@@ -191,12 +191,13 @@ class DeploymentsTest(CliCommandTest):
             'event_type': 'workflow_succeeded',
             'type': 'foo',
             'timestamp': '12345678',
-            'message': {
-                'text': 'workflow execution succeeded'
-            },
-            'context': {
-                'deployment_id': 'deployment-id'
-            }
+            'message': 'workflow execution succeeded',
+            'deployment_id': 'deployment-id',
+            'execution_id': '<execution_id>',
+            'node_name': '<node_name>',
+            'operation': '<operation>',
+            'workflow_id': '<workflow_id>',
+            'node_instance_id': '<node_instance_id>',
         }
         get_events_response = MockListResponse([success_event], 1)
 
