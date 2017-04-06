@@ -192,6 +192,7 @@ class DeploymentsTest(CliCommandTest):
             'type': 'foo',
             'timestamp': '12345678',
             'message': 'workflow execution succeeded',
+            'error_causes': '<error_causes>',
             'deployment_id': 'deployment-id',
             'execution_id': '<execution_id>',
             'node_name': '<node_name>',

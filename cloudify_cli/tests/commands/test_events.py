@@ -43,6 +43,7 @@ class EventsTest(CliCommandTest):
                 'workflow_id': '<workflow_id>',
                 'type': event_type,
                 'message': '<message>',
+                'error_causes': '<error_causes>',
             }
             events.append((event_time, event))
             event_time += 0.3
@@ -59,6 +60,7 @@ class EventsTest(CliCommandTest):
             'workflow_id': '<workflow_id>',
             'type': 'cloudify_event',
             'message': '<message>',
+            'error_causes': '<error_causes>',
         }
         events.append((end_time, success_event))
         return events
