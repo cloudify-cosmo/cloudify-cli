@@ -177,7 +177,7 @@ class DeploymentsTest(CliCommandTest):
         })
         self.client.deployments.create = MagicMock(return_value=deployment)
         self.invoke(
-            'cfy deployments create deployment -b aa --skip-plugins-validation')
+            'cfy deployments create deployment -b a --skip-plugins-validation')
         call_args = list(self.client.deployments.create.call_args)
         self.assertIn('skip_plugins_validation', call_args[1])
         self.assertEqual(call_args[1]['skip_plugins_validation'], True)
