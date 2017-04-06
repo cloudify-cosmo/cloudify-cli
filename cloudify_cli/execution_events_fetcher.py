@@ -90,12 +90,18 @@ class ExecutionEventsFetcher(object):
         }
         for context_field in self.CONTEXT_FIELDS:
             del event[context_field]
+
         event['context']['node_id'] = event['node_instance_id']
         del event['node_instance_id']
+
         event['message'] = {
             'arguments': None,
             'text': event['message'],
         }
+
+        event['context']['task_error_causes'] = event['error_causes']
+        del event['error_causes']
+
         return event
 
     def fetch_and_process_events(self, events_handler=None, timeout=60):
