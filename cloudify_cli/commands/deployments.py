@@ -20,6 +20,7 @@ from StringIO import StringIO
 
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 from cloudify_rest_client.exceptions import UnknownDeploymentInputError
+from cloudify_rest_client.exceptions import DeploymentPluginNotFound
 
 from .. import utils
 from ..local import load_env
@@ -29,7 +30,6 @@ from ..logger import get_events_logger
 from .. import execution_events_fetcher
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
-
 
 DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
                       'permission', 'tenant_name', 'created_by']
@@ -196,13 +196,15 @@ def manager_update(deployment_id,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.skip_plugins_validation
 def manager_create(blueprint_id,
                    deployment_id,
                    inputs,
                    private_resource,
                    logger,
                    client,
-                   tenant_name):
+                   tenant_name,
+                   skip_plugins_validation):
     """Create a deployment on the manager.
 
     `DEPLOYMENT_ID` is the id of the deployment you'd like to create.
@@ -219,12 +221,21 @@ def manager_create(blueprint_id,
             blueprint_id,
             deployment_id,
             inputs=inputs,
-            private_resource=private_resource
+            private_resource=private_resource,
+            skip_plugins_validation=skip_plugins_validation
         )
     except MissingRequiredDeploymentInputError as e:
         logger.info('Unable to create deployment. Not all '
                     'required inputs have been specified...')
         _print_deployment_inputs(client, blueprint_id)
+        raise CloudifyCliError(str(e))
+    except DeploymentPluginNotFound as e:
+        logger.info("Unable to create deployment. Not all "
+                    "deployment plugins are installed on the Manager.\n"
+                    "* Use 'cfy plugins upload' to upload the missing plugins"
+                    " to the Manager, or use 'cfy deployments create' with "
+                    "the flag '--skip-plugins-validation'"
+                    " to skip this validation.")
         raise CloudifyCliError(str(e))
     except UnknownDeploymentInputError as e:
         logger.info(

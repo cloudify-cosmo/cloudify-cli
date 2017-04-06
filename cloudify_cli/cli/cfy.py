@@ -745,6 +745,13 @@ class Options(object):
             help=helptexts.PRIVATE_RESOURCE
         )
 
+        self.skip_plugins_validation = click.option(
+            '--skip-plugins-validation',
+            is_flag=True,
+            default=False,
+            help=helptexts.SKIP_PLUGINS_VALIDATION
+        )
+
         self.users = click.option(
             '-u',
             '--users',
