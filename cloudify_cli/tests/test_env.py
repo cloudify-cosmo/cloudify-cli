@@ -558,6 +558,7 @@ class ExecutionEventsFetcherTest(CliCommandTest):
                 'workflow_id': '<workflow_id>',
                 'node_instance_id': '<node_instance_id>',
                 'message': '<message>',
+                'error_causes': '<error_causes>',
             }
             for _ in xrange(count)
         ]
@@ -728,6 +729,7 @@ class WaitForExecutionTests(CliCommandTest):
                 'workflow_id': '<workflow_id>',
                 'node_instance_id': '<node_instance_id>',
                 'message': '<message>',
+                'error_causes': '<error_causes>',
                 'event_type': 'workflow_succeeded',
             }], 1)],
             repeat(MockListResponse([], 0))
@@ -767,6 +769,7 @@ class WaitForExecutionTests(CliCommandTest):
                 'workflow_id': '<workflow_id>',
                 'node_instance_id': '<node_instance_id>',
                 'message': '<message>',
+                'error_causes': '<error_causes>',
                 'event_type': 'workflow_succeeded',
             }], 1)],
             repeat(MockListResponse([], 0))
