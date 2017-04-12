@@ -13,6 +13,7 @@ checkout:
 
 dependencies:
   override:
+    - pip install virtualenv
     - pip install tox
 
 test:

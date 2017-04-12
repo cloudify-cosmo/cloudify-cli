@@ -205,12 +205,14 @@ class ClusterJoinTest(CliCommandTest):
     def test_join_success(self):
         self.client.cluster.status = mock.Mock(side_effect=[
             ClusterState({'initialized': False}),
-            ClusterState({}),
             NotClusterMaster('not cluster master')
         ])
         self.client.cluster.nodes.list = mock.Mock(return_value=[
             ClusterNode({'host_ip': '10.10.1.10', 'online': True})
         ])
+        self.client.cluster.nodes.add = mock.Mock(return_value=ClusterNode({
+            'credentials': 'abc'
+        }))
 
         self.client.cluster.join = mock.Mock()
         outcome = self.invoke('cfy cluster join {0}'
@@ -220,9 +222,11 @@ class ClusterJoinTest(CliCommandTest):
     def test_join_profile_updated(self):
         self.client.cluster.status = mock.Mock(side_effect=[
             ClusterState({'initialized': False}),
-            ClusterState({}),
             NotClusterMaster('not cluster master')
         ])
+        self.client.cluster.nodes.add = mock.Mock(return_value=ClusterNode({
+            'credentials': 'abc'
+        }))
 
         self.client.cluster.nodes.list = mock.Mock(return_value=[
             ClusterNode({'host_ip': '10.10.1.10', 'online': True})
@@ -240,9 +244,11 @@ class ClusterJoinTest(CliCommandTest):
     def test_join_origin_profile_updated(self):
         self.client.cluster.status = mock.Mock(side_effect=[
             ClusterState({'initialized': False}),
-            ClusterState({}),
             NotClusterMaster('not cluster master')
         ])
+        self.client.cluster.nodes.add = mock.Mock(return_value=ClusterNode({
+            'credentials': 'abc'
+        }))
         with tempfile.NamedTemporaryFile(delete=False) as f:
             f.write('cert or key here\n')
         self.addCleanup(os.unlink, f.name)
