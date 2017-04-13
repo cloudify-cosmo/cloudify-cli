@@ -142,11 +142,15 @@ def use(manager_ip,
         return
 
     logger.info('Attempting to connect...'.format(manager_ip))
-    # determine SSL mode by port
-    if rest_port == constants.SECURED_REST_PORT:
-        rest_protocol = constants.SECURED_REST_PROTOCOL
-    else:
-        rest_protocol = constants.DEFAULT_REST_PROTOCOL
+
+    rest_port, rest_protocol = _get_rest_port_and_protocol(
+        profile_name,
+        manager_ip,
+        rest_port,
+        manager_username,
+        manager_password,
+        manager_tenant
+    )
 
     # First, attempt to get the provider from the manager - should it fail,
     # the manager's profile directory won't be created
@@ -466,7 +470,7 @@ def _get_profile(profile_name):
 
 def _assert_manager_available(client, profile_name):
     try:
-        client.manager.get_status()
+        return client.manager.get_status()
     except UserUnauthorizedError, e:
         raise CloudifyCliError(
             "Can't use manager {0}\n{1}.".format(
@@ -569,6 +573,49 @@ def _set_profile_context(profile_name,
     profile.bootstrap_state = 'Complete'
 
     profile.save()
+
+
+def _get_rest_port_and_protocol(profile_name=None,
+                                manager_ip=None,
+                                rest_port=None,
+                                manager_username=None,
+                                manager_password=None,
+                                manager_tenant=None):
+
+    # Determine SSL mode by port
+    if rest_port == constants.SECURED_REST_PORT:
+        return rest_port, constants.SECURED_REST_PROTOCOL
+
+    client = env.get_rest_client(
+        rest_host=manager_ip,
+        rest_port=rest_port,
+        rest_protocol=constants.DEFAULT_REST_PROTOCOL,
+        skip_version_check=True,
+        username=manager_username,
+        password=manager_password,
+        tenant_name=manager_tenant
+    )
+
+    response = _assert_manager_available(client, profile_name)
+
+    if _is_manager_secured(response):
+        return constants.SECURED_REST_PORT, constants.SECURED_REST_PROTOCOL
+
+    return rest_port, constants.DEFAULT_REST_PROTOCOL
+
+
+def _is_manager_secured(response):
+    """ Checks if the manager is secured (ssl enabled)
+
+    The manager is secured if the request was redirected to https
+    """
+
+    if 'history' in response:
+        response_history = response['history'][0]
+        return response_history.is_redirect \
+            and response_history.headers['location'].startswith('https')
+
+    return False
 
 
 @cfy.pass_logger

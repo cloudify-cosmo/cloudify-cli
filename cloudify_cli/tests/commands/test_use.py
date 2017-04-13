@@ -1,12 +1,20 @@
 from mock import MagicMock, patch
 
 from ... import env
+from ... import constants
 from .constants import SSL_PORT
-from ...constants import API_VERSION
 from .test_base import CliCommandTest
 
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import UserUnauthorizedError
+
+
+def _get_do_request_mock():
+    response_history = MagicMock()
+    response_history.is_redirect = True
+    response_history.headers = {'location': 'https'}
+    response_mock = {'history': [response_history]}
+    return MagicMock(return_value=response_mock)
 
 
 class UseTest(CliCommandTest):
@@ -67,10 +75,8 @@ class UseTest(CliCommandTest):
         host = 'localhost'
         self.client = CloudifyClient(host=host, protocol='https')
         self._test_use()
-        self.assertEqual(self.request_url,
-                         'https://{0}:{1}/api/{2}/status'.format(host,
-                                                                 SSL_PORT,
-                                                                 API_VERSION))
+        self.assertEqual(self.request_url, 'https://{0}:{1}/api/{2}/status'.
+                         format(host, SSL_PORT, constants.API_VERSION))
         self.assertTrue(self.verify)
 
     def test_use_trust_all(self):
@@ -78,11 +84,46 @@ class UseTest(CliCommandTest):
         self.client = CloudifyClient(host=host,
                                      protocol='https', trust_all=True)
         self._test_use()
-        self.assertEqual(self.request_url,
-                         'https://{0}:{1}/api/{2}/status'.format(host,
-                                                                 SSL_PORT,
-                                                                 API_VERSION))
+        self.assertEqual(self.request_url, 'https://{0}:{1}/api/{2}/status'.
+                         format(host, SSL_PORT, constants.API_VERSION))
         self.assertFalse(self.verify)
+
+    @patch('cloudify_cli.commands.profiles._get_provider_context',
+           return_value={})
+    @patch('cloudify_rest_client.client.HTTPClient._do_request',
+           _get_do_request_mock())
+    def test_use_sets_ssl_port_and_protocol(self, *_):
+        outcome = self.invoke('profiles use 1.2.3.4')
+        self.assertIn('Using manager 1.2.3.4', outcome.logs)
+        context = self._read_context()
+        self.assertEqual(constants.SECURED_REST_PORT, context.rest_port)
+        self.assertEqual(constants.SECURED_REST_PROTOCOL,
+                         context.rest_protocol)
+
+    @patch('cloudify_cli.commands.profiles._get_provider_context',
+           return_value={})
+    @patch('cloudify_rest_client.client.HTTPClient._do_request',
+           return_value={})
+    def test_use_rest_port_ssl(self, *_):
+        outcome = self.invoke('profiles use 1.2.3.4 --rest-port {0}'.
+                              format(constants.SECURED_REST_PORT))
+        self.assertIn('Using manager 1.2.3.4', outcome.logs)
+        context = self._read_context()
+        self.assertEqual(constants.SECURED_REST_PORT, context.rest_port)
+        self.assertEqual(constants.SECURED_REST_PROTOCOL,
+                         context.rest_protocol)
+
+    @patch('cloudify_cli.commands.profiles._get_provider_context',
+           return_value={})
+    @patch('cloudify_rest_client.client.HTTPClient._do_request',
+           return_value={})
+    def test_use_sets_default_port_and_protocol(self, *_):
+        outcome = self.invoke('profiles use 1.2.3.4')
+        self.assertIn('Using manager 1.2.3.4', outcome.logs)
+        context = self._read_context()
+        self.assertEqual(constants.DEFAULT_REST_PORT, context.rest_port)
+        self.assertEqual(constants.DEFAULT_REST_PROTOCOL,
+                         context.rest_protocol)
 
     def _test_use(self):
         host = 'localhost'
