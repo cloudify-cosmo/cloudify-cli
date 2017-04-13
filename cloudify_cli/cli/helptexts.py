@@ -202,10 +202,10 @@ PRIVATE_RESOURCE = 'If set to True the uploaded resource will only be ' \
                    'accessible by all users that belong to the same tenant. ' \
                    '(default: False)'
 
-SKIP_PLUGINS_VALIDATION = 'Determines whether to validate required deployment'\
-                          ' plugins exists on the manager. If validation is' \
-                          ' skipped plugins containing source URL will be' \
-                          ' installed from source.'
+SKIP_PLUGINS_VALIDATION = 'Determines whether to validate if the' \
+                          ' required deployment plugins exist on the manager.'\
+                          ' If validation is skipped, plugins containing' \
+                          ' source URL will be installed from source.' \
 
 USER = 'Username of user to whom the permissions apply. ' \
        'This argument can be used multiple times'
