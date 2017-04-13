@@ -182,11 +182,6 @@ SECURITY_ROLE = "A role to determine the user's permissions on the manager " \
                 "(default: user)"
 PASSWORD = 'Cloudify manager password'
 
-CLUSTER_ENCRYPTION_KEY = (
-    'The encryption key for the cluster (needs to be the same for all '
-    'members). A new key will be generated if not set.'
-)
-
 CLUSTER_HOST_IP = \
     'The IP of this machine to use for advertising to the cluster'
 CLUSTER_JOIN = 'Address of one of the cluster members to join'

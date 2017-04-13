@@ -15,14 +15,12 @@
 ############
 
 
-import os
 import sys
 import urllib
 import difflib
 import StringIO
 import traceback
 from functools import wraps
-from base64 import standard_b64encode
 
 import click
 from cloudify_rest_client.exceptions import NotModifiedError
@@ -732,11 +730,6 @@ class Options(object):
             '--cluster-node-name',
             default=lambda: 'cloudify_manager_' + generate_random_string(),
             help=helptexts.CLUSTER_NODE_NAME)
-
-        self.cluster_encryption_key = click.option(
-            '--cluster-encryption-key',
-            default=lambda: standard_b64encode(os.urandom(16)),
-            help=helptexts.CLUSTER_ENCRYPTION_KEY)
 
         self.private_resource = click.option(
             '--private-resource',
