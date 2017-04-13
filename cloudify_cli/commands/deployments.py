@@ -231,11 +231,11 @@ def manager_create(blueprint_id,
         raise CloudifyCliError(str(e))
     except DeploymentPluginNotFound as e:
         logger.info("Unable to create deployment. Not all "
-                    "deployment plugins are installed on the Manager.os.linesep"
+                    "deployment plugins are installed on the Manager.{}"
                     "* Use 'cfy plugins upload' to upload the missing plugins"
                     " to the Manager, or use 'cfy deployments create' with "
                     "the '--skip-plugins-validation' flag "
-                    " to skip this validation.")
+                    " to skip this validation.".format(os.linesep))
         raise CloudifyCliError(str(e))
     except UnknownDeploymentInputError as e:
         logger.info(
