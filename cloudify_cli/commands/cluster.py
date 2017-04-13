@@ -79,8 +79,10 @@ def status(client, logger):
     """Display the current status of the Cloudify Manager cluster
     """
     status = client.cluster.status()
-    logger.info('Cloudify Manager cluster initialized!\n'
-                'Encryption key: {0}'.format(status.encryption_key))
+    if status.initialized:
+        logger.info('Cloudify Manager cluster ready\n')
+    else:
+        logger.info('Cloudify Manager cluster not initialized\n')
 
 
 @cluster.command(name='start',
@@ -90,13 +92,11 @@ def status(client, logger):
 @cfy.options.timeout()
 @cfy.options.cluster_host_ip
 @cfy.options.cluster_node_name
-@cfy.options.cluster_encryption_key
 def start(client,
           logger,
           timeout,
           cluster_host_ip,
-          cluster_node_name,
-          cluster_encryption_key):
+          cluster_node_name):
     """Start a Cloudify Manager cluster with the current manager as the master.
 
     This will initialize all the Cloudify Manager cluster components on the
@@ -110,8 +110,7 @@ def start(client,
 
     client.cluster.start(
         host_ip=cluster_host_ip,
-        node_name=cluster_node_name,
-        encryption_key=cluster_encryption_key
+        node_name=cluster_node_name
     )
     status = _wait_for_cluster_initialized(client, logger, timeout=timeout)
 
