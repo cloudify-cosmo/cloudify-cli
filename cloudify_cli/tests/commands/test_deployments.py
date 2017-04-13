@@ -171,6 +171,28 @@ class DeploymentsTest(CliCommandTest):
         self.invoke(
             'cfy deployments create deployment -b a-blueprint-id')
 
+    def test_deployment_create_with_skip_plugins_validation_flag(self):
+        deployment = deployments.Deployment({
+            'deployment_id': 'deployment_id'
+        })
+        self.client.deployments.create = MagicMock(return_value=deployment)
+        self.invoke(
+            'cfy deployments create deployment -b a --skip-plugins-validation')
+        call_args = list(self.client.deployments.create.call_args)
+        self.assertIn('skip_plugins_validation', call_args[1])
+        self.assertEqual(call_args[1]['skip_plugins_validation'], True)
+
+    def test_deployment_create_without_skip_plugins_validation_flag(self):
+        deployment = deployments.Deployment({
+            'deployment_id': 'deployment_id'
+        })
+        self.client.deployments.create = MagicMock(return_value=deployment)
+        self.invoke(
+            'cfy deployments create deployment -b aa')
+        call_args = list(self.client.deployments.create.call_args)
+        self.assertIn('skip_plugins_validation', call_args[1])
+        self.assertEqual(call_args[1]['skip_plugins_validation'], False)
+
     def test_deployments_delete(self):
         self.client.deployments.delete = MagicMock()
         self.invoke('cfy deployments delete my-dep')
