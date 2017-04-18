@@ -227,11 +227,12 @@ def manager_start(workflow_id,
             logger.info(events_message.format(execution.id))
             if workflow_id == DEFAULT_UNINSTALL_WORKFLOW and not str(
                     parameters.get('ignore_failure')).lower() == 'true':
+
                 logger.info(
-                    "Note that, for the {0} workflow, you can use the 'ignore_failure' parameter "
+                    "Note that, for the {0} workflow, you can use the 'ignore_failure' parameter "  # noqa
                     'to ignore operation failures and continue the execution '
-                    "(for example: 'cfy executions start {0} -d {1} -p ignore_failure=true'). "
-                    "If your blueprint imports Cloudify's global definitions (types.yaml) "
+                    "(for example: 'cfy executions start {0} -d {1} -p ignore_failure=true'). "  # noqa
+                    "If your blueprint imports Cloudify's global definitions (types.yaml) "  # noqa
                     'of a version prior to 4.0, you will also need to include '
                     "'--allow-custom-parameters' in the command line."
                     .format(workflow_id, deployment_id))
