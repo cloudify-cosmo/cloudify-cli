@@ -1,7 +1,7 @@
 name "cloudify-manager-blueprints"
 
 ENV['CORE_TAG_NAME'] || raise('CORE_TAG_NAME environment variable not set')
-default_version ENV['CORE_TAG_NAME']
+default_version '17.3.31'
 manager_single_tar_url=ENV['SINGLE_TAR_URL']
 
 source :git => "https://github.com/cloudify-cosmo/cloudify-manager-blueprints"
