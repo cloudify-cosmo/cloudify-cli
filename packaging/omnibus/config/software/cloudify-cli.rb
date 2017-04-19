@@ -38,7 +38,7 @@ build do
     command "#{install_dir}/embedded/Scripts/pip.exe install --ignore-installed --build=#{project_dir} . --requirement dev-requirements.txt"
   else
     command "git reset --hard HEAD"  # previous patch gets cached
-    patch source: "cloudify_cli.patch"
+    #patch source: "cloudify_cli.patch"
 
     command ["#{install_dir}/embedded/bin/pip",
              "install", "-I", "--build=#{project_dir}",
