@@ -1194,18 +1194,13 @@ class TestLocal(CliCommandTest):
         )
 
     def test_initialize_blueprint_default_multi_env(self):
-        # Simulate the case when env.MULTIPLE_LOCAL_BLUEPRINTS == True
-        original_storage_dir = cli_local._STORAGE_DIR_NAME
-        cli_local._STORAGE_DIR_NAME = ''
-        try:
-            self._test_initialize_blueprint(
-                name='test',
-                custom_inputs={},
-                expected_inputs=TestLocal._DEFAULT_INPUTS,
-                expected_storage_dir='/tmp/.cloudify-test/profiles/local/test'
-            )
-        finally:
-            cli_local._STORAGE_DIR_NAME = original_storage_dir
+        """Initialize blueprint with multiple local blueprints enabled."""
+        self._test_initialize_blueprint(
+            name='test',
+            custom_inputs={},
+            expected_inputs=TestLocal._DEFAULT_INPUTS,
+            expected_storage_dir='/tmp/.cloudify-test/profiles/local/test'
+        )
 
     def _test_initialize_blueprint(self,
                                    name,
