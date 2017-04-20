@@ -1173,8 +1173,6 @@ class TestLocal(CliCommandTest):
             name='local',
             custom_inputs={},
             expected_inputs=TestLocal._DEFAULT_INPUTS,
-            expected_storage_dir='/tmp/.cloudify-test/profiles/local/'
-                                 'local-storage/local'
         )
 
     def test_initialize_blueprint_custom_single_env(self):
@@ -1189,8 +1187,6 @@ class TestLocal(CliCommandTest):
             name='temp',
             custom_inputs=custom_inputs,
             expected_inputs=custom_inputs,
-            expected_storage_dir='/tmp/.cloudify-test/profiles/local/'
-                                 'local-storage/temp'
         )
 
     def test_initialize_blueprint_default_multi_env(self):
@@ -1199,14 +1195,12 @@ class TestLocal(CliCommandTest):
             name='test',
             custom_inputs={},
             expected_inputs=TestLocal._DEFAULT_INPUTS,
-            expected_storage_dir='/tmp/.cloudify-test/profiles/local/test'
         )
 
     def _test_initialize_blueprint(self,
                                    name,
                                    custom_inputs,
-                                   expected_inputs,
-                                   expected_storage_dir):
+                                   expected_inputs):
         environment = cli_local.initialize_blueprint(
             TestLocal._BLUEPRINT_PATH,
             name,
@@ -1215,11 +1209,6 @@ class TestLocal(CliCommandTest):
         self.assertEqual(environment.name, name)
         self.assertEqual(environment.plan['inputs'], expected_inputs)
         self.assertIn('mock_workflow', environment.plan['workflows'])
-        # TODO: Figure out where _storage_dir was taken from
-        # self.assertEqual(
-        #     environment.storage._storage_dir,
-        #     expected_storage_dir
-        # )
 
 
 class TestClusterRestClient(CliCommandTest):
