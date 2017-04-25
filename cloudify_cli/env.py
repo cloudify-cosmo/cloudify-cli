@@ -45,7 +45,8 @@ CLOUDIFY_WORKDIR = os.path.join(
     constants.CLOUDIFY_BASE_DIRECTORY_NAME)
 PROFILES_DIR = os.path.join(CLOUDIFY_WORKDIR, 'profiles')
 ACTIVE_PRO_FILE = os.path.join(CLOUDIFY_WORKDIR, 'active.profile')
-MULTIPLE_LOCAL_BLUEPRINTS = os.environ.get('CFY_MULTIPLE_BLUEPRINTS') == 'true'
+MULTIPLE_LOCAL_BLUEPRINTS = (
+    os.environ.get('CFY_MULTIPLE_BLUEPRINTS', 'true') == 'true')
 CLUSTER_RETRY_INTERVAL = 5
 
 
