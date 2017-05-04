@@ -39,7 +39,6 @@ from ..constants import DEFAULT_TENANT_NAME
 @cfy.options.install_plugins
 @cfy.options.task_retries(5)
 @cfy.options.task_retry_interval(30)
-@cfy.options.task_thread_pool_size()
 @cfy.options.keep_up_on_failure
 @cfy.options.dont_save_password_in_profile
 @cfy.options.verbose()
@@ -53,7 +52,6 @@ def bootstrap(blueprint_path,
               install_plugins,
               task_retries,
               task_retry_interval,
-              task_thread_pool_size,
               keep_up_on_failure,
               dont_save_password_in_profile,
               logger):
@@ -87,7 +85,6 @@ def bootstrap(blueprint_path,
                 inputs=inputs,
                 task_retries=task_retries,
                 task_retry_interval=task_retry_interval,
-                task_thread_pool_size=task_thread_pool_size,
                 install_plugins=install_plugins,
                 resolver=config.get_import_resolver())
             logger.info('Bootstrap validation completed successfully')
@@ -107,7 +104,6 @@ def bootstrap(blueprint_path,
                     inputs=inputs,
                     task_retries=task_retries,
                     task_retry_interval=task_retry_interval,
-                    task_thread_pool_size=task_thread_pool_size,
                     install_plugins=install_plugins,
                     skip_sanity=skip_sanity)
                 manager_ip = details['manager_ip']
