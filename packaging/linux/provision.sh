@@ -36,7 +36,6 @@ else
     git tag -d $CORE_TAG_NAME
 fi
 NEW_TAG_NAME="${VERSION}.${PRERELEASE}"
-git tag -d $NEW_TAG_NAME
 git tag $NEW_TAG_NAME
 omnibus build cloudify && result="success"
 cd pkg
