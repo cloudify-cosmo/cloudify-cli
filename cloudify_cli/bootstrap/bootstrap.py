@@ -139,7 +139,6 @@ def bootstrap_validation(blueprint_path,
                          inputs=None,
                          task_retries=5,
                          task_retry_interval=30,
-                         task_thread_pool_size=1,
                          install_plugins=False,
                          resolver=None):
     validate_manager_deployment_size(blueprint_path=blueprint_path)
@@ -165,16 +164,14 @@ def bootstrap_validation(blueprint_path,
                             'operation':
                                 'cloudify.interfaces.validation.creation'},
                         task_retries=task_retries,
-                        task_retry_interval=task_retry_interval,
-                        task_thread_pool_size=task_thread_pool_size)
+                        task_retry_interval=task_retry_interval)
 
 
 def _perform_sanity(working_env,
                     manager_ip,
                     fabric_env,
                     task_retries=5,
-                    task_retry_interval=30,
-                    task_thread_pool_size=1):
+                    task_retry_interval=30):
     working_env.execute(workflow='execute_operation',
                         parameters={'operation':
                                     'cloudify.interfaces.lifecycle.start',
@@ -186,8 +183,7 @@ def _perform_sanity(working_env,
                                          'fabric_env': fabric_env}},
                         allow_custom_parameters=True,
                         task_retries=task_retries,
-                        task_retry_interval=task_retry_interval,
-                        task_thread_pool_size=task_thread_pool_size)
+                        task_retry_interval=task_retry_interval)
 
 
 def _handle_provider_context(rest_client,
@@ -234,7 +230,6 @@ def bootstrap(blueprint_path,
               inputs=None,
               task_retries=5,
               task_retry_interval=30,
-              task_thread_pool_size=1,
               install_plugins=False,
               skip_sanity=False):
     storage = local.FileStorage(storage_dir=_workdir())
@@ -256,8 +251,7 @@ def bootstrap(blueprint_path,
 
     working_env.execute(workflow='install',
                         task_retries=task_retries,
-                        task_retry_interval=task_retry_interval,
-                        task_thread_pool_size=task_thread_pool_size)
+                        task_retry_interval=task_retry_interval)
 
     nodes = working_env.storage.get_nodes()
     node_instances = working_env.storage.get_node_instances()
@@ -344,8 +338,7 @@ def bootstrap(blueprint_path,
                             manager_ip=manager_ip,
                             fabric_env=fabric_env,
                             task_retries=task_retries,
-                            task_retry_interval=task_retry_interval,
-                            task_thread_pool_size=task_thread_pool_size)
+                            task_retry_interval=task_retry_interval)
 
     return {
         'provider_name': 'provider',
@@ -359,18 +352,9 @@ def bootstrap(blueprint_path,
     }
 
 
-def teardown(name='manager',
-             task_retries=5,
-             task_retry_interval=30,
-             task_thread_pool_size=1,
-             ignore_failure=True):
+def teardown(name='manager'):
     working_env = load_env(name)
-    working_env.execute('uninstall',
-                        task_retries=task_retries,
-                        task_retry_interval=task_retry_interval,
-                        task_thread_pool_size=task_thread_pool_size,
-                        parameters={'ignore_failure': ignore_failure})
-
+    working_env.execute('uninstall', parameters={'ignore_failure': True})
     # deleting local environment data
     shutil.rmtree(_workdir())
 

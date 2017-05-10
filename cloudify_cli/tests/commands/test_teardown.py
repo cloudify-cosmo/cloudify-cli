@@ -28,11 +28,7 @@ class TeardownTest(CliCommandTest):
         self._use_manager()
         env.profile = env.get_profile_context(suppress_error=True)
         self.invoke('cfy teardown -f --ignore-deployments')
-        mock_teardown.assert_called_once_with(
-            task_retries=0,
-            task_retry_interval=1,
-            task_thread_pool_size=1
-        )
+        mock_teardown.assert_called_once_with()
 
     def test_teardown_has_existing_deployments_dont_ignore_deployments(self):
         self.client.manager.get_status = MagicMock()
@@ -73,11 +69,7 @@ class TeardownTest(CliCommandTest):
         self.use_manager(manager_ip='10.0.0.1')
         env.profile = env.get_profile_context(suppress_error=True)
         self.invoke('cfy teardown -f --ignore-deployments')
-        mock_teardown.assert_called_once_with(
-            task_retries=0,
-            task_retry_interval=1,
-            task_thread_pool_size=1
-        )
+        mock_teardown.assert_called_once_with()
 
     @patch('cloudify_cli.bootstrap.bootstrap.teardown')
     def test_teardown_default_values(self, mock_teardown):
@@ -86,24 +78,4 @@ class TeardownTest(CliCommandTest):
         self.use_manager(manager_ip='10.0.0.1')
 
         self.invoke('cfy teardown -f')
-        mock_teardown.assert_called_once_with(
-            task_retries=0,
-            task_retry_interval=1,
-            task_thread_pool_size=1
-        )
-
-    @patch('cloudify_cli.bootstrap.bootstrap.teardown')
-    def test_teardown_custom_values(self, mock_teardown):
-
-        self.client.deployments.list = MagicMock(return_value=[])
-        self.use_manager(host='10.0.0.1')
-
-        self.invoke('cfy teardown -f '
-                    '--task-retries 7 '
-                    '--task-retry-interval 14 '
-                    '--task-thread-pool-size 87')
-        mock_teardown.assert_called_once_with(
-            task_retries=7,
-            task_retry_interval=14,
-            task_thread_pool_size=87
-        )
+        mock_teardown.assert_called_once_with()
