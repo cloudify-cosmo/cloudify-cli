@@ -40,6 +40,7 @@ def snapshots():
 @cfy.options.tenant_name(required=False,
                          help=helptexts.RESTORE_SNAPSHOT_TENANT_NAME,
                          show_default_in_help=False)
+@cfy.options.restore_certificates
 @cfy.options.verbose()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
@@ -47,6 +48,7 @@ def restore(snapshot_id,
             without_deployment_envs,
             force,
             tenant_name,
+            restore_certificates,
             logger,
             client):
     """Restore a manager to its previous state
@@ -59,7 +61,8 @@ def restore(snapshot_id,
         snapshot_id,
         recreate_deployments_envs,
         force,
-        tenant_name
+        tenant_name,
+        restore_certificates
     )
     logger.info("Started workflow execution. The execution's id is {0}".format(
         execution.id))

@@ -694,6 +694,13 @@ class Options(object):
             default=False,
             help=helptexts.DESCENDING)
 
+        self.restore_certificates = click.option(
+            '--restore-certificates',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.RESTORE_CERTIFICATES)
+
         self.install_script = click.option(
             '-s',
             '--install-script',
