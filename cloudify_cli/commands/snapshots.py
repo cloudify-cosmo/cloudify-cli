@@ -41,6 +41,7 @@ def snapshots():
                          help=helptexts.RESTORE_SNAPSHOT_TENANT_NAME,
                          show_default_in_help=False)
 @cfy.options.restore_certificates
+@cfy.options.no_reboot
 @cfy.options.verbose()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
@@ -49,6 +50,7 @@ def restore(snapshot_id,
             force,
             tenant_name,
             restore_certificates,
+            no_reboot,
             logger,
             client):
     """Restore a manager to its previous state
@@ -62,10 +64,23 @@ def restore(snapshot_id,
         recreate_deployments_envs,
         force,
         tenant_name,
-        restore_certificates
+        restore_certificates,
+        no_reboot
     )
     logger.info("Started workflow execution. The execution's id is {0}".format(
         execution.id))
+    if not restore_certificates:
+        return
+    if no_reboot:
+        logger.warn('Certificates might be replaced during a snapshot '
+                    'restore action. It is recommended that you reboot the '
+                    'Manager VM when the execution is terminated, or several '
+                    'services might not work.')
+    else:
+        logger.info('In the event of a certificates restore action, the '
+                    'Manager VM will automatically reboot after execution is '
+                    'terminated. After reboot the Manager can work with the '
+                    'restored certificates.')
 
 
 @snapshots.command(name='create',

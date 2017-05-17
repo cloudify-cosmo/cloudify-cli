@@ -219,10 +219,17 @@ RESTORE_SNAPSHOT_TENANT_NAME = 'The name of the tenant into which the ' \
                                'will be raised'
 RESTORE_CERTIFICATES = 'Restore the certificates from the snapshot, using ' \
                        'them to replace the current Manager certificates. ' \
-                       'If the certificates metadata (I.E: the Manager IP ' \
+                       'If the certificates` metadata (I.E: the Manager IP ' \
                        'address) from the snapshot does not match the ' \
                        'Manager metadata, the certificates cannot work on ' \
-                       'this Manager and will not be restored'
+                       'this Manager and will not be restored. In the event ' \
+                       'that the certificates have been restored, the ' \
+                       'Manager will be automatically rebooted at the end ' \
+                       'of the execution. To avoid automatic reboot, use ' \
+                       'the flag `--no-reboot` (not recommended)'
+NO_REBOOT = 'Do not perform an automatic reboot to the Manager VM after ' \
+            'restoring certificates a from snapshot (not recommended). ' \
+            'Only relevant if the `--restore-certificates` flag was supplied'
 SKIP_CREDENTIALS_VALIDATION = 'Do not check that the passed credentials are ' \
                               'correct (default:False)'
 LDAP_SERVER = 'The LDAP server address to authenticate against'
