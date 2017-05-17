@@ -1160,7 +1160,7 @@ class TestLocal(CliCommandTest):
     def test_storage_dir(self):
         self.assertEqual(
             cli_local.storage_dir(),
-            '/tmp/.cloudify-test/profiles/local/local-storage'
+            '/tmp/.cloudify-test/profiles/local'
         )
 
         self.assertEqual(

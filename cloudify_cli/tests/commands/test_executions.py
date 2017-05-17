@@ -83,22 +83,30 @@ class ExecutionsTest(CliCommandTest):
     def test_local_execution_default_param(self):
         self._init_local_env()
         self._assert_outputs({'param': 'null'})
-        self.invoke('cfy executions start {0}'.format('run_test_op_on_nodes'))
+        self.invoke(
+            'cfy executions start {0} '
+            '-b local'
+            .format('run_test_op_on_nodes'))
         self._assert_outputs({'param': 'default_param'})
 
     def test_local_execution_custom_param_value(self):
         self._init_local_env()
-        self.invoke('cfy executions start {0} -p param=custom_value'.format(
-            'run_test_op_on_nodes')
+        self.invoke(
+            'cfy executions start {0} '
+            '-b local '
+            '-p param=custom_value'
+            .format('run_test_op_on_nodes')
         )
         self._assert_outputs({'param': 'custom_value'})
 
     def test_local_execution_allow_custom_params(self):
         self._init_local_env()
-        self.invoke('cfy executions start {0} '
-                    '-p custom_param=custom_value --allow-custom-parameters'
-                    ''.format('run_test_op_on_nodes')
-                    )
+        self.invoke(
+            'cfy executions start {0} '
+            '-b local '
+            '-p custom_param=custom_value --allow-custom-parameters'
+            .format('run_test_op_on_nodes')
+        )
         self._assert_outputs(
             {'param': 'default_param', 'custom_param': 'custom_value'}
         )
@@ -106,9 +114,10 @@ class ExecutionsTest(CliCommandTest):
     def test_local_execution_dont_allow_custom_params(self):
         self._init_local_env()
         self.invoke(
-            'cfy executions start {0} -p custom_param=custom_value'.format(
-                'run_test_op_on_nodes'
-            ),
+            'cfy executions start {0} '
+            '-b local '
+            '-p custom_param=custom_value'
+            .format('run_test_op_on_nodes'),
             err_str_segment='Workflow "run_test_op_on_nodes" does not '
                             'have the following parameters declared: '
                             'custom_param',
@@ -116,7 +125,8 @@ class ExecutionsTest(CliCommandTest):
         )
 
     def _assert_outputs(self, expected_outputs):
-        output = self.invoke('cfy deployments outputs').logs.split('\n')
+        output = self.invoke(
+            'cfy deployments outputs -b local').logs.split('\n')
         for key, value in expected_outputs.iteritems():
             if value == 'null':
                 key_val_string = '  "{0}": {1}, '.format(key, value)

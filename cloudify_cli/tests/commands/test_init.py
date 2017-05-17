@@ -75,7 +75,8 @@ class InitTest(CliCommandTest):
         self.invoke('cfy init {0}'.format(blueprint_path))
         cfy.register_commands()
 
-        output = self.invoke('cfy deployments outputs').logs.split('\n')
+        output = self.invoke(
+            'cfy deployments outputs -b local').logs.split('\n')
         self.assertIn('  "key1": "default_val1", ', output)
         self.assertIn('  "key2": "default_val2", ', output)
         self.assertIn('  "key3": "default_val3", ', output)
@@ -94,7 +95,8 @@ class InitTest(CliCommandTest):
         self.invoke(command)
         cfy.register_commands()
 
-        output = self.invoke('cfy deployments inputs').logs.split('\n')
+        output = self.invoke(
+            'cfy deployments inputs -b local').logs.split('\n')
         self.assertIn('  "key1": "default_val1", ', output)
         self.assertIn('  "key2": "default_val2", ', output)
         self.assertIn('  "key3": "default_val3"', output)
@@ -113,7 +115,8 @@ class InitTest(CliCommandTest):
         self.invoke(command)
         cfy.register_commands()
 
-        output = self.invoke('cfy deployments inputs').logs.split('\n')
+        output = self.invoke(
+            'cfy deployments inputs -b local').logs.split('\n')
         self.assertIn('  "key1": "val1", ', output)
         self.assertIn('  "key2": "val2", ', output)
         self.assertIn('  "key3": "val3"', output)
@@ -188,12 +191,13 @@ class InitTest(CliCommandTest):
 
     def test_init_blueprint_archive(self):
         self.invoke(
-            'cfy init {0} -n simple_blueprint.yaml'
+            'cfy init {0} -b local -n simple_blueprint.yaml'
             .format(SAMPLE_CUSTOM_NAME_ARCHIVE)
         )
         cfy.register_commands()
 
-        output = self.invoke('cfy deployments inputs').logs.split('\n')
+        output = self.invoke(
+            'cfy deployments inputs -b local').logs.split('\n')
         self.assertIn('  "key1": "default_val1", ', output)
         self.assertIn('  "key2": "default_val2", ', output)
         self.assertIn('  "key3": "default_val3"', output)
