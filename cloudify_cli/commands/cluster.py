@@ -24,7 +24,8 @@ from requests.exceptions import ReadTimeout
 from cloudify_rest_client.exceptions import (CloudifyClientError,
                                              NotClusterMaster)
 
-from .. import constants, env
+from . import init, profiles
+from .. import constants, env, utils
 from ..cli import cfy
 from ..table import print_data
 from ..exceptions import CloudifyCliError
@@ -120,8 +121,12 @@ def start(client,
         logger.error('Error while configuring the Cloudify Manager cluster')
         raise CloudifyCliError(status.error)
 
-    env.profile.profile_name = env.profile.manager_ip
-    _join_node_to_profile(env.profile)
+    profile_name = 'cluster_{0}'.format(utils.generate_random_string())
+    init.init_manager_profile(profile_name=profile_name)
+    cluster_profile = env.get_profile_context(profile_name)
+
+    _join_node_to_profile(env.profile, cluster_profile)
+    env.set_active_profile(profile_name)
 
     logger.info('Cloudify Manager cluster started at {0}.\n'
                 .format(cluster_host_ip))
@@ -150,15 +155,7 @@ def join(client,
     current members are unreachable, but is not required.
     """
     _verify_not_in_cluster(client)
-    if not env.is_profile_exists(join_profile):
-        raise CloudifyCliError('No such profile: {0}'
-                               .format(join_profile))
-    joined_profile = env.get_profile_context(join_profile)
-    if not joined_profile.cluster:
-        raise CloudifyCliError('Cannot join profile {0} - that profile '
-                               'has no cluster started'
-                               .format(join_profile))
-
+    joined_profile = _find_profile_to_join(join_profile)
     deadline = time.time() + timeout
     cluster_client = env.get_rest_client(client_profile=joined_profile)
     cluster_nodes = cluster_client.cluster.nodes.list()
@@ -207,9 +204,23 @@ def join(client,
             time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
 
     _join_node_to_profile(env.profile, joined_profile=joined_profile)
-    _copy_cluster_profile_settings(from_profile=joined_profile,
-                                   to_profile=env.profile)
     logger.info('Cloudify Manager joined cluster successfully.')
+
+
+def _find_profile_to_join(profile_name):
+    if env.is_profile_exists(profile_name):
+        profile = env.get_profile_context(profile_name)
+        if profile.cluster:
+            return profile
+
+    for candidate_name in profiles._get_profile_names():
+        candidate = env.get_profile_context(candidate_name)
+        if candidate.cluster and any(node['manager_ip'] == profile_name
+                                     for node in candidate.cluster):
+            return candidate
+
+    raise CloudifyCliError('Cannot find profile to join: {0}'
+                           .format(profile_name))
 
 
 @cluster.command(name='update-profile',
@@ -379,6 +390,9 @@ def _join_node_to_profile(from_profile, joined_profile=None):
             ssh_key = None
     else:
         ssh_key = None
+    for attr in ['manager_username', 'manager_password', 'manager_tenant']:
+        if not getattr(joined_profile, attr, None):
+            setattr(joined_profile, attr, getattr(from_profile, attr))
 
     node.update({
         'cert': profile_cert,
@@ -387,30 +401,6 @@ def _join_node_to_profile(from_profile, joined_profile=None):
     })
     joined_profile.cluster.append(node)
     joined_profile.save()
-
-
-def _copy_cluster_profile_settings(from_profile, to_profile):
-    """After joining to the cluster, make local profile also use it.
-
-    Copy the nodes and the certs + ssh keys of the cluster, from the
-    joined-to profile.
-    """
-    for attr in ['manager_username', 'manager_password', 'manager_tenant']:
-        setattr(to_profile, attr, getattr(from_profile, attr))
-
-    for node in from_profile.cluster:
-        added_node = node.copy()
-        for file_key in ['cert', 'ssh_key']:
-            path = node.get(file_key)
-            if not path:
-                continue
-            filename = os.path.basename(path)
-            new_filename = os.path.join(to_profile.workdir, filename)
-            # use .copy2 to also preserve chmod
-            shutil.copy2(node[file_key], new_filename)
-            added_node[file_key] = new_filename
-        to_profile.cluster.append(added_node)
-    to_profile.save()
 
 
 def _display_logs(logger, logs):
