@@ -423,9 +423,11 @@ class ProfileContext(yaml.YAMLObject):
 
     @property
     def cluster(self):
-        # default the .cluster attribute here, so that all callers can use it
-        # as just .cluster, even if it's not present in the source yaml
-        return getattr(self, '_cluster', [])
+        # default the ._cluster attribute here, so that all callers can use it
+        # as just ._cluster, even if it's not present in the source yaml
+        if not hasattr(self, '_cluster'):
+            self._cluster = []
+        return self._cluster
 
     @cluster.setter
     def cluster(self, cluster):
