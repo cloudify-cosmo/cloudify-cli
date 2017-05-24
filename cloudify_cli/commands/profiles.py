@@ -591,29 +591,35 @@ def _get_rest_port_and_protocol(profile_name=None,
         rest_port=rest_port,
         rest_protocol=constants.DEFAULT_REST_PROTOCOL,
         skip_version_check=True,
-        username=manager_username,
-        password=manager_password,
-        tenant_name=manager_tenant
+        # we're sending a dummy request over HTTP unencrypted, so DO NOT
+        # send the actual credentials just yet
+        username='<invalid>',
+        password='<invalid>',
+        tenant_name='<invalid>'
     )
-
-    response = _assert_manager_available(client, profile_name)
-
-    if _is_manager_secured(response):
-        return constants.SECURED_REST_PORT, constants.SECURED_REST_PROTOCOL
+    # run a dummy request against HTTP, and see if it was redirected to HTTPS -
+    # if it was, the manager is secured - let's use HTTPS
+    try:
+        client.manager.get_status()
+    except UserUnauthorizedError as e:
+        if e.response and _is_manager_secured(e.response.history):
+            return constants.SECURED_REST_PORT, constants.SECURED_REST_PROTOCOL
+    except CloudifyClientError as e:
+        raise
 
     return rest_port, constants.DEFAULT_REST_PROTOCOL
 
 
-def _is_manager_secured(response):
+def _is_manager_secured(response_history):
     """ Checks if the manager is secured (ssl enabled)
 
     The manager is secured if the request was redirected to https
     """
 
-    if 'history' in response:
-        response_history = response['history'][0]
-        return response_history.is_redirect \
-            and response_history.headers['location'].startswith('https')
+    if response_history:
+        first_response = response_history[0]
+        return first_response.is_redirect \
+            and first_response.headers['location'].startswith('https')
 
     return False
 
