@@ -262,7 +262,6 @@ def set(profile_name,
                                    .format(profile_name))
         old_name = env.profile.profile_name
         env.profile.profile_name = profile_name
-        env.set_active_profile(profile_name)
     if manager_username:
         logger.info('Setting username to `{0}`'.format(manager_username))
         env.profile.manager_username = manager_username
@@ -275,6 +274,7 @@ def set(profile_name,
 
     env.profile.save()
     if old_name is not None:
+        env.set_active_profile(profile_name)
         env.delete_profile(old_name)
     logger.info('Settings saved successfully')
 
