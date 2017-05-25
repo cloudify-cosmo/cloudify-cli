@@ -7,7 +7,7 @@ AWS_ACCESS_KEY=$4
 CLI_BRANCH=$5
 PACKAGER_BRANCH=$6
 export REPO=$7
-export CORE_TAG_NAME="4.1m1"
+export CORE_TAG_NAME="4.1m2"
 
 if [ $REPO == "cloudify-versions" ];then
     REPO_TAG="master"
