@@ -18,7 +18,7 @@
 name "cloudify-cli"
 
 ENV['CORE_TAG_NAME'] || raise('CORE_TAG_NAME environment variable not set')
-default_version ENV['CORE_TAG_NAME']
+default_version 'limor-gs-patch-2'
 
 ENV['GITHUB_USERNAME'] || raise('GITHUB_USERNAME environment variable not set (required for private repo)')
 ENV['GITHUB_PASSWORD'] || raise('GITHUB_PASSWORD environment variable not set (required for private repo)')

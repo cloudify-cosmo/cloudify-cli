@@ -18,7 +18,7 @@ echo "REPO=${REPO} ; REPO_TAG=${REPO_TAG}"
 
 curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${REPO_TAG}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
 source common_build_env.sh &&
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${REPO_TAG}/common/provision.sh -o ./common-provision.sh &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/limor-gs-patch-2/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
 curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${REPO_TAG}/packages-urls/manager-single-tar.yaml -o ./manager-single-tar.yaml &&
 export SINGLE_TAR_URL=$(cat manager-single-tar.yaml)
