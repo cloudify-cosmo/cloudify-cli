@@ -958,7 +958,7 @@ class Options(object):
             '--timeout',
             type=int,
             default=default,
-            help=helptexts.OPERATION_TIMEOUT)
+            help=helptexts.OPERATION_TIMEOUT.format(default))
 
     @staticmethod
     def deployment_id(required=False):
