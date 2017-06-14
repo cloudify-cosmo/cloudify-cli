@@ -74,8 +74,10 @@ def assert_profile_exists(profile_name):
 
 
 def set_active_profile(profile_name):
+    global profile
     with open(ACTIVE_PRO_FILE, 'w+') as active_profile:
         active_profile.write(profile_name)
+    profile = get_profile_context(profile_name, suppress_error=True)
 
 
 def get_active_profile():
