@@ -602,7 +602,7 @@ def _get_rest_port_and_protocol(profile_name=None,
     try:
         client.manager.get_status()
     except UserUnauthorizedError as e:
-        if e.response and _is_manager_secured(e.response.history):
+        if e.response is not None and _is_manager_secured(e.response.history):
             return constants.SECURED_REST_PORT, constants.SECURED_REST_PROTOCOL
     except CloudifyClientError as e:
         raise
