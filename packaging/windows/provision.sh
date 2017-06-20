@@ -97,7 +97,7 @@ GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
 export REPO=$5
-export CORE_TAG_NAME="4.1m1"
+export CORE_TAG_NAME="4.3.dev1"
 
 if [ $REPO == "cloudify-versions" ];then
     REPO_TAG="master"
