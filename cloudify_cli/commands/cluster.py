@@ -30,7 +30,8 @@ from ..exceptions import CloudifyCliError
 from ..execution_events_fetcher import WAIT_FOR_EXECUTION_SLEEP_INTERVAL
 
 
-CLUSTER_COLUMNS = ['name', 'host_ip', 'master', 'online']
+CLUSTER_COLUMNS = ['name', 'host_ip', 'state', 'consul',
+                   'services', 'database', 'heartbeat']
 
 
 def _verify_not_in_cluster(client):
@@ -283,9 +284,22 @@ def nodes():
 def list_nodes(client, logger):
     """Display a table with basic information about the nodes in the cluster
     """
+    defaults = {'state': 'offline', 'consul': 'FAIL', 'services': 'FAIL',
+                'database': 'FAIL', 'heartbeat': 'FAIL'}
     response = client.cluster.nodes.list()
-    default = {'master': False, 'online': False}
-    print_data(CLUSTER_COLUMNS, response, 'HA Cluster nodes', defaults=default)
+    for node in response:
+        checks = node.pop('checks', {})
+        checks = {check: 'OK' if passing else 'FAIL'
+                  for check, passing in checks.items()}
+        node.update(checks)
+        online = node.pop('online', False)
+        master = node.pop('master', False)
+        if online:
+            node['state'] = 'leader' if master else 'replica'
+        else:
+            node['state'] = 'offline'
+    print_data(CLUSTER_COLUMNS, response, 'HA Cluster nodes',
+               defaults=defaults)
 
 
 @nodes.command(name='remove',
