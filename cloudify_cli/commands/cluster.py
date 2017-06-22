@@ -305,8 +305,9 @@ def nodes():
 def list_nodes(client, logger):
     """Display a table with basic information about the nodes in the cluster
     """
-    defaults = {'state': 'offline', 'consul': 'FAIL', 'services': 'FAIL',
-                'database': 'FAIL', 'heartbeat': 'FAIL'}
+    defaults = {'state': 'offline', 'consul': 'FAIL',
+                'services': 'FAIL', 'database': 'FAIL',
+                'heartbeat': 'FAIL'}
     response = client.cluster.nodes.list()
     for node in response:
         checks = node.pop('checks', {})
@@ -320,7 +321,7 @@ def list_nodes(client, logger):
         else:
             node['state'] = 'offline'
     print_data(CLUSTER_COLUMNS, response, 'HA Cluster nodes',
-               defaults=defaults)
+               defaults=defaults, labels={'services': 'cloudify services'})
 
 
 @nodes.command(name='remove',

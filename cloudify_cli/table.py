@@ -85,8 +85,8 @@ def log(title, tb):
     logger.info('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
 
 
-def print_data(columns, items, header_text, labels=None, max_width=None,
-               defaults=None):
+def print_data(columns, items, header_text, max_width=None, defaults=None,
+               labels=None):
     if items is None:
         items = []
     elif not isinstance(items, (list, ListResponse)):
