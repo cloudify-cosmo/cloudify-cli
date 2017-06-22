@@ -19,6 +19,7 @@ import time
 import shutil
 from functools import wraps
 from datetime import datetime
+from requests.exceptions import ReadTimeout
 
 from cloudify_rest_client.exceptions import (CloudifyClientError,
                                              NotClusterMaster)
@@ -248,9 +249,10 @@ def _update_profile_cluster_settings(profile, client, logger=None):
                  short_help='Set one of the cluster nodes as the new active '
                             '[cluster only]')
 @cfy.argument('node_name')
+@cfy.options.timeout(default=60)
 @pass_cluster_client()
 @cfy.pass_logger
-def set_active(client, logger, node_name):
+def set_active(client, logger, node_name, timeout, poll_interval=1):
     nodes = client.cluster.nodes.list()
     for node in nodes:
         if node['name'] != node_name:
@@ -267,8 +269,27 @@ def set_active(client, logger, node_name):
                                "it's not a member of the cluster"
                                .format(node_name))
 
-    client.cluster.update(master=node_name)
-    logger.info('{0} set as the new active node'.format(node_name))
+    deadline = time.time() + timeout
+    try:
+        client.cluster.update(master=node_name)
+    except ReadTimeout:
+        pass
+    logger.info('Waiting for {0} to become the active node...'
+                .format(node_name))
+    while time.time() < deadline:
+        try:
+            nodes = client.cluster.nodes.list()
+        except CloudifyClientError:
+            time.sleep(poll_interval)
+            continue
+
+        if any(node['name'] == node_name and node['master'] for node in nodes):
+            logger.info('{0} set as the new active node'.format(node_name))
+            break
+        time.sleep(poll_interval)
+    else:
+        logger.error('Timed out while waiting for {0} to be set as the '
+                     'new active node'.format(node_name))
 
 
 @cluster.group(name='nodes')
