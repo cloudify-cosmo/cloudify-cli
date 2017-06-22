@@ -24,7 +24,7 @@ from prettytable import PrettyTable
 from cloudify_rest_client.responses import ListResponse
 
 
-def generate(cols, data, defaults=None):
+def generate(cols, data, defaults=None, labels=None):
     """
     Return a new PrettyTable instance representing the list.
 
@@ -46,8 +46,12 @@ def generate(cols, data, defaults=None):
                    for example: {'deploymentId':'123'} will set the
                    deploymentId value for all rows to '123'.
 
+        labels - A dictionary mapping a column name to a label that
+                 will be used for the table header
+
     """
     defaults = defaults or {}
+    labels = labels or {}
 
     def get_values_per_column(column, row_data):
         if column in row_data:
@@ -65,7 +69,7 @@ def generate(cols, data, defaults=None):
         else:
             return defaults.get(column)
 
-    pt = PrettyTable([col for col in cols])
+    pt = PrettyTable([labels.get(col, col) for col in cols])
 
     for d in data:
         values_row = []
@@ -81,13 +85,14 @@ def log(title, tb):
     logger.info('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
 
 
-def print_data(columns, items, header_text, max_width=None, defaults=None):
+def print_data(columns, items, header_text, max_width=None, defaults=None,
+               labels=None):
     if items is None:
         items = []
     elif not isinstance(items, (list, ListResponse)):
         items = [items]
 
-    pt = generate(columns, data=items, defaults=defaults)
+    pt = generate(columns, data=items, defaults=defaults, labels=labels)
     if max_width:
         pt.max_width = max_width
     log(header_text, pt)
