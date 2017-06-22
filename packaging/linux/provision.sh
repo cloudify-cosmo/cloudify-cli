@@ -24,7 +24,7 @@ git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd cloudify-cli/packaging/omnibus
 if [ "$CLI_BRANCH" != "master" ]; then
     git checkout -b ${CLI_BRANCH-$CORE_BRANCH} ${CLI_BRANCH-$CORE_BRANCH}
-    git tag -d $CLI_BRANCH
+    git tag -d $CORE_TAG_NAME
 else
     git checkout ${CLI_BRANCH-$CORE_BRANCH}
     git tag -d $CORE_TAG_NAME
