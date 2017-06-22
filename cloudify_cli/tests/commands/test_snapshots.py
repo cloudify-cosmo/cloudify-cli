@@ -6,6 +6,12 @@ from .test_base import CliCommandTest
 from cloudify_rest_client import snapshots, executions
 
 
+class FakeExecutionReturn():
+    def __init__(self, status):
+        self.status = status
+        self.error = None
+
+
 class SnapshotsTest(CliCommandTest):
 
     def setUp(self):
@@ -35,6 +41,13 @@ class SnapshotsTest(CliCommandTest):
 
     def test_snapshots_restore(self):
         self.client.snapshots.restore = MagicMock()
+        self.client.snapshots._restore_deployment_environments = MagicMock()
+        self.client.executions.get = MagicMock()
+        self.client.executions.get.return_value = FakeExecutionReturn(
+            'terminated',
+        )
+        self.client.tenants.list = MagicMock()
+        self.client.tenants.list.return_value = []
         self.invoke('cfy snapshots restore a-snapshot-id')
         self.invoke('cfy snapshots restore a-snapshot-id'
                     '--without-deployments-envs')

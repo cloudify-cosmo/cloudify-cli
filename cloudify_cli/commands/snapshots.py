@@ -14,9 +14,13 @@
 # limitations under the License.
 ############
 
+import time
+
 from ..table import print_data
 from .. import utils
 from ..cli import helptexts, cfy
+from ..exceptions import SuppressedCloudifyCliError
+from cloudify_rest_client.executions import Execution
 
 SNAPSHOT_COLUMNS = ['id', 'created_at', 'status', 'error', 'permission',
                     'tenant_name', 'created_by']
@@ -29,6 +33,42 @@ def snapshots():
     """Handle manager snapshots
     """
     pass
+
+
+@cfy.pass_logger
+def _wait_for_restore_worfklows(execution, client, logger,
+                                attempts=600, retry_delay=3):
+    """
+        Wait for a restore-related workflow to end for up to 30 minutes.
+        In cases of unresolvable from source plugin installs the manager
+        has been observed to take 25+ minutes. If the restore takes
+        longer than this then it is likely to fail.
+
+        We do not use the pass_client decorator because we need to respect the
+        modified client that is passed to us for the deployment environment
+        recreation.
+    """
+    execution_ended = False
+    attempt = 0
+    while attempt < attempts:
+        if not execution_ended:
+            execution = client.executions.get(execution['id'])
+            execution_ended = execution.status in Execution.END_STATES
+
+        if execution_ended:
+            break
+
+        if attempt > 0 and attempt % 10 == 0:
+            logger.info('Waiting...')
+
+        time.sleep(retry_delay)
+        attempt += 1
+
+    if execution_ended:
+        return execution
+    else:
+        logger.error('Execution did not complete in time.')
+        raise SuppressedCloudifyCliError()
 
 
 @snapshots.command(name='restore',
@@ -67,8 +107,71 @@ def restore(snapshot_id,
         restore_certificates,
         no_reboot
     )
-    logger.info("Started workflow execution. The execution's id is {0}".format(
-        execution.id))
+
+    if recreate_deployments_envs:
+        # This is intended as a temporary measure so the interface has not
+        # been modified in an effort to avoid introducing an option for only
+        # this version and then either deprecating or removing it on the next
+        # version which would then require a major version increase due to
+        # breaking compatibility.
+        logger.info(
+            'Deployment environments will be recreated after snapshot '
+            'restore workflow completes. Waiting up to 30 minutes...'
+        )
+        execution = _wait_for_restore_worfklows(execution, client)
+
+        if execution.error:
+            logger.error('Snapshot restore failed with error: {error}'.format(
+                error=execution.error))
+            raise SuppressedCloudifyCliError()
+        else:
+            logger.info('Snapshot restore workflow completed.')
+            failures = False
+            tenants = [tenant['name'] for tenant in client.tenants.list()]
+            logger.info(
+                'Restoring deployment environments for: {tenants}'.format(
+                    tenants=','.join(tenants),
+                )
+            )
+            for tenant in tenants:
+                logger.info(
+                    'Restoring deployment environments for {tenant}'.format(
+                        tenant=tenant,
+                    )
+                )
+                client._client.headers['Tenant'] = tenant
+                execution = (
+                    client.snapshots._restore_deployment_environments()
+                )
+                # Using same timeout and other settings due to same
+                # expectations of failure timing
+                execution = _wait_for_restore_worfklows(execution, client)
+                if execution.error:
+                    failures = True
+                    logger.warn(
+                        'Failed to restore deployment environments for '
+                        '{tenant}, with error: {error}'.format(
+                            tenant=tenant,
+                            error=execution.error,
+                        )
+                    )
+                else:
+                    logger.info(
+                        'Successfully restored deployment environments for '
+                        '{tenant}'.format(
+                            tenant=tenant,
+                        )
+                    )
+
+            if failures:
+                raise SuppressedCloudifyCliError()
+    else:
+        logger.info(
+            "Started workflow execution. The execution's id is {0}".format(
+                execution['id'],
+            )
+        )
+
     if not restore_certificates:
         return
     if no_reboot:
