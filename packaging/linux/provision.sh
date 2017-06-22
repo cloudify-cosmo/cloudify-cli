@@ -22,12 +22,17 @@ install_common_prereqs &&
 rm -rf cloudify-cli
 git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd cloudify-cli/packaging/omnibus
+gitTagExists=$(git tag -l '$CORE_TAG_NAME')
 if [ "$CLI_BRANCH" != "master" ]; then
     git checkout -b ${CLI_BRANCH-$CORE_BRANCH} ${CLI_BRANCH-$CORE_BRANCH}
-    git tag -d $CORE_TAG_NAME
+    if [ ! -n "$gitTagExists" ]; then
+        git tag -d $CORE_TAG_NAME
+    fi
 else
     git checkout ${CLI_BRANCH-$CORE_BRANCH}
-    git tag -d $CORE_TAG_NAME
+    if [ ! -n "$gitTagExists" ]; then
+        git tag -d $CORE_TAG_NAME
+    fi
 fi
 git tag $CORE_TAG_NAME
 omnibus build cloudify && result="success"
