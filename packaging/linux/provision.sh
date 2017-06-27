@@ -24,13 +24,13 @@ git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd cloudify-cli/packaging/omnibus
 gitTagExists=$(git tag -l '$CORE_TAG_NAME')
 if [ "$CLI_BRANCH" != "master" ]; then
-    git checkout -b ${CLI_BRANCH-$CORE_BRANCH} ${CLI_BRANCH-$CORE_BRANCH}
-    if [ ! -n "$gitTagExists" ]; then
+    git checkout -b ${CLI_BRANCH-$CORE_BRANCH} origin/${CLI_BRANCH-$CORE_BRANCH}
+    if [ -n "$gitTagExists" ]; then
         git tag -d $CORE_TAG_NAME
     fi
 else
     git checkout ${CLI_BRANCH-$CORE_BRANCH}
-    if [ ! -n "$gitTagExists" ]; then
+    if [ -n "$gitTagExists" ]; then
         git tag -d $CORE_TAG_NAME
     fi
 fi
