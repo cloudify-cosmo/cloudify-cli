@@ -35,6 +35,7 @@ else
     fi
 fi
 #git tag $CORE_TAG_NAME
+git tag '4.3'
 omnibus build cloudify && result="success"
 cd pkg
 cat *.json || exit 1
