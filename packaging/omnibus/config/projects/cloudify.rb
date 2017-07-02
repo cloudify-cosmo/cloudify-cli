@@ -17,7 +17,7 @@ override :zlib, version: '1.2.8', source: { md5: '44d667c142d7cda120332623eab69f
 # and /opt/cfy on all other platforms
 install_dir "#{default_root}/cfy"
 
-build_version Omnibus::BuildVersion.semver
+build_version Omnibus::BuildVersion
 
 # Creates required build directories
 dependency "preparation"
