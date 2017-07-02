@@ -21,6 +21,8 @@ from StringIO import StringIO
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_rest_client.exceptions import DeploymentPluginNotFound
+from cloudify_rest_client.exceptions import UnknownDeploymentSecretError
+from cloudify_rest_client.exceptions import UnsupportedDeploymentGetSecretError
 
 from .. import utils
 from ..local import load_env
@@ -241,6 +243,10 @@ def manager_create(blueprint_id,
         logger.info(
             'Unable to create deployment, an unknown input was specified...')
         _print_deployment_inputs(client, blueprint_id)
+        raise CloudifyCliError(str(e))
+    except (UnknownDeploymentSecretError,
+            UnsupportedDeploymentGetSecretError) as e:
+        logger.info('Unable to create deployment due to invalid secret')
         raise CloudifyCliError(str(e))
 
     logger.info("Deployment created. The deployment's id is {0}".format(
