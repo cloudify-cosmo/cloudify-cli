@@ -17,8 +17,8 @@
 # These options are required for all software definitions
 name "cloudify-cli"
 
-ENV['CORE_TAG_NAME'] || raise('CORE_TAG_NAME environment variable not set')
-default_version ENV['CORE_TAG_NAME']
+ENV['CORE_BRANCH'] || raise('CORE_BRANCH environment variable not set')
+default_version ENV['CORE_BRANCH']
 
 ENV['GITHUB_USERNAME'] || raise('GITHUB_USERNAME environment variable not set (required for private repo)')
 ENV['GITHUB_PASSWORD'] || raise('GITHUB_PASSWORD environment variable not set (required for private repo)')
