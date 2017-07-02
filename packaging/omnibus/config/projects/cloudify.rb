@@ -8,7 +8,7 @@ name "cloudify"
 maintainer "Gigaspaces"
 homepage "http://getcloudify.org/"
 
-override :cacerts, version: '2015.10.28', source: { md5: '38cd779c9429ab6e2e5ae3437b763238' }
+override :cacerts, version: '2015.10.28', source: { md5: '9d8c2e9a93881cdf1f2a7fc3d01a6318' }
 override :pip, version: '7.1.2', source: { md5: '3823d2343d9f3aaab21cf9c917710196' }
 override :setuptools, version: '18.5', source: { md5: '533c868f01169a3085177dffe5e768bb' }
 override :zlib, version: '1.2.8', source: { md5: '44d667c142d7cda120332623eab69f40'}
