@@ -37,9 +37,6 @@ def snapshots():
 @cfy.argument('snapshot-id')
 @cfy.options.without_deployment_envs
 @cfy.options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
-@cfy.options.tenant_name(required=False,
-                         help=helptexts.RESTORE_SNAPSHOT_TENANT_NAME,
-                         show_default_in_help=False)
 @cfy.options.restore_certificates
 @cfy.options.no_reboot
 @cfy.options.verbose()
@@ -48,7 +45,6 @@ def snapshots():
 def restore(snapshot_id,
             without_deployment_envs,
             force,
-            tenant_name,
             restore_certificates,
             no_reboot,
             logger,
@@ -63,7 +59,6 @@ def restore(snapshot_id,
         snapshot_id,
         recreate_deployments_envs,
         force,
-        tenant_name,
         restore_certificates,
         no_reboot
     )
