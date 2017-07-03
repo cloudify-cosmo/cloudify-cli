@@ -20,7 +20,7 @@ override :zlib, version: '1.2.8', source: { md5: '44d667c142d7cda120332623eab69f
 install_dir "#{default_root}/cfy"
 
 #build_version ENV['CORE_TAG_NAME']
-build_version ENV['VERSION']-ENV['PRERELEASE']
+build_version ENV['VERSION'].ENV['PRERELEASE']
 
 # Creates required build directories
 dependency "preparation"
