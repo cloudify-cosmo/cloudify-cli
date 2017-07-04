@@ -1,0 +1,10 @@
+git+https://github.com/cloudify-cosmo/cloudify-rest-client@4.1#egg=cloudify-rest-client==4.1
+git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@4.1#egg=cloudify-dsl-parser==4.1
+git+https://github.com/cloudify-cosmo/cloudify-plugins-common@4.1#egg=cloudify-plugins-common==4.1
+git+https://github.com/cloudify-cosmo/cloudify-script-plugin@1.4#egg=cloudify-script-plugin==1.4
+
+nose
+mock
+nose-cov
+testtools
+testfixtures
