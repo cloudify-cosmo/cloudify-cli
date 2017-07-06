@@ -1,6 +1,6 @@
 name "fabric-plugin"
 
-plugin_version = "fabric-plugin/1.4.2"
+plugin_version = "fabric-plugin/1.5"
 default_version plugin_version.sub! "fabric-plugin/", ""
 
 
