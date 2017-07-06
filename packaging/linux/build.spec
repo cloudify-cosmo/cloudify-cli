@@ -42,8 +42,8 @@ pip wheel virtualenv==13.1.0 --wheel-dir %{buildroot}/var/wheels/%{name} &&
 pip wheel git+https://github.com/cloudify-cosmo/cloudify-rest-client@%{CORE_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
 pip wheel git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@%{CORE_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
 pip wheel git+https://github.com/cloudify-cosmo/cloudify-plugins-common@%{CORE_TAG_NAME} --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} &&
-pip wheel git+https://github.com/cloudify-cosmo/cloudify-script-plugin@1.4 --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} --pre &&
-pip wheel git+https://github.com/cloudify-cosmo/cloudify-fabric-plugin@1.4 --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} --pre &&
+pip wheel git+https://github.com/cloudify-cosmo/cloudify-script-plugin@1.5 --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} --pre &&
+pip wheel git+https://github.com/cloudify-cosmo/cloudify-fabric-plugin@1.5 --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} --pre &&
 pip wheel git+https://github.com/cloudify-cosmo/cloudify-openstack-plugin@1.3.1 --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} --pre &&
 pip wheel git+https://github.com/cloudify-cosmo/cloudify-aws-plugin@1.4 --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} --pre &&
 pip wheel git+https://github.com/cloudify-cosmo/tosca-vcloud-plugin@1.3.1 --wheel-dir=%{buildroot}/var/wheels/%{name} --find-links=%{buildroot}/var/wheels/%{name} --pre &&
@@ -71,8 +71,8 @@ tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1 -C %{buil
 
 # Download plugin.yaml files to local plugins folder
 
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-fabric-plugin/1.4/plugin.yaml -o %{buildroot}/opt/cfy/cloudify/plugins/fabric-plugin/plugin.yaml &&
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-script-plugin/1.4/plugin.yaml -o %{buildroot}/opt/cfy/cloudify/plugins/script-plugin/plugin.yaml &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-fabric-plugin/1.5/plugin.yaml -o %{buildroot}/opt/cfy/cloudify/plugins/fabric-plugin/plugin.yaml &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-script-plugin/1.5/plugin.yaml -o %{buildroot}/opt/cfy/cloudify/plugins/script-plugin/plugin.yaml &&
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-diamond-plugin/1.3.2/plugin.yaml -o %{buildroot}/opt/cfy/cloudify/plugins/diamond-plugin/plugin.yaml &&
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/1.3.1/plugin.yaml -o %{buildroot}/opt/cfy/cloudify/plugins/openstack-plugin/plugin.yaml &&
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.4/plugin.yaml -o %{buildroot}/opt/cfy/cloudify/plugins/aws-plugin/plugin.yaml &&
