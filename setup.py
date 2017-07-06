@@ -53,7 +53,7 @@ setup(
         'PrettyTable>=0.7,<0.8',
         'click_didyoumean==0.0.3',
         'cloudify-dsl-parser==4.1',
-        'cloudify-script-plugin==1.4',
+        'cloudify-script-plugin==1.5',
         'cloudify-rest-client==4.1',
         'cloudify-plugins-common==4.1',
         'backports.shutil_get_terminal_size==1.0.0',
