@@ -1,6 +1,7 @@
 #!/bin/bash -e
 
 function install_requirements() {
+    pip install --upgrade pip
     pip install wheel==0.24.0
 }
 
