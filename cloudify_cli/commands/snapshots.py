@@ -85,7 +85,6 @@ def restore(snapshot_id,
 @cfy.options.exclude_credentials
 @cfy.options.private_resource
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.pass_client()
 @cfy.pass_logger
 def create(snapshot_id,
@@ -93,8 +92,7 @@ def create(snapshot_id,
            exclude_credentials,
            private_resource,
            logger,
-           client,
-           tenant_name):
+           client):
     """Create a snapshot on the manager
 
     The snapshot will contain the relevant data to restore a manager to
@@ -102,8 +100,6 @@ def create(snapshot_id,
 
     `SNAPSHOT_ID` is the id to attach to the snapshot.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     snapshot_id = snapshot_id or utils.generate_suffixed_id('snapshot')
     logger.info('Creating snapshot {0}...'.format(snapshot_id))
 
