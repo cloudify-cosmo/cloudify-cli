@@ -2,6 +2,8 @@
 
 function install_requirements() {
     pip install --upgrade pip
+    echo 'pip version:'
+    pip --version
     pip install wheel==0.24.0
 }
 
