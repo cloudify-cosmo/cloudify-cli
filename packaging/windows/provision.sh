@@ -16,7 +16,7 @@ function download_wheels() {
     wheel convert lxml-3.5.0.win32-py2.7.exe --dest-dir packaging/source/wheels
 
     PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/${CORE_TAG_NAME}/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
-    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/${CORE_TAG_NAME}.zip
+    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/upgrade-pip-in-cli-packaging-windows.zip
     unzip -q -o ${CORE_TAG_NAME}.zip
     [[ -f ${CORE_TAG_NAME}.zip ]] && rm -f ${CORE_TAG_NAME}.zip
     curl -sL "${PATCH_URL}" -o cloudify-cli-${CORE_TAG_NAME}/cloudify_cli.patch
@@ -100,7 +100,7 @@ GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
 export REPO=$5
-export CORE_TAG_NAME="upgrade-pip-in-cli-packaging-windows"
+export CORE_TAG_NAME="4.1"
 
 if [ $REPO == "cloudify-versions" ];then
     REPO_TAG="master"
