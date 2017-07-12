@@ -350,7 +350,7 @@ def get_manager_version_data(rest_client=None):
         version_data = rest_client.manager.get_version()
     except CloudifyClientError:
         return None
-    version_data['ip'] = rest_client.host
+    version_data['ip'] = profile.manager_ip
     return version_data
 
 
