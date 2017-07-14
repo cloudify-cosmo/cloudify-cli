@@ -56,7 +56,6 @@ def _deployment_exists(client, deployment_id):
                 short_help='Install deployment agents [manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
-@cfy.options.install_script
 @cfy.options.verbose()
 @cfy.options.tenant_name(
     required=False, resource_name_for_help='relevant deployment(s)')
@@ -64,7 +63,6 @@ def _deployment_exists(client, deployment_id):
 @cfy.pass_client()
 def install(deployment_id,
             include_logs,
-            install_script,
             tenant_name,
             logger,
             client):
@@ -124,19 +122,7 @@ def install(deployment_id,
         timeout = 900
 
         try:
-            kwargs = {}
-            if install_script is not None:
-                kwargs = {
-                    'parameters': {
-                        'install_script': install_script
-                    },
-                    'allow_custom_parameters': True
-                }
-            execution = client.executions.start(
-                dep_id,
-                workflow_id,
-                **kwargs
-            )
+            execution = client.executions.start(dep_id, workflow_id)
 
             execution = wait_for_execution(
                 client,

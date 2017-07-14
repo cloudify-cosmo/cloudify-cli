@@ -709,11 +709,6 @@ class Options(object):
             default=False,
             help=helptexts.NO_REBOOT)
 
-        self.install_script = click.option(
-            '-s',
-            '--install-script',
-            help=helptexts.INSTALL_SCRIPT_LOCATION)
-
         self.security_role = click.option(
             '-r',
             '--security-role',
