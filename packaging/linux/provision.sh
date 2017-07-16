@@ -8,19 +8,13 @@ CLI_BRANCH=$5
 PACKAGER_BRANCH=$6
 export REPO=$7
 export CORE_TAG_NAME="4.1.1"
+export CORE_BRANCH="master"
 
-if [ $REPO == "cloudify-versions" ];then
-    REPO_TAG="master"
-else
-    REPO_TAG=$CORE_TAG_NAME
-fi
-echo "REPO=${REPO} ; REPO_TAG=${REPO_TAG}"
-
-curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${REPO_TAG}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
+curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
 source common_build_env.sh &&
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${REPO_TAG}/common/provision.sh -o ./common-provision.sh &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${CORE_BRANCH}/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
-curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${REPO_TAG}/packages-urls/manager-single-tar.yaml -o ./manager-single-tar.yaml &&
+curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/manager-single-tar.yaml -o ./manager-single-tar.yaml &&
 export SINGLE_TAR_URL=$(cat manager-single-tar.yaml)
 
 
@@ -28,15 +22,12 @@ install_common_prereqs &&
 rm -rf cloudify-cli
 git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd cloudify-cli/packaging/omnibus
-if [ "$CLI_BRANCH" != "master" ]; then
-    git checkout -b ${CLI_BRANCH-$CORE_TAG_NAME} tags/${CLI_BRANCH-$CORE_TAG_NAME}
-    git tag -d $CLI_BRANCH
+gitTagExists=$(git tag -l $CORE_TAG_NAME)
+if [ "$CORE_BRANCH" != "master" ]; then
+    git checkout -b ${CORE_BRANCH} origin/${CORE_BRANCH}
 else
-    git checkout ${CLI_BRANCH-$CORE_TAG_NAME}
-    git tag -d $CORE_TAG_NAME
+    git checkout ${CORE_BRANCH}
 fi
-NEW_TAG_NAME="${VERSION}.${PRERELEASE}"
-git tag $NEW_TAG_NAME
 omnibus build cloudify && result="success"
 cd pkg
 cat *.json || exit 1
