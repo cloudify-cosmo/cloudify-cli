@@ -151,7 +151,6 @@ def use(manager_ip,
         manager_password,
         manager_tenant
     )
-
     # First, attempt to get the provider from the manager - should it fail,
     # the manager's profile directory won't be created
     provider_context = _get_provider_context(
@@ -595,7 +594,9 @@ def _get_rest_port_and_protocol(profile_name=None,
         # send the actual credentials just yet
         username='<invalid>',
         password='<invalid>',
-        tenant_name='<invalid>'
+        tenant_name='<invalid>',
+        client_profile=env.get_profile_context(profile_name=profile_name,
+                                               suppress_error=True)
     )
     # run a dummy request against HTTP, and see if it was redirected to HTTPS -
     # if it was, the manager is secured - let's use HTTPS
