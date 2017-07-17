@@ -8,7 +8,7 @@ CLI_BRANCH=$5
 PACKAGER_BRANCH=$6
 export REPO=$7
 export CORE_TAG_NAME="4.2.dev1"
-export CORE_BRANCH="remove-cloud-plugins"
+export CORE_BRANCH="master"
 
 curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
 source common_build_env.sh &&
@@ -23,11 +23,11 @@ rm -rf cloudify-cli
 git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd cloudify-cli/packaging/omnibus
 gitTagExists=$(git tag -l $CORE_TAG_NAME)
-if [ "$CORE_BRANCH" != "master" ]; then
-    git checkout -b ${CORE_BRANCH} origin/${CORE_BRANCH}
-else
-    git checkout ${CORE_BRANCH}
-fi
+#if [ "$CORE_BRANCH" != "master" ]; then
+    git checkout -b ${CORE_BRANCH} origin/remove-cloud-plugins
+#else
+#    git checkout ${CORE_BRANCH}
+#fi
 omnibus build cloudify && result="success"
 cd pkg
 cat *.json || exit 1
