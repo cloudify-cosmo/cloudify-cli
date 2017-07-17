@@ -58,7 +58,7 @@ Type: "filesandordirs"; Name: "{app}"
 
 [Code]
 const
-  mainPackagesName = 'cloudify cloudify-fabric-plugin cloudify-openstack-plugin cloudify-aws-plugin cloudify-softlayer-plugin cloudify-vsphere-plugin cloudify-vcloud-plugin';
+  mainPackagesName = 'cloudify cloudify-fabric-plugin';
   //Error messages
   errUnexpected = 'Unexpected error. Run setup with /LOG flag and check the logs for additional details.';
   LF = #10;
