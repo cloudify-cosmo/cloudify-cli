@@ -82,13 +82,20 @@ end;
 
 function runWheelsInstall(): Boolean;
 var
+  PyArgs: String;
   PipArgs: String;
   ErrorCode: Integer;
   PackagesToInstall: String;
 begin
   ExtractTemporaryFiles('*.whl');
 
-  PipArgs := 'install --pre --use-wheel --no-index --find-links . --force-reinstall --ignore-installed ' + mainPackagesName;
+  PyArgs := Expandconstant('{app}\embedded\Scripts\pip.exe') + ' install pip --upgrade';
+  Exec(Expandconstant('{app}\embedded\python.exe'), PyArgs, Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
+  Log('Upgrading pip return code: ' + IntToStr(ErrorCode));
+
+  Exec(Expandconstant('{app}\embedded\Scripts\pip.exe'), ' install cryptography==1.9', Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
+
+  PipArgs := 'install --pre --use-wheel --no-index --find-links . ' + mainPackagesName;
   Exec(Expandconstant('{app}\embedded\Scripts\pip.exe'), PipArgs, Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
   Log('Installting wheels return code: ' + IntToStr(ErrorCode));
 
