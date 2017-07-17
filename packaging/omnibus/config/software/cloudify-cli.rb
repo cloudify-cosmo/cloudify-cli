@@ -17,8 +17,8 @@
 # These options are required for all software definitions
 name "cloudify-cli"
 
-ENV['CORE_TAG_NAME'] || raise('CORE_TAG_NAME environment variable not set')
-default_version ENV['CORE_TAG_NAME']
+ENV['CORE_BRANCH'] || raise('CORE_BRANCH environment variable not set')
+default_version ENV['CORE_BRANCH']
 
 ENV['GITHUB_USERNAME'] || raise('GITHUB_USERNAME environment variable not set (required for private repo)')
 ENV['GITHUB_PASSWORD'] || raise('GITHUB_PASSWORD environment variable not set (required for private repo)')
@@ -52,10 +52,10 @@ build do
              "install", "--build=#{project_dir}/openstack-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-openstack-plugin/archive/2.0.1.zip"]
 
     command ["#{install_dir}/embedded/bin/pip",
-             "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.4.3.zip"]
+             "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.zip"]
 
     command ["#{install_dir}/embedded/bin/pip",
-             "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.4.zip"]
+             "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.zip"]
 
     command ["#{install_dir}/embedded/bin/pip",
              "install", "--build=#{project_dir}/vsphere-plugin", ".", "https://#{github_username}:#{github_password}@github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/2.0.1.zip"]
