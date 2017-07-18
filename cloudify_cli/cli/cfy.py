@@ -181,6 +181,7 @@ def set_verbosity_level(ctx, param, value):
         return
 
     set_global_verbosity_level(value)
+    return value
 
 
 def set_cli_except_hook(global_verbosity_level):
