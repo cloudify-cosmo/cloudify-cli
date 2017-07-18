@@ -48,7 +48,9 @@ function download_resources() {
     pushd packaging/source/blueprints
         curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/${CORE_BRANCH}.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
         tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1
-        sed -i "s|default:.*cloudify-manager-resources.*|default: ${SINGLE_TAR_URL}|g" inputs/manager-inputs.yaml
+        str='!b;'
+        spaces='\ \ \ \ '
+        sed -i "/manager_resources_package:/${str}n;n;n;c${spaces}default: ${SINGLE_TAR_URL}" inputs/manager-inputs.yaml
         sed -i "s|.*#manager_resources_package:.*|#manager_resources_package: ${SINGLE_TAR_URL}|g" *-inputs.yaml
     popd
 
