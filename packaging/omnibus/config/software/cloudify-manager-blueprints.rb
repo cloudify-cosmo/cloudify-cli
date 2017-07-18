@@ -10,7 +10,7 @@ build do
    command "cp -r ../cloudify-manager-blueprints /opt/cfy/"
 
    str='!b;'
-   str_to_replace="/manager_resources_package:/${str}n;n;n;c\ \ \ \ default:  #{manager_single_tar_url}"
+   str_to_replace="/manager_resources_package:/#{str}n;n;n;c\ \ \ \ default:  #{manager_single_tar_url}"
    cmd="sed -i \"#{str_to_replace}\" /opt/cfy/cloudify-manager-blueprints/inputs/manager-inputs.yaml"
    command cmd
    str_to_replace="s|.*#manager_resources_package:.*|#manager_resources_package: #{manager_single_tar_url}|g"
