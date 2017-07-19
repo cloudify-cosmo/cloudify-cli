@@ -1,7 +1,7 @@
 name "cloudify-manager-blueprints"
 
 ENV['CORE_BRANCH'] || raise('CORE_BRANCH environment variable not set')
-default_version 'remove-cloud-plugins1'
+default_version ENV['CORE_BRANCH']
 manager_single_tar_url=ENV['SINGLE_TAR_URL']
 
 source :git => "https://github.com/cloudify-cosmo/cloudify-manager-blueprints"
