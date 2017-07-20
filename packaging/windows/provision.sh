@@ -26,8 +26,9 @@ function download_wheels() {
     https://github.com/cloudify-cosmo/cloudify-rest-client/archive/${CORE_BRANCH}.zip#egg=cloudify-rest-client \
     https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/${CORE_BRANCH}.zip#egg=cloudify-dsl-parser \
     https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/${CORE_BRANCH}.zip#egg=cloudify-plugins-common \
-    https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.zip#egg=cloudify-script-plugin \
-    https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.zip#egg=cloudify-fabric-plugin
+    https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.1.zip#egg=cloudify-script-plugin \
+    https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip#egg=cloudify-fabric-plugin
+
 }
 
 function download_resources() {

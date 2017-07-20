@@ -46,10 +46,12 @@ build do
              "-r", "dev-requirements.txt"]
 
     command ["#{install_dir}/embedded/bin/pip",
-             "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.zip"]
+             "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip"]
+
 
     command ["#{install_dir}/embedded/bin/pip",
-             "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.zip"]
+             "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.1.zip"]
+
 
     erb :dest => "#{install_dir}/bin/cfy",
       :source => "cfy_wrapper.erb",
