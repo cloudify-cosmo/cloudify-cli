@@ -46,19 +46,19 @@ build do
              "-r", "dev-requirements.txt"]
 
     command ["#{install_dir}/embedded/bin/pip",
-             "install", "--build=#{project_dir}/aws-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-aws-plugin/archive/1.4.3.zip"]
+             "install", "--build=#{project_dir}/aws-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-aws-plugin/archive/1.4.10.zip"]
 
     command ["#{install_dir}/embedded/bin/pip",
              "install", "--build=#{project_dir}/openstack-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-openstack-plugin/archive/2.0.1.zip"]
 
     command ["#{install_dir}/embedded/bin/pip",
-             "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.zip"]
+             "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip"]
 
     command ["#{install_dir}/embedded/bin/pip",
-             "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.zip"]
+             "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.1.zip"]
 
     command ["#{install_dir}/embedded/bin/pip",
-             "install", "--build=#{project_dir}/vsphere-plugin", ".", "https://#{github_username}:#{github_password}@github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/2.0.1.zip"]
+             "install", "--build=#{project_dir}/vsphere-plugin", ".", "https://#{github_username}:#{github_password}@github.com/cloudify-cosmo/cloudify-vsphere-plugin/archive/2.3.0.zip"]
 
     command ["#{install_dir}/embedded/bin/pip",
              "install", "--build=#{project_dir}/vcloud-plugin", ".", "https://github.com/cloudify-cosmo/tosca-vcloud-plugin/archive/1.3.1.zip"]
