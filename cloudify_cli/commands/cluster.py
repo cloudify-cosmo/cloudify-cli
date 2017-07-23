@@ -330,6 +330,19 @@ def list_nodes(client, logger):
                defaults=defaults, labels={'services': 'cloudify services'})
 
 
+@nodes.command(name='update',
+               short_help='Update the options for a cluster node')
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.options.inputs
+@cfy.argument('cluster-node-name')
+def update_node_options(client, logger, cluster_node_name, inputs):
+    if not inputs:
+        raise CloudifyCliError('Need an inputs file to update node options')
+    client.cluster.nodes.update(cluster_node_name, inputs)
+    logger.info('Node {0} updated'.format(cluster_node_name))
+
+
 @nodes.command(name='remove',
                short_help='Remove a node from the cluster [cluster only]')
 @pass_cluster_client()
