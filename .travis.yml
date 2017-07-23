@@ -23,8 +23,7 @@ matrix:
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
       brew install rbenv ruby-build
-
-      ;
+    ;
     fi
 install:
   - pip install virtualenv --upgrade
