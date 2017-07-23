@@ -16,6 +16,8 @@ matrix:
   exclude:
     - python: "2.7"
       os: osx
+    - env: osx
+      os: linux
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
       brew install rbenv ruby-build
