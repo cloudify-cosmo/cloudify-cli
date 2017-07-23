@@ -1,10 +1,30 @@
+os:
+  - linux
+  - osx
 sudo: false
 language: python
 python:
   - "2.7"
 env:
-  - TOX_ENV=flake8
-  - TOX_ENV=py27
+ - TOX_ENV=flake8
+ - TOX_ENV=py27
+ - TOX_ENV=osx
+matrix:
+  include:
+    - language: generic
+      os: osx
+    - env: TOX_ENV=osx
+      os: osx
+  exclude:
+    - python: "2.7"
+      os: osx
+    - env: TOX_ENV=osx
+      os: linux
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew install rbenv ruby-build
+    ;
+    fi
 install:
   - pip install virtualenv --upgrade
   - pip install tox
