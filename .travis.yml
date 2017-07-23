@@ -13,10 +13,12 @@ matrix:
   include:
     - language: generic
       os: osx
+    - env: TOX_ENV=osx
+      os: osx
   exclude:
     - python: "2.7"
       os: osx
-    - env: osx
+    - env: TOX_ENV=osx
       os: linux
 before_install:
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
