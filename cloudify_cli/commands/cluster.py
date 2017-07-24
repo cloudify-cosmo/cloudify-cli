@@ -346,7 +346,7 @@ def list_nodes(client, logger):
 def get_node(client, logger, cluster_node_name):
     node = client.cluster.nodes.details(cluster_node_name)
     _prepare_node(node)
-    print_data(CLUSTER_COLUMNS, [node], 'HA Cluster nodes',
+    print_data(CLUSTER_COLUMNS, [node], 'Node {0}'.format(cluster_node_name),
                defaults=CLUSTER_COLUMNS_DEFAULTS,
                labels={'services': 'cloudify services'})
     options = node.get('options')
