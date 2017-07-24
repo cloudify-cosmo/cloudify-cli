@@ -5,8 +5,8 @@ This project creates full-stack platform-specific packages for
 
 Installation
 ------------
-You must have a sane Ruby 1.9+ environment with Bundler installed. Ensure all
-the required gems are installed:
+You must have a sane Ruby 2.0+ environment with Bundler installed and at least 2.5GB of memory.
+Ensure all the required gems are installed:
 
 ```shell
 $ bundle install --binstubs
