@@ -99,6 +99,8 @@ begin
   Exec(Expandconstant('{app}\embedded\Scripts\pip.exe'), PipArgs, Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
   Log('Installting wheels return code: ' + IntToStr(ErrorCode));
 
+  Exec(Expandconstant('{app}\embedded\Scripts\pip.exe'), ' install fabric==1.13.1', Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
+
   //Pip seems to return errorcode 2 when it's not clean install
   if (Errorcode = 0) or (Errorcode = 2) then
     Result := True
