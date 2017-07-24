@@ -15,8 +15,8 @@
 ############
 
 import os
-import json
 import time
+import yaml
 import shutil
 from functools import wraps
 from datetime import datetime
@@ -352,7 +352,7 @@ def get_node(client, logger, cluster_node_name):
     options = node.get('options')
     if options:
         logger.info('Node options:')
-        logger.info(json.dumps(options, indent=4, sort_keys=True))
+        logger.info(yaml.safe_dump(options, default_flow_style=False))
 
 
 @nodes.command(name='update',
