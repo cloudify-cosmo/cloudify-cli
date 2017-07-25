@@ -94,6 +94,7 @@ GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
 export REPO=$5
+export SINGLE_TAR_URL=$6
 export CORE_TAG_NAME="4.2.dev1"
 export CORE_BRANCH="master"
 
@@ -102,7 +103,9 @@ source common_build_env.sh &&
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${CORE_BRANCH}/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
 curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/manager-single-tar.yaml -o ./manager-single-tar.yaml &&
-export SINGLE_TAR_URL=$(cat manager-single-tar.yaml)
+if [ -z $SINGLE_TAR_URL ];then
+    export SINGLE_TAR_URL=$(cat manager-single-tar.yaml)
+fi
 
 install_requirements &&
 download_wheels $GITHUB_USERNAME $GITHUB_PASSWORD &&
