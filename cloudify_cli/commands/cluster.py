@@ -351,7 +351,7 @@ def get_node(client, logger, cluster_node_name):
                labels={'services': 'cloudify services'})
     options = node.get('options')
     if options:
-        logger.info('Node options:')
+        logger.info('Node configuration:')
         logger.info(yaml.safe_dump(options, default_flow_style=False))
 
 
