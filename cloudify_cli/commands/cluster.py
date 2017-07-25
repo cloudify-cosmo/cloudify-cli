@@ -16,6 +16,7 @@
 
 import os
 import time
+import yaml
 import shutil
 from functools import wraps
 from datetime import datetime
@@ -33,6 +34,9 @@ from ..execution_events_fetcher import WAIT_FOR_EXECUTION_SLEEP_INTERVAL
 
 CLUSTER_COLUMNS = ['name', 'host_ip', 'state', 'consul',
                    'services', 'database', 'heartbeat']
+CLUSTER_COLUMNS_DEFAULTS = {'state': 'offline', 'consul': 'FAIL',
+                            'services': 'FAIL', 'database': 'FAIL',
+                            'heartbeat': 'FAIL'}
 
 
 def _verify_not_in_cluster(client):
@@ -92,11 +96,13 @@ def status(client, logger):
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.timeout()
+@cfy.options.cluster_node_options
 @cfy.options.cluster_host_ip
 @cfy.options.cluster_node_name
 def start(client,
           logger,
           timeout,
+          options,
           cluster_host_ip,
           cluster_node_name):
     """Start a Cloudify Manager cluster with the current manager as the master.
@@ -112,7 +118,8 @@ def start(client,
 
     client.cluster.start(
         host_ip=cluster_host_ip,
-        node_name=cluster_node_name
+        node_name=cluster_node_name,
+        options=options
     )
     status = _wait_for_cluster_initialized(client, logger, timeout=timeout)
 
@@ -133,12 +140,14 @@ def start(client,
 @cfy.pass_logger
 @cfy.argument('join_profile')
 @cfy.options.timeout()
+@cfy.options.cluster_node_options
 @cfy.options.cluster_host_ip
 @cfy.options.cluster_node_name
 def join(client,
          logger,
          join_profile,
          timeout,
+         options,
          cluster_host_ip,
          cluster_node_name):
     """Join a Cloudify Manager cluster on this manager.
@@ -176,7 +185,8 @@ def join(client,
         host_ip=cluster_host_ip,
         node_name=cluster_node_name,
         credentials=new_cluster_node.credentials,
-        join_addrs=join
+        join_addrs=join,
+        options=options
     )
     timeout_left = deadline - time.time()
     try:
@@ -298,6 +308,20 @@ def nodes():
     """
 
 
+def _prepare_node(node):
+    """Normalize node for display in a table"""
+    checks = node.pop('checks', {})
+    checks = {check: 'OK' if passing else 'FAIL'
+              for check, passing in checks.items()}
+    node.update(checks)
+    online = node.pop('online', False)
+    master = node.pop('master', False)
+    if online:
+        node['state'] = 'leader' if master else 'replica'
+    else:
+        node['state'] = 'offline'
+
+
 @nodes.command(name='list',
                short_help='List the nodes in the cluster [cluster only]')
 @pass_cluster_client()
@@ -305,23 +329,45 @@ def nodes():
 def list_nodes(client, logger):
     """Display a table with basic information about the nodes in the cluster
     """
-    defaults = {'state': 'offline', 'consul': 'FAIL',
-                'services': 'FAIL', 'database': 'FAIL',
-                'heartbeat': 'FAIL'}
+
     response = client.cluster.nodes.list()
     for node in response:
-        checks = node.pop('checks', {})
-        checks = {check: 'OK' if passing else 'FAIL'
-                  for check, passing in checks.items()}
-        node.update(checks)
-        online = node.pop('online', False)
-        master = node.pop('master', False)
-        if online:
-            node['state'] = 'leader' if master else 'replica'
-        else:
-            node['state'] = 'offline'
+        _prepare_node(node)
     print_data(CLUSTER_COLUMNS, response, 'HA Cluster nodes',
-               defaults=defaults, labels={'services': 'cloudify services'})
+               defaults=CLUSTER_COLUMNS_DEFAULTS,
+               labels={'services': 'cloudify services'})
+
+
+@nodes.command(name='get',
+               short_help='Show cluster node details [cluster only]')
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.argument('cluster-node-name')
+def get_node(client, logger, cluster_node_name):
+    node = client.cluster.nodes.details(cluster_node_name)
+    _prepare_node(node)
+    print_data(CLUSTER_COLUMNS, [node], 'Node {0}'.format(cluster_node_name),
+               defaults=CLUSTER_COLUMNS_DEFAULTS,
+               labels={'services': 'cloudify services'})
+    options = node.get('options')
+    if options:
+        logger.info('Node configuration:')
+        logger.info(yaml.safe_dump(options, default_flow_style=False))
+
+
+@nodes.command(name='update',
+               short_help='Update the options for a cluster node '
+                          '[cluster only]')
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.options.cluster_node_options
+@cfy.argument('cluster-node-name')
+def update_node_options(client, logger, cluster_node_name,
+                        cluster_node_options):
+    if not cluster_node_options:
+        raise CloudifyCliError('Need an inputs file to update node options')
+    client.cluster.nodes.update(cluster_node_name, cluster_node_options)
+    logger.info('Node {0} updated'.format(cluster_node_name))
 
 
 @nodes.command(name='remove',

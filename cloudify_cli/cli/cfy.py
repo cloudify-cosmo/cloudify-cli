@@ -796,6 +796,14 @@ class Options(object):
             required=False,
             help=helptexts.SECRET_FILE)
 
+        # same as --inputs, name changed for consistency
+        self.cluster_node_options = click.option(
+            '-o',
+            '--options',
+            multiple=True,
+            callback=inputs_callback,
+            help=helptexts.CLUSTER_NODE_OPTIONS)
+
     @staticmethod
     def include_keys(help):
         return click.option(
