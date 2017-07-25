@@ -26,6 +26,7 @@ GITHUB_PASSWORD = ENV['GITHUB_PASSWORD']
 CLI_BRANCH = ENV['tag']
 PACKAGER_BRANCH = ENV['PACKAGER_BRANCH']
 REPO = ENV['REPO']
+SINGLE_TAR_URL = ENV['SINGLE_TAR_URL']
 
 Vagrant.configure('2') do |config|
   config.vm.define "centos65x64" do |centos65x64|
