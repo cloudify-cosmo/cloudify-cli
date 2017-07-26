@@ -12,17 +12,17 @@ function download_wheels() {
     curl -LO https://pypi.python.org/packages/2.7/l/lxml/lxml-3.5.0.win32-py2.7.exe
     wheel convert lxml-3.5.0.win32-py2.7.exe --dest-dir packaging/source/wheels
 
-    PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/CFY-7109-fix-fabric-versions-conflict/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
-    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/CFY-7109-fix-fabric-versions-conflict.zip
-    unzip -q -o CFY-7109-fix-fabric-versions-conflict.zip
-    [[ -f CFY-7109-fix-fabric-versions-conflict.zip ]] && rm -f CFY-7109-fix-fabric-versions-conflict.zip
-    curl -sL "${PATCH_URL}" -o cloudify-cli-CFY-7109-fix-fabric-versions-conflict/cloudify_cli.patch
-    patch -p1 -d cloudify-cli-CFY-7109-fix-fabric-versions-conflict < cloudify-cli-CFY-7109-fix-fabric-versions-conflict/cloudify_cli.patch
-    rm -f cloudify-cli-CFY-7109-fix-fabric-versions-conflict/cloudify_cli.patch
-    zip -q -r cloudify-cli-CFY-7109-fix-fabric-versions-conflict.zip cloudify-cli-CFY-7109-fix-fabric-versions-conflict
-    [[ $? -eq 0 ]] && rm -rf cloudify-cli-CFY-7109-fix-fabric-versions-conflict
+    PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/${CORE_BRANCH}/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
+    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/${CORE_BRANCH}.zip
+    unzip -q -o ${CORE_BRANCH}.zip
+    [[ -f ${CORE_BRANCH}.zip ]] && rm -f ${CORE_BRANCH}.zip
+    curl -sL "${PATCH_URL}" -o cloudify-cli-${CORE_BRANCH}/cloudify_cli.patch
+    patch -p1 -d cloudify-cli-${CORE_BRANCH} < cloudify-cli-${CORE_BRANCH}/cloudify_cli.patch
+    rm -f cloudify-cli-${CORE_BRANCH}/cloudify_cli.patch
+    zip -q -r cloudify-cli-${CORE_BRANCH}.zip cloudify-cli-${CORE_BRANCH}
+    [[ $? -eq 0 ]] && rm -rf cloudify-cli-${CORE_BRANCH}
 
-    pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-CFY-7109-fix-fabric-versions-conflict.zip \
+    pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-${CORE_BRANCH}.zip \
     https://github.com/cloudify-cosmo/cloudify-rest-client/archive/${CORE_BRANCH}.zip#egg=cloudify-rest-client \
     https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/${CORE_BRANCH}.zip#egg=cloudify-dsl-parser \
     https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/${CORE_BRANCH}.zip#egg=cloudify-plugins-common \
