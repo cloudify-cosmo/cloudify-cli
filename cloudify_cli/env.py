@@ -307,7 +307,7 @@ def get_tenant_name(from_profile=None):
 
 def get_default_rest_cert_local_path():
     return os.path.join(
-        CLOUDIFY_WORKDIR,
+        get_profile_dir(),
         constants.PUBLIC_REST_CERT
     )
 
