@@ -166,8 +166,6 @@ IMPORT_SSH_KEYS = 'WARNING: Import exported keys to their original locations'
 SORT_BY = "Key for sorting the list"
 DESCENDING = "Sort list in descending order [default: False]"
 
-INSTALL_SCRIPT_LOCATION = \
-    'Alternative location of the `install_agents.py` script'
 TENANT = 'The name of the tenant'
 TENANT_TEMPLATE = 'The name of the tenant of the {0}'
 TENANT_LIST_TEMPLATE = 'The name of the tenant to list {0}s from'
