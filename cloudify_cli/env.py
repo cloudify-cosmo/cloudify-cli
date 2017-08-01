@@ -166,17 +166,22 @@ def is_initialized(profile_name=None):
 
 
 def get_context_path(profile_name, suppress_error=False):
+    base_dir = get_profile_dir(profile_name, suppress_error)
+    if not base_dir:
+        return
     return os.path.join(
-        get_profile_dir(profile_name, suppress_error),
+        base_dir,
         constants.CLOUDIFY_PROFILE_CONTEXT_FILE_NAME
     )
 
 
 def get_profile_dir(profile_name=None, suppress_error=False):
     active_profile = profile_name or get_active_profile()
-    if suppress_error or (active_profile and os.path.isdir(
-            os.path.join(PROFILES_DIR, active_profile))):
+    if active_profile and os.path.isdir(
+            os.path.join(PROFILES_DIR, active_profile)):
         return os.path.join(PROFILES_DIR, active_profile)
+    elif suppress_error:
+        return
     else:
         raise CloudifyCliError('Profile directory does not exist')
 
@@ -306,10 +311,8 @@ def get_tenant_name(from_profile=None):
 
 
 def get_default_rest_cert_local_path():
-    return os.path.join(
-        get_profile_dir(),
-        constants.PUBLIC_REST_CERT
-    )
+    base_dir = get_profile_dir(suppress_error=True) or CLOUDIFY_WORKDIR
+    return os.path.join(base_dir, constants.PUBLIC_REST_CERT)
 
 
 def get_ssl_cert():

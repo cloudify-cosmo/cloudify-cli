@@ -155,7 +155,7 @@ def init_manager_profile(profile_name,
 
     context_file_path = env.get_context_path(profile_name, suppress_error=True)
 
-    if os.path.isfile(context_file_path):
+    if context_file_path and os.path.isfile(context_file_path):
         if reset_context:
             if hard:
                 os.remove(config.CLOUDIFY_CONFIG_PATH)
