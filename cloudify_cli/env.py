@@ -311,10 +311,8 @@ def get_tenant_name(from_profile=None):
 
 
 def get_default_rest_cert_local_path():
-    return os.path.join(
-        get_profile_dir(),
-        constants.PUBLIC_REST_CERT
-    )
+    base_dir = get_profile_dir(suppress_error=True) or CLOUDIFY_WORKDIR
+    return os.path.join(base_dir, constants.PUBLIC_REST_CERT)
 
 
 def get_ssl_cert():
