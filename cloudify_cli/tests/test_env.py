@@ -254,6 +254,18 @@ class CliEnvTests(CliCommandTest):
             env.get_profile_dir)
         self.assertEqual('Profile directory does not exist', str(ex))
 
+    def test_get_profile_dir_suppress_error(self):
+        self.use_manager()
+        profile_dir = env.get_profile_dir(suppress_error=True)
+        self.assertEqual(
+            profile_dir,
+            os.path.join(env.PROFILES_DIR, '10.10.1.10'))
+        self.assertTrue(os.path.isdir(profile_dir))
+
+    def test_get_non_existing_profile_dir_suppress_error(self):
+        profile_dir = env.get_profile_dir(suppress_error=True)
+        self.assertIs(None, profile_dir)
+
     def test_set_empty_profile_context(self):
         manager_ip = '10.10.1.10'
         profile = env.ProfileContext()
