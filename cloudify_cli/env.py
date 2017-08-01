@@ -166,8 +166,11 @@ def is_initialized(profile_name=None):
 
 
 def get_context_path(profile_name, suppress_error=False):
+    base_dir = get_profile_dir(profile_name, suppress_error)
+    if not base_dir:
+        return
     return os.path.join(
-        get_profile_dir(profile_name, suppress_error),
+        base_dir,
         constants.CLOUDIFY_PROFILE_CONTEXT_FILE_NAME
     )
 
