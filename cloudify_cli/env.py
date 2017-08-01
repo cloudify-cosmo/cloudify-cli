@@ -174,9 +174,11 @@ def get_context_path(profile_name, suppress_error=False):
 
 def get_profile_dir(profile_name=None, suppress_error=False):
     active_profile = profile_name or get_active_profile()
-    if suppress_error or (active_profile and os.path.isdir(
-            os.path.join(PROFILES_DIR, active_profile))):
+    if active_profile and os.path.isdir(
+            os.path.join(PROFILES_DIR, active_profile)):
         return os.path.join(PROFILES_DIR, active_profile)
+    elif suppress_error:
+        return
     else:
         raise CloudifyCliError('Profile directory does not exist')
 
