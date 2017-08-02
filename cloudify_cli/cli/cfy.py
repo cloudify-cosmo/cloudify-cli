@@ -583,6 +583,13 @@ class Options(object):
             default=False,
             help=helptexts.MANAGER_TENANT)
 
+        self.ssl_state = click.option(
+            '--ssl',
+            required=False,
+            help=helptexts.SSL_STATE,
+            callback=validate_name
+        )
+
         self.ssh_port = click.option(
             '--ssh-port',
             required=False,

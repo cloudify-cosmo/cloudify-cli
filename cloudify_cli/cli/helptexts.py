@@ -158,6 +158,7 @@ MANAGER_USERNAME = 'Manager username used to run commands on the manager'
 MANAGER_PASSWORD = 'Manager password used to run commands on the manager'
 MANAGER_TENANT = 'The tenant associated with the current user operating the ' \
                  'manager'
+SSL_STATE = 'Required SSL state (on/off)'
 REST_PORT = "The REST server's port"
 
 EXPORT_SSH_KEYS = 'Include ssh key files in archive'
