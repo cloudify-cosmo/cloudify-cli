@@ -230,6 +230,7 @@ def delete(profile_name, logger):
 @cfy.options.manager_username
 @cfy.options.manager_password
 @cfy.options.manager_tenant
+@cfy.options.ssl_state
 @cfy.options.skip_credentials_validation
 @cfy.options.verbose()
 @cfy.pass_logger
@@ -237,15 +238,17 @@ def set(profile_name,
         manager_username,
         manager_password,
         manager_tenant,
+        ssl,
         skip_credentials_validation,
         logger):
     """Set the profile name, manager username and/or password and/or tenant
-    in the *current* profile
+    and/or ssl state (on/off) in the *current* profile
     """
     if not any([profile_name, manager_username,
-                manager_password, manager_tenant]):
-        raise CloudifyCliError("You must supply at least one of the following:"
-                               "  profile name, username, password, tenant")
+                manager_password, manager_tenant, ssl]):
+        raise CloudifyCliError(
+            "You must supply at least one of the following:  "
+            "profile name, username, password, tenant, ssl")
     username = manager_username or env.get_username()
     password = manager_password or env.get_password()
     tenant = manager_tenant or env.get_tenant_name()
@@ -270,6 +273,18 @@ def set(profile_name,
     if manager_tenant:
         logger.info('Setting tenant to `{0}`'.format(manager_tenant))
         env.profile.manager_tenant = manager_tenant
+    if ssl is not None:
+        ssl = str(ssl).lower()
+        if ssl == 'on':
+            logger.info('Enabling SSL')
+            env.profile.rest_port = constants.SECURED_REST_PORT
+            env.profile.rest_protocol = constants.SECURED_REST_PROTOCOL
+        elif ssl == 'off':
+            logger.info('Disabling SSL')
+            env.profile.rest_port = constants.DEFAULT_REST_PORT
+            env.profile.rest_protocol = constants.DEFAULT_REST_PROTOCOL
+        else:
+            raise CloudifyCliError('SSL must be either `on` or `off`')
 
     env.profile.save()
     if old_name is not None:
