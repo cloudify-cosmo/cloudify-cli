@@ -124,9 +124,9 @@ def create_deployments_list(client, deployment_id, logger):
 
     # install agents for all deployments
     else:
-        dep_list = [dep['deployment_id'] for dep in
+        dep_list = [dep.id for dep in
                     client.deployments.list()
-                    if _is_deployment_installed(client, dep['deployment_id'])]
+                    if _is_deployment_installed(client, dep.id)]
         if not dep_list:
             logger.error('There are no deployments installed')
             raise SuppressedCloudifyCliError()

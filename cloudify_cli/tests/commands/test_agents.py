@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ class AgentsTests(CliCommandTest):
                                      start_index):
         for i in range(num_of_deps):
             deps_list.append(deployments.Deployment({
-                'deployment_id': 'dep{0}'.format(start_index),
+                'id': 'dep{0}'.format(start_index),
                 'tenant_name': tenant['name']}))
             start_index += 1
         return start_index
@@ -77,7 +77,7 @@ class AgentsTests(CliCommandTest):
                            tenant.
         """
         tenants_list, deps = self.create_tenants_and_deployments(2, 3)
-        deps_id_list = [d['deployment_id'] for d in deps['tenant0']]
+        deps_id_list = [d['id'] for d in deps['tenant0']]
         self.mock_client(tenants_list, deps, [], True)
         self.invoke('cfy agents install')
         call_args = list(worker_mock.call_args)
@@ -139,7 +139,7 @@ class AgentsTests(CliCommandTest):
                            deployments in specified tenant.
         """
         tenants_list, deps = self.create_tenants_and_deployments(3, 3)
-        deps_id_list = [d['deployment_id'] for d in deps['tenant2']]
+        deps_id_list = [d['id'] for d in deps['tenant2']]
         self.mock_client(tenants_list, deps, [], True)
         self.invoke('cfy agents install -t tenant2')
         call_args = list(worker_mock.call_args)
@@ -187,9 +187,9 @@ class AgentsTests(CliCommandTest):
         self.mock_client(tenants_list, deps, [], True)
         self.invoke('cfy agents install --all-tenants')
         self.assertEqual(3, worker_mock.call_count)  # 1 call per tenant
-        tenant0_deployments = [d['deployment_id'] for d in deps['tenant0']]
-        tenant1_deployments = [d['deployment_id'] for d in deps['tenant1']]
-        tenant2_deployments = [d['deployment_id'] for d in deps['tenant2']]
+        tenant0_deployments = [d['id'] for d in deps['tenant0']]
+        tenant1_deployments = [d['id'] for d in deps['tenant1']]
+        tenant2_deployments = [d['id'] for d in deps['tenant2']]
         self.assertEqual(
             tenant0_deployments in worker_mock.call_args_list[0][0], True)
         self.assertEqual(
