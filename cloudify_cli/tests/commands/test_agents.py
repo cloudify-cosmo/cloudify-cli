@@ -232,3 +232,75 @@ class AgentsTests(CliCommandTest):
         self.invoke('cfy agents install -t tenant2 dep11',
                     exception=SuppressedCloudifyCliError,
                     err_str_segment='')
+
+    @patch('cloudify_cli.commands.agents.run_worker')
+    def test_agents_install_all_tenants_missing_deployments(self,
+                                                            worker_mock):
+        """
+        3 tenants are created: t0 has no deployments, t1 and t2 has 3
+        deployments each.
+        Expected behavior: install agents for all deployments in t1 and t2
+                           (no exceptions expected!).
+        """
+        # Create 3 tenants, tenant0 - no deployments, t1 & t2 with 3
+        # deployments each.
+        tenants_list = []
+        deps = {}
+        for i in range(3):
+            ten = tenants.Tenant({'name': 'tenant{0}'.format(i)})
+            tenants_list.append(ten)
+        t0 = tenants_list[0]
+        t1 = tenants_list[1]
+        t2 = tenants_list[2]
+        # t0 with no deployments
+        deps[t0['name']] = []
+        # t1 with 3 deployments
+        deps[t1['name']] = []
+        index = AgentsTests.create_deployments_in_tenant(
+            deps[t1['name']], 3, t1, 0)
+        # t2 with 3 deployments
+        deps[t2['name']] = []
+        AgentsTests.create_deployments_in_tenant(
+            deps[t2['name']], 3, t2, index)
+        # assert worker is only called for the non-empty tenants
+        self.mock_client(tenants_list, deps, [], True)
+        self.invoke('cfy agents install --all-tenants')
+        self.assertEqual(2, worker_mock.call_count)  # 1 call per tenant
+        tenant1_deployments = [d['id'] for d in deps['tenant1']]
+        tenant2_deployments = [d['id'] for d in deps['tenant2']]
+        self.assertEqual(
+            tenant1_deployments in worker_mock.call_args_list[0][0], True)
+        self.assertEqual(
+            tenant2_deployments in worker_mock.call_args_list[1][0], True)
+
+    def test_agents_install_fail_all_tenants_no_deployments(self):
+        """
+        3 tenants are created: t0,t1,t2. All of them have no deployments,
+        Expected behavior: Exception should be raised.
+        """
+        tenants_list, deps = self.create_tenants_and_deployments(3, 0)
+
+        def f(*args):
+            raise Exception
+
+        self.mock_client(tenants_list, deps, [], f)
+        self.invoke('cfy agents install --all-tenants',
+                    exception=SuppressedCloudifyCliError,
+                    err_str_segment='')
+
+    def test_agents_install_fail_all_tenants_specific_dep_not_found(self):
+        """
+        3 tenants are created: t0,t1,t2. In each one 3 deployments are created:
+        'dep0', 'dep1', 'dep2'. The user tries to install agents for 'dep99'
+        across all tenants ('dep99' doesn't exist in any of them).
+        Expected behavior: Exception should be raised.
+        """
+        tenants_list, deps = self.create_tenants_and_deployments(3, 3, False)
+
+        def f(*args):
+            raise Exception
+
+        self.mock_client(tenants_list, deps, [], f)
+        self.invoke('cfy agents install --all-tenants dep99',
+                    exception=SuppressedCloudifyCliError,
+                    err_str_segment='')
