@@ -79,19 +79,29 @@ def install(deployment_id,
     """
     # install agents across all tenants
     if all_tenants:
+        no_deployments_found = True
         tenants_list = [tenant.name for tenant in client.tenants.list()]
         for tenant in tenants_list:
             tenant_client = env.get_rest_client(tenant_name=tenant)
             # install agents for a specified deployments or for all
             # deployments under tenant (depends if 'deployment_id' was passed)
-            deps =\
-                create_deployments_list(tenant_client, deployment_id, logger)
-            run_worker(deps, tenant_client, logger, include_logs)
+            deps, error_msg = create_deployments_list(
+                tenant_client, deployment_id, logger)
+            if not error_msg:
+                no_deployments_found = False
+                run_worker(deps, tenant_client, logger, include_logs)
+        if no_deployments_found:
+            logger.error(error_msg)
+            raise SuppressedCloudifyCliError()
     else:
         # install agents for all deployments under a specified tenant
         if tenant_name:
             logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
-        deps = create_deployments_list(client, deployment_id, logger)
+        deps, error_msg\
+            = create_deployments_list(client, deployment_id, logger)
+        if error_msg:
+            logger.error(error_msg)
+            raise SuppressedCloudifyCliError()
         run_worker(deps, client, logger, include_logs)
 
 
@@ -109,16 +119,18 @@ def create_deployments_list(client, deployment_id, logger):
     :return A list of the relevant deployments.
             """
     # install agents for a specified deployment
+    error_msg = None
     if deployment_id:
         dep_list = [deployment_id]
         if not _deployment_exists(client, deployment_id):
-            logger.error("Could not find deployment for deployment id: '{0}'."
-                         .format(deployment_id))
-            raise SuppressedCloudifyCliError()
+            error_msg = "Could not find deployment for deployment id: '{0}'.".\
+                format(deployment_id)
+            return dep_list, error_msg
         if not _is_deployment_installed(client, deployment_id):
-            logger.error("Deployment '{0}' is not installed"
-                         .format(deployment_id))
-            raise SuppressedCloudifyCliError()
+            error_msg =\
+                "Deployment '{0}' is not installed".format(deployment_id)
+            return dep_list, error_msg
+
         logger.info("Installing agent for deployment '{0}'"
                     .format(deployment_id))
 
@@ -128,11 +140,12 @@ def create_deployments_list(client, deployment_id, logger):
                     client.deployments.list()
                     if _is_deployment_installed(client, dep.id)]
         if not dep_list:
-            logger.error('There are no deployments installed')
-            raise SuppressedCloudifyCliError()
+            error_msg = 'There are no deployments installed'
+            return dep_list, error_msg
+
         logger.info('Installing agents for all installed deployments')
 
-    return dep_list
+    return dep_list, error_msg
 
 
 def run_worker(deps, client, logger, include_logs):
