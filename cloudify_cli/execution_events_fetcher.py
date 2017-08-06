@@ -62,7 +62,7 @@ class ExecutionEventsFetcher(object):
             _offset=self._from_event,
             _size=self._batch_size,
             include_logs=self._include_logs,
-            sort='@timestamp').items
+            sort='reported_timestamp').items
         self._from_event += len(events)
         return [
             self._map_api_event_to_internal_event(event)
