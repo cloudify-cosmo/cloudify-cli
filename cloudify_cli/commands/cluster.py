@@ -389,12 +389,11 @@ def remove_node(client, logger, cluster_node_name):
     if cluster_node_name not in cluster_nodes:
         raise CloudifyCliError('Invalid command. {0} is not a member of '
                                'the cluster.'.format(cluster_node_name))
-    removed_ip = cluster_nodes[cluster_node_name]
 
     client.cluster.nodes.delete(cluster_node_name)
 
     env.profile.cluster = [node for node in env.profile.cluster
-                           if node['manager_ip'] != removed_ip]
+                           if node['name'] != cluster_node_name]
     env.profile.save()
     logger.info('Node {0} was removed successfully!'
                 .format(cluster_node_name))
