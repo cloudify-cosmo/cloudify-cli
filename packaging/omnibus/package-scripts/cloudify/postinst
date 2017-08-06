@@ -26,6 +26,10 @@ else
     PREFIX="/usr"
 fi
 
+if is_darwin; then
+    INSTALLER_DIR="/usr/local/opt/cfy"
+fi
+
 ln -sf $INSTALLER_DIR/bin/cfy $PREFIX/bin || error_exit "Cannot link cfy to $PREFIX/bin"
 
 echo "Thank you for installing Cloudify!"

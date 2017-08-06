@@ -1,5 +1,6 @@
 name "python"
 default_version "2.7.9"
+skip_transitive_dependency_licensing true
 
 if windows?
   version("2.7.9")  { source md5: "3ed20d8b06dcd339f814b38861f88fc9" }

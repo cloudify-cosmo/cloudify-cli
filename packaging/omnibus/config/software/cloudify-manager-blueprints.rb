@@ -1,4 +1,5 @@
 name "cloudify-manager-blueprints"
+skip_transitive_dependency_licensing true
 
 ENV['CORE_BRANCH'] || raise('CORE_BRANCH environment variable not set')
 default_version ENV['CORE_BRANCH']
@@ -13,8 +14,16 @@ build do
    spaces='\ \ \ \ '
    str_to_replace="/manager_resources_package:/#{str}n;n;n;c#{spaces}default:  #{manager_single_tar_url}"
    cmd="sed -i \"#{str_to_replace}\" /opt/cfy/cloudify-manager-blueprints/inputs/manager-inputs.yaml"
-   command cmd
+   if osx?
+     command "echo 'OSX'"
+   else
+     command cmd
+   end
    str_to_replace="s|.*#manager_resources_package:.*|#manager_resources_package: #{manager_single_tar_url}|g"
    cmd="sed -i \"#{str_to_replace}\" /opt/cfy/cloudify-manager-blueprints/*-inputs.yaml"
-   command cmd
+   if osx?
+     command "echo 'OSX'"
+   else
+     command cmd
+   end
 end

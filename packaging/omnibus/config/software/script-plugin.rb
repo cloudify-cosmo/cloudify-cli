@@ -1,4 +1,5 @@
 name "script-plugin"
+skip_transitive_dependency_licensing true
 
 plugin_version = "script-plugin/1.5.1"
 default_version plugin_version.sub! "script-plugin/", ""

@@ -1,4 +1,5 @@
 name "cloudify-manager"
+skip_transitive_dependency_licensing true
 
 ENV['CORE_BRANCH'] || raise('CORE_TAG_NAME environment variable not set')
 

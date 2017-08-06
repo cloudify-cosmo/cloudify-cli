@@ -1,4 +1,5 @@
 name "openstack-plugin"
+skip_transitive_dependency_licensing true
 
 plugin_version = "openstack-plugin/2.0.1"
 default_version plugin_version.sub! "openstack-plugin/", ""
