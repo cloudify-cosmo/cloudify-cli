@@ -524,11 +524,27 @@ class Options(object):
             required=False,
             help=helptexts.SSH_USER)
 
+        self.ssh_user_flag = click.option(
+            '-s',
+            '--ssh-user',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.SSH_USER)
+
         self.ssh_key = click.option(
             '-k',
             '--ssh-key',
             required=False,
             cls=MutuallyExclusiveOption,
+            help=helptexts.SSH_KEY)
+
+        self.ssh_key_flag = click.option(
+            '-k',
+            '--ssh-key',
+            required=False,
+            is_flag=True,
+            default=False,
             help=helptexts.SSH_KEY)
 
         self.profile_name = click.option(
@@ -583,6 +599,21 @@ class Options(object):
             default=False,
             help=helptexts.MANAGER_TENANT)
 
+        self.rest_certificate = click.option(
+            '-c',
+            '--rest-certificate',
+            required=False,
+            help=helptexts.REST_CERT
+        )
+
+        self.rest_certificate_flag = click.option(
+            '-c',
+            '--rest-certificate',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.REST_CERT)
+
         self.ssl_state = click.option(
             '--ssl',
             required=False,
@@ -594,6 +625,11 @@ class Options(object):
             '--ssh-port',
             required=False,
             default=constants.REMOTE_EXECUTION_PORT,
+            help=helptexts.SSH_PORT)
+
+        self.ssh_port_no_default = click.option(
+            '--ssh-port',
+            required=False,
             help=helptexts.SSH_PORT)
 
         self.rest_port = click.option(
