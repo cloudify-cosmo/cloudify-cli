@@ -16,6 +16,7 @@
 
 # These options are required for all software definitions
 name "cloudify-cli"
+skip_transitive_dependency_licensing true
 
 ENV['CORE_BRANCH'] || raise('CORE_BRANCH environment variable not set')
 default_version ENV['CORE_BRANCH']

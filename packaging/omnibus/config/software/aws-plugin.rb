@@ -1,4 +1,5 @@
 name "aws-plugin"
+skip_transitive_dependency_licensing true
 
 
 plugin_version = "aws-plugin/1.4.10"

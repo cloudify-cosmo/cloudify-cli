@@ -32,6 +32,15 @@ if [ "$CORE_BRANCH" != "master" ]; then
 else
     git checkout ${CORE_BRANCH}
 fi
+
+# OSX manipulation
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    ditto cloudify-cli/packaging/osx/osx-resources/patches/ cloudify-cli/packaging/omnibus/config/patches/
+    ditto cloudify-cli/packaging/osx/osx-resources/software/ cloudify-cli/packaging/omnibus/config/software/
+    ditto cloudify-cli/packaging/osx/osx-resources/templates/ cloudify-cli/packaging/omnibus/config/templates/
+    grep -l '/opt' cloudify-cli/packaging/omnibus/config/software/* | xargs sed -i "" 's|/opt|/usr/local/opt|g'
+fi
+
 omnibus build cloudify && result="success"
 cd pkg
 cat *.json || exit 1

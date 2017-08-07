@@ -1,4 +1,5 @@
 name "vsphere-plugin"
+skip_transitive_dependency_licensing true
 
 plugin_version = "vsphere-plugin/2.3.0"
 default_version plugin_version.sub! "vsphere-plugin/", ""

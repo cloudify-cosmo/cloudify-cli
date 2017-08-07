@@ -1,4 +1,5 @@
 name "diamond-plugin"
+skip_transitive_dependency_licensing true
 
 plugin_version = "diamond-plugin/1.3.6"
 default_version plugin_version.sub! "diamond-plugin/", ""

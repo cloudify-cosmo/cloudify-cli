@@ -1,4 +1,5 @@
 name "fabric-plugin"
+skip_transitive_dependency_licensing true
 
 plugin_version = "fabric-plugin/1.5.1"
 default_version plugin_version.sub! "fabric-plugin/", ""
