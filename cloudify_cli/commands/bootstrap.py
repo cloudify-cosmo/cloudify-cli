@@ -165,6 +165,7 @@ def _set_profile_details(details, inputs, dont_save_password):
     profile.manager_ip = details['manager_ip']
     profile.rest_port = details['rest_port']
     profile.rest_protocol = details['rest_protocol']
+    profile.rest_certificate = env.get_default_rest_cert_local_path()
     profile.provider_context = details['provider_context']
     profile.ssh_key = details['ssh_key_path']
     profile.ssh_user = details['ssh_user']
