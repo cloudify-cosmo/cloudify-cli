@@ -803,6 +803,14 @@ class Options(object):
             callback=inputs_callback,
             help=helptexts.CLUSTER_NODE_OPTIONS)
 
+        # same as cluster_node_options, but for cluster-wide options
+        self.cluster_options = click.option(
+            '-o',
+            '--options',
+            multiple=True,
+            callback=inputs_callback,
+            help=helptexts.CLUSTER_OPTIONS)
+
     @staticmethod
     def include_keys(help):
         return click.option(
