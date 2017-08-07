@@ -223,9 +223,19 @@ def join(client,
     logger.info('Cloudify Manager joined cluster successfully.')
 
 
+@cluster.command(name='update',
+                 short_help='Update cluster-wide configuration [cluster only]')
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.options.cluster_options
+def update_configuration(client, logger, options):
+    client.cluster.update(**options)
+    logger.info('Cluster configuration updated')
+
+
 @cluster.command(name='update-profile',
                  short_help='Store the cluster nodes in the CLI profile '
-                            '[cluster only')
+                            '[cluster only]')
 @pass_cluster_client()
 @cfy.pass_logger
 def update_profile(client, logger):
