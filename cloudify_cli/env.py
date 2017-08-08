@@ -31,6 +31,7 @@ import requests
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.client import HTTPClient
 from cloudify_rest_client.exceptions import (CloudifyClientError,
+                                             RemovedFromCluster,
                                              NotClusterMaster)
 
 from . import constants
@@ -538,7 +539,8 @@ class ClusterHTTPClient(HTTPClient):
             try:
                 return super(ClusterHTTPClient, self).do_request(*args,
                                                                  **kwargs)
-            except (NotClusterMaster, requests.exceptions.ConnectionError):
+            except (RemovedFromCluster, NotClusterMaster,
+                    requests.exceptions.ConnectionError):
                 continue
 
         raise CloudifyClientError('No active node in the cluster!')
