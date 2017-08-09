@@ -26,7 +26,7 @@ from ..exceptions import CloudifyCliError
 @cfy.command(name='dev', short_help='Run fabric tasks [manager only]')
 @cfy.argument('task', required=True)
 @click.option('-t',
-              'tasks-file',
+              '--tasks-file',
               required=True,
               help='Tasks file from which to draw tasks')
 @click.option('-a',
@@ -122,7 +122,7 @@ def _parse_task_args(task_args):
 
 def get_exec_globals(tasks_file):
     copied_globals = globals().copy()
-    del copied_globals['exec_globals']
+    copied_globals.pop('exec_globals', None)
     copied_globals['__doc__'] = 'empty globals for exec'
     copied_globals['__file__'] = tasks_file
     copied_globals['__name__'] = 'cli_dev_tasks'
