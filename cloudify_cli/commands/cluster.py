@@ -128,7 +128,7 @@ def start(client,
         raise CloudifyCliError(status.error)
 
     env.profile.profile_name = env.profile.manager_ip
-    _join_node_to_profile(env.profile)
+    _join_node_to_profile(cluster_node_name, env.profile)
 
     logger.info('Cloudify Manager cluster started at {0}.\n'
                 .format(cluster_host_ip))
@@ -216,7 +216,8 @@ def join(client,
         else:
             time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
 
-    _join_node_to_profile(env.profile, joined_profile=joined_profile)
+    _join_node_to_profile(cluster_node_name, env.profile,
+                          joined_profile=joined_profile)
     _copy_cluster_profile_settings(from_profile=joined_profile,
                                    to_profile=env.profile)
     logger.info('Cloudify Manager joined cluster successfully.')
@@ -388,18 +389,17 @@ def remove_node(client, logger, cluster_node_name):
     if cluster_node_name not in cluster_nodes:
         raise CloudifyCliError('Invalid command. {0} is not a member of '
                                'the cluster.'.format(cluster_node_name))
-    removed_ip = cluster_nodes[cluster_node_name]
 
     client.cluster.nodes.delete(cluster_node_name)
 
     env.profile.cluster = [node for node in env.profile.cluster
-                           if node['manager_ip'] != removed_ip]
+                           if node['name'] != cluster_node_name]
     env.profile.save()
     logger.info('Node {0} was removed successfully!'
                 .format(cluster_node_name))
 
 
-def _join_node_to_profile(from_profile, joined_profile=None):
+def _join_node_to_profile(node_name, from_profile, joined_profile=None):
     if joined_profile is None:
         joined_profile = from_profile
     node = {node_attr: getattr(from_profile, node_attr)
@@ -427,6 +427,7 @@ def _join_node_to_profile(from_profile, joined_profile=None):
         ssh_key = None
 
     node.update({
+        'name': node_name,
         'cert': profile_cert,
         'trust_all': env.get_ssl_trust_all(),
         'ssh_key': ssh_key
