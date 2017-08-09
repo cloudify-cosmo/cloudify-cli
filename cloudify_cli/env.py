@@ -542,6 +542,13 @@ class ClusterHTTPClient(HTTPClient):
             except (RemovedFromCluster, NotClusterMaster,
                     requests.exceptions.ConnectionError):
                 continue
+            except CloudifyClientError as e:
+                # 502 means a node is in the process of restarting
+                # nginx/restservice, in that case also retry
+                if e.status_code == 502:
+                    continue
+                else:
+                    raise
 
         raise CloudifyClientError('No active node in the cluster!')
 
