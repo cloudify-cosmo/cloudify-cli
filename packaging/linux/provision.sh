@@ -71,6 +71,7 @@ function prepare_osx () {
 # OSX manipulation
 if [[ "$OSTYPE" == "darwin"* ]]; then
     prepare_osx
+    # Get Omnibus software from Chef Omnibus repo
     mkdir omnibus_source
     git clone https://github.com/chef/omnibus-software.git --depth 1
     list_of_omnibus_softwares="gdbm cacerts config_guess gdbm libffi makedepend
@@ -89,6 +90,8 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
        cp -r omnibus-software/config/patches/$omnibus_softwate config/patches/
     done
     cp -r omnibus-software/config/templates/* config/templates/
+    curl https://raw.githubusercontent.com/chef/omnibus-software/master/config/software/preparation.rb -o config/software/preparation.rb
+    curl https://raw.githubusercontent.com/systemizer/omnibus-software/master/config/software/pip.rb -o config/software/pip.rb
     grep -l '/opt' config/software/* | xargs sed -i "" 's|/opt|/usr/local/opt|g'
 fi
 
