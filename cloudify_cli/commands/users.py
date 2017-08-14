@@ -107,7 +107,8 @@ def set_role(username, security_role, logger, client):
 
 @users.command(name='get',
                short_help='Get details for a single user [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument(
+    'username', callback=cfy.validate_name, default=env.get_username())
 @cfy.options.verbose()
 @cfy.options.get_data
 @cfy.assert_manager_active()
@@ -116,7 +117,7 @@ def set_role(username, security_role, logger, client):
 def get(username, get_data, logger, client):
     """Get details for a single user
 
-    `USERNAME` is the username of the user
+    `USERNAME` is the username of the user. (default: current user)
     """
     logger.info('Getting info for user `{0}`...'.format(username))
     user_details = client.users.get(username, _get_data=get_data)
