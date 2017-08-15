@@ -99,7 +99,7 @@ export CORE_BRANCH="master"
 
 curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
 source common_build_env.sh &&
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${CORE_BRANCH}/common/provision.sh -o ./common-provision.sh &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/upload_pkg_using_awscli/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
 if [ $REPO == "cloudify-versions" ];then
      curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/manager-single-tar.yaml -o ./manager-single-tar.yaml
@@ -108,6 +108,7 @@ if [ $REPO == "cloudify-versions" ];then
 fi
 export SINGLE_TAR_URL=$(cat manager-single-tar.yaml)
 
+install_common_prereqs &&
 install_requirements &&
 download_wheels $GITHUB_USERNAME $GITHUB_PASSWORD &&
 download_resources $GITHUB_USERNAME $GITHUB_PASSWORD &&
