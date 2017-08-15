@@ -28,7 +28,7 @@ git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd cloudify-cli/packaging/omnibus
 gitTagExists=$(git tag -l $CORE_TAG_NAME)
 if [ "$CORE_BRANCH" != "master" ]; then
-    git checkout -b ${CORE_BRANCH} origin/${CORE_BRANCH}
+    git checkout -b add-osx-support origin/${CORE_BRANCH}
 else
     git checkout ${CORE_BRANCH}
 fi
