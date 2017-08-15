@@ -103,6 +103,7 @@ cat *.json || exit 1
 rm -f version-manifest.json
 [ $(ls | grep rpm | sed -n 2p ) ] && FILEEXT="rpm"
 [ $(ls | grep deb | sed -n 2p ) ] && FILEEXT="deb"
+[ $(ls | grep pkg | sed -n 2p ) ] && FILEEXT="pkg"
 
 #remove the -1 - omnibus set the build_iteration to 1 if it null
 file=$(basename $(find . -type f -name "*.$FILEEXT"))
