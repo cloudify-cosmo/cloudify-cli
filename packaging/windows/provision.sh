@@ -119,7 +119,6 @@ if [ $REPO == "cloudify-versions" ];then
 fi
 export SINGLE_TAR_URL=$(cat manager-single-tar.yaml)
 
-install_common_prereqs &&
 install_requirements &&
 download_wheels $GITHUB_USERNAME $GITHUB_PASSWORD &&
 download_resources $GITHUB_USERNAME $GITHUB_PASSWORD &&
