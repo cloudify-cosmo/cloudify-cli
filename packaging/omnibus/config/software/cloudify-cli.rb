@@ -18,8 +18,7 @@
 name "cloudify-cli"
 
 ENV['CORE_BRANCH'] || raise('CORE_BRANCH environment variable not set')
-#default_version ENV['CORE_BRANCH']
-default_version 'add-osx-support'
+default_version ENV['CORE_BRANCH']
 
 ENV['GITHUB_USERNAME'] || raise('GITHUB_USERNAME environment variable not set (required for private repo)')
 ENV['GITHUB_PASSWORD'] || raise('GITHUB_PASSWORD environment variable not set (required for private repo)')
