@@ -21,7 +21,9 @@ override :zlib, version: '1.2.8', source: { md5: '44d667c142d7cda120332623eab69f
 # Defaults to C:/cloudify on Windows
 # and /opt/cfy on all other platforms
 if osx?
-  default_root =  "/usr/local/opt/"
+  default_root = "/usr/local/opt/"
+else
+  default_root = "/opt"
 end
 
 install_dir "#{default_root}/cfy"
