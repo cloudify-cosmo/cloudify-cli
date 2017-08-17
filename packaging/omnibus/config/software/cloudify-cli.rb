@@ -36,7 +36,7 @@ source git: "https://github.com/cloudify-cosmo/cloudify-cli"
 
 build do
 
-  command "curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-dev/master/scripts/clap -o /tmp"
+  command "curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-dev/master/scripts/clap -o /tmp/clap"
   command "CLAP_REPO_BASE=/tmp/clap"
 
   if windows?
