@@ -43,7 +43,7 @@ build do
   if windows?
     command "git reset --hard HEAD"
     #command "#{install_dir}/embedded/Scripts/pip.exe install --ignore-installed --build=#{project_dir} . --requirement dev-requirements.txt"
-    command "./clap setup -r #{project_dir}/build-requirements.txt -b #{branch}"
+    command "./clap setup -r ./build-requirements.txt -b #{branch}"
   else
     command "git reset --hard HEAD"  # previous patch gets cached
     patch source: "cloudify_cli.patch"
@@ -53,7 +53,7 @@ build do
     #         ".",
     #         "-r", "dev-requirements.txt"]
 
-    command "./clap setup -r #{project_dir}/build-requirements.txt -b #{branch}"
+    command "./clap setup -r ./build-requirements.txt -b #{branch}"
 
     command ["#{install_dir}/embedded/bin/pip",
              "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip"]
