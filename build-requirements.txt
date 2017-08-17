@@ -1,0 +1,5 @@
+cloudify-rest-client
+cloudify-dsl-parser
+cloudify-plugins-common
+cloudify-script-plugin
+cloudify-cli

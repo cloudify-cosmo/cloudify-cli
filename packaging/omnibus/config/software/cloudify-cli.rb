@@ -17,8 +17,10 @@
 # These options are required for all software definitions
 name "cloudify-cli"
 
-ENV['CORE_BRANCH'] || raise('CORE_BRANCH environment variable not set')
-default_version ENV['CORE_BRANCH']
+branch=ENV['CORE_BRANCH']
+#{branch} || raise('CORE_BRANCH environment variable not set')
+default_version 'clap'
+#default_version #{branch}
 
 ENV['GITHUB_USERNAME'] || raise('GITHUB_USERNAME environment variable not set (required for private repo)')
 ENV['GITHUB_PASSWORD'] || raise('GITHUB_PASSWORD environment variable not set (required for private repo)')
@@ -33,17 +35,24 @@ end
 source git: "https://github.com/cloudify-cosmo/cloudify-cli"
 
 build do
+
+  command "curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-dev/master/scripts/clap -o /tmp"
+  command "CLAP_REPO_BASE=/tmp/clap"
+
   if windows?
     command "git reset --hard HEAD"
-    command "#{install_dir}/embedded/Scripts/pip.exe install --ignore-installed --build=#{project_dir} . --requirement dev-requirements.txt"
+    #command "#{install_dir}/embedded/Scripts/pip.exe install --ignore-installed --build=#{project_dir} . --requirement dev-requirements.txt"
+    command "/tmp/clap setup -r build-requirements.txt -b #{branch}"
   else
     command "git reset --hard HEAD"  # previous patch gets cached
     patch source: "cloudify_cli.patch"
 
-    command ["#{install_dir}/embedded/bin/pip",
-             "install", "-I", "--build=#{project_dir}",
-             ".",
-             "-r", "dev-requirements.txt"]
+    #command ["#{install_dir}/embedded/bin/pip",
+    #         "install", "-I", "--build=#{project_dir}",
+    #         ".",
+    #         "-r", "dev-requirements.txt"]
+
+    command "/tmp/clap setup -r build-requirements.txt -b #{branch}"
 
     command ["#{install_dir}/embedded/bin/pip",
              "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip"]
