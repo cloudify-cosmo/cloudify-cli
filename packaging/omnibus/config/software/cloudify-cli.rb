@@ -39,6 +39,7 @@ build do
   command "curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-dev/master/scripts/clap -o ./clap && chmod +x ./clap"
   command "pip install sh argh colorama"
   command "export CLAP_REPO_BASE=./dev/repos"
+  command "export BASE_GITHUB_URL=https://github.com/cloudify-cosmo/{0}.git"
 
   if windows?
     command "git reset --hard HEAD"
