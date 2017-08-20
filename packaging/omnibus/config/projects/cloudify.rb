@@ -23,7 +23,7 @@ override :zlib, version: '1.2.8', source: { md5: '44d667c142d7cda120332623eab69f
 if osx?
   default_root = "/usr/local/opt/"
 else
-  default_root = "/opt"
+  default_root = "/opt/"
 end
 
 install_dir "#{default_root}/cfy"
