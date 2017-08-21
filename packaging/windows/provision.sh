@@ -12,29 +12,17 @@ function download_wheels() {
     curl -LO https://pypi.python.org/packages/2.7/l/lxml/lxml-3.5.0.win32-py2.7.exe
     wheel convert lxml-3.5.0.win32-py2.7.exe --dest-dir packaging/source/wheels
 
-    #PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/${CORE_BRANCH}/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
-    #curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/${CORE_BRANCH}.zip
-    #unzip -q -o ${CORE_BRANCH}.zip
-    #[[ -f ${CORE_BRANCH}.zip ]] && rm -f ${CORE_BRANCH}.zip
-    #curl -sL "${PATCH_URL}" -o cloudify-cli-${CORE_BRANCH}/cloudify_cli.patch
-    #patch -p1 -d cloudify-cli-${CORE_BRANCH} < cloudify-cli-${CORE_BRANCH}/cloudify_cli.patch
-    #rm -f cloudify-cli-${CORE_BRANCH}/cloudify_cli.patch
-    #zip -q -r cloudify-cli-${CORE_BRANCH}.zip cloudify-cli-${CORE_BRANCH}
-    #[[ $? -eq 0 ]] && rm -rf cloudify-cli-${CORE_BRANCH}
+    PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/${CORE_BRANCH}/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
+    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/${CORE_BRANCH}.zip
+    unzip -q -o ${CORE_BRANCH}.zip
+    [[ -f ${CORE_BRANCH}.zip ]] && rm -f ${CORE_BRANCH}.zip
+    curl -sL "${PATCH_URL}" -o cloudify-cli-${CORE_BRANCH}/cloudify_cli.patch
+    patch -p1 -d cloudify-cli-${CORE_BRANCH} < cloudify-cli-${CORE_BRANCH}/cloudify_cli.patch
+    rm -f cloudify-cli-${CORE_BRANCH}/cloudify_cli.patch
+    zip -q -r cloudify-cli-${CORE_BRANCH}.zip cloudify-cli-${CORE_BRANCH}
+    [[ $? -eq 0 ]] && rm -rf cloudify-cli-${CORE_BRANCH}
 
-    #pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-${CORE_BRANCH}.zip \
-    
-    PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/add-osx-support/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
-    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/add-osx-support.zip
-    unzip -q -o add-osx-support.zip
-    [[ -f add-osx-support.zip ]] && rm -f add-osx-support.zip
-    curl -sL "${PATCH_URL}" -o cloudify-cli-add-osx-support/cloudify_cli.patch
-    patch -p1 -d cloudify-cli-add-osx-support < cloudify-cli-add-osx-support/cloudify_cli.patch
-    rm -f cloudify-cli-add-osx-support/cloudify_cli.patch
-    zip -q -r cloudify-cli-add-osx-support.zip cloudify-cli-add-osx-support
-    [[ $? -eq 0 ]] && rm -rf cloudify-cli-add-osx-support
-
-    pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-add-osx-support.zip \
+    pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-${CORE_BRANCH}.zip \
     https://github.com/cloudify-cosmo/cloudify-rest-client/archive/${CORE_BRANCH}.zip#egg=cloudify-rest-client \
     https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/${CORE_BRANCH}.zip#egg=cloudify-dsl-parser \
     https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/${CORE_BRANCH}.zip#egg=cloudify-plugins-common \
