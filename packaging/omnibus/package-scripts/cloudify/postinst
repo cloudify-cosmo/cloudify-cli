@@ -5,8 +5,6 @@
 #
 
 PROGNAME=$(basename $0)
-INSTALLER_DIR="/opt/cfy"
-PREFIX="/usr"
 
 function error_exit
 {
@@ -14,15 +12,12 @@ function error_exit
   exit 1
 }
 
-is_darwin()
-{
-  uname -v | grep "^Darwin" 2>&1 >/dev/null
-}
-
-if is_darwin; then
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    INSTALLER_DIR="/usr/local/opt/cfy"
     PREFIX="/usr/local"
     mkdir -p "$PREFIX/bin"
 else
+    INSTALLER_DIR="/opt/cfy"
     PREFIX="/usr"
 fi
 
