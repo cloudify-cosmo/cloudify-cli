@@ -1,5 +1,6 @@
 cloudify-rest-client
 cloudify-dsl-parser
 cloudify-plugins-common
-cloudify-script-plugin
+cloudify-script-plugin@1.5.1
 cloudify-cli
+cloudify-fabric-plugin@1.5.1

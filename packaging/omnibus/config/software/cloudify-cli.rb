@@ -39,7 +39,7 @@ build do
   command "curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-dev/install--upgrade/scripts/clap -o ./clap && chmod +x ./clap"
   command "pip install sh argh colorama"
   command "export CLAP_REPO_BASE=./dev/repos"
-  command "export BASE_GITHUB_URL=https://github.com/cloudify-cosmo/{0}.git"
+  command "export REPOS_BASE_GITHUB_URL=https://github.com/cloudify-cosmo/{0}.git"
 
   if windows?
     command "git reset --hard HEAD"
@@ -56,12 +56,12 @@ build do
 
     command "./clap setup -r ./build-requirements.txt -b #{branch}"
 
-    command ["#{install_dir}/embedded/bin/pip",
-             "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip"]
+    #command ["#{install_dir}/embedded/bin/pip",
+    #         "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip"]
 
 
-    command ["#{install_dir}/embedded/bin/pip",
-             "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.1.zip"]
+    #command ["#{install_dir}/embedded/bin/pip",
+    #         "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.1.zip"]
 
 
     erb :dest => "#{install_dir}/bin/cfy",
