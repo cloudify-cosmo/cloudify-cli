@@ -44,7 +44,7 @@ build do
   if windows?
     command "git reset --hard HEAD"
     #command "#{install_dir}/embedded/Scripts/pip.exe install --ignore-installed --build=#{project_dir} . --requirement dev-requirements.txt"
-    command "./clap setup -r ./build-requirements.txt -b #{branch}"
+    command "./clap setup -r ./build-requirements.txt -b #{branch} -d"
   else
     command "git reset --hard HEAD"  # previous patch gets cached
     patch source: "cloudify_cli.patch"
