@@ -40,29 +40,17 @@ build do
   command "pip install sh argh colorama"
   command "export CLAP_REPO_BASE=./dev/repos"
   command "export REPOS_BASE_GITHUB_URL=https://github.com/cloudify-cosmo/{0}.git"
+  cmd="./clap setup -r ./build-requirements.txt -b #{branch} -d"
+  command "git reset --hard HEAD"
 
   if windows?
-    command "git reset --hard HEAD"
-    #command "#{install_dir}/embedded/Scripts/pip.exe install --ignore-installed --build=#{project_dir} . --requirement dev-requirements.txt"
-    command "./clap setup -r ./build-requirements.txt -b #{branch} -d"
+    
+    command "#{cmd}"
   else
-    command "git reset --hard HEAD"  # previous patch gets cached
+    # previous patch gets cached
     patch source: "cloudify_cli.patch"
 
-    #command ["#{install_dir}/embedded/bin/pip",
-    #         "install", "-I", "--build=#{project_dir}",
-    #         ".",
-    #         "-r", "dev-requirements.txt"]
-
-    command "./clap setup -r ./build-requirements.txt -b #{branch}"
-
-    #command ["#{install_dir}/embedded/bin/pip",
-    #         "install", "--build=#{project_dir}/fabric-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip"]
-
-
-    #command ["#{install_dir}/embedded/bin/pip",
-    #         "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.1.zip"]
-
+    command "#{cmd}"
 
     erb :dest => "#{install_dir}/bin/cfy",
       :source => "cfy_wrapper.erb",
