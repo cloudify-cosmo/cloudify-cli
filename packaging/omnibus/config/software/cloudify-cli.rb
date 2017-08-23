@@ -37,8 +37,8 @@ source git: "https://github.com/cloudify-cosmo/cloudify-cli"
 build do
 
     command "curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-dev/install--upgrade/scripts/clap -o ./clap && chmod +x ./clap"
-    command "sudo pip install virtualenv"
-    command "virtualenv env && source env"
+    command ["#{install_dir}/embedded/bin/virtualenv", "env"]
+    command "source env"
     command "pip install sh argh colorama"
     command "export CLAP_REPO_BASE=./dev/repos"
     command "export REPOS_BASE_GITHUB_URL=https://github.com/cloudify-cosmo/{0}.git"
@@ -47,8 +47,6 @@ build do
     # previous patch gets cached
     patch source: "cloudify_cli.patch"
 
-    command ["#{install_dir}/embedded/bin/virtualenv", "env"]
-    command "source env"
     command "./clap setup -r ./build-requirements.txt -b #{branch} -d"
 
     erb :dest => "#{install_dir}/bin/cfy",
