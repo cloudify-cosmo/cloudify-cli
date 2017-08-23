@@ -37,9 +37,9 @@ source git: "https://github.com/cloudify-cosmo/cloudify-cli"
 build do
 
     command "curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-dev/install--upgrade/scripts/clap -o ./clap && chmod +x ./clap"
-    command ["#{install_dir}/embedded/bin/virtualenv", "env"]
-    command "source env"
-    command "pip install sh argh colorama"
+    #command ["#{install_dir}/embedded/bin/virtualenv", "env"]
+    #command "source env"
+    command ["#{install_dir}/embedded/bin/pip", "install", "sh argh colorama"]
     command "export CLAP_REPO_BASE=./dev/repos"
     command "export REPOS_BASE_GITHUB_URL=https://github.com/cloudify-cosmo/{0}.git"
     command "git reset --hard HEAD"
