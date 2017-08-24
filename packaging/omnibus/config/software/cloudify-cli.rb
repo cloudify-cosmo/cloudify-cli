@@ -45,7 +45,9 @@ build do
     # previous patch gets cached
     patch source: "cloudify_cli.patch"
 
-    command "alias pip=#{install_dir}/embedded/bin/pip >> ~/.bashrc && source ~/.bashrc"
+    command "alias pip=#{install_dir}/embedded/bin/pip >> ~/.bashrc"
+    command "~/.bashrc"
+    command "source ~/.bashrc"
     command "./clap setup -r ./build-requirements.txt -b #{branch} -d"
 
     erb :dest => "#{install_dir}/bin/cfy",
