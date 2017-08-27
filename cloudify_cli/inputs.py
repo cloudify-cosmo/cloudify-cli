@@ -46,7 +46,7 @@ def inputs_to_dict(resources):
         if isinstance(resource, basestring):
             try:
                 parsed_dict.update(_parse_single_input(resource))
-            except CloudifyCliError:
+            except CloudifyCliError as ex:
                 raise CloudifyCliError(
                     "Invalid input: {0}. It must represent a dictionary. "
                     "Valid values can be one of:\n "
@@ -55,8 +55,10 @@ def inputs_to_dict(resources):
                     "- A single quoted wildcard based path "
                     "(e.g. '*-inputs.yaml')\n "
                     "- A string formatted as JSON/YAML\n "
-                    "- A string formatted as key1=value1;key2=value2".format(
-                        resource))
+                    "- A string formatted as key1=value1;key2=value2\n"
+                    "\n"
+                    "Root cause: {1}".format(
+                        resource, str(ex)))
     return parsed_dict
 
 
