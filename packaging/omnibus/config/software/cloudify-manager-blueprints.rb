@@ -15,7 +15,7 @@ build do
   osx_replace=<<eos
             sed -i '' "/manager_resources_package:/,/manager_resources_package_checksum_file/ {\
             s|default.*|\
-            default: '#{manager_single_tar_url}'|
+                default: '#{manager_single_tar_url}'|
             }
             " /opt/cfy/cloudify-manager-blueprints/inputs/manager-inputs.yaml
 eos
