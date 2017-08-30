@@ -28,7 +28,7 @@ function download_wheels() {
     PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/fix-osx-build/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
     curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/fix-osx-build.zip
     unzip -q -o fix-osx-build.zip
-    [[ -f ${CORE_BRANCH}.zip ]] && rm -f fix-osx-build.zip
+    [[ -f fix-osx-build.zip ]] && rm -f fix-osx-build.zip
     curl -sL "${PATCH_URL}" -o cloudify-cli-fix-osx-build/cloudify_cli.patch
     patch -p1 -d cloudify-cli-fix-osx-build < cloudify-cli-fix-osx-build/cloudify_cli.patch
     rm -f cloudify-cli-fix-osx-build/cloudify_cli.patch
