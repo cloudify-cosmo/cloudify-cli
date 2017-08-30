@@ -32,12 +32,7 @@ gitTagExists=$(git tag -l $CORE_TAG_NAME)
 #else
 #    git checkout ${CORE_BRANCH}
 #fi
-if [ "$CORE_BRANCH" != "master" ]; then
-    git checkout -b ${CORE_BRANCH} origin/${CORE_BRANCH}
-else
-    git checkout ${CORE_BRANCH}
-fi
-git checkout -b clap - fix-osx-build
+git checkout -b fix-osx-build origin/fix-osx-build
 
 # OSX preparation
 function prepare_osx () {
