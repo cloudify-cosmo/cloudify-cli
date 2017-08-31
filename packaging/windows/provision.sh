@@ -12,7 +12,6 @@ function download_wheels() {
     curl -LO https://pypi.python.org/packages/2.7/l/lxml/lxml-3.5.0.win32-py2.7.exe
     wheel convert lxml-3.5.0.win32-py2.7.exe --dest-dir packaging/source/wheels
 
-
     PATCH_URL="https://raw.githubusercontent.com/cloudify-cosmo/cloudify-cli/${CORE_BRANCH}/packaging/omnibus/config/patches/cloudify-cli/cloudify_cli.patch"
     curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/${CORE_BRANCH}.zip
     unzip -q -o ${CORE_BRANCH}.zip
