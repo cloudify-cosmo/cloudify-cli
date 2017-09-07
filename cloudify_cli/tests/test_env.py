@@ -1089,9 +1089,12 @@ class TestGetRestClient(CliCommandTest):
         os.environ[constants.CLOUDIFY_PASSWORD_ENV] = 'test_password'
         os.environ[constants.CLOUDIFY_SSL_TRUST_ALL] = TRUST_ALL
         os.environ[constants.LOCAL_REST_CERT_FILE] = CERT_PATH
+        with open(CERT_PATH, 'w') as cert:
+            cert.write('cert content')
 
     def tearDown(self):
         super(TestGetRestClient, self).tearDown()
+        os.remove(CERT_PATH)
         del os.environ[constants.CLOUDIFY_USERNAME_ENV]
         del os.environ[constants.CLOUDIFY_PASSWORD_ENV]
         del os.environ[constants.CLOUDIFY_SSL_TRUST_ALL]
@@ -1117,6 +1120,7 @@ class TestGetRestClient(CliCommandTest):
             rest_host=host,
             rest_port=port,
             rest_protocol=rest_protocol,
+            rest_cert=CERT_PATH,
             skip_version_check=skip_version_check
         )
 
