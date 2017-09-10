@@ -47,18 +47,20 @@ def inputs_to_dict(resources):
             try:
                 parsed_dict.update(_parse_single_input(resource))
             except CloudifyCliError as ex:
-                raise CloudifyCliError(
-                    "Invalid input: {0}. It must represent a dictionary. "
-                    "Valid values can be one of:\n "
-                    "- A path to a YAML file\n "
-                    "- A path to a directory containing YAML files\n "
-                    "- A single quoted wildcard based path "
-                    "(e.g. '*-inputs.yaml')\n "
-                    "- A string formatted as JSON/YAML\n "
-                    "- A string formatted as key1=value1;key2=value2\n"
-                    "\n"
-                    "Root cause: {1}".format(
-                        resource, str(ex)))
+                ex_msg = \
+                    "Invalid input: {0}. It must represent a dictionary. " \
+                    "Valid values can be one of:\n" \
+                    "- A path to a YAML file\n" \
+                    "- A path to a directory containing YAML files\n" \
+                    "- A single quoted wildcard based path " \
+                    "(e.g. '*-inputs.yaml')\n" \
+                    "- A string formatted as JSON/YAML\n" \
+                    "- A string formatted as key1=value1;key2=value2\n"\
+                    .format(resource)
+                if ex.message:
+                    ex_msg += "\nRoot cause: {0}".format(str(ex))
+                raise CloudifyCliError(ex_msg)
+
     return parsed_dict
 
 
@@ -98,7 +100,9 @@ def _parse_yaml_path(resource):
     # Emtpy files return None
     content = content or dict()
     if not isinstance(content, dict):
-        raise CloudifyCliError()
+        raise CloudifyCliError('Resource is valid YAML, but does not '
+                               'represent a dictionary (content: {0})'
+                               .format(content))
 
     return content
 

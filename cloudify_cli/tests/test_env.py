@@ -469,22 +469,6 @@ class CliInputsTests(CliCommandTest):
         }
         return input_files_directory, expected_dict
 
-    def test_inputs_to_dict_error_handling(self):
-        input_list = ["my_key1=my_value1;my_key2"]
-
-        expected_err_msg = \
-            ("Invalid input: {0}. It must represent a dictionary. "
-             "Valid values can be one of:\n "
-             "- A path to a YAML file\n "
-             "- A path to a directory containing YAML files\n "
-             "- A single quoted wildcard based path ")
-
-        self.assertRaisesRegexp(
-            CloudifyCliError,
-            expected_err_msg.format(input_list[0]),
-            inputs.inputs_to_dict,
-            input_list)
-
 
 class TestProgressBar(CliCommandTest):
     def test_progress_bar_1(self):
