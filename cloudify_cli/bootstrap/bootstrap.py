@@ -193,10 +193,13 @@ def _handle_provider_context(rest_client,
     provider_context = manager_node_instance.runtime_properties.get(
         'provider_context', {})
     cloudify_configuration = manager_node.properties['cloudify']
-    cloudify_configuration['cloudify_agent']['agent_key_path'] = \
-        remote_agents_private_key_path
+    agent_config = cloudify_configuration['cloudify_agent']
+    agent_config['agent_key_path'] = remote_agents_private_key_path
     broker_ip = manager_node_instance.runtime_properties.get('broker_ip', '')
-    cloudify_configuration['cloudify_agent']['broker_ip'] = broker_ip
+    agent_config['broker_ip'] = broker_ip
+
+    # Make sure there's always a `default` network for the agents to use
+    agent_config['networks'].setdefault('default', broker_ip)
     provider_context['cloudify'] = cloudify_configuration
     manager_node_instance.runtime_properties['manager_provider_context'] = \
         provider_context
