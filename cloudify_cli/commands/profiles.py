@@ -84,7 +84,7 @@ def list(logger):
     current_profile = env.get_active_profile()
 
     profiles = []
-    profile_names = _get_profile_names()
+    profile_names = env.get_profile_names()
     for profile in profile_names:
         profile_data = _get_profile(profile)
         if profile == current_profile:
@@ -202,7 +202,7 @@ def purge_incomplete(logger):
     """Purge all profiles for which the bootstrap state is incomplete
     """
     logger.info('Purging incomplete bootstrap profiles...')
-    profile_names = _get_profile_names()
+    profile_names = env.get_profile_names()
     for profile in profile_names:
         context = env.get_profile_context(profile)
         if context.bootstrap_state == 'Incomplete':
@@ -411,7 +411,7 @@ def export_profiles(include_keys, output_path, logger):
     # TODO: Copy exported ssh keys to each profile's directory
     logger.info('Exporting profiles to {0}...'.format(destination))
     if include_keys:
-        for profile in _get_profile_names():
+        for profile in env.get_profile_names():
             _backup_ssh_key(profile)
     utils.tar(env.PROFILES_DIR, destination)
     if include_keys:
@@ -443,7 +443,7 @@ def import_profiles(archive_path, include_keys, logger):
     utils.untar(archive_path, os.path.dirname(env.PROFILES_DIR))
 
     if include_keys:
-        for profile in _get_profile_names():
+        for profile in env.get_profile_names():
             _restore_ssh_key(profile)
     else:
         if EXPORTED_KEYS_DIRNAME in os.listdir(env.PROFILES_DIR):
@@ -457,7 +457,7 @@ def import_profiles(archive_path, include_keys, logger):
 
 
 def _assert_profiles_exist():
-    if not _get_profile_names():
+    if not env.get_profile_names():
         raise CloudifyCliError('No profiles to export')
 
 
@@ -472,16 +472,6 @@ def _assert_profiles_archive(archive_path):
 def _assert_is_tarfile(archive_path):
     if not tarfile.is_tarfile(archive_path):
         raise CloudifyCliError('The archive provided must be a tar.gz archive')
-
-
-def _get_profile_names():
-    # TODO: This is too.. ambiguous. We should change it so there are
-    # no exclusions.
-    excluded = ['local', EXPORTED_KEYS_DIRNAME]
-    profile_names = [item for item in os.listdir(env.PROFILES_DIR)
-                     if item not in excluded]
-
-    return profile_names
 
 
 def _backup_ssh_key(profile):

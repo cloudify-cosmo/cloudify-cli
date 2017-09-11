@@ -90,6 +90,16 @@ def get_active_profile():
         return None
 
 
+def get_profile_names():
+    # TODO: This is too.. ambiguous. We should change it so there are
+    # no exclusions.
+    excluded = ['local']
+    profile_names = [item for item in os.listdir(PROFILES_DIR)
+                     if item not in excluded and not item.startswith('.')]
+
+    return profile_names
+
+
 def assert_manager_active():
     if not is_manager_active():
         raise CloudifyCliError(

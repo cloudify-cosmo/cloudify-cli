@@ -385,16 +385,31 @@ def remove_node(client, logger, cluster_node_name):
     """
     cluster_nodes = {node['name']: node.host_ip
                      for node in client.cluster.nodes.list()}
-
     if cluster_node_name not in cluster_nodes:
         raise CloudifyCliError('Invalid command. {0} is not a member of '
                                'the cluster.'.format(cluster_node_name))
+    removed_node_ip = cluster_nodes[cluster_node_name]
 
     client.cluster.nodes.delete(cluster_node_name)
 
-    env.profile.cluster = [node for node in env.profile.cluster
-                           if node['name'] != cluster_node_name]
-    env.profile.save()
+    for profile_name in env.get_profile_names():
+        profile_context = env.get_profile_context(profile_name)
+
+        if profile_context.profile_name == removed_node_ip:
+            logger.info('Profile {0} set as a non-cluster profile'
+                        .format(profile_context.profile_name))
+            profile_context.cluster = None
+            if hasattr(profile_context, '_original'):
+                for attrname, attr in profile_context._original.items():
+                    setattr(profile_context, attrname, attr)
+        else:
+            logger.info(
+                'Profile {0}: {1} removed from cluster nodes list'
+                .format(profile_context.profile_name, cluster_node_name))
+            profile_context.cluster = [node for node in profile_context.cluster
+                                       if node['name'] != cluster_node_name]
+        profile_context.save()
+
     logger.info('Node {0} was removed successfully!'
                 .format(cluster_node_name))
 
@@ -405,6 +420,10 @@ def _join_node_to_profile(node_name, from_profile, joined_profile=None):
     node = {node_attr: getattr(from_profile, node_attr)
             for node_attr in env.CLUSTER_NODE_ATTRS}
     cert_file = env.get_ssl_cert()
+
+    from_profile._original = {attrname: getattr(from_profile, attrname)
+                              for attrname in env.CLUSTER_NODE_ATTRS}
+    from_profile.save()
     if cert_file:
         profile_cert = os.path.join(
             joined_profile.workdir,
