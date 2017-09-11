@@ -115,6 +115,7 @@ def list(logger):
 @cfy.options.manager_tenant
 @cfy.options.rest_port
 @cfy.options.rest_certificate
+@cfy.options.skip_credentials_validation
 @cfy.options.verbose()
 @cfy.pass_logger
 def use(manager_ip,
@@ -127,6 +128,7 @@ def use(manager_ip,
         profile_name,
         rest_port,
         rest_certificate,
+        skip_credentials_validation,
         logger):
     """Control a specific manager
 
@@ -153,7 +155,8 @@ def use(manager_ip,
         rest_certificate,
         manager_username,
         manager_password,
-        manager_tenant
+        manager_tenant,
+        skip_credentials_validation
     )
     # First, attempt to get the provider from the manager - should it fail,
     # the manager's profile directory won't be created
@@ -165,8 +168,10 @@ def use(manager_ip,
         rest_certificate,
         manager_username,
         manager_password,
-        manager_tenant
+        manager_tenant,
+        skip_credentials_validation
     )
+
     if not env.is_profile_exists(profile_name):
         init.init_manager_profile(profile_name=profile_name)
 
@@ -543,18 +548,24 @@ def _get_provider_context(profile_name,
                           rest_certificate,
                           manager_username,
                           manager_password,
-                          manager_tenant):
+                          manager_tenant,
+                          skip_credentials_validation):
+    try:
+        client = _get_client_and_assert_manager(
+            profile_name,
+            manager_ip,
+            rest_port,
+            rest_protocol,
+            rest_certificate,
+            manager_username,
+            manager_password,
+            manager_tenant
+        )
+    except CloudifyCliError:
+        if skip_credentials_validation:
+            return None
+        raise
 
-    client = _get_client_and_assert_manager(
-        profile_name,
-        manager_ip,
-        rest_port,
-        rest_protocol,
-        rest_certificate,
-        manager_username,
-        manager_password,
-        manager_tenant
-    )
     try:
         response = client.manager.get_context()
         return response['context']
@@ -636,7 +647,8 @@ def _get_rest_port_and_protocol(profile_name=None,
                                 rest_certificate=None,
                                 manager_username=None,
                                 manager_password=None,
-                                manager_tenant=None):
+                                manager_tenant=None,
+                                skip_credentials_validation=False):
 
     # Determine SSL mode by port
     if rest_port == constants.SECURED_REST_PORT:
@@ -663,8 +675,9 @@ def _get_rest_port_and_protocol(profile_name=None,
     except UserUnauthorizedError as e:
         if e.response is not None and _is_manager_secured(e.response.history):
             return constants.SECURED_REST_PORT, constants.SECURED_REST_PROTOCOL
-    except CloudifyClientError as e:
-        raise
+    except Exception as e:
+        if not skip_credentials_validation:
+            raise
 
     return rest_port, constants.DEFAULT_REST_PROTOCOL
 
