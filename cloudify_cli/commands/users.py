@@ -120,7 +120,10 @@ def get(username, get_data, logger, client):
     `USERNAME` is the username of the user. (default: current user)
     """
     logger.info('Getting info for user `{0}`...'.format(username))
-    user_details = client.users.get(username, _get_data=get_data)
+    if username == env.get_username():
+        user_details = client.users.get_self(_get_data=get_data)
+    else:
+        user_details = client.users.get(username, _get_data=get_data)
     print_data(USER_COLUMNS, user_details, 'Requested user info:')
 
 
