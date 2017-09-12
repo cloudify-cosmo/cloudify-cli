@@ -774,6 +774,13 @@ class Options(object):
             help=helptexts.SKIP_CREDENTIALS_VALIDATION
         )
 
+        self.skip_connection_validation = click.option(
+            '--skip-connection-validation',
+            is_flag=True,
+            default=False,
+            help=helptexts.SKIP_CONNECTION_VALIDATION
+        )
+
         self.cluster_host_ip = click.option(
             '--cluster-host-ip',
             default=lambda: env.profile.manager_ip,

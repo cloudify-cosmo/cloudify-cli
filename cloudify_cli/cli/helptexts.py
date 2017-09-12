@@ -221,6 +221,8 @@ NO_REBOOT = 'Do not perform an automatic reboot to the Manager VM after ' \
             'Only relevant if the `--restore-certificates` flag was supplied'
 SKIP_CREDENTIALS_VALIDATION = 'Do not check that the passed credentials are ' \
                               'correct (default:False)'
+SKIP_CONNECTION_VALIDATION = 'Do not check that the target manager responds ' \
+                             'to requests (default: False)'
 LDAP_SERVER = 'The LDAP server address to authenticate against'
 LDAP_USERNAME = 'The LDAP admin username to be set on the Cloudify manager'
 LDAP_PASSWORD = 'The LDAP admin password to be set on the Cloudify manager'
