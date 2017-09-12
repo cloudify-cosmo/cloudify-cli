@@ -109,7 +109,7 @@ fi
 export SINGLE_TAR_URL=$(cat manager-single-tar.yaml)
 
 install_common_prereqs &&
-install_requirements &&
+#install_requirements && # moved to cloudify-packager
 download_wheels $GITHUB_USERNAME $GITHUB_PASSWORD &&
 download_resources $GITHUB_USERNAME $GITHUB_PASSWORD &&
 update_remote_to_local_links &&
