@@ -1,4 +1,4 @@
-from mock import Mock, MagicMock, patch
+from mock import MagicMock, patch
 
 from ... import env
 from ... import constants
@@ -7,17 +7,6 @@ from .test_base import CliCommandTest
 
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.exceptions import UserUnauthorizedError
-
-
-def _get_do_request_mock():
-    response_history = Mock()
-    response_history.is_redirect = True
-    response_history.headers = {'location': 'https'}
-    response_mock = {'history': [response_history]}
-    response_mock = Mock()
-    response_mock.history = [response_history]
-    return Mock(side_effect=UserUnauthorizedError(message='',
-                                                  response=response_mock))
 
 
 class UseTest(CliCommandTest):
@@ -93,10 +82,8 @@ class UseTest(CliCommandTest):
 
     @patch('cloudify_cli.commands.profiles._get_provider_context',
            return_value={})
-    @patch('cloudify_rest_client.client.HTTPClient._do_request',
-           _get_do_request_mock())
     def test_use_sets_ssl_port_and_protocol(self, *_):
-        outcome = self.invoke('profiles use 1.2.3.4')
+        outcome = self.invoke('profiles use 1.2.3.4 --ssl')
         self.assertIn('Using manager 1.2.3.4', outcome.logs)
         context = self._read_context()
         self.assertEqual(constants.SECURED_REST_PORT, context.rest_port)
@@ -107,9 +94,8 @@ class UseTest(CliCommandTest):
            return_value={})
     @patch('cloudify_rest_client.client.HTTPClient._do_request',
            return_value={})
-    def test_use_rest_port_ssl(self, *_):
-        outcome = self.invoke('profiles use 1.2.3.4 --rest-port {0}'.
-                              format(constants.SECURED_REST_PORT))
+    def test_use_secured(self, *_):
+        outcome = self.invoke('profiles use 1.2.3.4 --ssl')
         self.assertIn('Using manager 1.2.3.4', outcome.logs)
         context = self._read_context()
         self.assertEqual(constants.SECURED_REST_PORT, context.rest_port)
@@ -149,5 +135,10 @@ class UseTest(CliCommandTest):
 
         with patch('cloudify_rest_client.client.HTTPClient._do_request',
                    new=mock_do_request):
-            self.invoke('cfy profiles use {0} --rest-port {1}'.format(
-                host, self.client._client.port))
+            if self.client._client.port == SSL_PORT:
+                secured_flag = '--ssl'
+            else:
+                secured_flag = ''
+
+            self.invoke('cfy profiles use {0} {1}'.format(
+                host, secured_flag))
