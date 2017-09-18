@@ -234,32 +234,17 @@ def delete(profile_name, logger):
         logger.info(str(ex))
 
 
-@profiles.command(
-    name='set',
-    short_help='Set name/manager username/password/tenant in current profile')
-@cfy.options.profile_name
-@cfy.options.manager_username
-@cfy.options.manager_password
-@cfy.options.manager_tenant
-@cfy.options.ssh_user
-@cfy.options.ssh_key
-@cfy.options.ssh_port_no_default
-@cfy.options.ssl_state
-@cfy.options.rest_certificate
-@cfy.options.skip_credentials_validation
-@cfy.options.verbose()
-@cfy.pass_logger
-def set(profile_name,
-        manager_username,
-        manager_password,
-        manager_tenant,
-        ssh_user,
-        ssh_key,
-        ssh_port,
-        ssl,
-        rest_certificate,
-        skip_credentials_validation,
-        logger):
+def set_profile(profile_name,
+                manager_username,
+                manager_password,
+                manager_tenant,
+                ssh_user,
+                ssh_key,
+                ssh_port,
+                ssl,
+                rest_certificate,
+                skip_credentials_validation,
+                logger):
     """Set the profile name, manager username and/or password and/or tenant
     and/or ssl state (on/off) in the *current* profile
     """
@@ -296,11 +281,11 @@ def set(profile_name,
     if ssl is not None:
         ssl = str(ssl).lower()
         if ssl == 'on':
-            logger.info('Enabling SSL')
+            logger.info('Enabling SSL in the local profile')
             env.profile.rest_port = constants.SECURED_REST_PORT
             env.profile.rest_protocol = constants.SECURED_REST_PROTOCOL
         elif ssl == 'off':
-            logger.info('Disabling SSL')
+            logger.info('Disabling SSL in the local profile')
             env.profile.rest_port = constants.DEFAULT_REST_PORT
             env.profile.rest_protocol = constants.DEFAULT_REST_PROTOCOL
         else:
@@ -324,6 +309,45 @@ def set(profile_name,
         env.set_active_profile(profile_name)
         env.delete_profile(old_name)
     logger.info('Settings saved successfully')
+
+
+@profiles.command(
+    name='set',
+    short_help='Set name/manager username/password/tenant in current profile')
+@cfy.options.profile_name
+@cfy.options.manager_username
+@cfy.options.manager_password
+@cfy.options.manager_tenant
+@cfy.options.ssh_user
+@cfy.options.ssh_key
+@cfy.options.ssh_port_no_default
+@cfy.options.ssl_state
+@cfy.options.rest_certificate
+@cfy.options.skip_credentials_validation
+@cfy.options.verbose()
+@cfy.pass_logger
+def set_cmd(profile_name,
+            manager_username,
+            manager_password,
+            manager_tenant,
+            ssh_user,
+            ssh_key,
+            ssh_port,
+            ssl,
+            rest_certificate,
+            skip_credentials_validation,
+            logger):
+    return set_profile(profile_name,
+                       manager_username,
+                       manager_password,
+                       manager_tenant,
+                       ssh_user,
+                       ssh_key,
+                       ssh_port,
+                       ssl,
+                       rest_certificate,
+                       skip_credentials_validation,
+                       logger)
 
 
 @profiles.command(

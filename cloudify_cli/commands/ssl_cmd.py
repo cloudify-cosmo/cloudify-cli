@@ -15,6 +15,7 @@
 ############
 
 from ..cli import cfy
+from .profiles import set_profile
 
 
 @cfy.group(name='ssl')
@@ -46,10 +47,20 @@ def enable(logger, client):
     """Enable SSL on the manager.
     """
     logger.info(client.manager.set_ssl(True))
+    set_profile(profile_name=None,
+                manager_username=None,
+                manager_password=None,
+                manager_tenant=None,
+                ssh_user=None,
+                ssh_key=None,
+                ssh_port=None,
+                ssl='on',
+                rest_certificate=None,
+                skip_credentials_validation=True,
+                logger=logger)
     logger.info("Note that each user should now use SSL to communicate with "
-                "the manager:")
-    logger.info(
-        "Run 'cfy profiles set --ssl on --skip-credentials-validation'")
+                "the manager, they can do so by running:")
+    logger.info("cfy profiles set --ssl on --skip-credentials-validation")
 
 
 @ssl.command(name='disable', short_help='Disable SSL [manager only]')
@@ -61,7 +72,17 @@ def disable(logger, client):
     """Disable SSL on the manager.
     """
     logger.info(client.manager.set_ssl(False))
+    set_profile(profile_name=None,
+                manager_username=None,
+                manager_password=None,
+                manager_tenant=None,
+                ssh_user=None,
+                ssh_key=None,
+                ssh_port=None,
+                ssl='off',
+                rest_certificate=None,
+                skip_credentials_validation=True,
+                logger=logger)
     logger.info("Note that each user should now communicate with the manager "
-                "without SSL:")
-    logger.info(
-        "Run 'cfy profiles set --ssl off --skip-credentials-validation'")
+                "without SSL, they can do so by running:")
+    logger.info("cfy profiles set --ssl off --skip-credentials-validation")
