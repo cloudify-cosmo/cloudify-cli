@@ -173,7 +173,7 @@ class EventsTest(CliCommandTest):
     def _test_events(self, flag=''):
         self.client.executions.get = self._mock_executions_get
         self.client.events.list = self._mock_events_list
-        outcome = self.invoke('cfy events list -e execution-id {0}'.format(
+        outcome = self.invoke('cfy events list execution-id {0}'.format(
             flag))
         if flag == '--json-output':
             return outcome.output

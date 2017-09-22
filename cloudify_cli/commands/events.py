@@ -35,7 +35,7 @@ def events():
 
 @events.command(name='list',
                 short_help='List deployments events [manager only]')
-@cfy.options.execution_id(required=True)
+@cfy.argument('execution-id')
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.tail
