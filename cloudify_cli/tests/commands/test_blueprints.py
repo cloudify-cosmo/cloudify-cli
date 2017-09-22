@@ -51,7 +51,8 @@ class BlueprintsTest(CliCommandTest):
             ],
             data=[{'description': '123456789012345678..'},
                   {'description': 'abcdefg'}],
-            defaults=None
+            defaults=None,
+            labels=None
         )
 
     def test_blueprints_delete(self):

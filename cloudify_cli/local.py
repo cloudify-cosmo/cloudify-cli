@@ -34,7 +34,6 @@ from .config.config import CloudifyConfig
 
 
 _ENV_NAME = 'local'
-_STORAGE_DIR_NAME = '' if env.MULTIPLE_LOCAL_BLUEPRINTS else 'local-storage'
 
 
 def initialize_blueprint(blueprint_path,
@@ -69,7 +68,10 @@ def storage_dir(blueprint_id=None):
             blueprint_id
         )
     else:
-        return os.path.join(env.PROFILES_DIR, _ENV_NAME, _STORAGE_DIR_NAME)
+        directories = [env.PROFILES_DIR, _ENV_NAME]
+        if not env.MULTIPLE_LOCAL_BLUEPRINTS:
+            directories.append('local-storage')
+        return os.path.join(*directories)
 
 
 def get_storage():

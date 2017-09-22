@@ -24,6 +24,7 @@ from ..exceptions import ExecutionTimeoutError
 from ..exceptions import SuppressedCloudifyCliError
 from ..execution_events_fetcher import wait_for_execution, \
     WAIT_FOR_EXECUTION_SLEEP_INTERVAL
+from .. import env
 
 _NODE_INSTANCE_STATE_STARTED = 'started'
 
@@ -56,18 +57,18 @@ def _deployment_exists(client, deployment_id):
                 short_help='Install deployment agents [manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
-@cfy.options.install_script
 @cfy.options.verbose()
-@cfy.options.tenant_name(
+@cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='relevant deployment(s)')
+@cfy.options.all_tenants
 @cfy.pass_logger
 @cfy.pass_client()
 def install(deployment_id,
             include_logs,
-            install_script,
             tenant_name,
             logger,
-            client):
+            client,
+            all_tenants):
     """Install agents on the hosts of existing deployments
 
     `DEPLOYMENT_ID` - The ID of the deployment you would like to
@@ -76,33 +77,81 @@ def install(deployment_id,
     See Cloudify's documentation at http://docs.getcloudify.org for more
     information.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
-    workflow_id = 'install_new_agents'
+    # install agents across all tenants
+    if all_tenants:
+        no_deployments_found = True
+        tenants_list = [tenant.name for tenant in client.tenants.list()]
+        for tenant in tenants_list:
+            tenant_client = env.get_rest_client(tenant_name=tenant)
+            # install agents for a specified deployments or for all
+            # deployments under tenant (depends if 'deployment_id' was passed)
+            deps, error_msg = create_deployments_list(
+                tenant_client, deployment_id, logger)
+            if not error_msg:
+                no_deployments_found = False
+                run_worker(deps, tenant_client, logger, include_logs)
+        if no_deployments_found:
+            logger.error(error_msg)
+            raise SuppressedCloudifyCliError()
+    else:
+        # install agents for all deployments under a specified tenant
+        if tenant_name:
+            logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+        deps, error_msg\
+            = create_deployments_list(client, deployment_id, logger)
+        if error_msg:
+            logger.error(error_msg)
+            raise SuppressedCloudifyCliError()
+        run_worker(deps, client, logger, include_logs)
 
+
+def create_deployments_list(client, deployment_id, logger):
+    """
+    Creates a list of all the deployments who's agents
+    will be installed.
+
+    :param client: Rest client with the correct tenant.
+    :param deployment_id: An id of a specific
+           deployment you would like to install agents for.
+           If not passed all deployments under this tenants
+           will be included in the deployments list.
+    :param logger: In order to write logs.
+    :return A list of the relevant deployments.
+            """
+    # install agents for a specified deployment
+    error_msg = None
     if deployment_id:
-        deps = [deployment_id]
+        dep_list = [deployment_id]
         if not _deployment_exists(client, deployment_id):
-            logger.error("Could not find deployment for deployment id: '{0}'."
-                         .format(deployment_id))
-            raise SuppressedCloudifyCliError()
+            error_msg = "Could not find deployment for deployment id: '{0}'.".\
+                format(deployment_id)
+            return dep_list, error_msg
         if not _is_deployment_installed(client, deployment_id):
-            logger.error("Deployment '{0}' is not installed"
-                         .format(deployment_id))
-            raise SuppressedCloudifyCliError()
+            error_msg =\
+                "Deployment '{0}' is not installed".format(deployment_id)
+            return dep_list, error_msg
+
         logger.info("Installing agent for deployment '{0}'"
                     .format(deployment_id))
+
+    # install agents for all deployments
     else:
-        deps = [dep.id for dep in client.deployments.list()
-                if _is_deployment_installed(client, dep.id)]
-        if not deps:
-            logger.error('There are no deployments installed')
-            raise SuppressedCloudifyCliError()
+        dep_list = [dep.id for dep in
+                    client.deployments.list()
+                    if _is_deployment_installed(client, dep.id)]
+        if not dep_list:
+            error_msg = 'There are no deployments installed'
+            return dep_list, error_msg
+
         logger.info('Installing agents for all installed deployments')
 
+    return dep_list, error_msg
+
+
+def run_worker(deps, client, logger, include_logs):
+    workflow_id = 'install_new_agents'
     error_summary = []
     error_summary_lock = threading.Lock()
-
     event_lock = threading.Lock()
 
     def log_to_summary(message):
@@ -122,22 +171,9 @@ def install(deployment_id,
 
     def worker(dep_id):
         timeout = 900
-
         try:
-            kwargs = {}
-            if install_script is not None:
-                kwargs = {
-                    'parameters': {
-                        'install_script': install_script
-                    },
-                    'allow_custom_parameters': True
-                }
-            execution = client.executions.start(
-                dep_id,
-                workflow_id,
-                **kwargs
-            )
 
+            execution = client.executions.start(dep_id, workflow_id)
             execution = wait_for_execution(
                 client,
                 execution,
@@ -167,7 +203,7 @@ def install(deployment_id,
                 "status.\n"
                 "* Run 'cfy executions cancel --execution-id {2}' to cancel"
                 " the running workflow.".format(
-                    workflow_id, deployment_id, e.execution_id, timeout))
+                    workflow_id, dep_id, e.execution_id, timeout))
 
     threads = [threading.Thread(target=worker, args=(dep_id,))
                for dep_id in deps]

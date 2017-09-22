@@ -131,10 +131,7 @@ def bootstrap(blueprint_path,
                     else:
                         logger.info(
                             'Executing teardown due to failed bootstrap...')
-                        bs.teardown(name=env_name,
-                                    task_retries=5,
-                                    task_retry_interval=30,
-                                    task_thread_pool_size=1)
+                        bs.teardown(name=env_name)
                 raise tpe, value, traceback
     finally:
         if temp_profile_active:
@@ -168,6 +165,7 @@ def _set_profile_details(details, inputs, dont_save_password):
     profile.manager_ip = details['manager_ip']
     profile.rest_port = details['rest_port']
     profile.rest_protocol = details['rest_protocol']
+    profile.rest_certificate = env.get_default_rest_cert_local_path()
     profile.provider_context = details['provider_context']
     profile.ssh_key = details['ssh_key_path']
     profile.ssh_user = details['ssh_user']

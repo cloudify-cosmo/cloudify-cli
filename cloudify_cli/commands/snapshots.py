@@ -37,16 +37,16 @@ def snapshots():
 @cfy.argument('snapshot-id')
 @cfy.options.without_deployment_envs
 @cfy.options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
-@cfy.options.tenant_name(required=False,
-                         help=helptexts.RESTORE_SNAPSHOT_TENANT_NAME,
-                         show_default_in_help=False)
+@cfy.options.restore_certificates
+@cfy.options.no_reboot
 @cfy.options.verbose()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
 def restore(snapshot_id,
             without_deployment_envs,
             force,
-            tenant_name,
+            restore_certificates,
+            no_reboot,
             logger,
             client):
     """Restore a manager to its previous state
@@ -59,10 +59,23 @@ def restore(snapshot_id,
         snapshot_id,
         recreate_deployments_envs,
         force,
-        tenant_name
+        restore_certificates,
+        no_reboot
     )
     logger.info("Started workflow execution. The execution's id is {0}".format(
         execution.id))
+    if not restore_certificates:
+        return
+    if no_reboot:
+        logger.warn('Certificates might be replaced during a snapshot '
+                    'restore action. It is recommended that you reboot the '
+                    'Manager VM when the execution is terminated, or several '
+                    'services might not work.')
+    else:
+        logger.info('In the event of a certificates restore action, the '
+                    'Manager VM will automatically reboot after execution is '
+                    'terminated. After reboot the Manager can work with the '
+                    'restored certificates.')
 
 
 @snapshots.command(name='create',
@@ -72,7 +85,6 @@ def restore(snapshot_id,
 @cfy.options.exclude_credentials
 @cfy.options.private_resource
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.pass_client()
 @cfy.pass_logger
 def create(snapshot_id,
@@ -80,8 +92,7 @@ def create(snapshot_id,
            exclude_credentials,
            private_resource,
            logger,
-           client,
-           tenant_name):
+           client):
     """Create a snapshot on the manager
 
     The snapshot will contain the relevant data to restore a manager to
@@ -89,8 +100,6 @@ def create(snapshot_id,
 
     `SNAPSHOT_ID` is the id to attach to the snapshot.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     snapshot_id = snapshot_id or utils.generate_suffixed_id('snapshot')
     logger.info('Creating snapshot {0}...'.format(snapshot_id))
 

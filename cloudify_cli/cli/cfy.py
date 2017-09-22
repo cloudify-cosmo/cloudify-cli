@@ -181,6 +181,7 @@ def set_verbosity_level(ctx, param, value):
         return
 
     set_global_verbosity_level(value)
+    return value
 
 
 def set_cli_except_hook(global_verbosity_level):
@@ -523,11 +524,27 @@ class Options(object):
             required=False,
             help=helptexts.SSH_USER)
 
+        self.ssh_user_flag = click.option(
+            '-s',
+            '--ssh-user',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.SSH_USER)
+
         self.ssh_key = click.option(
             '-k',
             '--ssh-key',
             required=False,
             cls=MutuallyExclusiveOption,
+            help=helptexts.SSH_KEY)
+
+        self.ssh_key_flag = click.option(
+            '-k',
+            '--ssh-key',
+            required=False,
+            is_flag=True,
+            default=False,
             help=helptexts.SSH_KEY)
 
         self.profile_name = click.option(
@@ -582,10 +599,37 @@ class Options(object):
             default=False,
             help=helptexts.MANAGER_TENANT)
 
+        self.rest_certificate = click.option(
+            '-c',
+            '--rest-certificate',
+            required=False,
+            help=helptexts.REST_CERT
+        )
+
+        self.rest_certificate_flag = click.option(
+            '-c',
+            '--rest-certificate',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.REST_CERT)
+
+        self.ssl_state = click.option(
+            '--ssl',
+            required=False,
+            help=helptexts.SSL_STATE,
+            callback=validate_name
+        )
+
         self.ssh_port = click.option(
             '--ssh-port',
             required=False,
             default=constants.REMOTE_EXECUTION_PORT,
+            help=helptexts.SSH_PORT)
+
+        self.ssh_port_no_default = click.option(
+            '--ssh-port',
+            required=False,
             help=helptexts.SSH_PORT)
 
         self.rest_port = click.option(
@@ -694,10 +738,19 @@ class Options(object):
             default=False,
             help=helptexts.DESCENDING)
 
-        self.install_script = click.option(
-            '-s',
-            '--install-script',
-            help=helptexts.INSTALL_SCRIPT_LOCATION)
+        self.restore_certificates = click.option(
+            '--restore-certificates',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.RESTORE_CERTIFICATES)
+
+        self.no_reboot = click.option(
+            '--no-reboot',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.NO_REBOOT)
 
         self.security_role = click.option(
             '-r',
@@ -780,6 +833,14 @@ class Options(object):
             '--secret-file',
             required=False,
             help=helptexts.SECRET_FILE)
+
+        # same as --inputs, name changed for consistency
+        self.cluster_node_options = click.option(
+            '-o',
+            '--options',
+            multiple=True,
+            callback=inputs_callback,
+            help=helptexts.CLUSTER_NODE_OPTIONS)
 
     @staticmethod
     def include_keys(help):
@@ -944,7 +1005,7 @@ class Options(object):
             '--timeout',
             type=int,
             default=default,
-            help=helptexts.OPERATION_TIMEOUT)
+            help=helptexts.OPERATION_TIMEOUT.format(default))
 
     @staticmethod
     def deployment_id(required=False):

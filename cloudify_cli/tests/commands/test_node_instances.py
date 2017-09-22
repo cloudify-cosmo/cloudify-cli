@@ -39,18 +39,19 @@ class NodeInstancesTest(CliCommandTest):
 
     def test_local_instances(self):
         self._create_local_env()
-        output = self.invoke('cfy node-instances', context='local')
+        output = self.invoke('cfy node-instances -b local', context='local')
         self._assert_outputs(output, {'node_id': 'node'})
 
     def test_local_instances_with_existing_node_id(self):
         self._create_local_env()
-        output = self.invoke('cfy node-instances node', context='local')
+        output = self.invoke(
+            'cfy node-instances -b local node', context='local')
         self._assert_outputs(output, {'node_id': 'node'})
 
     def test_local_instances_with_non_existing_node_id(self):
         self._create_local_env()
         self.invoke(
-            'cfy node-instances noop', context='local',
+            'cfy node-instances -b local noop', context='local',
             err_str_segment='Could not find node noop'
         )
 
@@ -63,7 +64,10 @@ class NodeInstancesTest(CliCommandTest):
 
         self.invoke('cfy init {0}'.format(blueprint_path))
         cfy.register_commands()
-        self.invoke('cfy executions start {0}'.format('run_test_op_on_nodes'))
+        self.invoke(
+            'cfy executions start -b local {0}'
+            .format('run_test_op_on_nodes')
+        )
 
     def _assert_outputs(self, output, expected_outputs):
         output = output.logs.split('\n')

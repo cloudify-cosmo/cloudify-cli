@@ -158,7 +158,9 @@ MANAGER_USERNAME = 'Manager username used to run commands on the manager'
 MANAGER_PASSWORD = 'Manager password used to run commands on the manager'
 MANAGER_TENANT = 'The tenant associated with the current user operating the ' \
                  'manager'
+SSL_STATE = 'Required SSL state (on/off)'
 REST_PORT = "The REST server's port"
+REST_CERT = "The REST server's external certificate file location"
 
 EXPORT_SSH_KEYS = 'Include ssh key files in archive'
 IMPORT_SSH_KEYS = 'WARNING: Import exported keys to their original locations'
@@ -166,8 +168,6 @@ IMPORT_SSH_KEYS = 'WARNING: Import exported keys to their original locations'
 SORT_BY = "Key for sorting the list"
 DESCENDING = "Sort list in descending order [default: False]"
 
-INSTALL_SCRIPT_LOCATION = \
-    'Alternative location of the `install_agents.py` script'
 TENANT = 'The name of the tenant'
 TENANT_TEMPLATE = 'The name of the tenant of the {0}'
 TENANT_LIST_TEMPLATE = 'The name of the tenant to list {0}s from'
@@ -206,17 +206,19 @@ USER = 'Username of user to whom the permissions apply. ' \
        'This argument can be used multiple times'
 PERMISSION = 'The permission applicable to a resource [viewer|owner] ' \
              '(default:viewer)'
-RESTORE_SNAPSHOT_TENANT_NAME = 'The name of the tenant into which the ' \
-                               'snapshot should be restored. ' \
-                               'Important - this option is required when ' \
-                               'restoring snapshots from managers of ' \
-                               'versions prior to 4.0.0. If passed when ' \
-                               'restoring newer snapshots, an error ' \
-                               'will be raised. ' \
-                               'The given tenant will be created ' \
-                               'automatically. If the tenant name passed ' \
-                               'already exists on the manager, an error ' \
-                               'will be raised'
+RESTORE_CERTIFICATES = 'Restore the certificates from the snapshot, using ' \
+                       'them to replace the current Manager certificates. ' \
+                       'If the certificates` metadata (I.E: the Manager IP ' \
+                       'address) from the snapshot does not match the ' \
+                       'Manager metadata, the certificates cannot work on ' \
+                       'this Manager and will not be restored. In the event ' \
+                       'that the certificates have been restored, the ' \
+                       'Manager will be automatically rebooted at the end ' \
+                       'of the execution. To avoid automatic reboot, use ' \
+                       'the flag `--no-reboot` (not recommended)'
+NO_REBOOT = 'Do not perform an automatic reboot to the Manager VM after ' \
+            'restoring certificates a from snapshot (not recommended). ' \
+            'Only relevant if the `--restore-certificates` flag was supplied'
 SKIP_CREDENTIALS_VALIDATION = 'Do not check that the passed credentials are ' \
                               'correct (default:False)'
 LDAP_SERVER = 'The LDAP server address to authenticate against'
@@ -235,3 +237,5 @@ PROFILE_NAME = 'Name of the profile to use'
 SECRET_VALUE = "The secret's value to be set"
 SECRET_STRING = "The string to use as the secret's value"
 SECRET_FILE = "The secret's file to use its content as value to be set"
+CLUSTER_NODE_OPTIONS = 'Additional options for the cluster node '\
+                       'configuration {0}'.format(INPUTS_PARAMS_USAGE)

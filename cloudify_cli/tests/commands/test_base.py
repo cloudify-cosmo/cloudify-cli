@@ -21,6 +21,7 @@ from mock import patch, MagicMock
 from cloudify.utils import setup_logger
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.maintenance import Maintenance
+from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
 
 from .. import cfy
 from ... import env
@@ -47,6 +48,9 @@ class CliCommandTest(testtools.TestCase):
         self.client = CloudifyClient()
 
         def get_mock_rest_client(*args, **kwargs):
+            if 'tenant_name' in kwargs:
+                self.client._client.headers[CLOUDIFY_TENANT_HEADER] =\
+                    kwargs['tenant_name']
             return self.client
 
         self.original_utils_get_rest_client = env.get_rest_client

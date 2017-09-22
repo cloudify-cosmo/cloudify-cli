@@ -1,4 +1,4 @@
-from mock import MagicMock, patch
+from mock import Mock, MagicMock, patch
 
 from ... import env
 from ... import constants
@@ -10,11 +10,14 @@ from cloudify_rest_client.exceptions import UserUnauthorizedError
 
 
 def _get_do_request_mock():
-    response_history = MagicMock()
+    response_history = Mock()
     response_history.is_redirect = True
     response_history.headers = {'location': 'https'}
     response_mock = {'history': [response_history]}
-    return MagicMock(return_value=response_mock)
+    response_mock = Mock()
+    response_mock.history = [response_history]
+    return Mock(side_effect=UserUnauthorizedError(message='',
+                                                  response=response_mock))
 
 
 class UseTest(CliCommandTest):

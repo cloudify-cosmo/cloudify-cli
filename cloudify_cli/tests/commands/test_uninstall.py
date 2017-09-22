@@ -114,14 +114,14 @@ class UninstallTest(CliCommandTest):
             DEFAULT_BLUEPRINT_FILE_NAME
         )
         self.invoke('cfy init {0}'.format(blueprint_path))
-        self.invoke('cfy uninstall', context='local')
+        self.invoke('cfy uninstall -b local', context='local')
 
         args = local_start_mock.call_args_list[0][1]
         self.assertDictEqual(
             args,
             {
                 'parameters': DEFAULT_PARAMETERS,
-                'blueprint_id': None,
+                'blueprint_id': 'local',
                 'allow_custom_parameters': False,
                 'workflow_id': 'uninstall',
                 'task_retries': 0,
@@ -139,6 +139,7 @@ class UninstallTest(CliCommandTest):
         )
         self.invoke('cfy init {0}'.format(blueprint_path))
         self.invoke('cfy uninstall'
+                    ' -b local'
                     ' -w my_uninstall'
                     ' --parameters key=value'
                     ' --allow-custom-parameters'
@@ -152,7 +153,7 @@ class UninstallTest(CliCommandTest):
             args,
             {
                 'parameters': {u'key': u'value'},
-                'blueprint_id': None,
+                'blueprint_id': 'local',
                 'allow_custom_parameters': True,
                 'workflow_id': u'my_uninstall',
                 'task_retries': 14,
@@ -167,14 +168,19 @@ class UninstallTest(CliCommandTest):
             'local',
             DEFAULT_BLUEPRINT_FILE_NAME
         )
+        storage_dir = os.path.join(local.storage_dir(), 'local')
 
         # Using run_test_op_on_nodes because the blueprint doesn't have
         # install/uninstall workflows
         self.invoke(
-            'cfy install {0} -w run_test_op_on_nodes'.format(blueprint_path),
+            'cfy install {0} -b local -w run_test_op_on_nodes'
+            .format(blueprint_path),
             context='local'
         )
-        self.assertTrue(os.path.isdir(local.storage_dir()))
+        self.assertTrue(os.path.isdir(storage_dir))
 
-        self.invoke('cfy uninstall -w run_test_op_on_nodes', context='local')
-        self.assertFalse(os.path.isdir(local.storage_dir()))
+        self.invoke(
+            'cfy uninstall -b local -w run_test_op_on_nodes',
+            context='local',
+        )
+        self.assertFalse(os.path.isdir(storage_dir))

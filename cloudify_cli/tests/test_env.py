@@ -231,6 +231,33 @@ class CliEnvTests(CliCommandTest):
             env.get_profile_context)
         self.assertEqual('Local profile does not have context', str(ex))
 
+    def test_get_context_path_suppress_error(self):
+        profile = self.use_manager()
+        context_path = env.get_context_path(profile.manager_ip,
+                                            suppress_error=True)
+        self.assertEqual(
+            context_path,
+            os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context'))
+
+    def test_fail_get_context_path_suppress_error(self):
+        context_path = env.get_context_path('not.existing.profile',
+                                            suppress_error=True)
+        self.assertIs(None, context_path)
+
+    def test_get_default_rest_cert_local_path(self):
+        profile = self.use_manager()
+        rest_cert_path = env.get_default_rest_cert_local_path()
+        expected = os.path.join(env.get_profile_dir(profile.profile_name),
+                                constants.PUBLIC_REST_CERT)
+        self.assertEqual(expected, rest_cert_path)
+
+    def test_get_default_rest_cert_local_path_no_profile(self):
+        # if there's no profile, default to inside CFY_WORKDIR
+        rest_cert_path = env.get_default_rest_cert_local_path()
+        expected = os.path.join(env.CLOUDIFY_WORKDIR,
+                                constants.PUBLIC_REST_CERT)
+        self.assertEqual(expected, rest_cert_path)
+
     def test_fail_get_context_not_initialized(self):
         shutil.rmtree(env.CLOUDIFY_WORKDIR)
         ex = self.assertRaises(
@@ -253,6 +280,18 @@ class CliEnvTests(CliCommandTest):
             CloudifyCliError,
             env.get_profile_dir)
         self.assertEqual('Profile directory does not exist', str(ex))
+
+    def test_get_profile_dir_suppress_error(self):
+        self.use_manager()
+        profile_dir = env.get_profile_dir(suppress_error=True)
+        self.assertEqual(
+            profile_dir,
+            os.path.join(env.PROFILES_DIR, '10.10.1.10'))
+        self.assertTrue(os.path.isdir(profile_dir))
+
+    def test_get_non_existing_profile_dir_suppress_error(self):
+        profile_dir = env.get_profile_dir(suppress_error=True)
+        self.assertIs(None, profile_dir)
 
     def test_set_empty_profile_context(self):
         manager_ip = '10.10.1.10'
@@ -429,22 +468,6 @@ class CliInputsTests(CliCommandTest):
             'input3': 'new_input3'
         }
         return input_files_directory, expected_dict
-
-    def test_inputs_to_dict_error_handling(self):
-        input_list = ["my_key1=my_value1;my_key2"]
-
-        expected_err_msg = \
-            ("Invalid input: {0}. It must represent a dictionary. "
-             "Valid values can be one of:\n "
-             "- A path to a YAML file\n "
-             "- A path to a directory containing YAML files\n "
-             "- A single quoted wildcard based path ")
-
-        self.assertRaisesRegexp(
-            CloudifyCliError,
-            expected_err_msg.format(input_list[0]),
-            inputs.inputs_to_dict,
-            input_list)
 
 
 class TestProgressBar(CliCommandTest):
@@ -1066,9 +1089,12 @@ class TestGetRestClient(CliCommandTest):
         os.environ[constants.CLOUDIFY_PASSWORD_ENV] = 'test_password'
         os.environ[constants.CLOUDIFY_SSL_TRUST_ALL] = TRUST_ALL
         os.environ[constants.LOCAL_REST_CERT_FILE] = CERT_PATH
+        with open(CERT_PATH, 'w') as cert:
+            cert.write('cert content')
 
     def tearDown(self):
         super(TestGetRestClient, self).tearDown()
+        os.remove(CERT_PATH)
         del os.environ[constants.CLOUDIFY_USERNAME_ENV]
         del os.environ[constants.CLOUDIFY_PASSWORD_ENV]
         del os.environ[constants.CLOUDIFY_SSL_TRUST_ALL]
@@ -1094,6 +1120,7 @@ class TestGetRestClient(CliCommandTest):
             rest_host=host,
             rest_port=port,
             rest_protocol=rest_protocol,
+            rest_cert=CERT_PATH,
             skip_version_check=skip_version_check
         )
 
@@ -1160,7 +1187,7 @@ class TestLocal(CliCommandTest):
     def test_storage_dir(self):
         self.assertEqual(
             cli_local.storage_dir(),
-            '/tmp/.cloudify-test/profiles/local/local-storage'
+            '/tmp/.cloudify-test/profiles/local'
         )
 
         self.assertEqual(

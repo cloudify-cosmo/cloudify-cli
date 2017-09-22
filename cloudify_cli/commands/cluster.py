@@ -16,9 +16,11 @@
 
 import os
 import time
+import yaml
 import shutil
 from functools import wraps
 from datetime import datetime
+from requests.exceptions import ReadTimeout
 
 from cloudify_rest_client.exceptions import (CloudifyClientError,
                                              NotClusterMaster)
@@ -30,7 +32,11 @@ from ..exceptions import CloudifyCliError
 from ..execution_events_fetcher import WAIT_FOR_EXECUTION_SLEEP_INTERVAL
 
 
-CLUSTER_COLUMNS = ['name', 'host_ip', 'master', 'online']
+CLUSTER_COLUMNS = ['name', 'host_ip', 'state', 'consul',
+                   'services', 'database', 'heartbeat']
+CLUSTER_COLUMNS_DEFAULTS = {'state': 'offline', 'consul': 'FAIL',
+                            'services': 'FAIL', 'database': 'FAIL',
+                            'heartbeat': 'FAIL'}
 
 
 def _verify_not_in_cluster(client):
@@ -90,11 +96,13 @@ def status(client, logger):
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.timeout()
+@cfy.options.cluster_node_options
 @cfy.options.cluster_host_ip
 @cfy.options.cluster_node_name
 def start(client,
           logger,
           timeout,
+          options,
           cluster_host_ip,
           cluster_node_name):
     """Start a Cloudify Manager cluster with the current manager as the master.
@@ -110,7 +118,8 @@ def start(client,
 
     client.cluster.start(
         host_ip=cluster_host_ip,
-        node_name=cluster_node_name
+        node_name=cluster_node_name,
+        options=options
     )
     status = _wait_for_cluster_initialized(client, logger, timeout=timeout)
 
@@ -119,7 +128,7 @@ def start(client,
         raise CloudifyCliError(status.error)
 
     env.profile.profile_name = env.profile.manager_ip
-    _join_node_to_profile(env.profile)
+    _join_node_to_profile(cluster_node_name, env.profile)
 
     logger.info('Cloudify Manager cluster started at {0}.\n'
                 .format(cluster_host_ip))
@@ -131,12 +140,14 @@ def start(client,
 @cfy.pass_logger
 @cfy.argument('join_profile')
 @cfy.options.timeout()
+@cfy.options.cluster_node_options
 @cfy.options.cluster_host_ip
 @cfy.options.cluster_node_name
 def join(client,
          logger,
          join_profile,
          timeout,
+         options,
          cluster_host_ip,
          cluster_node_name):
     """Join a Cloudify Manager cluster on this manager.
@@ -174,7 +185,8 @@ def join(client,
         host_ip=cluster_host_ip,
         node_name=cluster_node_name,
         credentials=new_cluster_node.credentials,
-        join_addrs=join
+        join_addrs=join,
+        options=options
     )
     timeout_left = deadline - time.time()
     try:
@@ -204,7 +216,8 @@ def join(client,
         else:
             time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
 
-    _join_node_to_profile(env.profile, joined_profile=joined_profile)
+    _join_node_to_profile(cluster_node_name, env.profile,
+                          joined_profile=joined_profile)
     _copy_cluster_profile_settings(from_profile=joined_profile,
                                    to_profile=env.profile)
     logger.info('Cloudify Manager joined cluster successfully.')
@@ -247,9 +260,10 @@ def _update_profile_cluster_settings(profile, client, logger=None):
                  short_help='Set one of the cluster nodes as the new active '
                             '[cluster only]')
 @cfy.argument('node_name')
+@cfy.options.timeout(default=60)
 @pass_cluster_client()
 @cfy.pass_logger
-def set_active(client, logger, node_name):
+def set_active(client, logger, node_name, timeout, poll_interval=1):
     nodes = client.cluster.nodes.list()
     for node in nodes:
         if node['name'] != node_name:
@@ -266,14 +280,47 @@ def set_active(client, logger, node_name):
                                "it's not a member of the cluster"
                                .format(node_name))
 
-    client.cluster.update(master=node_name)
-    logger.info('{0} set as the new active node'.format(node_name))
+    deadline = time.time() + timeout
+    try:
+        client.cluster.update(master=node_name)
+    except ReadTimeout:
+        pass
+    logger.info('Waiting for {0} to become the active node...'
+                .format(node_name))
+    while time.time() < deadline:
+        try:
+            nodes = client.cluster.nodes.list()
+        except CloudifyClientError:
+            time.sleep(poll_interval)
+            continue
+
+        if any(node['name'] == node_name and node['master'] for node in nodes):
+            logger.info('{0} set as the new active node'.format(node_name))
+            break
+        time.sleep(poll_interval)
+    else:
+        logger.error('Timed out while waiting for {0} to be set as the '
+                     'new active node'.format(node_name))
 
 
 @cluster.group(name='nodes')
 def nodes():
     """Handle the cluster nodes [cluster only]
     """
+
+
+def _prepare_node(node):
+    """Normalize node for display in a table"""
+    checks = node.pop('checks', {})
+    checks = {check: 'OK' if passing else 'FAIL'
+              for check, passing in checks.items()}
+    node.update(checks)
+    online = node.pop('online', False)
+    master = node.pop('master', False)
+    if online:
+        node['state'] = 'leader' if master else 'replica'
+    else:
+        node['state'] = 'offline'
 
 
 @nodes.command(name='list',
@@ -283,9 +330,45 @@ def nodes():
 def list_nodes(client, logger):
     """Display a table with basic information about the nodes in the cluster
     """
+
     response = client.cluster.nodes.list()
-    default = {'master': False, 'online': False}
-    print_data(CLUSTER_COLUMNS, response, 'HA Cluster nodes', defaults=default)
+    for node in response:
+        _prepare_node(node)
+    print_data(CLUSTER_COLUMNS, response, 'HA Cluster nodes',
+               defaults=CLUSTER_COLUMNS_DEFAULTS,
+               labels={'services': 'cloudify services'})
+
+
+@nodes.command(name='get',
+               short_help='Show cluster node details [cluster only]')
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.argument('cluster-node-name')
+def get_node(client, logger, cluster_node_name):
+    node = client.cluster.nodes.details(cluster_node_name)
+    _prepare_node(node)
+    print_data(CLUSTER_COLUMNS, [node], 'Node {0}'.format(cluster_node_name),
+               defaults=CLUSTER_COLUMNS_DEFAULTS,
+               labels={'services': 'cloudify services'})
+    options = node.get('options')
+    if options:
+        logger.info('Node configuration:')
+        logger.info(yaml.safe_dump(options, default_flow_style=False))
+
+
+@nodes.command(name='update',
+               short_help='Update the options for a cluster node '
+                          '[cluster only]')
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.options.cluster_node_options
+@cfy.argument('cluster-node-name')
+def update_node_options(client, logger, cluster_node_name,
+                        cluster_node_options):
+    if not cluster_node_options:
+        raise CloudifyCliError('Need an inputs file to update node options')
+    client.cluster.nodes.update(cluster_node_name, cluster_node_options)
+    logger.info('Node {0} updated'.format(cluster_node_name))
 
 
 @nodes.command(name='remove',
@@ -302,27 +385,45 @@ def remove_node(client, logger, cluster_node_name):
     """
     cluster_nodes = {node['name']: node.host_ip
                      for node in client.cluster.nodes.list()}
-
     if cluster_node_name not in cluster_nodes:
         raise CloudifyCliError('Invalid command. {0} is not a member of '
                                'the cluster.'.format(cluster_node_name))
-    removed_ip = cluster_nodes[cluster_node_name]
+    removed_node_ip = cluster_nodes[cluster_node_name]
 
     client.cluster.nodes.delete(cluster_node_name)
 
-    env.profile.cluster = [node for node in env.profile.cluster
-                           if node['manager_ip'] != removed_ip]
-    env.profile.save()
+    for profile_name in env.get_profile_names():
+        profile_context = env.get_profile_context(profile_name)
+
+        if profile_context.profile_name == removed_node_ip:
+            logger.info('Profile {0} set as a non-cluster profile'
+                        .format(profile_context.profile_name))
+            profile_context.cluster = None
+            if hasattr(profile_context, '_original'):
+                for attrname, attr in profile_context._original.items():
+                    setattr(profile_context, attrname, attr)
+        else:
+            logger.info(
+                'Profile {0}: {1} removed from cluster nodes list'
+                .format(profile_context.profile_name, cluster_node_name))
+            profile_context.cluster = [node for node in profile_context.cluster
+                                       if node['name'] != cluster_node_name]
+        profile_context.save()
+
     logger.info('Node {0} was removed successfully!'
                 .format(cluster_node_name))
 
 
-def _join_node_to_profile(from_profile, joined_profile=None):
+def _join_node_to_profile(node_name, from_profile, joined_profile=None):
     if joined_profile is None:
         joined_profile = from_profile
     node = {node_attr: getattr(from_profile, node_attr)
             for node_attr in env.CLUSTER_NODE_ATTRS}
     cert_file = env.get_ssl_cert()
+
+    from_profile._original = {attrname: getattr(from_profile, attrname)
+                              for attrname in env.CLUSTER_NODE_ATTRS}
+    from_profile.save()
     if cert_file:
         profile_cert = os.path.join(
             joined_profile.workdir,
@@ -345,6 +446,7 @@ def _join_node_to_profile(from_profile, joined_profile=None):
         ssh_key = None
 
     node.update({
+        'name': node_name,
         'cert': profile_cert,
         'trust_all': env.get_ssl_trust_all(),
         'ssh_key': ssh_key

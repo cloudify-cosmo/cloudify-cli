@@ -26,18 +26,10 @@ from ..bootstrap import bootstrap as bs
 @cfy.command(name='teardown', short_help='Teardown a manager [manager only]')
 @cfy.options.force(help=helptexts.FORCE_TEARDOWN)
 @cfy.options.ignore_deployments
-@cfy.options.task_retries()
-@cfy.options.task_retry_interval()
-@cfy.options.task_thread_pool_size()
 @cfy.options.verbose()
 @cfy.pass_context
 @cfy.assert_manager_active()
-def teardown(ctx,
-             force,
-             ignore_deployments,
-             task_retries,
-             task_retry_interval,
-             task_thread_pool_size):
+def teardown(ctx, force, ignore_deployments):
     """Teardown the manager
     """
     _assert_force(force)
@@ -69,10 +61,7 @@ def teardown(ctx,
                 "directory a `cfy profiles use` command was executed on this"
                 "manager.")
         else:
-            _do_teardown(
-                task_retries,
-                task_retry_interval,
-                task_thread_pool_size)
+            _do_teardown()
     else:
         # make sure we don't teardown the manager if there are running
         # deployments, unless the user explicitly specified it.
@@ -83,10 +72,7 @@ def teardown(ctx,
         _update_local_provider_context(ctx, manager_ip)
 
         # execute teardown
-        _do_teardown(
-            task_retries,
-            task_retry_interval,
-            task_thread_pool_size)
+        _do_teardown()
 
 
 @cfy.pass_logger
@@ -139,15 +125,12 @@ def _assert_force(force):
             "command should be executed.")
 
 
-def _do_teardown(task_retries, task_retry_interval, task_thread_pool_size):
+def _do_teardown():
     # reload settings since the provider context maybe changed
     p = env.get_profile_context()
     provider_context = p.provider_context
     bs.read_manager_deployment_dump_if_needed(
         provider_context.get('cloudify', {}).get('manager_deployment'))
-    bs.teardown(
-        task_retries=task_retries,
-        task_retry_interval=task_retry_interval,
-        task_thread_pool_size=task_thread_pool_size)
+    bs.teardown()
 
     env.delete_profile(p.manager_ip)
