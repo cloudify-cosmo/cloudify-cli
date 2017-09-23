@@ -13,7 +13,7 @@ ENV['PRERELEASE'] || raise('PRERELEASE environment variable not set')
 cloudify_ver=ENV['VERSION']
 cloudify_pre=ENV['PRERELEASE']
 
-override :cacerts, version: '2017-06-07', source: { sha256: 'e78c8ab7b4432bd466e64bb942d988f6c0ac91cd785017e465bdc96d42fe9dd0' }
+override :cacerts, version: '2017-06-07', source: { sha256: '435ac8e816f5c10eaaf228d618445811c16a5e842e461cb087642b6265a36856' }
 override :pip, version: '7.1.2', source: { md5: '3823d2343d9f3aaab21cf9c917710196' }
 override :setuptools, version: '18.5', source: { md5: '533c868f01169a3085177dffe5e768bb' }
 override :zlib, version: '1.2.8', source: { md5: '44d667c142d7cda120332623eab69f40'}
