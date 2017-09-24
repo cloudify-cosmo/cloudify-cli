@@ -334,17 +334,24 @@ class DeploymentsTest(CliCommandTest):
     def test_missing_required_inputs(self):
         self._test_deployment_inputs(
             MissingRequiredDeploymentInputError,
-            'Unable to create deployment. Not all '
-            'required inputs have been specified...'
+            {'input1': 'value1'},
+            ['Missing input(s): input2',
+             'Unable to create deployment. Not all '
+             'required inputs have been specified.']
         )
 
     def test_invalid_input(self):
         self._test_deployment_inputs(
             UnknownDeploymentInputError,
-            'Unable to create deployment, an unknown input was specified...'
+            {'input1': 'value1',
+             'input2': 'value2',
+             'input3': 'value3'},
+            ['input3',
+             'Unable to create deployment, unknown input(s) were specified']
         )
 
-    def _test_deployment_inputs(self, exception_type, error_msg):
+    def _test_deployment_inputs(self, exception_type,
+                                inputs, expected_outputs=None):
         def raise_error(*args, **kwargs):
             raise exception_type('no inputs')
 
@@ -360,21 +367,26 @@ class DeploymentsTest(CliCommandTest):
         self.client.blueprints.get = MagicMock(return_value=blueprint)
         self.client.deployments.create = raise_error
 
+        inputs_line = ' '.join(
+            ['-i {0}={1}'.format(key, value) for
+             key, value in inputs.iteritems()])
+
         outcome = self.invoke(
-            'cfy deployments create deployment -b a-blueprint-id',
+            'cfy deployments create deployment -b a-blueprint-id {0}'.format(
+                inputs_line),
+            exception=exceptions.SuppressedCloudifyCliError,
             err_str_segment='no inputs'
         )
         outcome = [o.strip() for o in outcome.logs.split('\n')]
 
-        expected_outputs = [
-            'Deployment inputs:',
-            'input1:',
-            'description: val1',
-            'input2:',
-            'description: val2',
-        ]
+        if not expected_outputs:
+            expected_outputs = []
 
         for output in expected_outputs:
-            self.assertIn(output, outcome)
-
-        self.assertIn(error_msg, outcome)
+            found = False
+            for outcome_line in outcome:
+                if output in outcome_line:
+                    found = True
+                    break
+            self.assertTrue(found, 'String ''{0}'' not found in outcome {1}'
+                            .format(output, outcome))
