@@ -335,9 +335,7 @@ class DeploymentsTest(CliCommandTest):
         self._test_deployment_inputs(
             MissingRequiredDeploymentInputError,
             {'input1': 'value1'},
-            ['Missing input(s): input2',
-             'Unable to create deployment. Not all '
-             'required inputs have been specified.']
+            ['Unable to create deployment']
         )
 
     def test_invalid_input(self):
@@ -346,8 +344,7 @@ class DeploymentsTest(CliCommandTest):
             {'input1': 'value1',
              'input2': 'value2',
              'input3': 'value3'},
-            ['input3',
-             'Unable to create deployment, unknown input(s) were specified']
+            ['Unable to create deployment']
         )
 
     def _test_deployment_inputs(self, exception_type,
