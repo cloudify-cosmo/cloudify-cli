@@ -46,24 +46,6 @@ def deployments():
     pass
 
 
-def _get_deployment_inputs(client, blueprint_id):
-    blueprint = client.blueprints.get(blueprint_id)
-    return blueprint.plan['inputs']
-
-
-@cfy.pass_logger
-def _print_deployment_inputs(client, blueprint_id, logger):
-    logger.info('Deployment inputs:')
-    inputs_output = StringIO()
-    for input_name, input_def in _get_deployment_inputs(
-            client, blueprint_id).iteritems():
-        inputs_output.write('\t{0}:{1}'.format(input_name, os.linesep))
-        for k, v in input_def.iteritems():
-            inputs_output.write('\t\t{0}: {1}{2}'.format(k, v, os.linesep))
-    inputs_output.write(os.linesep)
-    logger.info(inputs_output.getvalue())
-
-
 @cfy.command(name='list', short_help='List deployments [manager only]')
 @cfy.options.blueprint_id()
 @cfy.options.sort_by()
@@ -230,16 +212,9 @@ def manager_create(blueprint_id,
             private_resource=private_resource,
             skip_plugins_validation=skip_plugins_validation
         )
-    except MissingRequiredDeploymentInputError as e:
-        expected_inputs_def = _get_deployment_inputs(client, blueprint_id)
-        available_input_names = set(inputs.keys())
-        inputs_without_defaults = set(
-            [x for (x, y) in expected_inputs_def.iteritems() if
-             'default' not in y])
-        missing_inputs = inputs_without_defaults - available_input_names
-        logger.error('Unable to create deployment. Not all '
-                     'required inputs have been specified. '
-                     'Missing input(s): {0}'.format(','.join(missing_inputs)))
+    except (MissingRequiredDeploymentInputError,
+            UnknownDeploymentInputError) as e:
+        logger.error('Unable to create deployment: {0}'.format(e.message))
         raise SuppressedCloudifyCliError(str(e))
     except DeploymentPluginNotFound as e:
         logger.info("Unable to create deployment. Not all "
@@ -249,15 +224,6 @@ def manager_create(blueprint_id,
                     "the '--skip-plugins-validation' flag "
                     " to skip this validation.".format(os.linesep))
         raise CloudifyCliError(str(e))
-    except UnknownDeploymentInputError as e:
-        available_input_names = set(inputs.keys())
-        expected_inputs_names = set(
-            _get_deployment_inputs(client, blueprint_id).keys())
-        unknown_input_names = available_input_names - expected_inputs_names
-        logger.error(
-            'Unable to create deployment, unknown input(s) were specified: '
-            '{0}'.format(','.join(unknown_input_names)))
-        raise SuppressedCloudifyCliError(str(e))
     except (UnknownDeploymentSecretError,
             UnsupportedDeploymentGetSecretError) as e:
         logger.info('Unable to create deployment due to invalid secret')
