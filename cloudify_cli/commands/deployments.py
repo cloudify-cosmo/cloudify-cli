@@ -46,20 +46,6 @@ def deployments():
     pass
 
 
-@cfy.pass_logger
-def _print_deployment_inputs(client, blueprint_id, logger):
-    blueprint = client.blueprints.get(blueprint_id)
-
-    logger.info('Deployment inputs:')
-    inputs_output = StringIO()
-    for input_name, input_def in blueprint.plan['inputs'].iteritems():
-        inputs_output.write('\t{0}:{1}'.format(input_name, os.linesep))
-        for k, v in input_def.iteritems():
-            inputs_output.write('\t\t{0}: {1}{2}'.format(k, v, os.linesep))
-    inputs_output.write(os.linesep)
-    logger.info(inputs_output.getvalue())
-
-
 @cfy.command(name='list', short_help='List deployments [manager only]')
 @cfy.options.blueprint_id()
 @cfy.options.sort_by()
@@ -226,11 +212,10 @@ def manager_create(blueprint_id,
             private_resource=private_resource,
             skip_plugins_validation=skip_plugins_validation
         )
-    except MissingRequiredDeploymentInputError as e:
-        logger.info('Unable to create deployment. Not all '
-                    'required inputs have been specified...')
-        _print_deployment_inputs(client, blueprint_id)
-        raise CloudifyCliError(str(e))
+    except (MissingRequiredDeploymentInputError,
+            UnknownDeploymentInputError) as e:
+        logger.error('Unable to create deployment: {0}'.format(e.message))
+        raise SuppressedCloudifyCliError(str(e))
     except DeploymentPluginNotFound as e:
         logger.info("Unable to create deployment. Not all "
                     "deployment plugins are installed on the Manager.{}"
@@ -238,11 +223,6 @@ def manager_create(blueprint_id,
                     " to the Manager, or use 'cfy deployments create' with "
                     "the '--skip-plugins-validation' flag "
                     " to skip this validation.".format(os.linesep))
-        raise CloudifyCliError(str(e))
-    except UnknownDeploymentInputError as e:
-        logger.info(
-            'Unable to create deployment, an unknown input was specified...')
-        _print_deployment_inputs(client, blueprint_id)
         raise CloudifyCliError(str(e))
     except (UnknownDeploymentSecretError,
             UnsupportedDeploymentGetSecretError) as e:
