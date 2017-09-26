@@ -13,10 +13,10 @@ ENV['PRERELEASE'] || raise('PRERELEASE environment variable not set')
 cloudify_ver=ENV['VERSION']
 cloudify_pre=ENV['PRERELEASE']
 
-# override :cacerts, version: '2017-06-07', source: { sha256: '435ac8e816f5c10eaaf228d618445811c16a5e842e461cb087642b6265a36856' }
+# override :cacerts, version: '2017-06-07', source: { md5: 'cb530d737c8f2d1023797cf0587b4e05' }
 override :pip, version: '7.1.2', source: { md5: '3823d2343d9f3aaab21cf9c917710196' }
-override :setuptools, version: '18.5', source: { md5: '533c868f01169a3085177dffe5e768bb' }
-override :zlib, version: '1.2.8', source: { md5: '44d667c142d7cda120332623eab69f40'}
+override :setuptools, version: '0.9.8'
+override :zlib, version: '1.2.11', source: { sha256: 'c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1', url: 'https://zlib.net/zlib-1.2.11.tar.gz'}
 
 # Defaults to C:/cloudify on Windows
 # and /opt/cfy on all other platforms
