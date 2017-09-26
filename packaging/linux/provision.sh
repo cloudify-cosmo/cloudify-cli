@@ -46,27 +46,34 @@ function prepare_osx () {
     fi
 }
 
-# CentOS Preperation
-function prepare_centos () {
+# Linux Preperation
+function prepare_linux () {
+    sudo chmod 777 /opt
+    if  which yum >> /dev/null; then
+        sudo yum install -y http://opensource.wandisco.com/centos/6/git/x86_64/wandisco-git-release-6-1.noarch.rpm
+        sudo yum install -y git fakeroot python-devel rpm-build
+        sudo curl -sSL https://rvm.io/mpapis.asc | gpg2 --import -
+    else
+        sudo apt-get install -y git curl fakeroot python-dev
+        sudo curl -sSL https://rvm.io/mpapis.asc | gpg --import -
+    fi
     
-}
-
-# Debian Preperation
-function prepare_debian () {
-    sudo apt-get install -y git curl vim fakeroot python-dev
-    sudo \curl -sSL https://get.rvm.io | bash && source /home/admin/.rvm/scripts/rvm
+    sudo curl -L get.rvm.io | bash -s stable
+    
+    if  which yum >> /dev/null; then
+        source /etc/profile.d/rvm.sh
+    else
+        source /home/admin/.rvm/scripts/rvm
+    fi
     rvm install 2.2.1 && rvm use 2.2.1
     gem install bundler -v '=1.8.4' --no-ri --no-rdoc
     gem install omnibus --no-ri --no-rdoc
-    sudo chmod 777 /opt
 }
 
 if [[ "$OSTYPE" == "darwin"* ]]; then
     prepare_osx
-elif  which yum >> /dev/null; then
-    prepare_centos
 else
-    prepare_debian
+    prepare_linux
 fi
 
 curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
@@ -83,18 +90,16 @@ export SINGLE_TAR_URL=$(cat manager-single-tar.yaml)
 install_common_prereqs &&
 rm -rf cloudify-cli
 git clone https://github.com/cloudify-cosmo/cloudify-cli.git
-cd cloudify-cli/packaging/omnibus
+cd ~/cloudify-cli/packaging/omnibus
 gitTagExists=$(git tag -l $CORE_TAG_NAME)
-# if [ "$CORE_BRANCH" != "master" ]; then
-#     git checkout -b ${CORE_BRANCH} origin/${CORE_BRANCH}
-# else
-#     git checkout ${CORE_BRANCH}
-# fi
-git checkout -b new-omnibus origin/new-omnibus
+if [ "$CORE_BRANCH" != "master" ]; then
+    git checkout -b ${CORE_BRANCH} origin/${CORE_BRANCH}
+else
+    git checkout ${CORE_BRANCH}
+fi
 
 # Get Omnibus software from Chef Omnibus repo
-mkdir omnibus_source
-git clone https://github.com/chef/omnibus-software.git --depth 1
+git clone https://github.com/chef/omnibus-software.git --depth 1 -q
 list_of_omnibus_softwares="gdbm cacerts config_guess gdbm libffi makedepend
     ncurses openssl pkg-config-lite setuptools
     util-macros version-manifest xproto zlib"
