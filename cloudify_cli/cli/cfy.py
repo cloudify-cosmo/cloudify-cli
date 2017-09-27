@@ -635,8 +635,14 @@ class Options(object):
         self.rest_port = click.option(
             '--rest-port',
             required=False,
-            default=constants.DEFAULT_REST_PORT,
             help=helptexts.REST_PORT)
+
+        self.ssl_rest = click.option(
+            '--ssl',
+            is_flag=True,
+            required=False,
+            default=False,
+            help=helptexts.SSL_REST)
 
         self.init_hard_reset = click.option(
             '--hard',

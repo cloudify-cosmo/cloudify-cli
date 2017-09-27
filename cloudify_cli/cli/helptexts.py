@@ -160,6 +160,7 @@ MANAGER_TENANT = 'The tenant associated with the current user operating the ' \
                  'manager'
 SSL_STATE = 'Required SSL state (on/off)'
 REST_PORT = "The REST server's port"
+SSL_REST = "Connect to REST server using SSL"
 REST_CERT = "The REST server's external certificate file location"
 
 EXPORT_SSH_KEYS = 'Include ssh key files in archive'
