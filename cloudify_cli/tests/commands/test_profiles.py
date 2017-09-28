@@ -9,7 +9,6 @@ from mock import MagicMock, patch
 from .. import cfy
 from ... import env
 from ... import utils
-from ... import constants
 from ...commands import profiles
 from .test_base import CliCommandTest
 
@@ -334,9 +333,6 @@ class ProfilesTest(CliCommandTest):
 
     @patch('cloudify_cli.commands.profiles._get_provider_context',
            return_value={})
-    @patch('cloudify_cli.commands.profiles._get_rest_port_and_protocol',
-           return_value={constants.DEFAULT_REST_PORT,
-                         constants.DEFAULT_REST_PROTOCOL})
     def test_use_defaults_ip_to_profile_name(self, *_):
         outcome = self.invoke('profiles use 1.2.3.4')
         self.assertIn('Using manager 1.2.3.4', outcome.logs)
@@ -346,9 +342,6 @@ class ProfilesTest(CliCommandTest):
 
     @patch('cloudify_cli.commands.profiles._get_provider_context',
            return_value={})
-    @patch('cloudify_cli.commands.profiles._get_rest_port_and_protocol',
-           return_value={constants.DEFAULT_REST_PORT,
-                         constants.DEFAULT_REST_PROTOCOL})
     def test_use_sets_provided_manager_ip(self, *_):
         outcome = self.invoke('profiles use 1.2.3.4 --profile-name 5.6.7.8')
         self.assertIn('Using manager 1.2.3.4', outcome.logs)

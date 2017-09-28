@@ -114,6 +114,7 @@ def list(logger):
 @cfy.options.manager_password
 @cfy.options.manager_tenant
 @cfy.options.rest_port
+@cfy.options.ssl_rest
 @cfy.options.rest_certificate
 @cfy.options.skip_credentials_validation
 @cfy.options.verbose()
@@ -127,6 +128,7 @@ def use(manager_ip,
         manager_tenant,
         profile_name,
         rest_port,
+        ssl,
         rest_certificate,
         skip_credentials_validation,
         logger):
@@ -146,18 +148,17 @@ def use(manager_ip,
         env.set_active_profile('local')
         return
 
-    logger.info('Attempting to connect...'.format(manager_ip))
+    rest_protocol = constants.SECURED_REST_PROTOCOL if ssl else \
+        constants.DEFAULT_REST_PROTOCOL
 
-    rest_port, rest_protocol = _get_rest_port_and_protocol(
-        profile_name,
-        manager_ip,
-        rest_port,
-        rest_certificate,
-        manager_username,
-        manager_password,
-        manager_tenant,
-        skip_credentials_validation
-    )
+    if not rest_port:
+        rest_port = constants.SECURED_REST_PORT if ssl else \
+            constants.DEFAULT_REST_PORT
+
+    logger.info('Attempting to connect to {0} through port {1}, using {2} '
+                '(SSL mode: {3})...'.format(manager_ip, rest_port,
+                                            rest_protocol, ssl))
+
     # First, attempt to get the provider from the manager - should it fail,
     # the manager's profile directory won't be created
     provider_context = _get_provider_context(
@@ -663,47 +664,6 @@ def _set_profile_context(profile_name,
     profile.bootstrap_state = 'Complete'
 
     profile.save()
-
-
-def _get_rest_port_and_protocol(profile_name=None,
-                                manager_ip=None,
-                                rest_port=None,
-                                rest_certificate=None,
-                                manager_username=None,
-                                manager_password=None,
-                                manager_tenant=None,
-                                skip_credentials_validation=False):
-
-    # Determine SSL mode by port
-    if rest_port == constants.SECURED_REST_PORT:
-        return rest_port, constants.SECURED_REST_PROTOCOL
-
-    client = env.get_rest_client(
-        rest_host=manager_ip,
-        rest_port=rest_port,
-        rest_protocol=constants.DEFAULT_REST_PROTOCOL,
-        rest_cert=rest_certificate,
-        skip_version_check=True,
-        # we're sending a dummy request over HTTP unencrypted, so DO NOT
-        # send the actual credentials just yet
-        username='<invalid>',
-        password='<invalid>',
-        tenant_name='<invalid>',
-        client_profile=env.get_profile_context(profile_name=profile_name,
-                                               suppress_error=True)
-    )
-    # run a dummy request against HTTP, and see if it was redirected to HTTPS -
-    # if it was, the manager is secured - let's use HTTPS
-    try:
-        client.manager.get_status()
-    except UserUnauthorizedError as e:
-        if e.response is not None and _is_manager_secured(e.response.history):
-            return constants.SECURED_REST_PORT, constants.SECURED_REST_PROTOCOL
-    except Exception as e:
-        if not skip_credentials_validation:
-            raise
-
-    return rest_port, constants.DEFAULT_REST_PROTOCOL
 
 
 def _is_manager_secured(response_history):
