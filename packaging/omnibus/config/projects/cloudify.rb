@@ -13,7 +13,7 @@ ENV['PRERELEASE'] || raise('PRERELEASE environment variable not set')
 cloudify_ver=ENV['VERSION']
 cloudify_pre=ENV['PRERELEASE']
 
-override :cacerts, version: '2016.01.20'
+override :cacerts, version: '2016.01.20', source { url: "https://curl.haxx.se/ca/cacert-2016-01-20.pem" }
 override :pip, version: '7.1.2', source: { md5: '3823d2343d9f3aaab21cf9c917710196' }
 override :setuptools, version: '18.5', source: { md5: '533c868f01169a3085177dffe5e768bb' }
 override :zlib, version: '1.2.8'
