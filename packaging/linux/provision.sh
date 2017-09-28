@@ -10,28 +10,6 @@ export REPO=$7
 export CORE_TAG_NAME="4.2.dev1"
 export CORE_BRANCH="master"
 
-curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
-source common_build_env.sh &&
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${CORE_BRANCH}/common/provision.sh -o ./common-provision.sh &&
-source common-provision.sh
-if [ $REPO == "cloudify-versions" ];then
-     curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/manager-single-tar.yaml -o ./manager-single-tar.yaml
- else
-     curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/manager-single-tar-release.yaml -o ./manager-single-tar.yaml
-fi
-export SINGLE_TAR_URL=$(cat manager-single-tar.yaml)
-
-
-install_common_prereqs &&
-rm -rf cloudify-cli
-git clone https://github.com/cloudify-cosmo/cloudify-cli.git
-cd cloudify-cli/packaging/omnibus
-gitTagExists=$(git tag -l $CORE_TAG_NAME)
-if [ "$CORE_BRANCH" != "master" ]; then
-    git checkout -b ${CORE_BRANCH} origin/${CORE_BRANCH}
-else
-    git checkout ${CORE_BRANCH}
-fi
 
 # OSX preparation
 function prepare_osx () {
@@ -68,33 +46,85 @@ function prepare_osx () {
     fi
 }
 
-# OSX manipulation
+# Linux Preperation
+function prepare_linux () {
+    sudo chmod 777 /opt
+    if  which yum >> /dev/null; then
+        sudo yum install -y http://opensource.wandisco.com/centos/6/git/x86_64/wandisco-git-release-6-1.noarch.rpm
+        sudo yum install -y git fakeroot python-devel rpm-build
+        sudo curl -sSL https://rvm.io/mpapis.asc | gpg2 --import -
+    else
+        sudo apt-get install -y git curl fakeroot python-dev
+        sudo curl -sSL https://rvm.io/mpapis.asc | gpg --import -
+    fi
+    
+    sudo curl -L get.rvm.io | bash -s stable
+    
+    if  which yum >> /dev/null; then
+        source /etc/profile.d/rvm.sh
+    else
+        source /home/admin/.rvm/scripts/rvm
+    fi
+    rvm install 2.2.1 && rvm use 2.2.1
+    gem install bundler -v '=1.8.4' --no-ri --no-rdoc
+    gem install omnibus --no-ri --no-rdoc
+}
+
 if [[ "$OSTYPE" == "darwin"* ]]; then
     prepare_osx
-    # Get Omnibus software from Chef Omnibus repo
-    mkdir omnibus_source
-    git clone https://github.com/chef/omnibus-software.git --depth 1
-    list_of_omnibus_softwares="gdbm cacerts config_guess gdbm libffi makedepend
-     ncurses openssl pkg-config-lite setuptools
-     util-macros version-manifest xproto zlib"
-    for omnibus_softwate in $list_of_omnibus_softwares
-    do
-       if [[ -e omnibus-software/config/software/$omnibus_softwate.rb ]] ; then
-         cp -r omnibus-software/config/software/$omnibus_softwate.rb \
-         config/software/$omnibus_softwate.rb
-       else
-         echo "Missing software in Omnibus-Software repo"
-         exit
-       fi
-       [[ -e omnibus-software/config/patches/$omnibus_softwate ]] &&
-       cp -r omnibus-software/config/patches/$omnibus_softwate config/patches/
-    done
-    cp -r omnibus-software/config/templates/* config/templates/
-    curl https://raw.githubusercontent.com/chef/omnibus-software/master/config/software/preparation.rb -o config/software/preparation.rb
-    curl https://raw.githubusercontent.com/systemizer/omnibus-software/master/config/software/pip.rb -o config/software/pip.rb
-    grep -l '/opt' config/software/* | xargs sed -i "" 's|/opt|/usr/local/opt|g'
+else
+    prepare_linux
 fi
 
+curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
+source common_build_env.sh &&
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${CORE_BRANCH}/common/provision.sh -o ./common-provision.sh &&
+source common-provision.sh
+if [ $REPO == "cloudify-versions" ];then
+     curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/manager-single-tar.yaml -o ./manager-single-tar.yaml
+ else
+     curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/manager-single-tar-release.yaml -o ./manager-single-tar.yaml
+fi
+export SINGLE_TAR_URL=$(cat manager-single-tar.yaml)
+
+install_common_prereqs &&
+rm -rf cloudify-cli
+git clone https://github.com/cloudify-cosmo/cloudify-cli.git
+cd ~/cloudify-cli/packaging/omnibus
+gitTagExists=$(git tag -l $CORE_TAG_NAME)
+# if [ "$CORE_BRANCH" != "master" ]; then
+#     git checkout -b ${CORE_BRANCH} origin/${CORE_BRANCH}
+# else
+#     git checkout ${CORE_BRANCH}
+# fi
+git checkout -b new-omnibus origin/new-omnibus
+
+# Get Omnibus software from Chef Omnibus repo
+git clone https://github.com/chef/omnibus-software.git --depth 1 -q
+list_of_omnibus_softwares="gdbm cacerts config_guess gdbm libffi makedepend
+    ncurses openssl pkg-config-lite setuptools
+    util-macros version-manifest xproto zlib"
+for omnibus_softwate in $list_of_omnibus_softwares
+do
+    if [[ -e omnibus-software/config/software/$omnibus_softwate.rb ]] ; then
+        cp -r omnibus-software/config/software/$omnibus_softwate.rb \
+        config/software/$omnibus_softwate.rb
+    else
+        echo "Missing software in Omnibus-Software repo"
+        exit
+    fi
+
+    [[ -e omnibus-software/config/patches/$omnibus_softwate ]] &&
+    cp -r omnibus-software/config/patches/$omnibus_softwate config/patches/
+done
+
+cp -r omnibus-software/config/templates/* config/templates/
+curl https://raw.githubusercontent.com/chef/omnibus-software/master/config/software/preparation.rb -o config/software/preparation.rb
+curl https://raw.githubusercontent.com/systemizer/omnibus-software/master/config/software/pip.rb -o config/software/pip.rb
+
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    grep -l '/opt' config/software/* | xargs sed -i "" 's|/opt|/usr/local/opt|g'
+fi
 
 omnibus build cloudify && result="success"
 cd pkg
