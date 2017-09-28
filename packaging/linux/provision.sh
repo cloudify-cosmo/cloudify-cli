@@ -27,12 +27,12 @@ rm -rf cloudify-cli
 git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd cloudify-cli/packaging/omnibus
 gitTagExists=$(git tag -l $CORE_TAG_NAME)
-if [ "$CORE_BRANCH" != "master" ]; then
-    git checkout -b ${CORE_BRANCH} origin/${CORE_BRANCH}
-else
-    git checkout ${CORE_BRANCH}
-fi
-
+# if [ "$CORE_BRANCH" != "master" ]; then
+#     git checkout -b ${CORE_BRANCH} origin/${CORE_BRANCH}
+# else
+#     git checkout ${CORE_BRANCH}
+# fi
+git checkout -b cacert-test origin/cacert-test
 # OSX preparation
 function prepare_osx () {
     which -s brew
@@ -75,26 +75,30 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
     mkdir omnibus_source
     git clone https://github.com/chef/omnibus-software.git --depth 1
     list_of_omnibus_softwares="gdbm cacerts config_guess gdbm libffi makedepend
-     ncurses openssl pkg-config-lite setuptools
-     util-macros version-manifest xproto zlib"
+        ncurses openssl pkg-config-lite setuptools
+        util-macros version-manifest xproto zlib"
     for omnibus_softwate in $list_of_omnibus_softwares
     do
-       if [[ -e omnibus-software/config/software/$omnibus_softwate.rb ]] ; then
-         cp -r omnibus-software/config/software/$omnibus_softwate.rb \
-         config/software/$omnibus_softwate.rb
-       else
-         echo "Missing software in Omnibus-Software repo"
-         exit
-       fi
-       [[ -e omnibus-software/config/patches/$omnibus_softwate ]] &&
-       cp -r omnibus-software/config/patches/$omnibus_softwate config/patches/
+        if [[ -e omnibus-software/config/software/$omnibus_softwate.rb ]] ; then
+            cp -r omnibus-software/config/software/$omnibus_softwate.rb \
+            config/software/$omnibus_softwate.rb
+        else
+            echo "Missing software in Omnibus-Software repo"
+            exit
+        fi
+        [[ -e omnibus-software/config/patches/$omnibus_softwate ]] &&
+        cp -r omnibus-software/config/patches/$omnibus_softwate config/patches/
     done
     cp -r omnibus-software/config/templates/* config/templates/
     curl https://raw.githubusercontent.com/chef/omnibus-software/master/config/software/preparation.rb -o config/software/preparation.rb
     curl https://raw.githubusercontent.com/systemizer/omnibus-software/master/config/software/pip.rb -o config/software/pip.rb
     grep -l '/opt' config/software/* | xargs sed -i "" 's|/opt|/usr/local/opt|g'
+else
+    # Get Omnibus software from chef repo and comment out License requirements
+    curl https://raw.githubusercontent.com/chef/omnibus-software/master/config/software/cacerts.rb -o /home/admin/.rvm/gems/ruby-2.2.1/bundler/gems/omnibus-software-2571d69789d9/config/software/cacerts.rb
+    sed -i 's/^license/#&/' /home/admin/.rvm/gems/ruby-2.2.1/bundler/gems/omnibus-software-2571d69789d9/config/software/cacerts.rb
+    sed -i 's/^skip_transitive_dependency_licensing/#&/' /home/admin/.rvm/gems/ruby-2.2.1/bundler/gems/omnibus-software-2571d69789d9/config/software/cacerts.rb
 fi
-
 
 omnibus build cloudify && result="success"
 cd pkg
