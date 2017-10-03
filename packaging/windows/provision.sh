@@ -7,6 +7,7 @@ function install_requirements() {
 function download_wheels() {
     GITHUB_USERNAME=$1
     GITHUB_PASSWORD=$2
+    CORE_BRANCH='windows-test'
 
     mkdir -p packaging/source/wheels
     curl -LO https://pypi.python.org/packages/2.7/l/lxml/lxml-3.5.0.win32-py2.7.exe
@@ -20,14 +21,22 @@ function download_wheels() {
     patch -p1 -d cloudify-cli-${CORE_BRANCH} < cloudify-cli-${CORE_BRANCH}/cloudify_cli.patch
     rm -f cloudify-cli-${CORE_BRANCH}/cloudify_cli.patch
     zip -q -r cloudify-cli-${CORE_BRANCH}.zip cloudify-cli-${CORE_BRANCH}
-    [[ $? -eq 0 ]] && rm -rf cloudify-cli-${CORE_BRANCH}
+    # [[ $? -eq 0 ]] && rm -rf cloudify-cli-${CORE_BRANCH}
 
     pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-${CORE_BRANCH}.zip \
-    https://github.com/cloudify-cosmo/cloudify-rest-client/archive/${CORE_BRANCH}.zip#egg=cloudify-rest-client \
-    https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/${CORE_BRANCH}.zip#egg=cloudify-dsl-parser \
-    https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/${CORE_BRANCH}.zip#egg=cloudify-plugins-common \
+    https://github.com/cloudify-cosmo/cloudify-rest-client/archive/master.zip#egg=cloudify-rest-client \
+    https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/master.zip#egg=cloudify-dsl-parser \
+    https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/master.zip#egg=cloudify-plugins-common \
     https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.1.zip#egg=cloudify-script-plugin \
     https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip#egg=cloudify-fabric-plugin
+
+    # Rename "Bad" wheels
+    pushd packaging/source/wheels
+        for file in *cp27m*; do
+            a="$(echo $file | sed s/-cp27m-/-none-/)"
+            mv -v "$file" "$a"
+        done
+    popd
 
 }
 
@@ -35,6 +44,7 @@ function download_resources() {
 
     GITHUB_USERNAME=$1
     GITHUB_PASSWORD=$2
+    CORE_BRANCH='master'
 
     mkdir -p packaging/source/{python,blueprints,types,scripts,plugins}
     pushd packaging/source/python
@@ -52,7 +62,7 @@ function download_resources() {
 
     # Downloading types.yaml
     pushd packaging/source/types
-        curl -LO http://getcloudify.org.s3.amazonaws.com/spec/cloudify/${CORE_BRANCH}/types.yaml
+        curl -LO http://www.getcloudify.org/spec/cloudify/${CORE_TAG_NAME}/types.yaml
     popd
 
     # Downloading Scripts

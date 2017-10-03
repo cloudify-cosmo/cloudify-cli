@@ -106,7 +106,7 @@ var
   Status: Boolean;
   Index: Integer;
 begin
-  ConfigYamlPath := Expandconstant('{app}\embedded\Lib\site-packages\cloudify_cli\resources\config.yaml')
+  ConfigYamlPath := Expandconstant('{%HOMEPATH}\.cloudify\config.yaml')
   ExtractTemporaryFile('import_resolver.yaml');
   Status := LoadStringsFromFile(ExpandConstant('{tmp}\import_resolver.yaml'), MappingStrings);
 
