@@ -762,8 +762,7 @@ class Options(object):
             '-r',
             '--security-role',
             required=False,
-            type=click.Choice(['admin', 'user']),
-            default='user',
+            default='default',
             help=helptexts.SECURITY_ROLE)
 
         self.password = click.option(

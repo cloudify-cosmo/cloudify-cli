@@ -44,23 +44,12 @@ class UsersTest(CliCommandTest):
     def test_create_users_default_role(self):
         self.invoke('cfy users create username -p password')
         call_list = self.client.users.method_calls[0][1]
-        self.assertEqual(call_list, ('username', 'password', 'user'))
+        self.assertEqual(call_list, ('username', 'password', 'default'))
 
     def test_create_users_custom_role(self):
         self.invoke('cfy users create username -p password -r admin')
         call_list = self.client.users.method_calls[0][1]
         self.assertEqual(call_list, ('username', 'password', 'admin'))
-
-    def test_create_users_invalid_role(self):
-        outcome = self.invoke(
-            'cfy users create username -p password -r invalid_role',
-            err_str_segment='2',  # Exit code
-            exception=SystemExit
-        )
-        self.assertIn(
-            'Invalid value for "-r" / "--security-role"',
-            outcome.output
-        )
 
     def test_empty_username(self):
         self.invoke(
