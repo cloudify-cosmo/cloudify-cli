@@ -17,11 +17,12 @@ import os
 
 from .. import env
 from ..cli import cfy
-from ..table import print_data, print_details
 from ..utils import handle_client_error
+from ..constants import RESOURCE_LABELS
 from ..exceptions import CloudifyCliError
+from ..table import print_data, print_details
 
-SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'permission',
+SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'resource_availability',
                    'tenant_name', 'created_by']
 
 
@@ -137,7 +138,10 @@ def list(sort_by, descending, tenant_name, all_tenants, logger, client):
         _all_tenants=all_tenants
     )
 
-    print_data(SECRETS_COLUMNS, secrets_list, 'Secrets:')
+    print_data(SECRETS_COLUMNS,
+               secrets_list,
+               'Secrets:',
+               labels=RESOURCE_LABELS)
 
 
 @secrets.command(name='delete', short_help='Delete a secret')

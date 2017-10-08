@@ -14,12 +14,13 @@
 # limitations under the License.
 ############
 
-from ..table import print_data
 from .. import utils
+from ..table import print_data
 from ..cli import helptexts, cfy
+from ..constants import RESOURCE_LABELS
 
-SNAPSHOT_COLUMNS = ['id', 'created_at', 'status', 'error', 'permission',
-                    'tenant_name', 'created_by']
+SNAPSHOT_COLUMNS = ['id', 'created_at', 'status', 'error',
+                    'resource_availability', 'tenant_name', 'created_by']
 
 
 @cfy.group(name='snapshots')
@@ -207,4 +208,7 @@ def list(sort_by, descending, tenant_name, all_tenants, logger, client):
                                       is_descending=descending,
                                       _all_tenants=all_tenants)
 
-    print_data(SNAPSHOT_COLUMNS, snapshots, 'Snapshots:')
+    print_data(SNAPSHOT_COLUMNS,
+               snapshots,
+               'Snapshots:',
+               labels=RESOURCE_LABELS)

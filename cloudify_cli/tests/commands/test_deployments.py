@@ -245,7 +245,7 @@ class DeploymentsTest(CliCommandTest):
                 'created_by': 'admin',
                 'updated_at': 'now',
                 'id': 'id',
-                'permission': 'creator',
+                'resource_availability': 'private',
                 'tenant_name': DEFAULT_TENANT_NAME
             },
             {
@@ -254,7 +254,7 @@ class DeploymentsTest(CliCommandTest):
                 'created_by': 'admin',
                 'updated_at': 'now',
                 'id': 'id',
-                'permission': 'creator',
+                'resource_availability': 'private',
                 'tenant_name': DEFAULT_TENANT_NAME
             },
             {
@@ -263,7 +263,7 @@ class DeploymentsTest(CliCommandTest):
                 'created_by': 'admin',
                 'updated_at': 'now',
                 'id': 'id',
-                'permission': 'creator',
+                'resource_availability': 'private',
                 'tenant_name': DEFAULT_TENANT_NAME
             }
         ]
