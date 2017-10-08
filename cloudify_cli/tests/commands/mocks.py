@@ -61,7 +61,7 @@ def execution_mock(status, wf_id='mock_wf'):
         'id': uuid4(),
         'created_at': datetime.now().isoformat()[:-3],
         'parameters': {},
-        'permission': 'creator',
+        'resource_availability': 'private',
         'created_by': 'admin',
         'tenant_name': DEFAULT_TENANT_NAME
     })
@@ -150,7 +150,7 @@ def node_instance_get_mock():
         'runtime_properties': {
             'floating_ip': '127.0.0.1'
         },
-        'permission': 'creator',
+        'resource_availability': 'private',
         'created_by': 'admin',
         'tenant_name': DEFAULT_TENANT_NAME
     })
@@ -168,7 +168,7 @@ def node_get_mock():
         'properties': {
             'port': '8080'
         },
-        'permission': 'creator',
+        'resource_availability': 'private',
         'created_by': 'admin',
         'tenant_name': DEFAULT_TENANT_NAME
     })
