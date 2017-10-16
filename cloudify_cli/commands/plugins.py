@@ -14,14 +14,14 @@
 # limitations under the License.
 ############
 
-import tarfile
 from urlparse import urlparse
+
+import wagon
 
 from .. import utils
 from ..table import print_data
 from ..cli import helptexts, cfy
 from ..constants import RESOURCE_LABELS
-from ..exceptions import CloudifyCliError
 
 
 PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
@@ -54,24 +54,7 @@ def validate(plugin_path, logger):
     `PLUGIN_PATH` is the path to wagon archive to validate.
     """
     logger.info('Validating plugin {0}...'.format(plugin_path))
-
-    if not tarfile.is_tarfile(plugin_path):
-        raise CloudifyCliError(
-            'Archive {0} is of an unsupported type. Only '
-            'tar.gz/wgn is allowed'.format(plugin_path))
-    with tarfile.open(plugin_path) as tar:
-        tar_members = tar.getmembers()
-        package_json_path = "{0}/{1}".format(
-            tar_members[0].name, 'package.json')
-        # TODO: Find a better way to validate a plugin.
-        # This is.. bad.
-        try:
-            tar.getmember(package_json_path)
-        except KeyError:
-            raise CloudifyCliError(
-                'Failed to validate plugin {0} '
-                '(package.json was not found in archive)'.format(plugin_path))
-
+    wagon.validate(plugin_path)
     logger.info('Plugin validated successfully')
 
 
