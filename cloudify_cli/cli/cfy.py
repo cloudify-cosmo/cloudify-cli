@@ -803,6 +803,13 @@ class Options(object):
             help=helptexts.SKIP_PLUGINS_VALIDATION
         )
 
+        self.user_role = click.option(
+            '-r',
+            '--role',
+            required=False,
+            help=helptexts.USER_ROLE,
+        )
+
         self.users = click.option(
             '-u',
             '--users',
