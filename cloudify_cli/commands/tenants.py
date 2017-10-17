@@ -71,22 +71,27 @@ def create(tenant_name, logger, client):
 @tenants.command(name='add-user',
                  short_help='Add a user to a tenant [manager only]')
 @cfy.argument('username', callback=cfy.validate_name)
+@cfy.options.user_role
 @cfy.options.tenant_name(show_default_in_help=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
-def add_user(username, tenant_name, logger, client):
+def add_user(username, tenant_name, role, logger, client):
     """Add a user to a tenant
 
     `USERNAME` is the name of the user to add to the tenant
     """
-    graceful_msg = 'User `{0}` is already associated with ' \
-                   'tenant `{1}`'.format(username, tenant_name)
+    graceful_msg = (
+        'User `{0}` is already associated with tenant `{1}`'
+        .format(username, tenant_name)
+    )
     with handle_client_error(409, graceful_msg, logger):
-        client.tenants.add_user(username, tenant_name)
-        logger.info('User `{0}` added successfully to tenant '
-                    '`{1}`'.format(username, tenant_name))
+        client.tenants.add_user(username, tenant_name, role)
+        logger.info(
+            'User `{0}` added successfully to tenant `{1}`'
+            .format(username, tenant_name)
+        )
 
 
 @tenants.command(name='remove-user',
