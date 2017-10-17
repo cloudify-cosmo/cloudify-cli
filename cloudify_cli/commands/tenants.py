@@ -129,12 +129,16 @@ def add_group(user_group_name, tenant_name, role, logger, client):
 
     `USER_GROUP_NAME` is the name of the user group to add to the tenant
     """
-    graceful_msg = 'User group `{0}` is already associated with ' \
-                   'tenant `{1}`'.format(user_group_name, tenant_name)
+    graceful_msg = (
+        'User group `{0}` is already associated with tenant `{1}`'
+        .format(user_group_name, tenant_name)
+    )
     with handle_client_error(409, graceful_msg, logger):
         client.tenants.add_group(user_group_name, tenant_name, role)
-        logger.info('User group `{0}` added successfully to tenant '
-                    '`{1}`'.format(user_group_name, tenant_name))
+        logger.info(
+            'User group `{0}` added successfully to tenant `{1}`'
+            .format(user_group_name, tenant_name)
+        )
 
 
 @tenants.command(name='remove-user-group',
