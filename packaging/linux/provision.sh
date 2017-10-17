@@ -136,7 +136,7 @@ rm -f version-manifest.json
 #remove the -1 - omnibus set the build_iteration to 1 if it null
 file=$(basename $(find . -type f -name "*.$FILEEXT"))
 echo "file=$file"
-file_no_build=$(echo "$file" | sed 's/\(.*\)-1/\1/')
+file_no_build=$(echo "$file" | sed 's/\(.*\)-1/\1/' | sed 's/cloudify/cloudify-cli/')
 echo "file_no_build=$file_no_build"
 mv $file $file_no_build
 

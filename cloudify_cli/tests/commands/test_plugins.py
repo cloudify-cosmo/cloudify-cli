@@ -1,10 +1,9 @@
-import os
 import shutil
 import tempfile
 
+import wagon
 from mock import MagicMock
 
-from .mocks import make_tarfile
 from .test_base import CliCommandTest
 
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
@@ -33,7 +32,7 @@ class PluginsTest(CliCommandTest):
                                          'distribution_release': 'trusty',
                                          'distribution': 'ubuntu',
                                          'uploaded_at': 'now',
-                                         'permission': 'creator',
+                                         'resource_availability': 'private',
                                          'created_by': 'admin',
                                          'tenant_name': DEFAULT_TENANT_NAME}))
 
@@ -53,19 +52,16 @@ class PluginsTest(CliCommandTest):
 
     def test_plugins_upload(self):
         self.client.plugins.upload = MagicMock()
-        plugin_dest = os.path.join(tempfile.gettempdir(), 'plugin.tar.gz')
+        plugin_dest_dir = tempfile.mkdtemp()
         try:
-            self.make_sample_plugin(plugin_dest)
-            self.invoke('cfy plugins upload {0}'.format(plugin_dest))
+            plugin_path = wagon.create(
+                'pip',
+                archive_destination_dir=plugin_dest_dir
+            )
+            self.invoke('cfy plugins upload {0}'.format(plugin_path))
         finally:
-            shutil.rmtree(plugin_dest, ignore_errors=True)
+            shutil.rmtree(plugin_dest_dir, ignore_errors=True)
 
     def test_plugins_download(self):
         self.client.plugins.download = MagicMock(return_value='some_file')
         self.invoke('cfy plugins download a-plugin-id')
-
-    def make_sample_plugin(self, plugin_dest):
-        temp_folder = tempfile.mkdtemp()
-        with open(os.path.join(temp_folder, 'package.json'), 'w') as f:
-            f.write('{}')
-        make_tarfile(plugin_dest, temp_folder)

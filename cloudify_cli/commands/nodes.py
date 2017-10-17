@@ -16,15 +16,16 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from ..table import print_data
 from .. import utils
 from ..cli import cfy
+from ..table import print_data
+from ..constants import RESOURCE_LABELS
 from ..exceptions import CloudifyCliError
 
 
 NODE_COLUMNS = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                 'number_of_instances', 'planned_number_of_instances',
-                'permission', 'tenant_name', 'created_by']
+                'resource_availability', 'tenant_name', 'created_by']
 
 
 @cfy.group(name='nodes')
@@ -70,7 +71,11 @@ def get(node_id, deployment_id, logger, client, tenant_name):
         raise CloudifyCliError('No node instances were found for '
                                'node {0}'.format(node_id))
 
-    print_data(NODE_COLUMNS, node, 'Node:', max_width=50)
+    print_data(NODE_COLUMNS,
+               node,
+               'Node:',
+               max_width=50,
+               labels=RESOURCE_LABELS)
 
     # print node properties
     logger.info('Node properties:')
@@ -126,4 +131,4 @@ def list(deployment_id, sort_by, descending, tenant_name, all_tenants,
         raise CloudifyCliError('Deployment {0} does not exist'.format(
             deployment_id))
 
-    print_data(NODE_COLUMNS, nodes, 'Nodes:')
+    print_data(NODE_COLUMNS, nodes, 'Nodes:', labels=RESOURCE_LABELS)

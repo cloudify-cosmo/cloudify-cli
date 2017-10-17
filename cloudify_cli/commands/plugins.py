@@ -14,18 +14,19 @@
 # limitations under the License.
 ############
 
-import tarfile
 from urlparse import urlparse
 
-from ..table import print_data
+import wagon
+
 from .. import utils
+from ..table import print_data
 from ..cli import helptexts, cfy
-from ..exceptions import CloudifyCliError
+from ..constants import RESOURCE_LABELS
 
 
 PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
                   'supported_platform', 'distribution_release', 'uploaded_at',
-                  'permission', 'tenant_name', 'created_by']
+                  'resource_availability', 'tenant_name', 'created_by']
 EXCLUDED_COLUMNS = ['archive_name', 'distribution_version', 'excluded_wheels',
                     'package_source', 'supported_py_versions', 'wheels']
 
@@ -53,24 +54,7 @@ def validate(plugin_path, logger):
     `PLUGIN_PATH` is the path to wagon archive to validate.
     """
     logger.info('Validating plugin {0}...'.format(plugin_path))
-
-    if not tarfile.is_tarfile(plugin_path):
-        raise CloudifyCliError(
-            'Archive {0} is of an unsupported type. Only '
-            'tar.gz/wgn is allowed'.format(plugin_path))
-    with tarfile.open(plugin_path) as tar:
-        tar_members = tar.getmembers()
-        package_json_path = "{0}/{1}".format(
-            tar_members[0].name, 'package.json')
-        # TODO: Find a better way to validate a plugin.
-        # This is.. bad.
-        try:
-            tar.getmember(package_json_path)
-        except KeyError:
-            raise CloudifyCliError(
-                'Failed to validate plugin {0} '
-                '(package.json was not found in archive)'.format(plugin_path))
-
+    wagon.validate(plugin_path)
     logger.info('Plugin validated successfully')
 
 
@@ -168,7 +152,7 @@ def get(plugin_id, logger, client, tenant_name):
     logger.info('Retrieving plugin {0}...'.format(plugin_id))
     plugin = client.plugins.get(plugin_id)
     _transform_plugin_response(plugin)
-    print_data(PLUGIN_COLUMNS, plugin, 'Plugin:')
+    print_data(PLUGIN_COLUMNS, plugin, 'Plugin:', labels=RESOURCE_LABELS)
 
 
 @plugins.command(name='list',
@@ -193,7 +177,10 @@ def list(sort_by, descending, tenant_name, all_tenants, logger, client):
                                        _all_tenants=all_tenants)
     for plugin in plugins_list:
         _transform_plugin_response(plugin)
-    print_data(PLUGIN_COLUMNS, plugins_list, 'Plugins:')
+    print_data(PLUGIN_COLUMNS,
+               plugins_list,
+               'Plugins:',
+               labels=RESOURCE_LABELS)
 
 
 def _transform_plugin_response(plugin):

@@ -180,7 +180,7 @@ GROUP_DN = 'The ldap group\'s distinguished name. This option is required ' \
            'when using ldap'
 
 SECURITY_ROLE = "A role to determine the user's permissions on the manager " \
-                "(default: user)"
+                "(default: default)"
 PASSWORD = 'Cloudify manager password'
 
 CLUSTER_HOST_IP = \
