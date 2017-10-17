@@ -178,6 +178,9 @@ ALL_TENANTS = 'Include resources from all tenants associated with the user. ' \
 GROUP = 'The name of the user group'
 GROUP_DN = 'The ldap group\'s distinguished name. This option is required ' \
            'when using ldap'
+GROUP_ROLE = (
+    'Role assigned to the users of group in the context of the tenant.'
+)
 
 SECURITY_ROLE = "A role to determine the user's permissions on the manager " \
                 "(default: default)"
