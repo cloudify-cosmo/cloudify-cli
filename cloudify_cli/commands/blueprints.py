@@ -34,6 +34,7 @@ from ..config import config
 from ..table import print_data
 from ..constants import RESOURCE_LABELS
 from ..exceptions import CloudifyCliError
+from ..utils import prettify_client_error
 
 
 DESCRIPTION_LIMIT = 20
@@ -379,3 +380,21 @@ def install_plugins(blueprint_path, logger):
     """
     logger.info('Installing plugins...')
     local._install_plugins(blueprint_path=blueprint_path)
+
+
+@blueprints.command(name='set-global',
+                    short_help="Set the blueprint's availability to global")
+@cfy.argument('blueprint-id')
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client(use_tenant_in_header=True)
+@cfy.pass_logger
+def set_global(blueprint_id, logger, client):
+    """Set the blueprint's availability to global
+
+    `BLUEPRINT_ID` is the id of the blueprint to set global
+    """
+    status_codes = [400, 403, 404]
+    with prettify_client_error(status_codes, logger):
+        client.blueprints.set_global(blueprint_id)
+        logger.info('Blueprint `{0}` was set to global'.format(blueprint_id))
