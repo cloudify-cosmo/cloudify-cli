@@ -82,12 +82,16 @@ def add_user(username, tenant_name, role, logger, client):
 
     `USERNAME` is the name of the user to add to the tenant
     """
-    graceful_msg = 'User `{0}` is already associated with ' \
-                   'tenant `{1}`'.format(username, tenant_name)
+    graceful_msg = (
+        'User `{0}` is already associated with tenant `{1}`'
+        .format(username, tenant_name)
+    )
     with handle_client_error(409, graceful_msg, logger):
         client.tenants.add_user(username, tenant_name, role)
-        logger.info('User `{0}` added successfully to tenant '
-                    '`{1}`'.format(username, tenant_name))
+        logger.info(
+            'User `{0}` added successfully to tenant `{1}`'
+            .format(username, tenant_name)
+        )
 
 
 @tenants.command(name='remove-user',
