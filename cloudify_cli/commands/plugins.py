@@ -22,6 +22,7 @@ from .. import utils
 from ..table import print_data
 from ..cli import helptexts, cfy
 from ..constants import RESOURCE_LABELS
+from ..utils import prettify_client_error
 
 
 PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
@@ -188,3 +189,21 @@ def _transform_plugin_response(plugin):
     """
     for column in EXCLUDED_COLUMNS:
         plugin.pop(column, None)
+
+
+@plugins.command(name='set-global',
+                 short_help="Set the plugin's availability to global")
+@cfy.argument('plugin-id')
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client(use_tenant_in_header=True)
+@cfy.pass_logger
+def set_global(plugin_id, logger, client):
+    """Set the plugin's availability to global
+
+    `PLUGIN_ID` is the id of the plugin to set global
+    """
+    status_codes = [400, 403, 404]
+    with prettify_client_error(status_codes, logger):
+        client.plugins.set_global(plugin_id)
+        logger.info('Plugin `{0}` was set to global'.format(plugin_id))
