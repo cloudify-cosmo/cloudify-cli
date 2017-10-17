@@ -287,3 +287,7 @@ class BlueprintsTest(CliCommandTest):
         )
 
         self.assertIn('pip install -r', output.exception.command)
+
+    def test_blueprints_set_global(self):
+        self.client.blueprints.set_global = MagicMock()
+        self.invoke('cfy blueprints set-global a-blueprint-id')

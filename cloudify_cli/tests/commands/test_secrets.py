@@ -13,6 +13,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+from mock import MagicMock
 from .test_base import CliCommandTest
 from cloudify_cli.exceptions import CloudifyValidationError, CloudifyCliError
 
@@ -45,3 +46,7 @@ class SecretsTest(CliCommandTest):
                             'Missing option --secret-string or secret-file.',
             exception=CloudifyCliError
         )
+
+    def test_secrets_set_global(self):
+        self.client.secrets.set_global = MagicMock()
+        self.invoke('cfy secrets set-global a-secret-key')

@@ -65,3 +65,7 @@ class PluginsTest(CliCommandTest):
     def test_plugins_download(self):
         self.client.plugins.download = MagicMock(return_value='some_file')
         self.invoke('cfy plugins download a-plugin-id')
+
+    def test_plugins_set_global(self):
+        self.client.plugins.set_global = MagicMock()
+        self.invoke('cfy plugins set-global a-plugin-id')

@@ -268,3 +268,18 @@ def handle_client_error(status_code, message, logger):
         if e.status_code != status_code:
             raise
         logger.info(message)
+
+
+@contextmanager
+def prettify_client_error(status_codes, logger):
+    """Prettify client errors with specific status codes
+
+    :param status_codes: List of status codes
+    :param logger: Logger for writing the error
+    """
+    try:
+        yield
+    except CloudifyClientError, e:
+        if e.status_code not in status_codes:
+            raise
+        logger.info(e.message)
