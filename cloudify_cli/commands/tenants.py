@@ -71,7 +71,7 @@ def create(tenant_name, logger, client):
 @tenants.command(name='add-user',
                  short_help='Add a user to a tenant [manager only]')
 @cfy.argument('username', callback=cfy.validate_name)
-@cfy.options.user_role
+@cfy.options.user_role()
 @cfy.options.tenant_name(show_default_in_help=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
