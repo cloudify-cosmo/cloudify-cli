@@ -705,13 +705,6 @@ class Options(object):
             callback=validate_name
         )
 
-        self.group_role = click.option(
-            '-r',
-            '--role',
-            required=False,
-            help=helptexts.GROUP_ROLE,
-        )
-
         self.ldap_distinguished_name = click.option(
             '-l',
             '--ldap-distinguished-name',
@@ -1069,6 +1062,15 @@ class Options(object):
             '--role',
             required=required,
             help=helptexts.USER_ROLE,
+        )
+
+    @staticmethod
+    def group_role(required=False):
+        return click.option(
+            '-r',
+            '--role',
+            required=required,
+            help=helptexts.GROUP_ROLE,
         )
 
 
