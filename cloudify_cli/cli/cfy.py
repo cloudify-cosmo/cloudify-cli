@@ -810,13 +810,6 @@ class Options(object):
             help=helptexts.SKIP_PLUGINS_VALIDATION
         )
 
-        self.user_role = click.option(
-            '-r',
-            '--role',
-            required=False,
-            help=helptexts.USER_ROLE,
-        )
-
         self.users = click.option(
             '-u',
             '--users',
@@ -1068,6 +1061,15 @@ class Options(object):
             '--blueprint-path',
             required=required,
             type=click.Path(exists=True))
+
+    @staticmethod
+    def user_role(required=False):
+        return click.option(
+            '-r',
+            '--role',
+            required=required,
+            help=helptexts.USER_ROLE,
+        )
 
 
 options = Options()

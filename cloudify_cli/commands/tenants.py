@@ -71,7 +71,7 @@ def create(tenant_name, logger, client):
 @tenants.command(name='add-user',
                  short_help='Add a user to a tenant [manager only]')
 @cfy.argument('username', callback=cfy.validate_name)
-@cfy.options.user_role
+@cfy.options.user_role()
 @cfy.options.tenant_name(show_default_in_help=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -90,6 +90,30 @@ def add_user(username, tenant_name, role, logger, client):
         client.tenants.add_user(username, tenant_name, role)
         logger.info(
             'User `{0}` added successfully to tenant `{1}`'
+            .format(username, tenant_name)
+        )
+
+
+@tenants.command(
+    name='update-user',
+    short_help='Update user-tenant relationship [manager only]')
+@cfy.argument('username', callback=cfy.validate_name)
+@cfy.options.user_role(required=True)
+@cfy.options.tenant_name(show_default_in_help=False)
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client(use_tenant_in_header=False)
+@cfy.pass_logger
+def update_user(username, tenant_name, role, logger, client):
+    """Update user-tenant relationship."""
+    not_found_msg = (
+        'User `{0}` is *not* currently associated to tenant `{1}`'
+        .format(username, tenant_name)
+    )
+    with handle_client_error(404, not_found_msg, logger):
+        client.tenants.update_user(username, tenant_name, role)
+        logger.info(
+            'User `{0}` updated successfully in tenant `{1}`'
             .format(username, tenant_name)
         )
 
