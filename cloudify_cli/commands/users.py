@@ -21,6 +21,7 @@ from ..utils import handle_client_error
 
 USER_COLUMNS = ['username', 'groups', 'role', 'tenants', 'active',
                 'last_login_at']
+USER_LABELS = {'role': 'system_wide_role'}
 
 
 @cfy.group(name='users')
@@ -49,7 +50,7 @@ def list(sort_by, descending, get_data, logger, client):
         is_descending=descending,
         _get_data=get_data
     )
-    print_data(USER_COLUMNS, users_list, 'Users:')
+    print_data(USER_COLUMNS, users_list, 'Users:', labels=USER_LABELS)
 
 
 @users.command(name='create', short_help='Create a user [manager only]')
@@ -124,7 +125,10 @@ def get(username, get_data, logger, client):
         user_details = client.users.get_self(_get_data=get_data)
     else:
         user_details = client.users.get(username, _get_data=get_data)
-    print_data(USER_COLUMNS, user_details, 'Requested user info:')
+    print_data(USER_COLUMNS,
+               user_details,
+               'Requested user info:',
+               labels=USER_LABELS)
 
 
 @users.command(name='delete',
