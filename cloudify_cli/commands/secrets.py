@@ -88,6 +88,9 @@ def get(key, logger, client):
     with handle_client_error(404, graceful_msg, logger):
         logger.info('Getting info for secret `{0}`...'.format(key))
         secret_details = client.secrets.get(key)
+        secret_details.pop('private_resource')
+        secret_details['availability'] = \
+            secret_details.pop('resource_availability')
         print_details(secret_details, 'Requested secret info:')
 
 
