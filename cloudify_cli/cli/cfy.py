@@ -1065,12 +1065,12 @@ class Options(object):
         )
 
     @staticmethod
-    def user_role(required=False):
-        return Options.role(helptexts.USER_ROLE, required=required)
+    def user_tenant_role(required=False):
+        return Options.tenant_role(helptexts.USER_ROLE, required=required)
 
     @staticmethod
-    def group_role(required=False):
-        return Options.role(helptexts.GROUP_ROLE, required=required)
+    def group_tenant_role(required=False):
+        return Options.tenant_role(helptexts.GROUP_ROLE, required=required)
 
 
 options = Options()
