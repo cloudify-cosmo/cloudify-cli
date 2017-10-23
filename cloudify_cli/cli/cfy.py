@@ -1056,22 +1056,21 @@ class Options(object):
             type=click.Path(exists=True))
 
     @staticmethod
-    def user_role(required=False):
+    def tenant_role(help_text, required=False):
         return click.option(
             '-r',
             '--role',
             required=required,
-            help=helptexts.USER_ROLE,
+            help=help_text
         )
 
     @staticmethod
+    def user_role(required=False):
+        return Options.role(helptexts.USER_ROLE, required=required)
+
+    @staticmethod
     def group_role(required=False):
-        return click.option(
-            '-r',
-            '--role',
-            required=required,
-            help=helptexts.GROUP_ROLE,
-        )
+        return Options.role(helptexts.GROUP_ROLE, required=required)
 
 
 options = Options()
