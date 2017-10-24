@@ -48,7 +48,7 @@ def _is_deployment_installed(client, deployment_id):
 def _deployment_exists(client, deployment_id):
     try:
         client.deployments.get(deployment_id)
-    except:
+    except Exception:
         return False
     return True
 

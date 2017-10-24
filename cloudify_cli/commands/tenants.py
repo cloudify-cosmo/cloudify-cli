@@ -166,7 +166,7 @@ def add_group(user_group_name, tenant_name, role, logger, client):
 
 
 @tenants.command(
-    name='update-group',
+    name='update-user-group',
     short_help='Update group-tenant relationship [manager only]')
 @cfy.argument('user-group-name', callback=cfy.validate_name)
 @cfy.options.group_tenant_role(required=True)
