@@ -71,7 +71,7 @@ def create(tenant_name, logger, client):
 @tenants.command(name='add-user',
                  short_help='Add a user to a tenant [manager only]')
 @cfy.argument('username', callback=cfy.validate_name)
-@cfy.options.user_role()
+@cfy.options.user_tenant_role()
 @cfy.options.tenant_name(show_default_in_help=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -98,7 +98,7 @@ def add_user(username, tenant_name, role, logger, client):
     name='update-user',
     short_help='Update user-tenant relationship [manager only]')
 @cfy.argument('username', callback=cfy.validate_name)
-@cfy.options.user_role(required=True)
+@cfy.options.user_tenant_role(required=True)
 @cfy.options.tenant_name(show_default_in_help=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -142,7 +142,7 @@ def remove_user(username, tenant_name, logger, client):
 @tenants.command(name='add-user-group',
                  short_help='Add a user group to a tenant [manager only]')
 @cfy.argument('user-group-name', callback=cfy.validate_name)
-@cfy.options.group_role()
+@cfy.options.group_tenant_role()
 @cfy.options.tenant_name(show_default_in_help=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -169,7 +169,7 @@ def add_group(user_group_name, tenant_name, role, logger, client):
     name='update-group',
     short_help='Update group-tenant relationship [manager only]')
 @cfy.argument('user-group-name', callback=cfy.validate_name)
-@cfy.options.group_role(required=True)
+@cfy.options.group_tenant_role(required=True)
 @cfy.options.tenant_name(show_default_in_help=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
