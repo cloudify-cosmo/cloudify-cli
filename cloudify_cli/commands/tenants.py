@@ -158,7 +158,7 @@ def add_group(user_group_name, tenant_name, role, logger, client):
         .format(user_group_name, tenant_name)
     )
     with handle_client_error(409, graceful_msg, logger):
-        client.tenants.add_group(user_group_name, tenant_name, role)
+        client.tenants.add_user_group(user_group_name, tenant_name, role)
         logger.info(
             'User group `{0}` added successfully to tenant `{1}`'
             .format(user_group_name, tenant_name)
@@ -182,7 +182,7 @@ def update_group(user_group_name, tenant_name, role, logger, client):
         .format(user_group_name, tenant_name)
     )
     with handle_client_error(404, not_found_msg, logger):
-        client.tenants.update_group(user_group_name, tenant_name, role)
+        client.tenants.update_user_group(user_group_name, tenant_name, role)
         logger.info(
             'Group `{0}` updated successfully in tenant `{1}`'
             .format(user_group_name, tenant_name)
@@ -205,7 +205,7 @@ def remove_group(user_group_name, tenant_name, logger, client):
     graceful_msg = 'User group `{0}` is not associated with ' \
                    'tenant `{1}`'.format(user_group_name, tenant_name)
     with handle_client_error(404, graceful_msg, logger):
-        client.tenants.remove_group(user_group_name, tenant_name)
+        client.tenants.remove_user_group(user_group_name, tenant_name)
         logger.info('User group `{0}` removed successfully from tenant '
                     '`{1}`'.format(user_group_name, tenant_name))
 
