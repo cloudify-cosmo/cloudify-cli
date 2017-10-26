@@ -148,7 +148,7 @@ def remove_user(username, tenant_name, logger, client):
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
-def add_group(user_group_name, tenant_name, role, logger, client):
+def add_user_group(user_group_name, tenant_name, role, logger, client):
     """Add a user group to a tenant
 
     `USER_GROUP_NAME` is the name of the user group to add to the tenant
@@ -175,7 +175,7 @@ def add_group(user_group_name, tenant_name, role, logger, client):
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
-def update_group(user_group_name, tenant_name, role, logger, client):
+def update_user_group(user_group_name, tenant_name, role, logger, client):
     """Update group-tenant relationship."""
     not_found_msg = (
         'User `{0}` is *not* currently associated to tenant `{1}`'
@@ -197,7 +197,7 @@ def update_group(user_group_name, tenant_name, role, logger, client):
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
-def remove_group(user_group_name, tenant_name, logger, client):
+def remove_user_group(user_group_name, tenant_name, logger, client):
     """Remove a user group from a tenant
 
     `USER_GROUP_NAME` is the name of the user group to remove from the tenant
