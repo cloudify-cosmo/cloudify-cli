@@ -7,7 +7,7 @@ AWS_ACCESS_KEY=$4
 CLI_BRANCH=$5
 PACKAGER_BRANCH=$6
 export REPO=$7
-export CORE_TAG_NAME="4.2.dev1"
+export CORE_TAG_NAME="4.2"
 export CORE_BRANCH="master"
 
 
