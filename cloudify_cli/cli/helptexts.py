@@ -206,6 +206,9 @@ SKIP_PLUGINS_VALIDATION = 'Determines whether to validate if the' \
                           ' If validation is skipped, plugins containing' \
                           ' source URL will be installed from source.' \
 
+SKIP_PLUGINS_UPLOAD_VALIDATION = 'If specified, skip validation of the ' \
+                                 'plugin archive before uploading.'
+
 USER = 'Username of user to whom the permissions apply. ' \
        'This argument can be used multiple times'
 USER_TENANT_ROLE = 'Role assigned to user in the context of the tenant.'

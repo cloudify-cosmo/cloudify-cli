@@ -803,6 +803,13 @@ class Options(object):
             help=helptexts.SKIP_PLUGINS_VALIDATION
         )
 
+        self.skip_plugins_upload_validation = click.option(
+            '--skip-validation',
+            is_flag=True,
+            default=False,
+            help=helptexts.SKIP_PLUGINS_UPLOAD_VALIDATION
+        )
+
         self.users = click.option(
             '-u',
             '--users',
