@@ -91,7 +91,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def upload(ctx, plugin_path, private_resource, skip_validation,
+def upload(ctx, plugin_path, private_resource, skip_local_plugins_validation,
            logger, client, tenant_name):
     """Upload a plugin to the manager
 
@@ -102,8 +102,8 @@ def upload(ctx, plugin_path, private_resource, skip_validation,
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     parsed_url = urlparse(plugin_path)
-    if (not parsed_url.scheme or not parsed_url.netloc) and not \
-            skip_validation:
+    is_local_path = not parsed_url.scheme or not parsed_url.netloc
+    if is_local_path and not skip_local_plugins_validation:
         ctx.invoke(validate, plugin_path=plugin_path)
 
     progress_handler = utils.generate_progress_handler(plugin_path, '')

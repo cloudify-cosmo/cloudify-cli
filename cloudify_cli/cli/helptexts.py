@@ -207,7 +207,9 @@ SKIP_PLUGINS_VALIDATION = 'Determines whether to validate if the' \
                           ' source URL will be installed from source.' \
 
 SKIP_PLUGINS_UPLOAD_VALIDATION = 'If specified, skip validation of the ' \
-                                 'plugin archive before uploading.'
+                                 'plugin archive before uploading. Note: ' \
+                                 'this only applies for plugin archives ' \
+                                 'available locally.'
 
 USER = 'Username of user to whom the permissions apply. ' \
        'This argument can be used multiple times'

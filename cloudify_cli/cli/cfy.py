@@ -804,7 +804,7 @@ class Options(object):
         )
 
         self.skip_plugins_upload_validation = click.option(
-            '--skip-validation',
+            '--skip-local-plugins-validation',
             is_flag=True,
             default=False,
             help=helptexts.SKIP_PLUGINS_UPLOAD_VALIDATION
