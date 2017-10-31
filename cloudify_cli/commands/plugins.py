@@ -84,13 +84,15 @@ def delete(plugin_id, force, logger, client, tenant_name):
                  short_help='Upload a plugin [manager only]')
 @cfy.argument('plugin-path')
 @cfy.options.private_resource
+@cfy.options.skip_plugins_upload_validation
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.pass_context
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def upload(ctx, plugin_path, private_resource, logger, client, tenant_name):
+def upload(ctx, plugin_path, private_resource, skip_local_plugins_validation,
+           logger, client, tenant_name):
     """Upload a plugin to the manager
 
     `PLUGIN_PATH` is the path to wagon archive to upload.
@@ -100,7 +102,8 @@ def upload(ctx, plugin_path, private_resource, logger, client, tenant_name):
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     parsed_url = urlparse(plugin_path)
-    if not parsed_url.scheme or not parsed_url.netloc:
+    is_local_path = not parsed_url.scheme or not parsed_url.netloc
+    if is_local_path and not skip_local_plugins_validation:
         ctx.invoke(validate, plugin_path=plugin_path)
 
     progress_handler = utils.generate_progress_handler(plugin_path, '')
