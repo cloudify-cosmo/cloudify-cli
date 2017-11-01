@@ -353,9 +353,9 @@ class ProfilesTest(CliCommandTest):
            return_value={})
     def test_use_cannot_update_profile(self, *_):
         self.use_manager()
-        self.invoke('profiles use 10.10.1.10 -p abc',
-                    err_str_segment='Profile 10.10.1.10 already exists, '
-                                    'but a new manager_password was provided')
+        outcome = self.invoke('profiles use 10.10.1.10 -p abc')
+        self.assertIn('The passed in options are ignored: manager_password',
+                      outcome.logs)
 
     @patch('cloudify_cli.commands.profiles._get_provider_context',
            return_value={})

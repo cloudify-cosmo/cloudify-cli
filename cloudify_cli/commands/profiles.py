@@ -160,18 +160,10 @@ def _switch_profile(manager_ip, profile_name, logger, **kwargs):
     # because the way to update an existing profile is `cfy profiles set`
     provided_options = [key for key, value in kwargs.items() if value]
     if any(provided_options):
-        error = CloudifyCliError(
-            'Profile {0} already exists, but a new {1} was provided'
-            .format(profile_name, ', '.join(provided_options)))
-
-        error.possible_solutions = [
-            "Update profile {0} using `cfy profiles set`".format(
-                profile_name),
-            "Choose another profile name",
-            "Delete profile {0} using `cfy profiles delete {0}`".format(
-                profile_name),
-        ]
-        raise error
+        logger.warning('Profile {0} already exists. '
+                       'The passed in options are ignored: {1}. '
+                       'To update the profile, use `cfy profiles set`'
+                       .format(profile_name, ', '.join(provided_options)))
 
     env.set_active_profile(profile_name)
     logger.info('Using manager {0}'.format(profile_name))
