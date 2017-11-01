@@ -354,7 +354,7 @@ def set_profile(profile_name,
 @cfy.options.manager_tenant
 @cfy.options.ssh_user
 @cfy.options.ssh_key
-@cfy.options.ssh_port_no_default
+@cfy.options.ssh_port
 @cfy.options.ssl_state
 @cfy.options.rest_certificate
 @cfy.options.skip_credentials_validation
@@ -682,8 +682,6 @@ def _set_profile_context(profile_name,
         profile.ssh_key = ssh_key
     if ssh_user:
         profile.ssh_user = ssh_user
-    if ssh_port:
-        profile.ssh_port = ssh_port
     if rest_port:
         profile.rest_port = rest_port
     if manager_username:
@@ -692,6 +690,7 @@ def _set_profile_context(profile_name,
         profile.manager_password = manager_password
     if manager_tenant:
         profile.manager_tenant = manager_tenant
+    profile.ssh_port = ssh_port or constants.REMOTE_EXECUTION_PORT
     profile.rest_protocol = rest_protocol
     profile.rest_certificate = rest_certificate
     profile.bootstrap_state = 'Complete'
