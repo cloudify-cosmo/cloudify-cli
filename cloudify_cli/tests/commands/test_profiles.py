@@ -348,3 +348,18 @@ class ProfilesTest(CliCommandTest):
         added_profile = env.get_profile_context('5.6.7.8')
         self.assertEqual('1.2.3.4', added_profile.manager_ip)
         self.assertEqual('5.6.7.8', added_profile.profile_name)
+
+    @patch('cloudify_cli.commands.profiles._get_provider_context',
+           return_value={})
+    def test_use_cannot_update_profile(self, *_):
+        self.use_manager()
+        self.invoke('profiles use 10.10.1.10 -p abc',
+                    err_str_segment='Profile 10.10.1.10 already exists, '
+                                    'but a new manager_password was provided')
+
+    @patch('cloudify_cli.commands.profiles._get_provider_context',
+           return_value={})
+    def test_use_existing_only_switches(self, mock_get_context):
+        self.use_manager()
+        self.invoke('profiles use 10.10.1.10')
+        self.assertFalse(mock_get_context.called)
