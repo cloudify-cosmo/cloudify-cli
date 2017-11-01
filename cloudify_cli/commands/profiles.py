@@ -148,6 +148,11 @@ def use(manager_ip,
         env.set_active_profile('local')
         return
 
+    if env.is_profile_exists(profile_name):
+        env.set_active_profile(profile_name)
+        logger.info('Using manager {0}'.format(profile_name))
+        return
+
     rest_protocol = constants.SECURED_REST_PROTOCOL if ssl else \
         constants.DEFAULT_REST_PROTOCOL
 
@@ -173,9 +178,7 @@ def use(manager_ip,
         skip_credentials_validation
     )
 
-    if not env.is_profile_exists(profile_name):
-        init.init_manager_profile(profile_name=profile_name)
-
+    init.init_manager_profile(profile_name=profile_name)
     env.set_active_profile(profile_name)
 
     logger.info('Using manager {0} with port {1}'.format(
