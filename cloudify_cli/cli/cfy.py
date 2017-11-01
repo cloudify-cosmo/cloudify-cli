@@ -29,7 +29,6 @@ from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
 from .. import env
-from .. import constants
 from ..cli import helptexts
 from ..inputs import inputs_to_dict
 from ..utils import generate_random_string
@@ -622,12 +621,6 @@ class Options(object):
         )
 
         self.ssh_port = click.option(
-            '--ssh-port',
-            required=False,
-            default=constants.REMOTE_EXECUTION_PORT,
-            help=helptexts.SSH_PORT)
-
-        self.ssh_port_no_default = click.option(
             '--ssh-port',
             required=False,
             help=helptexts.SSH_PORT)
