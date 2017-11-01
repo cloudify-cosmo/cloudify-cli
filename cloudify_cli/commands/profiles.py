@@ -120,18 +120,10 @@ def list(logger):
 @cfy.options.verbose()
 @cfy.pass_logger
 def use(manager_ip,
-        ssh_user,
-        ssh_key,
-        ssh_port,
-        manager_username,
-        manager_password,
-        manager_tenant,
         profile_name,
-        rest_port,
-        ssl,
-        rest_certificate,
         skip_credentials_validation,
-        logger):
+        logger,
+        **kwargs):
     """Control a specific manager
 
     `PROFILE_NAME` can be either a manager IP or `local`.
@@ -153,6 +145,27 @@ def use(manager_ip,
         logger.info('Using manager {0}'.format(profile_name))
         return
 
+    _create_profile(manager_ip=manager_ip,
+                    profile_name=profile_name,
+                    skip_credentials_validation=skip_credentials_validation,
+                    logger=logger,
+                    **kwargs)
+
+
+def _create_profile(
+        manager_ip,
+        profile_name,
+        ssh_user,
+        ssh_key,
+        ssh_port,
+        manager_username,
+        manager_password,
+        manager_tenant,
+        rest_port,
+        ssl,
+        rest_certificate,
+        skip_credentials_validation,
+        logger):
     rest_protocol = constants.SECURED_REST_PROTOCOL if ssl else \
         constants.DEFAULT_REST_PROTOCOL
 
