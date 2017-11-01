@@ -141,6 +141,23 @@ def use(manager_ip,
         return
 
     if env.is_profile_exists(profile_name):
+        # if using an existing profile, it is an error to provide any --option,
+        # because the way to update an existing profile is `cfy profiles set`
+        provided_options = [key for key, value in kwargs.items() if value]
+        if any(provided_options):
+            error = CloudifyCliError(
+                'Profile {0} already exists, but a new {1} was provided'
+                .format(profile_name, ', '.join(provided_options)))
+
+            error.possible_solutions = [
+                "Update profile {0} using `cfy profiles set`".format(
+                    profile_name),
+                "Choose another profile name",
+                "Delete profile {0} using `cfy profiles delete {0}`".format(
+                    profile_name),
+            ]
+            raise error
+
         env.set_active_profile(profile_name)
         logger.info('Using manager {0}'.format(profile_name))
         return
