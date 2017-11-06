@@ -392,6 +392,7 @@ def set_cmd(profile_name,
 @cfy.options.ssh_key
 @cfy.options.ssh_port
 @cfy.options.rest_certificate
+@cfy.pass_logger
 def set_cluster(cluster_node_name,
                 ssh_user,
                 ssh_key,
