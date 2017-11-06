@@ -22,6 +22,26 @@ from ..utils import handle_client_error
 TENANT_COLUMNS = ['name', 'groups', 'users']
 
 
+def _format_groups(groups):
+    groups = dict((str(group), str(groups[group])) for group in groups)
+    return str(groups).strip('{}')
+
+
+def _format_users(users):
+    users = dict(
+        (str(user),
+         [str(role) for role in users[user]['roles']])
+        for user in users
+    )
+    return str(users).strip('{}')
+
+
+def _format_tenant(tenant):
+    tenant['groups'] = _format_groups(tenant['groups'])
+    tenant['users'] = _format_users(tenant['users'])
+    return tenant
+
+
 @cfy.group(name='tenants')
 @cfy.options.verbose()
 def tenants():
@@ -49,6 +69,8 @@ def list(sort_by, descending, get_data, logger, client):
         is_descending=descending,
         _get_data=get_data
     )
+    if get_data:
+        tenants_list = [_format_tenant(tenant) for tenant in tenants_list]
     print_data(TENANT_COLUMNS, tenants_list, 'Tenants:')
 
 
@@ -225,6 +247,8 @@ def get(tenant_name, get_data, logger, client):
     """
     logger.info('Getting info for tenant `{0}`...'.format(tenant_name))
     tenant_details = client.tenants.get(tenant_name, _get_data=get_data)
+    if get_data:
+        _format_tenant(tenant_details)
     print_data(TENANT_COLUMNS, tenant_details, 'Requested tenant info:')
 
 

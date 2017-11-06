@@ -22,6 +22,13 @@ from ..utils import handle_client_error
 GROUP_COLUMNS = ['name', 'tenants', 'users']
 
 
+def _format_group(group):
+    tenants = dict((str(tenant), str(group['tenants'][tenant]))
+                   for tenant in group['tenants'])
+    group['tenants'] = str(tenants).strip('{}')
+    return group
+
+
 @cfy.group(name='user-groups')
 @cfy.options.verbose()
 def user_groups():
@@ -49,6 +56,8 @@ def list(sort_by, descending, get_data, logger, client):
         is_descending=descending,
         _get_data=get_data
     )
+    if get_data:
+        user_groups_list = [_format_group(group) for group in user_groups_list]
     print_data(GROUP_COLUMNS, user_groups_list, 'User groups:')
 
 
@@ -89,6 +98,8 @@ def get(user_group_name, get_data, logger, client):
         user_group_name,
         _get_data=get_data
     )
+    if get_data:
+        _format_group(user_group_details)
     print_data(GROUP_COLUMNS, user_group_details, 'Requested user group info:')
 
 

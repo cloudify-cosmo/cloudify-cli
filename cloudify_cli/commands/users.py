@@ -24,6 +24,16 @@ USER_COLUMNS = ['username', 'groups', 'role', 'tenants', 'active',
 USER_LABELS = {'role': 'system_wide_role'}
 
 
+def _format_user(user):
+    tenants = dict(
+        (str(tenant),
+         [str(role) for role in user['tenants'][tenant]['roles']])
+        for tenant in user['tenants']
+    )
+    user['tenants'] = str(tenants).strip('{}')
+    return user
+
+
 @cfy.group(name='users')
 @cfy.options.verbose()
 def users():
@@ -50,6 +60,8 @@ def list(sort_by, descending, get_data, logger, client):
         is_descending=descending,
         _get_data=get_data
     )
+    if get_data:
+        users_list = [_format_user(user) for user in users_list]
     print_data(USER_COLUMNS, users_list, 'Users:', labels=USER_LABELS)
 
 
@@ -125,6 +137,8 @@ def get(username, get_data, logger, client):
         user_details = client.users.get_self(_get_data=get_data)
     else:
         user_details = client.users.get(username, _get_data=get_data)
+    if get_data:
+        _format_user(user_details)
     print_data(USER_COLUMNS,
                user_details,
                'Requested user info:',
