@@ -385,6 +385,52 @@ def set_cmd(profile_name,
 
 
 @profiles.command(
+    name='set-cluster',
+    short_help='Set connection options for a cluster node')
+@cfy.options.cluster_node_name
+@cfy.options.ssh_user
+@cfy.options.ssh_key
+@cfy.options.ssh_port
+@cfy.options.rest_certificate
+def set_cluster(cluster_node_name,
+                ssh_user,
+                ssh_key,
+                ssh_port,
+                rest_certificate,
+                logger):
+    if not env.profile.cluster:
+        err = CloudifyCliError('The current profile is not a cluster profile!')
+        err.possible_solutions = [
+            "Select a different profile using `cfy profiles use`",
+            "Run `cfy cluster update-profile`"
+        ]
+        raise err
+
+    changed_node = None
+    for node in env.profile.cluster:
+        if node['name'] == cluster_node_name:
+            changed_node = node
+            break
+    else:
+        raise CloudifyCliError(
+            'Node {0} not found in the cluster'.format(cluster_node_name))
+
+    for source, target, label in [
+        (ssh_user, 'ssh_user', 'ssh user'),
+        (ssh_key, 'ssh_key', 'ssh key'),
+        (ssh_port, 'ssh_port', 'ssh port'),
+        (rest_certificate, 'cert', 'rest certificate'),
+    ]:
+        if source:
+            changed_node[target] = source
+            logger.info('Node {0}: setting {1} to `{2}`'
+                        .format(cluster_node_name, label, source))
+
+    env.profile.save()
+    logger.info('Settings saved successfully')
+
+
+@profiles.command(
     name='unset',
     short_help='Clear manager username/password/tenant from current profile')
 @cfy.options.manager_username_flag
