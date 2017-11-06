@@ -398,6 +398,10 @@ def set_cluster(cluster_node_name,
                 ssh_port,
                 rest_certificate,
                 logger):
+    """Set connection options for a cluster node.
+
+    `CLUSTER_NODE_NAME` is the name of the cluster node to set options for.
+    """
     if not env.profile.cluster:
         err = CloudifyCliError('The current profile is not a cluster profile!')
         err.possible_solutions = [
