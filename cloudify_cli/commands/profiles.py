@@ -387,7 +387,7 @@ def set_cmd(profile_name,
 @profiles.command(
     name='set-cluster',
     short_help='Set connection options for a cluster node')
-@cfy.options.cluster_node_name
+@cfy.argument('cluster-node-name')
 @cfy.options.ssh_user
 @cfy.options.ssh_key
 @cfy.options.ssh_port
