@@ -41,10 +41,11 @@ def secrets():
 @cfy.options.secret_string
 @cfy.options.secret_file
 @cfy.options.verbose()
+@cfy.options.private_resource
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def create(key, secret_string, secret_file, logger, client):
+def create(key, secret_string, secret_file, private_resource, logger, client):
     """Create a new secret (key-value pair)
 
     `KEY` is the new secret's key
@@ -68,7 +69,7 @@ def create(key, secret_string, secret_file, logger, client):
                    'tenant or as a global secret'.format(key)
 
     with handle_client_error(409, graceful_msg, logger):
-        client.secrets.create(key, secret_string)
+        client.secrets.create(key, secret_string, private_resource)
         logger.info('Secret `{0}` created'.format(key))
 
 
