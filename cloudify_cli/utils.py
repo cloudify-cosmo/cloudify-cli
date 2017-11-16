@@ -32,6 +32,7 @@ from .logger import get_logger
 from .exceptions import CloudifyCliError
 from .constants import SUPPORTED_ARCHIVE_TYPES
 
+from cloudify_rest_client.constants import AvailabilityState
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 
@@ -283,3 +284,14 @@ def prettify_client_error(status_codes, logger):
         if e.status_code not in status_codes:
             raise
         logger.info(e.message)
+
+
+def get_availability(global_availability, tenant_availability):
+    if not global_availability and not tenant_availability:
+        raise CloudifyCliError(
+            'You must choose the availability to be set, tenant or global '
+            'with the options -t or -g'
+        )
+
+    return AvailabilityState.GLOBAL if global_availability \
+        else AvailabilityState.TENANT
