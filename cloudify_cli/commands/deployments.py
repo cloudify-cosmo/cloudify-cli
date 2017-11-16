@@ -18,10 +18,11 @@ import os
 import json
 from StringIO import StringIO
 
-from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
-from cloudify_rest_client.exceptions import UnknownDeploymentInputError
+from cloudify_rest_client.constants import AvailabilityState
 from cloudify_rest_client.exceptions import DeploymentPluginNotFound
+from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_rest_client.exceptions import UnknownDeploymentSecretError
+from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 from cloudify_rest_client.exceptions import UnsupportedDeploymentGetSecretError
 
 from .. import utils
@@ -30,6 +31,7 @@ from ..table import print_data
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger
 from .. import execution_events_fetcher
+from ..utils import prettify_client_error
 from ..constants import DEFAULT_BLUEPRINT_PATH, RESOURCE_LABELS
 from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 
@@ -310,6 +312,34 @@ def manager_inputs(deployment_id, logger, client, tenant_name):
         inputs_.write(' - "{0}":{1}'.format(input_name, os.linesep))
         inputs_.write('     Value: {0}{1}'.format(input, os.linesep))
     logger.info(inputs_.getvalue())
+
+
+@cfy.command(name='set-availability',
+             short_help="Set the deployment's availability [manager only]")
+@cfy.argument('deployment-id')
+@cfy.options.tenant_availability
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client(use_tenant_in_header=True)
+@cfy.pass_logger
+def manager_set_availability(deployment_id,
+                             tenant_availability,
+                             logger,
+                             client):
+    """Set the deployment's availability to tenant
+
+    `DEPLOYMENT_ID` is the id of the deployment to update
+    """
+    if not tenant_availability:
+        raise CloudifyCliError(
+            'The tenant_availability option must be passed'
+        )
+    availability = AvailabilityState.TENANT
+    status_codes = [400, 403, 404]
+    with prettify_client_error(status_codes, logger):
+        client.deployments.set_availability(deployment_id, availability)
+        logger.info('Deployment `{0}` was set to {1}'.format(deployment_id,
+                                                             availability))
 
 
 @cfy.command(name='inputs', short_help='Show deployment inputs [locally]')

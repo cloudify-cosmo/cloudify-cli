@@ -20,7 +20,9 @@ from ..cli import cfy
 from ..constants import RESOURCE_LABELS
 from ..exceptions import CloudifyCliError
 from ..table import print_data, print_details
-from ..utils import handle_client_error, prettify_client_error
+from ..utils import (handle_client_error,
+                     prettify_client_error,
+                     get_availability)
 
 SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'resource_availability',
                    'tenant_name', 'created_by']
@@ -175,3 +177,31 @@ def set_global(key, logger, client):
     with prettify_client_error(status_codes, logger):
         client.secrets.set_global(key)
         logger.info('Secret `{0}` was set to global'.format(key))
+        logger.info("This command will be deprecated soon, please use the "
+                    "'set-availability' command instead")
+
+
+@secrets.command(name='set-availability',
+                 short_help="Set the secret's availability")
+@cfy.argument('key', callback=cfy.validate_name)
+@cfy.options.tenant_availability
+@cfy.options.global_availability()
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client(use_tenant_in_header=True)
+@cfy.pass_logger
+def set_availability(key,
+                     tenant_availability,
+                     global_availability,
+                     logger,
+                     client):
+    """Set the secret's availability
+
+    `KEY` is the secret's key
+    """
+    availability = get_availability(global_availability, tenant_availability)
+    status_codes = [400, 403, 404]
+    with prettify_client_error(status_codes, logger):
+        client.secrets.set_availability(key, availability)
+        logger.info('Secret `{0}` was set to {1}'.format(key,
+                                                         availability))

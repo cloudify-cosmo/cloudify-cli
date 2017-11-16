@@ -9,6 +9,7 @@ from ..cfy import ClickInvocationException
 from ... import env
 from ...config import config
 from .test_base import CliCommandTest
+from cloudify_cli.exceptions import CloudifyCliError
 from .constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH, \
     SAMPLE_ARCHIVE_PATH
 
@@ -291,3 +292,24 @@ class BlueprintsTest(CliCommandTest):
     def test_blueprints_set_global(self):
         self.client.blueprints.set_global = MagicMock()
         self.invoke('cfy blueprints set-global a-blueprint-id')
+
+    def test_blueprints_set_availability(self):
+        self.client.blueprints.set_availability = MagicMock()
+        self.invoke('cfy blueprints set-availability a-blueprint-id -t')
+
+    def test_blueprints_set_availability_missing_argument(self):
+        self.invoke(
+            'cfy blueprints set-availability a-blueprint-id',
+            err_str_segment='You must choose the availability to be set, '
+                            'tenant or global with the options -t or -g',
+            exception=CloudifyCliError
+        )
+
+    def test_blueprints_set_availability_mutually_exclusive_arguments(self):
+        outcome = self.invoke(
+            'cfy blueprints set-availability a-blueprint-id -t -g',
+            err_str_segment='2',  # Exit code
+            exception=SystemExit
+        )
+        self.assertIn('mutually exclusive with arguments: '
+                      '[tenant_availability]', outcome.output)
