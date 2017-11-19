@@ -8,7 +8,7 @@ CLI_BRANCH=$5
 PACKAGER_BRANCH=$6
 export REPO=$7
 export CORE_TAG_NAME="4.2"
-export CORE_BRANCH="master"
+export CORE_BRANCH="4.2-build"
 
 
 # OSX preparation
