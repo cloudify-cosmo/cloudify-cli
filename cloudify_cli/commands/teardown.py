@@ -41,7 +41,7 @@ def teardown(ctx, force, ignore_deployments):
         # 1. bootstrap was unsuccessful
         # 2. we are in the wrong directory
         try:
-            bs.load_env()
+            env.load_env()
             # this means we are probably in the right directory
             # which means the teardown was unsuccessful, try to teardown
             # anyway

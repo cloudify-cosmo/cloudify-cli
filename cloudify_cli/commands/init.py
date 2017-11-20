@@ -30,7 +30,6 @@ from .. import exceptions
 from ..config import config
 from ..logger import DEFAULT_LOG_FILE
 from ..logger import configure_loggers
-from ..bootstrap import bootstrap as bs
 from ..exceptions import CloudifyCliError
 
 
@@ -161,7 +160,7 @@ def init_manager_profile(profile_name,
                 os.remove(config.CLOUDIFY_CONFIG_PATH)
             else:
                 os.remove(context_file_path)
-            bs.delete_workdir()
+            env.delete_workdir()
         else:
             _raise_initialized_error(profile_name)
 

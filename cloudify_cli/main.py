@@ -38,7 +38,6 @@ from .commands import secrets
 from .commands import teardown
 from .commands import profiles
 from .commands import rollback
-from .commands import bootstrap
 from .commands import snapshots
 from .commands import uninstall
 from .commands import workflows
@@ -80,7 +79,7 @@ def _register_commands():
     _cfy.add_command(init.init)
     _cfy.add_command(status.status)
     _cfy.add_command(profiles.profiles)
-    _cfy.add_command(bootstrap.bootstrap)
+
 
     # Manager only commands
     _cfy.add_command(dev.dev)
