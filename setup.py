@@ -31,7 +31,6 @@ setup(
         'cloudify_cli': [
             'VERSION',
             'config/config_template.yaml',
-            'bootstrap/resources/install_plugins.sh.template'
         ],
     },
     license='LICENSE',
