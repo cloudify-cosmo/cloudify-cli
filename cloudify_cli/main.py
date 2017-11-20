@@ -80,7 +80,6 @@ def _register_commands():
     _cfy.add_command(status.status)
     _cfy.add_command(profiles.profiles)
 
-
     # Manager only commands
     _cfy.add_command(dev.dev)
     _cfy.add_command(ssh.ssh)
