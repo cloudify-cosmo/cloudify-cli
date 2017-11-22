@@ -52,10 +52,5 @@ build do
     command ["#{install_dir}/embedded/bin/pip",
              "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.1.zip"]
 
-
-    erb :dest => "#{install_dir}/bin/cfy",
-      :source => "cfy_wrapper.erb",
-      :mode => 0755,
-      :vars => { :install_dir => install_dir }
   end
 end
