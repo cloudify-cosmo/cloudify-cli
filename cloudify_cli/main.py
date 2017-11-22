@@ -36,7 +36,6 @@ from .commands import plugins
 from .commands import tenants
 from .commands import secrets
 from .commands import profiles
-from .commands import rollback
 from .commands import snapshots
 from .commands import uninstall
 from .commands import workflows
@@ -91,7 +90,6 @@ def _register_commands():
     _cfy.add_command(cluster.cluster)
     _cfy.add_command(plugins.plugins)
     _cfy.add_command(tenants.tenants)
-    _cfy.add_command(rollback.rollback)
     _cfy.add_command(snapshots.snapshots)
     _cfy.add_command(user_groups.user_groups)
     _cfy.add_command(maintenance_mode.maintenance_mode)
