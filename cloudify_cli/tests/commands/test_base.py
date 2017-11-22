@@ -16,17 +16,15 @@ import os
 import os as utils_os
 
 import testtools
-from mock import patch, MagicMock
+from mock import patch
 
 from cloudify.utils import setup_logger
 from cloudify_rest_client import CloudifyClient
-from cloudify_rest_client.maintenance import Maintenance
 from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
 
 from .. import cfy
 from ... import env
 from ... import utils
-from ...commands import upgrade
 from ...exceptions import CloudifyCliError
 
 
@@ -141,36 +139,3 @@ class CliCommandTest(testtools.TestCase):
 
     def _read_context(self):
         return env.get_profile_context()
-
-
-class BaseUpgradeTest(CliCommandTest):
-
-    def _test_not_in_maintenance(self, action):
-        self.client.maintenance_mode.status = MagicMock(
-            return_value=Maintenance({'status': 'deactivated'}))
-        self.invoke('cfy {0} path -i private_ip=localhost'.format(action),
-                    'To perform an upgrade of a manager to a newer '
-                    'version, the manager must be in maintenance mode')
-
-    def _test_no_bp(self, action):
-        self.client.maintenance_mode.status = MagicMock(
-            return_value=Maintenance({'status': 'active'}))
-        upgrade.profile = env.profile
-        self.invoke('cfy {0} path -i private_ip=localhost '
-                    '-i ssh_key_filename=key_path -i ssh_port=22'
-                    .format(action),
-                    "No such file or directory: 'path'",
-                    exception=IOError)
-
-    def _test_no_private_ip(self, action):
-        self.client.maintenance_mode.status = MagicMock(
-            return_value=Maintenance({'status': 'active'}))
-        self.invoke('cfy {0} path'.format(action),
-                    'Private IP must be provided for the '
-                    'upgrade/rollback process')
-
-    def _test_no_inputs(self, action):
-        self.client.maintenance_mode.status = MagicMock(
-            return_value=Maintenance({'status': 'active'}))
-        self.invoke('cfy {0} path --inputs inputs'.format(action),
-                    'Invalid input: inputs')
