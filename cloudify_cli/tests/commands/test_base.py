@@ -58,19 +58,6 @@ class CliCommandTest(testtools.TestCase):
         self.original_utils_os_getcwd = utils_os.getcwd
         utils_os.getcwd = lambda: env.CLOUDIFY_WORKDIR
 
-    def tearDown(self):
-        super(CliCommandTest, self).tearDown()
-        cfy.purge_dot_cloudify()
-
-        env.get_rest_client = self.original_utils_get_rest_client
-        utils.get_cwd = self.original_utils_get_cwd = utils.get_cwd
-        utils_os.getcwd = self.original_utils_os_getcwd = utils_os.getcwd
-
-        # empty log file
-        if os.path.exists(env.DEFAULT_LOG_FILE):
-            with open(env.DEFAULT_LOG_FILE, 'w') as f:
-                f.write('')
-
     # TODO: Consider separating
     def invoke(self,
                command,
