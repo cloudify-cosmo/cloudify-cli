@@ -35,7 +35,6 @@ from .commands import install
 from .commands import plugins
 from .commands import tenants
 from .commands import secrets
-from .commands import teardown
 from .commands import profiles
 from .commands import rollback
 from .commands import snapshots
@@ -92,7 +91,6 @@ def _register_commands():
     _cfy.add_command(cluster.cluster)
     _cfy.add_command(plugins.plugins)
     _cfy.add_command(tenants.tenants)
-    _cfy.add_command(teardown.teardown)
     _cfy.add_command(rollback.rollback)
     _cfy.add_command(snapshots.snapshots)
     _cfy.add_command(user_groups.user_groups)
