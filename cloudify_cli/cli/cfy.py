@@ -816,6 +816,13 @@ class Options(object):
             required=False,
             help=helptexts.SECRET_FILE)
 
+        self.secret_upsert = click.option(
+            '-u',
+            '--upsert',
+            is_flag=True,
+            help=helptexts.SECRET_UPSERT,
+        )
+
         # same as --inputs, name changed for consistency
         self.cluster_node_options = click.option(
             '-o',
