@@ -13,6 +13,7 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 import os
+import shutil
 import os as utils_os
 
 import testtools
@@ -47,7 +48,7 @@ class CliCommandTest(testtools.TestCase):
 
         def get_mock_rest_client(*args, **kwargs):
             if 'tenant_name' in kwargs:
-                self.client._client.headers[CLOUDIFY_TENANT_HEADER] =\
+                self.client._client.headers[CLOUDIFY_TENANT_HEADER] = \
                     kwargs['tenant_name']
             return self.client
 
@@ -57,6 +58,13 @@ class CliCommandTest(testtools.TestCase):
         utils.get_cwd = lambda: env.CLOUDIFY_WORKDIR
         self.original_utils_os_getcwd = utils_os.getcwd
         utils_os.getcwd = lambda: env.CLOUDIFY_WORKDIR
+        self.addCleanup(self._cleanup)
+
+    def _cleanup(self):
+        shutil.rmtree(env.CLOUDIFY_WORKDIR, ignore_errors=True)
+        env.get_rest_client = self.original_utils_get_rest_client
+        utils.get_cwd = self.original_utils_get_cwd
+        utils_os.getcwd = self.original_utils_os_getcwd
 
     # TODO: Consider separating
     def invoke(self,
