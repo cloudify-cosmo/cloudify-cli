@@ -816,11 +816,11 @@ class Options(object):
             required=False,
             help=helptexts.SECRET_FILE)
 
-        self.secret_upsert = click.option(
+        self.secret_update_if_exists = click.option(
             '-u',
-            '--upsert',
+            '--update-if-exists',
             is_flag=True,
-            help=helptexts.SECRET_UPSERT,
+            help=helptexts.SECRET_UPDATE_IF_EXISTS,
         )
 
         # same as --inputs, name changed for consistency
