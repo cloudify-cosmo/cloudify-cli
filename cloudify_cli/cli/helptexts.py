@@ -236,6 +236,7 @@ PROFILE_NAME = 'Name of the profile to use'
 SECRET_VALUE = "The secret's value to be set"
 SECRET_STRING = "The string to use as the secret's value"
 SECRET_FILE = "The secret's file to use its content as value to be set"
+SECRET_UPDATE_IF_EXISTS = 'Update secret value if secret key already exists'
 CLUSTER_NODE_OPTIONS = 'Additional options for the cluster node '\
                        'configuration {0}'.format(INPUTS_PARAMS_USAGE)
 

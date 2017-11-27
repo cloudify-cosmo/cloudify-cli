@@ -816,6 +816,13 @@ class Options(object):
             required=False,
             help=helptexts.SECRET_FILE)
 
+        self.secret_update_if_exists = click.option(
+            '-u',
+            '--update-if-exists',
+            is_flag=True,
+            help=helptexts.SECRET_UPDATE_IF_EXISTS,
+        )
+
         # same as --inputs, name changed for consistency
         self.cluster_node_options = click.option(
             '-o',
