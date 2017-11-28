@@ -80,8 +80,8 @@ def create(user_group_name,
     `USER_GROUP_NAME` is the name of the new user group
     """
     client.user_groups.create(user_group_name,
-                              ldap_group_dn=ldap_distinguished_name,
-                              role=security_role)
+                              security_role,
+                              ldap_group_dn=ldap_distinguished_name)
     logger.info('Group `{0}` created'.format(user_group_name))
 
 
