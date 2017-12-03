@@ -13,7 +13,6 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 import os
-import shutil
 import os as utils_os
 
 import testtools
@@ -58,13 +57,19 @@ class CliCommandTest(testtools.TestCase):
         utils.get_cwd = lambda: env.CLOUDIFY_WORKDIR
         self.original_utils_os_getcwd = utils_os.getcwd
         utils_os.getcwd = lambda: env.CLOUDIFY_WORKDIR
-        self.addCleanup(self._cleanup)
 
-    def _cleanup(self):
-        shutil.rmtree(env.CLOUDIFY_WORKDIR, ignore_errors=True)
+    def tearDown(self):
+        super(CliCommandTest, self).tearDown()
+        cfy.purge_dot_cloudify()
+
         env.get_rest_client = self.original_utils_get_rest_client
-        utils.get_cwd = self.original_utils_get_cwd
-        utils_os.getcwd = self.original_utils_os_getcwd
+        utils.get_cwd = self.original_utils_get_cwd = utils.get_cwd
+        utils_os.getcwd = self.original_utils_os_getcwd = utils_os.getcwd
+
+        # empty log file
+        if os.path.exists(env.DEFAULT_LOG_FILE):
+            with open(env.DEFAULT_LOG_FILE, 'w') as f:
+                f.write('')
 
     # TODO: Consider separating
     def invoke(self,

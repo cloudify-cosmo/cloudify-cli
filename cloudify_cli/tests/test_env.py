@@ -70,6 +70,11 @@ class TestCLIBase(CliCommandTest):
         super(TestCLIBase, self).setUp()
         cfy.invoke('init -r')
 
+    def tearDown(self):
+        super(TestCLIBase, self).tearDown()
+        self._reset_verbosity_and_loggers()
+        cfy.purge_dot_cloudify()
+
     def test_verbosity(self):
         def test(flag, expected):
             self._reset_verbosity_and_loggers()
@@ -101,6 +106,10 @@ class CliEnvTests(CliCommandTest):
     def setUp(self):
         super(CliEnvTests, self).setUp()
         cfy.invoke('init -r')
+
+    def tearDown(self):
+        super(CliEnvTests, self).tearDown()
+        cfy.purge_dot_cloudify()
 
     def _make_mock_profile(self, profile_name='10.10.1.10'):
         profile_path = os.path.join(env.PROFILES_DIR, profile_name)
@@ -811,6 +820,10 @@ class TestCLIConfig(CliCommandTest):
         self.addCleanup(patcher.stop)
         patcher.start()
 
+    def tearDown(self):
+        super(TestCLIConfig, self).tearDown()
+        os.remove(self.config_file_path)
+
     def test_colors_configuration(self):
         self.assertTrue(config.is_use_colors())
 
@@ -921,6 +934,10 @@ class GetImportResolverTests(CliCommandTest):
         cfy.invoke('cfy init -r')
         self.use_manager()
 
+    def tearDown(self):
+        super(GetImportResolverTests, self).tearDown()
+        cfy.purge_dot_cloudify()
+
     def test_get_resolver(self):
         resolver_configuration = create_resolver_configuration(
             implementation='mock implementation',
@@ -1014,6 +1031,13 @@ class TestGetRestClient(CliCommandTest):
         with open(CERT_PATH, 'w') as cert:
             cert.write('cert content')
 
+    def tearDown(self):
+        super(TestGetRestClient, self).tearDown()
+        os.remove(CERT_PATH)
+        del os.environ[constants.CLOUDIFY_USERNAME_ENV]
+        del os.environ[constants.CLOUDIFY_PASSWORD_ENV]
+        del os.environ[constants.CLOUDIFY_SSL_TRUST_ALL]
+        del os.environ[constants.LOCAL_REST_CERT_FILE]
         cfy.purge_dot_cloudify()
 
     def test_get_rest_client(self):
