@@ -228,9 +228,6 @@ def _create_profile(
         rest_certificate
     )
 
-    # delete the previous manager deployment if exists.
-    env.delete_workdir()
-
 
 @profiles.command(name='purge-incomplete',
                   short_help='Purge profiles in incomplete bootstrap state')

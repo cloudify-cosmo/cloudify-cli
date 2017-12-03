@@ -33,7 +33,6 @@ from cloudify_rest_client.client import HTTPClient
 from cloudify_rest_client.exceptions import (CloudifyClientError,
                                              RemovedFromCluster,
                                              NotClusterMaster)
-from cloudify.workflows import local
 from . import constants
 from .exceptions import CloudifyCliError
 
@@ -605,28 +604,6 @@ class CloudifyClusterClient(CloudifyClient):
     def client_class(self, *args, **kwargs):
         kwargs.setdefault('profile', self._profile)
         return ClusterHTTPClient(*args, **kwargs)
-
-
-def delete_workdir():
-    active_profile = get_active_profile()
-    profile_dir = get_profile_dir(active_profile)
-    workdir = os.path.join(profile_dir, 'bootstrap')
-    if os.path.isdir(workdir):
-        shutil.rmtree(workdir)
-
-
-def _workdir():
-    active_profile = get_active_profile()
-    profile_dir = get_profile_dir(active_profile)
-    workdir = os.path.join(profile_dir, 'bootstrap')
-    if not os.path.isdir(workdir):
-        os.makedirs(workdir)
-    return workdir
-
-
-def load_env(name=_ENV_NAME):
-    storage = local.FileStorage(storage_dir=_workdir())
-    return local.load_env(name=name, storage=storage)
 
 
 def build_fabric_env(manager_ip, ssh_user, ssh_port, ssh_key_path):

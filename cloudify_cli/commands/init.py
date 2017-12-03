@@ -160,7 +160,6 @@ def init_manager_profile(profile_name,
                 os.remove(config.CLOUDIFY_CONFIG_PATH)
             else:
                 os.remove(context_file_path)
-            env.delete_workdir()
         else:
             _raise_initialized_error(profile_name)
 
