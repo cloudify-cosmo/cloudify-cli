@@ -97,7 +97,7 @@ gitTagExists=$(git tag -l $CORE_TAG_NAME)
 #else
 #    git checkout ${CORE_BRANCH}
 #fi
-git checkout -b 
+git checkout -b CFY-7525-Remove-cloudify-manager-blueprints-from-CLI-packages
 # Get Omnibus software from Chef Omnibus repo
 git clone https://github.com/chef/omnibus-software.git --depth 1 -q
 list_of_omnibus_softwares="gdbm cacerts config_guess gdbm libffi makedepend
