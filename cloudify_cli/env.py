@@ -33,10 +33,10 @@ from cloudify_rest_client.client import HTTPClient
 from cloudify_rest_client.exceptions import (CloudifyClientError,
                                              RemovedFromCluster,
                                              NotClusterMaster)
-
 from . import constants
 from .exceptions import CloudifyCliError
 
+_ENV_NAME = 'manager'
 DEFAULT_LOG_FILE = os.path.expanduser(
     '{0}/cloudify-{1}/cloudify-cli.log'.format(
         tempfile.gettempdir(), getpass.getuser()))
@@ -604,6 +604,15 @@ class CloudifyClusterClient(CloudifyClient):
     def client_class(self, *args, **kwargs):
         kwargs.setdefault('profile', self._profile)
         return ClusterHTTPClient(*args, **kwargs)
+
+
+def build_fabric_env(manager_ip, ssh_user, ssh_port, ssh_key_path):
+    return {
+        "host_string": manager_ip,
+        "user": ssh_user,
+        "port": ssh_port,
+        "key_filename": ssh_key_path
+    }
 
 
 profile = get_profile_context(suppress_error=True)

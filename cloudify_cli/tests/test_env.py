@@ -30,16 +30,12 @@ from cStringIO import StringIO
 from mock import MagicMock, patch
 from itertools import chain, repeat, count
 
-import cloudify
 from cloudify import logs
-from cloudify.workflows import local
 
-from cloudify_rest_client.nodes import Node
 from cloudify_rest_client.executions import Execution
 from cloudify_rest_client.exceptions import NotClusterMaster
 from cloudify_rest_client.client import CloudifyClient
 from cloudify_rest_client.client import DEFAULT_API_VERSION
-from cloudify_rest_client.node_instances import NodeInstance
 
 import dsl_parser
 from dsl_parser.constants import IMPORT_RESOLVER_KEY, \
@@ -54,7 +50,6 @@ from .. import logger
 from .. import constants
 from ..config import config
 from .. import local as cli_local
-from ..bootstrap import bootstrap
 from ..exceptions import CloudifyCliError
 from ..colorful_event import ColorfulEvent
 from ..exceptions import ExecutionTimeoutError
@@ -1009,62 +1004,6 @@ class ImportResolverLocalUseTests(CliCommandTest):
         self._test_using_import_resolver(
             'blueprints validate', blueprint_path, blueprints)
 
-    @mock.patch.object(local._Environment, 'execute')
-    @mock.patch.object(dsl_parser.tasks, 'prepare_deployment_plan')
-    def test_bootstrap_uses_import_resolver_for_parsing(self, *_):
-        blueprint_path = '{0}/local/{1}.yaml'.format(
-            BLUEPRINTS_DIR, 'blueprint')
-
-        old_validate_dep_size = bootstrap.validate_manager_deployment_size
-        old_load_env = bootstrap.load_env
-        old_init = cloudify.workflows.local.FileStorage.init
-        old_get_nodes = cloudify.workflows.local.FileStorage.get_nodes
-        old_get_node_instances = \
-            cloudify.workflows.local.FileStorage.get_node_instances
-
-        bootstrap.validate_manager_deployment_size =\
-            lambda blueprint_path: None
-
-        def mock_load_env(name):
-            raise IOError('mock load env')
-        bootstrap.load_env = mock_load_env
-
-        def mock_init(self, name, plan, nodes, node_instances, blueprint_path,
-                      provider_context):
-            return 'mock init'
-        bootstrap.local.FileStorage.init = mock_init
-
-        def mock_get_nodes(self):
-            return [
-                Node({'id': 'mock_node',
-                      'type_hierarchy': 'cloudify.nodes.CloudifyManager'})
-            ]
-        cloudify.workflows.local.FileStorage.get_nodes = mock_get_nodes
-
-        def mock_get_node_instances(self):
-            return [
-                NodeInstance({'node_id': 'mock_node',
-                              'runtime_properties': {
-                                  'provider': 'mock_provider',
-                                  'manager_ip': 'mock_manager_ip',
-                                  'ssh_user': 'mock_ssh_user',
-                                  'ssh_key_path': 'mock_ssh_key_path',
-                                  'rest_port': 'mock_rest_port'}})
-            ]
-        cloudify.workflows.local.FileStorage.get_node_instances = \
-            mock_get_node_instances
-
-        try:
-            self._test_using_import_resolver(
-                'bootstrap', blueprint_path, dsl_parser.parser)
-        finally:
-            bootstrap.validate_manager_deployment_size = old_validate_dep_size
-            bootstrap.load_env = old_load_env
-            bootstrap.local.FileStorage.init = old_init
-            cloudify.workflows.local.FileStorage.get_nodes = old_get_nodes
-            cloudify.workflows.local.FileStorage.get_node_instances = \
-                old_get_node_instances
-
     @mock.patch('cloudify_cli.local.get_storage', new=mock.MagicMock)
     @mock.patch('cloudify.workflows.local._prepare_nodes_and_instances')
     @mock.patch('dsl_parser.tasks.prepare_deployment_plan')
@@ -1099,7 +1038,6 @@ class TestGetRestClient(CliCommandTest):
         del os.environ[constants.CLOUDIFY_PASSWORD_ENV]
         del os.environ[constants.CLOUDIFY_SSL_TRUST_ALL]
         del os.environ[constants.LOCAL_REST_CERT_FILE]
-
         cfy.purge_dot_cloudify()
 
     def test_get_rest_client(self):

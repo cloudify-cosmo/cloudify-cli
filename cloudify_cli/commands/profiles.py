@@ -29,7 +29,6 @@ from .. import utils
 from ..cli import cfy
 from .. import constants
 from ..cli import helptexts
-from ..bootstrap import bootstrap as bs
 from ..exceptions import CloudifyCliError
 
 EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
@@ -228,9 +227,6 @@ def _create_profile(
         rest_protocol,
         rest_certificate
     )
-
-    # delete the previous manager deployment if exists.
-    bs.delete_workdir()
 
 
 @profiles.command(name='purge-incomplete',
