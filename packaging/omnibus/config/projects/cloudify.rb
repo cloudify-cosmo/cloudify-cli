@@ -31,7 +31,6 @@ build_version "#{cloudify_ver}-#{cloudify_pre}"
 
 # Creates required build directories
 dependency "preparation"
-dependency "cloudify-manager-blueprints"
 dependency "cloudify-manager"
 dependency "script-plugin"
 dependency "aws-plugin"

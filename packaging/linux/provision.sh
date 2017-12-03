@@ -92,12 +92,12 @@ rm -rf cloudify-cli
 git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd ~/cloudify-cli/packaging/omnibus
 gitTagExists=$(git tag -l $CORE_TAG_NAME)
-if [ "$CORE_BRANCH" != "master" ]; then
-    git checkout -b ${CORE_BRANCH} origin/${CORE_BRANCH}
-else
-    git checkout ${CORE_BRANCH}
-fi
-
+#if [ "$CORE_BRANCH" != "master" ]; then
+#    git checkout -b ${CORE_BRANCH} origin/${CORE_BRANCH}
+#else
+#    git checkout ${CORE_BRANCH}
+#fi
+git checkout -b 
 # Get Omnibus software from Chef Omnibus repo
 git clone https://github.com/chef/omnibus-software.git --depth 1 -q
 list_of_omnibus_softwares="gdbm cacerts config_guess gdbm libffi makedepend
