@@ -19,7 +19,10 @@ from ..cli import cfy
 from ..table import print_data
 from ..utils import handle_client_error
 
-TENANT_COLUMNS = ['name', 'groups', 'users']
+TENANT_COLUMNS = ['name', 'groups']
+GET_DATA_COLUMNS = ['direct_users', 'group_users']
+NO_GET_DATA_COLUMNS = ['users']
+TENANT_LABELS = {'direct_users': 'direct users', 'group_users': 'group users'}
 
 
 def _format_groups(groups):
@@ -36,9 +39,30 @@ def _format_users(users):
     return str(users).strip('{}')
 
 
+def _format_direct_users(users):
+    return str(
+        dict((str(user), str(users[user])) for user in users)).strip('{}')
+
+
+def _format_group_users(group_users):
+    group_users = dict(
+        (str(group),
+         dict(zip(
+             ('role',
+              'users'),
+             (str(group_users[group]['role']),
+              [str(user) for user in group_users[group]['users']])
+         )))
+        for group in group_users
+    )
+    return str(group_users)[1:-1]
+
+
 def _format_tenant(tenant):
     tenant['groups'] = _format_groups(tenant['groups'])
     tenant['users'] = _format_users(tenant['users'])
+    tenant['direct_users'] = _format_direct_users(tenant.direct_users)
+    tenant['group_users'] = _format_group_users(tenant.group_users)
     return tenant
 
 
@@ -69,9 +93,14 @@ def list(sort_by, descending, get_data, logger, client):
         is_descending=descending,
         _get_data=get_data
     )
+    # copy list
+    columns = [] + TENANT_COLUMNS
     if get_data:
         tenants_list = [_format_tenant(tenant) for tenant in tenants_list]
-    print_data(TENANT_COLUMNS, tenants_list, 'Tenants:')
+        columns += GET_DATA_COLUMNS
+    else:
+        columns += NO_GET_DATA_COLUMNS
+    print_data(columns, tenants_list, 'Tenants:', labels=TENANT_LABELS)
 
 
 @tenants.command(name='create',
@@ -247,9 +276,17 @@ def get(tenant_name, get_data, logger, client):
     """
     logger.info('Getting info for tenant `{0}`...'.format(tenant_name))
     tenant_details = client.tenants.get(tenant_name, _get_data=get_data)
+    # copy list
+    columns = [] + TENANT_COLUMNS
     if get_data:
         _format_tenant(tenant_details)
-    print_data(TENANT_COLUMNS, tenant_details, 'Requested tenant info:')
+        columns += GET_DATA_COLUMNS
+    else:
+        columns += NO_GET_DATA_COLUMNS
+    print_data(columns,
+               tenant_details,
+               'Requested tenant info:',
+               labels=TENANT_LABELS)
 
 
 @tenants.command(name='delete',
