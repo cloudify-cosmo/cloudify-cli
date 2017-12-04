@@ -19,18 +19,40 @@ from ..cli import cfy
 from ..table import print_data
 from ..utils import handle_client_error
 
-USER_COLUMNS = ['username', 'groups', 'role', 'tenants', 'active',
+USER_COLUMNS = ['username', 'groups', 'role', 'group_system_roles', 'active',
                 'last_login_at']
-USER_LABELS = {'role': 'system_wide_role'}
+GET_DATA_COLUMNS = ['user_tenants', 'group_tenants']
+NO_GET_DATA_COLUMNS = ['tenants']
+USER_LABELS = {'role': 'system wide role',
+               'group_system_roles': 'system wide roles via groups'}
 
 
 def _format_user(user):
-    tenants = dict(
-        (str(tenant),
-         [str(role) for role in user['tenants'][tenant]['roles']])
-        for tenant in user['tenants']
+    user_tenants = dict(
+        (str(tenant), str(user.user_tenants[tenant]))
+        for tenant in user.user_tenants
     )
-    user['tenants'] = str(tenants).strip('{}')
+    group_tenants = dict(
+        (str(tenant),
+         dict(
+             (str(role),
+              [str(group) for group in user.group_tenants[tenant][role]])
+             for role in user.group_tenants[tenant]
+         ))
+        for tenant in user.group_tenants
+    )
+    user['user_tenants'] = str(user_tenants)[1:-1]
+    user['group_tenants'] = str(group_tenants)[1:-1]
+    return user
+
+
+def _format_group_system_roles(user):
+    group_system_roles = dict(
+        (str(role),
+         [str(user_group) for user_group in user['group_system_roles'][role]])
+        for role in user['group_system_roles']
+    )
+    user['group_system_roles'] = str(group_system_roles).strip('{}')
     return user
 
 
@@ -60,9 +82,15 @@ def list(sort_by, descending, get_data, logger, client):
         is_descending=descending,
         _get_data=get_data
     )
+    # copy list
+    columns = [] + USER_COLUMNS
+    users_list = [_format_group_system_roles(user) for user in users_list]
     if get_data:
         users_list = [_format_user(user) for user in users_list]
-    print_data(USER_COLUMNS, users_list, 'Users:', labels=USER_LABELS)
+        columns += GET_DATA_COLUMNS
+    else:
+        columns += NO_GET_DATA_COLUMNS
+    print_data(columns, users_list, 'Users:', labels=USER_LABELS)
 
 
 @users.command(name='create', short_help='Create a user [manager only]')
@@ -137,9 +165,14 @@ def get(username, get_data, logger, client):
         user_details = client.users.get_self(_get_data=get_data)
     else:
         user_details = client.users.get(username, _get_data=get_data)
+        # copy list
+    columns = [] + USER_COLUMNS
     if get_data:
         _format_user(user_details)
-    print_data(USER_COLUMNS,
+        columns += GET_DATA_COLUMNS
+    else:
+        columns += NO_GET_DATA_COLUMNS
+    print_data(columns,
                user_details,
                'Requested user info:',
                labels=USER_LABELS)
