@@ -84,14 +84,12 @@ def restore(snapshot_id,
 @cfy.argument('snapshot-id', required=False)
 @cfy.options.include_metrics
 @cfy.options.exclude_credentials
-@cfy.options.private_resource
 @cfy.options.verbose()
 @cfy.pass_client()
 @cfy.pass_logger
 def create(snapshot_id,
            include_metrics,
            exclude_credentials,
-           private_resource,
            logger,
            client):
     """Create a snapshot on the manager
@@ -106,8 +104,7 @@ def create(snapshot_id,
 
     execution = client.snapshots.create(snapshot_id,
                                         include_metrics,
-                                        not exclude_credentials,
-                                        private_resource)
+                                        not exclude_credentials)
     logger.info("Started workflow execution. The execution's id is {0}".format(
         execution.id))
 
@@ -135,14 +132,12 @@ def delete(snapshot_id, logger, client, tenant_name):
                    short_help='Upload a snapshot [manager only]')
 @cfy.argument('snapshot_path')
 @cfy.options.snapshot_id
-@cfy.options.private_resource
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.pass_client()
 @cfy.pass_logger
 def upload(snapshot_path,
            snapshot_id,
-           private_resource,
            logger,
            client,
            tenant_name):
@@ -158,7 +153,6 @@ def upload(snapshot_path,
     progress_handler = utils.generate_progress_handler(snapshot_path, '')
     snapshot = client.snapshots.upload(snapshot_path,
                                        snapshot_id,
-                                       private_resource,
                                        progress_handler)
     logger.info("Snapshot uploaded. The snapshot's id is {0}".format(
         snapshot.id))

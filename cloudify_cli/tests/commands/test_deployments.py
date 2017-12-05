@@ -350,12 +350,12 @@ class DeploymentsTest(CliCommandTest):
 
     def test_deployments_set_availability(self):
         self.client.deployments.set_availability = MagicMock()
-        self.invoke('cfy deployments set-availability a-deployment-id -t')
+        self.invoke('cfy deployments set-availability a-deployment-id -e')
 
     def test_deployments_set_availability_missing_argument(self):
         self.invoke(
             'cfy deployments set-availability a-deployment-id',
-            err_str_segment='The tenant_availability option must be passed',
+            err_str_segment='The tenant_resource option must be passed',
             exception=CloudifyCliError
         )
 
@@ -366,6 +366,14 @@ class DeploymentsTest(CliCommandTest):
             exception=SystemExit
         )
         self.assertIn('Error: no such option: -g', outcome.output)
+
+    def test_deployments_create_mutually_exclusive_arguments(self):
+        outcome = self.invoke(
+            'cfy deployments create deployment -b a-blueprint-id -p -e',
+            err_str_segment='2',  # Exit code
+            exception=SystemExit
+        )
+        self.assertIn('mutually exclusive with arguments:', outcome.output)
 
     def _test_deployment_inputs(self, exception_type,
                                 inputs, expected_outputs=None):
