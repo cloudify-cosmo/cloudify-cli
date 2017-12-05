@@ -295,21 +295,29 @@ class BlueprintsTest(CliCommandTest):
 
     def test_blueprints_set_availability(self):
         self.client.blueprints.set_availability = MagicMock()
-        self.invoke('cfy blueprints set-availability a-blueprint-id -t')
+        self.invoke('cfy blueprints set-availability a-blueprint-id -e')
 
     def test_blueprints_set_availability_missing_argument(self):
         self.invoke(
             'cfy blueprints set-availability a-blueprint-id',
             err_str_segment='You must choose the availability to be set, '
-                            'tenant or global with the options -t or -g',
+                            'tenant or global with the options -e or -g',
             exception=CloudifyCliError
         )
 
     def test_blueprints_set_availability_mutually_exclusive_arguments(self):
         outcome = self.invoke(
-            'cfy blueprints set-availability a-blueprint-id -t -g',
+            'cfy blueprints set-availability a-blueprint-id -e -g',
             err_str_segment='2',  # Exit code
             exception=SystemExit
         )
-        self.assertIn('mutually exclusive with arguments: '
-                      '[tenant_availability]', outcome.output)
+        self.assertIn('mutually exclusive with arguments:', outcome.output)
+
+    def test_blueprints_upload_mutually_exclusive_arguments(self):
+        outcome = self.invoke(
+            'cfy blueprints upload {0}/bad_blueprint/blueprint.yaml '
+            '-b my_blueprint_id -p -g'.format(BLUEPRINTS_DIR),
+            err_str_segment='2',  # Exit code
+            exception=SystemExit
+        )
+        self.assertIn('mutually exclusive with arguments:', outcome.output)

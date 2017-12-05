@@ -286,12 +286,26 @@ def prettify_client_error(status_codes, logger):
         logger.info(e.message)
 
 
-def get_availability(global_availability, tenant_availability):
-    if not global_availability and not tenant_availability:
+def get_availability_for_set(tenant_resource, global_resource):
+    if not global_resource and not tenant_resource:
         raise CloudifyCliError(
             'You must choose the availability to be set, tenant or global '
-            'with the options -t or -g'
+            'with the options -e or -g'
         )
 
-    return AvailabilityState.GLOBAL if global_availability \
+    # Setting a resource availability can be only to tenant or global
+    return AvailabilityState.GLOBAL if global_resource \
         else AvailabilityState.TENANT
+
+
+def get_availability_for_create(private_resource,
+                                tenant_resource,
+                                global_resource=False):
+    # These arguments are mutually exclusive so only one can be true
+    if private_resource:
+        return AvailabilityState.PRIVATE
+    elif tenant_resource:
+        return AvailabilityState.TENANT
+    elif global_resource:
+        return AvailabilityState.GLOBAL
+    return AvailabilityState.TENANT

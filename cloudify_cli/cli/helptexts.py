@@ -192,11 +192,6 @@ CLUSTER_JOIN_PROFILE = (
     '(use when you have a profile containing the cluster master)'
 )
 
-PRIVATE_RESOURCE = 'If set to True the uploaded resource will only be ' \
-                   'accessible by its creator. Otherwise, the resource is ' \
-                   'accessible by all users that belong to the same tenant. ' \
-                   '(default: False)'
-
 SKIP_PLUGINS_VALIDATION = 'Determines whether to validate if the' \
                           ' required deployment plugins exist on the manager.'\
                           ' If validation is skipped, plugins containing' \
@@ -240,8 +235,8 @@ SECRET_UPDATE_IF_EXISTS = 'Update secret value if secret key already exists'
 CLUSTER_NODE_OPTIONS = 'Additional options for the cluster node '\
                        'configuration {0}'.format(INPUTS_PARAMS_USAGE)
 
-TENANT_AVAILABILITY = "Makes the resource available to all users that have " \
-                      "access to the same tenant. You cannot use this " \
-                      "argument with arguments: [global_availability] "
-GLOBAL_AVAILABILITY = "Makes the resource available to all users that have " \
-                      "access to at least one of the manager's tenants"
+TENANT_RESOURCE = "Makes the resource available to all users that have " \
+                  "access to the same tenant"
+GLOBAL_RESOURCE = "Makes the resource available to all users that have " \
+                  "access to at least one of the manager's tenants"
+PRIVATE_RESOURCE = "Makes the resource available only to its creator"

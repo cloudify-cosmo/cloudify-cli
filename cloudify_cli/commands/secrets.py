@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ############
+
 import os
 
 from .. import env
@@ -22,7 +23,8 @@ from ..exceptions import CloudifyCliError
 from ..table import print_data, print_details
 from ..utils import (handle_client_error,
                      prettify_client_error,
-                     get_availability)
+                     get_availability_for_set,
+                     get_availability_for_create)
 
 SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'resource_availability',
                    'tenant_name', 'created_by']
@@ -43,15 +45,29 @@ def secrets():
 @cfy.options.secret_string
 @cfy.options.secret_file
 @cfy.options.secret_update_if_exists
+@cfy.options.private_resource
+@cfy.options.tenant_resource()
+@cfy.options.global_resource()
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def create(key, secret_string, secret_file, update_if_exists, logger, client):
+def create(key,
+           secret_string,
+           secret_file,
+           update_if_exists,
+           private_resource,
+           tenant_resource,
+           global_resource,
+           logger,
+           client):
     """Create a new secret (key-value pair)
 
     `KEY` is the new secret's key
     """
+    availability = get_availability_for_create(private_resource,
+                                               tenant_resource,
+                                               global_resource)
     if secret_string and secret_file:
         raise CloudifyCliError('Failed to create secret key. '
                                'The command can only accept either'
@@ -71,7 +87,10 @@ def create(key, secret_string, secret_file, update_if_exists, logger, client):
                    'tenant or as a global secret'.format(key)
 
     with handle_client_error(409, graceful_msg, logger):
-        client.secrets.create(key, secret_string, update_if_exists)
+        client.secrets.create(key,
+                              secret_string,
+                              update_if_exists,
+                              availability)
         logger.info('Secret `{0}` created'.format(key))
 
 
@@ -185,22 +204,22 @@ def set_global(key, logger, client):
 @secrets.command(name='set-availability',
                  short_help="Set the secret's availability")
 @cfy.argument('key', callback=cfy.validate_name)
-@cfy.options.tenant_availability
-@cfy.options.global_availability()
+@cfy.options.tenant_resource()
+@cfy.options.global_resource()
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
 def set_availability(key,
-                     tenant_availability,
-                     global_availability,
+                     tenant_resource,
+                     global_resource,
                      logger,
                      client):
     """Set the secret's availability
 
     `KEY` is the secret's key
     """
-    availability = get_availability(global_availability, tenant_availability)
+    availability = get_availability_for_set(tenant_resource, global_resource)
     status_codes = [400, 403, 404]
     with prettify_client_error(status_codes, logger):
         client.secrets.set_availability(key, availability)

@@ -31,9 +31,9 @@ from ..table import print_data
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger
 from .. import execution_events_fetcher
-from ..utils import prettify_client_error
 from ..constants import DEFAULT_BLUEPRINT_PATH, RESOURCE_LABELS
 from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
+from ..utils import prettify_client_error, get_availability_for_create
 
 DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
                       'resource_availability', 'tenant_name', 'created_by']
@@ -184,6 +184,7 @@ def manager_update(deployment_id,
 @cfy.options.blueprint_id(required=True)
 @cfy.options.inputs
 @cfy.options.private_resource
+@cfy.options.tenant_resource()
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
@@ -194,6 +195,7 @@ def manager_create(blueprint_id,
                    deployment_id,
                    inputs,
                    private_resource,
+                   tenant_resource,
                    logger,
                    client,
                    tenant_name,
@@ -208,13 +210,15 @@ def manager_create(blueprint_id,
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
     deployment_id = deployment_id or blueprint_id
+    availability = get_availability_for_create(private_resource,
+                                               tenant_resource)
 
     try:
         deployment = client.deployments.create(
             blueprint_id,
             deployment_id,
             inputs=inputs,
-            private_resource=private_resource,
+            availability=availability,
             skip_plugins_validation=skip_plugins_validation
         )
     except (MissingRequiredDeploymentInputError,
@@ -317,22 +321,22 @@ def manager_inputs(deployment_id, logger, client, tenant_name):
 @cfy.command(name='set-availability',
              short_help="Set the deployment's availability [manager only]")
 @cfy.argument('deployment-id')
-@cfy.options.tenant_availability
+@cfy.options.tenant_resource()
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
 def manager_set_availability(deployment_id,
-                             tenant_availability,
+                             tenant_resource,
                              logger,
                              client):
     """Set the deployment's availability to tenant
 
     `DEPLOYMENT_ID` is the id of the deployment to update
     """
-    if not tenant_availability:
+    if not tenant_resource:
         raise CloudifyCliError(
-            'The tenant_availability option must be passed'
+            'The tenant_resource option must be passed'
         )
     availability = AvailabilityState.TENANT
     status_codes = [400, 403, 404]

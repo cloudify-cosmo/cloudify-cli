@@ -776,6 +776,7 @@ class Options(object):
             help=helptexts.CLUSTER_NODE_NAME)
 
         self.private_resource = click.option(
+            '-p',
             '--private-resource',
             is_flag=True,
             default=False,
@@ -830,26 +831,6 @@ class Options(object):
             multiple=True,
             callback=inputs_callback,
             help=helptexts.CLUSTER_NODE_OPTIONS)
-
-        self.tenant_availability = click.option(
-            '-t',
-            '--tenant-availability',
-            is_flag=True,
-            default=False,
-            help=helptexts.TENANT_AVAILABILITY
-        )
-
-    @staticmethod
-    def global_availability():
-        return click.option(
-            '-g',
-            '--global-availability',
-            is_flag=True,
-            default=False,
-            help=helptexts.GLOBAL_AVAILABILITY,
-            cls=MutuallyExclusiveOption,
-            mutually_exclusive=['tenant_availability']
-        )
 
     @staticmethod
     def include_keys(help):
@@ -1077,6 +1058,32 @@ class Options(object):
     def group_tenant_role():
         return Options.tenant_role(
             helptexts.GROUP_TENANT_ROLE, required=True)
+
+    @staticmethod
+    def tenant_resource():
+        return click.option(
+            '-e',
+            '--tenant-resource',
+            is_flag=True,
+            default=False,
+            help=helptexts.TENANT_RESOURCE,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['private_resource',
+                                'global_resource']
+        )
+
+    @staticmethod
+    def global_resource():
+        return click.option(
+            '-g',
+            '--global-resource',
+            is_flag=True,
+            default=False,
+            help=helptexts.GLOBAL_RESOURCE,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['private_resource',
+                                'tenant_resource']
+        )
 
 
 options = Options()
