@@ -19,7 +19,7 @@ from ..cli import cfy
 from ..table import print_data
 from ..utils import handle_client_error
 
-GROUP_COLUMNS = ['name', 'tenants', 'users']
+GROUP_COLUMNS = ['name', 'role', 'tenants', 'users']
 
 
 def _format_group(group):
@@ -65,16 +65,22 @@ def list(sort_by, descending, get_data, logger, client):
                      short_help='Create a user group [manager only]')
 @cfy.argument('user-group-name', callback=cfy.validate_name)
 @cfy.options.ldap_distinguished_name
+@cfy.options.security_role
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def create(user_group_name, ldap_distinguished_name, logger, client):
+def create(user_group_name,
+           ldap_distinguished_name,
+           security_role,
+           logger,
+           client):
     """Create a new user group on the manager
 
     `USER_GROUP_NAME` is the name of the new user group
     """
     client.user_groups.create(user_group_name,
+                              security_role,
                               ldap_group_dn=ldap_distinguished_name)
     logger.info('Group `{0}` created'.format(user_group_name))
 
@@ -101,6 +107,24 @@ def get(user_group_name, get_data, logger, client):
     if get_data:
         _format_group(user_group_details)
     print_data(GROUP_COLUMNS, user_group_details, 'Requested user group info:')
+
+
+@user_groups.command(name='set-role',
+                     short_help='Set a new role for a group [manager only]')
+@cfy.argument('user-group-name', callback=cfy.validate_name)
+@cfy.options.security_role
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def set_role(user_group_name, security_role, logger, client):
+    """Set a new role for a group
+
+    `USER_GROUP_NAME` is the name of the user group
+    """
+    logger.info('Setting new role for group {0}...'.format(user_group_name))
+    client.user_groups.set_role(user_group_name, security_role)
+    logger.info('New role `{0}` set'.format(security_role))
 
 
 @user_groups.command(name='add-user',

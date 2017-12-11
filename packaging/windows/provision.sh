@@ -44,18 +44,10 @@ function download_resources() {
     GITHUB_USERNAME=$1
     GITHUB_PASSWORD=$2
 
-    mkdir -p packaging/source/{python,blueprints,types,scripts,plugins}
+    mkdir -p packaging/source/{python,types,scripts,plugins}
     pushd packaging/source/python
         curl -L http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/components/Python279_x32.tar.gz -o /tmp/Python279_x32.tar.gz
         tar -zxvf /tmp/Python279_x32.tar.gz --strip-components=1
-    popd
-    pushd packaging/source/blueprints
-        curl -L https://github.com/cloudify-cosmo/cloudify-manager-blueprints/archive/${CORE_BRANCH}.tar.gz -o /tmp/cloudify-manager-blueprints.tar.gz
-        tar -zxvf /tmp/cloudify-manager-blueprints.tar.gz --strip-components=1
-        str='!b;'
-        spaces='\ \ \ \ '
-        sed -i "/manager_resources_package:/${str}n;n;n;c${spaces}default: ${SINGLE_TAR_URL}" inputs/manager-inputs.yaml
-        sed -i "s|.*#manager_resources_package:.*|#manager_resources_package: ${SINGLE_TAR_URL}|g" *-inputs.yaml
     popd
 
     # Downloading types.yaml
@@ -109,12 +101,7 @@ curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/clou
 source common_build_env.sh &&
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${CORE_BRANCH}/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
-if [ $REPO == "cloudify-versions" ];then
-     curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/manager-single-tar.yaml -o ./manager-single-tar.yaml
- else
-     curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/manager-single-tar-release.yaml -o ./manager-single-tar.yaml
-fi
-export SINGLE_TAR_URL=$(cat manager-single-tar.yaml)
+
 
 install_common_prereqs &&
 #install_requirements && # moved to cloudify-packager

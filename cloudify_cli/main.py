@@ -35,10 +35,7 @@ from .commands import install
 from .commands import plugins
 from .commands import tenants
 from .commands import secrets
-from .commands import teardown
 from .commands import profiles
-from .commands import rollback
-from .commands import bootstrap
 from .commands import snapshots
 from .commands import uninstall
 from .commands import workflows
@@ -80,7 +77,6 @@ def _register_commands():
     _cfy.add_command(init.init)
     _cfy.add_command(status.status)
     _cfy.add_command(profiles.profiles)
-    _cfy.add_command(bootstrap.bootstrap)
 
     # Manager only commands
     _cfy.add_command(dev.dev)
@@ -94,8 +90,6 @@ def _register_commands():
     _cfy.add_command(cluster.cluster)
     _cfy.add_command(plugins.plugins)
     _cfy.add_command(tenants.tenants)
-    _cfy.add_command(teardown.teardown)
-    _cfy.add_command(rollback.rollback)
     _cfy.add_command(snapshots.snapshots)
     _cfy.add_command(user_groups.user_groups)
     _cfy.add_command(maintenance_mode.maintenance_mode)
@@ -113,6 +107,7 @@ def _register_commands():
     deployments.deployments.add_command(deployments.manager_delete)
     deployments.deployments.add_command(deployments.manager_update)
     deployments.deployments.add_command(deployments.manager_list)
+    deployments.deployments.add_command(deployments.manager_set_availability)
 
     executions.executions.add_command(executions.manager_cancel)
     executions.executions.add_command(executions.manager_list)

@@ -30,8 +30,8 @@ class UserGroupsTest(CliCommandTest):
         self.invoke('cfy user-groups create my_group_name')
         self.assertEquals(1, len(self.client.user_groups.method_calls))
         self.assertEquals('create', self.client.user_groups.method_calls[0][0])
-        self.assertEquals(
-            ('my_group_name',), self.client.user_groups.method_calls[0][1])
+        self.assertEquals(('my_group_name', 'default'),
+                          self.client.user_groups.method_calls[0][1])
 
     def test_user_groups_get(self):
         self.client.user_groups.get = MagicMock(

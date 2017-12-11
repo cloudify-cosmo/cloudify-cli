@@ -6,6 +6,7 @@ from cloudify_rest_client import deployments, executions, blueprints
 from cloudify_rest_client.exceptions import CloudifyClientError, \
     MissingRequiredDeploymentInputError, UnknownDeploymentInputError
 
+from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
 
 from ... import exceptions
@@ -346,6 +347,25 @@ class DeploymentsTest(CliCommandTest):
              'input3': 'value3'},
             ['Unable to create deployment']
         )
+
+    def test_deployments_set_availability(self):
+        self.client.deployments.set_availability = MagicMock()
+        self.invoke('cfy deployments set-availability a-deployment-id -t')
+
+    def test_deployments_set_availability_missing_argument(self):
+        self.invoke(
+            'cfy deployments set-availability a-deployment-id',
+            err_str_segment='The tenant_availability option must be passed',
+            exception=CloudifyCliError
+        )
+
+    def test_deployments_set_availability_wrong_argument(self):
+        outcome = self.invoke(
+            'cfy deployments set-availability a-deployment-id -g',
+            err_str_segment='2',  # Exit code
+            exception=SystemExit
+        )
+        self.assertIn('Error: no such option: -g', outcome.output)
 
     def _test_deployment_inputs(self, exception_type,
                                 inputs, expected_outputs=None):

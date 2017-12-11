@@ -50,3 +50,24 @@ class SecretsTest(CliCommandTest):
     def test_secrets_set_global(self):
         self.client.secrets.set_global = MagicMock()
         self.invoke('cfy secrets set-global a-secret-key')
+
+    def test_secrets_set_availability(self):
+        self.client.secrets.set_availability = MagicMock()
+        self.invoke('cfy secrets set-availability a-secret-key -t')
+
+    def test_secrets_set_availability_missing_argument(self):
+        self.invoke(
+            'cfy secrets set-availability a-secret-key',
+            err_str_segment='You must choose the availability to be set, '
+                            'tenant or global with the options -t or -g',
+            exception=CloudifyCliError
+        )
+
+    def test_secrets_set_availability_mutually_exclusive_arguments(self):
+        outcome = self.invoke(
+            'cfy secrets set-availability a-secret-key -t -g',
+            err_str_segment='2',  # Exit code
+            exception=SystemExit
+        )
+        self.assertIn('mutually exclusive with arguments: '
+                      '[tenant_availability]', outcome.output)

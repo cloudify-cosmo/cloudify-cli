@@ -141,14 +141,11 @@ IGNORE_DEPLOYMENTS = \
 
 TAIL_OUTPUT = "Tail the events of the specified execution until it ends"
 
-
 SET_MANAGEMENT_CREDS = (
     'You can use the `-s` and `-k` flags to set the ssh user and '
     'key-file path respectively. '
     '(e.g. `cfy profiles use -s my_user -k ~/my/key/path`)'
 )
-
-DEFAULT_MUTUALITY_MESSAGE = 'Cannot be used simultaneously'
 
 MANAGEMENT_IP = 'The IP of the host machine on which you bootstrapped'
 SSH_USER = 'The SSH user on the host machine with which you bootstrapped'
@@ -173,8 +170,7 @@ TENANT = 'The name of the tenant'
 TENANT_TEMPLATE = 'The name of the tenant of the {0}'
 TENANT_LIST_TEMPLATE = 'The name of the tenant to list {0}s from'
 ALL_TENANTS = 'Include resources from all tenants associated with the user. ' \
-              'This option is mutually exclusive with the argument ' \
-              '`tenant_name` and cannot be used simultaneously'
+              'You cannot use this argument with arguments: [tenant_name]'
 GROUP = 'The name of the user group'
 GROUP_DN = 'The ldap group\'s distinguished name. This option is required ' \
            'when using ldap'
@@ -209,8 +205,6 @@ SKIP_PLUGINS_VALIDATION = 'Determines whether to validate if the' \
 USER = 'Username of user to whom the permissions apply. ' \
        'This argument can be used multiple times'
 USER_TENANT_ROLE = 'Role assigned to user in the context of the tenant.'
-PERMISSION = 'The permission applicable to a resource [viewer|owner] ' \
-             '(default:viewer)'
 RESTORE_CERTIFICATES = 'Restore the certificates from the snapshot, using ' \
                        'them to replace the current Manager certificates. ' \
                        'If the certificates` metadata (I.E: the Manager IP ' \
@@ -242,5 +236,12 @@ PROFILE_NAME = 'Name of the profile to use'
 SECRET_VALUE = "The secret's value to be set"
 SECRET_STRING = "The string to use as the secret's value"
 SECRET_FILE = "The secret's file to use its content as value to be set"
+SECRET_UPDATE_IF_EXISTS = 'Update secret value if secret key already exists'
 CLUSTER_NODE_OPTIONS = 'Additional options for the cluster node '\
                        'configuration {0}'.format(INPUTS_PARAMS_USAGE)
+
+TENANT_AVAILABILITY = "Makes the resource available to all users that have " \
+                      "access to the same tenant. You cannot use this " \
+                      "argument with arguments: [global_availability] "
+GLOBAL_AVAILABILITY = "Makes the resource available to all users that have " \
+                      "access to at least one of the manager's tenants"

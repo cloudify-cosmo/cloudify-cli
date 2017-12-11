@@ -34,7 +34,7 @@ from ..config import config
 from ..table import print_data
 from ..constants import RESOURCE_LABELS
 from ..exceptions import CloudifyCliError
-from ..utils import prettify_client_error
+from ..utils import prettify_client_error, get_availability
 
 
 DESCRIPTION_LIMIT = 20
@@ -398,3 +398,31 @@ def set_global(blueprint_id, logger, client):
     with prettify_client_error(status_codes, logger):
         client.blueprints.set_global(blueprint_id)
         logger.info('Blueprint `{0}` was set to global'.format(blueprint_id))
+        logger.info("This command will be deprecated soon, please use the "
+                    "'set-availability' command instead")
+
+
+@blueprints.command(name='set-availability',
+                    short_help="Set the blueprint's availability")
+@cfy.argument('blueprint-id')
+@cfy.options.tenant_availability
+@cfy.options.global_availability()
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client(use_tenant_in_header=True)
+@cfy.pass_logger
+def set_availability(blueprint_id,
+                     tenant_availability,
+                     global_availability,
+                     logger,
+                     client):
+    """Set the blueprint's availability
+
+    `BLUEPRINT_ID` is the id of the blueprint to update
+    """
+    availability = get_availability(global_availability, tenant_availability)
+    status_codes = [400, 403, 404]
+    with prettify_client_error(status_codes, logger):
+        client.blueprints.set_availability(blueprint_id, availability)
+        logger.info('Blueprint `{0}` was set to {1}'.format(blueprint_id,
+                                                            availability))

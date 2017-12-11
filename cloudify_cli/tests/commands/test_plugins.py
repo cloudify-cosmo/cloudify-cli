@@ -6,6 +6,7 @@ from mock import MagicMock
 
 from .test_base import CliCommandTest
 
+from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
 
 from cloudify_rest_client import plugins
@@ -69,3 +70,24 @@ class PluginsTest(CliCommandTest):
     def test_plugins_set_global(self):
         self.client.plugins.set_global = MagicMock()
         self.invoke('cfy plugins set-global a-plugin-id')
+
+    def test_plugins_set_availability(self):
+        self.client.plugins.set_availability = MagicMock()
+        self.invoke('cfy plugins set-availability a-plugin-id -t')
+
+    def test_plugins_set_availability_missing_argument(self):
+        self.invoke(
+            'cfy plugins set-availability a-plugin-id',
+            err_str_segment='You must choose the availability to be set, '
+                            'tenant or global with the options -t or -g',
+            exception=CloudifyCliError
+        )
+
+    def test_plugins_set_availability_mutually_exclusive_arguments(self):
+        outcome = self.invoke(
+            'cfy plugins set-availability a-plugin-id -t -g',
+            err_str_segment='2',  # Exit code
+            exception=SystemExit
+        )
+        self.assertIn('mutually exclusive with arguments: '
+                      '[tenant_availability]', outcome.output)
