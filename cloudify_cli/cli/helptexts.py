@@ -158,7 +158,8 @@ MANAGER_TENANT = 'The tenant associated with the current user operating the ' \
 SSL_STATE = 'Required SSL state (on/off)'
 REST_PORT = "The REST server's port"
 SSL_REST = "Connect to REST server using SSL"
-REST_CERT = "The REST server's external certificate file location"
+REST_CERT = "The REST server's external certificate file location (implies " \
+    "--ssl)"
 
 EXPORT_SSH_KEYS = 'Include ssh key files in archive'
 IMPORT_SSH_KEYS = 'WARNING: Import exported keys to their original locations'
@@ -214,7 +215,7 @@ NO_REBOOT = 'Do not perform an automatic reboot to the Manager VM after ' \
             'restoring certificates a from snapshot (not recommended). ' \
             'Only relevant if the `--restore-certificates` flag was supplied'
 SKIP_CREDENTIALS_VALIDATION = 'Do not check that the passed credentials are ' \
-                              'correct (default:False)'
+                              'correct (default: False)'
 LDAP_SERVER = 'The LDAP server address to authenticate against'
 LDAP_USERNAME = 'The LDAP admin username to be set on the Cloudify manager'
 LDAP_PASSWORD = 'The LDAP admin password to be set on the Cloudify manager'
