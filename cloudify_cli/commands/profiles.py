@@ -182,6 +182,11 @@ def _create_profile(
         rest_certificate,
         skip_credentials_validation,
         logger):
+    # If REST certificate is provided, then automatically
+    # assume SSL.
+    if rest_certificate:
+        ssl = True
+
     rest_protocol = constants.SECURED_REST_PROTOCOL if ssl else \
         constants.DEFAULT_REST_PROTOCOL
 
