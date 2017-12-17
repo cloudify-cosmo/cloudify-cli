@@ -226,7 +226,7 @@ def join(client,
 
 @cluster.command(name='update-profile',
                  short_help='Store the cluster nodes in the CLI profile '
-                            '[cluster only')
+                            '[cluster only]')
 @pass_cluster_client()
 @cfy.pass_logger
 def update_profile(client, logger):
