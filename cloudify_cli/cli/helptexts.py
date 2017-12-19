@@ -235,9 +235,9 @@ SECRET_FILE = "The secret's file to use its content as value to be set"
 SECRET_UPDATE_IF_EXISTS = 'Update secret value if secret key already exists'
 CLUSTER_NODE_OPTIONS = 'Additional options for the cluster node '\
                        'configuration {0}'.format(INPUTS_PARAMS_USAGE)
-
-TENANT_RESOURCE = "Makes the resource available to all users that have " \
-                  "access to the same tenant"
-GLOBAL_RESOURCE = "Makes the resource available to all users that have " \
-                  "access to at least one of the manager's tenants"
-PRIVATE_RESOURCE = "Makes the resource available only to its creator"
+PRIVATE_RESOURCE = 'If set to True the uploaded resource will only be ' \
+                   'accessible by its creator. Otherwise, the resource is ' \
+                   'accessible by all users that belong to the same tenant. ' \
+                   '(default: False)'
+AVAILABILITY = 'Defines who can access the resource, can be set to one of ' \
+               '{0}'

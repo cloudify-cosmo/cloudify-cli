@@ -53,28 +53,31 @@ class SecretsTest(CliCommandTest):
 
     def test_secrets_set_availability(self):
         self.client.secrets.set_availability = MagicMock()
-        self.invoke('cfy secrets set-availability a-secret-key -e')
+        self.invoke('cfy secrets set-availability a-secret-key -a global')
+
+    def test_secrets_set_availability_invalid_argument(self):
+        self.invoke('cfy secrets set-availability a-secret-key -a private',
+                    err_str_segment='Invalid availability: `private`',
+                    exception=CloudifyCliError)
 
     def test_secrets_set_availability_missing_argument(self):
-        self.invoke(
-            'cfy secrets set-availability a-secret-key',
-            err_str_segment='You must choose the availability to be set, '
-                            'tenant or global with the options -e or -g',
-            exception=CloudifyCliError
-        )
+        outcome = self.invoke('cfy secrets set-availability a-secret-key',
+                              err_str_segment='2',
+                              exception=SystemExit)
+        self.assertIn('Missing option "-a" / "--availability"',
+                      outcome.output)
 
-    def test_secrets_set_availability_mutually_exclusive_arguments(self):
-        outcome = self.invoke(
-            'cfy secrets set-availability a-secret-key -e -g',
-            err_str_segment='2',  # Exit code
-            exception=SystemExit
-        )
-        self.assertIn('mutually exclusive with arguments:', outcome.output)
+    def test_secrets_set_availability_wrong_argument(self):
+        outcome = self.invoke('cfy secrets set-availability a-secret-key -g',
+                              err_str_segment='2',
+                              exception=SystemExit)
+        self.assertIn('Error: no such option: -g', outcome.output)
 
-    def test_secrets_create_mutually_exclusive_arguments(self):
-        outcome = self.invoke(
-            'cfy secrets create key -g -e',
-            err_str_segment='2',  # Exit code
-            exception=SystemExit
-        )
-        self.assertIn('mutually exclusive with arguments:', outcome.output)
+    def test_secrets_create_invalid_argument(self):
+        self.invoke('cfy secrets create a-secret-key -a bla',
+                    err_str_segment='Invalid availability: `bla`',
+                    exception=CloudifyCliError)
+
+    def test_secrets_create_with_availability(self):
+        self.client.secrets.create = MagicMock()
+        self.invoke('cfy secrets create a-secret-key -a private -s hello')

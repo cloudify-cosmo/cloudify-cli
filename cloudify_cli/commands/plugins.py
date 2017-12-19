@@ -16,13 +16,15 @@
 
 import wagon
 
+from cloudify_rest_client.constants import AVAILABILITY_EXCEPT_PRIVATE
+
 from .. import utils
 from ..table import print_data
 from ..cli import helptexts, cfy
 from ..constants import RESOURCE_LABELS
 from ..utils import (prettify_client_error,
-                     get_availability_for_set,
-                     get_availability_for_create)
+                     get_availability,
+                     validate_availability)
 
 PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
                   'supported_platform', 'distribution_release', 'uploaded_at',
@@ -83,8 +85,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
                  short_help='Upload a plugin [manager only]')
 @cfy.argument('plugin-path')
 @cfy.options.private_resource
-@cfy.options.tenant_resource()
-@cfy.options.global_resource()
+@cfy.options.availability()
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.pass_context
@@ -94,8 +95,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
 def upload(ctx,
            plugin_path,
            private_resource,
-           tenant_resource,
-           global_resource,
+           availability,
            logger,
            client,
            tenant_name):
@@ -109,9 +109,7 @@ def upload(ctx,
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
 
     progress_handler = utils.generate_progress_handler(plugin_path, '')
-    availability = get_availability_for_create(private_resource,
-                                               tenant_resource,
-                                               global_resource)
+    availability = get_availability(private_resource, availability, logger)
     logger.info('Uploading plugin {0}...'.format(plugin_path))
     plugin = client.plugins.upload(plugin_path,
                                    availability,
@@ -222,22 +220,22 @@ def set_global(plugin_id, logger, client):
 @plugins.command(name='set-availability',
                  short_help="Set the plugin's availability")
 @cfy.argument('plugin-id')
-@cfy.options.tenant_resource()
-@cfy.options.global_resource()
+@cfy.options.availability(required=True,
+                          valid_values=AVAILABILITY_EXCEPT_PRIVATE)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
 def set_availability(plugin_id,
-                     tenant_resource,
-                     global_resource,
+                     availability,
                      logger,
                      client):
     """Set the plugin's availability
 
     `PLUGIN_ID` is the id of the plugin to update
     """
-    availability = get_availability_for_set(tenant_resource, global_resource)
+    validate_availability(availability,
+                          valid_values=AVAILABILITY_EXCEPT_PRIVATE)
     status_codes = [400, 403, 404]
     with prettify_client_error(status_codes, logger):
         client.plugins.set_availability(plugin_id, availability)
