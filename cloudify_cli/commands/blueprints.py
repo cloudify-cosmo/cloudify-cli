@@ -24,6 +24,7 @@ import click
 
 from dsl_parser.parser import parse_from_path
 from dsl_parser.exceptions import DSLParsingException
+from cloudify_rest_client.constants import AVAILABILITY_EXCEPT_PRIVATE
 
 from .. import local
 from .. import utils
@@ -35,8 +36,8 @@ from ..table import print_data
 from ..constants import RESOURCE_LABELS
 from ..exceptions import CloudifyCliError
 from ..utils import (prettify_client_error,
-                     get_availability_for_set,
-                     get_availability_for_create)
+                     get_availability,
+                     validate_availability)
 
 
 DESCRIPTION_LIMIT = 20
@@ -86,8 +87,7 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
 @cfy.options.private_resource
-@cfy.options.tenant_resource()
-@cfy.options.global_resource()
+@cfy.options.availability()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -98,8 +98,7 @@ def upload(ctx,
            blueprint_filename,
            validate,
            private_resource,
-           tenant_resource,
-           global_resource,
+           availability,
            logger,
            client,
            tenant_name):
@@ -124,9 +123,7 @@ def upload(ctx,
     progress_handler = utils.generate_progress_handler(blueprint_path, '')
     blueprint_id = blueprint_id or blueprint.generate_id(
         processed_blueprint_path, blueprint_filename)
-    availability = get_availability_for_create(private_resource,
-                                               tenant_resource,
-                                               global_resource)
+    availability = get_availability(private_resource, availability, logger)
 
     if is_url:
         # When a URL is passed it's assumed to be pointing to an archive
@@ -414,22 +411,22 @@ def set_global(blueprint_id, logger, client):
 @blueprints.command(name='set-availability',
                     short_help="Set the blueprint's availability")
 @cfy.argument('blueprint-id')
-@cfy.options.tenant_resource()
-@cfy.options.global_resource()
+@cfy.options.availability(required=True,
+                          valid_values=AVAILABILITY_EXCEPT_PRIVATE)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
 def set_availability(blueprint_id,
-                     tenant_resource,
-                     global_resource,
+                     availability,
                      logger,
                      client):
     """Set the blueprint's availability
 
     `BLUEPRINT_ID` is the id of the blueprint to update
     """
-    availability = get_availability_for_set(tenant_resource, global_resource)
+    validate_availability(availability,
+                          valid_values=AVAILABILITY_EXCEPT_PRIVATE)
     status_codes = [400, 403, 404]
     with prettify_client_error(status_codes, logger):
         client.blueprints.set_availability(blueprint_id, availability)

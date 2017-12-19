@@ -18,12 +18,13 @@ import os
 import json
 from StringIO import StringIO
 
-from cloudify_rest_client.constants import AvailabilityState
 from cloudify_rest_client.exceptions import DeploymentPluginNotFound
 from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_rest_client.exceptions import UnknownDeploymentSecretError
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 from cloudify_rest_client.exceptions import UnsupportedDeploymentGetSecretError
+from cloudify_rest_client.constants import (AvailabilityState,
+                                            AVAILABILITY_EXCEPT_GLOBAL)
 
 from .. import utils
 from ..local import load_env
@@ -33,7 +34,9 @@ from ..logger import get_events_logger
 from .. import execution_events_fetcher
 from ..constants import DEFAULT_BLUEPRINT_PATH, RESOURCE_LABELS
 from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
-from ..utils import prettify_client_error, get_availability_for_create
+from ..utils import (prettify_client_error,
+                     get_availability,
+                     validate_availability)
 
 DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
                       'resource_availability', 'tenant_name', 'created_by']
@@ -184,7 +187,7 @@ def manager_update(deployment_id,
 @cfy.options.blueprint_id(required=True)
 @cfy.options.inputs
 @cfy.options.private_resource
-@cfy.options.tenant_resource()
+@cfy.options.availability(valid_values=AVAILABILITY_EXCEPT_GLOBAL)
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
@@ -195,7 +198,7 @@ def manager_create(blueprint_id,
                    deployment_id,
                    inputs,
                    private_resource,
-                   tenant_resource,
+                   availability,
                    logger,
                    client,
                    tenant_name,
@@ -210,8 +213,10 @@ def manager_create(blueprint_id,
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
     deployment_id = deployment_id or blueprint_id
-    availability = get_availability_for_create(private_resource,
-                                               tenant_resource)
+    availability = get_availability(private_resource,
+                                    availability,
+                                    logger,
+                                    valid_values=AVAILABILITY_EXCEPT_GLOBAL)
 
     try:
         deployment = client.deployments.create(
@@ -321,24 +326,22 @@ def manager_inputs(deployment_id, logger, client, tenant_name):
 @cfy.command(name='set-availability',
              short_help="Set the deployment's availability [manager only]")
 @cfy.argument('deployment-id')
-@cfy.options.tenant_resource()
+@cfy.options.availability(required=True,
+                          valid_values=[AvailabilityState.TENANT])
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
 def manager_set_availability(deployment_id,
-                             tenant_resource,
+                             availability,
                              logger,
                              client):
     """Set the deployment's availability to tenant
 
     `DEPLOYMENT_ID` is the id of the deployment to update
     """
-    if not tenant_resource:
-        raise CloudifyCliError(
-            'The tenant_resource option must be passed'
-        )
-    availability = AvailabilityState.TENANT
+    validate_availability(availability,
+                          valid_values=[AvailabilityState.TENANT])
     status_codes = [400, 403, 404]
     with prettify_client_error(status_codes, logger):
         client.deployments.set_availability(deployment_id, availability)

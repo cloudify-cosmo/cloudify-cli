@@ -23,6 +23,7 @@ import traceback
 from functools import wraps
 
 import click
+from cloudify_rest_client.constants import AvailabilityState
 from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
@@ -776,7 +777,6 @@ class Options(object):
             help=helptexts.CLUSTER_NODE_NAME)
 
         self.private_resource = click.option(
-            '-p',
             '--private-resource',
             is_flag=True,
             default=False,
@@ -1060,30 +1060,18 @@ class Options(object):
             helptexts.GROUP_TENANT_ROLE, required=True)
 
     @staticmethod
-    def tenant_resource():
-        return click.option(
-            '-e',
-            '--tenant-resource',
-            is_flag=True,
-            default=False,
-            help=helptexts.TENANT_RESOURCE,
-            cls=MutuallyExclusiveOption,
-            mutually_exclusive=['private_resource',
-                                'global_resource']
-        )
-
-    @staticmethod
-    def global_resource():
-        return click.option(
-            '-g',
-            '--global-resource',
-            is_flag=True,
-            default=False,
-            help=helptexts.GLOBAL_RESOURCE,
-            cls=MutuallyExclusiveOption,
-            mutually_exclusive=['private_resource',
-                                'tenant_resource']
-        )
+    def availability(required=False, valid_values=AvailabilityState.STATES):
+        args = ['-a', '--availability']
+        kwargs = {
+            'required': required,
+            'help': helptexts.AVAILABILITY.format(valid_values)
+        }
+        if not required:
+            kwargs['default'] = AvailabilityState.TENANT
+            kwargs['cls'] = MutuallyExclusiveOption
+            kwargs['mutually_exclusive'] = ['private_resource']
+            kwargs['help'] += ' [default: tenant]'
+        return click.option(*args, **kwargs)
 
 
 options = Options()

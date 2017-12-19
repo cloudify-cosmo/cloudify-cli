@@ -350,14 +350,33 @@ class DeploymentsTest(CliCommandTest):
 
     def test_deployments_set_availability(self):
         self.client.deployments.set_availability = MagicMock()
-        self.invoke('cfy deployments set-availability a-deployment-id -e')
+        self.invoke('cfy deployments set-availability a-deployment-id -a '
+                    'tenant')
 
-    def test_deployments_set_availability_missing_argument(self):
+    def test_deployments_set_availability_invalid_argument(self):
         self.invoke(
-            'cfy deployments set-availability a-deployment-id',
-            err_str_segment='The tenant_resource option must be passed',
+            'cfy deployments set-availability a-deployment-id -a private',
+            err_str_segment='Invalid availability: `private`',
             exception=CloudifyCliError
         )
+        self.invoke(
+            'cfy deployments set-availability a-deployment-id -a global',
+            err_str_segment='Invalid availability: `global`',
+            exception=CloudifyCliError
+        )
+        self.invoke(
+            'cfy deployments set-availability a-deployment-id -a bla',
+            err_str_segment='Invalid availability: `bla`',
+            exception=CloudifyCliError
+        )
+
+    def test_deployments_set_availability_missing_argument(self):
+        outcome = self.invoke(
+            'cfy deployments set-availability a-deployment-id',
+            err_str_segment='2',
+            exception=SystemExit
+        )
+        self.assertIn('Missing option "-a" / "--availability"', outcome.output)
 
     def test_deployments_set_availability_wrong_argument(self):
         outcome = self.invoke(
@@ -369,11 +388,26 @@ class DeploymentsTest(CliCommandTest):
 
     def test_deployments_create_mutually_exclusive_arguments(self):
         outcome = self.invoke(
-            'cfy deployments create deployment -b a-blueprint-id -p -e',
+            'cfy deployments create deployment -b a-blueprint-id -a tenant '
+            '--private-resource',
             err_str_segment='2',  # Exit code
             exception=SystemExit
         )
         self.assertIn('mutually exclusive with arguments:', outcome.output)
+
+    def test_deployments_create_invalid_argument(self):
+        self.invoke(
+            'cfy deployments create deployment -b a-blueprint-id -a bla'
+            .format(BLUEPRINTS_DIR),
+            err_str_segment='Invalid availability: `bla`',
+            exception=CloudifyCliError
+        )
+
+    def test_deployments_create_with_availability(self):
+        self.client.deployments.create = MagicMock()
+        self.invoke('cfy deployments create deployment -b a-blueprint-id '
+                    '-a private'
+                    .format(SAMPLE_ARCHIVE_PATH))
 
     def _test_deployment_inputs(self, exception_type,
                                 inputs, expected_outputs=None):
