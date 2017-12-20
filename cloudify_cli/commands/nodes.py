@@ -64,7 +64,10 @@ def get(node_id, deployment_id, logger, client, tenant_name):
     logger.debug('Getting node instances for node with ID \'{0}\''
                  .format(node_id))
     try:
-        instances = client.node_instances.list(deployment_id, node_id)
+        instances = client.node_instances.list(
+            deployment_id=deployment_id,
+            node_id=node_id
+        )
     except CloudifyClientError as e:
         if e.status_code != 404:
             raise
