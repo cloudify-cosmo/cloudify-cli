@@ -39,7 +39,9 @@ def agents():
 
 
 def _is_deployment_installed(client, deployment_id):
-    for node_instance in client.node_instances.list(deployment_id):
+    for node_instance in client.node_instances.list(
+            deployment_id=deployment_id
+    ):
         if node_instance.state != _NODE_INSTANCE_STATE_STARTED:
             return False
     return True
