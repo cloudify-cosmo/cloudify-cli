@@ -23,8 +23,8 @@ from cloudify_rest_client.exceptions import UnknownDeploymentInputError
 from cloudify_rest_client.exceptions import UnknownDeploymentSecretError
 from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
 from cloudify_rest_client.exceptions import UnsupportedDeploymentGetSecretError
-from cloudify_rest_client.constants import (AvailabilityState,
-                                            AVAILABILITY_EXCEPT_GLOBAL)
+from cloudify_rest_client.constants import (VisibilityState,
+                                            VISIBILITY_EXCEPT_GLOBAL)
 
 from .. import utils
 from ..local import load_env
@@ -35,8 +35,8 @@ from .. import execution_events_fetcher
 from ..constants import DEFAULT_BLUEPRINT_PATH, RESOURCE_LABELS
 from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 from ..utils import (prettify_client_error,
-                     get_availability,
-                     validate_availability)
+                     get_visibility,
+                     validate_visibility)
 
 DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
                       'resource_availability', 'tenant_name', 'created_by']
@@ -187,7 +187,7 @@ def manager_update(deployment_id,
 @cfy.options.blueprint_id(required=True)
 @cfy.options.inputs
 @cfy.options.private_resource
-@cfy.options.availability(valid_values=AVAILABILITY_EXCEPT_GLOBAL)
+@cfy.options.visibility(valid_values=VISIBILITY_EXCEPT_GLOBAL)
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
@@ -198,7 +198,7 @@ def manager_create(blueprint_id,
                    deployment_id,
                    inputs,
                    private_resource,
-                   availability,
+                   visibility,
                    logger,
                    client,
                    tenant_name,
@@ -213,17 +213,17 @@ def manager_create(blueprint_id,
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
     deployment_id = deployment_id or blueprint_id
-    availability = get_availability(private_resource,
-                                    availability,
-                                    logger,
-                                    valid_values=AVAILABILITY_EXCEPT_GLOBAL)
+    visibility = get_visibility(private_resource,
+                                visibility,
+                                logger,
+                                valid_values=VISIBILITY_EXCEPT_GLOBAL)
 
     try:
         deployment = client.deployments.create(
             blueprint_id,
             deployment_id,
             inputs=inputs,
-            availability=availability,
+            visibility=visibility,
             skip_plugins_validation=skip_plugins_validation
         )
     except (MissingRequiredDeploymentInputError,
@@ -323,30 +323,25 @@ def manager_inputs(deployment_id, logger, client, tenant_name):
     logger.info(inputs_.getvalue())
 
 
-@cfy.command(name='set-availability',
-             short_help="Set the deployment's availability [manager only]")
+@cfy.command(name='set-visibility',
+             short_help="Set the deployment's visibility [manager only]")
 @cfy.argument('deployment-id')
-@cfy.options.availability(required=True,
-                          valid_values=[AvailabilityState.TENANT])
+@cfy.options.visibility(required=True, valid_values=[VisibilityState.TENANT])
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def manager_set_availability(deployment_id,
-                             availability,
-                             logger,
-                             client):
-    """Set the deployment's availability to tenant
+def manager_set_visibility(deployment_id, visibility, logger, client):
+    """Set the deployment's visibility to tenant
 
     `DEPLOYMENT_ID` is the id of the deployment to update
     """
-    validate_availability(availability,
-                          valid_values=[AvailabilityState.TENANT])
+    validate_visibility(visibility, valid_values=[VisibilityState.TENANT])
     status_codes = [400, 403, 404]
     with prettify_client_error(status_codes, logger):
-        client.deployments.set_availability(deployment_id, availability)
+        client.deployments.set_visibility(deployment_id, visibility)
         logger.info('Deployment `{0}` was set to {1}'.format(deployment_id,
-                                                             availability))
+                                                             visibility))
 
 
 @cfy.command(name='inputs', short_help='Show deployment inputs [locally]')

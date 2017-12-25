@@ -348,39 +348,39 @@ class DeploymentsTest(CliCommandTest):
             ['Unable to create deployment']
         )
 
-    def test_deployments_set_availability(self):
-        self.client.deployments.set_availability = MagicMock()
-        self.invoke('cfy deployments set-availability a-deployment-id -a '
+    def test_deployments_set_visibility(self):
+        self.client.deployments.set_visibility = MagicMock()
+        self.invoke('cfy deployments set-visibility a-deployment-id -y '
                     'tenant')
 
-    def test_deployments_set_availability_invalid_argument(self):
+    def test_deployments_set_visibility_invalid_argument(self):
         self.invoke(
-            'cfy deployments set-availability a-deployment-id -a private',
-            err_str_segment='Invalid availability: `private`',
+            'cfy deployments set-visibility a-deployment-id -y private',
+            err_str_segment='Invalid visibility: `private`',
             exception=CloudifyCliError
         )
         self.invoke(
-            'cfy deployments set-availability a-deployment-id -a global',
-            err_str_segment='Invalid availability: `global`',
+            'cfy deployments set-visibility a-deployment-id -y global',
+            err_str_segment='Invalid visibility: `global`',
             exception=CloudifyCliError
         )
         self.invoke(
-            'cfy deployments set-availability a-deployment-id -a bla',
-            err_str_segment='Invalid availability: `bla`',
+            'cfy deployments set-visibility a-deployment-id -y bla',
+            err_str_segment='Invalid visibility: `bla`',
             exception=CloudifyCliError
         )
 
-    def test_deployments_set_availability_missing_argument(self):
+    def test_deployments_set_visibility_missing_argument(self):
         outcome = self.invoke(
-            'cfy deployments set-availability a-deployment-id',
+            'cfy deployments set-visibility a-deployment-id',
             err_str_segment='2',
             exception=SystemExit
         )
-        self.assertIn('Missing option "-a" / "--availability"', outcome.output)
+        self.assertIn('Missing option "-y" / "--visibility"', outcome.output)
 
-    def test_deployments_set_availability_wrong_argument(self):
+    def test_deployments_set_visibility_wrong_argument(self):
         outcome = self.invoke(
-            'cfy deployments set-availability a-deployment-id -g',
+            'cfy deployments set-visibility a-deployment-id -g',
             err_str_segment='2',  # Exit code
             exception=SystemExit
         )
@@ -388,7 +388,7 @@ class DeploymentsTest(CliCommandTest):
 
     def test_deployments_create_mutually_exclusive_arguments(self):
         outcome = self.invoke(
-            'cfy deployments create deployment -b a-blueprint-id -a tenant '
+            'cfy deployments create deployment -b a-blueprint-id -y tenant '
             '--private-resource',
             err_str_segment='2',  # Exit code
             exception=SystemExit
@@ -397,16 +397,16 @@ class DeploymentsTest(CliCommandTest):
 
     def test_deployments_create_invalid_argument(self):
         self.invoke(
-            'cfy deployments create deployment -b a-blueprint-id -a bla'
+            'cfy deployments create deployment -b a-blueprint-id -y bla'
             .format(BLUEPRINTS_DIR),
-            err_str_segment='Invalid availability: `bla`',
+            err_str_segment='Invalid visibility: `bla`',
             exception=CloudifyCliError
         )
 
-    def test_deployments_create_with_availability(self):
+    def test_deployments_create_with_visibility(self):
         self.client.deployments.create = MagicMock()
         self.invoke('cfy deployments create deployment -b a-blueprint-id '
-                    '-a private'
+                    '-y private'
                     .format(SAMPLE_ARCHIVE_PATH))
 
     def _test_deployment_inputs(self, exception_type,

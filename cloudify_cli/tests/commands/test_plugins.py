@@ -71,40 +71,40 @@ class PluginsTest(CliCommandTest):
         self.client.plugins.set_global = MagicMock()
         self.invoke('cfy plugins set-global a-plugin-id')
 
-    def test_plugins_set_availability(self):
-        self.client.plugins.set_availability = MagicMock()
-        self.invoke('cfy plugins set-availability a-plugin-id -a global')
+    def test_plugins_set_visibility(self):
+        self.client.plugins.set_visibility = MagicMock()
+        self.invoke('cfy plugins set-visibility a-plugin-id -y global')
 
-    def test_plugins_set_availability_invalid_argument(self):
-        self.invoke('cfy plugins set-availability a-plugin-id -a private',
-                    err_str_segment='Invalid availability: `private`',
+    def test_plugins_set_visibility_invalid_argument(self):
+        self.invoke('cfy plugins set-visibility a-plugin-id -y private',
+                    err_str_segment='Invalid visibility: `private`',
                     exception=CloudifyCliError)
 
-    def test_plugins_set_availability_missing_argument(self):
-        outcome = self.invoke('cfy plugins set-availability a-plugin-id',
+    def test_plugins_set_visibility_missing_argument(self):
+        outcome = self.invoke('cfy plugins set-visibility a-plugin-id',
                               err_str_segment='2',
                               exception=SystemExit)
-        self.assertIn('Missing option "-a" / "--availability"', outcome.output)
+        self.assertIn('Missing option "-y" / "--visibility"', outcome.output)
 
-    def test_blueprints_set_availability_wrong_argument(self):
-        outcome = self.invoke('cfy plugins set-availability a-plugin-id -g',
+    def test_blueprints_set_visibility_wrong_argument(self):
+        outcome = self.invoke('cfy plugins set-visibility a-plugin-id -g',
                               err_str_segment='2',
                               exception=SystemExit)
         self.assertIn('Error: no such option: -g', outcome.output)
 
     def test_plugins_upload_mutually_exclusive_arguments(self):
         outcome = self.invoke(
-            'cfy plugins upload --private-resource -a tenant',
+            'cfy plugins upload --private-resource -y tenant',
             err_str_segment='2',  # Exit code
             exception=SystemExit
         )
         self.assertIn('mutually exclusive with arguments:', outcome.output)
 
     def test_plugins_upload_invalid_argument(self):
-        self.invoke('cfy plugins upload -a bla plugin_path',
-                    err_str_segment='Invalid availability: `bla`',
+        self.invoke('cfy plugins upload -y bla plugin_path',
+                    err_str_segment='Invalid visibility: `bla`',
                     exception=CloudifyCliError)
 
-    def test_plugins_upload_with_availability(self):
+    def test_plugins_upload_with_visibility(self):
         self.client.plugins.upload = MagicMock()
-        self.invoke('cfy plugins upload -a private plugin_path')
+        self.invoke('cfy plugins upload -y private plugin_path')
