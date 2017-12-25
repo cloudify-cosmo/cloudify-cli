@@ -24,7 +24,7 @@ import click
 
 from dsl_parser.parser import parse_from_path
 from dsl_parser.exceptions import DSLParsingException
-from cloudify_rest_client.constants import AVAILABILITY_EXCEPT_PRIVATE
+from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
 from .. import local
 from .. import utils
@@ -36,8 +36,8 @@ from ..table import print_data
 from ..constants import RESOURCE_LABELS
 from ..exceptions import CloudifyCliError
 from ..utils import (prettify_client_error,
-                     get_availability,
-                     validate_availability)
+                     get_visibility,
+                     validate_visibility)
 
 
 DESCRIPTION_LIMIT = 20
@@ -87,7 +87,7 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
 @cfy.options.private_resource
-@cfy.options.availability()
+@cfy.options.visibility()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -98,7 +98,7 @@ def upload(ctx,
            blueprint_filename,
            validate,
            private_resource,
-           availability,
+           visibility,
            logger,
            client,
            tenant_name):
@@ -123,7 +123,7 @@ def upload(ctx,
     progress_handler = utils.generate_progress_handler(blueprint_path, '')
     blueprint_id = blueprint_id or blueprint.generate_id(
         processed_blueprint_path, blueprint_filename)
-    availability = get_availability(private_resource, availability, logger)
+    visibility = get_visibility(private_resource, visibility, logger)
 
     if is_url:
         # When a URL is passed it's assumed to be pointing to an archive
@@ -135,7 +135,7 @@ def upload(ctx,
             processed_blueprint_path,
             blueprint_id,
             blueprint_filename,
-            availability,
+            visibility,
             progress_handler)
     else:
         try:
@@ -151,7 +151,7 @@ def upload(ctx,
             blueprint_obj = client.blueprints.upload(
                 processed_blueprint_path,
                 blueprint_id,
-                availability,
+                visibility,
                 progress_handler
             )
         finally:
@@ -389,14 +389,14 @@ def install_plugins(blueprint_path, logger):
 
 
 @blueprints.command(name='set-global',
-                    short_help="Set the blueprint's availability to global")
+                    short_help="Set the blueprint's visibility to global")
 @cfy.argument('blueprint-id')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
 def set_global(blueprint_id, logger, client):
-    """Set the blueprint's availability to global
+    """Set the blueprint's visibility to global
 
     `BLUEPRINT_ID` is the id of the blueprint to set global
     """
@@ -405,30 +405,25 @@ def set_global(blueprint_id, logger, client):
         client.blueprints.set_global(blueprint_id)
         logger.info('Blueprint `{0}` was set to global'.format(blueprint_id))
         logger.info("This command will be deprecated soon, please use the "
-                    "'set-availability' command instead")
+                    "'set-visibility' command instead")
 
 
-@blueprints.command(name='set-availability',
-                    short_help="Set the blueprint's availability")
+@blueprints.command(name='set-visibility',
+                    short_help="Set the blueprint's visibility")
 @cfy.argument('blueprint-id')
-@cfy.options.availability(required=True,
-                          valid_values=AVAILABILITY_EXCEPT_PRIVATE)
+@cfy.options.visibility(required=True, valid_values=VISIBILITY_EXCEPT_PRIVATE)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def set_availability(blueprint_id,
-                     availability,
-                     logger,
-                     client):
-    """Set the blueprint's availability
+def set_visibility(blueprint_id, visibility, logger, client):
+    """Set the blueprint's visibility
 
     `BLUEPRINT_ID` is the id of the blueprint to update
     """
-    validate_availability(availability,
-                          valid_values=AVAILABILITY_EXCEPT_PRIVATE)
+    validate_visibility(visibility, valid_values=VISIBILITY_EXCEPT_PRIVATE)
     status_codes = [400, 403, 404]
     with prettify_client_error(status_codes, logger):
-        client.blueprints.set_availability(blueprint_id, availability)
+        client.blueprints.set_visibility(blueprint_id, visibility)
         logger.info('Blueprint `{0}` was set to {1}'.format(blueprint_id,
-                                                            availability))
+                                                            visibility))

@@ -107,7 +107,7 @@ def _register_commands():
     deployments.deployments.add_command(deployments.manager_delete)
     deployments.deployments.add_command(deployments.manager_update)
     deployments.deployments.add_command(deployments.manager_list)
-    deployments.deployments.add_command(deployments.manager_set_availability)
+    deployments.deployments.add_command(deployments.manager_set_visibility)
 
     executions.executions.add_command(executions.manager_cancel)
     executions.executions.add_command(executions.manager_list)

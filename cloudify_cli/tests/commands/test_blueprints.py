@@ -53,7 +53,7 @@ class BlueprintsTest(CliCommandTest):
             data=[{'description': '123456789012345678..'},
                   {'description': 'abcdefg'}],
             defaults=None,
-            labels={'resource_availability': 'availability'}
+            labels={'resource_availability': 'visibility'}
         )
 
     def test_blueprints_delete(self):
@@ -293,29 +293,29 @@ class BlueprintsTest(CliCommandTest):
         self.client.blueprints.set_global = MagicMock()
         self.invoke('cfy blueprints set-global a-blueprint-id')
 
-    def test_blueprints_set_availability(self):
-        self.client.blueprints.set_availability = MagicMock()
-        self.invoke('cfy blueprints set-availability a-blueprint-id -a '
+    def test_blueprints_set_visibility(self):
+        self.client.blueprints.set_visibility = MagicMock()
+        self.invoke('cfy blueprints set-visibility a-blueprint-id -y '
                     'global')
 
-    def test_blueprints_set_availability_invalid_argument(self):
+    def test_blueprints_set_visibility_invalid_argument(self):
         self.invoke(
-            'cfy blueprints set-availability a-blueprint-id -a private',
-            err_str_segment='Invalid availability: `private`',
+            'cfy blueprints set-visibility a-blueprint-id -y private',
+            err_str_segment='Invalid visibility: `private`',
             exception=CloudifyCliError
         )
 
-    def test_blueprints_set_availability_missing_argument(self):
+    def test_blueprints_set_visibility_missing_argument(self):
         outcome = self.invoke(
-            'cfy blueprints set-availability a-blueprint-id',
+            'cfy blueprints set-visibility a-blueprint-id',
             err_str_segment='2',
             exception=SystemExit
         )
-        self.assertIn('Missing option "-a" / "--availability"', outcome.output)
+        self.assertIn('Missing option "-y" / "--visibility"', outcome.output)
 
-    def test_blueprints_set_availability_wrong_argument(self):
+    def test_blueprints_set_visibility_wrong_argument(self):
         outcome = self.invoke(
-            'cfy blueprints set-availability a-blueprint-id -g',
+            'cfy blueprints set-visibility a-blueprint-id -g',
             err_str_segment='2',
             exception=SystemExit
         )
@@ -324,7 +324,7 @@ class BlueprintsTest(CliCommandTest):
     def test_blueprints_upload_mutually_exclusive_arguments(self):
         outcome = self.invoke(
             'cfy blueprints upload {0}/bad_blueprint/blueprint.yaml '
-            '-b my_blueprint_id --private-resource -a tenant'
+            '-b my_blueprint_id --private-resource -y tenant'
             .format(BLUEPRINTS_DIR),
             err_str_segment='2',  # Exit code
             exception=SystemExit
@@ -334,14 +334,14 @@ class BlueprintsTest(CliCommandTest):
     def test_blueprints_upload_invalid_argument(self):
         self.invoke(
             'cfy blueprints upload {0}/bad_blueprint/blueprint.yaml '
-            '-b my_blueprint_id -a bla'
+            '-b my_blueprint_id -y bla'
             .format(BLUEPRINTS_DIR),
-            err_str_segment='Invalid availability: `bla`',
+            err_str_segment='Invalid visibility: `bla`',
             exception=CloudifyCliError
         )
 
-    def test_blueprints_upload_with_availability(self):
+    def test_blueprints_upload_with_visibility(self):
         self.client.blueprints.upload = MagicMock()
         self.invoke('cfy blueprints upload {0} -b my_blueprint_id '
-                    '--blueprint-filename blueprint.yaml -a private'
+                    '--blueprint-filename blueprint.yaml -y private'
                     .format(SAMPLE_ARCHIVE_PATH))

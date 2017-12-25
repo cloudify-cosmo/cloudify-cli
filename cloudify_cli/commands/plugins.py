@@ -16,15 +16,15 @@
 
 import wagon
 
-from cloudify_rest_client.constants import AVAILABILITY_EXCEPT_PRIVATE
+from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
 from .. import utils
 from ..table import print_data
 from ..cli import helptexts, cfy
 from ..constants import RESOURCE_LABELS
 from ..utils import (prettify_client_error,
-                     get_availability,
-                     validate_availability)
+                     get_visibility,
+                     validate_visibility)
 
 PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
                   'supported_platform', 'distribution_release', 'uploaded_at',
@@ -85,7 +85,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
                  short_help='Upload a plugin [manager only]')
 @cfy.argument('plugin-path')
 @cfy.options.private_resource
-@cfy.options.availability()
+@cfy.options.visibility()
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.pass_context
@@ -95,7 +95,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
 def upload(ctx,
            plugin_path,
            private_resource,
-           availability,
+           visibility,
            logger,
            client,
            tenant_name):
@@ -109,10 +109,10 @@ def upload(ctx,
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
 
     progress_handler = utils.generate_progress_handler(plugin_path, '')
-    availability = get_availability(private_resource, availability, logger)
+    visibility = get_visibility(private_resource, visibility, logger)
     logger.info('Uploading plugin {0}...'.format(plugin_path))
     plugin = client.plugins.upload(plugin_path,
-                                   availability,
+                                   visibility,
                                    progress_handler)
     logger.info("Plugin uploaded. The plugin's id is {0}".format(plugin.id))
 
@@ -198,14 +198,14 @@ def _transform_plugin_response(plugin):
 
 
 @plugins.command(name='set-global',
-                 short_help="Set the plugin's availability to global")
+                 short_help="Set the plugin's visibility to global")
 @cfy.argument('plugin-id')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
 def set_global(plugin_id, logger, client):
-    """Set the plugin's availability to global
+    """Set the plugin's visibility to global
 
     `PLUGIN_ID` is the id of the plugin to set global
     """
@@ -214,30 +214,25 @@ def set_global(plugin_id, logger, client):
         client.plugins.set_global(plugin_id)
         logger.info('Plugin `{0}` was set to global'.format(plugin_id))
         logger.info("This command will be deprecated soon, please use the "
-                    "'set-availability' command instead")
+                    "'set-visibility' command instead")
 
 
-@plugins.command(name='set-availability',
-                 short_help="Set the plugin's availability")
+@plugins.command(name='set-visibility',
+                 short_help="Set the plugin's visibility")
 @cfy.argument('plugin-id')
-@cfy.options.availability(required=True,
-                          valid_values=AVAILABILITY_EXCEPT_PRIVATE)
+@cfy.options.visibility(required=True, valid_values=VISIBILITY_EXCEPT_PRIVATE)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def set_availability(plugin_id,
-                     availability,
-                     logger,
-                     client):
-    """Set the plugin's availability
+def set_visibility(plugin_id, visibility, logger, client):
+    """Set the plugin's visibility
 
     `PLUGIN_ID` is the id of the plugin to update
     """
-    validate_availability(availability,
-                          valid_values=AVAILABILITY_EXCEPT_PRIVATE)
+    validate_visibility(visibility, valid_values=VISIBILITY_EXCEPT_PRIVATE)
     status_codes = [400, 403, 404]
     with prettify_client_error(status_codes, logger):
-        client.plugins.set_availability(plugin_id, availability)
+        client.plugins.set_visibility(plugin_id, visibility)
         logger.info('Plugin `{0}` was set to {1}'.format(plugin_id,
-                                                         availability))
+                                                         visibility))

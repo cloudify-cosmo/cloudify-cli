@@ -23,7 +23,7 @@ import traceback
 from functools import wraps
 
 import click
-from cloudify_rest_client.constants import AvailabilityState
+from cloudify_rest_client.constants import VisibilityState
 from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
@@ -1070,14 +1070,14 @@ class Options(object):
             helptexts.GROUP_TENANT_ROLE, required=True)
 
     @staticmethod
-    def availability(required=False, valid_values=AvailabilityState.STATES):
-        args = ['-a', '--availability']
+    def visibility(required=False, valid_values=VisibilityState.STATES):
+        args = ['-y', '--visibility']
         kwargs = {
             'required': required,
-            'help': helptexts.AVAILABILITY.format(valid_values)
+            'help': helptexts.VISIBILITY.format(valid_values)
         }
         if not required:
-            kwargs['default'] = AvailabilityState.TENANT
+            kwargs['default'] = VisibilityState.TENANT
             kwargs['cls'] = MutuallyExclusiveOption
             kwargs['mutually_exclusive'] = ['private_resource']
             kwargs['help'] += ' [default: tenant]'
