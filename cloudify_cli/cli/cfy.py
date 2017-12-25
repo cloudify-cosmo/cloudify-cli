@@ -679,6 +679,16 @@ class Options(object):
             is_flag=True,
             help=helptexts.EXCLUDE_CREDENTIALS_IN_SNAPSHOT)
 
+        self.exclude_logs = click.option(
+            '--exclude-logs',
+            is_flag=True,
+            help=helptexts.EXCLUDE_LOGS_IN_SNAPSHOT)
+
+        self.exclude_events = click.option(
+            '--exclude-events',
+            is_flag=True,
+            help=helptexts.EXCLUDE_EVENTS_IN_SNAPSHOT)
+
         self.ssh_command = click.option(
             '-c',
             '--command',
