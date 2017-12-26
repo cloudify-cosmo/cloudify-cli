@@ -290,12 +290,13 @@ class ProfilesTest(CliCommandTest):
     @patch('cloudify_cli.commands.profiles._validate_credentials')
     def test_set_works_without_skip(self, validate_credentials_mock):
         self.use_manager()
-        self.invoke('profiles set -u 0 -p 0 -t 0')
+        self.invoke('profiles set -u 0 -p 0 -t 0 -c 0')
 
-        validate_credentials_mock.assert_called_once_with('0', '0', '0')
+        validate_credentials_mock.assert_called_once_with('0', '0', '0', '0')
         self.assertEquals('0', env.profile.manager_username)
         self.assertEquals('0', env.profile.manager_password)
         self.assertEquals('0', env.profile.manager_tenant)
+        self.assertEquals('0', env.profile.rest_certificate)
 
     def test_cannot_set_name_local(self):
         self.use_manager()
