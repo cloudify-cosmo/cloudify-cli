@@ -294,7 +294,7 @@ def set_profile(profile_name,
     tenant = manager_tenant or env.get_tenant_name()
 
     if not skip_credentials_validation:
-        _validate_credentials(username, password, tenant)
+        _validate_credentials(username, password, tenant, rest_certificate)
     old_name = None
     if profile_name:
         if profile_name == 'local':
@@ -476,9 +476,14 @@ def unset(manager_username,
         tenant = os.environ.get(constants.CLOUDIFY_TENANT_ENV)
     else:
         tenant = env.profile.manager_tenant
+    if rest_certificate:
+        cert = os.environ.get(constants.LOCAL_REST_CERT_FILE) \
+               or env.get_default_rest_cert_local_path()
+    else:
+        cert = None
 
     if not skip_credentials_validation:
-        _validate_credentials(username, password, tenant)
+        _validate_credentials(username, password, tenant, cert)
 
     if manager_username:
         logger.info('Clearing manager username')
@@ -765,12 +770,13 @@ def _is_manager_secured(response_history):
 
 
 @cfy.pass_logger
-def _validate_credentials(username, password, tenant, logger):
+def _validate_credentials(username, password, tenant, certificate, logger):
     logger.info('Validating credentials...')
     _get_client_and_assert_manager(
         profile_name=env.profile.profile_name,
         manager_username=username,
         manager_password=password,
-        manager_tenant=tenant
+        manager_tenant=tenant,
+        rest_certificate=certificate
     )
     logger.info('Credentials validated')
