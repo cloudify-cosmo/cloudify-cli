@@ -91,7 +91,6 @@ def get(node_id, deployment_id, logger, client, tenant_name):
     logger.info('')
 
     if get_global_verbosity() != NO_VERBOSE:
-        logger.info('Node operations:')
         operations = []
         for op in utils.decode_dict(
                 node.operations).iteritems():
