@@ -1083,5 +1083,13 @@ class Options(object):
             kwargs['help'] += ' [default: tenant]'
         return click.option(*args, **kwargs)
 
+    @staticmethod
+    def plugin_yaml_path():
+        return click.option(
+            '-y',
+            '--yaml-path',
+            required=True,
+            help=helptexts.PLUGIN_YAML_PATH)
+
 
 options = Options()
