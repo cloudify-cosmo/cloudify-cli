@@ -1,3 +1,4 @@
+import os
 import shutil
 import tempfile
 
@@ -10,6 +11,8 @@ from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
 
 from cloudify_rest_client import plugins
+
+from .constants import PLUGINS_DIR
 
 
 class PluginsTest(CliCommandTest):
@@ -59,7 +62,9 @@ class PluginsTest(CliCommandTest):
                 'pip',
                 archive_destination_dir=plugin_dest_dir
             )
-            self.invoke('cfy plugins upload {0}'.format(plugin_path))
+            yaml_path = os.path.join(PLUGINS_DIR, 'plugin.yaml')
+            self.invoke('cfy plugins upload {0} -y {1}'.format(plugin_path,
+                                                               yaml_path))
         finally:
             shutil.rmtree(plugin_dest_dir, ignore_errors=True)
 
@@ -101,10 +106,14 @@ class PluginsTest(CliCommandTest):
         self.assertIn('mutually exclusive with arguments:', outcome.output)
 
     def test_plugins_upload_invalid_argument(self):
-        self.invoke('cfy plugins upload -l bla plugin_path',
+        yaml_path = os.path.join(PLUGINS_DIR, 'plugin.yaml')
+        self.invoke('cfy plugins upload {0} -l bla -y {1}'.
+                    format(yaml_path, yaml_path),
                     err_str_segment='Invalid visibility: `bla`',
                     exception=CloudifyCliError)
 
     def test_plugins_upload_with_visibility(self):
         self.client.plugins.upload = MagicMock()
-        self.invoke('cfy plugins upload -l private plugin_path')
+        yaml_path = os.path.join(PLUGINS_DIR, 'plugin.yaml')
+        self.invoke('cfy plugins upload {0} -l private -y {1}'
+                    .format(yaml_path, yaml_path))

@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ############
+import os
 
 import wagon
 
@@ -83,6 +84,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
 @plugins.command(name='upload',
                  short_help='Upload a plugin [manager only]')
 @cfy.argument('plugin-path')
+@cfy.options.plugin_yaml_path()
 @cfy.options.private_resource
 @cfy.options.visibility()
 @cfy.options.verbose()
@@ -93,6 +95,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
 @cfy.pass_logger
 def upload(ctx,
            plugin_path,
+           yaml_path,
            private_resource,
            visibility,
            logger,
@@ -107,13 +110,20 @@ def upload(ctx,
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
 
+    logger.info('Creating plugin zip archive..')
+    plugin_path = utils.get_local_path(plugin_path)
+    yaml_path = utils.get_local_path(yaml_path)
+    plugin_path = utils.zip_files([plugin_path, yaml_path])
+
     progress_handler = utils.generate_progress_handler(plugin_path, '')
+
     visibility = get_visibility(private_resource, visibility, logger)
-    logger.info('Uploading plugin {0}...'.format(plugin_path))
+    logger.info('Uploading plugin archive (wagon + yaml)..')
     plugin = client.plugins.upload(plugin_path,
                                    visibility,
                                    progress_handler)
     logger.info("Plugin uploaded. The plugin's id is {0}".format(plugin.id))
+    os.remove(plugin_path)
 
 
 @plugins.command(name='download',

@@ -242,3 +242,4 @@ PRIVATE_RESOURCE = 'If set to True the uploaded resource will only be ' \
                    'accessible by all users that belong to the same tenant. ' \
                    '(default: False)'
 VISIBILITY = 'Defines who can see the resource, can be set to one of {0}'
+PLUGIN_YAML_PATH = "The path to the plugin's yaml file"
