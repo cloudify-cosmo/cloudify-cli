@@ -101,7 +101,8 @@ def get(node_id, deployment_id, logger, client, tenant_name):
             tempdict.update({'name': op[0]})
             operations = operations + [tempdict]
             #logger.info('\t{0}'.format(op))
-        print_data(OPERATION_COLUMNS, operations, 'Operations:', labels=RESOURCE_LABELS)
+        print_data(OPERATION_COLUMNS, operations, 'Operations:',
+                   labels=RESOURCE_LABELS)
         logger.info('')
 
 
