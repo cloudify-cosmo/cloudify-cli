@@ -30,6 +30,7 @@ NODE_COLUMNS = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
 
 OPERATION_COLUMNS = ['name', 'inputs', 'plugin', 'executor', 'operation']
 
+
 @cfy.group(name='nodes')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -91,20 +92,19 @@ def get(node_id, deployment_id, logger, client, tenant_name):
 
     if get_global_verbosity() != NO_VERBOSE:
         logger.info('Node operations:')
-        operations=[]
+        operations = []
         for op in utils.decode_dict(
                 node.operations).iteritems():
             # op is a tuple (operation_name, dict_of_attributes)
             # we want to add the name to the dict
             # and build a new array in order to print it in a table
-            tempdict=op[1].copy()
+            tempdict = op[1].copy()
             tempdict.update({'name': op[0]})
             operations = operations + [tempdict]
-            #logger.info('\t{0}'.format(op))
+            # logger.info('\t{0}'.format(op))
         print_data(OPERATION_COLUMNS, operations, 'Operations:',
                    labels=RESOURCE_LABELS)
         logger.info('')
-
 
     # print node instances IDs
     logger.info('Node instance IDs:')
