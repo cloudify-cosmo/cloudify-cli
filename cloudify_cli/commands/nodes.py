@@ -92,15 +92,12 @@ def get(node_id, deployment_id, logger, client, tenant_name):
 
     if get_global_verbosity() != NO_VERBOSE:
         operations = []
-        for op in utils.decode_dict(
-                node.operations).iteritems():
-            # op is a tuple (operation_name, dict_of_attributes)
+        for op_name, op in utils.decode_dict(node.operations).iteritems():
+            # operations is a tuple (operation_name, dict_of_attributes)
             # we want to add the name to the dict
             # and build a new array in order to print it in a table
-            tempdict = op[1].copy()
-            tempdict.update({'name': op[0]})
-            operations = operations + [tempdict]
-            # logger.info('\t{0}'.format(op))
+            op['name'] = op_name
+            operations += [op]
         print_data(OPERATION_COLUMNS, operations, 'Operations:',
                    labels=RESOURCE_LABELS)
         logger.info('')
