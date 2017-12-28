@@ -21,11 +21,14 @@ from ..cli import cfy
 from ..table import print_data
 from ..constants import RESOURCE_LABELS
 from ..exceptions import CloudifyCliError
-
+from ..logger import NO_VERBOSE
+from ..logger import get_global_verbosity
 
 NODE_COLUMNS = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                 'number_of_instances', 'planned_number_of_instances',
                 'resource_availability', 'tenant_name', 'created_by']
+
+OPERATION_COLUMNS = ['name', 'inputs', 'plugin', 'executor', 'operation']
 
 
 @cfy.group(name='nodes')
@@ -86,6 +89,18 @@ def get(node_id, deployment_id, logger, client, tenant_name):
             node.properties).iteritems():
         logger.info('\t{0}: {1}'.format(property_name, property_value))
     logger.info('')
+
+    if get_global_verbosity() != NO_VERBOSE:
+        operations = []
+        for op_name, op in utils.decode_dict(node.operations).iteritems():
+            # operations is a tuple (operation_name, dict_of_attributes)
+            # we want to add the name to the dict
+            # and build a new array in order to print it in a table
+            op['name'] = op_name
+            operations += [op]
+        print_data(OPERATION_COLUMNS, operations, 'Operations:',
+                   labels=RESOURCE_LABELS)
+        logger.info('')
 
     # print node instances IDs
     logger.info('Node instance IDs:')
