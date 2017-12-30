@@ -24,8 +24,8 @@ from .. import utils
 from ..table import print_data
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger
+from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 from ..execution_events_fetcher import wait_for_execution
-from ..constants import DEFAULT_UNINSTALL_WORKFLOW, RESOURCE_LABELS
 from ..exceptions import CloudifyCliError, ExecutionTimeoutError, \
     SuppressedCloudifyCliError
 
@@ -34,8 +34,8 @@ _STATUS_CANCELING_MESSAGE = (
     'may take a while to change into "cancelled"')
 
 EXECUTION_COLUMNS = ['id', 'workflow_id', 'status', 'deployment_id',
-                     'created_at', 'error', 'resource_availability',
-                     'tenant_name', 'created_by']
+                     'created_at', 'error', 'visibility', 'tenant_name',
+                     'created_by']
 
 
 @cfy.group(name='executions')
@@ -69,11 +69,7 @@ def manager_get(execution_id, logger, client, tenant_name):
             raise
         raise CloudifyCliError('Execution {0} not found'.format(execution_id))
 
-    print_data(EXECUTION_COLUMNS,
-               execution,
-               'Execution:',
-               max_width=50,
-               labels=RESOURCE_LABELS)
+    print_data(EXECUTION_COLUMNS, execution, 'Execution:', max_width=50)
 
     # print execution parameters
     logger.info('Execution Parameters:')
@@ -133,10 +129,7 @@ def manager_list(
         raise CloudifyCliError('Deployment {0} does not exist'.format(
             deployment_id))
 
-    print_data(EXECUTION_COLUMNS,
-               executions,
-               'Executions:',
-               labels=RESOURCE_LABELS)
+    print_data(EXECUTION_COLUMNS, executions, 'Executions:')
 
     if any(execution.status in (
             execution.CANCELLING, execution.FORCE_CANCELLING)

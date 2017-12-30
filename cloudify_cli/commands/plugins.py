@@ -21,14 +21,13 @@ from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 from .. import utils
 from ..table import print_data
 from ..cli import helptexts, cfy
-from ..constants import RESOURCE_LABELS
 from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility)
 
 PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
                   'supported_platform', 'distribution_release', 'uploaded_at',
-                  'resource_availability', 'tenant_name', 'created_by']
+                  'visibility', 'tenant_name', 'created_by']
 EXCLUDED_COLUMNS = ['archive_name', 'distribution_version', 'excluded_wheels',
                     'package_source', 'supported_py_versions', 'wheels']
 
@@ -159,7 +158,7 @@ def get(plugin_id, logger, client, tenant_name):
     logger.info('Retrieving plugin {0}...'.format(plugin_id))
     plugin = client.plugins.get(plugin_id)
     _transform_plugin_response(plugin)
-    print_data(PLUGIN_COLUMNS, plugin, 'Plugin:', labels=RESOURCE_LABELS)
+    print_data(PLUGIN_COLUMNS, plugin, 'Plugin:')
 
 
 @plugins.command(name='list',
@@ -184,10 +183,7 @@ def list(sort_by, descending, tenant_name, all_tenants, logger, client):
                                        _all_tenants=all_tenants)
     for plugin in plugins_list:
         _transform_plugin_response(plugin)
-    print_data(PLUGIN_COLUMNS,
-               plugins_list,
-               'Plugins:',
-               labels=RESOURCE_LABELS)
+    print_data(PLUGIN_COLUMNS, plugins_list, 'Plugins:')
 
 
 def _transform_plugin_response(plugin):
