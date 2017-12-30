@@ -46,14 +46,14 @@ class BlueprintsTest(CliCommandTest):
                 'main_file_name',
                 'created_at',
                 'updated_at',
-                'resource_availability',
+                'visibility',
                 'tenant_name',
                 'created_by'
             ],
             data=[{'description': '123456789012345678..'},
                   {'description': 'abcdefg'}],
             defaults=None,
-            labels={'resource_availability': 'visibility'}
+            labels=None
         )
 
     def test_blueprints_delete(self):

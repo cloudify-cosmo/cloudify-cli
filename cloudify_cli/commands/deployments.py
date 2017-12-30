@@ -32,14 +32,14 @@ from ..table import print_data
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger
 from .. import execution_events_fetcher
-from ..constants import DEFAULT_BLUEPRINT_PATH, RESOURCE_LABELS
+from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility)
 
 DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
-                      'resource_availability', 'tenant_name', 'created_by']
+                      'visibility', 'tenant_name', 'created_by']
 TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
 
 
@@ -88,10 +88,7 @@ def manager_list(blueprint_id,
         deployments = filter(lambda deployment:
                              deployment['blueprint_id'] == blueprint_id,
                              deployments)
-    print_data(DEPLOYMENT_COLUMNS,
-               deployments,
-               'Deployments:',
-               labels=RESOURCE_LABELS)
+    print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:')
 
 
 @cfy.command(name='update', short_help='Update a deployment [manager only]')

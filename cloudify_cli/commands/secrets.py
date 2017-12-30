@@ -20,14 +20,13 @@ from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
 from .. import env
 from ..cli import cfy
-from ..constants import RESOURCE_LABELS
 from ..exceptions import CloudifyCliError
 from ..table import print_data, print_details
 from ..utils import (handle_client_error,
                      prettify_client_error,
                      validate_visibility)
 
-SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'resource_availability',
+SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'visibility',
                    'tenant_name', 'created_by']
 
 
@@ -106,8 +105,6 @@ def get(key, logger, client):
         logger.info('Getting info for secret `{0}`...'.format(key))
         secret_details = client.secrets.get(key)
         secret_details.pop('private_resource')
-        secret_details['visibility'] = \
-            secret_details.pop('resource_availability')
         print_details(secret_details, 'Requested secret info:')
 
 
@@ -152,10 +149,7 @@ def list(sort_by, descending, tenant_name, all_tenants, logger, client):
         _all_tenants=all_tenants
     )
 
-    print_data(SECRETS_COLUMNS,
-               secrets_list,
-               'Secrets:',
-               labels=RESOURCE_LABELS)
+    print_data(SECRETS_COLUMNS, secrets_list, 'Secrets:')
 
 
 @secrets.command(name='delete', short_help='Delete a secret')

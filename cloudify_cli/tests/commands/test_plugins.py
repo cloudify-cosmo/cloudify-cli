@@ -33,7 +33,7 @@ class PluginsTest(CliCommandTest):
                                          'distribution_release': 'trusty',
                                          'distribution': 'ubuntu',
                                          'uploaded_at': 'now',
-                                         'resource_availability': 'private',
+                                         'visibility': 'private',
                                          'created_by': 'admin',
                                          'tenant_name': DEFAULT_TENANT_NAME}))
 

@@ -241,4 +241,4 @@ PRIVATE_RESOURCE = 'If set to True the uploaded resource will only be ' \
                    'accessible by its creator. Otherwise, the resource is ' \
                    'accessible by all users that belong to the same tenant. ' \
                    '(default: False)'
-VISIBILITY = 'Defines who can access the resource, can be set to one of {0}'
+VISIBILITY = 'Defines who can see the resource, can be set to one of {0}'

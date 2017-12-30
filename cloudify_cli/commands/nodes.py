@@ -19,14 +19,13 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from .. import utils
 from ..cli import cfy
 from ..table import print_data
-from ..constants import RESOURCE_LABELS
 from ..exceptions import CloudifyCliError
 from ..logger import NO_VERBOSE
 from ..logger import get_global_verbosity
 
 NODE_COLUMNS = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                 'number_of_instances', 'planned_number_of_instances',
-                'resource_availability', 'tenant_name', 'created_by']
+                'visibility', 'tenant_name', 'created_by']
 
 OPERATION_COLUMNS = ['name', 'inputs', 'plugin', 'executor', 'operation']
 
@@ -77,11 +76,7 @@ def get(node_id, deployment_id, logger, client, tenant_name):
         raise CloudifyCliError('No node instances were found for '
                                'node {0}'.format(node_id))
 
-    print_data(NODE_COLUMNS,
-               node,
-               'Node:',
-               max_width=50,
-               labels=RESOURCE_LABELS)
+    print_data(NODE_COLUMNS, node, 'Node:', max_width=50)
 
     # print node properties
     logger.info('Node properties:')
@@ -98,8 +93,7 @@ def get(node_id, deployment_id, logger, client, tenant_name):
             # and build a new array in order to print it in a table
             op['name'] = op_name
             operations += [op]
-        print_data(OPERATION_COLUMNS, operations, 'Operations:',
-                   labels=RESOURCE_LABELS)
+        print_data(OPERATION_COLUMNS, operations, 'Operations:')
         logger.info('')
 
     # print node instances IDs
@@ -149,4 +143,4 @@ def list(deployment_id, sort_by, descending, tenant_name, all_tenants,
         raise CloudifyCliError('Deployment {0} does not exist'.format(
             deployment_id))
 
-    print_data(NODE_COLUMNS, nodes, 'Nodes:', labels=RESOURCE_LABELS)
+    print_data(NODE_COLUMNS, nodes, 'Nodes:')

@@ -82,5 +82,3 @@ API_VERSION = 'v3.1'
 HELP_TEXT_COLUMN_BUFFER = 5
 
 SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
-
-RESOURCE_LABELS = {'resource_availability': 'visibility'}

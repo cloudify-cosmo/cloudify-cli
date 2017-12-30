@@ -33,7 +33,6 @@ from .. import blueprint
 from .. import exceptions
 from ..config import config
 from ..table import print_data
-from ..constants import RESOURCE_LABELS
 from ..exceptions import CloudifyCliError
 from ..utils import (prettify_client_error,
                      get_visibility,
@@ -42,8 +41,7 @@ from ..utils import (prettify_client_error,
 
 DESCRIPTION_LIMIT = 20
 BLUEPRINT_COLUMNS = ['id', 'description', 'main_file_name', 'created_at',
-                     'updated_at', 'resource_availability', 'tenant_name',
-                     'created_by']
+                     'updated_at', 'visibility', 'tenant_name', 'created_by']
 INPUTS_COLUMNS = ['name', 'type', 'default', 'description']
 
 
@@ -241,10 +239,7 @@ def list(sort_by, descending, tenant_name, all_tenants, logger, client):
     logger.info('Listing all blueprints...')
     blueprints = [trim_description(b) for b in client.blueprints.list(
         sort=sort_by, is_descending=descending, _all_tenants=all_tenants)]
-    print_data(BLUEPRINT_COLUMNS,
-               blueprints,
-               'Blueprints:',
-               labels=RESOURCE_LABELS)
+    print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
 
 @blueprints.command(name='get',
@@ -268,11 +263,7 @@ def get(blueprint_id, logger, client, tenant_name):
                                           blueprint_id=blueprint_id)
     blueprint_dict['#deployments'] = len(deployments)
     columns = BLUEPRINT_COLUMNS + ['#deployments']
-    print_data(columns,
-               blueprint_dict,
-               'Blueprint:',
-               max_width=50,
-               labels=RESOURCE_LABELS)
+    print_data(columns, blueprint_dict, 'Blueprint:', max_width=50)
 
     logger.info('Description:')
     logger.info('{0}\n'.format(blueprint_dict['description'] or ''))
