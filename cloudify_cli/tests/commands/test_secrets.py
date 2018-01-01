@@ -53,10 +53,10 @@ class SecretsTest(CliCommandTest):
 
     def test_secrets_set_visibility(self):
         self.client.secrets.set_visibility = MagicMock()
-        self.invoke('cfy secrets set-visibility a-secret-key -y global')
+        self.invoke('cfy secrets set-visibility a-secret-key -l global')
 
     def test_secrets_set_visibility_invalid_argument(self):
-        self.invoke('cfy secrets set-visibility a-secret-key -y private',
+        self.invoke('cfy secrets set-visibility a-secret-key -l private',
                     err_str_segment='Invalid visibility: `private`',
                     exception=CloudifyCliError)
 
@@ -64,7 +64,7 @@ class SecretsTest(CliCommandTest):
         outcome = self.invoke('cfy secrets set-visibility a-secret-key',
                               err_str_segment='2',
                               exception=SystemExit)
-        self.assertIn('Missing option "-y" / "--visibility"',
+        self.assertIn('Missing option "-l" / "--visibility"',
                       outcome.output)
 
     def test_secrets_set_visibility_wrong_argument(self):
@@ -74,10 +74,10 @@ class SecretsTest(CliCommandTest):
         self.assertIn('Error: no such option: -g', outcome.output)
 
     def test_secrets_create_invalid_argument(self):
-        self.invoke('cfy secrets create a-secret-key -y bla',
+        self.invoke('cfy secrets create a-secret-key -l bla',
                     err_str_segment='Invalid visibility: `bla`',
                     exception=CloudifyCliError)
 
     def test_secrets_create_with_visibility(self):
         self.client.secrets.create = MagicMock()
-        self.invoke('cfy secrets create a-secret-key -y private -s hello')
+        self.invoke('cfy secrets create a-secret-key -l private -s hello')
