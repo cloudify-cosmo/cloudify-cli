@@ -73,10 +73,10 @@ class PluginsTest(CliCommandTest):
 
     def test_plugins_set_visibility(self):
         self.client.plugins.set_visibility = MagicMock()
-        self.invoke('cfy plugins set-visibility a-plugin-id -y global')
+        self.invoke('cfy plugins set-visibility a-plugin-id -l global')
 
     def test_plugins_set_visibility_invalid_argument(self):
-        self.invoke('cfy plugins set-visibility a-plugin-id -y private',
+        self.invoke('cfy plugins set-visibility a-plugin-id -l private',
                     err_str_segment='Invalid visibility: `private`',
                     exception=CloudifyCliError)
 
@@ -84,7 +84,7 @@ class PluginsTest(CliCommandTest):
         outcome = self.invoke('cfy plugins set-visibility a-plugin-id',
                               err_str_segment='2',
                               exception=SystemExit)
-        self.assertIn('Missing option "-y" / "--visibility"', outcome.output)
+        self.assertIn('Missing option "-l" / "--visibility"', outcome.output)
 
     def test_blueprints_set_visibility_wrong_argument(self):
         outcome = self.invoke('cfy plugins set-visibility a-plugin-id -g',
@@ -94,17 +94,17 @@ class PluginsTest(CliCommandTest):
 
     def test_plugins_upload_mutually_exclusive_arguments(self):
         outcome = self.invoke(
-            'cfy plugins upload --private-resource -y tenant',
+            'cfy plugins upload --private-resource -l tenant',
             err_str_segment='2',  # Exit code
             exception=SystemExit
         )
         self.assertIn('mutually exclusive with arguments:', outcome.output)
 
     def test_plugins_upload_invalid_argument(self):
-        self.invoke('cfy plugins upload -y bla plugin_path',
+        self.invoke('cfy plugins upload -l bla plugin_path',
                     err_str_segment='Invalid visibility: `bla`',
                     exception=CloudifyCliError)
 
     def test_plugins_upload_with_visibility(self):
         self.client.plugins.upload = MagicMock()
-        self.invoke('cfy plugins upload -y private plugin_path')
+        self.invoke('cfy plugins upload -l private plugin_path')

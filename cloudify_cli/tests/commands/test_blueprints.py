@@ -295,12 +295,12 @@ class BlueprintsTest(CliCommandTest):
 
     def test_blueprints_set_visibility(self):
         self.client.blueprints.set_visibility = MagicMock()
-        self.invoke('cfy blueprints set-visibility a-blueprint-id -y '
+        self.invoke('cfy blueprints set-visibility a-blueprint-id -l '
                     'global')
 
     def test_blueprints_set_visibility_invalid_argument(self):
         self.invoke(
-            'cfy blueprints set-visibility a-blueprint-id -y private',
+            'cfy blueprints set-visibility a-blueprint-id -l private',
             err_str_segment='Invalid visibility: `private`',
             exception=CloudifyCliError
         )
@@ -311,7 +311,7 @@ class BlueprintsTest(CliCommandTest):
             err_str_segment='2',
             exception=SystemExit
         )
-        self.assertIn('Missing option "-y" / "--visibility"', outcome.output)
+        self.assertIn('Missing option "-l" / "--visibility"', outcome.output)
 
     def test_blueprints_set_visibility_wrong_argument(self):
         outcome = self.invoke(
@@ -324,7 +324,7 @@ class BlueprintsTest(CliCommandTest):
     def test_blueprints_upload_mutually_exclusive_arguments(self):
         outcome = self.invoke(
             'cfy blueprints upload {0}/bad_blueprint/blueprint.yaml '
-            '-b my_blueprint_id --private-resource -y tenant'
+            '-b my_blueprint_id --private-resource -l tenant'
             .format(BLUEPRINTS_DIR),
             err_str_segment='2',  # Exit code
             exception=SystemExit
@@ -334,7 +334,7 @@ class BlueprintsTest(CliCommandTest):
     def test_blueprints_upload_invalid_argument(self):
         self.invoke(
             'cfy blueprints upload {0}/bad_blueprint/blueprint.yaml '
-            '-b my_blueprint_id -y bla'
+            '-b my_blueprint_id -l bla'
             .format(BLUEPRINTS_DIR),
             err_str_segment='Invalid visibility: `bla`',
             exception=CloudifyCliError
@@ -343,5 +343,5 @@ class BlueprintsTest(CliCommandTest):
     def test_blueprints_upload_with_visibility(self):
         self.client.blueprints.upload = MagicMock()
         self.invoke('cfy blueprints upload {0} -b my_blueprint_id '
-                    '--blueprint-filename blueprint.yaml -y private'
+                    '--blueprint-filename blueprint.yaml -l private'
                     .format(SAMPLE_ARCHIVE_PATH))

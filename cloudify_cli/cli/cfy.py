@@ -1071,7 +1071,7 @@ class Options(object):
 
     @staticmethod
     def visibility(required=False, valid_values=VisibilityState.STATES):
-        args = ['-y', '--visibility']
+        args = ['-l', '--visibility']
         kwargs = {
             'required': required,
             'help': helptexts.VISIBILITY.format(valid_values)
