@@ -403,6 +403,10 @@ class ProfileContext(yaml.YAMLObject):
     yaml_tag = u'!CloudifyProfileContext'
     yaml_loader = yaml.Loader
 
+    # If this isn't set here, it breaks backwards compatibility with pre-4.2
+    # profiles
+    rest_certificate = None
+
     def __init__(self, profile_name=None):
         # Note that __init__ is not called when loading from yaml.
         # When adding a new ProfileContext attribute, make sure that
@@ -419,7 +423,6 @@ class ProfileContext(yaml.YAMLObject):
         self.manager_tenant = None
         self.rest_port = constants.DEFAULT_REST_PORT
         self.rest_protocol = constants.DEFAULT_REST_PROTOCOL
-        self.rest_certificate = None
         self._cluster = []
 
     def to_dict(self):
