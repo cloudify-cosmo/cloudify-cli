@@ -1070,7 +1070,9 @@ class Options(object):
             helptexts.GROUP_TENANT_ROLE, required=True)
 
     @staticmethod
-    def visibility(required=False, valid_values=VisibilityState.STATES):
+    def visibility(required=False,
+                   valid_values=VisibilityState.STATES,
+                   mutually_exclusive_required=True):
         args = ['-l', '--visibility']
         kwargs = {
             'required': required,
@@ -1078,9 +1080,10 @@ class Options(object):
         }
         if not required:
             kwargs['default'] = VisibilityState.TENANT
-            kwargs['cls'] = MutuallyExclusiveOption
-            kwargs['mutually_exclusive'] = ['private_resource']
             kwargs['help'] += ' [default: tenant]'
+            if mutually_exclusive_required:
+                kwargs['cls'] = MutuallyExclusiveOption
+                kwargs['mutually_exclusive'] = ['private_resource']
         return click.option(*args, **kwargs)
 
     @staticmethod

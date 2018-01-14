@@ -237,9 +237,10 @@ SECRET_FILE = "The secret's file to use its content as value to be set"
 SECRET_UPDATE_IF_EXISTS = 'Update secret value if secret key already exists'
 CLUSTER_NODE_OPTIONS = 'Additional options for the cluster node '\
                        'configuration {0}'.format(INPUTS_PARAMS_USAGE)
-PRIVATE_RESOURCE = 'If set to True the uploaded resource will only be ' \
-                   'accessible by its creator. Otherwise, the resource is ' \
-                   'accessible by all users that belong to the same tenant. ' \
-                   '(default: False)'
+PRIVATE_RESOURCE = 'This option is deprecated; use --visibility option ' \
+                   'instead. If set to True the uploaded resource will only ' \
+                   'be accessible by its creator. Otherwise, the resource ' \
+                   'is accessible by all users that belong to the same ' \
+                   'tenant [default: False].'
 VISIBILITY = 'Defines who can see the resource, can be set to one of {0}'
 PLUGIN_YAML_PATH = "The path to the plugin's yaml file"

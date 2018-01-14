@@ -45,7 +45,7 @@ def secrets():
 @cfy.options.secret_string
 @cfy.options.secret_file
 @cfy.options.secret_update_if_exists
-@cfy.options.visibility()
+@cfy.options.visibility(mutually_exclusive_required=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
@@ -193,7 +193,9 @@ def set_global(key, logger, client):
 @secrets.command(name='set-visibility',
                  short_help="Set the secret's visibility")
 @cfy.argument('key', callback=cfy.validate_name)
-@cfy.options.visibility(required=True, valid_values=VISIBILITY_EXCEPT_PRIVATE)
+@cfy.options.visibility(required=True,
+                        valid_values=VISIBILITY_EXCEPT_PRIVATE,
+                        mutually_exclusive_required=False)
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
