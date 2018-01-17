@@ -14,6 +14,11 @@
 # limitations under the License.
 ############
 import os
+import tarfile
+import tempfile
+
+import shutil
+import yaml
 
 import wagon
 
@@ -25,6 +30,7 @@ from ..cli import helptexts, cfy
 from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility)
+from ..exceptions import CloudifyCliError
 
 PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
                   'supported_platform', 'distribution_release', 'uploaded_at',
@@ -32,6 +38,37 @@ PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
 GET_DATA_COLUMNS = ['file_server_path']
 EXCLUDED_COLUMNS = ['archive_name', 'distribution_version', 'excluded_wheels',
                     'package_source', 'supported_py_versions', 'wheels']
+
+
+def _create_caravan(mappings, dest, name=None):
+    tempdir = tempfile.mkdtemp()
+    metadata = {}
+
+    for wgn_path, yaml_path in mappings.iteritems():
+        plugin_root_dir = os.path.basename(wgn_path).split('.', 1)[0]
+        os.mkdir(os.path.join(tempdir, plugin_root_dir))
+
+        dest_wgn_path = os.path.join(plugin_root_dir,
+                                     os.path.basename(wgn_path))
+        dest_yaml_path = os.path.join(plugin_root_dir,
+                                      os.path.basename(yaml_path))
+
+        shutil.copy(wgn_path, os.path.join(tempdir, dest_wgn_path))
+        shutil.copy(yaml_path, os.path.join(tempdir, dest_yaml_path))
+        metadata[dest_wgn_path] = dest_yaml_path
+
+    with open(os.path.join(tempdir, 'METADATA'), 'w+') as f:
+        yaml.dump(metadata, f)
+
+    tar_name = name or 'palace'
+    tar_path = os.path.join(dest, '{0}.cvn'.format(tar_name))
+    tarfile_ = tarfile.open(tar_path, 'w:gz')
+    try:
+        tarfile_.add(tempdir, arcname=tar_name)
+    finally:
+        tarfile_.close()
+
+    return tar_path
 
 
 @cfy.group(name='plugins')
@@ -125,6 +162,32 @@ def upload(ctx,
                                    progress_handler)
     logger.info("Plugin uploaded. The plugin's id is {0}".format(plugin.id))
     os.remove(plugin_path)
+
+
+@plugins.command(name='create-caravan', short_help='Create a caravan')
+@cfy.options.caravan_name
+@cfy.argument('plugin-mappings')
+@cfy.argument('destination')
+@cfy.pass_logger
+def create_caravan(logger, plugin_mappings, destination, name):
+    logger.info('Packing wagons into a Caravan')
+    try:
+        plugin_mappings = yaml.load(
+            open(utils.get_local_path(plugin_mappings)))
+    except CloudifyCliError:
+        plugin_mappings = yaml.load(plugin_mappings)
+
+    cvn_path = _create_caravan(plugin_mappings, destination, name)
+    logger.info('Caravan created at {0}'.format(cvn_path))
+    return cvn_path
+
+
+@plugins.command(name='upload-caravan', short_help='Create a caravan')
+@cfy.argument('caravan-path')
+@cfy.pass_client()
+def upload_caravan(client, caravan_path):
+    progress = utils.generate_progress_handler(caravan_path, '')
+    return client.plugins.upload(caravan_path, progress_callback=progress)
 
 
 @plugins.command(name='download',

@@ -834,6 +834,13 @@ class Options(object):
             help=helptexts.SECRET_UPDATE_IF_EXISTS,
         )
 
+        self.caravan_name = click.option(
+            '-n',
+            '--name',
+            required=False,
+            help=helptexts.CARAVAN_NAME
+        )
+
         # same as --inputs, name changed for consistency
         self.cluster_node_options = click.option(
             '-o',
