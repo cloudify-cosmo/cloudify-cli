@@ -1,4 +1,4 @@
-#/bin/bash -e
+#/bin/bash -e -x
 
 export GITHUB_USERNAME=$1
 export GITHUB_PASSWORD=$2
