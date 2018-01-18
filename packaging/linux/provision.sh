@@ -87,7 +87,7 @@ cd ~/cloudify-cli/packaging/omnibus
 gitTagExists=$(git tag -l $CORE_TAG_NAME)
 if [ "$CORE_BRANCH" != "master" ]; then
     export CLI_BRANCH="$CORE_BRANCH"
-    if [ "${REPO}" == "cloudify-versions"]; then
+    if [ "${REPO}" == "cloudify-versions" ]; then
         export CORE_BRANCH="master"
     fi
     git checkout -b ${CLI_BRANCH} origin/${CLI_BRANCH}
