@@ -1,6 +1,6 @@
 name "cloudify-manager"
 
-ENV['CORE_BRANCH'] || raise('CORE_TAG_NAME environment variable not set')
+ENV['CORE_BRANCH'] || raise('CORE_BRANCH environment variable not set')
 
 default_version ENV['CORE_BRANCH']
 

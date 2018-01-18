@@ -21,7 +21,6 @@ AWS_ACCESS_KEY = ENV['AWS_ACCESS_KEY']
 
 GITHUB_USERNAME = ENV['GITHUB_USERNAME']
 GITHUB_PASSWORD = ENV['GITHUB_PASSWORD']
-CLI_BRANCH = ENV['tag']
 PACKAGER_BRANCH = ENV['PACKAGER_BRANCH']
 REPO = ENV['REPO']
 
@@ -46,7 +45,7 @@ Vagrant.configure('2') do |config|
     end
     centos65x64.vm.provision "shell" do |s|
       s.path = "linux/provision.sh"
-      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID} #{AWS_ACCESS_KEY} #{CLI_BRANCH} #{PACKAGER_BRANCH} #{REPO}"
+      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID} #{AWS_ACCESS_KEY} #{PACKAGER_BRANCH} #{REPO}"
       s.privileged = false
     end
   end
@@ -71,7 +70,7 @@ Vagrant.configure('2') do |config|
     end
     debian_wheezy_x64.vm.provision "shell" do |s|
       s.path = "linux/provision.sh"
-      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID} #{AWS_ACCESS_KEY} #{CLI_BRANCH} #{PACKAGER_BRANCH} #{REPO}"
+      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID} #{AWS_ACCESS_KEY} #{PACKAGER_BRANCH} #{REPO}"
       s.privileged = false
     end
   end

@@ -4,9 +4,8 @@ export GITHUB_USERNAME=$1
 export GITHUB_PASSWORD=$2
 AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
-CLI_BRANCH=$5
-PACKAGER_BRANCH=$6
-export REPO=$7
+PACKAGER_BRANCH=$5
+export REPO=$6
 export CORE_TAG_NAME="4.3.dev1"
 export CORE_BRANCH="master"
 
@@ -87,9 +86,13 @@ git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd ~/cloudify-cli/packaging/omnibus
 gitTagExists=$(git tag -l $CORE_TAG_NAME)
 if [ "$CORE_BRANCH" != "master" ]; then
-    git checkout -b ${CORE_BRANCH} origin/${CORE_BRANCH}
+    export CLI_BRANCH="$CORE_BRANCH"
+    if [ "${REPO}" == "cloudify-versions"]; then
+        export CORE_BRANCH="master"
+    fi
+    git checkout -b ${CLI_BRANCH} origin/${CLI_BRANCH}
 else
-    git checkout ${CORE_BRANCH}
+    git checkout ${CLI_BRANCH}
 fi
 
 # Get Omnibus software from Chef Omnibus repo
