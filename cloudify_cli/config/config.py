@@ -20,8 +20,11 @@ import yaml
 
 from dsl_parser import utils as dsl_parser_utils
 from dsl_parser.constants import IMPORT_RESOLVER_KEY
+from dsl_parser.import_resolver.default_import_resolver import (
+    DefaultImportResolver
+)
 
-from .. import env
+from .. import env, exceptions
 
 
 CLOUDIFY_CONFIG_PATH = os.path.join(env.CLOUDIFY_WORKDIR, 'config.yaml')
@@ -88,12 +91,14 @@ def is_auto_generate_ids():
 
 
 def get_import_resolver():
-    if not env.is_initialized():
-        return None
-
-    config = CloudifyConfig()
-    # get the resolver configuration from the config file
-    local_import_resolver = config.local_import_resolver
+    local_import_resolver = {
+        'implementation': 'cloudify_cli.config.config:ResolverWithPlugins'
+    }
+    if env.is_initialized():
+        config = CloudifyConfig()
+        # get the resolver configuration from the config file
+        if isinstance(config.local_import_resolver, dict):
+            local_import_resolver.update(config.local_import_resolver)
     return dsl_parser_utils.create_import_resolver(local_import_resolver)
 
 
@@ -102,3 +107,24 @@ def is_validate_definitions_version():
         return True
     config = CloudifyConfig()
     return config.validate_definitions_version
+
+
+class ResolverWithPlugins(DefaultImportResolver):
+    PREFIX = 'plugin:'
+
+    def fetch_import(self, import_url):
+        if self._is_plugin_url(import_url):
+            e = exceptions.CloudifyCliError(
+                'Error fetching plugin yaml: {0!r}\nBlueprints using plugin '
+                'repository imports can not be validated locally.'
+                .format(import_url))
+            e.possible_solutions = [
+                'Upload the blueprint to a Cloudify Manager',
+                'Use an explicit URL to the plugin YAML file instead of a '
+                'plugin repository `plugin:` import'
+            ]
+            raise e
+        return super(ResolverWithPlugins, self).fetch_import(import_url)
+
+    def _is_plugin_url(self, import_url):
+        return import_url.startswith(self.PREFIX)
