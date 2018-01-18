@@ -3,7 +3,7 @@ name "cloudify-manager"
 ENV['CORE_BRANCH'] || raise('CORE_BRANCH environment variable not set')
 
 default_version ENV['CORE_BRANCH']
-
+puts "default_version=#{default_version}"
 source :git => "https://github.com/cloudify-cosmo/cloudify-manager"
 
 build do

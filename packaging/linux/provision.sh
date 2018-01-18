@@ -7,7 +7,7 @@ AWS_ACCESS_KEY=$4
 PACKAGER_BRANCH=$5
 export REPO=$6
 export CORE_TAG_NAME="4.3.dev1"
-export CORE_BRANCH="master"
+export CORE_BRANCH="18.1.25-build"
 
 
 # OSX preparation
@@ -74,7 +74,10 @@ if [[ "$OSTYPE" == "darwin"* ]]; then
 else
     prepare_linux
 fi
+echo "curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh"
+echo "curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${CORE_BRANCH}/common/provision.sh -o ./common-provision.sh"
 
+echo "CORE_BRANCH=${CORE_BRANCH}"
 curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
 source common_build_env.sh &&
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${CORE_BRANCH}/common/provision.sh -o ./common-provision.sh &&
@@ -84,13 +87,17 @@ install_common_prereqs &&
 rm -rf cloudify-cli
 git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd ~/cloudify-cli/packaging/omnibus
-gitTagExists=$(git tag -l $CORE_TAG_NAME)
 if [ "$CORE_BRANCH" != "master" ]; then
+    echo "in if ###"
     export CLI_BRANCH="$CORE_BRANCH"
-    if [ "${REPO}" == "cloudify-versions" ]; then
-        export CORE_BRANCH="master"
-    fi
+    echo "CLI_BRANCH=${CLI_BRANCH}"
+    echo "REPO=${REPO}"
     git checkout -b ${CLI_BRANCH} origin/${CLI_BRANCH}
+    if [ "${REPO}" == "cloudify-versions" ]; then
+        source ~/cloudify-cli/packaging/source_branch
+        echo "CORE_BRANCH=${CORE_BRANCH}"
+    fi
+    
 else
     git checkout ${CLI_BRANCH}
 fi
