@@ -7,7 +7,7 @@ AWS_ACCESS_KEY=$4
 PACKAGER_BRANCH=$5
 export REPO=$6
 export CORE_TAG_NAME="4.3.dev1"
-export CORE_BRANCH="master"
+export CORE_BRANCH="18.1.25-build"
 
 
 # OSX preparation
@@ -88,7 +88,7 @@ gitTagExists=$(git tag -l $CORE_TAG_NAME)
 if [ "$CORE_BRANCH" != "master" ]; then
     export CLI_BRANCH="$CORE_BRANCH"
     if [ "${REPO}" == "cloudify-versions" ]; then
-        export CORE_BRANCH="master"
+        export CORE_BRANCH="18.1.25-build"
     fi
     git checkout -b ${CLI_BRANCH} origin/${CLI_BRANCH}
 else
