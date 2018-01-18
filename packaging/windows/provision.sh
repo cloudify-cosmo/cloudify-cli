@@ -95,7 +95,7 @@ AWS_ACCESS_KEY_ID=$3
 AWS_ACCESS_KEY=$4
 export REPO=$5
 export CORE_TAG_NAME="4.3.dev1"
-export CORE_BRANCH="master"
+export CORE_BRANCH="18.1.25-build"
 
 curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
 source common_build_env.sh &&
@@ -104,7 +104,7 @@ source common-provision.sh
 
 export CLI_BRANCH="$CORE_BRANCH"
 if [ "$CORE_BRANCH" != "master" ] && [ "${REPO}" == "cloudify-versions"]; then
-    export CORE_BRANCH="master"
+    export CORE_BRANCH="18.1.25-build"
 fi
 
 install_common_prereqs &&
