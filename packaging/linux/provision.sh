@@ -92,7 +92,7 @@ if [ "$CORE_BRANCH" != "master" ]; then
     export CLI_BRANCH="$CORE_BRANCH"
     echo "REPO=${REPO}"
     if [ "${REPO}" == "cloudify-versions" ]; then
-        source source_branch
+        source ../source_branch
         echo "CORE_BRANCH=${CORE_BRANCH}"
     fi
     git checkout -b ${CLI_BRANCH} origin/${CLI_BRANCH}
