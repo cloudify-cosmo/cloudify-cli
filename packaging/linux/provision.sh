@@ -84,8 +84,8 @@ install_common_prereqs &&
 rm -rf cloudify-cli
 git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd ~/cloudify-cli/packaging/omnibus
+export CLI_BRANCH="$CORE_BRANCH"
 if [ "$CORE_BRANCH" != "master" ]; then
-    export CLI_BRANCH="$CORE_BRANCH"
     if [ "${REPO}" == "cloudify-versions" ]; then
         source ~/cloudify-cli/packaging/source_branch
     fi
