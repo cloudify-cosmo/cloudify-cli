@@ -104,7 +104,7 @@ source common-provision.sh
 
 export CLI_BRANCH="$CORE_BRANCH"
 if [ "$CORE_BRANCH" != "master" ] && [ "${REPO}" == "cloudify-versions"]; then
-    export CORE_BRANCH="master"
+    source ~/cloudify-cli/packaging/source_branch
 fi
 
 install_common_prereqs &&
