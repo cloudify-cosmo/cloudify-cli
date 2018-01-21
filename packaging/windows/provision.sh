@@ -103,7 +103,7 @@ curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${CORE_B
 source common-provision.sh
 
 export CLI_BRANCH="$CORE_BRANCH"
-if [ "$CORE_BRANCH" != "master" ] && [ "${REPO}" == "cloudify-versions"]; then
+if [ "$CORE_BRANCH" != "master" ] && [ "$REPO" == "cloudify-versions" ]; then
     source packaging/source_branch
 fi
 
