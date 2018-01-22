@@ -164,7 +164,8 @@ def upload(ctx,
     os.remove(plugin_path)
 
 
-@plugins.command(name='create-caravan', short_help='Create a caravan')
+@plugins.command(name='create-caravan',
+                 short_help='Create a bundle of plugins')
 @cfy.options.caravan_name
 @cfy.argument('plugin-mappings')
 @cfy.argument('destination')
@@ -182,7 +183,8 @@ def create_caravan(logger, plugin_mappings, destination, name):
     return cvn_path
 
 
-@plugins.command(name='upload-caravan', short_help='Create a caravan')
+@plugins.command(name='upload-caravan',
+                 short_help='Upload a bundle of plugins')
 @cfy.argument('caravan-path')
 @cfy.pass_client()
 def upload_caravan(client, caravan_path):
