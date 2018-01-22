@@ -67,6 +67,7 @@ def _create_caravan(mappings, dest, name=None):
         tarfile_.add(tempdir, arcname=tar_name)
     finally:
         tarfile_.close()
+        shutil.rmtree(tempdir)
 
     return tar_path
 
