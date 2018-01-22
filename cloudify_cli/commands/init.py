@@ -58,8 +58,8 @@ def init(blueprint_path,
     This is required to perform many actions and should be the first
     action performed after installing Cloudify.
 
-    Note: Running `cfy bootstrap`, `cfy install` or `cfy profiles use` will
-    initialize a environment automatically.
+    Note: Running `cfy install` or `cfy profiles use` will
+    initialize an environment automatically.
 
     Providing a `BLUEPRINT_PATH` will also initialize a blueprint to
     work on.

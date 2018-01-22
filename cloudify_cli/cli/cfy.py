@@ -458,33 +458,6 @@ class Options(object):
             is_flag=True,
             help=helptexts.TAIL_OUTPUT)
 
-        self.validate_only = click.option(
-            '--validate-only',
-            is_flag=True,
-            help=helptexts.VALIDATE_ONLY)
-
-        self.skip_validations = click.option(
-            '--skip-validations',
-            is_flag=True,
-            help=helptexts.SKIP_BOOTSTRAP_VALIDATIONS)
-
-        self.skip_sanity = click.option(
-            '--skip-sanity',
-            is_flag=True,
-            default=False,
-            help=helptexts.SKIP_BOOTSTRAP_SANITY)
-
-        self.keep_up_on_failure = click.option(
-            '--keep-up-on-failure',
-            is_flag=True,
-            help=helptexts.KEEP_UP_ON_FAILURE)
-
-        self.dont_save_password_in_profile = click.option(
-            '--dont-save-password-in-profile',
-            is_flag=True,
-            default=False,
-            help=helptexts.DONT_SAVE_PASSWORD_IN_PROFILE)
-
         self.validate = click.option(
             '--validate',
             is_flag=True,

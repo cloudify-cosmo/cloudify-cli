@@ -35,8 +35,7 @@ EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
 EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
 PROFILE_COLUMNS = ['name', 'manager_ip', 'manager_username', 'manager_tenant',
                    'ssh_user', 'ssh_key_path', 'ssh_port',
-                   'rest_port', 'rest_protocol', 'rest_certificate',
-                   'bootstrap_state']
+                   'rest_port', 'rest_protocol', 'rest_certificate']
 
 
 @cfy.group(name='profiles')
@@ -46,8 +45,8 @@ def profiles():
 
     Each profile can manage a single Cloudify manager.
 
-    A profile is automatically created when using the `cfy profiles use`,
-    and `cfy bootstrap` commands.
+    A profile is automatically created when using the `cfy profiles use`
+    command.
 
     Profiles are named according to the IP of the manager they manage.
     """
@@ -65,8 +64,7 @@ def show(logger):
     active_profile_name = env.get_active_profile()
     if active_profile_name == 'local':
         logger.info("You're currently working in local mode. "
-                    "To use a manager run `cfy profiles use MANAGER_IP`"
-                    " or bootstrap one")
+                    "To use a manager run `cfy profiles use MANAGER_IP`")
         return
 
     active_profile = _get_profile(env.get_active_profile())
@@ -98,8 +96,7 @@ def list(logger):
     if not profile_names:
         logger.info(
             'No profiles found. You can create a new profile '
-            'by bootstrapping a manager via `cfy bootstrap` or using an '
-            'existing manager via the `cfy profiles use` command')
+            'by using an existing manager via the `cfy profiles use` command')
 
 
 @profiles.command(name='use',
@@ -232,23 +229,6 @@ def _create_profile(
         rest_protocol,
         rest_certificate
     )
-
-
-@profiles.command(name='purge-incomplete',
-                  short_help='Purge profiles in incomplete bootstrap state')
-@cfy.options.verbose()
-@cfy.pass_logger
-def purge_incomplete(logger):
-    """Purge all profiles for which the bootstrap state is incomplete
-    """
-    logger.info('Purging incomplete bootstrap profiles...')
-    profile_names = env.get_profile_names()
-    for profile in profile_names:
-        context = env.get_profile_context(profile)
-        if context.bootstrap_state == 'Incomplete':
-            logger.debug('Deleteing profiles {0}...'.format(profile))
-            env.delete_profile(profile)
-    logger.info('Purge complete')
 
 
 @profiles.command(name='delete',
@@ -750,7 +730,6 @@ def _set_profile_context(profile_name,
     profile.ssh_port = ssh_port or constants.REMOTE_EXECUTION_PORT
     profile.rest_protocol = rest_protocol
     profile.rest_certificate = rest_certificate
-    profile.bootstrap_state = 'Complete'
 
     profile.save()
 

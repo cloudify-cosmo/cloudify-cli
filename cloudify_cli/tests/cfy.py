@@ -45,7 +45,6 @@ default_manager_params = dict(
     rest_port=80,
     rest_protocol='http',
     rest_certificate=None,
-    bootstrap_state='Complete',
     manager_username='admin',
     manager_password='admin',
     manager_tenant=constants.DEFAULT_TENANT_NAME,
@@ -145,7 +144,6 @@ def use_manager(**manager_params):
     profile.manager_password = manager_params['manager_password']
     profile.manager_tenant = manager_params['manager_tenant']
     profile.provider_context = provider_context
-    profile.bootstrap_state = 'Complete'
 
     purge_profile(manager_params['manager_ip'])
     profile.save()
