@@ -104,8 +104,7 @@ def assert_manager_active():
     if not is_manager_active():
         raise CloudifyCliError(
             'This command is only available when using a manager. '
-            'You can either bootstrap a manager or run `cfy profiles use '
-            'MANAGER_IP`')
+            'You need to run run `cfy profiles use MANAGER_IP`')
 
 
 def assert_local_active():
@@ -407,7 +406,6 @@ class ProfileContext(yaml.YAMLObject):
         # Note that __init__ is not called when loading from yaml.
         # When adding a new ProfileContext attribute, make sure that
         # all methods handle the case when the attribute is missing
-        self.bootstrap_state = 'Incomplete'
         self._profile_name = profile_name
         self.manager_ip = None
         self.ssh_key = None
@@ -425,7 +423,6 @@ class ProfileContext(yaml.YAMLObject):
     def to_dict(self):
         return dict(
             name=self.profile_name,
-            bootstrap_state=self.bootstrap_state,
             manager_ip=self.manager_ip,
             ssh_key_path=self.ssh_key,
             ssh_port=self.ssh_port,

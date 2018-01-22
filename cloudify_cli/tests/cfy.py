@@ -145,7 +145,6 @@ def use_manager(**manager_params):
     profile.manager_password = manager_params['manager_password']
     profile.manager_tenant = manager_params['manager_tenant']
     profile.provider_context = provider_context
-    profile.bootstrap_state = 'Complete'
 
     purge_profile(manager_params['manager_ip'])
     profile.save()
