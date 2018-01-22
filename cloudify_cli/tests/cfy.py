@@ -45,7 +45,6 @@ default_manager_params = dict(
     rest_port=80,
     rest_protocol='http',
     rest_certificate=None,
-    bootstrap_state='Complete',
     manager_username='admin',
     manager_password='admin',
     manager_tenant=constants.DEFAULT_TENANT_NAME,
