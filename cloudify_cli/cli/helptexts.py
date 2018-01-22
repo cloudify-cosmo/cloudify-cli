@@ -110,20 +110,6 @@ EXCLUDE_LOGS_IN_SNAPSHOT = "Exclude logs from the snapshot"
 EXCLUDE_EVENTS_IN_SNAPSHOT = "Exclude events from the snapshot"
 SNAPSHOT_ID = "The unique identifier for the snapshot"
 
-KEEP_UP_ON_FAILURE = "Do not teardown the manager even if the bootstrap fails"
-DONT_SAVE_PASSWORD_IN_PROFILE = "After the bootstrap is complete, don't " \
-                                "save the password in the profile context. " \
-                                "Regardless, the password will *always* be " \
-                                "printed to the console [default: False]"
-VALIDATE_ONLY = (
-    "Only perform resource creation validation without actually bootstrapping"
-)
-SKIP_BOOTSTRAP_VALIDATIONS = (
-    "Bootstrap without validating resource creation prior to bootstrapping "
-    "the manager"
-)
-SKIP_BOOTSTRAP_SANITY = \
-    "Bootstrap without performing the post-bootstrap sanity test"
 DEV_TASK_ARGS = "Arguments for the fabric task"
 
 MAINTENANCE_MODE_WAIT = (
