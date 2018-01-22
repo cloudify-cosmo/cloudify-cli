@@ -269,15 +269,6 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
     return print_progress
 
 
-def add_ignore_bootstrap_validations_input(inputs):
-    """This is used when passing the `--skip-validations` flag as we
-    also want to skip bootstrap validations, not just `creation_validation`
-    operations.
-    """
-    assert isinstance(inputs, dict)
-    inputs.update({'ignore_bootstrap_validations': True})
-
-
 @contextmanager
 def handle_client_error(status_code, message, logger):
     """Gracefully handle client errors with specific status codes
