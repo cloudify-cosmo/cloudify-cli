@@ -45,7 +45,7 @@ def _create_caravan(mappings, dest, name=None):
     metadata = {}
 
     for wgn_path, yaml_path in mappings.iteritems():
-        plugin_root_dir = os.path.basename(wgn_path).split('.', 1)[0]
+        plugin_root_dir = os.path.basename(wgn_path).rsplit('.', 1)[0]
         os.mkdir(os.path.join(tempdir, plugin_root_dir))
 
         dest_wgn_path = os.path.join(plugin_root_dir,
@@ -53,11 +53,8 @@ def _create_caravan(mappings, dest, name=None):
         dest_yaml_path = os.path.join(plugin_root_dir,
                                       os.path.basename(yaml_path))
 
-        wgn_path = utils.get_local_path(wgn_path)
-        yaml_path = utils.get_local_path(yaml_path)
-
-        shutil.copy(wgn_path, os.path.join(tempdir, dest_wgn_path))
-        shutil.copy(yaml_path, os.path.join(tempdir, dest_yaml_path))
+        utils.get_local_path(wgn_path, os.path.join(tempdir, dest_wgn_path))
+        utils.get_local_path(yaml_path, os.path.join(tempdir, dest_yaml_path))
         metadata[dest_wgn_path] = dest_yaml_path
 
     with open(os.path.join(tempdir, 'METADATA'), 'w+') as f:
@@ -70,7 +67,7 @@ def _create_caravan(mappings, dest, name=None):
         tarfile_.add(tempdir, arcname=tar_name)
     finally:
         tarfile_.close()
-        shutil.rmtree(tempdir)
+        shutil.rmtree(tempdir, ignore_errors=True)
 
     return tar_path
 

@@ -318,12 +318,15 @@ def validate_visibility(visibility, valid_values=VisibilityState.STATES):
         )
 
 
-def get_local_path(source):
+def get_local_path(source, destination=None):
     if urlparse(source).scheme:
-        downloaded_file = download_file(source, keep_name=True)
+        downloaded_file = download_file(source, destination, keep_name=True)
         return downloaded_file
     elif os.path.isfile(source):
-        return source
+        if destination:
+            return shutil.copy(source, destination)
+        else:
+            return source
     else:
         raise CloudifyCliError(
             'You must provide either a path to a local file, or a remote URL')
