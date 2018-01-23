@@ -192,7 +192,7 @@ def create_caravan(logger, plugin_mappings, destination, name):
 def upload_caravan(client, caravan_path, logger):
     progress = utils.generate_progress_handler(caravan_path, '')
     plugins_ = client.plugins.upload(caravan_path, progress_callback=progress)
-    logger.info("Caravan uploaded. The plugin's ids are {0}".format(
+    logger.info("Caravan uploaded. The plugins' ids are {0}".format(
         ', '.join([p.id for p in plugins_])
     ))
 
