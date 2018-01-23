@@ -53,6 +53,9 @@ def _create_caravan(mappings, dest, name=None):
         dest_yaml_path = os.path.join(plugin_root_dir,
                                       os.path.basename(yaml_path))
 
+        wgn_path = utils.get_local_path(wgn_path)
+        yaml_path = utils.get_local_path(yaml_path)
+
         shutil.copy(wgn_path, os.path.join(tempdir, dest_wgn_path))
         shutil.copy(yaml_path, os.path.join(tempdir, dest_yaml_path))
         metadata[dest_wgn_path] = dest_yaml_path
