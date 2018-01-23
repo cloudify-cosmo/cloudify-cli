@@ -174,8 +174,8 @@ def upload(ctx,
 def create_caravan(logger, plugin_mappings, destination, name):
     logger.info('Packing wagons into a Caravan')
     try:
-        plugin_mappings = yaml.load(
-            open(utils.get_local_path(plugin_mappings)))
+        with open(plugin_mappings, 'rb') as f:
+            plugin_mappings = yaml.load(f)
     except CloudifyCliError:
         plugin_mappings = yaml.load(plugin_mappings)
 
@@ -188,9 +188,13 @@ def create_caravan(logger, plugin_mappings, destination, name):
                  short_help='Upload a bundle of plugins')
 @cfy.argument('caravan-path')
 @cfy.pass_client()
-def upload_caravan(client, caravan_path):
+@cfy.pass_logger
+def upload_caravan(client, caravan_path, logger):
     progress = utils.generate_progress_handler(caravan_path, '')
-    return client.plugins.upload(caravan_path, progress_callback=progress)
+    plugins_ = client.plugins.upload(caravan_path, progress_callback=progress)
+    logger.info("Caravan uploaded. The plugin's ids are {0}".format(
+        ', '.join([p.id for p in plugins_])
+    ))
 
 
 @plugins.command(name='download',
