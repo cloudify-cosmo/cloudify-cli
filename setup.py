@@ -55,5 +55,15 @@ setup(
         'cloudify-rest-client==4.3.dev1',
         'cloudify-plugins-common==4.3.dev1',
         'backports.shutil_get_terminal_size==1.0.0',
+
+        # included from requests[security] because 9.0.1
+        # pip install -r can't handle that properly
+        "asn1crypto==0.24.",
+        "cffi==1.11.",
+        "cryptography==2.1.",
+        "enum34==1.1.",
+        "ipaddress==1.0.1",
+        "pyOpenSSL==17.5.",
+        "pycparser==2.18",
     ]
 )
