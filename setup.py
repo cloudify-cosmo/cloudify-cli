@@ -47,7 +47,7 @@ setup(
         'jinja2==2.7.2',
         'retrying==1.3.3',
         'colorama==0.3.3',
-        'requests[security]>=2.7.0,<3.0.0',
+        'requests>=2.7.0,<3.0.0',
         'PrettyTable>=0.7,<0.8',
         'click_didyoumean==0.0.3',
         'cloudify-dsl-parser==4.3.dev1',
