@@ -306,8 +306,8 @@ class UpdateProfileTest(CliCommandTest):
         self.client.cluster.join = mock.Mock()
 
         outcome = self.invoke('cfy cluster update-profile')
-        self.assertIn('Adding cluster node: 1.2.3.4', outcome.logs)
-        self.assertIn('Adding cluster node: 5.6.7.8', outcome.logs)
+        self.assertIn('Adding cluster node 1.2.3.4', outcome.logs)
+        self.assertIn('Adding cluster node 5.6.7.8', outcome.logs)
 
         self.assertEqual(env.profile.cluster,
                          [

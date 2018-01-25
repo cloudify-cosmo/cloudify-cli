@@ -338,14 +338,13 @@ def _prepare_node(node):
 def list_nodes(client, logger):
     """Display a table with basic information about the nodes in the cluster
     """
-
     response = client.cluster.nodes.list()
     for node in response:
         _prepare_node(node)
     print_data(CLUSTER_COLUMNS, response, 'HA Cluster nodes',
                defaults=CLUSTER_COLUMNS_DEFAULTS,
                labels={'services': 'cloudify services'})
-    _update_profile_cluster_settings(env.profile, nodes, logger=logger)
+    _update_profile_cluster_settings(env.profile, response, logger=logger)
 
 
 @nodes.command(name='get',
