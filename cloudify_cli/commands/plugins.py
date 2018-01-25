@@ -150,19 +150,23 @@ def upload(ctx,
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
 
     logger.info('Creating plugin zip archive..')
-    plugin_path = utils.get_local_path(plugin_path)
-    yaml_path = utils.get_local_path(yaml_path)
-    plugin_path = utils.zip_files([plugin_path, yaml_path])
+    wagon_path = utils.get_local_path(plugin_path, create_temp=True)
+    yaml_path = utils.get_local_path(yaml_path, create_temp=True)
+    zip_path = utils.zip_files([wagon_path, yaml_path])
 
-    progress_handler = utils.generate_progress_handler(plugin_path, '')
+    progress_handler = utils.generate_progress_handler(zip_path, '')
 
     visibility = get_visibility(private_resource, visibility, logger)
     logger.info('Uploading plugin archive (wagon + yaml)..')
-    plugin = client.plugins.upload(plugin_path,
-                                   visibility,
-                                   progress_handler)
-    logger.info("Plugin uploaded. The plugin's id is {0}".format(plugin.id))
-    os.remove(plugin_path)
+    try:
+        plugin = client.plugins.upload(zip_path,
+                                       visibility,
+                                       progress_handler)
+        logger.info("Plugin uploaded. Plugin's id is {0}".format(plugin.id))
+    finally:
+        os.remove(wagon_path)
+        os.remove(yaml_path)
+        os.remove(zip_path)
 
 
 @plugins.command(name='create-caravan',
