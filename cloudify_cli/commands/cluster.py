@@ -241,18 +241,19 @@ def update_profile(client, logger):
     will be contacted in case of a cluster master failure.
     """
     logger.info('Fetching the cluster nodes list...')
-    _update_profile_cluster_settings(env.profile, client, logger=logger)
+    nodes = client.cluster.nodes.list()
+    _update_profile_cluster_settings(env.profile, nodes, logger=logger)
     logger.info('Profile is up to date with {0} nodes'
                 .format(len(env.profile.cluster)))
 
 
-def _update_profile_cluster_settings(profile, client, logger=None):
-    nodes = client.cluster.nodes.list()
+def _update_profile_cluster_settings(profile, nodes, logger=None):
     stored_nodes = {node['manager_ip'] for node in env.profile.cluster}
     for node in nodes:
         if node.host_ip not in stored_nodes:
             if logger:
-                logger.info('Adding cluster node: {0}'.format(node.host_ip))
+                logger.info('Adding cluster node {0} to local profile'
+                            .format(node.host_ip))
             env.profile.cluster.append({
                 # currently only the host IP is received; all other parameters
                 # will be defaulted to the ones from the last used manager
@@ -344,6 +345,7 @@ def list_nodes(client, logger):
     print_data(CLUSTER_COLUMNS, response, 'HA Cluster nodes',
                defaults=CLUSTER_COLUMNS_DEFAULTS,
                labels={'services': 'cloudify services'})
+    _update_profile_cluster_settings(env.profile, nodes, logger=logger)
 
 
 @nodes.command(name='get',
