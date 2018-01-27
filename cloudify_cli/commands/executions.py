@@ -257,7 +257,7 @@ def manager_start(workflow_id,
             " the running workflow.".format(
                 workflow_id, deployment_id, e.execution_id, original_timeout))
 
-        events_tail_message = "* Run 'cfy events list --tail --include-logs " \
+        events_tail_message = "* Run 'cfy events list --tail " \
                               "--execution-id {0}' to retrieve the " \
                               "execution's events/logs"
         logger.info(events_tail_message.format(e.execution_id))
