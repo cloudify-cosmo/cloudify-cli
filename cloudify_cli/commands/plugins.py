@@ -22,6 +22,7 @@ import yaml
 
 import wagon
 
+from cloudify_cli.cli.cfy import inputs_callback
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
 from .. import utils
@@ -30,7 +31,6 @@ from ..cli import helptexts, cfy
 from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility)
-from ..exceptions import CloudifyCliError
 
 PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
                   'supported_platform', 'distribution_release', 'uploaded_at',
@@ -175,14 +175,11 @@ def upload(ctx,
 @cfy.argument('plugin-mappings')
 @cfy.argument('destination')
 @cfy.pass_logger
-def create_caravan(logger, plugin_mappings, destination, name):
+@cfy.pass_context
+def create_caravan(ctx, logger, plugin_mappings, destination, name):
     logger.info('Packing wagons into a Caravan')
-    try:
-        with open(plugin_mappings, 'rb') as f:
-            plugin_mappings = yaml.load(f)
-    except CloudifyCliError:
-        plugin_mappings = yaml.load(plugin_mappings)
-
+    # Using to tuple notation to make use of the same base code
+    plugin_mappings = inputs_callback(ctx, None, value=(plugin_mappings,))
     cvn_path = _create_caravan(plugin_mappings, destination, name)
     logger.info('Caravan created at {0}'.format(cvn_path))
     return cvn_path
