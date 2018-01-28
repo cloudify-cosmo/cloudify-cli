@@ -325,8 +325,8 @@ def get_local_path(source, destination=None, create_temp=False):
         return downloaded_file
     elif os.path.isfile(source):
         if not destination and create_temp:
-            fd, destination = tempfile.mkstemp()
-            os.close(fd)
+            source_name = os.path.basename(source)
+            destination = os.path.join(tempfile.mkdtemp(), source_name)
         if destination:
             shutil.copy(source, destination)
             return destination
