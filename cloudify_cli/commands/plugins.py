@@ -185,7 +185,7 @@ def create_caravan(ctx, logger, plugin_mappings, destination, name):
     return cvn_path
 
 
-@plugins.command(name='upload-caravan',
+@plugins.command(name='caravan-upload',
                  short_help='Upload a bundle of plugins')
 @cfy.argument('caravan-path')
 @cfy.pass_client()
