@@ -1,0 +1,13 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+description: >
+    This plugin tries to use a plugin repository URL (`plugin:...`)
+    with a local `cfy blueprints validate`
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.3.dev1/types.yaml
+  - plugin:cloudify-openstack-plugin
+
+node_templates:
+  x:
+    type: cloudify.nodes.Root

@@ -170,6 +170,12 @@ class BlueprintsTest(CliCommandTest):
             .format(BLUEPRINTS_DIR),
             err_str_segment='Failed to validate blueprint')
 
+    def test_validate_plugin_repository(self):
+        self.invoke(
+            'cfy blueprints validate {0}/bad_blueprint/plugin_repo.yaml'
+            .format(BLUEPRINTS_DIR),
+            err_str_segment='plugin repository')
+
     def test_blueprint_inputs(self):
 
         blueprint_id = 'a-blueprint-id'
