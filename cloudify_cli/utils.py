@@ -320,7 +320,8 @@ def validate_visibility(visibility, valid_values=VisibilityState.STATES):
 
 
 def get_local_path(source, destination=None, create_temp=False):
-    if urlparse(source).scheme:
+    allowed_schemes = ['http', 'https']
+    if urlparse(source).scheme in allowed_schemes:
         downloaded_file = download_file(source, destination, keep_name=True)
         return downloaded_file
     elif os.path.isfile(source):
@@ -334,4 +335,5 @@ def get_local_path(source, destination=None, create_temp=False):
             return source
     else:
         raise CloudifyCliError(
-            'You must provide either a path to a local file, or a remote URL')
+            'You must provide either a path to a local file, or a remote URL '
+            'using one of the allowed schemes: {0}'.format(allowed_schemes))
