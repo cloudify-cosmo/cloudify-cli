@@ -248,7 +248,7 @@ def update_profile(client, logger):
 
 
 def _update_profile_cluster_settings(profile, nodes, logger=None):
-    stored_nodes = {node['name'] for node in env.profile.cluster}
+    stored_nodes = {node.get('name') for node in env.profile.cluster}
     for node in nodes:
         if node.name not in stored_nodes:
             if logger:
@@ -418,8 +418,9 @@ def remove_node(client, logger, cluster_node_name):
             logger.info(
                 'Profile {0}: {1} removed from cluster nodes list'
                 .format(profile_context.profile_name, cluster_node_name))
-            profile_context.cluster = [node for node in profile_context.cluster
-                                       if node['name'] != cluster_node_name]
+            profile_context.cluster = [
+                node for node in profile_context.cluster
+                if node.get('name') != cluster_node_name]
         profile_context.save()
 
     logger.info('Node {0} was removed successfully!'
