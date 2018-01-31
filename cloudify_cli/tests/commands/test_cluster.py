@@ -309,12 +309,11 @@ class UpdateProfileTest(CliCommandTest):
         self.assertIn('Adding cluster node 1.2.3.4', outcome.logs)
         self.assertIn('Adding cluster node 5.6.7.8', outcome.logs)
 
-        self.assertEqual(env.profile.cluster,
-                         [
-                             {'manager_ip': env.profile.manager_ip},
-                             {'manager_ip': '1.2.3.4'},
-                             {'manager_ip': '5.6.7.8'}
-                         ])
+        self.assertEqual(env.profile.cluster, [
+            {'manager_ip': env.profile.manager_ip},
+            {'manager_ip': '1.2.3.4', 'name': 'node name 1'},
+            {'manager_ip': '5.6.7.8', 'name': 'node name 2'}
+        ])
 
 
 class PassClusterClientTest(unittest.TestCase):
