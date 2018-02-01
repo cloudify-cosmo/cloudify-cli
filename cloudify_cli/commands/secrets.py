@@ -77,7 +77,7 @@ def create(key,
         raise CloudifyCliError('Failed to create secret key. '
                                'Missing option '
                                '--secret-string or secret-file.')
-    graceful_msg = 'Secret with key `{0}` is already exist in this current ' \
+    graceful_msg = 'Secret with key `{0}` already exists in the current ' \
                    'tenant or as a global secret'.format(key)
 
     with handle_client_error(409, graceful_msg, logger):
