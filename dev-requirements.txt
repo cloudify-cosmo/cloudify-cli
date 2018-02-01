@@ -1,6 +1,6 @@
-git+https://github.com/cloudify-cosmo/cloudify-rest-client@master#egg=cloudify-rest-client==4.3.dev1
-git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@master#egg=cloudify-dsl-parser==4.3.dev1
-git+https://github.com/cloudify-cosmo/cloudify-plugins-common@master#egg=cloudify-plugins-common==4.3.dev1
+git+https://github.com/cloudify-cosmo/cloudify-rest-client@4.3#egg=cloudify-rest-client==4.3
+git+https://github.com/cloudify-cosmo/cloudify-dsl-parser@4.3#egg=cloudify-dsl-parser==4.3
+git+https://github.com/cloudify-cosmo/cloudify-plugins-common@4.3#egg=cloudify-plugins-common==4.3
 git+https://github.com/cloudify-cosmo/cloudify-script-plugin@1.5.2#egg=cloudify-script-plugin==1.5.2
 
 nose
