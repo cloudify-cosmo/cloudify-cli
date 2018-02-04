@@ -807,11 +807,11 @@ class Options(object):
             help=helptexts.SECRET_UPDATE_IF_EXISTS,
         )
 
-        self.caravan_name = click.option(
-            '-n',
-            '--name',
+        self.plugins_bundle_path = click.option(
+            '-p',
+            '--path',
             required=False,
-            help=helptexts.CARAVAN_NAME
+            help=helptexts.PLUGINS_BUNDLE_PATH
         )
 
         # same as --inputs, name changed for consistency
