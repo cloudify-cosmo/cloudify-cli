@@ -22,7 +22,6 @@ import yaml
 
 import wagon
 
-from cloudify_cli.cli.cfy import inputs_callback
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
 from .. import utils
@@ -61,7 +60,7 @@ def _create_caravan(mappings, dest, name=None):
         yaml.dump(metadata, f)
 
     tar_name = name or 'palace'
-    tar_path = os.path.join(dest, '{0}.cvn'.format(tar_name))
+    tar_path = os.path.join(dest, '{0}.tgz'.format(tar_name))
     tarfile_ = tarfile.open(tar_path, 'w:gz')
     try:
         tarfile_.add(tempdir, arcname=tar_name)
@@ -169,33 +168,21 @@ def upload(ctx,
         os.remove(zip_path)
 
 
-@plugins.command(name='create-caravan',
-                 short_help='Create a bundle of plugins')
-@cfy.options.caravan_name
-@cfy.argument('plugin-mappings')
-@cfy.argument('destination')
-@cfy.pass_logger
-@cfy.pass_context
-def create_caravan(ctx, logger, plugin_mappings, destination, name):
-    logger.info('Packing wagons into a Caravan')
-    # Using to tuple notation to make use of the same base code
-    plugin_mappings = inputs_callback(ctx, None, value=(plugin_mappings,))
-    cvn_path = _create_caravan(plugin_mappings, destination, name)
-    logger.info('Caravan created at {0}'.format(cvn_path))
-    return cvn_path
-
-
-@plugins.command(name='caravan-upload',
-                 short_help='Upload a bundle of plugins')
-@cfy.argument('caravan-path')
+@plugins.command(name='bundle-upload',
+                 short_help='Upload a bundle of plugins [manager only]')
+@cfy.options.plugins_bundle_path
 @cfy.pass_client()
 @cfy.pass_logger
-def upload_caravan(client, caravan_path, logger):
-    progress = utils.generate_progress_handler(caravan_path, '')
-    plugins_ = client.plugins.upload(caravan_path, progress_callback=progress)
-    logger.info("Caravan uploaded. The plugins' ids are {0}".format(
-        ', '.join([p.id for p in plugins_])
-    ))
+def upload_caravan(client, logger, path):
+    if not path:
+        path = 'http://cloudify.co/plugins/get-bundle-4.3'
+    progress = utils.generate_progress_handler(path, '')
+    plugins_ = client.plugins.upload(path, progress_callback=progress)
+    logger.info("Bundle uploaded, {0} Plugins installed."
+                .format(len(plugins_)))
+    if len(plugins_) > 0:
+        logger.info("The plugins' ids are:\n{0}\n".
+                    format('\n'.join([p.id for p in plugins_])))
 
 
 @plugins.command(name='download',
