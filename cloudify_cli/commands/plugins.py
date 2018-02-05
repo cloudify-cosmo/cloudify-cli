@@ -14,11 +14,6 @@
 # limitations under the License.
 ############
 import os
-import tarfile
-import tempfile
-
-import shutil
-import yaml
 
 import wagon
 
@@ -37,38 +32,6 @@ PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
 GET_DATA_COLUMNS = ['file_server_path']
 EXCLUDED_COLUMNS = ['archive_name', 'distribution_version', 'excluded_wheels',
                     'package_source', 'supported_py_versions', 'wheels']
-
-
-def _create_caravan(mappings, dest, name=None):
-    tempdir = tempfile.mkdtemp()
-    metadata = {}
-
-    for wgn_path, yaml_path in mappings.iteritems():
-        plugin_root_dir = os.path.basename(wgn_path).rsplit('.', 1)[0]
-        os.mkdir(os.path.join(tempdir, plugin_root_dir))
-
-        dest_wgn_path = os.path.join(plugin_root_dir,
-                                     os.path.basename(wgn_path))
-        dest_yaml_path = os.path.join(plugin_root_dir,
-                                      os.path.basename(yaml_path))
-
-        utils.get_local_path(wgn_path, os.path.join(tempdir, dest_wgn_path))
-        utils.get_local_path(yaml_path, os.path.join(tempdir, dest_yaml_path))
-        metadata[dest_wgn_path] = dest_yaml_path
-
-    with open(os.path.join(tempdir, 'METADATA'), 'w+') as f:
-        yaml.dump(metadata, f)
-
-    tar_name = name or 'palace'
-    tar_path = os.path.join(dest, '{0}.tgz'.format(tar_name))
-    tarfile_ = tarfile.open(tar_path, 'w:gz')
-    try:
-        tarfile_.add(tempdir, arcname=tar_name)
-    finally:
-        tarfile_.close()
-        shutil.rmtree(tempdir, ignore_errors=True)
-
-    return tar_path
 
 
 @cfy.group(name='plugins')
