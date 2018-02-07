@@ -138,7 +138,10 @@ def upload(ctx,
 @cfy.pass_logger
 def upload_caravan(client, logger, path):
     if not path:
-        path = 'http://cloudify.co/plugins/get-bundle-4.3'
+        logger.info("Starting upload of plugins bundle, "
+                    "this may take few minutes to complete.")
+        path = 'http://repository.cloudifysource.org/' \
+               'cloudify/wagons/cloudify-plugins-bundle.tgz'
     progress = utils.generate_progress_handler(path, '')
     plugins_ = client.plugins.upload(path, progress_callback=progress)
     logger.info("Bundle uploaded, {0} Plugins installed."
