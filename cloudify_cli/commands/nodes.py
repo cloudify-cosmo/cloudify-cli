@@ -114,10 +114,18 @@ def get(node_id, deployment_id, logger, client, tenant_name):
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='node')
 @cfy.options.all_tenants
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
 @cfy.options.verbose()
 @cfy.pass_logger
 @cfy.pass_client()
-def list(deployment_id, sort_by, descending, tenant_name, all_tenants,
+def list(deployment_id,
+         sort_by,
+         descending,
+         tenant_name,
+         all_tenants,
+         pagination_offset,
+         pagination_size,
          logger, client):
     """List nodes
 
@@ -136,7 +144,10 @@ def list(deployment_id, sort_by, descending, tenant_name, all_tenants,
             deployment_id=deployment_id,
             sort=sort_by,
             is_descending=descending,
-            _all_tenants=all_tenants)
+            _all_tenants=all_tenants,
+            _offset=pagination_offset,
+            _size=pagination_size
+        )
     except CloudifyClientError as e:
         if e.status_code != 404:
             raise

@@ -169,6 +169,18 @@ def validate_password(ctx, param, value):
     return value
 
 
+def validate_nonnegative_integer(ctx, param, value):
+    if ctx.resilient_parsing:
+        return
+
+    try:
+        assert int(value) >= 0
+    except (ValueError, AssertionError):
+        raise CloudifyValidationError('ERROR: {0} is expected to be a '
+                                      'nonnegative integer'.format(param.name))
+    return value
+
+
 def set_verbosity_level(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
@@ -821,6 +833,22 @@ class Options(object):
             multiple=True,
             callback=inputs_callback,
             help=helptexts.CLUSTER_NODE_OPTIONS)
+
+        self.pagination_offset = click.option(
+            '-o',
+            '--pagination-offset',
+            required=False,
+            default=0,
+            callback=validate_nonnegative_integer,
+            help=helptexts.PAGINATION_OFFSET)
+
+        self.pagination_size = click.option(
+            '-s',
+            '--pagination-size',
+            required=False,
+            default=1000,
+            callback=validate_nonnegative_integer,
+            help=helptexts.PAGINATION_SIZE)
 
     @staticmethod
     def include_keys(help):

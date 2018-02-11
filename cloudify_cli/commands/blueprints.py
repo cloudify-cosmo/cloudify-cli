@@ -219,10 +219,19 @@ def delete(blueprint_id, logger, client, tenant_name):
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='blueprint')
 @cfy.options.all_tenants
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, tenant_name, all_tenants, logger, client):
+def list(sort_by,
+         descending,
+         tenant_name,
+         all_tenants,
+         pagination_offset,
+         pagination_size,
+         logger,
+         client):
     """List all blueprints
     """
     def trim_description(blueprint):
@@ -238,7 +247,12 @@ def list(sort_by, descending, tenant_name, all_tenants, logger, client):
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Listing all blueprints...')
     blueprints = [trim_description(b) for b in client.blueprints.list(
-        sort=sort_by, is_descending=descending, _all_tenants=all_tenants)]
+        sort=sort_by,
+        is_descending=descending,
+        _all_tenants=all_tenants,
+        _offset=pagination_offset,
+        _size=pagination_size
+    )]
     print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
 

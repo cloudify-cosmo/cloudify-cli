@@ -38,12 +38,16 @@ class ExecutionEventsFetcher(object):
         'workflow_id',
     ]
 
-    def __init__(self, client, execution_id, batch_size=100,
-                 include_logs=False):
+    def __init__(self,
+                 client,
+                 execution_id,
+                 batch_size=100,
+                 include_logs=False,
+                 from_event=0):
         self._client = client
         self._execution_id = execution_id
         self._batch_size = batch_size
-        self._from_event = 0
+        self._from_event = from_event
         self._include_logs = include_logs
         # make sure execution exists before proceeding
         # a 404 will be raised otherwise
@@ -171,7 +175,9 @@ def wait_for_execution(client,
                        execution,
                        events_handler=None,
                        include_logs=False,
-                       timeout=900):
+                       timeout=900,
+                       batch_size=100,
+                       from_event=0):
 
     # if execution already ended - return without waiting
     if execution.status in Execution.END_STATES:
@@ -180,8 +186,13 @@ def wait_for_execution(client,
     if timeout is not None:
         deadline = time.time() + timeout
 
-    events_fetcher = ExecutionEventsFetcher(client, execution.id,
-                                            include_logs=include_logs)
+    events_fetcher = ExecutionEventsFetcher(
+        client,
+        execution.id,
+        include_logs=include_logs,
+        batch_size=batch_size,
+        from_event=from_event
+    )
 
     # Poll for execution status and execution logs, until execution ends
     # and we receive an event of type in WORKFLOW_END_TYPES
