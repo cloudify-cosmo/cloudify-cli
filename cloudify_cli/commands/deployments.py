@@ -58,6 +58,8 @@ def deployments():
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='deployment')
 @cfy.options.all_tenants
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -66,6 +68,8 @@ def manager_list(blueprint_id,
                  sort_by,
                  descending,
                  all_tenants,
+                 pagination_offset,
+                 pagination_size,
                  logger,
                  client,
                  tenant_name):
@@ -82,8 +86,11 @@ def manager_list(blueprint_id,
     else:
         logger.info('Listing all deployments...')
 
-    deployments = client.deployments.list(
-        sort=sort_by, is_descending=descending, _all_tenants=all_tenants)
+    deployments = client.deployments.list(sort=sort_by,
+                                          is_descending=descending,
+                                          _all_tenants=all_tenants,
+                                          _offset=pagination_offset,
+                                          _size=pagination_size)
     if blueprint_id:
         deployments = filter(lambda deployment:
                              deployment['blueprint_id'] == blueprint_id,

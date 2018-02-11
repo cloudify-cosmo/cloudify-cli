@@ -231,3 +231,7 @@ PRIVATE_RESOURCE = 'This option is deprecated; use --visibility option ' \
                    'tenant [default: False].'
 VISIBILITY = 'Defines who can see the resource, can be set to one of {0}'
 PLUGIN_YAML_PATH = "The path to the plugin's yaml file"
+PAGINATION_SIZE = 'The max number of results to retrieve per page ' \
+                  '[default: 1000]'
+PAGINATION_OFFSET = 'The number of resources to skip; --pagination-offset=1 ' \
+                    'skips the first resource [default: 0]'

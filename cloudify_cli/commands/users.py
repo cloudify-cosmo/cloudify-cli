@@ -70,17 +70,27 @@ def users():
 @cfy.options.descending
 @cfy.options.verbose()
 @cfy.options.get_data
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, get_data, logger, client):
+def list(sort_by,
+         descending,
+         get_data,
+         pagination_offset,
+         pagination_size,
+         logger,
+         client):
     """List all users
     """
     logger.info('Listing all users...')
     users_list = client.users.list(
         sort=sort_by,
         is_descending=descending,
-        _get_data=get_data
+        _get_data=get_data,
+        _offset=pagination_offset,
+        _size=pagination_size
     )
     # copy list
     columns = [] + USER_COLUMNS

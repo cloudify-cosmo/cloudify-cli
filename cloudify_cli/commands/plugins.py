@@ -207,6 +207,8 @@ def get(plugin_id, logger, client, tenant_name, get_data):
 @cfy.options.all_tenants
 @cfy.options.verbose()
 @cfy.options.get_data
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -214,6 +216,8 @@ def list(sort_by,
          descending,
          tenant_name,
          all_tenants,
+         pagination_offset,
+         pagination_size,
          logger,
          client,
          get_data):
@@ -225,7 +229,9 @@ def list(sort_by,
     plugins_list = client.plugins.list(sort=sort_by,
                                        is_descending=descending,
                                        _all_tenants=all_tenants,
-                                       _get_data=get_data)
+                                       _get_data=get_data,
+                                       _offset=pagination_offset,
+                                       _size=pagination_size)
     for plugin in plugins_list:
         _transform_plugin_response(plugin)
     columns = PLUGIN_COLUMNS + GET_DATA_COLUMNS if get_data else PLUGIN_COLUMNS
