@@ -38,8 +38,6 @@ def events():
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.tail
-@cfy.options.pagination_offset
-@cfy.options.pagination_size
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.pass_client()
@@ -48,8 +46,6 @@ def list(execution_id,
          include_logs,
          json_output,
          tail,
-         pagination_offset,
-         pagination_size,
          logger,
          client,
          tenant_name):
@@ -63,9 +59,7 @@ def list(execution_id,
         execution_events = ExecutionEventsFetcher(
             client,
             execution_id,
-            include_logs=include_logs,
-            batch_size=pagination_size,
-            from_event=pagination_offset
+            include_logs=include_logs
         )
 
         events_logger = get_events_logger(json_output)
@@ -75,9 +69,7 @@ def list(execution_id,
                                            client.executions.get(execution_id),
                                            events_handler=events_logger,
                                            include_logs=include_logs,
-                                           timeout=None,  # don't timeout ever
-                                           batch_size=pagination_size,
-                                           from_event=pagination_offset)
+                                           timeout=None)  # don't timeout ever
             if execution.error:
                 logger.info('Execution of workflow {0} for deployment '
                             '{1} failed. [error={2}]'.format(
