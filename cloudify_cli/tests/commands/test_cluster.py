@@ -191,6 +191,24 @@ class ClusterNodesTest(CliCommandTest):
         self.invoke('cfy cluster nodes list',
                     'not part of a Cloudify Manager cluster')
 
+    def test_set_node_cert(self):
+        env.profile.cluster = [{'name': 'm1', 'manager_ip': '1.2.3.4'}]
+        with tempfile.NamedTemporaryFile() as f:
+            self.invoke('cfy cluster nodes set-certificate m1 {0}'
+                        .format(f.name))
+
+    def test_set_node_cert_doesnt_exist(self):
+        env.profile.cluster = [{'name': 'm1', 'manager_ip': '1.2.3.4'}]
+        self.invoke('cfy cluster nodes set-certificate m1 /tmp/not-a-file',
+                    'does not exist')
+
+    def test_set_node_cert_no_such_node(self):
+        env.profile.cluster = [{'name': 'm1', 'manager_ip': '1.2.3.4'}]
+        with tempfile.NamedTemporaryFile() as f:
+            self.invoke('cfy cluster nodes set-certificate not-a-node {0}'
+                        .format(f.name),
+                        'not found in the cluster profile')
+
 
 class ClusterJoinTest(CliCommandTest):
     def setUp(self):
