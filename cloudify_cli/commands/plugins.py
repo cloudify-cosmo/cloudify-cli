@@ -236,6 +236,9 @@ def list(sort_by,
         _transform_plugin_response(plugin)
     columns = PLUGIN_COLUMNS + GET_DATA_COLUMNS if get_data else PLUGIN_COLUMNS
     print_data(columns, plugins_list, 'Plugins:')
+    total = plugins_list.metadata.pagination.total
+    logger.info('Showing {0} of {1} plugins'.format(len(plugins_list),
+                                                    total))
 
 
 def _transform_plugin_response(plugin):

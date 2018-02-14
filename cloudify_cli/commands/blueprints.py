@@ -246,14 +246,17 @@ def list(sort_by,
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     logger.info('Listing all blueprints...')
-    blueprints = [trim_description(b) for b in client.blueprints.list(
+    blueprints_list = client.blueprints.list(
         sort=sort_by,
         is_descending=descending,
         _all_tenants=all_tenants,
         _offset=pagination_offset,
         _size=pagination_size
-    )]
+    )
+    blueprints = [trim_description(b) for b in blueprints_list]
     print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
+    total = blueprints_list.metadata.pagination.total
+    logger.info('Showing {0} of {1} blueprints'.format(len(blueprints), total))
 
 
 @blueprints.command(name='get',

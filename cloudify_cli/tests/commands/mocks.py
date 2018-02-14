@@ -198,10 +198,20 @@ def mock_logger(attribute_path):
         yield output
 
 
+class MockPagination(dict):
+    def __init__(self, total=0):
+        self.total = total
+
+
+class MockMetadata(dict):
+    def __init__(self, pagination=MockPagination()):
+        self.pagination = pagination
+
+
 class MockListResponse(object):
-    def __init__(self, items, _):
+    def __init__(self, items=[], _=None):
         self.items = items
-        self.metadata = None
+        self.metadata = MockMetadata()
 
     def __iter__(self):
         return iter(self.items)

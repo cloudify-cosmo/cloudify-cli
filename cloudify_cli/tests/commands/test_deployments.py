@@ -233,7 +233,9 @@ class DeploymentsTest(CliCommandTest):
         self.invoke('cfy executions start install -d a-deployment-id')
 
     def test_deployments_list_all(self):
-        self.client.deployments.list = MagicMock(return_value=[])
+        self.client.deployments.list = MagicMock(
+            return_value=MockListResponse()
+        )
         self.invoke('cfy deployments list')
         self.invoke('cfy deployments list -t dummy_tenant')
         self.invoke('cfy deployments list -a')
@@ -269,7 +271,9 @@ class DeploymentsTest(CliCommandTest):
             }
         ]
 
-        self.client.deployments.list = MagicMock(return_value=deps)
+        self.client.deployments.list = MagicMock(
+            return_value=MockListResponse(items=deps)
+        )
         outcome = self.invoke('cfy deployments list -b b1_blueprint -v')
         self.assertNotIn('b2_blueprint', outcome.logs)
         self.assertIn('b1_blueprint', outcome.logs)

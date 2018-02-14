@@ -91,11 +91,14 @@ def manager_list(blueprint_id,
                                           _all_tenants=all_tenants,
                                           _offset=pagination_offset,
                                           _size=pagination_size)
+    total = deployments.metadata.pagination.total
     if blueprint_id:
         deployments = filter(lambda deployment:
                              deployment['blueprint_id'] == blueprint_id,
                              deployments)
     print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:')
+    logger.info('Showing {0} of {1} deployments'.format(len(deployments),
+                                                        total))
 
 
 @cfy.command(name='update', short_help='Update a deployment [manager only]')

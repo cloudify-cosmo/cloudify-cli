@@ -1,5 +1,6 @@
 from collections import namedtuple
 
+from .mocks import MockListResponse
 from .test_base import CliCommandTest
 
 
@@ -113,6 +114,6 @@ class ListSortTest(CliCommandTest):
             self.count_mock_calls += 1
             self.assertEqual(sort, kwargs['sort'])
             self.assertEqual(descending, kwargs['is_descending'])
-            return []
+            return MockListResponse()
 
         resource.class_type.list = _mock_list

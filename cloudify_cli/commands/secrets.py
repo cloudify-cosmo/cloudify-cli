@@ -157,8 +157,9 @@ def list(sort_by,
         _offset=pagination_offset,
         _size=pagination_size
     )
-
     print_data(SECRETS_COLUMNS, secrets_list, 'Secrets:')
+    total = secrets_list.metadata.pagination.total
+    logger.info('Showing {0} of {1} secrets'.format(len(secrets_list), total))
 
 
 @secrets.command(name='delete', short_help='Delete a secret')
