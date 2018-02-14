@@ -155,3 +155,5 @@ def list(deployment_id,
             deployment_id))
 
     print_data(NODE_COLUMNS, nodes, 'Nodes:')
+    total = nodes.metadata.pagination.total
+    logger.info('Showing {0} of {1} nodes'.format(len(nodes), total))

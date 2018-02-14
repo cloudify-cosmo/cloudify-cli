@@ -111,6 +111,8 @@ def list(sort_by,
     else:
         columns += NO_GET_DATA_COLUMNS
     print_data(columns, tenants_list, 'Tenants:', labels=TENANT_LABELS)
+    total = tenants_list.metadata.pagination.total
+    logger.info('Showing {0} of {1} tenants'.format(len(tenants_list), total))
 
 
 @tenants.command(name='create',

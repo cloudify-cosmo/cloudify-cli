@@ -219,3 +219,5 @@ def list(sort_by,
                                       _size=pagination_size)
 
     print_data(SNAPSHOT_COLUMNS, snapshots, 'Snapshots:')
+    total = snapshots.metadata.pagination.total
+    logger.info('Showing {0} of {1} snapshots'.format(len(snapshots), total))

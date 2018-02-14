@@ -137,6 +137,8 @@ def manager_list(
             deployment_id))
 
     print_data(EXECUTION_COLUMNS, executions, 'Executions:')
+    total = executions.metadata.pagination.total
+    logger.info('Showing {0} of {1} executions'.format(len(executions), total))
 
     if any(execution.status in (
             execution.CANCELLING, execution.FORCE_CANCELLING)

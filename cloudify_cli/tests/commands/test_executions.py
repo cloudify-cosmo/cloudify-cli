@@ -3,10 +3,10 @@ import os
 from mock import MagicMock, patch
 
 from .. import cfy
-from .mocks import execution_mock
-from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
-from .test_base import CliCommandTest
 from ...commands import executions
+from .test_base import CliCommandTest
+from .mocks import execution_mock, MockListResponse
+from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
 from cloudify_rest_client.exceptions import \
     DeploymentEnvironmentCreationPendingError, \
     DeploymentEnvironmentCreationInProgressError
@@ -24,7 +24,9 @@ class ExecutionsTest(CliCommandTest):
         self.invoke('cfy executions get execution-id')
 
     def test_executions_list(self):
-        self.client.executions.list = MagicMock(return_value=[])
+        self.client.executions.list = MagicMock(
+            return_value=MockListResponse()
+        )
         self.invoke('cfy executions list -d deployment-id')
         self.invoke('cfy executions list -t dummy_tenant')
 

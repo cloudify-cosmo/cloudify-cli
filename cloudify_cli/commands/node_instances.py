@@ -126,6 +126,9 @@ def list(deployment_id,
             deployment_id))
 
     print_data(NODE_INSTANCE_COLUMNS, node_instances, 'Node-instances:')
+    total = node_instances.metadata.pagination.total
+    logger.info('Showing {0} of {1} node-instances'
+                .format(len(node_instances), total))
 
 
 @cfy.command(name='node-instances',

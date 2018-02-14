@@ -10,6 +10,7 @@ from .. import cfy
 from ... import env
 from ... import utils
 from ...commands import profiles
+from .mocks import MockListResponse
 from .test_base import CliCommandTest
 
 
@@ -200,7 +201,9 @@ class ProfilesTest(CliCommandTest):
 
         # Setting the env variable should cause the invocation to fail
         os.environ[env_var] = temp_value
-        self.client.blueprints.list = MagicMock(return_value=[])
+        self.client.blueprints.list = MagicMock(
+            return_value=MockListResponse()
+        )
         self.invoke('blueprints list', err_str_segment=error_msg)
 
         # Unsetting the variable in the profile should fix this

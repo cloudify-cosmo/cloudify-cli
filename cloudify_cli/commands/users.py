@@ -92,6 +92,7 @@ def list(sort_by,
         _offset=pagination_offset,
         _size=pagination_size
     )
+    total = users_list.metadata.pagination.total
     # copy list
     columns = [] + USER_COLUMNS
     users_list = [_format_group_system_roles(user) for user in users_list]
@@ -101,6 +102,7 @@ def list(sort_by,
     else:
         columns += NO_GET_DATA_COLUMNS
     print_data(columns, users_list, 'Users:', labels=USER_LABELS)
+    logger.info('Showing {0} of {1} users'.format(len(users_list), total))
 
 
 @users.command(name='create', short_help='Create a user [manager only]')

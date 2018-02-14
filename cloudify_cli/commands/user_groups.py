@@ -66,9 +66,12 @@ def list(sort_by,
         _offset=pagination_offset,
         _size=pagination_size
     )
+    total = user_groups_list.metadata.pagination.total
     if get_data:
         user_groups_list = [_format_group(group) for group in user_groups_list]
     print_data(GROUP_COLUMNS, user_groups_list, 'User groups:')
+    logger.info('Showing {0} of {1} user groups'.format(len(user_groups_list),
+                                                        total))
 
 
 @user_groups.command(name='create',

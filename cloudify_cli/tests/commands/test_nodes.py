@@ -1,7 +1,7 @@
 from mock import MagicMock
 
 from .test_base import CliCommandTest
-from .mocks import node_get_mock, node_instance_get_mock
+from .mocks import node_get_mock, node_instance_get_mock, MockListResponse
 
 
 class NodesTest(CliCommandTest):
@@ -39,7 +39,9 @@ class NodesTest(CliCommandTest):
 
     def test_nodes_list(self):
         self.client.nodes.list = MagicMock(
-            return_value=[node_get_mock(), node_get_mock()])
+            return_value=MockListResponse(items=[node_get_mock(),
+                                                 node_get_mock()])
+        )
         self.invoke('cfy nodes list')
         self.invoke('cfy nodes list -d nodecellar')
         self.invoke('cfy nodes list -t dummy_tenant')
