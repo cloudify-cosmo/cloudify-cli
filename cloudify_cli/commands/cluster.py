@@ -20,7 +20,7 @@ import yaml
 import shutil
 from functools import wraps
 from datetime import datetime
-from requests.exceptions import ReadTimeout
+from requests.exceptions import ReadTimeout, ConnectionError
 
 from cloudify_rest_client.exceptions import (CloudifyClientError,
                                              NotClusterMaster)
@@ -524,10 +524,11 @@ def _wait_for_cluster_initialized(client, logger=None, timeout=900):
                 since=last_log)
         except NotClusterMaster:
             raise
-        except CloudifyClientError as e:
-            # during cluster initialization, we restart the database, nginx,
-            # and the rest service; while that happens, the server might
-            # return intermittent 500 errors
+        except (ConnectionError, CloudifyClientError) as e:
+            # during cluster initialization, we restart the database - while
+            # that happens, the server might return intermittent 500 errors;
+            # we also restart the restservice and nginx, which might lead
+            # to intermittent connection errors
             logger.debug('Error while fetching cluster status: {0}'
                          .format(e))
         else:
