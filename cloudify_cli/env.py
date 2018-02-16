@@ -522,7 +522,7 @@ CLUSTER_NODE_ATTRS = ['manager_ip', 'rest_port', 'rest_protocol', 'ssh_port',
 
 
 class ClusterHTTPClient(HTTPClient):
-    default_timeout_sec = 5
+    default_timeout_sec = (5, None)
 
     def __init__(self, *args, **kwargs):
         profile = kwargs.pop('profile')
