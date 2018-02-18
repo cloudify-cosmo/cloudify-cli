@@ -468,6 +468,8 @@ class Options(object):
         self.tail = click.option(
             '--tail',
             is_flag=True,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['pagination_offset', 'pagination_size'],
             help=helptexts.TAIL_OUTPUT)
 
         self.validate = click.option(
