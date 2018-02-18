@@ -643,12 +643,12 @@ class ExecutionEventsFetcherTest(CliCommandTest):
                                                     'execution_id',
                                                     batch_size=batch_size)
             for i in range(0, 4):
-                events_batch_count = \
-                    events_fetcher._fetch_and_process_events_batch()
+                events_batch_count, _ = \
+                    events_fetcher.fetch_and_process_events_batch()
                 self.assertEqual(events_batch_count, batch_size)
                 total_events_count += events_batch_count
-            remaining_events_count = \
-                events_fetcher._fetch_and_process_events_batch()
+            remaining_events_count, _ = \
+                events_fetcher.fetch_and_process_events_batch()
             self.assertEqual(remaining_events_count, 1)
             total_events_count += remaining_events_count
             self.assertEqual(len(self.events), total_events_count)
@@ -657,7 +657,7 @@ class ExecutionEventsFetcherTest(CliCommandTest):
         self.events = self._generate_events(10)
         events_fetcher = ExecutionEventsFetcher(self.client, 'execution_id',
                                                 batch_size=100)
-        batch_events = events_fetcher._fetch_events_batch()
+        batch_events = events_fetcher._fetch_events_batch().items
         self.assertListEqual(self.events, batch_events)
 
     def test_fetch_events_explicit_several_batches(self):
