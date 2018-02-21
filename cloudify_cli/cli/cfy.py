@@ -460,6 +460,12 @@ class Options(object):
             default=True,
             help=helptexts.INCLUDE_LOGS)
 
+        self.dry_run = click.option(
+            '--dry-run',
+            is_flag=True,
+            help=helptexts.DRY_RUN
+        )
+
         self.json_output = click.option(
             '--json-output',
             is_flag=True,
