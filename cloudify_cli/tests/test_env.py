@@ -762,8 +762,8 @@ class WaitForExecutionTests(CliCommandTest):
         wait_for_execution(self.client, mock_execution, timeout=None)
 
         calls_count = len(self.client.events.list.mock_calls)
-        self.assertEqual(calls_count, 1, """wait_for_execution didnt poll
-            events once after execution terminated (expected 1
+        self.assertEqual(calls_count, 2, """wait_for_execution didnt poll
+            events once after execution terminated (expected 2
             call, got %d)""" % calls_count)
 
     def test_wait_for_execution_after_log_succeeded(self):
