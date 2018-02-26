@@ -7,7 +7,7 @@ AWS_ACCESS_KEY=$4
 PACKAGER_BRANCH=$5
 export REPO=$6
 export CORE_TAG_NAME="4.3"
-export CORE_BRANCH="master"
+export CORE_BRANCH="18.2.28-build"
 
 
 # OSX preparation
