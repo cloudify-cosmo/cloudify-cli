@@ -199,6 +199,10 @@ def wait_for_execution(client,
     # and we receive an event of type in WORKFLOW_END_TYPES
     execution_ended = False
     events_watcher = EventsWatcher(events_handler)
+
+    # delay after execution ends to wait for additional logs
+    delay = 3 * WAIT_FOR_EXECUTION_SLEEP_INTERVAL
+
     while True:
         if timeout is not None:
             if time.time() > deadline:
@@ -226,8 +230,8 @@ def wait_for_execution(client,
             events_fetcher.fetch_and_process_events(
                 events_handler=events_watcher, timeout=timeout)
 
-        if execution_ended and not events_watcher.end_log_received:
-            delay = 3 * WAIT_FOR_EXECUTION_SLEEP_INTERVAL
+        if execution_ended and not events_watcher.end_log_received and \
+                timeout > delay:
             if logger:
                 logger.info('Execution ended, waiting {0} seconds for '
                             'additional log messages'.format(delay))
