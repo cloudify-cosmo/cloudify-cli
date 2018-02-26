@@ -73,6 +73,7 @@ def list(execution_id,
                                            client.executions.get(execution_id),
                                            events_handler=events_logger,
                                            include_logs=include_logs,
+                                           logger=logger,
                                            timeout=None)  # don't timeout ever
             if execution.error:
                 logger.info('Execution of workflow {0} for deployment '

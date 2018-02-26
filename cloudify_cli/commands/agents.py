@@ -181,7 +181,8 @@ def run_worker(deps, client, logger, include_logs):
                 execution,
                 events_handler=threadsafe_events_logger,
                 include_logs=include_logs,
-                timeout=timeout
+                timeout=timeout,
+                logger=logger
             )
 
             if execution.error:

@@ -215,6 +215,7 @@ def manager_start(workflow_id,
                                    client, deployment_id),
                                events_handler=events_logger,
                                include_logs=include_logs,
+                               logger=logger,
                                timeout=timeout)
             remaining_timeout = time.time() - now
             timeout -= remaining_timeout
