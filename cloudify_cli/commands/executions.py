@@ -230,7 +230,8 @@ def manager_start(workflow_id,
                                        execution,
                                        events_handler=events_logger,
                                        include_logs=include_logs,
-                                       timeout=timeout)
+                                       timeout=timeout,
+                                       logger=logger)
         if execution.error:
             logger.info('Execution of workflow {0} for deployment '
                         '{1} failed. [error={2}]'.format(
