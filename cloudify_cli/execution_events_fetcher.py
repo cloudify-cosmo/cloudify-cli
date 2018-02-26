@@ -200,8 +200,9 @@ def wait_for_execution(client,
     execution_ended = False
     events_watcher = EventsWatcher(events_handler)
 
-    # delay after execution ends to wait for additional logs
-    delay = 3 * WAIT_FOR_EXECUTION_SLEEP_INTERVAL
+    # did we already see the execution status change, and are only waiting
+    # for additional logs now?
+    waiting_for_logs = False
 
     while True:
         if timeout is not None:
@@ -231,12 +232,14 @@ def wait_for_execution(client,
                 events_handler=events_watcher, timeout=timeout)
 
         if execution_ended and not events_watcher.end_log_received and \
-                timeout > delay:
+                not waiting_for_logs:
+            delay = 3 * WAIT_FOR_EXECUTION_SLEEP_INTERVAL
             if logger:
                 logger.info('Execution ended, waiting {0} seconds for '
                             'additional log messages'.format(delay))
             deadline = time.time() + delay
             timeout = delay
+            waiting_for_logs = True
 
         if execution_ended and events_watcher.end_log_received:
             break
