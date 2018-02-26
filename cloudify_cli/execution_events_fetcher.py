@@ -212,7 +212,7 @@ def wait_for_execution(client,
                         logger.info('Execution ended, but no end log message '
                                     'received, some logs might have been not '
                                     'displayed.')
-                    return execution
+                    break
                 raise ExecutionTimeoutError(
                     execution.id,
                     'execution of operation {0} for deployment {1} '
