@@ -233,7 +233,7 @@ def wait_for_execution(client,
             if waiting_for_logs:
                 if logger:
                     logger.info('Execution ended, but no end log message '
-                                'received, some logs might have been not '
+                                'received. Some logs might not have been '
                                 'displayed.')
                 break
             else:
