@@ -207,12 +207,6 @@ def wait_for_execution(client,
     while True:
         if timeout is not None:
             if time.time() > deadline:
-                if execution_ended:
-                    if logger:
-                        logger.info('Execution ended, but no end log message '
-                                    'received, some logs might have been not '
-                                    'displayed.')
-                    break
                 raise ExecutionTimeoutError(
                     execution.id,
                     'execution of operation {0} for deployment {1} '
@@ -234,13 +228,20 @@ def wait_for_execution(client,
         if execution_ended and events_watcher.end_log_received:
             break
 
-        if execution_ended and not waiting_for_logs:
-            timeout = 3 * WAIT_FOR_EXECUTION_SLEEP_INTERVAL
-            if logger:
-                logger.info('Execution ended, waiting {0} seconds for '
-                            'additional log messages'.format(timeout))
-            deadline = time.time() + timeout
-            waiting_for_logs = True
+        # if the execution ended, wait one iteration for additional logs
+        if execution_ended:
+            if waiting_for_logs:
+                if logger:
+                    logger.info('Execution ended, but no end log message '
+                                'received, some logs might have been not '
+                                'displayed.')
+                break
+            else:
+                if logger:
+                    logger.info('Execution ended, waiting {0} seconds for '
+                                'additional log messages'
+                                .format(WAIT_FOR_EXECUTION_SLEEP_INTERVAL))
+                waiting_for_logs = True
 
         time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
 
