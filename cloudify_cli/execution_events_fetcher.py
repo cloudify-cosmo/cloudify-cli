@@ -181,7 +181,8 @@ def wait_for_execution(client,
                        execution,
                        events_handler=None,
                        include_logs=False,
-                       timeout=900):
+                       timeout=900,
+                       logger=None):
 
     # if execution already ended - return without waiting
     if execution.status in Execution.END_STATES:
@@ -201,6 +202,12 @@ def wait_for_execution(client,
     while True:
         if timeout is not None:
             if time.time() > deadline:
+                if execution_ended:
+                    if logger:
+                        logger.info('Execution ended, but no end log message '
+                                    'received, some logs might have been not '
+                                    'displayed.')
+                    return execution
                 raise ExecutionTimeoutError(
                     execution.id,
                     'execution of operation {0} for deployment {1} '
@@ -218,6 +225,13 @@ def wait_for_execution(client,
                 execution.status != Execution.PENDING:
             events_fetcher.fetch_and_process_events(
                 events_handler=events_watcher, timeout=timeout)
+
+        if execution_ended and not events_watcher.end_log_received:
+            delay = 3 * WAIT_FOR_EXECUTION_SLEEP_INTERVAL
+            if logger:
+                logger.info('Execution ended, waiting {0} seconds for '
+                            'additional log messages'.format(delay))
+            timeout = time.time() + delay
 
         if execution_ended and events_watcher.end_log_received:
             break
