@@ -231,7 +231,8 @@ def wait_for_execution(client,
             if logger:
                 logger.info('Execution ended, waiting {0} seconds for '
                             'additional log messages'.format(delay))
-            timeout = time.time() + delay
+            deadline = time.time() + delay
+            timeout = delay
 
         if execution_ended and events_watcher.end_log_received:
             break
