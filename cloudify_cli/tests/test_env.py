@@ -724,7 +724,7 @@ class WaitForExecutionTests(CliCommandTest):
         self.time.time.side_effect = count(0)
 
     def test_wait_for_log_after_execution_finishes(self):
-        """wait_for_execution continues polling logs, after execution status
+        """wait_for_execution polls logs once, after execution status
         is terminated
         """
 
@@ -735,21 +735,23 @@ class WaitForExecutionTests(CliCommandTest):
             repeat(MagicMock(status=Execution.TERMINATED))
         )
 
-        # prepare mock events.list() calls - first return empty events 100
-        # times and only then return a 'workflow_succeeded' event
+        # prepare mock events.list() calls - first return empty,
+        # and only then return a 'workflow_succeeded' event
         events = chain(
-            repeat(MockListResponse([], 0), 100),
-            [MockListResponse([{
-                'deployment_id': '<deployment_id>',
-                'execution_id': '<execution_id>',
-                'node_name': '<node_name>',
-                'operation': '<operation>',
-                'workflow_id': '<workflow_id>',
-                'node_instance_id': '<node_instance_id>',
-                'message': '<message>',
-                'error_causes': '<error_causes>',
-                'event_type': 'workflow_succeeded',
-            }], 1)],
+            [
+                MockListResponse([], 0),
+                MockListResponse([{
+                    'deployment_id': '<deployment_id>',
+                    'execution_id': '<execution_id>',
+                    'node_name': '<node_name>',
+                    'operation': '<operation>',
+                    'workflow_id': '<workflow_id>',
+                    'node_instance_id': '<node_instance_id>',
+                    'message': '<message>',
+                    'error_causes': '<error_causes>',
+                    'event_type': 'workflow_succeeded',
+                }], 1)
+            ],
             repeat(MockListResponse([], 0))
         )
 
@@ -760,9 +762,9 @@ class WaitForExecutionTests(CliCommandTest):
         wait_for_execution(self.client, mock_execution, timeout=None)
 
         calls_count = len(self.client.events.list.mock_calls)
-        self.assertEqual(calls_count, 101, """wait_for_execution didnt keep
-            polling events after execution terminated (expected 101
-            calls, got %d)""" % calls_count)
+        self.assertEqual(calls_count, 2, """wait_for_execution didnt poll
+            events once after execution terminated (expected 2
+            call, got %d)""" % calls_count)
 
     def test_wait_for_execution_after_log_succeeded(self):
         """wait_for_execution continues polling the execution status,

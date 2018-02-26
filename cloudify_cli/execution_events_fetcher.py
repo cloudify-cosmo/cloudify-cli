@@ -181,7 +181,8 @@ def wait_for_execution(client,
                        execution,
                        events_handler=None,
                        include_logs=False,
-                       timeout=900):
+                       timeout=900,
+                       logger=None):
 
     # if execution already ended - return without waiting
     if execution.status in Execution.END_STATES:
@@ -198,6 +199,11 @@ def wait_for_execution(client,
     # and we receive an event of type in WORKFLOW_END_TYPES
     execution_ended = False
     events_watcher = EventsWatcher(events_handler)
+
+    # did we already see the execution status change, and are only waiting
+    # for additional logs now?
+    waiting_for_logs = False
+
     while True:
         if timeout is not None:
             if time.time() > deadline:
@@ -221,6 +227,21 @@ def wait_for_execution(client,
 
         if execution_ended and events_watcher.end_log_received:
             break
+
+        # if the execution ended, wait one iteration for additional logs
+        if execution_ended:
+            if waiting_for_logs:
+                if logger:
+                    logger.info('Execution ended, but no end log message '
+                                'received. Some logs might not have been '
+                                'displayed.')
+                break
+            else:
+                if logger:
+                    logger.info('Execution ended, waiting {0} seconds for '
+                                'additional log messages'
+                                .format(WAIT_FOR_EXECUTION_SLEEP_INTERVAL))
+                waiting_for_logs = True
 
         time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
 
