@@ -94,7 +94,7 @@ if [ "$CORE_BRANCH" != "master" ]; then
         source ~/cloudify-cli/packaging/source_branch
     fi
     #git checkout -b ${CLI_BRANCH} origin/${CLI_BRANCH}
-else
+#else
     #git checkout ${CLI_BRANCH}
 fi
 git checkout opencm-patch-2
