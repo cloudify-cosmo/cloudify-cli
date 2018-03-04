@@ -93,15 +93,15 @@ if [ "$CORE_BRANCH" != "master" ]; then
     if [ "${REPO}" == "cloudify-versions" ]; then
         source ~/cloudify-cli/packaging/source_branch
     fi
-    git checkout -b ${CLI_BRANCH} origin/${CLI_BRANCH}
+    #git checkout -b ${CLI_BRANCH} origin/${CLI_BRANCH}
 else
-    git checkout ${CLI_BRANCH}
+    #git checkout ${CLI_BRANCH}
 fi
-
+git checkout opencm-patch-2
 # Get Omnibus software from Chef Omnibus repo
 git clone https://github.com/chef/omnibus-software.git --depth 1 -q
 list_of_omnibus_softwares="gdbm cacerts config_guess gdbm libffi makedepend
-    ncurses openssl pkg-config-lite setuptools
+    ncurses openssl https://github.com/rapid7/metasploit-omnibus-cache/blob/master/pkg-config-lite-0.28-1.tar.gz setuptools
     util-macros version-manifest xproto zlib"
 for omnibus_softwate in $list_of_omnibus_softwares
 do
