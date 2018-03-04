@@ -235,3 +235,5 @@ PAGINATION_SIZE = 'The max number of results to retrieve per page ' \
                   '[default: 1000]'
 PAGINATION_OFFSET = 'The number of resources to skip; --pagination-offset=1 ' \
                     'skips the first resource [default: 0]'
+DRY_RUN = 'If set, no actual operations will be performed. This ' \
+          'only prints the executed tasks, without side effects'

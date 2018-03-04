@@ -156,6 +156,7 @@ def manager_list(
 @cfy.options.timeout()
 @cfy.options.include_logs
 @cfy.options.json_output
+@cfy.options.dry_run
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.assert_manager_active()
@@ -169,6 +170,7 @@ def manager_start(workflow_id,
                   timeout,
                   include_logs,
                   json_output,
+                  dry_run,
                   logger,
                   client,
                   tenant_name):
@@ -194,7 +196,8 @@ def manager_start(workflow_id,
                 workflow_id,
                 parameters=parameters,
                 allow_custom_parameters=allow_custom_parameters,
-                force=force)
+                force=force,
+                dry_run=dry_run)
         except (exceptions.DeploymentEnvironmentCreationInProgressError,
                 exceptions.DeploymentEnvironmentCreationPendingError) as e:
             # wait for deployment environment creation workflow
