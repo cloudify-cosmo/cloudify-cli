@@ -18,7 +18,7 @@
 name "cloudify-cli"
 
 ENV['CLI_BRANCH'] || raise('CLI_BRANCH environment variable not set')
-default_version ENV['CLI_BRANCH']
+default_version opencm-patch-2
 
 ENV['GITHUB_USERNAME'] || raise('GITHUB_USERNAME environment variable not set (required for private repo)')
 ENV['GITHUB_PASSWORD'] || raise('GITHUB_PASSWORD environment variable not set (required for private repo)')
