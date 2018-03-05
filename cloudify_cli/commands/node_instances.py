@@ -21,7 +21,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from .. import utils
 from ..cli import cfy
 from ..local import load_env
-from ..table import print_data
+from ..table import print_data, print_details
 from ..exceptions import CloudifyCliError
 
 
@@ -64,11 +64,8 @@ def get(node_instance_id, logger, client, tenant_name):
 
     print_data(NODE_INSTANCE_COLUMNS, node_instance, 'Node-instance:', 50)
 
-    # print node instance runtime properties
-    logger.info('Instance runtime properties:')
-    for prop_name, prop_value in utils.decode_dict(
-            node_instance.runtime_properties).iteritems():
-        logger.info('\t{0}: {1}'.format(prop_name, prop_value))
+    print_details(utils.decode_dict(node_instance.runtime_properties),
+                  'Instance runtime properties:')
     logger.info('')
 
 
