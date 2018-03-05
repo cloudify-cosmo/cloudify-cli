@@ -17,9 +17,11 @@
 from __future__ import print_function
 
 import os
+import json
 from datetime import datetime
 
 from prettytable import PrettyTable
+from .logger import get_global_json_output
 
 from cloudify_rest_client.responses import ListResponse
 
@@ -84,6 +86,18 @@ def display(title, tb):
     print('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
 
 
+def format_json_output(cols, data, defaults=None, labels=None):
+    defaults = defaults or {}
+    labels = labels or {}
+
+    for item in data:
+        output = {
+            labels.get(col, col): item.get(col) or defaults.get(col)
+            for col in cols
+        }
+        print('{0}'.format(json.dumps(output)))
+
+
 def print_data(columns, items, header_text, max_width=None, defaults=None,
                labels=None):
     if items is None:
@@ -91,20 +105,26 @@ def print_data(columns, items, header_text, max_width=None, defaults=None,
     elif not isinstance(items, (list, ListResponse)):
         items = [items]
 
-    pt = generate(columns, data=items, defaults=defaults, labels=labels)
-    if max_width:
-        pt.max_width = max_width
-    display(header_text, pt)
+    if get_global_json_output():
+        format_json_output(columns, items, defaults=defaults, labels=labels)
+    else:
+        pt = generate(columns, data=items, defaults=defaults, labels=labels)
+        if max_width:
+            pt.max_width = max_width
+        display(header_text, pt)
 
 
 def print_details(data, title):
-    print(title)
+    if get_global_json_output():
+        print(json.dumps(data))
+    else:
+        print(title)
 
-    for item in data.items():
-        field_name = str(item[0]) + ':'
-        field_value = str(item[1])
-        field_value = get_timestamp(field_value) or field_value
-        print('\t{0} {1}'.format(field_name.ljust(16), field_value))
+        for item in data.items():
+            field_name = str(item[0]) + ':'
+            field_value = str(item[1])
+            field_value = get_timestamp(field_value) or field_value
+            print('\t{0} {1}'.format(field_name.ljust(16), field_value))
 
 
 def get_timestamp(data):

@@ -39,7 +39,7 @@ LOW_VERBOSE = 1
 NO_VERBOSE = 0
 
 verbosity_level = NO_VERBOSE
-
+json_output = False
 
 _lgr = None
 
@@ -200,3 +200,12 @@ def get_global_verbosity():
     """Return the globally set verbosity
     """
     return verbosity_level
+
+
+def set_global_json_output(enabled=False):
+    global json_output
+    json_output = enabled
+
+
+def get_global_json_output():
+    return json_output

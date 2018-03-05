@@ -36,7 +36,11 @@ from ..utils import generate_random_string
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import SuppressedCloudifyCliError
 from ..exceptions import CloudifyBootstrapError, CloudifyValidationError
-from ..logger import get_logger, set_global_verbosity_level, DEFAULT_LOG_FILE
+from ..logger import (
+    get_logger,
+    set_global_verbosity_level,
+    DEFAULT_LOG_FILE,
+    set_global_json_output)
 
 
 CLICK_CONTEXT_SETTINGS = dict(
@@ -184,6 +188,11 @@ def validate_nonnegative_integer(ctx, param, value):
     except (ValueError, AssertionError):
         raise CloudifyValidationError('ERROR: {0} is expected to be a '
                                       'nonnegative integer'.format(param.name))
+    return value
+
+
+def set_json(ctx, param, value):
+    set_global_json_output(value)
     return value
 
 
@@ -418,6 +427,11 @@ class Options(object):
             expose_value=False,
             is_eager=True,
             help=helptexts.VERSION)
+
+        self.json = click.option(
+            '--json',
+            is_flag=True,
+            callback=set_json)
 
         self.inputs = click.option(
             '-i',

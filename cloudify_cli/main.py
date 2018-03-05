@@ -50,7 +50,8 @@ from .commands import maintenance_mode
 @cfy.group(name='cfy')
 @cfy.options.verbose(expose_value=True)
 @cfy.options.version
-def _cfy(verbose):
+@cfy.options.json
+def _cfy(verbose, json):
     """Cloudify's Command Line Interface
 
     Note that some commands are only available if you're using a manager.
@@ -139,7 +140,6 @@ def _register_commands():
 
 _register_commands()
 logger.configure_loggers()
-
 
 if __name__ == '__main__':
     _cfy()
