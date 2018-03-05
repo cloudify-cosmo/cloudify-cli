@@ -194,6 +194,7 @@ def download(snapshot_id, output_path, logger, client, tenant_name):
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='snapshot')
 @cfy.options.all_tenants
+@cfy.options.search
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
 @cfy.options.verbose()
@@ -203,6 +204,7 @@ def list(sort_by,
          descending,
          tenant_name,
          all_tenants,
+         search,
          pagination_offset,
          pagination_size,
          logger,
@@ -215,6 +217,7 @@ def list(sort_by,
     snapshots = client.snapshots.list(sort=sort_by,
                                       is_descending=descending,
                                       _all_tenants=all_tenants,
+                                      _search=search,
                                       _offset=pagination_offset,
                                       _size=pagination_size)
 

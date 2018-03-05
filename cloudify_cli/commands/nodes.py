@@ -114,6 +114,7 @@ def get(node_id, deployment_id, logger, client, tenant_name):
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='node')
 @cfy.options.all_tenants
+@cfy.options.search
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
 @cfy.options.verbose()
@@ -124,6 +125,7 @@ def list(deployment_id,
          descending,
          tenant_name,
          all_tenants,
+         search,
          pagination_offset,
          pagination_size,
          logger, client):
@@ -145,6 +147,7 @@ def list(deployment_id,
             sort=sort_by,
             is_descending=descending,
             _all_tenants=all_tenants,
+            _search=search,
             _offset=pagination_offset,
             _size=pagination_size
         )
