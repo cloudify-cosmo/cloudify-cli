@@ -104,7 +104,7 @@ def print_details(data, title):
         field_name = str(item[0]) + ':'
         field_value = str(item[1])
         field_value = get_timestamp(field_value) or field_value
-        print('{0} {1}'.format(field_name.ljust(16), field_value))
+        print('\t{0} {1}'.format(field_name.ljust(16), field_value))
 
 
 def get_timestamp(data):
