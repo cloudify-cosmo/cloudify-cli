@@ -166,8 +166,6 @@ def get_events_logger(json_output):
         :param events: The events to print.
         :return:
         """
-        # TODO: Why we're writing directly to stdout here
-        # but use the logger when the --json-output flag isn't passed.
         for event in events:
             sys.stdout.write('{}\n'.format(json.dumps(event)))
             sys.stdout.flush()
@@ -181,7 +179,8 @@ def get_events_logger(json_output):
         for event in events:
             output = logs.create_event_message_prefix(event)
             if output:
-                _lgr.info(output)
+                sys.stdout.write('{}\n'.format(output))
+                sys.stdout.flush()
 
     return json_events_logger if json_output else text_events_logger
 

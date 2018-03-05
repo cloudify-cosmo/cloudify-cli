@@ -14,10 +14,10 @@
 # limitations under the License.
 ############
 
+from __future__ import print_function
+
 import os
 from datetime import datetime
-
-from .logger import get_logger
 
 from prettytable import PrettyTable
 
@@ -57,7 +57,7 @@ def generate(cols, data, defaults=None, labels=None):
         if column in row_data:
             if row_data[column] and isinstance(row_data[column], basestring):
                 row_data[column] = get_timestamp(row_data[column]) \
-                                   or row_data[column]
+                    or row_data[column]
             elif row_data[column] and isinstance(row_data[column], list):
                 row_data[column] = ','.join(row_data[column])
             elif isinstance(row_data[column], bool):
@@ -80,9 +80,8 @@ def generate(cols, data, defaults=None, labels=None):
     return pt
 
 
-def log(title, tb):
-    logger = get_logger()
-    logger.info('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
+def display(title, tb):
+    print('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
 
 
 def print_data(columns, items, header_text, max_width=None, defaults=None,
@@ -95,18 +94,17 @@ def print_data(columns, items, header_text, max_width=None, defaults=None,
     pt = generate(columns, data=items, defaults=defaults, labels=labels)
     if max_width:
         pt.max_width = max_width
-    log(header_text, pt)
+    display(header_text, pt)
 
 
 def print_details(data, title):
-    logger = get_logger()
-    logger.info(title)
+    print(title)
 
     for item in data.items():
         field_name = str(item[0]) + ':'
         field_value = str(item[1])
         field_value = get_timestamp(field_value) or field_value
-        logger.info('{0} {1}'.format(field_name.ljust(16), field_value))
+        print('{0} {1}'.format(field_name.ljust(16), field_value))
 
 
 def get_timestamp(data):
