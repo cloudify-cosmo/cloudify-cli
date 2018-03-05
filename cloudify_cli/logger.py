@@ -158,6 +158,7 @@ def _configure_from_file():
 
 
 def get_events_logger(json_output):
+    json_output = json_output or get_global_json_output()
 
     def json_events_logger(events):
         """The json events logger prints events as consumable JSON formatted

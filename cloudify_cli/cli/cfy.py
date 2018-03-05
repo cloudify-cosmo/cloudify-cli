@@ -19,6 +19,7 @@ import sys
 import urllib
 import difflib
 import StringIO
+import warnings
 import traceback
 from functools import wraps
 
@@ -193,6 +194,13 @@ def validate_nonnegative_integer(ctx, param, value):
 
 def set_json(ctx, param, value):
     set_global_json_output(value)
+    return value
+
+
+def json_output_deprecate(ctx, param, value):
+    if value:
+        warnings.warn("Instead of --json-output, use the global "
+                      "`cfy --json` flag")
     return value
 
 
@@ -508,6 +516,7 @@ class Options(object):
         self.json_output = click.option(
             '--json-output',
             is_flag=True,
+            callback=json_output_deprecate,
             help=helptexts.JSON_OUTPUT)
 
         self.tail = click.option(
