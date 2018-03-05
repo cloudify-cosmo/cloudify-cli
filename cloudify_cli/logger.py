@@ -65,7 +65,7 @@ LOGGER = {
         },
         "console": {
             "class": "logging.StreamHandler",
-            "stream": "ext://sys.stdout",
+            "stream": "ext://sys.stderr",
             "formatter": "console"
         }
     }
