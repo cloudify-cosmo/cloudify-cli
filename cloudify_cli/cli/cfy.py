@@ -455,6 +455,13 @@ class Options(object):
             help=helptexts.ALL_TENANTS,
         )
 
+        self.search = click.option(
+            '--search',
+            default=None,
+            required=False,
+            help=helptexts.SEARCH,
+        )
+
         self.include_logs = click.option(
             '--include-logs/--no-logs',
             default=True,

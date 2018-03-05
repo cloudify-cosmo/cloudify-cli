@@ -81,6 +81,7 @@ def tenants():
 @cfy.options.descending
 @cfy.options.verbose()
 @cfy.options.get_data
+@cfy.options.search
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
 @cfy.assert_manager_active()
@@ -89,6 +90,7 @@ def tenants():
 def list(sort_by,
          descending,
          get_data,
+         search,
          pagination_offset,
          pagination_size,
          logger,
@@ -100,6 +102,7 @@ def list(sort_by,
         sort=sort_by,
         is_descending=descending,
         _get_data=get_data,
+        _search=search,
         _offset=pagination_offset,
         _size=pagination_size
     )

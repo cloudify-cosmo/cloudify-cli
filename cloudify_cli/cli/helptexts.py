@@ -154,6 +154,8 @@ IMPORT_SSH_KEYS = 'WARNING: Import exported keys to their original locations'
 
 SORT_BY = "Key for sorting the list"
 DESCENDING = "Sort list in descending order [default: False]"
+SEARCH = 'Search resources by name/id. The returned list will include only ' \
+         'resources that contains the given search pattern'
 
 TENANT = 'The name of the tenant'
 TENANT_TEMPLATE = 'The name of the tenant of the {0}'
