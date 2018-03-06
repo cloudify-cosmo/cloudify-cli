@@ -39,7 +39,7 @@ setup(
         ]
     },
     install_requires=[
-        'click==4.0',
+        'click==6.7',
         'wagon[venv]==0.6.1',
         'pyyaml==3.10',
         'paramiko==1.18.3',
