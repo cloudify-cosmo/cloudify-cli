@@ -19,12 +19,13 @@ import os
 import shutil
 
 from . import init
-from ..cli import cfy
 from . import executions
 from . import blueprints
 from .. import blueprint
 from . import deployments
+from ..cli import cfy, helptexts
 from ..constants import DEFAULT_INSTALL_WORKFLOW
+from cloudify_rest_client.constants import VISIBILITY_EXCEPT_GLOBAL
 
 
 @cfy.command(name='install',
@@ -36,6 +37,11 @@ from ..constants import DEFAULT_INSTALL_WORKFLOW
 @cfy.options.deployment_id()
 @cfy.options.inputs
 @cfy.options.workflow_id('install')
+@cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
+@cfy.options.visibility(valid_values=VISIBILITY_EXCEPT_GLOBAL)
+@cfy.options.tenant_name(required=False,
+                         resource_name_for_help='blueprint and deployment')
+@cfy.options.skip_plugins_validation
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
 @cfy.options.timeout()
@@ -51,6 +57,10 @@ def manager(ctx,
             deployment_id,
             inputs,
             workflow_id,
+            force,
+            visibility,
+            tenant_name,
+            skip_plugins_validation,
             parameters,
             allow_custom_parameters,
             timeout,
@@ -75,19 +85,16 @@ def manager(ctx,
     deployment_id = deployment_id or blueprint_id
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
 
-    # Although the `install` command does not need the `force` argument,
-    # we *are* using the `executions start` handler as a part of it.
-    # as a result, we need to provide it with a `force` argument, which is
-    # defined below.
-    force = False
-
     try:
         ctx.invoke(
             blueprints.upload,
             blueprint_path=processed_blueprint_path,
             blueprint_id=blueprint_id,
             blueprint_filename=blueprint_filename,
-            validate=validate)
+            validate=validate,
+            visibility=visibility,
+            tenant_name=tenant_name
+        )
     finally:
         # Every situation other than the user providing a path of a local
         # yaml means a temp folder will be created that should be later
@@ -99,7 +106,11 @@ def manager(ctx,
         deployments.manager_create,
         blueprint_id=blueprint_id,
         deployment_id=deployment_id,
-        inputs=inputs)
+        inputs=inputs,
+        visibility=visibility,
+        tenant_name=tenant_name,
+        skip_plugins_validation=skip_plugins_validation
+    )
     ctx.invoke(
         executions.manager_start,
         workflow_id=workflow_id,
@@ -109,7 +120,9 @@ def manager(ctx,
         allow_custom_parameters=allow_custom_parameters,
         include_logs=include_logs,
         parameters=parameters,
-        json_output=json_output)
+        json_output=json_output,
+        tenant_name=tenant_name
+    )
 
 
 @cfy.command(name='install',
