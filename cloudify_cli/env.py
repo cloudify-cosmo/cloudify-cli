@@ -104,7 +104,8 @@ def assert_manager_active():
     if not is_manager_active():
         raise CloudifyCliError(
             'This command is only available when using a manager. '
-            'You need to run run `cfy profiles use MANAGER_IP`')
+            'Please use the `cfy profiles use` command to connect '
+            'to a Cloudify Manager.')
 
 
 def assert_local_active():
