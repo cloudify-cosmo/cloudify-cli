@@ -33,9 +33,10 @@ _STATUS_CANCELING_MESSAGE = (
     'NOTE: Executions currently in a "canceling/force-canceling" status '
     'may take a while to change into "cancelled"')
 
-EXECUTION_COLUMNS = ['id', 'workflow_id', 'status', 'deployment_id',
+EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display', 'deployment_id',
                      'created_at', 'error', 'visibility', 'tenant_name',
                      'created_by']
+EXECUTION_TABLE_LABELS = {'status_display': 'status'}
 
 
 @cfy.group(name='executions')
@@ -69,7 +70,8 @@ def manager_get(execution_id, logger, client, tenant_name):
             raise
         raise CloudifyCliError('Execution {0} not found'.format(execution_id))
 
-    print_data(EXECUTION_COLUMNS, execution, 'Execution:', max_width=50)
+    print_data(EXECUTION_COLUMNS, execution, 'Execution:', max_width=50,
+               labels=EXECUTION_TABLE_LABELS)
 
     # print execution parameters
     logger.info('Execution Parameters:')
@@ -136,7 +138,8 @@ def manager_list(
         raise CloudifyCliError('Deployment {0} does not exist'.format(
             deployment_id))
 
-    print_data(EXECUTION_COLUMNS, executions, 'Executions:')
+    print_data(EXECUTION_COLUMNS, executions, 'Executions:',
+               labels=EXECUTION_TABLE_LABELS)
     total = executions.metadata.pagination.total
     logger.info('Showing {0} of {1} executions'.format(len(executions), total))
 
