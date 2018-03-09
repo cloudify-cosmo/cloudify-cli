@@ -191,6 +191,24 @@ class ClusterNodesTest(CliCommandTest):
         self.invoke('cfy cluster nodes list',
                     'not part of a Cloudify Manager cluster')
 
+    def test_set_node_cert(self):
+        env.profile.cluster = [{'name': 'm1', 'manager_ip': '1.2.3.4'}]
+        with tempfile.NamedTemporaryFile() as f:
+            self.invoke('cfy cluster nodes set-certificate m1 {0}'
+                        .format(f.name))
+
+    def test_set_node_cert_doesnt_exist(self):
+        env.profile.cluster = [{'name': 'm1', 'manager_ip': '1.2.3.4'}]
+        self.invoke('cfy cluster nodes set-certificate m1 /tmp/not-a-file',
+                    'does not exist')
+
+    def test_set_node_cert_no_such_node(self):
+        env.profile.cluster = [{'name': 'm1', 'manager_ip': '1.2.3.4'}]
+        with tempfile.NamedTemporaryFile() as f:
+            self.invoke('cfy cluster nodes set-certificate not-a-node {0}'
+                        .format(f.name),
+                        'not found in the cluster profile')
+
 
 class ClusterJoinTest(CliCommandTest):
     def setUp(self):
@@ -306,15 +324,14 @@ class UpdateProfileTest(CliCommandTest):
         self.client.cluster.join = mock.Mock()
 
         outcome = self.invoke('cfy cluster update-profile')
-        self.assertIn('Adding cluster node: 1.2.3.4', outcome.logs)
-        self.assertIn('Adding cluster node: 5.6.7.8', outcome.logs)
+        self.assertIn('Adding cluster node 1.2.3.4', outcome.logs)
+        self.assertIn('Adding cluster node 5.6.7.8', outcome.logs)
 
-        self.assertEqual(env.profile.cluster,
-                         [
-                             {'manager_ip': env.profile.manager_ip},
-                             {'manager_ip': '1.2.3.4'},
-                             {'manager_ip': '5.6.7.8'}
-                         ])
+        self.assertEqual(env.profile.cluster, [
+            {'manager_ip': env.profile.manager_ip},
+            {'manager_ip': '1.2.3.4', 'name': 'node name 1'},
+            {'manager_ip': '5.6.7.8', 'name': 'node name 2'}
+        ])
 
 
 class PassClusterClientTest(unittest.TestCase):

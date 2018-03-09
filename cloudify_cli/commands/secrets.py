@@ -77,15 +77,13 @@ def create(key,
         raise CloudifyCliError('Failed to create secret key. '
                                'Missing option '
                                '--secret-string or secret-file.')
-    graceful_msg = 'Secret with key `{0}` is already exist in this current ' \
-                   'tenant or as a global secret'.format(key)
 
-    with handle_client_error(409, graceful_msg, logger):
-        client.secrets.create(key,
-                              secret_string,
-                              update_if_exists,
-                              visibility)
-        logger.info('Secret `{0}` created'.format(key))
+    client.secrets.create(key,
+                          secret_string,
+                          update_if_exists,
+                          visibility)
+
+    logger.info('Secret `{0}` created'.format(key))
 
 
 @secrets.command(name='get', short_help='Get details for a single secret')
@@ -133,10 +131,21 @@ def update(key, secret_string, logger, client):
 @cfy.options.tenant_name_for_list(required=False,
                                   resource_name_for_help='secret')
 @cfy.options.all_tenants
+@cfy.options.search
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, tenant_name, all_tenants, logger, client):
+def list(sort_by,
+         descending,
+         tenant_name,
+         all_tenants,
+         search,
+         pagination_offset,
+         pagination_size,
+         logger,
+         client):
     """List all secrets
     """
     if tenant_name:
@@ -146,10 +155,14 @@ def list(sort_by, descending, tenant_name, all_tenants, logger, client):
     secrets_list = client.secrets.list(
         sort=sort_by,
         is_descending=descending,
-        _all_tenants=all_tenants
+        _all_tenants=all_tenants,
+        _search=search,
+        _offset=pagination_offset,
+        _size=pagination_size
     )
-
     print_data(SECRETS_COLUMNS, secrets_list, 'Secrets:')
+    total = secrets_list.metadata.pagination.total
+    logger.info('Showing {0} of {1} secrets'.format(len(secrets_list), total))
 
 
 @secrets.command(name='delete', short_help='Delete a secret')

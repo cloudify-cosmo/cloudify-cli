@@ -5,14 +5,13 @@ import tempfile
 import wagon
 from mock import MagicMock
 
+from .constants import PLUGINS_DIR
 from .test_base import CliCommandTest
 
+from .mocks import MockListResponse
+from cloudify_rest_client import plugins
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
-
-from cloudify_rest_client import plugins
-
-from .constants import PLUGINS_DIR
 
 
 class PluginsTest(CliCommandTest):
@@ -22,7 +21,7 @@ class PluginsTest(CliCommandTest):
         self.use_manager()
 
     def test_plugins_list(self):
-        self.client.plugins.list = MagicMock(return_value=[])
+        self.client.plugins.list = MagicMock(return_value=MockListResponse())
         self.invoke('cfy plugins list')
         self.invoke('cfy plugins list -t dummy_tenant')
         self.invoke('cfy plugins list -a')

@@ -14,11 +14,6 @@
 # limitations under the License.
 ############
 import os
-import tarfile
-import tempfile
-
-import shutil
-import yaml
 
 import wagon
 
@@ -30,7 +25,6 @@ from ..cli import helptexts, cfy
 from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility)
-from ..exceptions import CloudifyCliError
 
 PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
                   'supported_platform', 'distribution_release', 'uploaded_at',
@@ -38,38 +32,6 @@ PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
 GET_DATA_COLUMNS = ['file_server_path']
 EXCLUDED_COLUMNS = ['archive_name', 'distribution_version', 'excluded_wheels',
                     'package_source', 'supported_py_versions', 'wheels']
-
-
-def _create_caravan(mappings, dest, name=None):
-    tempdir = tempfile.mkdtemp()
-    metadata = {}
-
-    for wgn_path, yaml_path in mappings.iteritems():
-        plugin_root_dir = os.path.basename(wgn_path).rsplit('.', 1)[0]
-        os.mkdir(os.path.join(tempdir, plugin_root_dir))
-
-        dest_wgn_path = os.path.join(plugin_root_dir,
-                                     os.path.basename(wgn_path))
-        dest_yaml_path = os.path.join(plugin_root_dir,
-                                      os.path.basename(yaml_path))
-
-        utils.get_local_path(wgn_path, os.path.join(tempdir, dest_wgn_path))
-        utils.get_local_path(yaml_path, os.path.join(tempdir, dest_yaml_path))
-        metadata[dest_wgn_path] = dest_yaml_path
-
-    with open(os.path.join(tempdir, 'METADATA'), 'w+') as f:
-        yaml.dump(metadata, f)
-
-    tar_name = name or 'palace'
-    tar_path = os.path.join(dest, '{0}.cvn'.format(tar_name))
-    tarfile_ = tarfile.open(tar_path, 'w:gz')
-    try:
-        tarfile_.add(tempdir, arcname=tar_name)
-    finally:
-        tarfile_.close()
-        shutil.rmtree(tempdir, ignore_errors=True)
-
-    return tar_path
 
 
 @cfy.group(name='plugins')
@@ -150,51 +112,43 @@ def upload(ctx,
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
 
     logger.info('Creating plugin zip archive..')
-    plugin_path = utils.get_local_path(plugin_path)
-    yaml_path = utils.get_local_path(yaml_path)
-    plugin_path = utils.zip_files([plugin_path, yaml_path])
+    wagon_path = utils.get_local_path(plugin_path, create_temp=True)
+    yaml_path = utils.get_local_path(yaml_path, create_temp=True)
+    zip_path = utils.zip_files([wagon_path, yaml_path])
 
-    progress_handler = utils.generate_progress_handler(plugin_path, '')
+    progress_handler = utils.generate_progress_handler(zip_path, '')
 
     visibility = get_visibility(private_resource, visibility, logger)
     logger.info('Uploading plugin archive (wagon + yaml)..')
-    plugin = client.plugins.upload(plugin_path,
-                                   visibility,
-                                   progress_handler)
-    logger.info("Plugin uploaded. The plugin's id is {0}".format(plugin.id))
-    os.remove(plugin_path)
-
-
-@plugins.command(name='create-caravan',
-                 short_help='Create a bundle of plugins')
-@cfy.options.caravan_name
-@cfy.argument('plugin-mappings')
-@cfy.argument('destination')
-@cfy.pass_logger
-def create_caravan(logger, plugin_mappings, destination, name):
-    logger.info('Packing wagons into a Caravan')
     try:
-        with open(plugin_mappings, 'rb') as f:
-            plugin_mappings = yaml.load(f)
-    except CloudifyCliError:
-        plugin_mappings = yaml.load(plugin_mappings)
+        plugin = client.plugins.upload(zip_path,
+                                       visibility,
+                                       progress_handler)
+        logger.info("Plugin uploaded. Plugin's id is {0}".format(plugin.id))
+    finally:
+        os.remove(wagon_path)
+        os.remove(yaml_path)
+        os.remove(zip_path)
 
-    cvn_path = _create_caravan(plugin_mappings, destination, name)
-    logger.info('Caravan created at {0}'.format(cvn_path))
-    return cvn_path
 
-
-@plugins.command(name='upload-caravan',
-                 short_help='Upload a bundle of plugins')
-@cfy.argument('caravan-path')
+@plugins.command(name='bundle-upload',
+                 short_help='Upload a bundle of plugins [manager only]')
+@cfy.options.plugins_bundle_path
 @cfy.pass_client()
 @cfy.pass_logger
-def upload_caravan(client, caravan_path, logger):
-    progress = utils.generate_progress_handler(caravan_path, '')
-    plugins_ = client.plugins.upload(caravan_path, progress_callback=progress)
-    logger.info("Caravan uploaded. The plugins' ids are {0}".format(
-        ', '.join([p.id for p in plugins_])
-    ))
+def upload_caravan(client, logger, path):
+    if not path:
+        logger.info("Starting upload of plugins bundle, "
+                    "this may take few minutes to complete.")
+        path = 'http://repository.cloudifysource.org/' \
+               'cloudify/wagons/cloudify-plugins-bundle.tgz'
+    progress = utils.generate_progress_handler(path, '')
+    plugins_ = client.plugins.upload(path, progress_callback=progress)
+    logger.info("Bundle uploaded, {0} Plugins installed."
+                .format(len(plugins_)))
+    if len(plugins_) > 0:
+        logger.info("The plugins' ids are:\n{0}\n".
+                    format('\n'.join([p.id for p in plugins_])))
 
 
 @plugins.command(name='download',
@@ -253,6 +207,8 @@ def get(plugin_id, logger, client, tenant_name, get_data):
 @cfy.options.all_tenants
 @cfy.options.verbose()
 @cfy.options.get_data
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -260,6 +216,8 @@ def list(sort_by,
          descending,
          tenant_name,
          all_tenants,
+         pagination_offset,
+         pagination_size,
          logger,
          client,
          get_data):
@@ -271,11 +229,16 @@ def list(sort_by,
     plugins_list = client.plugins.list(sort=sort_by,
                                        is_descending=descending,
                                        _all_tenants=all_tenants,
-                                       _get_data=get_data)
+                                       _get_data=get_data,
+                                       _offset=pagination_offset,
+                                       _size=pagination_size)
     for plugin in plugins_list:
         _transform_plugin_response(plugin)
     columns = PLUGIN_COLUMNS + GET_DATA_COLUMNS if get_data else PLUGIN_COLUMNS
     print_data(columns, plugins_list, 'Plugins:')
+    total = plugins_list.metadata.pagination.total
+    logger.info('Showing {0} of {1} plugins'.format(len(plugins_list),
+                                                    total))
 
 
 def _transform_plugin_response(plugin):

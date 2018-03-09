@@ -8,6 +8,7 @@ from ..cfy import ClickInvocationException
 
 from ... import env
 from ...config import config
+from .mocks import MockListResponse
 from .test_base import CliCommandTest
 from cloudify_cli.exceptions import CloudifyCliError
 from .constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH, \
@@ -21,7 +22,9 @@ class BlueprintsTest(CliCommandTest):
         self.use_manager()
 
     def test_blueprints_list(self):
-        self.client.blueprints.list = MagicMock(return_value=[])
+        self.client.blueprints.list = MagicMock(
+            return_value=MockListResponse()
+        )
         self.invoke('blueprints list')
         self.invoke('blueprints list -t dummy_tenant')
         self.invoke('cfy blueprints list -a')
@@ -32,10 +35,10 @@ class BlueprintsTest(CliCommandTest):
     @patch('cloudify_cli.table.generate')
     def test_blueprints_list_with_values(self, table_generate_mock):
         self.client.blueprints.list = MagicMock(
-            return_value=[
+            return_value=MockListResponse(items=[
                 {'description': '12345678901234567890123'},
                 {'description': 'abcdefg'}
-            ]
+            ])
         )
         self.invoke('blueprints list')
 
@@ -161,7 +164,7 @@ class BlueprintsTest(CliCommandTest):
             'cfy blueprints validate '
             '{0}/local/blueprint_validate_definitions_version.yaml'
             .format(BLUEPRINTS_DIR),
-            err_str_segment='Failed to validate blueprint description'
+            err_str_segment='Failed to validate blueprint: description'
         )
 
     def test_validate_bad_blueprint(self):
@@ -169,6 +172,12 @@ class BlueprintsTest(CliCommandTest):
             'cfy blueprints validate {0}/bad_blueprint/blueprint.yaml'
             .format(BLUEPRINTS_DIR),
             err_str_segment='Failed to validate blueprint')
+
+    def test_validate_plugin_repository(self):
+        self.invoke(
+            'cfy blueprints validate {0}/bad_blueprint/plugin_repo.yaml'
+            .format(BLUEPRINTS_DIR),
+            err_str_segment='plugin repository')
 
     def test_blueprint_inputs(self):
 

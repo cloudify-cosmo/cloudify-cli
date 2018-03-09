@@ -169,6 +169,18 @@ def validate_password(ctx, param, value):
     return value
 
 
+def validate_nonnegative_integer(ctx, param, value):
+    if ctx.resilient_parsing:
+        return
+
+    try:
+        assert int(value) >= 0
+    except (ValueError, AssertionError):
+        raise CloudifyValidationError('ERROR: {0} is expected to be a '
+                                      'nonnegative integer'.format(param.name))
+    return value
+
+
 def set_verbosity_level(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
@@ -443,10 +455,23 @@ class Options(object):
             help=helptexts.ALL_TENANTS,
         )
 
+        self.search = click.option(
+            '--search',
+            default=None,
+            required=False,
+            help=helptexts.SEARCH,
+        )
+
         self.include_logs = click.option(
             '--include-logs/--no-logs',
             default=True,
             help=helptexts.INCLUDE_LOGS)
+
+        self.dry_run = click.option(
+            '--dry-run',
+            is_flag=True,
+            help=helptexts.DRY_RUN
+        )
 
         self.json_output = click.option(
             '--json-output',
@@ -456,6 +481,8 @@ class Options(object):
         self.tail = click.option(
             '--tail',
             is_flag=True,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['pagination_offset', 'pagination_size'],
             help=helptexts.TAIL_OUTPUT)
 
         self.validate = click.option(
@@ -807,11 +834,11 @@ class Options(object):
             help=helptexts.SECRET_UPDATE_IF_EXISTS,
         )
 
-        self.caravan_name = click.option(
-            '-n',
-            '--name',
+        self.plugins_bundle_path = click.option(
+            '-p',
+            '--path',
             required=False,
-            help=helptexts.CARAVAN_NAME
+            help=helptexts.PLUGINS_BUNDLE_PATH
         )
 
         # same as --inputs, name changed for consistency
@@ -821,6 +848,22 @@ class Options(object):
             multiple=True,
             callback=inputs_callback,
             help=helptexts.CLUSTER_NODE_OPTIONS)
+
+        self.pagination_offset = click.option(
+            '-o',
+            '--pagination-offset',
+            required=False,
+            default=0,
+            callback=validate_nonnegative_integer,
+            help=helptexts.PAGINATION_OFFSET)
+
+        self.pagination_size = click.option(
+            '-s',
+            '--pagination-size',
+            required=False,
+            default=1000,
+            callback=validate_nonnegative_integer,
+            help=helptexts.PAGINATION_SIZE)
 
     @staticmethod
     def include_keys(help):

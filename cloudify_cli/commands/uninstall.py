@@ -16,11 +16,11 @@
 
 from .. import env
 from .. import utils
-from ..cli import cfy
 from . import blueprints
 from . import executions
 from . import deployments
 from ..local import storage_dir
+from ..cli import cfy, helptexts
 from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 
 
@@ -28,17 +28,20 @@ from ..constants import DEFAULT_UNINSTALL_WORKFLOW
              short_help='Uninstall an application blueprint [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.workflow_id('uninstall')
+@cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
 @cfy.options.timeout()
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.options.tenant_name(required=False,
+                         resource_name_for_help='blueprint and deployment')
 @cfy.pass_context
 def manager(ctx,
             deployment_id,
             workflow_id,
+            force,
             parameters,
             allow_custom_parameters,
             timeout,
@@ -53,12 +56,6 @@ def manager(ctx,
     `DEPLOYMENT_ID` is the id of the deployment to uninstall.
     """
     env.assert_manager_active()
-
-    # Although the `uninstall` command does not use the `force` argument,
-    # we are using the `executions start` handler as a part of it.
-    # As a result, we need to provide it with a `force` argument, which is
-    # defined below.
-    force = False
 
     # if no workflow was supplied, execute the `uninstall` workflow
     workflow_id = workflow_id or DEFAULT_UNINSTALL_WORKFLOW
@@ -84,7 +81,7 @@ def manager(ctx,
     ctx.invoke(
         deployments.manager_delete,
         deployment_id=deployment_id,
-        force=False,
+        force=force,
         tenant_name=tenant_name)
     ctx.invoke(
         blueprints.delete,

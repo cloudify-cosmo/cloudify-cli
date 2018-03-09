@@ -38,7 +38,10 @@ class ExecutionEventsFetcher(object):
         'workflow_id',
     ]
 
-    def __init__(self, client, execution_id, batch_size=100,
+    def __init__(self,
+                 client,
+                 execution_id,
+                 batch_size=100,
                  include_logs=False):
         self._client = client
         self._execution_id = execution_id
@@ -49,25 +52,32 @@ class ExecutionEventsFetcher(object):
         # a 404 will be raised otherwise
         self._client.executions.get(execution_id)
 
-    def _fetch_and_process_events_batch(self, events_handler=None):
-        events = self._fetch_events_batch()
+    def fetch_and_process_events_batch(self,
+                                       events_handler=None,
+                                       offset=None,
+                                       size=None):
+        events_list_response = self._fetch_events_batch(offset, size)
+        total_events = events_list_response.metadata.pagination.total
+        events = [
+            self._map_api_event_to_internal_event(event)
+            for event in events_list_response.items
+        ]
         if events and events_handler:
             events_handler(events)
 
-        return len(events)
+        return len(events), total_events
 
-    def _fetch_events_batch(self):
-        events = self._client.events.list(
+    def _fetch_events_batch(self, offset=None, size=None):
+        offset = offset if offset is not None else self._from_event
+        size = size if size is not None else self._batch_size
+        events_list_response = self._client.events.list(
             execution_id=self._execution_id,
-            _offset=self._from_event,
-            _size=self._batch_size,
+            _offset=offset,
+            _size=size,
             include_logs=self._include_logs,
-            sort='reported_timestamp').items
-        self._from_event += len(events)
-        return [
-            self._map_api_event_to_internal_event(event)
-            for event in events
-        ]
+            sort='reported_timestamp')
+        self._from_event += len(events_list_response)
+        return events_list_response
 
     def _map_api_event_to_internal_event(self, event):
         """Map data structure from API to internal.
@@ -117,7 +127,7 @@ class ExecutionEventsFetcher(object):
                     self._execution_id,
                     'events/log fetching timed out')
 
-            events_batch_count = self._fetch_and_process_events_batch(
+            events_batch_count, _ = self.fetch_and_process_events_batch(
                 events_handler=events_handler)
 
             total_events_count += events_batch_count
@@ -171,7 +181,8 @@ def wait_for_execution(client,
                        execution,
                        events_handler=None,
                        include_logs=False,
-                       timeout=900):
+                       timeout=900,
+                       logger=None):
 
     # if execution already ended - return without waiting
     if execution.status in Execution.END_STATES:
@@ -180,13 +191,19 @@ def wait_for_execution(client,
     if timeout is not None:
         deadline = time.time() + timeout
 
-    events_fetcher = ExecutionEventsFetcher(client, execution.id,
+    events_fetcher = ExecutionEventsFetcher(client,
+                                            execution.id,
                                             include_logs=include_logs)
 
     # Poll for execution status and execution logs, until execution ends
     # and we receive an event of type in WORKFLOW_END_TYPES
     execution_ended = False
     events_watcher = EventsWatcher(events_handler)
+
+    # did we already see the execution status change, and are only waiting
+    # for additional logs now?
+    waiting_for_logs = False
+
     while True:
         if timeout is not None:
             if time.time() > deadline:
@@ -210,6 +227,21 @@ def wait_for_execution(client,
 
         if execution_ended and events_watcher.end_log_received:
             break
+
+        # if the execution ended, wait one iteration for additional logs
+        if execution_ended:
+            if waiting_for_logs:
+                if logger:
+                    logger.info('Execution ended, but no end log message '
+                                'received. Some logs might not have been '
+                                'displayed.')
+                break
+            else:
+                if logger:
+                    logger.info('Execution ended, waiting {0} seconds for '
+                                'additional log messages'
+                                .format(WAIT_FOR_EXECUTION_SLEEP_INTERVAL))
+                waiting_for_logs = True
 
         time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
 

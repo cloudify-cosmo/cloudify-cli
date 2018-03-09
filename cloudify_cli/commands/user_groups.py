@@ -44,21 +44,37 @@ def user_groups():
 @cfy.options.descending
 @cfy.options.verbose()
 @cfy.options.get_data
+@cfy.options.search
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, get_data, logger, client):
+def list(sort_by,
+         descending,
+         get_data,
+         search,
+         pagination_offset,
+         pagination_size,
+         logger,
+         client):
     """List all user groups
     """
     logger.info('Listing all user groups...')
     user_groups_list = client.user_groups.list(
         sort=sort_by,
         is_descending=descending,
-        _get_data=get_data
+        _get_data=get_data,
+        _search=search,
+        _offset=pagination_offset,
+        _size=pagination_size
     )
+    total = user_groups_list.metadata.pagination.total
     if get_data:
         user_groups_list = [_format_group(group) for group in user_groups_list]
     print_data(GROUP_COLUMNS, user_groups_list, 'User groups:')
+    logger.info('Showing {0} of {1} user groups'.format(len(user_groups_list),
+                                                        total))
 
 
 @user_groups.command(name='create',

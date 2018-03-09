@@ -154,6 +154,8 @@ IMPORT_SSH_KEYS = 'WARNING: Import exported keys to their original locations'
 
 SORT_BY = "Key for sorting the list"
 DESCENDING = "Sort list in descending order [default: False]"
+SEARCH = 'Search resources by name/id. The returned list will include only ' \
+         'resources that contains the given search pattern'
 
 TENANT = 'The name of the tenant'
 TENANT_TEMPLATE = 'The name of the tenant of the {0}'
@@ -221,7 +223,7 @@ SECRET_VALUE = "The secret's value to be set"
 SECRET_STRING = "The string to use as the secret's value"
 SECRET_FILE = "The secret's file to use its content as value to be set"
 SECRET_UPDATE_IF_EXISTS = 'Update secret value if secret key already exists'
-CARAVAN_NAME = 'The name for the caravan'
+PLUGINS_BUNDLE_PATH = 'The path of the plugins bundle'
 CLUSTER_NODE_OPTIONS = 'Additional options for the cluster node '\
                        'configuration {0}'.format(INPUTS_PARAMS_USAGE)
 PRIVATE_RESOURCE = 'This option is deprecated; use --visibility option ' \
@@ -231,3 +233,9 @@ PRIVATE_RESOURCE = 'This option is deprecated; use --visibility option ' \
                    'tenant [default: False].'
 VISIBILITY = 'Defines who can see the resource, can be set to one of {0}'
 PLUGIN_YAML_PATH = "The path to the plugin's yaml file"
+PAGINATION_SIZE = 'The max number of results to retrieve per page ' \
+                  '[default: 1000]'
+PAGINATION_OFFSET = 'The number of resources to skip; --pagination-offset=1 ' \
+                    'skips the first resource [default: 0]'
+DRY_RUN = 'If set, no actual operations will be performed. This ' \
+          'only prints the executed tasks, without side effects'

@@ -104,7 +104,8 @@ def assert_manager_active():
     if not is_manager_active():
         raise CloudifyCliError(
             'This command is only available when using a manager. '
-            'You need to run run `cfy profiles use MANAGER_IP`')
+            'Please use the `cfy profiles use` command to connect '
+            'to a Cloudify Manager.')
 
 
 def assert_local_active():
@@ -522,7 +523,7 @@ CLUSTER_NODE_ATTRS = ['manager_ip', 'rest_port', 'rest_protocol', 'ssh_port',
 
 
 class ClusterHTTPClient(HTTPClient):
-    default_timeout_sec = 5
+    default_timeout_sec = (5, None)
 
     def __init__(self, *args, **kwargs):
         profile = kwargs.pop('profile')

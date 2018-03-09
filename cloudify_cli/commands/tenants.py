@@ -81,17 +81,30 @@ def tenants():
 @cfy.options.descending
 @cfy.options.verbose()
 @cfy.options.get_data
+@cfy.options.search
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by, descending, get_data, logger, client):
+def list(sort_by,
+         descending,
+         get_data,
+         search,
+         pagination_offset,
+         pagination_size,
+         logger,
+         client):
     """List all tenants
     """
     logger.info('Listing all tenants...')
     tenants_list = client.tenants.list(
         sort=sort_by,
         is_descending=descending,
-        _get_data=get_data
+        _get_data=get_data,
+        _search=search,
+        _offset=pagination_offset,
+        _size=pagination_size
     )
     # copy list
     columns = [] + TENANT_COLUMNS
@@ -101,6 +114,8 @@ def list(sort_by, descending, get_data, logger, client):
     else:
         columns += NO_GET_DATA_COLUMNS
     print_data(columns, tenants_list, 'Tenants:', labels=TENANT_LABELS)
+    total = tenants_list.metadata.pagination.total
+    logger.info('Showing {0} of {1} tenants'.format(len(tenants_list), total))
 
 
 @tenants.command(name='create',

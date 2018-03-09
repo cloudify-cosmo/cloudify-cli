@@ -40,15 +40,19 @@ def events():
 @cfy.options.tail
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
 @cfy.pass_client()
 @cfy.pass_logger
 def list(execution_id,
          include_logs,
          json_output,
          tail,
-         logger,
+         tenant_name,
+         pagination_offset,
+         pagination_size,
          client,
-         tenant_name):
+         logger):
     """Display events for an execution
     """
     if tenant_name:
@@ -59,7 +63,8 @@ def list(execution_id,
         execution_events = ExecutionEventsFetcher(
             client,
             execution_id,
-            include_logs=include_logs)
+            include_logs=include_logs
+        )
 
         events_logger = get_events_logger(json_output)
 
@@ -68,7 +73,7 @@ def list(execution_id,
                                            client.executions.get(execution_id),
                                            events_handler=events_logger,
                                            include_logs=include_logs,
-                                           timeout=None)   # don't timeout ever
+                                           timeout=None)  # don't timeout ever
             if execution.error:
                 logger.info('Execution of workflow {0} for deployment '
                             '{1} failed. [error={2}]'.format(
@@ -83,9 +88,15 @@ def list(execution_id,
                                 execution.deployment_id))
         else:
             # don't tail, get only the events created until now and return
-            events = execution_events.fetch_and_process_events(
-                events_handler=events_logger)
-            logger.info('\nTotal events: {0}'.format(events))
+            current_events, total_events = execution_events. \
+                fetch_and_process_events_batch(events_handler=events_logger,
+                                               offset=pagination_offset,
+                                               size=pagination_size)
+            logger.info('\nShowing {0} of {1} events'.format(current_events,
+                                                             total_events))
+            if not json_output:
+                logger.info('Debug messages are only shown when you use very '
+                            'verbose mode (-vv)')
     except CloudifyClientError as e:
         if e.status_code != 404:
             raise

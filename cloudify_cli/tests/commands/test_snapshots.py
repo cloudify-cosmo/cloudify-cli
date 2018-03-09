@@ -1,5 +1,6 @@
 from mock import MagicMock
 
+from .mocks import MockListResponse
 from .constants import SNAPSHOTS_DIR
 from .test_base import CliCommandTest
 
@@ -13,7 +14,7 @@ class SnapshotsTest(CliCommandTest):
         self.use_manager()
 
     def test_snapshots_list(self):
-        self.client.snapshots.list = MagicMock(return_value=[])
+        self.client.snapshots.list = MagicMock(return_value=MockListResponse())
         self.invoke('cfy snapshots list')
         self.invoke('cfy snapshots list -t dummy_tenant')
         self.invoke('cfy snapshots list -a')

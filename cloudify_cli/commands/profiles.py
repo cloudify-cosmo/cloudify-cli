@@ -294,17 +294,7 @@ def set_profile(profile_name,
         logger.info('Setting tenant to `{0}`'.format(manager_tenant))
         env.profile.manager_tenant = manager_tenant
     if ssl is not None:
-        ssl = str(ssl).lower()
-        if ssl == 'on':
-            logger.info('Enabling SSL in the local profile')
-            env.profile.rest_port = constants.SECURED_REST_PORT
-            env.profile.rest_protocol = constants.SECURED_REST_PROTOCOL
-        elif ssl == 'off':
-            logger.info('Disabling SSL in the local profile')
-            env.profile.rest_port = constants.DEFAULT_REST_PORT
-            env.profile.rest_protocol = constants.DEFAULT_REST_PROTOCOL
-        else:
-            raise CloudifyCliError('SSL must be either `on` or `off`')
+        _set_profile_ssl(ssl, logger)
     if rest_certificate:
         logger.info(
             'Setting rest certificate to `{0}`'.format(rest_certificate))
@@ -324,6 +314,31 @@ def set_profile(profile_name,
         env.set_active_profile(profile_name)
         env.delete_profile(old_name)
     logger.info('Settings saved successfully')
+
+
+def _set_profile_ssl(ssl, logger):
+    ssl = str(ssl).lower()
+    if ssl == 'on':
+        logger.info('Enabling SSL in the local profile')
+        port = constants.SECURED_REST_PORT
+        protocol = constants.SECURED_REST_PROTOCOL
+    elif ssl == 'off':
+        logger.info('Disabling SSL in the local profile')
+        port = constants.DEFAULT_REST_PORT
+        protocol = constants.DEFAULT_REST_PROTOCOL
+    else:
+        raise CloudifyCliError('SSL must be either `on` or `off`')
+
+    env.profile.rest_port = port
+    env.profile.rest_protocol = protocol
+
+    if env.profile.cluster:
+        for node in env.profile.cluster:
+            node['rest_port'] = port
+            node['rest_protocol'] = protocol
+            node['trust_all'] = True
+            logger.info('Enabling SSL for {0} without certificate validation'
+                        .format(node['manager_ip']))
 
 
 @profiles.command(

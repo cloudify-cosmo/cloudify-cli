@@ -145,6 +145,7 @@ def zip_files(files):
     for path in files:
         copy(path, source_folder)
     zip(source_folder, destination_zip, include_folder=False)
+    shutil.rmtree(source_folder)
     return destination_zip
 
 
@@ -318,15 +319,21 @@ def validate_visibility(visibility, valid_values=VisibilityState.STATES):
         )
 
 
-def get_local_path(source, destination=None):
-    if urlparse(source).scheme:
+def get_local_path(source, destination=None, create_temp=False):
+    allowed_schemes = ['http', 'https']
+    if urlparse(source).scheme in allowed_schemes:
         downloaded_file = download_file(source, destination, keep_name=True)
         return downloaded_file
     elif os.path.isfile(source):
+        if not destination and create_temp:
+            source_name = os.path.basename(source)
+            destination = os.path.join(tempfile.mkdtemp(), source_name)
         if destination:
-            return shutil.copy(source, destination)
+            shutil.copy(source, destination)
+            return destination
         else:
             return source
     else:
         raise CloudifyCliError(
-            'You must provide either a path to a local file, or a remote URL')
+            'You must provide either a path to a local file, or a remote URL '
+            'using one of the allowed schemes: {0}'.format(allowed_schemes))
