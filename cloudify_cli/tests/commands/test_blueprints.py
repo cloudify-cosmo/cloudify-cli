@@ -164,7 +164,7 @@ class BlueprintsTest(CliCommandTest):
             'cfy blueprints validate '
             '{0}/local/blueprint_validate_definitions_version.yaml'
             .format(BLUEPRINTS_DIR),
-            err_str_segment='Failed to validate blueprint description'
+            err_str_segment='Failed to validate blueprint: description'
         )
 
     def test_validate_bad_blueprint(self):

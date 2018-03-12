@@ -72,7 +72,7 @@ def validate_blueprint(blueprint_path, logger):
             resolver=resolver,
             validate_version=validate_version)
     except DSLParsingException as ex:
-        raise CloudifyCliError('Failed to validate blueprint {0}'.format(ex))
+        raise CloudifyCliError('Failed to validate blueprint: {0}'.format(ex))
     logger.info('Blueprint validated successfully')
 
 
