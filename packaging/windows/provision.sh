@@ -89,11 +89,12 @@ function update_remote_to_local_links() {
 
 # VERSION/PRERELEASE/BUILD/CORE_BRANCH/PLUGINS_TAG_NAME must be exported as they are being read as an env var by the install wizard
 
-GITHUB_USERNAME=$1
-GITHUB_PASSWORD=$2
-AWS_ACCESS_KEY_ID=$3
-AWS_ACCESS_KEY=$4
-export REPO=$5
+export GITHUB_USERNAME=$1
+export GITHUB_PASSWORD=$2
+export AWS_ACCESS_KEY_ID=$3
+export AWS_ACCESS_KEY=$4
+export BRANCH=$5
+export REPO=$6
 export CORE_TAG_NAME="4.4.dev1"
 export CORE_BRANCH="master"
 
