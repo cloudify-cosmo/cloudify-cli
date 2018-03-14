@@ -101,6 +101,7 @@ fi
 if [[ ! -z $BRANCH ]] && [[ "$BRANCH" != "master" ]] && git show-ref --quiet origin/$BRANCH ; then
     export CLI_BRANCH="$BRANCH"
     git checkout -b $CLI_BRANCH origin/$CLI_BRANCH
+    AWS_S3_PATH="$AWS_S3_PATH/$BRANCH"
 fi
 
 # Get Omnibus software from Chef Omnibus repo

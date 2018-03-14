@@ -107,6 +107,13 @@ export CLI_BRANCH="$CORE_BRANCH"
 if [ "$CORE_BRANCH" != "master" ] && [ "$REPO" == "cloudify-versions" ]; then
     source packaging/source_branch
 fi
+pushd /tmp
+    git clone https://github.com/cloudify-cosmo/cloudify-cli.git
+    if [[ ! -z $BRANCH ]] && [[ "$BRANCH" != "master" ]] && git show-ref --quiet origin/$BRANCH ; then
+        export CLI_BRANCH="$BRANCH"
+        AWS_S3_PATH="$AWS_S3_PATH/$BRANCH"
+    fi
+popd
 
 install_common_prereqs &&
 #install_requirements && # moved to cloudify-packager
