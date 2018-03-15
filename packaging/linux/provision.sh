@@ -73,6 +73,8 @@ function prepare_linux () {
     gem install omnibus --no-ri --no-rdoc
 }
 
+echo "BRANCH=$BRANCH"
+echo "REPO=$REPO"
 if [[ "$OSTYPE" == "darwin"* ]]; then
     prepare_osx
 else
