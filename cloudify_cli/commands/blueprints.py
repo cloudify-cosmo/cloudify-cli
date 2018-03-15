@@ -79,7 +79,7 @@ def validate_blueprint(blueprint_path, logger):
 @blueprints.command(name='upload',
                     short_help='Upload a blueprint [manager only]')
 @cfy.argument('blueprint-path')
-@cfy.options.blueprint_id()
+@cfy.options.blueprint_id(validate=True)
 @cfy.options.blueprint_filename()
 @cfy.options.validate
 @cfy.options.verbose()

@@ -80,7 +80,7 @@ def restore(snapshot_id,
 
 @snapshots.command(name='create',
                    short_help='Create a snapshot [manager only]')
-@cfy.argument('snapshot-id', required=False)
+@cfy.argument('snapshot-id', required=False, callback=cfy.validate_name)
 @cfy.options.include_metrics
 @cfy.options.exclude_credentials
 @cfy.options.exclude_logs
@@ -136,7 +136,7 @@ def delete(snapshot_id, logger, client, tenant_name):
 @snapshots.command(name='upload',
                    short_help='Upload a snapshot [manager only]')
 @cfy.argument('snapshot_path')
-@cfy.options.snapshot_id
+@cfy.options.snapshot_id(validate=True)
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.pass_client()
