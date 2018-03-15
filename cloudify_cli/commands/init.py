@@ -36,7 +36,8 @@ from ..exceptions import CloudifyCliError
 @cfy.command(name='init', short_help='Initialize a working env')
 @cfy.argument('blueprint-path', required=False)
 @cfy.options.blueprint_filename()
-@cfy.options.blueprint_id(required=False, multiple_blueprints=True)
+@cfy.options.blueprint_id(
+    required=False, multiple_blueprints=True, validate=True)
 @cfy.options.reset_context
 @cfy.options.inputs
 @cfy.options.install_plugins

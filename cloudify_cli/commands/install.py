@@ -31,10 +31,10 @@ from cloudify_rest_client.constants import VISIBILITY_EXCEPT_GLOBAL
 @cfy.command(name='install',
              short_help='Install an application blueprint [manager only]')
 @cfy.argument('blueprint-path')
-@cfy.options.blueprint_id()
+@cfy.options.blueprint_id(validate=True)
 @cfy.options.blueprint_filename()
 @cfy.options.validate
-@cfy.options.deployment_id()
+@cfy.options.deployment_id(validate=True)
 @cfy.options.inputs
 @cfy.options.workflow_id('install')
 @cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
@@ -129,7 +129,8 @@ def manager(ctx,
              short_help='Install an application blueprint [locally]')
 @cfy.argument('blueprint-path')
 @cfy.options.blueprint_filename()
-@cfy.options.blueprint_id(required=False, multiple_blueprints=True)
+@cfy.options.blueprint_id(
+    required=False, multiple_blueprints=True, validate=True)
 @cfy.options.inputs
 @cfy.options.validate
 @cfy.options.install_plugins
