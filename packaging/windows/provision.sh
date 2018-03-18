@@ -108,8 +108,9 @@ if [ "$CORE_BRANCH" != "master" ] && [ "$REPO" == "cloudify-versions" ]; then
     source packaging/source_branch
 fi
 pushd /tmp
-    curl https://github.com/cloudify-cosmo/cloudify-cli/archive/$BRANCH.zip -o $BRANCH.zip
+    curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/${BRANCH}.zip
     if zip -T $BRANCH.zip > /dev/null; then
+        echo "yes"
         export CLI_BRANCH="$BRANCH"
         AWS_S3_PATH="$AWS_S3_PATH/$BRANCH"
     fi
