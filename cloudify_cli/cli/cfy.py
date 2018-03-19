@@ -873,6 +873,24 @@ class Options(object):
             callback=validate_nonnegative_integer,
             help=helptexts.PAGINATION_SIZE)
 
+        self.manager_ip = click.option(
+            '--manager-ip',
+            required=True,
+            help=helptexts.MANAGER_IP
+        )
+
+        self.manager_certificate = click.option(
+            '--manager_certificate',
+            required=True,
+            help=helptexts.MANAGER_CERTIFICATE_PATH
+        )
+
+        self.manager_rest_token = click.option(
+            '--manager_rest_token',
+            required=True,
+            help=helptexts.MANAGER_REST_TOKEN
+        )
+
     @staticmethod
     def include_keys(help):
         return click.option(

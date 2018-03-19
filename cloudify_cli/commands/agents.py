@@ -79,6 +79,21 @@ def install(deployment_id,
     See Cloudify's documentation at http://docs.getcloudify.org for more
     information.
     """
+    get_deployments_and_run_worker(
+        deployment_id, include_logs, tenant_name,
+        logger, client, all_tenants, 'install_new_agents')
+
+
+def get_deployments_and_run_worker(
+        deployment_id,
+        include_logs,
+        tenant_name,
+        logger,
+        client,
+        all_tenants,
+        workflow_id,
+        parameters=None):
+
     # install agents across all tenants
     if all_tenants:
         no_deployments_found = True
@@ -91,7 +106,8 @@ def install(deployment_id,
                 tenant_client, deployment_id, logger)
             if not error_msg:
                 no_deployments_found = False
-                run_worker(deps, tenant_client, logger, include_logs)
+                run_worker(deps, tenant_client, logger, include_logs,
+                           workflow_id, parameters)
         if no_deployments_found:
             logger.error(error_msg)
             raise SuppressedCloudifyCliError()
@@ -104,7 +120,7 @@ def install(deployment_id,
         if error_msg:
             logger.error(error_msg)
             raise SuppressedCloudifyCliError()
-        run_worker(deps, client, logger, include_logs)
+        run_worker(deps, client, logger, include_logs, workflow_id, parameters)
 
 
 def create_deployments_list(client, deployment_id, logger):
@@ -150,8 +166,9 @@ def create_deployments_list(client, deployment_id, logger):
     return dep_list, error_msg
 
 
-def run_worker(deps, client, logger, include_logs):
-    workflow_id = 'install_new_agents'
+def run_worker(
+        deps, client, logger, include_logs, workflow_id, parameters=None):
+
     error_summary = []
     error_summary_lock = threading.Lock()
     event_lock = threading.Lock()
@@ -175,7 +192,7 @@ def run_worker(deps, client, logger, include_logs):
         timeout = 900
         try:
 
-            execution = client.executions.start(dep_id, workflow_id)
+            execution = client.executions.start(dep_id, workflow_id, parameters)
             execution = wait_for_execution(
                 client,
                 execution,
@@ -225,3 +242,44 @@ def run_worker(deps, client, logger, include_logs):
         ))
 
         raise SuppressedCloudifyCliError()
+
+
+@agents.command(name='transfer',
+                short_help=
+                'Configure agents to work with a new Cloudify Manager'
+                ' [Manager only]')
+@cfy.argument('deployment-id', required=False)
+@cfy.options.include_logs
+@cfy.options.verbose()
+@cfy.options.tenant_name_for_list(
+    required=False, resource_name_for_help='relevant deployment(s)')
+@cfy.options.all_tenants
+@cfy.options.manager_ip
+@cfy.options.manager_certificate
+@cfy.options.manager_rest_token
+@cfy.pass_logger
+@cfy.pass_client()
+def transfer(deployment_id,
+             include_logs,
+             tenant_name,
+             logger,
+             client,
+             all_tenants,
+             manager_ip,
+             manager_certificate,
+             manager_rest_token):
+
+    with open(manager_certificate, 'r') as ssl_file:
+        manager_certificate = ssl_file.read()
+
+    logger.info('*************************')
+    logger.info('New Manager IP: {0}'.format(manager_ip))
+    logger.info('New Manager Cert: {0}'.format(manager_certificate))
+    logger.info('New Manager REST token: {0}'.format(manager_rest_token))
+
+    params = {'manager_ip': manager_ip,
+              'manager_certificate': manager_certificate,
+              'manager_rest_token': manager_rest_token}
+    get_deployments_and_run_worker(
+        deployment_id, include_logs, tenant_name,
+        logger, client, all_tenants, 'transfer_agents', params)
