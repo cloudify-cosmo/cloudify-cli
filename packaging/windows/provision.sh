@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash -e
 
 function install_requirements() {
     pip install wheel==0.24.0
