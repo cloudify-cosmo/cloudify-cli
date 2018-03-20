@@ -45,7 +45,7 @@ Vagrant.configure('2') do |config|
     end
     centos65x64.vm.provision "shell" do |s|
       s.path = "linux/provision.sh"
-      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID} #{AWS_ACCESS_KEY} #{BRANCH} #{REPO}"
+      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID} #{AWS_ACCESS_KEY} #{REPO} #{BRANCH}"
       s.privileged = false
     end
   end
@@ -70,7 +70,7 @@ Vagrant.configure('2') do |config|
     end
     debian_wheezy_x64.vm.provision "shell" do |s|
       s.path = "linux/provision.sh"
-      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID} #{AWS_ACCESS_KEY} #{BRANCH} #{REPO}"
+      s.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID} #{AWS_ACCESS_KEY} #{REPO} #{BRANCH}"
       s.privileged = false
     end
   end
@@ -99,7 +99,7 @@ Vagrant.configure('2') do |config|
     # shell provisioning uses bash, so use cmd to run batch script
     windows.vm.provision "shell" do |shell|
       shell.path = 'windows/provision.sh'
-      shell.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID} #{AWS_ACCESS_KEY} #{BRANCH} #{REPO}"
+      shell.args = "#{GITHUB_USERNAME} #{GITHUB_PASSWORD} #{AWS_ACCESS_KEY_ID} #{AWS_ACCESS_KEY} #{REPO} #{BRANCH}"
       shell.privileged = false
     end
   end
