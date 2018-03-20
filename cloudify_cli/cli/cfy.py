@@ -96,6 +96,12 @@ def _tenant_help_message(message, message_template, resource_name):
     return helptexts.TENANT
 
 
+def _get_validate_callback(validate):
+    if validate:
+        return validate_name
+    return None
+
+
 def show_version(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
@@ -659,11 +665,6 @@ class Options(object):
             required=False,
             help=helptexts.NODE_NAME)
 
-        self.snapshot_id = click.option(
-            '-s',
-            '--snapshot-id',
-            help=helptexts.SNAPSHOT_ID)
-
         self.without_deployment_envs = click.option(
             '--without-deployment-envs',
             is_flag=True,
@@ -1031,12 +1032,22 @@ class Options(object):
             help=helptexts.OPERATION_TIMEOUT.format(default))
 
     @staticmethod
-    def deployment_id(required=False):
+    def deployment_id(required=False, validate=False):
         return click.option(
             '-d',
             '--deployment-id',
             required=required,
-            help=helptexts.DEPLOYMENT_ID)
+            help=helptexts.DEPLOYMENT_ID,
+            callback=_get_validate_callback(validate))
+
+    @staticmethod
+    def snapshot_id(required=False, validate=False):
+        return click.option(
+            '-s',
+            '--snapshot-id',
+            required=required,
+            help=helptexts.SNAPSHOT_ID,
+            callback=_get_validate_callback(validate))
 
     @staticmethod
     def execution_id(required=False):
@@ -1047,7 +1058,9 @@ class Options(object):
             help=helptexts.EXECUTION_ID)
 
     @staticmethod
-    def blueprint_id(required=False, multiple_blueprints=False):
+    def blueprint_id(required=False,
+                     multiple_blueprints=False,
+                     validate=False):
         def pass_empty_blueprint_id(func):
             @wraps(func)
             def wrapper(*args, **kwargs):
@@ -1063,7 +1076,8 @@ class Options(object):
                 '-b',
                 '--blueprint-id',
                 required=required,
-                help=helptexts.BLUEPRINT_ID)
+                help=helptexts.BLUEPRINT_ID,
+                callback=_get_validate_callback(validate))
 
     @staticmethod
     def blueprint_path(required=False):

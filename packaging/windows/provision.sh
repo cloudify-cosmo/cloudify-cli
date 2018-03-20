@@ -79,7 +79,7 @@ function download_resources() {
         curl -L https://$GITHUB_USERNAME:$GITHUB_PASSWORD@raw.githubusercontent.com/cloudify-cosmo/cloudify-softlayer-plugin/1.3.1/plugin.yaml -o softlayer-plugin/plugin.yaml
 
         # Downloading commercial plugin yamls
-        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-vsphere-plugin/2.3.0/plugin.yaml -o vsphere-plugin/plugin.yaml
+        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-vsphere-plugin/2.4.0/plugin.yaml -o vsphere-plugin/plugin.yaml
     popd
 }
 

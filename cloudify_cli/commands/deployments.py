@@ -193,7 +193,7 @@ def manager_update(deployment_id,
 
 @cfy.command(name='create',
              short_help='Create a deployment [manager only]')
-@cfy.argument('deployment-id', required=False)
+@cfy.argument('deployment-id', required=False, callback=cfy.validate_name)
 @cfy.options.blueprint_id(required=True)
 @cfy.options.inputs
 @cfy.options.private_resource
