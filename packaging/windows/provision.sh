@@ -107,7 +107,7 @@ export CLI_BRANCH="$CORE_BRANCH"
 if [ "$CORE_BRANCH" != "master" ] && [ "$REPO" == "cloudify-versions" ]; then
     source packaging/source_branch
 fi
-if [[ ! -z $BRANCH ]];then
+if [[ ! -z $BRANCH ]] && [[ "$BRANCH" != "master" ]];then
     pushd /tmp
         curl -sLO https://github.com/cloudify-cosmo/cloudify-cli/archive/${BRANCH}.zip
         if zip -T $BRANCH.zip > /dev/null; then
