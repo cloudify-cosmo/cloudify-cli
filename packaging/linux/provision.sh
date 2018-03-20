@@ -2,9 +2,9 @@
 
 export GITHUB_USERNAME=$1
 export GITHUB_PASSWORD=$2
-AWS_ACCESS_KEY_ID=$3
-AWS_ACCESS_KEY=$4
-PACKAGER_BRANCH=$5
+export AWS_ACCESS_KEY_ID=$3
+export AWS_ACCESS_KEY=$4
+export BRANCH=$5
 export REPO=$6
 export CORE_TAG_NAME="4.4.dev1"
 export CORE_BRANCH="master"
@@ -73,6 +73,8 @@ function prepare_linux () {
     gem install omnibus --no-ri --no-rdoc
 }
 
+echo "BRANCH=$BRANCH"
+echo "REPO=$REPO"
 if [[ "$OSTYPE" == "darwin"* ]]; then
     prepare_osx
 else
@@ -90,12 +92,18 @@ git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd ~/cloudify-cli/packaging/omnibus
 export CLI_BRANCH="$CORE_BRANCH"
 if [ "$CORE_BRANCH" != "master" ]; then
-    if [ "${REPO}" == "cloudify-versions" ]; then
+    if [ "$REPO" == "cloudify-versions" ]; then
         source ~/cloudify-cli/packaging/source_branch
     fi
-    git checkout -b ${CLI_BRANCH} origin/${CLI_BRANCH}
+    git checkout -b $CLI_BRANCH origin/$CLI_BRANCH
 else
-    git checkout ${CLI_BRANCH}
+    git checkout $CLI_BRANCH
+fi
+
+if [[ ! -z $BRANCH ]] && [[ "$BRANCH" != "master" ]] && git show-ref --quiet origin/$BRANCH ; then
+    export CLI_BRANCH="$BRANCH"
+    git checkout -b $CLI_BRANCH origin/$CLI_BRANCH
+    AWS_S3_PATH="$AWS_S3_PATH/$BRANCH"
 fi
 
 # Get Omnibus software from Chef Omnibus repo
