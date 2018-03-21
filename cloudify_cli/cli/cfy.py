@@ -426,6 +426,13 @@ class Options(object):
             callback=inputs_callback,
             help=helptexts.INPUTS)
 
+        self.render = click.option(
+            '-r',
+            '--render',
+            multiple=True,
+            callback=inputs_callback,
+            help=helptexts.RENDER)
+
         self.parameters = click.option(
             '-p',
             '--parameters',

@@ -56,9 +56,10 @@ def blueprints():
 @blueprints.command(name='validate',
                     short_help='Validate a blueprint')
 @cfy.argument('blueprint-path')
+@cfy.options.render
 @cfy.options.verbose()
 @cfy.pass_logger
-def validate_blueprint(blueprint_path, logger):
+def validate_blueprint(blueprint_path, render, logger):
     """Validate a blueprint
 
     `BLUEPRINT_PATH` is the path of the blueprint to validate.
@@ -70,7 +71,8 @@ def validate_blueprint(blueprint_path, logger):
         parse_from_path(
             dsl_file_path=blueprint_path,
             resolver=resolver,
-            validate_version=validate_version)
+            validate_version=validate_version,
+            render=render)
     except DSLParsingException as ex:
         raise CloudifyCliError('Failed to validate blueprint: {0}'.format(ex))
     logger.info('Blueprint validated successfully')
@@ -81,6 +83,7 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.argument('blueprint-path')
 @cfy.options.blueprint_id(validate=True)
 @cfy.options.blueprint_filename()
+@cfy.options.render
 @cfy.options.validate
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
@@ -94,6 +97,7 @@ def upload(ctx,
            blueprint_path,
            blueprint_id,
            blueprint_filename,
+           render,
            validate,
            private_resource,
            visibility,
@@ -111,8 +115,10 @@ def upload(ctx,
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
 
+    # If we need to render the blueprint, we always want to download,
+    # in order to perform the rendering locally
     processed_blueprint_path = blueprint.get(
-        blueprint_path, blueprint_filename)
+        blueprint_path, blueprint_filename, download=bool(render))
 
     # Take into account that `blueprint.get` might not return a URL
     # instead of a blueprint file (archive files are not locally downloaded)
@@ -141,6 +147,7 @@ def upload(ctx,
                 ctx.invoke(
                     validate_blueprint,
                     blueprint_path=processed_blueprint_path,
+                    render=render
                 )
 
             # When the blueprint file is already available locally, it can be
@@ -150,7 +157,8 @@ def upload(ctx,
                 processed_blueprint_path,
                 blueprint_id,
                 visibility,
-                progress_handler
+                progress_handler,
+                render
             )
         finally:
             # When an archive file is passed, it's extracted to a temporary

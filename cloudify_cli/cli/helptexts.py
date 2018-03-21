@@ -44,6 +44,8 @@ BLUEPRINT_FILENAME = (
     "The name of the archive's main blueprint file. "
     "This is only relevant if uploading an archive")
 INPUTS = "Inputs for the deployment {0}".format(INPUTS_PARAMS_USAGE)
+RENDER = "Values to be rendered in the blueprint template " \
+         "{0}".format(INPUTS_PARAMS_USAGE)
 PARAMETERS = "Parameters for the workflow {0}".format(INPUTS_PARAMS_USAGE)
 ALLOW_CUSTOM_PARAMETERS = (
     "Allow passing custom parameters (which were not defined in the "

@@ -17,6 +17,8 @@
 import os
 from urlparse import urlparse
 
+from jinja2 import Environment, meta, StrictUndefined, Template
+
 from . import utils
 from .exceptions import CloudifyCliError
 from .constants import DEFAULT_BLUEPRINT_PATH
@@ -125,3 +127,57 @@ def generate_id(blueprint_path, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
         filename, _ = os.path.splitext(os.path.basename(blueprint_filename))
         blueprint_id = (blueprint_id + '.' + filename)
     return blueprint_id.replace('_', '-')
+
+
+def _get_rendered_path(blueprint_path):
+    """
+    Create a new path for the rendered blueprint in the same dir as the
+    original
+    """
+    dirname, filename = os.path.split(blueprint_path)
+    basename, ext = os.path.splitext(filename)
+    new_name = '{basename}_rendered.{ext}'.format(basename=basename, ext=ext)
+    return os.path.join(dirname, new_name)
+
+
+def _validate_variables(ast, render):
+    passed_vars = set(render.keys())
+    template_variables = meta.find_undeclared_variables(ast)
+    missing_vars = template_variables - passed_vars
+    extra_vars = passed_vars - template_variables
+    message = ''
+    if missing_vars:
+        message += '\n - The following blueprint template render ' \
+                   'variables were not provided: ' \
+                   '{0}'.format(list(missing_vars))
+
+    if extra_vars:
+        message += '\n - The following extra blueprint template render ' \
+                   'variables were provided: {0}'.format(list(extra_vars))
+
+    if message:
+        raise CloudifyCliError(
+            'Failed to validate blueprint template:{0}'.format(message)
+        )
+
+
+def _get_rendered_blueprint(blueprint_path, render):
+    """ Render the blueprint template with `render` values and return it """
+    with open(blueprint_path, 'r') as f:
+        content = f.read()
+
+    # StrictUndefined makes sure that if a variable wasn't provided
+    # an exception will be thrown
+    env = Environment(undefined=StrictUndefined)
+    ast = env.parse(content)
+    _validate_variables(ast, render)
+    template = Template(ast)
+    return template.render(**render)
+
+
+def render_blueprint(blueprint_path, render):
+    new_content = _get_rendered_blueprint(blueprint_path, render)
+    rendered_blueprint_path = _get_rendered_path(blueprint_path)
+    with open(rendered_blueprint_path, 'w') as f:
+        f.write(new_content)
+    return rendered_blueprint_path
