@@ -103,6 +103,11 @@ def get(node_id, deployment_id, logger, client, tenant_name):
             logger.info('\t{0}'.format(instance['id']))
     else:
         logger.info('\tNo node instances')
+    logger.info('')
+
+    logger.info('Node type hierarchy:')
+    hierarchy = ' --> '.join(node.type_hierarchy)
+    logger.info('\t{0}'.format(hierarchy))
 
 
 @nodes.command(name='list',
