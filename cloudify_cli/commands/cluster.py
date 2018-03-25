@@ -248,7 +248,17 @@ def update_profile(client, logger):
 
 
 def _update_profile_cluster_settings(profile, nodes, logger=None):
+    """Update the cluster list set in profile with the received nodes
+
+    We will merge the received nodes into the stored list - adding and
+    removing when necessary - and not just set the profile list to the
+    received nodes, because the profile might have more details about
+    the nodes (eg. a certificate path)
+    """
     stored_nodes = {node.get('name') for node in env.profile.cluster}
+    received_nodes = {node.name for node in nodes}
+    if env.profile.cluster is None:
+        env.profile.cluster = []
     for node in nodes:
         if node.name not in stored_nodes:
             if logger:
@@ -260,6 +270,9 @@ def _update_profile_cluster_settings(profile, nodes, logger=None):
                 # ones from the last used manager
                 'manager_ip': node.host_ip
             })
+    # filter out removed nodes
+    env.profile.cluster = [n for n in env.profile.cluster
+                           if n['name'] in received_nodes]
     env.profile.save()
 
 
@@ -382,6 +395,27 @@ def update_node_options(client, logger, cluster_node_name,
     logger.info('Node {0} updated'.format(cluster_node_name))
 
 
+@nodes.command(name='set-certificate')
+@cfy.pass_logger
+@cfy.argument('cluster-node-name')
+@cfy.argument('certificate-path')
+def set_node_certificate(logger, cluster_node_name, certificate_path):
+    """Set REST certificate for the given cluster node."""
+    certificate_path = os.path.expanduser(certificate_path)
+    if not os.path.exists(certificate_path):
+        raise CloudifyCliError('Certificate file {0} does not exist'
+                               .format(certificate_path))
+
+    for node in env.profile.cluster:
+        if node['name'] == cluster_node_name:
+            node['cert'] = certificate_path
+            break
+    else:
+        raise CloudifyCliError('Node {0} not found in the cluster profile'
+                               .format(cluster_node_name))
+    env.profile.save()
+
+
 @nodes.command(name='remove',
                short_help='Remove a node from the cluster [cluster only]')
 @pass_cluster_client()
@@ -410,7 +444,7 @@ def remove_node(client, logger, cluster_node_name):
         if profile_context.profile_name == removed_node_ip:
             logger.info('Profile {0} set as a non-cluster profile'
                         .format(profile_context.profile_name))
-            profile_context.cluster = None
+            profile_context.cluster = []
             if hasattr(profile_context, '_original'):
                 for attrname, attr in profile_context._original.items():
                     setattr(profile_context, attrname, attr)
@@ -425,26 +459,6 @@ def remove_node(client, logger, cluster_node_name):
 
     logger.info('Node {0} was removed successfully!'
                 .format(cluster_node_name))
-
-
-@nodes.command(name='set-certificate')
-@cfy.pass_logger
-@cfy.argument('cluster-node-name')
-@cfy.argument('certificate-path')
-def set_node_certificate(logger, cluster_node_name, certificate_path):
-    """Set REST certificate for the given cluster node."""
-    certificate_path = os.path.expanduser(certificate_path)
-    if not os.path.exists(certificate_path):
-        raise CloudifyCliError('Certificate file {0} does not exist'
-                               .format(certificate_path))
-
-    for node in env.profile.cluster:
-        if node['name'] == cluster_node_name:
-            node['cert'] = certificate_path
-            break
-    else:
-        raise CloudifyCliError('Node {0} not found in the cluster profile'
-                               .format(cluster_node_name))
 
 
 def _join_node_to_profile(node_name, from_profile, joined_profile=None):
