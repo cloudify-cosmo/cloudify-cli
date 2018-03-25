@@ -250,6 +250,8 @@ def update_profile(client, logger):
 def _update_profile_cluster_settings(profile, nodes, logger=None):
     stored_nodes = {node.get('name') for node in env.profile.cluster}
     received_nodes = {node.name for node in nodes}
+    if env.profile.cluster is None:
+        env.profile.cluster = []
     for node in nodes:
         if node.name not in stored_nodes:
             if logger:
@@ -414,7 +416,7 @@ def remove_node(client, logger, cluster_node_name):
         if profile_context.profile_name == removed_node_ip:
             logger.info('Profile {0} set as a non-cluster profile'
                         .format(profile_context.profile_name))
-            profile_context.cluster = None
+            profile_context.cluster = []
             if hasattr(profile_context, '_original'):
                 for attrname, attr in profile_context._original.items():
                     setattr(profile_context, attrname, attr)
