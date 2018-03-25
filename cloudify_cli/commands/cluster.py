@@ -249,6 +249,7 @@ def update_profile(client, logger):
 
 def _update_profile_cluster_settings(profile, nodes, logger=None):
     stored_nodes = {node.get('name') for node in env.profile.cluster}
+    received_nodes = {node.name for node in nodes}
     for node in nodes:
         if node.name not in stored_nodes:
             if logger:
@@ -260,6 +261,9 @@ def _update_profile_cluster_settings(profile, nodes, logger=None):
                 # ones from the last used manager
                 'manager_ip': node.host_ip
             })
+    # filter out removed nodes
+    env.profile.cluster = [n for n in env.profile.cluster
+                           if n['name'] in received_nodes]
     env.profile.save()
 
 

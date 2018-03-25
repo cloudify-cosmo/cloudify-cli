@@ -311,13 +311,16 @@ class UpdateProfileTest(CliCommandTest):
     def setUp(self):
         super(UpdateProfileTest, self).setUp()
         self.use_manager()
-        env.profile.cluster = [{'manager_ip': env.profile.manager_ip}]
+        env.profile.cluster = [{'manager_ip': env.profile.manager_ip,
+                                'name': 'master'}]
         env.profile.save()
 
     def test_nodes_added_to_profile(self):
         self.client.cluster.status = mock.Mock(
             return_value=ClusterState({'initialized': True}))
         self.client.cluster.nodes.list = mock.Mock(return_value=[
+            ClusterNode({'name': 'master',
+                         'host_ip': env.profile.manager_ip}),
             ClusterNode({'name': 'node name 1', 'host_ip': '1.2.3.4'}),
             ClusterNode({'name': 'node name 2', 'host_ip': '5.6.7.8'})
         ])
@@ -328,7 +331,22 @@ class UpdateProfileTest(CliCommandTest):
         self.assertIn('Adding cluster node 5.6.7.8', outcome.logs)
 
         self.assertEqual(env.profile.cluster, [
-            {'manager_ip': env.profile.manager_ip},
+            {'manager_ip': env.profile.manager_ip, 'name': 'master'},
+            {'manager_ip': '1.2.3.4', 'name': 'node name 1'},
+            {'manager_ip': '5.6.7.8', 'name': 'node name 2'}
+        ])
+
+    def test_nodes_removed_from_profile(self):
+        self.client.cluster.status = mock.Mock(
+            return_value=ClusterState({'initialized': True}))
+        self.client.cluster.nodes.list = mock.Mock(return_value=[
+            ClusterNode({'name': 'node name 1', 'host_ip': '1.2.3.4'}),
+            ClusterNode({'name': 'node name 2', 'host_ip': '5.6.7.8'})
+        ])
+        self.client.cluster.join = mock.Mock()
+
+        self.invoke('cfy cluster update-profile')
+        self.assertEqual(env.profile.cluster, [
             {'manager_ip': '1.2.3.4', 'name': 'node name 1'},
             {'manager_ip': '5.6.7.8', 'name': 'node name 2'}
         ])
