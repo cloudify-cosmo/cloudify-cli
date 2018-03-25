@@ -248,6 +248,13 @@ def update_profile(client, logger):
 
 
 def _update_profile_cluster_settings(profile, nodes, logger=None):
+    """Update the cluster list set in profile with the received nodes
+
+    We will merge the received nodes into the stored list - adding and
+    removing when necessary - and not just set the profile list to the
+    received nodes, because the profile might have more details about
+    the nodes (eg. a certificate path)
+    """
     stored_nodes = {node.get('name') for node in env.profile.cluster}
     received_nodes = {node.name for node in nodes}
     if env.profile.cluster is None:
