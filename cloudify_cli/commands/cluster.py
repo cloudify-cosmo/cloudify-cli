@@ -388,6 +388,27 @@ def update_node_options(client, logger, cluster_node_name,
     logger.info('Node {0} updated'.format(cluster_node_name))
 
 
+@nodes.command(name='set-certificate')
+@cfy.pass_logger
+@cfy.argument('cluster-node-name')
+@cfy.argument('certificate-path')
+def set_node_certificate(logger, cluster_node_name, certificate_path):
+    """Set REST certificate for the given cluster node."""
+    certificate_path = os.path.expanduser(certificate_path)
+    if not os.path.exists(certificate_path):
+        raise CloudifyCliError('Certificate file {0} does not exist'
+                               .format(certificate_path))
+
+    for node in env.profile.cluster:
+        if node['name'] == cluster_node_name:
+            node['cert'] = certificate_path
+            break
+    else:
+        raise CloudifyCliError('Node {0} not found in the cluster profile'
+                               .format(cluster_node_name))
+    env.profile.save()
+
+
 @nodes.command(name='remove',
                short_help='Remove a node from the cluster [cluster only]')
 @pass_cluster_client()
@@ -431,26 +452,6 @@ def remove_node(client, logger, cluster_node_name):
 
     logger.info('Node {0} was removed successfully!'
                 .format(cluster_node_name))
-
-
-@nodes.command(name='set-certificate')
-@cfy.pass_logger
-@cfy.argument('cluster-node-name')
-@cfy.argument('certificate-path')
-def set_node_certificate(logger, cluster_node_name, certificate_path):
-    """Set REST certificate for the given cluster node."""
-    certificate_path = os.path.expanduser(certificate_path)
-    if not os.path.exists(certificate_path):
-        raise CloudifyCliError('Certificate file {0} does not exist'
-                               .format(certificate_path))
-
-    for node in env.profile.cluster:
-        if node['name'] == cluster_node_name:
-            node['cert'] = certificate_path
-            break
-    else:
-        raise CloudifyCliError('Node {0} not found in the cluster profile'
-                               .format(cluster_node_name))
 
 
 def _join_node_to_profile(node_name, from_profile, joined_profile=None):

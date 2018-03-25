@@ -351,6 +351,18 @@ class UpdateProfileTest(CliCommandTest):
             {'manager_ip': '5.6.7.8', 'name': 'node name 2'}
         ])
 
+    def test_set_node_cert(self):
+        env.profile.cluster.append({'manager_ip': '1.2.3.4', 'name': 'node2'})
+        env.profile.save()
+        with tempfile.NamedTemporaryFile() as f:
+            self.invoke('cfy cluster nodes set-certificate {0} {1}'
+                        .format('master', f.name))
+        with tempfile.NamedTemporaryFile() as f2:
+            self.invoke('cfy cluster nodes set-certificate {0} {1}'
+                        .format('node2', f2.name))
+        self.assertEqual(env.profile.cluster[0]['cert'], f.name)
+        self.assertEqual(env.profile.cluster[1]['cert'], f2.name)
+
 
 class PassClusterClientTest(unittest.TestCase):
     def test_pass_cluster_client_not_initialized(self):
