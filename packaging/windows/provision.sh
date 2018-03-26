@@ -26,7 +26,7 @@ function download_wheels() {
     https://github.com/cloudify-cosmo/cloudify-rest-client/archive/${CORE_BRANCH}.zip#egg=cloudify-rest-client \
     https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/${CORE_BRANCH}.zip#egg=cloudify-dsl-parser \
     https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/${CORE_BRANCH}.zip#egg=cloudify-plugins-common \
-    https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.2.zip#egg=cloudify-script-plugin \
+    https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.3.zip#egg=cloudify-script-plugin \
     https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip#egg=cloudify-fabric-plugin
 
     # Rename "Bad" wheels
@@ -72,7 +72,7 @@ function download_resources() {
         mkdir -p {fabric-plugin,script-plugin,diamond-plugin,openstack-plugin,aws-plugin,vsphere-plugin,softlayer-plugin}
 
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-fabric-plugin/1.5.1/plugin.yaml -o fabric-plugin/plugin.yaml
-        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-script-plugin/1.5.2/plugin.yaml -o script-plugin/plugin.yaml
+        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-script-plugin/1.5.3/plugin.yaml -o script-plugin/plugin.yaml
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-diamond-plugin/1.3.6/plugin.yaml -o diamond-plugin/plugin.yaml
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/2.0.1/plugin.yaml -o openstack-plugin/plugin.yaml
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.4.10/plugin.yaml -o aws-plugin/plugin.yaml
