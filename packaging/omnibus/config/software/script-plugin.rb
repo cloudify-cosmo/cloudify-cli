@@ -1,6 +1,6 @@
 name "script-plugin"
 
-plugin_version = "script-plugin/1.5.2"
+plugin_version = "script-plugin/1.5.3"
 default_version plugin_version.sub! "script-plugin/", ""
 
 source :git => "https://github.com/cloudify-cosmo/cloudify-script-plugin"

@@ -50,7 +50,7 @@ build do
 
 
     command ["#{install_dir}/embedded/bin/pip",
-             "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.2.zip"]
+             "install", "--build=#{project_dir}/script-plugin", ".", "https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.3.zip"]
 
   end
 end
