@@ -39,8 +39,8 @@ setup(
         ]
     },
     install_requires=[
-        'click==4.0',
-        'wagon[venv]==0.6.1',
+        'click==6.7',
+        'wagon[venv]==0.6.2',
         'pyyaml==3.10',
         'paramiko==1.18.3',
         'fabric==1.13.1',
