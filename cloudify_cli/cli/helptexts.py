@@ -46,6 +46,10 @@ BLUEPRINT_FILENAME = (
 INPUTS = "Inputs for the deployment {0}".format(INPUTS_PARAMS_USAGE)
 RENDER = "Values to be rendered in the blueprint template " \
          "{0}".format(INPUTS_PARAMS_USAGE)
+RENDER_ELEMENT = "Blueprint elements to be rendered in the blueprint " \
+                 "template. Can be passed multiple times"
+FORCE_RENDER = 'If set, the blueprint will be rendered regardless of ' \
+               'whether any render values were passed with `--render`'
 PARAMETERS = "Parameters for the workflow {0}".format(INPUTS_PARAMS_USAGE)
 ALLOW_CUSTOM_PARAMETERS = (
     "Allow passing custom parameters (which were not defined in the "

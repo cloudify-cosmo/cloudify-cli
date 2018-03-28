@@ -33,7 +33,7 @@ from .. import env
 from ..cli import helptexts
 from ..inputs import inputs_to_dict
 from ..utils import generate_random_string
-from ..constants import DEFAULT_BLUEPRINT_PATH
+from ..constants import DEFAULT_BLUEPRINT_PATH, BLUEPRINT_ELEMENTS
 from ..exceptions import SuppressedCloudifyCliError
 from ..exceptions import CloudifyBootstrapError, CloudifyValidationError
 from ..logger import get_logger, set_global_verbosity_level, DEFAULT_LOG_FILE
@@ -432,6 +432,21 @@ class Options(object):
             multiple=True,
             callback=inputs_callback,
             help=helptexts.RENDER)
+
+        self.force_render = click.option(
+            '--force-render',
+            is_flag=True,
+            default=False,
+            help=helptexts.FORCE_RENDER
+        )
+
+        self.render_elements = click.option(
+            '-e',
+            '--render-elements',
+            multiple=True,
+            type=click.Choice(BLUEPRINT_ELEMENTS),
+            default=BLUEPRINT_ELEMENTS,
+            help=helptexts.RENDER_ELEMENT)
 
         self.parameters = click.option(
             '-p',

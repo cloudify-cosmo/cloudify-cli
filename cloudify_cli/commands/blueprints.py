@@ -20,9 +20,15 @@ import json
 import shutil
 from urlparse import urlparse
 
+import yaml
+from pygments import highlight
+from pygments.lexers import YamlLexer
+from pygments.formatters import Terminal256Formatter
+
 import click
 
 from dsl_parser.parser import parse_from_path
+from dsl_parser.utils import current_yaml
 from dsl_parser.exceptions import DSLParsingException
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
@@ -57,14 +63,16 @@ def blueprints():
                     short_help='Validate a blueprint')
 @cfy.argument('blueprint-path')
 @cfy.options.render
+@cfy.options.force_render
 @cfy.options.verbose()
 @cfy.pass_logger
-def validate_blueprint(blueprint_path, render, logger):
+def validate_blueprint(blueprint_path, render, force_render, logger):
     """Validate a blueprint
 
     `BLUEPRINT_PATH` is the path of the blueprint to validate.
     """
     logger.info('Validating blueprint: {0}'.format(blueprint_path))
+    render = True if force_render and not render else {}
     try:
         resolver = config.get_import_resolver()
         validate_version = config.is_validate_definitions_version()
@@ -78,12 +86,49 @@ def validate_blueprint(blueprint_path, render, logger):
     logger.info('Blueprint validated successfully')
 
 
+@blueprints.command(name='render',
+                    short_help='Print a rendered blueprint template')
+@cfy.argument('template-path')
+@cfy.options.render
+@cfy.options.force_render
+@cfy.options.render_elements
+@cfy.options.verbose()
+@cfy.pass_logger
+def render_template(template_path, render, force_render, render_elements,
+                    logger):
+    """Print a rendered blueprint template
+
+    `BLUEPRINT_PATH` is the path of the blueprint template to validate.
+    """
+    render = True if force_render and not render else {}
+    try:
+        resolver = config.get_import_resolver()
+        validate_version = config.is_validate_definitions_version()
+        parse_from_path(
+            dsl_file_path=template_path,
+            resolver=resolver,
+            validate_version=validate_version,
+            render=render)
+        output = '\n'.join(yaml.dump({elem: current_yaml.get(elem)})
+                           for elem in render_elements
+                           if current_yaml.get(elem)
+                           )
+        logger.info(highlight(
+            output,
+            YamlLexer(),
+            Terminal256Formatter(style='emacs'))
+        )
+    except DSLParsingException as ex:
+        raise CloudifyCliError('Failed to render blueprint: {0}'.format(ex))
+
+
 @blueprints.command(name='upload',
                     short_help='Upload a blueprint [manager only]')
 @cfy.argument('blueprint-path')
 @cfy.options.blueprint_id(validate=True)
 @cfy.options.blueprint_filename()
 @cfy.options.render
+@cfy.options.force_render
 @cfy.options.validate
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
@@ -98,6 +143,7 @@ def upload(ctx,
            blueprint_id,
            blueprint_filename,
            render,
+           force_render,
            validate,
            private_resource,
            visibility,
@@ -114,6 +160,8 @@ def upload(ctx,
     """
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+
+    render = True if force_render and not render else {}
 
     # If we need to render the blueprint, we always want to download,
     # in order to perform the rendering locally

@@ -82,3 +82,24 @@ API_VERSION = 'v3.1'
 HELP_TEXT_COLUMN_BUFFER = 5
 
 SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
+
+BLUEPRINT_ELEMENTS = [
+    'tosca_definitions_version',
+    'dsl_definitions',
+    'imports',
+    'inputs',
+    'plugins',
+    'data_types',
+    'node_types',
+    'node_templates',
+    'workflows',
+    'relationships',
+    'intrinsic_functions',
+    'interfaces',
+    'groups',
+    'policies',
+    'policy_triggers',
+    'import_resolver',
+    'upload_resources',
+    'outputs'
+]
