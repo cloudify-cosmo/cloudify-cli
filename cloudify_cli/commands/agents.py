@@ -191,7 +191,7 @@ def run_worker(
     def worker(dep_id):
         timeout = 900
         try:
-
+            logger.info('*** parameters: {0} ***'.format(parameters))
             execution = client.executions.start(dep_id, workflow_id, parameters)
             execution = wait_for_execution(
                 client,
