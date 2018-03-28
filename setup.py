@@ -41,7 +41,7 @@ setup(
     install_requires=[
         'click==6.7',
         'wagon[venv]==0.6.2',
-        'pyyaml==3.10',
+        'pyyaml==3.12',
         'paramiko==1.18.3',
         'fabric==1.13.1',
         'jinja2==2.7.2',
