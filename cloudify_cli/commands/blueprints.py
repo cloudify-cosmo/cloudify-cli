@@ -20,16 +20,12 @@ import json
 import shutil
 from urlparse import urlparse
 
-import yaml
 from pygments import highlight
 from pygments.lexers import YamlLexer
 from pygments.formatters import Terminal256Formatter
 
 import click
 
-from dsl_parser.parser import parse_from_path
-from dsl_parser.utils import current_yaml
-from dsl_parser.exceptions import DSLParsingException
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
 from .. import local
@@ -37,7 +33,6 @@ from .. import utils
 from ..cli import cfy
 from .. import blueprint
 from .. import exceptions
-from ..config import config
 from ..table import print_data
 from ..exceptions import CloudifyCliError
 from ..utils import (prettify_client_error,
@@ -73,16 +68,11 @@ def validate_blueprint(blueprint_path, render, force_render, logger):
     """
     logger.info('Validating blueprint: {0}'.format(blueprint_path))
     render = True if force_render and not render else render
-    try:
-        resolver = config.get_import_resolver()
-        validate_version = config.is_validate_definitions_version()
-        parse_from_path(
-            dsl_file_path=blueprint_path,
-            resolver=resolver,
-            validate_version=validate_version,
-            render=render)
-    except DSLParsingException as ex:
-        raise CloudifyCliError('Failed to validate blueprint: {0}'.format(ex))
+    blueprint.parse_blueprint(
+        blueprint_path,
+        render=render,
+        error_msg='Failed to validate blueprint: {0}'
+    )
     logger.info('Blueprint validated successfully')
 
 
@@ -101,25 +91,17 @@ def render_template(template_path, render, force_render, render_elements,
     `BLUEPRINT_PATH` is the path of the blueprint template to validate.
     """
     render = True if force_render and not render else render
-    try:
-        resolver = config.get_import_resolver()
-        validate_version = config.is_validate_definitions_version()
-        parse_from_path(
-            dsl_file_path=template_path,
-            resolver=resolver,
-            validate_version=validate_version,
-            render=render)
-        output = '\n'.join(yaml.dump({elem: current_yaml.get(elem)})
-                           for elem in render_elements
-                           if current_yaml.get(elem)
-                           )
-        logger.info(highlight(
-            output,
-            YamlLexer(),
-            Terminal256Formatter(style='emacs'))
-        )
-    except DSLParsingException as ex:
-        raise CloudifyCliError('Failed to render blueprint: {0}'.format(ex))
+    blueprint.parse_blueprint(
+        template_path,
+        render=render,
+        error_msg='Failed to render blueprint: {0}'
+    )
+
+    logger.info(highlight(
+        blueprint.get_rendered_yaml_output(render_elements),
+        YamlLexer(),
+        Terminal256Formatter(style='emacs'))
+    )
 
 
 @blueprints.command(name='upload',
@@ -168,6 +150,10 @@ def upload(ctx,
     processed_blueprint_path = blueprint.get(
         blueprint_path, blueprint_filename, download=bool(render))
 
+    rendered_blueprint_path = blueprint.get_rendered_blueprint_path(
+        processed_blueprint_path
+    )
+
     # Take into account that `blueprint.get` might not return a URL
     # instead of a blueprint file (archive files are not locally downloaded)
     is_url = bool(urlparse(processed_blueprint_path).scheme)
@@ -198,6 +184,20 @@ def upload(ctx,
                     render=render
                 )
 
+            # If we're rendering, add the rendered blueprint to the
+            # archive we're uploading to the manager
+            if render:
+                blueprint.parse_blueprint(
+                    processed_blueprint_path,
+                    render=render,
+                    error_msg='Failed to validate blueprint: {0}'
+                )
+
+                rendered_bp = blueprint.get_rendered_yaml_output()
+
+                with open(rendered_blueprint_path, 'w') as f:
+                    f.write(rendered_bp)
+
             # When the blueprint file is already available locally, it can be
             # uploaded directly using the `upload` API call.
             logger.info('Uploading blueprint %s...', blueprint_path)
@@ -209,6 +209,8 @@ def upload(ctx,
                 render
             )
         finally:
+            if render:
+                os.remove(rendered_blueprint_path)
             # When an archive file is passed, it's extracted to a temporary
             # directory to get the blueprint file. Once the blueprint has been
             # uploaded, the temporary directory needs to be cleaned up.

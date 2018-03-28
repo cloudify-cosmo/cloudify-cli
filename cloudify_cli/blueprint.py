@@ -15,13 +15,19 @@
 ############
 
 import os
+import yaml
 from urlparse import urlparse
-
-from jinja2 import Environment, meta, StrictUndefined, Template
 
 from . import utils
 from .exceptions import CloudifyCliError
 from .constants import DEFAULT_BLUEPRINT_PATH
+
+from .config import config
+from .constants import BLUEPRINT_ELEMENTS
+
+from dsl_parser.parser import parse_from_path
+from dsl_parser.exceptions import DSLParsingException
+from dsl_parser.utils import current_yaml
 
 
 def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH, download=False):
@@ -129,55 +135,31 @@ def generate_id(blueprint_path, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
     return blueprint_id.replace('_', '-')
 
 
-def _get_rendered_path(blueprint_path):
-    """
-    Create a new path for the rendered blueprint in the same dir as the
-    original
-    """
-    dirname, filename = os.path.split(blueprint_path)
-    basename, ext = os.path.splitext(filename)
-    new_name = '{basename}_rendered.{ext}'.format(basename=basename, ext=ext)
-    return os.path.join(dirname, new_name)
+def get_rendered_blueprint_path(blueprint_path):
+    dirname, full_filename = os.path.split(os.path.abspath(blueprint_path))
+    filename, ext = os.path.splitext(full_filename)
+    rendered_blueprint_name = '{0}_rendered{1}'.format(filename, ext)
+    return os.path.join(dirname, rendered_blueprint_name)
 
 
-def _validate_variables(ast, render):
-    passed_vars = set(render.keys())
-    template_variables = meta.find_undeclared_variables(ast)
-    missing_vars = template_variables - passed_vars
-    extra_vars = passed_vars - template_variables
-    message = ''
-    if missing_vars:
-        message += '\n - The following blueprint template render ' \
-                   'variables were not provided: ' \
-                   '{0}'.format(list(missing_vars))
-
-    if extra_vars:
-        message += '\n - The following extra blueprint template render ' \
-                   'variables were provided: {0}'.format(list(extra_vars))
-
-    if message:
-        raise CloudifyCliError(
-            'Failed to validate blueprint template:{0}'.format(message)
-        )
+def parse_blueprint(blueprint_path, render=None, error_msg='{0}'):
+    try:
+        render = render or {}
+        resolver = config.get_import_resolver()
+        validate_version = config.is_validate_definitions_version()
+        parse_from_path(
+            dsl_file_path=blueprint_path,
+            resolver=resolver,
+            validate_version=validate_version,
+            render=render)
+    except DSLParsingException as ex:
+        raise CloudifyCliError(error_msg.format(ex))
 
 
-def _get_rendered_blueprint(blueprint_path, render):
-    """ Render the blueprint template with `render` values and return it """
-    with open(blueprint_path, 'r') as f:
-        content = f.read()
-
-    # StrictUndefined makes sure that if a variable wasn't provided
-    # an exception will be thrown
-    env = Environment(undefined=StrictUndefined)
-    ast = env.parse(content)
-    _validate_variables(ast, render)
-    template = Template(ast)
-    return template.render(**render)
-
-
-def render_blueprint(blueprint_path, render):
-    new_content = _get_rendered_blueprint(blueprint_path, render)
-    rendered_blueprint_path = _get_rendered_path(blueprint_path)
-    with open(rendered_blueprint_path, 'w') as f:
-        f.write(new_content)
-    return rendered_blueprint_path
+def get_rendered_yaml_output(elements=None):
+    elements = elements or BLUEPRINT_ELEMENTS
+    return '\n'.join(
+        yaml.dump({elem: current_yaml.get(elem)})
+        for elem in elements
+        if current_yaml.get(elem)
+    )
