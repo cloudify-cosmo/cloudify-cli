@@ -72,7 +72,7 @@ def validate_blueprint(blueprint_path, render, force_render, logger):
     `BLUEPRINT_PATH` is the path of the blueprint to validate.
     """
     logger.info('Validating blueprint: {0}'.format(blueprint_path))
-    render = True if force_render and not render else {}
+    render = True if force_render and not render else render
     try:
         resolver = config.get_import_resolver()
         validate_version = config.is_validate_definitions_version()
@@ -100,7 +100,7 @@ def render_template(template_path, render, force_render, render_elements,
 
     `BLUEPRINT_PATH` is the path of the blueprint template to validate.
     """
-    render = True if force_render and not render else {}
+    render = True if force_render and not render else render
     try:
         resolver = config.get_import_resolver()
         validate_version = config.is_validate_definitions_version()
@@ -161,7 +161,7 @@ def upload(ctx,
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
 
-    render = True if force_render and not render else {}
+    render = True if force_render and not render else render
 
     # If we need to render the blueprint, we always want to download,
     # in order to perform the rendering locally
