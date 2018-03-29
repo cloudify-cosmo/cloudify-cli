@@ -159,7 +159,7 @@ def parse_blueprint(blueprint_path, render=None, error_msg='{0}'):
 def get_rendered_yaml_output(elements=None):
     elements = elements or BLUEPRINT_ELEMENTS
     return '\n'.join(
-        yaml.dump({elem: current_yaml.get(elem)})
+        yaml.dump({elem: current_yaml.get(elem)}, default_flow_style=False)
         for elem in elements
         if current_yaml.get(elem)
     )
