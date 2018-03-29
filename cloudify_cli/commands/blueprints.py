@@ -82,10 +82,11 @@ def validate_blueprint(blueprint_path, render, force_render, logger):
 @cfy.options.render
 @cfy.options.force_render
 @cfy.options.render_elements
+@cfy.options.output_path
 @cfy.options.verbose()
 @cfy.pass_logger
 def render_template(template_path, render, force_render, render_elements,
-                    logger):
+                    output_path, logger):
     """Print a rendered blueprint template
 
     `BLUEPRINT_PATH` is the path of the blueprint template to validate.
@@ -97,11 +98,22 @@ def render_template(template_path, render, force_render, render_elements,
         error_msg='Failed to render blueprint: {0}'
     )
 
-    logger.info(highlight(
-        blueprint.get_rendered_yaml_output(render_elements),
-        YamlLexer(),
-        Terminal256Formatter(style='emacs'))
-    )
+    # When writing to file, we skip the imports section, because
+    # all the info from the imports is already present in the file
+    if output_path:
+        render_elements = [e for e in render_elements if e != 'imports']
+
+    yaml_output = blueprint.get_rendered_yaml_output(render_elements)
+
+    if output_path:
+        with open(output_path, 'w') as f:
+            f.write(yaml_output)
+    else:
+        logger.info(highlight(
+            yaml_output,
+            YamlLexer(),
+            Terminal256Formatter(style='emacs')
+        ))
 
 
 @blueprints.command(name='upload',
