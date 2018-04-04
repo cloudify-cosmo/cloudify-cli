@@ -14,17 +14,13 @@
 # limitations under the License.
 ############
 
-
 import os
 import shutil
 
-from . import init
-from . import executions
-from . import blueprints
-from .. import blueprint
-from . import deployments
 from ..cli import cfy, helptexts
 from ..constants import DEFAULT_INSTALL_WORKFLOW
+from ..blueprint import get_blueprint_path_and_id
+from . import init, executions, blueprints, deployments
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_GLOBAL
 
 
@@ -77,7 +73,7 @@ def manager(ctx,
     This will upload the blueprint, create a deployment and execute the
     `install` workflow.
     """
-    processed_blueprint_path, blueprint_id = _get_blueprint_path_and_id(
+    processed_blueprint_path, blueprint_id = get_blueprint_path_and_id(
         blueprint_path,
         blueprint_filename,
         blueprint_id
@@ -166,7 +162,7 @@ def local(ctx,
     Supported archive types are: zip, tar, tar.gz and tar.bz2
 
     """
-    processed_blueprint_path, blueprint_id = _get_blueprint_path_and_id(
+    processed_blueprint_path, blueprint_id = get_blueprint_path_and_id(
         blueprint_path,
         blueprint_filename,
         blueprint_id
@@ -201,20 +197,3 @@ def local(ctx,
         task_retries=task_retries,
         task_retry_interval=task_retry_interval,
         task_thread_pool_size=task_thread_pool_size)
-
-
-def _get_blueprint_path_and_id(blueprint_path,
-                               blueprint_filename,
-                               blueprint_id):
-    processed_blueprint_path = blueprint.get(
-        blueprint_path,
-        blueprint_filename,
-        download=True,
-    )
-
-    blueprint_id = blueprint_id or blueprint.generate_id(
-        processed_blueprint_path,
-        blueprint_filename
-    )
-
-    return processed_blueprint_path, blueprint_id

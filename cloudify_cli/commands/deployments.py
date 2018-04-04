@@ -16,6 +16,8 @@
 
 import os
 import json
+import shutil
+
 from StringIO import StringIO
 
 from cloudify_rest_client.exceptions import DeploymentPluginNotFound
@@ -26,17 +28,19 @@ from cloudify_rest_client.exceptions import UnsupportedDeploymentGetSecretError
 from cloudify_rest_client.constants import (VisibilityState,
                                             VISIBILITY_EXCEPT_GLOBAL)
 
-from .. import utils
+from . import blueprints
 from ..local import load_env
 from ..table import print_data
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger
-from .. import execution_events_fetcher
+from .. import execution_events_fetcher, utils
 from ..constants import DEFAULT_BLUEPRINT_PATH
+from ..blueprint import get_blueprint_path_and_id
 from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility)
+
 
 DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
                       'visibility', 'tenant_name', 'created_by']
@@ -106,21 +110,26 @@ def manager_list(blueprint_id,
 
 @cfy.command(name='update', short_help='Update a deployment [manager only]')
 @cfy.argument('deployment-id')
-@cfy.options.blueprint_path(required=True)
+@cfy.options.blueprint_path()
+@cfy.options.blueprint_filename(' [DEPRECATED]')
+@cfy.options.blueprint_id()
 @cfy.options.inputs
-@cfy.options.blueprint_filename()
 @cfy.options.workflow_id('update')
 @cfy.options.skip_install
 @cfy.options.skip_uninstall
 @cfy.options.force(help=helptexts.FORCE_UPDATE)
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.options.visibility(mutually_exclusive_required=False)
+@cfy.options.validate
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.verbose()
-@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def manager_update(deployment_id,
+@cfy.pass_context
+def manager_update(ctx,
+                   deployment_id,
                    blueprint_path,
                    inputs,
                    blueprint_filename,
@@ -132,41 +141,84 @@ def manager_update(deployment_id,
                    json_output,
                    logger,
                    client,
-                   tenant_name):
-    """Update a specified deployment according to the specified blueprint
+                   tenant_name,
+                   blueprint_id,
+                   visibility,
+                   validate):
+    """Update a specified deployment according to the specified blueprint.
+    The blueprint can be supplied as an id of a blueprint that already exists
+    in the system (recommended).
+    The other way (not recommended) is to supply a blueprint to upload and
+    use it to update the deployment [DEPRECATED]
+    Note: using the deprecated way will upload the blueprint and then use it
+    to update the deployment. So doing it twice with the same blueprint may
+    fail because the blueprint id in the system will already exist. In this
+    case it is better to use the first and recommended way, and simply pass
+    the blueprint id.
 
     `DEPLOYMENT_ID` is the deployment's id to update.
     """
-    if not utils.is_archive(blueprint_path) and \
-            blueprint_filename not in (DEFAULT_BLUEPRINT_PATH, blueprint_path):
+    if not blueprint_id and not blueprint_path:
         raise CloudifyCliError(
-            '--blueprint-filename param should be passed '
-            'only when updating from an archive'
+            'Must supply either an id of an existing blueprint, '
+            'or a path to a new blueprint')
+    if (not blueprint_path or not utils.is_archive(blueprint_path)) \
+            and blueprint_filename not in (DEFAULT_BLUEPRINT_PATH,
+                                           blueprint_path):
+        raise CloudifyCliError(
+            '--blueprint-filename param should be passed only when updating '
+            'from an archive, so --blueprint-path must be passed as a path to '
+            'a blueprint archive'
         )
 
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
-    blueprint_or_archive_path = blueprint_path
+    if blueprint_path:
+        logger.warn(
+            'DEPRECATED: passing a path to blueprint for deployment update '
+            'is deprecated, and it is recommended instead to pass an id of '
+            'a blueprint that is already in the system. Note that '
+            'the blueprint passed will be added to the system and '
+            'then deployment update will start.'
+        )
+        processed_blueprint_path, blueprint_id = get_blueprint_path_and_id(
+            blueprint_path, blueprint_filename, blueprint_id)
+        try:
+            ctx.invoke(blueprints.upload,
+                       blueprint_path=processed_blueprint_path,
+                       blueprint_id=blueprint_id,
+                       blueprint_filename=blueprint_filename,
+                       validate=validate,
+                       visibility=visibility,
+                       tenant_name=tenant_name)
+        finally:
+            # Every situation other than the user providing a path of a local
+            # yaml means a temp folder will be created that should be later
+            # removed.
+            if processed_blueprint_path != blueprint_path:
+                shutil.rmtree(os.path.dirname(os.path.dirname(
+                    processed_blueprint_path)))
+
     logger.info('Updating deployment {0} using blueprint {1}'.format(
-        deployment_id, blueprint_or_archive_path))
-
-    deployment_update = client.deployment_updates.update(
-        deployment_id,
-        blueprint_or_archive_path,
-        application_file_name=blueprint_filename,
-        inputs=inputs,
-        workflow_id=workflow_id,
-        skip_install=skip_install,
-        skip_uninstall=skip_uninstall,
-        force=force)
+        deployment_id, blueprint_id))
+    deployment_update = \
+        client.deployment_updates.update_with_existing_blueprint(
+            deployment_id,
+            blueprint_id,
+            inputs,
+            skip_install,
+            skip_uninstall,
+            workflow_id,
+            force
+        )
     events_logger = get_events_logger(json_output)
-
     execution = execution_events_fetcher.wait_for_execution(
         client,
         client.executions.get(deployment_update.execution_id),
         events_handler=events_logger,
         include_logs=include_logs,
-        timeout=None)  # don't timeout ever
+        timeout=None  # don't timeout ever
+    )
 
     if execution.error:
         logger.info("Execution of workflow '{0}' for deployment "

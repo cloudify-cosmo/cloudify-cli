@@ -32,7 +32,10 @@ class DeploymentUpdatesTest(CliCommandTest):
         self.use_manager()
 
         self.client.deployment_updates.update = MagicMock()
+        self.client.blueprints.upload = MagicMock()
         self.client.executions = MagicMock()
+        self.client.deployment_updates.update_with_existing_blueprint = \
+            MagicMock()
 
         self._mock_wait_for_executions(False)
 
@@ -119,7 +122,7 @@ class DeploymentUpdatesTest(CliCommandTest):
     def test_deployment_update_blueprint_filename_parameter(self):
         self.invoke(
             'cfy deployments update -p '
-            '{0} -n my-blueprint.yaml my_deployment'
+            '{0} -n blueprint.yaml my_deployment'
             .format(SAMPLE_ARCHIVE_PATH))
 
     def test_deployment_update_inputs_parameter(self):
@@ -144,16 +147,12 @@ class DeploymentUpdatesTest(CliCommandTest):
         self.assertIn('Missing argument "deployment-id"', outcome.output)
 
     def test_deployment_update_no_bp_path_nor_archive_loc_parameters(self):
-        outcome = self.invoke(
+        self.invoke(
             'cfy deployments update my_deployment'.format(
                 BLUEPRINTS_DIR),
-            err_str_segment='2',  # Exit code
-            exception=SystemExit)
-
-        self.assertIn(
-            'Missing option "-p" / "--blueprint-path"',
-            outcome.output
-        )
+            err_str_segment='Must supply either an id of an existing '
+                            'blueprint, or a path to a new blueprint',
+            exception=CloudifyCliError)
 
 
 class DeploymentsTest(CliCommandTest):
