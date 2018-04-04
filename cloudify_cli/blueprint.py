@@ -125,3 +125,14 @@ def generate_id(blueprint_path, blueprint_filename=DEFAULT_BLUEPRINT_PATH):
         filename, _ = os.path.splitext(os.path.basename(blueprint_filename))
         blueprint_id = (blueprint_id + '.' + filename)
     return blueprint_id.replace('_', '-')
+
+
+def get_blueprint_path_and_id(blueprint_path,
+                              blueprint_filename,
+                              blueprint_id):
+    processed_blueprint_path = get(blueprint_path,
+                                   blueprint_filename,
+                                   download=True)
+    blueprint_id = blueprint_id or generate_id(processed_blueprint_path,
+                                               blueprint_filename)
+    return processed_blueprint_path, blueprint_id

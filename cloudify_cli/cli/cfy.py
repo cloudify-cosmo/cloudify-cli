@@ -983,12 +983,12 @@ class Options(object):
             help=help)
 
     @staticmethod
-    def blueprint_filename():
+    def blueprint_filename(extra_message=''):
         return click.option(
             '-n',
             '--blueprint-filename',
             default=DEFAULT_BLUEPRINT_PATH,
-            help=helptexts.BLUEPRINT_FILENAME)
+            help=helptexts.BLUEPRINT_FILENAME + extra_message)
 
     @staticmethod
     def workflow_id(default):
@@ -1092,7 +1092,8 @@ class Options(object):
             '-p',
             '--blueprint-path',
             required=required,
-            type=click.Path(exists=True))
+            type=click.Path(exists=True),
+            help=helptexts.BLUEPRINT_PATH)
 
     @staticmethod
     def tenant_role(help_text, required=False):
