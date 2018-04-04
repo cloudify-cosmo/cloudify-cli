@@ -835,6 +835,13 @@ class Options(object):
             help=helptexts.SECRET_UPDATE_IF_EXISTS,
         )
 
+        self.secret_hidden_value = click.option(
+            '--hidden-value',
+            is_flag=True,
+            default=False,
+            help=helptexts.SECRET_HIDDEN_VALUE,
+        )
+
         self.plugins_bundle_path = click.option(
             '-p',
             '--path',
