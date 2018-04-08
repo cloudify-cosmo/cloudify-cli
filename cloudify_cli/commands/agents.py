@@ -283,3 +283,29 @@ def transfer(deployment_id,
     get_deployments_and_run_worker(
         deployment_id, include_logs, tenant_name,
         logger, client, all_tenants, 'transfer_agents', params)
+
+
+@agents.command(name='validate',
+                short_help=
+                'Validates the connection between the Cloudify-Manager and the'
+                ' Cloudify-Agents (installed on remote hosts).'
+                ' [Manager only]')
+@cfy.argument('deployment-id', required=False)
+@cfy.options.include_logs
+@cfy.options.verbose()
+@cfy.options.tenant_name_for_list(
+    required=False, resource_name_for_help='relevant deployment(s)')
+@cfy.options.all_tenants
+@cfy.pass_logger
+@cfy.pass_client()
+def validate(deployment_id,
+             include_logs,
+             tenant_name,
+             logger,
+             client,
+             all_tenants):
+
+    # params = {'manager_ip': manager_ip}
+    get_deployments_and_run_worker(
+        deployment_id, include_logs, tenant_name,
+        logger, client, all_tenants, 'validate_agents')
