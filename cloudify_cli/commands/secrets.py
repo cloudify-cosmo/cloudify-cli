@@ -27,7 +27,7 @@ from ..utils import (handle_client_error,
                      validate_visibility)
 
 SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'visibility',
-                   'tenant_name', 'created_by']
+                   'tenant_name', 'created_by', 'is_hidden_value']
 
 
 @cfy.group(name='secrets')
@@ -46,6 +46,7 @@ def secrets():
 @cfy.options.secret_file
 @cfy.options.secret_update_if_exists
 @cfy.options.visibility(mutually_exclusive_required=False)
+@cfy.options.secret_hidden_value
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
@@ -54,6 +55,7 @@ def create(key,
            secret_string,
            secret_file,
            update_if_exists,
+           hidden_value,
            visibility,
            logger,
            client):
@@ -81,6 +83,7 @@ def create(key,
     client.secrets.create(key,
                           secret_string,
                           update_if_exists,
+                          hidden_value,
                           visibility)
 
     logger.info('Secret `{0}` created'.format(key))
@@ -102,7 +105,10 @@ def get(key, logger, client):
     with handle_client_error(404, graceful_msg, logger):
         logger.info('Getting info for secret `{0}`...'.format(key))
         secret_details = client.secrets.get(key)
+        if secret_details.is_hidden_value and secret_details.value == '':
+            secret_details.value = '*********'
         secret_details.pop('private_resource')
+        secret_details.pop('resource_availability')
         print_details(secret_details, 'Requested secret info:')
 
 
