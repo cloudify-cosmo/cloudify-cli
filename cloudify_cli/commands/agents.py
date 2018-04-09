@@ -191,7 +191,8 @@ def run_worker(
     def worker(dep_id):
         timeout = 900
         try:
-            execution = client.executions.start(dep_id, workflow_id, parameters)
+            execution = client.executions.start(
+                dep_id, workflow_id, parameters)
             execution = wait_for_execution(
                 client,
                 execution,
@@ -244,9 +245,8 @@ def run_worker(
 
 
 @agents.command(name='transfer',
-                short_help=
-                'Configure agents to work with a new Cloudify-Manager'
-                ' [Manager only]')
+                short_help='Configure agents to work with a new'
+                           ' Cloudify-Manager [Manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
 @cfy.options.verbose()
@@ -285,10 +285,9 @@ def transfer(deployment_id,
 
 
 @agents.command(name='validate',
-                short_help=
-                'Validates the connection between the Cloudify-Manager and the'
-                ' Cloudify-Agents (installed on remote hosts).'
-                ' [Manager only]')
+                short_help='Validates the connection between the'
+                           ' Cloudify-Manager and the Cloudify-Agents'
+                           ' (installed on remote hosts). [Manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
 @cfy.options.verbose()
