@@ -55,5 +55,6 @@ setup(
         'cloudify-rest-client==4.4.dev1',
         'cloudify-plugins-common==4.4.dev1',
         'backports.shutil_get_terminal_size==1.0.0',
+        'ipaddress==1.0.19'
     ]
 )
