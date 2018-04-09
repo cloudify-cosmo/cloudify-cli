@@ -191,7 +191,6 @@ def run_worker(
     def worker(dep_id):
         timeout = 900
         try:
-            logger.info('*** parameters: {0} ***'.format(parameters))
             execution = client.executions.start(dep_id, workflow_id, parameters)
             execution = wait_for_execution(
                 client,
@@ -276,11 +275,6 @@ def transfer(deployment_id,
     """
     with open(manager_certificate, 'r') as ssl_file:
         manager_certificate = ssl_file.read()
-
-    logger.info('*************************')
-    logger.info('New Manager IP: {0}'.format(manager_ip))
-    logger.info('New Manager Cert: {0}'.format(manager_certificate))
-    logger.info('New Manager REST token: {0}'.format(manager_rest_token))
 
     params = {'manager_ip': manager_ip,
               'manager_certificate': manager_certificate,
