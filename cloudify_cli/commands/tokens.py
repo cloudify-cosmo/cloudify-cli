@@ -36,7 +36,7 @@ def tokens():
 @cfy.pass_client()
 @cfy.pass_logger
 def get(logger, client):
-    """returns updated REST token from the Manager.
+    """returns a valid REST token from the Cloudify Manager.
     """
     logger.info('Retrieving REST token')
     token = client.tokens.get()

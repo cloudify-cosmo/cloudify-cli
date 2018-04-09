@@ -246,7 +246,7 @@ def run_worker(
 
 @agents.command(name='transfer',
                 short_help=
-                'Configure agents to work with a new Cloudify Manager'
+                'Configure agents to work with a new Cloudify-Manager'
                 ' [Manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
@@ -268,7 +268,12 @@ def transfer(deployment_id,
              manager_ip,
              manager_certificate,
              manager_rest_token):
+    """Configure agents to work with a new Cloudify-Manager.
 
+    `DEPLOYMENT_ID` - The ID of the deployment you would like to
+    configure agents in.
+
+    """
     with open(manager_certificate, 'r') as ssl_file:
         manager_certificate = ssl_file.read()
 
@@ -304,7 +309,13 @@ def validate(deployment_id,
              logger,
              client,
              all_tenants):
+    """Validates the connection between the Cloudify-Manager and the'
+                ' Cloudify-Agents (installed on remote hosts).
 
+        `DEPLOYMENT_ID` - The ID of the deployment you would like to
+        validate agents for.
+
+        """
     # params = {'manager_ip': manager_ip}
     get_deployments_and_run_worker(
         deployment_id, include_logs, tenant_name,
