@@ -149,7 +149,7 @@ def create_deployments_list(client, deployment_id, logger):
                 "Deployment '{0}' is not installed".format(deployment_id)
             return dep_list, error_msg
 
-        logger.info("Installing agent for deployment '{0}'"
+        logger.info("Running execution for deployment '{0}'"
                     .format(deployment_id))
 
     # install agents for all deployments
@@ -161,7 +161,7 @@ def create_deployments_list(client, deployment_id, logger):
             error_msg = 'There are no deployments installed'
             return dep_list, error_msg
 
-        logger.info('Installing agents for all installed deployments')
+        logger.info('Running execution for all installed deployments')
 
     return dep_list, error_msg
 
