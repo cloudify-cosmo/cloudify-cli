@@ -171,8 +171,6 @@ def manager_update(ctx,
             'a blueprint archive'
         )
 
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
     if blueprint_path:
         logger.warn(
             'DEPRECATED: passing a path to blueprint for deployment update '
@@ -198,6 +196,8 @@ def manager_update(ctx,
             if processed_blueprint_path != blueprint_path:
                 shutil.rmtree(os.path.dirname(os.path.dirname(
                     processed_blueprint_path)))
+    elif tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
 
     logger.info('Updating deployment {0} using blueprint {1}'.format(
         deployment_id, blueprint_id))
