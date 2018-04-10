@@ -16,6 +16,7 @@
 
 import time
 import threading
+import os.path
 
 from cloudify import logs
 
@@ -79,12 +80,12 @@ def install(deployment_id,
     See Cloudify's documentation at http://docs.getcloudify.org for more
     information.
     """
-    get_deployments_and_run_worker(
+    get_deployments_and_run_workers(
         deployment_id, include_logs, tenant_name,
         logger, client, all_tenants, 'install_new_agents')
 
 
-def get_deployments_and_run_worker(
+def get_deployments_and_run_workers(
         deployment_id,
         include_logs,
         tenant_name,
@@ -103,7 +104,7 @@ def get_deployments_and_run_worker(
             # install agents for a specified deployments or for all
             # deployments under tenant (depends if 'deployment_id' was passed)
             deps, error_msg = create_deployments_list(
-                tenant_client, deployment_id, logger)
+                tenant_client, deployment_id, logger, workflow_id)
             if not error_msg:
                 no_deployments_found = False
                 run_worker(deps, tenant_client, logger, include_logs,
@@ -115,15 +116,15 @@ def get_deployments_and_run_worker(
         # install agents for all deployments under a specified tenant
         if tenant_name:
             logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
-        deps, error_msg\
-            = create_deployments_list(client, deployment_id, logger)
+        deps, error_msg = create_deployments_list(
+            client, deployment_id, logger, workflow_id)
         if error_msg:
             logger.error(error_msg)
             raise SuppressedCloudifyCliError()
         run_worker(deps, client, logger, include_logs, workflow_id, parameters)
 
 
-def create_deployments_list(client, deployment_id, logger):
+def create_deployments_list(client, deployment_id, logger, workflow_id):
     """
     Creates a list of all the deployments who's agents
     will be installed.
@@ -149,8 +150,8 @@ def create_deployments_list(client, deployment_id, logger):
                 "Deployment '{0}' is not installed".format(deployment_id)
             return dep_list, error_msg
 
-        logger.info("Running execution for deployment '{0}'"
-                    .format(deployment_id))
+        logger.info("Running workflow '{0}' for deployment '{1}'"
+                    .format(workflow_id, deployment_id))
 
     # install agents for all deployments
     else:
@@ -161,7 +162,8 @@ def create_deployments_list(client, deployment_id, logger):
             error_msg = 'There are no deployments installed'
             return dep_list, error_msg
 
-        logger.info('Running execution for all installed deployments')
+        logger.info("Running workflow '{0}' for all installed deployments".
+                    format(workflow_id))
 
     return dep_list, error_msg
 
@@ -245,8 +247,8 @@ def run_worker(
 
 
 @agents.command(name='transfer',
-                short_help='Configure agents to work with a new'
-                           ' Cloudify-Manager [Manager only]')
+                short_help='Transfer live agents to work with a new'
+                           ' Cloudify Manager [Manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
 @cfy.options.verbose()
@@ -270,23 +272,32 @@ def transfer(deployment_id,
     """Configure agents to work with a new Cloudify-Manager.
 
     `DEPLOYMENT_ID` - The ID of the deployment you would like to
-    configure agents in.
+    configure agents on.
 
     """
-    with open(manager_certificate, 'r') as ssl_file:
-        manager_certificate = ssl_file.read()
+    if not os.path.exist(manager_certificate):
+        logger.error("Manager's SSL certificate file does not exist: {0}".
+                     format(manager_certificate))
+        raise IOError
+    try:
+        with open(manager_certificate, 'r') as ssl_file:
+            manager_certificate = ssl_file.read()
+    except IOError:
+        logger.error("Could not read Manager's SSL certificate from the given"
+                     " path: {0}".format(manager_certificate))
+        raise
 
     params = {'manager_ip': manager_ip,
               'manager_certificate': manager_certificate,
               'manager_rest_token': manager_rest_token}
-    get_deployments_and_run_worker(
+    get_deployments_and_run_workers(
         deployment_id, include_logs, tenant_name,
         logger, client, all_tenants, 'transfer_agents', params)
 
 
 @agents.command(name='validate',
                 short_help='Validates the connection between the'
-                           ' Cloudify-Manager and the Cloudify-Agents'
+                           ' Cloudify Manager and the live Cloudify Agents'
                            ' (installed on remote hosts). [Manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
@@ -302,14 +313,13 @@ def validate(deployment_id,
              logger,
              client,
              all_tenants):
-    """Validates the connection between the Cloudify-Manager and the'
-                ' Cloudify-Agents (installed on remote hosts).
+    """Validates the connection between the Cloudify Manager and the
+                'live Cloudify Agents (installed on remote hosts).
 
         `DEPLOYMENT_ID` - The ID of the deployment you would like to
         validate agents for.
 
         """
-    # params = {'manager_ip': manager_ip}
-    get_deployments_and_run_worker(
+    get_deployments_and_run_workers(
         deployment_id, include_logs, tenant_name,
         logger, client, all_tenants, 'validate_agents')
