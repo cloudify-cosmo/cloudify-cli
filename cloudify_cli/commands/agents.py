@@ -248,7 +248,7 @@ def run_worker(
 
 @agents.command(name='transfer',
                 short_help='Transfer live agents to work with a new'
-                           ' Cloudify Manager [Manager only]')
+                           ' Cloudify Manager [manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
 @cfy.options.verbose()
@@ -269,14 +269,15 @@ def transfer(deployment_id,
              manager_ip,
              manager_certificate,
              manager_rest_token):
-    """Configure agents to work with a new Cloudify-Manager.
+    """Configure agents to work with a new Cloudify Manager.
 
     `DEPLOYMENT_ID` - The ID of the deployment you would like to
     configure agents on.
 
     """
-    if not os.path.exist(manager_certificate):
-        logger.error("Manager's SSL certificate file does not exist: {0}".
+    if not os.path.exists(manager_certificate):
+        logger.error("Manager's SSL certificate file does not exist in the"
+                     " following path: {0}".
                      format(manager_certificate))
         raise IOError
     try:
@@ -285,7 +286,7 @@ def transfer(deployment_id,
     except IOError:
         logger.error("Could not read Manager's SSL certificate from the given"
                      " path: {0}".format(manager_certificate))
-        raise
+        raise IOError
 
     params = {'manager_ip': manager_ip,
               'manager_certificate': manager_certificate,
@@ -298,7 +299,7 @@ def transfer(deployment_id,
 @agents.command(name='validate',
                 short_help='Validates the connection between the'
                            ' Cloudify Manager and the live Cloudify Agents'
-                           ' (installed on remote hosts). [Manager only]')
+                           ' (installed on remote hosts). [manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
 @cfy.options.verbose()
