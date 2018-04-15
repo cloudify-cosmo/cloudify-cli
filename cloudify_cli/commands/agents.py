@@ -276,17 +276,14 @@ def transfer(deployment_id,
 
     """
     if not os.path.exists(manager_certificate):
-        logger.error("Manager's SSL certificate file does not exist in the"
-                     " following path: {0}".
-                     format(manager_certificate))
-        raise IOError
+        raise IOError("Manager's SSL certificate file does not exist in the"
+                      " following path: {0}".format(manager_certificate))
     try:
         with open(manager_certificate, 'r') as ssl_file:
             manager_certificate = ssl_file.read()
-    except IOError:
-        logger.error("Could not read Manager's SSL certificate from the given"
-                     " path: {0}".format(manager_certificate))
-        raise IOError
+    except IOError as e:
+        raise IOError("Could not read Manager's SSL certificate from the given"
+                      " path: {0}\nError:{1}".format(manager_certificate, e))
 
     params = {'manager_ip': manager_ip,
               'manager_certificate': manager_certificate,
