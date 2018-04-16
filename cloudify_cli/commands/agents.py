@@ -65,6 +65,8 @@ def _deployment_exists(client, deployment_id):
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='relevant deployment(s)')
 @cfy.options.all_tenants
+@cfy.options.cfy_manager_ip()
+@cfy.options.manager_certificate()
 @cfy.pass_logger
 @cfy.pass_client()
 def install(deployment_id,
@@ -72,7 +74,9 @@ def install(deployment_id,
             tenant_name,
             logger,
             client,
-            all_tenants):
+            all_tenants,
+            manager_ip=None,
+            manager_cert=None):
     """Install agents on the hosts of existing deployments
 
     `DEPLOYMENT_ID` - The ID of the deployment you would like to
@@ -81,9 +85,13 @@ def install(deployment_id,
     See Cloudify's documentation at http://docs.getcloudify.org for more
     information.
     """
+    if manager_cert:
+        manager_cert = _validate_certificate_file(manager_cert)
+    params = {'manager_ip': manager_ip,
+              'manager_certificate': manager_cert}
     get_deployments_and_run_workers(
         deployment_id, include_logs, tenant_name,
-        logger, client, all_tenants, 'install_new_agents')
+        logger, client, all_tenants, 'install_new_agents', params)
 
 
 def get_deployments_and_run_workers(
@@ -256,8 +264,8 @@ def run_worker(
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='relevant deployment(s)')
 @cfy.options.all_tenants
-@cfy.options.manager_ip
-@cfy.options.manager_certificate
+@cfy.options.cfy_manager_ip(required=True)
+@cfy.options.manager_certificate(required=True)
 @cfy.options.manager_rest_token
 @cfy.pass_logger
 @cfy.pass_client()
@@ -276,16 +284,7 @@ def transfer(deployment_id,
     configure agents on.
 
     """
-    if not os.path.exists(manager_certificate):
-        raise IOError("Manager's SSL certificate file does not exist in the"
-                      " following path: {0}".format(manager_certificate))
-    try:
-        with open(manager_certificate, 'r') as ssl_file:
-            manager_certificate = ssl_file.read()
-    except IOError as e:
-        raise IOError("Could not read Manager's SSL certificate from the given"
-                      " path: {0}\nError:{1}".format(manager_certificate, e))
-
+    manager_certificate = _validate_certificate_file(manager_certificate)
     params = {'manager_ip': manager_ip,
               'manager_certificate': manager_certificate,
               'manager_rest_token': manager_rest_token}
@@ -322,3 +321,16 @@ def validate(deployment_id,
     get_deployments_and_run_workers(
         deployment_id, include_logs, tenant_name,
         logger, client, all_tenants, 'validate_agents')
+
+
+def _validate_certificate_file(certificate):
+    if not os.path.exists(certificate):
+        raise IOError("Manager's SSL certificate file does not exist in the"
+                      " following path: {0}".format(certificate))
+    try:
+        with open(certificate, 'r') as ssl_file:
+            manager_certificate = ssl_file.read()
+    except IOError as e:
+        raise IOError("Could not read Manager's SSL certificate from the given"
+                      " path: {0}\nError:{1}".format(certificate, e))
+    return manager_certificate
