@@ -13,6 +13,8 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+import os
+import tempfile
 from mock import MagicMock, patch
 
 from .test_base import CliCommandTest
@@ -304,3 +306,21 @@ class AgentsTests(CliCommandTest):
         self.invoke('cfy agents install --all-tenants dep99',
                     exception=SuppressedCloudifyCliError,
                     err_str_segment='')
+
+    def test_agents_transfer_fail_ssl_cert_file_not_exists(self):
+        self.invoke('cfy agents transfer --manager-ip 0.0.0.0'
+                    ' --manager_certificate cert.txt'
+                    ' --manager_rest_token resttoken',
+                    exception=IOError,
+                    err_str_segment="Manager's SSL certificate file does not"
+                                    " exist in the following path:")
+
+    def test_agents_transfer_fail_no_permission_to_ssl_cert_file(self):
+        with tempfile.NamedTemporaryFile() as f:
+            os.chmod(f.name, 000)
+            command = 'cfy agents transfer --manager-ip 0.0.0.0' \
+                      ' --manager_certificate {0} --manager_rest_token' \
+                      ' resttoken'.format(f.name)
+            self.invoke(command, exception=IOError,
+                        err_str_segment="Could not read Manager's SSL"
+                                        " certificate from the given path:")
