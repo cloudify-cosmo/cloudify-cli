@@ -879,12 +879,6 @@ class Options(object):
             help=helptexts.MANAGER_IP
         )
 
-        self.manager_certificate = click.option(
-            '--manager_certificate',
-            required=True,
-            help=helptexts.MANAGER_CERTIFICATE_PATH
-        )
-
         self.manager_rest_token = click.option(
             '--manager_rest_token',
             required=True,
@@ -1156,6 +1150,20 @@ class Options(object):
             '--yaml-path',
             required=True,
             help=helptexts.PLUGIN_YAML_PATH)
+
+    @staticmethod
+    def cfy_manager_ip(required=False):
+        args = ['--manager-ip']
+        kwargs = {'required': required,
+                  'help': helptexts.MANAGER_IP}
+        return click.option(*args, **kwargs)
+
+    @staticmethod
+    def manager_certificate(required=False):
+        args = ['--manager_certificate']
+        kwargs = {'required': required,
+                  'help': helptexts.MANAGER_CERTIFICATE_PATH}
+        return click.option(*args, **kwargs)
 
 
 options = Options()
