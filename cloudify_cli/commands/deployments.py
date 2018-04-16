@@ -84,8 +84,7 @@ def manager_list(blueprint_id,
     If `--blueprint-id` is provided, list deployments for that blueprint.
     Otherwise, list deployments for all blueprints.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     if blueprint_id:
         logger.info('Listing deployments for blueprint {0}...'.format(
             blueprint_id))
@@ -270,8 +269,7 @@ def manager_create(blueprint_id,
     `DEPLOYMENT_ID` is the id of the deployment you'd like to create.
 
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
     deployment_id = deployment_id or blueprint_id
@@ -323,8 +321,7 @@ def manager_delete(deployment_id, force, logger, client, tenant_name):
 
     `DEPLOYMENT_ID` is the id of the deployment to delete.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Deleting deployment {0}...'.format(deployment_id))
     client.deployments.delete(deployment_id, force)
     logger.info("Deployment deleted")
@@ -343,8 +340,7 @@ def manager_outputs(deployment_id, logger, client, tenant_name):
 
     `DEPLOYMENT_ID` is the id of the deployment to print outputs for.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving outputs for deployment {0}...'.format(
         deployment_id))
     dep = client.deployments.get(deployment_id, _include=['outputs'])
@@ -373,8 +369,7 @@ def manager_inputs(deployment_id, logger, client, tenant_name):
 
     `DEPLOYMENT_ID` is the id of the deployment to print inputs for.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving inputs for deployment {0}...'.format(
         deployment_id))
     dep = client.deployments.get(deployment_id, _include=['inputs'])

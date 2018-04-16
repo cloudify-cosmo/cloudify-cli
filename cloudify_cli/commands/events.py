@@ -16,6 +16,7 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
+from .. import utils
 from ..cli import cfy
 from ..logger import get_events_logger
 from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
@@ -55,8 +56,7 @@ def list(execution_id,
          logger):
     """Display events for an execution
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing events for execution id {0} '
                 '[include_logs={1}]'.format(execution_id, include_logs))
     try:
@@ -116,8 +116,7 @@ def delete(deployment_id, include_logs, logger, client, tenant_name):
 
     `EXECUTION_ID` is the execution events to delete.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info(
         'Deleting events for deployment id {0} [include_logs={1}]'.format(
             deployment_id, include_logs))

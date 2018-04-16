@@ -52,8 +52,7 @@ def get(node_instance_id, logger, client, tenant_name):
 
     `NODE_INSTANCE_ID` is the id of the node-instance to get information on.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving node instance {0}'.format(node_instance_id))
     try:
         node_instance = client.node_instances.get(node_instance_id)
@@ -105,8 +104,7 @@ def list(deployment_id,
     If `DEPLOYMENT_ID` is provided, list node-instances for that deployment.
     Otherwise, list node-instances for all deployments.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     try:
         if deployment_id:
             logger.info('Listing instances for deployment {0}...'.format(
