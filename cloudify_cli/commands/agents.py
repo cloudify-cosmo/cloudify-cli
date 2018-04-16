@@ -20,6 +20,7 @@ import os.path
 
 from cloudify import logs
 
+from .. import utils
 from ..cli import cfy
 from ..exceptions import ExecutionTimeoutError
 from ..exceptions import SuppressedCloudifyCliError
@@ -113,9 +114,9 @@ def get_deployments_and_run_workers(
             logger.error(error_msg)
             raise SuppressedCloudifyCliError()
     else:
-        # install agents for all deployments under a specified tenant
-        if tenant_name:
-            logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+        # if tenant name was passed, install agents for all deployments
+        # under a specified tenant
+        utils.explicit_tenant_name_message(tenant_name, logger)
         deps, error_msg = create_deployments_list(
             client, deployment_id, logger, workflow_id)
         if error_msg:

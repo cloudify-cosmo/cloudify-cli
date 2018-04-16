@@ -45,8 +45,7 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
 
     `WORKFLOW_ID` is the id of the workflow to get information on.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     try:
         logger.info('Retrieving workflow {0} for deployment {1}'.format(
             workflow_id, deployment_id))
@@ -107,8 +106,7 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
 def list(deployment_id, logger, client, tenant_name):
     """List all workflows on the manager for a specific deployment
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing workflows for deployment {0}...'.format(
         deployment_id))
     deployment = client.deployments.get(deployment_id)

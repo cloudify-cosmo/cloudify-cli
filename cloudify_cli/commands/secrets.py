@@ -19,6 +19,7 @@ import os
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
 from .. import env
+from .. import utils
 from ..cli import cfy
 from ..exceptions import CloudifyCliError
 from ..table import print_data, print_details
@@ -47,6 +48,7 @@ def secrets():
 @cfy.options.secret_update_if_exists
 @cfy.options.visibility(mutually_exclusive_required=False)
 @cfy.options.secret_hidden_value
+@cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
@@ -57,12 +59,14 @@ def create(key,
            update_if_exists,
            hidden_value,
            visibility,
+           tenant_name,
            logger,
            client):
     """Create a new secret (key-value pair)
 
     `KEY` is the new secret's key
     """
+    utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
     if secret_string and secret_file:
         raise CloudifyCliError('Failed to create secret key. '
@@ -91,15 +95,17 @@ def create(key,
 
 @secrets.command(name='get', short_help='Get details for a single secret')
 @cfy.argument('key', callback=cfy.validate_name)
+@cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def get(key, logger, client):
+def get(key, tenant_name, logger, client):
     """Get details for a single secret
 
     `KEY` is the secret's key
     """
+    utils.explicit_tenant_name_message(tenant_name, logger)
     graceful_msg = 'Requested secret with key `{0}` was not found in this ' \
                    'tenant'.format(key)
     with handle_client_error(404, graceful_msg, logger):
@@ -115,15 +121,17 @@ def get(key, logger, client):
 @secrets.command(name='update', short_help='Update an existing secret')
 @cfy.argument('key', callback=cfy.validate_name)
 @cfy.options.secret_string
+@cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def update(key, secret_string, logger, client):
+def update(key, secret_string, tenant_name, logger, client):
     """Update an existing secret
 
     `KEY` is the secret's key
     """
+    utils.explicit_tenant_name_message(tenant_name, logger)
     graceful_msg = 'Requested secret with key `{0}` was not found'.format(key)
     with handle_client_error(404, graceful_msg, logger):
         client.secrets.update(key, secret_string)
@@ -154,9 +162,7 @@ def list(sort_by,
          client):
     """List all secrets
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
-
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing all secrets...')
     secrets_list = client.secrets.list(
         sort=sort_by,
@@ -173,15 +179,17 @@ def list(sort_by,
 
 @secrets.command(name='delete', short_help='Delete a secret')
 @cfy.argument('key', callback=cfy.validate_name)
+@cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def delete(key, logger, client):
+def delete(key, tenant_name, logger, client):
     """Delete a secret
 
     `KEY` is the secret's key
     """
+    utils.explicit_tenant_name_message(tenant_name, logger)
     graceful_msg = 'Requested secret with key `{0}` was not found'.format(key)
     with handle_client_error(404, graceful_msg, logger):
         logger.info('Deleting secret `{0}`...'.format(key))
@@ -216,14 +224,16 @@ def set_global(key, logger, client):
                         valid_values=VISIBILITY_EXCEPT_PRIVATE,
                         mutually_exclusive_required=False)
 @cfy.options.verbose()
+@cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def set_visibility(key, visibility, logger, client):
+def set_visibility(key, visibility, tenant_name, logger, client):
     """Set the secret's visibility
 
     `KEY` is the secret's key
     """
+    utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility, valid_values=VISIBILITY_EXCEPT_PRIVATE)
     status_codes = [400, 403, 404]
     with prettify_client_error(status_codes, logger):

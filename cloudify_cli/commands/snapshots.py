@@ -126,8 +126,7 @@ def delete(snapshot_id, logger, client, tenant_name):
 
     `SNAPSHOT_ID` is the id of the snapshot to download.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Deleting snapshot {0}...'.format(snapshot_id))
     client.snapshots.delete(snapshot_id)
     logger.info('Snapshot deleted successfully')
@@ -150,8 +149,7 @@ def upload(snapshot_path,
 
     `SNAPSHOT_PATH` is the path to the snapshot to upload.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     snapshot_id = snapshot_id or utils.generate_suffixed_id('snapshot')
 
     logger.info('Uploading snapshot {0}...'.format(snapshot_path))
@@ -176,8 +174,7 @@ def download(snapshot_id, output_path, logger, client, tenant_name):
 
     `SNAPSHOT_ID` is the id of the snapshot to download.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Downloading snapshot {0}...'.format(snapshot_id))
     snapshot_name = output_path if output_path else snapshot_id
     progress_handler = utils.generate_progress_handler(snapshot_name, '')
@@ -211,8 +208,7 @@ def list(sort_by,
          client):
     """List all snapshots on the manager
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing snapshots...')
     snapshots = client.snapshots.list(sort=sort_by,
                                       is_descending=descending,

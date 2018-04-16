@@ -18,6 +18,7 @@ import json
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
+from .. import utils
 from ..cli import cfy
 from ..exceptions import CloudifyCliError
 
@@ -41,8 +42,7 @@ def groups():
 def list(deployment_id, logger, client, tenant_name):
     """List all groups for a deployment
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info("Listing groups for deployment {0}...".format(
         deployment_id))
     try:

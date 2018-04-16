@@ -75,8 +75,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
 
     `PLUGIN_ID` is the id of the plugin to delete.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Deleting plugin {0}...'.format(plugin_id))
     client.plugins.delete(plugin_id=plugin_id, force=force)
     logger.info('Plugin deleted')
@@ -108,9 +107,7 @@ def upload(ctx,
     """
     # Test whether the path is a valid URL. If it is, no point in doing local
     # validations - it will be validated on the server side anyway
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
-
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Creating plugin zip archive..')
     wagon_path = utils.get_local_path(plugin_path, create_temp=True)
     yaml_path = utils.get_local_path(yaml_path, create_temp=True)
@@ -164,8 +161,7 @@ def download(plugin_id, output_path, logger, client, tenant_name):
 
     `PLUGIN_ID` is the id of the plugin to download.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Downloading plugin {0}...'.format(plugin_id))
     plugin_name = output_path if output_path else plugin_id
     progress_handler = utils.generate_progress_handler(plugin_name, '')
@@ -189,8 +185,7 @@ def get(plugin_id, logger, client, tenant_name, get_data):
 
     `PLUGIN_ID` is the id of the plugin to get information on.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving plugin {0}...'.format(plugin_id))
     plugin = client.plugins.get(plugin_id, _get_data=get_data)
     _transform_plugin_response(plugin)
@@ -225,8 +220,7 @@ def list(sort_by,
          get_data):
     """List all plugins on the manager
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing all plugins...')
     plugins_list = client.plugins.list(sort=sort_by,
                                        is_descending=descending,

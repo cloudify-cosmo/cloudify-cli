@@ -60,8 +60,7 @@ def manager_get(execution_id, logger, client, tenant_name):
 
     `EXECUTION_ID` is the execution to get information on.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     try:
         logger.info('Retrieving execution {0}'.format(execution_id))
         execution = client.executions.get(execution_id)
@@ -114,8 +113,7 @@ def manager_list(
     If `DEPLOYMENT_ID` is provided, list executions for that deployment.
     Otherwise, list executions for all deployments.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     try:
         if deployment_id:
             logger.info('Listing executions for deployment {0}...'.format(
@@ -181,8 +179,7 @@ def manager_start(workflow_id,
 
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     events_logger = get_events_logger(json_output)
     events_message = "* Run 'cfy events list -e {0}' to retrieve the " \
                      "execution's events/logs"
@@ -294,8 +291,7 @@ def manager_cancel(execution_id, force, logger, client, tenant_name):
 
     `EXECUTION_ID` is the ID of the execution to cancel.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('{0}Cancelling execution {1}'.format(
         'Force-' if force else '', execution_id))
     client.executions.cancel(execution_id, force)

@@ -337,3 +337,8 @@ def get_local_path(source, destination=None, create_temp=False):
         raise CloudifyCliError(
             'You must provide either a path to a local file, or a remote URL '
             'using one of the allowed schemes: {0}'.format(allowed_schemes))
+
+
+def explicit_tenant_name_message(tenant_name, logger):
+    if tenant_name:
+        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))

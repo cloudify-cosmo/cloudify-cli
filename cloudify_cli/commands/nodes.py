@@ -52,8 +52,7 @@ def get(node_id, deployment_id, logger, client, tenant_name):
 
     `NODE_ID` is the node id to get information on.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving node {0} for deployment {1}'.format(
         node_id, deployment_id))
     try:
@@ -134,8 +133,7 @@ def list(deployment_id,
     If `DEPLOYMENT_ID` is provided, list nodes for that deployment.
     Otherwise, list nodes for all deployments.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     try:
         if deployment_id:
             logger.info('Listing nodes for deployment {0}...'.format(

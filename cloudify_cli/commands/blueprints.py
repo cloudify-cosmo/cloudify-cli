@@ -107,9 +107,7 @@ def upload(ctx,
     retrieved from GitHub).
     Supported archive types are: zip, tar, tar.gz and tar.bz2
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
-
+    utils.explicit_tenant_name_message(tenant_name, logger)
     processed_blueprint_path = blueprint.get(
         blueprint_path, blueprint_filename)
 
@@ -179,8 +177,7 @@ def download(blueprint_id, output_path, logger, client, tenant_name):
 
     `BLUEPRINT_ID` is the id of the blueprint to download.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Downloading blueprint {0}...'.format(blueprint_id))
     blueprint_name = output_path if output_path else blueprint_id
     progress_handler = utils.generate_progress_handler(blueprint_name, '')
@@ -203,8 +200,7 @@ def delete(blueprint_id, logger, client, tenant_name):
 
     `BLUEPRINT_ID` is the id of the blueprint to delete.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Deleting blueprint {0}...'.format(blueprint_id))
     client.blueprints.delete(blueprint_id)
     logger.info('Blueprint deleted')
@@ -244,8 +240,7 @@ def list(sort_by,
             blueprint['description'] = ''
         return blueprint
 
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing all blueprints...')
     blueprints_list = client.blueprints.list(
         sort=sort_by,
@@ -274,8 +269,7 @@ def get(blueprint_id, logger, client, tenant_name):
 
     `BLUEPRINT_ID` is the id of the blueprint to get information on.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving blueprint {0}...'.format(blueprint_id))
     blueprint_dict = client.blueprints.get(blueprint_id)
     deployments = client.deployments.list(_include=['id'],
@@ -304,8 +298,7 @@ def inputs(blueprint_id, logger, client, tenant_name):
 
     `BLUEPRINT_ID` is the path of the blueprint to get inputs for.
     """
-    if tenant_name:
-        logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving inputs for blueprint {0}...'.format(blueprint_id))
     blueprint_dict = client.blueprints.get(blueprint_id)
     inputs = blueprint_dict['plan']['inputs']
