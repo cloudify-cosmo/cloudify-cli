@@ -246,7 +246,7 @@ DRY_RUN = 'If set, no actual operations will be performed. This ' \
           'only prints the executed tasks, without side effects'
 
 MANAGER_IP = 'The private IP of the new Cloudify Manger.' \
-             ' This is the IP through which the agents connect to the manager'
+             ' This is the IP through which the agents connect to the Manager.'
 MANAGER_CERTIFICATE_PATH = 'A path to a file containing the SSL certificate' \
                            ' of the new Cloudify Manager.' \
                            ' The certificate is available on the Manager:' \

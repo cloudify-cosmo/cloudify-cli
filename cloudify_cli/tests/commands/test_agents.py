@@ -324,3 +324,18 @@ class AgentsTests(CliCommandTest):
             self.invoke(command, exception=IOError,
                         err_str_segment="Could not read Manager's SSL"
                                         " certificate from the given path:")
+
+    @patch('cloudify_cli.commands.agents.run_worker')
+    def test_agents_install_with_manager_ip_and_ssl_cert(self, worker_mock):
+        """
+        Expected behavior: install agents for all deployments in current
+                           tenant.
+        """
+        pass
+        # tenants_list, deps = self.create_tenants_and_deployments(2, 3)
+        # deps_id_list = [d['id'] for d in deps['tenant0']]
+        # self.mock_client(tenants_list, deps, [], True)
+        # self.invoke('cfy agents install')
+        # call_args = list(worker_mock.call_args)
+        # self.assertEqual(call_args[0][0], deps_id_list)
+        # self.assertEqual(1, worker_mock.call_count)
