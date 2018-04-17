@@ -14,10 +14,9 @@
 # limitations under the License.
 ############
 
-from __future__ import print_function
-
 import os
 import json
+import click
 from datetime import datetime
 
 from prettytable import PrettyTable
@@ -83,7 +82,7 @@ def generate(cols, data, defaults=None, labels=None):
 
 
 def display(title, tb):
-    print('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
+    click.echo('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
 
 
 def format_json_output(cols, data, defaults=None, labels=None):
@@ -95,7 +94,7 @@ def format_json_output(cols, data, defaults=None, labels=None):
             labels.get(col, col): item.get(col) or defaults.get(col)
             for col in cols
         }
-        print('{0}'.format(json.dumps(output)))
+        click.echo('{0}'.format(json.dumps(output)))
 
 
 def print_data(columns, items, header_text, max_width=None, defaults=None,
@@ -116,15 +115,15 @@ def print_data(columns, items, header_text, max_width=None, defaults=None,
 
 def print_details(data, title):
     if get_global_json_output():
-        print(json.dumps(data))
+        click.echo(json.dumps(data))
     else:
-        print(title)
+        click.echo(title)
 
         for item in data.items():
             field_name = str(item[0]) + ':'
             field_value = str(item[1])
             field_value = get_timestamp(field_value) or field_value
-            print('\t{0} {1}'.format(field_name.ljust(16), field_value))
+            click.echo('\t{0} {1}'.format(field_name.ljust(16), field_value))
 
 
 def get_timestamp(data):

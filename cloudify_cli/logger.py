@@ -16,9 +16,9 @@
 
 
 import os
-import sys
 import copy
 import json
+import click
 import logging
 import logging.config
 
@@ -168,8 +168,7 @@ def get_events_logger(json_output):
         :return:
         """
         for event in events:
-            sys.stdout.write('{}\n'.format(json.dumps(event)))
-            sys.stdout.flush()
+            click.echo(json.dumps(event))
 
     def text_events_logger(events):
         """The default events logger prints events as short messages.
@@ -180,8 +179,7 @@ def get_events_logger(json_output):
         for event in events:
             output = logs.create_event_message_prefix(event)
             if output:
-                sys.stdout.write('{}\n'.format(output))
-                sys.stdout.flush()
+                click.echo(output)
 
     return json_events_logger if json_output else text_events_logger
 
