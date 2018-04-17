@@ -186,18 +186,6 @@ def mock_stdout():
         yield stdout
 
 
-@contextmanager
-def mock_logger(attribute_path):
-    output = StringIO()
-
-    class MockLogger(object):
-        @staticmethod
-        def info(message):
-            output.write(message)
-    with patch(attribute_path, MockLogger):
-        yield output
-
-
 class MockPagination(dict):
     def __init__(self, total=0):
         self.total = total

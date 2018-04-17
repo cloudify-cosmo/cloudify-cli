@@ -183,7 +183,7 @@ class ClusterNodesTest(CliCommandTest):
             ClusterNode({'name': 'node name 1', 'host_ip': '1.2.3.4'})
         ])
         outcome = self.invoke('cfy cluster nodes list')
-        self.assertIn('node name 1', outcome.logs)
+        self.assertIn('node name 1', outcome.output)
 
     def test_list_not_initialized(self):
         self.client.cluster.status = mock.Mock(

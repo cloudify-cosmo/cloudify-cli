@@ -60,7 +60,7 @@ from ..execution_events_fetcher import ExecutionEventsFetcher
 from . import cfy
 
 from .commands.test_base import CliCommandTest
-from .commands.mocks import mock_logger, mock_stdout, MockListResponse
+from .commands.mocks import mock_stdout, MockListResponse
 from .commands.constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH
 
 
@@ -521,11 +521,11 @@ class TestLogger(CliCommandTest):
         def mock_create_message(event):
             return None if event['key'] == 'hide' else event['key']
 
-        with mock_logger('cloudify_cli.logger._lgr') as output:
+        with mock_stdout() as output:
             with patch('cloudify.logs.create_event_message_prefix',
                        mock_create_message):
                 events_logger(events)
-        self.assertEqual(events[0]['key'], output.getvalue())
+        self.assertEqual(events[0]['key'], output.getvalue().strip())
 
     def test_json_events_logger(self):
         events_logger = logger.get_events_logger(json_output=True)

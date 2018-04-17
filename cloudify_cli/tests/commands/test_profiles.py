@@ -23,10 +23,10 @@ class ProfilesTest(CliCommandTest):
     def test_get_active_profile(self):
         self.use_manager()
         outcome = self.invoke('profiles show-current')
-        self.assertIn('manager_ip', outcome.logs)
-        self.assertIn('10.10.1.10', outcome.logs)
-        self.assertIn('rest_port', outcome.logs)
-        self.assertIn('80', outcome.logs)
+        self.assertIn('manager_ip', outcome.output)
+        self.assertIn('10.10.1.10', outcome.output)
+        self.assertIn('rest_port', outcome.output)
+        self.assertIn('80', outcome.output)
 
     def test_get_profile(self):
         self.use_manager()
@@ -41,10 +41,10 @@ class ProfilesTest(CliCommandTest):
     def test_list_profiles(self):
         self.use_manager()
         outcome = self.invoke('profiles list')
-        self.assertIn('manager_ip', outcome.logs)
-        self.assertIn('*10.10.1.10', outcome.logs)
-        self.assertIn('rest_port', outcome.logs)
-        self.assertIn('80', outcome.logs)
+        self.assertIn('manager_ip', outcome.output)
+        self.assertIn('*10.10.1.10', outcome.output)
+        self.assertIn('rest_port', outcome.output)
+        self.assertIn('80', outcome.output)
 
     def test_list_profiles_no_profiles(self):
         outcome = self.invoke('profiles list')

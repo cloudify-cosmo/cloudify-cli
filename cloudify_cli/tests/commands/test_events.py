@@ -1,6 +1,5 @@
 import json
 import time
-from StringIO import StringIO
 
 from mock import patch
 
@@ -143,12 +142,7 @@ class EventsTest(CliCommandTest):
         self.client.executions.get = self._mock_executions_get
         self.client.events.list = self._mock_events_list
 
-        # Since we're tailing stdout here, we have to patch it.
-        # Can't just read the output once.
-        stdout = StringIO()
-        with patch('sys.stdout', stdout):
-            self.invoke('cfy events list -e execution-id --tail')
-        output = stdout.getvalue()
+        output = self.invoke('cfy events list -e execution-id --tail').output
         expected_events = self._get_events_before(
             self.execution_termination_time)
 
@@ -183,7 +177,7 @@ class EventsTest(CliCommandTest):
             flag))
         if flag == '--json-output':
             return outcome.output
-        return outcome.logs
+        return outcome.output
 
     def _patch_clients_for_deletion(self):
         self.client.deployments.get = self._mock_deployments_get

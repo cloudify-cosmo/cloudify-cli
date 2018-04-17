@@ -76,7 +76,7 @@ class WorkflowsTest(CliCommandTest):
 
         self.client.deployments.get = MagicMock(return_value=deployment)
 
-        output = self.invoke('cfy workflows list -d a-deployment-id').logs
+        output = self.invoke('cfy workflows list -d a-deployment-id').output
         first = output.find('my_workflow_0')
         second = output.find('my_workflow_1')
         self.assertTrue(0 < first < second)
