@@ -72,8 +72,6 @@ class BlueprintsTest(CliCommandTest):
         outcome = self.invoke('blueprints download a-blueprint-id')
         self.assertIn('Blueprint downloaded as test', outcome.logs)
 
-    @patch('cloudify_cli.table.generate', autospec=True)
-    @patch('cloudify_cli.table.log', autospec=True)
     def test_blueprints_get(self, *args):
         self.client.blueprints.get = MagicMock()
         self.client.deployments.list = MagicMock()
@@ -132,15 +130,15 @@ class BlueprintsTest(CliCommandTest):
     def test_blueprints_upload_from_url(self):
         self.client.blueprints.publish_archive = MagicMock()
         self.invoke(
-                'cfy blueprints upload https://aaa.com/maste.tar.gz -n b.yaml '
-                '-b blueprint3')
+            'cfy blueprints upload https://aaa.com/maste.tar.gz -n b.yaml '
+            '-b blueprint3')
 
     def test_blueprints_upload_from_github(self):
         mocked = MagicMock()
         self.client.blueprints.publish_archive = mocked
         self.invoke(
-                'cfy blueprints upload organization/repo -n b.yaml '
-                '-b blueprint3')
+            'cfy blueprints upload organization/repo -n b.yaml '
+            '-b blueprint3')
         self.assertIn('github.com', mocked.call_args[0][0])
 
     def test_blueprint_validate(self):
