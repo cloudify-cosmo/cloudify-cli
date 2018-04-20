@@ -236,14 +236,6 @@ def get_rest_client(client_profile=None,
     if not password:
         raise CloudifyCliError('Command failed: Missing password')
 
-    if rest_protocol == constants.SECURED_REST_PROTOCOL and \
-            (not rest_cert or not os.path.isfile(rest_cert)):
-        raise CloudifyCliError('Command failed: Trying to work with https '
-                               'protocol without certificate. Make sure '
-                               '`rest_certificate` is defined in your profile '
-                               'to be the path to the valid rest public '
-                               'certificate file')
-
     if cluster:
         client = CloudifyClusterClient(
             host=rest_host,
