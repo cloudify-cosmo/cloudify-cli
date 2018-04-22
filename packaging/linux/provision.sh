@@ -85,7 +85,7 @@ curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/clou
 source common_build_env.sh &&
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-packager/${CORE_BRANCH}/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
-
+echo "test"
 install_common_prereqs &&
 rm -rf cloudify-cli
 git clone https://github.com/cloudify-cosmo/cloudify-cli.git
