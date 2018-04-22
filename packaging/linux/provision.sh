@@ -132,7 +132,7 @@ curl https://raw.githubusercontent.com/systemizer/omnibus-software/master/config
 if [[ "$OSTYPE" == "darwin"* ]]; then
     grep -l '/opt' config/software/* | xargs sed -i "" 's|/opt|/usr/local/opt|g'
 fi
-
+echo "test"
 omnibus build cloudify && result="success"
 cd pkg
 cat *.json || exit 1
