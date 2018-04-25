@@ -147,7 +147,9 @@ def upload(ctx,
                 processed_blueprint_path,
                 blueprint_id,
                 visibility,
-                progress_handler
+                progress_handler,
+                # if blueprint is in an archive we skip the size limit check
+                utils.is_archive(blueprint_path)
             )
         finally:
             # When an archive file is passed, it's extracted to a temporary
