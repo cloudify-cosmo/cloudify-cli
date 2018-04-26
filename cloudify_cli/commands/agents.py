@@ -65,7 +65,7 @@ def _deployment_exists(client, deployment_id):
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='relevant deployment(s)')
 @cfy.options.all_tenants
-@cfy.options.cfy_manager_ip()
+@cfy.options.manager_ip()
 @cfy.options.manager_certificate()
 @cfy.pass_logger
 @cfy.pass_client()
@@ -264,7 +264,7 @@ def run_worker(
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='relevant deployment(s)')
 @cfy.options.all_tenants
-@cfy.options.cfy_manager_ip(required=True)
+@cfy.options.manager_ip(required=True)
 @cfy.options.manager_certificate(required=True)
 @cfy.options.manager_rest_token
 @cfy.pass_logger

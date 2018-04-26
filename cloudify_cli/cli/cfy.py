@@ -511,12 +511,6 @@ class Options(object):
             is_flag=True,
             help=helptexts.BACKUP_LOGS_FIRST)
 
-        self.manager_ip = click.option(
-            '-t',
-            '--manager-ip',
-            required=False,
-            help=helptexts.MANAGEMENT_IP)
-
         self.ssh_user = click.option(
             '-s',
             '--ssh-user',
@@ -873,12 +867,6 @@ class Options(object):
             callback=validate_nonnegative_integer,
             help=helptexts.PAGINATION_SIZE)
 
-        self.manager_ip = click.option(
-            '--manager-ip',
-            required=True,
-            help=helptexts.MANAGER_IP
-        )
-
         self.manager_rest_token = click.option(
             '--manager_rest_token',
             required=True,
@@ -1152,7 +1140,7 @@ class Options(object):
             help=helptexts.PLUGIN_YAML_PATH)
 
     @staticmethod
-    def cfy_manager_ip(required=False):
+    def manager_ip(required=False):
         args = ['--manager-ip']
         kwargs = {'required': required,
                   'help': helptexts.MANAGER_IP}
