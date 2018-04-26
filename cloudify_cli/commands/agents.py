@@ -85,9 +85,6 @@ def install(deployment_id,
     See Cloudify's documentation at http://docs.getcloudify.org for more
     information.
     """
-    # import pydevd
-    # pydevd.settrace('127.0.0.1', port=53100, stdoutToServer=True,
-    #                 stderrToServer=True, suspend=False)
     if manager_certificate:
         manager_certificate = _validate_certificate_file(manager_certificate)
     params = {'manager_ip': manager_ip,
