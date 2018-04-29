@@ -816,24 +816,31 @@ class Options(object):
             required=False,
             help=helptexts.SECRET_STRING)
 
-        self.secret_file = click.option(
-            '-f',
-            '--secret-file',
-            required=False,
-            help=helptexts.SECRET_FILE)
-
         self.secret_update_if_exists = click.option(
             '-u',
             '--update-if-exists',
             is_flag=True,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['hidden_value', 'visibility'],
             help=helptexts.SECRET_UPDATE_IF_EXISTS,
         )
 
-        self.secret_hidden_value = click.option(
+        self.hidden_value = click.option(
             '--hidden-value',
             is_flag=True,
             default=False,
-            help=helptexts.SECRET_HIDDEN_VALUE,
+            help=helptexts.HIDDEN_VALUE,
+        )
+
+        self.update_hidden_value = click.option(
+            '--hidden-value/--not-hidden-value',
+            default=None,
+            help=helptexts.HIDDEN_VALUE)
+
+        self.update_visibility = click.option(
+            '-l',
+            '--visibility',
+            help=helptexts.VISIBILITY.format(VisibilityState.STATES)
         )
 
         self.plugins_bundle_path = click.option(
@@ -871,6 +878,17 @@ class Options(object):
             '--manager_rest_token',
             required=True,
             help=helptexts.MANAGER_REST_TOKEN
+        )
+
+    @staticmethod
+    def secret_file():
+        return click.option(
+            '-f',
+            '--secret-file',
+            required=False,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['secret_string'],
+            help=helptexts.SECRET_FILE
         )
 
     @staticmethod

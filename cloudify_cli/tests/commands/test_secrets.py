@@ -81,3 +81,11 @@ class SecretsTest(CliCommandTest):
     def test_secrets_create_with_visibility(self):
         self.client.secrets.create = MagicMock()
         self.invoke('cfy secrets create a-secret-key -l private -s hello')
+
+    def test_secrets_create_mutually_exclusive_arguments(self):
+        outcome = self.invoke(
+            'cfy secrets create a-secret-key -s hello -f file',
+            err_str_segment='2',  # Exit code
+            exception=SystemExit
+        )
+        self.assertIn('mutually exclusive with arguments:', outcome.output)

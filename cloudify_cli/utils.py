@@ -312,7 +312,7 @@ def get_visibility(private_resource,
 
 
 def validate_visibility(visibility, valid_values=VisibilityState.STATES):
-    if visibility not in valid_values:
+    if visibility and visibility not in valid_values:
         raise CloudifyCliError(
             "Invalid visibility: `{0}`. Valid visibility's values are: "
             "{1}".format(visibility, valid_values)
