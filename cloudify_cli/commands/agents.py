@@ -131,6 +131,8 @@ def get_deployments_and_run_workers(
             logger.error(error_msg)
             raise SuppressedCloudifyCliError()
         run_worker(deps, client, logger, include_logs, workflow_id, parameters)
+    logger.info('Use `cfy agents validate` from the new Manager to make sure'
+                ' the agents are connected properly')
 
 
 def create_deployments_list(client, deployment_id, logger, workflow_id):
@@ -312,7 +314,7 @@ def validate(deployment_id,
              client,
              all_tenants):
     """Validates the connection between the Cloudify Manager and the
-                'live Cloudify Agents (installed on remote hosts).
+    live Cloudify Agents (installed on remote hosts).
 
         `DEPLOYMENT_ID` - The ID of the deployment you would like to
         validate agents for.

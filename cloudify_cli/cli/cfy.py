@@ -1141,16 +1141,25 @@ class Options(object):
 
     @staticmethod
     def manager_ip(required=False):
+
+        if required:  # cfy agents transfer mode
+            help_text = helptexts.MANAGER_IP_TRANSFER_MODE
+        else:  # cfy agents install mode
+            help_text = helptexts.MANAGER_IP_INSTALL_MODE
         args = ['--manager-ip']
         kwargs = {'required': required,
-                  'help': helptexts.MANAGER_IP}
+                  'help': help_text}
         return click.option(*args, **kwargs)
 
     @staticmethod
     def manager_certificate(required=False):
+        if required:  # cfy agents transfer mode
+            help_text = helptexts.MANAGER_CERTIFICATE_PATH_TRANSFER_MODE
+        else:  # cfy agents install mode
+            help_text = helptexts.MANAGER_CERTIFICATE_PATH_INSTALL_MODE
         args = ['--manager_certificate']
         kwargs = {'required': required,
-                  'help': helptexts.MANAGER_CERTIFICATE_PATH}
+                  'help': help_text}
         return click.option(*args, **kwargs)
 
 
