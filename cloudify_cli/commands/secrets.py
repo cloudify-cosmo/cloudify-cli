@@ -44,10 +44,10 @@ def secrets():
                                            '(key-value pair)')
 @cfy.argument('key', callback=cfy.validate_name)
 @cfy.options.secret_string
-@cfy.options.secret_file
+@cfy.options.secret_file()
 @cfy.options.secret_update_if_exists
 @cfy.options.visibility(mutually_exclusive_required=False)
-@cfy.options.secret_hidden_value
+@cfy.options.hidden_value
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
@@ -68,22 +68,11 @@ def create(key,
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
-    if secret_string and secret_file:
-        raise CloudifyCliError('Failed to create secret key. '
-                               'The command can only accept either'
-                               ' --secret-string or secret-file.')
-    if secret_file:
-        if not os.path.exists(secret_file):
-            raise CloudifyCliError('Failed to create secret key. '
-                                   'File does not exist: '
-                                   '{0}'.format(secret_file))
-        with open(secret_file, 'r') as secret_file:
-            secret_string = secret_file.read()
+    secret_string = _get_secret_string(secret_file, secret_string)
     if not secret_string:
         raise CloudifyCliError('Failed to create secret key. '
                                'Missing option '
                                '--secret-string or secret-file.')
-
     client.secrets.create(key,
                           secret_string,
                           update_if_exists,
@@ -121,20 +110,32 @@ def get(key, tenant_name, logger, client):
 @secrets.command(name='update', short_help='Update an existing secret')
 @cfy.argument('key', callback=cfy.validate_name)
 @cfy.options.secret_string
+@cfy.options.secret_file()
+@cfy.options.update_hidden_value
+@cfy.options.update_visibility
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def update(key, secret_string, tenant_name, logger, client):
+def update(key,
+           secret_string,
+           secret_file,
+           hidden_value,
+           visibility,
+           tenant_name,
+           logger,
+           client):
     """Update an existing secret
 
     `KEY` is the secret's key
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
+    validate_visibility(visibility)
+    secret_string = _get_secret_string(secret_file, secret_string)
     graceful_msg = 'Requested secret with key `{0}` was not found'.format(key)
     with handle_client_error(404, graceful_msg, logger):
-        client.secrets.update(key, secret_string)
+        client.secrets.update(key, secret_string, visibility, hidden_value)
         logger.info('Secret `{0}` updated'.format(key))
 
 
@@ -239,3 +240,14 @@ def set_visibility(key, visibility, tenant_name, logger, client):
     with prettify_client_error(status_codes, logger):
         client.secrets.set_visibility(key, visibility)
         logger.info('Secret `{0}` was set to {1}'.format(key, visibility))
+
+
+def _get_secret_string(secret_file, secret_string):
+    if secret_file:
+        if not os.path.exists(secret_file):
+            raise CloudifyCliError('Failed to create secret key. '
+                                   'File does not exist: '
+                                   '{0}'.format(secret_file))
+        with open(secret_file, 'r') as secret_file:
+            secret_string = secret_file.read()
+    return secret_string
