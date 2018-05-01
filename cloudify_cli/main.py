@@ -14,7 +14,6 @@
 # limitations under the License.
 ############
 
-
 from . import env
 from . import logger
 from .cli import cfy
@@ -108,6 +107,8 @@ def _register_commands():
     deployments.deployments.add_command(deployments.manager_delete)
     deployments.deployments.add_command(deployments.manager_update)
     deployments.deployments.add_command(deployments.manager_list)
+    deployments.deployments.add_command(deployments.manager_history)
+    deployments.deployments.add_command(deployments.manager_get_update)
     deployments.deployments.add_command(deployments.manager_set_visibility)
 
     executions.executions.add_command(executions.manager_cancel)
