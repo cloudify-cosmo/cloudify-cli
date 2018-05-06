@@ -20,13 +20,15 @@ import shutil
 
 from StringIO import StringIO
 
-from cloudify_rest_client.exceptions import DeploymentPluginNotFound
-from cloudify_rest_client.exceptions import UnknownDeploymentInputError
-from cloudify_rest_client.exceptions import UnknownDeploymentSecretError
-from cloudify_rest_client.exceptions import MissingRequiredDeploymentInputError
-from cloudify_rest_client.exceptions import UnsupportedDeploymentGetSecretError
 from cloudify_rest_client.constants import (VisibilityState,
                                             VISIBILITY_EXCEPT_GLOBAL)
+from cloudify_rest_client.exceptions import (
+    DeploymentPluginNotFound,
+    UnknownDeploymentInputError,
+    UnknownDeploymentSecretError,
+    MissingRequiredDeploymentInputError,
+    UnsupportedDeploymentGetSecretError
+)
 
 from . import blueprints
 from ..local import load_env
@@ -44,6 +46,9 @@ from ..utils import (prettify_client_error,
 
 DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
                       'visibility', 'tenant_name', 'created_by']
+DEPLOYMENT_UPDATE_COLUMNS = ['id', 'deployment_id', 'tenant_name',
+                             'execution_id', 'created_at',
+                             'old_blueprint_id', 'new_blueprint_id']
 TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
 
 
@@ -96,15 +101,99 @@ def manager_list(blueprint_id,
                                           _all_tenants=all_tenants,
                                           _search=search,
                                           _offset=pagination_offset,
-                                          _size=pagination_size)
+                                          _size=pagination_size,
+                                          blueprint_id=blueprint_id)
     total = deployments.metadata.pagination.total
-    if blueprint_id:
-        deployments = filter(lambda deployment:
-                             deployment['blueprint_id'] == blueprint_id,
-                             deployments)
     print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:')
     logger.info('Showing {0} of {1} deployments'.format(len(deployments),
                                                         total))
+
+
+@cfy.command(name='history', short_help='List deployment updates '
+                                        '[manager only]')
+@cfy.options.deployment_id()
+@cfy.options.sort_by()
+@cfy.options.descending
+@cfy.options.tenant_name_for_list(
+    required=False, resource_name_for_help='deployment update')
+@cfy.options.all_tenants
+@cfy.options.search
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def manager_history(deployment_id,
+                    sort_by,
+                    descending,
+                    all_tenants,
+                    search,
+                    pagination_offset,
+                    pagination_size,
+                    logger,
+                    client,
+                    tenant_name):
+    """Show deployment history by listing deployment updates
+
+    If `--deployment-id` is provided, list deployment updates for that
+    deployment. Otherwise, list deployment updates for all deployments.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    if deployment_id:
+        logger.info('Listing deployment updates for deployment {0}...'.format(
+            deployment_id))
+    else:
+        logger.info('Listing all deployment updates...')
+
+    deployment_updates = client.deployment_updates.list(
+        sort=sort_by,
+        is_descending=descending,
+        _all_tenants=all_tenants,
+        _search=search,
+        _offset=pagination_offset,
+        _size=pagination_size,
+        deployment_id=deployment_id
+    )
+    total = deployment_updates.metadata.pagination.total
+    print_data(
+        DEPLOYMENT_UPDATE_COLUMNS, deployment_updates, 'Deployment updates:')
+    logger.info('Showing {0} of {1} deployment updates'.format(
+        len(deployment_updates), total))
+
+
+@cfy.command(
+    name='get-update',
+    short_help='Retrieve deployment update information [manager only]'
+)
+@cfy.argument('deployment-update-id')
+@cfy.options.verbose()
+@cfy.options.tenant_name(required=False,
+                         resource_name_for_help='deployment update')
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def manager_get_update(deployment_update_id, logger, client, tenant_name):
+    """Retrieve information for a specific deployment update
+
+    `DEPLOYMENT_UPDATE_ID` is the id of the deployment update to get
+    information on.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info(
+        'Retrieving deployment update {0}...'.format(deployment_update_id))
+    deployment_update_dict = client.deployment_updates.get(
+        deployment_update_id)
+    print_data(DEPLOYMENT_UPDATE_COLUMNS,
+               deployment_update_dict,
+               'Deployment Update:',
+               max_width=50)
+
+    logger.info('Old inputs:')
+    logger.info('{0}\n'.format(deployment_update_dict['old_inputs'] or ''))
+
+    logger.info('New inputs:')
+    logger.info('{0}\n'.format(deployment_update_dict['new_inputs'] or ''))
 
 
 @cfy.command(name='update', short_help='Update a deployment [manager only]')
@@ -113,7 +202,7 @@ def manager_list(blueprint_id,
 @cfy.options.blueprint_filename(' [DEPRECATED]')
 @cfy.options.blueprint_id()
 @cfy.options.inputs
-@cfy.options.workflow_id('update')
+@cfy.options.workflow_id()
 @cfy.options.skip_install
 @cfy.options.skip_uninstall
 @cfy.options.force(help=helptexts.FORCE_UPDATE)

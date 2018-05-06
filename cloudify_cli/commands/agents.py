@@ -75,8 +75,8 @@ def install(deployment_id,
             logger,
             client,
             all_tenants,
-            manager_ip=None,
-            manager_certificate=None):
+            manager_ip,
+            manager_certificate):
     """Install agents on the hosts of existing deployments
 
     `DEPLOYMENT_ID` - The ID of the deployment you would like to
@@ -87,8 +87,10 @@ def install(deployment_id,
     """
     if manager_certificate:
         manager_certificate = _validate_certificate_file(manager_certificate)
-    params = {'manager_ip': manager_ip,
-              'manager_certificate': manager_certificate}
+    params = None
+    if manager_ip or manager_certificate:
+        params = {'manager_ip': manager_ip,
+                  'manager_certificate': manager_certificate}
     get_deployments_and_run_workers(
         deployment_id, include_logs, tenant_name,
         logger, client, all_tenants, 'install_new_agents', params)
