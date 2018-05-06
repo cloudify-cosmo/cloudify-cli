@@ -47,7 +47,7 @@ from ..utils import (prettify_client_error,
 DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
                       'visibility', 'tenant_name', 'created_by']
 DEPLOYMENT_UPDATE_COLUMNS = ['id', 'deployment_id', 'tenant_name',
-                             'execution_id', 'created_at', 'inputs_changed',
+                             'execution_id', 'created_at',
                              'old_blueprint_id', 'new_blueprint_id']
 TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
 
@@ -202,7 +202,7 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
 @cfy.options.blueprint_filename(' [DEPRECATED]')
 @cfy.options.blueprint_id()
 @cfy.options.inputs
-@cfy.options.workflow_id('update')
+@cfy.options.workflow_id()
 @cfy.options.skip_install
 @cfy.options.skip_uninstall
 @cfy.options.force(help=helptexts.FORCE_UPDATE)

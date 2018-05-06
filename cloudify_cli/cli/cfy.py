@@ -1009,7 +1009,7 @@ class Options(object):
             help=helptexts.BLUEPRINT_FILENAME + extra_message)
 
     @staticmethod
-    def workflow_id(default):
+    def workflow_id(default=None):
         return click.option(
             '-w',
             '--workflow-id',
