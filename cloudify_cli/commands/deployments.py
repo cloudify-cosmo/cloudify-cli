@@ -246,10 +246,10 @@ def manager_update(ctx,
 
     `DEPLOYMENT_ID` is the deployment's id to update.
     """
-    if not blueprint_id and not blueprint_path:
+    if not any([blueprint_id, blueprint_path, inputs]):
         raise CloudifyCliError(
-            'Must supply either an id of an existing blueprint, '
-            'or a path to a new blueprint')
+            'Must supply either a blueprint (by id of an existing blueprint, '
+            'or a path to a new blueprint), or new inputs')
     if (not blueprint_path or not utils.is_archive(blueprint_path)) \
             and blueprint_filename not in (DEFAULT_BLUEPRINT_PATH,
                                            blueprint_path):
