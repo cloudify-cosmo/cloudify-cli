@@ -150,8 +150,9 @@ class DeploymentUpdatesTest(CliCommandTest):
         self.invoke(
             'cfy deployments update my_deployment'.format(
                 BLUEPRINTS_DIR),
-            err_str_segment='Must supply either an id of an existing '
-                            'blueprint, or a path to a new blueprint',
+            err_str_segment='Must supply either a blueprint '
+                            '(by id of an existing blueprint, or a path to a '
+                            'new blueprint), or new inputs',
             exception=CloudifyCliError)
 
 
