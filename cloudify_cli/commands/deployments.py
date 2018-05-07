@@ -46,8 +46,8 @@ from ..utils import (prettify_client_error,
 
 DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
                       'visibility', 'tenant_name', 'created_by']
-DEPLOYMENT_UPDATE_COLUMNS = ['id', 'deployment_id', 'tenant_name',
-                             'execution_id', 'created_at',
+DEPLOYMENT_UPDATE_COLUMNS = ['id', 'deployment_id', 'tenant_name', 'state',
+                             'execution_id', 'created_at', 'visibility',
                              'old_blueprint_id', 'new_blueprint_id']
 TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
 
