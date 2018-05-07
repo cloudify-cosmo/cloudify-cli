@@ -23,10 +23,7 @@ function download_wheels() {
     [[ $? -eq 0 ]] && rm -rf cloudify-cli-${CLI_BRANCH}
 
     pip wheel --wheel-dir packaging/source/wheels --find-links packaging/source/wheels C:/Cygwin/home/Administrator/cloudify-cli-${CLI_BRANCH}.zip \
-    https://github.com/cloudify-cosmo/cloudify-rest-client/archive/${CORE_BRANCH}.zip#egg=cloudify-rest-client \
-    https://github.com/cloudify-cosmo/cloudify-dsl-parser/archive/${CORE_BRANCH}.zip#egg=cloudify-dsl-parser \
-    https://github.com/cloudify-cosmo/cloudify-plugins-common/archive/${CORE_BRANCH}.zip#egg=cloudify-plugins-common \
-    https://github.com/cloudify-cosmo/cloudify-script-plugin/archive/1.5.3.zip#egg=cloudify-script-plugin \
+    https://github.com/cloudify-cosmo/cloudify-common/archive/${CORE_BRANCH}.zip#egg=cloudify-common \
     https://github.com/cloudify-cosmo/cloudify-fabric-plugin/archive/1.5.1.zip#egg=cloudify-fabric-plugin
 
     # Rename "Bad" wheels
