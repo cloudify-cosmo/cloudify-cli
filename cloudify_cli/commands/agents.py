@@ -133,8 +133,6 @@ def get_deployments_and_run_workers(
             logger.error(error_msg)
             raise SuppressedCloudifyCliError()
         run_worker(deps, client, logger, include_logs, workflow_id, parameters)
-    logger.info('Use `cfy agents validate` from the new Manager to make sure'
-                ' the agents are connected properly')
 
 
 def create_deployments_list(client, deployment_id, logger, workflow_id):
@@ -295,6 +293,8 @@ def transfer(deployment_id,
     get_deployments_and_run_workers(
         deployment_id, include_logs, tenant_name,
         logger, client, all_tenants, 'transfer_agents', params)
+    logger.info('Use `cfy agents validate` from the new Manager to make sure'
+                ' the agents are connected properly')
 
 
 @agents.command(name='validate',
