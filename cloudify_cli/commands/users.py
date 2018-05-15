@@ -20,7 +20,7 @@ from ..table import print_data
 from ..utils import handle_client_error
 
 USER_COLUMNS = ['username', 'groups', 'role', 'group_system_roles', 'active',
-                'last_login_at']
+                'last_login_at', 'is_locked']
 GET_DATA_COLUMNS = ['user_tenants', 'group_tenants']
 NO_GET_DATA_COLUMNS = ['tenants']
 USER_LABELS = {'role': 'system wide role',
@@ -246,3 +246,19 @@ def deactivate(username, logger, client):
     with handle_client_error(409, graceful_msg, logger):
         client.users.deactivate(username)
         logger.info('User deactivated')
+
+
+@users.command(name='unlock',
+               short_help='Unlock a locked user [manager only]')
+@cfy.argument('username')
+@cfy.options.verbose()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def unlock(username, logger, client):
+    """Unlock a locked user
+
+    `USERNAME` is the username of the user
+    """
+    logger.info('Unlocking user `{0}`...'.format(username))
+    client.users.unlock(username)
