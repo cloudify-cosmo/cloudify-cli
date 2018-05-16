@@ -260,5 +260,8 @@ def unlock(username, logger, client):
 
     `USERNAME` is the username of the user
     """
+    graceful_msg = 'User `{0}` is already unlocked'.format(username)
     logger.info('Unlocking user `{0}`...'.format(username))
-    client.users.unlock(username)
+    with handle_client_error(409, graceful_msg, logger):
+        client.users.unlock(username)
+        logger.info('User unlocked')
