@@ -512,6 +512,11 @@ class Options(object):
             is_flag=True,
             help=helptexts.SKIP_UNINSTALL)
 
+        self.ignore_failure = click.option(
+            '--ignore-failure',
+            is_flag=True,
+            help=helptexts.IGNORE_FAILURE)
+
         self.backup_first = click.option(
             '--backup-first',
             is_flag=True,

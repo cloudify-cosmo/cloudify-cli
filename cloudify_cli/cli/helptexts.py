@@ -70,6 +70,10 @@ JSON_OUTPUT = "Output events in a consumable JSON format"
 
 SKIP_INSTALL = "Skip install lifecycle operations"
 SKIP_UNINSTALL = "Skip uninstall lifecycle operations"
+IGNORE_FAILURE = (
+    "Supply the parameter `ignore_failure` with the value `true` to the "
+    "uninstall workflow"
+)
 FORCE_UPDATE = (
     "Force running update in case a previous update on this deployment has "
     "failed to finished successfully"
