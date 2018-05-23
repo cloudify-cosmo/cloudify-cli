@@ -74,6 +74,10 @@ IGNORE_FAILURE = (
     "Supply the parameter `ignore_failure` with the value `true` to the "
     "uninstall workflow"
 )
+INSTALL_FIRST = (
+    "In deployment update, perform install workflow and then uninstall "
+    "workflow. default: uninstall and then install"
+)
 FORCE_UPDATE = (
     "Force running update in case a previous update on this deployment has "
     "failed to finished successfully"

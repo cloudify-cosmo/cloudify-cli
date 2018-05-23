@@ -517,6 +517,11 @@ class Options(object):
             is_flag=True,
             help=helptexts.IGNORE_FAILURE)
 
+        self.install_first = click.option(
+            '--install-first',
+            is_flag=True,
+            help=helptexts.INSTALL_FIRST)
+
         self.backup_first = click.option(
             '--backup-first',
             is_flag=True,
