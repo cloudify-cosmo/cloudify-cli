@@ -80,7 +80,7 @@ def install(deployment_id,
     """Install agents on the hosts of existing deployments
 
     `DEPLOYMENT_ID` - The ID of the deployment you would like to
-    install agents for.
+    install agents for. If not set, install will be run on all deployments
 
     See Cloudify's documentation at http://docs.getcloudify.org for more
     information.
@@ -283,8 +283,7 @@ def transfer(deployment_id,
     """Configure agents to work with a new Cloudify Manager.
 
     `DEPLOYMENT_ID` - The ID of the deployment you would like to
-    configure agents on.
-
+    configure agents on. If not set, transfer will be run on all deployments
     """
     manager_certificate = _validate_certificate_file(manager_certificate)
     params = {'manager_ip': manager_ip,
@@ -307,24 +306,27 @@ def transfer(deployment_id,
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='relevant deployment(s)')
 @cfy.options.all_tenants
+@cfy.options.update_runtime_properties
 @cfy.pass_logger
 @cfy.pass_client()
 def validate(deployment_id,
              include_logs,
              tenant_name,
+             update_runtime_properties,
              logger,
              client,
              all_tenants):
-    """Validates the connection between the Cloudify Manager and the
-    live Cloudify Agents (installed on remote hosts).
+    """Validates the connection between the Cloudify Manager and live Cloudify
+    Agents (installed on remote hosts).
 
-        `DEPLOYMENT_ID` - The ID of the deployment you would like to
-        validate agents for.
-
-        """
+    `DEPLOYMENT_ID` - The ID of the deployment you would like to
+    validate agents for. If not set, validations will be run on all deployments
+    """
     get_deployments_and_run_workers(
         deployment_id, include_logs, tenant_name,
-        logger, client, all_tenants, 'validate_agents')
+        logger, client, all_tenants, 'validate_agents',
+        parameters={'update_runtime_properties': update_runtime_properties}
+    )
 
 
 def _validate_certificate_file(certificate):

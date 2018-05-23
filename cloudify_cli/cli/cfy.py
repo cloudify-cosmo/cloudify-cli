@@ -880,6 +880,14 @@ class Options(object):
             help=helptexts.MANAGER_REST_TOKEN
         )
 
+        self.update_runtime_properties = click.option(
+            '--update',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.UPDATE_RUNTIME_PROPERTIES
+        )
+
     @staticmethod
     def secret_file():
         return click.option(

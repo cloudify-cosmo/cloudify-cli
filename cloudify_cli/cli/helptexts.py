@@ -265,3 +265,9 @@ MANAGER_CERTIFICATE_PATH_INSTALL_MODE = 'A path to a file containing the SSL' \
                                          ' available on the Manager: ' \
                                          '/etc/cloudify/ssl/' \
                                          'cloudify_internal_ca_cert.pem'
+UPDATE_RUNTIME_PROPERTIES = (
+    "Update the agent's config in the node instance's runtime properties "
+    "with the current manager's host and cluster settings (where applicable). "
+    "Use this option *only* after restoring a snapshot, and performing the "
+    "`cfy agents transfer` command on the old manager."
+)
