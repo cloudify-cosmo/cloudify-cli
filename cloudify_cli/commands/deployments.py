@@ -206,6 +206,7 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
 @cfy.options.skip_install
 @cfy.options.skip_uninstall
 @cfy.options.ignore_failure
+@cfy.options.install_first
 @cfy.options.force(help=helptexts.FORCE_UPDATE)
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.options.visibility(mutually_exclusive_required=False)
@@ -225,6 +226,7 @@ def manager_update(ctx,
                    skip_install,
                    skip_uninstall,
                    ignore_failure,
+                   install_first,
                    workflow_id,
                    force,
                    include_logs,
@@ -300,7 +302,8 @@ def manager_update(ctx,
             skip_uninstall,
             workflow_id,
             force,
-            ignore_failure
+            ignore_failure,
+            install_first
         )
     events_logger = get_events_logger(json_output)
     execution = execution_events_fetcher.wait_for_execution(
