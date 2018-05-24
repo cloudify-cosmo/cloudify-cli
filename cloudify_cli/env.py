@@ -28,6 +28,7 @@ from base64 import urlsafe_b64encode
 import yaml
 import requests
 
+from cloudify_rest_client.utils import is_kerberos_env
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.client import HTTPClient
 from cloudify_rest_client.exceptions import (CloudifyClientError,
@@ -231,11 +232,11 @@ def get_rest_client(client_profile=None,
     headers[constants.CLOUDIFY_TENANT_HEADER] = tenant_name
     cluster = cluster or client_profile.cluster
 
-    if not username:
-        raise CloudifyCliError('Command failed: Missing Username')
-
-    if not password:
-        raise CloudifyCliError('Command failed: Missing password')
+    if not is_kerberos_env():
+        if not username:
+            raise CloudifyCliError('Command failed: Missing Username')
+        if not password:
+            raise CloudifyCliError('Command failed: Missing password')
 
     if cluster:
         client = CloudifyClusterClient(
