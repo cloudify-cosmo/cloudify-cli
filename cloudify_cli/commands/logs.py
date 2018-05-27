@@ -31,7 +31,9 @@ def logs():
     pass
 
 
-def _archive_logs(logger):
+def _archive_logs(logger,
+                  host_string='',
+                  key_filename=None):
     """Creates an archive of all logs found under /var/log/cloudify plus
     journalctl.
     """
@@ -42,15 +44,18 @@ def _archive_logs(logger):
 
     ssh.run_command_on_manager(
         'journalctl > /tmp/jctl && '
-        'mv /tmp/jctl {0}'.format(journalctl_destination_path), use_sudo=True)
+        'mv /tmp/jctl {0}'.format(journalctl_destination_path), use_sudo=True,
+        host_string=host_string, key_filename=key_filename)
     logger.info('Creating logs archive in manager: {0}'.format(archive_path))
     # We skip checking if the tar executable can be found on the machine
     # knowingly. We don't want to run another ssh command just to verify
     # something that will almost never happen.
     ssh.run_command_on_manager('tar -czf {0} -C /var/log cloudify'.format(
-        archive_path), use_sudo=True)
+        archive_path), use_sudo=True,
+        host_string=host_string, key_filename=key_filename)
     ssh.run_command_on_manager(
-        'rm {0}'.format(journalctl_destination_path), use_sudo=True)
+        'rm {0}'.format(journalctl_destination_path), use_sudo=True,
+        host_string=host_string, key_filename=key_filename)
     return archive_path
 
 
@@ -62,12 +67,33 @@ def _archive_logs(logger):
 def download(output_path, logger):
     """Download an archive containing all of the manager's service logs
     """
-    archive_path_on_manager = _archive_logs(logger)
-    logger.info('Downloading archive to: {0}'.format(output_path))
-    ssh.get_file_from_manager(archive_path_on_manager, output_path)
-    logger.info('Removing archive from manager...')
-    ssh.run_command_on_manager(
-        'rm {0}'.format(archive_path_on_manager), use_sudo=True)
+    if len(env.profile.cluster) > 0:
+        for node in env.profile.cluster:
+            if output_path:
+                output_path_ip = output_path + '_' + node['manager_ip']
+            host_string = env.build_manager_host_string(
+                ssh_user=node['ssh_user'], ip=node['manager_ip'])
+            archive_path_on_manager = _archive_logs(
+                logger,
+                host_string=host_string,
+                key_filename=node['ssh_key'])
+            logger.info('Downloading archive to: {0}'.format(output_path_ip))
+            ssh.get_file_from_manager(archive_path_on_manager,
+                                      output_path_ip,
+                                      host_string=host_string,
+                                      key_filename=node['ssh_key'])
+            logger.info('Removing archive from manager...')
+            ssh.run_command_on_manager(
+                'rm {0}'.format(archive_path_on_manager), use_sudo=True,
+                host_string=host_string,
+                key_filename=node['ssh_key'])
+    else:
+        archive_path_on_manager = _archive_logs(logger)
+        logger.info('Downloading archive to: {0}'.format(output_path))
+        ssh.get_file_from_manager(archive_path_on_manager, output_path)
+        logger.info('Removing archive from manager...')
+        ssh.run_command_on_manager(
+            'rm {0}'.format(archive_path_on_manager), use_sudo=True)
 
 
 @logs.command(name='purge',
