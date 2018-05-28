@@ -62,12 +62,16 @@ def _archive_logs(logger,
 @logs.command(name='download',
               short_help='Download manager service logs [manager only]')
 @cfy.options.output_path
+@cfy.options.all_nodes
 @cfy.options.verbose()
 @cfy.pass_logger
-def download(output_path, logger):
+def download(output_path, all_nodes, logger):
     """Download an archive containing all of the manager's service logs
     """
-    if len(env.profile.cluster) > 0:
+    if all_nodes:
+        if not env.profile.cluster:
+            raise CloudifyCliError(
+                "No cluster nodes defined in this profile")
         for node in env.profile.cluster:
             if output_path:
                 output_path_ip = output_path + '_' + node['manager_ip']
