@@ -74,7 +74,7 @@ def download(output_path, all_nodes, logger):
                 "No cluster nodes defined in this profile")
         for node in env.profile.cluster:
             if output_path:
-                output_path_ip = output_path + '_' + node['manager_ip']
+                output_path_ip = node['manager_ip'] + '_' + output_path
             host_string = env.build_manager_host_string(
                 ssh_user=node['ssh_user'], ip=node['manager_ip'])
             archive_path_on_manager = _archive_logs(
