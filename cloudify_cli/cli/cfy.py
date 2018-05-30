@@ -438,6 +438,12 @@ class Options(object):
             '--output-path',
             help=helptexts.OUTPUT_PATH)
 
+        self.all_nodes = click.option(
+            '--all-nodes',
+            is_flag=True,
+            help=helptexts.ALL_NODES
+        )
+
         self.optional_output_path = click.option(
             '-o',
             '--output-path',

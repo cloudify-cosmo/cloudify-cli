@@ -29,11 +29,15 @@ def get_manager_date():
         return run_command_on_manager('date +%Y%m%dT%H%M%S').stdout
 
 
-def get_file_from_manager(remote_source_path, destination_path):
-    key_filename = os.path.expanduser(profile.ssh_key)
+def get_file_from_manager(remote_source_path,
+                          destination_path,
+                          host_string='',
+                          key_filename=None):
+    host_string = host_string or build_manager_host_string()
+    key_filename = key_filename or os.path.expanduser(profile.ssh_key)
     with fab.settings(
             fab.hide('running', 'stdout'),
-            host_string=build_manager_host_string(),
+            host_string=host_string,
             key_filename=key_filename,
             port=profile.ssh_port):
         fab.get(remote_source_path, destination_path)
@@ -62,7 +66,8 @@ def run_command_on_manager(command,
                            use_sudo=False,
                            open_shell=False,
                            host_string='',
-                           force_output=False):
+                           force_output=False,
+                           key_filename=None):
     """Runs an SSH command on a Manager.
 
     `open_shell` opens an interactive shell to the server.
@@ -72,10 +77,11 @@ def run_command_on_manager(command,
     test_profile()
 
     host_string = host_string or build_manager_host_string()
+    key_filename = key_filename or os.path.expanduser(profile.ssh_key)
     port = int(profile.ssh_port)
 
     def execute():
-        key_filename = os.path.expanduser(profile.ssh_key)
+
         with fab.settings(
                 host_string=host_string,
                 key_filename=key_filename,
