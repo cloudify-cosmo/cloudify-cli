@@ -72,3 +72,8 @@ class UsersTest(CliCommandTest):
             err_str_segment='ERROR: The password is empty',
             exception=CloudifyValidationError
         )
+
+    def test_unlock_user(self):
+        self.invoke('cfy users unlock user1')
+        call_list = self.client.users.method_calls[0][1][0]
+        self.assertEqual(call_list, 'user1')
