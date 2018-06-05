@@ -426,6 +426,12 @@ class Options(object):
             callback=inputs_callback,
             help=helptexts.INPUTS)
 
+        self.reinstall_list = click.option(
+            '-r',
+            '--reinstall-list',
+            multiple=True,
+            help=helptexts.REINSTALL_LIST)
+
         self.parameters = click.option(
             '-p',
             '--parameters',
