@@ -46,6 +46,8 @@ BLUEPRINT_FILENAME = (
     "This is only relevant if uploading an archive")
 INPUTS = "Inputs for the deployment {0}".format(INPUTS_PARAMS_USAGE)
 PARAMETERS = "Parameters for the workflow {0}".format(INPUTS_PARAMS_USAGE)
+REINSTALL_LIST = "Node instances ids to be reinstalled as part of " \
+                 "deployment update"
 ALLOW_CUSTOM_PARAMETERS = (
     "Allow passing custom parameters (which were not defined in the "
     "workflow's schema in the blueprint) to the execution"
