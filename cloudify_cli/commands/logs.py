@@ -73,9 +73,9 @@ def download(output_path, all_nodes, logger):
             raise CloudifyCliError(
                 "No cluster nodes defined in this profile")
         for node in env.profile.cluster:
-            if 'ssh_user' not in node:
-                logger.info("No 'ssh_user' defined for manager {0} in "
-                            "cluster profile. Skipping..."
+            if 'ssh_user' not in node or 'ssh_key' not in node:
+                logger.info('No ssh details defined for manager {0} in '
+                            'cluster profile. Skipping...'
                             .format(node['manager_ip']))
                 continue
             if output_path:
