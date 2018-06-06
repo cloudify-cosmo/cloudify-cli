@@ -1141,18 +1141,20 @@ class Options(object):
             help=helptexts.BLUEPRINT_PATH)
 
     @staticmethod
-    def tenant_role(help_text, required=False):
-        return click.option(
-            '-r',
-            '--role',
-            required=required,
-            help=help_text
-        )
+    def tenant_role(help_text, required, options_flags=None):
+        args = options_flags or ['-r', '--role']
+
+        kwargs = {
+            'required': required,
+            'help': help_text
+        }
+        return click.option(*args, **kwargs)
 
     @staticmethod
-    def user_tenant_role():
+    def user_tenant_role(required=True, options_flags=None):
         return Options.tenant_role(
-            helptexts.USER_TENANT_ROLE, required=True)
+            helptexts.USER_TENANT_ROLE, required=required,
+            options_flags=options_flags)
 
     @staticmethod
     def group_tenant_role():
