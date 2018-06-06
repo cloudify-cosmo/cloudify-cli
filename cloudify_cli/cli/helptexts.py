@@ -187,8 +187,8 @@ GROUP_TENANT_ROLE = (
     'Role assigned to the users of group in the context of the tenant.'
 )
 
-SECURITY_ROLE = "A role to determine the user's permissions on the manager " \
-                "(default: default)"
+SECURITY_ROLE = "A role to determine the user's permissions on the manager, " \
+                "if admin or regular user (default: default permissions)"
 PASSWORD = 'Cloudify manager password'
 
 CLUSTER_HOST_IP = \
