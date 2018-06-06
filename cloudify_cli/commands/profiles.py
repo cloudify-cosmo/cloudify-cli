@@ -429,9 +429,9 @@ def set_cluster(cluster_node_name,
         changed_node['cert'] = rest_certificate
         changed_node['trust_all'] = False
         changed_node['rest_protocol'] = 'https'
-        logger.info('Node {0}: setting rest-certificate to `{2}` and enabling '
+        logger.info('Node {0}: setting rest-certificate to `{1}` and enabling '
                     'certificate verification'
-                    .format(cluster_node_name, label, source))
+                    .format(cluster_node_name, source))
     env.profile.save()
     logger.info('Settings saved successfully')
 
