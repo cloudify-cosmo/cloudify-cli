@@ -206,6 +206,7 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
 @cfy.options.workflow_id()
 @cfy.options.skip_install
 @cfy.options.skip_uninstall
+@cfy.options.skip_reinstall
 @cfy.options.ignore_failure
 @cfy.options.install_first
 @cfy.options.force(help=helptexts.FORCE_UPDATE)
@@ -227,6 +228,7 @@ def manager_update(ctx,
                    blueprint_filename,
                    skip_install,
                    skip_uninstall,
+                   skip_reinstall,
                    ignore_failure,
                    install_first,
                    workflow_id,
@@ -306,6 +308,7 @@ def manager_update(ctx,
             inputs,
             skip_install,
             skip_uninstall,
+            skip_reinstall,
             workflow_id,
             force,
             ignore_failure,
