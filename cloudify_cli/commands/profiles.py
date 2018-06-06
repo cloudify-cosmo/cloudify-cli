@@ -420,13 +420,18 @@ def set_cluster(cluster_node_name,
         (ssh_user, 'ssh_user', 'ssh user'),
         (ssh_key, 'ssh_key', 'ssh key'),
         (ssh_port, 'ssh_port', 'ssh port'),
-        (rest_certificate, 'cert', 'rest certificate'),
     ]:
         if source:
             changed_node[target] = source
             logger.info('Node {0}: setting {1} to `{2}`'
                         .format(cluster_node_name, label, source))
-
+    if rest_certificate:
+        changed_node['cert'] = rest_certificate
+        changed_node['trust_all'] = False
+        changed_node['rest_protocol'] = 'https'
+        logger.info('Node {0}: setting rest-certificate to `{2}` and enabling '
+                    'certificate verification'
+                    .format(cluster_node_name, label, source))
     env.profile.save()
     logger.info('Settings saved successfully')
 
