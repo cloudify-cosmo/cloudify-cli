@@ -46,8 +46,10 @@ BLUEPRINT_FILENAME = (
     "This is only relevant if uploading an archive")
 INPUTS = "Inputs for the deployment {0}".format(INPUTS_PARAMS_USAGE)
 PARAMETERS = "Parameters for the workflow {0}".format(INPUTS_PARAMS_USAGE)
-REINSTALL_LIST = "Node instances ids to be reinstalled as part of " \
-                 "deployment update"
+REINSTALL_LIST = (
+    "Node instances ids to be reinstalled as part of deployment update. They "
+    "will be reinstalled even if the flag --skip-reinstall has been supplied"
+)
 ALLOW_CUSTOM_PARAMETERS = (
     "Allow passing custom parameters (which were not defined in the "
     "workflow's schema in the blueprint) to the execution"
@@ -72,6 +74,11 @@ JSON_OUTPUT = "Output events in a consumable JSON format"
 
 SKIP_INSTALL = "Skip install lifecycle operations"
 SKIP_UNINSTALL = "Skip uninstall lifecycle operations"
+SKIP_REINSTALL = (
+    "Skip automatically reinstall node-instances that their properties has "
+    "been modified, as part of a deployment update. Node instances that were "
+    "explicitly given to the reinstall list will still be reinstalled"
+)
 IGNORE_FAILURE = (
     "Supply the parameter `ignore_failure` with the value `true` to the "
     "uninstall workflow"
