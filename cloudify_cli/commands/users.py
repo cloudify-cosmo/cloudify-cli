@@ -113,16 +113,31 @@ def list(sort_by,
 @cfy.options.verbose()
 @cfy.options.security_role
 @cfy.options.password
+@cfy.options.tenant_name(required=False)
+@cfy.options.user_tenant_role(required=False,
+                              options_flags=['-l', '--user-tenant-role'])
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def create(username, security_role, password, logger, client):
+def create(username,
+           security_role,
+           password,
+           tenant_name,
+           user_tenant_role,
+           logger,
+           client):
     """Create a new user on the manager
 
     `USERNAME` is the username of the user
     """
     client.users.create(username, password, security_role)
     logger.info('User `{0}` created'.format(username))
+
+    if tenant_name and user_tenant_role:
+        client.tenants.add_user(username, tenant_name, user_tenant_role)
+        logger.info(
+            'User `{0}` added successfully to tenant `{1}`'
+            .format(username, tenant_name))
 
 
 @users.command(name='set-password',
