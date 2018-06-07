@@ -58,7 +58,7 @@ Vagrant.configure('2') do |config|
       aws.access_key_id = AWS_ACCESS_KEY_ID
       aws.secret_access_key = AWS_ACCESS_KEY
       # official debian wheezy 64bit with omnibus installed
-      aws.ami = "ami-61e56916"
+      aws.ami = "ami-7b585802"
       aws.region = "eu-west-1"
       aws.instance_type = "m3.large"
       aws.keypair_name = "vagrant_build"
