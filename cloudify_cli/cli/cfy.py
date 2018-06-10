@@ -1187,27 +1187,20 @@ class Options(object):
             help=helptexts.PLUGIN_YAML_PATH)
 
     @staticmethod
-    def manager_ip(required=False):
-
-        if required:  # cfy agents transfer mode
-            help_text = helptexts.MANAGER_IP_TRANSFER_MODE
-        else:  # cfy agents install mode
-            help_text = helptexts.MANAGER_IP_INSTALL_MODE
-        args = ['--manager-ip']
-        kwargs = {'required': required,
-                  'help': help_text}
-        return click.option(*args, **kwargs)
+    def manager_ip():
+        return click.option(
+            '--manager-ip',
+            required=False,
+            help=helptexts.MANAGER_IP_INSTALL_MODE
+        )
 
     @staticmethod
-    def manager_certificate(required=False):
-        if required:  # cfy agents transfer mode
-            help_text = helptexts.MANAGER_CERTIFICATE_PATH_TRANSFER_MODE
-        else:  # cfy agents install mode
-            help_text = helptexts.MANAGER_CERTIFICATE_PATH_INSTALL_MODE
-        args = ['--manager_certificate']
-        kwargs = {'required': required,
-                  'help': help_text}
-        return click.option(*args, **kwargs)
+    def manager_certificate():
+        return click.option(
+            '--manager_certificate',
+            required=False,
+            help=helptexts.MANAGER_CERTIFICATE_PATH_INSTALL_MODE
+        )
 
 
 options = Options()
