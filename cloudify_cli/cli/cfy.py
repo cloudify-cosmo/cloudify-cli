@@ -901,10 +901,16 @@ class Options(object):
             callback=validate_nonnegative_integer,
             help=helptexts.PAGINATION_SIZE)
 
-        self.manager_rest_token = click.option(
-            '--manager_rest_token',
-            required=True,
-            help=helptexts.MANAGER_REST_TOKEN
+        self.manager_ip = click.option(
+            '--manager-ip',
+            required=False,
+            help=helptexts.MANAGER_IP
+        )
+
+        self.manager_certificate = click.option(
+            '--manager_certificate',
+            required=False,
+            help=helptexts.MANAGER_CERTIFICATE_PATH
         )
 
     @staticmethod
@@ -1193,29 +1199,6 @@ class Options(object):
             '--yaml-path',
             required=True,
             help=helptexts.PLUGIN_YAML_PATH)
-
-    @staticmethod
-    def manager_ip(required=False):
-
-        if required:  # cfy agents transfer mode
-            help_text = helptexts.MANAGER_IP_TRANSFER_MODE
-        else:  # cfy agents install mode
-            help_text = helptexts.MANAGER_IP_INSTALL_MODE
-        args = ['--manager-ip']
-        kwargs = {'required': required,
-                  'help': help_text}
-        return click.option(*args, **kwargs)
-
-    @staticmethod
-    def manager_certificate(required=False):
-        if required:  # cfy agents transfer mode
-            help_text = helptexts.MANAGER_CERTIFICATE_PATH_TRANSFER_MODE
-        else:  # cfy agents install mode
-            help_text = helptexts.MANAGER_CERTIFICATE_PATH_INSTALL_MODE
-        args = ['--manager_certificate']
-        kwargs = {'required': required,
-                  'help': help_text}
-        return click.option(*args, **kwargs)
 
 
 options = Options()
