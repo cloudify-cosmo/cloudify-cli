@@ -262,15 +262,6 @@ PAGINATION_OFFSET = 'The number of resources to skip; --pagination-offset=1 ' \
                     'skips the first resource [default: 0]'
 DRY_RUN = 'If set, no actual operations will be performed. This ' \
           'only prints the executed tasks, without side effects'
-
-MANAGER_IP_TRANSFER_MODE = 'The private IP of the new Cloudify Manger.' \
-             ' This is the IP through which the agents connect to the Manager.'
-MANAGER_CERTIFICATE_PATH_TRANSFER_MODE = 'A path to a file containing the' \
-                                         ' SSL certificate of the new' \
-                                         ' Cloudify Manager. The certificate' \
-                                         ' is available on the Manager: ' \
-                                         '/etc/cloudify/ssl/' \
-                                         'cloudify_internal_ca_cert.pem'
 MANAGER_REST_TOKEN = 'The REST token of the new Cloudify Manager.' \
                      ' Acquire the token by running `cfy tokens get` while' \
                      ' using the new Manager.'
