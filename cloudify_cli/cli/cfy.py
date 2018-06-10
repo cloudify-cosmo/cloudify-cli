@@ -913,6 +913,13 @@ class Options(object):
             help=helptexts.MANAGER_CERTIFICATE_PATH
         )
 
+        self.stop_old_agent = click.option(
+            '--stop-old-agent',
+            is_flag=True,
+            default=False,
+            help=helptexts.STOP_OLD_AGENT
+        )
+
     @staticmethod
     def secret_file():
         return click.option(

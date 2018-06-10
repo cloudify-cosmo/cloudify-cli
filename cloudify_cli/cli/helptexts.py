@@ -278,3 +278,7 @@ MANAGER_CERTIFICATE_PATH = 'A path to a file containing the SSL certificate ' \
 MANAGER_REST_TOKEN = 'The REST token of the new Cloudify Manager.' \
                      ' Acquire the token by running `cfy tokens get` while' \
                      ' using the new Manager.'
+STOP_OLD_AGENT = 'If set, after installing the new agent the old agent ' \
+                 '(that is connected to the old Cloudify Manager) will be ' \
+                 'stopped. *IMPORTANT* if the deployment has monitoring ' \
+                 'with auto-healing configured, you need to disable it first'
