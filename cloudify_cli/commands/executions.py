@@ -285,20 +285,26 @@ def manager_start(workflow_id,
              short_help='Cancel a workflow execution [manager only]')
 @cfy.argument('execution-id')
 @cfy.options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
+@cfy.options.kill()
 @cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def manager_cancel(execution_id, force, logger, client, tenant_name):
+def manager_cancel(execution_id, force, kill, logger, client, tenant_name):
     """Cancel a workflow's execution
 
     `EXECUTION_ID` is the ID of the execution to cancel.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('{0}Cancelling execution {1}'.format(
-        'Force-' if force else '', execution_id))
-    client.executions.cancel(execution_id, force)
+    if kill:
+        message = 'Killing'
+    elif force:
+        message = 'Force-cancelling'
+    else:
+        message = 'Cancelling'
+    logger.info('{0} execution {1}'.format(message, execution_id))
+    client.executions.cancel(execution_id, force=force, kill=kill)
     logger.info(
         "A cancel request for execution {0} has been sent. "
         "To track the execution's status, use:\n"

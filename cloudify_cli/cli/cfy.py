@@ -1028,6 +1028,14 @@ class Options(object):
             help=help)
 
     @staticmethod
+    def kill():
+        return click.option(
+            '-k',
+            '--kill',
+            is_flag=True,
+            help=helptexts.KILL_EXECUTION)
+
+    @staticmethod
     def blueprint_filename(extra_message=''):
         return click.option(
             '-n',
