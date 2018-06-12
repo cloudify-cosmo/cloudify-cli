@@ -299,7 +299,7 @@ def manager_update(ctx,
     if inputs:
         msg += ' with new inputs'
     if blueprint_id:
-        msg += ', using blueprint {1}'
+        msg += ', using blueprint {0}'.format(blueprint_id)
     logger.info(msg)
     deployment_update = \
         client.deployment_updates.update_with_existing_blueprint(
