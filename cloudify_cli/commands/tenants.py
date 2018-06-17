@@ -155,8 +155,8 @@ def add_user(username, tenant_name, role, logger, client):
     with handle_client_error(409, graceful_msg, logger):
         client.tenants.add_user(username, tenant_name, role)
         logger.info(
-            'User `{0}` added successfully to tenant `{1}`'
-            .format(username, tenant_name)
+            'User `{0}` added successfully to tenant `{1}` with `{2}` role'
+            .format(username, tenant_name, role)
         )
 
 
