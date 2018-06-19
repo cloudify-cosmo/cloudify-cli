@@ -333,12 +333,18 @@ def _set_profile_ssl(ssl, logger):
     env.profile.rest_protocol = protocol
 
     if env.profile.cluster:
+        missing_certs = []
         for node in env.profile.cluster:
             node['rest_port'] = port
             node['rest_protocol'] = protocol
-            node['trust_all'] = True
-            logger.info('Enabling SSL for {0} without certificate validation'
-                        .format(node['manager_ip']))
+            logger.info('Enabling SSL for {0}'.format(node['manager_ip']))
+            if not node.get('cert'):
+                missing_certs.append(node['name'])
+        if missing_certs:
+            logger.warning('The following cluster nodes have no certificate '
+                           'set: {0}'.format(', '.join(missing_certs)))
+            logger.warning('If required, set the certificates for those '
+                           'nodes using `cfy profiles set-cluster`')
 
 
 @profiles.command(
@@ -478,7 +484,7 @@ def unset(manager_username,
         tenant = env.profile.manager_tenant
     if rest_certificate:
         cert = os.environ.get(constants.LOCAL_REST_CERT_FILE) \
-               or env.get_default_rest_cert_local_path()
+            or env.get_default_rest_cert_local_path()
     else:
         cert = None
 
