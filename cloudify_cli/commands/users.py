@@ -38,7 +38,7 @@ def _format_user(user):
              (str(role),
               [str(group) for group in user.group_tenants[tenant][role]])
              for role in user.group_tenants[tenant]
-         ))
+        ))
         for tenant in user.group_tenants
     )
     user['user_tenants'] = str(user_tenants)[1:-1]
@@ -57,7 +57,7 @@ def _format_group_system_roles(user):
 
 
 @cfy.group(name='users')
-@cfy.options.verbose()
+@cfy.options.common_options
 def users():
     """Handle Cloudify users
     """
@@ -68,7 +68,7 @@ def users():
 @users.command(name='list', short_help='List users [manager only]')
 @cfy.options.sort_by('username')
 @cfy.options.descending
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.get_data
 @cfy.options.search
 @cfy.options.pagination_offset
@@ -110,7 +110,7 @@ def list(sort_by,
 
 @users.command(name='create', short_help='Create a user [manager only]')
 @cfy.argument('username', callback=cfy.validate_name)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.security_role
 @cfy.options.password
 @cfy.options.tenant_name(required=False)
@@ -145,7 +145,7 @@ def create(username,
                short_help='Set a new password for a user [manager only]')
 @cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.password
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -163,7 +163,7 @@ def set_password(username, password, logger, client):
                short_help='Set a new role for a user [manager only]')
 @cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.security_role
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -181,7 +181,7 @@ def set_role(username, security_role, logger, client):
                short_help='Get details for a single user [manager only]')
 @cfy.argument(
     'username', callback=cfy.validate_name, default=env.get_username())
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.get_data
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -212,7 +212,7 @@ def get(username, get_data, logger, client):
 @users.command(name='delete',
                short_help='Delete a user [manager only]')
 @cfy.argument('username', callback=cfy.validate_name)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -229,7 +229,7 @@ def delete(username, logger, client):
 @users.command(name='activate',
                short_help='Make an inactive user active [manager only]')
 @cfy.argument('username')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -248,7 +248,7 @@ def activate(username, logger, client):
 @users.command(name='deactivate',
                short_help='Make an active user inactive [manager only]')
 @cfy.argument('username')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -267,7 +267,7 @@ def deactivate(username, logger, client):
 @users.command(name='unlock',
                short_help='Unlock a locked user [manager only]')
 @cfy.argument('username')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger

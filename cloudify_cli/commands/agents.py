@@ -32,7 +32,7 @@ _NODE_INSTANCE_STATE_STARTED = 'started'
 
 
 @cfy.group(name='agents')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 def agents():
     """Handle a deployment's agents
@@ -61,7 +61,7 @@ def _deployment_exists(client, deployment_id):
                 short_help='Install deployment agents [manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='relevant deployment(s)')
 @cfy.options.all_tenants
@@ -269,7 +269,7 @@ def run_worker(
                            ' (installed on remote hosts). [manager only]')
 @cfy.argument('deployment-id', required=False)
 @cfy.options.include_logs
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='relevant deployment(s)')
 @cfy.options.all_tenants

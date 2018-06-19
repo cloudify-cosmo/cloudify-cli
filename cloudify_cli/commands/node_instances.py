@@ -30,7 +30,7 @@ NODE_INSTANCE_COLUMNS = ['id', 'deployment_id', 'host_id', 'node_id', 'state',
 
 
 @cfy.group(name='node-instances')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 def manager():
     """Handle a deployment's node-instances
@@ -42,7 +42,7 @@ def manager():
                  short_help='Retrieve node-instance information '
                  '[manager only]')
 @cfy.argument('node_instance_id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(
     required=False, resource_name_for_help='node-instance')
 @cfy.pass_logger
@@ -82,7 +82,7 @@ def get(node_instance_id, logger, client, tenant_name):
 @cfy.options.search
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 @cfy.pass_client()
 def list(deployment_id,
@@ -133,7 +133,7 @@ def list(deployment_id,
              short_help='Show node-instance information [locally]')
 @cfy.argument('node-id', required=False)
 @cfy.options.blueprint_id(required=True, multiple_blueprints=True)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def local(node_id, blueprint_id, logger):
     """Display node-instances for the execution

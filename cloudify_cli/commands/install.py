@@ -43,7 +43,7 @@ from cloudify_rest_client.constants import VISIBILITY_EXCEPT_GLOBAL
 @cfy.options.timeout()
 @cfy.options.include_logs
 @cfy.options.json_output
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_context
 def manager(ctx,
             blueprint_path,
@@ -136,7 +136,7 @@ def manager(ctx,
 @cfy.options.task_retries(5)
 @cfy.options.task_retry_interval(3)
 @cfy.options.task_thread_pool_size()
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_context
 def local(ctx,
           blueprint_path,

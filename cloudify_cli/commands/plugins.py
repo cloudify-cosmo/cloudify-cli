@@ -35,7 +35,7 @@ EXCLUDED_COLUMNS = ['archive_name', 'distribution_version', 'excluded_wheels',
 
 
 @cfy.group(name='plugins')
-@cfy.options.verbose()
+@cfy.options.common_options
 def plugins():
     """Handle plugins on the manager
     """
@@ -45,7 +45,7 @@ def plugins():
 @plugins.command(name='validate',
                  short_help='Validate a plugin')
 @cfy.argument('plugin-path')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def validate(plugin_path, logger):
     """Validate a plugin
@@ -65,7 +65,7 @@ def validate(plugin_path, logger):
                  short_help='Delete a plugin [manager only]')
 @cfy.argument('plugin-id')
 @cfy.options.force(help=helptexts.FORCE_DELETE_PLUGIN)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -87,7 +87,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
 @cfy.options.plugin_yaml_path()
 @cfy.options.private_resource
 @cfy.options.visibility()
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.pass_context
 @cfy.assert_manager_active()
@@ -152,7 +152,7 @@ def upload_caravan(client, logger, path):
                  short_help='Download a plugin [manager only]')
 @cfy.argument('plugin-id')
 @cfy.options.output_path
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.pass_logger
 @cfy.pass_client()
@@ -174,7 +174,7 @@ def download(plugin_id, output_path, logger, client, tenant_name):
 @plugins.command(name='get',
                  short_help='Retrieve plugin information [manager only]')
 @cfy.argument('plugin-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.get_data
 @cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.assert_manager_active()
@@ -201,7 +201,7 @@ def get(plugin_id, logger, client, tenant_name, get_data):
     required=False, resource_name_for_help='plugin')
 @cfy.options.all_tenants
 @cfy.options.search
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.get_data
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
@@ -248,7 +248,7 @@ def _transform_plugin_response(plugin):
 @plugins.command(name='set-global',
                  short_help="Set the plugin's visibility to global")
 @cfy.argument('plugin-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
@@ -269,7 +269,7 @@ def set_global(plugin_id, logger, client):
                  short_help="Set the plugin's visibility")
 @cfy.argument('plugin-id')
 @cfy.options.visibility(required=True, valid_values=VISIBILITY_EXCEPT_PRIVATE)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger

@@ -32,7 +32,7 @@ def tokens():
     name='get',
     short_help='returns a valid REST token from the Cloudify Manager')
 @cfy.assert_manager_active()
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
 def get(logger, client):

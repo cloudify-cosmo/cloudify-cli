@@ -45,7 +45,7 @@ EXECUTION_TABLE_LABELS = {'status_display': 'status'}
 
 
 @cfy.group(name='executions')
-@cfy.options.verbose()
+@cfy.options.common_options
 def executions():
     """Handle workflow executions
     """
@@ -55,7 +55,7 @@ def executions():
 @cfy.command(name='get',
              short_help='Retrieve execution information [manager only]')
 @cfy.argument('execution-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -98,7 +98,7 @@ def manager_get(execution_id, logger, client, tenant_name):
 @cfy.options.all_tenants
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -163,7 +163,7 @@ def manager_list(
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.dry_run
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -285,9 +285,9 @@ def manager_start(workflow_id,
 @cfy.command(name='cancel',
              short_help='Cancel a workflow execution [manager only]')
 @cfy.argument('execution-id')
+@cfy.options.common_options
 @cfy.options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
 @cfy.options.kill()
-@cfy.options.verbose()
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -321,7 +321,7 @@ def manager_cancel(execution_id, force, kill, logger, client, tenant_name):
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def local_start(workflow_id,
                 blueprint_id,

@@ -39,7 +39,7 @@ PROFILE_COLUMNS = ['name', 'manager_ip', 'manager_username', 'manager_tenant',
 
 
 @cfy.group(name='profiles')
-@cfy.options.verbose()
+@cfy.options.common_options
 def profiles():
     """Handle Cloudify CLI profiles
 
@@ -56,7 +56,7 @@ def profiles():
 
 @profiles.command(name='show-current',
                   short_help='Retrieve current profile information')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def show(logger):
     """Shows your current active profile and it's properties
@@ -73,7 +73,7 @@ def show(logger):
 
 @profiles.command(name='list',
                   short_help='List profiles')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def list(logger):
     """List all profiles
@@ -113,7 +113,7 @@ def list(logger):
 @cfy.options.ssl_rest
 @cfy.options.rest_certificate
 @cfy.options.skip_credentials_validation
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def use(manager_ip,
         profile_name,
@@ -234,7 +234,7 @@ def _create_profile(
 @profiles.command(name='delete',
                   short_help='Delete a profile')
 @cfy.argument('profile-name')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def delete(profile_name, logger):
     """Delete a profile
@@ -360,7 +360,7 @@ def _set_profile_ssl(ssl, logger):
 @cfy.options.ssl_state
 @cfy.options.rest_certificate
 @cfy.options.skip_credentials_validation
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def set_cmd(profile_name,
             manager_username,
@@ -452,7 +452,7 @@ def set_cluster(cluster_node_name,
 @cfy.options.ssh_key_flag
 @cfy.options.rest_certificate_flag
 @cfy.options.skip_credentials_validation
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def unset(manager_username,
           manager_password,
@@ -517,7 +517,7 @@ def unset(manager_username,
                   short_help='Export all profiles to an archive')
 @cfy.options.include_keys(helptexts.EXPORT_SSH_KEYS)
 @cfy.options.optional_output_path
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def export_profiles(include_keys, output_path, logger):
     """Export all profiles to a file
@@ -552,7 +552,7 @@ def export_profiles(include_keys, output_path, logger):
                   short_help='Import profiles from an archive')
 @cfy.argument('archive-path')
 @cfy.options.include_keys(helptexts.IMPORT_SSH_KEYS)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def import_profiles(archive_path, include_keys, logger):
     """Import profiles from a profiles archive

@@ -24,7 +24,7 @@ from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='groups')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 def groups():
     """Handle deployment groups
@@ -35,7 +35,7 @@ def groups():
 @groups.command(name='list',
                 short_help='List groups for a deployment [manager only]')
 @cfy.options.deployment_id(required=True)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_client()
 @cfy.pass_logger

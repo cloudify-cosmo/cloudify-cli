@@ -45,7 +45,7 @@ INPUTS_COLUMNS = ['name', 'type', 'default', 'description']
 
 
 @cfy.group(name='blueprints')
-@cfy.options.verbose()
+@cfy.options.common_options
 def blueprints():
     """Handle blueprints on the manager
     """
@@ -55,7 +55,7 @@ def blueprints():
 @blueprints.command(name='validate',
                     short_help='Validate a blueprint')
 @cfy.argument('blueprint-path')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def validate_blueprint(blueprint_path, logger):
     """Validate a blueprint
@@ -81,7 +81,7 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.options.blueprint_id(validate=True)
 @cfy.options.blueprint_filename()
 @cfy.options.validate
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
 @cfy.options.private_resource
 @cfy.options.visibility()
@@ -169,7 +169,7 @@ def upload(ctx,
                     short_help='Download a blueprint [manager only]')
 @cfy.argument('blueprint-id')
 @cfy.options.output_path
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -192,7 +192,7 @@ def download(blueprint_id, output_path, logger, client, tenant_name):
 @blueprints.command(name='delete',
                     short_help='Delete a blueprint [manager only]')
 @cfy.argument('blueprint-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -212,7 +212,7 @@ def delete(blueprint_id, logger, client, tenant_name):
                     short_help='List blueprints [manager only]')
 @cfy.options.sort_by()
 @cfy.options.descending
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='blueprint')
 @cfy.options.all_tenants
@@ -261,7 +261,7 @@ def list(sort_by,
 @blueprints.command(name='get',
                     short_help='Retrieve blueprint information [manager only]')
 @cfy.argument('blueprint-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -298,7 +298,7 @@ def get(blueprint_id, logger, client, tenant_name):
 @blueprints.command(name='inputs',
                     short_help='Retrieve blueprint inputs [manager only]')
 @cfy.argument('blueprint-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -326,7 +326,7 @@ def inputs(blueprint_id, logger, client, tenant_name):
 @cfy.argument('blueprint-path')
 @cfy.options.optional_output_path
 @cfy.options.validate
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 @cfy.pass_context
 def package(ctx, blueprint_path, output_path, validate, logger):
@@ -360,7 +360,7 @@ def package(ctx, blueprint_path, output_path, validate, logger):
                     short_help='Create pip-requirements')
 @cfy.argument('blueprint-path', type=click.Path(exists=True))
 @cfy.options.optional_output_path
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def create_requirements(blueprint_path, output_path, logger):
     """Generate a pip-compliant requirements file for a given blueprint
@@ -386,7 +386,7 @@ def create_requirements(blueprint_path, output_path, logger):
 @blueprints.command(name='install-plugins',
                     short_help='Install plugins [locally]')
 @cfy.argument('blueprint-path', type=click.Path(exists=True))
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_local_active
 @cfy.pass_logger
 def install_plugins(blueprint_path, logger):
@@ -404,7 +404,7 @@ def install_plugins(blueprint_path, logger):
 @blueprints.command(name='set-global',
                     short_help="Set the blueprint's visibility to global")
 @cfy.argument('blueprint-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
@@ -425,7 +425,7 @@ def set_global(blueprint_id, logger, client):
                     short_help="Set the blueprint's visibility")
 @cfy.argument('blueprint-id')
 @cfy.options.visibility(required=True, valid_values=VISIBILITY_EXCEPT_PRIVATE)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger

@@ -68,7 +68,7 @@ def pass_cluster_client(*client_args, **client_kwargs):
 
 
 @cfy.group(name='cluster')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 def cluster():
     """Handle the Cloudify Manager cluster
@@ -81,7 +81,7 @@ def cluster():
                  short_help='Show the current cluster status [cluster only]')
 @pass_cluster_client()
 @cfy.pass_logger
-@cfy.options.verbose()
+@cfy.options.common_options
 def status(client, logger):
     """Display the current status of the Cloudify Manager cluster
     """
@@ -96,7 +96,7 @@ def status(client, logger):
                  short_help='Start a Cloudify Manager cluster [manager only]')
 @cfy.pass_client()
 @cfy.pass_logger
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.timeout()
 @cfy.options.cluster_node_options
 @cfy.options.cluster_host_ip
@@ -141,7 +141,7 @@ def start(client,
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.argument('join_profile')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.timeout()
 @cfy.options.cluster_node_options
 @cfy.options.cluster_host_ip
@@ -232,7 +232,7 @@ def join(client,
                             '[cluster only]')
 @pass_cluster_client()
 @cfy.pass_logger
-@cfy.options.verbose()
+@cfy.options.common_options
 def update_profile(client, logger):
     """Fetch the list of the cluster nodes and update the current profile.
 
@@ -280,7 +280,7 @@ def _update_profile_cluster_settings(profile, nodes, logger=None):
                  short_help='Set one of the cluster nodes as the new active '
                             '[cluster only]')
 @cfy.argument('node_name')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.timeout(default=60)
 @pass_cluster_client()
 @cfy.pass_logger
@@ -348,7 +348,7 @@ def _prepare_node(node):
                short_help='List the nodes in the cluster [cluster only]')
 @pass_cluster_client()
 @cfy.pass_logger
-@cfy.options.verbose()
+@cfy.options.common_options
 def list_nodes(client, logger):
     """Display a table with basic information about the nodes in the cluster
     """
@@ -366,7 +366,7 @@ def list_nodes(client, logger):
 @pass_cluster_client()
 @cfy.pass_logger
 @cfy.argument('cluster-node-name')
-@cfy.options.verbose()
+@cfy.options.common_options
 def get_node(client, logger, cluster_node_name):
     node = client.cluster.nodes.details(cluster_node_name)
     _prepare_node(node)
@@ -386,7 +386,7 @@ def get_node(client, logger, cluster_node_name):
 @cfy.pass_logger
 @cfy.options.cluster_node_options
 @cfy.argument('cluster-node-name')
-@cfy.options.verbose()
+@cfy.options.common_options
 def update_node_options(client, logger, cluster_node_name,
                         cluster_node_options):
     if not cluster_node_options:
@@ -421,7 +421,7 @@ def set_node_certificate(logger, cluster_node_name, certificate_path):
 @pass_cluster_client()
 @cfy.pass_logger
 @cfy.argument('cluster-node-name')
-@cfy.options.verbose()
+@cfy.options.common_options
 def remove_node(client, logger, cluster_node_name):
     """Unregister a node from the cluster.
 

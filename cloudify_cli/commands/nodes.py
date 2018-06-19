@@ -31,7 +31,7 @@ OPERATION_COLUMNS = ['name', 'inputs', 'plugin', 'executor', 'operation']
 
 
 @cfy.group(name='nodes')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 def nodes():
     """Handle a deployment's nodes
@@ -43,7 +43,7 @@ def nodes():
                short_help='Retrieve node information [manager only]')
 @cfy.argument('node-id')
 @cfy.options.deployment_id(required=True)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='node')
 @cfy.pass_logger
 @cfy.pass_client()
@@ -116,7 +116,7 @@ def get(node_id, deployment_id, logger, client, tenant_name):
 @cfy.options.search
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 @cfy.pass_client()
 def list(deployment_id,

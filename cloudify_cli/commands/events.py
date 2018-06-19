@@ -25,7 +25,7 @@ from ..execution_events_fetcher import ExecutionEventsFetcher, \
 
 
 @cfy.group(name='events')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 def events():
     """Show events from workflow executions
@@ -39,7 +39,7 @@ def events():
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.tail
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
@@ -107,7 +107,7 @@ def list(execution_id,
                 short_help='Delete deployment events [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.include_logs
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_client()
 @cfy.pass_logger

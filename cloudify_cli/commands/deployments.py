@@ -56,7 +56,7 @@ TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
 
 
 @cfy.group(name='deployments')
-@cfy.options.verbose()
+@cfy.options.common_options
 def deployments():
     """Handle deployments on the Manager
     """
@@ -73,7 +73,7 @@ def deployments():
 @cfy.options.search
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -123,7 +123,7 @@ def manager_list(blueprint_id,
 @cfy.options.search
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -170,7 +170,7 @@ def manager_history(deployment_id,
     short_help='Retrieve deployment update information [manager only]'
 )
 @cfy.argument('deployment-update-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False,
                          resource_name_for_help='deployment update')
 @cfy.assert_manager_active()
@@ -218,7 +218,7 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
 @cfy.options.validate
 @cfy.options.include_logs
 @cfy.options.json_output
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -357,7 +357,7 @@ def manager_update(ctx,
 @cfy.options.inputs
 @cfy.options.private_resource
 @cfy.options.visibility(valid_values=VISIBILITY_EXCEPT_GLOBAL)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -419,7 +419,7 @@ def manager_create(blueprint_id,
              short_help='Delete a deployment [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.force(help=helptexts.IGNORE_LIVE_NODES)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -459,7 +459,7 @@ def manager_delete(deployment_id, force, logger, client, tenant_name):
 @cfy.command(name='outputs',
              short_help='Show deployment outputs [manager only]')
 @cfy.argument('deployment-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -488,7 +488,7 @@ def manager_outputs(deployment_id, logger, client, tenant_name):
 @cfy.command(name='inputs',
              short_help='Show deployment inputs [manager only]')
 @cfy.argument('deployment-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -513,7 +513,7 @@ def manager_inputs(deployment_id, logger, client, tenant_name):
              short_help="Set the deployment's visibility [manager only]")
 @cfy.argument('deployment-id')
 @cfy.options.visibility(required=True, valid_values=[VisibilityState.TENANT])
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
@@ -531,7 +531,7 @@ def manager_set_visibility(deployment_id, visibility, logger, client):
 
 
 @cfy.command(name='inputs', short_help='Show deployment inputs [locally]')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.blueprint_id(required=True, multiple_blueprints=True)
 @cfy.pass_logger
 def local_inputs(blueprint_id, logger):
@@ -542,7 +542,7 @@ def local_inputs(blueprint_id, logger):
 
 
 @cfy.command(name='outputs', short_help='Show deployment outputs [locally]')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.blueprint_id(required=True, multiple_blueprints=True)
 @cfy.pass_logger
 def local_outputs(blueprint_id, logger):

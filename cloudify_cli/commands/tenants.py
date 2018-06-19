@@ -67,7 +67,7 @@ def _format_tenant(tenant):
 
 
 @cfy.group(name='tenants')
-@cfy.options.verbose()
+@cfy.options.common_options
 def tenants():
     """Handle Cloudify tenants (Premium feature)
     """
@@ -79,7 +79,7 @@ def tenants():
                  short_help='List tenants [manager only]')
 @cfy.options.sort_by('name')
 @cfy.options.descending
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.get_data
 @cfy.options.search
 @cfy.options.pagination_offset
@@ -121,7 +121,7 @@ def list(sort_by,
 @tenants.command(name='create',
                  short_help='Create a tenant [manager only]')
 @cfy.argument('tenant-name', callback=cfy.validate_name)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
@@ -139,7 +139,7 @@ def create(tenant_name, logger, client):
 @cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.user_tenant_role()
 @cfy.options.tenant_name(show_default_in_help=False)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
@@ -166,7 +166,7 @@ def add_user(username, tenant_name, role, logger, client):
 @cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.user_tenant_role()
 @cfy.options.tenant_name(show_default_in_help=False)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
@@ -188,7 +188,7 @@ def update_user(username, tenant_name, role, logger, client):
                  short_help='Remove a user from a tenant [manager only]')
 @cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.tenant_name(show_default_in_help=False)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
@@ -210,7 +210,7 @@ def remove_user(username, tenant_name, logger, client):
 @cfy.argument('user-group-name', callback=cfy.validate_name)
 @cfy.options.group_tenant_role()
 @cfy.options.tenant_name(show_default_in_help=False)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
@@ -237,7 +237,7 @@ def add_user_group(user_group_name, tenant_name, role, logger, client):
 @cfy.argument('user-group-name', callback=cfy.validate_name)
 @cfy.options.group_tenant_role()
 @cfy.options.tenant_name(show_default_in_help=False)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
@@ -259,7 +259,7 @@ def update_user_group(user_group_name, tenant_name, role, logger, client):
                  short_help='Remove a user group from a tenant [manager only]')
 @cfy.argument('user-group-name', callback=cfy.validate_name)
 @cfy.options.tenant_name(show_default_in_help=False)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
@@ -279,7 +279,7 @@ def remove_user_group(user_group_name, tenant_name, logger, client):
 @tenants.command(name='get',
                  short_help='Get details for a single tenant [manager only]')
 @cfy.argument('tenant-name', callback=cfy.validate_name)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.options.get_data
 @cfy.pass_client(use_tenant_in_header=False)
@@ -307,7 +307,7 @@ def get(tenant_name, get_data, logger, client):
 @tenants.command(name='delete',
                  short_help='Delete a tenant [manager only]')
 @cfy.argument('tenant-name', callback=cfy.validate_name)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
