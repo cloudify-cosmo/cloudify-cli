@@ -268,7 +268,7 @@ def _update_profile_cluster_settings(profile, nodes, logger=None):
                 'name': node.name,
                 # all other conenction parameters will be defaulted to the
                 # ones from the last used manager
-                'manager_ip': node.host_ip
+                'manager_ip': node.public_ip or node.host_ip
             })
     # filter out removed nodes
     env.profile.cluster = [n for n in env.profile.cluster
