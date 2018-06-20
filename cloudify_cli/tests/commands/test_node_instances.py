@@ -1,4 +1,5 @@
 import os
+import json
 
 from mock import MagicMock
 
@@ -18,6 +19,14 @@ class NodeInstancesTest(CliCommandTest):
         self.client.node_instances.get = \
             MagicMock(return_value=node_instance_get_mock())
         self.invoke('cfy node-instances get instance_id', context='manager')
+
+    def test_instances_get_json(self):
+        self.client.node_instances.get = \
+            MagicMock(return_value=node_instance_get_mock())
+        result = self.invoke('cfy node-instances get instance_id --json',
+                             context='manager')
+        data = json.loads(result.output)
+        self.assertIn('runtime_properties', data)
 
     def test_instance_get_no_instance_id(self):
         outcome = self.invoke(

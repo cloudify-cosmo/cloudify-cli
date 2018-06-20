@@ -21,6 +21,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from .. import utils
 from ..cli import cfy
 from ..local import load_env
+from ..logger import get_global_json_output
 from ..table import print_data, print_details
 from ..exceptions import CloudifyCliError
 
@@ -62,10 +63,21 @@ def get(node_instance_id, logger, client, tenant_name):
         raise CloudifyCliError('Node instance {0} not found'.format(
             node_instance_id))
 
-    print_data(NODE_INSTANCE_COLUMNS, node_instance, 'Node-instance:', 50)
+    # decode in-place so that it's decoded for both branches
+    node_instance.runtime_properties.update(
+        utils.decode_dict(node_instance.runtime_properties))
 
-    print_details(utils.decode_dict(node_instance.runtime_properties),
-                  'Instance runtime properties:')
+    if get_global_json_output():
+        # for json output, make sure runtime properties are in the same object
+        # so that the output is a single decode-able object
+        columns = NODE_INSTANCE_COLUMNS + ['runtime_properties']
+        print_data(columns, node_instance, 'Node-instance:', 50)
+    else:
+        print_data(NODE_INSTANCE_COLUMNS, node_instance, 'Node-instance:', 50)
+
+        print_details(node_instance.runtime_properties,
+                      'Instance runtime properties:')
+
     logger.info('')
 
 
