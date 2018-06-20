@@ -20,7 +20,7 @@ import click
 from datetime import datetime
 
 from prettytable import PrettyTable
-from .logger import get_global_json_output, CloudifyJSONEncoder
+from .logger import get_global_json_output, CloudifyJSONEncoder, output
 
 from cloudify_rest_client.responses import ListResponse
 
@@ -82,7 +82,7 @@ def generate(cols, data, defaults=None, labels=None):
 
 
 def display(title, tb):
-    click.echo('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
+    output('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
 
 
 def format_json_output(cols, data, defaults=None, labels=None):
@@ -90,11 +90,11 @@ def format_json_output(cols, data, defaults=None, labels=None):
     labels = labels or {}
 
     for item in data:
-        output = {
+        values = {
             labels.get(col, col): item.get(col) or defaults.get(col)
             for col in cols
         }
-        click.echo('{0}'.format(json.dumps(output, cls=CloudifyJSONEncoder)))
+        output('{0}'.format(json.dumps(values, cls=CloudifyJSONEncoder)))
 
 
 def print_data(columns, items, header_text, max_width=None, defaults=None,
@@ -115,15 +115,15 @@ def print_data(columns, items, header_text, max_width=None, defaults=None,
 
 def print_details(data, title):
     if get_global_json_output():
-        click.echo(json.dumps(data, cls=CloudifyJSONEncoder))
+        output(json.dumps(data, cls=CloudifyJSONEncoder))
     else:
-        click.echo(title)
+        output(title)
 
         for item in data.items():
             field_name = str(item[0]) + ':'
             field_value = str(item[1])
             field_value = get_timestamp(field_value) or field_value
-            click.echo('\t{0} {1}'.format(field_name.ljust(16), field_value))
+            output('\t{0} {1}'.format(field_name.ljust(16), field_value))
 
 
 def get_timestamp(data):

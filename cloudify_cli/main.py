@@ -51,7 +51,7 @@ from .commands import maintenance_mode
 @cfy.options.verbose(expose_value=True)
 @cfy.options.version
 @cfy.options.json
-def _cfy(verbose, json):
+def _cfy(verbose):
     """Cloudify's Command Line Interface
 
     Note that some commands are only available if you're using a manager.

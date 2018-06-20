@@ -69,8 +69,20 @@ LOGGER = {
             "stream": "ext://sys.stderr",
             "formatter": "console"
         }
+    },
+    "loggers": {
+        "cloudify.cli.main": {
+            "handlers": ["console", "file"]
+        },
+        "logfile": {
+            "level": "DEBUG",
+            "propagate": False,
+            "handlers": ["file"]
+        }
     }
 }
+# logger that goes only to the file, for use when logging table data
+logfile_logger = logging.getLogger('logfile')
 
 
 def get_logger():
@@ -110,11 +122,6 @@ def _configure_defaults():
 
     # add handlers to the main logger
     logger_dict = copy.deepcopy(LOGGER)
-    logger_dict['loggers'] = {
-        'cloudify.cli.main': {
-            'handlers': list(logger_dict['handlers'].keys())
-        }
-    }
     logger_dict['handlers']['file']['filename'] = DEFAULT_LOG_FILE
     logfile_dir = os.path.dirname(DEFAULT_LOG_FILE)
     if not os.path.exists(logfile_dir):
@@ -142,11 +149,14 @@ def _configure_from_file():
     # add handlers to every logger
     # specified in the file
     loggers = {}
-    for logger_name in loggers_config:
+    for logger_name, logger_settings in loggers_config.items():
+        if isinstance(logger_settings, basestring):
+            logger_settings = {'level': logger_settings.upper()}
         loggers[logger_name] = {
             'handlers': list(logger_dict['handlers'].keys())
         }
-    logger_dict['loggers'] = loggers
+        loggers[logger_name].update(logger_settings)
+    logger_dict['loggers'].update(loggers)
 
     # set level for each logger
     for logger_name, logging_level in loggers_config.iteritems():
@@ -209,6 +219,11 @@ def set_global_json_output(enabled=False):
 
 def get_global_json_output():
     return json_output
+
+
+def output(line):
+    logfile_logger.info(line)
+    click.echo(line)
 
 
 class CloudifyJSONEncoder(json.JSONEncoder):
