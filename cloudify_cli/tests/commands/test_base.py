@@ -26,6 +26,7 @@ from .. import cfy
 from ... import env
 from ... import utils
 from ...exceptions import CloudifyCliError
+from ...logger import set_global_json_output
 
 
 class CliCommandTest(testtools.TestCase):
@@ -57,6 +58,8 @@ class CliCommandTest(testtools.TestCase):
         utils.get_cwd = lambda: env.CLOUDIFY_WORKDIR
         self.original_utils_os_getcwd = utils_os.getcwd
         utils_os.getcwd = lambda: env.CLOUDIFY_WORKDIR
+        # reset in case a test set it
+        set_global_json_output(False)
 
     def tearDown(self):
         super(CliCommandTest, self).tearDown()
