@@ -18,6 +18,7 @@
 import os
 import copy
 import json
+import uuid
 import click
 import logging
 import logging.config
@@ -208,3 +209,10 @@ def set_global_json_output(enabled=False):
 
 def get_global_json_output():
     return json_output
+
+
+class CloudifyJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, uuid.UUID):
+            return obj.hex
+        return super(CloudifyJSONEncoder, self).default(obj)

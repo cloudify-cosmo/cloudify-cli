@@ -20,7 +20,7 @@ import click
 from datetime import datetime
 
 from prettytable import PrettyTable
-from .logger import get_global_json_output
+from .logger import get_global_json_output, CloudifyJSONEncoder
 
 from cloudify_rest_client.responses import ListResponse
 
@@ -94,7 +94,7 @@ def format_json_output(cols, data, defaults=None, labels=None):
             labels.get(col, col): item.get(col) or defaults.get(col)
             for col in cols
         }
-        click.echo('{0}'.format(json.dumps(output)))
+        click.echo('{0}'.format(json.dumps(output, cls=CloudifyJSONEncoder)))
 
 
 def print_data(columns, items, header_text, max_width=None, defaults=None,
@@ -115,7 +115,7 @@ def print_data(columns, items, header_text, max_width=None, defaults=None,
 
 def print_details(data, title):
     if get_global_json_output():
-        click.echo(json.dumps(data))
+        click.echo(json.dumps(data, cls=CloudifyJSONEncoder))
     else:
         click.echo(title)
 
