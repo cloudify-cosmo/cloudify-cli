@@ -108,6 +108,11 @@ FORCE_CANCEL_EXECUTION = (
     "Terminate the execution abruptly, rather than request an orderly "
     "termination"
 )
+KILL_EXECUTION = (
+    "Terminate the execution abruptly, and also stop currently running tasks. "
+    "This will stop all processes running operations and workflows for the "
+    "given execution."
+)
 
 INIT_LOCAL = "Initialize environment for local executions"
 NODE_NAME = "The node's name"
