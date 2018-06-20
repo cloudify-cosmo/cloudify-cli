@@ -193,7 +193,14 @@ def validate_nonnegative_integer(ctx, param, value):
 
 
 def set_json(ctx, param, value):
-    set_global_json_output(value)
+    if value is not None:
+        set_global_json_output(value)
+    return value
+
+
+def set_format(ctx, param, value):
+    if value == 'json':
+        set_global_json_output(True)
     return value
 
 
@@ -436,9 +443,18 @@ class Options(object):
             is_eager=True,
             help=helptexts.VERSION)
 
+        self.format = click.option(
+            '--format',
+            type=click.Choice(['plain', 'json']),
+            expose_value=False,
+            callback=set_format
+        )
+
         self.json = click.option(
             '--json',
             is_flag=True,
+            expose_value=False,
+            default=None,
             callback=set_json)
 
         self.inputs = click.option(
@@ -956,7 +972,7 @@ class Options(object):
         To be used for arguments that are going to be applied for all or
         almost all commands.
         """
-        for arg in [self.json, self.verbose()]:
+        for arg in [self.json, self.verbose(), self.format]:
             f = arg(f)
         return f
 
