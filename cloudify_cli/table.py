@@ -16,7 +16,6 @@
 
 import os
 import json
-import click
 from datetime import datetime
 
 from prettytable import PrettyTable
@@ -94,7 +93,7 @@ def format_json_output(cols, data, defaults=None, labels=None):
             labels.get(col, col): item.get(col) or defaults.get(col)
             for col in cols
         }
-        output('{0}'.format(json.dumps(values, cls=CloudifyJSONEncoder)))
+        output(json.dumps(values, cls=CloudifyJSONEncoder))
 
 
 def print_data(columns, items, header_text, max_width=None, defaults=None,
