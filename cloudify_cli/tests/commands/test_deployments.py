@@ -32,6 +32,7 @@ class DeploymentUpdatesTest(CliCommandTest):
         self.use_manager()
 
         self.client.deployment_updates.update = MagicMock()
+        self.client.deployment_updates.get = MagicMock()
         self.client.blueprints.upload = MagicMock()
         self.client.executions = MagicMock()
         self.client.deployment_updates.update_with_existing_blueprint = \

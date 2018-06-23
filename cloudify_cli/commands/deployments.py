@@ -47,7 +47,8 @@ from ..utils import (prettify_client_error,
 DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
                       'visibility', 'tenant_name', 'created_by']
 DEPLOYMENT_UPDATE_COLUMNS = ['id', 'deployment_id', 'tenant_name', 'state',
-                             'execution_id', 'created_at', 'visibility',
+                             'execution_id', 'second_execution_id',
+                             'created_at', 'visibility',
                              'old_blueprint_id', 'new_blueprint_id']
 TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
 
@@ -336,15 +337,40 @@ def manager_update(ctx,
                             dep_id=deployment_id,
                             exec_id=execution.id))
         raise SuppressedCloudifyCliError()
-    else:
-        logger.info("Finished executing workflow '{0}' on deployment "
-                    "'{1}'".format(execution.workflow_id,
-                                   execution.deployment_id))
-        logger.info('Successfully updated deployment {dep_id}. '
-                    'Deployment update id: {depup_id}. Execution id: {exec_id}'
-                    .format(depup_id=deployment_update.id,
-                            dep_id=deployment_id,
-                            exec_id=execution.id))
+    logger.info("Finished executing workflow '{0}' on deployment "
+                "'{1}'".format(execution.workflow_id,
+                               execution.deployment_id))
+    msg = 'Successfully updated deployment {dep_id}. Deployment update id: ' \
+          '{depup_id}. Execution id: {exec_id}'.format(
+            depup_id=deployment_update.id,
+            dep_id=deployment_id,
+            exec_id=execution.id
+            )
+    deployment_update = client.deployment_updates.get(deployment_update.id)
+    if deployment_update.second_execution_id:
+        second_execution = execution_events_fetcher.wait_for_execution(
+            client,
+            client.executions.get(deployment_update.second_execution_id),
+            events_handler=events_logger,
+            include_logs=include_logs,
+            timeout=None  # don't timeout ever
+        )
+        if second_execution.error:
+            logger.info(
+                "Execution of workflow '{0}' for deployment '{1}' failed. "
+                "[error={2}]".format(second_execution.workflow_id,
+                                     second_execution.deployment_id,
+                                     second_execution.error))
+            logger.info(
+                'Failed updating deployment {dep_id}. Deployment update '
+                'id: {depup_id}. Execution id: {exec_id}'.format(
+                    depup_id=deployment_update.id,
+                    dep_id=deployment_id,
+                    exec_id=second_execution.id
+                ))
+            raise SuppressedCloudifyCliError()
+        msg += '. Second execution id: {0}'.format(second_execution.id)
+    logger.info(msg)
 
 
 @cfy.command(name='create',
