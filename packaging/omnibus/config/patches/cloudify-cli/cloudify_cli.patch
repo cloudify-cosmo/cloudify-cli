@@ -14,7 +14,7 @@ index 2ffe55d..6e6e3cb 100644
 +    - {'http://www.getcloudify.org/spec/aws-plugin/1.4.10': 'file:/opt/cfy/plugins/aws-plugin'}
 +    - {'http://www.getcloudify.org/spec/openstack-plugin/2.0.1': 'file:/opt/cfy/plugins/openstack-plugin'}
 +    - {'http://www.getcloudify.org/spec/fabric-plugin/1.5.2': 'file:/opt/cfy/plugins/fabric-plugin'}
-+    - {'http://www.getcloudify.org/spec/diamond-plugin/1.3.12': 'file:/opt/cfy/plugins/diamond-plugin'}
++    - {'http://www.getcloudify.org/spec/diamond-plugin/1.3.13': 'file:/opt/cfy/plugins/diamond-plugin'}
 +    - {'http://www.getcloudify.org/spec/vsphere-plugin/2.4.0': 'file:/opt/cfy/plugins/vsphere-plugin'}
 
 diff --git a/cloudify_cli/utils.py b/cloudify_cli/utils.py
