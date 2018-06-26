@@ -65,8 +65,9 @@ def _deployment_exists(client, deployment_id):
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='relevant deployment(s)')
 @cfy.options.all_tenants
-@cfy.options.manager_ip()
-@cfy.options.manager_certificate()
+@cfy.options.stop_old_agent
+@cfy.options.manager_ip
+@cfy.options.manager_certificate
 @cfy.pass_logger
 @cfy.pass_client()
 def install(deployment_id,
@@ -75,6 +76,7 @@ def install(deployment_id,
             logger,
             client,
             all_tenants,
+            stop_old_agent,
             manager_ip,
             manager_certificate):
     """Install agents on the hosts of existing deployments
@@ -87,10 +89,10 @@ def install(deployment_id,
     """
     if manager_certificate:
         manager_certificate = _validate_certificate_file(manager_certificate)
-    params = None
+    params = {'stop_old_agent': stop_old_agent}
     if manager_ip or manager_certificate:
-        params = {'manager_ip': manager_ip,
-                  'manager_certificate': manager_certificate}
+        params['manager_ip'] = manager_ip
+        params['manager_certificate'] = manager_certificate
     get_deployments_and_run_workers(
         deployment_id, include_logs, tenant_name,
         logger, client, all_tenants, 'install_new_agents', params)
@@ -255,46 +257,6 @@ def run_worker(
         ))
 
         raise SuppressedCloudifyCliError()
-
-
-@agents.command(name='transfer',
-                short_help='Transfer live agents to work with a new'
-                           ' Cloudify Manager [manager only]')
-@cfy.argument('deployment-id', required=False)
-@cfy.options.include_logs
-@cfy.options.verbose()
-@cfy.options.tenant_name_for_list(
-    required=False, resource_name_for_help='relevant deployment(s)')
-@cfy.options.all_tenants
-@cfy.options.manager_ip(required=True)
-@cfy.options.manager_certificate(required=True)
-@cfy.options.manager_rest_token
-@cfy.pass_logger
-@cfy.pass_client()
-def transfer(deployment_id,
-             include_logs,
-             tenant_name,
-             logger,
-             client,
-             all_tenants,
-             manager_ip,
-             manager_certificate,
-             manager_rest_token):
-    """Configure agents to work with a new Cloudify Manager.
-
-    `DEPLOYMENT_ID` - The ID of the deployment you would like to
-    configure agents on.
-
-    """
-    manager_certificate = _validate_certificate_file(manager_certificate)
-    params = {'manager_ip': manager_ip,
-              'manager_certificate': manager_certificate,
-              'manager_rest_token': manager_rest_token}
-    get_deployments_and_run_workers(
-        deployment_id, include_logs, tenant_name,
-        logger, client, all_tenants, 'transfer_agents', params)
-    logger.info('Use `cfy agents validate` from the new Manager to make sure'
-                ' the agents are connected properly')
 
 
 @agents.command(name='validate',
