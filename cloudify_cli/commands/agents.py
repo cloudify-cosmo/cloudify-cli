@@ -89,7 +89,11 @@ def install(deployment_id,
     """
     if manager_certificate:
         manager_certificate = _validate_certificate_file(manager_certificate)
-    params = {'stop_old_agent': stop_old_agent}
+    params = {}
+    # We only want to pass this arg if it's true, because of backwards
+    # compatibility with blueprints that don't support it
+    if stop_old_agent:
+        params['stop_old_agent'] = stop_old_agent
     if manager_ip or manager_certificate:
         params['manager_ip'] = manager_ip
         params['manager_certificate'] = manager_certificate
