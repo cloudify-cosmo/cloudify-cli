@@ -55,7 +55,6 @@ default_manager_params = dict(
 @log_capture()
 def invoke(command, capture, context=None):
 
-    logger.configure_loggers()
     logger.set_global_verbosity_level(verbose=logger.NO_VERBOSE)
 
     cfy = clicktest.CliRunner()

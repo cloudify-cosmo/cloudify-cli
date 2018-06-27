@@ -66,18 +66,13 @@ LOGGER = {
         },
         "console": {
             "class": "logging.StreamHandler",
-            "stream": "ext://sys.stderr",
+            "stream": "ext://sys.stdout",
             "formatter": "console"
         }
     },
     "loggers": {
         "cloudify.cli.main": {
             "handlers": ["console", "file"]
-        },
-        "logfile": {
-            "level": "DEBUG",
-            "propagate": False,
-            "handlers": ["file"]
         }
     }
 }
@@ -119,7 +114,13 @@ def configure_loggers():
 
 
 def _configure_defaults():
-
+    if get_global_json_output():
+        LOGGER['loggers']["logfile"] = {
+            "level": "DEBUG",
+            "propagate": False,
+            "handlers": ["file"]
+        }
+        LOGGER['handlers']['console']['stream'] = 'ext://sys.stderr'
     # add handlers to the main logger
     logger_dict = copy.deepcopy(LOGGER)
     logger_dict['handlers']['file']['filename'] = DEFAULT_LOG_FILE

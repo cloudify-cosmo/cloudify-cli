@@ -30,7 +30,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
-from .. import env
+from .. import env, logger
 from ..cli import helptexts
 from ..inputs import inputs_to_dict
 from ..utils import generate_random_string
@@ -393,6 +393,10 @@ class AliasedGroup(click.Group):
                     '\n    '.join(matches))
             raise click.exceptions.UsageError(error_msg, error.ctx)
 
+    def command(self, *a, **kw):
+        kw.setdefault('cls', CommandWithLoggers)
+        return super(AliasedGroup, self).command(*a, **kw)
+
 
 def group(name):
     """Allow to create a group with a default click context
@@ -405,6 +409,18 @@ def group(name):
         cls=AliasedGroup)
 
 
+class CommandWithLoggers(click.Command):
+    """Like a click Command, but configure loggers first.
+
+    We want loggers to be configured after argument parsing has been
+    performed (ie. verbose/quiet callbacks have fired), but before the
+    command was actually run.
+    """
+    def invoke(self, *a, **kw):
+        logger.configure_loggers()
+        return super(CommandWithLoggers, self).invoke(*a, **kw)
+
+
 def command(*args, **kwargs):
     """Make Click commands Cloudify specific
 
@@ -412,6 +428,7 @@ def command(*args, **kwargs):
     Some decorators are called `@click.something` instead of
     `@cfy.something`
     """
+    kwargs.setdefault('cls', CommandWithLoggers)
     return click.command(*args, **kwargs)
 
 

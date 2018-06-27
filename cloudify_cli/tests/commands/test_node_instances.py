@@ -25,6 +25,7 @@ class NodeInstancesTest(CliCommandTest):
             MagicMock(return_value=node_instance_get_mock())
         result = self.invoke('cfy node-instances get instance_id --json',
                              context='manager')
+        import pudb; pu.db
         data = json.loads(result.output)
         self.assertIn('runtime_properties', data)
 
