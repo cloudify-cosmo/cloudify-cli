@@ -244,7 +244,7 @@ GET_DATA = 'When set to True, displays the full list of connected resources ' \
 PROFILE_NAME = 'Name of the profile to use'
 SECRET_VALUE = "The secret's value to be set"
 SECRET_STRING = "The string to use as the secret's value"
-SECRET_FILE = "The secret's file to use its content as value to be set"
+SECRET_FILE = "The file with the contents of the secret"
 SECRET_UPDATE_IF_EXISTS = 'Update secret value if secret key already ' \
                           'exists. [This option is deprecated; use cfy ' \
                           'secrets update command instead]'
