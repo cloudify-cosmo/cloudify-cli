@@ -38,7 +38,9 @@ def _archive_logs(logger,
     journalctl.
     """
     archive_filename = 'cloudify-manager-logs_{0}_{1}.tar.gz'.format(
-        ssh.get_manager_date(), env.profile.manager_ip)
+        ssh.get_manager_date(),
+        env.profile.manager_ip
+        if not host_string else host_string.split('@')[1])
     archive_path = os.path.join('/tmp', archive_filename)
     journalctl_destination_path = '/var/log/cloudify/journalctl.log'
 
@@ -78,17 +80,17 @@ def download(output_path, all_nodes, logger):
                             'cluster profile. Skipping...'
                             .format(node['manager_ip']))
                 continue
-            if output_path:
-                output_path_ip = node['manager_ip'] + '_' + output_path
+            if not output_path:
+                output_path = os.getcwd()
             host_string = env.build_manager_host_string(
                 ssh_user=node['ssh_user'], ip=node['manager_ip'])
             archive_path_on_manager = _archive_logs(
                 logger,
                 host_string=host_string,
                 key_filename=node['ssh_key'])
-            logger.info('Downloading archive to: {0}'.format(output_path_ip))
+            logger.info('Downloading archive to: {0}'.format(output_path))
             ssh.get_file_from_manager(archive_path_on_manager,
-                                      output_path_ip,
+                                      output_path,
                                       host_string=host_string,
                                       key_filename=node['ssh_key'])
             logger.info('Removing archive from manager...')
@@ -98,6 +100,8 @@ def download(output_path, all_nodes, logger):
                 key_filename=node['ssh_key'])
     else:
         archive_path_on_manager = _archive_logs(logger)
+        if not output_path:
+            output_path = os.getcwd()
         logger.info('Downloading archive to: {0}'.format(output_path))
         ssh.get_file_from_manager(archive_path_on_manager, output_path)
         logger.info('Removing archive from manager...')
