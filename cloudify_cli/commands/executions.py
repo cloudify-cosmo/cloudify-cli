@@ -22,9 +22,10 @@ from cloudify_rest_client import exceptions
 from .. import local
 from .. import utils
 from ..table import print_data
+from ..utils import get_deployment_environment_execution
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger
-from ..constants import DEFAULT_UNINSTALL_WORKFLOW
+from ..constants import DEFAULT_UNINSTALL_WORKFLOW, CREATE_DEPLOYMENT
 from ..execution_events_fetcher import wait_for_execution
 from ..exceptions import CloudifyCliError, ExecutionTimeoutError, \
     SuppressedCloudifyCliError
@@ -218,8 +219,8 @@ def manager_start(workflow_id,
                          'workflow execution to finish...')
             now = time.time()
             wait_for_execution(client,
-                               _get_deployment_environment_creation_execution(
-                                   client, deployment_id),
+                               get_deployment_environment_execution(
+                                   client, deployment_id, CREATE_DEPLOYMENT),
                                events_handler=events_logger,
                                include_logs=include_logs,
                                timeout=timeout)
@@ -309,16 +310,6 @@ def manager_cancel(execution_id, force, kill, logger, client, tenant_name):
         "A cancel request for execution {0} has been sent. "
         "To track the execution's status, use:\n"
         "cfy executions get {0}".format(execution_id))
-
-
-def _get_deployment_environment_creation_execution(client, deployment_id):
-    executions = client.executions.list(deployment_id=deployment_id)
-    for execution in executions:
-        if execution.workflow_id == 'create_deployment_environment':
-            return execution
-    raise RuntimeError('Failed to get create_deployment_environment '
-                       'workflow execution.'
-                       'Available executions: {0}'.format(executions))
 
 
 @cfy.command(name='start',

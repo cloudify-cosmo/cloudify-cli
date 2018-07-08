@@ -27,21 +27,24 @@ from cloudify_rest_client.exceptions import (
     UnknownDeploymentInputError,
     UnknownDeploymentSecretError,
     MissingRequiredDeploymentInputError,
-    UnsupportedDeploymentGetSecretError
+    UnsupportedDeploymentGetSecretError,
+    CloudifyClientError
 )
-
 from . import blueprints
 from ..local import load_env
 from ..table import print_data
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger
 from .. import execution_events_fetcher, utils
-from ..constants import DEFAULT_BLUEPRINT_PATH
+from ..constants import DEFAULT_BLUEPRINT_PATH, DELETE_DEP
 from ..blueprint import get_blueprint_path_and_id
-from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
+from ..exceptions import (CloudifyCliError,
+                          SuppressedCloudifyCliError,
+                          ExecutionTimeoutError)
 from ..utils import (prettify_client_error,
                      get_visibility,
-                     validate_visibility)
+                     validate_visibility,
+                     get_deployment_environment_execution)
 
 
 DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
@@ -426,9 +429,28 @@ def manager_delete(deployment_id, force, logger, client, tenant_name):
 
     `DEPLOYMENT_ID` is the id of the deployment to delete.
     """
+
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Deleting deployment {0}...'.format(deployment_id))
+    logger.info('Trying to delete deployment {0}...'.format(deployment_id))
     client.deployments.delete(deployment_id, force)
+    try:
+        execution = get_deployment_environment_execution(
+            client, deployment_id, DELETE_DEP)
+        if execution:
+            execution_events_fetcher.wait_for_execution(
+                client, execution, timeout=5, logger=logger)
+
+    except ExecutionTimeoutError:
+        raise CloudifyCliError(
+            'Could not delete deployment {0}...'.format(deployment_id))
+
+    # The deployemnt might be deleted from the DB before we are able to
+    # retrieve it, and that's fine
+    except CloudifyClientError as e:
+        if ('`Deployment` with ID `{0}` was not found'.format(deployment_id)
+                in e.message):
+            pass
+
     logger.info("Deployment deleted")
 
 
