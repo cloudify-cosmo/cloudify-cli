@@ -196,6 +196,10 @@ class DeploymentsTest(CliCommandTest):
 
     def test_deployments_delete(self):
         self.client.deployments.delete = MagicMock()
+        self.client.executions.list = MagicMock(
+            side_effect=CloudifyClientError(
+                '`Deployment` with ID `my-dep` was not found')
+        )
         self.invoke('cfy deployments delete my-dep')
 
     def test_deployments_execute(self):
