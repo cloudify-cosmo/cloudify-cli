@@ -429,7 +429,6 @@ def manager_delete(deployment_id, force, logger, client, tenant_name):
 
     `DEPLOYMENT_ID` is the id of the deployment to delete.
     """
-
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Trying to delete deployment {0}...'.format(deployment_id))
     client.deployments.delete(deployment_id, force)
@@ -438,7 +437,7 @@ def manager_delete(deployment_id, force, logger, client, tenant_name):
             client, deployment_id, DELETE_DEP)
         if execution:
             execution_events_fetcher.wait_for_execution(
-                client, execution, timeout=5, logger=logger)
+                client, execution, timeout=8, logger=logger)
 
     except ExecutionTimeoutError:
         raise CloudifyCliError(
