@@ -143,6 +143,7 @@ def use_manager(**manager_params):
     profile.manager_username = manager_params['manager_username']
     profile.manager_password = manager_params['manager_password']
     profile.manager_tenant = manager_params['manager_tenant']
+    profile.cluster = manager_params['cluster']
     profile.provider_context = provider_context
 
     purge_profile(manager_params['manager_ip'])
