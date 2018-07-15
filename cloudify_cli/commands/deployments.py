@@ -438,11 +438,13 @@ def manager_delete(deployment_id, force, logger, client, tenant_name):
             client, deployment_id, DELETE_DEP)
         if execution:
             execution_events_fetcher.wait_for_execution(
-                client, execution, timeout=5, logger=logger)
+                client, execution, timeout=18, logger=logger)
 
     except ExecutionTimeoutError:
         raise CloudifyCliError(
-            'Could not delete deployment {0}...'.format(deployment_id))
+            'Timed out waiting for deployment `{0}` to be deleted. Please '
+            'execute `cfy deployments list` to check whether the '
+            'deployment has been deleted.'.format(deployment_id))
 
     # The deployemnt might be deleted from the DB before we are able to
     # retrieve it, and that's fine
