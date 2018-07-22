@@ -272,7 +272,11 @@ def set_profile(profile_name,
     username = manager_username or env.get_username()
     password = manager_password or env.get_password()
     tenant = manager_tenant or env.get_tenant_name()
-    protocol = constants.SECURED_REST_PROTOCOL if ssl else constants.DEFAULT_REST_PROTOCOL
+
+    if ssl is not None:
+        protocol = constants.SECURED_REST_PROTOCOL if ssl else constants.DEFAULT_REST_PROTOCOL
+    else:
+        protocol = None
 
     if not skip_credentials_validation:
         _validate_credentials(username, password, tenant, rest_certificate, protocol)
