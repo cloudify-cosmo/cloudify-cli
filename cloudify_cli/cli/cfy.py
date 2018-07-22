@@ -920,6 +920,13 @@ class Options(object):
             help=helptexts.STOP_OLD_AGENT
         )
 
+        self.ignore_plugin_installation_failure = click.option(
+            '--ignore-plugin-installation-failure',
+            is_flag=True,
+            default=False,
+            help=helptexts.IGNORE_PLUGIN_INSTALLATION_FAILURE
+        )
+
     @staticmethod
     def secret_file():
         return click.option(
