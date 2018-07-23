@@ -85,8 +85,8 @@ class TestCLIBase(CliCommandTest):
                 expected_logging_level = logging.DEBUG
             else:
                 expected_logging_level = logging.INFO
-            self.assertTrue(logger.all_loggers())
-            for logger_name in logger.all_loggers():
+            for logger_name in ['cloudify.cli.main',
+                                'cloudify.rest_client.http']:
                 log = logging.getLogger(logger_name)
                 self.assertEqual(log.level, expected_logging_level)
 
