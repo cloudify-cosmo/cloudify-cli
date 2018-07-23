@@ -273,15 +273,8 @@ def set_profile(profile_name,
     password = manager_password or env.get_password()
     tenant = manager_tenant or env.get_tenant_name()
 
-    if ssl is not None:
-        protocol = constants.SECURED_REST_PROTOCOL if ssl else \
-            constants.DEFAULT_REST_PROTOCOL
-    else:
-        protocol = None
-
     if not skip_credentials_validation:
-        _validate_credentials(username, password, tenant, rest_certificate,
-                              protocol)
+        _validate_credentials(username, password, tenant, rest_certificate)
     old_name = None
     if profile_name:
         if profile_name == 'local':
@@ -783,8 +776,8 @@ def _is_manager_secured(response_history):
 
 
 @cfy.pass_logger
-def _validate_credentials(username, password, tenant, certificate, protocol,
-                          logger):
+def _validate_credentials(username, password, tenant, certificate, logger,
+                          protocol=None):
     logger.info('Validating credentials...')
     _get_client_and_assert_manager(
         profile_name=env.profile.profile_name,
