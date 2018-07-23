@@ -147,30 +147,21 @@ def _configure_from_file():
     if not os.path.exists(logfile_dir):
         os.makedirs(logfile_dir)
 
-    # add handlers to every logger
-    # specified in the file
-    loggers = {}
-    for logger_name, logger_settings in loggers_config.items():
-        if isinstance(logger_settings, basestring):
-            logger_settings = {'level': logger_settings.upper()}
-        loggers[logger_name] = {
-            'handlers': list(logger_dict['handlers'].keys())
-        }
-        loggers[logger_name].update(logger_settings)
-    logger_dict['loggers'].update(loggers)
-
-    # set level for each logger
-    for logger_name, logging_level in loggers_config.iteritems():
+    # add handlers to every logger specified in the file
+    for logger_name, logging_level in loggers_config.items():
         if verbosity_level >= HIGH_VERBOSE:
             level = logging.DEBUG
         elif verbosity_level <= QUIET:
             level = logging.CRITICAL
-        else:
+        elif isinstance(logging_level, basestring):
             level = logging._levelNames[logging_level.upper()]
-        try:
-            logger_dict['loggers'][logger_name]['level'] = level
-        except KeyError:
-            pass
+        else:
+            level = logging.INFO
+
+        logger_dict['loggers'][logger_name] = {
+            'handlers': list(logger_dict['handlers'].keys()),
+            'level': level
+        }
 
     logging.config.dictConfig(logger_dict)
 
