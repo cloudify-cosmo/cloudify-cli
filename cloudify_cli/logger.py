@@ -38,13 +38,12 @@ HIGH_VERBOSE = 3
 MEDIUM_VERBOSE = 2
 LOW_VERBOSE = 1
 NO_VERBOSE = 0
+QUIET = -1
 
 verbosity_level = NO_VERBOSE
 json_output = False
 
 _lgr = None
-
-_all_loggers = set()
 
 
 LOGGER = {
@@ -86,10 +85,6 @@ def get_logger():
     return _lgr
 
 
-def all_loggers():
-    return _all_loggers
-
-
 def configure_loggers():
     # first off, configure defaults
     # to enable the use of the logger
@@ -129,8 +124,13 @@ def _configure_defaults():
         os.makedirs(logfile_dir)
 
     logging.config.dictConfig(logger_dict)
-    logging.getLogger('cloudify.cli.main').setLevel(logging.INFO)
-    _all_loggers.add('cloudify.cli.main')
+    if verbosity_level >= HIGH_VERBOSE:
+        level = logging.DEBUG
+    elif verbosity_level <= QUIET:
+        level = logging.CRITICAL
+    else:
+        level = logging.INFO
+    logging.getLogger('cloudify.cli.main').setLevel(level)
 
 
 def _configure_from_file():
@@ -161,10 +161,16 @@ def _configure_from_file():
 
     # set level for each logger
     for logger_name, logging_level in loggers_config.iteritems():
-        log = logging.getLogger(logger_name)
-        level = logging._levelNames[logging_level.upper()]
-        log.setLevel(level)
-        _all_loggers.add(logger_name)
+        if verbosity_level >= HIGH_VERBOSE:
+            level = logging.DEBUG
+        elif verbosity_level <= QUIET:
+            level = logging.CRITICAL
+        else:
+            level = logging._levelNames[logging_level.upper()]
+        try:
+            logger_dict['loggers'][logger_name]['level'] = level
+        except KeyError:
+            pass
 
     logging.config.dictConfig(logger_dict)
 
@@ -202,9 +208,6 @@ def set_global_verbosity_level(verbose):
     global verbosity_level
     verbosity_level = verbose
     logs.EVENT_VERBOSITY_LEVEL = verbosity_level
-    if verbosity_level >= HIGH_VERBOSE:
-        for logger_name in all_loggers():
-            logging.getLogger(logger_name).setLevel(logging.DEBUG)
 
 
 def get_global_verbosity():

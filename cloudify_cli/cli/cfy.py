@@ -214,8 +214,10 @@ def json_output_deprecate(ctx, param, value):
 def set_verbosity_level(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-
-    set_global_verbosity_level(value)
+    if param.name == 'verbose':
+        set_global_verbosity_level(value)
+    elif value and param.name == 'quiet':
+        set_global_verbosity_level(logger.QUIET)
     return value
 
 
@@ -989,7 +991,7 @@ class Options(object):
         To be used for arguments that are going to be applied for all or
         almost all commands.
         """
-        for arg in [self.json, self.verbose(), self.format]:
+        for arg in [self.json, self.verbose(), self.format, self.quiet()]:
             f = arg(f)
         return f
 
@@ -1021,6 +1023,17 @@ class Options(object):
             expose_value=expose_value,
             is_eager=True,
             help=helptexts.VERBOSE)
+
+    @staticmethod
+    def quiet(expose_value=False):
+        return click.option(
+            '-q',
+            '--quiet',
+            is_flag=True,
+            callback=set_verbosity_level,
+            expose_value=expose_value,
+            is_eager=True,
+            help=helptexts.QUIET)
 
     @staticmethod
     def tenant_name(required=True,
