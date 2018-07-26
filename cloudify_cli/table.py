@@ -94,8 +94,12 @@ def format_json_output(cols, data, defaults=None, labels=None):
             labels.get(col, col): item.get(col) or defaults.get(col)
             for col in cols
         })
-    output(json.dumps(formatted, cls=CloudifyJSONEncoder,
-                      indent=4, sort_keys=True))
+    # output the json array newline-separated to aid debuggability: makes
+    # it possible to analyze the output line-by-line and use eg. grep
+    output('[')
+    output(',\n'.join(
+        json.dumps(obj, cls=CloudifyJSONEncoder) for obj in formatted))
+    output(']')
 
 
 def print_data(columns, items, header_text, max_width=None, defaults=None,
