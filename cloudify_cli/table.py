@@ -94,7 +94,8 @@ def format_json_output(cols, data, defaults=None, labels=None):
             labels.get(col, col): item.get(col) or defaults.get(col)
             for col in cols
         })
-    output(json.dumps(formatted, cls=CloudifyJSONEncoder))
+    output(json.dumps(formatted, cls=CloudifyJSONEncoder,
+                      indent=4, sort_keys=True))
 
 
 def print_data(columns, items, header_text, max_width=None, defaults=None,
