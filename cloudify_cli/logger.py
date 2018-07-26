@@ -117,7 +117,7 @@ def _set_loggers_verbosity(logger_config):
         if verbosity_level >= HIGH_VERBOSE:
             logger['level'] = logging.DEBUG
         elif verbosity_level <= QUIET:
-            logger['level'] = logging.CRITICAL
+            logger['level'] = logging.ERROR
 
 
 def _configure_defaults(logger_config):
