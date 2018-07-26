@@ -54,7 +54,7 @@ def enable(logger, client):
                 ssh_user=None,
                 ssh_key=None,
                 ssh_port=None,
-                ssl='on',
+                ssl=True,
                 rest_certificate=None,
                 skip_credentials_validation=True,
                 logger=logger)
@@ -79,7 +79,7 @@ def disable(logger, client):
                 ssh_user=None,
                 ssh_key=None,
                 ssh_port=None,
-                ssl='off',
+                ssl=False,
                 rest_certificate=None,
                 skip_credentials_validation=True,
                 logger=logger)

@@ -264,7 +264,8 @@ def set_profile(profile_name,
     and/or ssl state (on/off) in the *current* profile
     """
     if not any([profile_name, ssh_user, ssh_key, ssh_port, manager_username,
-                manager_password, manager_tenant, ssl, rest_certificate]):
+                manager_password, manager_tenant, ssl is not None,
+                rest_certificate]):
         raise CloudifyCliError(
             "You must supply at least one of the following:  "
             "profile name, username, password, tenant, "
@@ -274,7 +275,7 @@ def set_profile(profile_name,
     tenant = manager_tenant or env.get_tenant_name()
 
     if ssl is not None:
-        protocol = constants.SECURED_REST_PROTOCOL if ssl == 'on' else \
+        protocol = constants.SECURED_REST_PROTOCOL if ssl else \
             constants.DEFAULT_REST_PROTOCOL
     else:
         protocol = None
@@ -324,17 +325,18 @@ def set_profile(profile_name,
 
 
 def _set_profile_ssl(ssl, logger):
-    ssl = str(ssl).lower()
-    if ssl == 'on':
+    if ssl is None:
+        raise CloudifyCliError('Internal error: SSL must be either `on` or '
+                               '`off`')
+
+    if ssl:
         logger.info('Enabling SSL in the local profile')
         port = constants.SECURED_REST_PORT
         protocol = constants.SECURED_REST_PROTOCOL
-    elif ssl == 'off':
+    else:
         logger.info('Disabling SSL in the local profile')
         port = constants.DEFAULT_REST_PORT
         protocol = constants.DEFAULT_REST_PROTOCOL
-    else:
-        raise CloudifyCliError('SSL must be either `on` or `off`')
 
     env.profile.rest_port = port
     env.profile.rest_protocol = protocol
@@ -387,7 +389,7 @@ def set_cmd(profile_name,
                        ssh_user,
                        ssh_key,
                        ssh_port,
-                       ssl,
+                       _get_ssl_indication(ssl),
                        rest_certificate,
                        skip_credentials_validation,
                        logger)
@@ -780,6 +782,12 @@ def _is_manager_secured(response_history):
             and first_response.headers['location'].startswith('https')
 
     return False
+
+
+def _get_ssl_indication(ssl):
+    if ssl is None:
+        return None
+    return str(ssl).lower() == 'on'
 
 
 @cfy.pass_logger
