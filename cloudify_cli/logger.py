@@ -71,7 +71,8 @@ LOGGER = {
     },
     "loggers": {
         "cloudify.cli.main": {
-            "handlers": ["console", "file"]
+            "handlers": ["console", "file"],
+            "level": "INFO"
         }
     }
 }
@@ -89,12 +90,15 @@ def configure_loggers():
     # first off, configure defaults
     # to enable the use of the logger
     # even before the init was executed.
-    _configure_defaults()
+    logger_config = copy.deepcopy(LOGGER)
+    _configure_defaults(logger_config)
 
     if env.is_initialized():
         # init was already called
         # use the configuration file.
-        _configure_from_file()
+        _configure_from_file(logger_config)
+    _set_loggers_verbosity(logger_config)
+    logging.config.dictConfig(logger_config)
 
     global _lgr
     _lgr = logging.getLogger('cloudify.cli.main')
@@ -108,62 +112,45 @@ def configure_loggers():
         colorama.init(autoreset=True)
 
 
-def _configure_defaults():
+def _set_loggers_verbosity(logger_config):
+    for logger in logger_config['loggers'].values():
+        if verbosity_level >= HIGH_VERBOSE:
+            logger['level'] = logging.DEBUG
+        elif verbosity_level <= QUIET:
+            logger['level'] = logging.CRITICAL
+
+
+def _configure_defaults(logger_config):
     if get_global_json_output():
-        LOGGER['loggers']["logfile"] = {
+        logger_config['loggers']["logfile"] = {
             "level": "DEBUG",
             "propagate": False,
             "handlers": ["file"]
         }
-        LOGGER['handlers']['console']['stream'] = 'ext://sys.stderr'
-    # add handlers to the main logger
-    logger_dict = copy.deepcopy(LOGGER)
-    logger_dict['handlers']['file']['filename'] = DEFAULT_LOG_FILE
+        logger_config['handlers']['console']['stream'] = 'ext://sys.stderr'
+
+    logger_config['handlers']['file']['filename'] = DEFAULT_LOG_FILE
     logfile_dir = os.path.dirname(DEFAULT_LOG_FILE)
     if not os.path.exists(logfile_dir):
         os.makedirs(logfile_dir)
 
-    logging.config.dictConfig(logger_dict)
-    if verbosity_level >= HIGH_VERBOSE:
-        level = logging.DEBUG
-    elif verbosity_level <= QUIET:
-        level = logging.CRITICAL
-    else:
-        level = logging.INFO
-    logging.getLogger('cloudify.cli.main').setLevel(level)
 
-
-def _configure_from_file():
-
+def _configure_from_file(loggers_config):
     config = CloudifyConfig()
-    logging_config = config.logging
-    loggers_config = logging_config.loggers
-    logfile = logging_config.filename
 
     # set filename on file handler
     logger_dict = copy.deepcopy(LOGGER)
-    logger_dict['handlers']['file']['filename'] = logfile
-    logfile_dir = os.path.dirname(logfile)
+    loggers_config['handlers']['file']['filename'] = config.logging.filename
+    logfile_dir = os.path.dirname(config.logging.filename)
     if not os.path.exists(logfile_dir):
         os.makedirs(logfile_dir)
 
     # add handlers to every logger specified in the file
-    for logger_name, logging_level in loggers_config.items():
-        if verbosity_level >= HIGH_VERBOSE:
-            level = logging.DEBUG
-        elif verbosity_level <= QUIET:
-            level = logging.CRITICAL
-        elif isinstance(logging_level, basestring):
-            level = logging._levelNames[logging_level.upper()]
-        else:
-            level = logging.INFO
-
-        logger_dict['loggers'][logger_name] = {
+    for logger_name, logging_level in config.logging.loggers.items():
+        loggers_config['loggers'][logger_name] = {
             'handlers': list(logger_dict['handlers'].keys()),
-            'level': level
+            'level': logging_level.upper()
         }
-
-    logging.config.dictConfig(logger_dict)
 
 
 def get_events_logger(json_output):
