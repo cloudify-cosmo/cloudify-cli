@@ -88,12 +88,13 @@ def format_json_output(cols, data, defaults=None, labels=None):
     defaults = defaults or {}
     labels = labels or {}
 
+    formatted = []
     for item in data:
-        values = {
+        formatted.append({
             labels.get(col, col): item.get(col) or defaults.get(col)
             for col in cols
-        }
-        output(json.dumps(values, cls=CloudifyJSONEncoder))
+        })
+    output(json.dumps(formatted, cls=CloudifyJSONEncoder))
 
 
 def print_data(columns, items, header_text, max_width=None, defaults=None,
