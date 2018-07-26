@@ -275,14 +275,15 @@ def set_profile(profile_name,
     tenant = manager_tenant or env.get_tenant_name()
 
     if ssl is not None:
-        protocol = constants.SECURED_REST_PROTOCOL if ssl else \
-            constants.DEFAULT_REST_PROTOCOL
+        protocol, port = (constants.SECURED_REST_PROTOCOL,
+                          constants.SECURED_REST_PORT) if ssl else \
+            (constants.DEFAULT_REST_PROTOCOL, constants.DEFAULT_REST_PORT)
     else:
-        protocol = None
+        protocol, port = None, None
 
     if not skip_credentials_validation:
         _validate_credentials(username, password, tenant, rest_certificate,
-                              protocol)
+                              protocol, port)
     old_name = None
     if profile_name:
         if profile_name == 'local':
@@ -499,7 +500,7 @@ def unset(manager_username,
 
     if not skip_credentials_validation:
         _validate_credentials(username, password, tenant, cert,
-                              env.profile.rest_protocol)
+                              env.profile.rest_protocol, env.profile.rest_port)
 
     if manager_username:
         logger.info('Clearing manager username')
@@ -792,7 +793,7 @@ def _get_ssl_indication(ssl):
 
 @cfy.pass_logger
 def _validate_credentials(username, password, tenant, certificate, protocol,
-                          logger):
+                          rest_port, logger):
     logger.info('Validating credentials...')
     _get_client_and_assert_manager(
         profile_name=env.profile.profile_name,
@@ -800,6 +801,7 @@ def _validate_credentials(username, password, tenant, certificate, protocol,
         manager_password=password,
         manager_tenant=tenant,
         rest_certificate=certificate,
-        rest_protocol=protocol
+        rest_protocol=protocol,
+        rest_port=rest_port
     )
     logger.info('Credentials validated')
