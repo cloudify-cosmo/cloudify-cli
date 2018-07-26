@@ -113,16 +113,20 @@ def configure_loggers():
 
 
 def _set_loggers_verbosity(logger_config):
+    if get_global_json_output():
+        logger_config['loggers']['cloudify.cli.main']['level'] = 'ERROR'
     for logger in logger_config['loggers'].values():
         if verbosity_level >= HIGH_VERBOSE:
             logger['level'] = logging.DEBUG
+        elif verbosity_level == LOW_VERBOSE:
+            logger['level'] = logging.INFO
         elif verbosity_level <= QUIET:
             logger['level'] = logging.ERROR
 
 
 def _configure_defaults(logger_config):
     if get_global_json_output():
-        logger_config['loggers']["logfile"] = {
+        logger_config['loggers']['logfile'] = {
             "level": "DEBUG",
             "propagate": False,
             "handlers": ["file"]
