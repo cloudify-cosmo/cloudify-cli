@@ -16,7 +16,6 @@
 
 import os
 import time
-import yaml
 import shutil
 from functools import wraps
 from datetime import datetime
@@ -27,7 +26,8 @@ from cloudify_rest_client.exceptions import (CloudifyClientError,
 
 from .. import constants, env
 from ..cli import cfy
-from ..table import print_data, print_single
+from ..logger import get_global_json_output
+from ..table import print_data, print_single, print_details
 from ..exceptions import CloudifyCliError
 from ..execution_events_fetcher import WAIT_FOR_EXECUTION_SLEEP_INTERVAL
 
@@ -370,13 +370,15 @@ def list_nodes(client, logger):
 def get_node(client, logger, cluster_node_name):
     node = client.cluster.nodes.details(cluster_node_name)
     _prepare_node(node)
-    print_single(CLUSTER_COLUMNS, [node], 'Node {0}'.format(cluster_node_name),
+    columns = CLUSTER_COLUMNS
+    if get_global_json_output():
+        columns += ['options']
+    print_single(CLUSTER_COLUMNS, node, 'Node {0}'.format(cluster_node_name),
                  defaults=CLUSTER_COLUMNS_DEFAULTS,
                  labels={'services': 'cloudify services'})
     options = node.get('options')
-    if options:
-        logger.info('Node configuration:')
-        logger.info(yaml.safe_dump(options, default_flow_style=False))
+    if not get_global_json_output() and options:
+        print_details(options, 'Node configuration:')
 
 
 @nodes.command(name='update',

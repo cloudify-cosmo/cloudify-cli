@@ -16,6 +16,7 @@
 
 import os
 import mock
+import json
 import tempfile
 import unittest
 
@@ -208,6 +209,31 @@ class ClusterNodesTest(CliCommandTest):
             self.invoke('cfy cluster nodes set-certificate not-a-node {0}'
                         .format(f.name),
                         'not found in the cluster profile')
+
+    def test_get_node(self):
+        self.client.cluster.status = mock.Mock(
+            return_value=ClusterState({'initialized': True}))
+        self.client.cluster.nodes.details = mock.Mock(return_value={
+            'id': 'm1',
+            'options': {
+                'option1': 'value1'
+            }
+        })
+        outcome = self.invoke('cluster nodes get m1')
+        self.assertIn('value1', outcome.output)
+
+    def test_get_node_json(self):
+        self.client.cluster.status = mock.Mock(
+            return_value=ClusterState({'initialized': True}))
+        self.client.cluster.nodes.details = mock.Mock(return_value={
+            'id': 'm1',
+            'options': {
+                'option1': 'value1'
+            }
+        })
+        outcome = self.invoke('cluster nodes get m1 --json')
+        parsed = json.loads(outcome.output)
+        self.assertEqual(parsed['options'], {'option1': 'value1'})
 
 
 class ClusterJoinTest(CliCommandTest):
