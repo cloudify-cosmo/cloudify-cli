@@ -18,7 +18,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
 from ..cli import cfy
-from ..table import print_data
+from ..table import print_data, print_single
 from ..exceptions import CloudifyCliError
 from ..logger import NO_VERBOSE
 from ..logger import get_global_verbosity
@@ -75,7 +75,7 @@ def get(node_id, deployment_id, logger, client, tenant_name):
         raise CloudifyCliError('No node instances were found for '
                                'node {0}'.format(node_id))
 
-    print_data(NODE_COLUMNS, node, 'Node:', max_width=50)
+    print_single(NODE_COLUMNS, node, 'Node:', max_width=50)
 
     # print node properties
     logger.info('Node properties:')

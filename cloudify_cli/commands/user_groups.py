@@ -16,7 +16,7 @@
 
 from .. import env
 from ..cli import cfy
-from ..table import print_data
+from ..table import print_data, print_single
 from ..utils import handle_client_error
 
 GROUP_COLUMNS = ['name', 'role', 'tenants', 'users']
@@ -122,7 +122,8 @@ def get(user_group_name, get_data, logger, client):
     )
     if get_data:
         _format_group(user_group_details)
-    print_data(GROUP_COLUMNS, user_group_details, 'Requested user group info:')
+    print_single(GROUP_COLUMNS, user_group_details,
+                 'Requested user group info:')
 
 
 @user_groups.command(name='set-role',

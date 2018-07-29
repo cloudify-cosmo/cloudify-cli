@@ -27,7 +27,7 @@ from cloudify_rest_client.exceptions import (CloudifyClientError,
 
 from .. import constants, env
 from ..cli import cfy
-from ..table import print_data
+from ..table import print_data, print_single
 from ..exceptions import CloudifyCliError
 from ..execution_events_fetcher import WAIT_FOR_EXECUTION_SLEEP_INTERVAL
 
@@ -370,9 +370,9 @@ def list_nodes(client, logger):
 def get_node(client, logger, cluster_node_name):
     node = client.cluster.nodes.details(cluster_node_name)
     _prepare_node(node)
-    print_data(CLUSTER_COLUMNS, [node], 'Node {0}'.format(cluster_node_name),
-               defaults=CLUSTER_COLUMNS_DEFAULTS,
-               labels={'services': 'cloudify services'})
+    print_single(CLUSTER_COLUMNS, [node], 'Node {0}'.format(cluster_node_name),
+                 defaults=CLUSTER_COLUMNS_DEFAULTS,
+                 labels={'services': 'cloudify services'})
     options = node.get('options')
     if options:
         logger.info('Node configuration:')

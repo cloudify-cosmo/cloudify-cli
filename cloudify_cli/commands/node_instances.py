@@ -22,7 +22,7 @@ from .. import utils
 from ..cli import cfy
 from ..local import load_env
 from ..logger import get_global_json_output
-from ..table import print_data, print_details
+from ..table import print_data, print_details, print_single
 from ..exceptions import CloudifyCliError
 
 
@@ -71,9 +71,10 @@ def get(node_instance_id, logger, client, tenant_name):
         # for json output, make sure runtime properties are in the same object
         # so that the output is a single decode-able object
         columns = NODE_INSTANCE_COLUMNS + ['runtime_properties']
-        print_data(columns, node_instance, 'Node-instance:', 50)
+        print_single(columns, node_instance, 'Node-instance:', 50)
     else:
-        print_data(NODE_INSTANCE_COLUMNS, node_instance, 'Node-instance:', 50)
+        print_single(NODE_INSTANCE_COLUMNS, node_instance,
+                     'Node-instance:', 50)
 
         print_details(node_instance.runtime_properties,
                       'Instance runtime properties:')

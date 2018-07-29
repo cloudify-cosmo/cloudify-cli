@@ -24,7 +24,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError, \
 
 from . import init
 from .. import env
-from ..table import print_data
+from ..table import print_data, print_single
 from .. import utils
 from ..cli import cfy
 from .. import constants
@@ -68,7 +68,7 @@ def show(logger):
         return
 
     active_profile = _get_profile(env.get_active_profile())
-    print_data(PROFILE_COLUMNS, active_profile, 'Active profile:')
+    print_single(PROFILE_COLUMNS, active_profile, 'Active profile:')
 
 
 @profiles.command(name='list',

@@ -16,7 +16,7 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from ..table import print_data
+from ..table import print_data, print_single
 from .. import utils
 from ..cli import cfy
 from ..exceptions import CloudifyCliError
@@ -65,7 +65,7 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
         'blueprint_id': deployment.blueprint_id,
         'deployment_id': deployment.id
     }
-    print_data(WORKFLOW_COLUMNS, workflow, 'Workflows:', defaults=defaults)
+    print_single(WORKFLOW_COLUMNS, workflow, 'Workflows:', defaults=defaults)
 
     # print workflow parameters
     mandatory_params = dict()

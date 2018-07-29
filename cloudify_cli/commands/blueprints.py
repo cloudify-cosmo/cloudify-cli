@@ -31,7 +31,7 @@ from ..cli import cfy
 from .. import blueprint
 from .. import exceptions
 from ..config import config
-from ..table import print_data
+from ..table import print_data, print_single
 from ..exceptions import CloudifyCliError
 from ..utils import (prettify_client_error,
                      get_visibility,
@@ -278,7 +278,7 @@ def get(blueprint_id, logger, client, tenant_name):
                                           blueprint_id=blueprint_id)
     blueprint_dict['#deployments'] = len(deployments)
     columns = BLUEPRINT_COLUMNS + ['#deployments']
-    print_data(columns, blueprint_dict, 'Blueprint:', max_width=50)
+    print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
 
     logger.info('Description:')
     logger.info('{0}\n'.format(blueprint_dict['description'] or ''))

@@ -21,7 +21,7 @@ from cloudify_rest_client import exceptions
 
 from .. import local
 from .. import utils
-from ..table import print_data
+from ..table import print_data, print_single
 from ..utils import get_deployment_environment_execution
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger
@@ -74,8 +74,8 @@ def manager_get(execution_id, logger, client, tenant_name):
             raise
         raise CloudifyCliError('Execution {0} not found'.format(execution_id))
 
-    print_data(FULL_EXECUTION_COLUMNS, execution, 'Execution:', max_width=50,
-               labels=EXECUTION_TABLE_LABELS)
+    print_single(FULL_EXECUTION_COLUMNS, execution, 'Execution:', max_width=50,
+                 labels=EXECUTION_TABLE_LABELS)
 
     # print execution parameters
     logger.info('Execution Parameters:')

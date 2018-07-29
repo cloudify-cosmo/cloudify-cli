@@ -32,7 +32,7 @@ from cloudify_rest_client.exceptions import (
 )
 from . import blueprints
 from ..local import load_env
-from ..table import print_data
+from ..table import print_data, print_single
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger
 from .. import execution_events_fetcher, utils
@@ -187,10 +187,10 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
         'Retrieving deployment update {0}...'.format(deployment_update_id))
     deployment_update_dict = client.deployment_updates.get(
         deployment_update_id)
-    print_data(DEPLOYMENT_UPDATE_COLUMNS,
-               deployment_update_dict,
-               'Deployment Update:',
-               max_width=50)
+    print_single(DEPLOYMENT_UPDATE_COLUMNS,
+                 deployment_update_dict,
+                 'Deployment Update:',
+                 max_width=50)
 
     logger.info('Old inputs:')
     logger.info('{0}\n'.format(deployment_update_dict['old_inputs'] or ''))

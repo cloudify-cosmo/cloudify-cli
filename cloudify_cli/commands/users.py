@@ -16,7 +16,7 @@
 
 from .. import env
 from ..cli import cfy
-from ..table import print_data
+from ..table import print_data, print_single
 from ..utils import handle_client_error
 
 USER_COLUMNS = ['username', 'groups', 'role', 'group_system_roles', 'active',
@@ -203,10 +203,10 @@ def get(username, get_data, logger, client):
         columns += GET_DATA_COLUMNS
     else:
         columns += NO_GET_DATA_COLUMNS
-    print_data(columns,
-               user_details,
-               'Requested user info:',
-               labels=USER_LABELS)
+    print_single(columns,
+                 user_details,
+                 'Requested user info:',
+                 labels=USER_LABELS)
 
 
 @users.command(name='delete',

@@ -16,7 +16,7 @@
 
 from .. import env
 from ..cli import cfy
-from ..table import print_data
+from ..table import print_data, print_single
 from ..utils import handle_client_error
 
 TENANT_COLUMNS = ['name', 'groups']
@@ -298,10 +298,10 @@ def get(tenant_name, get_data, logger, client):
         columns += GET_DATA_COLUMNS
     else:
         columns += NO_GET_DATA_COLUMNS
-    print_data(columns,
-               tenant_details,
-               'Requested tenant info:',
-               labels=TENANT_LABELS)
+    print_single(columns,
+                 tenant_details,
+                 'Requested tenant info:',
+                 labels=TENANT_LABELS)
 
 
 @tenants.command(name='delete',

@@ -15,7 +15,7 @@
 ############
 
 from ..cli import cfy
-from ..table import print_data
+from ..table import print_single
 
 REST_TOKEN_COLUMN = ['role', 'value']
 
@@ -40,4 +40,4 @@ def get(logger, client):
     """
     logger.info('Retrieving REST token')
     token = client.tokens.get()
-    print_data(REST_TOKEN_COLUMN, token, 'REST token')
+    print_single(REST_TOKEN_COLUMN, token, 'REST token')

@@ -20,7 +20,7 @@ import wagon
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
 from .. import utils
-from ..table import print_data
+from ..table import print_data, print_single
 from ..cli import helptexts, cfy
 from ..utils import (prettify_client_error,
                      get_visibility,
@@ -190,7 +190,7 @@ def get(plugin_id, logger, client, tenant_name, get_data):
     plugin = client.plugins.get(plugin_id, _get_data=get_data)
     _transform_plugin_response(plugin)
     columns = PLUGIN_COLUMNS + GET_DATA_COLUMNS if get_data else PLUGIN_COLUMNS
-    print_data(columns, plugin, 'Plugin:')
+    print_single(columns, plugin, 'Plugin:')
 
 
 @plugins.command(name='list',
