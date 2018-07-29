@@ -31,6 +31,7 @@ from ..cli import cfy
 from .. import blueprint
 from .. import exceptions
 from ..config import config
+from ..logger import get_global_json_output
 from ..table import print_data, print_single
 from ..exceptions import CloudifyCliError
 from ..utils import (prettify_client_error,
@@ -278,21 +279,29 @@ def get(blueprint_id, logger, client, tenant_name):
                                           blueprint_id=blueprint_id)
     blueprint_dict['#deployments'] = len(deployments)
     columns = BLUEPRINT_COLUMNS + ['#deployments']
-    print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
+    blueprint_metadata = blueprint_dict['plan']['metadata'] or {}
+    blueprint_deployments = [d['id'] for d in deployments]
 
-    logger.info('Description:')
-    logger.info('{0}\n'.format(blueprint_dict['description'] or ''))
+    if get_global_json_output():
+        columns += ['description', 'metadata', 'deployments']
+        blueprint_dict['metadata'] = blueprint_metadata
+        blueprint_dict['deployments'] = blueprint_deployments
+        print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
+    else:
+        print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
 
-    blueprint_metadata = blueprint_dict['plan']['metadata']
-    if blueprint_metadata:
-        logger.info('Metadata:')
-        for property_name, property_value in utils.decode_dict(
-                blueprint_dict['plan']['metadata']).iteritems():
-            logger.info('\t{0}: {1}'.format(property_name, property_value))
-        logger.info('')
+        logger.info('Description:')
+        logger.info('{0}\n'.format(blueprint_dict['description'] or ''))
 
-    logger.info('Existing deployments:')
-    logger.info('{0}\n'.format(json.dumps([d['id'] for d in deployments])))
+        if blueprint_metadata:
+            logger.info('Metadata:')
+            for property_name, property_value in utils.decode_dict(
+                    blueprint_dict['plan']['metadata']).iteritems():
+                logger.info('\t{0}: {1}'.format(property_name, property_value))
+            logger.info('')
+
+        logger.info('Existing deployments:')
+        logger.info('{0}\n'.format(json.dumps(blueprint_deployments)))
 
 
 @blueprints.command(name='inputs',

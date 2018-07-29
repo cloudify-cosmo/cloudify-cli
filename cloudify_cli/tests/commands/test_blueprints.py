@@ -1,7 +1,8 @@
 import os
+import json
 import yaml
 import tempfile
-from mock import MagicMock, patch
+from mock import Mock, MagicMock, patch
 
 from cloudify.exceptions import CommandExecutionException
 from ..cfy import ClickInvocationException
@@ -73,9 +74,46 @@ class BlueprintsTest(CliCommandTest):
         self.assertIn('Blueprint downloaded as test', outcome.logs)
 
     def test_blueprints_get(self, *args):
-        self.client.blueprints.get = MagicMock()
-        self.client.deployments.list = MagicMock()
-        self.invoke('blueprints get a-blueprint-id')
+        deployment_id = 'deployment id 1'
+        metadata_value = 'value 1'
+        description = 'blueprint description 1'
+        self.client.blueprints.get = Mock(return_value={
+            'id': 'a-blueprint-id',
+            'description': description,
+            'plan': {
+                'metadata': {
+                    'key1': metadata_value
+                }
+            }
+        })
+        self.client.deployments.list = Mock(return_value=[
+            {'id': deployment_id}
+        ])
+        outcome = self.invoke('blueprints get a-blueprint-id')
+        for expected in [deployment_id, metadata_value, description]:
+            self.assertIn(expected, outcome.output)
+
+    def test_blueprints_get_json(self, *args):
+        deployment_id = 'deployment id 1'
+        metadata_value = 'value 1'
+        description = 'blueprint description 1'
+        self.client.blueprints.get = Mock(return_value={
+            'id': 'a-blueprint-id',
+            'description': description,
+            'plan': {
+                'metadata': {
+                    'key1': metadata_value
+                }
+            }
+        })
+        self.client.deployments.list = Mock(return_value=[
+            {'id': deployment_id}
+        ])
+        outcome = self.invoke('blueprints get a-blueprint-id --json')
+        parsed = json.loads(outcome.output)
+        self.assertEqual(parsed['description'], description)
+        self.assertEqual(parsed['metadata'], {'key1': metadata_value})
+        self.assertEqual(parsed['deployments'], [deployment_id])
 
     def test_blueprints_upload(self):
         self.client.blueprints.upload = MagicMock()
