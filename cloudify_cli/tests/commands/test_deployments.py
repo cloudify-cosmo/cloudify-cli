@@ -1,6 +1,24 @@
+########
+# Copyright (c) 2018 Cloudify Platform Ltd. All rights reserved
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
+
+
+import json
 import datetime
 
-from mock import patch, MagicMock, PropertyMock
+from mock import patch, MagicMock, PropertyMock, Mock
 
 from cloudify_rest_client import deployments, executions, blueprints
 from cloudify_rest_client.exceptions import CloudifyClientError, \
@@ -42,6 +60,31 @@ class DeploymentUpdatesTest(CliCommandTest):
         patcher = patch('cloudify_cli.inputs.inputs_to_dict', MagicMock())
         self.addCleanup(patcher.stop)
         patcher.start()
+
+    def test_deployment_update_get(self):
+        old_value = 'old value 1'
+        new_value = 'new value 1'
+        self.client.deployment_updates.get = Mock(return_value={
+            'id': 'update-id-1',
+            'old_inputs': {'inp1': old_value},
+            'new_inputs': {'inp1': new_value},
+        })
+        outcome = self.invoke('deployments get-update update-id-1')
+        self.assertIn(old_value, outcome.output)
+        self.assertIn(new_value, outcome.output)
+
+    def test_deployment_update_get_json(self):
+        old_value = 'old value 1'
+        new_value = 'new value 1'
+        self.client.deployment_updates.get = Mock(return_value={
+            'id': 'update-id-1',
+            'old_inputs': {'inp1': old_value},
+            'new_inputs': {'inp1': new_value},
+        })
+        outcome = self.invoke('deployments get-update update-id-1 --json')
+        parsed = json.loads(outcome.output)
+        self.assertEqual(parsed['old_inputs'], {'inp1': old_value})
+        self.assertEqual(parsed['new_inputs'], {'inp1': new_value})
 
     def test_deployment_update_successful(self):
         outcome = self.invoke(

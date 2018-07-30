@@ -32,9 +32,9 @@ from cloudify_rest_client.exceptions import (
 )
 from . import blueprints
 from ..local import load_env
-from ..table import print_data, print_single
+from ..table import print_data, print_single, print_details
 from ..cli import cfy, helptexts
-from ..logger import get_events_logger
+from ..logger import get_events_logger, get_global_json_output
 from .. import execution_events_fetcher, utils
 from ..constants import DEFAULT_BLUEPRINT_PATH, DELETE_DEP
 from ..blueprint import get_blueprint_path_and_id
@@ -187,16 +187,19 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
         'Retrieving deployment update {0}...'.format(deployment_update_id))
     deployment_update_dict = client.deployment_updates.get(
         deployment_update_id)
-    print_single(DEPLOYMENT_UPDATE_COLUMNS,
+    columns = DEPLOYMENT_UPDATE_COLUMNS
+    if get_global_json_output():
+        columns += ['old_inputs', 'new_inputs']
+    print_single(columns,
                  deployment_update_dict,
                  'Deployment Update:',
                  max_width=50)
 
-    logger.info('Old inputs:')
-    logger.info('{0}\n'.format(deployment_update_dict['old_inputs'] or ''))
-
-    logger.info('New inputs:')
-    logger.info('{0}\n'.format(deployment_update_dict['new_inputs'] or ''))
+    if not get_global_json_output():
+        print_details(deployment_update_dict['old_inputs'] or {},
+                      'Old inputs:')
+        print_details(deployment_update_dict['new_inputs'] or {},
+                      'New inputs:')
 
 
 @cfy.command(name='update', short_help='Update a deployment [manager only]')
