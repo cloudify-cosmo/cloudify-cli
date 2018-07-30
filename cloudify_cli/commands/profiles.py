@@ -184,12 +184,9 @@ def _create_profile(
     if rest_certificate:
         ssl = True
 
-    rest_protocol = constants.SECURED_REST_PROTOCOL if ssl else \
-        constants.DEFAULT_REST_PROTOCOL
-
+    rest_protocol, default_rest_port = _get_ssl_protocol_and_port(ssl)
     if not rest_port:
-        rest_port = constants.SECURED_REST_PORT if ssl else \
-            constants.DEFAULT_REST_PORT
+        rest_port = default_rest_port
 
     logger.info('Attempting to connect to {0} through port {1}, using {2} '
                 '(SSL mode: {3})...'.format(manager_ip, rest_port,
@@ -264,7 +261,8 @@ def set_profile(profile_name,
     and/or ssl state (on/off) in the *current* profile
     """
     if not any([profile_name, ssh_user, ssh_key, ssh_port, manager_username,
-                manager_password, manager_tenant, ssl, rest_certificate]):
+                manager_password, manager_tenant, ssl is not None,
+                rest_certificate]):
         raise CloudifyCliError(
             "You must supply at least one of the following:  "
             "profile name, username, password, tenant, "
@@ -272,9 +270,11 @@ def set_profile(profile_name,
     username = manager_username or env.get_username()
     password = manager_password or env.get_password()
     tenant = manager_tenant or env.get_tenant_name()
+    protocol, port = _get_ssl_protocol_and_port(ssl)
 
     if not skip_credentials_validation:
-        _validate_credentials(username, password, tenant, rest_certificate)
+        _validate_credentials(username, password, tenant, rest_certificate,
+                              protocol, port)
     old_name = None
     if profile_name:
         if profile_name == 'local':
@@ -317,17 +317,15 @@ def set_profile(profile_name,
 
 
 def _set_profile_ssl(ssl, logger):
-    ssl = str(ssl).lower()
-    if ssl == 'on':
+    if ssl is None:
+        raise CloudifyCliError('Internal error: SSL must be either `on` or '
+                               '`off`')
+
+    protocol, port = _get_ssl_protocol_and_port(ssl)
+    if protocol == constants.SECURED_REST_PROTOCOL:
         logger.info('Enabling SSL in the local profile')
-        port = constants.SECURED_REST_PORT
-        protocol = constants.SECURED_REST_PROTOCOL
-    elif ssl == 'off':
-        logger.info('Disabling SSL in the local profile')
-        port = constants.DEFAULT_REST_PORT
-        protocol = constants.DEFAULT_REST_PROTOCOL
     else:
-        raise CloudifyCliError('SSL must be either `on` or `off`')
+        logger.info('Disabling SSL in the local profile')
 
     env.profile.rest_port = port
     env.profile.rest_protocol = protocol
@@ -380,7 +378,7 @@ def set_cmd(profile_name,
                        ssh_user,
                        ssh_key,
                        ssh_port,
-                       ssl,
+                       _get_ssl_indication(ssl),
                        rest_certificate,
                        skip_credentials_validation,
                        logger)
@@ -489,7 +487,8 @@ def unset(manager_username,
         cert = None
 
     if not skip_credentials_validation:
-        _validate_credentials(username, password, tenant, cert)
+        _validate_credentials(username, password, tenant, cert,
+                              env.profile.rest_protocol, env.profile.rest_port)
 
     if manager_username:
         logger.info('Clearing manager username')
@@ -774,14 +773,33 @@ def _is_manager_secured(response_history):
     return False
 
 
+def _get_ssl_indication(ssl):
+    if ssl is None:
+        return None
+    return str(ssl).lower() == 'on'
+
+
+def _get_ssl_protocol_and_port(ssl):
+    if ssl is not None:
+        protocol, port = (constants.SECURED_REST_PROTOCOL,
+                          constants.SECURED_REST_PORT) if ssl else \
+            (constants.DEFAULT_REST_PROTOCOL, constants.DEFAULT_REST_PORT)
+    else:
+        protocol, port = None, None
+    return protocol, port
+
+
 @cfy.pass_logger
-def _validate_credentials(username, password, tenant, certificate, logger):
+def _validate_credentials(username, password, tenant, certificate, protocol,
+                          rest_port, logger):
     logger.info('Validating credentials...')
     _get_client_and_assert_manager(
         profile_name=env.profile.profile_name,
         manager_username=username,
         manager_password=password,
         manager_tenant=tenant,
-        rest_certificate=certificate
+        rest_certificate=certificate,
+        rest_protocol=protocol,
+        rest_port=rest_port
     )
     logger.info('Credentials validated')
