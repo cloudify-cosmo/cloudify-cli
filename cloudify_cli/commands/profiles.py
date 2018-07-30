@@ -184,12 +184,9 @@ def _create_profile(
     if rest_certificate:
         ssl = True
 
-    rest_protocol = constants.SECURED_REST_PROTOCOL if ssl else \
-        constants.DEFAULT_REST_PROTOCOL
-
+    rest_protocol, default_rest_port = _get_ssl_protocol_and_port(ssl)
     if not rest_port:
-        rest_port = constants.SECURED_REST_PORT if ssl else \
-            constants.DEFAULT_REST_PORT
+        rest_port = default_rest_port
 
     logger.info('Attempting to connect to {0} through port {1}, using {2} '
                 '(SSL mode: {3})...'.format(manager_ip, rest_port,
@@ -273,13 +270,7 @@ def set_profile(profile_name,
     username = manager_username or env.get_username()
     password = manager_password or env.get_password()
     tenant = manager_tenant or env.get_tenant_name()
-
-    if ssl is not None:
-        protocol, port = (constants.SECURED_REST_PROTOCOL,
-                          constants.SECURED_REST_PORT) if ssl else \
-            (constants.DEFAULT_REST_PROTOCOL, constants.DEFAULT_REST_PORT)
-    else:
-        protocol, port = None, None
+    protocol, port = _get_ssl_protocol_and_port(ssl)
 
     if not skip_credentials_validation:
         _validate_credentials(username, password, tenant, rest_certificate,
@@ -330,14 +321,11 @@ def _set_profile_ssl(ssl, logger):
         raise CloudifyCliError('Internal error: SSL must be either `on` or '
                                '`off`')
 
-    if ssl:
+    protocol, port = _get_ssl_protocol_and_port(ssl)
+    if protocol == constants.SECURED_REST_PROTOCOL:
         logger.info('Enabling SSL in the local profile')
-        port = constants.SECURED_REST_PORT
-        protocol = constants.SECURED_REST_PROTOCOL
     else:
         logger.info('Disabling SSL in the local profile')
-        port = constants.DEFAULT_REST_PORT
-        protocol = constants.DEFAULT_REST_PROTOCOL
 
     env.profile.rest_port = port
     env.profile.rest_protocol = protocol
@@ -789,6 +777,16 @@ def _get_ssl_indication(ssl):
     if ssl is None:
         return None
     return str(ssl).lower() == 'on'
+
+
+def _get_ssl_protocol_and_port(ssl):
+    if ssl is not None:
+        protocol, port = (constants.SECURED_REST_PROTOCOL,
+                          constants.SECURED_REST_PORT) if ssl else \
+            (constants.DEFAULT_REST_PROTOCOL, constants.DEFAULT_REST_PORT)
+    else:
+        protocol, port = None, None
+    return protocol, port
 
 
 @cfy.pass_logger
