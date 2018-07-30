@@ -23,7 +23,7 @@ SNAPSHOT_COLUMNS = ['id', 'created_at', 'status', 'error',
 
 
 @cfy.group(name='snapshots')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 def snapshots():
     """Handle manager snapshots
@@ -40,7 +40,7 @@ def snapshots():
 @cfy.options.restore_certificates
 @cfy.options.no_reboot
 @cfy.options.ignore_plugin_installation_failure
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
 def restore(snapshot_id,
@@ -88,7 +88,7 @@ def restore(snapshot_id,
 @cfy.options.exclude_credentials
 @cfy.options.exclude_logs
 @cfy.options.exclude_events
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
 def create(snapshot_id,
@@ -120,7 +120,7 @@ def create(snapshot_id,
 @snapshots.command(name='delete',
                    short_help='Delete a snapshot [manager only]')
 @cfy.argument('snapshot-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.pass_client()
 @cfy.pass_logger
@@ -139,7 +139,7 @@ def delete(snapshot_id, logger, client, tenant_name):
                    short_help='Upload a snapshot [manager only]')
 @cfy.argument('snapshot_path')
 @cfy.options.snapshot_id(validate=True)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.pass_client()
 @cfy.pass_logger
@@ -168,7 +168,7 @@ def upload(snapshot_path,
                    short_help='Download a snapshot [manager only]')
 @cfy.argument('snapshot-id')
 @cfy.options.output_path
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.pass_client()
 @cfy.pass_logger
@@ -197,7 +197,7 @@ def download(snapshot_id, output_path, logger, client, tenant_name):
 @cfy.options.search
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
 def list(sort_by,

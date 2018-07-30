@@ -16,7 +16,7 @@
 
 from .. import env
 from ..cli import cfy
-from ..table import print_data
+from ..table import print_data, print_single
 from ..utils import handle_client_error
 
 GROUP_COLUMNS = ['name', 'role', 'tenants', 'users']
@@ -30,7 +30,7 @@ def _format_group(group):
 
 
 @cfy.group(name='user-groups')
-@cfy.options.verbose()
+@cfy.options.common_options
 def user_groups():
     """Handle Cloudify user groups (Premium feature)
     """
@@ -42,7 +42,7 @@ def user_groups():
                      short_help='List user groups [manager only]')
 @cfy.options.sort_by('name')
 @cfy.options.descending
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.get_data
 @cfy.options.search
 @cfy.options.pagination_offset
@@ -82,7 +82,7 @@ def list(sort_by,
 @cfy.argument('user-group-name', callback=cfy.validate_name)
 @cfy.options.ldap_distinguished_name
 @cfy.options.security_role
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -105,7 +105,7 @@ def create(user_group_name,
                      short_help='Get details for a single '
                                 'user group [manager only]')
 @cfy.argument('user-group-name', callback=cfy.validate_name)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.get_data
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -122,14 +122,15 @@ def get(user_group_name, get_data, logger, client):
     )
     if get_data:
         _format_group(user_group_details)
-    print_data(GROUP_COLUMNS, user_group_details, 'Requested user group info:')
+    print_single(GROUP_COLUMNS, user_group_details,
+                 'Requested user group info:')
 
 
 @user_groups.command(name='set-role',
                      short_help='Set a new role for a group [manager only]')
 @cfy.argument('user-group-name', callback=cfy.validate_name)
 @cfy.options.security_role
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -147,7 +148,7 @@ def set_role(user_group_name, security_role, logger, client):
                      short_help='Add a user to a user group [manager only]')
 @cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.group_name
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -169,7 +170,7 @@ def add_user(username, group_name, logger, client):
     short_help='Remove a user from a user group [manager only]')
 @cfy.argument('username', callback=cfy.validate_name)
 @cfy.options.group_name
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -189,7 +190,7 @@ def remove_user(username, group_name, logger, client):
 @user_groups.command(name='delete',
                      short_help='Delete a user group [manager only]')
 @cfy.argument('user_group-name', callback=cfy.validate_name)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger

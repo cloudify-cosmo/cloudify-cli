@@ -1,6 +1,24 @@
+########
+# Copyright (c) 2018 Cloudify Platform Ltd. All rights reserved
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+############
+
+
+import json
 import datetime
 
-from mock import patch, MagicMock, PropertyMock
+from mock import patch, MagicMock, PropertyMock, Mock
 
 from cloudify_rest_client import deployments, executions, blueprints
 from cloudify_rest_client.exceptions import CloudifyClientError, \
@@ -42,6 +60,31 @@ class DeploymentUpdatesTest(CliCommandTest):
         patcher = patch('cloudify_cli.inputs.inputs_to_dict', MagicMock())
         self.addCleanup(patcher.stop)
         patcher.start()
+
+    def test_deployment_update_get(self):
+        old_value = 'old value 1'
+        new_value = 'new value 1'
+        self.client.deployment_updates.get = Mock(return_value={
+            'id': 'update-id-1',
+            'old_inputs': {'inp1': old_value},
+            'new_inputs': {'inp1': new_value},
+        })
+        outcome = self.invoke('deployments get-update update-id-1')
+        self.assertIn(old_value, outcome.output)
+        self.assertIn(new_value, outcome.output)
+
+    def test_deployment_update_get_json(self):
+        old_value = 'old value 1'
+        new_value = 'new value 1'
+        self.client.deployment_updates.get = Mock(return_value={
+            'id': 'update-id-1',
+            'old_inputs': {'inp1': old_value},
+            'new_inputs': {'inp1': new_value},
+        })
+        outcome = self.invoke('deployments get-update update-id-1 --json')
+        parsed = json.loads(outcome.output)
+        self.assertEqual(parsed['old_inputs'], {'inp1': old_value})
+        self.assertEqual(parsed['new_inputs'], {'inp1': new_value})
 
     def test_deployment_update_successful(self):
         outcome = self.invoke(
@@ -319,6 +362,32 @@ class DeploymentsTest(CliCommandTest):
         self.client.deployments.outputs.get = MagicMock(return_value=outputs)
         self.invoke('cfy deployments outputs dep1')
 
+    def test_deployments_outputs_json(self):
+        outputs = deployments.DeploymentOutputs({
+            'deployment_id': 'dep1',
+            'outputs': {
+                'port': 8080
+            }
+        })
+        deployment = deployments.Deployment({
+            'outputs': {
+                'port': {
+                    'description': 'Webserver port.',
+                    'value': '...'
+                }
+            }
+        })
+        self.client.deployments.get = MagicMock(return_value=deployment)
+        self.client.deployments.outputs.get = MagicMock(return_value=outputs)
+        outcome = self.invoke('cfy deployments outputs dep1 --json')
+        parsed = json.loads(outcome.output)
+        self.assertEqual(parsed, {
+            'port': {
+                'value': 8080,
+                'description': 'Webserver port.'
+            }
+        })
+
     def test_deployments_inputs(self):
         deployment = deployments.Deployment({
             'deployment_id': 'deployment_id',
@@ -339,6 +408,17 @@ class DeploymentsTest(CliCommandTest):
 
         for output in expected_outputs:
             self.assertIn(output, outcome)
+
+    def test_deployments_inputs_json(self):
+        deployment = deployments.Deployment({
+            'deployment_id': 'deployment_id',
+            'inputs': {'key1': 'val1', 'key2': 'val2'}
+        })
+
+        self.client.deployments.get = MagicMock(return_value=deployment)
+        outcome = self.invoke('cfy deployments inputs deployment_id --json')
+        parsed = json.loads(outcome.output)
+        self.assertEqual(parsed, {'key1': 'val1', 'key2': 'val2'})
 
     def test_missing_required_inputs(self):
         self._test_deployment_inputs(

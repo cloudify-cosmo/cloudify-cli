@@ -60,7 +60,9 @@ def execution_mock(status, wf_id='mock_wf'):
         'error': '',
         'id': uuid4(),
         'created_at': datetime.now().isoformat()[:-3],
-        'parameters': {},
+        'parameters': {
+            'param1': 'value1'
+        },
         'visibility': 'private',
         'created_by': 'admin',
         'tenant_name': DEFAULT_TENANT_NAME
@@ -184,18 +186,6 @@ def mock_stdout():
     stdout = StringIO()
     with patch('sys.stdout', stdout):
         yield stdout
-
-
-@contextmanager
-def mock_logger(attribute_path):
-    output = StringIO()
-
-    class MockLogger(object):
-        @staticmethod
-        def info(message):
-            output.write(message)
-    with patch(attribute_path, MockLogger):
-        yield output
 
 
 class MockPagination(dict):

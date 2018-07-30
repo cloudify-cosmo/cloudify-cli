@@ -34,7 +34,7 @@ from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 @cfy.options.timeout()
 @cfy.options.include_logs
 @cfy.options.json_output
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False,
                          resource_name_for_help='blueprint and deployment')
 @cfy.pass_context
@@ -98,7 +98,7 @@ def manager(ctx,
 @cfy.options.task_retries()
 @cfy.options.task_retry_interval()
 @cfy.options.task_thread_pool_size()
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_context
 def local(ctx,
           workflow_id,

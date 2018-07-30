@@ -15,7 +15,6 @@
 ############
 
 from . import env
-from . import logger
 from .cli import cfy
 from .commands import dev
 from .commands import ssh
@@ -50,6 +49,7 @@ from .commands import maintenance_mode
 @cfy.group(name='cfy')
 @cfy.options.verbose(expose_value=True)
 @cfy.options.version
+@cfy.options.json
 def _cfy(verbose):
     """Cloudify's Command Line Interface
 
@@ -138,7 +138,6 @@ def _register_commands():
 
 
 _register_commands()
-logger.configure_loggers()
 
 
 if __name__ == '__main__':

@@ -23,7 +23,7 @@ from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='logs')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 def logs():
     """Handle manager service logs
@@ -65,7 +65,7 @@ def _archive_logs(logger,
               short_help='Download manager service logs [manager only]')
 @cfy.options.output_path
 @cfy.options.all_nodes
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def download(output_path, all_nodes, logger):
     """Download an archive containing all of the manager's service logs
@@ -113,7 +113,7 @@ def download(output_path, all_nodes, logger):
               short_help='Purge manager service logs [manager only]')
 @cfy.options.force(help=helptexts.FORCE_PURGE_LOGS)
 @cfy.options.backup_first
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def purge(force, backup_first, logger):
     """Truncate all logs files under /var/log/cloudify.
@@ -142,7 +142,7 @@ def purge(force, backup_first, logger):
 
 @logs.command(name='backup',
               short_help='Backup manager service logs [manager only]')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def backup(logger):
     """Create a backup of all logs under a single archive and save it

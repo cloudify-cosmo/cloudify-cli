@@ -16,6 +16,7 @@
 
 import os
 import sys
+import click
 import errno
 import string
 import random
@@ -275,8 +276,8 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
 
         # The \r caret makes sure the cursor moves back to the beginning of
         # the line
-        sys.stdout.write('\r{0} {1} |{2}| {3}%'.format(
-            action, file_name, bar, percents))
+        msg = '\r{0} {1} |{2}| {3}%'.format(action, file_name, bar, percents)
+        click.echo(msg, nl=False)
         if read_bytes >= total_bytes:
             sys.stdout.write('\n')
 

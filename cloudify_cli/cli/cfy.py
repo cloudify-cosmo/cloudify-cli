@@ -19,6 +19,7 @@ import sys
 import urllib
 import difflib
 import StringIO
+import warnings
 import traceback
 from functools import wraps
 
@@ -29,14 +30,18 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
-from .. import env
+from .. import env, logger
 from ..cli import helptexts
 from ..inputs import inputs_to_dict
 from ..utils import generate_random_string
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import SuppressedCloudifyCliError
 from ..exceptions import CloudifyBootstrapError, CloudifyValidationError
-from ..logger import get_logger, set_global_verbosity_level, DEFAULT_LOG_FILE
+from ..logger import (
+    get_logger,
+    set_global_verbosity_level,
+    DEFAULT_LOG_FILE,
+    set_global_json_output)
 
 
 CLICK_CONTEXT_SETTINGS = dict(
@@ -187,11 +192,32 @@ def validate_nonnegative_integer(ctx, param, value):
     return value
 
 
+def set_json(ctx, param, value):
+    if value is not None:
+        set_global_json_output(value)
+    return value
+
+
+def set_format(ctx, param, value):
+    if value == 'json':
+        set_global_json_output(True)
+    return value
+
+
+def json_output_deprecate(ctx, param, value):
+    if value:
+        warnings.warn("Instead of --json-output, use the global "
+                      "`cfy --json` flag")
+    return value
+
+
 def set_verbosity_level(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-
-    set_global_verbosity_level(value)
+    if param.name == 'verbose':
+        set_global_verbosity_level(value)
+    elif value and param.name == 'quiet':
+        set_global_verbosity_level(logger.QUIET)
     return value
 
 
@@ -369,6 +395,10 @@ class AliasedGroup(click.Group):
                     '\n    '.join(matches))
             raise click.exceptions.UsageError(error_msg, error.ctx)
 
+    def command(self, *a, **kw):
+        kw.setdefault('cls', CommandWithLoggers)
+        return super(AliasedGroup, self).command(*a, **kw)
+
 
 def group(name):
     """Allow to create a group with a default click context
@@ -381,6 +411,18 @@ def group(name):
         cls=AliasedGroup)
 
 
+class CommandWithLoggers(click.Command):
+    """Like a click Command, but configure loggers first.
+
+    We want loggers to be configured after argument parsing has been
+    performed (ie. verbose/quiet callbacks have fired), but before the
+    command was actually run.
+    """
+    def invoke(self, *a, **kw):
+        logger.configure_loggers()
+        return super(CommandWithLoggers, self).invoke(*a, **kw)
+
+
 def command(*args, **kwargs):
     """Make Click commands Cloudify specific
 
@@ -388,6 +430,7 @@ def command(*args, **kwargs):
     Some decorators are called `@click.something` instead of
     `@cfy.something`
     """
+    kwargs.setdefault('cls', CommandWithLoggers)
     return click.command(*args, **kwargs)
 
 
@@ -418,6 +461,20 @@ class Options(object):
             expose_value=False,
             is_eager=True,
             help=helptexts.VERSION)
+
+        self.format = click.option(
+            '--format',
+            type=click.Choice(['plain', 'json']),
+            expose_value=False,
+            callback=set_format
+        )
+
+        self.json = click.option(
+            '--json',
+            is_flag=True,
+            expose_value=False,
+            default=None,
+            callback=set_json)
 
         self.inputs = click.option(
             '-i',
@@ -494,6 +551,7 @@ class Options(object):
         self.json_output = click.option(
             '--json-output',
             is_flag=True,
+            callback=json_output_deprecate,
             help=helptexts.JSON_OUTPUT)
 
         self.tail = click.option(
@@ -927,6 +985,16 @@ class Options(object):
             help=helptexts.IGNORE_PLUGIN_INSTALLATION_FAILURE
         )
 
+    def common_options(self, f):
+        """A shorthand for applying commonly used arguments.
+
+        To be used for arguments that are going to be applied for all or
+        almost all commands.
+        """
+        for arg in [self.json, self.verbose(), self.format, self.quiet()]:
+            f = arg(f)
+        return f
+
     @staticmethod
     def secret_file():
         return click.option(
@@ -955,6 +1023,17 @@ class Options(object):
             expose_value=expose_value,
             is_eager=True,
             help=helptexts.VERBOSE)
+
+    @staticmethod
+    def quiet(expose_value=False):
+        return click.option(
+            '-q',
+            '--quiet',
+            is_flag=True,
+            callback=set_verbosity_level,
+            expose_value=expose_value,
+            is_eager=True,
+            help=helptexts.QUIET)
 
     @staticmethod
     def tenant_name(required=True,

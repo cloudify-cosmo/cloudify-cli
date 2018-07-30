@@ -30,7 +30,7 @@ EXECUTION_COLUMNS = ['id', 'deployment_id', 'workflow_id', 'status']
 
 
 @cfy.group(name='maintenance-mode')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 def maintenance_mode():
     """Handle the manager's maintenance-mode
@@ -41,7 +41,7 @@ def maintenance_mode():
 @maintenance_mode.command(name='status',
                           short_help='Show maintenance-mode status '
                           '[manager only]')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_client()
 def status(client):
     """Retrieve the current maintenance-mode status.
@@ -95,7 +95,7 @@ def _print_maintenance_mode_status(client, logger):
                           '[manager only]')
 @cfy.options.wait
 @cfy.options.timeout(default=0)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
 def activate(wait, timeout, logger, client):
@@ -140,7 +140,7 @@ def activate(wait, timeout, logger, client):
 @maintenance_mode.command(name='deactivate',
                           short_help='Deactivate maintenance-mode '
                           '[manager only]')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
 def deactivate(logger, client):

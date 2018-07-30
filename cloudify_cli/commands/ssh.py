@@ -32,7 +32,7 @@ from ..ssh import run_command_on_manager, test_profile
 @cfy.options.host_session
 @cfy.options.session_id
 @cfy.options.list_sessions
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_logger
 def ssh(command, host, sid, list_sessions, logger):

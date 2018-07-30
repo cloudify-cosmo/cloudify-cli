@@ -32,9 +32,9 @@ from cloudify_rest_client.exceptions import (
 )
 from . import blueprints
 from ..local import load_env
-from ..table import print_data
+from ..table import print_data, print_single, print_details
 from ..cli import cfy, helptexts
-from ..logger import get_events_logger
+from ..logger import get_events_logger, get_global_json_output
 from .. import execution_events_fetcher, utils
 from ..constants import DEFAULT_BLUEPRINT_PATH, DELETE_DEP
 from ..blueprint import get_blueprint_path_and_id
@@ -56,7 +56,7 @@ TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
 
 
 @cfy.group(name='deployments')
-@cfy.options.verbose()
+@cfy.options.common_options
 def deployments():
     """Handle deployments on the Manager
     """
@@ -73,7 +73,7 @@ def deployments():
 @cfy.options.search
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -123,7 +123,7 @@ def manager_list(blueprint_id,
 @cfy.options.search
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -170,7 +170,7 @@ def manager_history(deployment_id,
     short_help='Retrieve deployment update information [manager only]'
 )
 @cfy.argument('deployment-update-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False,
                          resource_name_for_help='deployment update')
 @cfy.assert_manager_active()
@@ -187,16 +187,19 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
         'Retrieving deployment update {0}...'.format(deployment_update_id))
     deployment_update_dict = client.deployment_updates.get(
         deployment_update_id)
-    print_data(DEPLOYMENT_UPDATE_COLUMNS,
-               deployment_update_dict,
-               'Deployment Update:',
-               max_width=50)
+    columns = DEPLOYMENT_UPDATE_COLUMNS
+    if get_global_json_output():
+        columns += ['old_inputs', 'new_inputs']
+    print_single(columns,
+                 deployment_update_dict,
+                 'Deployment Update:',
+                 max_width=50)
 
-    logger.info('Old inputs:')
-    logger.info('{0}\n'.format(deployment_update_dict['old_inputs'] or ''))
-
-    logger.info('New inputs:')
-    logger.info('{0}\n'.format(deployment_update_dict['new_inputs'] or ''))
+    if not get_global_json_output():
+        print_details(deployment_update_dict['old_inputs'] or {},
+                      'Old inputs:')
+        print_details(deployment_update_dict['new_inputs'] or {},
+                      'New inputs:')
 
 
 @cfy.command(name='update', short_help='Update a deployment [manager only]')
@@ -218,7 +221,7 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
 @cfy.options.validate
 @cfy.options.include_logs
 @cfy.options.json_output
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -357,7 +360,7 @@ def manager_update(ctx,
 @cfy.options.inputs
 @cfy.options.private_resource
 @cfy.options.visibility(valid_values=VISIBILITY_EXCEPT_GLOBAL)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -419,7 +422,7 @@ def manager_create(blueprint_id,
              short_help='Delete a deployment [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.force(help=helptexts.IGNORE_LIVE_NODES)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -459,7 +462,7 @@ def manager_delete(deployment_id, force, logger, client, tenant_name):
 @cfy.command(name='outputs',
              short_help='Show deployment outputs [manager only]')
 @cfy.argument('deployment-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -475,20 +478,27 @@ def manager_outputs(deployment_id, logger, client, tenant_name):
     dep = client.deployments.get(deployment_id, _include=['outputs'])
     outputs_def = dep.outputs
     response = client.deployments.outputs.get(deployment_id)
-    outputs_ = StringIO()
-    for output_name, output in response.outputs.iteritems():
-        outputs_.write(' - "{0}":{1}'.format(output_name, os.linesep))
-        description = outputs_def[output_name].get('description', '')
-        outputs_.write('     Description: {0}{1}'.format(description,
-                                                         os.linesep))
-        outputs_.write('     Value: {0}{1}'.format(output, os.linesep))
-    logger.info(outputs_.getvalue())
+    if get_global_json_output():
+        outputs = {out: {
+            'value': val,
+            'description': outputs_def[out].get('description')
+        } for out, val in response.outputs.items()}
+        print_details(outputs, 'Deployment outputs:')
+    else:
+        outputs_ = StringIO()
+        for output_name, output in response.outputs.items():
+            outputs_.write(' - "{0}":{1}'.format(output_name, os.linesep))
+            description = outputs_def[output_name].get('description', '')
+            outputs_.write('     Description: {0}{1}'.format(description,
+                                                             os.linesep))
+            outputs_.write('     Value: {0}{1}'.format(output, os.linesep))
+        logger.info(outputs_.getvalue())
 
 
 @cfy.command(name='inputs',
              short_help='Show deployment inputs [manager only]')
 @cfy.argument('deployment-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -502,18 +512,21 @@ def manager_inputs(deployment_id, logger, client, tenant_name):
     logger.info('Retrieving inputs for deployment {0}...'.format(
         deployment_id))
     dep = client.deployments.get(deployment_id, _include=['inputs'])
-    inputs_ = StringIO()
-    for input_name, input in dep.inputs.iteritems():
-        inputs_.write(' - "{0}":{1}'.format(input_name, os.linesep))
-        inputs_.write('     Value: {0}{1}'.format(input, os.linesep))
-    logger.info(inputs_.getvalue())
+    if get_global_json_output():
+        print_details(dep.inputs, 'Deployment inputs:')
+    else:
+        inputs_ = StringIO()
+        for input_name, input in dep.inputs.items():
+            inputs_.write(' - "{0}":{1}'.format(input_name, os.linesep))
+            inputs_.write('     Value: {0}{1}'.format(input, os.linesep))
+        logger.info(inputs_.getvalue())
 
 
 @cfy.command(name='set-visibility',
              short_help="Set the deployment's visibility [manager only]")
 @cfy.argument('deployment-id')
 @cfy.options.visibility(required=True, valid_values=[VisibilityState.TENANT])
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
@@ -531,7 +544,7 @@ def manager_set_visibility(deployment_id, visibility, logger, client):
 
 
 @cfy.command(name='inputs', short_help='Show deployment inputs [locally]')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.blueprint_id(required=True, multiple_blueprints=True)
 @cfy.pass_logger
 def local_inputs(blueprint_id, logger):
@@ -542,7 +555,7 @@ def local_inputs(blueprint_id, logger):
 
 
 @cfy.command(name='outputs', short_help='Show deployment outputs [locally]')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.blueprint_id(required=True, multiple_blueprints=True)
 @cfy.pass_logger
 def local_outputs(blueprint_id, logger):

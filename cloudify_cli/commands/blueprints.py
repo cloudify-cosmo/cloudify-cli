@@ -31,7 +31,8 @@ from ..cli import cfy
 from .. import blueprint
 from .. import exceptions
 from ..config import config
-from ..table import print_data
+from ..logger import get_global_json_output
+from ..table import print_data, print_single
 from ..exceptions import CloudifyCliError
 from ..utils import (prettify_client_error,
                      get_visibility,
@@ -45,7 +46,7 @@ INPUTS_COLUMNS = ['name', 'type', 'default', 'description']
 
 
 @cfy.group(name='blueprints')
-@cfy.options.verbose()
+@cfy.options.common_options
 def blueprints():
     """Handle blueprints on the manager
     """
@@ -55,7 +56,7 @@ def blueprints():
 @blueprints.command(name='validate',
                     short_help='Validate a blueprint')
 @cfy.argument('blueprint-path')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def validate_blueprint(blueprint_path, logger):
     """Validate a blueprint
@@ -81,7 +82,7 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.options.blueprint_id(validate=True)
 @cfy.options.blueprint_filename()
 @cfy.options.validate
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
 @cfy.options.private_resource
 @cfy.options.visibility()
@@ -169,7 +170,7 @@ def upload(ctx,
                     short_help='Download a blueprint [manager only]')
 @cfy.argument('blueprint-id')
 @cfy.options.output_path
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -192,7 +193,7 @@ def download(blueprint_id, output_path, logger, client, tenant_name):
 @blueprints.command(name='delete',
                     short_help='Delete a blueprint [manager only]')
 @cfy.argument('blueprint-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -212,7 +213,7 @@ def delete(blueprint_id, logger, client, tenant_name):
                     short_help='List blueprints [manager only]')
 @cfy.options.sort_by()
 @cfy.options.descending
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='blueprint')
 @cfy.options.all_tenants
@@ -261,7 +262,7 @@ def list(sort_by,
 @blueprints.command(name='get',
                     short_help='Retrieve blueprint information [manager only]')
 @cfy.argument('blueprint-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -278,27 +279,35 @@ def get(blueprint_id, logger, client, tenant_name):
                                           blueprint_id=blueprint_id)
     blueprint_dict['#deployments'] = len(deployments)
     columns = BLUEPRINT_COLUMNS + ['#deployments']
-    print_data(columns, blueprint_dict, 'Blueprint:', max_width=50)
+    blueprint_metadata = blueprint_dict['plan']['metadata'] or {}
+    blueprint_deployments = [d['id'] for d in deployments]
 
-    logger.info('Description:')
-    logger.info('{0}\n'.format(blueprint_dict['description'] or ''))
+    if get_global_json_output():
+        columns += ['description', 'metadata', 'deployments']
+        blueprint_dict['metadata'] = blueprint_metadata
+        blueprint_dict['deployments'] = blueprint_deployments
+        print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
+    else:
+        print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
 
-    blueprint_metadata = blueprint_dict['plan']['metadata']
-    if blueprint_metadata:
-        logger.info('Metadata:')
-        for property_name, property_value in utils.decode_dict(
-                blueprint_dict['plan']['metadata']).iteritems():
-            logger.info('\t{0}: {1}'.format(property_name, property_value))
-        logger.info('')
+        logger.info('Description:')
+        logger.info('{0}\n'.format(blueprint_dict['description'] or ''))
 
-    logger.info('Existing deployments:')
-    logger.info('{0}\n'.format(json.dumps([d['id'] for d in deployments])))
+        if blueprint_metadata:
+            logger.info('Metadata:')
+            for property_name, property_value in utils.decode_dict(
+                    blueprint_dict['plan']['metadata']).iteritems():
+                logger.info('\t{0}: {1}'.format(property_name, property_value))
+            logger.info('')
+
+        logger.info('Existing deployments:')
+        logger.info('{0}\n'.format(json.dumps(blueprint_deployments)))
 
 
 @blueprints.command(name='inputs',
                     short_help='Retrieve blueprint inputs [manager only]')
 @cfy.argument('blueprint-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -326,7 +335,7 @@ def inputs(blueprint_id, logger, client, tenant_name):
 @cfy.argument('blueprint-path')
 @cfy.options.optional_output_path
 @cfy.options.validate
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 @cfy.pass_context
 def package(ctx, blueprint_path, output_path, validate, logger):
@@ -360,7 +369,7 @@ def package(ctx, blueprint_path, output_path, validate, logger):
                     short_help='Create pip-requirements')
 @cfy.argument('blueprint-path', type=click.Path(exists=True))
 @cfy.options.optional_output_path
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def create_requirements(blueprint_path, output_path, logger):
     """Generate a pip-compliant requirements file for a given blueprint
@@ -386,7 +395,7 @@ def create_requirements(blueprint_path, output_path, logger):
 @blueprints.command(name='install-plugins',
                     short_help='Install plugins [locally]')
 @cfy.argument('blueprint-path', type=click.Path(exists=True))
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_local_active
 @cfy.pass_logger
 def install_plugins(blueprint_path, logger):
@@ -404,7 +413,7 @@ def install_plugins(blueprint_path, logger):
 @blueprints.command(name='set-global',
                     short_help="Set the blueprint's visibility to global")
 @cfy.argument('blueprint-id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
@@ -425,7 +434,7 @@ def set_global(blueprint_id, logger, client):
                     short_help="Set the blueprint's visibility")
 @cfy.argument('blueprint-id')
 @cfy.options.visibility(required=True, valid_values=VISIBILITY_EXCEPT_PRIVATE)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger

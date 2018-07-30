@@ -21,7 +21,8 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from .. import utils
 from ..cli import cfy
 from ..local import load_env
-from ..table import print_data
+from ..logger import get_global_json_output
+from ..table import print_data, print_details, print_single
 from ..exceptions import CloudifyCliError
 
 
@@ -30,7 +31,7 @@ NODE_INSTANCE_COLUMNS = ['id', 'deployment_id', 'host_id', 'node_id', 'state',
 
 
 @cfy.group(name='node-instances')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 def manager():
     """Handle a deployment's node-instances
@@ -42,7 +43,7 @@ def manager():
                  short_help='Retrieve node-instance information '
                  '[manager only]')
 @cfy.argument('node_instance_id')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(
     required=False, resource_name_for_help='node-instance')
 @cfy.pass_logger
@@ -62,13 +63,22 @@ def get(node_instance_id, logger, client, tenant_name):
         raise CloudifyCliError('Node instance {0} not found'.format(
             node_instance_id))
 
-    print_data(NODE_INSTANCE_COLUMNS, node_instance, 'Node-instance:', 50)
+    # decode in-place so that it's decoded for both branches
+    node_instance.runtime_properties.update(
+        utils.decode_dict(node_instance.runtime_properties))
 
-    # print node instance runtime properties
-    logger.info('Instance runtime properties:')
-    for prop_name, prop_value in utils.decode_dict(
-            node_instance.runtime_properties).iteritems():
-        logger.info('\t{0}: {1}'.format(prop_name, prop_value))
+    if get_global_json_output():
+        # for json output, make sure runtime properties are in the same object
+        # so that the output is a single decode-able object
+        columns = NODE_INSTANCE_COLUMNS + ['runtime_properties']
+        print_single(columns, node_instance, 'Node-instance:', 50)
+    else:
+        print_single(NODE_INSTANCE_COLUMNS, node_instance,
+                     'Node-instance:', 50)
+
+        print_details(node_instance.runtime_properties,
+                      'Instance runtime properties:')
+
     logger.info('')
 
 
@@ -85,7 +95,7 @@ def get(node_instance_id, logger, client, tenant_name):
 @cfy.options.search
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 @cfy.pass_client()
 def list(deployment_id,
@@ -136,7 +146,7 @@ def list(deployment_id,
              short_help='Show node-instance information [locally]')
 @cfy.argument('node-id', required=False)
 @cfy.options.blueprint_id(required=True, multiple_blueprints=True)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_logger
 def local(node_id, blueprint_id, logger):
     """Display node-instances for the execution

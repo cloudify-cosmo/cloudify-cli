@@ -16,7 +16,8 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from ..table import print_data
+from ..logger import get_global_json_output
+from ..table import print_data, print_single
 from .. import utils
 from ..cli import cfy
 from ..exceptions import CloudifyCliError
@@ -36,7 +37,7 @@ def workflows():
                    short_help='Retrieve workflow information [manager only]')
 @cfy.argument('workflow-id')
 @cfy.options.deployment_id(required=True)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_logger
 @cfy.pass_client()
@@ -65,41 +66,46 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
         'blueprint_id': deployment.blueprint_id,
         'deployment_id': deployment.id
     }
-    print_data(WORKFLOW_COLUMNS, workflow, 'Workflows:', defaults=defaults)
+    columns = WORKFLOW_COLUMNS
 
-    # print workflow parameters
-    mandatory_params = dict()
-    optional_params = dict()
-    for param_name, param in utils.decode_dict(
-            workflow.parameters).iteritems():
-        params_group = optional_params if 'default' in param else \
-            mandatory_params
-        params_group[param_name] = param
+    if get_global_json_output():
+        columns += ['parameters']
+    print_single(columns, workflow, 'Workflows:', defaults=defaults)
 
-    logger.info('Workflow Parameters:')
-    logger.info('\tMandatory Parameters:')
-    for param_name, param in mandatory_params.iteritems():
-        if 'description' in param:
-            logger.info('\t\t{0}\t({1})'.format(param_name,
-                                                param['description']))
-        else:
-            logger.info('\t\t{0}'.format(param_name))
+    if not get_global_json_output():
+        # print workflow parameters
+        mandatory_params = dict()
+        optional_params = dict()
+        for param_name, param in utils.decode_dict(
+                workflow.parameters).iteritems():
+            params_group = optional_params if 'default' in param else \
+                mandatory_params
+            params_group[param_name] = param
 
-    logger.info('\tOptional Parameters:')
-    for param_name, param in optional_params.iteritems():
-        if 'description' in param:
-            logger.info('\t\t{0}: \t{1}\t({2})'.format(
-                param_name, param['default'], param['description']))
-        else:
-            logger.info('\t\t{0}: \t{1}'.format(param_name,
-                                                param['default']))
-    logger.info('')
+        logger.info('Workflow Parameters:')
+        logger.info('\tMandatory Parameters:')
+        for param_name, param in mandatory_params.iteritems():
+            if 'description' in param:
+                logger.info('\t\t{0}\t({1})'.format(param_name,
+                                                    param['description']))
+            else:
+                logger.info('\t\t{0}'.format(param_name))
+
+        logger.info('\tOptional Parameters:')
+        for param_name, param in optional_params.iteritems():
+            if 'description' in param:
+                logger.info('\t\t{0}: \t{1}\t({2})'.format(
+                    param_name, param['default'], param['description']))
+            else:
+                logger.info('\t\t{0}: \t{1}'.format(param_name,
+                                                    param['default']))
+        logger.info('')
 
 
 @workflows.command(name='list',
                    short_help='List workflows for a deployment [manager only]')
 @cfy.options.deployment_id(required=True)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_logger
 @cfy.pass_client()

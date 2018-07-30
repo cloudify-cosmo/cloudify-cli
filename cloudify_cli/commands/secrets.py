@@ -32,7 +32,7 @@ SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'visibility',
 
 
 @cfy.group(name='secrets')
-@cfy.options.verbose()
+@cfy.options.common_options
 def secrets():
     """Handle Cloudify secrets (key-value pairs)
     """
@@ -49,7 +49,7 @@ def secrets():
 @cfy.options.visibility(mutually_exclusive_required=False)
 @cfy.options.hidden_value
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
@@ -85,7 +85,7 @@ def create(key,
 @secrets.command(name='get', short_help='Get details for a single secret')
 @cfy.argument('key', callback=cfy.validate_name)
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
@@ -114,7 +114,7 @@ def get(key, tenant_name, logger, client):
 @cfy.options.update_hidden_value
 @cfy.options.update_visibility
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
@@ -142,7 +142,7 @@ def update(key,
 @secrets.command(name='list', short_help="List all secrets")
 @cfy.options.sort_by('key')
 @cfy.options.descending
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name_for_list(required=False,
                                   resource_name_for_help='secret')
 @cfy.options.all_tenants
@@ -181,7 +181,7 @@ def list(sort_by,
 @secrets.command(name='delete', short_help='Delete a secret')
 @cfy.argument('key', callback=cfy.validate_name)
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -201,7 +201,7 @@ def delete(key, tenant_name, logger, client):
 @secrets.command(name='set-global',
                  short_help="Set the secret's visibility to global")
 @cfy.argument('key', callback=cfy.validate_name)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
@@ -224,7 +224,7 @@ def set_global(key, logger, client):
 @cfy.options.visibility(required=True,
                         valid_values=VISIBILITY_EXCEPT_PRIVATE,
                         mutually_exclusive_required=False)
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)

@@ -15,13 +15,11 @@
 ############
 
 import os
+import json
 from datetime import datetime
 
-from .logger import get_logger
-
 from prettytable import PrettyTable
-
-from cloudify_rest_client.responses import ListResponse
+from .logger import get_global_json_output, CloudifyJSONEncoder, output
 
 
 def generate(cols, data, defaults=None, labels=None):
@@ -57,7 +55,7 @@ def generate(cols, data, defaults=None, labels=None):
         if column in row_data:
             if row_data[column] and isinstance(row_data[column], basestring):
                 row_data[column] = get_timestamp(row_data[column]) \
-                                   or row_data[column]
+                    or row_data[column]
             elif row_data[column] and isinstance(row_data[column], list):
                 row_data[column] = ','.join(row_data[column])
             elif isinstance(row_data[column], bool):
@@ -80,33 +78,71 @@ def generate(cols, data, defaults=None, labels=None):
     return pt
 
 
-def log(title, tb):
-    logger = get_logger()
-    logger.info('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
+def display(title, tb):
+    output('{0}{1}{0}{2}{0}'.format(os.linesep, title, tb))
+
+
+def format_json_object(cols, item, defaults=None, labels=None):
+    defaults = defaults or {}
+    labels = labels or {}
+
+    return json.dumps({
+        labels.get(col, col): item.get(col) or defaults.get(col)
+        for col in cols
+    }, cls=CloudifyJSONEncoder)
+
+
+def format_json_output(cols, data, defaults=None, labels=None):
+    # output the json array newline-separated to aid debuggability: makes
+    # it possible to analyze the output line-by-line and use eg. grep
+    output('[')
+    output(',\n'.join(
+        format_json_object(cols, item, defaults, labels) for item in data))
+    output(']')
 
 
 def print_data(columns, items, header_text, max_width=None, defaults=None,
                labels=None):
-    if items is None:
-        items = []
-    elif not isinstance(items, (list, ListResponse)):
-        items = [items]
+    """Display the items in a tabular manner.
+    """
+    if get_global_json_output():
+        format_json_output(columns, items, defaults=defaults, labels=labels)
+    else:
+        pt = generate(columns, data=items, defaults=defaults, labels=labels)
+        if max_width:
+            pt.max_width = max_width
+        display(header_text, pt)
 
-    pt = generate(columns, data=items, defaults=defaults, labels=labels)
-    if max_width:
-        pt.max_width = max_width
-    log(header_text, pt)
+
+def print_single(columns, item, header_text, max_width=None, defaults=None,
+                 labels=None):
+    """Print out a single item.
+
+    This is similar to the table-generating print_data, but for use when
+    it is known that there is only going to be one item.
+    """
+    if get_global_json_output():
+        output(format_json_object(
+            columns, item, defaults=defaults, labels=labels))
+    else:
+        print_data(columns, [item], header_text, max_width, defaults, labels)
 
 
 def print_details(data, title):
-    logger = get_logger()
-    logger.info(title)
+    """Utility for printing structured key/value pairs.
 
-    for item in data.items():
-        field_name = str(item[0]) + ':'
-        field_value = str(item[1])
-        field_value = get_timestamp(field_value) or field_value
-        logger.info('{0} {1}'.format(field_name.ljust(16), field_value))
+    Note that this is not for printing the standard output table, but
+    rather for auxilliary data.
+    """
+    if get_global_json_output():
+        output(json.dumps(data, cls=CloudifyJSONEncoder))
+    else:
+        output(title)
+        for item in data.items():
+            field_name = str(item[0]) + ':'
+            field_value = str(item[1])
+            field_value = get_timestamp(field_value) or field_value
+            output('\t{0} {1}'.format(field_name.ljust(16), field_value))
 
 
 def get_timestamp(data):

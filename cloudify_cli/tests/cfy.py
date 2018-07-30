@@ -55,7 +55,6 @@ default_manager_params = dict(
 @log_capture()
 def invoke(command, capture, context=None):
 
-    logger.configure_loggers()
     logger.set_global_verbosity_level(verbose=logger.NO_VERBOSE)
 
     cfy = clicktest.CliRunner()
@@ -65,17 +64,23 @@ def invoke(command, capture, context=None):
     # of the command
     if lexed_command[0] == 'cfy':
         del lexed_command[0]
-    # For commands which contain a dash (like maintenance-mode)
+
+    is_version = False
+    global_flags = []
     if lexed_command[0] == '--version':
         func = lexed_command[0]
         is_version = True
-    else:
+    elif lexed_command[0].startswith('--'):
+        # for --json and --format
+        while lexed_command[0].startswith('--'):
+            global_flags.append(lexed_command.pop(0))
+
+    if not is_version:
+        # For commands which contain a dash (like maintenance-mode)
         func = lexed_command[0].replace('-', '_')
-        is_version = False
     params = lexed_command[1:]
 
     sub_func = context or func
-
     # If we call `cfy init`, what we actually want to do is get the
     # init module from `commands` and then get the `init` command
     # from that module, hence the attribute getting.
@@ -83,7 +88,7 @@ def invoke(command, capture, context=None):
         outcome = cfy.invoke(getattr(main, '_cfy'), ['--version'])
     else:
         outcome = cfy.invoke(getattr(
-            getattr(commands, func), sub_func), params)
+            getattr(commands, func), sub_func), global_flags + params)
     outcome.command = command
 
     logs = [capture.records[m].msg for m in range(len(capture.records))]

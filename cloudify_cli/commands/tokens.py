@@ -15,7 +15,7 @@
 ############
 
 from ..cli import cfy
-from ..table import print_data
+from ..table import print_single
 
 REST_TOKEN_COLUMN = ['role', 'value']
 
@@ -32,7 +32,7 @@ def tokens():
     name='get',
     short_help='returns a valid REST token from the Cloudify Manager')
 @cfy.assert_manager_active()
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
 def get(logger, client):
@@ -40,4 +40,4 @@ def get(logger, client):
     """
     logger.info('Retrieving REST token')
     token = client.tokens.get()
-    print_data(REST_TOKEN_COLUMN, token, 'REST token')
+    print_single(REST_TOKEN_COLUMN, token, 'REST token')

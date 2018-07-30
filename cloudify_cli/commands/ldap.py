@@ -17,7 +17,7 @@ from ..cli import cfy
 
 
 @cfy.group(name='ldap')
-@cfy.options.verbose()
+@cfy.options.common_options
 @cfy.assert_manager_active()
 def ldap():
     """Set LDAP authenticator.

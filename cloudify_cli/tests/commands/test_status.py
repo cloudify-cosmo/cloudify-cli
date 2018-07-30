@@ -48,12 +48,12 @@ class StatusTest(CliCommandTest):
         self.client.manager.get_status = MagicMock(return_value=status_result)
 
         outcome = self.invoke('cfy status')
-        outcome = [o.strip() for o in outcome.logs.split('\n')]
+        outcome = [o.strip() for o in outcome.output.split('\n')]
 
         expected_outputs = [
             '| name1                          | state1 |',
             '| name2                          | state2 |',
-            ]
+        ]
 
         for output in expected_outputs:
             self.assertIn(output, outcome)
