@@ -60,7 +60,9 @@ def execution_mock(status, wf_id='mock_wf'):
         'error': '',
         'id': uuid4(),
         'created_at': datetime.now().isoformat()[:-3],
-        'parameters': {},
+        'parameters': {
+            'param1': 'value1'
+        },
         'visibility': 'private',
         'created_by': 'admin',
         'tenant_name': DEFAULT_TENANT_NAME
