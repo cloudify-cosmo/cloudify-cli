@@ -478,14 +478,21 @@ def manager_outputs(deployment_id, logger, client, tenant_name):
     dep = client.deployments.get(deployment_id, _include=['outputs'])
     outputs_def = dep.outputs
     response = client.deployments.outputs.get(deployment_id)
-    outputs_ = StringIO()
-    for output_name, output in response.outputs.iteritems():
-        outputs_.write(' - "{0}":{1}'.format(output_name, os.linesep))
-        description = outputs_def[output_name].get('description', '')
-        outputs_.write('     Description: {0}{1}'.format(description,
-                                                         os.linesep))
-        outputs_.write('     Value: {0}{1}'.format(output, os.linesep))
-    logger.info(outputs_.getvalue())
+    if get_global_json_output():
+        outputs = {out: {
+            'value': val,
+            'description': outputs_def[out].get('description')
+        } for out, val in response.outputs.items()}
+        print_details(outputs, 'Deployment outputs:')
+    else:
+        outputs_ = StringIO()
+        for output_name, output in response.outputs.items():
+            outputs_.write(' - "{0}":{1}'.format(output_name, os.linesep))
+            description = outputs_def[output_name].get('description', '')
+            outputs_.write('     Description: {0}{1}'.format(description,
+                                                             os.linesep))
+            outputs_.write('     Value: {0}{1}'.format(output, os.linesep))
+        logger.info(outputs_.getvalue())
 
 
 @cfy.command(name='inputs',
@@ -505,11 +512,14 @@ def manager_inputs(deployment_id, logger, client, tenant_name):
     logger.info('Retrieving inputs for deployment {0}...'.format(
         deployment_id))
     dep = client.deployments.get(deployment_id, _include=['inputs'])
-    inputs_ = StringIO()
-    for input_name, input in dep.inputs.iteritems():
-        inputs_.write(' - "{0}":{1}'.format(input_name, os.linesep))
-        inputs_.write('     Value: {0}{1}'.format(input, os.linesep))
-    logger.info(inputs_.getvalue())
+    if get_global_json_output():
+        print_details(dep.inputs, 'Deployment inputs:')
+    else:
+        inputs_ = StringIO()
+        for input_name, input in dep.inputs.items():
+            inputs_.write(' - "{0}":{1}'.format(input_name, os.linesep))
+            inputs_.write('     Value: {0}{1}'.format(input, os.linesep))
+        logger.info(inputs_.getvalue())
 
 
 @cfy.command(name='set-visibility',

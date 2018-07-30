@@ -362,6 +362,32 @@ class DeploymentsTest(CliCommandTest):
         self.client.deployments.outputs.get = MagicMock(return_value=outputs)
         self.invoke('cfy deployments outputs dep1')
 
+    def test_deployments_outputs_json(self):
+        outputs = deployments.DeploymentOutputs({
+            'deployment_id': 'dep1',
+            'outputs': {
+                'port': 8080
+            }
+        })
+        deployment = deployments.Deployment({
+            'outputs': {
+                'port': {
+                    'description': 'Webserver port.',
+                    'value': '...'
+                }
+            }
+        })
+        self.client.deployments.get = MagicMock(return_value=deployment)
+        self.client.deployments.outputs.get = MagicMock(return_value=outputs)
+        outcome = self.invoke('cfy deployments outputs dep1 --json')
+        parsed = json.loads(outcome.output)
+        self.assertEqual(parsed, {
+            'port': {
+                'value': 8080,
+                'description': 'Webserver port.'
+            }
+        })
+
     def test_deployments_inputs(self):
         deployment = deployments.Deployment({
             'deployment_id': 'deployment_id',
@@ -382,6 +408,17 @@ class DeploymentsTest(CliCommandTest):
 
         for output in expected_outputs:
             self.assertIn(output, outcome)
+
+    def test_deployments_inputs_json(self):
+        deployment = deployments.Deployment({
+            'deployment_id': 'deployment_id',
+            'inputs': {'key1': 'val1', 'key2': 'val2'}
+        })
+
+        self.client.deployments.get = MagicMock(return_value=deployment)
+        outcome = self.invoke('cfy deployments inputs deployment_id --json')
+        parsed = json.loads(outcome.output)
+        self.assertEqual(parsed, {'key1': 'val1', 'key2': 'val2'})
 
     def test_missing_required_inputs(self):
         self._test_deployment_inputs(
