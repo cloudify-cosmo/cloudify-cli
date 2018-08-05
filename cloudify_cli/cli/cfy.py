@@ -986,6 +986,13 @@ class Options(object):
             help=helptexts.IGNORE_PLUGIN_FAILURE
         )
 
+        self.queue = click.option(
+            '--queue',
+            is_flag=True,
+            default=False,
+            help=helptexts.QUEUE_EXECUTIONS
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 

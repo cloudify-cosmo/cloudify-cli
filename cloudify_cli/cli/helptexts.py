@@ -283,6 +283,9 @@ STOP_OLD_AGENT = 'If set, after installing the new agent the old agent ' \
                  '(that is connected to the old Cloudify Manager) will be ' \
                  'stopped. *IMPORTANT* if the deployment has monitoring ' \
                  'with auto-healing configured, you need to disable it first'
-IGNORE_PLUGIN_FAILURE = 'if set, plugin installation errors during snapshot ' \
+IGNORE_PLUGIN_FAILURE = 'If set, plugin installation errors during snapshot ' \
                         'restore will only be logged as warnings, and will ' \
                         'not fail the snapshot restore workflow'
+QUEUE_EXECUTIONS = 'If set, blocked executions will be queued and ' \
+                   'automatically run when the blocking executions are' \
+                   ' finished'
