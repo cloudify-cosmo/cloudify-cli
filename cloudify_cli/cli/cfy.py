@@ -978,11 +978,12 @@ class Options(object):
             help=helptexts.STOP_OLD_AGENT
         )
 
-        self.ignore_plugin_installation_failure = click.option(
-            '--ignore-plugin-installation-failure',
+        self.ignore_plugin_failure = click.option(
+            '-i',
+            '--ignore-plugin-failure',
             is_flag=True,
             default=False,
-            help=helptexts.IGNORE_PLUGIN_INSTALLATION_FAILURE
+            help=helptexts.IGNORE_PLUGIN_FAILURE
         )
 
     def common_options(self, f):
