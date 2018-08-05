@@ -89,6 +89,7 @@ def restore(snapshot_id,
 @cfy.options.exclude_logs
 @cfy.options.exclude_events
 @cfy.options.common_options
+@cfy.options.queue
 @cfy.pass_client()
 @cfy.pass_logger
 def create(snapshot_id,
@@ -96,6 +97,7 @@ def create(snapshot_id,
            exclude_credentials,
            exclude_logs,
            exclude_events,
+           queue,
            logger,
            client):
     """Create a snapshot on the manager
@@ -112,7 +114,8 @@ def create(snapshot_id,
                                         include_metrics,
                                         not exclude_credentials,
                                         not exclude_logs,
-                                        not exclude_events)
+                                        not exclude_events,
+                                        queue)
     logger.info("Started workflow execution. The execution's id is {0}".format(
         execution.id))
 
