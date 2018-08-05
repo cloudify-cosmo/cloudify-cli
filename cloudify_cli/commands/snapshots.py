@@ -39,7 +39,7 @@ def snapshots():
 @cfy.options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
 @cfy.options.restore_certificates
 @cfy.options.no_reboot
-@cfy.options.ignore_plugin_installation_failure
+@cfy.options.ignore_plugin_failure
 @cfy.options.common_options
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
@@ -48,7 +48,7 @@ def restore(snapshot_id,
             force,
             restore_certificates,
             no_reboot,
-            ignore_plugin_installation_failure,
+            ignore_plugin_failure,
             logger,
             client):
     """Restore a manager to its previous state
@@ -63,7 +63,7 @@ def restore(snapshot_id,
         force,
         restore_certificates,
         no_reboot,
-        ignore_plugin_installation_failure
+        ignore_plugin_failure
     )
     logger.info("Started workflow execution. The execution's id is {0}".format(
         execution.id))
