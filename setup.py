@@ -44,7 +44,7 @@ setup(
         'pyyaml==3.10',
         'paramiko==1.18.3',
         'fabric==1.13.1',
-        'jinja2==2.7.2',
+        'jinja2==2.10',
         'retrying==1.3.3',
         'colorama==0.3.3',
         'requests>=2.7.0,<3.0.0',
