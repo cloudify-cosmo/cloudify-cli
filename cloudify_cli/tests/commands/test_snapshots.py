@@ -40,7 +40,7 @@ class SnapshotsTest(CliCommandTest):
         self.invoke('cfy snapshots restore a-snapshot-id'
                     '--without-deployments-envs')
         self.invoke('cfy snapshots restore a-snapshot-id'
-                    '--ignore-plugin-installation-failure')
+                    '--ignore-plugin-failure')
 
     def test_snapshots_download(self):
         self.client.snapshots.download = MagicMock(return_value='some_file')
