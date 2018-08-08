@@ -286,3 +286,6 @@ STOP_OLD_AGENT = 'If set, after installing the new agent the old agent ' \
 IGNORE_PLUGIN_FAILURE = 'if set, plugin installation errors during snapshot ' \
                         'restore will only be logged as warnings, and will ' \
                         'not fail the snapshot restore workflow'
+AGENT_NODE_INSTANCE_ID = 'The node instance id to be used for filtering'
+AGENT_NODE_ID = 'The node id to filter to be used for filtering'
+AGENT_INSTALL_METHOD = 'Only show agents installed with this install_method'
