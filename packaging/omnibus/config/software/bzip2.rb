@@ -24,7 +24,7 @@ dependency "zlib"
 dependency "openssl"
 
 source url: "http://www.bzip.org/#{version}/#{name}-#{version}.tar.gz",
-       md5: "00b516f4704d4a7cb50a1d97e6e8e15b"
+       md5: "bf0e786f0f6b34030568fddc063d658d"
 
 relative_path "#{name}-#{version}"
 
