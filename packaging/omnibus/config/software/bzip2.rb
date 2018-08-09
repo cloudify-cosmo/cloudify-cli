@@ -23,8 +23,8 @@ default_version "1.0.6"
 dependency "zlib"
 dependency "openssl"
 
-source url: "http://www.bzip.org/#{version}/#{name}-#{version}.tar.gz",
-       md5: "b22588371218150aff7d34b33bce722a"
+source url: "http://www.bzip.org/#{version}/#{name}-#{version}.tar.gz"
+       #md5: "b22588371218150aff7d34b33bce722a"
 
 relative_path "#{name}-#{version}"
 
