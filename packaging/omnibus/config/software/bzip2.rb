@@ -23,7 +23,8 @@ default_version "1.0.6"
 dependency "zlib"
 dependency "openssl"
 
-source url: "http://www.bzip.org/#{version}/#{name}-#{version}.tar.gz",
+#source url: "http://www.bzip.org/#{version}/#{name}-#{version}.tar.gz",
+source url: "https://github.com/past-due/bzip2-mirror/releases/download/v1.0.6/bzip2-1.0.6.tar.gz",
        md5: "00b516f4704d4a7cb50a1d97e6e8e15b"
 
 relative_path "#{name}-#{version}"
