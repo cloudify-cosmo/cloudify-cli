@@ -69,7 +69,7 @@ function prepare_linux () {
         source /home/admin/.rvm/scripts/rvm
     fi
     rvm install 2.4 && rvm use 2.4
-    gem install bundler -v '=1.8.4' --no-ri --no-rdoc
+    gem install bundler -v '=1.13.7' --no-ri --no-rdoc
     gem install omnibus --no-ri --no-rdoc
 }
 
