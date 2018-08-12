@@ -29,13 +29,13 @@ function prepare_osx () {
         source ~/.bash_profile
     fi
 
-    if [[ $(rbenv version | cut -d' ' -f1) != '2.2.1' ]] ; then
-        echo "Installing rbenv version 2.2.1"
-        rbenv install 2.2.1 -s
+    if [[ $(rbenv version | cut -d' ' -f1) != '2.4' ]] ; then
+        echo "Installing rbenv version 2.4"
+        rbenv install 2.4 -s
     else
-        echo "rbenv 2.2.1 is installed"
+        echo "rbenv 2.4 is installed"
     fi
-    rbenv global 2.2.1
+    rbenv global 2.4
     if [[ $(gem list |grep bundler) != 'bundler (1.8.4)' ]] ; then
         gem install bundler -v '=1.8.4' --no-ri --no-rdoc
     fi
