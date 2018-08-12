@@ -29,15 +29,15 @@ function prepare_osx () {
         source ~/.bash_profile
     fi
 
-    if [[ $(rbenv version | cut -d' ' -f1) != '2.2.1' ]] ; then
-        echo "Installing rbenv version 2.2.1"
-        rbenv install 2.2.1 -s
+    if [[ $(rbenv version | cut -d' ' -f1) != '2.4.4' ]] ; then
+        echo "Installing rbenv version 2.4.4"
+        rbenv install 2.4.4 -s
     else
-        echo "rbenv 2.2.1 is installed"
+        echo "rbenv 2.4.4 is installed"
     fi
-    rbenv global 2.2.1
+    rbenv global 2.4.4
     if [[ $(gem list |grep bundler) != 'bundler (1.8.4)' ]] ; then
-        gem install bundler -v '=1.8.4' --no-ri --no-rdoc
+        gem install bundler -v '=1.16.0' --no-ri --no-rdoc
     fi
     which -s omnibus
     if [[ $? != 0 ]] ; then
@@ -68,8 +68,8 @@ function prepare_linux () {
     else
         source /home/admin/.rvm/scripts/rvm
     fi
-    rvm install 2.2.1 && rvm use 2.2.1
-    gem install bundler -v '=1.8.4' --no-ri --no-rdoc
+    rvm install 2.4.4 && rvm use 2.4.4
+    gem install bundler -v '=1.16.0' --no-ri --no-rdoc
     gem install omnibus --no-ri --no-rdoc
 }
 
@@ -125,6 +125,7 @@ do
     cp -r omnibus-software/config/patches/$omnibus_softwate config/patches/
 done
 
+[ ! -d config/templates/ ] && mkdir config/templates/ 
 cp -r omnibus-software/config/templates/* config/templates/
 curl https://raw.githubusercontent.com/chef/omnibus-software/master/config/software/preparation.rb -o config/software/preparation.rb
 curl https://raw.githubusercontent.com/systemizer/omnibus-software/master/config/software/pip.rb -o config/software/pip.rb
