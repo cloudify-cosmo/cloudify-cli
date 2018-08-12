@@ -29,7 +29,7 @@ function prepare_osx () {
         source ~/.bash_profile
     fi
 
-    if [[ $(rbenv version | cut -d' ' -f1) != '2.2.1' ]] ; then
+    if [[ $(rbenv version | cut -d' ' -f1) != '2.2.2' ]] ; then
         echo "Installing rbenv version 2.2.1"
         rbenv install 2.2.1 -s
     else
