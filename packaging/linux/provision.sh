@@ -29,7 +29,7 @@ function prepare_osx () {
         source ~/.bash_profile
     fi
 
-    if [[ $(rbenv version | cut -d' ' -f1) != '2.2.2' ]] ; then
+    if [[ $(rbenv version | cut -d' ' -f1) != '2.2.1' ]] ; then
         echo "Installing rbenv version 2.2.1"
         rbenv install 2.2.1 -s
     else
@@ -68,7 +68,7 @@ function prepare_linux () {
     else
         source /home/admin/.rvm/scripts/rvm
     fi
-    rvm install 2.2.1 && rvm use 2.2.1
+    rvm install 2.2.2 && rvm use 2.2.2
     gem install bundler -v '=1.8.4' --no-ri --no-rdoc
     gem install omnibus --no-ri --no-rdoc
 }
