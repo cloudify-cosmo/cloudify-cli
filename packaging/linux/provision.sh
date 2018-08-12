@@ -68,8 +68,8 @@ function prepare_linux () {
     else
         source /home/admin/.rvm/scripts/rvm
     fi
-    rvm install 2.4 && rvm use 2.4
-    gem install bundler -v '=1.13.7' --no-ri --no-rdoc
+    rvm install 2.4.4 && rvm use 2.4.4
+    gem install bundler -v '=1.16.0' --no-ri --no-rdoc
     gem install omnibus --no-ri --no-rdoc
 }
 
