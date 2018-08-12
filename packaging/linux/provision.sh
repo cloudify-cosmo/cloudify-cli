@@ -125,6 +125,7 @@ do
     cp -r omnibus-software/config/patches/$omnibus_softwate config/patches/
 done
 
+[ ! -d config/templates/ ] && mkdir config/templates/ 
 cp -r omnibus-software/config/templates/* config/templates/
 curl https://raw.githubusercontent.com/chef/omnibus-software/master/config/software/preparation.rb -o config/software/preparation.rb
 curl https://raw.githubusercontent.com/systemizer/omnibus-software/master/config/software/pip.rb -o config/software/pip.rb
