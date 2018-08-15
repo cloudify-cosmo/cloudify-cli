@@ -116,8 +116,12 @@ def create(snapshot_id,
                                         not exclude_logs,
                                         not exclude_events,
                                         queue)
-    logger.info("Started workflow execution. The execution's id is {0}".format(
-        execution.id))
+    log_msg = "Started workflow execution. The execution's id is {0}".format(
+        execution.id)
+    if queue:
+        log_msg = '`queue` flag was passed, snapshot creation will start when'\
+                  ' possible. Execution id: {0}'.format(execution.id)
+    logger.info(log_msg)
 
 
 @snapshots.command(name='delete',

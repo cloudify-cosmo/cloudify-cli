@@ -39,9 +39,9 @@ FULL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display',
                           'error', 'visibility', 'tenant_name',
                           'created_by', 'started_at']
 MINIMAL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display',
-                             'deployment_id', 'created_at', 'error',
-                             'visibility', 'tenant_name', 'created_by',
-                             'started_at']
+                             'deployment_id', 'created_at', 'started_at',
+                             'visibility', 'tenant_name',
+                             'created_by', 'error']
 EXECUTION_TABLE_LABELS = {'status_display': 'status'}
 
 
@@ -192,11 +192,14 @@ def manager_start(workflow_id,
     events_message = "* Run 'cfy events list -e {0}' to retrieve the " \
                      "execution's events/logs"
     original_timeout = timeout
-    logger.info('Executing workflow {0} on deployment {1} '
-                '[timeout={2} seconds]'.format(
-                    workflow_id,
-                    deployment_id,
-                    timeout))
+    log_msg = 'Executing workflow `{0}` on deployment `{1}` [timeout={2}' \
+              ' seconds]'.format(workflow_id, deployment_id, timeout)
+    if queue:
+        log_msg = '`queue` flag was passed, execution workflow `{0}` on' \
+                  ' deployment `{1}` will start when' \
+                  ' possible.'.format(workflow_id, deployment_id)
+
+    logger.info(log_msg)
     try:
         try:
             execution = client.executions.start(
@@ -238,7 +241,8 @@ def manager_start(workflow_id,
                 allow_custom_parameters=allow_custom_parameters,
                 force=force,
                 queue=queue)
-
+        if queue:  # We don't need to wait for execution
+            return
         execution = wait_for_execution(client,
                                        execution,
                                        events_handler=events_logger,
