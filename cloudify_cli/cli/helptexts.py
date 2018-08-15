@@ -287,5 +287,4 @@ IGNORE_PLUGIN_FAILURE = 'If set, plugin installation errors during snapshot ' \
                         'restore will only be logged as warnings, and will ' \
                         'not fail the snapshot restore workflow'
 QUEUE_EXECUTIONS = 'If set, blocked executions will be queued and ' \
-                   'automatically run when the blocking executions are' \
-                   ' finished'
+                   'automatically run when possible'
