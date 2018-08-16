@@ -192,14 +192,10 @@ def manager_start(workflow_id,
     events_message = "* Run 'cfy events list -e {0}' to retrieve the " \
                      "execution's events/logs"
     original_timeout = timeout
-    log_msg = 'Executing workflow `{0}` on deployment `{1}` [timeout={2}' \
-              ' seconds]'.format(workflow_id, deployment_id, timeout)
-    if queue:
-        log_msg = '`queue` flag was passed, execution workflow `{0}` on' \
-                  ' deployment `{1}` will start when' \
-                  ' possible.'.format(workflow_id, deployment_id)
-
-    logger.info(log_msg)
+    logger.info('Executing workflow `{0}` on deployment `{1}`'
+                ' [timeout={2} seconds]'.format(workflow_id,
+                                                deployment_id,
+                                                timeout))
     try:
         try:
             execution = client.executions.start(
@@ -241,7 +237,10 @@ def manager_start(workflow_id,
                 allow_custom_parameters=allow_custom_parameters,
                 force=force,
                 queue=queue)
-        if queue:  # We don't need to wait for execution
+
+        if execution.status == 'queued':  # We don't need to wait for execution
+            logger.info('Execution is being queued. It will automatically'
+                        ' start when possible.')
             return
         execution = wait_for_execution(client,
                                        execution,

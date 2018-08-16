@@ -89,7 +89,7 @@ def restore(snapshot_id,
 @cfy.options.exclude_logs
 @cfy.options.exclude_events
 @cfy.options.common_options
-@cfy.options.queue
+@cfy.options.queue_snapshot
 @cfy.pass_client()
 @cfy.pass_logger
 def create(snapshot_id,
@@ -116,12 +116,13 @@ def create(snapshot_id,
                                         not exclude_logs,
                                         not exclude_events,
                                         queue)
-    log_msg = "Started workflow execution. The execution's id is {0}".format(
-        execution.id)
-    if queue:
-        log_msg = '`queue` flag was passed, snapshot creation will start when'\
-                  ' possible. Execution id: {0}'.format(execution.id)
-    logger.info(log_msg)
+    started_log_msg = "Started workflow execution. The execution's id is" \
+                      " {0}".format(execution.id)
+    queued_log_msg = '`queue` flag was passed, snapshot creation will start' \
+                     ' automatically when possible. Execution id:' \
+                     ' {0}'.format(execution.id)
+    queued = True if execution.status == 'queued' else False
+    logger.info(queued_log_msg) if queued else logger.info(started_log_msg)
 
 
 @snapshots.command(name='delete',

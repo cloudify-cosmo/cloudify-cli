@@ -286,5 +286,7 @@ STOP_OLD_AGENT = 'If set, after installing the new agent the old agent ' \
 IGNORE_PLUGIN_FAILURE = 'If set, plugin installation errors during snapshot ' \
                         'restore will only be logged as warnings, and will ' \
                         'not fail the snapshot restore workflow'
+QUEUE_SNAPSHOTS = 'If set, blocked snapshot-creation-workflows will be ' \
+                   'queued and automatically run when possible'
 QUEUE_EXECUTIONS = 'If set, blocked executions will be queued and ' \
                    'automatically run when possible'

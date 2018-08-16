@@ -990,7 +990,16 @@ class Options(object):
             '--queue',
             is_flag=True,
             default=False,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['dry_run', 'force'],
             help=helptexts.QUEUE_EXECUTIONS
+        )
+
+        self.queue_snapshot = click.option(
+            '--queue',
+            is_flag=True,
+            default=False,
+            help=helptexts.QUEUE_SNAPSHOTS
         )
 
     def common_options(self, f):
