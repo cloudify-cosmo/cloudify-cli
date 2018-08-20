@@ -986,6 +986,22 @@ class Options(object):
             help=helptexts.IGNORE_PLUGIN_FAILURE
         )
 
+        self.queue = click.option(
+            '--queue',
+            is_flag=True,
+            default=False,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['dry_run', 'force'],
+            help=helptexts.QUEUE_EXECUTIONS
+        )
+
+        self.queue_snapshot = click.option(
+            '--queue',
+            is_flag=True,
+            default=False,
+            help=helptexts.QUEUE_SNAPSHOTS
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
