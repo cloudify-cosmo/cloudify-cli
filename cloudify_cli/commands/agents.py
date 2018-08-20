@@ -27,8 +27,12 @@ from ..exceptions import SuppressedCloudifyCliError
 from ..execution_events_fetcher import wait_for_execution, \
     WAIT_FOR_EXECUTION_SLEEP_INTERVAL
 from .. import env
+from ..table import print_data
+
 
 _NODE_INSTANCE_STATE_STARTED = 'started'
+AGENT_COLUMNS = ['id', 'ip', 'deployment', 'node', 'system', 'version',
+                 'install_method']
 
 
 @cfy.group(name='agents')
@@ -57,9 +61,21 @@ def _deployment_exists(client, deployment_id):
     return True
 
 
+@agents.command(name='list',
+                short_help='List installed agents [manager only]')
+@cfy.options.common_options
+@cfy.options.agent_filters
+@cfy.pass_logger
+@cfy.pass_client()
+def list(agent_filters, client, logger):
+    agents = client.agents.list(**agent_filters)
+    logger.info('Listing agents...')
+    print_data(AGENT_COLUMNS, agents, 'Agents:')
+
+
 @agents.command(name='install',
                 short_help='Install deployment agents [manager only]')
-@cfy.argument('deployment-id', required=False)
+@cfy.argument('deployment', required=False)
 @cfy.options.include_logs
 @cfy.options.common_options
 @cfy.options.tenant_name_for_list(
@@ -68,9 +84,11 @@ def _deployment_exists(client, deployment_id):
 @cfy.options.stop_old_agent
 @cfy.options.manager_ip
 @cfy.options.manager_certificate
+@cfy.options.agent_filters
 @cfy.pass_logger
 @cfy.pass_client()
-def install(deployment_id,
+def install(deployment,
+            agent_filters,
             include_logs,
             tenant_name,
             logger,
@@ -81,12 +99,16 @@ def install(deployment_id,
             manager_certificate):
     """Install agents on the hosts of existing deployments
 
-    `DEPLOYMENT_ID` - The ID of the deployment you would like to
+    `DEPLOYMENT` - The ID of the deployment you would like to
     install agents for.
 
     See Cloudify's documentation at http://docs.getcloudify.org for more
     information.
     """
+    if deployment:
+        logger.warning('Passing the deployment ID as an argument is '
+                       'deprecated, use --deployment-id instead')
+        agent_filters['deployment_id'] = deployment
     if manager_certificate:
         manager_certificate = _validate_certificate_file(manager_certificate)
     params = {}
@@ -98,12 +120,12 @@ def install(deployment_id,
         params['manager_ip'] = manager_ip
         params['manager_certificate'] = manager_certificate
     get_deployments_and_run_workers(
-        deployment_id, include_logs, tenant_name,
+        agent_filters, include_logs, tenant_name,
         logger, client, all_tenants, 'install_new_agents', params)
 
 
 def get_deployments_and_run_workers(
-        deployment_id,
+        agent_filters,
         include_logs,
         tenant_name,
         logger,
@@ -113,6 +135,13 @@ def get_deployments_and_run_workers(
         parameters=None):
 
     # install agents across all tenants
+    if parameters is None:
+        parameters = {}
+    deployment_id = agent_filters.get('deployment_id')
+    if agent_filters.get('node_ids'):
+        parameters['node_ids'] = agent_filters['node_ids']
+    if agent_filters.get('node_instance_ids'):
+        parameters['node_instance_ids'] = agent_filters['node_instance_ids']
     if all_tenants:
         no_deployments_found = True
         tenants_list = [tenant.name for tenant in client.tenants.list()]
@@ -267,15 +296,17 @@ def run_worker(
                 short_help='Validates the connection between the'
                            ' Cloudify Manager and the live Cloudify Agents'
                            ' (installed on remote hosts). [manager only]')
-@cfy.argument('deployment-id', required=False)
+@cfy.argument('deployment', required=False)
 @cfy.options.include_logs
 @cfy.options.common_options
+@cfy.options.agent_filters
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='relevant deployment(s)')
 @cfy.options.all_tenants
 @cfy.pass_logger
 @cfy.pass_client()
-def validate(deployment_id,
+def validate(deployment,
+             agent_filters,
              include_logs,
              tenant_name,
              logger,
@@ -288,8 +319,12 @@ def validate(deployment_id,
         validate agents for.
 
         """
+    if deployment:
+        logger.warning('Passing the deployment ID as an argument is '
+                       'deprecated, use --deployment-id instead')
+        agent_filters['deployment_id'] = deployment
     get_deployments_and_run_workers(
-        deployment_id, include_logs, tenant_name,
+        agent_filters, include_logs, tenant_name,
         logger, client, all_tenants, 'validate_agents')
 
 

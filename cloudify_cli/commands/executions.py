@@ -41,7 +41,7 @@ FULL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display',
 MINIMAL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display',
                              'deployment_id', 'created_at', 'started_at',
                              'visibility', 'tenant_name',
-                             'created_by', 'error']
+                             'created_by']
 EXECUTION_TABLE_LABELS = {'status_display': 'status'}
 
 

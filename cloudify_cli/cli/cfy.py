@@ -1012,6 +1012,41 @@ class Options(object):
             f = arg(f)
         return f
 
+    def agent_filters(self, f):
+        """Set of filter arguments for commands working with a list of agents
+
+        Applies deployment id, node id and node instance id filters.
+        """
+        node_instance_id = click.option('--node-instance-id', multiple=True,
+                                        help=helptexts.AGENT_NODE_INSTANCE_ID)
+        node_id = click.option('--node-id', multiple=True,
+                               help=helptexts.AGENT_NODE_ID)
+        install_method = click.option('--install-method', multiple=True,
+                                      help=helptexts.AGENT_INSTALL_METHOD)
+
+        # we add separate --node-instance-id, --node-id and --deployment-id
+        # arguments, but only expose a agents_filter = {'node_id': ..} dict
+        # to the decorated function
+        def _filters_deco(f):
+            @wraps(f)
+            def _inner(*args, **kwargs):
+                filters = {}
+                for arg_name, filter_name in [
+                        ('node_id', 'node_ids'),
+                        ('node_instance_id', 'node_instance_ids'),
+                        ('deployment_id', 'deployment_id'),
+                        ('install_method', 'install_methods')]:
+                    filters[filter_name] = \
+                        kwargs.pop(arg_name, None)
+                kwargs['agent_filters'] = filters
+                return f(*args, **kwargs)
+            return _inner
+
+        for arg in [install_method, node_instance_id, node_id,
+                    self.deployment_id(), _filters_deco]:
+            f = arg(f)
+        return f
+
     @staticmethod
     def secret_file():
         return click.option(

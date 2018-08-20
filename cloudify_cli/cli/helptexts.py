@@ -290,3 +290,6 @@ QUEUE_SNAPSHOTS = 'If set, blocked snapshot-creation-workflows will be ' \
                    'queued and automatically run when possible'
 QUEUE_EXECUTIONS = 'If set, blocked executions will be queued and ' \
                    'automatically run when possible'
+AGENT_NODE_INSTANCE_ID = 'The node instance id to be used for filtering'
+AGENT_NODE_ID = 'The node id to filter to be used for filtering'
+AGENT_INSTALL_METHOD = 'Only show agents installed with this install_method'
