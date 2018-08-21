@@ -1012,17 +1012,32 @@ class Options(object):
             f = arg(f)
         return f
 
+    def parse_comma_separated(self, ctx, param, value):
+        """Callback for parsing multiple comma-separated arguments.
+
+        This is for use with `--opt a --opt b,c` -> ['a', 'b', 'c']
+        """
+        if not value:
+            return []
+        return sum((part.split(',') for part in value), [])
+
     def agent_filters(self, f):
         """Set of filter arguments for commands working with a list of agents
 
         Applies deployment id, node id and node instance id filters.
         """
         node_instance_id = click.option('--node-instance-id', multiple=True,
-                                        help=helptexts.AGENT_NODE_INSTANCE_ID)
+                                        help=helptexts.AGENT_NODE_INSTANCE_ID,
+                                        callback=self.parse_comma_separated)
         node_id = click.option('--node-id', multiple=True,
-                               help=helptexts.AGENT_NODE_ID)
+                               help=helptexts.AGENT_NODE_ID,
+                               callback=self.parse_comma_separated)
         install_method = click.option('--install-method', multiple=True,
-                                      help=helptexts.AGENT_INSTALL_METHOD)
+                                      help=helptexts.AGENT_INSTALL_METHOD,
+                                      callback=self.parse_comma_separated)
+        deployment_id = click.option('--deployment-id', multiple=True,
+                                     help=helptexts.AGENT_DEPLOYMENT_ID,
+                                     callback=self.parse_comma_separated)
 
         # we add separate --node-instance-id, --node-id and --deployment-id
         # arguments, but only expose a agents_filter = {'node_id': ..} dict
@@ -1039,11 +1054,12 @@ class Options(object):
                     filters[filter_name] = \
                         kwargs.pop(arg_name, None)
                 kwargs['agent_filters'] = filters
+                print kwargs
                 return f(*args, **kwargs)
             return _inner
 
         for arg in [install_method, node_instance_id, node_id,
-                    self.deployment_id(), _filters_deco]:
+                    deployment_id, _filters_deco]:
             f = arg(f)
         return f
 
