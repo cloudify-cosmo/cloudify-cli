@@ -172,6 +172,7 @@ REST_PORT = "The REST server's port"
 SSL_REST = "Connect to REST server using SSL"
 REST_CERT = "The REST server's external certificate file location (implies " \
     "--ssl)"
+KERBEROS_ENV = "Whether or not to use kerberos while connecting to the manager"
 
 EXPORT_SSH_KEYS = 'Include ssh key files in archive'
 IMPORT_SSH_KEYS = 'WARNING: Import exported keys to their original locations'

@@ -45,6 +45,7 @@ default_manager_params = dict(
     rest_port=80,
     rest_protocol='http',
     rest_certificate=None,
+    kerberos_env=False,
     manager_username='admin',
     manager_password='admin',
     manager_tenant=constants.DEFAULT_TENANT_NAME,

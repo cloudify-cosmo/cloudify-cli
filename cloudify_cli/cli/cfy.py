@@ -692,6 +692,19 @@ class Options(object):
             default=False,
             help=helptexts.REST_CERT)
 
+        self.kerberos_env = click.option(
+            '--kerberos-env',
+            required=False,
+            help=helptexts.KERBEROS_ENV
+        )
+
+        self.kerberos_env_flag = click.option(
+            '--kerberos-env',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.KERBEROS_ENV)
+
         self.ssl_state = click.option(
             '--ssl',
             required=False,
