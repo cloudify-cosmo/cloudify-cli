@@ -56,6 +56,7 @@ def enable(logger, client):
                 ssh_port=None,
                 ssl=True,
                 rest_certificate=None,
+                kerberos_env=None,
                 skip_credentials_validation=True,
                 logger=logger)
     logger.info("Note that each user should now use SSL to communicate with "
@@ -81,6 +82,7 @@ def disable(logger, client):
                 ssh_port=None,
                 ssl=False,
                 rest_certificate=None,
+                kerberos_env=None,
                 skip_credentials_validation=True,
                 logger=logger)
     logger.info("Note that each user should now communicate with the manager "

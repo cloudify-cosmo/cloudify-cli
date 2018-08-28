@@ -17,24 +17,26 @@
 import os
 import shutil
 import tarfile
+
 from contextlib import closing
 
-from cloudify_rest_client.exceptions import CloudifyClientError, \
-    UserUnauthorizedError
+from cloudify_rest_client.exceptions import (CloudifyClientError,
+                                             UserUnauthorizedError)
 
 from . import init
 from .. import env
-from ..table import print_data, print_single
 from .. import utils
 from ..cli import cfy
 from .. import constants
 from ..cli import helptexts
 from ..exceptions import CloudifyCliError
+from ..table import print_data, print_single
+
 
 EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
 EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
 PROFILE_COLUMNS = ['name', 'manager_ip', 'manager_username', 'manager_tenant',
-                   'ssh_user', 'ssh_key_path', 'ssh_port',
+                   'ssh_user', 'ssh_key_path', 'ssh_port', 'kerberos_env',
                    'rest_port', 'rest_protocol', 'rest_certificate']
 
 
@@ -112,6 +114,7 @@ def list(logger):
 @cfy.options.rest_port
 @cfy.options.ssl_rest
 @cfy.options.rest_certificate
+@cfy.options.kerberos_env
 @cfy.options.skip_credentials_validation
 @cfy.options.common_options
 @cfy.pass_logger
@@ -177,16 +180,19 @@ def _create_profile(
         rest_port,
         ssl,
         rest_certificate,
+        kerberos_env,
         skip_credentials_validation,
         logger):
     # If REST certificate is provided, then automatically
     # assume SSL.
     if rest_certificate:
         ssl = True
-
     rest_protocol, default_rest_port = _get_ssl_protocol_and_port(ssl)
     if not rest_port:
         rest_port = default_rest_port
+
+    # kerberos_env default is `False` and not `None`
+    kerberos_env = _get_kerberos_indication(kerberos_env) or False
 
     logger.info('Attempting to connect to {0} through port {1}, using {2} '
                 '(SSL mode: {3})...'.format(manager_ip, rest_port,
@@ -203,6 +209,7 @@ def _create_profile(
         manager_username,
         manager_password,
         manager_tenant,
+        kerberos_env,
         skip_credentials_validation
     )
 
@@ -224,7 +231,8 @@ def _create_profile(
         manager_tenant,
         rest_port,
         rest_protocol,
-        rest_certificate
+        rest_certificate,
+        kerberos_env
     )
 
 
@@ -255,6 +263,7 @@ def set_profile(profile_name,
                 ssh_port,
                 ssl,
                 rest_certificate,
+                kerberos_env,
                 skip_credentials_validation,
                 logger):
     """Set the profile name, manager username and/or password and/or tenant
@@ -262,19 +271,24 @@ def set_profile(profile_name,
     """
     if not any([profile_name, ssh_user, ssh_key, ssh_port, manager_username,
                 manager_password, manager_tenant, ssl is not None,
-                rest_certificate]):
+                rest_certificate, kerberos_env is not None]):
         raise CloudifyCliError(
             "You must supply at least one of the following:  "
             "profile name, username, password, tenant, "
-            "ssl, rest certificate, ssh user, ssh key, ssh port")
+            "ssl, rest certificate, ssh user, ssh key, ssh port, kerberos env")
     username = manager_username or env.get_username()
     password = manager_password or env.get_password()
     tenant = manager_tenant or env.get_tenant_name()
     protocol, port = _get_ssl_protocol_and_port(ssl)
 
     if not skip_credentials_validation:
-        _validate_credentials(username, password, tenant, rest_certificate,
-                              protocol, port)
+        _validate_credentials(username,
+                              password,
+                              tenant,
+                              rest_certificate,
+                              protocol,
+                              port,
+                              kerberos_env)
     old_name = None
     if profile_name:
         if profile_name == 'local':
@@ -308,6 +322,9 @@ def set_profile(profile_name,
     if ssh_port:
         logger.info('Setting ssh port to `{0}`'.format(ssh_port))
         env.profile.ssh_port = ssh_port
+    if kerberos_env is not None:
+        logger.info('Setting kerberos_env to `{0}`'.format(kerberos_env))
+        env.profile.kerberos_env = kerberos_env
 
     env.profile.save()
     if old_name is not None:
@@ -357,6 +374,7 @@ def _set_profile_ssl(ssl, logger):
 @cfy.options.ssh_port
 @cfy.options.ssl_state
 @cfy.options.rest_certificate
+@cfy.options.kerberos_env
 @cfy.options.skip_credentials_validation
 @cfy.options.common_options
 @cfy.pass_logger
@@ -369,6 +387,7 @@ def set_cmd(profile_name,
             ssh_port,
             ssl,
             rest_certificate,
+            kerberos_env,
             skip_credentials_validation,
             logger):
     return set_profile(profile_name,
@@ -380,6 +399,7 @@ def set_cmd(profile_name,
                        ssh_port,
                        _get_ssl_indication(ssl),
                        rest_certificate,
+                       _get_kerberos_indication(kerberos_env),
                        skip_credentials_validation,
                        logger)
 
@@ -449,6 +469,7 @@ def set_cluster(cluster_node_name,
 @cfy.options.ssh_user_flag
 @cfy.options.ssh_key_flag
 @cfy.options.rest_certificate_flag
+@cfy.options.kerberos_env_flag
 @cfy.options.skip_credentials_validation
 @cfy.options.common_options
 @cfy.pass_logger
@@ -458,15 +479,16 @@ def unset(manager_username,
           ssh_user,
           ssh_key,
           rest_certificate,
+          kerberos_env,
           skip_credentials_validation,
           logger):
     """Clear the manager username and/or password and/or tenant
     from the *current* profile
     """
     if not any([manager_username, manager_password, manager_tenant,
-                rest_certificate, ssh_user, ssh_key]):
+                rest_certificate, ssh_user, ssh_key, kerberos_env]):
         raise CloudifyCliError("You must choose at least one of the following:"
-                               " username, password, tenant, "
+                               " username, password, tenant, kerberos_env, "
                                "rest certificate, ssh user, ssh key")
     if manager_username:
         username = os.environ.get(constants.CLOUDIFY_USERNAME_ENV)
@@ -487,8 +509,13 @@ def unset(manager_username,
         cert = None
 
     if not skip_credentials_validation:
-        _validate_credentials(username, password, tenant, cert,
-                              env.profile.rest_protocol, env.profile.rest_port)
+        _validate_credentials(username,
+                              password,
+                              tenant,
+                              cert,
+                              env.profile.rest_protocol,
+                              env.profile.rest_port,
+                              None)
 
     if manager_username:
         logger.info('Clearing manager username')
@@ -508,6 +535,9 @@ def unset(manager_username,
     if ssh_key:
         logger.info('Clearing ssh key')
         env.profile.ssh_key = None
+    if kerberos_env:
+        logger.info('Clearing kerberos_env')
+        env.profile.kerberos_env = None
     env.profile.save()
     logger.info('Settings saved successfully')
 
@@ -669,6 +699,7 @@ def _get_provider_context(profile_name,
                           manager_username,
                           manager_password,
                           manager_tenant,
+                          kerberos_env,
                           skip_credentials_validation):
     try:
         client = _get_client_and_assert_manager(
@@ -679,7 +710,8 @@ def _get_provider_context(profile_name,
             rest_certificate,
             manager_username,
             manager_password,
-            manager_tenant
+            manager_tenant,
+            kerberos_env
         )
     except CloudifyCliError:
         if skip_credentials_validation:
@@ -700,7 +732,8 @@ def _get_client_and_assert_manager(profile_name,
                                    rest_certificate=None,
                                    manager_username=None,
                                    manager_password=None,
-                                   manager_tenant=None):
+                                   manager_tenant=None,
+                                   kerberos_env=None):
     # Attempt to update the profile with an existing profile context, if one
     # is available. This is relevant in case the user didn't pass a username
     # or a password, and was expecting them to be taken from the old profile
@@ -714,7 +747,8 @@ def _get_client_and_assert_manager(profile_name,
         skip_version_check=True,
         username=manager_username,
         password=manager_password,
-        tenant_name=manager_tenant
+        tenant_name=manager_tenant,
+        kerberos_env=kerberos_env
     )
 
     _assert_manager_available(client, profile_name)
@@ -732,7 +766,8 @@ def _set_profile_context(profile_name,
                          manager_tenant,
                          rest_port,
                          rest_protocol,
-                         rest_certificate):
+                         rest_certificate,
+                         kerberos_env):
 
     profile = env.get_profile_context(profile_name)
     profile.provider_context = provider_context
@@ -755,6 +790,7 @@ def _set_profile_context(profile_name,
     profile.ssh_port = ssh_port or constants.REMOTE_EXECUTION_PORT
     profile.rest_protocol = rest_protocol
     profile.rest_certificate = rest_certificate
+    profile.kerberos_env = kerberos_env
 
     profile.save()
 
@@ -779,6 +815,12 @@ def _get_ssl_indication(ssl):
     return str(ssl).lower() == 'on'
 
 
+def _get_kerberos_indication(kerberos_env):
+    if kerberos_env is None:
+        return None
+    return str(kerberos_env).lower() == 'true'
+
+
 def _get_ssl_protocol_and_port(ssl):
     if ssl is not None:
         protocol, port = (constants.SECURED_REST_PROTOCOL,
@@ -791,7 +833,7 @@ def _get_ssl_protocol_and_port(ssl):
 
 @cfy.pass_logger
 def _validate_credentials(username, password, tenant, certificate, protocol,
-                          rest_port, logger):
+                          rest_port, kerberos_env, logger):
     logger.info('Validating credentials...')
     _get_client_and_assert_manager(
         profile_name=env.profile.profile_name,
@@ -800,6 +842,7 @@ def _validate_credentials(username, password, tenant, certificate, protocol,
         manager_tenant=tenant,
         rest_certificate=certificate,
         rest_protocol=protocol,
-        rest_port=rest_port
+        rest_port=rest_port,
+        kerberos_env=kerberos_env
     )
     logger.info('Credentials validated')

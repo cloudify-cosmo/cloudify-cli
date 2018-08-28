@@ -296,7 +296,7 @@ class ProfilesTest(CliCommandTest):
         self.invoke('profiles set -u 0 -p 0 -t 0 -c 0')
 
         validate_credentials_mock.assert_called_once_with('0', '0', '0', '0',
-                                                          None, None)
+                                                          None, None, None)
         self.assertEquals('0', env.profile.manager_username)
         self.assertEquals('0', env.profile.manager_password)
         self.assertEquals('0', env.profile.manager_tenant)

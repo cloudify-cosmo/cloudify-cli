@@ -217,7 +217,8 @@ def get_rest_client(client_profile=None,
                     tenant_name=None,
                     trust_all=False,
                     skip_version_check=False,
-                    cluster=None):
+                    cluster=None,
+                    kerberos_env=None):
     if client_profile is None:
         client_profile = profile
     rest_host = rest_host or client_profile.manager_ip
@@ -231,31 +232,33 @@ def get_rest_client(client_profile=None,
     headers = get_auth_header(username, password)
     headers[constants.CLOUDIFY_TENANT_HEADER] = tenant_name
     cluster = cluster or client_profile.cluster
+    kerberos_env = kerberos_env \
+        if kerberos_env is not None else client_profile.kerberos_env
 
-    if not is_kerberos_env():
+    if kerberos_env is False \
+            or (kerberos_env is None and not is_kerberos_env()):
         if not username:
             raise CloudifyCliError('Command failed: Missing Username')
         if not password:
             raise CloudifyCliError('Command failed: Missing password')
 
     if cluster:
-        client = CloudifyClusterClient(
-            host=rest_host,
-            port=rest_port,
-            protocol=rest_protocol,
-            headers=headers,
-            cert=rest_cert,
-            trust_all=trust_all,
-            profile=client_profile)
-
+        client = CloudifyClusterClient(host=rest_host,
+                                       port=rest_port,
+                                       protocol=rest_protocol,
+                                       headers=headers,
+                                       cert=rest_cert,
+                                       trust_all=trust_all,
+                                       profile=client_profile,
+                                       kerberos_env=kerberos_env)
     else:
-        client = CloudifyClient(
-            host=rest_host,
-            port=rest_port,
-            protocol=rest_protocol,
-            headers=headers,
-            cert=rest_cert,
-            trust_all=trust_all)
+        client = CloudifyClient(host=rest_host,
+                                port=rest_port,
+                                protocol=rest_protocol,
+                                headers=headers,
+                                cert=rest_cert,
+                                trust_all=trust_all,
+                                kerberos_env=kerberos_env)
 
     # TODO: Put back version check after we've solved the problem where
     # a new CLI is used with an older manager on `cfy upgrade`.
@@ -412,6 +415,7 @@ class ProfileContext(yaml.YAMLObject):
         self.rest_port = constants.DEFAULT_REST_PORT
         self.rest_protocol = constants.DEFAULT_REST_PROTOCOL
         self.rest_certificate = None
+        self.kerberos_env = False
         self._cluster = []
 
     def to_dict(self):
@@ -427,6 +431,7 @@ class ProfileContext(yaml.YAMLObject):
             rest_port=self.rest_port,
             rest_protocol=self.rest_protocol,
             rest_certificate=self.rest_certificate,
+            kerberos_env=self.kerberos_env,
             cluster=self.cluster
         )
 
