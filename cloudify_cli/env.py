@@ -150,19 +150,26 @@ def is_manager_active():
 
 
 def get_profile_context(profile_name=None, suppress_error=False):
+    # empty profile with nothing but default values
+    default = ProfileContext()
     profile_name = profile_name or get_active_profile()
     if profile_name == 'local':
         if suppress_error:
-            return ProfileContext()
+            return default
         raise CloudifyCliError('Local profile does not have context')
     try:
         path = get_context_path(profile_name)
         with open(path) as f:
-            return yaml.load(f.read())
+            context = yaml.load(f.read())
+        # fill the default with values from existing profile (the default is
+        # used as base because some of the attributes may not be in the
+        # existing profile file)
+        for key, value in context.__dict__.items():
+            setattr(default, key, value)
     except CloudifyCliError:
-        if suppress_error:
-            return ProfileContext()
-        raise
+        if not suppress_error:
+            raise
+    return default
 
 
 def is_initialized(profile_name=None):
