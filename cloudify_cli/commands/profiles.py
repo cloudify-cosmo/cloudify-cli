@@ -20,6 +20,7 @@ import tarfile
 
 from contextlib import closing
 
+from cloudify.utils import get_kerberos_indication
 from cloudify_rest_client.exceptions import (CloudifyClientError,
                                              UserUnauthorizedError)
 
@@ -192,7 +193,7 @@ def _create_profile(
         rest_port = default_rest_port
 
     # kerberos_env default is `False` and not `None`
-    kerberos_env = _get_kerberos_indication(kerberos_env) or False
+    kerberos_env = get_kerberos_indication(kerberos_env) or False
 
     logger.info('Attempting to connect to {0} through port {1}, using {2} '
                 '(SSL mode: {3})...'.format(manager_ip, rest_port,
@@ -399,7 +400,7 @@ def set_cmd(profile_name,
                        ssh_port,
                        _get_ssl_indication(ssl),
                        rest_certificate,
-                       _get_kerberos_indication(kerberos_env),
+                       get_kerberos_indication(kerberos_env),
                        skip_credentials_validation,
                        logger)
 
@@ -813,12 +814,6 @@ def _get_ssl_indication(ssl):
     if ssl is None:
         return None
     return str(ssl).lower() == 'on'
-
-
-def _get_kerberos_indication(kerberos_env):
-    if kerberos_env is None:
-        return None
-    return str(kerberos_env).lower() == 'true'
 
 
 def _get_ssl_protocol_and_port(ssl):
