@@ -88,16 +88,15 @@ def get(node_id, deployment_id, logger, client, tenant_name):
         # print node properties
         print_details(node.properties, 'Node properties:')
 
-        if get_global_verbosity() != NO_VERBOSE:
-            operations = []
-            for op_name, op in utils.decode_dict(node.operations).iteritems():
-                # operations is a tuple (operation_name, dict_of_attributes)
-                # we want to add the name to the dict
-                # and build a new array in order to print it in a table
-                op['name'] = op_name
-                operations += [op]
-            print_data(OPERATION_COLUMNS, operations, 'Operations:')
-            logger.info('')
+        operations = []
+        for op_name, op in utils.decode_dict(node.operations).iteritems():
+            # operations is a tuple (operation_name, dict_of_attributes)
+            # we want to add the name to the dict
+            # and build a new array in order to print it in a table
+            op['name'] = op_name
+            operations += [op]
+        print_data(OPERATION_COLUMNS, operations, 'Operations:')
+        logger.info('')
 
         # print node instances IDs
         logger.info('Node instance IDs:')
