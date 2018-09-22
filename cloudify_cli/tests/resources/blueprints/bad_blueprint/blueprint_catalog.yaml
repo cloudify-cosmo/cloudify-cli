@@ -1,0 +1,13 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+description: >
+    This plugin tries to use a blueprint from Cloudify catalog URL (`blueprint:...`)
+    with a local `cfy blueprints validate`
+
+imports:
+  - http://www.getcloudify.org/spec/cloudify/4.3.dev1/types.yaml
+  - blueprint:test
+
+node_templates:
+  x:
+    type: cloudify.nodes.Root

@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -92,7 +92,8 @@ def is_auto_generate_ids():
 
 def get_import_resolver():
     local_import_resolver = {
-        'implementation': 'cloudify_cli.config.config:ResolverWithPlugins'
+        'implementation':
+            'cloudify_cli.config.config:ResolverWithCatalogIdentification'
     }
     if env.is_initialized():
         config = CloudifyConfig()
@@ -109,22 +110,29 @@ def is_validate_definitions_version():
     return config.validate_definitions_version
 
 
-class ResolverWithPlugins(DefaultImportResolver):
-    PREFIX = 'plugin:'
+class ResolverWithCatalogIdentification(DefaultImportResolver):
+    """
+    All catalog resources (blueprints, plugin) can only be validated
+    in the manger not via the CLI, so this resolver only supports not
+    catalog-style urls.
+    """
+    CATALOG_RESOURCES_PREFIX = ('plugin:', 'blueprint:')
 
     def fetch_import(self, import_url):
-        if self._is_plugin_url(import_url):
+        if self._is_cloudify_repository_url(import_url):
             e = exceptions.CloudifyCliError(
-                'Error fetching plugin yaml: {0!r}\nBlueprints using plugin '
-                'repository imports can not be validated locally.'
+                'Error fetching remote resource yaml: {0!r}\nBlueprints using '
+                'Cloudify repository imports can not be validated locally.'
                 .format(import_url))
             e.possible_solutions = [
-                'Upload the blueprint to a Cloudify Manager',
-                'Use an explicit URL to the plugin YAML file instead of a '
-                'plugin repository `plugin:` import'
+                'Upload the blueprint/plugin to the Cloudify Manager',
+                'In case of a missing plugin, use an explicit URL '
+                'to the plugin YAML file instead of a plugin '
+                'repository `plugin:` import'
             ]
             raise e
-        return super(ResolverWithPlugins, self).fetch_import(import_url)
+        return super(ResolverWithCatalogIdentification, self)\
+            .fetch_import(import_url)
 
-    def _is_plugin_url(self, import_url):
-        return import_url.startswith(self.PREFIX)
+    def _is_cloudify_repository_url(self, import_url):
+        return import_url.startswith(self.CATALOG_RESOURCES_PREFIX)

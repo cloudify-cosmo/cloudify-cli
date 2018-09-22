@@ -209,11 +209,17 @@ class BlueprintsTest(CliCommandTest):
             .format(BLUEPRINTS_DIR),
             err_str_segment='Failed to validate blueprint')
 
-    def test_validate_plugin_repository(self):
+    def test_cannot_validate_plugin_repository(self):
         self.invoke(
             'cfy blueprints validate {0}/bad_blueprint/plugin_repo.yaml'
             .format(BLUEPRINTS_DIR),
-            err_str_segment='plugin repository')
+            err_str_segment='remote resource')
+
+    def test_cannot_validate_blueprints_catalog(self):
+        self.invoke(
+            'cfy blueprints validate {0}/bad_blueprint/blueprint_catalog.yaml'
+            .format(BLUEPRINTS_DIR),
+            err_str_segment='remote resource')
 
     def test_blueprint_inputs(self):
 
