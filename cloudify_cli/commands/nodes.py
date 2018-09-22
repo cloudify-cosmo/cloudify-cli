@@ -77,9 +77,7 @@ def get(node_id, deployment_id, logger, client, tenant_name):
 
     columns = NODE_COLUMNS
     if get_global_json_output():
-        columns += ['properties', 'instances']
-        if get_global_verbosity() != NO_VERBOSE:
-            columns += ['operations']
+        columns += ['properties', 'instances', 'operations']
         node['instances'] = [instance['id'] for instance in instances]
 
     print_single(columns, node, 'Node:', max_width=50)
