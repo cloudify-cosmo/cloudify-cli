@@ -18,6 +18,7 @@ import os
 import shlex
 import shutil
 import tempfile
+import traceback
 
 import click.testing as clicktest
 from testfixtures import log_capture
@@ -111,15 +112,21 @@ class ClickInvocationException(Exception):
         self.logs = logs
         self.exit_code = exit_code
         self.exception = exception
-        self.exc_info = exc_info
+        self.ex_type, self.ex_value, self.ex_tb = exc_info if exc_info else \
+            (None, None, None)
 
     def __str__(self):
         string = '\nMESSAGE: {0}\n'.format(self.message)
         string += 'STDOUT: {0}\n'.format(self.output)
         string += 'EXIT_CODE: {0}\n'.format(self.exit_code)
         string += 'LOGS: {0}\n'.format(self.logs)
-        string += 'EXCEPTION: {0}\n'.format(self.exception)
-        string += 'EXC_INFO: {0}\n'.format(self.exc_info)
+        if self.ex_type:
+            exc_info_str_list = traceback.format_exception(
+                self.ex_type, self.ex_value, self.ex_tb)
+        else:
+            exc_info_str_list = ["<None>"]
+
+        string += 'EXC_INFO:\n{0}\n'.format(''.join(exc_info_str_list))
         return string
 
 

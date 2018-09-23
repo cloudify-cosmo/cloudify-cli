@@ -20,8 +20,7 @@ from .. import utils
 from ..cli import cfy
 from ..table import print_data, print_single, print_details
 from ..exceptions import CloudifyCliError
-from ..logger import NO_VERBOSE
-from ..logger import get_global_verbosity, get_global_json_output
+from ..logger import get_global_json_output
 
 NODE_COLUMNS = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                 'number_of_instances', 'planned_number_of_instances',

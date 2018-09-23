@@ -170,6 +170,7 @@ def node_get_mock():
         'properties': {
             'port': '8080'
         },
+        'operations': {},
         'visibility': 'private',
         'created_by': 'admin',
         'tenant_name': DEFAULT_TENANT_NAME

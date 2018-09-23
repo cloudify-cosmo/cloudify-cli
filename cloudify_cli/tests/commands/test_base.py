@@ -97,8 +97,8 @@ class CliCommandTest(testtools.TestCase):
                 output=outcome.output,
                 logs=outcome.logs,
                 exit_code=outcome.exit_code,
-                exception=str(type(outcome.exception)),
-                exc_info=str(outcome.exception))
+                exception=outcome.exception,
+                exc_info=outcome.exc_info)
 
         if should_fail:
             self.assertIn(err_str_segment, str(outcome.exception))
