@@ -235,6 +235,7 @@ LDAP_SERVER = 'The LDAP server address to authenticate against'
 LDAP_USERNAME = 'The LDAP admin username to be set on the Cloudify manager'
 LDAP_PASSWORD = 'The LDAP admin password to be set on the Cloudify manager'
 LDAP_DOMAIN = 'The LDAP domain to be used by the server'
+LDAP_OU = 'The LDAP organization unit to be used by the server'
 LDAP_IS_ACTIVE_DIRECTORY = 'Specify whether the LDAP used for authentication' \
                            ' is Active-Directory.'
 LDAP_DN_EXTRA = 'Extra LDAP DN options.'

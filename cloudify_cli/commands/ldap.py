@@ -31,6 +31,7 @@ def ldap():
 @cfy.options.ldap_username()
 @cfy.options.ldap_password()
 @cfy.options.ldap_domain()
+@cfy.options.ldap_ou()
 @cfy.options.ldap_is_active_directory()
 @cfy.options.ldap_dn_extra()
 @cfy.pass_client()
@@ -39,6 +40,7 @@ def set(ldap_server,
         ldap_username,
         ldap_password,
         ldap_domain,
+        ldap_ou,
         ldap_is_active_directory,
         ldap_dn_extra,
         client,
@@ -49,6 +51,7 @@ def set(ldap_server,
                     ldap_password=ldap_password,
                     ldap_is_active_directory=ldap_is_active_directory,
                     ldap_domain=ldap_domain,
+                    ldap_ou=ldap_ou,
                     ldap_dn_extra=ldap_dn_extra)
     logger.info('LDAP authentication set successfully')
 

@@ -1182,6 +1182,14 @@ class Options(object):
             help=helptexts.LDAP_DOMAIN)
 
     @staticmethod
+    def ldap_ou():
+        return click.option(
+            '-o',
+            '--ldap-ou',
+            required=False,
+            help=helptexts.LDAP_OU)
+
+    @staticmethod
     def ldap_is_active_directory():
         return click.option(
             '-a',
