@@ -121,14 +121,15 @@ def assert_credentials_set():
                 'You can set it in the profile by running ' \
                 '`cfy profiles set {1}`, or you can set the `CLOUDIFY_{2}` ' \
                 'environment variable.'
-    if not get_username():
-        raise CloudifyCliError(
-            error_msg.format('Username', '--manager-username', 'USERNAME')
-        )
-    if not get_password():
-        raise CloudifyCliError(
-            error_msg.format('Password', '--manager-password', 'PASSWORD')
-        )
+    if not get_kerberos_env():
+        if not get_username():
+            raise CloudifyCliError(
+                error_msg.format('Username', '--manager-username', 'USERNAME')
+            )
+        if not get_password():
+            raise CloudifyCliError(
+                error_msg.format('Password', '--manager-password', 'PASSWORD')
+            )
     if not get_tenant_name():
         raise CloudifyCliError(
             error_msg.format('Tenant', '--manager-tenant', 'TENANT')
@@ -336,6 +337,12 @@ def get_tenant_name(from_profile=None):
                                'Either unset the env variable, or run '
                                '`cfy profiles unset --manager-tenant`')
     return tenant or from_profile.manager_tenant
+
+
+def get_kerberos_env(from_profile=None):
+    if from_profile is None:
+        from_profile = profile
+    return from_profile.kerberos_env
 
 
 def get_ssl_cert(from_profile=None):
