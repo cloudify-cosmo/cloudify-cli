@@ -5,6 +5,7 @@ from opentracing_instrumentation.request_context import get_current_span, \
 from logger import get_logger
 
 logger = get_logger()
+_tracer = None
 
 
 class Tracer(object):
@@ -38,9 +39,15 @@ def close():
 
     :raises RuntimeError: whenever 'close' is called before 'init_tracing'.
     """
-    global _tracer
     if not _tracer:
         raise RuntimeError(
             'Tracer closed before initialized, call "init_tracing" first.')
     logger.debug('Destroying tracer...')
     _tracer.destroy()
+
+
+def get_tracer():
+    """
+    :return: current tracer instance.
+    """
+    return _tracer
