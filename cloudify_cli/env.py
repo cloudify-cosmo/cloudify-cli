@@ -259,7 +259,7 @@ def get_rest_client(client_profile=None,
                                        trust_all=trust_all,
                                        profile=client_profile,
                                        kerberos_env=kerberos_env,
-                                       tracer=tracer.get_logger())
+                                       tracer=tracer.get_tracer())
     else:
         client = CloudifyClient(host=rest_host,
                                 port=rest_port,
@@ -268,7 +268,7 @@ def get_rest_client(client_profile=None,
                                 cert=rest_cert,
                                 trust_all=trust_all,
                                 kerberos_env=kerberos_env,
-                                tracer=tracer.get_logger())
+                                tracer=tracer.get_tracer())
 
     # TODO: Put back version check after we've solved the problem where
     # a new CLI is used with an older manager on `cfy upgrade`.
