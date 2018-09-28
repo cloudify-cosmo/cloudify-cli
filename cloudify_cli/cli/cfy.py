@@ -1026,9 +1026,10 @@ class Options(object):
         self.trace = click.option(
             '--trace',
             is_flag=True,
+            expose_value=False,
             default=False,
             help=helptexts.TRACE,
-            call_back=enable_tracing
+            callback=enable_tracing
         )
 
     def common_options(self, f):
@@ -1037,7 +1038,8 @@ class Options(object):
         To be used for arguments that are going to be applied for all or
         almost all commands.
         """
-        for arg in [self.json, self.verbose(), self.format, self.quiet()]:
+        for arg in [self.json, self.verbose(), self.format, self.quiet(),
+                    self.trace]:
             f = arg(f)
         return f
 
