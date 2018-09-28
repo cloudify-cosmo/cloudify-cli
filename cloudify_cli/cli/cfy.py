@@ -1015,6 +1015,13 @@ class Options(object):
             help=helptexts.QUEUE_SNAPSHOTS
         )
 
+        self.trace = click.option(
+            '--trace',
+            is_flag=True,
+            default=False,
+            help=helptexts.TRACE
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 

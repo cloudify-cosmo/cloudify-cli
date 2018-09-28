@@ -291,6 +291,8 @@ QUEUE_SNAPSHOTS = 'If set, snapshot-creation-workflows that can`t currently ' \
                   'run will be queued and run automatically when possible'
 QUEUE_EXECUTIONS = 'If set, executions that can`t currently run will be '\
                    'queued and run automatically when possible'
+TRACE = 'If set, the command local execution will be traced. Tracing must ' \
+        'be enabled in the manager beforehand.'
 
 _MULTIPLE_TIMES_FRAGMENT = ' (can be passed multiple times, ' \
                            'or comma-separated)'
