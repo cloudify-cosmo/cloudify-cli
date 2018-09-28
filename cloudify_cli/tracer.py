@@ -1,5 +1,6 @@
 import opentracing
-from jaeger_client import constants, codecs
+import jaeger_client
+from jaeger_client import constants, codecs, reporter, sampler
 from opentracing_instrumentation.request_context import get_current_span, \
     span_in_context
 
@@ -12,7 +13,10 @@ class Tracer(object):
 
     def __init__(self, operation_name):
         curr_span = get_current_span()
-        self.span = opentracing.Tracer().start_span(
+        self.span = jaeger_client.Tracer(
+            'no-op',
+            reporter=reporter.NullReporter(),
+            sampler=sampler.ProbabilisticSampler(0)).start_span(
             operation_name,
             child_of=curr_span)
         self.span.__enter__()
