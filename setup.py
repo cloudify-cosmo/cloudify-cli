@@ -52,6 +52,8 @@ setup(
         'click_didyoumean==0.0.3',
         'cloudify-common==4.5',
         'backports.shutil_get_terminal_size==1.0.0',
-        'ipaddress==1.0.19'
+        'ipaddress==1.0.19',
+        'opentracing==1.3.0',
+        'opentracing_instrumentation==2.4.3'
     ]
 )

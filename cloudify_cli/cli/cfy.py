@@ -30,7 +30,7 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
-from .. import env, logger
+from .. import env, logger, tracer
 from ..cli import helptexts
 from ..inputs import inputs_to_dict
 from ..utils import generate_random_string
@@ -218,6 +218,13 @@ def set_verbosity_level(ctx, param, value):
         set_global_verbosity_level(value)
     elif value and param.name == 'quiet':
         set_global_verbosity_level(logger.QUIET)
+    return value
+
+
+def enable_tracing(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    tracer.init_tracing(ctx.command.name)
     return value
 
 
@@ -1019,7 +1026,8 @@ class Options(object):
             '--trace',
             is_flag=True,
             default=False,
-            help=helptexts.TRACE
+            help=helptexts.TRACE,
+            call_back=enable_tracing
         )
 
     def common_options(self, f):
