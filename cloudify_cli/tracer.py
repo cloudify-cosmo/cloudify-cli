@@ -3,16 +3,13 @@ from jaeger_client import constants, codecs
 from opentracing_instrumentation.request_context import get_current_span, \
     span_in_context
 
-from logger import get_logger
-
-logger = get_logger()
-
 _tracer = None
 
 
 class Tracer(object):
     """Simplified tracer class.
     """
+
     def __init__(self, operation_name):
         curr_span = get_current_span()
         self.span = opentracing.Tracer().start_span(
@@ -57,7 +54,6 @@ def init_tracing(operation_name):
     :param operation_name: operation name to start a span with.
     """
     global _tracer
-    logger.debug('Initializing tracer...')
     _tracer = Tracer(operation_name)
 
 
@@ -69,7 +65,6 @@ def close():
     if not _tracer:
         raise RuntimeError(
             'Tracer closed before initialized, call "init_tracing" first.')
-    logger.debug('Destroying tracer...')
     _tracer.destroy()
 
 
