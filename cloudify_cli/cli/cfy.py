@@ -225,7 +225,6 @@ def enable_tracing(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
     tracer.init_tracing(ctx.command.name)
-    ctx.call_on_close(tracer.close)
     return value
 
 
