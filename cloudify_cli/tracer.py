@@ -18,7 +18,7 @@ class CloudifyTracer(object):
         self.tracer = Tracer(
             'no-op',
             reporter=reporter.NullReporter(),
-            sampler=sampler.ProbabilisticSampler(0))
+            sampler=sampler.ConstSampler(True))
         self.current_span = None
 
     def inject(self, span_context, carrier):
