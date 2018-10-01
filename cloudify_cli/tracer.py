@@ -1,6 +1,9 @@
+import pickle
+
 from opentracing import Format
 from jaeger_client import reporter, sampler, Tracer
 
+SPANS_TO_REPORT = 'spans_to_report'
 _tracer = None
 
 
@@ -31,9 +34,28 @@ class CloudifyTracer(object):
 
         :param operation_name: operation name.
         """
-        self.current_span = self.tracer.start_span(operation_name,
-                                                   self.current_span)
+        span = self.tracer.start_span(operation_name,
+                                      self.current_span)
+        baggage = span.context.baggage
+        if SPANS_TO_REPORT not in baggage:
+            baggage[SPANS_TO_REPORT] = dict()
+        else:
+            s_dict = self._get_span_dict(span)
+            baggage[SPANS_TO_REPORT][s_dict['span_id']] = pickle.dumps(s_dict)
+        self.current_span = span
         return self.current_span
+
+    @staticmethod
+    def _get_span_dict(span):
+        s_dict = dict()
+        s_fields = ['operation_name', 'start_time', 'logs', 'tags']
+        s_ctx_fields = ['span_id', 'parent_id', 'flags', 'debug_id']
+        for field in s_fields:
+            s_dict[field] = getattr(span, field)
+        context = span.context
+        for field in s_ctx_fields:
+            s_dict[field] = getattr(context, field)
+        return s_dict
 
 
 def init_tracing(operation_name):
