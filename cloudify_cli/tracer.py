@@ -39,9 +39,8 @@ class CloudifyTracer(object):
         baggage = span.context.baggage
         if SPANS_TO_REPORT not in baggage:
             baggage[SPANS_TO_REPORT] = dict()
-        else:
-            s_dict = self._get_span_dict(span)
-            baggage[SPANS_TO_REPORT][s_dict['span_id']] = pickle.dumps(s_dict)
+        s_dict = self._get_span_dict(span)
+        baggage[SPANS_TO_REPORT][s_dict['span_id']] = pickle.dumps(s_dict)
         self.current_span = span
         return self.current_span
 
@@ -49,7 +48,8 @@ class CloudifyTracer(object):
     def _get_span_dict(span):
         s_dict = dict()
         s_fields = ['operation_name', 'start_time', 'logs', 'tags']
-        s_ctx_fields = ['span_id', 'parent_id', 'flags', 'debug_id']
+        s_ctx_fields = ['trace_id', 'span_id', 'parent_id', 'flags',
+                        'debug_id']
         for field in s_fields:
             s_dict[field] = getattr(span, field)
         context = span.context
