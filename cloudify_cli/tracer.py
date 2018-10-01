@@ -1,3 +1,4 @@
+from copy import deepcopy
 import pickle
 
 from opentracing import Format
@@ -26,7 +27,11 @@ class CloudifyTracer(object):
         :param span_context: span context to serialize.
         :param carrier: a dict obj to add the serialized span context to.
         """
-        self.tracer.inject(span_context, Format.HTTP_HEADERS, carrier)
+        ctx_cpy = deepcopy(span_context)
+        baggage = ctx_cpy.baggage
+        if SPANS_TO_REPORT in baggage:
+            baggage[SPANS_TO_REPORT] = pickle.dumps(baggage[SPANS_TO_REPORT])
+        self.tracer.inject(ctx_cpy, Format.HTTP_HEADERS, carrier)
 
     def start_span(self, operation_name):
         """Same as jaeger_client.Tracer's start_span(..) method but this one
