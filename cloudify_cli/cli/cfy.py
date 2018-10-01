@@ -224,7 +224,7 @@ def set_verbosity_level(ctx, param, value):
 def enable_tracing(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    tracer.init_tracing(ctx.command.name)
+    tracer.init_tracing('CLI {}'.format(ctx.command.name))
     return value
 
 

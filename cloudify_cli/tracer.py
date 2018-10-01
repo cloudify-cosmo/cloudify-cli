@@ -62,6 +62,15 @@ class CloudifyTracer(object):
             s_dict[field] = getattr(context, field)
         return s_dict
 
+    @staticmethod
+    def remove_spans_to_report(span_context):
+        """Removes all the spans to report field in the context baggage.
+
+        :param span_context: span context obj.
+        """
+        if SPANS_TO_REPORT in span_context.baggage:
+            del span_context.baggage[SPANS_TO_REPORT]
+
 
 def init_tracing(operation_name):
     """Initializes the Opentracing tracer and starts a span with the given
