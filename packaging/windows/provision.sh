@@ -69,7 +69,7 @@ function download_resources() {
         mkdir -p {fabric-plugin,script-plugin,diamond-plugin,openstack-plugin,aws-plugin,vsphere-plugin,softlayer-plugin}
 
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-fabric-plugin/1.5.2/plugin.yaml -o fabric-plugin/plugin.yaml
-        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-diamond-plugin/1.3.16/plugin.yaml -o diamond-plugin/plugin.yaml
+        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-diamond-plugin/1.3.17/plugin.yaml -o diamond-plugin/plugin.yaml
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/2.0.1/plugin.yaml -o openstack-plugin/plugin.yaml
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.4.10/plugin.yaml -o aws-plugin/plugin.yaml
         curl -L https://$GITHUB_USERNAME:$GITHUB_PASSWORD@raw.githubusercontent.com/cloudify-cosmo/cloudify-softlayer-plugin/1.3.1/plugin.yaml -o softlayer-plugin/plugin.yaml
