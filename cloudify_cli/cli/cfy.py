@@ -1067,7 +1067,6 @@ class Options(object):
                     filters[filter_name] = \
                         kwargs.pop(arg_name, None)
                 kwargs['agent_filters'] = filters
-                print kwargs
                 return f(*args, **kwargs)
             return _inner
 
