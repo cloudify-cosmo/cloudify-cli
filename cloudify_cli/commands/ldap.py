@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 ############
+
 from ..cli import cfy
+from ..exceptions import CloudifyCliError
 
 
 @cfy.group(name='ldap')
@@ -43,6 +45,11 @@ def set(ldap_server,
         ldap_dn_extra,
         client,
         logger):
+    if (ldap_username and not ldap_password) \
+            or (ldap_password and not ldap_username):
+        raise CloudifyCliError(
+            'Must either set both username and password, or neither. '
+            'Note that an empty username or password is invalid')
     logger.info('Setting the Cloudify manager authenticator to use LDAP..')
     client.ldap.set(ldap_server=ldap_server,
                     ldap_username=ldap_username,
