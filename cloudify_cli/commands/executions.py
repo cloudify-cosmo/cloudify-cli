@@ -34,11 +34,12 @@ _STATUS_CANCELING_MESSAGE = (
     'NOTE: Executions currently in a "canceling/force-canceling" status '
     'may take a while to change into "cancelled"')
 
-FULL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display',
+FULL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display', 'is_dry_run',
                           'deployment_id', 'created_at', 'ended_at',
                           'error', 'visibility', 'tenant_name',
                           'created_by', 'started_at']
 MINIMAL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display',
+                             'is_dry_run',
                              'deployment_id', 'created_at', 'started_at',
                              'visibility', 'tenant_name',
                              'created_by']
