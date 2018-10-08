@@ -1175,7 +1175,8 @@ class Options(object):
         return click.option(
             '-u',
             '--ldap-username',
-            required=True,
+            required=False,
+            default=None,
             help=helptexts.LDAP_USERNAME)
 
     @staticmethod
@@ -1183,7 +1184,8 @@ class Options(object):
         return click.option(
             '-p',
             '--ldap-password',
-            required=True,
+            required=False,
+            default=None,
             help=helptexts.LDAP_PASSWORD)
 
     @staticmethod
