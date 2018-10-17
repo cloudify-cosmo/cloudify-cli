@@ -472,27 +472,67 @@ def manager_outputs(deployment_id, logger, client, tenant_name):
 
     `DEPLOYMENT_ID` is the id of the deployment to print outputs for.
     """
+    _present_outputs_or_capabilities(
+        'outputs',
+        deployment_id,
+        tenant_name,
+        logger,
+        client
+    )
+
+
+@cfy.command(name='capabilities',
+             short_help='Show deployment capabilities [manager only]')
+@cfy.argument('deployment-id')
+@cfy.options.common_options
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def manager_capabilities(deployment_id, logger, client, tenant_name):
+    """Retrieve capabilities for a specific deployment
+
+    `DEPLOYMENT_ID` is the id of the deployment to print capabilities for.
+    """
+    _present_outputs_or_capabilities(
+        'capabilities',
+        deployment_id,
+        tenant_name,
+        logger,
+        client
+    )
+
+
+def _present_outputs_or_capabilities(
+        resource, deployment_id, tenant_name, logger, client
+):
+    # resource is either "outputs" or "capabilities"
+
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Retrieving outputs for deployment {0}...'.format(
-        deployment_id))
-    dep = client.deployments.get(deployment_id, _include=['outputs'])
-    outputs_def = dep.outputs
-    response = client.deployments.outputs.get(deployment_id)
+    logger.info(
+        'Retrieving {0} for deployment {1}...'.format(resource, deployment_id)
+    )
+    dep = client.deployments.get(deployment_id, _include=[resource])
+    definitions = getattr(dep, resource)
+    client_api = getattr(client.deployments, resource)
+    response = client_api.get(deployment_id)
+    values_dict = getattr(response, resource)
     if get_global_json_output():
-        outputs = {out: {
+        values = {out: {
             'value': val,
-            'description': outputs_def[out].get('description')
-        } for out, val in response.outputs.items()}
-        print_details(outputs, 'Deployment outputs:')
+            'description': definitions[out].get('description')
+        } for out, val in values_dict.items()}
+        print_details(values, 'Deployment {0}:'.format(resource))
     else:
-        outputs_ = StringIO()
-        for output_name, output in response.outputs.items():
-            outputs_.write(' - "{0}":{1}'.format(output_name, os.linesep))
-            description = outputs_def[output_name].get('description', '')
-            outputs_.write('     Description: {0}{1}'.format(description,
-                                                             os.linesep))
-            outputs_.write('     Value: {0}{1}'.format(output, os.linesep))
-        logger.info(outputs_.getvalue())
+        values = StringIO()
+        for elem_name, elem in values_dict.items():
+            values.write(' - "{0}":{1}'.format(elem_name, os.linesep))
+            description = definitions[elem_name].get('description', '')
+            values.write('     Description: {0}{1}'.format(description,
+                                                           os.linesep))
+            values.write(
+                '     Value: {0}{1}'.format(elem, os.linesep))
+        logger.info(values.getvalue())
 
 
 @cfy.command(name='inputs',
