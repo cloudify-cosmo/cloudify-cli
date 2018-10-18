@@ -146,6 +146,11 @@ FORCE_DELETE_PLUGIN = (
     "using it"
 )
 
+FORCE_DELETE_BLUEPRINT = (
+    "Delete the blueprint even if there are deployments which are currently "
+    "using it"
+)
+
 FORCE_TEARDOWN = "This is mandatory for performing the teardown"
 
 IGNORE_DEPLOYMENTS = \

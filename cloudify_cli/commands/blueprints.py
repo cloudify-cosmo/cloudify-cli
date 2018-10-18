@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2018 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
 from .. import local
 from .. import utils
-from ..cli import cfy
+from ..cli import cfy, helptexts
 from .. import blueprint
 from .. import exceptions
 from ..config import config
@@ -193,19 +193,20 @@ def download(blueprint_id, output_path, logger, client, tenant_name):
 @blueprints.command(name='delete',
                     short_help='Delete a blueprint [manager only]')
 @cfy.argument('blueprint-id')
+@cfy.options.force(help=helptexts.FORCE_DELETE_BLUEPRINT)
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def delete(blueprint_id, logger, client, tenant_name):
+def delete(blueprint_id, force, logger, client, tenant_name):
     """Delete a blueprint from the manager
 
     `BLUEPRINT_ID` is the id of the blueprint to delete.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Deleting blueprint {0}...'.format(blueprint_id))
-    client.blueprints.delete(blueprint_id)
+    client.blueprints.delete(blueprint_id, force)
     logger.info('Blueprint deleted')
 
 
