@@ -76,12 +76,16 @@ def get(node_id, deployment_id, logger, client, tenant_name):
 
     columns = NODE_COLUMNS
     if get_global_json_output():
-        columns += ['properties', 'instances', 'operations']
+        columns += ['properties', 'instances', 'operations', 'type_hierarchy']
         node['instances'] = [instance['id'] for instance in instances]
 
     print_single(columns, node, 'Node:', max_width=50)
 
     if not get_global_json_output():
+        # Print type hierarchy
+        logger.info('Type hierarchy:\n\t{0}\n'.format('\n\t'.join(
+            node.type_hierarchy)))
+
         # print node properties
         print_details(node.properties, 'Node properties:')
 
@@ -93,7 +97,6 @@ def get(node_id, deployment_id, logger, client, tenant_name):
             op['name'] = op_name
             operations += [op]
         print_data(OPERATION_COLUMNS, operations, 'Operations:')
-        logger.info('')
 
         # print node instances IDs
         logger.info('Node instance IDs:')
