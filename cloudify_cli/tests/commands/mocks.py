@@ -165,6 +165,7 @@ def node_get_mock():
         'blueprint_id': 'blueprint_id',
         'host_id': 'host_id',
         'type': 'Compute',
+        'type_hierarchy': ['cloudify.nodes.Root', 'Compute'],
         'number_of_instances': '1',
         'planned_number_of_instances': '2',
         'properties': {
