@@ -1289,10 +1289,11 @@ class Options(object):
             callback=_get_validate_callback(validate))
 
     @staticmethod
-    def execution_id(required=False):
+    def execution_id(required=False, dest=None):
         return click.option(
             '-e',
             '--execution-id',
+            dest,
             required=required,
             help=helptexts.EXECUTION_ID)
 
