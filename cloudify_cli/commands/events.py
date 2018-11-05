@@ -16,6 +16,8 @@
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
+import click
+
 from .. import utils
 from ..cli import cfy
 from ..logger import get_events_logger
@@ -35,7 +37,8 @@ def events():
 
 @events.command(name='list',
                 short_help='List deployments events [manager only]')
-@cfy.options.execution_id(required=True)
+@cfy.argument('execution-id', required=False)
+@cfy.options.execution_id(required=False, dest='execution_id_opt')
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.tail
@@ -46,6 +49,7 @@ def events():
 @cfy.pass_client()
 @cfy.pass_logger
 def list(execution_id,
+         execution_id_opt,
          include_logs,
          json_output,
          tail,
@@ -54,6 +58,23 @@ def list(execution_id,
          pagination_size,
          client,
          logger):
+    if execution_id and execution_id_opt:
+        raise click.UsageError(
+            "Execution ID provided both as a positional "
+            "argument ('{}') and as an option ('{}'). "
+            "Please only specify it once (preferably as "
+            "a positional argument).".format(
+                execution_id,
+                execution_id_opt))
+
+    if not execution_id:
+        execution_id = execution_id_opt
+        if not execution_id:
+            raise click.UsageError('Execution ID not provided')
+        logger.warning("Providing the execution ID as an option (using '-e') "
+                       "is now deprecated. Please provide the execution ID as "
+                       "a positional argument.")
+
     """Display events for an execution
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
