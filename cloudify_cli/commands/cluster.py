@@ -335,6 +335,9 @@ def _prepare_node(node):
     checks = node.pop('checks', {})
     checks = {check: 'OK' if passing else 'FAIL'
               for check, passing in checks.items()}
+    remote_database = node.pop('remote_database', False)
+    if remote_database:
+        checks['database'] = 'REMOTE'
     node.update(checks)
     online = node.pop('online', False)
     master = node.pop('master', False)
