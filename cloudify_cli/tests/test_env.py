@@ -575,6 +575,8 @@ class ExecutionEventsFetcherTest(CliCommandTest):
                 'operation': '<operation>',
                 'workflow_id': '<workflow_id>',
                 'node_instance_id': '<node_instance_id>',
+                'source_id': None,
+                'target_id': None,
                 'message': '<message>',
                 'error_causes': '<error_causes>',
             }
@@ -588,6 +590,25 @@ class ExecutionEventsFetcherTest(CliCommandTest):
                                                 batch_size=2)
         events_count = events_fetcher.fetch_and_process_events()
         self.assertEqual(0, events_count)
+
+    def test_relationship_events(self):
+        self._parsed_events = []
+
+        def events_handler(events):
+            self._parsed_events = events
+
+        self.events = self._generate_events(10)
+        for event in self.events:
+            event['source_id'] = 'source_id'
+            event['target_id'] = 'target_id'
+        events_fetcher = ExecutionEventsFetcher(self.client, 'execution_id')
+        events_fetcher.fetch_and_process_events(events_handler=events_handler)
+
+        for event in self._parsed_events:
+            self.assertIn('source_id', event['context'])
+            self.assertEqual(event['context']['source_id'], 'source_id')
+            self.assertIn('target_id', event['context'])
+            self.assertEqual(event['context']['target_id'], 'target_id')
 
     def test_new_events_after_fetched_all(self):
         self.events = self._generate_events(10)
@@ -747,6 +768,8 @@ class WaitForExecutionTests(CliCommandTest):
                     'operation': '<operation>',
                     'workflow_id': '<workflow_id>',
                     'node_instance_id': '<node_instance_id>',
+                    'source_id': None,
+                    'target_id': None,
                     'message': '<message>',
                     'error_causes': '<error_causes>',
                     'event_type': 'workflow_succeeded',
@@ -788,6 +811,8 @@ class WaitForExecutionTests(CliCommandTest):
                 'operation': '<operation>',
                 'workflow_id': '<workflow_id>',
                 'node_instance_id': '<node_instance_id>',
+                'source_id': None,
+                'target_id': None,
                 'message': '<message>',
                 'error_causes': '<error_causes>',
                 'event_type': 'workflow_succeeded',
