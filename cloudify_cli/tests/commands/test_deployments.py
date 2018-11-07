@@ -265,6 +265,8 @@ class DeploymentsTest(CliCommandTest):
             'error_causes': '<error_causes>',
             'deployment_id': 'deployment-id',
             'execution_id': '<execution_id>',
+            'source_id': None,
+            'target_id': None,
             'node_name': '<node_name>',
             'operation': '<operation>',
             'workflow_id': '<workflow_id>',
