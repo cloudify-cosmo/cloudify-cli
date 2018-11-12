@@ -21,7 +21,6 @@ from ..cli import cfy, helptexts
 from ..constants import DEFAULT_INSTALL_WORKFLOW
 from ..blueprint import get_blueprint_path_and_id
 from . import init, executions, blueprints, deployments
-from cloudify_rest_client.constants import VISIBILITY_EXCEPT_GLOBAL
 
 
 @cfy.command(name='install',
@@ -34,7 +33,7 @@ from cloudify_rest_client.constants import VISIBILITY_EXCEPT_GLOBAL
 @cfy.options.inputs
 @cfy.options.workflow_id('install')
 @cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
-@cfy.options.visibility(valid_values=VISIBILITY_EXCEPT_GLOBAL)
+@cfy.options.visibility()
 @cfy.options.tenant_name(required=False,
                          resource_name_for_help='blueprint and deployment')
 @cfy.options.skip_plugins_validation

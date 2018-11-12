@@ -20,8 +20,7 @@ import shutil
 
 from StringIO import StringIO
 
-from cloudify_rest_client.constants import (VisibilityState,
-                                            VISIBILITY_EXCEPT_GLOBAL)
+from cloudify_rest_client.constants import VisibilityState
 from cloudify_rest_client.exceptions import (
     DeploymentPluginNotFound,
     UnknownDeploymentInputError,
@@ -359,7 +358,7 @@ def manager_update(ctx,
 @cfy.options.blueprint_id(required=True)
 @cfy.options.inputs
 @cfy.options.private_resource
-@cfy.options.visibility(valid_values=VISIBILITY_EXCEPT_GLOBAL)
+@cfy.options.visibility()
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
@@ -384,10 +383,7 @@ def manager_create(blueprint_id,
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
     deployment_id = deployment_id or blueprint_id
-    visibility = get_visibility(private_resource,
-                                visibility,
-                                logger,
-                                valid_values=VISIBILITY_EXCEPT_GLOBAL)
+    visibility = get_visibility(private_resource, visibility, logger)
 
     try:
         deployment = client.deployments.create(
