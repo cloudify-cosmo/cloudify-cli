@@ -20,10 +20,7 @@ import shutil
 
 from StringIO import StringIO
 
-from cloudify_rest_client.constants import (
-    VisibilityState,
-    VISIBILITY_EXCEPT_PRIVATE
-)
+from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 from cloudify_rest_client.exceptions import (
     DeploymentPluginNotFound,
     UnknownDeploymentInputError,
