@@ -20,8 +20,7 @@ import shutil
 
 from StringIO import StringIO
 
-from cloudify_rest_client.constants import (VisibilityState,
-                                            VISIBILITY_EXCEPT_GLOBAL)
+from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 from cloudify_rest_client.exceptions import (
     DeploymentPluginNotFound,
     UnknownDeploymentInputError,
@@ -359,7 +358,7 @@ def manager_update(ctx,
 @cfy.options.blueprint_id(required=True)
 @cfy.options.inputs
 @cfy.options.private_resource
-@cfy.options.visibility(valid_values=VISIBILITY_EXCEPT_GLOBAL)
+@cfy.options.visibility()
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
@@ -384,10 +383,7 @@ def manager_create(blueprint_id,
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
     deployment_id = deployment_id or blueprint_id
-    visibility = get_visibility(private_resource,
-                                visibility,
-                                logger,
-                                valid_values=VISIBILITY_EXCEPT_GLOBAL)
+    visibility = get_visibility(private_resource, visibility, logger)
 
     try:
         deployment = client.deployments.create(
@@ -565,7 +561,7 @@ def manager_inputs(deployment_id, logger, client, tenant_name):
 @cfy.command(name='set-visibility',
              short_help="Set the deployment's visibility [manager only]")
 @cfy.argument('deployment-id')
-@cfy.options.visibility(required=True, valid_values=[VisibilityState.TENANT])
+@cfy.options.visibility(required=True, valid_values=VISIBILITY_EXCEPT_PRIVATE)
 @cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
@@ -575,7 +571,7 @@ def manager_set_visibility(deployment_id, visibility, logger, client):
 
     `DEPLOYMENT_ID` is the id of the deployment to update
     """
-    validate_visibility(visibility, valid_values=[VisibilityState.TENANT])
+    validate_visibility(visibility, valid_values=VISIBILITY_EXCEPT_PRIVATE)
     status_codes = [400, 403, 404]
     with prettify_client_error(status_codes, logger):
         client.deployments.set_visibility(deployment_id, visibility)
