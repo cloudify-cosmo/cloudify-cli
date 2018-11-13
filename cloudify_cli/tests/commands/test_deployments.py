@@ -442,16 +442,13 @@ class DeploymentsTest(CliCommandTest):
         self.client.deployments.set_visibility = MagicMock()
         self.invoke('cfy deployments set-visibility a-deployment-id -l '
                     'tenant')
+        self.invoke('cfy deployments set-visibility a-deployment-id -l '
+                    'global')
 
     def test_deployments_set_visibility_invalid_argument(self):
         self.invoke(
             'cfy deployments set-visibility a-deployment-id -l private',
             err_str_segment='Invalid visibility: `private`',
-            exception=CloudifyCliError
-        )
-        self.invoke(
-            'cfy deployments set-visibility a-deployment-id -l global',
-            err_str_segment='Invalid visibility: `global`',
             exception=CloudifyCliError
         )
         self.invoke(
