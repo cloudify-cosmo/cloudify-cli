@@ -192,6 +192,7 @@ TENANT_TEMPLATE = 'The name of the tenant of the {0}'
 TENANT_LIST_TEMPLATE = 'The name of the tenant to list {0}s from'
 ALL_TENANTS = 'Include resources from all tenants associated with the user. ' \
               'You cannot use this argument with arguments: [tenant_name]'
+ALL_EXECUTIONS = 'Apply to all available executions'
 GROUP = 'The name of the user group'
 GROUP_DN = 'The ldap group\'s distinguished name. This option is required ' \
            'when using ldap'
@@ -306,3 +307,6 @@ AGENT_NODE_ID = 'The node id to filter to be used for filtering' \
 AGENT_INSTALL_METHOD = 'Only show agents installed with this install_method' \
                        + _MULTIPLE_TIMES_FRAGMENT
 AGENT_DEPLOYMENT_ID = DEPLOYMENT_ID + _MULTIPLE_TIMES_FRAGMENT
+
+WAIT_AFTER_FAIL = 'When a task fails, wait this many seconds for ' \
+                  'already-running tasks to return'
