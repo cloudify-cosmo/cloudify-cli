@@ -237,6 +237,7 @@ def manager_start(workflow_id,
                 parameters=parameters,
                 allow_custom_parameters=allow_custom_parameters,
                 force=force,
+                dry_run=dry_run,
                 queue=queue)
 
         if execution.status == 'queued':  # We don't need to wait for execution
