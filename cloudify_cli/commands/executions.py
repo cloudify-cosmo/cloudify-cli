@@ -165,6 +165,7 @@ def manager_list(
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.dry_run
+@cfy.options.wait_after_fail
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.options.queue
@@ -180,6 +181,7 @@ def manager_start(workflow_id,
                   include_logs,
                   json_output,
                   dry_run,
+                  wait_after_fail,
                   queue,
                   logger,
                   client,
@@ -206,7 +208,8 @@ def manager_start(workflow_id,
                 allow_custom_parameters=allow_custom_parameters,
                 force=force,
                 dry_run=dry_run,
-                queue=queue)
+                queue=queue,
+                wait_after_fail=wait_after_fail)
         except (exceptions.DeploymentEnvironmentCreationInProgressError,
                 exceptions.DeploymentEnvironmentCreationPendingError) as e:
             # wait for deployment environment creation workflow
@@ -238,7 +241,8 @@ def manager_start(workflow_id,
                 allow_custom_parameters=allow_custom_parameters,
                 force=force,
                 dry_run=dry_run,
-                queue=queue)
+                queue=queue,
+                wait_after_fail=wait_after_fail)
 
         if execution.status == 'queued':  # We don't need to wait for execution
             logger.info('Execution is being queued. It will automatically'

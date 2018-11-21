@@ -530,6 +530,13 @@ class Options(object):
             help=helptexts.ALL_TENANTS,
         )
 
+        self.all_executions = click.option(
+            '--all-executions',
+            is_flag=True,
+            default=False,
+            help=helptexts.ALL_EXECUTIONS,
+        )
+
         self.search = click.option(
             '--search',
             default=None,
@@ -1013,6 +1020,13 @@ class Options(object):
             is_flag=True,
             default=False,
             help=helptexts.QUEUE_SNAPSHOTS
+        )
+
+        self.wait_after_fail = click.option(
+            '--wait-after-fail',
+            default=600,
+            type=int,
+            help=helptexts.WAIT_AFTER_FAIL
         )
 
     def common_options(self, f):
