@@ -126,6 +126,7 @@ def _register_commands():
 
         deployments.deployments.add_command(deployments.manager_inputs)
         deployments.deployments.add_command(deployments.manager_outputs)
+        deployments.deployments.add_command(deployments.manager_capabilities)
 
         executions.executions.add_command(executions.manager_start)
     else:
