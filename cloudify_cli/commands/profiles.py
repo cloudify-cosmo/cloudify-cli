@@ -71,7 +71,24 @@ def show(logger):
         return
 
     active_profile = _get_profile(env.get_active_profile())
-    print_single(PROFILE_COLUMNS, active_profile, 'Active profile:')
+    if active_profile.get('cluster'):
+        common_attributes = {k: active_profile.get(k) for k in PROFILE_COLUMNS}
+        nodes = []
+        for node in active_profile['cluster']:
+            # merge the common attrs with node data, but rename node's name
+            # attribute to cluster_node, because the attribute 'name' is
+            # reserved for the profile name
+            node_data = dict(node)
+            node_data['cluster_node_name'] = node_data.pop('name')
+            nodes.append(dict(common_attributes, **node_data))
+
+        columns = PROFILE_COLUMNS[:1] + ['cluster_node_name'] \
+            + PROFILE_COLUMNS[1:]
+        print_data(columns, nodes, 'Cluster nodes in profile {0}:'
+                   .format(active_profile['name']),
+                   labels={'cluster_node_name': 'cluster node name'})
+    else:
+        print_single(PROFILE_COLUMNS, active_profile, 'Active profile:')
 
 
 @profiles.command(name='list',
