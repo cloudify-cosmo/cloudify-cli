@@ -37,11 +37,11 @@ _STATUS_CANCELING_MESSAGE = (
 FULL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display', 'is_dry_run',
                           'deployment_id', 'created_at', 'ended_at',
                           'error', 'visibility', 'tenant_name',
-                          'created_by', 'started_at']
+                          'created_by', 'started_at', 'scheduled_for']
 MINIMAL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display',
                              'is_dry_run',
                              'deployment_id', 'created_at', 'started_at',
-                             'visibility', 'tenant_name',
+                             'scheduled_for', 'visibility', 'tenant_name',
                              'created_by']
 EXECUTION_TABLE_LABELS = {'status_display': 'status'}
 
