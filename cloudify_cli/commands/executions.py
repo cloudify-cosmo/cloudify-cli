@@ -252,6 +252,9 @@ def manager_start(workflow_id,
             logger.info('Execution is being queued. It will automatically'
                         ' start when possible.')
             return
+        if execution.status == 'scheduled':
+            logger.info('Execution is scheduled for {0}.'.format(schedule))
+            return
         execution = wait_for_execution(client,
                                        execution,
                                        events_handler=events_logger,
