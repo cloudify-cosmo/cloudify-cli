@@ -39,6 +39,7 @@ AGENT_COLUMNS = ['id', 'ip', 'deployment', 'node', 'system', 'version',
 @cfy.options.common_options
 @cfy.assert_manager_active()
 def agents():
+    
     """Handle a deployment's agents
     """
     pass
