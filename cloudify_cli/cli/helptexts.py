@@ -314,3 +314,5 @@ AGENT_DEPLOYMENT_ID = DEPLOYMENT_ID + _MULTIPLE_TIMES_FRAGMENT
 
 WAIT_AFTER_FAIL = 'When a task fails, wait this many seconds for ' \
                   'already-running tasks to return'
+DEPLOYMENT_COPY = "Use another deployment's inputs (overridable by " \
+                  "specifying '-i')"

@@ -18,7 +18,7 @@
 import json
 import datetime
 
-from mock import patch, MagicMock, PropertyMock, Mock
+from mock import patch, MagicMock, PropertyMock, Mock, DEFAULT
 
 from cloudify_rest_client import deployments, executions, blueprints
 from cloudify_rest_client.exceptions import CloudifyClientError, \
@@ -197,6 +197,51 @@ class DeploymentUpdatesTest(CliCommandTest):
                             '(by id of an existing blueprint, or a path to a '
                             'new blueprint), or new inputs',
             exception=CloudifyCliError)
+
+
+class DeploymentCopyTest(CliCommandTest):
+    def setUp(self):
+        super(DeploymentCopyTest, self).setUp()
+        self.use_manager()
+
+    EXISTING_DEPLOYMENT = deployments.Deployment({
+        'deployment_id': 'd1',
+        'blueprint_id': 'bp1',
+        'inputs': {
+            'a': 1,
+            'b': 2
+        }
+    })
+
+    def _dep_create(self, deployment_id, **kwargs):
+        return DeploymentCopyTest.EXISTING_DEPLOYMENT if \
+            deployment_id == DeploymentCopyTest.EXISTING_DEPLOYMENT[
+                'deployment_id'] else DEFAULT
+
+    def test_deployments_create_copy_and_bpid(self):
+        # Both should end with the same error.
+        self.invoke('cfy deployments create d1 -b b1 --copy d2',
+                    err_str_segment="Exactly one of")
+        self.invoke('cfy deployments create d1',
+                    err_str_segment="Exactly one of")
+
+    def test_deployments_create_copy(self):
+        self.client.deployments.get = MagicMock(side_effect=self._dep_create)
+        self.client.deployments.create = MagicMock()
+        self.invoke('cfy deployments create d2 --copy d1')
+        call_args = self.client.deployments.create.call_args
+        self.assertEqual(('bp1', 'd2'), call_args[0])
+        self.assertEquals(self.EXISTING_DEPLOYMENT.inputs,
+                          call_args[1]['inputs'])
+
+    def test_deployments_create_copy_override(self):
+        self.client.deployments.get = MagicMock(side_effect=self._dep_create)
+        self.client.deployments.create = MagicMock()
+        self.invoke('cfy deployments create d2 --copy d1 -i a=3 -i c=5')
+        call_args = self.client.deployments.create.call_args
+        self.assertEqual(('bp1', 'd2'), call_args[0])
+        self.assertEquals('3', call_args[1]['inputs']['a'])
+        self.assertEquals('5', call_args[1]['inputs']['c'])
 
 
 class DeploymentsTest(CliCommandTest):

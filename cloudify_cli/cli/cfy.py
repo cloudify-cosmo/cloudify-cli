@@ -483,6 +483,12 @@ class Options(object):
             callback=inputs_callback,
             help=helptexts.INPUTS)
 
+        self.copy = click.option(
+            '-c',
+            '--copy',
+            help=helptexts.DEPLOYMENT_COPY
+        )
+
         self.reinstall_list = click.option(
             '-r',
             '--reinstall-list',

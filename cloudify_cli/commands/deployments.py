@@ -361,7 +361,8 @@ def manager_update(ctx,
 @cfy.command(name='create',
              short_help='Create a deployment [manager only]')
 @cfy.argument('deployment-id', required=False, callback=cfy.validate_name)
-@cfy.options.blueprint_id(required=True)
+@cfy.options.blueprint_id()
+@cfy.options.copy
 @cfy.options.inputs
 @cfy.options.private_resource
 @cfy.options.visibility()
@@ -373,6 +374,7 @@ def manager_update(ctx,
 @cfy.options.skip_plugins_validation
 def manager_create(blueprint_id,
                    deployment_id,
+                   copy,
                    inputs,
                    private_resource,
                    visibility,
@@ -385,17 +387,34 @@ def manager_create(blueprint_id,
     `DEPLOYMENT_ID` is the id of the deployment you'd like to create.
 
     """
+    # "copy" and "blueprint_id" are mutually exclusive.
+    if bool(copy) == bool(blueprint_id):
+        raise CloudifyCliError("Exactly one of '-b' or '--copy' must be "
+                               "provided")
+    # If "copy" is provided, then "deployment_id" must be provided.
+    if copy and not deployment_id:
+        raise CloudifyCliError("Deployment ID must be provided when "
+                               "'--copy' is specified")
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Creating new deployment from blueprint {0}...'.format(
-        blueprint_id))
+    if copy:
+        existing_dep = client.deployments.get(copy, _include=['inputs',
+                                                              'blueprint_id'])
+        blueprint_id = existing_dep.blueprint_id
+        final_inputs = existing_dep.inputs
+    else:
+        final_inputs = dict()
+    logger.info('Creating new deployment from blueprint {0}{1}...'.format(
+        blueprint_id, ", copying deployment inputs from {0}".format(copy)
+        if copy else ""))
     deployment_id = deployment_id or blueprint_id
     visibility = get_visibility(private_resource, visibility, logger)
+    final_inputs.update(inputs)
 
     try:
         deployment = client.deployments.create(
             blueprint_id,
             deployment_id,
-            inputs=inputs,
+            inputs=final_inputs,
             visibility=visibility,
             skip_plugins_validation=skip_plugins_validation
         )
