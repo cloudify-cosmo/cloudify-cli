@@ -37,11 +37,11 @@ _STATUS_CANCELING_MESSAGE = (
 FULL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display', 'is_dry_run',
                           'deployment_id', 'created_at', 'ended_at',
                           'error', 'visibility', 'tenant_name',
-                          'created_by', 'started_at']
+                          'created_by', 'started_at', 'scheduled_for']
 MINIMAL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display',
                              'is_dry_run',
                              'deployment_id', 'created_at', 'started_at',
-                             'visibility', 'tenant_name',
+                             'scheduled_for', 'visibility', 'tenant_name',
                              'created_by']
 EXECUTION_TABLE_LABELS = {'status_display': 'status'}
 
@@ -168,6 +168,7 @@ def manager_list(
 @cfy.options.wait_after_fail
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
+@cfy.options.schedule
 @cfy.options.queue
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -183,6 +184,7 @@ def manager_start(workflow_id,
                   dry_run,
                   wait_after_fail,
                   queue,
+                  schedule,
                   logger,
                   client,
                   tenant_name):
@@ -209,7 +211,8 @@ def manager_start(workflow_id,
                 force=force,
                 dry_run=dry_run,
                 queue=queue,
-                wait_after_fail=wait_after_fail)
+                wait_after_fail=wait_after_fail,
+                schedule=schedule)
         except (exceptions.DeploymentEnvironmentCreationInProgressError,
                 exceptions.DeploymentEnvironmentCreationPendingError) as e:
             # wait for deployment environment creation workflow
@@ -242,11 +245,15 @@ def manager_start(workflow_id,
                 force=force,
                 dry_run=dry_run,
                 queue=queue,
-                wait_after_fail=wait_after_fail)
+                wait_after_fail=wait_after_fail,
+                schedule=schedule)
 
         if execution.status == 'queued':  # We don't need to wait for execution
             logger.info('Execution is being queued. It will automatically'
                         ' start when possible.')
+            return
+        if execution.status == 'scheduled':
+            logger.info('Execution is scheduled for {0}.'.format(schedule))
             return
         execution = wait_for_execution(client,
                                        execution,

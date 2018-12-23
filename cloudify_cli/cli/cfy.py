@@ -1015,6 +1015,13 @@ class Options(object):
             help=helptexts.QUEUE_EXECUTIONS
         )
 
+        self.schedule = click.option(
+            '--schedule',
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['queue'],
+            help=helptexts.SCHEDULE_EXECUTIONS
+        )
+
         self.queue_snapshot = click.option(
             '--queue',
             is_flag=True,
