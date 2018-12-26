@@ -338,6 +338,7 @@ def manager_cancel(execution_id, force, kill, logger, client, tenant_name):
 @cfy.command(name='list',
              short_help='List deployment executions')
 @cfy.options.blueprint_id(required=True)
+@cfy.options.common_options
 @cfy.pass_logger
 def local_list(blueprint_id, logger):
     """Execute a workflow
@@ -348,6 +349,30 @@ def local_list(blueprint_id, logger):
     executions = env.storage.get_executions()
     print_data(LOCAL_EXECUTION_COLUMNS, executions, 'Executions:',
                labels=EXECUTION_TABLE_LABELS)
+
+
+@cfy.command(name='get',
+             short_help='Retrieve execution information')
+@cfy.argument('execution-id')
+@cfy.options.blueprint_id(required=True)
+@cfy.options.common_options
+@cfy.pass_logger
+def local_get(execution_id, blueprint_id, logger):
+    """Retrieve information for a specific execution
+
+    `EXECUTION_ID` is the execution to get information on.
+    """
+    env = local.load_env(blueprint_id)
+    execution = env.storage.get_execution(execution_id)
+    if not execution:
+        raise CloudifyCliError('Execution {0} not found'.format(execution_id))
+    columns = LOCAL_EXECUTION_COLUMNS
+    if get_global_json_output():
+        columns += ['parameters']
+    print_single(LOCAL_EXECUTION_COLUMNS, execution, 'Execution:',
+                 labels=EXECUTION_TABLE_LABELS)
+    if not get_global_json_output():
+        print_details(execution['parameters'], 'Execution Parameters:')
 
 
 @cfy.command(name='start',
