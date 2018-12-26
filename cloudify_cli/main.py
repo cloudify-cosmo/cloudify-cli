@@ -143,6 +143,7 @@ def _register_commands():
 
         blueprints.blueprints.add_command(blueprints.local_list)
 
+
 _register_commands()
 
 
