@@ -34,6 +34,8 @@ _STATUS_CANCELING_MESSAGE = (
     'NOTE: Executions currently in a "canceling/force-canceling" status '
     'may take a while to change into "cancelled"')
 
+LOCAL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display',
+                           'blueprint_id', 'started_at', 'ended_at', 'error']
 FULL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display', 'is_dry_run',
                           'deployment_id', 'created_at', 'ended_at',
                           'error', 'visibility', 'tenant_name',
@@ -90,7 +92,7 @@ def manager_get(execution_id, logger, client, tenant_name):
 
 
 @cfy.command(name='list',
-             short_help='List deployment executions [manager only]')
+             short_help='List deployment executions')
 @cfy.options.deployment_id(required=False)
 @cfy.options.include_system_workflows
 @cfy.options.sort_by()
@@ -331,6 +333,21 @@ def manager_cancel(execution_id, force, kill, logger, client, tenant_name):
         "A cancel request for execution {0} has been sent. "
         "To track the execution's status, use:\n"
         "cfy executions get {0}".format(execution_id))
+
+
+@cfy.command(name='list',
+             short_help='List deployment executions')
+@cfy.options.blueprint_id(required=True)
+@cfy.pass_logger
+def local_list(blueprint_id, logger):
+    """Execute a workflow
+
+    `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
+    """
+    env = local.load_env(blueprint_id)
+    executions = env.storage.get_executions()
+    print_data(LOCAL_EXECUTION_COLUMNS, executions, 'Executions:',
+               labels=EXECUTION_TABLE_LABELS)
 
 
 @cfy.command(name='start',

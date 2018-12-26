@@ -114,7 +114,6 @@ def _register_commands():
     deployments.deployments.add_command(deployments.manager_set_visibility)
 
     executions.executions.add_command(executions.manager_cancel)
-    executions.executions.add_command(executions.manager_list)
     executions.executions.add_command(executions.manager_get)
 
     # Commands which should be both in manager and local context
@@ -129,6 +128,7 @@ def _register_commands():
         deployments.deployments.add_command(deployments.manager_capabilities)
 
         executions.executions.add_command(executions.manager_start)
+        executions.executions.add_command(executions.manager_list)
 
         blueprints.blueprints.add_command(blueprints.manager_list)
     else:
@@ -140,6 +140,7 @@ def _register_commands():
         deployments.deployments.add_command(deployments.local_outputs)
 
         executions.executions.add_command(executions.local_start)
+        executions.executions.add_command(executions.local_list)
 
         blueprints.blueprints.add_command(blueprints.local_list)
 
