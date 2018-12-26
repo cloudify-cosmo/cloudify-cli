@@ -40,8 +40,9 @@ from ..utils import (prettify_client_error,
 
 
 DESCRIPTION_LIMIT = 20
-BLUEPRINT_COLUMNS = ['id', 'description', 'main_file_name', 'created_at',
-                     'updated_at', 'visibility', 'tenant_name', 'created_by']
+BASE_BLUEPRINT_COLUMNS = ['id', 'description', 'main_file_name', 'created_at']
+BLUEPRINT_COLUMNS = BASE_BLUEPRINT_COLUMNS + ['updated_at', 'visibility',
+                                              'tenant_name', 'created_by']
 INPUTS_COLUMNS = ['name', 'type', 'default', 'description']
 
 
@@ -210,8 +211,7 @@ def delete(blueprint_id, force, logger, client, tenant_name):
     logger.info('Blueprint deleted')
 
 
-@blueprints.command(name='list',
-                    short_help='List blueprints [manager only]')
+@cfy.command(name='list', short_help='List blueprints')
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.common_options
@@ -224,15 +224,15 @@ def delete(blueprint_id, force, logger, client, tenant_name):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by,
-         descending,
-         tenant_name,
-         all_tenants,
-         search,
-         pagination_offset,
-         pagination_size,
-         logger,
-         client):
+def manager_list(sort_by,
+                 descending,
+                 tenant_name,
+                 all_tenants,
+                 search,
+                 pagination_offset,
+                 pagination_size,
+                 logger,
+                 client):
     """List all blueprints
     """
     def trim_description(blueprint):
@@ -258,6 +258,13 @@ def list(sort_by,
     print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
     total = blueprints_list.metadata.pagination.total
     logger.info('Showing {0} of {1} blueprints'.format(len(blueprints), total))
+
+
+@cfy.command(name='list', short_help='List blueprints')
+@cfy.pass_logger
+def local_list(logger):
+    blueprints = local.list_blueprints()
+    print_data(BASE_BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
 
 @blueprints.command(name='get',

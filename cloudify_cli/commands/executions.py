@@ -336,7 +336,7 @@ def manager_cancel(execution_id, force, kill, logger, client, tenant_name):
 @cfy.command(name='start',
              short_help='Execute a workflow')
 @cfy.argument('workflow-id')
-@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
+@cfy.options.blueprint_id(required=True)
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
 @cfy.options.task_retries()
