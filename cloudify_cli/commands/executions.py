@@ -194,7 +194,7 @@ def manager_start(workflow_id,
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     events_logger = get_events_logger(json_output)
-    events_message = "* Run 'cfy events list -e {0}' to retrieve the " \
+    events_message = "* Run 'cfy events list {0}' to retrieve the " \
                      "execution's events/logs"
     original_timeout = timeout
     logger.info('Executing workflow `{0}` on deployment `{1}`'
@@ -297,7 +297,7 @@ def manager_start(workflow_id,
                 workflow_id, deployment_id, e.execution_id, original_timeout))
 
         events_tail_message = "* Run 'cfy events list --tail " \
-                              "--execution-id {0}' to retrieve the " \
+                              "{0}' to retrieve the " \
                               "execution's events/logs"
         logger.info(events_tail_message.format(e.execution_id))
         raise SuppressedCloudifyCliError()
