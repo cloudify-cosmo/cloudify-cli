@@ -581,7 +581,7 @@ def manager_set_visibility(deployment_id, visibility, logger, client):
 
 @cfy.command(name='inputs', short_help='Show deployment inputs [locally]')
 @cfy.options.common_options
-@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
+@cfy.options.blueprint_id(required=True)
 @cfy.pass_logger
 def local_inputs(blueprint_id, logger):
     """Display inputs for the execution
@@ -592,7 +592,7 @@ def local_inputs(blueprint_id, logger):
 
 @cfy.command(name='outputs', short_help='Show deployment outputs [locally]')
 @cfy.options.common_options
-@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
+@cfy.options.blueprint_id(required=True)
 @cfy.pass_logger
 def local_outputs(blueprint_id, logger):
     """Display outputs for the execution

@@ -62,28 +62,36 @@ def initialize_blueprint(blueprint_path,
 
 def storage_dir(blueprint_id=None):
     if blueprint_id:
-        return os.path.join(
-            env.PROFILES_DIR,
-            _ENV_NAME,
-            blueprint_id
-        )
+        return os.path.join(env.PROFILES_DIR, _ENV_NAME, blueprint_id)
     else:
-        directories = [env.PROFILES_DIR, _ENV_NAME]
-        if not env.MULTIPLE_LOCAL_BLUEPRINTS:
-            directories.append('local-storage')
-        return os.path.join(*directories)
+        return os.path.join(env.PROFILES_DIR, _ENV_NAME)
+
+
+def list_blueprints():
+    blueprints = []
+    for bp_id in os.listdir(os.path.join(env.PROFILES_DIR, _ENV_NAME)):
+        bp_env = load_env(bp_id)
+        blueprints.append({
+            'id': bp_id,
+            'description': bp_env.plan['description'],
+            'main_file_name': os.path.basename(
+                bp_env.storage.get_blueprint_path()),
+            'created_at': bp_env.created_at,
+        })
+    return blueprints
 
 
 def get_storage():
     return local.FileStorage(storage_dir=storage_dir())
 
 
-def load_env(blueprint_id=None):
-    if not os.path.isdir(storage_dir()):
+def load_env(blueprint_id):
+    if not os.path.isdir(storage_dir(blueprint_id)):
         error = exceptions.CloudifyCliError('Please initialize a blueprint')
         error.possible_solutions = ["Run `cfy init BLUEPRINT_PATH`"]
         raise error
-    return local.load_env(name=blueprint_id or 'local', storage=get_storage())
+    return local.load_env(name=blueprint_id or 'local',
+                          storage=get_storage())
 
 
 def _install_plugins(blueprint_path):

@@ -129,6 +129,8 @@ def _register_commands():
         deployments.deployments.add_command(deployments.manager_capabilities)
 
         executions.executions.add_command(executions.manager_start)
+
+        blueprints.blueprints.add_command(blueprints.manager_list)
     else:
         _cfy.add_command(install.local)
         _cfy.add_command(uninstall.local)
@@ -138,6 +140,8 @@ def _register_commands():
         deployments.deployments.add_command(deployments.local_outputs)
 
         executions.executions.add_command(executions.local_start)
+
+        blueprints.blueprints.add_command(blueprints.local_list)
 
 
 _register_commands()

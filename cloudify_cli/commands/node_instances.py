@@ -145,7 +145,7 @@ def list(deployment_id,
 @cfy.command(name='node-instances',
              short_help='Show node-instance information [locally]')
 @cfy.argument('node-id', required=False)
-@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
+@cfy.options.blueprint_id(required=True)
 @cfy.options.common_options
 @cfy.pass_logger
 def local(node_id, blueprint_id, logger):

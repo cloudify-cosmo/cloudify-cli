@@ -92,7 +92,7 @@ def manager(ctx,
 @cfy.command(name='uninstall',
              short_help='Uninstall an application blueprint')
 @cfy.options.workflow_id('uninstall')
-@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
+@cfy.options.blueprint_id(required=True)
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
 @cfy.options.task_retries()
