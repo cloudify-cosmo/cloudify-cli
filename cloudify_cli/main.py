@@ -44,7 +44,6 @@ from .commands import user_groups
 from .commands import deployments
 from .commands import node_instances
 from .commands import maintenance_mode
-from .commands import summary
 
 
 @cfy.group(name='cfy')
@@ -103,7 +102,6 @@ def _register_commands():
     _cfy.add_command(blueprints.blueprints)
     _cfy.add_command(executions.executions)
     _cfy.add_command(deployments.deployments)
-    _cfy.add_command(summary.summary)
 
     deployments.deployments.add_command(deployments.manager_create)
     deployments.deployments.add_command(deployments.manager_delete)
@@ -120,7 +118,7 @@ def _register_commands():
     if env.is_manager_active():
         _cfy.add_command(install.manager)
         _cfy.add_command(uninstall.manager)
-        _cfy.add_command(node_instances.manager)
+        _cfy.add_command(node_instances.node_instances)
 
         deployments.deployments.add_command(deployments.manager_inputs)
         deployments.deployments.add_command(deployments.manager_outputs)
