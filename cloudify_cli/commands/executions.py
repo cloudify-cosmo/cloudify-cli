@@ -34,17 +34,15 @@ _STATUS_CANCELING_MESSAGE = (
     'NOTE: Executions currently in a "canceling/force-canceling" status '
     'may take a while to change into "cancelled"')
 
-LOCAL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display',
-                           'blueprint_id', 'started_at', 'ended_at', 'error']
-FULL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display', 'is_dry_run',
-                          'deployment_id', 'created_at', 'ended_at',
-                          'error', 'visibility', 'tenant_name',
-                          'created_by', 'started_at', 'scheduled_for']
-MINIMAL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display',
-                             'is_dry_run',
-                             'deployment_id', 'created_at', 'started_at',
-                             'scheduled_for', 'visibility', 'tenant_name',
-                             'created_by']
+BASE_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display']
+LOCAL_EXECUTION_COLUMNS = BASE_EXECUTION_COLUMNS + [
+    'blueprint_id', 'started_at', 'ended_at', 'error']
+FULL_EXECUTION_COLUMNS = BASE_EXECUTION_COLUMNS + [
+    'is_dry_run', 'deployment_id', 'created_at', 'ended_at', 'error',
+    'visibility', 'tenant_name', 'created_by', 'started_at', 'scheduled_for']
+MINIMAL_EXECUTION_COLUMNS = BASE_EXECUTION_COLUMNS + [
+    'is_dry_run', 'deployment_id', 'created_at', 'started_at', 'scheduled_for',
+    'visibility', 'tenant_name', 'created_by']
 EXECUTION_TABLE_LABELS = {'status_display': 'status'}
 
 
