@@ -16,6 +16,7 @@
 
 import os
 import sys
+import pytz
 import click
 import errno
 import string
@@ -24,7 +25,9 @@ import shutil
 import tarfile
 import zipfile
 import tempfile
+import dateutil.parser
 from shutil import copy
+from datetime import datetime
 from urlparse import urlparse
 from contextlib import closing, contextmanager
 from backports.shutil_get_terminal_size import get_terminal_size
@@ -32,8 +35,10 @@ from backports.shutil_get_terminal_size import get_terminal_size
 import requests
 
 from .logger import get_logger
-from .exceptions import CloudifyCliError
 from .constants import SUPPORTED_ARCHIVE_TYPES
+from .exceptions import (
+    CloudifyCliError,
+    CloudifyValidationError)
 
 from cloudify_rest_client.constants import VisibilityState
 from cloudify_rest_client.exceptions import CloudifyClientError
@@ -356,3 +361,37 @@ def get_local_path(source, destination=None, create_temp=False):
 def explicit_tenant_name_message(tenant_name, logger):
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+
+
+def validate_date(date):
+    """
+    :param date: The `scheduled for` date that is passed when using the
+            `--schedule` flag (when running `cfy executions start`). Need to
+            validate that this date is in the future and can be parsed
+            successfully.
+    :return: A string representing the date in UTC and no timezone info.
+    """
+    # Parse the string to datetime object
+    date_with_offset = dateutil.parser.parse(date)
+    # Convert the date to UTC & remove tzinfo
+    try:
+        utc_date = date_with_offset.astimezone(pytz.utc)
+    except ValueError:
+        raise CloudifyValidationError('Date `{0}` missing timezone '
+                                      'information, please provide valid date.'
+                                      '\nExpected format: YYYYMMDDHHMM+HHMM or'
+                                      ' YYYYMMDDHHMM-HHMM i.e:'
+                                      ' 201801012230-0500 (Jan-01-18'
+                                      ' 10:30pm EST)'.format(date))
+    utc_date = utc_date.replace(tzinfo=None)
+    now = datetime.utcnow()
+    if utc_date <= now:
+        raise CloudifyValidationError('Date `{0}` has already passed, please'
+                                      ' provide valid date.\nExpected format: '
+                                      'YYYYMMDDHHMM+HHMM or '
+                                      'YYYYMMDDHHMM-HHMM i.e:'
+                                      ' 201801012230-0500 (Jan-01-18'
+                                      ' 10:30pm EST)'.format(date))
+
+    date_str = utc_date.strftime('%Y%m%d%H%M')
+    return date_str

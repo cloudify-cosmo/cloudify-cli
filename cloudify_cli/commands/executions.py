@@ -21,14 +21,19 @@ from cloudify_rest_client import exceptions
 
 from .. import local
 from .. import utils
-from ..table import print_data, print_single, print_details
-from ..utils import get_deployment_environment_execution
 from ..cli import cfy, helptexts
+from ..execution_events_fetcher import wait_for_execution
+from ..table import print_data, print_single, print_details
 from ..logger import get_events_logger, get_global_json_output
 from ..constants import DEFAULT_UNINSTALL_WORKFLOW, CREATE_DEPLOYMENT
-from ..execution_events_fetcher import wait_for_execution
-from ..exceptions import CloudifyCliError, ExecutionTimeoutError, \
-    SuppressedCloudifyCliError
+from ..utils import (
+    get_deployment_environment_execution,
+    validate_date)
+from ..exceptions import (
+    CloudifyCliError,
+    ExecutionTimeoutError,
+    SuppressedCloudifyCliError)
+
 
 _STATUS_CANCELING_MESSAGE = (
     'NOTE: Executions currently in a "canceling/force-canceling" status '
@@ -201,6 +206,9 @@ def manager_start(workflow_id,
                 ' [timeout={2} seconds]'.format(workflow_id,
                                                 deployment_id,
                                                 timeout))
+    if schedule:
+        schedule_utc = validate_date(schedule)
+
     try:
         try:
             execution = client.executions.start(
@@ -212,7 +220,7 @@ def manager_start(workflow_id,
                 dry_run=dry_run,
                 queue=queue,
                 wait_after_fail=wait_after_fail,
-                schedule=schedule)
+                schedule=schedule_utc)
         except (exceptions.DeploymentEnvironmentCreationInProgressError,
                 exceptions.DeploymentEnvironmentCreationPendingError) as e:
             # wait for deployment environment creation workflow
@@ -246,7 +254,7 @@ def manager_start(workflow_id,
                 dry_run=dry_run,
                 queue=queue,
                 wait_after_fail=wait_after_fail,
-                schedule=schedule)
+                schedule=schedule_utc)
 
         if execution.status == 'queued':  # We don't need to wait for execution
             logger.info('Execution is being queued. It will automatically'
