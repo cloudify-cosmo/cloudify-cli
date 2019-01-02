@@ -23,7 +23,7 @@ from cloudify_rest_client import exceptions
 from .. import local
 from .. import utils
 from ..table import print_data, print_single, print_details
-from ..utils import get_deployment_environment_execution
+from ..utils import get_deployment_environment_execution, normalize_parameters
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger, get_global_json_output
 from ..constants import DEFAULT_UNINSTALL_WORKFLOW, CREATE_DEPLOYMENT
@@ -204,11 +204,20 @@ def manager_start(workflow_id,
     events_logger = get_events_logger(json_output)
     events_message = "* Run 'cfy events list {0}' to retrieve the " \
                      "execution's events/logs"
+
+    if parameters:
+        # Only do this if there's at least one parameter.
+        deployment = client.deployments.get(deployment_id, _include=['blueprint_id'])
+        blueprint = client.blueprints.get(deployment.blueprint_id, _include=['plan'])
+        workflow_parameters = blueprint.plan['workflows'][workflow_id].get('parameters')
+        normalize_parameters(workflow_parameters, parameters)
+
     original_timeout = timeout
     logger.info('Executing workflow `{0}` on deployment `{1}`'
                 ' [timeout={2} seconds]'.format(workflow_id,
                                                 deployment_id,
                                                 timeout))
+
     try:
         try:
             execution = client.executions.start(

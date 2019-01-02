@@ -24,6 +24,7 @@ import shutil
 import tarfile
 import zipfile
 import tempfile
+
 from shutil import copy
 from urlparse import urlparse
 from contextlib import closing, contextmanager
@@ -356,3 +357,19 @@ def get_local_path(source, destination=None, create_temp=False):
 def explicit_tenant_name_message(tenant_name, logger):
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+
+
+def normalize_parameters(parameters_desc, parameters):
+    for param_name, param_value in parameters.items():
+        if param_name in parameters_desc:
+            param_desc = parameters_desc[param_name]
+            if param_desc.get('type') == 'boolean':
+                str_value = str(param_value).lower()
+                if str_value == 'true':
+                    parameters[param_name] = True
+                elif str_value == 'false':
+                    parameters[param_name] = False
+                else:
+                    raise CloudifyCliError("Value provided to "
+                                           "'%s' must be either 'true' or "
+                                           "'false' (case-insensitive)")

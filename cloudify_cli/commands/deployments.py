@@ -45,7 +45,8 @@ from ..exceptions import (CloudifyCliError,
 from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility,
-                     get_deployment_environment_execution)
+                     get_deployment_environment_execution,
+                     normalize_parameters)
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 
@@ -395,22 +396,7 @@ def manager_create(blueprint_id,
         # Only do this if inputs were provided.
         blueprint = client.blueprints.get(blueprint_id, _include=['plan'])
         bp_inputs = blueprint.plan.get('inputs', {})
-        for input_name, input_value in inputs.items():
-            if input_name in bp_inputs:
-                input_desc = bp_inputs[input_name]
-                if input_desc.get('type') == 'boolean':
-                    str_value = str(input_value).lower()
-                    if str_value == 'true':
-                        inputs[input_name] = True
-                    elif str_value == 'false':
-                        inputs[input_name] = False
-                    else:
-                        raise CloudifyCliError("Value provided to the input "
-                                               "'%s' must be either 'true' or "
-                                               "'false' (case-insensitive)")
-                    logger.debug("Coerced input '%s' to boolean; original=%s, "
-                                 "updated=%s",
-                                 input_name, input_value, inputs[input_name])
+        normalize_parameters(bp_inputs, inputs)
 
     try:
         deployment = client.deployments.create(
