@@ -71,6 +71,7 @@ function prepare_linux () {
     fi
     rvm install 2.4.4 && rvm use 2.4.4
     gem install bundler -v '=1.16.0' --no-ri --no-rdoc
+    gem install mixlib-cli -v 1.7.0
     gem install omnibus --no-ri --no-rdoc
 }
 
