@@ -6,7 +6,7 @@ description: >
 
 imports:
   - http://www.getcloudify.org/spec/cloudify/4.5.5.dev1/types.yaml
-  - blueprint:test
+  - ns--blueprint:test
 
 node_templates:
   x:

@@ -16,6 +16,7 @@
 
 import json
 
+import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
@@ -24,24 +25,31 @@ from ..local import load_env
 from ..logger import get_global_json_output
 from ..table import print_data, print_details, print_single
 from ..exceptions import CloudifyCliError
+from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 
 NODE_INSTANCE_COLUMNS = ['id', 'deployment_id', 'host_id', 'node_id', 'state',
                          'visibility', 'tenant_name', 'created_by']
+NODE_INSTANCES_SUMMARY_FIELDS = [
+    'deployment_id',
+    'node_id',
+    'state',
+    'host_id',
+] + BASE_SUMMARY_FIELDS
 
 
 @cfy.group(name='node-instances')
 @cfy.options.common_options
 @cfy.assert_manager_active()
-def manager():
+def node_instances():
     """Handle a deployment's node-instances
     """
     pass
 
 
-@manager.command(name='get',
-                 short_help='Retrieve node-instance information '
-                 '[manager only]')
+@node_instances.command(name='get',
+                        short_help='Retrieve node-instance information '
+                                   '[manager only]')
 @cfy.argument('node_instance_id')
 @cfy.options.common_options
 @cfy.options.tenant_name(
@@ -82,9 +90,9 @@ def get(node_instance_id, logger, client, tenant_name):
     logger.info('')
 
 
-@manager.command(name='list',
-                 short_help='List node-instances for a deployment '
-                 '[manager only]')
+@node_instances.command(name='list',
+                        short_help='List node-instances for a deployment '
+                                   '[manager only]')
 @cfy.options.deployment_id(required=False)
 @cfy.options.node_name
 @cfy.options.sort_by('node_id')
@@ -142,10 +150,57 @@ def list(deployment_id,
                 .format(len(node_instances), total))
 
 
+@node_instances.command(name='summary',
+                        short_help='Retrieve summary of node instance '
+                                   'details [manager only]')
+@cfy.argument('target_field',
+              type=click.Choice(NODE_INSTANCES_SUMMARY_FIELDS))
+@cfy.argument('sub_field',
+              type=click.Choice(NODE_INSTANCES_SUMMARY_FIELDS),
+              default=None, required=False)
+@cfy.options.common_options
+@cfy.options.tenant_name(required=False, resource_name_for_help='summary')
+@cfy.options.all_tenants
+@cfy.pass_logger
+@cfy.pass_client()
+def summary(target_field, sub_field, logger, client, tenant_name,
+            all_tenants):
+    """Retrieve summary of node instances, e.g. a count of each node instance
+    with the same deployment ID.
+
+    `TARGET_FIELD` is the field to summarise node instances on.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info(
+        'Retrieving summary of node instances on field {field}'.format(
+            field=target_field,
+        )
+    )
+
+    summary = client.summary.node_instances.get(
+        _target_field=target_field,
+        _sub_field=sub_field,
+        _all_tenants=all_tenants,
+    )
+
+    columns, items = structure_summary_results(
+        summary.items,
+        target_field,
+        sub_field,
+        'node_instances',
+    )
+
+    print_data(
+        columns,
+        items,
+        'Node instance summary by {field}'.format(field=target_field),
+    )
+
+
 @cfy.command(name='node-instances',
              short_help='Show node-instance information [locally]')
 @cfy.argument('node-id', required=False)
-@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
+@cfy.options.blueprint_id(required=True)
 @cfy.options.common_options
 @cfy.pass_logger
 def local(node_id, blueprint_id, logger):

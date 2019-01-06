@@ -124,8 +124,7 @@ def manager(ctx,
              short_help='Install an application blueprint [locally]')
 @cfy.argument('blueprint-path')
 @cfy.options.blueprint_filename()
-@cfy.options.blueprint_id(
-    required=False, multiple_blueprints=True, validate=True)
+@cfy.options.blueprint_id(required=False, validate=True)
 @cfy.options.inputs
 @cfy.options.validate
 @cfy.options.install_plugins

@@ -18,8 +18,7 @@ import os
 import json
 import shutil
 
-from StringIO import StringIO
-
+import click
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 from cloudify_rest_client.exceptions import (
     DeploymentPluginNotFound,
@@ -29,6 +28,9 @@ from cloudify_rest_client.exceptions import (
     UnsupportedDeploymentGetSecretError,
     CloudifyClientError
 )
+from StringIO import StringIO
+
+
 from . import blueprints
 from ..local import load_env
 from ..table import print_data, print_single, print_details
@@ -44,6 +46,7 @@ from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility,
                      get_deployment_environment_execution)
+from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 
 DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
@@ -52,6 +55,9 @@ DEPLOYMENT_UPDATE_COLUMNS = ['id', 'deployment_id', 'tenant_name', 'state',
                              'execution_id', 'created_at', 'visibility',
                              'old_blueprint_id', 'new_blueprint_id']
 TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
+DEPLOYMENTS_SUMMARY_FIELDS = [
+    'blueprint_id',
+] + BASE_SUMMARY_FIELDS
 
 
 @cfy.group(name='deployments')
@@ -581,7 +587,7 @@ def manager_set_visibility(deployment_id, visibility, logger, client):
 
 @cfy.command(name='inputs', short_help='Show deployment inputs [locally]')
 @cfy.options.common_options
-@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
+@cfy.options.blueprint_id(required=True)
 @cfy.pass_logger
 def local_inputs(blueprint_id, logger):
     """Display inputs for the execution
@@ -592,10 +598,52 @@ def local_inputs(blueprint_id, logger):
 
 @cfy.command(name='outputs', short_help='Show deployment outputs [locally]')
 @cfy.options.common_options
-@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
+@cfy.options.blueprint_id(required=True)
 @cfy.pass_logger
 def local_outputs(blueprint_id, logger):
     """Display outputs for the execution
     """
     env = load_env(blueprint_id)
     logger.info(json.dumps(env.outputs() or {}, sort_keys=True, indent=2))
+
+
+@deployments.command(name='summary',
+                     short_help='Retrieve summary of deployment details '
+                                '[manager only]')
+@cfy.argument('target_field', type=click.Choice(DEPLOYMENTS_SUMMARY_FIELDS))
+@cfy.argument('sub_field', type=click.Choice(DEPLOYMENTS_SUMMARY_FIELDS),
+              default=None, required=False)
+@cfy.options.common_options
+@cfy.options.tenant_name(required=False, resource_name_for_help='summary')
+@cfy.options.all_tenants
+@cfy.pass_logger
+@cfy.pass_client()
+def summary(target_field, sub_field, logger, client, tenant_name,
+            all_tenants):
+    """Retrieve summary of deployments, e.g. a count of each deployment with
+    the same blueprint ID.
+
+    `TARGET_FIELD` is the field to summarise deployments on.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Retrieving summary of deployments on field {field}'.format(
+        field=target_field))
+
+    summary = client.summary.deployments.get(
+        _target_field=target_field,
+        _sub_field=sub_field,
+        _all_tenants=all_tenants,
+    )
+
+    columns, items = structure_summary_results(
+        summary.items,
+        target_field,
+        sub_field,
+        'deployments',
+    )
+
+    print_data(
+        columns,
+        items,
+        'Deployment summary by {field}'.format(field=target_field),
+    )

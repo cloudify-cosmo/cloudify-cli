@@ -14,6 +14,7 @@
 # limitations under the License.
 ############
 
+import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
@@ -21,12 +22,16 @@ from ..cli import cfy
 from ..table import print_data, print_single, print_details
 from ..exceptions import CloudifyCliError
 from ..logger import get_global_json_output
+from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 NODE_COLUMNS = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                 'number_of_instances', 'planned_number_of_instances',
                 'visibility', 'tenant_name', 'created_by']
 
 OPERATION_COLUMNS = ['name', 'inputs', 'plugin', 'executor', 'operation']
+NODES_SUMMARY_FIELDS = [
+    'deployment_id',
+] + BASE_SUMMARY_FIELDS
 
 
 @cfy.group(name='nodes')
@@ -161,3 +166,43 @@ def list(deployment_id,
     print_data(NODE_COLUMNS, nodes, 'Nodes:')
     total = nodes.metadata.pagination.total
     logger.info('Showing {0} of {1} nodes'.format(len(nodes), total))
+
+
+@nodes.command(name='summary',
+               short_help='Retrieve summary of node details [manager only]')
+@cfy.argument('target_field', type=click.Choice(NODES_SUMMARY_FIELDS))
+@cfy.argument('sub_field', type=click.Choice(NODES_SUMMARY_FIELDS),
+              default=None, required=False)
+@cfy.options.common_options
+@cfy.options.tenant_name(required=False, resource_name_for_help='summary')
+@cfy.options.all_tenants
+@cfy.pass_logger
+@cfy.pass_client()
+def summary(target_field, sub_field, logger, client, tenant_name, all_tenants):
+    """Retrieve summary of nodes, e.g. a count of each node with the same
+    deployment ID.
+
+    `TARGET_FIELD` is the field to summarise nodes on.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Retrieving summary of nodes on field {field}'.format(
+        field=target_field))
+
+    summary = client.summary.nodes.get(
+        _target_field=target_field,
+        _sub_field=sub_field,
+        _all_tenants=all_tenants,
+    )
+
+    columns, items = structure_summary_results(
+        summary.items,
+        target_field,
+        sub_field,
+        'nodes',
+    )
+
+    print_data(
+        columns,
+        items,
+        'Node summary by {field}'.format(field=target_field),
+    )

@@ -1015,6 +1015,13 @@ class Options(object):
             help=helptexts.QUEUE_EXECUTIONS
         )
 
+        self.schedule = click.option(
+            '--schedule',
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['queue'],
+            help=helptexts.SCHEDULE_EXECUTIONS
+        )
+
         self.queue_snapshot = click.option(
             '--queue',
             is_flag=True,
@@ -1314,26 +1321,13 @@ class Options(object):
             help=helptexts.EXECUTION_ID)
 
     @staticmethod
-    def blueprint_id(required=False,
-                     multiple_blueprints=False,
-                     validate=False):
-        def pass_empty_blueprint_id(func):
-            @wraps(func)
-            def wrapper(*args, **kwargs):
-                kwargs['blueprint_id'] = None
-                return func(*args, **kwargs)
-
-            return wrapper
-
-        if multiple_blueprints and not env.MULTIPLE_LOCAL_BLUEPRINTS:
-            return pass_empty_blueprint_id
-        else:
-            return click.option(
-                '-b',
-                '--blueprint-id',
-                required=required,
-                help=helptexts.BLUEPRINT_ID,
-                callback=_get_validate_callback(validate))
+    def blueprint_id(required=False, validate=False):
+        return click.option(
+            '-b',
+            '--blueprint-id',
+            required=required,
+            help=helptexts.BLUEPRINT_ID,
+            callback=_get_validate_callback(validate))
 
     @staticmethod
     def blueprint_path(required=False):

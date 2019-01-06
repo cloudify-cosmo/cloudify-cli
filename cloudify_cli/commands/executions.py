@@ -17,6 +17,7 @@
 import json
 import time
 
+import click
 from cloudify_rest_client import exceptions
 
 from .. import local
@@ -29,21 +30,28 @@ from ..constants import DEFAULT_UNINSTALL_WORKFLOW, CREATE_DEPLOYMENT
 from ..execution_events_fetcher import wait_for_execution
 from ..exceptions import CloudifyCliError, ExecutionTimeoutError, \
     SuppressedCloudifyCliError
+from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 _STATUS_CANCELING_MESSAGE = (
     'NOTE: Executions currently in a "canceling/force-canceling" status '
     'may take a while to change into "cancelled"')
 
-FULL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display', 'is_dry_run',
-                          'deployment_id', 'created_at', 'ended_at',
-                          'error', 'visibility', 'tenant_name',
-                          'created_by', 'started_at']
-MINIMAL_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display',
-                             'is_dry_run',
-                             'deployment_id', 'created_at', 'started_at',
-                             'visibility', 'tenant_name',
-                             'created_by']
+BASE_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display']
+LOCAL_EXECUTION_COLUMNS = BASE_EXECUTION_COLUMNS + [
+    'blueprint_id', 'started_at', 'ended_at', 'error']
+FULL_EXECUTION_COLUMNS = BASE_EXECUTION_COLUMNS + [
+    'is_dry_run', 'deployment_id', 'created_at', 'ended_at', 'error',
+    'visibility', 'tenant_name', 'created_by', 'started_at', 'scheduled_for']
+MINIMAL_EXECUTION_COLUMNS = BASE_EXECUTION_COLUMNS + [
+    'is_dry_run', 'deployment_id', 'created_at', 'started_at', 'scheduled_for',
+    'visibility', 'tenant_name', 'created_by']
 EXECUTION_TABLE_LABELS = {'status_display': 'status'}
+EXECUTIONS_SUMMARY_FIELDS = [
+    'status',
+    'blueprint_id',
+    'deployment_id',
+    'workflow_id',
+] + BASE_SUMMARY_FIELDS
 
 
 @cfy.group(name='executions')
@@ -90,7 +98,7 @@ def manager_get(execution_id, logger, client, tenant_name):
 
 
 @cfy.command(name='list',
-             short_help='List deployment executions [manager only]')
+             short_help='List deployment executions')
 @cfy.options.deployment_id(required=False)
 @cfy.options.include_system_workflows
 @cfy.options.sort_by()
@@ -168,6 +176,7 @@ def manager_list(
 @cfy.options.wait_after_fail
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
+@cfy.options.schedule
 @cfy.options.queue
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -183,6 +192,7 @@ def manager_start(workflow_id,
                   dry_run,
                   wait_after_fail,
                   queue,
+                  schedule,
                   logger,
                   client,
                   tenant_name):
@@ -192,7 +202,7 @@ def manager_start(workflow_id,
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     events_logger = get_events_logger(json_output)
-    events_message = "* Run 'cfy events list -e {0}' to retrieve the " \
+    events_message = "* Run 'cfy events list {0}' to retrieve the " \
                      "execution's events/logs"
     original_timeout = timeout
     logger.info('Executing workflow `{0}` on deployment `{1}`'
@@ -209,7 +219,8 @@ def manager_start(workflow_id,
                 force=force,
                 dry_run=dry_run,
                 queue=queue,
-                wait_after_fail=wait_after_fail)
+                wait_after_fail=wait_after_fail,
+                schedule=schedule)
         except (exceptions.DeploymentEnvironmentCreationInProgressError,
                 exceptions.DeploymentEnvironmentCreationPendingError) as e:
             # wait for deployment environment creation workflow
@@ -242,11 +253,15 @@ def manager_start(workflow_id,
                 force=force,
                 dry_run=dry_run,
                 queue=queue,
-                wait_after_fail=wait_after_fail)
+                wait_after_fail=wait_after_fail,
+                schedule=schedule)
 
         if execution.status == 'queued':  # We don't need to wait for execution
             logger.info('Execution is being queued. It will automatically'
                         ' start when possible.')
+            return
+        if execution.status == 'scheduled':
+            logger.info('Execution is scheduled for {0}.'.format(schedule))
             return
         execution = wait_for_execution(client,
                                        execution,
@@ -290,7 +305,7 @@ def manager_start(workflow_id,
                 workflow_id, deployment_id, e.execution_id, original_timeout))
 
         events_tail_message = "* Run 'cfy events list --tail " \
-                              "--execution-id {0}' to retrieve the " \
+                              "{0}' to retrieve the " \
                               "execution's events/logs"
         logger.info(events_tail_message.format(e.execution_id))
         raise SuppressedCloudifyCliError()
@@ -326,10 +341,50 @@ def manager_cancel(execution_id, force, kill, logger, client, tenant_name):
         "cfy executions get {0}".format(execution_id))
 
 
+@cfy.command(name='list',
+             short_help='List deployment executions')
+@cfy.options.blueprint_id(required=True)
+@cfy.options.common_options
+@cfy.pass_logger
+def local_list(blueprint_id, logger):
+    """Execute a workflow
+
+    `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
+    """
+    env = local.load_env(blueprint_id)
+    executions = env.storage.get_executions()
+    print_data(LOCAL_EXECUTION_COLUMNS, executions, 'Executions:',
+               labels=EXECUTION_TABLE_LABELS)
+
+
+@cfy.command(name='get',
+             short_help='Retrieve execution information')
+@cfy.argument('execution-id')
+@cfy.options.blueprint_id(required=True)
+@cfy.options.common_options
+@cfy.pass_logger
+def local_get(execution_id, blueprint_id, logger):
+    """Retrieve information for a specific execution
+
+    `EXECUTION_ID` is the execution to get information on.
+    """
+    env = local.load_env(blueprint_id)
+    execution = env.storage.get_execution(execution_id)
+    if not execution:
+        raise CloudifyCliError('Execution {0} not found'.format(execution_id))
+    columns = LOCAL_EXECUTION_COLUMNS
+    if get_global_json_output():
+        columns += ['parameters']
+    print_single(LOCAL_EXECUTION_COLUMNS, execution, 'Execution:',
+                 labels=EXECUTION_TABLE_LABELS)
+    if not get_global_json_output():
+        print_details(execution['parameters'], 'Execution Parameters:')
+
+
 @cfy.command(name='start',
              short_help='Execute a workflow')
 @cfy.argument('workflow-id')
-@cfy.options.blueprint_id(required=True, multiple_blueprints=True)
+@cfy.options.blueprint_id(required=True)
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
 @cfy.options.task_retries()
@@ -358,3 +413,45 @@ def local_start(workflow_id,
                          task_thread_pool_size=task_thread_pool_size)
     if result is not None:
         logger.info(json.dumps(result, sort_keys=True, indent=2))
+
+
+@executions.command(name='summary',
+                    short_help='Retrieve summary of execution details '
+                               '[manager only]')
+@cfy.argument('target_field', type=click.Choice(EXECUTIONS_SUMMARY_FIELDS))
+@cfy.argument('sub_field', type=click.Choice(EXECUTIONS_SUMMARY_FIELDS),
+              default=None, required=False)
+@cfy.options.common_options
+@cfy.options.tenant_name(required=False, resource_name_for_help='summary')
+@cfy.options.all_tenants
+@cfy.pass_logger
+@cfy.pass_client()
+def summary(target_field, sub_field, logger, client, tenant_name,
+            all_tenants):
+    """Retrieve summary of executions, e.g. a count of each execution with
+    the same deployment ID.
+
+    `TARGET_FIELD` is the field to summarise executions on.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Retrieving summary of executions on field {field}'.format(
+        field=target_field))
+
+    summary = client.summary.executions.get(
+        _target_field=target_field,
+        _sub_field=sub_field,
+        _all_tenants=all_tenants,
+    )
+
+    columns, items = structure_summary_results(
+        summary.items,
+        target_field,
+        sub_field,
+        'executions',
+    )
+
+    print_data(
+        columns,
+        items,
+        'Execution summary by {field}'.format(field=target_field),
+    )

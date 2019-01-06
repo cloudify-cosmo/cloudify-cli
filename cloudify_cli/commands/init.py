@@ -36,8 +36,7 @@ from ..exceptions import CloudifyCliError
 @cfy.command(name='init', short_help='Initialize a working env')
 @cfy.argument('blueprint-path', required=False)
 @cfy.options.blueprint_filename()
-@cfy.options.blueprint_id(
-    required=False, multiple_blueprints=True, validate=True)
+@cfy.options.blueprint_id(required=False, validate=True)
 @cfy.options.reset_context
 @cfy.options.inputs
 @cfy.options.install_plugins
@@ -89,11 +88,10 @@ def init(blueprint_path,
             blueprint_filename
         )
 
-        if env.MULTIPLE_LOCAL_BLUEPRINTS:
-            blueprint_id = blueprint_id or blueprint.generate_id(
-                processed_blueprint_path,
-                blueprint_filename
-            )
+        blueprint_id = blueprint_id or blueprint.generate_id(
+            processed_blueprint_path,
+            blueprint_filename
+        )
 
         if os.path.isdir(local.storage_dir(blueprint_id)):
             shutil.rmtree(local.storage_dir(blueprint_id))

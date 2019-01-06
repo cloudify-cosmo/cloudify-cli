@@ -33,7 +33,7 @@ class ListSortTest(CliCommandTest):
                 'node-instances',
                 self.client.node_instances,
                 'node_id',
-                'manager'
+                'node_instances'
             ),
             ListSortTest._resource(
                 'blueprints',

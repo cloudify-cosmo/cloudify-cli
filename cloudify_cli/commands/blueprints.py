@@ -37,12 +37,15 @@ from ..exceptions import CloudifyCliError
 from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility)
+from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 
 DESCRIPTION_LIMIT = 20
-BLUEPRINT_COLUMNS = ['id', 'description', 'main_file_name', 'created_at',
-                     'updated_at', 'visibility', 'tenant_name', 'created_by']
+BASE_BLUEPRINT_COLUMNS = ['id', 'description', 'main_file_name', 'created_at']
+BLUEPRINT_COLUMNS = BASE_BLUEPRINT_COLUMNS + ['updated_at', 'visibility',
+                                              'tenant_name', 'created_by']
 INPUTS_COLUMNS = ['name', 'type', 'default', 'description']
+BLUEPRINTS_SUMMARY_FIELDS = BASE_SUMMARY_FIELDS
 
 
 @cfy.group(name='blueprints')
@@ -210,8 +213,7 @@ def delete(blueprint_id, force, logger, client, tenant_name):
     logger.info('Blueprint deleted')
 
 
-@blueprints.command(name='list',
-                    short_help='List blueprints [manager only]')
+@cfy.command(name='list', short_help='List blueprints')
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.common_options
@@ -224,15 +226,15 @@ def delete(blueprint_id, force, logger, client, tenant_name):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list(sort_by,
-         descending,
-         tenant_name,
-         all_tenants,
-         search,
-         pagination_offset,
-         pagination_size,
-         logger,
-         client):
+def manager_list(sort_by,
+                 descending,
+                 tenant_name,
+                 all_tenants,
+                 search,
+                 pagination_offset,
+                 pagination_size,
+                 logger,
+                 client):
     """List all blueprints
     """
     def trim_description(blueprint):
@@ -258,6 +260,13 @@ def list(sort_by,
     print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
     total = blueprints_list.metadata.pagination.total
     logger.info('Showing {0} of {1} blueprints'.format(len(blueprints), total))
+
+
+@cfy.command(name='list', short_help='List blueprints')
+@cfy.pass_logger
+def local_list(logger):
+    blueprints = local.list_blueprints()
+    print_data(BASE_BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
 
 @blueprints.command(name='get',
@@ -450,3 +459,45 @@ def set_visibility(blueprint_id, visibility, logger, client):
         client.blueprints.set_visibility(blueprint_id, visibility)
         logger.info('Blueprint `{0}` was set to {1}'.format(blueprint_id,
                                                             visibility))
+
+
+@blueprints.command(name='summary',
+                    short_help='Retrieve summary of blueprint details '
+                               '[manager only]')
+@cfy.argument('target_field', type=click.Choice(BLUEPRINTS_SUMMARY_FIELDS))
+@cfy.argument('sub_field', type=click.Choice(BLUEPRINTS_SUMMARY_FIELDS),
+              default=None, required=False)
+@cfy.options.common_options
+@cfy.options.tenant_name(required=False, resource_name_for_help='summary')
+@cfy.options.all_tenants
+@cfy.pass_logger
+@cfy.pass_client()
+def summary(target_field, sub_field, logger, client, tenant_name,
+            all_tenants):
+    """Retrieve summary of blueprints, e.g. a count of each blueprint with
+    the same tenant name.
+
+    `TARGET_FIELD` is the field to summarise blueprints on.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Retrieving summary of blueprints on field {field}'.format(
+        field=target_field))
+
+    summary = client.summary.blueprints.get(
+        _target_field=target_field,
+        _sub_field=sub_field,
+        _all_tenants=all_tenants,
+    )
+
+    columns, items = structure_summary_results(
+        summary.items,
+        target_field,
+        sub_field,
+        'blueprints',
+    )
+
+    print_data(
+        columns,
+        items,
+        'Blueprint summary by {field}'.format(field=target_field),
+    )

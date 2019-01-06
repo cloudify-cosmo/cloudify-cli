@@ -18,7 +18,7 @@ class NodeInstancesTest(CliCommandTest):
     def test_instances_get(self):
         self.client.node_instances.get = \
             MagicMock(return_value=node_instance_get_mock())
-        self.invoke('node-instances get instance_id', context='manager')
+        self.invoke('node-instances get instance_id', context='node_instances')
 
     def test_instances_get_json(self):
         self.client.node_instances.get = \
@@ -27,7 +27,7 @@ class NodeInstancesTest(CliCommandTest):
         # expose stdout/stderr separately, just mushed together. To be fixed
         # in click 6.8/7.0
         result = self.invoke('node-instances get instance_id --json --quiet',
-                             context='manager')
+                             context='node_instances')
         data = json.loads(result.output)
         self.assertIn('runtime_properties', data)
 
@@ -36,7 +36,7 @@ class NodeInstancesTest(CliCommandTest):
             'cfy node-instances get',
             err_str_segment='2',  # Exit code
             exception=SystemExit,
-            context='manager'
+            context='node_instances'
         )
 
         self.assertIn('Missing argument "node_instance_id"', outcome.output)
@@ -46,10 +46,12 @@ class NodeInstancesTest(CliCommandTest):
             return_value=MockListResponse(items=[node_instance_get_mock(),
                                                  node_instance_get_mock()])
         )
-        self.invoke('cfy node-instances list', context='manager')
-        self.invoke('cfy node-instances list -d nodecellar', context='manager')
-        self.invoke('cfy node-instances list -t dummy_t', context='manager')
-        self.invoke('cfy node-instances list -a', context='manager')
+        self.invoke('cfy node-instances list', context='node_instances')
+        self.invoke('cfy node-instances list -d nodecellar',
+                    context='node_instances')
+        self.invoke('cfy node-instances list -t dummy_t',
+                    context='node_instances')
+        self.invoke('cfy node-instances list -a', context='node_instances')
 
     def test_local_instances(self):
         self._create_local_env()

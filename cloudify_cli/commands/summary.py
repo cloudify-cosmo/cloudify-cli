@@ -1,105 +1,69 @@
-from .. import utils
-from ..cli import cfy
-from ..table import print_data
-import click
+from ..logger import get_global_json_output
 
 
-@cfy.group(name='summary')
-@cfy.options.common_options
-@cfy.assert_manager_active()
-def summary():
-    """Get summary information
+BASE_SUMMARY_FIELDS = [
+    'tenant_name',
+    'visibility',
+]
+
+
+def structure_summary_results(results, target_field, sub_field,
+                              summary_type):
+    """Restructure the results returned from the rest client.
+
+    This is needed in case sub-fields are provided, as sub-fields will result
+    in output that looks like:
+    [
+        {
+            "<target_field>": "<value>",
+            "<summary_type>": <total count>,
+            "by <sub_field>": [
+                {
+                    "<sub_field>": "<sub_field value>",
+                    "<summary_type>": <count>,
+                },
+                ... more sub-field results for this value of target_field ...
+            ],
+        },
+        ... more results ...
+    ]
+
+    For compatibility with the CLI output tools, we want to turn this into:
+    [
+        {
+            "<target_field>": "<value>",
+            "<sub_field>": "<sub_field value>",
+            "<summary_type>": <count>,
+        },
+        ... more sub-field results for this value of target_field ...
+        {
+            "<target_field>": "<value>",
+            "<sub_field>": "<TOTAL if not json, empty if json>",
+            "<summary_type>": <count>,
+        },
+        ... sub-fields followed by totals for other target_field values ...
+    ]
     """
-    pass
-
-
-@summary.command(name='nodes',
-                 short_help='Retrieve summary of node details [manager only]')
-@cfy.argument('target_field', type=click.Choice(['deployment_id']))
-@cfy.options.common_options
-@cfy.options.tenant_name(required=False, resource_name_for_help='summary')
-@cfy.pass_logger
-@cfy.pass_client()
-def nodes(target_field, logger, client, tenant_name):
-    """Retrieve summary of nodes, e.g. a count of each node with the same
-    deployment ID.
-
-    `TARGET_FIELD` is the field to summarise nodes on.
-                   Valid fields: deployment_id
-    """
-    utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Retrieving summary of nodes on field {field}'.format(
-        field=target_field))
-
-    summary = client.summary.nodes.get(
-        _target_field=target_field,
-    )
-
-    print_data(
-        [target_field, 'nodes'],
-        summary.items,
-        'Node summary by {field}'.format(field=target_field),
-    )
-
-
-@summary.command(name='node_instances',
-                 short_help='Retrieve summary of node instance details '
-                            '[manager only]')
-@cfy.argument('target_field', type=click.Choice(['deployment_id', 'node_id']))
-@cfy.options.common_options
-@cfy.options.tenant_name(required=False, resource_name_for_help='summary')
-@cfy.pass_logger
-@cfy.pass_client()
-def node_instances(target_field, logger, client, tenant_name):
-    """Retrieve summary of node instances, e.g. a count of each node instance
-    with the same deployment ID.
-
-    `TARGET_FIELD` is the field to summarise node instances on.
-                   Valid fields: deployment_id, node_id
-    """
-    utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info(
-        'Retrieving summary of node instances on field {field}'.format(
-            field=target_field,
-        )
-    )
-
-    summary = client.summary.node_instances.get(
-        _target_field=target_field,
-    )
-
-    print_data(
-        [target_field, 'node_instances'],
-        summary.items,
-        'Node instance summary by {field}'.format(field=target_field),
-    )
-
-
-@summary.command(name='deployments',
-                 short_help='Retrieve summary of deployment details '
-                            '[manager only]')
-@cfy.argument('target_field', type=click.Choice(['blueprint_id']))
-@cfy.options.common_options
-@cfy.options.tenant_name(required=False, resource_name_for_help='summary')
-@cfy.pass_logger
-@cfy.pass_client()
-def deployments(target_field, logger, client, tenant_name):
-    """Retrieve summary of deployments, e.g. a count of each deployment with
-    the same blueprint ID.
-
-    `TARGET_FIELD` is the field to summarise deployments on.
-                   Valid fields: blueprint_id
-    """
-    utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Retrieving summary of deployments on field {field}'.format(
-        field=target_field))
-
-    summary = client.summary.deployments.get(
-        _target_field=target_field,
-    )
-
-    print_data(
-        [target_field, 'deployments'],
-        summary.items,
-        'Deployment summary by {field}'.format(field=target_field),
-    )
+    if sub_field:
+        columns = [target_field, sub_field, summary_type]
+        structured_result = []
+        for result in results:
+            for sub_result in result['by ' + sub_field]:
+                structured_result.append(
+                    {
+                        target_field: result[target_field],
+                        sub_field: sub_result[sub_field],
+                        summary_type: sub_result[summary_type],
+                    }
+                )
+            structured_result.append(
+                {
+                    target_field: result[target_field],
+                    sub_field: '' if get_global_json_output() else 'TOTAL',
+                    summary_type: result[summary_type],
+                }
+            )
+    else:
+        columns = [target_field, summary_type]
+        structured_result = results
+    return columns, structured_result

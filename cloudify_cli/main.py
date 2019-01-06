@@ -44,7 +44,6 @@ from .commands import user_groups
 from .commands import deployments
 from .commands import node_instances
 from .commands import maintenance_mode
-from .commands import summary
 
 
 @cfy.group(name='cfy')
@@ -103,7 +102,6 @@ def _register_commands():
     _cfy.add_command(blueprints.blueprints)
     _cfy.add_command(executions.executions)
     _cfy.add_command(deployments.deployments)
-    _cfy.add_command(summary.summary)
 
     deployments.deployments.add_command(deployments.manager_create)
     deployments.deployments.add_command(deployments.manager_delete)
@@ -114,21 +112,23 @@ def _register_commands():
     deployments.deployments.add_command(deployments.manager_set_visibility)
 
     executions.executions.add_command(executions.manager_cancel)
-    executions.executions.add_command(executions.manager_list)
-    executions.executions.add_command(executions.manager_get)
 
     # Commands which should be both in manager and local context
     # But change depending on the context.
     if env.is_manager_active():
         _cfy.add_command(install.manager)
         _cfy.add_command(uninstall.manager)
-        _cfy.add_command(node_instances.manager)
+        _cfy.add_command(node_instances.node_instances)
 
         deployments.deployments.add_command(deployments.manager_inputs)
         deployments.deployments.add_command(deployments.manager_outputs)
         deployments.deployments.add_command(deployments.manager_capabilities)
 
         executions.executions.add_command(executions.manager_start)
+        executions.executions.add_command(executions.manager_list)
+        executions.executions.add_command(executions.manager_get)
+
+        blueprints.blueprints.add_command(blueprints.manager_list)
     else:
         _cfy.add_command(install.local)
         _cfy.add_command(uninstall.local)
@@ -138,6 +138,10 @@ def _register_commands():
         deployments.deployments.add_command(deployments.local_outputs)
 
         executions.executions.add_command(executions.local_start)
+        executions.executions.add_command(executions.local_list)
+        executions.executions.add_command(executions.local_get)
+
+        blueprints.blueprints.add_command(blueprints.local_list)
 
 
 _register_commands()
