@@ -45,8 +45,7 @@ from ..exceptions import (CloudifyCliError,
 from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility,
-                     get_deployment_environment_execution,
-                     normalize_parameters)
+                     get_deployment_environment_execution)
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 
@@ -391,12 +390,6 @@ def manager_create(blueprint_id,
         blueprint_id))
     deployment_id = deployment_id or blueprint_id
     visibility = get_visibility(private_resource, visibility, logger)
-
-    if inputs:
-        # Only do this if inputs were provided.
-        blueprint = client.blueprints.get(blueprint_id, _include=['plan'])
-        bp_inputs = blueprint.plan.get('inputs', {})
-        normalize_parameters(bp_inputs, inputs)
 
     try:
         deployment = client.deployments.create(
