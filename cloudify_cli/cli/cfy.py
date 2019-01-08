@@ -598,6 +598,11 @@ class Options(object):
             is_flag=True,
             help=helptexts.INSTALL_FIRST)
 
+        self.preview = click.option(
+            '--preview',
+            is_flag=True,
+            help=helptexts.PREVIEW)
+
         self.backup_first = click.option(
             '--backup-first',
             is_flag=True,

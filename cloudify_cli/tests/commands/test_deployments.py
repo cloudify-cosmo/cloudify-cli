@@ -64,22 +64,32 @@ class DeploymentUpdatesTest(CliCommandTest):
     def test_deployment_update_get(self):
         old_value = 'old value 1'
         new_value = 'new value 1'
+        steps = [{'entity_id': 'step1'}, {'entity_id': 'step2'}]
         self.client.deployment_updates.get = Mock(return_value={
             'id': 'update-id-1',
             'old_inputs': {'inp1': old_value},
             'new_inputs': {'inp1': new_value},
+            'steps': steps
         })
         outcome = self.invoke('deployments get-update update-id-1')
+
         self.assertIn(old_value, outcome.output)
         self.assertIn(new_value, outcome.output)
+
+        for d in steps:
+            for k, v in d.iteritems():
+                self.assertIn(str(k), outcome.output)
+                self.assertIn(str(v), outcome.output)
 
     def test_deployment_update_get_json(self):
         old_value = 'old value 1'
         new_value = 'new value 1'
+        steps = [{'entity_id': 'step1'}, {'entity_id': 'step2'}]
         self.client.deployment_updates.get = Mock(return_value={
             'id': 'update-id-1',
             'old_inputs': {'inp1': old_value},
             'new_inputs': {'inp1': new_value},
+            'steps': steps
         })
         outcome = self.invoke('deployments get-update update-id-1 --json')
         parsed = json.loads(outcome.output)

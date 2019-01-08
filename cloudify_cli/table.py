@@ -136,13 +136,17 @@ def print_details(data, title):
     """
     if get_global_json_output():
         output(json.dumps(data, cls=CloudifyJSONEncoder))
-    else:
-        output(title)
-        for item in data.items():
-            field_name = str(item[0]) + ':'
-            field_value = str(item[1])
-            field_value = get_timestamp(field_value) or field_value
-            output('\t{0} {1}'.format(field_name.ljust(16), field_value))
+        return
+    output(title)
+    if isinstance(data, list):
+        for item in data:
+            output('\t- {0}'.format(get_timestamp(str(item)) or (item)))
+        return
+    for item in data.items():
+        field_name = str(item[0]) + ':'
+        field_value = str(item[1])
+        field_value = get_timestamp(field_value) or field_value
+        output('\t{0} {1}'.format(field_name.ljust(16), field_value))
 
 
 def get_timestamp(data):
