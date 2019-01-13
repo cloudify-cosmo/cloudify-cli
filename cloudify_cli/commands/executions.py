@@ -163,7 +163,7 @@ def manager_list(
 
 
 @cfy.command(name='start',
-             short_help='Execute a workflow [manager only]')
+             short_help='Execute a workflow')
 @cfy.argument('workflow-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.parameters
