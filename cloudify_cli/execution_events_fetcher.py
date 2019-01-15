@@ -102,8 +102,9 @@ class ExecutionEventsFetcher(object):
             del event[context_field]
 
         event['context']['node_id'] = event['node_instance_id']
-        event['context']['source_id'] = event['source_id']
-        event['context']['target_id'] = event['target_id']
+        if 'source_id' in event:
+            event['context']['source_id'] = event['source_id']
+            event['context']['target_id'] = event['target_id']
         del event['node_instance_id']
 
         event['message'] = {
