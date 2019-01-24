@@ -341,6 +341,34 @@ def manager_cancel(execution_id, force, kill, logger, client, tenant_name):
         "cfy executions get {0}".format(execution_id))
 
 
+@cfy.command(name='resume',
+             short_help='Resume a workflow execution [manager only]')
+@cfy.argument('execution-id')
+@cfy.options.common_options
+@cfy.options.reset_operations
+@cfy.options.tenant_name(required=False, resource_name_for_help='execution')
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def manager_resume(execution_id, reset_operations, logger, client,
+                   tenant_name):
+    """Resume the execution of a workflow in a failed or cancelled state.
+
+    `EXECUTION_ID` is the ID of the execution to resume.
+    The workflow will run again, restoring the tasks graph from the storage,
+    and retrying failed tasks when necessary.
+    If reset-operations is passed, tasks that were started but didn't fail
+    will be retried as well.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Resuming execution {0}'.format(execution_id))
+    client.executions.resume(execution_id, force=reset_operations)
+    logger.info(
+        "A resume request for execution {0} has been sent. "
+        "To track the execution's status, use:\n"
+        "cfy executions get {0}".format(execution_id))
+
+
 @cfy.command(name='list',
              short_help='List deployment executions')
 @cfy.options.blueprint_id(required=True)
