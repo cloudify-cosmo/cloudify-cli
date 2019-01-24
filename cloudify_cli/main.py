@@ -129,6 +129,7 @@ def _register_commands():
         executions.executions.add_command(executions.manager_get)
 
         blueprints.blueprints.add_command(blueprints.manager_list)
+        executions.executions.add_command(executions.manager_resume)
     else:
         _cfy.add_command(install.local)
         _cfy.add_command(uninstall.local)

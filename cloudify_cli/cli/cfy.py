@@ -1015,6 +1015,13 @@ class Options(object):
             help=helptexts.QUEUE_EXECUTIONS
         )
 
+        self.reset_operations = click.option(
+            '--reset-operations',
+            is_flag=True,
+            default=False,
+            help=helptexts.RESET_OPERATIONS
+        )
+
         self.schedule = click.option(
             '--schedule',
             cls=MutuallyExclusiveOption,
