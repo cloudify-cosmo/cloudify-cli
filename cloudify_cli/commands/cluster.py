@@ -261,14 +261,15 @@ def _update_profile_cluster_settings(profile, nodes, logger=None):
         env.profile.cluster = []
     for node in nodes:
         if node.name not in stored_nodes:
+            node_ip = node.public_ip or node.host_ip
             if logger:
                 logger.info('Adding cluster node {0} to local profile'
-                            .format(node.host_ip))
+                            .format(node_ip))
             env.profile.cluster.append({
                 'name': node.name,
                 # all other conenction parameters will be defaulted to the
                 # ones from the last used manager
-                'manager_ip': node.public_ip or node.host_ip
+                'manager_ip': node_ip
             })
     # filter out removed nodes
     env.profile.cluster = [n for n in env.profile.cluster
