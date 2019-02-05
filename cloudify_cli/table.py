@@ -130,9 +130,6 @@ def print_single(columns, item, header_text, max_width=None, defaults=None,
 
 def print_list(data, title):
     """Print a bulleted list with a title"""
-    if get_global_json_output():
-        output(json.dumps(data, cls=CloudifyJSONEncoder))
-        return
     output(title)
     for item in data:
         output('\t- {0}'.format(get_timestamp(str(item)) or item))
