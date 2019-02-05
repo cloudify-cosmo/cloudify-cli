@@ -91,7 +91,7 @@ INSTALL_FIRST = (
 PREVIEW = (
     "In deployment update, perform a preview of an update and not an actual "
     "update. The changes that should be done will be returned, but no change "
-    "will actually take affect"
+    "will actually take effect"
 )
 FORCE_UPDATE = (
     "Force running update in case a previous update on this deployment has "
