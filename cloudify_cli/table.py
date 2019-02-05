@@ -128,6 +128,16 @@ def print_single(columns, item, header_text, max_width=None, defaults=None,
         print_data(columns, [item], header_text, max_width, defaults, labels)
 
 
+def print_list(data, title):
+    """Print a bulleted list with a title"""
+    if get_global_json_output():
+        output(json.dumps(data, cls=CloudifyJSONEncoder))
+        return
+    output(title)
+    for item in data:
+        output('\t- {0}'.format(get_timestamp(str(item)) or item))
+
+
 def print_details(data, title):
     """Utility for printing structured key/value pairs.
 
@@ -138,10 +148,6 @@ def print_details(data, title):
         output(json.dumps(data, cls=CloudifyJSONEncoder))
         return
     output(title)
-    if isinstance(data, list):
-        for item in data:
-            output('\t- {0}'.format(get_timestamp(str(item)) or (item)))
-        return
     for item in data.items():
         field_name = str(item[0]) + ':'
         field_value = str(item[1])

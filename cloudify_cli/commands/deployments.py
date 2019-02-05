@@ -33,7 +33,12 @@ from StringIO import StringIO
 
 from . import blueprints
 from ..local import load_env
-from ..table import print_data, print_single, print_details
+from ..table import (
+    print_data,
+    print_single,
+    print_details,
+    print_list
+)
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger, get_global_json_output
 from .. import execution_events_fetcher, utils
@@ -110,17 +115,17 @@ def _print_single_update(deployment_update_dict,
         print_data(STEPS_COLUMNS,
                    deployment_update_dict['steps'] or {},
                    'Steps:')
-        print_details(
+        print_list(
             deployment_update_dict['installed_nodes'] or [],
             'Installed nodes{0}:'.format(skip_msg if skip_install else '')
         )
-        print_details(
+        print_list(
             deployment_update_dict['uninstalled_nodes'] or [],
             'Uninstalled nodes{0}:'.format(skip_msg if skip_uninstall else '')
         )
-        print_details(deployment_update_dict['reinstalled_nodes'] or [],
-                      'Automatically detected nodes to reinstall{0}:'.format(
-                          skip_msg if skip_reinstall else ''))
+        print_list(deployment_update_dict['reinstalled_nodes'] or [],
+                   'Automatically detected nodes to reinstall{0}:'
+                   .format(skip_msg if skip_reinstall else ''))
 
 
 @cfy.command(name='list', short_help='List deployments [manager only]')
@@ -380,7 +385,7 @@ def manager_update(ctx,
                              skip_install=skip_install,
                              skip_uninstall=skip_uninstall,
                              skip_reinstall=skip_reinstall)
-        print_details(reinstall_list, 'Expicitly given nodes to reinstall:')
+        print_list(reinstall_list, 'Expicitly given nodes to reinstall:')
         return
 
     events_logger = get_events_logger(json_output)
