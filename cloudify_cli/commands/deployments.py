@@ -79,6 +79,8 @@ def _print_single_update(deployment_update_dict,
                          skip_install=False,
                          skip_uninstall=False,
                          skip_reinstall=False):
+    if explicit_reinstall is None:
+        explicit_reinstall = []
     columns = DEPLOYMENT_UPDATE_COLUMNS
     if preview:
         columns = [c for c in columns if c not in NON_PREVIEW_COLUMNS]
