@@ -74,6 +74,7 @@ def deployments():
 
 
 def _print_single_update(deployment_update_dict,
+                         explicit_reinstall=None,
                          preview=False,
                          skip_install=False,
                          skip_uninstall=False,
@@ -82,6 +83,7 @@ def _print_single_update(deployment_update_dict,
     if preview:
         columns = [c for c in columns if c not in NON_PREVIEW_COLUMNS]
 
+    deployment_update_dict['explicit_reinstall'] = explicit_reinstall
     deployment_update_dict['installed_nodes'] = []
     deployment_update_dict['uninstalled_nodes'] = []
     deployment_update_dict['reinstalled_nodes'] = []
@@ -99,7 +101,8 @@ def _print_single_update(deployment_update_dict,
     if get_global_json_output():
         columns += [
             'old_inputs', 'new_inputs', 'steps', 'modified_entity_ids',
-            'installed_nodes', 'uninstalled_nodes', 'reinstalled_nodes'
+            'installed_nodes', 'uninstalled_nodes', 'reinstalled_nodes',
+            'explicit_reinstall'
         ]
     print_single(columns,
                  deployment_update_dict,
@@ -126,6 +129,7 @@ def _print_single_update(deployment_update_dict,
         print_list(deployment_update_dict['reinstalled_nodes'] or [],
                    'Automatically detected nodes to reinstall{0}:'
                    .format(skip_msg if skip_reinstall else ''))
+        print_list(explicit_reinstall, 'Expicitly given nodes to reinstall:')
 
 
 @cfy.command(name='list', short_help='List deployments [manager only]')
@@ -381,11 +385,11 @@ def manager_update(ctx,
 
     if preview:
         _print_single_update(deployment_update,
+                             explicit_reinstall=reinstall_list,
                              preview=True,
                              skip_install=skip_install,
                              skip_uninstall=skip_uninstall,
                              skip_reinstall=skip_reinstall)
-        print_list(reinstall_list, 'Expicitly given nodes to reinstall:')
         return
 
     events_logger = get_events_logger(json_output)
