@@ -235,6 +235,20 @@ class ClusterNodesTest(CliCommandTest):
         parsed = json.loads(outcome.output)
         self.assertEqual(parsed['options'], {'option1': 'value1'})
 
+    def test_node_update(self):
+        self.client.cluster.status = mock.Mock(
+            return_value=ClusterState({'initialized': True}))
+        self.client.cluster.nodes.update = mock.Mock()
+        node_name = 'n1'
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            json.dump({'check_fail_fast': False}, f)
+        self.addCleanup(os.unlink, f.name)
+        outcome = self.invoke(
+            'cluster nodes update {0} --options {1}'.format(node_name, f.name))
+        self.assertIn('Node {0} updated'.format(node_name), outcome.logs)
+        self.client.cluster.nodes.update.assert_called_with(
+            node_name, {'check_fail_fast': False})
+
 
 class ClusterJoinTest(CliCommandTest):
     def setUp(self):
