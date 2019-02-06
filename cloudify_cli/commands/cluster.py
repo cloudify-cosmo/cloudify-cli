@@ -393,11 +393,10 @@ def get_node(client, logger, cluster_node_name):
 @cfy.options.cluster_node_options
 @cfy.argument('cluster-node-name')
 @cfy.options.common_options
-def update_node_options(client, logger, cluster_node_name,
-                        cluster_node_options):
-    if not cluster_node_options:
+def update_node_options(client, logger, cluster_node_name, options):
+    if not options:
         raise CloudifyCliError('Need an inputs file to update node options')
-    client.cluster.nodes.update(cluster_node_name, cluster_node_options)
+    client.cluster.nodes.update(cluster_node_name, options)
     logger.info('Node {0} updated'.format(cluster_node_name))
 
 
