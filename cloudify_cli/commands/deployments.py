@@ -70,6 +70,13 @@ NON_PREVIEW_COLUMNS = ['id', 'execution_id']
 STEPS_COLUMNS = ['entity_type', 'entity_id', 'action']
 TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
 DEPLOYMENTS_SUMMARY_FIELDS = ['blueprint_id'] + BASE_SUMMARY_FIELDS
+# for human-redable outputs, those fields are formatted separately. In
+# machine-readable (json) output, they are just part of the output
+MACHINE_READABLE_UPDATE_PREVIEW_COLUMNS = [
+    'old_inputs', 'new_inputs', 'steps', 'modified_entity_ids',
+    'installed_nodes', 'uninstalled_nodes', 'reinstalled_nodes',
+    'explicit_reinstall'
+]
 
 
 @cfy.group(name='deployments')
@@ -109,11 +116,8 @@ def _print_single_update(deployment_update_dict,
             deployment_update_dict['reinstalled_nodes'].append(entity[1])
 
     if get_global_json_output():
-        columns += [
-            'old_inputs', 'new_inputs', 'steps', 'modified_entity_ids',
-            'installed_nodes', 'uninstalled_nodes', 'reinstalled_nodes',
-            'explicit_reinstall'
-        ]
+        columns += MACHINE_READABLE_UPDATE_PREVIEW_COLUMNS
+
     print_single(columns,
                  deployment_update_dict,
                  'Deployment Update:',
