@@ -16,11 +16,17 @@
 
 
 import json
+import inspect
 import datetime
 
 from mock import patch, MagicMock, PropertyMock, Mock
 
-from cloudify_rest_client import deployments, executions, blueprints
+from cloudify_rest_client import (
+    deployments,
+    executions,
+    blueprints,
+    deployment_updates
+)
 from cloudify_rest_client.exceptions import CloudifyClientError, \
     MissingRequiredDeploymentInputError, UnknownDeploymentInputError
 
@@ -80,6 +86,41 @@ class DeploymentUpdatesTest(CliCommandTest):
             for k, v in d.iteritems():
                 self.assertIn(str(k), outcome.output)
                 self.assertIn(str(v), outcome.output)
+
+    def test_deployment_update_preview(self):
+        old_value = 'old value 1'
+        new_value = 'new value 1'
+        steps = [
+            {'entity_id': 'nodes:step1', 'action': 'add'},
+            {'entity_id': 'nodes:step2', 'action': 'remove'},
+        ]
+        self.client.deployment_updates.update_with_existing_blueprint = Mock(
+            return_value={
+                'id': 'update-id-1',
+                'old_inputs': {'inp1': old_value},
+                'new_inputs': {'inp1': new_value},
+                'steps': steps
+            })
+        outcome = self.invoke(
+            'deployments update dep-1 -b b2 --preview --json')
+        output = json.loads(outcome.output)
+
+        self.assertEqual(output['installed_nodes'], ['step1'])
+        self.assertEqual(output['uninstalled_nodes'], ['step2'])
+
+        # find out if the preview=True argument has been set. It might have
+        # been passed positionally or by name into the rest-client method,
+        # so let's use inspect to find out which argument value was actually
+        # the preview arg
+        calls = self.client.deployment_updates\
+            .update_with_existing_blueprint.mock_calls
+        self.assertEqual(len(calls), 1)
+        _, args, kwargs = calls[0]
+        call_args = inspect.getcallargs(
+            deployment_updates.DeploymentUpdatesClient(None)
+            .update_with_existing_blueprint,
+            *args, **kwargs)
+        self.assertTrue(call_args['preview'])
 
     def test_deployment_update_get_json(self):
         old_value = 'old value 1'
