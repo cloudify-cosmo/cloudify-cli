@@ -54,11 +54,18 @@ from ..utils import (prettify_client_error,
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 
-DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
-                      'visibility', 'tenant_name', 'created_by']
-DEPLOYMENT_UPDATE_COLUMNS = ['id', 'deployment_id', 'tenant_name', 'state',
-                             'execution_id', 'created_at', 'visibility',
-                             'old_blueprint_id', 'new_blueprint_id']
+DEPLOYMENT_COLUMNS = [
+    'id', 'blueprint_id', 'created_at', 'updated_at', 'visibility',
+    'tenant_name', 'created_by'
+]
+DEPLOYMENT_UPDATE_COLUMNS = [
+    'id', 'deployment_id', 'tenant_name', 'state', 'execution_id',
+    'created_at', 'visibility', 'old_blueprint_id', 'new_blueprint_id'
+]
+DEPLOYMENT_UPDATE_PREVIEW_COLUMNS = [
+    'deployment_id', 'tenant_name', 'state', 'created_at', 'visibility',
+    'old_blueprint_id', 'new_blueprint_id'
+]
 NON_PREVIEW_COLUMNS = ['id', 'execution_id']
 STEPS_COLUMNS = ['entity_type', 'entity_id', 'action']
 TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
@@ -81,9 +88,10 @@ def _print_single_update(deployment_update_dict,
                          skip_reinstall=False):
     if explicit_reinstall is None:
         explicit_reinstall = []
-    columns = DEPLOYMENT_UPDATE_COLUMNS
     if preview:
-        columns = [c for c in columns if c not in NON_PREVIEW_COLUMNS]
+        columns = DEPLOYMENT_UPDATE_PREVIEW_COLUMNS
+    else:
+        columns = DEPLOYMENT_UPDATE_COLUMNS
 
     deployment_update_dict['explicit_reinstall'] = explicit_reinstall
     deployment_update_dict['installed_nodes'] = []
