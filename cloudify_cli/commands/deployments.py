@@ -380,7 +380,7 @@ def manager_update(ctx,
     if blueprint_id:
         msg += ', using blueprint {0}'.format(blueprint_id)
     logger.info(msg)
-    reinstall_list = list(reinstall_list or [])
+    reinstall_list = reinstall_list or []
     deployment_update = \
         client.deployment_updates.update_with_existing_blueprint(
             deployment_id,
