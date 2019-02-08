@@ -88,6 +88,11 @@ INSTALL_FIRST = (
     "In deployment update, perform install workflow and then uninstall "
     "workflow. default: uninstall and then install"
 )
+PREVIEW = (
+    "Preview the deployment update, stating what changes will be made "
+    "without actually applying any changes."
+)
+
 FORCE_UPDATE = (
     "Force running update in case a previous update on this deployment has "
     "failed to finished successfully"

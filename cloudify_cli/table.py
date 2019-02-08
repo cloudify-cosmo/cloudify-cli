@@ -128,6 +128,13 @@ def print_single(columns, item, header_text, max_width=None, defaults=None,
         print_data(columns, [item], header_text, max_width, defaults, labels)
 
 
+def print_list(data, title):
+    """Print a bulleted list with a title"""
+    output(title)
+    for item in data:
+        output('\t- {0}'.format(get_timestamp(str(item)) or item))
+
+
 def print_details(data, title):
     """Utility for printing structured key/value pairs.
 

@@ -33,7 +33,12 @@ from StringIO import StringIO
 
 from . import blueprints
 from ..local import load_env
-from ..table import print_data, print_single, print_details
+from ..table import (
+    print_data,
+    print_single,
+    print_details,
+    print_list
+)
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger, get_global_json_output
 from .. import execution_events_fetcher, utils
@@ -49,15 +54,29 @@ from ..utils import (prettify_client_error,
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 
-DEPLOYMENT_COLUMNS = ['id', 'blueprint_id', 'created_at', 'updated_at',
-                      'visibility', 'tenant_name', 'created_by']
-DEPLOYMENT_UPDATE_COLUMNS = ['id', 'deployment_id', 'tenant_name', 'state',
-                             'execution_id', 'created_at', 'visibility',
-                             'old_blueprint_id', 'new_blueprint_id']
+DEPLOYMENT_COLUMNS = [
+    'id', 'blueprint_id', 'created_at', 'updated_at', 'visibility',
+    'tenant_name', 'created_by'
+]
+DEPLOYMENT_UPDATE_COLUMNS = [
+    'id', 'deployment_id', 'tenant_name', 'state', 'execution_id',
+    'created_at', 'visibility', 'old_blueprint_id', 'new_blueprint_id'
+]
+DEPLOYMENT_UPDATE_PREVIEW_COLUMNS = [
+    'deployment_id', 'tenant_name', 'state', 'created_at', 'visibility',
+    'old_blueprint_id', 'new_blueprint_id'
+]
+NON_PREVIEW_COLUMNS = ['id', 'execution_id']
+STEPS_COLUMNS = ['entity_type', 'entity_id', 'action']
 TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
-DEPLOYMENTS_SUMMARY_FIELDS = [
-    'blueprint_id',
-] + BASE_SUMMARY_FIELDS
+DEPLOYMENTS_SUMMARY_FIELDS = ['blueprint_id'] + BASE_SUMMARY_FIELDS
+# for human-redable outputs, those fields are formatted separately. In
+# machine-readable (json) output, they are just part of the output
+MACHINE_READABLE_UPDATE_PREVIEW_COLUMNS = [
+    'old_inputs', 'new_inputs', 'steps', 'modified_entity_ids',
+    'installed_nodes', 'uninstalled_nodes', 'reinstalled_nodes',
+    'explicit_reinstall'
+]
 
 
 @cfy.group(name='deployments')
@@ -66,6 +85,65 @@ def deployments():
     """Handle deployments on the Manager
     """
     pass
+
+
+def _print_single_update(deployment_update_dict,
+                         explicit_reinstall=None,
+                         preview=False,
+                         skip_install=False,
+                         skip_uninstall=False,
+                         skip_reinstall=False):
+    if explicit_reinstall is None:
+        explicit_reinstall = []
+    if preview:
+        columns = DEPLOYMENT_UPDATE_PREVIEW_COLUMNS
+    else:
+        columns = DEPLOYMENT_UPDATE_COLUMNS
+
+    deployment_update_dict['explicit_reinstall'] = explicit_reinstall
+    deployment_update_dict['installed_nodes'] = []
+    deployment_update_dict['uninstalled_nodes'] = []
+    deployment_update_dict['reinstalled_nodes'] = []
+    for step in deployment_update_dict['steps']:
+        entity = step['entity_id'].split(':')
+        if entity[0] != 'nodes':
+            continue
+        if step['action'] == 'add':
+            deployment_update_dict['installed_nodes'].append(entity[1])
+        elif step['action'] == 'remove':
+            deployment_update_dict['uninstalled_nodes'].append(entity[1])
+        elif step['action'] == 'modify':
+            deployment_update_dict['reinstalled_nodes'].append(entity[1])
+
+    if get_global_json_output():
+        columns += MACHINE_READABLE_UPDATE_PREVIEW_COLUMNS
+
+    print_single(columns,
+                 deployment_update_dict,
+                 'Deployment Update:',
+                 max_width=50)
+
+    if not get_global_json_output():
+        skip_msg = ' (will be skipped)'
+        print_details(deployment_update_dict['old_inputs'] or {},
+                      'Old inputs:')
+        print_details(deployment_update_dict['new_inputs'] or {},
+                      'New inputs:')
+        print_data(STEPS_COLUMNS,
+                   deployment_update_dict['steps'] or {},
+                   'Steps:')
+        print_list(
+            deployment_update_dict['installed_nodes'] or [],
+            'Installed nodes{0}:'.format(skip_msg if skip_install else '')
+        )
+        print_list(
+            deployment_update_dict['uninstalled_nodes'] or [],
+            'Uninstalled nodes{0}:'.format(skip_msg if skip_uninstall else '')
+        )
+        print_list(deployment_update_dict['reinstalled_nodes'] or [],
+                   'Automatically detected nodes to reinstall{0}:'
+                   .format(skip_msg if skip_reinstall else ''))
+        print_list(explicit_reinstall, 'Expicitly given nodes to reinstall:')
 
 
 @cfy.command(name='list', short_help='List deployments [manager only]')
@@ -192,19 +270,7 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
         'Retrieving deployment update {0}...'.format(deployment_update_id))
     deployment_update_dict = client.deployment_updates.get(
         deployment_update_id)
-    columns = DEPLOYMENT_UPDATE_COLUMNS
-    if get_global_json_output():
-        columns += ['old_inputs', 'new_inputs']
-    print_single(columns,
-                 deployment_update_dict,
-                 'Deployment Update:',
-                 max_width=50)
-
-    if not get_global_json_output():
-        print_details(deployment_update_dict['old_inputs'] or {},
-                      'Old inputs:')
-        print_details(deployment_update_dict['new_inputs'] or {},
-                      'New inputs:')
+    _print_single_update(deployment_update_dict)
 
 
 @cfy.command(name='update', short_help='Update a deployment [manager only]')
@@ -220,6 +286,7 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
 @cfy.options.skip_reinstall
 @cfy.options.ignore_failure
 @cfy.options.install_first
+@cfy.options.preview
 @cfy.options.force(help=helptexts.FORCE_UPDATE)
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.options.visibility(mutually_exclusive_required=False)
@@ -242,6 +309,7 @@ def manager_update(ctx,
                    skip_reinstall,
                    ignore_failure,
                    install_first,
+                   preview,
                    workflow_id,
                    force,
                    include_logs,
@@ -312,6 +380,7 @@ def manager_update(ctx,
     if blueprint_id:
         msg += ', using blueprint {0}'.format(blueprint_id)
     logger.info(msg)
+    reinstall_list = reinstall_list or []
     deployment_update = \
         client.deployment_updates.update_with_existing_blueprint(
             deployment_id,
@@ -324,8 +393,19 @@ def manager_update(ctx,
             force,
             ignore_failure,
             install_first,
-            list(reinstall_list)
+            reinstall_list,
+            preview
         )
+
+    if preview:
+        _print_single_update(deployment_update,
+                             explicit_reinstall=reinstall_list,
+                             preview=True,
+                             skip_install=skip_install,
+                             skip_uninstall=skip_uninstall,
+                             skip_reinstall=skip_reinstall)
+        return
+
     events_logger = get_events_logger(json_output)
     execution = execution_events_fetcher.wait_for_execution(
         client,
