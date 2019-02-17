@@ -13,16 +13,28 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-import os
-import tempfile
 from mock import MagicMock, patch
 
 from .test_base import CliCommandTest
-from cloudify_rest_client import deployments, tenants
-from cloudify_cli.exceptions import SuppressedCloudifyCliError
+from cloudify_rest_client.executions import ExecutionsClient
+from cloudify_rest_client.node_instances import NodeInstance
+from cloudify_cli.cli import cfy
+from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
 
+from cloudify_cli.commands.agents import (
+    get_node_instances_map,
+    get_deployments_and_run_workers)
+
 DEFAULT_TENANT_NAME = 'tenant0'
+
+
+def _node_instance(ni_id, node_id, dep_id):
+    return NodeInstance({
+        'id': ni_id,
+        'node_id': node_id,
+        'deployment_id': dep_id
+    })
 
 
 class AgentsTests(CliCommandTest):
@@ -30,345 +42,209 @@ class AgentsTests(CliCommandTest):
         super(AgentsTests, self).setUp()
         self.use_manager()
 
-    @staticmethod
-    def create_tenants_and_deployments(num_of_tenants, num_of_deps,
-                                       unique_deps_id=True):
-        tenants_list = []
-        deps = {}
-        index = 0
-        # create requested num of tenants
-        for i in range(num_of_tenants):
-            ten = tenants.Tenant({'name': 'tenant{0}'.format(i)})
-            tenants_list.append(ten)
-        # create requested num of deployments for each tenant
-        for tenant in tenants_list:
-            if not unique_deps_id:
-                index = 0
-            deps[tenant['name']] = []
-            index = AgentsTests.create_deployments_in_tenant(
-                deps[tenant['name']], num_of_deps, tenant, index)
-        return tenants_list, deps
+    # @staticmethod
+    # def create_tenants_and_deployments(num_of_tenants, num_of_deps,
+    #                                    unique_deps_id=True):
+    #     tenants_list = []
+    #     deps = {}
+    #     index = 0
+    #     # create requested num of tenants
+    #     for i in range(num_of_tenants):
+    #         ten = tenants.Tenant({'name': 'tenant{0}'.format(i)})
+    #         tenants_list.append(ten)
+    #     # create requested num of deployments for each tenant
+    #     for tenant in tenants_list:
+    #         if not unique_deps_id:
+    #             index = 0
+    #         deps[tenant['name']] = []
+    #         index = AgentsTests.create_deployments_in_tenant(
+    #             deps[tenant['name']], num_of_deps, tenant, index)
+    #     return tenants_list, deps
+    #
+    # @staticmethod
+    # def create_deployments_in_tenant(deps_list, num_of_deps, tenant,
+    #                                  start_index):
+    #     for i in range(num_of_deps):
+    #         deps_list.append(deployments.Deployment({
+    #             'id': 'dep{0}'.format(start_index),
+    #             'tenant_name': tenant['name']}))
+    #         start_index += 1
+    #     return start_index
 
     @staticmethod
-    def create_deployments_in_tenant(deps_list, num_of_deps, tenant,
-                                     start_index):
-        for i in range(num_of_deps):
-            deps_list.append(deployments.Deployment({
-                'id': 'dep{0}'.format(start_index),
-                'tenant_name': tenant['name']}))
-            start_index += 1
-        return start_index
+    def _agent_filters(node_ids=None, node_instance_ids=None,
+                       deployment_ids=None, install_methods=None):
+        return {cfy.AGENT_FILTER_NODE_IDS: node_ids,
+                cfy.AGENT_FILTER_NODE_INSTANCE_IDS: node_instance_ids,
+                cfy.AGENT_FILTER_DEPLOYMENT_ID: deployment_ids,
+                cfy.AGENT_FILTER_INSTALL_METHODS: install_methods}
 
-    def mock_client(self, tenants, deps, nodes, deps_get):
-        def dep_list():
+    DEFAULT_TENANTS_MAP = {
+        DEFAULT_TENANT_NAME: [
+            _node_instance('t0d0node1_1', 'node1', 'd0'),
+            _node_instance('t0d0node1_2', 'node1', 'd0'),
+            _node_instance('t0d0node2_1', 'node2', 'd0'),
+            _node_instance('t0d1node1_1', 'node1', 'd1'),
+            _node_instance('t0d1node1_2', 'node1', 'd1'),
+            _node_instance('t0d1node3_1', 'node3', 'd1'),
+        ],
+        'other_tenant': [
+            _node_instance('t1d0node1_1', 'node1', 'd0'),
+            _node_instance('t1d0node1_2', 'node1', 'd0'),
+            _node_instance('t1d1node3_1', 'node3', 'd1'),
+            _node_instance('t1d2node4_1', 'node4', 'd2'),
+        ]
+    }
+
+    def mock_client(self, tenants_map):
+        def list_node_instances(**kwargs):
             tenant_name = self.client._client.headers.get(
                 CLOUDIFY_TENANT_HEADER)
             if not tenant_name:
                 tenant_name = DEFAULT_TENANT_NAME
-            return deps[tenant_name]
-        self.client.tenants.list = MagicMock(return_value=tenants)
-        self.client.deployments.list = dep_list
-        self.client.node_instances.list = MagicMock(return_value=nodes)
-        self.client.deployments.get = deps_get
+            if tenant_name not in tenants_map:
+                return []
+            results = list()
+            if kwargs.get('_all_tenants', False):
+                candidate_tenants = tenants_map.keys()
+            else:
+                candidate_tenants = [tenant_name]
+            for tenant_name in candidate_tenants:
+                node_instances = tenants_map[tenant_name]
+                for node_instance in node_instances:
+                    ni_id = node_instance['id']
+                    ni_node_id = node_instance['node_id']
+                    ni_dep_id = node_instance['deployment_id']
+                    if ni_id in kwargs.get('id', [ni_id]) and \
+                            ni_node_id in kwargs.get('node_id', [ni_node_id]) \
+                            and ni_dep_id in kwargs.get(
+                           'deployment_id', [ni_dep_id]):
+                        results.append(node_instance)
+            return results
 
-    @patch('cloudify_cli.commands.agents.run_worker')
-    def test_agents_install_multiple_tenants_and_deployments(self,
-                                                             worker_mock):
-        """
-        Expected behavior: install agents for all deployments in current
-                           tenant.
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(2, 3)
-        deps_id_list = [d['id'] for d in deps['tenant0']]
-        self.mock_client(tenants_list, deps, [], True)
-        self.invoke('cfy agents install')
-        call_args = list(worker_mock.call_args)
-        self.assertEqual(call_args[0][0], deps_id_list)
-        self.assertEqual(1, worker_mock.call_count)
+        self.client.tenants.list = MagicMock(return_value=tenants_map.keys())
+        self.client.node_instances.list = list_node_instances
 
-    @patch('cloudify_cli.commands.agents.run_worker')
-    def test_agents_install_specific_deployment(self, worker_mock):
-        """
-        Expected behavior: install agents for a specified deployment
-                           in current tenant.
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(2, 4)
-        deps_id_list = ['dep3']
+    def assert_execution_started(self, client_mock, deployment_id,
+                                 node_instances):
+        self.assertIn(
+            ((deployment_id, 'workflow', {
+                'node_instance_ids': node_instances
+            }), {
+                'allow_custom_parameters': True
+            }), client_mock.call_args_list)
 
-        def f(dep_id):
-            return True
-        self.mock_client(tenants_list, deps, [], f)
-        self.invoke('cfy agents install dep3')
-        call_args = list(worker_mock.call_args)
-        self.assertEqual(call_args[0][0], deps_id_list)
-        self.assertEqual(1, worker_mock.call_count)
+    def _to_node_instance_ids_set(self, results):
+        return set(map(lambda x: x['id'], [item for sublist in results.values()
+                                           for item in sublist]))
 
-    def test_agents_install_fail_dep_in_specific_ten(self):
-        """
-        Since the given deployment_ID is not installed in tenant2 we
-        expect an exception to be raised.
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(3, 3)
+    # Tests for get_node_instances_map
 
-        def f():
-            raise Exception
-        self.mock_client(tenants_list, deps, [], f)
-        self.invoke('cfy agents install -t tenant2 dep2',
-                    exception=SuppressedCloudifyCliError,
-                    err_str_segment='')
+    def test_parameters_error(self):
+        self.mock_client({})
+        self.assertRaises(
+            CloudifyCliError,
+            get_node_instances_map,
+            self.client,
+            AgentsTests._agent_filters(
+                node_instance_ids=['a1'],
+                deployment_ids=['d1']
+            ),
+            [DEFAULT_TENANT_NAME])
 
-    @patch('cloudify_cli.commands.agents.run_worker')
-    def test_agents_install_specific_dep_in_specific_ten(self, worker_mock):
-        """
-        Expected behavior: install agents for specified deployment in
-                           specified tenant.
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(3, 3)
-        deps_id_list = ['dep6']
+    def test_instance_map_empty(self):
+        self.mock_client({})
+        results = get_node_instances_map(
+            self.client, AgentsTests._agent_filters(),
+            [DEFAULT_TENANT_NAME])
+        self.assertFalse(results)
 
-        def f(dep_id):
-            return True
-        self.mock_client(tenants_list, deps, [], f)
-        self.invoke('cfy agents install -t tenant2 dep6')
-        call_args = list(worker_mock.call_args)
-        self.assertEqual(call_args[0][0], deps_id_list)
-        self.assertEqual(1, worker_mock.call_count)
+    def test_instance_map_empty_node_instances(self):
+        self.mock_client({})
+        results = get_node_instances_map(
+            self.client, AgentsTests._agent_filters(
+                node_instance_ids=['t0d0node1_1']), [DEFAULT_TENANT_NAME])
+        self.assertFalse(results)
 
-    @patch('cloudify_cli.commands.agents.run_worker')
-    def test_agents_install_in_specific_ten(self, worker_mock):
-        """
-        Expected behavior: install agents for all
-                           deployments in specified tenant.
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(3, 3)
-        deps_id_list = [d['id'] for d in deps['tenant2']]
-        self.mock_client(tenants_list, deps, [], True)
-        self.invoke('cfy agents install -t tenant2')
-        call_args = list(worker_mock.call_args)
-        self.assertEqual(call_args[0][0], deps_id_list)
-        self.assertEqual(1, worker_mock.call_count)
+    def test_instance_map_empty_deployment_ids(self):
+        self.mock_client({})
+        results = get_node_instances_map(
+            self.client, AgentsTests._agent_filters(
+                deployment_ids=['d0']), [DEFAULT_TENANT_NAME])
+        self.assertFalse(results)
 
-    def test_agents_install_fail_when_t_and_all_togther(self):
-        """
-         This tests makes sure that if both flags '-t' and '--all-tenants'
-         are requested, the right error occurs.
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(3, 3)
-        self.mock_client(tenants_list, deps, [], True)
-        outcome = self.invoke(
-            'cfy agents install -t tenant2 --all-tenants',
-            exception=SystemExit,
-            err_str_segment='2'  # Exit code
+    def test_instance_map_bad_tenant(self):
+        self.mock_client(AgentsTests.DEFAULT_TENANTS_MAP)
+        results = get_node_instances_map(
+            self.client, AgentsTests._agent_filters(), ['FAKE'])
+        self.assertFalse(results)
+
+    def test_instance_map_all(self):
+        self.mock_client(AgentsTests.DEFAULT_TENANTS_MAP)
+        results = get_node_instances_map(
+            self.client, AgentsTests._agent_filters(),
+            AgentsTests.DEFAULT_TENANTS_MAP.keys())
+        self.assertEquals(
+            {'t0d0node1_1', 't0d0node1_2', 't0d0node2_1', 't0d1node1_1',
+             't0d1node1_2', 't0d1node3_1', 't1d0node1_1', 't1d0node1_2',
+             't1d1node3_1', 't1d2node4_1'},
+            self._to_node_instance_ids_set(results))
+
+    def test_instance_map_node_id_single_tenant(self):
+        self.mock_client(AgentsTests.DEFAULT_TENANTS_MAP)
+        results = get_node_instances_map(
+            self.client, AgentsTests._agent_filters(
+                node_ids=['node1']),
+            [DEFAULT_TENANT_NAME])
+
+        self.assertEquals(
+            {'t0d0node1_1', 't0d0node1_2', 't0d1node1_1', 't0d1node1_2'},
+            self._to_node_instance_ids_set(results))
+
+    def test_instance_map_node_id_all_tenants(self):
+        self.mock_client(AgentsTests.DEFAULT_TENANTS_MAP)
+        results = get_node_instances_map(
+            self.client, AgentsTests._agent_filters(
+                node_ids=['node1']),
+            AgentsTests.DEFAULT_TENANTS_MAP.keys())
+
+        self.assertEquals(
+            {'t0d0node1_1', 't0d0node1_2', 't0d1node1_1', 't0d1node1_2',
+             't1d0node1_1', 't1d0node1_2'},
+            self._to_node_instance_ids_set(results))
+
+    # Tests for get_deployments_and_run_workers
+
+    def test_empty_node_instances_map(self):
+        self.mock_client({})
+        self.assertRaises(
+            CloudifyCliError,
+            get_deployments_and_run_workers,
+            self.client,
+            self._agent_filters(),
+            [],
+            self.logger,
+            '')
+
+    @patch.object(ExecutionsClient, 'start')
+    def test_node_instances_map_full(self, exec_client_mock):
+        self.mock_client(AgentsTests.DEFAULT_TENANTS_MAP)
+        get_deployments_and_run_workers(
+            self.client, self._agent_filters(),
+            AgentsTests.DEFAULT_TENANTS_MAP.keys(),
+            self.logger, 'workflow'
         )
-        self.assertIn('Illegal usage: `tenant_name` is mutually exclusive with'
-                      ' arguments: [all_tenants]', outcome.output)
 
-    def test_agents_install_fail_when_t_all_and_dep_togther(self):
-        """
-         This tests makes sure that if both flags '-t' and '--all-tenants'
-         are requested and a deployment is specified, an error occurs.
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(3, 3)
-        self.mock_client(tenants_list, deps, [], True)
-        outcome = self.invoke(
-            'cfy agents install -t tenant2 --all-tenants dep2',
-            exception=SystemExit,
-            err_str_segment='2'  # Exit code
-        )
-        self.assertIn('Illegal usage: `tenant_name` is mutually exclusive with'
-                      ' arguments: [all_tenants]', outcome.output)
-
-    @patch('cloudify_cli.commands.agents.run_worker')
-    def test_agents_install_all_tenants_multiple_deployments(self,
-                                                             worker_mock):
-        """
-        Expected behavior: install agents for all deployments
-                           across all tenants.
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(3, 3)
-        self.mock_client(tenants_list, deps, [], True)
-        self.invoke('cfy agents install --all-tenants')
-        self.assertEqual(3, worker_mock.call_count)  # 1 call per tenant
-        tenant0_deployments = [d['id'] for d in deps['tenant0']]
-        tenant1_deployments = [d['id'] for d in deps['tenant1']]
-        tenant2_deployments = [d['id'] for d in deps['tenant2']]
-        self.assertEqual(
-            tenant0_deployments in worker_mock.call_args_list[0][0], True)
-        self.assertEqual(
-            tenant1_deployments in worker_mock.call_args_list[1][0], True)
-        self.assertEqual(
-            tenant2_deployments in worker_mock.call_args_list[2][0], True)
-
-    @patch('cloudify_cli.commands.agents.run_worker')
-    def test_agents_install_all_tenants_specific_deployments(self,
-                                                             worker_mock):
-        """
-        Expected behavior: install agents for a specific deployment
-                           across all tenants.
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(3, 3, False)
-
-        def f(dep_id):
-            return True
-        self.mock_client(tenants_list, deps, [], f)
-        self.invoke('cfy agents install --all-tenants dep2')
-        self.assertEqual(3, worker_mock.call_count)  # 1 call per tenant
-        self.assertEqual(
-            ['dep2'] in worker_mock.call_args_list[0][0], True)
-        self.assertEqual(
-            ['dep2'] in worker_mock.call_args_list[1][0], True)
-        self.assertEqual(
-            ['dep2'] in worker_mock.call_args_list[2][0], True)
-
-    def test_agents_install_fail_spec_dep_in_spec_ten(self):
-        """
-        Expected behavior: when an unrecognized deployment ID is given, we
-                           expect an exception.
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(3, 3)
-
-        def f():
-            raise Exception
-
-        self.mock_client(tenants_list, deps, [], f)
-        self.invoke('cfy agents install -t tenant2 dep11',
-                    exception=SuppressedCloudifyCliError,
-                    err_str_segment='')
-
-    @patch('cloudify_cli.commands.agents.run_worker')
-    def test_agents_install_all_tenants_missing_deployments(self,
-                                                            worker_mock):
-        """
-        3 tenants are created: t0 has no deployments, t1 and t2 has 3
-        deployments each.
-        Expected behavior: install agents for all deployments in t1 and t2
-                           (no exceptions expected!).
-        """
-        # Create 3 tenants, tenant0 - no deployments, t1 & t2 with 3
-        # deployments each.
-        tenants_list = []
-        deps = {}
-        for i in range(3):
-            ten = tenants.Tenant({'name': 'tenant{0}'.format(i)})
-            tenants_list.append(ten)
-        t0 = tenants_list[0]
-        t1 = tenants_list[1]
-        t2 = tenants_list[2]
-        # t0 with no deployments
-        deps[t0['name']] = []
-        # t1 with 3 deployments
-        deps[t1['name']] = []
-        index = AgentsTests.create_deployments_in_tenant(
-            deps[t1['name']], 3, t1, 0)
-        # t2 with 3 deployments
-        deps[t2['name']] = []
-        AgentsTests.create_deployments_in_tenant(
-            deps[t2['name']], 3, t2, index)
-        # assert worker is only called for the non-empty tenants
-        self.mock_client(tenants_list, deps, [], True)
-        self.invoke('cfy agents install --all-tenants')
-        self.assertEqual(2, worker_mock.call_count)  # 1 call per tenant
-        tenant1_deployments = [d['id'] for d in deps['tenant1']]
-        tenant2_deployments = [d['id'] for d in deps['tenant2']]
-        self.assertEqual(
-            tenant1_deployments in worker_mock.call_args_list[0][0], True)
-        self.assertEqual(
-            tenant2_deployments in worker_mock.call_args_list[1][0], True)
-
-    def test_agents_install_fail_all_tenants_no_deployments(self):
-        """
-        3 tenants are created: t0,t1,t2. All of them have no deployments,
-        Expected behavior: Exception should be raised.
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(3, 0)
-
-        def f(*args):
-            raise Exception
-
-        self.mock_client(tenants_list, deps, [], f)
-        self.invoke('cfy agents install --all-tenants',
-                    exception=SuppressedCloudifyCliError,
-                    err_str_segment='')
-
-    def test_agents_install_fail_all_tenants_specific_dep_not_found(self):
-        """
-        3 tenants are created: t0,t1,t2. In each one 3 deployments are created:
-        'dep0', 'dep1', 'dep2'. The user tries to install agents for 'dep99'
-        across all tenants ('dep99' doesn't exist in any of them).
-        Expected behavior: Exception should be raised.
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(3, 3, False)
-
-        def f(*args):
-            raise Exception
-
-        self.mock_client(tenants_list, deps, [], f)
-        self.invoke('cfy agents install --all-tenants dep99',
-                    exception=SuppressedCloudifyCliError,
-                    err_str_segment='')
-
-    @patch('cloudify_cli.commands.agents.run_worker')
-    def test_agents_install_with_manager_ip_and_ssl_cert(self, worker_mock):
-        """
-        Assert that the arguments `manager_ip` and `manager_certificate` are
-        passed as expected
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(2, 3)
-        self.mock_client(tenants_list, deps, [], True)
-        with tempfile.NamedTemporaryFile(delete=False)as f:
-            cert_content = 'certificate content...'
-            f.write(cert_content)
-            f.close()
-            self.invoke('cfy agents install --manager-ip 10.10.10.10'
-                        ' --manager_certificate {0}'.format(f.name))
-            call_args = list(worker_mock.call_args)
-            self.assertEqual(call_args[0][5]['manager_ip'], '10.10.10.10')
-            self.assertEqual(
-                call_args[0][5]['manager_certificate'], cert_content)
-            self.assertEqual(1, worker_mock.call_count)
-
-    @patch('cloudify_cli.commands.agents.run_worker')
-    def test_agents_install_with_manager_ip(self, worker_mock):
-        """
-        Assert that the argument `manager_ip` is passed as expected
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(2, 3)
-        self.mock_client(tenants_list, deps, [], True)
-        self.invoke('cfy agents install --manager-ip 10.10.10.10')
-        call_args = list(worker_mock.call_args)
-        self.assertEqual(call_args[0][5]['manager_ip'], '10.10.10.10')
-        self.assertEqual(1, worker_mock.call_count)
-
-    @patch('cloudify_cli.commands.agents.run_worker')
-    def test_agents_install_with_ssl_cert(self, worker_mock):
-        """
-        Assert that the argument `manager_certificate` is passed as expected
-        """
-        tenants_list, deps = self.create_tenants_and_deployments(2, 3)
-        self.mock_client(tenants_list, deps, [], True)
-        with tempfile.NamedTemporaryFile(delete=False)as f:
-            cert_content = 'certificate content...'
-            f.write(cert_content)
-            f.close()
-            self.invoke(
-                'cfy agents install --manager_certificate {0}'.format(f.name))
-            call_args = list(worker_mock.call_args)
-            self.assertEqual(
-                call_args[0][5]['manager_certificate'], cert_content)
-            self.assertEqual(1, worker_mock.call_count)
-
-    def test_agents_install_fail_ssl_cert_file_not_exists(self):
-        self.invoke('cfy agents install --manager-ip 0.0.0.0'
-                    ' --manager_certificate cert.txt',
-                    exception=IOError,
-                    err_str_segment="Manager's SSL certificate file does not"
-                                    " exist in the following path:")
-
-    def test_agents_install_fail_no_permission_to_ssl_cert_file(self):
-        with tempfile.NamedTemporaryFile() as f:
-            os.chmod(f.name, 000)
-            command = 'cfy agents install --manager-ip 0.0.0.0' \
-                      ' --manager_certificate {0}'.format(f.name)
-            self.invoke(command, exception=IOError,
-                        err_str_segment="Could not read Manager's SSL"
-                                        " certificate from the given path:")
+        self.assert_execution_started(
+            exec_client_mock, 'd1',
+            ['t0d1node1_1', 't0d1node1_2', 't0d1node3_1'])
+        self.assert_execution_started(
+            exec_client_mock, 'd0',
+            ['t0d0node1_1', 't0d0node1_2', 't0d0node2_1'])
+        self.assert_execution_started(
+            exec_client_mock, 'd0', ['t1d0node1_1', 't1d0node1_2'])
+        self.assert_execution_started(
+            exec_client_mock, 'd1', ['t1d1node3_1'])
+        self.assert_execution_started(
+            exec_client_mock, 'd2', ['t1d2node4_1'])
+        self.assertEquals(len(exec_client_mock.call_args_list), 5)

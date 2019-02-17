@@ -14,18 +14,10 @@
 # limitations under the License.
 ############
 
-import time
-import threading
 import os.path
 
-from cloudify import logs
-
-from .. import utils
 from ..cli import cfy
-from ..exceptions import ExecutionTimeoutError
-from ..exceptions import SuppressedCloudifyCliError
-from ..execution_events_fetcher import wait_for_execution, \
-    WAIT_FOR_EXECUTION_SLEEP_INTERVAL
+from ..exceptions import CloudifyCliError
 from .. import env
 from ..table import print_data
 
@@ -35,6 +27,27 @@ AGENT_COLUMNS = ['id', 'ip', 'deployment', 'node', 'system', 'version',
                  'install_method']
 
 
+def _get_tenants(client, all_tenants, tenant_name):
+    if all_tenants:
+        tenants_list = [tenant.name for tenant in client.tenants.list()]
+    else:
+        tenants_list = [tenant_name]
+    return tenants_list
+
+
+def _handle_deployment_id(logger, deployment, agent_filters):
+    # Handle the case when a deployment ID is provided as a positional
+    # argument.
+    if deployment:
+        logger.warning('Passing the deployment ID as an argument is '
+                       'deprecated, use --deployment-id instead')
+        if agent_filters[cfy.AGENT_FILTER_DEPLOYMENT_ID]:
+            raise CloudifyCliError(
+                "'--deployment-id' must not be specified if a deployment ID "
+                "is provided as a positional argument")
+        agent_filters[cfy.AGENT_FILTER_DEPLOYMENT_ID] = [deployment]
+
+
 @cfy.group(name='agents')
 @cfy.options.common_options
 @cfy.assert_manager_active()
@@ -42,23 +55,6 @@ def agents():
     """Handle a deployment's agents
     """
     pass
-
-
-def _is_deployment_installed(client, deployment_id):
-    for node_instance in client.node_instances.list(
-            deployment_id=deployment_id,
-            _get_all_results=True):
-        if node_instance.state != _NODE_INSTANCE_STATE_STARTED:
-            return False
-    return True
-
-
-def _deployment_exists(client, deployment_id):
-    try:
-        client.deployments.get(deployment_id)
-    except Exception:
-        return False
-    return True
 
 
 @agents.command(name='list',
@@ -76,7 +72,6 @@ def agents_list(agent_filters, client, logger):
 @agents.command(name='install',
                 short_help='Install deployment agents [manager only]')
 @cfy.argument('deployment', required=False)
-@cfy.options.include_logs
 @cfy.options.common_options
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='relevant deployment(s)')
@@ -89,7 +84,6 @@ def agents_list(agent_filters, client, logger):
 @cfy.pass_client()
 def install(deployment,
             agent_filters,
-            include_logs,
             tenant_name,
             logger,
             client,
@@ -105,13 +99,10 @@ def install(deployment,
     See Cloudify's documentation at http://docs.getcloudify.org for more
     information.
     """
-    if deployment:
-        logger.warning('Passing the deployment ID as an argument is '
-                       'deprecated, use --deployment-id instead')
-        agent_filters['deployment_id'] = deployment
+    _handle_deployment_id(logger, deployment, agent_filters)
     if manager_certificate:
         manager_certificate = _validate_certificate_file(manager_certificate)
-    params = {}
+    params = dict()
     # We only want to pass this arg if it's true, because of backwards
     # compatibility with blueprints that don't support it
     if stop_old_agent:
@@ -120,177 +111,129 @@ def install(deployment,
         params['manager_ip'] = manager_ip
         params['manager_certificate'] = manager_certificate
     get_deployments_and_run_workers(
-        agent_filters, include_logs, tenant_name,
-        logger, client, all_tenants, 'install_new_agents', params)
+        client, agent_filters, _get_tenants(client, all_tenants, tenant_name),
+        logger, 'install_new_agents', params)
+
+
+def get_node_instances_map(
+        client,
+        agent_filters,
+        tenants):
+    def _get_node_instances(rest_client, **kwargs):
+        return rest_client.node_instances.list(
+            _include=['node_id', 'deployment_id'],
+            _get_all_results=True, **kwargs)
+
+    # We need to analyze the filters.
+    #
+    # If node instance ID's are given, then we only process these node
+    # instances. The filters for deployment ID's and node ID's
+    # must not be specified.
+    #
+    # Otherwise, we perform an intersection between:
+    #
+    # * Union of all specified node ID's
+    # * Union of all specified deployment ID's
+    #
+    # This will end up being a mapping of this form:
+    #
+    # tenant1 |- nodeinstance_1
+    #         |- nodeinstance_2
+    #         |- nodeinstance_3
+    # tenant2 |- nodeinstance_4
+    #
+    # It is possible that one of the keys in the dict is 'None',
+    # and that means - the current tenant.
+
+    if agent_filters[cfy.AGENT_FILTER_NODE_INSTANCE_IDS] and (
+            agent_filters[cfy.AGENT_FILTER_DEPLOYMENT_ID] or
+            agent_filters[cfy.AGENT_FILTER_NODE_IDS]):
+        raise CloudifyCliError(
+            "If node instance ID's are provided, neither deployment ID's nor "
+            "deployment ID's are allowed.")
+    tenants_to_node_instances = dict()
+
+    def _add_to_tenant_nodeinstances(tenant_name, node_instances):
+        # 'None' is a valid tenant_name, so we can't use .get()
+        tenant_node_instances = tenants_to_node_instances.setdefault(
+            tenant_name, list())
+        tenant_node_instances.extend(node_instances)
+
+    if agent_filters[cfy.AGENT_FILTER_NODE_INSTANCE_IDS]:
+        candidate_ids = agent_filters[
+            cfy.AGENT_FILTER_NODE_INSTANCE_IDS]
+        candidates = _get_node_instances(
+            client, ids=candidate_ids, _all_tenants=True)
+        # Ensure that all requested node instance ID's actually exist.
+        missing = {node_instance.id for node_instance
+                   in candidates} - set(candidate_ids)
+        if missing:
+            raise CloudifyCliError("Node instances do not exist: "
+                                   "%s" % str(missing))
+        _add_to_tenant_nodeinstances(None, candidates)
+    else:
+        for tenant in tenants:
+            tenant_client = env.get_rest_client(tenant_name=tenant)
+            ni_filters = dict()
+            if agent_filters[cfy.AGENT_FILTER_NODE_IDS]:
+                ni_filters['node_id'] = agent_filters[
+                    cfy.AGENT_FILTER_NODE_IDS]
+            if agent_filters[cfy.AGENT_FILTER_DEPLOYMENT_ID]:
+                ni_filters['deployment_id'] = agent_filters[
+                    cfy.AGENT_FILTER_DEPLOYMENT_ID]
+            candidates = _get_node_instances(tenant_client, **ni_filters)
+            _add_to_tenant_nodeinstances(tenant, candidates)
+
+    # Remove empty tenants.
+    for tenant_name, node_instances in tenants_to_node_instances.items():
+        if not node_instances:
+            del tenants_to_node_instances[tenant_name]
+
+    return tenants_to_node_instances
 
 
 def get_deployments_and_run_workers(
-        agent_filters,
-        include_logs,
-        tenant_name,
-        logger,
         client,
-        all_tenants,
+        agent_filters,
+        tenants,
+        logger,
         workflow_id,
         parameters=None):
+    tenants_to_ni_cache = get_node_instances_map(
+        client, agent_filters, tenants)
 
-    # install agents across all tenants
-    if parameters is None:
-        parameters = {}
-    deployment_id = agent_filters.get('deployment_id')
-    if agent_filters.get('node_ids'):
-        parameters['node_ids'] = agent_filters['node_ids']
-    if agent_filters.get('node_instance_ids'):
-        parameters['node_instance_ids'] = agent_filters['node_instance_ids']
-    if all_tenants:
-        no_deployments_found = True
-        tenants_list = [tenant.name for tenant in client.tenants.list()]
-        for tenant in tenants_list:
-            tenant_client = env.get_rest_client(tenant_name=tenant)
-            # install agents for a specified deployments or for all
-            # deployments under tenant (depends if 'deployment_id' was passed)
-            deps, error_msg = create_deployments_list(
-                tenant_client, deployment_id, logger, workflow_id)
-            if not error_msg:
-                no_deployments_found = False
-                run_worker(deps, tenant_client, logger, include_logs,
-                           workflow_id, parameters)
-        if no_deployments_found:
-            logger.error(error_msg)
-            raise SuppressedCloudifyCliError()
-    else:
-        # if tenant name was passed, install agents for all deployments
-        # under a specified tenant
-        utils.explicit_tenant_name_message(tenant_name, logger)
-        deps, error_msg = create_deployments_list(
-            client, deployment_id, logger, workflow_id)
-        if error_msg:
-            logger.error(error_msg)
-            raise SuppressedCloudifyCliError()
-        run_worker(deps, client, logger, include_logs, workflow_id, parameters)
+    if not tenants_to_ni_cache:
+        raise CloudifyCliError("No eligible deployments found")
 
+    for tenant_name, node_instances in tenants_to_ni_cache.items():
+        tenant_client = env.get_rest_client(tenant_name=tenant_name)
+        # Group node instances by deployment ID's.
+        deployments_map = dict()
+        for node_instance in node_instances:
+            dep_instances = deployments_map.setdefault(
+                node_instance.deployment_id, list())
+            dep_instances.append(node_instance)
 
-def create_deployments_list(client, deployment_id, logger, workflow_id):
-    """
-    Creates a list of all the deployments who's agents
-    will be installed.
-
-    :param client: Rest client with the correct tenant.
-    :param deployment_id: An id of a specific
-           deployment you would like to install agents for.
-           If not passed all deployments under this tenants
-           will be included in the deployments list.
-    :param logger: In order to write logs.
-    :return A list of the relevant deployments.
-            """
-    # install agents for a specified deployment
-    error_msg = None
-    if deployment_id:
-        dep_list = [deployment_id]
-        if not _deployment_exists(client, deployment_id):
-            error_msg = "Could not find deployment for deployment id: '{0}'.".\
-                format(deployment_id)
-            return dep_list, error_msg
-        if not _is_deployment_installed(client, deployment_id):
-            error_msg =\
-                "Deployment '{0}' is not installed".format(deployment_id)
-            return dep_list, error_msg
-
-        logger.info("Running workflow '{0}' for deployment '{1}'"
-                    .format(workflow_id, deployment_id))
-
-    # install agents for all deployments
-    else:
-        dep_list = [dep.id for dep in
-                    client.deployments.list()
-                    if _is_deployment_installed(client, dep.id)]
-        if not dep_list:
-            error_msg = 'There are no deployments installed'
-            return dep_list, error_msg
-
-        logger.info("Running workflow '{0}' for all installed deployments".
-                    format(workflow_id))
-
-    return dep_list, error_msg
-
-
-def run_worker(
-        deps, client, logger, include_logs, workflow_id, parameters=None):
-
-    error_summary = []
-    error_summary_lock = threading.Lock()
-    event_lock = threading.Lock()
-
-    def log_to_summary(message):
-        with error_summary_lock:
-            error_summary.append(message)
-
-    def threadsafe_log(message):
-        with event_lock:
-            logger.info(message)
-
-    def threadsafe_events_logger(events):
-        with event_lock:
-            for event in events:
-                output = logs.create_event_message_prefix(event)
-                if output:
-                    logger.info(output)
-
-    def worker(dep_id):
-        timeout = 900
-        try:
-            execution = client.executions.start(
-                dep_id, workflow_id, parameters,
+        for deployment_id, dep_node_instances in deployments_map.items():
+            execution_params = {
+                'node_instance_ids': [ni.id for ni in dep_node_instances],
+            }
+            if agent_filters[cfy.AGENT_FILTER_INSTALL_METHODS]:
+                execution_params['install_methods'] = agent_filters[
+                    cfy.AGENT_FILTER_INSTALL_METHODS]
+            if parameters:
+                execution_params.update(parameters)
+            execution = tenant_client.executions.start(
+                deployment_id, workflow_id, execution_params,
                 allow_custom_parameters=True)
-            execution = wait_for_execution(
-                client,
-                execution,
-                events_handler=threadsafe_events_logger,
-                include_logs=include_logs,
-                timeout=timeout
+            logger.info(
+                "Scheduled execution for deployment '%s': %s",
+                deployment_id, execution.id
             )
 
-            if execution.error:
-                log_to_summary("Execution of workflow '{0}' for "
-                               "deployment '{1}' failed. [error={2}]"
-                               .format(workflow_id,
-                                       dep_id,
-                                       execution.error))
-            else:
-                threadsafe_log("Finished executing workflow "
-                               "'{0}' on deployment"
-                               " '{1}'".format(workflow_id, dep_id))
-
-        except ExecutionTimeoutError as e:
-            log_to_summary(
-                "Timed out waiting for workflow '{0}' of deployment '{1}' to "
-                "end. The execution may still be running properly; however, "
-                "the command-line utility was instructed to wait up to {3} "
-                "seconds for its completion.\n\n"
-                "* Run 'cfy executions list' to determine the execution's "
-                "status.\n"
-                "* Run 'cfy executions cancel --execution-id {2}' to cancel"
-                " the running workflow.".format(
-                    workflow_id, dep_id, e.execution_id, timeout))
-
-    threads = [threading.Thread(target=worker, args=(dep_id,))
-               for dep_id in deps]
-
-    for t in threads:
-        t.daemon = True
-        t.start()
-
-    while True:
-        if all(not thread.is_alive() for thread in threads):
-            break
-        time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
-
-    if error_summary:
-        logger.error('Summary:\n{0}\n'.format(
-            '\n'.join(error_summary)
-        ))
-
-        raise SuppressedCloudifyCliError()
+    logger.info("Executions started for all applicable deployments."
+                "You may now use the 'cfy events list' command to "
+                "view the events associated with these executions.")
 
 
 @agents.command(name='validate',
@@ -298,7 +241,6 @@ def run_worker(
                            ' Cloudify Manager and the live Cloudify Agents'
                            ' (installed on remote hosts). [manager only]')
 @cfy.argument('deployment', required=False)
-@cfy.options.include_logs
 @cfy.options.common_options
 @cfy.options.agent_filters
 @cfy.options.tenant_name_for_list(
@@ -308,7 +250,6 @@ def run_worker(
 @cfy.pass_client()
 def validate(deployment,
              agent_filters,
-             include_logs,
              tenant_name,
              logger,
              client,
@@ -318,15 +259,12 @@ def validate(deployment,
 
         `DEPLOYMENT_ID` - The ID of the deployment you would like to
         validate agents for.
+    """
 
-        """
-    if deployment:
-        logger.warning('Passing the deployment ID as an argument is '
-                       'deprecated, use --deployment-id instead')
-        agent_filters['deployment_id'] = deployment
+    _handle_deployment_id(logger, deployment, agent_filters)
     get_deployments_and_run_workers(
-        agent_filters, include_logs, tenant_name,
-        logger, client, all_tenants, 'validate_agents')
+        client, agent_filters, _get_tenants(client, all_tenants, tenant_name),
+        logger, 'validate_agents')
 
 
 def _validate_certificate_file(certificate):
