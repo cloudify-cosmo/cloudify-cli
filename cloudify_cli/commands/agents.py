@@ -67,7 +67,7 @@ def _deployment_exists(client, deployment_id):
 @cfy.options.agent_filters
 @cfy.pass_logger
 @cfy.pass_client()
-def list(agent_filters, client, logger):
+def agents_list(agent_filters, client, logger):
     agents = client.agents.list(**agent_filters)
     logger.info('Listing agents...')
     print_data(AGENT_COLUMNS, agents, 'Agents:')
