@@ -229,7 +229,7 @@ def get_deployments_and_run_workers(
                 deployment_id, workflow_id, execution_params,
                 allow_custom_parameters=True)
             logger.info(
-                "Scheduled execution for deployment '%s': %s",
+                "Started execution for deployment '%s': %s",
                 deployment_id, execution.id
             )
 
