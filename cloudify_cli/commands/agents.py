@@ -27,14 +27,6 @@ AGENT_COLUMNS = ['id', 'ip', 'deployment', 'node', 'system', 'version',
                  'install_method']
 
 
-def _get_tenants(client, all_tenants, tenant_name):
-    if all_tenants:
-        tenants_list = [tenant.name for tenant in client.tenants.list()]
-    else:
-        tenants_list = [tenant_name]
-    return tenants_list
-
-
 def _handle_deployment_id(logger, deployment, agent_filters):
     # Handle the case when a deployment ID is provided as a positional
     # argument.
@@ -111,17 +103,17 @@ def install(deployment,
         params['manager_ip'] = manager_ip
         params['manager_certificate'] = manager_certificate
     get_deployments_and_run_workers(
-        client, agent_filters, _get_tenants(client, all_tenants, tenant_name),
+        client, agent_filters, all_tenants,
         logger, 'install_new_agents', params)
 
 
 def get_node_instances_map(
         client,
         agent_filters,
-        tenants):
-    def _get_node_instances(rest_client, **kwargs):
-        return rest_client.node_instances.list(
-            _include=['node_id', 'deployment_id'],
+        all_tenants):
+    def _get_node_instances(**kwargs):
+        return client.node_instances.list(
+            _include=['tenant_name', 'node_id', 'deployment_id'],
             _get_all_results=True, **kwargs)
 
     # We need to analyze the filters.
@@ -153,36 +145,46 @@ def get_node_instances_map(
             "deployment ID's are allowed.")
     tenants_to_node_instances = dict()
 
-    def _add_to_tenant_nodeinstances(tenant_name, node_instances):
-        # 'None' is a valid tenant_name, so we can't use .get()
-        tenant_node_instances = tenants_to_node_instances.setdefault(
-            tenant_name, list())
-        tenant_node_instances.extend(node_instances)
+    def _add_to_tenant_nodeinstances(node_instances):
+        for node_instance in node_instances:
+            tenant_node_instances = tenants_to_node_instances.setdefault(
+                node_instance['tenant_name'], list())
+            tenant_node_instances.append(node_instance)
 
     if agent_filters[cfy.AGENT_FILTER_NODE_INSTANCE_IDS]:
         candidate_ids = agent_filters[
             cfy.AGENT_FILTER_NODE_INSTANCE_IDS]
         candidates = _get_node_instances(
-            client, ids=candidate_ids, _all_tenants=True)
+            ids=candidate_ids, _all_tenants=True)
         # Ensure that all requested node instance ID's actually exist.
         missing = {node_instance.id for node_instance
                    in candidates} - set(candidate_ids)
         if missing:
             raise CloudifyCliError("Node instances do not exist: "
                                    "%s" % str(missing))
-        _add_to_tenant_nodeinstances(None, candidates)
+        _add_to_tenant_nodeinstances(candidates)
     else:
-        for tenant in tenants:
-            tenant_client = env.get_rest_client(tenant_name=tenant)
-            ni_filters = dict()
-            if agent_filters[cfy.AGENT_FILTER_NODE_IDS]:
-                ni_filters['node_id'] = agent_filters[
-                    cfy.AGENT_FILTER_NODE_IDS]
-            if agent_filters[cfy.AGENT_FILTER_DEPLOYMENT_ID]:
-                ni_filters['deployment_id'] = agent_filters[
-                    cfy.AGENT_FILTER_DEPLOYMENT_ID]
-            candidates = _get_node_instances(tenant_client, **ni_filters)
-            _add_to_tenant_nodeinstances(tenant, candidates)
+        # If at least one deployment ID was provided, then ensure
+        # all specified deployment ID's indeed exist.
+        if agent_filters[cfy.AGENT_FILTER_DEPLOYMENT_ID]:
+            existing_deployments = client.deployments.list(
+                id=agent_filters[cfy.AGENT_FILTER_DEPLOYMENT_ID],
+                _include=['id'])
+            missing = {deployment.id for deployment in existing_deployments} \
+                - set(agent_filters[cfy.AGENT_FILTER_DEPLOYMENT_ID])
+            if missing:
+                raise CloudifyCliError("Deployments do not exist: "
+                                       "%s" % str(missing))
+        ni_filters = dict()
+        if agent_filters[cfy.AGENT_FILTER_NODE_IDS]:
+            ni_filters['node_id'] = agent_filters[
+                cfy.AGENT_FILTER_NODE_IDS]
+        if agent_filters[cfy.AGENT_FILTER_DEPLOYMENT_ID]:
+            ni_filters['deployment_id'] = agent_filters[
+                cfy.AGENT_FILTER_DEPLOYMENT_ID]
+        candidates = _get_node_instances(_all_tenants=all_tenants,
+                                         **ni_filters)
+        _add_to_tenant_nodeinstances(candidates)
 
     # Remove empty tenants.
     for tenant_name, node_instances in tenants_to_node_instances.items():
@@ -195,12 +197,12 @@ def get_node_instances_map(
 def get_deployments_and_run_workers(
         client,
         agent_filters,
-        tenants,
+        all_tenants,
         logger,
         workflow_id,
         parameters=None):
     tenants_to_ni_cache = get_node_instances_map(
-        client, agent_filters, tenants)
+        client, agent_filters, all_tenants)
 
     if not tenants_to_ni_cache:
         raise CloudifyCliError("No eligible deployments found")
@@ -263,7 +265,7 @@ def validate(deployment,
 
     _handle_deployment_id(logger, deployment, agent_filters)
     get_deployments_and_run_workers(
-        client, agent_filters, _get_tenants(client, all_tenants, tenant_name),
+        client, agent_filters, all_tenants,
         logger, 'validate_agents')
 
 

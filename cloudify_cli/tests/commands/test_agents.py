@@ -13,11 +13,12 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from mock import MagicMock, patch
+from mock import patch
 
 from .test_base import CliCommandTest
 from cloudify_rest_client.executions import ExecutionsClient
 from cloudify_rest_client.node_instances import NodeInstance
+from cloudify_rest_client.deployments import Deployment
 from cloudify_cli.cli import cfy
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
@@ -29,8 +30,9 @@ from cloudify_cli.commands.agents import (
 DEFAULT_TENANT_NAME = 'tenant0'
 
 
-def _node_instance(ni_id, node_id, dep_id):
+def _node_instance(tenant_name, ni_id, node_id, dep_id):
     return NodeInstance({
+        'tenant_name': tenant_name,
         'id': ni_id,
         'node_id': node_id,
         'deployment_id': dep_id
@@ -79,51 +81,56 @@ class AgentsTests(CliCommandTest):
                 cfy.AGENT_FILTER_DEPLOYMENT_ID: deployment_ids,
                 cfy.AGENT_FILTER_INSTALL_METHODS: install_methods}
 
-    DEFAULT_TENANTS_MAP = {
-        DEFAULT_TENANT_NAME: [
-            _node_instance('t0d0node1_1', 'node1', 'd0'),
-            _node_instance('t0d0node1_2', 'node1', 'd0'),
-            _node_instance('t0d0node2_1', 'node2', 'd0'),
-            _node_instance('t0d1node1_1', 'node1', 'd1'),
-            _node_instance('t0d1node1_2', 'node1', 'd1'),
-            _node_instance('t0d1node3_1', 'node3', 'd1'),
-        ],
-        'other_tenant': [
-            _node_instance('t1d0node1_1', 'node1', 'd0'),
-            _node_instance('t1d0node1_2', 'node1', 'd0'),
-            _node_instance('t1d1node3_1', 'node3', 'd1'),
-            _node_instance('t1d2node4_1', 'node4', 'd2'),
+    DEFAULT_TOPOLOGY = [
+        _node_instance(DEFAULT_TENANT_NAME, 't0d0node1_1', 'node1', 'd0'),
+        _node_instance(DEFAULT_TENANT_NAME, 't0d0node1_2', 'node1', 'd0'),
+        _node_instance(DEFAULT_TENANT_NAME, 't0d0node2_1', 'node2', 'd0'),
+        _node_instance(DEFAULT_TENANT_NAME, 't0d1node1_1', 'node1', 'd1'),
+        _node_instance(DEFAULT_TENANT_NAME, 't0d1node1_2', 'node1', 'd1'),
+        _node_instance(DEFAULT_TENANT_NAME, 't0d1node3_1', 'node3', 'd1'),
+        _node_instance('other_tenant', 't1d0node1_1', 'node1', 'd0'),
+        _node_instance('other_tenant', 't1d0node1_2', 'node1', 'd0'),
+        _node_instance('other_tenant', 't1d1node3_1', 'node3', 'd1'),
+        _node_instance('other_tenant', 't1d2node4_1', 'node4', 'd2'),
         ]
-    }
 
-    def mock_client(self, tenants_map):
-        def list_node_instances(**kwargs):
+    def mock_client(self, topology):
+        def _topology_filter(predicate, **kwargs):
             tenant_name = self.client._client.headers.get(
                 CLOUDIFY_TENANT_HEADER)
             if not tenant_name:
                 tenant_name = DEFAULT_TENANT_NAME
-            if tenant_name not in tenants_map:
-                return []
             results = list()
-            if kwargs.get('_all_tenants', False):
-                candidate_tenants = tenants_map.keys()
-            else:
-                candidate_tenants = [tenant_name]
-            for tenant_name in candidate_tenants:
-                node_instances = tenants_map[tenant_name]
-                for node_instance in node_instances:
-                    ni_id = node_instance['id']
-                    ni_node_id = node_instance['node_id']
-                    ni_dep_id = node_instance['deployment_id']
-                    if ni_id in kwargs.get('id', [ni_id]) and \
-                            ni_node_id in kwargs.get('node_id', [ni_node_id]) \
-                            and ni_dep_id in kwargs.get(
-                           'deployment_id', [ni_dep_id]):
-                        results.append(node_instance)
+            all_tenants = kwargs.get('_all_tenants', False)
+            for node_instance in topology:
+                ni_tenant_name = node_instance['tenant_name']
+                if (all_tenants or ni_tenant_name == tenant_name) \
+                        and predicate(node_instance):
+                    results.append(node_instance)
             return results
 
-        self.client.tenants.list = MagicMock(return_value=tenants_map.keys())
+        def list_node_instances(**kwargs):
+            def _matcher(node_instance):
+                ni_id = node_instance['id']
+                ni_node_id = node_instance['node_id']
+                ni_dep_id = node_instance['deployment_id']
+                return ni_id in kwargs.get('id', [ni_id]) and \
+                    ni_node_id in kwargs.get('node_id', [ni_node_id]) and \
+                    ni_dep_id in kwargs.get('deployment_id', [ni_dep_id])
+
+            return _topology_filter(_matcher, **kwargs)
+
+        def list_deployments(**kwargs):
+            all_node_instances = _topology_filter(lambda x: True, **kwargs)
+            deployment_ids = {x['deployment_id'] for x in all_node_instances}
+            results = set()
+            for dep_id in deployment_ids:
+                if dep_id in kwargs.get('id', [dep_id]):
+                    results.add(dep_id)
+            return [Deployment({'id': x}) for x in results]
+
         self.client.node_instances.list = list_node_instances
+        self.client.deployments.list = list_deployments
 
     def assert_execution_started(self, client_mock, deployment_id,
                                  node_instances):
@@ -155,35 +162,28 @@ class AgentsTests(CliCommandTest):
     def test_instance_map_empty(self):
         self.mock_client({})
         results = get_node_instances_map(
-            self.client, AgentsTests._agent_filters(),
-            [DEFAULT_TENANT_NAME])
+            self.client, AgentsTests._agent_filters(), False)
         self.assertFalse(results)
 
     def test_instance_map_empty_node_instances(self):
         self.mock_client({})
         results = get_node_instances_map(
             self.client, AgentsTests._agent_filters(
-                node_instance_ids=['t0d0node1_1']), [DEFAULT_TENANT_NAME])
+                node_instance_ids=['t0d0node1_1']), False)
         self.assertFalse(results)
 
     def test_instance_map_empty_deployment_ids(self):
         self.mock_client({})
         results = get_node_instances_map(
             self.client, AgentsTests._agent_filters(
-                deployment_ids=['d0']), [DEFAULT_TENANT_NAME])
-        self.assertFalse(results)
-
-    def test_instance_map_bad_tenant(self):
-        self.mock_client(AgentsTests.DEFAULT_TENANTS_MAP)
-        results = get_node_instances_map(
-            self.client, AgentsTests._agent_filters(), ['FAKE'])
+                deployment_ids=['d0']), False)
         self.assertFalse(results)
 
     def test_instance_map_all(self):
-        self.mock_client(AgentsTests.DEFAULT_TENANTS_MAP)
+        self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
         results = get_node_instances_map(
             self.client, AgentsTests._agent_filters(),
-            AgentsTests.DEFAULT_TENANTS_MAP.keys())
+            True)
         self.assertEquals(
             {'t0d0node1_1', 't0d0node1_2', 't0d0node2_1', 't0d1node1_1',
              't0d1node1_2', 't0d1node3_1', 't1d0node1_1', 't1d0node1_2',
@@ -191,26 +191,55 @@ class AgentsTests(CliCommandTest):
             self._to_node_instance_ids_set(results))
 
     def test_instance_map_node_id_single_tenant(self):
-        self.mock_client(AgentsTests.DEFAULT_TENANTS_MAP)
+        self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
         results = get_node_instances_map(
             self.client, AgentsTests._agent_filters(
-                node_ids=['node1']),
-            [DEFAULT_TENANT_NAME])
+                node_ids=['node1']), False)
 
         self.assertEquals(
             {'t0d0node1_1', 't0d0node1_2', 't0d1node1_1', 't0d1node1_2'},
             self._to_node_instance_ids_set(results))
 
     def test_instance_map_node_id_all_tenants(self):
-        self.mock_client(AgentsTests.DEFAULT_TENANTS_MAP)
+        self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
         results = get_node_instances_map(
             self.client, AgentsTests._agent_filters(
-                node_ids=['node1']),
-            AgentsTests.DEFAULT_TENANTS_MAP.keys())
+                node_ids=['node1']), True)
 
         self.assertEquals(
             {'t0d0node1_1', 't0d0node1_2', 't0d1node1_1', 't0d1node1_2',
              't1d0node1_1', 't1d0node1_2'},
+            self._to_node_instance_ids_set(results))
+
+    def test_instance_map_dep_id_single_tenant(self):
+        self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
+        results = get_node_instances_map(
+            self.client, AgentsTests._agent_filters(
+                deployment_ids=['d0']), False)
+
+        self.assertEquals(
+            {'t0d0node1_1', 't0d0node1_2', 't0d0node2_1'},
+            self._to_node_instance_ids_set(results))
+
+    def test_instance_map_dep_id_all_tenants(self):
+        self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
+        results = get_node_instances_map(
+            self.client, AgentsTests._agent_filters(
+                deployment_ids=['d0']), True)
+
+        self.assertEquals(
+            {'t0d0node1_1', 't0d0node1_2', 't0d0node2_1',
+             't1d0node1_1', 't1d0node1_2'},
+            self._to_node_instance_ids_set(results))
+
+    def test_instance_map_bad_dep_id(self):
+        self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
+        results = get_node_instances_map(
+            self.client, AgentsTests._agent_filters(
+                deployment_ids=['error']), False)
+
+        self.assertEquals(
+            set(),
             self._to_node_instance_ids_set(results))
 
     # Tests for get_deployments_and_run_workers
@@ -228,11 +257,10 @@ class AgentsTests(CliCommandTest):
 
     @patch.object(ExecutionsClient, 'start')
     def test_node_instances_map_full(self, exec_client_mock):
-        self.mock_client(AgentsTests.DEFAULT_TENANTS_MAP)
+        self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
         get_deployments_and_run_workers(
             self.client, self._agent_filters(),
-            AgentsTests.DEFAULT_TENANTS_MAP.keys(),
-            self.logger, 'workflow'
+            True, self.logger, 'workflow'
         )
 
         self.assert_execution_started(
