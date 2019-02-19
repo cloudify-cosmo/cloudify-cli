@@ -1053,6 +1053,13 @@ class Options(object):
             help=helptexts.WAIT_AFTER_FAIL
         )
 
+        self.agents_wait = click.option(
+            '--wait',
+            is_flag=True,
+            default=False,
+            help=helptexts.AGENTS_WAIT
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
@@ -1102,8 +1109,8 @@ class Options(object):
                         ('node_instance_id', AGENT_FILTER_NODE_INSTANCE_IDS),
                         ('deployment_id', AGENT_FILTER_DEPLOYMENT_ID),
                         ('install_method', AGENT_FILTER_INSTALL_METHODS)]:
-                    filters[filter_name] = \
-                        kwargs.pop(arg_name, None)
+                    filters[filter_name] = kwargs.pop(arg_name, None)
+
                 kwargs['agent_filters'] = filters
                 return f(*args, **kwargs)
             return _inner

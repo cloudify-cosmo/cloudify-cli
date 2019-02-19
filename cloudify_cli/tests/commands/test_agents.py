@@ -167,17 +167,21 @@ class AgentsTests(CliCommandTest):
 
     def test_instance_map_empty_node_instances(self):
         self.mock_client({})
-        results = get_node_instances_map(
-            self.client, AgentsTests._agent_filters(
-                node_instance_ids=['t0d0node1_1']), False)
-        self.assertFalse(results)
+        self.assertRaises(
+            CloudifyCliError,
+            get_node_instances_map,
+            self.client,
+            AgentsTests._agent_filters(node_instance_ids=['t0d0node1_1']),
+            False)
 
     def test_instance_map_empty_deployment_ids(self):
         self.mock_client({})
-        results = get_node_instances_map(
-            self.client, AgentsTests._agent_filters(
-                deployment_ids=['d0']), False)
-        self.assertFalse(results)
+        self.assertRaises(
+            CloudifyCliError,
+            get_node_instances_map,
+            self.client,
+            AgentsTests._agent_filters(deployment_ids=['d0']),
+            False)
 
     def test_instance_map_all(self):
         self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
@@ -234,13 +238,12 @@ class AgentsTests(CliCommandTest):
 
     def test_instance_map_bad_dep_id(self):
         self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
-        results = get_node_instances_map(
-            self.client, AgentsTests._agent_filters(
-                deployment_ids=['error']), False)
-
-        self.assertEquals(
-            set(),
-            self._to_node_instance_ids_set(results))
+        self.assertRaises(
+            CloudifyCliError,
+            get_node_instances_map,
+            self.client,
+            AgentsTests._agent_filters(deployment_ids=['error']),
+            False)
 
     # Tests for get_deployments_and_run_workers
 
@@ -253,14 +256,15 @@ class AgentsTests(CliCommandTest):
             self._agent_filters(),
             [],
             self.logger,
-            '')
+            '',
+            False)
 
     @patch.object(ExecutionsClient, 'start')
     def test_node_instances_map_full(self, exec_client_mock):
         self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
         get_deployments_and_run_workers(
             self.client, self._agent_filters(),
-            True, self.logger, 'workflow'
+            True, self.logger, 'workflow', False
         )
 
         self.assert_execution_started(
