@@ -276,21 +276,34 @@ def get_deployments_and_run_workers(
                 execution = executions_queue.get_nowait()
             except queue.Empty:
                 break
-            execution = wait_for_execution(
-                client, execution, events_handler=_events_handler,
-                include_logs=True, timeout=None)
 
-            if execution.error:
+            try:
+                execution = wait_for_execution(
+                    client, execution, events_handler=_events_handler,
+                    include_logs=True, timeout=None)
+
+                if execution.error:
+                    errors_summary.append(
+                        "Execution of workflow '{0}' for "
+                        "deployment '{1}' failed. [error={2}]"
+                        .format(workflow_id, execution.deployment_id,
+                                execution.error))
+                else:
+                    logger.info("Finished executing workflow "
+                                "'{0}' on deployment"
+                                " '{1}'".format(workflow_id,
+                                                execution.deployment_id))
+            except Exception as ex:
+                # Log to the logger with a full traceback.
+                # Add to errors summary with only the exception message,
+                # to avoid clutter.
+                logger.exception("Failed waiting for execution {0} to "
+                                 "finish".format(execution.id))
+
                 errors_summary.append(
-                    "Execution of workflow '{0}' for "
-                    "deployment '{1}' failed. [error={2}]"
-                    .format(workflow_id, execution.deployment_id,
-                            execution.error))
-            else:
-                logger.info("Finished executing workflow "
-                            "'{0}' on deployment"
-                            " '{1}'".format(workflow_id,
-                                            execution.deployment_id))
+                    "Failed waiting for execution {0} to finish; error "
+                    "message: %s" % str(ex)
+                )
 
     threads = []
     for i in range(MAX_TRACKER_THREADS):
@@ -304,8 +317,8 @@ def get_deployments_and_run_workers(
             break
         time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
 
-    for thread in threads:
-        thread.join()
+    # No need to join any thread, because if we get to this point,
+    # all threads have already ended (see loop above).
 
     if errors_summary:
         logger.error('Summary:\n{0}\n'.format(
