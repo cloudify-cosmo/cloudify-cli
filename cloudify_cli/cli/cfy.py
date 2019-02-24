@@ -48,6 +48,11 @@ CLICK_CONTEXT_SETTINGS = dict(
     help_option_names=['-h', '--help'],
     token_normalize_func=lambda param: param.lower())
 
+AGENT_FILTER_NODE_IDS = 'node_ids'
+AGENT_FILTER_NODE_INSTANCE_IDS = 'node_instance_ids'
+AGENT_FILTER_DEPLOYMENT_ID = 'deployment_id'
+AGENT_FILTER_INSTALL_METHODS = 'install_methods'
+
 
 class MutuallyExclusiveOption(click.Option):
     """Makes options mutually exclusive. The option must pass a `cls` argument
@@ -1048,6 +1053,13 @@ class Options(object):
             help=helptexts.WAIT_AFTER_FAIL
         )
 
+        self.agents_wait = click.option(
+            '--wait',
+            is_flag=True,
+            default=False,
+            help=helptexts.AGENTS_WAIT
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
@@ -1093,12 +1105,12 @@ class Options(object):
             def _inner(*args, **kwargs):
                 filters = {}
                 for arg_name, filter_name in [
-                        ('node_id', 'node_ids'),
-                        ('node_instance_id', 'node_instance_ids'),
-                        ('deployment_id', 'deployment_id'),
-                        ('install_method', 'install_methods')]:
-                    filters[filter_name] = \
-                        kwargs.pop(arg_name, None)
+                        ('node_id', AGENT_FILTER_NODE_IDS),
+                        ('node_instance_id', AGENT_FILTER_NODE_INSTANCE_IDS),
+                        ('deployment_id', AGENT_FILTER_DEPLOYMENT_ID),
+                        ('install_method', AGENT_FILTER_INSTALL_METHODS)]:
+                    filters[filter_name] = kwargs.pop(arg_name, None)
+
                 kwargs['agent_filters'] = filters
                 return f(*args, **kwargs)
             return _inner
