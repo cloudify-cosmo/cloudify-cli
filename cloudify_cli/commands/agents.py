@@ -40,19 +40,6 @@ AGENT_COLUMNS = ['id', 'ip', 'deployment', 'node', 'system', 'version',
 MAX_TRACKER_THREADS = 20
 
 
-def _handle_deployment_id(logger, deployment, agent_filters):
-    # Handle the case when a deployment ID is provided as a positional
-    # argument.
-    if deployment:
-        logger.warning('Passing the deployment ID as an argument is '
-                       'deprecated, use --deployment-id instead')
-        if agent_filters[cfy.AGENT_FILTER_DEPLOYMENT_ID]:
-            raise CloudifyCliError(
-                "'--deployment-id' must not be specified if a deployment ID "
-                "is provided as a positional argument")
-        agent_filters[cfy.AGENT_FILTER_DEPLOYMENT_ID] = [deployment]
-
-
 @cfy.group(name='agents')
 @cfy.options.common_options
 @cfy.assert_manager_active()
@@ -76,7 +63,6 @@ def agents_list(agent_filters, client, logger):
 
 @agents.command(name='install',
                 short_help='Install deployment agents [manager only]')
-@cfy.argument('deployment', required=False)
 @cfy.options.common_options
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='relevant deployment(s)')
@@ -88,8 +74,7 @@ def agents_list(agent_filters, client, logger):
 @cfy.options.agents_wait
 @cfy.pass_logger
 @cfy.pass_client()
-def install(deployment,
-            agent_filters,
+def install(agent_filters,
             tenant_name,
             logger,
             client,
@@ -98,15 +83,8 @@ def install(deployment,
             manager_ip,
             manager_certificate,
             wait):
-    """Install agents on the hosts of existing deployments
-
-    `DEPLOYMENT` - The ID of the deployment you would like to
-    install agents for.
-
-    See Cloudify's documentation at http://docs.getcloudify.org for more
-    information.
+    """Install agents on the hosts of existing deployments.
     """
-    _handle_deployment_id(logger, deployment, agent_filters)
     if manager_certificate:
         manager_certificate = _validate_certificate_file(manager_certificate)
     params = dict()
@@ -144,10 +122,12 @@ def get_node_instances_map(
     #
     # This will end up being a mapping of this form:
     #
-    # tenant1 |- nodeinstance_1
-    #         |- nodeinstance_2
-    #         |- nodeinstance_3
-    # tenant2 |- nodeinstance_4
+    # tenant1 |- dep1 |- nodeinstance_1
+    #         |-      |- nodeinstance_2
+    #         |-      |- nodeinstance_3
+    # tenant2 |- dep2 |- nodeinstance_4
+    #         |- dep3 |- nodeinstance_5
+    #         |-      |- nodeinstance_6
     #
     # It is possible that one of the keys in the dict is 'None',
     # and that means - the current tenant.
@@ -162,9 +142,11 @@ def get_node_instances_map(
 
     def _add_to_tenant_nodeinstances(node_instances):
         for node_instance in node_instances:
-            tenant_node_instances = tenants_to_node_instances.setdefault(
-                node_instance['tenant_name'], list())
-            tenant_node_instances.append(node_instance)
+            tenant_deployments = tenants_to_node_instances.setdefault(
+                node_instance['tenant_name'], dict())
+            deployment_node_instances = tenant_deployments.setdefault(
+                node_instance['deployment_id'], list())
+            deployment_node_instances.append(node_instance.id)
 
     if agent_filters[cfy.AGENT_FILTER_NODE_INSTANCE_IDS]:
         candidate_ids = agent_filters[
@@ -202,11 +184,6 @@ def get_node_instances_map(
                                          **ni_filters)
         _add_to_tenant_nodeinstances(candidates)
 
-    # Remove empty tenants.
-    for tenant_name, node_instances in tenants_to_node_instances.items():
-        if not node_instances:
-            del tenants_to_node_instances[tenant_name]
-
     return tenants_to_node_instances
 
 
@@ -218,25 +195,18 @@ def get_deployments_and_run_workers(
         workflow_id,
         agents_wait,
         parameters=None):
-    tenants_to_ni_cache = get_node_instances_map(
+    tenants_to_deployments = get_node_instances_map(
         client, agent_filters, all_tenants)
 
-    if not tenants_to_ni_cache:
+    if not tenants_to_deployments:
         raise CloudifyCliError("No eligible deployments found")
 
     started_executions = []
-    for tenant_name, node_instances in tenants_to_ni_cache.items():
+    for tenant_name, deployments in tenants_to_deployments.items():
         tenant_client = env.get_rest_client(tenant_name=tenant_name)
-        # Group node instances by deployment ID's.
-        deployments_map = dict()
-        for node_instance in node_instances:
-            dep_instances = deployments_map.setdefault(
-                node_instance.deployment_id, list())
-            dep_instances.append(node_instance)
-
-        for deployment_id, dep_node_instances in deployments_map.items():
+        for deployment_id, dep_node_instances in deployments.items():
             execution_params = {
-                'node_instance_ids': [ni.id for ni in dep_node_instances],
+                'node_instance_ids': dep_node_instances,
             }
             if agent_filters[cfy.AGENT_FILTER_INSTALL_METHODS]:
                 execution_params['install_methods'] = agent_filters[
@@ -283,11 +253,12 @@ def get_deployments_and_run_workers(
                     include_logs=True, timeout=None)
 
                 if execution.error:
-                    errors_summary.append(
-                        "Execution of workflow '{0}' for "
-                        "deployment '{1}' failed. [error={2}]"
-                        .format(workflow_id, execution.deployment_id,
-                                execution.error))
+                    message = "Execution of workflow '{0}' for " \
+                              "deployment '{1}' failed. [error={2}]".format(
+                                  workflow_id, execution.deployment_id,
+                                  execution.error)
+                    logger.error(message)
+                    errors_summary.append(message)
                 else:
                     logger.info("Finished executing workflow "
                                 "'{0}' on deployment"
@@ -332,7 +303,6 @@ def get_deployments_and_run_workers(
                 short_help='Validates the connection between the'
                            ' Cloudify Manager and the live Cloudify Agents'
                            ' (installed on remote hosts). [manager only]')
-@cfy.argument('deployment', required=False)
 @cfy.options.common_options
 @cfy.options.agent_filters
 @cfy.options.tenant_name_for_list(
@@ -341,8 +311,7 @@ def get_deployments_and_run_workers(
 @cfy.options.agents_wait
 @cfy.pass_logger
 @cfy.pass_client()
-def validate(deployment,
-             agent_filters,
+def validate(agent_filters,
              tenant_name,
              logger,
              client,
@@ -350,12 +319,7 @@ def validate(deployment,
              wait):
     """Validates the connection between the Cloudify Manager and the
     live Cloudify Agents (installed on remote hosts).
-
-        `DEPLOYMENT_ID` - The ID of the deployment you would like to
-        validate agents for.
     """
-
-    _handle_deployment_id(logger, deployment, agent_filters)
     get_deployments_and_run_workers(
         client, agent_filters, all_tenants,
         logger, 'validate_agents', wait, None)
