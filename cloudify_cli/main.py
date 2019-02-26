@@ -34,6 +34,7 @@ from .commands import install
 from .commands import plugins
 from .commands import tenants
 from .commands import secrets
+from .commands import license
 from .commands import profiles
 from .commands import snapshots
 from .commands import uninstall
@@ -102,6 +103,8 @@ def _register_commands():
     _cfy.add_command(blueprints.blueprints)
     _cfy.add_command(executions.executions)
     _cfy.add_command(deployments.deployments)
+
+    _cfy.add_command(license.license)
 
     deployments.deployments.add_command(deployments.manager_create)
     deployments.deployments.add_command(deployments.manager_delete)
