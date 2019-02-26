@@ -24,7 +24,7 @@ from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
 
 from cloudify_cli.commands.agents import (
-    get_node_instances_map,
+    get_filters_map,
     get_deployments_and_run_workers)
 
 DEFAULT_TENANT_NAME = 'tenant0'
@@ -121,23 +121,32 @@ class AgentsTests(CliCommandTest):
             return _topology_filter(_matcher, **kwargs)
 
         def list_deployments(**kwargs):
+            tenant_name = self.client._client.headers.get(
+                CLOUDIFY_TENANT_HEADER)
+            if not tenant_name:
+                tenant_name = DEFAULT_TENANT_NAME
             all_node_instances = _topology_filter(lambda x: True, **kwargs)
-            deployment_ids = {x['deployment_id'] for x in all_node_instances}
-            results = set()
-            for dep_id in deployment_ids:
-                if dep_id in kwargs.get('id', [dep_id]):
-                    results.add(dep_id)
-            return [Deployment({'id': x}) for x in results]
+            deployments = {(x['tenant_name'], x['deployment_id'])
+                           for x in all_node_instances}
+            deployments = [Deployment({'id': b, 'tenant_id': a}) for a, b in
+                           deployments]
+            results = list()
+            all_tenants = kwargs.get('_all_tenants', False)
+            searched_ids = kwargs['id']
+            for dep in deployments:
+                deployment_tenant = dep['tenant_id']
+                if (all_tenants or deployment_tenant == tenant_name) \
+                        and (not searched_ids) or dep.id in searched_ids:
+                    results.append(dep)
+            return results
 
         self.client.node_instances.list = list_node_instances
         self.client.deployments.list = list_deployments
 
     def assert_execution_started(self, client_mock, deployment_id,
-                                 node_instances):
+                                 filters):
         self.assertIn(
-            ((deployment_id, 'workflow', {
-                'node_instance_ids': node_instances
-            }), {
+            ((deployment_id, 'workflow', filters), {
                 'allow_custom_parameters': True
             }), client_mock.call_args_list)
 
@@ -147,7 +156,7 @@ class AgentsTests(CliCommandTest):
         self.mock_client({})
         self.assertRaises(
             CloudifyCliError,
-            get_node_instances_map,
+            get_filters_map,
             self.client,
             AgentsTests._agent_filters(
                 node_instance_ids=['a1'],
@@ -155,108 +164,120 @@ class AgentsTests(CliCommandTest):
             ),
             [DEFAULT_TENANT_NAME])
 
-    def test_instance_map_empty(self):
+    def test_filters_map_empty(self):
         self.mock_client({})
-        results = get_node_instances_map(
+        results = get_filters_map(
             self.client, AgentsTests._agent_filters(), False)
         self.assertFalse(results)
 
-    def test_instance_map_empty_node_instances(self):
+    def test_filters_map_empty_node_instances(self):
         self.mock_client({})
         self.assertRaises(
             CloudifyCliError,
-            get_node_instances_map,
+            get_filters_map,
             self.client,
             AgentsTests._agent_filters(node_instance_ids=['t0d0node1_1']),
             False)
 
-    def test_instance_map_empty_deployment_ids(self):
+    def test_filters_map_empty_deployment_ids(self):
         self.mock_client({})
         self.assertRaises(
             CloudifyCliError,
-            get_node_instances_map,
+            get_filters_map,
             self.client,
             AgentsTests._agent_filters(deployment_ids=['d0']),
             False)
 
-    def test_instance_map_all(self):
+    def test_filters_map_all(self):
         self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
-        results = get_node_instances_map(
+        results = get_filters_map(
             self.client, AgentsTests._agent_filters(),
             True)
         self.assertEquals({
             DEFAULT_TENANT_NAME: {
-                'd0': ['t0d0node1_1', 't0d0node1_2', 't0d0node2_1'],
-                'd1': ['t0d1node1_1', 't0d1node1_2', 't0d1node3_1']
+                'd0': {},
+                'd1': {}
             },
             'other_tenant': {
-                'd0': ['t1d0node1_1', 't1d0node1_2'],
-                'd1': ['t1d1node3_1'],
-                'd2': ['t1d2node4_1']
+                'd0': {},
+                'd1': {},
+                'd2': {}
             }
         }, results)
 
-    def test_instance_map_node_id_single_tenant(self):
+    def test_filters_map_node_id_single_tenant(self):
         self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
-        results = get_node_instances_map(
+        results = get_filters_map(
             self.client, AgentsTests._agent_filters(
                 node_ids=['node1']), False)
 
         self.assertEquals({
             DEFAULT_TENANT_NAME: {
-                'd0': ['t0d0node1_1', 't0d0node1_2'],
-                'd1': ['t0d1node1_1', 't0d1node1_2']
+                'd0': {'node_ids': ['node1']},
+                'd1': {'node_ids': ['node1']}
             }
         }, results)
 
-    def test_instance_map_node_id_all_tenants(self):
+    def test_filters_map_node_id_all_tenants(self):
         self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
-        results = get_node_instances_map(
+        results = get_filters_map(
             self.client, AgentsTests._agent_filters(
                 node_ids=['node1']), True)
 
         self.assertEquals({
             DEFAULT_TENANT_NAME: {
-                'd0': ['t0d0node1_1', 't0d0node1_2'],
-                'd1': ['t0d1node1_1', 't0d1node1_2']
+                'd0': {
+                    'node_ids': ['node1']
+                },
+                'd1': {
+                    'node_ids': ['node1']
+                }
             },
             'other_tenant': {
-                'd0': ['t1d0node1_1', 't1d0node1_2']
+                'd0': {
+                    'node_ids': ['node1']
+                },
+                'd1': {
+                    'node_ids': ['node1']
+                },
+                'd2': {
+                    'node_ids': ['node1']
+                }
             }
         }, results)
 
-    def test_instance_map_dep_id_single_tenant(self):
+    def test_filters_map_dep_id_single_tenant(self):
         self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
-        results = get_node_instances_map(
+        results = get_filters_map(
             self.client, AgentsTests._agent_filters(
                 deployment_ids=['d0']), False)
 
         self.assertEquals({
             DEFAULT_TENANT_NAME: {
-                'd0': ['t0d0node1_1', 't0d0node1_2', 't0d0node2_1']
+                'd0': {}
             }
         }, results)
 
-    def test_instance_map_dep_id_all_tenants(self):
+    def test_filters_map_dep_id_all_tenants(self):
         self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
-        results = get_node_instances_map(
+        results = get_filters_map(
             self.client, AgentsTests._agent_filters(
                 deployment_ids=['d0']), True)
 
         self.assertEquals({
             DEFAULT_TENANT_NAME: {
-                'd0': ['t0d0node1_1', 't0d0node1_2', 't0d0node2_1']
+                'd0': {}
             },
             'other_tenant': {
-                'd0': ['t1d0node1_1', 't1d0node1_2']
+                'd0': {}
             }
         }, results)
 
-    def test_instance_map_bad_dep_id(self):
+    def test_filters_map_bad_dep_id(self):
         self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
         self.assertRaises(
             CloudifyCliError,
-            get_node_instances_map,
+            get_filters_map,
             self.client,
             AgentsTests._agent_filters(deployment_ids=['error']),
             False)
@@ -283,18 +304,9 @@ class AgentsTests(CliCommandTest):
             True, self.logger, 'workflow', False
         )
 
-        self.assert_execution_started(
-            exec_client_mock, 'd1',
-            ['t0d1node1_1', 't0d1node1_2', 't0d1node3_1'])
-        self.assert_execution_started(
-            exec_client_mock, 'd0',
-            ['t0d0node1_1', 't0d0node1_2', 't0d0node2_1'])
-        self.assert_execution_started(
-            exec_client_mock, 'd0', ['t1d0node1_1', 't1d0node1_2'])
-        self.assert_execution_started(
-            exec_client_mock, 'd1', ['t1d1node3_1'])
-        self.assert_execution_started(
-            exec_client_mock, 'd2', ['t1d2node4_1'])
+        self.assert_execution_started(exec_client_mock, 'd1', {})
+        self.assert_execution_started(exec_client_mock, 'd0', {})
+        self.assert_execution_started(exec_client_mock, 'd2', {})
         self.assertEquals(len(exec_client_mock.call_args_list), 5)
 
     @patch.object(ExecutionsClient, 'start')
