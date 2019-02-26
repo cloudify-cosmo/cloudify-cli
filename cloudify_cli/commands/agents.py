@@ -100,7 +100,7 @@ def install(agent_filters,
         logger, 'install_new_agents', wait, params)
 
 
-def get_node_instances_map(
+def get_filters_map(
         client,
         agent_filters,
         all_tenants):
@@ -138,53 +138,57 @@ def get_node_instances_map(
         raise CloudifyCliError(
             "If node instance ID's are provided, neither deployment ID's nor "
             "deployment ID's are allowed.")
-    tenants_to_node_instances = dict()
+    tenants_to_deployments = dict()
 
-    def _add_to_tenant_nodeinstances(node_instances):
-        for node_instance in node_instances:
-            tenant_deployments = tenants_to_node_instances.setdefault(
-                node_instance['tenant_name'], dict())
-            deployment_node_instances = tenant_deployments.setdefault(
-                node_instance['deployment_id'], list())
-            deployment_node_instances.append(node_instance.id)
-
-    if agent_filters[cfy.AGENT_FILTER_NODE_INSTANCE_IDS]:
-        candidate_ids = agent_filters[
-            cfy.AGENT_FILTER_NODE_INSTANCE_IDS]
+    requested_node_instance_ids = agent_filters[
+        cfy.AGENT_FILTER_NODE_INSTANCE_IDS]
+    if requested_node_instance_ids:
+        candidate_ids = requested_node_instance_ids
         candidates = _get_node_instances(
             id=candidate_ids, _all_tenants=True)
         # Ensure that all requested node instance ID's actually exist.
-        missing = set(
-            candidate_ids) - {node_instance.id for node_instance in candidates}
+        missing = set(candidate_ids) - {
+            node_instance.id for node_instance in candidates}
         if missing:
             raise CloudifyCliError("Node instances do not exist: "
                                    "%s" % ', '.join(missing))
-        _add_to_tenant_nodeinstances(candidates)
+
+        for node_instance in candidates:
+            tenant_map = tenants_to_deployments.setdefault(
+                node_instance['tenant_id'], dict())
+            deployment = tenant_map.setdefault(
+                node_instance['deployment_id'], dict())
+            deployment_node_instances = deployment.setdefault(
+                'node_instance_ids', list())
+            deployment_node_instances.append(node_instance.id)
     else:
+        requested_deployment_ids = agent_filters[
+            cfy.AGENT_FILTER_DEPLOYMENT_ID]
+        requested_node_ids = agent_filters[cfy.AGENT_FILTER_NODE_IDS]
+
+        existing_deployments = client.deployments.list(
+            id=requested_deployment_ids or None,
+            _include=['id', 'tenant_id'],
+            _get_all_results=True,
+            _all_tenants=all_tenants)
+
         # If at least one deployment ID was provided, then ensure
         # all specified deployment ID's indeed exist.
-        if agent_filters[cfy.AGENT_FILTER_DEPLOYMENT_ID]:
-            candidate_ids = agent_filters[cfy.AGENT_FILTER_DEPLOYMENT_ID]
-            existing_deployments = client.deployments.list(
-                id=candidate_ids, _include=['id'])
-            missing = set(
-                candidate_ids) - {deployment.id for
-                                  deployment in existing_deployments}
+        if requested_deployment_ids:
+            missing = set(requested_deployment_ids) - {
+                deployment.id for deployment in existing_deployments}
             if missing:
                 raise CloudifyCliError("Deployments do not exist: "
                                        "%s" % ', '.join(missing))
-        ni_filters = dict()
-        if agent_filters[cfy.AGENT_FILTER_NODE_IDS]:
-            ni_filters['node_id'] = agent_filters[
-                cfy.AGENT_FILTER_NODE_IDS]
-        if agent_filters[cfy.AGENT_FILTER_DEPLOYMENT_ID]:
-            ni_filters['deployment_id'] = agent_filters[
-                cfy.AGENT_FILTER_DEPLOYMENT_ID]
-        candidates = _get_node_instances(_all_tenants=all_tenants,
-                                         **ni_filters)
-        _add_to_tenant_nodeinstances(candidates)
 
-    return tenants_to_node_instances
+        for deployment in existing_deployments:
+            tenant_map = tenants_to_deployments.setdefault(
+                deployment['tenant_id'], dict())
+            deployment_filters = tenant_map.setdefault(deployment.id, dict())
+            if requested_node_ids:
+                deployment_filters['node_ids'] = requested_node_ids
+
+    return tenants_to_deployments
 
 
 def get_deployments_and_run_workers(
@@ -195,22 +199,20 @@ def get_deployments_and_run_workers(
         workflow_id,
         agents_wait,
         parameters=None):
-    tenants_to_deployments = get_node_instances_map(
+    tenants_to_deployments = get_filters_map(
         client, agent_filters, all_tenants)
 
     if not tenants_to_deployments:
         raise CloudifyCliError("No eligible deployments found")
 
     started_executions = []
+    requested_install_methods = agent_filters[cfy.AGENT_FILTER_INSTALL_METHODS]
     for tenant_name, deployments in tenants_to_deployments.items():
         tenant_client = env.get_rest_client(tenant_name=tenant_name)
-        for deployment_id, dep_node_instances in deployments.items():
-            execution_params = {
-                'node_instance_ids': dep_node_instances,
-            }
-            if agent_filters[cfy.AGENT_FILTER_INSTALL_METHODS]:
-                execution_params['install_methods'] = agent_filters[
-                    cfy.AGENT_FILTER_INSTALL_METHODS]
+        for deployment_id, dep_filters in deployments.items():
+            execution_params = dep_filters.copy()   # Shallow is fine.
+            if requested_install_methods:
+                execution_params['install_methods'] = requested_install_methods
             if parameters:
                 execution_params.update(parameters)
             execution = tenant_client.executions.start(
