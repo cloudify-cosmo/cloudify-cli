@@ -1049,7 +1049,7 @@ class Options(object):
         )
 
         self.agents_wait = click.option(
-            '--wait',
+            '--wait/--no-wait',
             is_flag=True,
             default=True,
             help=helptexts.AGENTS_WAIT
