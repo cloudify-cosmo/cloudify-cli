@@ -240,8 +240,8 @@ def get_deployments_and_run_workers(
                 allow_custom_parameters=True)
             started_executions.append((tenant_name, execution))
             logger.info(
-                "Started execution for deployment '%s': %s",
-                deployment_id, execution.id
+                "Started execution for deployment '%s' on tenant '%s': %s",
+                deployment_id, tenant_name, execution.id
             )
 
     if not agents_wait:
