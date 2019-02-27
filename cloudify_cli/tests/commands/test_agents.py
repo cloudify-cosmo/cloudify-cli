@@ -19,6 +19,7 @@ from .test_base import CliCommandTest
 from cloudify_rest_client.executions import ExecutionsClient
 from cloudify_rest_client.node_instances import NodeInstance
 from cloudify_rest_client.deployments import Deployment
+from cloudify_rest_client.nodes import Node
 from cloudify_cli.cli import cfy
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
@@ -128,20 +129,27 @@ class AgentsTests(CliCommandTest):
             all_node_instances = _topology_filter(lambda x: True, **kwargs)
             deployments = {(x['tenant_name'], x['deployment_id'])
                            for x in all_node_instances}
-            deployments = [Deployment({'id': b, 'tenant_id': a}) for a, b in
+            deployments = [Deployment({'id': b, 'tenant_name': a}) for a, b in
                            deployments]
             results = list()
-            all_tenants = kwargs.get('_all_tenants', False)
             searched_ids = kwargs['id']
             for dep in deployments:
-                deployment_tenant = dep['tenant_id']
-                if (all_tenants or deployment_tenant == tenant_name) \
-                        and (not searched_ids) or dep.id in searched_ids:
+                if (not searched_ids) or dep.id in searched_ids:
                     results.append(dep)
             return results
 
+        def list_nodes(**kwargs):
+            node_ids = kwargs['id']
+            all_node_instances = _topology_filter(lambda x: True, **kwargs)
+            nodes = {(x['tenant_name'], x['deployment_id'], x['node_id'])
+                     for x in all_node_instances}
+            nodes = [Node({'id': c, 'deployment_id': b, 'tenant_name': a}) for
+                     (a, b, c) in nodes]
+            return list(filter(lambda x: x['id'] in node_ids, nodes))
+
         self.client.node_instances.list = list_node_instances
         self.client.deployments.list = list_deployments
+        self.client.nodes.list = list_nodes
 
     def assert_execution_started(self, client_mock, deployment_id,
                                  filters):
@@ -235,12 +243,6 @@ class AgentsTests(CliCommandTest):
             },
             'other_tenant': {
                 'd0': {
-                    'node_ids': ['node1']
-                },
-                'd1': {
-                    'node_ids': ['node1']
-                },
-                'd2': {
                     'node_ids': ['node1']
                 }
             }
