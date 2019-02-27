@@ -238,10 +238,10 @@ def get_deployments_and_run_workers(
             execution = tenant_client.executions.start(
                 deployment_id, workflow_id, execution_params,
                 allow_custom_parameters=True)
-            started_executions.append(execution)
+            started_executions.append((tenant_name, execution))
             logger.info(
-                "Started execution for deployment '%s': %s",
-                deployment_id, execution.id
+                "Started execution for deployment '%s' on tenant '%s': %s",
+                deployment_id, tenant_name, execution.id
             )
 
     if not agents_wait:
@@ -251,8 +251,8 @@ def get_deployments_and_run_workers(
         return
 
     executions_queue = queue.Queue()
-    for execution in started_executions:
-        executions_queue.put(execution)
+    for execution_info in started_executions:
+        executions_queue.put(execution_info)
 
     errors_summary = []
 
@@ -265,13 +265,14 @@ def get_deployments_and_run_workers(
     def _tracker_thread():
         while True:
             try:
-                execution = executions_queue.get_nowait()
+                tenant_name, execution = executions_queue.get_nowait()
             except queue.Empty:
                 break
 
             try:
+                tenant_client = env.get_rest_client(tenant_name=tenant_name)
                 execution = wait_for_execution(
-                    client, execution, events_handler=_events_handler,
+                    tenant_client, execution, events_handler=_events_handler,
                     include_logs=True, timeout=None)
 
                 if execution.error:
@@ -314,11 +315,8 @@ def get_deployments_and_run_workers(
     # all threads have already ended (see loop above).
 
     if errors_summary:
-        logger.error('Summary:\n{0}\n'.format(
-            '\n'.join(errors_summary)
-        ))
-
-        raise CloudifyCliError("At least one execution ended with an error")
+        raise CloudifyCliError("At least one execution ended with an error:\n"
+                               "{0}".format('\n'.join(errors_summary)))
 
 
 @agents.command(name='validate',
