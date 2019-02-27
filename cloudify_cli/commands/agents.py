@@ -168,7 +168,7 @@ def get_filters_map(
 
         existing_deployments = client.deployments.list(
             id=requested_deployment_ids or None,
-            _include=['id', 'tenant_id'],
+            _include=['id', 'tenant_name'],
             _get_all_results=True,
             _all_tenants=all_tenants)
 
@@ -181,9 +181,29 @@ def get_filters_map(
                 raise CloudifyCliError("Deployments do not exist: "
                                        "%s" % ', '.join(missing))
 
-        for deployment in existing_deployments:
+        if requested_node_ids:
+            existing_nodes = client.nodes.list(
+                id=requested_node_ids,
+                _include=['id', 'deployment_id', 'tenant_name'],
+                _get_all_results=True,
+                _all_tenants=all_tenants
+            )
+            deps_with_req_nodes = set([
+                (node['tenant_name'], node.deployment_id)
+                for node in existing_nodes])
+            # Collect all deployments (from 'existing_deployments')
+            # that includes at least one of the requested nodes.
+            deployments_to_execute = list()
+            for deployment in existing_deployments:
+                if (deployment['tenant_name'], deployment.id) in \
+                        deps_with_req_nodes:
+                    deployments_to_execute.append(deployment)
+        else:
+            deployments_to_execute = existing_deployments
+
+        for deployment in deployments_to_execute:
             tenant_map = tenants_to_deployments.setdefault(
-                deployment['tenant_id'], dict())
+                deployment['tenant_name'], dict())
             deployment_filters = tenant_map.setdefault(deployment.id, dict())
             if requested_node_ids:
                 deployment_filters['node_ids'] = requested_node_ids
@@ -225,7 +245,7 @@ def get_deployments_and_run_workers(
             )
 
     if not agents_wait:
-        logger.info("Executions started for all applicable deployments."
+        logger.info("Executions started for all applicable deployments. "
                     "You may now use the 'cfy events list' command to "
                     "view the events associated with these executions.")
         return
