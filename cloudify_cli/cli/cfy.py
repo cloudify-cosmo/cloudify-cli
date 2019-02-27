@@ -1056,7 +1056,7 @@ class Options(object):
         self.agents_wait = click.option(
             '--wait',
             is_flag=True,
-            default=False,
+            default=True,
             help=helptexts.AGENTS_WAIT
         )
 
