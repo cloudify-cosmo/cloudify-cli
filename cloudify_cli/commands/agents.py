@@ -315,11 +315,8 @@ def get_deployments_and_run_workers(
     # all threads have already ended (see loop above).
 
     if errors_summary:
-        logger.error('Summary:\n{0}\n'.format(
-            '\n'.join(errors_summary)
-        ))
-
-        raise CloudifyCliError("At least one execution ended with an error")
+        raise CloudifyCliError("At least one execution ended with an error:\n"
+                               "{0}".format('\n'.join(errors_summary)))
 
 
 @agents.command(name='validate',

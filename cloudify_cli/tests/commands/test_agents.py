@@ -13,16 +13,21 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
-from mock import patch
+import uuid
+
+from mock import patch, PropertyMock, DEFAULT
 
 from .test_base import CliCommandTest
+from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
 from cloudify_rest_client.executions import ExecutionsClient
+from cloudify_rest_client.events import EventsClient
 from cloudify_rest_client.node_instances import NodeInstance
 from cloudify_rest_client.deployments import Deployment
 from cloudify_rest_client.nodes import Node
+from cloudify_rest_client.executions import Execution
+from cloudify_rest_client.responses import ListResponse, Metadata
 from cloudify_cli.cli import cfy
 from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
 
 from cloudify_cli.commands.agents import (
     get_filters_map,
@@ -292,3 +297,37 @@ class AgentsTests(CliCommandTest):
         self.assertEquals(exec_client_mock.call_count, 5)
         for call in exec_client_mock.call_args_list:
             self.assertTrue(call[0][2]['install_methods'] == ['provided'])
+
+    @patch.object(ExecutionsClient, 'get',
+                  return_value=Execution({'status': 'terminated'}))
+    @patch.object(EventsClient, 'list',
+                  return_value=ListResponse(
+                      [],
+                      Metadata({'pagination': {
+                          'total': 0,
+                          'offset': 0,
+                          'size': 10}})))
+    def test_execution_tracking(self, events_list_mock, exec_get_mock):
+        self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
+
+        def _mock_execution_start(*args, **kwargs):
+            tenant_name = args[0].api.headers.get(CLOUDIFY_TENANT_HEADER)
+            deployment_id = args[1]
+            return Execution({'id': str(uuid.uuid4()),
+                              'deployment_id': deployment_id,
+                              'tenant_name': tenant_name})
+
+        def _wait_side_effect(*args, **kwargs):
+            client_tenant = args[0]._client.headers[CLOUDIFY_TENANT_HEADER]
+            execution = args[1]
+            self.assertEquals(client_tenant, execution['tenant_name'])
+            return DEFAULT
+
+        with patch('cloudify_cli.commands.agents.wait_for_execution',
+                   return_value=PropertyMock(error=False),
+                   side_effect=_wait_side_effect):
+            with patch.object(ExecutionsClient, 'start',
+                              _mock_execution_start):
+                get_deployments_and_run_workers(
+                    self.client, self._agent_filters(), True, self.logger,
+                    'workflow', True)
