@@ -238,7 +238,7 @@ def get_deployments_and_run_workers(
             execution = tenant_client.executions.start(
                 deployment_id, workflow_id, execution_params,
                 allow_custom_parameters=True)
-            started_executions.append(execution)
+            started_executions.append((tenant_name, execution))
             logger.info(
                 "Started execution for deployment '%s': %s",
                 deployment_id, execution.id
@@ -251,8 +251,8 @@ def get_deployments_and_run_workers(
         return
 
     executions_queue = queue.Queue()
-    for execution in started_executions:
-        executions_queue.put(execution)
+    for execution_info in started_executions:
+        executions_queue.put(execution_info)
 
     errors_summary = []
 
@@ -265,13 +265,14 @@ def get_deployments_and_run_workers(
     def _tracker_thread():
         while True:
             try:
-                execution = executions_queue.get_nowait()
+                tenant_name, execution = executions_queue.get_nowait()
             except queue.Empty:
                 break
 
             try:
+                tenant_client = env.get_rest_client(tenant_name=tenant_name)
                 execution = wait_for_execution(
-                    client, execution, events_handler=_events_handler,
+                    tenant_client, execution, events_handler=_events_handler,
                     include_logs=True, timeout=None)
 
                 if execution.error:

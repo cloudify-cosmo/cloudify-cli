@@ -45,35 +45,6 @@ class AgentsTests(CliCommandTest):
         super(AgentsTests, self).setUp()
         self.use_manager()
 
-    # @staticmethod
-    # def create_tenants_and_deployments(num_of_tenants, num_of_deps,
-    #                                    unique_deps_id=True):
-    #     tenants_list = []
-    #     deps = {}
-    #     index = 0
-    #     # create requested num of tenants
-    #     for i in range(num_of_tenants):
-    #         ten = tenants.Tenant({'name': 'tenant{0}'.format(i)})
-    #         tenants_list.append(ten)
-    #     # create requested num of deployments for each tenant
-    #     for tenant in tenants_list:
-    #         if not unique_deps_id:
-    #             index = 0
-    #         deps[tenant['name']] = []
-    #         index = AgentsTests.create_deployments_in_tenant(
-    #             deps[tenant['name']], num_of_deps, tenant, index)
-    #     return tenants_list, deps
-    #
-    # @staticmethod
-    # def create_deployments_in_tenant(deps_list, num_of_deps, tenant,
-    #                                  start_index):
-    #     for i in range(num_of_deps):
-    #         deps_list.append(deployments.Deployment({
-    #             'id': 'dep{0}'.format(start_index),
-    #             'tenant_name': tenant['name']}))
-    #         start_index += 1
-    #     return start_index
-
     @staticmethod
     def _agent_filters(node_ids=None, node_instance_ids=None,
                        deployment_ids=None, install_methods=None):
