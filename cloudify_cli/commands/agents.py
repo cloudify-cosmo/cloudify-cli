@@ -102,13 +102,9 @@ def install(agent_filters,
 
 def get_filters_map(
         client,
+        logger,
         agent_filters,
         all_tenants):
-    def _get_node_instances(**kwargs):
-        return client.node_instances.list(
-            _include=['id', 'tenant_name', 'node_id', 'deployment_id'],
-            _get_all_results=True, **kwargs)
-
     # We need to analyze the filters.
     #
     # If node instance ID's are given, then we only process these node
@@ -144,18 +140,21 @@ def get_filters_map(
         cfy.AGENT_FILTER_NODE_INSTANCE_IDS]
     if requested_node_instance_ids:
         candidate_ids = requested_node_instance_ids
-        candidates = _get_node_instances(
-            id=candidate_ids, _all_tenants=True)
+        candidates = client.node_instances.list(
+            id=candidate_ids,
+            _include=['id', 'tenant_name', 'deployment_id'],
+            _get_all_results=True, _all_tenants=True)
+
         # Ensure that all requested node instance ID's actually exist.
-        missing = set(candidate_ids) - {
-            node_instance.id for node_instance in candidates}
+        missing = set(candidate_ids) - set([
+            node_instance.id for node_instance in candidates])
         if missing:
             raise CloudifyCliError("Node instances do not exist: "
                                    "%s" % ', '.join(missing))
 
         for node_instance in candidates:
             tenant_map = tenants_to_deployments.setdefault(
-                node_instance['tenant_id'], dict())
+                node_instance['tenant_name'], dict())
             deployment = tenant_map.setdefault(
                 node_instance['deployment_id'], dict())
             deployment_node_instances = deployment.setdefault(
@@ -175,8 +174,8 @@ def get_filters_map(
         # If at least one deployment ID was provided, then ensure
         # all specified deployment ID's indeed exist.
         if requested_deployment_ids:
-            missing = set(requested_deployment_ids) - {
-                deployment.id for deployment in existing_deployments}
+            missing = set(requested_deployment_ids) - set([
+                deployment.id for deployment in existing_deployments])
             if missing:
                 raise CloudifyCliError("Deployments do not exist: "
                                        "%s" % ', '.join(missing))
@@ -208,6 +207,36 @@ def get_filters_map(
             if requested_node_ids:
                 deployment_filters['node_ids'] = requested_node_ids
 
+        # If no deployment ID's were requested, then filter out deployments
+        # that have at least one Compute instance that is not in "started"
+        # state.
+        # We skip this check if specific deployment ID's were requested.
+        if not requested_deployment_ids:
+            for tenant_name in tenants_to_deployments.keys():
+                tenant_client = env.get_rest_client(tenant_name=tenant_name)
+                deps_to_execute = tenants_to_deployments[tenant_name]
+
+                node_instances = tenant_client.node_instances.list(
+                    deployment_id=deps_to_execute.keys(),
+                    _include=['id', 'host_id', 'deployment_id', 'state']
+                )
+
+                # Find all unstarted Compute instances.
+                unstarted_computes = list(filter(
+                    lambda ni: ni.id == ni.host_id and ni.state !=
+                    _NODE_INSTANCE_STATE_STARTED,
+                    node_instances))
+
+                for unstarted_ni in unstarted_computes:
+                    logger.info("Node instance '%s' is not in '%s' state; "
+                                "deployment '%s' will be skipped",
+                                unstarted_ni.id, _NODE_INSTANCE_STATE_STARTED,
+                                unstarted_ni.deployment_id)
+                    deps_to_execute.pop(unstarted_ni.deployment_id, None)
+
+                if not deps_to_execute:
+                    del tenants_to_deployments[tenant_name]
+
     return tenants_to_deployments
 
 
@@ -220,7 +249,7 @@ def get_deployments_and_run_workers(
         agents_wait,
         parameters=None):
     tenants_to_deployments = get_filters_map(
-        client, agent_filters, all_tenants)
+        client, logger, agent_filters, all_tenants)
 
     if not tenants_to_deployments:
         raise CloudifyCliError("No eligible deployments found")
