@@ -36,12 +36,15 @@ from cloudify_cli.commands.agents import (
 DEFAULT_TENANT_NAME = 'tenant0'
 
 
-def _node_instance(tenant_name, ni_id, node_id, dep_id):
+def _node_instance(tenant_name, ni_id, node_id, dep_id,
+                   state='started'):
     return NodeInstance({
         'tenant_name': tenant_name,
         'id': ni_id,
+        'host_id': ni_id,
         'node_id': node_id,
-        'deployment_id': dep_id
+        'deployment_id': dep_id,
+        'state': state
     })
 
 
@@ -115,13 +118,14 @@ class AgentsTests(CliCommandTest):
             return results
 
         def list_nodes(**kwargs):
-            node_ids = kwargs['id']
+            node_ids = kwargs.get('id')
             all_node_instances = _topology_filter(lambda x: True, **kwargs)
             nodes = {(x['tenant_name'], x['deployment_id'], x['node_id'])
                      for x in all_node_instances}
             nodes = [Node({'id': c, 'deployment_id': b, 'tenant_name': a}) for
                      (a, b, c) in nodes]
-            return list(filter(lambda x: x['id'] in node_ids, nodes))
+            return list(filter(
+                lambda x: (node_ids is None) or x['id'] in node_ids, nodes))
 
         self.client.node_instances.list = list_node_instances
         self.client.deployments.list = list_deployments
@@ -142,6 +146,7 @@ class AgentsTests(CliCommandTest):
             CloudifyCliError,
             get_filters_map,
             self.client,
+            self.logger,
             AgentsTests._agent_filters(
                 node_instance_ids=['a1'],
                 deployment_ids=['d1']
@@ -151,7 +156,7 @@ class AgentsTests(CliCommandTest):
     def test_filters_map_empty(self):
         self.mock_client({})
         results = get_filters_map(
-            self.client, AgentsTests._agent_filters(), False)
+            self.client, self.logger, AgentsTests._agent_filters(), False)
         self.assertFalse(results)
 
     def test_filters_map_empty_node_instances(self):
@@ -160,6 +165,7 @@ class AgentsTests(CliCommandTest):
             CloudifyCliError,
             get_filters_map,
             self.client,
+            self.logger,
             AgentsTests._agent_filters(node_instance_ids=['t0d0node1_1']),
             False)
 
@@ -169,13 +175,14 @@ class AgentsTests(CliCommandTest):
             CloudifyCliError,
             get_filters_map,
             self.client,
+            self.logger,
             AgentsTests._agent_filters(deployment_ids=['d0']),
             False)
 
     def test_filters_map_all(self):
         self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
         results = get_filters_map(
-            self.client, AgentsTests._agent_filters(),
+            self.client, self.logger, AgentsTests._agent_filters(),
             True)
         self.assertEquals({
             DEFAULT_TENANT_NAME: {
@@ -192,7 +199,7 @@ class AgentsTests(CliCommandTest):
     def test_filters_map_node_id_single_tenant(self):
         self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
         results = get_filters_map(
-            self.client, AgentsTests._agent_filters(
+            self.client, self.logger, AgentsTests._agent_filters(
                 node_ids=['node1']), False)
 
         self.assertEquals({
@@ -205,7 +212,7 @@ class AgentsTests(CliCommandTest):
     def test_filters_map_node_id_all_tenants(self):
         self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
         results = get_filters_map(
-            self.client, AgentsTests._agent_filters(
+            self.client, self.logger, AgentsTests._agent_filters(
                 node_ids=['node1']), True)
 
         self.assertEquals({
@@ -227,7 +234,7 @@ class AgentsTests(CliCommandTest):
     def test_filters_map_dep_id_single_tenant(self):
         self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
         results = get_filters_map(
-            self.client, AgentsTests._agent_filters(
+            self.client, self.logger, AgentsTests._agent_filters(
                 deployment_ids=['d0']), False)
 
         self.assertEquals({
@@ -239,7 +246,7 @@ class AgentsTests(CliCommandTest):
     def test_filters_map_dep_id_all_tenants(self):
         self.mock_client(AgentsTests.DEFAULT_TOPOLOGY)
         results = get_filters_map(
-            self.client, AgentsTests._agent_filters(
+            self.client, self.logger, AgentsTests._agent_filters(
                 deployment_ids=['d0']), True)
 
         self.assertEquals({
@@ -257,6 +264,7 @@ class AgentsTests(CliCommandTest):
             CloudifyCliError,
             get_filters_map,
             self.client,
+            self.logger,
             AgentsTests._agent_filters(deployment_ids=['error']),
             False)
 
@@ -286,6 +294,18 @@ class AgentsTests(CliCommandTest):
         self.assert_execution_started(exec_client_mock, 'd0', {})
         self.assert_execution_started(exec_client_mock, 'd2', {})
         self.assertEquals(len(exec_client_mock.call_args_list), 5)
+
+    @patch.object(ExecutionsClient, 'start')
+    def test_full_topology_one_nonstarted(self, exec_client_mock):
+        topology = list(AgentsTests.DEFAULT_TOPOLOGY)
+        topology.append(_node_instance(DEFAULT_TENANT_NAME, 't0d1node4_1',
+                                       'node4', 'd1', 'creating'))
+        self.mock_client(topology)
+        get_deployments_and_run_workers(
+            self.client, self._agent_filters(),
+            True, self.logger, 'workflow', False
+        )
+        self.assertEquals(len(exec_client_mock.call_args_list), 4)
 
     @patch.object(ExecutionsClient, 'start')
     def test_node_instances_map_none(self, exec_client_mock):
