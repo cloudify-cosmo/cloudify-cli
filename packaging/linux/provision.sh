@@ -7,7 +7,7 @@ export AWS_ACCESS_KEY=$4
 export REPO=$5
 export BRANCH=$6
 export CORE_TAG_NAME="5.0.dev1"
-export CORE_BRANCH="master"
+export CORE_BRANCH="19.02.22-build"
 
 
 # OSX preparation
