@@ -318,6 +318,7 @@ AGENT_INSTALL_METHOD = 'Only show agents installed with this install_method' \
 AGENT_DEPLOYMENT_ID = DEPLOYMENT_ID + _MULTIPLE_TIMES_FRAGMENT
 
 AGENTS_WAIT = "Wait for agents operations to end, and show execution logs"
+INSTALL_AGENT_TIMEOUT = "Agent installation timeout"
 WAIT_AFTER_FAIL = 'When a task fails, wait this many seconds for ' \
                   'already-running tasks to return'
 RESET_OPERATIONS = 'Reset operations in started state, so that they are '\

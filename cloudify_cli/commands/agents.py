@@ -72,6 +72,7 @@ def agents_list(agent_filters, client, logger):
 @cfy.options.manager_certificate
 @cfy.options.agent_filters
 @cfy.options.agents_wait
+@cfy.options.install_agent_timeout
 @cfy.pass_logger
 @cfy.pass_client()
 def install(agent_filters,
@@ -82,7 +83,8 @@ def install(agent_filters,
             stop_old_agent,
             manager_ip,
             manager_certificate,
-            wait):
+            wait,
+            install_agent_timeout):
     """Install agents on the hosts of existing deployments.
     """
     if manager_certificate:
@@ -95,6 +97,7 @@ def install(agent_filters,
     if manager_ip or manager_certificate:
         params['manager_ip'] = manager_ip
         params['manager_certificate'] = manager_certificate
+    params['install_agent_timeout'] = install_agent_timeout
     get_deployments_and_run_workers(
         client, agent_filters, all_tenants,
         logger, 'install_new_agents', wait, params)
