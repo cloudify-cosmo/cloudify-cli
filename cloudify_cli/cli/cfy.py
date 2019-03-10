@@ -1060,6 +1060,13 @@ class Options(object):
             help=helptexts.AGENTS_WAIT
         )
 
+        self.install_agent_timeout = click.option(
+            '--install-agent-timeout',
+            default=300,
+            type=int,
+            help=helptexts.INSTALL_AGENT_TIMEOUT
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
