@@ -21,7 +21,7 @@ from cloudify_cli.table import print_data
 from cloudify_cli.exceptions import CloudifyValidationError
 
 LICENSE_COLUMN = ['customer_id', 'expiration_date', 'license_edition', 'trial',
-                  'cloudify_version', 'capabilities']
+                  'cloudify_version', 'capabilities', 'expired']
 
 
 @cfy.group(name='license')
