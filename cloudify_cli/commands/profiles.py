@@ -46,7 +46,8 @@ CLUSTER_PROFILE_COLUMNS = ['profile_name', 'cluster_node_name'] \
 @cfy.group(name='profiles')
 @cfy.options.common_options
 def profiles():
-    """Handle Cloudify CLI profiles
+    """
+    Handle Cloudify CLI profiles
 
     Each profile can manage a single Cloudify manager.
 
@@ -59,30 +60,13 @@ def profiles():
         init.init_local_profile()
 
 
-def _format_cluster_profile(profile):
-    """Format the list of cluster nodes for display
-
-    In `cfy cluster show`, we show the profile details of every stored
-    cluster node.
-    """
-    common_attributes = {k: profile.get(k) for k in PROFILE_COLUMNS}
-    nodes = []
-    for node in profile['cluster']:
-        # merge the common attrs with node data, but rename node's name
-        # attribute to cluster_node, because the attribute 'name' is
-        # reserved for the profile name
-        node_data = dict(node)
-        node_data['cluster_node_name'] = node_data.pop('name')
-        nodes.append(dict(common_attributes, **node_data))
-    return nodes
-
-
 @profiles.command(name='show-current',
                   short_help='Retrieve current profile information')
 @cfy.options.common_options
 @cfy.pass_logger
 def show(logger):
-    """Shows your current active profile and it's properties
+    """
+    Shows your current active profile and it's properties
     """
     active_profile_name = env.get_active_profile()
     if active_profile_name == 'local':
@@ -91,18 +75,7 @@ def show(logger):
         return
 
     active_profile = _get_profile(env.get_active_profile())
-    if active_profile.get('cluster'):
-
-        columns = PROFILE_COLUMNS[:1] + ['cluster_node_name'] \
-            + PROFILE_COLUMNS[1:]
-        print_data(columns, _format_cluster_profile(active_profile),
-                   'Cluster nodes in profile {0}:'
-                   .format(active_profile['name']),
-                   labels={
-                   'profile_name': 'name',
-                   'cluster_node_name': 'cluster node name'})
-    else:
-        print_single(PROFILE_COLUMNS, active_profile, 'Active profile:')
+    print_single(PROFILE_COLUMNS, active_profile, 'Active profile:')
 
 
 @profiles.command(name='list',
@@ -110,7 +83,8 @@ def show(logger):
 @cfy.options.common_options
 @cfy.pass_logger
 def list(logger):
-    """List all profiles
+    """
+    List all profiles
     """
     current_profile = env.get_active_profile()
 

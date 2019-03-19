@@ -17,23 +17,17 @@
 
 import os
 import json
-import types
 import shutil
 import pkgutil
 import getpass
 import tempfile
-import itertools
 from base64 import urlsafe_b64encode
 
 import yaml
-import requests
 
 from cloudify_rest_client.utils import is_kerberos_env
 from cloudify_rest_client import CloudifyClient
-from cloudify_rest_client.client import HTTPClient
-from cloudify_rest_client.exceptions import (CloudifyClientError,
-                                             RemovedFromCluster,
-                                             NotClusterMaster)
+from cloudify_rest_client.exceptions import CloudifyClientError
 from . import constants
 from .exceptions import CloudifyCliError
 
@@ -47,7 +41,6 @@ CLOUDIFY_WORKDIR = os.path.join(
     constants.CLOUDIFY_BASE_DIRECTORY_NAME)
 PROFILES_DIR = os.path.join(CLOUDIFY_WORKDIR, 'profiles')
 ACTIVE_PRO_FILE = os.path.join(CLOUDIFY_WORKDIR, 'active.profile')
-CLUSTER_RETRY_INTERVAL = 5
 
 
 def delete_profile(profile_name):
@@ -223,7 +216,6 @@ def get_rest_client(client_profile=None,
                     tenant_name=None,
                     trust_all=False,
                     skip_version_check=False,
-                    cluster=None,
                     kerberos_env=None):
     if client_profile is None:
         client_profile = profile
@@ -237,7 +229,6 @@ def get_rest_client(client_profile=None,
     trust_all = trust_all or get_ssl_trust_all()
     headers = get_auth_header(username, password)
     headers[constants.CLOUDIFY_TENANT_HEADER] = tenant_name
-    cluster = cluster or client_profile.cluster
     kerberos_env = kerberos_env \
         if kerberos_env is not None else client_profile.kerberos_env
 
@@ -248,15 +239,6 @@ def get_rest_client(client_profile=None,
         if not password:
             raise CloudifyCliError('Command failed: Missing password')
 
-    if cluster:
-        client = CloudifyClusterClient(host=rest_host,
-                                       port=rest_port,
-                                       protocol=rest_protocol,
-                                       headers=headers,
-                                       cert=rest_cert,
-                                       trust_all=trust_all,
-                                       profile=client_profile,
-                                       kerberos_env=kerberos_env)
     else:
         client = CloudifyClient(host=rest_host,
                                 port=rest_port,
@@ -428,7 +410,6 @@ class ProfileContext(yaml.YAMLObject):
         self.rest_protocol = constants.DEFAULT_REST_PROTOCOL
         self.rest_certificate = None
         self.kerberos_env = False
-        self._cluster = []
 
     def to_dict(self):
         return dict(
@@ -443,8 +424,7 @@ class ProfileContext(yaml.YAMLObject):
             rest_port=self.rest_port,
             rest_protocol=self.rest_protocol,
             rest_certificate=self.rest_certificate,
-            kerberos_env=self.kerberos_env,
-            cluster=self.cluster
+            kerberos_env=self.kerberos_env
         )
 
     @property
@@ -466,18 +446,6 @@ class ProfileContext(yaml.YAMLObject):
     @profile_name.setter
     def profile_name(self, profile_name):
         self._profile_name = profile_name
-
-    @property
-    def cluster(self):
-        # default the ._cluster attribute here, so that all callers can use it
-        # as just ._cluster, even if it's not present in the source yaml
-        if not hasattr(self, '_cluster'):
-            self._cluster = []
-        return self._cluster
-
-    @cluster.setter
-    def cluster(self, cluster):
-        self._cluster = cluster
 
     def _get_context_path(self):
         init_path = get_profile_dir(self.profile_name)
@@ -517,110 +485,6 @@ def get_auth_header(username, password):
                 constants.BASIC_AUTH_PREFIX + ' ' + encoded_credentials}
 
     return header
-
-
-# attributes that can differ for each node in a cluster. Those will be updated
-# in the profile when we switch to a new master.
-# Dicts with these keys live in profile.cluster, and are added there during
-# either `cfy cluster update-profile` (in which case some of them might be
-# missing, eg. ssh_*), or during a `cfy cluster join`.
-# If a value is missing, we will use the value from the last active manager.
-# Only the IP is required.
-# Note that not all attributes are allowed - username/password will be
-# the same for every node in the cluster.
-CLUSTER_NODE_ATTRS = ['manager_ip', 'rest_port', 'rest_protocol', 'ssh_port',
-                      'ssh_user', 'ssh_key']
-
-
-class ClusterHTTPClient(HTTPClient):
-    default_timeout_sec = (5, None)
-
-    def __init__(self, *args, **kwargs):
-        profile = kwargs.pop('profile')
-        super(ClusterHTTPClient, self).__init__(*args, **kwargs)
-        if not profile.cluster:
-            raise ValueError('Cluster client invoked for an empty cluster!')
-        self._cluster = list(profile.cluster)
-        self._profile = profile
-        first_node = self._cluster[0]
-        self.cert = first_node.get('cert') or self.cert
-        self.trust_all = first_node.get('trust_all') or self.trust_all
-
-    def do_request(self, *args, **kwargs):
-        # this request can be retried for each manager - if the data is
-        # a generator, we need to copy it, so we can send it more than once
-        copied_data = None
-        if isinstance(kwargs.get('data'), types.GeneratorType):
-            copied_data = itertools.tee(kwargs.pop('data'),
-                                        len(self._cluster))
-
-        if kwargs.get('timeout') is None:
-            kwargs['timeout'] = self.default_timeout_sec
-
-        for node_index, node in list(enumerate(self._profile.cluster)):
-            self._use_node(node)
-            if copied_data is not None:
-                kwargs['data'] = copied_data[node_index]
-
-            try:
-                return super(ClusterHTTPClient, self).do_request(*args,
-                                                                 **kwargs)
-            except (RemovedFromCluster, NotClusterMaster,
-                    requests.exceptions.ConnectionError):
-                continue
-
-        raise CloudifyClientError('No active node in the cluster!')
-
-    def _use_node(self, node):
-        if node['manager_ip'] == self.host:
-            return
-        self.host = node['manager_ip']
-        for attr in ['rest_port', 'rest_protocol', 'trust_all', 'cert']:
-            new_value = node.get(attr)
-            if new_value:
-                setattr(self, attr, new_value)
-        self._update_profile(node)
-
-    def _update_profile(self, node):
-        """Put the node at the start of the cluster list in profile.
-
-        The client tries nodes in the order of the cluster list, so putting
-        the node first will make the client try it first next time. This makes
-        the client always try the last-known-master first.
-        """
-        self._profile.cluster.remove(node)
-        self._profile.cluster = [node] + self._profile.cluster
-        for node_attr in CLUSTER_NODE_ATTRS:
-            if node_attr in node:
-                setattr(self._profile, node_attr, node[node_attr])
-        self._profile.save()
-
-
-class CloudifyClusterClient(CloudifyClient):
-    """A CloudifyClient that will retry the queries with the current master.
-
-    When a request fails with a connection error, or with a "not cluster
-    master" error, this will keep trying with every node in the cluster,
-    until it finds the cluster master.
-
-    When the master is found, the profile will be updated with its address.
-    """
-    def __init__(self, profile, *args, **kwargs):
-        self._profile = profile
-        super(CloudifyClusterClient, self).__init__(*args, **kwargs)
-
-    def client_class(self, *args, **kwargs):
-        kwargs.setdefault('profile', self._profile)
-        return ClusterHTTPClient(*args, **kwargs)
-
-
-def build_fabric_env(manager_ip, ssh_user, ssh_port, ssh_key_path):
-    return {
-        "host_string": manager_ip,
-        "user": ssh_user,
-        "port": ssh_port,
-        "key_filename": ssh_key_path
-    }
 
 
 profile = get_profile_context(suppress_error=True)
