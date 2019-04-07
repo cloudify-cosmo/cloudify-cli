@@ -1068,10 +1068,7 @@ class TestGetRestClient(CliCommandTest):
         cfy.purge_dot_cloudify()
 
     def test_get_rest_client(self):
-        client = self.original_utils_get_rest_client(
-            rest_host='localhost',
-            skip_version_check=True
-        )
+        client = self.original_utils_get_rest_client(rest_host='localhost')
         self.assertIsNotNone(client._client.headers[
             constants.CLOUDIFY_AUTHENTICATION_HEADER])
 
@@ -1079,14 +1076,12 @@ class TestGetRestClient(CliCommandTest):
         rest_protocol = 'https'
         host = 'localhost'
         port = 443
-        skip_version_check = True
 
         client = self.original_utils_get_rest_client(
             rest_host=host,
             rest_port=port,
             rest_protocol=rest_protocol,
-            rest_cert=CERT_PATH,
-            skip_version_check=skip_version_check
+            rest_cert=CERT_PATH
         )
 
         self.assertEqual(CERT_PATH, client._client.cert)

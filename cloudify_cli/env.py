@@ -222,7 +222,6 @@ def get_rest_client(client_profile=None,
                     password=None,
                     tenant_name=None,
                     trust_all=False,
-                    skip_version_check=False,
                     cluster=None,
                     kerberos_env=None):
     if client_profile is None:
@@ -265,23 +264,7 @@ def get_rest_client(client_profile=None,
                                 cert=rest_cert,
                                 trust_all=trust_all,
                                 kerberos_env=kerberos_env)
-
-    # TODO: Put back version check after we've solved the problem where
-    # a new CLI is used with an older manager on `cfy upgrade`.
-    if skip_version_check or True:
-        return client
-
-    cli_version, manager_version = get_cli_manager_versions(client)
-
-    if cli_version == manager_version:
-        return client
-    elif not manager_version:
-        return client
-    else:
-        raise CloudifyCliError(
-            'CLI and manager versions do not match\n'
-            'CLI Version: {0}\n'
-            'Manager Version: {1}'.format(cli_version, manager_version))
+    return client
 
 
 def build_manager_host_string(ssh_user='', ip=''):
@@ -385,7 +368,7 @@ def get_manager_version_data(rest_client=None):
         if not get_profile_context(suppress_error=True):
             return None
         try:
-            rest_client = get_rest_client(skip_version_check=True)
+            rest_client = get_rest_client()
         except CloudifyCliError:
             return None
     try:
@@ -394,17 +377,6 @@ def get_manager_version_data(rest_client=None):
         return None
     version_data['ip'] = profile.manager_ip
     return version_data
-
-
-def get_cli_manager_versions(rest_client):
-    manager_version_data = get_manager_version_data(rest_client)
-    cli_version = get_version_data().get('version')
-
-    if not manager_version_data:
-        return cli_version, None
-    else:
-        manager_version = manager_version_data.get('version')
-        return cli_version, manager_version
 
 
 class ProfileContext(yaml.YAMLObject):
