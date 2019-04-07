@@ -26,6 +26,7 @@ STATUS_COLUMNS = ['service', 'status']
 
 @cfy.command(name='status', short_help="Show manager status [manager only]")
 @cfy.options.common_options
+@cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def status(logger, client):

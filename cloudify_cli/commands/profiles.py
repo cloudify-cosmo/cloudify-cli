@@ -39,7 +39,7 @@ EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
 PROFILE_COLUMNS = ['name', 'manager_ip', 'manager_username', 'manager_tenant',
                    'ssh_user', 'ssh_key_path', 'ssh_port', 'kerberos_env',
                    'rest_port', 'rest_protocol', 'rest_certificate']
-CLUSTER_PROFILE_COLUMNS = ['profile_name', 'cluster_node_name'] \
+CLUSTER_PROFILE_COLUMNS = ['profile_name', 'hostname'] \
     + PROFILE_COLUMNS[1:]
 
 
@@ -60,6 +60,23 @@ def profiles():
         init.init_local_profile()
 
 
+def _format_cluster_profile(profile):
+    """
+    Format the list of cluster nodes for display in `cfy cluster show`,
+    we show the profile details of every stored cluster node.
+    """
+    common_attributes = {k: profile.get(k) for k in PROFILE_COLUMNS}
+    nodes = []
+    for node in profile['cluster']:
+        # merge the common attrs with node data, but rename node's name
+        # attribute to cluster_node, because the attribute 'name' is
+        # reserved for the profile name
+        node_data = dict(node)
+        node_data['hostname'] = node_data.pop('hostname')
+        nodes.append(dict(common_attributes, **node_data))
+    return nodes
+
+
 @profiles.command(name='show-current',
                   short_help='Retrieve current profile information')
 @cfy.options.common_options
@@ -75,7 +92,18 @@ def show(logger):
         return
 
     active_profile = _get_profile(env.get_active_profile())
-    print_single(PROFILE_COLUMNS, active_profile, 'Active profile:')
+    if active_profile.get('cluster'):
+
+        columns = PROFILE_COLUMNS[:1] + ['hostname'] \
+                  + PROFILE_COLUMNS[1:]
+        print_data(columns, _format_cluster_profile(active_profile),
+                   'Cluster nodes in profile {0}:'
+                   .format(active_profile['name']),
+                   labels={
+                       'profile_name': 'Name',
+                       'hostname': 'Manager hostname'})
+    else:
+        print_single(PROFILE_COLUMNS, active_profile, 'Active profile:')
 
 
 @profiles.command(name='list',

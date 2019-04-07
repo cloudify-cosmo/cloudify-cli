@@ -65,7 +65,7 @@ def generate(cols, data, defaults=None, labels=None):
                 row_data[column] = ''
             return row_data[column]
         else:
-            return defaults.get(column)
+            return defaults.get(column, 'N/A')
 
     pt = PrettyTable([labels.get(col, col) for col in cols])
 
@@ -87,7 +87,7 @@ def format_json_object(cols, item, defaults=None, labels=None):
     labels = labels or {}
 
     return json.dumps({
-        labels.get(col, col): item.get(col) or defaults.get(col)
+        labels.get(col, col): item.get(col) or defaults.get(col, 'N/A')
         for col in cols
     }, cls=CloudifyJSONEncoder)
 

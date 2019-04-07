@@ -21,7 +21,7 @@ from requests.exceptions import ConnectionError
 from cloudify_rest_client.manager import ManagerItem
 
 from .test_base import CliCommandTest
-from ...exceptions import CloudifyCliError
+from cloudify_cli.tests.cfy import ClickInvocationException
 
 
 class ClusterTest(CliCommandTest):
@@ -69,45 +69,32 @@ class ClusterTest(CliCommandTest):
 
     def setUp(self):
         super(ClusterTest, self).setUp()
-        self.use_manager()
+        self.client.manager.get_status = mock.MagicMock()
+        self.client.maintenance_mode.status = mock.MagicMock()
+        self.client.manager.get_managers = mock.MagicMock()
+        self.client.manager.get_managers().items = self.MANAGERS_LIST
 
     def test_list_nodes(self):
-        self.client.manager.get_managers = mock.Mock(
-            return_value=self.MANAGERS_LIST)
-        self.client.manager.get_status = mock.Mock(side_affect=[
+        self.use_manager()
+
+        self.client.manager.get_status.side_effect = [
             {
                 'services': [
                     {
-                        'display_name': 'Service-1',
-                        'instances': [
-                            {
-                                'state': 'running'
-                            }
-                        ]
+                        'instances': [{'state': 'running'}],
+                        'display_name': 'Service-1'
                     },
                     {
-                        'display_name': 'Service-2',
-                        'instances': [
-                            {
-                                'state': 'remote'
-                            }
-                        ]
+                        'instances': [{'state': 'remote'}],
+                        'display_name': 'Service-2'
                     },
                     {
-                        'display_name': 'Service-3',
-                        'instances': [
-                            {
-                                'state': 'down'
-                            }
-                        ]
+                        'instances': [{'state': 'down'}],
+                        'display_name': 'Service-3'
                     },
                     {
-                        'display_name': 'Service-4',
-                        'instances': [
-                            {
-                                'state': 'running'
-                            }
-                        ]
+                        'instances': [{'state': 'running'}],
+                        'display_name': 'Service-4'
                     }
                 ]
             },
@@ -115,26 +102,18 @@ class ClusterTest(CliCommandTest):
             {
                 'services': [
                     {
-                        'display_name': 'Service-BlaBla',
-                        'instances': [
-                            {
-                                'state': 'running'
-                            }
-                        ]
+                        'instances': [{'state': 'running'}],
+                        'display_name': 'Service-BlaBla'
                     },
                     {
-                        'display_name': 'Service-1',
-                        'instances': [
-                            {
-                                'state': 'down'
-                            }
-                        ]
+                        'instances': [{'state': 'down'}],
+                        'display_name': 'Service-1'
                     }
                 ]
             }
-        ])
-        outcome = self.invoke('cfy status')
-        self.assertIn([
+        ]
+        outcome = self.invoke('cfy cluster status')
+        supposed_to_be_in_list = [
             'Service-1',
             'Service-2',
             'Service-3',
@@ -143,30 +122,28 @@ class ClusterTest(CliCommandTest):
             'down',
             'remote',
             'running',
-            'Online',
+            'Active',
             'Offline',
             'hostname_1',
-            '1.2.3.5'
-            ], outcome.output)
-        self.assertNotIn([
-            'id',
-            'fs_sync_node_id',
-            ], outcome.output
-        )
+            '1.2.3.5',
+            'N/A'
+        ]
+        for supposed_to_be_in in supposed_to_be_in_list:
+            self.assertIn(supposed_to_be_in, outcome.output)
+        self.assertNotIn('id', outcome.output)
+        self.assertNotIn('fs_sync_node_id', outcome.output)
 
     def test_remove_node(self):
-        self.client.manager.get_managers = mock.Mock(
-            return_value=self.MANAGERS_LIST)
-        self.client.manager.remove_manager = mock.Mock(
+        self.use_manager()
+        self.client.manager.remove_manager = mock.MagicMock(
             return_value=self.MANAGERS_LIST[0])
-        outcome = self.invoke('cfy remove hostname_1')
+        outcome = self.invoke('cfy cluster remove hostname_1')
         self.assertIn('Node hostname_1 was removed successfully!',
                       outcome.output)
 
     def test_remove_non_existing_node(self):
-        self.client.manager.get_managers = mock.Mock(
-            return_value=self.MANAGERS_LIST)
+        self.use_manager()
         self.client.manager.remove_manager = mock.Mock(
             return_value=self.MANAGERS_LIST[0])
-        self.assertRaises(CloudifyCliError, self.invoke,
-                          'cfy remove hostname_BlaBla')
+        self.assertRaises(ClickInvocationException, self.invoke,
+                          'cfy cluster remove hostname_BlaBla')

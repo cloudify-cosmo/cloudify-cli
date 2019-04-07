@@ -294,8 +294,29 @@ def set_cli_except_hook(global_verbosity_level):
     sys.excepthook = new_excepthook
 
 
+def assert_manager_active(require_creds=True):
+    """
+    Wrap the command so that it can only run when a manager is active
+
+    :param require_creds: If set to True, the wrapped method will fail if no
+    admin password was set either in the profile, or in the env variable
+    """
+    def decorator(func):
+        # Wraps here makes sure the original docstring propagates to click
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            env.assert_manager_active()
+            if require_creds:
+                env.assert_credentials_set()
+            return func(*args, **kwargs)
+
+        return wrapper
+    return decorator
+
+
 def assert_local_active(func):
-    """Wrap the command so that it can only run when in local context
+    """
+    Wrap the command so that it can only run when in local context
     """
     @wraps(func)
     def wrapper(*args, **kwargs):

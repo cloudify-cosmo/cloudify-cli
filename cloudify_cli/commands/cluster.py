@@ -14,6 +14,8 @@
 # limitations under the License.
 ############
 
+from functools import wraps
+
 from requests.exceptions import ConnectionError
 
 from .. import env
@@ -25,6 +27,26 @@ from ..exceptions import CloudifyCliError
 # The list will be updated with the services on each manager
 CLUSTER_COLUMNS = ['hostname', 'private_ip', 'public_ip', 'version', 'edition',
                    'distribution', 'distro_release', 'status']
+
+
+def pass_cluster_client(*client_args, **client_kwargs):
+    """
+    Pass the REST client, and assert that it is connected to a cluster.
+
+    Instead of using `@cfy.pass_client()`, use this function for an automatic
+    check that we're using a cluster.
+    """
+    def _deco(f):
+        @cfy.pass_client(*client_args, **client_kwargs)
+        @wraps(f)
+        def _inner(client, *args, **kwargs):
+            managers_list = client.manager.get_managers().items
+            if len(managers_list) == 1:
+                raise CloudifyCliError('This manager is not part of a '
+                                       'Cloudify Manager cluster')
+            return f(client=client, *args, **kwargs)
+        return _inner
+    return _deco
 
 
 @cfy.group(name='cluster')
@@ -39,22 +61,23 @@ def cluster():
 
 @cluster.command(name='status',
                  short_help='Show the current cluster status [cluster only]')
+@pass_cluster_client()
 @cfy.options.common_options
-@cfy.pass_client()
 def status(client):
     """
     Display the current status of the Cloudify Manager cluster
     """
     managers = client.manager.get_managers().items
-    updated_columns = []
+    updated_columns = CLUSTER_COLUMNS
     for manager in managers:
         client.host = manager.public_ip
         try:
             services = client.manager.get_status()['services']
-            updated_columns = [] + CLUSTER_COLUMNS + [
-                service['display_name'].ljust(30) for service in services
+            updated_columns += [
+                service['display_name'].ljust(20) for service in services
+                if service['display_name'].ljust(20) not in updated_columns
             ]
-            manager.update({'status': 'Online'})
+            manager.update({'status': 'Active'})
         except ConnectionError:
             manager.update({'status': 'Offline'})
             continue
@@ -62,12 +85,13 @@ def status(client):
             state = service['instances'][0]['state'] \
                 if 'instances' in service and \
                    len(service['instances']) > 0 else 'unknown'
-            manager.update({service['display_name'].ljust(30): state})
+            manager.update({service['display_name'].ljust(20): state})
     print_data(updated_columns, managers, 'HA Cluster nodes')
 
 
 @cluster.command(name='remove',
                  short_help='Remove a node from the cluster [cluster only]')
+@pass_cluster_client()
 @cfy.pass_logger
 @cfy.argument('hostname')
 @cfy.options.common_options
@@ -81,7 +105,7 @@ def remove_node(client, logger, hostname):
     user to examine and teardown the node.
     """
     cluster_nodes = {node['hostname']: node.public_ip
-                     for node in client.manager.get_managers()}
+                     for node in client.manager.get_managers().items}
     if hostname not in cluster_nodes:
         raise CloudifyCliError('Invalid command. {0} is not a member of '
                                'the cluster.'.format(hostname))
@@ -90,3 +114,55 @@ def remove_node(client, logger, hostname):
 
     logger.info('Node {0} was removed successfully!'
                 .format(hostname))
+
+
+@cluster.command(name='update-profile',
+                 short_help='Store the cluster nodes in the CLI profile '
+                            '[cluster only]')
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.options.common_options
+def update_profile(client, logger):
+    """
+    Fetch the list of the cluster nodes and update the current profile.
+
+    Use this to update the profile if nodes are added to the cluster from
+    another machine. Only the cluster nodes that are stored in the profile
+    will be contacted in case of a manager failure.
+    """
+    logger.info('Fetching the cluster nodes list...')
+    nodes = client.manager.get_managers().items
+    _update_profile_cluster_settings(nodes, logger=logger)
+    logger.info('Profile is up to date with {0} nodes'
+                .format(len(env.profile.cluster)))
+
+
+def _update_profile_cluster_settings(nodes, logger=None):
+    """
+    Update the cluster list set in profile with the received nodes
+
+    We will merge the received nodes into the stored list - adding and
+    removing when necessary - and not just set the profile list to the
+    received nodes, because the profile might have more details about
+    the nodes (eg. a certificate path)
+    """
+    stored_nodes = {node.get('hostname') for node in env.profile.cluster}
+    received_nodes = {node.hostname for node in nodes}
+    if env.profile.cluster is None:
+        env.profile.cluster = []
+    for node in nodes:
+        if node.hostname not in stored_nodes:
+            node_ip = node.public_ip or node.private_ip
+            if logger:
+                logger.info('Adding cluster node {0} to local profile'
+                            .format(node_ip))
+            env.profile.cluster.append({
+                'hostname': node.hostname,
+                # all other connection parameters will be defaulted to the
+                # ones from the last used manager
+                'manager_ip': node_ip
+            })
+    # filter out removed nodes
+    env.profile.cluster = [n for n in env.profile.cluster
+                           if n['hostname'] in received_nodes]
+    env.profile.save()
