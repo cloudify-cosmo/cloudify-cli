@@ -39,14 +39,15 @@ EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
 PROFILE_COLUMNS = ['name', 'manager_ip', 'manager_username', 'manager_tenant',
                    'ssh_user', 'ssh_key_path', 'ssh_port', 'kerberos_env',
                    'rest_port', 'rest_protocol', 'rest_certificate']
-CLUSTER_PROFILE_COLUMNS = ['profile_name', 'cluster_node_name'] \
+CLUSTER_PROFILE_COLUMNS = ['profile_name', 'hostname'] \
     + PROFILE_COLUMNS[1:]
 
 
 @cfy.group(name='profiles')
 @cfy.options.common_options
 def profiles():
-    """Handle Cloudify CLI profiles
+    """
+    Handle Cloudify CLI profiles
 
     Each profile can manage a single Cloudify manager.
 
@@ -60,10 +61,9 @@ def profiles():
 
 
 def _format_cluster_profile(profile):
-    """Format the list of cluster nodes for display
-
-    In `cfy cluster show`, we show the profile details of every stored
-    cluster node.
+    """
+    Format the list of cluster nodes for display in `cfy cluster show`,
+    we show the profile details of every stored cluster node.
     """
     common_attributes = {k: profile.get(k) for k in PROFILE_COLUMNS}
     nodes = []
@@ -72,7 +72,7 @@ def _format_cluster_profile(profile):
         # attribute to cluster_node, because the attribute 'name' is
         # reserved for the profile name
         node_data = dict(node)
-        node_data['cluster_node_name'] = node_data.pop('name')
+        node_data['hostname'] = node_data.pop('hostname')
         nodes.append(dict(common_attributes, **node_data))
     return nodes
 
@@ -82,7 +82,8 @@ def _format_cluster_profile(profile):
 @cfy.options.common_options
 @cfy.pass_logger
 def show(logger):
-    """Shows your current active profile and it's properties
+    """
+    Shows your current active profile and it's properties
     """
     active_profile_name = env.get_active_profile()
     if active_profile_name == 'local':
@@ -93,14 +94,14 @@ def show(logger):
     active_profile = _get_profile(env.get_active_profile())
     if active_profile.get('cluster'):
 
-        columns = PROFILE_COLUMNS[:1] + ['cluster_node_name'] \
-            + PROFILE_COLUMNS[1:]
+        columns = PROFILE_COLUMNS[:1] + ['hostname'] \
+                  + PROFILE_COLUMNS[1:]
         print_data(columns, _format_cluster_profile(active_profile),
                    'Cluster nodes in profile {0}:'
                    .format(active_profile['name']),
                    labels={
-                   'profile_name': 'name',
-                   'cluster_node_name': 'cluster node name'})
+                       'profile_name': 'Name',
+                       'hostname': 'Manager hostname'})
     else:
         print_single(PROFILE_COLUMNS, active_profile, 'Active profile:')
 
@@ -110,7 +111,8 @@ def show(logger):
 @cfy.options.common_options
 @cfy.pass_logger
 def list(logger):
-    """List all profiles
+    """
+    List all profiles
     """
     current_profile = env.get_active_profile()
 

@@ -31,9 +31,7 @@ import requests
 from cloudify_rest_client.utils import is_kerberos_env
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.client import HTTPClient
-from cloudify_rest_client.exceptions import (CloudifyClientError,
-                                             RemovedFromCluster,
-                                             NotClusterMaster)
+from cloudify_rest_client.exceptions import CloudifyClientError
 from . import constants
 from .exceptions import CloudifyCliError
 
@@ -46,7 +44,7 @@ CLOUDIFY_WORKDIR = os.path.join(
     os.environ.get('CFY_WORKDIR', os.path.expanduser('~')),
     constants.CLOUDIFY_BASE_DIRECTORY_NAME)
 PROFILES_DIR = os.path.join(CLOUDIFY_WORKDIR, 'profiles')
-ACTIVE_PRO_FILE = os.path.join(CLOUDIFY_WORKDIR, 'active.profile')
+ACTIVE_PROFILE = os.path.join(CLOUDIFY_WORKDIR, 'active.profile')
 CLUSTER_RETRY_INTERVAL = 5
 
 
@@ -75,14 +73,14 @@ def assert_profile_exists(profile_name):
 
 def set_active_profile(profile_name):
     global profile
-    with open(ACTIVE_PRO_FILE, 'w+') as active_profile:
+    with open(ACTIVE_PROFILE, 'w+') as active_profile:
         active_profile.write(profile_name)
     profile = get_profile_context(profile_name, suppress_error=True)
 
 
 def get_active_profile():
-    if os.path.isfile(ACTIVE_PRO_FILE):
-        with open(ACTIVE_PRO_FILE) as active_profile:
+    if os.path.isfile(ACTIVE_PROFILE):
+        with open(ACTIVE_PROFILE) as active_profile:
             return active_profile.read().strip()
     else:
         # We return None explicitly as no profile is active.
@@ -172,7 +170,8 @@ def get_profile_context(profile_name=None, suppress_error=False):
 
 
 def is_initialized(profile_name=None):
-    """Check if a profile or an environment is initialized.
+    """
+    Check if a profile or an environment is initialized.
 
     If profile_name is provided, it will check if the profile
     is initialized. If not, it will just check that workenv is.
@@ -435,10 +434,6 @@ class ProfileContext(yaml.YAMLObject):
         return getattr(self, '_profile_name', None) \
             or getattr(self, 'manager_ip', None)
 
-    @profile_name.setter
-    def profile_name(self, profile_name):
-        self._profile_name = profile_name
-
     @property
     def cluster(self):
         # default the ._cluster attribute here, so that all callers can use it
@@ -450,6 +445,10 @@ class ProfileContext(yaml.YAMLObject):
     @cluster.setter
     def cluster(self, cluster):
         self._cluster = cluster
+
+    @profile_name.setter
+    def profile_name(self, profile_name):
+        self._profile_name = profile_name
 
     def _get_context_path(self):
         init_path = get_profile_dir(self.profile_name)
@@ -537,11 +536,10 @@ class ClusterHTTPClient(HTTPClient):
             try:
                 return super(ClusterHTTPClient, self).do_request(*args,
                                                                  **kwargs)
-            except (RemovedFromCluster, NotClusterMaster,
-                    requests.exceptions.ConnectionError):
+            except requests.exceptions.ConnectionError:
                 continue
 
-        raise CloudifyClientError('No active node in the cluster!')
+        raise CloudifyClientError('All cluster nodes are offline')
 
     def _use_node(self, node):
         if node['manager_ip'] == self.host:
@@ -554,11 +552,12 @@ class ClusterHTTPClient(HTTPClient):
         self._update_profile(node)
 
     def _update_profile(self, node):
-        """Put the node at the start of the cluster list in profile.
+        """
+        Put the node at the start of the cluster list in profile.
 
         The client tries nodes in the order of the cluster list, so putting
         the node first will make the client try it first next time. This makes
-        the client always try the last-known-master first.
+        the client always try the last-known-active-manager first.
         """
         self._profile.cluster.remove(node)
         self._profile.cluster = [node] + self._profile.cluster
@@ -569,13 +568,14 @@ class ClusterHTTPClient(HTTPClient):
 
 
 class CloudifyClusterClient(CloudifyClient):
-    """A CloudifyClient that will retry the queries with the current master.
+    """
+    A CloudifyClient that will retry the queries with the current manager.
 
-    When a request fails with a connection error, or with a "not cluster
-    master" error, this will keep trying with every node in the cluster,
-    until it finds the cluster master.
+    When a request fails with a connection error, this will keep trying with
+    every node in the cluster, until it finds an active manager.
 
-    When the master is found, the profile will be updated with its address.
+    When an active manager is found, the profile will be updated with its
+    address.
     """
     def __init__(self, profile, *args, **kwargs):
         self._profile = profile
@@ -584,15 +584,6 @@ class CloudifyClusterClient(CloudifyClient):
     def client_class(self, *args, **kwargs):
         kwargs.setdefault('profile', self._profile)
         return ClusterHTTPClient(*args, **kwargs)
-
-
-def build_fabric_env(manager_ip, ssh_user, ssh_port, ssh_key_path):
-    return {
-        "host_string": manager_ip,
-        "user": ssh_user,
-        "port": ssh_port,
-        "key_filename": ssh_key_path
-    }
 
 
 profile = get_profile_context(suppress_error=True)

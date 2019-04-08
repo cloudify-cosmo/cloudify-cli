@@ -295,7 +295,9 @@ def set_cli_except_hook(global_verbosity_level):
 
 
 def assert_manager_active(require_creds=True):
-    """Wrap the command so that it can only run when a manager is active
+    """
+    Wrap the command so that it can only run when a manager is active
+
     :param require_creds: If set to True, the wrapped method will fail if no
     admin password was set either in the profile, or in the env variable
     """
@@ -313,7 +315,8 @@ def assert_manager_active(require_creds=True):
 
 
 def assert_local_active(func):
-    """Wrap the command so that it can only run when in local context
+    """
+    Wrap the command so that it can only run when in local context
     """
     @wraps(func)
     def wrapper(*args, **kwargs):

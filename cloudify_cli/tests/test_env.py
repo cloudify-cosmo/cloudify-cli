@@ -33,7 +33,6 @@ from itertools import chain, repeat, count
 from cloudify import logs
 
 from cloudify_rest_client.executions import Execution
-from cloudify_rest_client.exceptions import NotClusterMaster
 from cloudify_rest_client.client import CloudifyClient
 from cloudify_rest_client.client import DEFAULT_API_VERSION
 
@@ -155,7 +154,7 @@ class CliEnvTests(CliCommandTest):
 
     def test_set_active_profile(self):
         env.set_active_profile('10.10.1.10')
-        with open(env.ACTIVE_PRO_FILE) as active_profile:
+        with open(env.ACTIVE_PROFILE) as active_profile:
             self.assertEqual(active_profile.read(), '10.10.1.10')
 
     def test_get_active_profile(self):
@@ -1199,32 +1198,20 @@ class TestLocal(CliCommandTest):
 
 
 class TestClusterRestClient(CliCommandTest):
-    def _mock_get(self, master, followers, offline):
+    def _mock_get(self, manager, offline):
         """Mock cloudify-rest-client's requests.get for the cluster tests.
 
-        When the rest client queries the master ip, a valid response is
-        returned.
-        When one of the ips in the followers set is queried, the
-        'not cluster master' response is returned.
+        When the rest client queries any manager, a valid response is returned.
         When one of the ips in the offline set is queried, a connection
         error is raised.
         """
         def _mocked_get(request_url, *args, **kwargs):
-            if master in request_url:
+            if manager in request_url:
                 response = mock.Mock()
                 # any valid response; tests won't assert anything about its
                 # actual contents
                 response.status_code = 200
                 response.json.return_value = {'items': [], 'metadata': {}}
-                return response
-
-            if any(follower in request_url for follower in followers):
-                response = mock.Mock()
-                response.status_code = 400
-                response.json.return_value = {
-                    'message': '',
-                    'error_code': NotClusterMaster.ERROR_CODE
-                }
                 return response
 
             if any(node in request_url for node in offline):
@@ -1235,7 +1222,7 @@ class TestClusterRestClient(CliCommandTest):
         return mock.patch('cloudify_rest_client.client.requests.get',
                           side_effect=_mocked_get)
 
-    def test_master_offline(self):
+    def test_manager_offline(self):
         env.profile.manager_ip = '127.0.0.1'
         env.profile.cluster = [
             {'manager_ip': '127.0.0.1'},
@@ -1243,32 +1230,9 @@ class TestClusterRestClient(CliCommandTest):
         ]
         c = env.CloudifyClusterClient(env.profile, host='127.0.0.1')
 
-        with self._mock_get('127.0.0.2', [], ['127.0.0.1']) as mocked_get:
+        with self._mock_get('127.0.0.2', ['127.0.0.1']) as mocked_get:
             response = c.blueprints.list()
 
         self.assertEqual([], list(response))
         self.assertEqual(2, len(mocked_get.mock_calls))
         self.assertEqual('127.0.0.2', env.profile.cluster[0]['manager_ip'])
-
-    def test_master_changed(self):
-        env.profile.manager_ip = '127.0.0.1'
-        env.profile.cluster = [
-            {'manager_ip': '127.0.0.1'},
-            {'manager_ip': '127.0.0.2'},
-            {'manager_ip': '127.0.0.3'},
-            # only those two will be called (because .4 will be the new master)
-            # for a total of 3 calls (original failed .1, then .5, then .4)
-            {'manager_ip': '127.0.0.4'},
-            {'manager_ip': '127.0.0.5'}
-        ]
-        master = '127.0.0.4'
-        followers = ['127.0.0.1', '127.0.0.5']
-        offline = ['127.0.0.2', '127.0.0.3']
-
-        c = env.CloudifyClusterClient(env.profile, host='127.0.0.1')
-        with self._mock_get(master, followers, offline) as mocked_get:
-            response = c.blueprints.list()
-
-        self.assertEqual([], list(response))
-        self.assertEqual(4, len(mocked_get.mock_calls))
-        self.assertEqual('127.0.0.4', env.profile.cluster[0]['manager_ip'])

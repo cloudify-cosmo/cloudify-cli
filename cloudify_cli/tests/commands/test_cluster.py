@@ -14,422 +14,136 @@
 # limitations under the License.
 ############
 
-import os
 import mock
-import json
-import tempfile
-import unittest
 
-from cloudify_rest_client.cluster import ClusterState, ClusterNode
-from cloudify_rest_client.exceptions import NotClusterMaster
+from requests.exceptions import ConnectionError
 
-from ... import env
+from cloudify_rest_client.manager import ManagerItem
+
 from .test_base import CliCommandTest
-from ...exceptions import CloudifyCliError
-from ...commands.cluster import (_wait_for_cluster_initialized,
-                                 pass_cluster_client)
-from ...execution_events_fetcher import WAIT_FOR_EXECUTION_SLEEP_INTERVAL
+from cloudify_cli.tests.cfy import ClickInvocationException
 
 
-class WaitForClusterTest(unittest.TestCase):
-    def test_polls_until_done(self):
-        """The CLI stops polling when the cluster is initialized."""
-
-        client = mock.Mock()
-        # prepare a mock "cluster.status()" method that will return
-        # initialized = False on the first 4 calls, and initialized = True
-        # on the 5th call
-        client.cluster.status = mock.Mock(
-            side_effect=[ClusterState({'initialized': False})] * 4 +
-                        [ClusterState({'initialized': True})])
-
-        with mock.patch('cloudify_cli.commands.cluster.time') as mock_time:
-            mock_time.time.return_value = 0
-            status = _wait_for_cluster_initialized(client)
-        self.assertEqual(5, len(client.cluster.status.mock_calls))
-        self.assertTrue(status['initialized'])
-
-    def test_stops_at_timeout(self):
-        """If the cluster is never started, polling stops at timeout."""
-        timeout = 900
-        clock = {'time': 1000}
-        client = mock.Mock()
-        client.cluster.status = mock.Mock(
-            return_value=ClusterState({'initialized': False}))
-
-        def _mock_sleep(n):
-            clock['time'] += n
-
-        def _mock_time():
-            return clock['time']
-
-        with mock.patch('cloudify_cli.commands.cluster.time') as mock_time:
-            mock_time.sleep = mock.Mock(side_effect=_mock_sleep)
-            mock_time.time = _mock_time
-
-            with self.assertRaises(CloudifyCliError) as cm:
-                _wait_for_cluster_initialized(client, timeout=timeout)
-
-        self.assertIn('timed out', cm.exception.message.lower())
-        # there should be (timeout//interval) time.sleep(interval) calls,
-        # so the total time waited is equal to timeout
-        self.assertEqual(timeout // WAIT_FOR_EXECUTION_SLEEP_INTERVAL,
-                         len(mock_time.sleep.mock_calls))
-
-    def test_passes_log_cursor(self):
-        # prepare mock status responses containing logs. The first status
-        # contains logs that end at cursor=1, so the next call needs to provide
-        # since='1'. The 2nd status has cursor=2 and 3, so the next call needs
-        # to be since='3'. The next call returns no logs at all, so since stays
-        # '3'.
-        status_responses = [
-            ClusterState({
-                'initialized': False,
-                'logs': [{'timestamp': 1, 'message': 'a', 'cursor': '1'}]
-            }),
-            ClusterState({
-                'initialized': False,
-                'logs': [{'timestamp': 1, 'message': 'a', 'cursor': '2'},
-                         {'timestamp': 1, 'message': 'a', 'cursor': '3'}]
-            }),
-            ClusterState({'initialized': False}),
-            ClusterState({
-                'initialized': True,
-                'logs': [{'timestamp': 1, 'message': 'a', 'cursor': '4'}]
-            })
+class ClusterTest(CliCommandTest):
+    MANAGERS_LIST = [
+            ManagerItem(
+                {
+                    'id': '0',
+                    'hostname': 'hostname_1',
+                    'private_ip': '1.2.3.4',
+                    'public_ip': '2.2.3.4',
+                    'version': '5.0',
+                    'edition': 'premium',
+                    'distribution': 'centos',
+                    'distro_release': 'core',
+                    'fs_sync_node_id': 'hgujriewgthuiyenfjk'
+                }
+            ),
+            ManagerItem(
+                {
+                    'id': '1',
+                    'hostname': 'hostname_2',
+                    'private_ip': '1.2.3.5',
+                    'public_ip': '2.2.3.5',
+                    'version': '5.0',
+                    'edition': 'premium',
+                    'distribution': 'centos',
+                    'distro_release': 'core',
+                    'fs_sync_node_id': 'hgujriewgthuiyenfjk'
+                }
+            ),
+            ManagerItem(
+                {
+                    'id': '2',
+                    'hostname': 'hostname_3',
+                    'private_ip': '1.2.3.6',
+                    'public_ip': '2.2.3.6',
+                    'version': '5.0',
+                    'edition': 'premium',
+                    'distribution': 'centos',
+                    'distro_release': 'core',
+                    'fs_sync_node_id': 'hgujriewgthuiyenfjk'
+                }
+            )
         ]
-        client = mock.Mock()
-        client.cluster.status = mock.Mock(side_effect=status_responses)
 
-        with mock.patch('cloudify_cli.commands.cluster.time') as mock_time:
-            mock_time.time.return_value = 1000
-            _wait_for_cluster_initialized(client, logger=mock.Mock())
-        self.assertEqual(4, len(client.cluster.status.mock_calls))
-
-        since_passed = [kw['since'] for _, _, kw in
-                        client.cluster.status.mock_calls]
-
-        self.assertEqual([None, '1', '3', '3'], since_passed)
-
-
-class ClusterStartTest(CliCommandTest):
     def setUp(self):
-        super(ClusterStartTest, self).setUp()
-        self.use_manager()
-
-    def test_already_in_cluster(self):
-        self.client.cluster.status = mock.Mock(
-            return_value=ClusterState({'initialized': True}))
-        self.invoke('cfy cluster start --cluster-host-ip 1.2.3.4',
-                    'already part of a Cloudify Manager cluster')
-
-    def test_start_success(self):
-        self.client.cluster.status = mock.Mock(side_effect=[
-            ClusterState({'initialized': False}),
-            ClusterState({'initialized': True}),
-        ])
-        self.client.cluster.start = mock.Mock()
-        outcome = self.invoke('cfy cluster start --cluster-host-ip 1.2.3.4')
-        self.assertIn('cluster started', outcome.logs)
-
-    def test_start_success_with_logs(self):
-        self.client.cluster.status = mock.Mock(side_effect=[
-            ClusterState({'initialized': False}),
-            ClusterState({
-                'initialized': False,
-                'logs': [{'timestamp': 1, 'message': 'one log message',
-                          'cursor': '1'}]
-            }),
-            ClusterState({'initialized': True}),
-        ])
-        self.client.cluster.start = mock.Mock()
-        with mock.patch('cloudify_cli.commands.cluster.time') as mock_time:
-            mock_time.time.return_value = 1000
-            outcome = self.invoke(
-                'cfy cluster start --cluster-host-ip 1.2.3.4')
-        self.assertIn('cluster started', outcome.logs)
-        self.assertIn('one log message', outcome.logs)
-
-    def test_start_error(self):
-        self.client.cluster.status = mock.Mock(side_effect=[
-            ClusterState({'initialized': False}),
-            ClusterState({'error': 'some error happened'}),
-        ])
-        self.client.cluster.start = mock.Mock()
-        self.invoke('cfy cluster start --cluster-host-ip 1.2.3.4',
-                    'some error happened')
-
-    def test_profile_updated(self):
-        self.client.cluster.status = mock.Mock(side_effect=[
-            ClusterState({'initialized': False}),
-            ClusterState({'initialized': True}),
-        ])
-        self.client.cluster.start = mock.Mock()
-        outcome = self.invoke('cfy cluster start --cluster-host-ip 1.2.3.4')
-        self.assertIn('cluster started', outcome.logs)
-        self.assertEqual(1, len(env.profile.cluster))
-        self.assertEqual(env.profile.manager_ip,
-                         env.profile.cluster[0]['manager_ip'])
-
-
-class ClusterNodesTest(CliCommandTest):
-    def setUp(self):
-        super(ClusterNodesTest, self).setUp()
-        self.use_manager()
+        super(ClusterTest, self).setUp()
+        self.client.manager.get_status = mock.MagicMock()
+        self.client.maintenance_mode.status = mock.MagicMock()
+        self.client.manager.get_managers = mock.MagicMock()
+        self.client.manager.get_managers().items = self.MANAGERS_LIST
 
     def test_list_nodes(self):
-        self.client.cluster.status = mock.Mock(
-            return_value=ClusterState({'initialized': True}))
-        self.client.cluster.nodes.list = mock.Mock(return_value=[
-            ClusterNode({'name': 'node name 1', 'host_ip': '1.2.3.4'})
-        ])
-        outcome = self.invoke('cfy cluster nodes list')
-        self.assertIn('node name 1', outcome.output)
-
-    def test_list_not_initialized(self):
-        self.client.cluster.status = mock.Mock(
-            return_value=ClusterState({'initialized': False}))
-        self.invoke('cfy cluster nodes list',
-                    'not part of a Cloudify Manager cluster')
-
-    def test_set_node_cert(self):
-        env.profile.cluster = [{'name': 'm1', 'manager_ip': '1.2.3.4'}]
-        with tempfile.NamedTemporaryFile() as f:
-            self.invoke('cfy cluster nodes set-certificate m1 {0}'
-                        .format(f.name))
-
-    def test_set_node_cert_doesnt_exist(self):
-        env.profile.cluster = [{'name': 'm1', 'manager_ip': '1.2.3.4'}]
-        self.invoke('cfy cluster nodes set-certificate m1 /tmp/not-a-file',
-                    'does not exist')
-
-    def test_set_node_cert_no_such_node(self):
-        env.profile.cluster = [{'name': 'm1', 'manager_ip': '1.2.3.4'}]
-        with tempfile.NamedTemporaryFile() as f:
-            self.invoke('cfy cluster nodes set-certificate not-a-node {0}'
-                        .format(f.name),
-                        'not found in the cluster profile')
-
-    def test_get_node(self):
-        self.client.cluster.status = mock.Mock(
-            return_value=ClusterState({'initialized': True}))
-        self.client.cluster.nodes.details = mock.Mock(return_value={
-            'id': 'm1',
-            'options': {
-                'option1': 'value1'
-            }
-        })
-        outcome = self.invoke('cluster nodes get m1')
-        self.assertIn('value1', outcome.output)
-
-    def test_get_node_json(self):
-        self.client.cluster.status = mock.Mock(
-            return_value=ClusterState({'initialized': True}))
-        self.client.cluster.nodes.details = mock.Mock(return_value={
-            'id': 'm1',
-            'options': {
-                'option1': 'value1'
-            }
-        })
-        outcome = self.invoke('cluster nodes get m1 --json')
-        parsed = json.loads(outcome.output)
-        self.assertEqual(parsed['options'], {'option1': 'value1'})
-
-    def test_node_update(self):
-        self.client.cluster.status = mock.Mock(
-            return_value=ClusterState({'initialized': True}))
-        self.client.cluster.nodes.update = mock.Mock()
-        node_name = 'n1'
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            json.dump({'check_fail_fast': False}, f)
-        self.addCleanup(os.unlink, f.name)
-        outcome = self.invoke(
-            'cluster nodes update {0} --options {1}'.format(node_name, f.name))
-        self.assertIn('Node {0} updated'.format(node_name), outcome.logs)
-        self.client.cluster.nodes.update.assert_called_with(
-            node_name, {'check_fail_fast': False})
-
-
-class ClusterJoinTest(CliCommandTest):
-    def setUp(self):
-        super(ClusterJoinTest, self).setUp()
         self.use_manager()
 
-        self.master_profile = env.ProfileContext()
-        self.master_profile.manager_ip = 'master_profile'
-        self.master_profile.cluster = [{'manager_ip': '1.2.3.4'}]
-        self.master_profile.save()
+        self.client.manager.get_status.side_effect = [
+            {
+                'services': [
+                    {
+                        'instances': [{'state': 'running'}],
+                        'display_name': 'Service-1'
+                    },
+                    {
+                        'instances': [{'state': 'remote'}],
+                        'display_name': 'Service-2'
+                    },
+                    {
+                        'instances': [{'state': 'down'}],
+                        'display_name': 'Service-3'
+                    },
+                    {
+                        'instances': [{'state': 'running'}],
+                        'display_name': 'Service-4'
+                    }
+                ]
+            },
+            ConnectionError,
+            {
+                'services': [
+                    {
+                        'instances': [{'state': 'running'}],
+                        'display_name': 'Service-BlaBla'
+                    },
+                    {
+                        'instances': [{'state': 'down'}],
+                        'display_name': 'Service-1'
+                    }
+                ]
+            }
+        ]
+        outcome = self.invoke('cfy cluster status')
+        supposed_to_be_in_list = [
+            'Service-1',
+            'Service-2',
+            'Service-3',
+            'Service-4',
+            'Service-BlaBla',
+            'down',
+            'remote',
+            'running',
+            'Active',
+            'Offline',
+            'hostname_1',
+            '1.2.3.5',
+            'N/A'
+        ]
+        for supposed_to_be_in in supposed_to_be_in_list:
+            self.assertIn(supposed_to_be_in, outcome.output)
+        self.assertNotIn('id', outcome.output)
+        self.assertNotIn('fs_sync_node_id', outcome.output)
 
-    def test_join_success(self):
-        self.client.cluster.status = mock.Mock(side_effect=[
-            ClusterState({'initialized': False}),
-            NotClusterMaster('not cluster master')
-        ])
-        self.client.cluster.nodes.list = mock.Mock(return_value=[
-            ClusterNode({'host_ip': '10.10.1.10', 'online': True})
-        ])
-        self.client.cluster.nodes.add = mock.Mock(return_value=ClusterNode({
-            'credentials': 'abc'
-        }))
-
-        self.client.cluster.join = mock.Mock()
-        outcome = self.invoke('cfy cluster join {0}'
-                              .format(self.master_profile.manager_ip))
-        self.assertIn('joined cluster', outcome.logs)
-
-    def test_join_profile_updated(self):
-        self.client.cluster.status = mock.Mock(side_effect=[
-            ClusterState({'initialized': False}),
-            NotClusterMaster('not cluster master')
-        ])
-        self.client.cluster.nodes.add = mock.Mock(return_value=ClusterNode({
-            'credentials': 'abc'
-        }))
-
-        self.client.cluster.nodes.list = mock.Mock(return_value=[
-            ClusterNode({'host_ip': '10.10.1.10', 'online': True})
-        ])
-        self.client.cluster.join = mock.Mock()
-        outcome = self.invoke('cfy cluster join {0}'
-                              .format(self.master_profile.manager_ip))
-        self.assertIn('joined cluster', outcome.logs)
-
-        master_profile = env.get_profile_context('master_profile')
-        self.assertEqual(2, len(master_profile.cluster))
-        self.assertEqual(env.profile.manager_ip,
-                         master_profile.cluster[1]['manager_ip'])
-
-    def test_join_origin_profile_updated(self):
-        self.client.cluster.status = mock.Mock(side_effect=[
-            ClusterState({'initialized': False}),
-            NotClusterMaster('not cluster master')
-        ])
-        self.client.cluster.nodes.add = mock.Mock(return_value=ClusterNode({
-            'credentials': 'abc'
-        }))
-        with tempfile.NamedTemporaryFile(delete=False) as f:
-            f.write('cert or key here\n')
-        self.addCleanup(os.unlink, f.name)
-        self.master_profile.cluster[0]['ssh_key'] = f.name
-        self.master_profile.save()
-
-        self.client.cluster.nodes.list = mock.Mock(return_value=[
-            ClusterNode({'host_ip': '10.10.1.10', 'online': True})
-        ])
-        self.client.cluster.join = mock.Mock()
-        outcome = self.invoke('cfy cluster join {0}'
-                              .format(self.master_profile.manager_ip))
-        self.assertIn('joined cluster', outcome.logs)
-
-        self.assertEqual(2, len(env.profile.cluster))
-
-        joined_node = env.profile.cluster[1]
-        self.assertEqual('10.10.1.10', joined_node['manager_ip'])
-
-        master_node = env.profile.cluster[0]
-        self.assertIn('ssh_key', master_node)
-        # check that the master's ssh key was copied to the local profile's
-        # workdir
-        self.assertTrue(master_node['ssh_key'].startswith(env.profile.workdir))
-
-    def test_join_duplicate_name(self):
-        self.client.cluster.status = mock.Mock(side_effect=[
-            ClusterState({'initialized': False}),
-            ClusterState({}),
-        ])
-        self.client.cluster.nodes.list = mock.Mock(return_value=[
-            ClusterNode({'host_ip': '10.10.1.10', 'online': True, 'name': 'n'})
-        ])
-
-        self.client.cluster.join = mock.Mock()
-        self.invoke('cfy cluster join {0} --cluster-node-name n'
-                    .format(self.master_profile.manager_ip),
-                    'is already a member of the cluster')
-
-
-class UpdateProfileTest(CliCommandTest):
-    def setUp(self):
-        super(UpdateProfileTest, self).setUp()
+    def test_remove_node(self):
         self.use_manager()
-        env.profile.cluster = [{'manager_ip': env.profile.manager_ip,
-                                'name': 'master'}]
-        env.profile.save()
+        self.client.manager.remove_manager = mock.MagicMock(
+            return_value=self.MANAGERS_LIST[0])
+        outcome = self.invoke('cfy cluster remove hostname_1')
+        self.assertIn('Node hostname_1 was removed successfully!',
+                      outcome.output)
 
-    def test_nodes_added_to_profile(self):
-        self.client.cluster.status = mock.Mock(
-            return_value=ClusterState({'initialized': True}))
-        self.client.cluster.nodes.list = mock.Mock(return_value=[
-            ClusterNode({'name': 'master',
-                         'host_ip': env.profile.manager_ip}),
-            ClusterNode({'name': 'node name 1', 'host_ip': '1.2.3.4'}),
-            ClusterNode({'name': 'node name 2', 'host_ip': '5.6.7.8'})
-        ])
-        self.client.cluster.join = mock.Mock()
-
-        outcome = self.invoke('cfy cluster update-profile')
-        self.assertIn('Adding cluster node 1.2.3.4', outcome.logs)
-        self.assertIn('Adding cluster node 5.6.7.8', outcome.logs)
-
-        self.assertEqual(env.profile.cluster, [
-            {'manager_ip': env.profile.manager_ip, 'name': 'master'},
-            {'manager_ip': '1.2.3.4', 'name': 'node name 1'},
-            {'manager_ip': '5.6.7.8', 'name': 'node name 2'}
-        ])
-
-    def test_nodes_removed_from_profile(self):
-        self.client.cluster.status = mock.Mock(
-            return_value=ClusterState({'initialized': True}))
-        self.client.cluster.nodes.list = mock.Mock(return_value=[
-            ClusterNode({'name': 'node name 1', 'host_ip': '1.2.3.4'}),
-            ClusterNode({'name': 'node name 2', 'host_ip': '5.6.7.8'})
-        ])
-        self.client.cluster.join = mock.Mock()
-
-        self.invoke('cfy cluster update-profile')
-        self.assertEqual(env.profile.cluster, [
-            {'manager_ip': '1.2.3.4', 'name': 'node name 1'},
-            {'manager_ip': '5.6.7.8', 'name': 'node name 2'}
-        ])
-
-    def test_set_node_cert(self):
-        env.profile.cluster.append({'manager_ip': '1.2.3.4', 'name': 'node2'})
-        env.profile.save()
-        with tempfile.NamedTemporaryFile() as f:
-            self.invoke('cfy cluster nodes set-certificate {0} {1}'
-                        .format('master', f.name))
-        with tempfile.NamedTemporaryFile() as f2:
-            self.invoke('cfy cluster nodes set-certificate {0} {1}'
-                        .format('node2', f2.name))
-        self.assertEqual(env.profile.cluster[0]['cert'], f.name)
-        self.assertEqual(env.profile.cluster[1]['cert'], f2.name)
-
-
-class PassClusterClientTest(unittest.TestCase):
-    def test_pass_cluster_client_not_initialized(self):
-        @pass_cluster_client()
-        def _f(client):
-            pass
-
-        mock_client = mock.Mock()
-        mock_client.cluster.status.return_value = \
-            ClusterState({'initialized': False})
-        with mock.patch('cloudify_cli.env.get_rest_client',
-                        return_value=mock_client):
-            with self.assertRaises(CloudifyCliError) as cm:
-                _f()
-        mock_client.cluster.status.assert_any_call()
-        self.assertIn('not part of a Cloudify Manager cluster',
-                      str(cm.exception))
-
-    def test_pass_cluster_client_initialized(self):
-        @pass_cluster_client()
-        def _f(client):
-            pass
-
-        mock_client = mock.Mock()
-        mock_client.cluster.status.return_value = \
-            ClusterState({'initialized': True})
-        with mock.patch('cloudify_cli.env.get_rest_client',
-                        return_value=mock_client):
-            _f()
-        mock_client.cluster.status.assert_any_call()
+    def test_remove_non_existing_node(self):
+        self.use_manager()
+        self.client.manager.remove_manager = mock.Mock(
+            return_value=self.MANAGERS_LIST[0])
+        self.assertRaises(ClickInvocationException, self.invoke,
+                          'cfy cluster remove hostname_BlaBla')
