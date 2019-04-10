@@ -125,6 +125,42 @@ class DeploymentUpdatesTest(CliCommandTest):
             *args, **kwargs)
         self.assertTrue(call_args['preview'])
 
+    def test_deployment_update_update_plugins_is_false(self):
+        update_client_mock = Mock()
+        self.client.deployment_updates.update_with_existing_blueprint = \
+            update_client_mock
+        self.invoke('deployments update dep-1 -b b2 --dont-update-plugins')
+
+        calls = self.client.deployment_updates\
+            .update_with_existing_blueprint.mock_calls
+        self.assertEqual(len(calls), 1)
+        _, args, kwargs = calls[0]
+        call_args = inspect.getcallargs(
+            deployment_updates.DeploymentUpdatesClient(None)
+            .update_with_existing_blueprint,
+            *args, **kwargs)
+
+        self.assertIn('update_plugins', call_args)
+        self.assertFalse(call_args['update_plugins'])
+
+    def test_deployment_update_update_plugins_is_true(self):
+        update_client_mock = Mock()
+        self.client.deployment_updates.update_with_existing_blueprint = \
+            update_client_mock
+        self.invoke('deployments update dep-1 -b b2')
+
+        calls = self.client.deployment_updates\
+            .update_with_existing_blueprint.mock_calls
+        self.assertEqual(len(calls), 1)
+        _, args, kwargs = calls[0]
+        call_args = inspect.getcallargs(
+            deployment_updates.DeploymentUpdatesClient(None)
+            .update_with_existing_blueprint,
+            *args, **kwargs)
+
+        self.assertIn('update_plugins', call_args)
+        self.assertTrue(call_args['update_plugins'])
+
     def test_deployment_update_get_json(self):
         old_value = 'old value 1'
         new_value = 'new value 1'

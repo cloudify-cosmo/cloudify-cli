@@ -18,6 +18,10 @@ import os
 
 import wagon
 
+from cloudify_cli import execution_events_fetcher
+from cloudify_cli.logger import get_events_logger
+from cloudify_cli.exceptions import SuppressedCloudifyCliError
+
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
 from .. import utils
@@ -30,6 +34,9 @@ from ..utils import (prettify_client_error,
 PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
                   'supported_platform', 'distribution_release', 'uploaded_at',
                   'visibility', 'tenant_name', 'created_by', 'yaml_url_path']
+PLUGINS_UPDATE_COLUMNS = ['id', 'state', 'blueprint_id', 'temp_blueprint_id',
+                          'execution_id', 'deployments_to_update',
+                          'visibility', 'created_at', 'forced']
 GET_DATA_COLUMNS = ['file_server_path']
 EXCLUDED_COLUMNS = ['archive_name', 'distribution_version', 'excluded_wheels',
                     'package_source', 'supported_py_versions', 'wheels']
@@ -285,3 +292,137 @@ def set_visibility(plugin_id, visibility, logger, client):
         client.plugins.set_visibility(plugin_id, visibility)
         logger.info('Plugin `{0}` was set to {1}'.format(plugin_id,
                                                          visibility))
+
+
+@plugins.command(name='update',
+                 short_help='Update the plugins of all the deployments of '
+                            'the blueprint [manager only]')
+@cfy.argument('blueprint-id')
+@cfy.options.common_options
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.assert_manager_active()
+@cfy.options.include_logs
+@cfy.options.json_output
+@cfy.pass_logger
+@cfy.pass_client()
+@cfy.options.force(help=helptexts.FORCE_PLUGINS_UPDATE)
+def update(blueprint_id,
+           include_logs,
+           json_output,
+           logger,
+           client,
+           tenant_name,
+           force):
+    """Update the plugins of all the deployments of the given blueprint. This
+    will update the deployments one by one until all succeeded.
+
+    `BLUEPRINT_ID` the blueprint's ID to perform the plugins update with.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Updating the plugins of the deployments of the blueprint '
+                '{}'.format(blueprint_id))
+    plugins_update = client.plugins_update.update_plugins(blueprint_id, force)
+    events_logger = get_events_logger(json_output)
+    execution = execution_events_fetcher.wait_for_execution(
+        client,
+        client.executions.get(plugins_update.execution_id),
+        events_handler=events_logger,
+        include_logs=include_logs,
+        timeout=None  # don't timeout ever
+    )
+
+    if execution.error:
+        logger.info("Execution of workflow '{0}' for blueprint "
+                    "'{1}' failed. [error={2}]"
+                    .format(execution.workflow_id,
+                            blueprint_id,
+                            execution.error))
+        logger.info('Failed updating plugins for blueprint {0}. '
+                    'Plugins update ID: {1}. Execution id: {2}'
+                    .format(blueprint_id,
+                            plugins_update.id,
+                            execution.id))
+        raise SuppressedCloudifyCliError()
+    logger.info("Finished executing workflow '{0}'".format(
+        execution.workflow_id))
+    logger.info('Successfully updated plugins for blueprint {0}. '
+                'Plugins update ID: {1}. Execution id: {2}'
+                .format(blueprint_id,
+                        plugins_update.id,
+                        execution.id))
+
+
+@plugins.command(
+    name='get-update',
+    short_help='Retrieve plugins update information [manager only]'
+)
+@cfy.argument('plugins-update-id')
+@cfy.options.common_options
+@cfy.options.tenant_name(required=False,
+                         resource_name_for_help='plugins update')
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def manager_get_update(plugins_update_id, logger, client, tenant_name):
+    """Retrieve information for a specific plugins update
+
+    `PLUGINS_UPDATE_ID` is the id of the plugins update to get information on.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Retrieving plugins update {0}...'.format(plugins_update_id))
+    plugins_update_dict = client.plugins_update.get(plugins_update_id)
+    print_single(
+        PLUGINS_UPDATE_COLUMNS, plugins_update_dict, 'Plugins update:')
+
+
+@plugins.command(name='history', short_help='List plugins updates '
+                                            '[manager only]')
+@cfy.options.blueprint_id()
+@cfy.options.sort_by()
+@cfy.options.descending
+@cfy.options.tenant_name_for_list(
+    required=False, resource_name_for_help='plugins update')
+@cfy.options.all_tenants
+@cfy.options.search
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def manager_history(blueprint_id,
+                    sort_by,
+                    descending,
+                    all_tenants,
+                    search,
+                    pagination_offset,
+                    pagination_size,
+                    logger,
+                    client,
+                    tenant_name):
+    """Show blueprint history by listing plugins updates
+
+    If `--blueprint-id` is provided, list plugins updates for that
+    blueprint. Otherwise, list plugins updates for all blueprints.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    if blueprint_id:
+        logger.info('Listing plugins updates for blueprint {0}...'.format(
+            blueprint_id))
+    else:
+        logger.info('Listing all plugins updates...')
+
+    plugins_updates = client.plugins_update.list(
+        sort=sort_by,
+        is_descending=descending,
+        _all_tenants=all_tenants,
+        _search=search,
+        _offset=pagination_offset,
+        _size=pagination_size,
+        blueprint_id=blueprint_id
+    )
+    total = plugins_updates.metadata.pagination.total
+    print_data(
+        PLUGINS_UPDATE_COLUMNS, plugins_updates, 'Plugins updates:')
+    logger.info('Showing {0} of {1} plugins updates'.format(
+        len(plugins_updates), total))

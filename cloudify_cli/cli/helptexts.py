@@ -92,10 +92,17 @@ PREVIEW = (
     "Preview the deployment update, stating what changes will be made "
     "without actually applying any changes."
 )
+DONT_UPDATE_PLUGINS = (
+    "Don't update the plugins."
+)
 
 FORCE_UPDATE = (
     "Force running update in case a previous update on this deployment has "
     "failed to finished successfully"
+)
+FORCE_PLUGINS_UPDATE = (
+    "Force running the update in case a previous update on this blueprint has "
+    "failed to finished successfully."
 )
 
 DEPLOYMENT_ID = "The unique identifier for the deployment"
