@@ -7,7 +7,7 @@ export AWS_ACCESS_KEY_ID=$3
 export AWS_ACCESS_KEY=$4
 export REPO=$5
 export BRANCH=$6
-export CORE_TAG_NAME="4.5.5.dev1"
+export CORE_TAG_NAME="5.0.dev1"
 export CORE_BRANCH="master"
 
 set +e
@@ -66,6 +66,10 @@ echo "file=$file"
 file_no_build=$(echo "$file" | sed 's/\(.*\)-1/\1/' | sed 's/cloudify/cloudify-cli/')
 echo "file_no_build=$file_no_build"
 mv $file $file_no_build
+
+if [[ ! -z $BRANCH ]] && [[ "$BRANCH" != "master" ]] ; then
+    AWS_S3_PATH="$AWS_S3_PATH/$BRANCH"
+fi
 
 [ "$result" == "success" ] && create_md5 $FILEEXT &&
 [ -z ${AWS_ACCESS_KEY} ] || upload_to_s3 $FILEEXT && upload_to_s3 "md5" &&
