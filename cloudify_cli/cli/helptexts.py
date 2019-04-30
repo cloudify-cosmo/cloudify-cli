@@ -323,3 +323,6 @@ WAIT_AFTER_FAIL = 'When a task fails, wait this many seconds for ' \
                   'already-running tasks to return'
 RESET_OPERATIONS = 'Reset operations in started state, so that they are '\
                    'run again unconditionally'
+LATITUDE = "The latitude of the site's location"
+LONGITUDE = "The longitude of the site's location"
+NEW_NAME = "The new name of the {0}"

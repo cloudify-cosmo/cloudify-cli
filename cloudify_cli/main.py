@@ -24,6 +24,7 @@ from .commands import logs
 from .commands import ldap
 from .commands import users
 from .commands import nodes
+from .commands import sites
 from .commands import agents
 from .commands import events
 from .commands import groups
@@ -98,13 +99,12 @@ def _register_commands():
     _cfy.add_command(tokens.tokens)
     _cfy.add_command(nodes.nodes)
     _cfy.add_command(groups.groups)
-
     _cfy.add_command(workflows.workflows)
     _cfy.add_command(blueprints.blueprints)
     _cfy.add_command(executions.executions)
     _cfy.add_command(deployments.deployments)
-
     _cfy.add_command(license.license)
+    _cfy.add_command(sites.sites)
 
     deployments.deployments.add_command(deployments.manager_create)
     deployments.deployments.add_command(deployments.manager_delete)

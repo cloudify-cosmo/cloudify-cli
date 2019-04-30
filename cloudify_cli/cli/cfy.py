@@ -1070,6 +1070,20 @@ class Options(object):
             help=helptexts.INSTALL_AGENT_TIMEOUT
         )
 
+        self.latitude = click.option(
+            '--latitude',
+            required=False,
+            type=float,
+            help=helptexts.LATITUDE
+        )
+
+        self.longitude = click.option(
+            '--longitude',
+            required=False,
+            type=float,
+            help=helptexts.LONGITUDE
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
@@ -1417,6 +1431,16 @@ class Options(object):
             '--yaml-path',
             required=True,
             help=helptexts.PLUGIN_YAML_PATH)
+
+    @staticmethod
+    def new_name(resource_name_for_help=None):
+        return click.option(
+            '-n',
+            '--new-name',
+            required=False,
+            help=helptexts.NEW_NAME.format(resource_name_for_help),
+            callback=validate_name
+        )
 
 
 options = Options()
