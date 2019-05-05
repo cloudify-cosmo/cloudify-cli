@@ -1070,18 +1070,10 @@ class Options(object):
             help=helptexts.INSTALL_AGENT_TIMEOUT
         )
 
-        self.latitude = click.option(
-            '--latitude',
+        self.location = click.option(
+            '--location',
             required=False,
-            type=float,
-            help=helptexts.LATITUDE
-        )
-
-        self.longitude = click.option(
-            '--longitude',
-            required=False,
-            type=float,
-            help=helptexts.LONGITUDE
+            help=helptexts.LOCATION
         )
 
     def common_options(self, f):

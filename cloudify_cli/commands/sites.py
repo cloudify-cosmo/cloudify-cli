@@ -21,7 +21,7 @@ from ..cli import cfy
 from ..table import print_data, print_single
 from ..utils import handle_client_error, validate_visibility
 
-SITES_COLUMNS = ['name', 'latitude', 'longitude', 'visibility', 'tenant_name',
+SITES_COLUMNS = ['name', 'location', 'visibility', 'tenant_name',
                  'created_at', 'created_by']
 
 
@@ -37,22 +37,21 @@ def sites():
 
 @sites.command(name='create', short_help='Create a new site')
 @cfy.argument('name', callback=cfy.validate_name)
-@cfy.options.latitude
-@cfy.options.longitude
+@cfy.options.location
 @cfy.options.visibility(mutually_exclusive_required=False)
 @cfy.options.tenant_name(required=False, resource_name_for_help='site')
 @cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def create(name, latitude, longitude, visibility, tenant_name, client, logger):
+def create(name, location, visibility, tenant_name, client, logger):
     """Create a new site
 
     `NAME` is the new site's name
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
-    client.sites.create(name, latitude, longitude, visibility)
+    client.sites.create(name, location, visibility)
     logger.info('Site `{0}` created'.format(name))
 
 
@@ -79,8 +78,7 @@ def get(name, tenant_name, client, logger):
 
 @sites.command(name='update', short_help='Update an existing site')
 @cfy.argument('name', callback=cfy.validate_name)
-@cfy.options.latitude
-@cfy.options.longitude
+@cfy.options.location
 @cfy.options.update_visibility
 @cfy.options.new_name('site')
 @cfy.options.tenant_name(required=False, resource_name_for_help='site')
@@ -88,8 +86,7 @@ def get(name, tenant_name, client, logger):
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def update(name, latitude, longitude, visibility, new_name, tenant_name,
-           client, logger):
+def update(name, location, visibility, new_name, tenant_name, client, logger):
     """Update an existing site
 
     `NAME` is the site's name
@@ -98,7 +95,7 @@ def update(name, latitude, longitude, visibility, new_name, tenant_name,
     validate_visibility(visibility)
     graceful_msg = 'Requested site with name `{0}` was not found'.format(name)
     with handle_client_error(404, graceful_msg, logger):
-        client.sites.update(name, latitude, longitude, visibility, new_name)
+        client.sites.update(name, location, visibility, new_name)
         logger.info('Site `{0}` updated'.format(name))
 
 

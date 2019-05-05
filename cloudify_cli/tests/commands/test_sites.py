@@ -13,6 +13,8 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 
+from mock import MagicMock
+
 from .test_base import CliCommandTest
 from cloudify_cli.exceptions import CloudifyValidationError, CloudifyCliError
 
@@ -26,6 +28,10 @@ class SitesTest(CliCommandTest):
     def setUp(self):
         super(SitesTest, self).setUp()
         self.use_manager()
+
+    def test_sites_get(self):
+        self.client.sites.get = MagicMock()
+        self.invoke('cfy sites get test_site')
 
     def test_get_missing_name(self):
         outcome = self.invoke('cfy sites get', **self.system_exit)
@@ -46,6 +52,10 @@ class SitesTest(CliCommandTest):
             exception=CloudifyValidationError
         )
 
+    def test_sites_create(self):
+        self.client.sites.create = MagicMock()
+        self.invoke('cfy sites create test_site')
+
     def test_create_missing_name(self):
         outcome = self.invoke('cfy sites create ', **self.system_exit)
         self.assertIn('Missing argument "name"', outcome.output)
@@ -60,37 +70,41 @@ class SitesTest(CliCommandTest):
                               **self.system_exit)
         self.assertIn('no such option: -g', outcome.output)
 
-    def test_create_invalid_longitude(self):
-        outcome = self.invoke('cfy sites create test_site --longitude bla',
+    def test_create_invalid_location(self):
+        outcome = self.invoke('cfy sites create test_site --location',
                               **self.system_exit)
-        self.assertIn('Error: Invalid value for "--longitude": bla is '
-                      'not a valid floating point value', outcome.output)
+        self.assertIn('Error: --location option requires an argument',
+                      outcome.output)
 
-    def test_create_invalid_latitude(self):
-        outcome = self.invoke('cfy sites create test_site --latitude bla',
-                              **self.system_exit)
-        self.assertIn('Error: Invalid value for "--latitude": bla is '
-                      'not a valid floating point value', outcome.output)
+    def test_sites_update(self):
+        self.client.sites.update = MagicMock()
+        self.invoke('cfy sites update test_site')
 
     def test_update_invalid_visibility(self):
         self.invoke('cfy sites update test_site -l bla',
                     err_str_segment='Invalid visibility: `bla`',
                     exception=CloudifyCliError)
 
-    def test_update_invalid_latitude(self):
-        outcome = self.invoke('cfy sites update test_site --latitude bla',
+    def test_update_invalid_location(self):
+        outcome = self.invoke('cfy sites update test_site --location',
                               **self.system_exit)
-        self.assertIn('Invalid value for "--latitude": bla is not a valid '
-                      'floating point value', outcome.output)
-
-    def test_update_invalid_longitude(self):
-        outcome = self.invoke('cfy sites update test_site --longitude bla',
-                              **self.system_exit)
-        self.assertIn('Invalid value for "--longitude": bla is not a valid '
-                      'floating point value', outcome.output)
+        self.assertIn('Error: --location option requires an argument',
+                      outcome.output)
 
     def test_update_invalid_new_name(self):
         self.invoke('cfy sites update test_site --new-name :bla',
                     err_str_segment='The `new_name` argument contains illegal '
                                     'characters',
                     exception=CloudifyValidationError)
+
+    def test_sites_delete(self):
+        self.client.sites.delete = MagicMock()
+        self.invoke('cfy sites delete test_site')
+
+    def test_sites_list(self):
+        self.client.sites.list = MagicMock()
+        self.invoke('cfy sites list')
+
+    def test_sites_invalid_command(self):
+        outcome = self.invoke('cfy sites bla', **self.system_exit)
+        self.assertIn('Error: No such command "bla"', outcome.output)
