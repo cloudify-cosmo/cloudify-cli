@@ -54,11 +54,11 @@ function prepare_linux () {
         sudo yum update -y nss
         gpg=gpg2
     else
-        sudo apt-get install -y git curl fakeroot python-dev
+        sudo apt-get install -y git curl fakeroot python-dev dirmngr
         gpg=gpg
     fi
 
-    curl -sSL https://rvm.io/pkuczynski.asc | gpg2 --import -
+    curl -sSL https://rvm.io/pkuczynski.asc | $gpg --import -
     $gpg --keyserver hkp://pool.sks-keyservers.net --recv-keys \
         409B6B1796C275462A1703113804BB82D39DC0E3 \
         7D2BAF1CF37B13E2069D6956105BD0E739499BDB
@@ -67,7 +67,7 @@ function prepare_linux () {
     if  which yum >> /dev/null; then
         source /etc/profile.d/rvm.sh
     else
-        source /home/admin/.rvm/scripts/rvm
+        source $HOME/.rvm/scripts/rvm
     fi
     rvm install 2.4.4 && rvm use 2.4.4
     gem install bundler -v '=1.16.0' --no-ri --no-rdoc
