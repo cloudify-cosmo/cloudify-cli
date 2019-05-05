@@ -235,7 +235,7 @@ def get_rest_client(client_profile=None,
     trust_all = trust_all or get_ssl_trust_all()
     headers = get_auth_header(username, password)
     headers[constants.CLOUDIFY_TENANT_HEADER] = tenant_name
-    cluster = cluster or client_profile.cluster
+    cluster = client_profile.cluster if cluster is None else cluster
     kerberos_env = kerberos_env \
         if kerberos_env is not None else client_profile.kerberos_env
 
@@ -536,8 +536,10 @@ class ClusterHTTPClient(HTTPClient):
             try:
                 return super(ClusterHTTPClient, self).do_request(*args,
                                                                  **kwargs)
-            except requests.exceptions.ConnectionError:
-                continue
+            except (requests.exceptions.ConnectionError,
+                    CloudifyClientError) as e:
+                if isinstance(e, CloudifyClientError) and e.status_code != 502:
+                    raise
 
         raise CloudifyClientError('All cluster nodes are offline')
 

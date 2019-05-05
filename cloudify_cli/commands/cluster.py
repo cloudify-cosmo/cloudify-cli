@@ -23,6 +23,8 @@ from ..cli import cfy
 from ..table import print_data
 from ..exceptions import CloudifyCliError
 
+from cloudify_rest_client.exceptions import CloudifyClientError
+
 
 # The list will be updated with the services on each manager
 CLUSTER_COLUMNS = ['hostname', 'private_ip', 'public_ip', 'version', 'edition',
@@ -69,23 +71,28 @@ def status(client):
     """
     managers = client.manager.get_managers().items
     updated_columns = CLUSTER_COLUMNS
+    # After we get the managers list from either of the managers in the profile
+    # we retrieve each manager's status directly
     for manager in managers:
-        client.host = manager.public_ip
+        direct_rest_client = env.get_rest_client(
+            rest_host=manager.public_ip, cluster=[])
         try:
-            services = client.manager.get_status()['services']
+            services = direct_rest_client.manager.get_status()['services']
             updated_columns += [
-                service['display_name'].ljust(20) for service in services
-                if service['display_name'].ljust(20) not in updated_columns
+                service['display_name'] for service in services
+                if service['display_name'] not in updated_columns
             ]
             manager.update({'status': 'Active'})
-        except ConnectionError:
+        except (ConnectionError, CloudifyClientError) as e:
+            if isinstance(e, CloudifyClientError) and e.status_code != 502:
+                raise
             manager.update({'status': 'Offline'})
             continue
         for service in services:
             state = service['instances'][0]['state'] \
                 if 'instances' in service and \
                    len(service['instances']) > 0 else 'unknown'
-            manager.update({service['display_name'].ljust(20): state})
+            manager.update({service['display_name']: state})
     print_data(updated_columns, managers, 'HA Cluster nodes')
 
 
@@ -146,18 +153,18 @@ def _update_profile_cluster_settings(nodes, logger=None):
     received nodes, because the profile might have more details about
     the nodes (eg. a certificate path)
     """
-    stored_nodes = {node.get('hostname') for node in env.profile.cluster}
-    received_nodes = {node.hostname for node in nodes}
+    stored_nodes = {node['hostname'] for node in env.profile.cluster}
+    received_nodes = {node['hostname'] for node in nodes}
     if env.profile.cluster is None:
         env.profile.cluster = []
     for node in nodes:
-        if node.hostname not in stored_nodes:
-            node_ip = node.public_ip or node.private_ip
+        if node['hostname'] not in stored_nodes:
+            node_ip = node['public_ip'] or node['private_ip']
             if logger:
                 logger.info('Adding cluster node {0} to local profile'
                             .format(node_ip))
             env.profile.cluster.append({
-                'hostname': node.hostname,
+                'hostname': node['hostname'],
                 # all other connection parameters will be defaulted to the
                 # ones from the last used manager
                 'manager_ip': node_ip
