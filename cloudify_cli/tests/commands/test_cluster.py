@@ -18,9 +18,8 @@ import mock
 
 from requests.exceptions import ConnectionError
 
-from cloudify_rest_client.manager import ManagerItem
-
 from .test_base import CliCommandTest
+from cloudify_rest_client.manager import ManagerItem
 from cloudify_cli.tests.cfy import ClickInvocationException
 
 
