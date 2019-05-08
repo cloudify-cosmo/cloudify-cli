@@ -14,6 +14,7 @@
 # limitations under the License.
 ############
 
+from warnings import warn
 from functools import wraps
 
 from requests.exceptions import ConnectionError
@@ -44,8 +45,8 @@ def pass_cluster_client(*client_args, **client_kwargs):
         def _inner(client, *args, **kwargs):
             managers_list = client.manager.get_managers().items
             if len(managers_list) == 1:
-                raise CloudifyCliError('This manager is not part of a '
-                                       'Cloudify Manager cluster')
+                warn('It is highly recommended to have more than one '
+                     'manager in a Cloudify cluster')
             return f(client=client, *args, **kwargs)
         return _inner
     return _deco
