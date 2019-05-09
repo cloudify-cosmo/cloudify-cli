@@ -10,8 +10,8 @@ RUN curl -sSL https://get.rvm.io | bash -s stable
 RUN /bin/bash -c '''\
     source /etc/profile.d/rvm.sh && \
     rvm install 2.4.4 && rvm use 2.4.4 && \
-    gem install bundler -v '=1.16.0' --no-ri --no-rdoc && \
-    gem install mixlib-cli -v 1.7.0 --no-ri --no-rdoc && \
-    gem install omnibus --no-ri --no-rdoc \
+    gem install bundler -v '=1.16.0' --no-document && \
+    gem install mixlib-cli -v 1.7.0 --no-document && \
+    gem install omnibus --no-document \
 '''
 RUN yum install sudo -y

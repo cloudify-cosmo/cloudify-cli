@@ -37,11 +37,11 @@ function prepare_osx () {
     fi
     rbenv global 2.4.4
     if [[ $(gem list |grep bundler) != 'bundler (1.8.4)' ]] ; then
-        gem install bundler -v '=1.16.0' --no-ri --no-rdoc
+        gem install bundler -v '=1.16.0' --no-document
     fi
     which -s omnibus
     if [[ $? != 0 ]] ; then
-        gem install omnibus --no-ri --no-rdoc
+        gem install omnibus --no-document
     fi
 }
 
@@ -70,9 +70,9 @@ function prepare_linux () {
         source $HOME/.rvm/scripts/rvm
     fi
     rvm install 2.4.4 && rvm use 2.4.4
-    gem install bundler -v '=1.16.0' --no-ri --no-rdoc
-    gem install mixlib-cli -v 1.7.0 --no-ri --no-rdoc
-    gem install omnibus --no-ri --no-rdoc
+    gem install bundler -v '=1.16.0' --no-document
+    gem install mixlib-cli -v 1.7.0 --no-document
+    gem install omnibus --no-document
 }
 
 echo "BRANCH=$BRANCH"
@@ -127,7 +127,7 @@ do
     cp -r omnibus-software/config/patches/$omnibus_softwate config/patches/
 done
 
-[ ! -d config/templates/ ] && mkdir config/templates/ 
+[ ! -d config/templates/ ] && mkdir config/templates/
 cp -r omnibus-software/config/templates/* config/templates/
 curl https://raw.githubusercontent.com/chef/omnibus-software/master/config/software/preparation.rb -o config/software/preparation.rb
 curl https://raw.githubusercontent.com/systemizer/omnibus-software/master/config/software/pip.rb -o config/software/pip.rb
