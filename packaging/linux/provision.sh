@@ -72,6 +72,7 @@ function prepare_linux () {
     rvm install 2.4.4 && rvm use 2.4.4
     gem install bundler -v '=1.16.0' --no-document
     gem install mixlib-cli -v 1.7.0 --no-document
+    gem install ohai -v 14.8.12 --no-document
     gem install omnibus --no-document
 }
 
