@@ -194,7 +194,7 @@ SEARCH = 'Search resources by name/id. The returned list will include only ' \
 
 TENANT = 'The name of the tenant'
 TENANT_TEMPLATE = 'The name of the tenant of the {0}'
-TENANT_LIST_TEMPLATE = 'The name of the tenant to list {0}s from'
+TENANT_LIST_TEMPLATE = 'The name of the tenant to manage {0}s from'
 ALL_TENANTS = 'Include resources from all tenants associated with the user. ' \
               'You cannot use this argument with arguments: [tenant_name]'
 ALL_EXECUTIONS = 'Apply to all available executions'
@@ -208,6 +208,10 @@ GROUP_TENANT_ROLE = (
 SECURITY_ROLE = "A role to determine the user's permissions on the manager, " \
                 "if admin or default (default: default role)"
 PASSWORD = 'Cloudify manager password'
+
+ENCRYPTION_PASSWORD = "The password used to encrypt the secrets' values, " \
+                      "must be 8 characters long."
+NOT_ENCRYPTED = "The secrets' values won't be encrypted" \
 
 CLUSTER_HOST_IP = \
     'The IP of this machine to use for advertising to the cluster'
@@ -273,6 +277,10 @@ PRIVATE_RESOURCE = 'This option is deprecated; use --visibility option ' \
                    'is accessible by all users that belong to the same ' \
                    'tenant [default: False].'
 VISIBILITY = 'Defines who can see the resource, can be set to one of {0}'
+FILTER_VISIBILITY = "Filters the secrets exported according to their" \
+                    " visibility, can be set to one of {0}"
+FILTER_TENANT = "Filters the secrets exported according to their tenant"
+FILTER_BY_KEYWORD = "Filters the secrets exported according to a keyword"
 PLUGIN_YAML_PATH = "The path to the plugin's yaml file"
 PAGINATION_SIZE = 'The max number of results to retrieve per page ' \
                   '[default: 1000]'
@@ -323,6 +331,8 @@ WAIT_AFTER_FAIL = 'When a task fails, wait this many seconds for ' \
                   'already-running tasks to return'
 RESET_OPERATIONS = 'Reset operations in started state, so that they are '\
                    'run again unconditionally'
+EXPORT_FILE_LOCATION = "The path to the secrets' file, the default path is " \
+                       "<current_directory>/secrets.json"
 LOCATION = "The location of the site, expected format: latitude,longitude " \
            "such as 32.071072,34.787274"
 NEW_NAME = "The new name of the {0}"

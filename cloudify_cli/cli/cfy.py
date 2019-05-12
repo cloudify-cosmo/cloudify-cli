@@ -185,6 +185,19 @@ def validate_password(ctx, param, value):
     return value
 
 
+def validate_encryption_password(ctx, param, value):
+    if value is None or ctx.resilient_parsing:
+        return
+
+    if not value:
+        raise CloudifyValidationError('ERROR: The password is empty')
+
+    if len(value) < 8:
+        raise CloudifyValidationError('ERROR: Password must contain at least '
+                                      '8 characters')
+    return value
+
+
 def validate_nonnegative_integer(ctx, param, value):
     if ctx.resilient_parsing:
         return
@@ -881,6 +894,49 @@ class Options(object):
             required=True,
             help=helptexts.PASSWORD,
             callback=validate_password)
+
+        self.encryption_password = click.option(
+            '-p',
+            '--password',
+            required=False,
+            help=helptexts.ENCRYPTION_PASSWORD,
+            callback=validate_encryption_password
+        )
+
+        self.not_encrypted = click.option(
+            '--not-encrypted',
+            is_flag=True,
+            required=False,
+            default=False,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['password'],
+            help=helptexts.NOT_ENCRYPTED
+        )
+
+        self.filter_by_visibility = click.option(
+            '-l',
+            '--visibility',
+            required=False,
+            help=helptexts.FILTER_VISIBILITY.format(VisibilityState.STATES)
+        )
+
+        self.filter_by_tenant = click.option(
+            '--tenant-filter',
+            required=False,
+            help=helptexts.FILTER_TENANT
+        )
+
+        self.filter_by = click.option(
+            '--filter-by',
+            required=False,
+            help=helptexts.FILTER_BY_KEYWORD
+        )
+
+        self.file_path = click.option(
+            '--file-path',
+            required=False,
+            help=helptexts.EXPORT_FILE_LOCATION
+        )
 
         self.skip_credentials_validation = click.option(
             '--skip-credentials-validation',
