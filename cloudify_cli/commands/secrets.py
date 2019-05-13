@@ -110,13 +110,12 @@ def get(key, tenant_name, logger, client):
 
 @secrets.command(name='export', short_help="Export secrets to a file")
 @cfy.options.encryption_password
-@cfy.options.not_encrypted
-@cfy.options.filter_by_visibility
+@cfy.options.visibility_filter
 @cfy.options.tenant_name_for_list(required=False,
                                   resource_name_for_help='secret')
 @cfy.options.all_tenants
 @cfy.options.filter_by
-@cfy.options.file_path
+@cfy.options.output_path
 @cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -125,27 +124,23 @@ def export(tenant_name,
            all_tenants,
            filter_by,
            password,
-           not_encrypted,
            visibility,
            logger,
            client,
-           file_path=None):
+           output_path):
     utils.explicit_tenant_name_message(tenant_name, logger)
-    if not password and not not_encrypted:
-        raise CloudifyCliError('Failed to export secrets. '
-                               'Missing option '
-                               '--password or --not-encrypted.')
     validate_visibility(visibility, valid_values=VISIBILITY_EXCEPT_PRIVATE)
-    secrets_list = client.secrets.export(_password=password,
-                                         visibility=visibility,
+    secrets_list = client.secrets.export(visibility=visibility,
+                                         _password=password,
                                          _all_tenants=all_tenants,
                                          _search=filter_by)
-    if not file_path:
-        file_path = '{0}/secrets.json'.format(os.getcwd())
-    print(file_path)
 
-    with open(file_path, 'w') as f:  # TODO: Maybe add a file_path verification
-        json.dump(secrets_list, f, indent=1)
+    output_path = output_path if output_path else 'secrets.json'
+    with open(output_path, 'w') as output_file:
+        json.dump(secrets_list, output_file, indent=1)
+    if not password:
+        logger.info('No password was given, the secrets are not encrypted')
+    logger.info('The secrets` file was saved to {}'.format(output_path))
 
 
 @secrets.command(name='update', short_help='Update an existing secret')

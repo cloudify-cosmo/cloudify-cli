@@ -89,3 +89,26 @@ class SecretsTest(CliCommandTest):
             exception=SystemExit
         )
         self.assertIn('mutually exclusive with arguments:', outcome.output)
+
+    def test_secrets_export_password_length(self):
+        self.invoke('cfy secrets export -p 1234567',
+                    err_str_segment='ERROR: Password must contain at least 8 '
+                                    'characters',
+                    exception=CloudifyValidationError)
+
+    def test_secrets_export_password_empty(self):
+        self.invoke('cfy secrets export -p ' '',
+                    err_str_segment='2',
+                    exception=SystemExit)
+
+    def test_secrets_export_mutually_exclusive_tenant_all_tenants(self):
+        self.invoke('cfy secrets export -t default_tenant -a',
+                    err_str_segment='2',
+                    exception=SystemExit)
+
+    def test_secrets_export_invalid_visibility(self):
+        # 'private' visibility is also invalid
+        self.invoke('cfy secrets export -l private',
+                    err_str_segment="Invalid visibility: `private`. Valid"
+                                    " visibility's values are: ['tenant', "
+                                    "'global']")
