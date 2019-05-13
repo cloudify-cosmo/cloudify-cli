@@ -27,11 +27,14 @@ from cloudify_rest_client import (
     blueprints,
     deployment_updates
 )
-from cloudify_rest_client.exceptions import CloudifyClientError, \
-    MissingRequiredDeploymentInputError, UnknownDeploymentInputError
+from cloudify_rest_client.exceptions import (
+    CloudifyClientError,
+    UnknownDeploymentInputError,
+    MissingRequiredDeploymentInputError
+)
 
-from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
+from cloudify_cli.exceptions import CloudifyCliError, CloudifyValidationError
 
 from ... import exceptions
 from .mocks import MockListResponse
@@ -287,6 +290,26 @@ class DeploymentsTest(CliCommandTest):
         call_args = list(self.client.deployments.create.call_args)
         self.assertIn('skip_plugins_validation', call_args[1])
         self.assertEqual(call_args[1]['skip_plugins_validation'], False)
+
+    def test_deployment_create_with_site_name(self):
+        deployment = deployments.Deployment({'deployment_id': 'deployment_id'})
+        self.client.deployments.create = MagicMock(return_value=deployment)
+        self.invoke('cfy deployments create deployment -b a --site-name site')
+        call_args = list(self.client.deployments.create.call_args)
+        self.assertEqual(call_args[1]['site_name'], 'site')
+
+    def test_deployment_create_invalid_site_name(self):
+        error_msg = 'The `site_name` argument contains illegal characters'
+        self.invoke('cfy deployments create deployment -b a --site-name :site',
+                    err_str_segment=error_msg,
+                    exception=CloudifyValidationError)
+
+    def test_deployment_create_without_site_name(self):
+        deployment = deployments.Deployment({'deployment_id': 'deployment_id'})
+        self.client.deployments.create = MagicMock(return_value=deployment)
+        self.invoke('cfy deployments create deployment -b a')
+        call_args = list(self.client.deployments.create.call_args)
+        self.assertIsNone(call_args[1]['site_name'])
 
     def test_deployments_delete(self):
         self.client.deployments.delete = MagicMock()
@@ -546,6 +569,51 @@ class DeploymentsTest(CliCommandTest):
         self.invoke('cfy deployments create deployment -b a-blueprint-id '
                     '-l private'
                     .format(SAMPLE_ARCHIVE_PATH))
+
+    def test_deployments_set_site_with_site_name(self):
+        self.client.deployments.set_site = MagicMock()
+        self.invoke('cfy deployments set-site deployment_1 --site-name site')
+        call_args = list(self.client.deployments.set_site.call_args)
+        self.assertEqual(call_args[0][0], 'deployment_1')
+        self.assertEqual(call_args[1]['site_name'], 'site')
+        self.assertFalse(call_args[1]['detach_site'])
+
+    def test_deployments_set_site_without_options(self):
+        error_msg = 'Must provide either a `--site-name` of a valid site ' \
+                    'or `--detach-site`'
+        self.invoke('cfy deployments set-site deployment_1',
+                    err_str_segment=error_msg,
+                    exception=CloudifyCliError)
+
+    def test_deployments_set_site_with_detach(self):
+        self.client.deployments.set_site = MagicMock()
+        self.invoke('cfy deployments set-site deployment_1 --detach-site')
+        call_args = list(self.client.deployments.set_site.call_args)
+        self.assertEqual(call_args[0][0], 'deployment_1')
+        self.assertIsNone(call_args[1]['site_name'])
+        self.assertTrue(call_args[1]['detach_site'])
+
+    def test_deployments_set_site_mutually_exclusive(self):
+        outcome = self.invoke(
+            'cfy deployments set-site deployment_1 -s site --detach-site',
+            err_str_segment='2',  # Exit code
+            exception=SystemExit
+        )
+        error_msg = 'Error: Illegal usage: `detach_site` is ' \
+                    'mutually exclusive with arguments: [site_name]'
+        self.assertIn(error_msg, outcome.output)
+
+    def test_deployment_set_site_no_deployment_id(self):
+        outcome = self.invoke('cfy deployments set-site',
+                              err_str_segment='2',  # Exit code
+                              exception=SystemExit)
+        self.assertIn('Missing argument "deployment-id"', outcome.output)
+
+    def test_deployment_set_site_invalid_site_name(self):
+        error_msg = 'The `site_name` argument contains illegal characters'
+        self.invoke('cfy deployments set-site deployment_1 --site-name :site',
+                    err_str_segment=error_msg,
+                    exception=CloudifyValidationError)
 
     def _test_deployment_inputs(self, exception_type,
                                 inputs, expected_outputs=None):

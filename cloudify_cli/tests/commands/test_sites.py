@@ -32,6 +32,8 @@ class SitesTest(CliCommandTest):
     def test_sites_get(self):
         self.client.sites.get = MagicMock()
         self.invoke('cfy sites get test_site')
+        call_args = list(self.client.sites.get.call_args)
+        self.assertEqual(call_args[0][0], 'test_site')
 
     def test_get_missing_name(self):
         outcome = self.invoke('cfy sites get', **self.system_exit)
@@ -55,6 +57,14 @@ class SitesTest(CliCommandTest):
     def test_sites_create(self):
         self.client.sites.create = MagicMock()
         self.invoke('cfy sites create test_site')
+        call_args = list(self.client.sites.create.call_args)
+        self.assertEqual(call_args[0][0], 'test_site')
+
+    def test_sites_create_with_location(self):
+        self.client.sites.create = MagicMock()
+        self.invoke('cfy sites create test_site --location 1.0,2.0')
+        call_args = list(self.client.sites.create.call_args)
+        self.assertEqual(call_args[0][1], '1.0,2.0')
 
     def test_create_missing_name(self):
         outcome = self.invoke('cfy sites create ', **self.system_exit)
@@ -79,6 +89,20 @@ class SitesTest(CliCommandTest):
     def test_sites_update(self):
         self.client.sites.update = MagicMock()
         self.invoke('cfy sites update test_site')
+        call_args = list(self.client.sites.update.call_args)
+        self.assertEqual(call_args[0][0], 'test_site')
+
+    def test_sites_update_with_location(self):
+        self.client.sites.update = MagicMock()
+        self.invoke('cfy sites update test_site --location 1.2,1.3')
+        call_args = list(self.client.sites.update.call_args)
+        self.assertEqual(call_args[0][1], '1.2,1.3')
+
+    def test_sites_update_with_new_name(self):
+        self.client.sites.update = MagicMock()
+        self.invoke('cfy sites update test_site --new-name new_name')
+        call_args = list(self.client.sites.update.call_args)
+        self.assertEqual(call_args[0][3], 'new_name')
 
     def test_update_invalid_visibility(self):
         self.invoke('cfy sites update test_site -l bla',
@@ -100,6 +124,8 @@ class SitesTest(CliCommandTest):
     def test_sites_delete(self):
         self.client.sites.delete = MagicMock()
         self.invoke('cfy sites delete test_site')
+        call_args = list(self.client.sites.delete.call_args)
+        self.assertEqual(call_args[0][0], 'test_site')
 
     def test_sites_list(self):
         self.client.sites.list = MagicMock()

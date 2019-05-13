@@ -326,3 +326,6 @@ RESET_OPERATIONS = 'Reset operations in started state, so that they are '\
 LOCATION = "The location of the site, expected format: latitude,longitude " \
            "such as 32.071072,34.787274"
 NEW_NAME = "The new name of the {0}"
+SITE_NAME = "Deployment's site name"
+DETACH_SITE = "If set, detach the current site, making the deployment " \
+              "siteless [default: False]"
