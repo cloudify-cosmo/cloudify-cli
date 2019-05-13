@@ -186,13 +186,8 @@ def validate_password(ctx, param, value):
 
 
 def validate_encryption_password(ctx, param, value):
-    if value is None or ctx.resilient_parsing:
-        return
-
-    if not value:
-        raise CloudifyValidationError('ERROR: The password is empty')
-
-    if len(value) < 8:
+    value = validate_password(ctx, param, value)
+    if value and len(value) < 8:
         raise CloudifyValidationError('ERROR: Password must contain at least '
                                       '8 characters')
     return value
@@ -903,39 +898,17 @@ class Options(object):
             callback=validate_encryption_password
         )
 
-        self.not_encrypted = click.option(
-            '--not-encrypted',
-            is_flag=True,
-            required=False,
-            default=False,
-            cls=MutuallyExclusiveOption,
-            mutually_exclusive=['password'],
-            help=helptexts.NOT_ENCRYPTED
-        )
-
-        self.filter_by_visibility = click.option(
+        self.visibility_filter = click.option(
             '-l',
             '--visibility',
             required=False,
-            help=helptexts.FILTER_VISIBILITY.format(VisibilityState.STATES)
-        )
-
-        self.filter_by_tenant = click.option(
-            '--tenant-filter',
-            required=False,
-            help=helptexts.FILTER_TENANT
+            help=helptexts.VISIBILITY_FILTER.format(['tenant', 'global'])
         )
 
         self.filter_by = click.option(
             '--filter-by',
             required=False,
             help=helptexts.FILTER_BY_KEYWORD
-        )
-
-        self.file_path = click.option(
-            '--file-path',
-            required=False,
-            help=helptexts.EXPORT_FILE_LOCATION
         )
 
         self.skip_credentials_validation = click.option(
