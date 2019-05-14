@@ -1076,6 +1076,25 @@ class Options(object):
             help=helptexts.LOCATION
         )
 
+        self.site_name = click.option(
+            '-s',
+            '--site-name',
+            required=False,
+            callback=validate_name,
+            help=helptexts.SITE_NAME
+        )
+
+        self.detach_site = click.option(
+            '-d',
+            '--detach-site',
+            required=False,
+            is_flag=True,
+            default=False,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['site_name'],
+            help=helptexts.DETACH_SITE
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 

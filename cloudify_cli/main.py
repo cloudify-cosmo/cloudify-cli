@@ -113,6 +113,7 @@ def _register_commands():
     deployments.deployments.add_command(deployments.manager_history)
     deployments.deployments.add_command(deployments.manager_get_update)
     deployments.deployments.add_command(deployments.manager_set_visibility)
+    deployments.deployments.add_command(deployments.manager_set_site)
 
     executions.executions.add_command(executions.manager_cancel)
 

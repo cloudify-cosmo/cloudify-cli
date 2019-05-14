@@ -56,7 +56,7 @@ from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 DEPLOYMENT_COLUMNS = [
     'id', 'blueprint_id', 'created_at', 'updated_at', 'visibility',
-    'tenant_name', 'created_by'
+    'tenant_name', 'created_by', 'site_name'
 ]
 DEPLOYMENT_UPDATE_COLUMNS = [
     'id', 'deployment_id', 'tenant_name', 'state', 'execution_id',
@@ -445,6 +445,7 @@ def manager_update(ctx,
 @cfy.options.inputs
 @cfy.options.private_resource
 @cfy.options.visibility()
+@cfy.options.site_name
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
@@ -456,6 +457,7 @@ def manager_create(blueprint_id,
                    inputs,
                    private_resource,
                    visibility,
+                   site_name,
                    logger,
                    client,
                    tenant_name,
@@ -477,7 +479,8 @@ def manager_create(blueprint_id,
             deployment_id,
             inputs=inputs,
             visibility=visibility,
-            skip_plugins_validation=skip_plugins_validation
+            skip_plugins_validation=skip_plugins_validation,
+            site_name=site_name
         )
     except (MissingRequiredDeploymentInputError,
             UnknownDeploymentInputError) as e:
@@ -727,3 +730,34 @@ def summary(target_field, sub_field, logger, client, tenant_name,
         items,
         'Deployment summary by {field}'.format(field=target_field),
     )
+
+
+@cfy.command(name='set-site',
+             short_help="Set the deployment's site [manager only]")
+@cfy.argument('deployment-id')
+@cfy.options.site_name
+@cfy.options.detach_site
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client(use_tenant_in_header=True)
+@cfy.pass_logger
+def manager_set_site(deployment_id, site_name, detach_site, client, logger):
+    """Set the deployment's site
+
+    `DEPLOYMENT_ID` is the id of the deployment to update
+    """
+    if not (site_name or detach_site):
+        raise CloudifyCliError(
+            'Must provide either a `--site-name` of a valid site or '
+            '`--detach-site` (for detaching the current site of '
+            'the given deployment)'
+        )
+
+    client.deployments.set_site(deployment_id,
+                                site_name=site_name,
+                                detach_site=detach_site)
+    if detach_site:
+        logger.info('The site of `{0}` was detached'.format(deployment_id))
+    else:
+        logger.info('The site of `{0}` was set to {1}'.format(deployment_id,
+                                                              site_name))
