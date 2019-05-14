@@ -30,6 +30,7 @@ from .commands import events
 from .commands import groups
 from .commands import status
 from .commands import tokens
+from .commands import config
 from .commands import cluster
 from .commands import install
 from .commands import plugins
@@ -119,6 +120,7 @@ def _register_commands():
     # Commands which should be both in manager and local context
     # But change depending on the context.
     if env.is_manager_active():
+        _cfy.add_command(config.config)
         _cfy.add_command(install.manager)
         _cfy.add_command(uninstall.manager)
         _cfy.add_command(node_instances.node_instances)
