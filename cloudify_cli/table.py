@@ -87,7 +87,7 @@ def format_json_object(cols, item, defaults=None, labels=None):
     labels = labels or {}
 
     return json.dumps({
-        labels.get(col, col): item.get(col) or defaults.get(col, 'N/A')
+        labels.get(col, col): item.get(col) or defaults.get(col)
         for col in cols
     }, cls=CloudifyJSONEncoder)
 
