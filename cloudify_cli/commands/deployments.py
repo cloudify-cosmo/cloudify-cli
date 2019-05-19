@@ -69,7 +69,8 @@ DEPLOYMENT_UPDATE_PREVIEW_COLUMNS = [
 NON_PREVIEW_COLUMNS = ['id', 'execution_id']
 STEPS_COLUMNS = ['entity_type', 'entity_id', 'action']
 TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
-DEPLOYMENTS_SUMMARY_FIELDS = ['blueprint_id'] + BASE_SUMMARY_FIELDS
+DEPLOYMENTS_SUMMARY_FIELDS = (['blueprint_id', 'site_name'] +
+                              BASE_SUMMARY_FIELDS)
 # for human-redable outputs, those fields are formatted separately. In
 # machine-readable (json) output, they are just part of the output
 MACHINE_READABLE_UPDATE_PREVIEW_COLUMNS = [
