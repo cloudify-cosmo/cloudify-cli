@@ -209,6 +209,9 @@ SECURITY_ROLE = "A role to determine the user's permissions on the manager, " \
                 "if admin or default (default: default role)"
 PASSWORD = 'Cloudify manager password'
 
+ENCRYPTION_PASSWORD = 'The password used to encrypt the secrets, ' \
+                      'must be 8 characters long.'
+
 CLUSTER_HOST_IP = \
     'The IP of this machine to use for advertising to the cluster'
 CLUSTER_JOIN = 'Address of one of the cluster members to join'
@@ -273,6 +276,9 @@ PRIVATE_RESOURCE = 'This option is deprecated; use --visibility option ' \
                    'is accessible by all users that belong to the same ' \
                    'tenant [default: False].'
 VISIBILITY = 'Defines who can see the resource, can be set to one of {0}'
+VISIBILITY_FILTER = 'Filters the secrets exported according to their' \
+                    ' visibility, can be set to one of the following {0}.'
+FILTER_BY_KEYWORD = "Filters the secrets exported according to a keyword"
 PLUGIN_YAML_PATH = "The path to the plugin's yaml file"
 PAGINATION_SIZE = 'The max number of results to retrieve per page ' \
                   '[default: 1000]'
