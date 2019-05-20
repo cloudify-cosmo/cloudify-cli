@@ -90,25 +90,56 @@ class SecretsTest(CliCommandTest):
         )
         self.assertIn('mutually exclusive with arguments:', outcome.output)
 
-    def test_secrets_export_password_length(self):
+    def test_secrets_export_invalid_password_length(self):
         self.invoke('cfy secrets export -p 1234567',
                     err_str_segment='ERROR: Password must contain at least 8 '
-                                    'characters',
+                                    'characters.',
                     exception=CloudifyValidationError)
 
-    def test_secrets_export_password_empty(self):
-        self.invoke('cfy secrets export -p ' '',
-                    err_str_segment='2',
-                    exception=SystemExit)
+    def test_secrets_export_valid_password(self):
+        self.client.secrets.export = MagicMock(return_value={})
+        self.invoke('cfy secrets export -p 12345678')
+        call_args = list(self.client.secrets.export.call_args)
+        self.assertIn('_password', call_args[1])
+        self.assertEqual(call_args[1]['_password'], '12345678')
+
+    def test_secrets_export_empty_password(self):
+        self.invoke("cfy secrets export -p ' '",
+                    err_str_segment='ERROR: Password must contain at least 8 '
+                                    'characters.',
+                    exception=CloudifyValidationError)
 
     def test_secrets_export_mutually_exclusive_tenant_all_tenants(self):
-        self.invoke('cfy secrets export -t default_tenant -a',
-                    err_str_segment='2',
-                    exception=SystemExit)
+        outcome = self.invoke('cfy secrets export -t default_tenant -a',
+                              err_str_segment='2',
+                              exception=SystemExit)
+        self.assertIn(
+            '`tenant_name` is mutually exclusive with arguments: '
+            '[all_tenants]', outcome.output)
+
+    def test_secrets_export_all_tenants(self):
+        self.client.secrets.export = MagicMock(return_value={})
+        self.invoke('cfy secrets export -a')
+        call_args = list(self.client.secrets.export.call_args)
+        self.assertIn('_all_tenants', call_args[1])
+        self.assertEqual(call_args[1]['_all_tenants'], True)
 
     def test_secrets_export_invalid_visibility(self):
-        # 'private' visibility is also invalid
-        self.invoke('cfy secrets export -l private',
-                    err_str_segment="Invalid visibility: `private`. Valid"
-                                    " visibility's values are: ['tenant', "
-                                    "'global']")
+        self.invoke('cfy secrets export -l hi',
+                    err_str_segment="Invalid visibility: `hi`. "
+                                    "Valid visibility's values are: "
+                                    "['private', 'tenant', 'global']")
+
+    def test_secrets_export_with_visibility(self):
+        self.client.secrets.export = MagicMock(return_value={})
+        self.invoke('cfy secrets export -l global')
+        call_args = list(self.client.secrets.export.call_args)
+        self.assertIn('visibility', call_args[1])
+        self.assertEqual(call_args[1]['visibility'], 'global')
+
+    def test_secrets_export_filter_by(self):
+        self.client.secrets.export = MagicMock(return_value={})
+        self.invoke('cfy secrets export --filter-by key')
+        call_args = list(self.client.secrets.export.call_args)
+        self.assertIn('_search', call_args[1])
+        self.assertEqual(call_args[1]['_search'], 'key')
