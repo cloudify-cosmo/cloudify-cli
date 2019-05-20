@@ -12,6 +12,7 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
+import os
 
 from mock import MagicMock
 from .test_base import CliCommandTest
@@ -97,11 +98,12 @@ class SecretsTest(CliCommandTest):
                     exception=CloudifyValidationError)
 
     def test_secrets_export_valid_password(self):
-        self.client.secrets.export = MagicMock(return_value={})
+        self.client.secrets.export = MagicMock(return_value={'key': '0'})
         self.invoke('cfy secrets export -p 12345678')
         call_args = self.client.secrets.export.call_args
         self.assertIn('_password', call_args[1])
         self.assertEqual(call_args[1]['_password'], '12345678')
+        os.system('rm secrets.json')
 
     def test_secrets_export_empty_password(self):
         self.invoke("cfy secrets export -p ' '",
@@ -118,11 +120,12 @@ class SecretsTest(CliCommandTest):
             '[all_tenants]', outcome.output)
 
     def test_secrets_export_all_tenants(self):
-        self.client.secrets.export = MagicMock(return_value={})
+        self.client.secrets.export = MagicMock(return_value={'key': '1'})
         self.invoke('cfy secrets export -a')
         call_args = self.client.secrets.export.call_args
         self.assertIn('_all_tenants', call_args[1])
         self.assertEqual(call_args[1]['_all_tenants'], True)
+        os.system('rm secrets.json')
 
     def test_secrets_export_invalid_visibility(self):
         self.invoke('cfy secrets export -l hi',
@@ -131,15 +134,17 @@ class SecretsTest(CliCommandTest):
                                     "['private', 'tenant', 'global']")
 
     def test_secrets_export_with_visibility(self):
-        self.client.secrets.export = MagicMock(return_value={})
+        self.client.secrets.export = MagicMock(return_value={'key': '2'})
         self.invoke('cfy secrets export -l global')
         call_args = self.client.secrets.export.call_args
         self.assertIn('visibility', call_args[1])
         self.assertEqual(call_args[1]['visibility'], 'global')
+        os.system('rm secrets.json')
 
     def test_secrets_export_filter_by(self):
-        self.client.secrets.export = MagicMock(return_value={})
+        self.client.secrets.export = MagicMock(return_value={'key': '3'})
         self.invoke('cfy secrets export --filter-by key')
         call_args = self.client.secrets.export.call_args
         self.assertIn('_search', call_args[1])
         self.assertEqual(call_args[1]['_search'], 'key')
+        os.system('rm secrets.json')
