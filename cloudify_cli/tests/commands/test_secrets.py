@@ -99,7 +99,7 @@ class SecretsTest(CliCommandTest):
     def test_secrets_export_valid_password(self):
         self.client.secrets.export = MagicMock(return_value={})
         self.invoke('cfy secrets export -p 12345678')
-        call_args = list(self.client.secrets.export.call_args)
+        call_args = self.client.secrets.export.call_args
         self.assertIn('_password', call_args[1])
         self.assertEqual(call_args[1]['_password'], '12345678')
 
@@ -120,7 +120,7 @@ class SecretsTest(CliCommandTest):
     def test_secrets_export_all_tenants(self):
         self.client.secrets.export = MagicMock(return_value={})
         self.invoke('cfy secrets export -a')
-        call_args = list(self.client.secrets.export.call_args)
+        call_args = self.client.secrets.export.call_args
         self.assertIn('_all_tenants', call_args[1])
         self.assertEqual(call_args[1]['_all_tenants'], True)
 
@@ -133,13 +133,13 @@ class SecretsTest(CliCommandTest):
     def test_secrets_export_with_visibility(self):
         self.client.secrets.export = MagicMock(return_value={})
         self.invoke('cfy secrets export -l global')
-        call_args = list(self.client.secrets.export.call_args)
+        call_args = self.client.secrets.export.call_args
         self.assertIn('visibility', call_args[1])
         self.assertEqual(call_args[1]['visibility'], 'global')
 
     def test_secrets_export_filter_by(self):
         self.client.secrets.export = MagicMock(return_value={})
         self.invoke('cfy secrets export --filter-by key')
-        call_args = list(self.client.secrets.export.call_args)
+        call_args = self.client.secrets.export.call_args
         self.assertIn('_search', call_args[1])
         self.assertEqual(call_args[1]['_search'], 'key')
