@@ -15,6 +15,7 @@
 ############
 
 import os
+import json
 
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
@@ -105,6 +106,44 @@ def get(key, tenant_name, logger, client):
         secret_details.pop('private_resource')
         secret_details.pop('resource_availability')
         print_details(secret_details, 'Requested secret info:')
+
+
+@secrets.command(name='export',
+                 short_help='Export secrets from the Manager to a file')
+@cfy.options.encryption_password
+@cfy.options.visibility_filter
+@cfy.options.tenant_name_for_list(required=False,
+                                  resource_name_for_help='secret')
+@cfy.options.all_tenants
+@cfy.options.filter_by
+@cfy.options.output_path
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def export(tenant_name,
+           all_tenants,
+           filter_by,
+           password,
+           visibility,
+           logger,
+           client,
+           output_path):
+    """Export secrets from the Manager to a file
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    validate_visibility(visibility)
+    secrets_list = client.secrets.export(visibility=visibility,
+                                         _password=password,
+                                         _all_tenants=all_tenants,
+                                         _search=filter_by)
+
+    output_path = output_path if output_path else 'secrets.json'
+    with open(output_path, 'w') as output_file:
+        json.dump(secrets_list, output_file, indent=1)
+    if not password:
+        logger.info('No password was given, the secrets are not encrypted')
+    logger.info('The secrets` file was saved to {}'.format(output_path))
 
 
 @secrets.command(name='update', short_help='Update an existing secret')

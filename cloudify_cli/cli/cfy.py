@@ -185,6 +185,14 @@ def validate_password(ctx, param, value):
     return value
 
 
+def validate_encryption_password(ctx, param, value):
+    value = validate_password(ctx, param, value)
+    if value and len(value) < 8:
+        raise CloudifyValidationError('ERROR: Password must contain at least '
+                                      '8 characters.')
+    return value
+
+
 def validate_nonnegative_integer(ctx, param, value):
     if ctx.resilient_parsing:
         return
@@ -881,6 +889,27 @@ class Options(object):
             required=True,
             help=helptexts.PASSWORD,
             callback=validate_password)
+
+        self.encryption_password = click.option(
+            '-p',
+            '--password',
+            required=False,
+            help=helptexts.ENCRYPTION_PASSWORD,
+            callback=validate_encryption_password
+        )
+
+        self.visibility_filter = click.option(
+            '-l',
+            '--visibility',
+            required=False,
+            help=helptexts.VISIBILITY_FILTER.format(VisibilityState.STATES)
+        )
+
+        self.filter_by = click.option(
+            '--filter-by',
+            required=False,
+            help=helptexts.FILTER_BY_KEYWORD
+        )
 
         self.skip_credentials_validation = click.option(
             '--skip-credentials-validation',
