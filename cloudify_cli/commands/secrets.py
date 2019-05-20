@@ -108,7 +108,8 @@ def get(key, tenant_name, logger, client):
         print_details(secret_details, 'Requested secret info:')
 
 
-@secrets.command(name='export', short_help="Export secrets to a file")
+@secrets.command(name='export',
+                 short_help='Export secrets from the Manager to a file')
 @cfy.options.encryption_password
 @cfy.options.visibility_filter
 @cfy.options.tenant_name_for_list(required=False,
@@ -128,8 +129,10 @@ def export(tenant_name,
            logger,
            client,
            output_path):
+    """Export secrets from the Manager to a file
+    """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    validate_visibility(visibility, valid_values=VISIBILITY_EXCEPT_PRIVATE)
+    validate_visibility(visibility)
     secrets_list = client.secrets.export(visibility=visibility,
                                          _password=password,
                                          _all_tenants=all_tenants,

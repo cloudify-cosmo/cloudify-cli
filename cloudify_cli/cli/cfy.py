@@ -189,7 +189,7 @@ def validate_encryption_password(ctx, param, value):
     value = validate_password(ctx, param, value)
     if value and len(value) < 8:
         raise CloudifyValidationError('ERROR: Password must contain at least '
-                                      '8 characters')
+                                      '8 characters.')
     return value
 
 
@@ -902,7 +902,7 @@ class Options(object):
             '-l',
             '--visibility',
             required=False,
-            help=helptexts.VISIBILITY_FILTER.format(['tenant', 'global'])
+            help=helptexts.VISIBILITY_FILTER.format(VisibilityState.STATES)
         )
 
         self.filter_by = click.option(
