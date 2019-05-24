@@ -134,6 +134,10 @@ class ClusterTest(CliCommandTest):
 
     def test_remove_node(self):
         self.use_manager()
+        list_result = mock.Mock()
+        list_result.items = self.MANAGERS_LIST
+        self.client.manager.get_managers = mock.MagicMock(
+            return_value=list_result)
         self.client.manager.remove_manager = mock.MagicMock(
             return_value=self.MANAGERS_LIST[0])
         outcome = self.invoke('cfy cluster remove hostname_1')
