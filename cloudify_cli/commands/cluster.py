@@ -14,15 +14,17 @@
 # limitations under the License.
 ############
 
-from warnings import warn
 from functools import wraps
+import json
+from warnings import warn
 
 from requests.exceptions import ConnectionError
 
 from .. import env
 from ..cli import cfy
-from ..table import print_data
+from ..table import print_data, print_details
 from ..exceptions import CloudifyCliError
+from ..logger import get_global_json_output
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
@@ -30,6 +32,47 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 # The list will be updated with the services on each manager
 CLUSTER_COLUMNS = ['hostname', 'private_ip', 'public_ip', 'version', 'edition',
                    'distribution', 'distro_release', 'status']
+BROKER_COLUMNS = ['name', 'port', 'networks']
+
+
+def check_manager_exists(managers, hostname, must_exist=True):
+    manager_names = {manager['hostname'] for manager in managers}
+    if must_exist and hostname not in manager_names:
+        raise CloudifyCliError(
+            '{name} is not a manager in the cluster. '
+            'Current managers: {managers}'.format(
+                name=hostname,
+                managers=', '.join(manager_names),
+            )
+        )
+    elif (not must_exist) and hostname in manager_names:
+        raise CloudifyCliError(
+            '{name} is already a manager in the cluster. '
+            'Current managers: {managers}'.format(
+                name=hostname,
+                managers=', '.join(manager_names),
+            )
+        )
+
+
+def check_broker_exists(brokers, name, must_exist=True):
+    broker_names = {broker['name'] for broker in brokers}
+    if must_exist and name not in broker_names:
+        raise CloudifyCliError(
+            '{name} is not a broker in the cluster. '
+            'Current brokers: {brokers}'.format(
+                name=name,
+                brokers=', '.join(broker_names),
+            )
+        )
+    elif (not must_exist) and name in broker_names:
+        raise CloudifyCliError(
+            '{name} is already a broker in the cluster. '
+            'Current brokers: {brokers}'.format(
+                name=name,
+                brokers=', '.join(broker_names),
+            )
+        )
 
 
 def pass_cluster_client(*client_args, **client_kwargs):
@@ -112,11 +155,7 @@ def remove_node(client, logger, hostname):
     Removed replicas are not usable as Cloudify Managers, so it is left to the
     user to examine and teardown the node.
     """
-    cluster_nodes = {node['hostname']: node.public_ip
-                     for node in client.manager.get_managers().items}
-    if hostname not in cluster_nodes:
-        raise CloudifyCliError('Invalid command. {0} is not a member of '
-                               'the cluster.'.format(hostname))
+    check_manager_exists(client.manager.get_managers().items, hostname)
 
     client.manager.remove_manager(hostname)
 
@@ -174,3 +213,97 @@ def _update_profile_cluster_settings(nodes, logger=None):
     env.profile.cluster = [n for n in env.profile.cluster
                            if n['hostname'] in received_nodes]
     env.profile.save()
+
+
+@cluster.group(name='brokers')
+@cfy.options.common_options
+def brokers():
+    """Handle the Cloudify Manager cluster's brokers."""
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+
+@brokers.command(name='get',
+                 short_help='Get details of a specific cluster broker')
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.argument('name')
+@cfy.options.common_options
+def get_broker(client, logger, name):
+    """Get full details of a specific broker associated with the cluster."""
+    brokers = client.manager.get_brokers().items
+    check_broker_exists(brokers, name)
+
+    for broker in brokers:
+        if broker['name'] == name:
+            target_broker = broker
+            break
+
+    _clean_up_broker_for_output(target_broker)
+
+    print_details(target_broker, 'Broker "{0}":'.format(name))
+
+
+@brokers.command(name='list',
+                 short_help="List the cluster's brokers")
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.options.common_options
+def list_brokers(client, logger):
+    """List brokers associated with the cluster."""
+    brokers = client.manager.get_brokers()
+    for broker in brokers:
+        _clean_up_broker_for_output(broker)
+    print_data(BROKER_COLUMNS, brokers, 'Cluster brokers')
+
+
+def _clean_up_broker_for_output(broker):
+    """Clean up broker details to give nicer output."""
+    broker['port'] = broker['port'] or 5671
+    if not get_global_json_output():
+        broker['networks'] = json.dumps(broker['networks'])
+
+
+@brokers.command(name='add',
+                 short_help='Add a broker to the cluster')
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.argument('name')
+@cfy.argument('address')
+@cfy.argument('port', required=False)
+@cfy.argument('networks', required=False)
+@cfy.options.common_options
+def add_broker(client, logger, name, address, port=None, networks=None):
+    """Register a broker with the cluster.
+
+    Note that this will not create the broker itself. The broker should have
+    been created before running this command.
+    """
+    check_broker_exists(client.manager.get_brokers().items, name,
+                        must_exist=False)
+
+    client.manager.add_broker(name, address, port, networks)
+
+    logger.info('Broker {0} was added successfully!'
+                .format(name))
+
+
+@brokers.command(name='remove',
+                 short_help='Remove a broker from the cluster')
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.argument('name')
+@cfy.options.common_options
+def remove_broker(client, logger, name):
+    """Unregister a broker from the cluster.
+
+    Note that this will not uninstall the broker itself. The broker should be
+    removed and then disassociated from the broker cluster using cfy_manager
+    after being removed from the cluster.
+    """
+    check_broker_exists(client.manager.get_brokers().items, name)
+
+    client.manager.remove_broker(name)
+
+    logger.info('Broker {0} was removed successfully!'
+                .format(name))
