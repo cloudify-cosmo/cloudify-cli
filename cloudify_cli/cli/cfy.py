@@ -1124,6 +1124,15 @@ class Options(object):
             help=helptexts.DETACH_SITE
         )
 
+        self.with_logs = click.option(
+            '-l',
+            '--with-logs',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.WITH_LOGS
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 

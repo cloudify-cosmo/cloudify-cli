@@ -509,11 +509,13 @@ def manager_create(blueprint_id,
 @cfy.argument('deployment-id')
 @cfy.options.force(help=helptexts.IGNORE_LIVE_NODES)
 @cfy.options.common_options
+@cfy.options.with_logs
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def manager_delete(deployment_id, force, logger, client, tenant_name):
+def manager_delete(deployment_id, force, with_logs, logger, client,
+                   tenant_name):
     """Delete a deployment from the manager
 
     `DEPLOYMENT_ID` is the id of the deployment to delete.
@@ -521,7 +523,8 @@ def manager_delete(deployment_id, force, logger, client, tenant_name):
 
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Trying to delete deployment {0}...'.format(deployment_id))
-    client.deployments.delete(deployment_id, force)
+    client.deployments.delete(deployment_id, force,
+                              with_logs=with_logs)
     try:
         execution = get_deployment_environment_execution(
             client, deployment_id, DELETE_DEP)
