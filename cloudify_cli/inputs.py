@@ -17,12 +17,14 @@ import os
 import glob
 import yaml
 
+from utils import deep_update_dict, insert_dotted_key_to_dict
+
 from .logger import get_logger
 from.exceptions import CloudifyCliError
 
 
 # TODO: Add test for inputs as JSON/YAML string
-def inputs_to_dict(resources):
+def inputs_to_dict(resources, dot_hierarchy=False):
     """Returns a dictionary of inputs
 
     `resources` can be:
@@ -45,7 +47,11 @@ def inputs_to_dict(resources):
         # Workflow parameters always pass an empty dictionary. We ignore it
         if isinstance(resource, basestring):
             try:
-                parsed_dict.update(_parse_single_input(resource))
+                if dot_hierarchy:
+                    deep_update_dict(parsed_dict,
+                                     _parse_single_input(resource, True))
+                else:
+                    parsed_dict.update(_parse_single_input(resource))
             except CloudifyCliError as ex:
                 ex_msg = \
                     "Invalid input: {0}. It must represent a dictionary. " \
@@ -64,10 +70,10 @@ def inputs_to_dict(resources):
     return parsed_dict
 
 
-def _parse_single_input(resource):
+def _parse_single_input(resource, dot_hierarchy=False):
     try:
         # parse resource as string representation of a dictionary
-        return plain_string_to_dict(resource)
+        return plain_string_to_dict(resource, dot_hierarchy)
     except CloudifyCliError:
         input_files = glob.glob(resource)
         parsed_dict = dict()
@@ -107,7 +113,7 @@ def _parse_yaml_path(resource):
     return content
 
 
-def plain_string_to_dict(input_string):
+def plain_string_to_dict(input_string, dot_hierarchy=False):
     input_string = input_string.strip()
     input_dict = {}
     mapped_inputs = input_string.split(';')
@@ -123,5 +129,8 @@ def plain_string_to_dict(input_string):
             raise CloudifyCliError(
                 "Invalid input format: {0}, the expected format is: "
                 "key1=value1;key2=value2".format(input_string))
-        input_dict[key] = value
+        if dot_hierarchy and '.' in key:
+            insert_dotted_key_to_dict(input_dict, key, value)
+        else:
+            input_dict[key] = value
     return input_dict

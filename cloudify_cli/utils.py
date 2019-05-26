@@ -24,6 +24,7 @@ import shutil
 import tarfile
 import zipfile
 import tempfile
+import collections
 from shutil import copy
 from urlparse import urlparse
 from contextlib import closing, contextmanager
@@ -356,3 +357,33 @@ def get_local_path(source, destination=None, create_temp=False):
 def explicit_tenant_name_message(tenant_name, logger):
     if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
+
+
+def deep_update_dict(dest_dict, src_dict):
+    for key, value in src_dict.iteritems():
+        if isinstance(dest_dict, collections.MutableMapping):
+            if isinstance(value, collections.MutableMapping):
+                dest_dict[key] = deep_update_dict(dest_dict.get(key), value)
+            else:
+                dest_dict[key] = src_dict[key]
+        else:
+            dest_dict = {key: src_dict[key]}
+    return dest_dict
+
+
+def deep_subtract_dict(dest_dict, src_dict):
+    for key, value in src_dict.iteritems():
+        if isinstance(value, collections.MutableMapping):
+            deep_subtract_dict(dest_dict.get(key), value)
+        else:
+            if key not in dest_dict:
+                raise CloudifyCliError('Key {} does not exist'.format(key))
+            dest_dict.pop(key)
+
+
+def insert_dotted_key_to_dict(dest_dict, key, value):
+    key_path = key.split('.')
+    for item in key_path[:-1]:
+        dest_dict.setdefault(item, {})
+        dest_dict = dest_dict[item]
+    dest_dict.setdefault(key_path[-1], value)

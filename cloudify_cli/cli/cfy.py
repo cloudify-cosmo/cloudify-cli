@@ -155,6 +155,18 @@ def inputs_callback(ctx, param, value):
     return inputs_to_dict(value)
 
 
+def properties_callback(ctx, param, value):
+    """Same as inputs_callback above,
+    But also allows the user to pass inputs of the format key=value where
+    key has a dot hierarchy - e.g. 'a.b.c=d', and parses such inputs
+    into correct dict format: {a: {b: {c: d}}}.
+    """
+    if not value or ctx.resilient_parsing:
+        return {}
+
+    return inputs_to_dict(value, dot_hierarchy=True)
+
+
 def validate_name(ctx, param, value):
     if value is None or ctx.resilient_parsing:
         return
@@ -500,6 +512,14 @@ class Options(object):
             multiple=True,
             callback=inputs_callback,
             help=helptexts.INPUTS)
+
+        self.runtime_properties = click.option(
+            '-p',
+            '--properties',
+            required=True,
+            multiple=True,
+            callback=properties_callback,
+            help=helptexts.RUNTIME_PROPERTIES)
 
         self.reinstall_list = click.option(
             '-r',
