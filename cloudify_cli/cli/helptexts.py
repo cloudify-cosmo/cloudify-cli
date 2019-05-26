@@ -335,3 +335,5 @@ NEW_NAME = "The new name of the {0}"
 SITE_NAME = "Deployment's site name"
 DETACH_SITE = "If set, detach the current site, making the deployment " \
               "siteless [default: False]"
+WITH_LOGS = "If set, then the deployment's management workers logs are " \
+            "deleted as well [default: False]"
