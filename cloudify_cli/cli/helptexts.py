@@ -205,7 +205,7 @@ TENANT = 'The name of the tenant'
 TENANT_TEMPLATE = 'The name of the tenant of the {0}'
 TENANT_LIST_TEMPLATE = 'The name of the tenant to list {0}s from'
 ALL_TENANTS = 'Include resources from all tenants associated with the user. ' \
-              'You cannot use this argument with arguments: [tenant_name]'
+              'You cannot use this argument with arguments: [tenant_name].'
 ALL_EXECUTIONS = 'Apply to all available executions'
 GROUP = 'The name of the user group'
 GROUP_DN = 'The ldap group\'s distinguished name. This option is required ' \
@@ -218,7 +218,7 @@ SECURITY_ROLE = "A role to determine the user's permissions on the manager, " \
                 "if admin or default (default: default role)"
 PASSWORD = 'Cloudify manager password'
 
-ENCRYPTION_PASSWORD = 'The password used to encrypt the secrets, ' \
+ENCRYPTION_PASSPHRASE = 'The passphrase used to encrypt the secrets, ' \
                       'must be 8 characters long.'
 
 CLUSTER_HOST_IP = \
@@ -287,7 +287,7 @@ PRIVATE_RESOURCE = 'This option is deprecated; use --visibility option ' \
 VISIBILITY = 'Defines who can see the resource, can be set to one of {0}'
 VISIBILITY_FILTER = 'Filters the secrets exported according to their' \
                     ' visibility, can be set to one of the following {0}.'
-FILTER_BY_KEYWORD = "Filters the secrets exported according to a keyword"
+FILTER_BY_KEYWORD = 'Filters the secrets exported according to a keyword.'
 PLUGIN_YAML_PATH = "The path to the plugin's yaml file"
 PAGINATION_SIZE = 'The max number of results to retrieve per page ' \
                   '[default: 1000]'

@@ -110,7 +110,7 @@ def get(key, tenant_name, logger, client):
 
 @secrets.command(name='export',
                  short_help='Export secrets from the Manager to a file')
-@cfy.options.encryption_password
+@cfy.options.encryption_passphrase
 @cfy.options.visibility_filter
 @cfy.options.tenant_name_for_list(required=False,
                                   resource_name_for_help='secret')
@@ -124,7 +124,7 @@ def get(key, tenant_name, logger, client):
 def export(tenant_name,
            all_tenants,
            filter_by,
-           password,
+           passphrase,
            visibility,
            logger,
            client,
@@ -134,14 +134,14 @@ def export(tenant_name,
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
     secrets_list = client.secrets.export(visibility=visibility,
-                                         _password=password,
+                                         _passphrase=passphrase,
                                          _all_tenants=all_tenants,
                                          _search=filter_by)
 
     output_path = output_path if output_path else 'secrets.json'
     with open(output_path, 'w') as output_file:
         json.dump(secrets_list, output_file, indent=1)
-    if not password:
+    if not passphrase:
         logger.info('No password was given, the secrets are not encrypted')
     logger.info('The secrets` file was saved to {}'.format(output_path))
 

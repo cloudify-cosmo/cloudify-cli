@@ -197,11 +197,11 @@ def validate_password(ctx, param, value):
     return value
 
 
-def validate_encryption_password(ctx, param, value):
+def validate_encryption_passphrase(ctx, param, value):
     value = validate_password(ctx, param, value)
     if value and len(value) < 8:
-        raise CloudifyValidationError('ERROR: Password must contain at least '
-                                      '8 characters.')
+        raise CloudifyValidationError('ERROR: Passphrase must contain at '
+                                      'least 8 characters.')
     return value
 
 
@@ -917,12 +917,12 @@ class Options(object):
             help=helptexts.PASSWORD,
             callback=validate_password)
 
-        self.encryption_password = click.option(
+        self.encryption_passphrase = click.option(
             '-p',
-            '--password',
+            '--passphrase',
             required=False,
-            help=helptexts.ENCRYPTION_PASSWORD,
-            callback=validate_encryption_password
+            help=helptexts.ENCRYPTION_PASSPHRASE,
+            callback=validate_encryption_passphrase
         )
 
         self.visibility_filter = click.option(
