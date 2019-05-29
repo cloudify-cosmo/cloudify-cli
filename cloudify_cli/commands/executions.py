@@ -64,7 +64,7 @@ def executions():
 
 @cfy.command(name='get',
              short_help='Retrieve execution information [manager only]')
-@cfy.argument('execution-id')
+@cfy.options.execution_id_argument()
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.assert_manager_active()
@@ -74,6 +74,8 @@ def manager_get(execution_id, logger, client, tenant_name):
     """Retrieve information for a specific execution
 
     `EXECUTION_ID` is the execution to get information on.
+    Execution ID can also be the workflow name to use the most recent
+    execution of that workflow.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     try:
@@ -313,7 +315,7 @@ def manager_start(workflow_id,
 
 @cfy.command(name='cancel',
              short_help='Cancel a workflow execution [manager only]')
-@cfy.argument('execution-id')
+@cfy.options.execution_id_argument()
 @cfy.options.common_options
 @cfy.options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
 @cfy.options.kill()
@@ -325,6 +327,8 @@ def manager_cancel(execution_id, force, kill, logger, client, tenant_name):
     """Cancel a workflow's execution
 
     `EXECUTION_ID` is the ID of the execution to cancel.
+    Execution ID can also be the workflow name to use the most recent
+    execution of that workflow.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     if kill:
@@ -343,7 +347,7 @@ def manager_cancel(execution_id, force, kill, logger, client, tenant_name):
 
 @cfy.command(name='resume',
              short_help='Resume a workflow execution [manager only]')
-@cfy.argument('execution-id')
+@cfy.options.execution_id_argument()
 @cfy.options.common_options
 @cfy.options.reset_operations
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
@@ -355,6 +359,9 @@ def manager_resume(execution_id, reset_operations, logger, client,
     """Resume the execution of a workflow in a failed or cancelled state.
 
     `EXECUTION_ID` is the ID of the execution to resume.
+    Execution ID can also be the workflow name to use the most recent
+    execution of that workflow.
+
     The workflow will run again, restoring the tasks graph from the storage,
     and retrying failed tasks when necessary.
     If reset-operations is passed, tasks that were started but didn't fail

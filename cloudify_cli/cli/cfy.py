@@ -14,7 +14,7 @@
 # limitations under the License.
 ############
 
-
+import re
 import sys
 import urllib
 import difflib
@@ -36,7 +36,10 @@ from ..inputs import inputs_to_dict
 from ..utils import generate_random_string
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import SuppressedCloudifyCliError
-from ..exceptions import CloudifyBootstrapError, CloudifyValidationError
+from ..exceptions import (
+    CloudifyBootstrapError,
+    CloudifyValidationError
+)
 from ..logger import (
     get_logger,
     set_global_verbosity_level,
@@ -153,6 +156,23 @@ def inputs_callback(ctx, param, value):
         return {}
 
     return inputs_to_dict(value)
+
+
+def _get_execution_id(ctx, param, value):
+    tenant = ctx.params.get('tenant_name')
+    is_uuid = value and re.match('[a-fA-F0-9-]{30,40}', value)
+    if is_uuid or not value:
+        return value
+    else:
+        client = env.get_rest_client(tenant_name=tenant)
+        executions = client.executions.list(
+            workflow_id=value, sort='created_at', is_descending=True).items
+        if not executions:
+            # no executions for this workflow name found - pass through the
+            # value, maybe the user wants to pass that as the execution id
+            # after all
+            return value
+    return executions[0].id
 
 
 def validate_name(ctx, param, value):
@@ -1132,6 +1152,10 @@ class Options(object):
             default=False,
             help=helptexts.WITH_LOGS
         )
+
+    def execution_id_argument(self, **kwargs):
+        return click.argument(
+            'execution-id', callback=_get_execution_id, **kwargs)
 
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.

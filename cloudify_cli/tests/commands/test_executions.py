@@ -34,11 +34,29 @@ class ExecutionsTest(CliCommandTest):
     def setUp(self):
         super(ExecutionsTest, self).setUp()
         self.use_manager()
+        self.client.executions.list = MagicMock(
+            return_value=MockListResponse())
 
     def test_executions_get(self):
         execution = execution_mock('terminated')
         self.client.executions.get = MagicMock(return_value=execution)
         outcome = self.invoke('cfy executions get execution-id')
+        self.assertIn(execution.parameters['param1'], outcome.output)
+
+    def test_executions_get_workflow_id(self):
+        execution = execution_mock('terminated')
+        execution2 = execution_mock('terminated')
+        execution2.parameters['param1'] = 'some other value'
+
+        self.client.executions.get = MagicMock(return_value=execution)
+        self.client.executions.list = MagicMock(return_value=MockListResponse(
+            items=[execution]
+        ))
+        outcome = self.invoke('cfy executions get {0}'
+                              .format(execution.workflow_id))
+        self.client.executions.list.assert_called_with(
+            sort='created_at', is_descending=True,
+            workflow_id=execution.workflow_id)
         self.assertIn(execution.parameters['param1'], outcome.output)
 
     def test_executions_get_json(self):

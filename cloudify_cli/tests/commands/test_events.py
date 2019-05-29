@@ -1,7 +1,7 @@
 import json
 import time
 
-from mock import patch
+from mock import patch, Mock
 
 from .test_base import CliCommandTest
 from .mocks import MockListResponse, mock_log_message_prefix
@@ -21,6 +21,7 @@ class EventsTest(CliCommandTest):
         self.events = self._generate_events(self.execution_start_time,
                                             self.execution_termination_time)
         self.executions_status = executions.Execution.STARTED
+        self.client.executions.list = Mock(return_value=MockListResponse())
 
     def _generate_events(self, start_time, end_time):
         events = []

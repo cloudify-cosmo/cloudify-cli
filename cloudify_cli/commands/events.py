@@ -37,7 +37,7 @@ def events():
 
 @events.command(name='list',
                 short_help='List deployments events [manager only]')
-@cfy.argument('execution-id', required=False)
+@cfy.options.execution_id_argument(required=False)
 @cfy.options.execution_id(required=False, dest='execution_id_opt')
 @cfy.options.include_logs
 @cfy.options.json_output
@@ -58,6 +58,12 @@ def list(execution_id,
          pagination_size,
          client,
          logger):
+    """Show events of the given execution.
+
+    `EXECUTION_ID` is the execution to get events for.
+    Execution ID can also be the workflow name to use the most recent
+    execution of that workflow.
+    """
     if execution_id and execution_id_opt:
         raise click.UsageError(
             "Execution ID provided both as a positional "
