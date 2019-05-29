@@ -106,7 +106,7 @@ def cluster():
 
 
 @cluster.command(name='status',
-                 short_help='Show the current cluster status [cluster only]')
+                 short_help='Show the current cluster status')
 @pass_cluster_client()
 @cfy.options.common_options
 def status(client):
@@ -141,7 +141,7 @@ def status(client):
 
 
 @cluster.command(name='remove',
-                 short_help='Remove a node from the cluster [cluster only]')
+                 short_help='Remove a node from the cluster')
 @pass_cluster_client()
 @cfy.pass_logger
 @cfy.argument('hostname')
@@ -164,8 +164,7 @@ def remove_node(client, logger, hostname):
 
 
 @cluster.command(name='update-profile',
-                 short_help='Store the cluster nodes in the CLI profile '
-                            '[cluster only]')
+                 short_help='Store the cluster nodes in the CLI profile')
 @pass_cluster_client()
 @cfy.pass_logger
 @cfy.options.common_options
@@ -215,10 +214,10 @@ def _update_profile_cluster_settings(nodes, logger=None):
     env.profile.save()
 
 
-@cluster.group(name='brokers')
+@cluster.group(name='brokers',
+               short_help="Handle the Cloudify Manager cluster's brokers")
 @cfy.options.common_options
 def brokers():
-    """Handle the Cloudify Manager cluster's brokers."""
     if not env.is_initialized():
         env.raise_uninitialized()
 
