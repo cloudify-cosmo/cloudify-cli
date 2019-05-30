@@ -198,8 +198,10 @@ def validate_nonnegative_integer(ctx, param, value):
         return
 
     try:
-        assert int(value) >= 0
-    except (ValueError, AssertionError):
+        value = int(value)
+        if value < 0:
+            raise ValueError()
+    except ValueError:
         raise CloudifyValidationError('ERROR: {0} is expected to be a '
                                       'nonnegative integer'.format(param.name))
     return value
@@ -1133,6 +1135,13 @@ class Options(object):
             help=helptexts.WITH_LOGS
         )
 
+        self.port = click.option(
+            '--port',
+            required=False,
+            type=click.IntRange(1, 65535),
+            help=helptexts.PORT,
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
@@ -1489,6 +1498,16 @@ class Options(object):
             required=False,
             help=helptexts.NEW_NAME.format(resource_name_for_help),
             callback=validate_name
+        )
+
+    def networks(self, required=True):
+        return click.option(
+            '-n',
+            '--networks',
+            required=required,
+            multiple=True,
+            callback=inputs_callback,
+            help=helptexts.NETWORKS
         )
 
 

@@ -269,8 +269,8 @@ def _clean_up_broker_for_output(broker):
 @cfy.pass_logger
 @cfy.argument('name')
 @cfy.argument('address')
-@cfy.argument('port', required=False)
-@cfy.argument('networks', required=False)
+@cfy.options.port
+@cfy.options.networks(required=False)
 @cfy.options.common_options
 def add_broker(client, logger, name, address, port=None, networks=None):
     """Register a broker with the cluster.
@@ -305,4 +305,36 @@ def remove_broker(client, logger, name):
     client.manager.remove_broker(name)
 
     logger.info('Broker {0} was removed successfully!'
+                .format(name))
+
+
+@brokers.command(name='update',
+                 short_help='Update a broker in the cluster')
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.argument('name')
+@cfy.options.networks(required=True)
+@cfy.options.common_options
+def update_broker(client, logger, name, networks=None):
+    """Update a cluster's broker's networks.
+
+    Note that the broker must already have the appropriate certificate for the
+    new networks that are being added.
+    Provided networks will be added if they do not exist or updated if they
+    already exist.
+    Networks cannot be deleted from a broker except by removing and re-adding
+    the broker.
+    """
+    check_broker_exists(client.manager.get_brokers().items, name)
+
+    # When/if we support updating other parameters we can replace this check
+    # with a check that at least one updatable parameter was provided.
+    if not networks:
+        raise CloudifyCliError(
+            'Networks must be provided to update the broker.'
+        )
+
+    client.manager.update_broker(name, networks=networks)
+
+    logger.info('Broker {0} was updated successfully!'
                 .format(name))
