@@ -337,3 +337,8 @@ DETACH_SITE = "If set, detach the current site, making the deployment " \
               "siteless [default: False]"
 WITH_LOGS = "If set, then the deployment's management workers logs are " \
             "deleted as well [default: False]"
+
+NETWORKS = "Networks as a JSON string or as '\'net1=ip1;net2=ip2\'). " \
+           "This argument can be used multiple times."
+
+PORT = "A non-default network port to use for this component."
