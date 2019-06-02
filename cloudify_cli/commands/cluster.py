@@ -16,7 +16,7 @@
 
 from functools import wraps
 import json
-from warnings import warn
+from logging import warning
 
 from requests.exceptions import ConnectionError
 
@@ -24,7 +24,11 @@ from .. import env
 from ..cli import cfy
 from ..table import print_data, print_details
 from ..exceptions import CloudifyCliError
-from ..logger import get_global_json_output
+from ..logger import (
+    get_global_json_output,
+    get_global_verbosity,
+    LOW_VERBOSE
+)
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
@@ -88,8 +92,8 @@ def pass_cluster_client(*client_args, **client_kwargs):
         def _inner(client, *args, **kwargs):
             managers_list = client.manager.get_managers().items
             if len(managers_list) == 1:
-                warn('It is highly recommended to have more than one '
-                     'manager in a Cloudify cluster')
+                warning(' It is highly recommended to have more than one '
+                        'manager in a Cloudify cluster')
             return f(client=client, *args, **kwargs)
         return _inner
     return _deco
@@ -108,8 +112,9 @@ def cluster():
 @cluster.command(name='status',
                  short_help='Show the current cluster status')
 @pass_cluster_client()
+@cfy.pass_logger
 @cfy.options.common_options
-def status(client):
+def status(client, logger):
     """
     Display the current status of the Cloudify Manager cluster
     """
@@ -122,22 +127,25 @@ def status(client):
             rest_host=manager.public_ip, cluster=[])
         try:
             services = direct_rest_client.manager.get_status()['services']
-            updated_columns += [
-                service['display_name'] for service in services
-                if service['display_name'] not in updated_columns
-            ]
             manager.update({'status': 'Active'})
+            if get_global_verbosity() >= LOW_VERBOSE:
+                updated_columns += [
+                    service['display_name'] for service in services
+                    if service['display_name'] not in updated_columns
+                ]
+            for service in services:
+                state = service['instances'][0]['state'] \
+                    if 'instances' in service and \
+                       len(service['instances']) > 0 else 'unknown'
+                manager.update({service['display_name']: state})
         except (ConnectionError, CloudifyClientError) as e:
             if isinstance(e, CloudifyClientError) and e.status_code != 502:
                 raise
             manager.update({'status': 'Offline'})
             continue
-        for service in services:
-            state = service['instances'][0]['state'] \
-                if 'instances' in service and \
-                   len(service['instances']) > 0 else 'unknown'
-            manager.update({service['display_name']: state})
     print_data(updated_columns, managers, 'HA Cluster nodes')
+
+    _list_brokers(client, logger)
 
 
 @cluster.command(name='remove',
@@ -250,10 +258,7 @@ def get_broker(client, logger, name):
 @cfy.options.common_options
 def list_brokers(client, logger):
     """List brokers associated with the cluster."""
-    brokers = client.manager.get_brokers()
-    for broker in brokers:
-        _clean_up_broker_for_output(broker)
-    print_data(BROKER_COLUMNS, brokers, 'Cluster brokers')
+    _list_brokers(client, logger)
 
 
 def _clean_up_broker_for_output(broker):
@@ -261,6 +266,13 @@ def _clean_up_broker_for_output(broker):
     broker['port'] = broker['port'] or 5671
     if not get_global_json_output():
         broker['networks'] = json.dumps(broker['networks'])
+
+
+def _list_brokers(client, logger):
+    brokers = client.manager.get_brokers()
+    for broker in brokers:
+        _clean_up_broker_for_output(broker)
+    print_data(BROKER_COLUMNS, brokers, 'HA Cluster brokers')
 
 
 @brokers.command(name='add',
