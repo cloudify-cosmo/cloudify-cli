@@ -1,4 +1,4 @@
-version: 2
+version: 2.1
 
 checkout:
   post:
@@ -38,6 +38,15 @@ workflows:
   version: 2
 
   build_and_test:
-    jobs:
+    jobs: &build_jobs
       - flake8
       - test
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs: *build_jobs
