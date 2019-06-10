@@ -44,9 +44,9 @@ workflows:
   nightly:
     triggers:
       - schedule:
-        cron: "0 1 * * *"
-        filters:
-          branches:
+          cron: "0 0 * * *"
+          filters:
+            branches:
             only:
               - master
     jobs: *build_jobs
