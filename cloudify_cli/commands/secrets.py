@@ -145,6 +145,87 @@ def export(tenant_name,
         logger.info('No password was given, the secrets are not encrypted')
     logger.info('The secrets` file was saved to {}'.format(output_path))
 
+@secrets.command(name='import',
+                 short_help='Import secrets from a file to the Manager')
+@cfy.options.encryption_passphrase
+@cfy.options.input_path(required=True)
+@cfy.options.override_collisions
+@cfy.options.tenant_map
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def import_secrets(passphrase,
+                   tenant_map,
+                   override_collisions,
+                   input_path,
+                   logger,
+                   client):
+    """Import secrets from a file to the Manager
+    """
+
+    tenant_map_dict = None
+    try:
+        with open(input_path) as secrets_file:
+            secrets_list = json.load(secrets_file)
+    except IOError:
+        logger.info('The secrets file path does not exist')
+    try:
+        assert not isinstance(secrets_list, basestring)
+        for secret in secrets_list:
+            assert isinstance(secret, dict)
+    except AssertionError:
+        logger.info('The secrets file is not written right')
+        return
+
+    if tenant_map:
+        try:
+            with open(tenant_map) as tenant_map_file:
+                tenant_map_dict = json.load(tenant_map_file)
+        except IOError:
+            logger.info('The tenant-map file path does not exist')
+            return
+        try:
+            assert isinstance(tenant_map_dict, dict)
+            for key, value in tenant_map_dict:
+                assert isinstance(key, str)
+                assert isinstance(value, str)
+        except AssertionError:
+            logger.info('The tenant-map file is not in the right form')
+            return
+    logger.info('Creating imported secrets...')
+
+    response = client.secrets.import_secrets(
+        secrets_list=secrets_list,
+        tenant_map_dict=tenant_map_dict,
+        passphrase=passphrase,
+        override_collisions=override_collisions)
+
+    if response['overridden_secrets']:
+        logger.info('Secrets imported.\nPlease note that the following '
+                    'secrets were overridden: {0}'.
+                    format(response['overridden_secrets']))
+    elif response['colliding_secrets']:
+        logger.info('Secrets imported.\nPlease note that the following '
+                    'secrets were not created because they collided with'
+                    ' existing secrets: {0}'.
+                    format(response['colliding_secrets']))
+    else:
+        logger.info('Secrets imported')
+    if response['secrets_errors']:
+        secrets_errors_list = [(key, response['secrets_errors'][key]) for key
+                               in sorted(response['secrets_errors'].keys())]
+        logger.info('\nPlease note the following secrets were not created due'
+                    ' to the the errors mentioned for each secret:')
+        for key, secret_errors in secrets_errors_list:
+            print('\n\tSecret {0}:'.format(int(key)+1))
+            for attr, error in secret_errors.iteritems():
+                print('\t\t{0}: {1}'.format(attr, error))
+
+
+
+
+
 
 @secrets.command(name='update', short_help='Update an existing secret')
 @cfy.argument('key', callback=cfy.validate_name)

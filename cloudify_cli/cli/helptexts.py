@@ -40,7 +40,13 @@ SHOW_ACTIVE_CONNECTION_INFORMATION = \
 ENABLE_COLORS = "Enable colors in logger (use --hard when working with" \
                 " an initialized environment) [default: False]"
 
-OUTPUT_PATH = "The local path to download to"
+OUTPUT_PATH = "The local path to download to."
+INPUT_PATH = 'The local path to download from.'
+OVERRIDE_COLLISIONS = 'If a certain key already exists in the destination' \
+                      ' manager, its value will be updated with the new' \
+                      ' imported value.'
+TENANT_MAP = 'The path to a json file containing a dictionary of' \
+             ' (source_tenant : default_tenant) pairs.'
 ALL_NODES = "Perform operation on all cluster nodes"
 BLUEPRINT_FILENAME = (
     "The name of the archive's main blueprint file. "
@@ -218,8 +224,8 @@ SECURITY_ROLE = "A role to determine the user's permissions on the manager, " \
                 "if admin or default (default: default role)"
 PASSWORD = 'Cloudify manager password'
 
-ENCRYPTION_PASSPHRASE = 'The passphrase used to encrypt the secrets, ' \
-                      'must be 8 characters long.'
+ENCRYPTION_PASSPHRASE = 'The passphrase used to encrypt or decrypt the ' \
+                        'secrets` values, must be 8 characters long.'
 
 CLUSTER_HOST_IP = \
     'The IP of this machine to use for advertising to the cluster'
