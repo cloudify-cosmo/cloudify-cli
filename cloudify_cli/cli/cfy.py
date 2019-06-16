@@ -210,10 +210,8 @@ def validate_nonnegative_integer(ctx, param, value):
         return
 
     try:
-        value = int(value)
-        if value < 0:
-            raise ValueError()
-    except ValueError:
+        assert int(value) >= 0
+    except (ValueError, AssertionError):
         raise CloudifyValidationError('ERROR: {0} is expected to be a '
                                       'nonnegative integer'.format(param.name))
     return value
@@ -538,6 +536,18 @@ class Options(object):
             '-o',
             '--output-path',
             help=helptexts.OUTPUT_PATH)
+
+        self.override_collisions = click.option(
+            '--override-collisions',
+            is_flag=True,
+            help=helptexts.OVERRIDE_COLLISIONS
+        )
+
+        self.tenant_map = click.option(
+            '-m',
+            '--tenant-map',
+            help=helptexts.TENANT_MAP
+        )
 
         self.all_nodes = click.option(
             '--all-nodes',
@@ -1151,20 +1161,13 @@ class Options(object):
             help=helptexts.DETACH_SITE
         )
 
-        self.with_logs = click.option(
-            '-l',
-            '--with-logs',
-            required=False,
+        self.non_encrypted = click.option(
+            '--non-encrypted',
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['passphrase'],
             is_flag=True,
             default=False,
-            help=helptexts.WITH_LOGS
-        )
-
-        self.port = click.option(
-            '--port',
-            required=False,
-            type=click.IntRange(1, 65535),
-            help=helptexts.PORT,
+            help=helptexts.NON_ENCRYPTED
         )
 
     def common_options(self, f):
@@ -1525,14 +1528,13 @@ class Options(object):
             callback=validate_name
         )
 
-    def networks(self, required=True):
+    @staticmethod
+    def input_path(required=False):
         return click.option(
-            '-n',
-            '--networks',
+            '-i',
+            '--input-path',
             required=required,
-            multiple=True,
-            callback=inputs_callback,
-            help=helptexts.NETWORKS
+            help=helptexts.INPUT_PATH
         )
 
     @staticmethod
@@ -1544,16 +1546,6 @@ class Options(object):
             help=helptexts.IMPORT_SECRETS
         )
 
-    @staticmethod
-    def non_encrypted():
-        return click.option(
-            '--non-encrypted',
-            cls=MutuallyExclusiveOption,
-            mutually_exclusive=['passphrase'],
-            is_flag=True,
-            default=False,
-            help=helptexts.NON_ENCRYPTED
-        )
 
 
 options = Options()

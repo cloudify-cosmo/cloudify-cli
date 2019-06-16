@@ -50,8 +50,8 @@ IMPORT_SECRETS = 'The local path to the secrets file. ' \
                  '\"value\":\"value\",\n'\
                  '\"tenant_name\":\"tenant_name\",\n'\
                  '\"visibility\":\"tenant\",\n'\
-                 '\"is_hidden_value\": false,\n'\
-                 '\"encrypted\": \"False\"\n'\
+                 '\"is_hidden_value\": \"False\",\n'\
+                 '\"encrypted\": false"\n'\
                  '}\n'\
                  ']'
 
