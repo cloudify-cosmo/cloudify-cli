@@ -621,6 +621,11 @@ class Options(object):
             is_flag=True,
             help=helptexts.PREVIEW)
 
+        self.dont_update_plugins = click.option(
+            '--dont-update-plugins',
+            is_flag=True,
+            help=helptexts.DONT_UPDATE_PLUGINS)
+
         self.backup_first = click.option(
             '--backup-first',
             is_flag=True,

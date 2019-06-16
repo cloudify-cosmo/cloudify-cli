@@ -288,6 +288,7 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
 @cfy.options.ignore_failure
 @cfy.options.install_first
 @cfy.options.preview
+@cfy.options.dont_update_plugins
 @cfy.options.force(help=helptexts.FORCE_UPDATE)
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.options.visibility(mutually_exclusive_required=False)
@@ -311,6 +312,7 @@ def manager_update(ctx,
                    ignore_failure,
                    install_first,
                    preview,
+                   dont_update_plugins,
                    workflow_id,
                    force,
                    include_logs,
@@ -395,7 +397,8 @@ def manager_update(ctx,
             ignore_failure,
             install_first,
             reinstall_list,
-            preview
+            preview,
+            not dont_update_plugins
         )
 
     if preview:
