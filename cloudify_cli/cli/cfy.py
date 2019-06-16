@@ -210,8 +210,10 @@ def validate_nonnegative_integer(ctx, param, value):
         return
 
     try:
-        assert int(value) >= 0
-    except (ValueError, AssertionError):
+        value = int(value)
+        if value < 0:
+            raise ValueError()
+    except ValueError:
         raise CloudifyValidationError('ERROR: {0} is expected to be a '
                                       'nonnegative integer'.format(param.name))
     return value
@@ -1161,13 +1163,20 @@ class Options(object):
             help=helptexts.DETACH_SITE
         )
 
-        self.non_encrypted = click.option(
-            '--non-encrypted',
-            cls=MutuallyExclusiveOption,
-            mutually_exclusive=['passphrase'],
+        self.with_logs = click.option(
+            '-l',
+            '--with-logs',
+            required=False,
             is_flag=True,
             default=False,
-            help=helptexts.NON_ENCRYPTED
+            help=helptexts.WITH_LOGS
+        )
+
+        self.port = click.option(
+            '--port',
+            required=False,
+            type=click.IntRange(1, 65535),
+            help=helptexts.PORT,
         )
 
     def common_options(self, f):
@@ -1528,6 +1537,16 @@ class Options(object):
             callback=validate_name
         )
 
+    def networks(self, required=True):
+        return click.option(
+            '-n',
+            '--networks',
+            required=required,
+            multiple=True,
+            callback=inputs_callback,
+            help=helptexts.NETWORKS
+        )
+
     @staticmethod
     def input_path(required=False):
         return click.option(
@@ -1546,6 +1565,16 @@ class Options(object):
             help=helptexts.IMPORT_SECRETS
         )
 
+    @staticmethod
+    def non_encrypted():
+        return click.option(
+            '--non-encrypted',
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['passphrase'],
+            is_flag=True,
+            default=False,
+            help=helptexts.NON_ENCRYPTED
+        )
 
 
 options = Options()
