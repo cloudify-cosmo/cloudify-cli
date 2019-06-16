@@ -1535,5 +1535,25 @@ class Options(object):
             help=helptexts.NETWORKS
         )
 
+    @staticmethod
+    def import_input_path():
+        return click.option(
+            '-i',
+            '--input-path',
+            required=True,
+            help=helptexts.IMPORT_SECRETS
+        )
+
+    @staticmethod
+    def non_encrypted():
+        return click.option(
+            '--non-encrypted',
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['passphrase'],
+            is_flag=True,
+            default=False,
+            help=helptexts.NON_ENCRYPTED
+        )
+
 
 options = Options()

@@ -42,11 +42,25 @@ ENABLE_COLORS = "Enable colors in logger (use --hard when working with" \
 
 OUTPUT_PATH = "The local path to download to."
 INPUT_PATH = 'The local path to download from.'
+IMPORT_SECRETS = 'The local path to the secrets file. ' \
+                 'The secrets file should be a json format, for example:\n' \
+                 '[\n'\
+                 '{\n'\
+                 '\"key\":\"key\",\n'\
+                 '\"value\":\"value\",\n'\
+                 '\"tenant_name\":\"tenant_name\",\n'\
+                 '\"visibility\":\"tenant\",\n'\
+                 '\"is_hidden_value\": false,\n'\
+                 '\"encrypted\": \"False\"\n'\
+                 '}\n'\
+                 ']'
+
 OVERRIDE_COLLISIONS = 'If a certain key already exists in the destination' \
                       ' manager, its value will be updated with the new' \
                       ' imported value.'
 TENANT_MAP = 'The path to a json file containing a dictionary of' \
-             ' (source_tenant : default_tenant) pairs.'
+             ' (source_tenant : destination_tenant) pairs. for example:\n' \
+             '{\"source_tenant\":\"destination_tenant\"}'
 ALL_NODES = "Perform operation on all cluster nodes"
 BLUEPRINT_FILENAME = (
     "The name of the archive's main blueprint file. "
@@ -350,10 +364,5 @@ NEW_NAME = "The new name of the {0}"
 SITE_NAME = "Deployment's site name"
 DETACH_SITE = "If set, detach the current site, making the deployment " \
               "siteless [default: False]"
-WITH_LOGS = "If set, then the deployment's management workers logs are " \
-            "deleted as well [default: False]"
-
-NETWORKS = "Networks as a JSON string or as '\'net1=ip1;net2=ip2\'). " \
-           "This argument can be used multiple times."
-
-PORT = "A non-default network port to use for this component."
+NON_ENCRYPTED = 'Please use this flag if the secrets values should not be ' \
+                'encrypted'
