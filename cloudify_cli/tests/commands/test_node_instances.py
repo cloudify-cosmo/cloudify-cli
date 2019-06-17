@@ -1,10 +1,12 @@
 import os
 import json
+import tempfile
 
 from mock import MagicMock
 
 from .. import cfy
 from .test_base import CliCommandTest
+from cloudify_cli.exceptions import CloudifyCliError
 from .mocks import node_instance_get_mock, MockListResponse
 from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
 
@@ -70,6 +72,154 @@ class NodeInstancesTest(CliCommandTest):
             'cfy node-instances -b local noop', context='local',
             err_str_segment='Could not find node noop'
         )
+
+    def test_update_runtime_missing_args(self):
+        self._common_runtime_missing_args('update-runtime')
+
+    def test_update_runtime_invalid_dict(self):
+        self._common_runtime_invalid_dict('update-runtime')
+
+    def test_update_runtime_successful(self):
+        self.client.node_instances.get = \
+            MagicMock(return_value=node_instance_get_mock())
+        self.client.node_instances.update = MagicMock(return_value={})
+
+        self.invoke('cfy node-instances update-runtime instance_id -p abc=2')
+        call_args = self.client.node_instances.update.call_args
+        self.assertEqual('2', call_args[1]['runtime_properties']['abc'])
+        self.assertEqual(2, call_args[1]['version'])
+
+        self.invoke('cfy node-instances update-runtime instance_id -p x.y=z')
+        self.assertEqual('z', call_args[1]['runtime_properties']['x']['y'])
+
+    def test_update_runtime_successful_key_exists(self):
+        self.client.node_instances.get = \
+            MagicMock(return_value=node_instance_get_mock())
+        self.client.node_instances.update = MagicMock(return_value={})
+
+        self.invoke('cfy node-instances update-runtime instance_id -p x.y=z')
+        self.invoke('cfy node-instances update-runtime instance_id -p "{0}"'
+                    .format({'x': {'z': 5}}))
+        self.invoke('cfy node-instances update-runtime instance_id -p "{0}"'
+                    .format({'floating_ip': '0.0.0.0', 'x': {'y': 'w'}}))
+        call_args = self.client.node_instances.update.call_args
+        self.assertEqual('w', call_args[1]['runtime_properties']['x']['y'])
+        self.assertEqual(5, call_args[1]['runtime_properties']['x']['z'])
+
+    def test_update_runtime_successful_dict_in_place_of_literal(self):
+        self.client.node_instances.get = \
+            MagicMock(return_value=node_instance_get_mock())
+        self.client.node_instances.update = MagicMock(return_value={})
+
+        self.invoke('cfy node-instances update-runtime instance_id -p abc=2')
+        call_args = self.client.node_instances.update.call_args
+        self.assertEqual('2', call_args[1]['runtime_properties']['abc'])
+        self.invoke('cfy node-instances update-runtime instance_id -p abc.d=2')
+        self.assertEqual({'d': '2'}, call_args[1]['runtime_properties']['abc'])
+
+    def test_update_runtime_from_yaml(self):
+        self.client.node_instances.get = \
+            MagicMock(return_value=node_instance_get_mock())
+        self.client.node_instances.update = MagicMock(return_value={})
+
+        yaml_path = tempfile.mktemp()
+        with open(yaml_path, 'wb') as f:
+            f.write("""
+                    x1:
+                        y: 1
+                    x2:
+                        y:
+                            z: 2
+                    """)
+        self.invoke('cfy node-instances update-runtime instance_id -p {0}'
+                    .format(yaml_path))
+        call_args = self.client.node_instances.update.call_args
+        self.assertEqual(1, call_args[1]['runtime_properties']['x1']['y'])
+        self.assertEqual(2, call_args[1]['runtime_properties']['x2']['y']['z'])
+
+    def test_delete_runtime_missing_args(self):
+        self._common_runtime_missing_args('delete-runtime')
+
+    def test_delete_runtime_invalid_dict(self):
+        self._common_runtime_invalid_dict('delete-runtime')
+
+    def test_delete_runtime_no_such_property(self):
+        self.client.node_instances.get = \
+            MagicMock(return_value=node_instance_get_mock())
+        self.invoke('cfy node-instances delete-runtime instance_id -p "abc="',
+                    err_str_segment='Key abc does not exist',
+                    exception=CloudifyCliError)
+        self.invoke('cfy node-instances delete-runtime instance_id -p {abc}',
+                    err_str_segment='Key abc does not exist',
+                    exception=CloudifyCliError)
+
+    def test_delete_runtime_successful(self):
+        self.client.node_instances.get = \
+            MagicMock(return_value=node_instance_get_mock())
+        self.client.node_instances.update = MagicMock(return_value={})
+        self.invoke('cfy node-instances update-runtime instance_id -p '
+                    '"x.y.z=1" -p "x.w=2"')
+        self.invoke('cfy node-instances delete-runtime instance_id -p '
+                    '{x:{y:}}')
+        call_args = self.client.node_instances.update.call_args
+        self.assertEqual({'w': '2'}, call_args[1]['runtime_properties']['x'])
+
+    def test_delete_runtime_from_yaml(self):
+        self.client.node_instances.get = \
+            MagicMock(return_value=node_instance_get_mock())
+        self.client.node_instances.update = MagicMock(return_value={})
+
+        yaml_path = tempfile.mktemp()
+        with open(yaml_path, 'wb') as f:
+            f.write("""
+                    x:
+                        y:
+                            z: 2
+                        w: 3
+                    """)
+        self.invoke('cfy node-instances update-runtime instance_id -p {0}'
+                    .format(yaml_path))
+        call_args = self.client.node_instances.update.call_args
+        with open(yaml_path, 'wb') as f:
+            f.write("""
+                    x:
+                        y:
+                            z:
+                    """)
+        self.invoke('cfy node-instances delete-runtime instance_id -p {0}'
+                    .format(yaml_path))
+        self.assertEqual({}, call_args[1]['runtime_properties']['x']['y'])
+        self.assertEqual(3, call_args[1]['runtime_properties']['x']['w'])
+
+    def _common_runtime_missing_args(self, command):
+        outcome = self.invoke('cfy node-instances {0}'.format(command),
+                              err_str_segment='2',
+                              exception=SystemExit)
+        self.assertIn('Missing argument "node_instance_id"', outcome.output)
+        outcome = self.invoke('cfy node-instances {0} instance_id'
+                              .format(command),
+                              err_str_segment='2',
+                              exception=SystemExit)
+        self.assertIn('Missing option "-p"', outcome.output)
+        outcome = self.invoke('cfy node-instances {0} instance_id -p'
+                              .format(command),
+                              err_str_segment='2',
+                              exception=SystemExit)
+        self.assertIn('-p option requires an argument', outcome.output)
+
+    def _common_runtime_invalid_dict(self, command):
+        self.invoke('cfy node-instances {0} instance_id -p abc'
+                    .format(command),
+                    err_str_segment='It must represent a dictionary',
+                    exception=CloudifyCliError)
+        self.invoke('cfy node-instances {0} instance_id -p {1}'
+                    .format(command, "{a: {b: }"),  # unbalanced brackets
+                    err_str_segment='It must represent a dictionary',
+                    exception=CloudifyCliError)
+        self.invoke('cfy node-instances {0} instance_id -p {1}'
+                    .format(command, '~/no_such.yaml'),
+                    err_str_segment='It must represent a dictionary',
+                    exception=CloudifyCliError)
 
     def _create_local_env(self):
         blueprint_path = os.path.join(

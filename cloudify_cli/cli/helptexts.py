@@ -46,6 +46,8 @@ BLUEPRINT_FILENAME = (
     "The name of the archive's main blueprint file. "
     "This is only relevant if uploading an archive")
 INPUTS = "Inputs for the deployment {0}".format(INPUTS_PARAMS_USAGE)
+RUNTIME_PROPERTIES = "Runtime properties to be changed for the node " \
+                     "instance {0}".format(INPUTS_PARAMS_USAGE)
 PARAMETERS = "Parameters for the workflow {0}".format(INPUTS_PARAMS_USAGE)
 REINSTALL_LIST = (
     "Node instances ids to be reinstalled as part of deployment update. They "

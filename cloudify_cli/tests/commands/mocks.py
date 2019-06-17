@@ -154,7 +154,8 @@ def node_instance_get_mock():
         },
         'visibility': 'private',
         'created_by': 'admin',
-        'tenant_name': DEFAULT_TENANT_NAME
+        'tenant_name': DEFAULT_TENANT_NAME,
+        'version': 1
     })
 
 

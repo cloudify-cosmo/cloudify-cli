@@ -17,14 +17,15 @@
 import json
 
 import click
-from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
 from ..cli import cfy
 from ..local import load_env
-from ..logger import get_global_json_output
-from ..table import print_data, print_details, print_single
 from ..exceptions import CloudifyCliError
+from ..logger import get_global_json_output
+from ..utils import deep_update_dict, deep_subtract_dict
+from ..table import print_data, print_details, print_single
+from cloudify_rest_client.exceptions import CloudifyClientError
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 
@@ -195,6 +196,56 @@ def summary(target_field, sub_field, logger, client, tenant_name,
         items,
         'Node instance summary by {field}'.format(field=target_field),
     )
+
+
+@node_instances.command(name='update-runtime',
+                        short_help='Update runtime properties of a '
+                                   'node-instance [manager only]')
+@cfy.argument('node_instance_id')
+@cfy.options.common_options
+@cfy.options.runtime_properties
+@cfy.options.tenant_name(required=False,
+                         resource_name_for_help='node-instance')
+@cfy.pass_logger
+@cfy.pass_client()
+def update_runtime(node_instance_id, logger, client, tenant_name, properties):
+    _modify_runtime(node_instance_id, logger, client, tenant_name,
+                    properties, deep_update_dict)
+
+
+@node_instances.command(name='delete-runtime',
+                        short_help='Delete runtime properties of a '
+                                   'node-instance [manager only]')
+@cfy.argument('node_instance_id')
+@cfy.options.common_options
+@cfy.options.runtime_properties
+@cfy.options.tenant_name(required=False,
+                         resource_name_for_help='node-instance')
+@cfy.pass_logger
+@cfy.pass_client()
+def delete_runtime(node_instance_id, logger, client, tenant_name, properties):
+    _modify_runtime(node_instance_id, logger, client, tenant_name,
+                    properties, deep_subtract_dict)
+
+
+def _modify_runtime(node_instance_id, logger, client, tenant_name,
+                    properties, modifier_function):
+    """Update or delete the runtime properties of a specific node-instance
+
+    `NODE_INSTANCE_ID` is the id of the node-instance to update.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    node_instance = client.node_instances.get(node_instance_id)
+
+    runtime_properties = node_instance.runtime_properties
+    modifier_function(runtime_properties, properties)
+    new_version = node_instance.version + 1
+
+    client.node_instances.update(node_instance_id,
+                                 runtime_properties=runtime_properties,
+                                 version=new_version)
+    logger.info('Updated the runtime properties of node instance '
+                '{0}'.format(node_instance_id))
 
 
 @cfy.command(name='node-instances',
