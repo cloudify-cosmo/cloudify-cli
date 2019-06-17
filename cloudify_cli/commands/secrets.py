@@ -168,9 +168,6 @@ def import_secrets(passphrase,
                    client):
     """Import secrets from a file to the Manager
     """
-    # import pydevd
-    # pydevd.settrace('192.168.8.110', port=53100, stdoutToServer=True,
-    #                 stderrToServer=True, suspend=True)
     _mention_encryption(passphrase, non_encrypted)
     tenant_map_dict = None
     secrets_list = _get_imported_secrets_list(input_path)
