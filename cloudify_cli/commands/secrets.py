@@ -110,10 +110,11 @@ def get(key, tenant_name, logger, client):
 
 @secrets.command(name='export',
                  short_help='Export secrets from the Manager to a file')
-@cfy.options.encryption_password
+@cfy.options.encryption_passphrase
 @cfy.options.visibility_filter
 @cfy.options.tenant_name_for_list(required=False,
                                   resource_name_for_help='secret')
+@cfy.options.non_encrypted()
 @cfy.options.all_tenants
 @cfy.options.filter_by
 @cfy.options.output_path
@@ -124,26 +125,61 @@ def get(key, tenant_name, logger, client):
 def export(tenant_name,
            all_tenants,
            filter_by,
-           password,
+           passphrase,
+           non_encrypted,
            visibility,
            logger,
            client,
            output_path):
     """Export secrets from the Manager to a file
     """
+    _mention_encryption(passphrase, non_encrypted)
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
     secrets_list = client.secrets.export(visibility=visibility,
-                                         _password=password,
+                                         _passphrase=passphrase,
                                          _all_tenants=all_tenants,
                                          _search=filter_by)
 
     output_path = output_path if output_path else 'secrets.json'
     with open(output_path, 'w') as output_file:
         json.dump(secrets_list, output_file, indent=1)
-    if not password:
+    if not passphrase:
         logger.info('No password was given, the secrets are not encrypted')
     logger.info('The secrets` file was saved to {}'.format(output_path))
+
+@secrets.command(name='import',
+                 short_help='Import secrets from a file to the Manager')
+@cfy.options.encryption_passphrase
+@cfy.options.import_input_path()
+@cfy.options.non_encrypted()
+@cfy.options.override_collisions
+@cfy.options.tenant_map
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def import_secrets(passphrase,
+                   non_encrypted,
+                   tenant_map,
+                   override_collisions,
+                   input_path,
+                   logger,
+                   client):
+    """Import secrets from a file to the Manager
+    """
+    _mention_encryption(passphrase, non_encrypted)
+    tenant_map_dict = None
+    secrets_list = _get_imported_secrets_list(input_path)
+    if tenant_map:
+        tenant_map_dict = _get_tenant_map(tenant_map)
+    logger.info('Creating imported secrets...')
+    response = client.secrets.import_secrets(
+        secrets_list=secrets_list,
+        tenant_map_dict=tenant_map_dict,
+        passphrase=passphrase,
+        override_collisions=override_collisions)
+    _print_import_response(response, logger)
 
 
 @secrets.command(name='update', short_help='Update an existing secret')
@@ -290,3 +326,67 @@ def _get_secret_string(secret_file, secret_string):
         with open(secret_file, 'r') as secret_file:
             secret_string = secret_file.read()
     return secret_string
+
+
+def _get_imported_secrets_list(input_path):
+    if input_path:
+        if not os.path.exists(input_path):
+            raise CloudifyCliError('Failed to import secrets file. '
+                                   'File does not exist: '
+                                   '{0}'.format(input_path))
+    with open(input_path) as secrets_file:
+        secrets_list = json.load(secrets_file)
+    return secrets_list
+
+
+def _get_tenant_map(tenant_map_path):
+    if tenant_map_path:
+        if not os.path.exists(tenant_map_path):
+            raise CloudifyCliError('Failed to import tenant map file. '
+                                   'File does not exist: '
+                                   '{0}'.format(tenant_map_path))
+    with open(tenant_map_path) as tenant_map_file:
+        tenant_map_dict = json.load(tenant_map_file)
+    return tenant_map_dict
+
+
+def _print_import_response(response, logger):
+    logger.info('Secrets imported')
+    if response['overridden_secrets']:
+        logger.info('Please note that the following secrets were overridden:')
+        _print_dict(response['overridden_secrets'])
+    elif response['colliding_secrets']:
+        logger.info('Please note that the following secrets were not created'
+                    ' because they collided with existing secrets in the '
+                    'mentioned tenant:')
+        _print_dict(response['colliding_secrets'])
+    if response['secrets_errors']:
+        _print_secrets_errors(response['secrets_errors'], logger)
+
+
+def _print_secrets_errors(secrets_errors_dict, logger):
+    secrets_errors_list = [(key, secrets_errors_dict[key]) for key
+                           in sorted(secrets_errors_dict.keys(),
+                                     key=lambda x: int(x))]
+    logger.info('\nPlease note the following secrets were not created due'
+                ' to the the errors mentioned for each secret. The secrets'
+                ' number refer to their position in the imported list:')
+    for key, secret_errors in secrets_errors_list:
+        print('\n\tSecret {0}:'.format(int(key) + 1))
+        for attr, error in secret_errors.iteritems():
+            if attr == 'missing secret attributes':
+                error = [str(param) for param in error]
+            print('\t\t{0}: {1}'.format(attr, error))
+
+
+def _mention_encryption(passphrase, non_encrypted):
+    if (not passphrase) and (not non_encrypted):
+        raise CloudifyCliError('Please provide a passphrase if you wish to'
+                               ' encrypt the secrets values or otherwise,'
+                               ' specify `--non-encrypted`')
+
+
+def _print_dict(keys_dict):
+    for tenant_name, keys in keys_dict.iteritems():
+        str_keys = [str(key) for key in keys]
+        print('{0}: {1}'. format(tenant_name, str_keys))

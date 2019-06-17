@@ -197,11 +197,11 @@ def validate_password(ctx, param, value):
     return value
 
 
-def validate_encryption_password(ctx, param, value):
+def validate_encryption_passphrase(ctx, param, value):
     value = validate_password(ctx, param, value)
     if value and len(value) < 8:
-        raise CloudifyValidationError('ERROR: Password must contain at least '
-                                      '8 characters.')
+        raise CloudifyValidationError('ERROR: Passphrase must contain at '
+                                      'least 8 characters.')
     return value
 
 
@@ -538,6 +538,18 @@ class Options(object):
             '-o',
             '--output-path',
             help=helptexts.OUTPUT_PATH)
+
+        self.override_collisions = click.option(
+            '--override-collisions',
+            is_flag=True,
+            help=helptexts.OVERRIDE_COLLISIONS
+        )
+
+        self.tenant_map = click.option(
+            '-m',
+            '--tenant-map',
+            help=helptexts.TENANT_MAP
+        )
 
         self.all_nodes = click.option(
             '--all-nodes',
@@ -917,12 +929,12 @@ class Options(object):
             help=helptexts.PASSWORD,
             callback=validate_password)
 
-        self.encryption_password = click.option(
+        self.encryption_passphrase = click.option(
             '-p',
-            '--password',
+            '--passphrase',
             required=False,
-            help=helptexts.ENCRYPTION_PASSWORD,
-            callback=validate_encryption_password
+            help=helptexts.ENCRYPTION_PASSPHRASE,
+            callback=validate_encryption_passphrase
         )
 
         self.visibility_filter = click.option(
@@ -1533,6 +1545,35 @@ class Options(object):
             multiple=True,
             callback=inputs_callback,
             help=helptexts.NETWORKS
+        )
+
+    @staticmethod
+    def input_path(required=False):
+        return click.option(
+            '-i',
+            '--input-path',
+            required=required,
+            help=helptexts.INPUT_PATH
+        )
+
+    @staticmethod
+    def import_input_path():
+        return click.option(
+            '-i',
+            '--input-path',
+            required=True,
+            help=helptexts.IMPORT_SECRETS
+        )
+
+    @staticmethod
+    def non_encrypted():
+        return click.option(
+            '--non-encrypted',
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['passphrase'],
+            is_flag=True,
+            default=False,
+            help=helptexts.NON_ENCRYPTED
         )
 
 

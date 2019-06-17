@@ -40,7 +40,27 @@ SHOW_ACTIVE_CONNECTION_INFORMATION = \
 ENABLE_COLORS = "Enable colors in logger (use --hard when working with" \
                 " an initialized environment) [default: False]"
 
-OUTPUT_PATH = "The local path to download to"
+OUTPUT_PATH = "The local path to download to."
+INPUT_PATH = 'The local path to download from.'
+IMPORT_SECRETS = 'The local path to the secrets file. ' \
+                 'The secrets file should be a json format, for example:\n' \
+                 '[\n'\
+                 '{\n'\
+                 '\"key\":\"key\",\n'\
+                 '\"value\":\"value\",\n'\
+                 '\"tenant_name\":\"tenant_name\",\n'\
+                 '\"visibility\":\"tenant\",\n'\
+                 '\"is_hidden_value\": \"False\",\n'\
+                 '\"encrypted\": false"\n'\
+                 '}\n'\
+                 ']'
+
+OVERRIDE_COLLISIONS = 'If a certain key already exists in the destination' \
+                      ' manager, its value will be updated with the new' \
+                      ' imported value.'
+TENANT_MAP = 'The path to a json file containing a dictionary of' \
+             ' (source_tenant : destination_tenant) pairs. for example:\n' \
+             '{\"source_tenant\":\"destination_tenant\"}'
 ALL_NODES = "Perform operation on all cluster nodes"
 BLUEPRINT_FILENAME = (
     "The name of the archive's main blueprint file. "
@@ -205,7 +225,7 @@ TENANT = 'The name of the tenant'
 TENANT_TEMPLATE = 'The name of the tenant of the {0}'
 TENANT_LIST_TEMPLATE = 'The name of the tenant to list {0}s from'
 ALL_TENANTS = 'Include resources from all tenants associated with the user. ' \
-              'You cannot use this argument with arguments: [tenant_name]'
+              'You cannot use this argument with arguments: [tenant_name].'
 ALL_EXECUTIONS = 'Apply to all available executions'
 GROUP = 'The name of the user group'
 GROUP_DN = 'The ldap group\'s distinguished name. This option is required ' \
@@ -218,8 +238,8 @@ SECURITY_ROLE = "A role to determine the user's permissions on the manager, " \
                 "if admin or default (default: default role)"
 PASSWORD = 'Cloudify manager password'
 
-ENCRYPTION_PASSWORD = 'The password used to encrypt the secrets, ' \
-                      'must be 8 characters long.'
+ENCRYPTION_PASSPHRASE = 'The passphrase used to encrypt or decrypt the ' \
+                        'secrets` values, must be 8 characters long.'
 
 CLUSTER_HOST_IP = \
     'The IP of this machine to use for advertising to the cluster'
@@ -287,7 +307,7 @@ PRIVATE_RESOURCE = 'This option is deprecated; use --visibility option ' \
 VISIBILITY = 'Defines who can see the resource, can be set to one of {0}'
 VISIBILITY_FILTER = 'Filters the secrets exported according to their' \
                     ' visibility, can be set to one of the following {0}.'
-FILTER_BY_KEYWORD = "Filters the secrets exported according to a keyword"
+FILTER_BY_KEYWORD = 'Filters the secrets exported according to a keyword.'
 PLUGIN_YAML_PATH = "The path to the plugin's yaml file"
 PAGINATION_SIZE = 'The max number of results to retrieve per page ' \
                   '[default: 1000]'
@@ -351,3 +371,5 @@ NETWORKS = "Networks as a JSON string or as '\'net1=ip1;net2=ip2\'). " \
            "This argument can be used multiple times."
 
 PORT = "A non-default network port to use for this component."
+NON_ENCRYPTED = 'Please use this flag if the secrets values should not be ' \
+                'encrypted'
