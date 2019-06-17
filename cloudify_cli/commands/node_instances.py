@@ -209,6 +209,10 @@ def summary(target_field, sub_field, logger, client, tenant_name,
 @cfy.pass_logger
 @cfy.pass_client()
 def update_runtime(node_instance_id, logger, client, tenant_name, properties):
+    """Update the runtime properties of a specific node-instance
+
+    `NODE_INSTANCE_ID` is the id of the node-instance to update.
+    """
     _modify_runtime(node_instance_id, logger, client, tenant_name,
                     properties, deep_update_dict)
 
@@ -224,16 +228,17 @@ def update_runtime(node_instance_id, logger, client, tenant_name, properties):
 @cfy.pass_logger
 @cfy.pass_client()
 def delete_runtime(node_instance_id, logger, client, tenant_name, properties):
+    """Delete specified runtime properties of a specific node-instance
+
+    `NODE_INSTANCE_ID` is the id of the node-instance to update.
+    """
     _modify_runtime(node_instance_id, logger, client, tenant_name,
                     properties, deep_subtract_dict)
 
 
 def _modify_runtime(node_instance_id, logger, client, tenant_name,
                     properties, modifier_function):
-    """Update or delete the runtime properties of a specific node-instance
-
-    `NODE_INSTANCE_ID` is the id of the node-instance to update.
-    """
+    """Update or delete the runtime properties of a specific node-instance"""
     utils.explicit_tenant_name_message(tenant_name, logger)
     node_instance = client.node_instances.get(node_instance_id)
 

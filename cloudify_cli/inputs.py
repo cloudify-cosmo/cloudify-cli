@@ -24,7 +24,7 @@ from.exceptions import CloudifyCliError
 
 
 # TODO: Add test for inputs as JSON/YAML string
-def inputs_to_dict(resources, dot_hierarchy=False):
+def inputs_to_dict(resources, **kwargs):
     """Returns a dictionary of inputs
 
     `resources` can be:
@@ -47,9 +47,9 @@ def inputs_to_dict(resources, dot_hierarchy=False):
         # Workflow parameters always pass an empty dictionary. We ignore it
         if isinstance(resource, basestring):
             try:
-                if dot_hierarchy:
+                if kwargs.get('dot_hierarchy'):
                     deep_update_dict(parsed_dict,
-                                     _parse_single_input(resource, True))
+                                     _parse_single_input(resource, **kwargs))
                 else:
                     parsed_dict.update(_parse_single_input(resource))
             except CloudifyCliError as ex:
@@ -70,10 +70,10 @@ def inputs_to_dict(resources, dot_hierarchy=False):
     return parsed_dict
 
 
-def _parse_single_input(resource, dot_hierarchy=False):
+def _parse_single_input(resource, **kwargs):
     try:
         # parse resource as string representation of a dictionary
-        return plain_string_to_dict(resource, dot_hierarchy)
+        return plain_string_to_dict(resource, **kwargs)
     except CloudifyCliError:
         input_files = glob.glob(resource)
         parsed_dict = dict()
@@ -113,7 +113,24 @@ def _parse_yaml_path(resource):
     return content
 
 
-def plain_string_to_dict(input_string, dot_hierarchy=False):
+def _parse_key_value_pair(mapped_input, input_string):
+    split_mapping = mapped_input.split('=')
+    try:
+        key = split_mapping[0].strip()
+        value = split_mapping[1].strip()
+        return key, value
+    except IndexError:
+        raise CloudifyCliError(
+            "Invalid input format: {0}, the expected format is: "
+            "key1=value1;key2=value2".format(input_string))
+
+
+def _is_not_plain_string_input(mapped_input):
+    """True if the input is a json string, yaml file or a directory"""
+    return mapped_input.endswith(('}', '.yaml', '/'))
+
+
+def plain_string_to_dict(input_string, **kwargs):
     input_string = input_string.strip()
     input_dict = {}
     mapped_inputs = input_string.split(';')
@@ -121,15 +138,19 @@ def plain_string_to_dict(input_string, dot_hierarchy=False):
         mapped_input = mapped_input.strip()
         if not mapped_input:
             continue
-        split_mapping = mapped_input.split('=')
-        try:
-            key = split_mapping[0].strip()
-            value = split_mapping[1].strip()
-        except IndexError:
-            raise CloudifyCliError(
-                "Invalid input format: {0}, the expected format is: "
-                "key1=value1;key2=value2".format(input_string))
-        if dot_hierarchy and '.' in key:
+
+        # Only in delete-runtime the input can be a string (key) with no value
+        if kwargs.get('deleting'):
+            if _is_not_plain_string_input(mapped_input):
+                raise CloudifyCliError('The input {0} is not a plain string '
+                                       'key'.format(mapped_input))
+            key = mapped_input.strip()
+            value = None
+        else:
+            key, value = _parse_key_value_pair(mapped_input, input_string)
+
+        # If the input is in dot hierarchy format, e.g. 'a.b.c=d'
+        if kwargs.get('dot_hierarchy') and '.' in key:
             insert_dotted_key_to_dict(input_dict, key, value)
         else:
             input_dict[key] = value
