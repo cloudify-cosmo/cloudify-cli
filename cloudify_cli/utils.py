@@ -382,6 +382,15 @@ def deep_subtract_dict(dest_dict, src_dict):
 
 
 def insert_dotted_key_to_dict(dest_dict, key, value):
+    """Insert the value into dest_dict according to the key which is in dot
+       hierarchy format
+
+    :param dest_dict: The dict to update
+    :param key: The dot hierarchy key, e.g. 'a.b.c'
+    :param value: The value to insert, e.g. 'd'
+    :return: dest_dict will include the value in the wanted location,
+        e.g. {a: {b: {c: d}}}
+    """
     key_path = key.split('.')
     for item in key_path[:-1]:
         dest_dict.setdefault(item, {})

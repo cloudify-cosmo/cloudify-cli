@@ -163,8 +163,8 @@ def properties_callback(ctx, param, value):
     """
     if not value or ctx.resilient_parsing:
         return {}
-
-    return inputs_to_dict(value, dot_hierarchy=True)
+    deleting = ctx.info_name == 'delete-runtime'
+    return inputs_to_dict(value, dot_hierarchy=True, deleting=deleting)
 
 
 def validate_name(ctx, param, value):
