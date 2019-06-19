@@ -72,22 +72,7 @@ def get(node_instance_id, logger, client, tenant_name):
         raise CloudifyCliError('Node instance {0} not found'.format(
             node_instance_id))
 
-    # decode in-place so that it's decoded for both branches
-    node_instance.runtime_properties.update(
-        utils.decode_dict(node_instance.runtime_properties))
-
-    if get_global_json_output():
-        # for json output, make sure runtime properties are in the same object
-        # so that the output is a single decode-able object
-        columns = NODE_INSTANCE_COLUMNS + ['runtime_properties']
-        print_single(columns, node_instance, 'Node-instance:', 50)
-    else:
-        print_single(NODE_INSTANCE_COLUMNS, node_instance,
-                     'Node-instance:', 50)
-
-        print_details(node_instance.runtime_properties,
-                      'Instance runtime properties:')
-
+    _print_node_instance(node_instance)
     logger.info('')
 
 
@@ -249,8 +234,10 @@ def _modify_runtime(node_instance_id, logger, client, tenant_name,
     client.node_instances.update(node_instance_id,
                                  runtime_properties=runtime_properties,
                                  version=new_version)
-    logger.info('Updated the runtime properties of node instance '
-                '{0}'.format(node_instance_id))
+    logger.info('Successfully updated the runtime properties of "{0}"'
+                .format(node_instance_id))
+    node_instance = client.node_instances.get(node_instance_id)
+    _print_node_instance(node_instance)
 
 
 @cfy.command(name='node-instances',
@@ -273,3 +260,21 @@ def local(node_id, blueprint_id, logger):
             raise CloudifyCliError(
                 'Could not find node {0}'.format(node_id))
     logger.info(json.dumps(node_instances, sort_keys=True, indent=2))
+
+
+def _print_node_instance(node_instance):
+    # Decode in-place so that it's decoded for both branches
+    node_instance.runtime_properties.update(
+        utils.decode_dict(node_instance.runtime_properties))
+
+    if get_global_json_output():
+        # For json output, make sure runtime properties are in the same object
+        # so that the output is a single decode-able object
+        columns = NODE_INSTANCE_COLUMNS + ['runtime_properties']
+        print_single(columns, node_instance, 'Node-instance:', 50)
+    else:
+        print_single(NODE_INSTANCE_COLUMNS, node_instance,
+                     'Node-instance:', 50)
+
+        print_details(node_instance.runtime_properties,
+                      'Instance runtime properties:')
