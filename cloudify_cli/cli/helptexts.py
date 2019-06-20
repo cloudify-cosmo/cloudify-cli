@@ -371,5 +371,4 @@ NETWORKS = "Networks as a JSON string or as '\'net1=ip1;net2=ip2\'). " \
            "This argument can be used multiple times."
 
 PORT = "A non-default network port to use for this component."
-NON_ENCRYPTED = 'Use this flag if the secrets values should not be ' \
-                'encrypted'
+NON_ENCRYPTED = "Use this flag for none encrypted scerets' values."
