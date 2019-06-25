@@ -42,7 +42,7 @@ def list_config(client):
                 short_help='Update configuration')
 @cfy.pass_client()
 @cfy.pass_logger
-@cfy.argument('inputs', callback=cfy.inputs_callback)
+@cfy.argument('inputs', callback=cfy.inputs_callback, nargs=-1)
 @cfy.options.common_options
 def update_config(client, inputs, logger):
     """Update the manager configuration.
