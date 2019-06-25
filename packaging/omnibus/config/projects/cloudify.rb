@@ -42,11 +42,6 @@ build_version "#{cloudify_ver}-#{cloudify_pre}"
 # Creates required build directories
 dependency "preparation"
 dependency "cloudify-manager"
-dependency "aws-plugin"
-dependency "fabric-plugin"
-dependency "openstack-plugin"
-dependency "diamond-plugin"
-dependency "vsphere-plugin"
 
 # cloudify dependencies/components
 dependency "python"
