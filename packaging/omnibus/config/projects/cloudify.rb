@@ -1,19 +1,28 @@
 #
-# Copyright 2015 YOUR NAME
+# Copyright (c) 2015-2019 Cloudify Platform Ltd. All rights reserved
 #
-# All Rights Reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#        http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 #
 
 name "cloudify"
-maintainer "Gigaspaces"
-homepage "http://getcloudify.org/"
+maintainer "cloudify"
+homepage "https://cloudify.co/"
 
 ENV['VERSION'] || raise('VERSION environment variable not set')
 ENV['PRERELEASE'] || raise('PRERELEASE environment variable not set')
 cloudify_ver=ENV['VERSION']
 cloudify_pre=ENV['PRERELEASE']
 
-override :pip, version: '7.1.2', source: { md5: '3823d2343d9f3aaab21cf9c917710196' }
 override :setuptools, version: '18.5', source: { md5: '533c868f01169a3085177dffe5e768bb' }
 override :zlib, version: '1.2.11', source: { sha256: 'c3e5e9fdd5004dcb542feda5ee4f0ff0744628baf8ed2dd5d66f8ca1197cb1a1', url: 'https://zlib.net/zlib-1.2.11.tar.gz'}
 
