@@ -548,6 +548,7 @@ class Options(object):
         self.tenant_map = click.option(
             '-m',
             '--tenant-map',
+            type=click.Path(exists=True),
             help=helptexts.TENANT_MAP
         )
 
@@ -1562,6 +1563,7 @@ class Options(object):
             '-i',
             '--input-path',
             required=True,
+            type=click.Path(exists=True),
             help=helptexts.IMPORT_SECRETS
         )
 

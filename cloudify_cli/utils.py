@@ -16,6 +16,7 @@
 
 import os
 import sys
+import json
 import click
 import errno
 import string
@@ -396,3 +397,32 @@ def insert_dotted_key_to_dict(dest_dict, key, value):
         dest_dict.setdefault(item, {})
         dest_dict = dest_dict[item]
     dest_dict.setdefault(key_path[-1], value)
+
+
+def assert_one_argument(arguments):
+    """Asserts exactly one argument in a dictionary of
+    {argument_name: argument} is not null or False, else raises an error
+    """
+    one_argument = 0
+    for argument in arguments.values():
+        if argument:
+            one_argument += 1
+            if one_argument > 1:
+                break
+    if one_argument != 1:
+        raise CloudifyCliError('Please provide one of the options: '
+                               '{0}'.format(arguments.keys()))
+
+
+def load_json(input_path):
+    if not input_path:
+        return
+    with open(input_path) as json_file:
+        json_content = json.load(json_file)
+    return json_content
+
+
+def print_dict(keys_dict):
+    for key, values in keys_dict.items():
+        str_values = [str(value) for value in values]
+        print('{0}: {1}'. format(key, str_values))
