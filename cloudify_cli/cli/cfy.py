@@ -84,6 +84,22 @@ class MutuallyExclusiveOption(click.Option):
             ctx, opts, args)
 
 
+class SingularOption(click.Option):
+    """Allows an option to be used only once per command.
+     """
+    def __init__(self, *args, **kwargs):
+        kwargs['multiple'] = True
+        super(SingularOption, self).__init__(*args, **kwargs)
+
+    def type_cast_value(self, ctx, value):
+        values = super(SingularOption, self).type_cast_value(ctx, value)
+        if len(values) > 1:
+            raise click.UsageError(
+                'Illegal usage: `{0}` can be used only once.'.format(self.name)
+            )
+        return values[0]
+
+
 def _format_version_data(version_data,
                          prefix=None,
                          suffix=None,
@@ -1437,13 +1453,14 @@ class Options(object):
             help=helptexts.OPERATION_TIMEOUT.format(default))
 
     @staticmethod
-    def deployment_id(required=False, validate=False):
+    def deployment_id(required=False, validate=False, singular=False):
+        kwargs = {'cls': SingularOption} if singular else {}
         return click.option(
             '-d',
             '--deployment-id',
             required=required,
             help=helptexts.DEPLOYMENT_ID,
-            callback=_get_validate_callback(validate))
+            callback=_get_validate_callback(validate), **kwargs)
 
     @staticmethod
     def snapshot_id(required=False, validate=False):

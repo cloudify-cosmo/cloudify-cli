@@ -165,7 +165,7 @@ def manager_list(
 @cfy.command(name='start',
              short_help='Execute a workflow')
 @cfy.argument('workflow-id')
-@cfy.options.deployment_id(required=True)
+@cfy.options.deployment_id(required=True, singular=True)
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
 @cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
