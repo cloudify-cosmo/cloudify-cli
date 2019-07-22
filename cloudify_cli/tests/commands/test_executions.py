@@ -106,6 +106,14 @@ class ExecutionsTest(CliCommandTest):
         finally:
             executions.wait_for_execution = original_wait_for
 
+    def test_executions_start_multiple_deployments(self):
+        outcome = self.invoke(
+            'cfy executions start mock_wf -d dep1 -d dep2',
+            exception=SystemExit,
+            err_str_segment='2'  # Exit code
+        )
+        self.assertIn('`deployment_id` can be used only once', outcome.output)
+
     def test_local_execution_default_param(self):
         self._init_local_env()
         self._assert_outputs({'param': 'null'})
