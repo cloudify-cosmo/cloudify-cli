@@ -1,6 +1,6 @@
-import inspect
 import os
 import shutil
+import inspect
 import tempfile
 
 from mock import MagicMock, PropertyMock, patch, Mock
@@ -146,6 +146,7 @@ class PluginsUpdateTest(CliCommandTest):
             }))
         outcome = self.invoke('cfy plugins get-update asdf')
         self.assertEqual(2, outcome.output.count('asdf'))
+        self.assertNotRegex('(?i)error|fail', outcome.output)
 
     def test_plugins_list(self):
         _plugins = MockListResponse([
@@ -157,6 +158,7 @@ class PluginsUpdateTest(CliCommandTest):
         outcome = self.invoke('cfy plugins history')
         self.assertIn('asdf', outcome.output)
         self.assertIn('fdsa', outcome.output)
+        self.assertNotRegex('(?i)error|fail', outcome.output)
 
     def test_plugins_list_of_blueprint(self):
         plugins_updates = [
