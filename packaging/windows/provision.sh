@@ -91,7 +91,7 @@ export AWS_ACCESS_KEY_ID=$3
 export AWS_ACCESS_KEY=$4
 export REPO=$5
 export BRANCH=$6
-export CORE_TAG_NAME="5.0.0"
+export CORE_TAG_NAME="5.0.5.dev1"
 export CORE_BRANCH="master"
 
 curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
