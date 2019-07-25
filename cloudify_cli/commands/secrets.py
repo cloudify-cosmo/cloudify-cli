@@ -177,14 +177,14 @@ def import_secrets(passphrase,
     assert_one_argument({'passphrase': passphrase,
                          'non_encrypted': non_encrypted})
     secrets_list = load_json(input_path)
-    tenant_map_dict = load_json(tenant_map)
+    tenant_map = load_json(tenant_map)
     logger.info('Importing secrets to Manager')
     response = client.secrets.import_secrets(
         secrets_list=secrets_list,
-        tenant_map_dict=tenant_map_dict,
+        tenant_map=tenant_map,
         passphrase=passphrase,
         override_collisions=override_collisions)
-    _print_import_response(response, logger)
+    _print_import_response(response, logger, override_collisions)
 
 
 @secrets.command(name='update', short_help='Update an existing secret')
@@ -333,15 +333,16 @@ def _get_secret_string(secret_file, secret_string):
     return secret_string
 
 
-def _print_import_response(response, logger):
+def _print_import_response(response, logger, override_collisions):
     logger.info('Secrets imported')
-    if response['overridden_secrets']:
-        logger.info('Please note that the following secrets were overridden:')
-        print_dict(response['overridden_secrets'])
-    elif response['colliding_secrets']:
-        logger.info('Please note that the following secrets were not created'
-                    ' because they collided with existing secrets in the '
-                    'mentioned tenant:')
+    if response['colliding_secrets']:
+        if override_collisions:
+            logger.info('Please note that the following secrets were '
+                        'overridden:')
+        else:
+            logger.info('Please note that the following secrets were not '
+                        'created because they collided with existing'
+                        ' secrets in the mentioned tenant:')
         print_dict(response['colliding_secrets'])
     if response['secrets_errors']:
         _print_secrets_errors(response['secrets_errors'], logger)
