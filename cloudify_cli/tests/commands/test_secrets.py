@@ -162,6 +162,5 @@ class SecretsTest(CliCommandTest):
     def test_secrets_import_encryption_given(self):
         os.system('touch secrets.json')
         self.invoke('cfy secrets import -i secrets.json',
-                    err_str_segment="Please provide one of the options:"
-                                    " ['non_encrypted', 'passphrase']")
+                    err_str_segment="Please provide one of the options:")
         os.system('rm secrets.json')
