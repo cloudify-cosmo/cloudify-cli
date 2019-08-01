@@ -148,6 +148,7 @@ def export(tenant_name,
         logger.info('No password was given, the secrets are not encrypted')
     logger.info('The secrets` file was saved to {}'.format(output_path))
 
+
 @secrets.command(name='import',
                  short_help='Import secrets from a file to the Manager')
 @cfy.options.encryption_passphrase
