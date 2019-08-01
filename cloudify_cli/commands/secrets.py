@@ -173,7 +173,6 @@ def import_secrets(passphrase,
                    client):
     """Import secrets from a file to the Manager
     """
-
     assert_one_argument({'passphrase': passphrase,
                          'non_encrypted': non_encrypted})
     secrets_list = load_json(input_path)
@@ -343,7 +342,7 @@ def _print_import_response(response, logger, override_collisions):
             logger.info('Please note that the following secrets were not '
                         'created because they collided with existing'
                         ' secrets in the mentioned tenant:')
-        print_dict(response['colliding_secrets'])
+        print_dict(response['colliding_secrets'], logger)
     if response['secrets_errors']:
         _print_secrets_errors(response['secrets_errors'], logger)
 
@@ -358,6 +357,6 @@ def _print_secrets_errors(secrets_errors_dict, logger):
     for key, secret_errors in secrets_errors_list:
         print('\n\tSecret {0}:'.format(int(key) + 1))
         for attr, error in secret_errors.items():
-            if attr == 'missing secret attributes':
+            if attr == 'missing secret fields':
                 error = [str(param) for param in error]
             print('\t\t{0}: {1}'.format(attr, error))
