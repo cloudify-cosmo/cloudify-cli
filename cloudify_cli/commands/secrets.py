@@ -24,9 +24,12 @@ from .. import utils
 from ..cli import cfy
 from ..exceptions import CloudifyCliError
 from ..table import print_data, print_details
-from ..utils import (handle_client_error,
-                     prettify_client_error,
-                     validate_visibility)
+from ..utils import (load_json,
+                     print_dict,
+                     validate_visibility,
+                     assert_one_argument,
+                     handle_client_error,
+                     prettify_client_error)
 
 SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'visibility',
                    'tenant_name', 'created_by', 'is_hidden_value']
@@ -133,7 +136,8 @@ def export(tenant_name,
            output_path):
     """Export secrets from the Manager to a file
     """
-    _mention_encryption(passphrase, non_encrypted)
+    assert_one_argument({'passphrase': passphrase,
+                         'non_encrypted': non_encrypted})
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
     secrets_list = client.secrets.export(visibility=visibility,
@@ -169,18 +173,17 @@ def import_secrets(passphrase,
                    client):
     """Import secrets from a file to the Manager
     """
-    _mention_encryption(passphrase, non_encrypted)
-    tenant_map_dict = None
-    secrets_list = _get_imported_secrets_list(input_path)
-    if tenant_map:
-        tenant_map_dict = _get_tenant_map(tenant_map)
-    logger.info('Creating imported secrets...')
+    assert_one_argument({'passphrase': passphrase,
+                         'non_encrypted': non_encrypted})
+    secrets_list = load_json(input_path)
+    tenant_map = load_json(tenant_map)
+    logger.info('Importing secrets to Manager')
     response = client.secrets.import_secrets(
         secrets_list=secrets_list,
-        tenant_map_dict=tenant_map_dict,
+        tenant_map=tenant_map,
         passphrase=passphrase,
         override_collisions=override_collisions)
-    _print_import_response(response, logger)
+    _print_import_response(response, logger, override_collisions)
 
 
 @secrets.command(name='update', short_help='Update an existing secret')
@@ -329,38 +332,17 @@ def _get_secret_string(secret_file, secret_string):
     return secret_string
 
 
-def _get_imported_secrets_list(input_path):
-    if input_path:
-        if not os.path.exists(input_path):
-            raise CloudifyCliError('Failed to import secrets file. '
-                                   'File does not exist: '
-                                   '{0}'.format(input_path))
-    with open(input_path) as secrets_file:
-        secrets_list = json.load(secrets_file)
-    return secrets_list
-
-
-def _get_tenant_map(tenant_map_path):
-    if tenant_map_path:
-        if not os.path.exists(tenant_map_path):
-            raise CloudifyCliError('Failed to import tenant map file. '
-                                   'File does not exist: '
-                                   '{0}'.format(tenant_map_path))
-    with open(tenant_map_path) as tenant_map_file:
-        tenant_map_dict = json.load(tenant_map_file)
-    return tenant_map_dict
-
-
-def _print_import_response(response, logger):
+def _print_import_response(response, logger, override_collisions):
     logger.info('Secrets imported')
-    if response['overridden_secrets']:
-        logger.info('Please note that the following secrets were overridden:')
-        _print_dict(response['overridden_secrets'])
-    elif response['colliding_secrets']:
-        logger.info('Please note that the following secrets were not created'
-                    ' because they collided with existing secrets in the '
-                    'mentioned tenant:')
-        _print_dict(response['colliding_secrets'])
+    if response['colliding_secrets']:
+        if override_collisions:
+            logger.info('Please note that the following secrets were '
+                        'overridden:')
+        else:
+            logger.info('Please note that the following secrets were not '
+                        'created because they collided with existing'
+                        ' secrets in the mentioned tenant:')
+        print_dict(response['colliding_secrets'], logger)
     if response['secrets_errors']:
         _print_secrets_errors(response['secrets_errors'], logger)
 
@@ -369,25 +351,12 @@ def _print_secrets_errors(secrets_errors_dict, logger):
     secrets_errors_list = [(key, secrets_errors_dict[key]) for key
                            in sorted(secrets_errors_dict.keys(),
                                      key=lambda x: int(x))]
-    logger.info('\nPlease note the following secrets were not created due'
-                ' to the the errors mentioned for each secret. The secrets'
+    logger.info('\nPlease note the following secrets were not imported due'
+                ' to the the errors mentioned for each secret. The secrets`'
                 ' number refer to their position in the imported list:')
     for key, secret_errors in secrets_errors_list:
         print('\n\tSecret {0}:'.format(int(key) + 1))
-        for attr, error in secret_errors.iteritems():
-            if attr == 'missing secret attributes':
+        for attr, error in secret_errors.items():
+            if attr == 'missing secret fields':
                 error = [str(param) for param in error]
             print('\t\t{0}: {1}'.format(attr, error))
-
-
-def _mention_encryption(passphrase, non_encrypted):
-    if (not passphrase) and (not non_encrypted):
-        raise CloudifyCliError('Please provide a passphrase if you wish to'
-                               ' encrypt the secrets values or otherwise,'
-                               ' specify `--non-encrypted`')
-
-
-def _print_dict(keys_dict):
-    for tenant_name, keys in keys_dict.iteritems():
-        str_keys = [str(key) for key in keys]
-        print('{0}: {1}'. format(tenant_name, str_keys))

@@ -149,3 +149,18 @@ class SecretsTest(CliCommandTest):
         self.assertIn('_search', call_args[1])
         self.assertEqual(call_args[1]['_search'], 'key')
         os.system('rm secrets.json')
+
+    def test_secrets_import_mutually_exclusive_passphrase_non_encrypted(self):
+        outcome = self.invoke('cfy secrets import -p 12345678'
+                              ' --non-encrypted',
+                              err_str_segment='2',
+                              exception=SystemExit)
+        self.assertIn(
+            '`non_encrypted` is mutually exclusive with arguments:'
+            ' [passphrase]', outcome.output)
+
+    def test_secrets_import_encryption_given(self):
+        os.system('touch secrets.json')
+        self.invoke('cfy secrets import -i secrets.json',
+                    err_str_segment="Please provide one of the options:")
+        os.system('rm secrets.json')

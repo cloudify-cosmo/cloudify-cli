@@ -43,15 +43,15 @@ ENABLE_COLORS = "Enable colors in logger (use --hard when working with" \
 OUTPUT_PATH = "The local path to download to."
 INPUT_PATH = 'The local path to download from.'
 IMPORT_SECRETS = 'The local path to the secrets file. ' \
-                 'The secrets file should be a json format, for example:\n' \
+                 'The secrets file should be a json format, i.e:\n' \
                  '[\n'\
                  '{\n'\
                  '\"key\":\"key\",\n'\
                  '\"value\":\"value\",\n'\
                  '\"tenant_name\":\"tenant_name\",\n'\
                  '\"visibility\":\"tenant\",\n'\
-                 '\"is_hidden_value\": \"False\",\n'\
-                 '\"encrypted\": false"\n'\
+                 '\"is_hidden_value\": false,\n'\
+                 '\"encrypted\": false\n'\
                  '}\n'\
                  ']'
 
@@ -59,7 +59,7 @@ OVERRIDE_COLLISIONS = 'If a certain key already exists in the destination' \
                       ' manager, its value will be updated with the new' \
                       ' imported value.'
 TENANT_MAP = 'The path to a json file containing a dictionary of' \
-             ' (source_tenant : destination_tenant) pairs. for example:\n' \
+             ' (source_tenant : destination_tenant) pairs. i.e:\n' \
              '{\"source_tenant\":\"destination_tenant\"}'
 ALL_NODES = "Perform operation on all cluster nodes"
 BLUEPRINT_FILENAME = (
