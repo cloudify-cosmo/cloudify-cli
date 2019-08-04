@@ -65,8 +65,10 @@ def restore(snapshot_id,
         no_reboot,
         ignore_plugin_failure
     )
-    logger.info("Started workflow execution. The execution's id is {0}".format(
-        execution.id))
+    logger.info("Started workflow execution. The execution's id is {0}. "
+                "You can use `cfy snapshots status` to check for the "
+                "restore status.".format(execution.id))
+
     if not restore_certificates:
         return
     if no_reboot:
@@ -117,7 +119,7 @@ def create(snapshot_id,
                                         not exclude_events,
                                         queue)
     started_log_msg = "Started workflow execution. The execution's id is" \
-                      " {0}".format(execution.id)
+                      " {0}.".format(execution.id)
     queued_log_msg = '`queue` flag was passed, snapshot creation will start' \
                      ' automatically when possible. Execution id:' \
                      ' {0}'.format(execution.id)
@@ -231,3 +233,18 @@ def list(sort_by,
     print_data(SNAPSHOT_COLUMNS, snapshots, 'Snapshots:')
     total = snapshots.metadata.pagination.total
     logger.info('Showing {0} of {1} snapshots'.format(len(snapshots), total))
+
+
+@snapshots.command(name='status',
+                   short_help='Show the status of the snapshot restore '
+                              'workflow [manager only]')
+@cfy.options.common_options
+@cfy.pass_client()
+@cfy.pass_logger
+def status(logger, client):
+    """
+    Return the status of the `restore_snapshot` workflow.
+    """
+    logger.info('Retrieving snapshot restore status...')
+    status = client.snapshots.get_snapshot_status()
+    logger.info(status['status'])
