@@ -246,5 +246,5 @@ def status(logger, client):
     Return the status of the `restore_snapshot` workflow.
     """
     logger.info('Retrieving snapshot restore status...')
-    status = client.snapshots.get_snapshot_status()
+    status = client.snapshots.get_status()
     logger.info(status['status'])
