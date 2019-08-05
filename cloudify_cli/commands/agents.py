@@ -35,7 +35,7 @@ from ..table import print_data
 
 _NODE_INSTANCE_STATE_STARTED = 'started'
 AGENT_COLUMNS = ['id', 'ip', 'deployment', 'node', 'system', 'version',
-                 'install_method']
+                 'install_method', 'tenant_name']
 
 MAX_TRACKER_THREADS = 20
 
@@ -53,12 +53,14 @@ def agents():
                 short_help='List installed agents [manager only]')
 @cfy.options.common_options
 @cfy.options.agent_filters
+@cfy.options.all_tenants
 @cfy.pass_logger
 @cfy.pass_client()
-def agents_list(agent_filters, client, logger):
-    agents = client.agents.list(**agent_filters)
+def agents_list(agent_filters, client, logger, all_tenants):
+    agent_filters['_all_tenants'] = all_tenants
+    agent_list = client.agents.list(**agent_filters)
     logger.info('Listing agents...')
-    print_data(AGENT_COLUMNS, agents, 'Agents:')
+    print_data(AGENT_COLUMNS, agent_list, 'Agents:')
 
 
 @agents.command(name='install',
