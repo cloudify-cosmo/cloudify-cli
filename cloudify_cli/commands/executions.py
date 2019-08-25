@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2019 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -40,8 +40,9 @@ BASE_EXECUTION_COLUMNS = ['id', 'workflow_id', 'status_display']
 LOCAL_EXECUTION_COLUMNS = BASE_EXECUTION_COLUMNS + [
     'blueprint_id', 'started_at', 'ended_at', 'error']
 FULL_EXECUTION_COLUMNS = BASE_EXECUTION_COLUMNS + [
-    'is_dry_run', 'deployment_id', 'created_at', 'ended_at', 'error',
-    'visibility', 'tenant_name', 'created_by', 'started_at', 'scheduled_for']
+    'is_dry_run', 'deployment_id', 'blueprint_id', 'created_at', 'ended_at',
+    'error', 'visibility', 'tenant_name', 'created_by', 'started_at',
+    'scheduled_for']
 MINIMAL_EXECUTION_COLUMNS = BASE_EXECUTION_COLUMNS + [
     'is_dry_run', 'deployment_id', 'created_at', 'started_at', 'scheduled_for',
     'visibility', 'tenant_name', 'created_by']
