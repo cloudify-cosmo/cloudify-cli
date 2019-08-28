@@ -340,7 +340,7 @@ QUEUE_EXECUTIONS = 'If set, executions that can`t currently run will be '\
 SCHEDULE_EXECUTIONS = 'The time (including timezone) this workflow will be' \
                       ' executed at; expected format: YYYYMMDDHHMM+HHMM or ' \
                       'YYYYMMDDHHMM-HHMM. e.g.: 201801182230-0500' \
-                      ' (Jan-01-18 10:30pm EST)'
+                      ' (18th January 2018 10:30pm EST)'
 
 _MULTIPLE_TIMES_FRAGMENT = ' (can be passed multiple times, ' \
                            'or comma-separated)'
