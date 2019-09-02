@@ -1240,6 +1240,13 @@ class Options(object):
             callback=self.parse_comma_separated
         )
 
+        self.runtime_only_evaluation = click.option(
+            '--runtime-only-evaluation',
+            is_flag=True,
+            default=False,
+            required=False,
+            help=helptexts.RUNTIME_ONLY_EVALUATION)
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 

@@ -382,3 +382,8 @@ PORT = "A non-default network port to use for this component."
 NON_ENCRYPTED = "Use this flag for none encrypted secrets' values."
 RAW_JSON = "If set, then output the manager status in a JSON format"
 NODE_ID = "Cloudify's auto-generated node id."
+
+RUNTIME_ONLY_EVALUATION = "If set, all intrinsic functions will only be "\
+                          "evaluated at runtime, and no intrinsic functions "\
+                          "will be evaluated at parse time (such as "\
+                          "get_input, get_property)"
