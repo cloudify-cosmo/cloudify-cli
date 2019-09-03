@@ -76,7 +76,7 @@ begin
   if Errorcode <> 0 then
     Result := False
     Exit;
-  Exec(Expandconstant('{app}\embedded\Scripts\pip.exe'), 'install --upgrade pip==9.0.1', Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
+  Exec(Expandconstant('{app}\embedded\python.exe'), '-m pip install --upgrade pip==9.0.1', Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
   if Errorcode <> 0 then
     Result := False
   else
