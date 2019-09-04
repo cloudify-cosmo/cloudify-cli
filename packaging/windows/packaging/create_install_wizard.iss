@@ -136,7 +136,7 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then begin
-    if not (runPipSetup and runWheelsInstall and updateConfigYaml) then
+    if not (runPipSetup and runWheelsInstall) then
       RaiseException(errUnexpected);
   end;
 end;
