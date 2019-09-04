@@ -287,6 +287,7 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
 @cfy.options.skip_reinstall
 @cfy.options.ignore_failure
 @cfy.options.install_first
+@cfy.options.update_executions
 @cfy.options.preview
 @cfy.options.dont_update_plugins
 @cfy.options.force(help=helptexts.FORCE_UPDATE)
@@ -322,7 +323,8 @@ def manager_update(ctx,
                    tenant_name,
                    blueprint_id,
                    visibility,
-                   validate):
+                   validate,
+                   update_executions):
     """Update a specified deployment according to the specified blueprint.
     The blueprint can be supplied as an id of a blueprint that already exists
     in the system (recommended).
@@ -398,7 +400,8 @@ def manager_update(ctx,
             install_first,
             reinstall_list,
             preview,
-            not dont_update_plugins
+            not dont_update_plugins,
+            update_executions=update_executions
         )
 
     if preview:

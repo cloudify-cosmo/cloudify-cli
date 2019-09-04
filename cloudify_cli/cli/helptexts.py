@@ -372,3 +372,6 @@ NETWORKS = "Networks as a JSON string or as '\'net1=ip1;net2=ip2\'). " \
 
 PORT = "A non-default network port to use for this component."
 NON_ENCRYPTED = "Use this flag for none encrypted scerets' values."
+
+UPDATE_EXECUTIONS = "If set, the deployment update will also update stored " \
+    "operations of unfinished executions."
