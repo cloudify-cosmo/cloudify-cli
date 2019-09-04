@@ -1,201 +1,213 @@
-Apache License
-                           Version 2.0, January 2004
-                        http://www.apache.org/licenses/
+                           Cloudify Software License Agreement
 
-   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+IMPORTANT -- READ CAREFULLY THE FOLLOWING TERMS AND CONDITIONS
+(THESE "TERMS") BEFORE INSTALLING THE CLOUDIFY SOFTWARE
+("SOFTWARE"). BY INSTALLING THE CLOUDIFY SOFTWARE, YOU AGREE TO
+BE BOUND BY THESE TERMS. IF YOU DO NOT AGREE TO THE TERMS OF
+THIS LICENSE, DO NOT USE OR INSTALL THE SOFTWARE. DO NOT
+INSTALL OR USE THE SOFTWARE UNTIL YOU HAVE CAREFULLY READ,
+UNDERSTOOD, AND AGREED TO THESE TERMS.
+   FURTHERMORE, YOU HEREBY WAIVE ANY RIGHTS OR REQUIREMENTS UNDER
+ANY LAWS OR REGULATIONS IN ANY JURISDICTION WHICH REQUIRE AN
+ORIGINAL (NON-ELECTRONIC) SIGNATURE OR DELIVERY OR RETENTION
+OF NON-ELECTRONIC RECORDS, TO THE EXTENT PERMITTED UNDER
+APPLICABLE LAW.
+   THESE TERMS CONSTITUTE THE COMPLETE AND EXCLUSIVE STATEMENT OF
+THE AGREEMENT BETWEEN YOU, OR THE COMPANY ON WHOSE BEHALF YOU
+ARE INSTALLING THE SOFTWARE, ("YOU") AND CLOUDIFY PLATFORM LTD.
+("CLOUDIFY"), WHICH SUPERSEDES ANY PROPOSAL OR PRIOR AGREEMENT,
+ORAL OR WRITTEN, AND ANY OTHER COMMUNICATION RELATING TO THE
+SUBJECT MATTER OF THESE TERMS. YOU ASSUME ALL RESPONSIBILITY
+FOR THE SELECTION OF THE SOFTWARE TO ACHIEVE YOUR INTENDED
+RESULTS AND FOR THE INSTALLATION, USE AND RESULTS OBTAINED
+FROM THE SOFTWARE.
 
-   1. Definitions.
+Cloudify reserves the right, at its discretion, to change these Terms at any
+time. Such change will be effective ten (10) days following posting of the
+revised Terms on https://cloudify.co/license, and your continued use of the
+Software thereafter means that you accept those changes.
 
-      "License" shall mean the terms and conditions for use, reproduction,
-      and distribution as defined by Sections 1 through 9 of this document.
+1. GRANT OF LICENSE. Subject to the terms and conditions of these Terms,
+   Cloudify grants you a limited, personal, nonexclusive, nontransferable,
+   non-sublicensable license to use, only in binary executable form and script
+   code form only, the Software, for your internal business purposes for up to
+   10 Nodes (as defined below) managed by Cloudify. Currently the license for
+   the Software granted hereunder is for free. The license for the Premium
+   Software granted hereunder is for free for the first 60 days from
+   installation, after which the pricing shall be as detailed on the Cloudify
+   website and as updated from time to time. Cloudify may in the future charge a
+   fee for certain uses (including but not limited to non-personal use).
+      If Cloudify does choose to charge, it will give you notice by posting the
+   changes on its website, and charges will only be incurred by you if you
+   explicitly consent. "Node" means a single installation of an operating system
+   running on a machine (virtual or physical) that is managed by Cloudify,
+   whether by installing the Cloudify agent on the node or by managing it
+   remotely.
 
-      "Licensor" shall mean the copyright owner or entity authorized by
-      the copyright owner that is granting the License.
+2. LICENSE RESTRICTIONS. The Software should be installed in accordance with
+   the instructions of Cloudify. You may not, nor permit anyone else to,
+   directly or indirectly:
+   (i)   distribute, rent, lease, market, sublicense, resell or otherwise
+         transfer the Software,
+   (ii)  copy or modify the Software either alone or in conjunction with any
+         other product or program,
+   (iii) decompile, disassemble or reverse engineer all or any portion of the
+         Software, except and only to the extent, that such activity is
+         expressly permitted by applicable law notwithstanding this limitation,
+   (iv)  integrate, bundle and/or combine the Software with your or any other
+         parties' product and/or software except for your internal usage,
+   (v)   remove any identification, including copyright, trademark, patent or
+         other notices, contained in or on the Software; (vi) use the Cloudify
+         name, logo or trademarks without prior written consent from Cloudify,
+   (vii) publish the results of any comparisons or other benchmarking activities
+         that you will conduct with the Software, either alone or in connection
+         with any other software or hardware without the prior written consent
+         of Cloudify, or
+   (viii) publish reviews of the Software without the prior written consent of
+         Cloudify. You agree that Cloudify may audit your use of the Software
+         for compliance with these Terms at any time, upon reasonable notice.
 
-      "Legal Entity" shall mean the union of the acting entity and all
-      other entities that control, are controlled by, or are under common
-      control with that entity. For the purposes of this definition,
-      "control" means (i) the power, direct or indirect, to cause the
-      direction or management of such entity, whether by contract or
-      otherwise, or (ii) ownership of fifty percent (50%) or more of the
-      outstanding shares, or (iii) beneficial ownership of such entity.
+3. OWNERSHIP; COPYRIGHT PROTECTION. The Software is licensed, not sold. As
+   between the parties, all title, ownership rights, and intellectual property
+   rights (including all copyrights, patents, trade secret rights and
+   trademarks) in and to the Software, including all documentation, shall remain
+   in Cloudify, its affiliates, or their respective suppliers and licensors.
+   Your possession, installation, or use of the Software does not transfer to
+   you any title to the intellectual property in the Software, and you will not
+   acquire any rights to the Software except as expressly set forth in these
+   Terms. These Terms do not give you any rights not expressly granted herein.
+   You may not copy the Software manual(s), on-line documentation, or any
+   written materials accompanying the Software. Any right not explicitly granted
+   to you is reserved to Cloudify or its licensors.
+      If you contact Cloudify with feedback data (e.g., questions, comments,
+   suggestions or the like) regarding the Software (collectively, "Information"),
+   such Information shall be deemed to be non-confidential, and Cloudify shall
+   have a non-exclusive, royalty-free, worldwide, perpetual license to use or
+   incorporate into the Software any such Information.
 
-      "You" (or "Your") shall mean an individual or Legal Entity
-      exercising permissions granted by this License.
+4. PRIVACY. Cloudify will use any personal information that it may collect or
+   obtain in connection with your use of the Software in accordance with
+   Cloudify's privacy policy which is available at:
+   https://cloudify.co/privacy-policy, and by using Cloudify you agree that
+   Cloudify may do so.
 
-      "Source" form shall mean the preferred form for making modifications,
-      including but not limited to software source code, documentation
-      source, and configuration files.
+5. UPDATES. These Terms apply to downloading, installing and using the
+   Software. Cloudify may from time to time revise or update its Software. Such
+   updates and revisions will be supplied according to Cloudify's then prevailing
+   policies, which may include automatic updating without any additional notice
+   to you.
 
-      "Object" form shall mean any form resulting from mechanical
-      transformation or translation of a Source form, including but
-      not limited to compiled object code, generated documentation,
-      and conversions to other media types.
+6. OPEN SOURCE SOFTWARE. The Software includes open source software
+   programs that are made available by Cloudify and other third parties under
+   their respective open source licenses ("Open Source Licenses"). Certain Open
+   Source Licenses and/or certain relevant provisions of such Open Source
+   Licenses   are listed in the Software notice.txt file. You are obligated to
+   comply with the applicable Open Source Licenses related to such open source
+   software programs. Open source software programs are governed solely by such
+   Open Source Licenses, including without limitation warranty and
+   indemnification, which will prevail over these Terms.
 
-      "Work" shall mean the work of authorship, whether in Source or
-      Object form, made available under the License, as indicated by a
-      copyright notice that is included in or attached to the work
-      (an example is provided in the Appendix below).
+7. TERM AND TERMINATION. These Terms shall continue until terminated as set
+   forth in this section. You may terminate these Terms at any time by removing
+   the Software from your system and destroying all copies of the Software and
+   documentation relating to the Software. Unauthorized copying of the Software
+   or otherwise failing to comply with these Terms will result in automatic
+   immediate termination of these Terms and will make available to Cloudify
+   legal remedies. Cloudify reserves the right to terminate these Terms and the
+   license granted hereunder at any time and without notice. Upon termination of
+   these Terms, the license granted herein will terminate and you:
+   (i)   will cease any and all rights to use the Software, and
+   (ii)  will remove the Software from all hard drives, networks and other
+         storage media and destroy all copies of the Software in your possession
+         or under your control. Upon Cloudify request you shall within three (3)
+         days certify destruction of, all full or partial copies of the
+         Software, documentation and related materials provided by Cloudify.
+   The provisions in the paragraphs above labeled LICENSE RESTRICTIONS,
+   OWNERSHIP; COPYRIGHT PROTECTION, OPEN SOURCE SOFTWARE, TERM
+   AND TERMINATION, INDEMNITY, LIMITATION OF LIABILITY AND
+   WARRANTY, and MISCELLANEOUS will survive any termination of these Terms.
 
-      "Derivative Works" shall mean any work, whether in Source or Object
-      form, that is based on (or derived from) the Work and for which the
-      editorial revisions, annotations, elaborations, or other modifications
-      represent, as a whole, an original work of authorship. For the purposes
-      of this License, Derivative Works shall not include works that remain
-      separable from, or merely link (or bind by name) to the interfaces of,
-      the Work and Derivative Works thereof.
+8. INDEMNITY. You agree that Cloudify shall have no liability whatsoever for any
+   use made of the Software by you or any third party. You hereby agree to
+   defend, indemnify and hold harmless Cloudify and its affiliates and their
+   respective officers, directors, agents and employees from any and all claims,
+   damages, liabilities, costs, and expenses (including attorney's fees) arising
+   from claims related to your use of the Software as well as from your failure
+   to comply with these Terms.
 
-      "Contribution" shall mean any work of authorship, including
-      the original version of the Work and any modifications or additions
-      to that Work or Derivative Works thereof, that is intentionally
-      submitted to Licensor for inclusion in the Work by the copyright owner
-      or by an individual or Legal Entity authorized to submit on behalf of
-      the copyright owner. For the purposes of this definition, "submitted"
-      means any form of electronic, verbal, or written communication sent
-      to the Licensor or its representatives, including but not limited to
-      communication on electronic mailing lists, source code control systems,
-      and issue tracking systems that are managed by, or on behalf of, the
-      Licensor for the purpose of discussing and improving the Work, but
-      excluding communication that is conspicuously marked or otherwise
-      designated in writing by the copyright owner as "Not a Contribution."
+9. LIMITATION OF LIABILITY AND WARRANTY. TO THE FULLEST EXTENT
+   PROVIDED BY LAW, THE SOFTWARE IS PROVIDED "AS IS" WITHOUT
+   WARRANTY OF ANY KIND. Cloudify, ITS AFFILIATES, SUBSIDIARIES
+   AND ITS THIRD PARTY LICENSORS DISCLAIM ANY WARRANTIES
+   REGARDING THE SECURITY, RELIABILITY, TIMELINESS, AND
+   PERFORMANCE OF THE SOFTWARE. Cloudify DOES NOT WARRANT THAT
+   THE SOFTWARE WILL OPERATE ERROR-FREE, THAT THE SOFTWARE IS
+   FREE OF COMPUTER VIRUSES OR OTHER HARMFUL MECHANISMS OR THAT
+   Cloudify WILL CORRECT ANY ERRORS IN THE SOFTWARE.
+   Cloudify DISCLAIMS ANY RESPONSIBILITY FOR ANY HARM RESULTING
+   FROM DOWNLOADING OR USING THE SOFTWARE.
+      Cloudify, ITS AFFILIATES, SUBSIDIARIES AND ITS THIRD
+   PARTY LICENSORS, IF ANY, DISCLAIM ALL WARRANTIES, EITHER
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO IMPLIED
+   WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+   PURPOSE AND NON-INFRINGEMENT, WITH RESPECT TO THE SOFTWARE.
+      IN NO EVENT SHALL Cloudify, ITS AFFILIATES, SUBSIDIARIES
+   OR ITS THIRD PARTY LICENSORS BE LIABLE FOR ANY DAMAGES
+   WHATSOEVER (INCLUDING, WITHOUT LIMITATION, DIRECT,
+   CONSEQUENTIAL, INDIRECT, SPECIAL, PUNITIVE OR INCIDENTAL
+   DAMAGES, OR DAMAGES FOR LOSS OF BUSINESS PROFITS, BUSINESS
+   INTERRUPTION, LOSS OF BUSINESS INFORMATION, NON-INFRINGEMENT
+   OF INTELLECTUAL PROPERTY RIGHTS OR OTHER PECUNIARY LOSS)
+   ARISING OUT OF THE USE OF OR INABILITY TO USE THE SOFTWARE,
+   EVEN IF Cloudify HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH
+   DAMAGES. YOU AGREE TO THE ALLOCATION OF LIABILITY RISK WHICH
+   IS SET FORTH IN THIS SECTION.
 
-      "Contributor" shall mean Licensor and any individual or Legal Entity
-      on behalf of whom a Contribution has been received by Licensor and
-      subsequently incorporated within the Work.
+10. GOVERNMENT USE. If you are part of an agency, department, or other entity
+   of the United States Government ("Government"), the use, duplication,
+   reproduction, release, modification, disclosure or transfer of the Software
+   is restricted in accordance with the Federal Acquisition Regulations as
+   applied to civilian agencies and the Defense Federal Acquisition Regulation
+   Supplement as applied to military agencies. The Software is a "commercial
+   item", "commercial computer software" and "commercial computer software
+   documentation". In accordance with such provisions, any use of the Software
+   by the Government shall be governed solely by the terms of these Terms.
 
-   2. Grant of Copyright License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      copyright license to reproduce, prepare Derivative Works of,
-      publicly display, publicly perform, sublicense, and distribute the
-      Work and such Derivative Works in Source or Object form.
+11. EXPORT CONTROLS. You acknowledge that the Software may be subject to
+   international rules that govern the export of software. You agree to comply
+   with all applicable international and national laws that apply to the
+   Software as well as end-user, end-use and destination restrictions issued by
+   national governments.
 
-   3. Grant of Patent License. Subject to the terms and conditions of
-      this License, each Contributor hereby grants to You a perpetual,
-      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
-      (except as stated in this section) patent license to make, have made,
-      use, offer to sell, sell, import, and otherwise transfer the Work,
-      where such license applies only to those patent claims licensable
-      by such Contributor that are necessarily infringed by their
-      Contribution(s) alone or by combination of their Contribution(s)
-      with the Work to which such Contribution(s) was submitted. If You
-      institute patent litigation against any entity (including a
-      cross-claim or counterclaim in a lawsuit) alleging that the Work
-      or a Contribution incorporated within the Work constitutes direct
-      or contributory patent infringement, then any patent licenses
-      granted to You under this License for that Work shall terminate
-      as of the date such litigation is filed.
+12. PUBLICITY. You agree that Cloudify and/or Cloudify may indicate that you are
+   a Software user, and use your company's name and/or trademarks in any
+   advertising or promotional materials or activities, including on its website.
 
-   4. Redistribution. You may reproduce and distribute copies of the
-      Work or Derivative Works thereof in any medium, with or without
-      modifications, and in Source or Object form, provided that You
-      meet the following conditions:
+13. MISCELLANEOUS. These Terms represent the complete agreement concerning
+   the Software between you and Cloudify and supersedes all prior agreements
+   and representations between you and Cloudify. If any provision of these
+   Terms is held to be unenforceable for any reason, such provision shall be
+   reformed only to the extent necessary to make it enforceable. Any waiver of
+   any provision of these Terms will be effective only if in writing and signed
+   by Cloudify. These Terms are personal to you and may not be assigned or
+   transferred for any reason whatsoever without the consent of Cloudify and any
+   action or conduct in violation of the foregoing shall be void and without
+   effect. Cloudify expressly reserves the right to assign these Terms and to
+   delegate any of its obligations hereunder. These Terms are governed by and
+   construed under the laws of the State of New York, excluding its conflicts of
+   law rules. You expressly agree that the exclusive jurisdiction for any claim
+   or action arising out of or relating to these Terms shall be applicable
+   courts located in New York County, NY, and you further agree and submit to
+   the exercise of personal jurisdiction of such courts for the purpose of
+   litigating any such claim or action. You hereby agree to service of process
+   in accordance with the rules of such courts. In any action or proceeding to
+   enforce rights under these Terms, the prevailing party shall be entitled to
+   recover costs and attorneys' fees.
 
-      (a) You must give any other recipients of the Work or
-          Derivative Works a copy of this License; and
+YOU EXPRESSLY ACKNOWLEDGE THAT YOU HAVE READ THESE TERMS AND
+UNDERSTAND THE RIGHTS, OBLIGATIONS, TERMS AND CONDITIONS SET
+FORTH HEREIN. BY CLICKING ON THE AGREE BUTTON AND/OR CONTINUING
+TO INSTALL OR USE THE SOFTWARE, YOU EXPRESSLY CONSENT TO BE
+BOUND BY THESE TERMS.
 
-      (b) You must cause any modified files to carry prominent notices
-          stating that You changed the files; and
-
-      (c) You must retain, in the Source form of any Derivative Works
-          that You distribute, all copyright, patent, trademark, and
-          attribution notices from the Source form of the Work,
-          excluding those notices that do not pertain to any part of
-          the Derivative Works; and
-
-      (d) If the Work includes a "NOTICE" text file as part of its
-          distribution, then any Derivative Works that You distribute must
-          include a readable copy of the attribution notices contained
-          within such NOTICE file, excluding those notices that do not
-          pertain to any part of the Derivative Works, in at least one
-          of the following places: within a NOTICE text file distributed
-          as part of the Derivative Works; within the Source form or
-          documentation, if provided along with the Derivative Works; or,
-          within a display generated by the Derivative Works, if and
-          wherever such third-party notices normally appear. The contents
-          of the NOTICE file are for informational purposes only and
-          do not modify the License. You may add Your own attribution
-          notices within Derivative Works that You distribute, alongside
-          or as an addendum to the NOTICE text from the Work, provided
-          that such additional attribution notices cannot be construed
-          as modifying the License.
-
-      You may add Your own copyright statement to Your modifications and
-      may provide additional or different license terms and conditions
-      for use, reproduction, or distribution of Your modifications, or
-      for any such Derivative Works as a whole, provided Your use,
-      reproduction, and distribution of the Work otherwise complies with
-      the conditions stated in this License.
-
-   5. Submission of Contributions. Unless You explicitly state otherwise,
-      any Contribution intentionally submitted for inclusion in the Work
-      by You to the Licensor shall be under the terms and conditions of
-      this License, without any additional terms or conditions.
-      Notwithstanding the above, nothing herein shall supersede or modify
-      the terms of any separate license agreement you may have executed
-      with Licensor regarding such Contributions.
-
-   6. Trademarks. This License does not grant permission to use the trade
-      names, trademarks, service marks, or product names of the Licensor,
-      except as required for reasonable and customary use in describing the
-      origin of the Work and reproducing the content of the NOTICE file.
-
-   7. Disclaimer of Warranty. Unless required by applicable law or
-      agreed to in writing, Licensor provides the Work (and each
-      Contributor provides its Contributions) on an "AS IS" BASIS,
-      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-      implied, including, without limitation, any warranties or conditions
-      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
-      PARTICULAR PURPOSE. You are solely responsible for determining the
-      appropriateness of using or redistributing the Work and assume any
-      risks associated with Your exercise of permissions under this License.
-
-   8. Limitation of Liability. In no event and under no legal theory,
-      whether in tort (including negligence), contract, or otherwise,
-      unless required by applicable law (such as deliberate and grossly
-      negligent acts) or agreed to in writing, shall any Contributor be
-      liable to You for damages, including any direct, indirect, special,
-      incidental, or consequential damages of any character arising as a
-      result of this License or out of the use or inability to use the
-      Work (including but not limited to damages for loss of goodwill,
-      work stoppage, computer failure or malfunction, or any and all
-      other commercial damages or losses), even if such Contributor
-      has been advised of the possibility of such damages.
-
-   9. Accepting Warranty or Additional Liability. While redistributing
-      the Work or Derivative Works thereof, You may choose to offer,
-      and charge a fee for, acceptance of support, warranty, indemnity,
-      or other liability obligations and/or rights consistent with this
-      License. However, in accepting such obligations, You may act only
-      on Your own behalf and on Your sole responsibility, not on behalf
-      of any other Contributor, and only if You agree to indemnify,
-      defend, and hold each Contributor harmless for any liability
-      incurred by, or claims asserted against, such Contributor by reason
-      of your accepting any such warranty or additional liability.
-
-   END OF TERMS AND CONDITIONS
-
-   APPENDIX: How to apply the Apache License to your work.
-
-      To apply the Apache License to your work, attach the following
-      boilerplate notice, with the fields enclosed by brackets "{}"
-      replaced with your own identifying information. (Don't include
-      the brackets!)  The text should be enclosed in the appropriate
-      comment syntax for the file format. We also recommend that a
-      file or class name and description of purpose be included on the
-      same "printed page" as the copyright notice for easier
-      identification within third-party archives.
-
-   Copyright 2015 GigaSpaces Technologies TLD
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License.
+Last Revised: August 30, 2018
