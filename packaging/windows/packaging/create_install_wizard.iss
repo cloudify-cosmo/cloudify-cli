@@ -69,13 +69,9 @@ var
   GetPipArgs: String;
   ErrorCode: Integer;
 begin
-  GetPipArgs := '-m ensurepip';
   Log('Installting pip..');
   Exec(Expandconstant('{app}\embedded\python.exe'), '-m pip install --upgrade pip==9.0.1', Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
-  if Errorcode <> 0 then
-    Result := False
-  else
-    Result := True;
+  Result := True;
   Log('Installation of pip return code: ' + IntToStr(ErrorCode));
 end;
 
@@ -136,7 +132,7 @@ end;
 procedure CurStepChanged(CurStep: TSetupStep);
 begin
   if CurStep = ssPostInstall then begin
-    if not (runPipSetup and runWheelsInstall) then
+    if not (runPipSetup and runWheelsInstall and updateConfigYaml) then
       RaiseException(errUnexpected);
   end;
 end;
