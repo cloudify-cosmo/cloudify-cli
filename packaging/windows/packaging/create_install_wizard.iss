@@ -66,7 +66,6 @@ const
 
 function runPipSetup(): Boolean;
 var
-  GetPipArgs: String;
   ErrorCode: Integer;
 begin
   Log('Installting pip..');
