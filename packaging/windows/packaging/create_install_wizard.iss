@@ -71,7 +71,10 @@ var
 begin
   Log('Installting pip..');
   Exec(Expandconstant('{app}\embedded\python.exe'), '-m pip install --upgrade pip==9.0.1', Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
-  Result := True;
+  if (Errorcode = 0) or (Errorcode = 2) then
+    Result := True
+  else
+    Result := False;
   Log('Installation of pip return code: ' + IntToStr(ErrorCode));
 end;
 
