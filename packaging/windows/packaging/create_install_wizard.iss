@@ -2,8 +2,8 @@
 #define AppVersion GetEnv('VERSION')
 #define AppMilestone GetEnv('PRERELEASE')
 #define AppBuild GetEnv('BUILD')
-#define AppPublisher "Cloudify Platform"
-#define AppURL "https://cloudify.co/"
+#define AppPublisher "GigaSpaces Technologies"
+#define AppURL "http://getcloudify.org/"
 #define PluginsTagName GetEnv('PLUGINS_TAG_NAME')
 #define CoreTagName GetEnv('CORE_TAG_NAME')
 
@@ -69,14 +69,13 @@ var
   GetPipArgs: String;
   ErrorCode: Integer;
 begin
-  GetPipArgs := '-m pip install --upgrade pip==9.0.1';
+  GetPipArgs := '-m ensurepip';
   Exec(Expandconstant('{app}\embedded\python.exe'), GetPipArgs, Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
   Log('Installting pip return code: ' + IntToStr(ErrorCode));
-  //Pip seems to return errorcode 2 when it's not clean install
-  if (Errorcode = 0) or (Errorcode = 2) then
-    Result := True
+  if Errorcode <> 0 then
+    Result := False
   else
-    Result := False;
+    Result := True;
 end;
 
 
@@ -108,14 +107,14 @@ var
 begin
   ConfigYamlPath := Expandconstant('{%HOMEPATH}\.cloudify\config.yaml')
   ExtractTemporaryFile('import_resolver.yaml');
-  
   Status := LoadStringsFromFile(ExpandConstant('{tmp}\import_resolver.yaml'), MappingStrings);
+
   if not Status then
   begin
     Result := False;
     Exit;
   end;
-  
+
   for Index := 0 to GetArrayLength(MappingStrings) - 1 do
   begin
     // setting the path to cloudify dir path
@@ -126,10 +125,9 @@ begin
     // replacing the end line from linux to both windows and linux
     StringChangeEx(MappingStrings[Index], LF, CRLF, False);
   end;
-  
   Log('Saving new config: ' + ConfigYamlPath);
-  CreateDir(Expandconstant('{%HOMEPATH}\.cloudify'));
   Result := SaveStringsToFile(ConfigYamlPath, MappingStrings, True);
+
 end;
 
 
