@@ -13,6 +13,6 @@ RUN /bin/bash -c '''\
     gem install bundler -v '=1.16.0' --no-document && \
     gem install mixlib-cli -v 1.7.0 --no-document && \
     gem install ohai -v 14.8.12 --no-document && \
-    gem install omnibus -v 6.0.25 --no-document \
+    gem install omnibus -v 6.1.4 --no-document \
 '''
 RUN yum install sudo -y
