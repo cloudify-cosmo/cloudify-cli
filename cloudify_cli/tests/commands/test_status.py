@@ -36,13 +36,20 @@ class StatusTest(CliCommandTest):
         self.use_manager()
 
         status_result = {
-            'services': [{
-                'instances': [{'state': 'state1'}],
-                'display_name': 'name1'
-            }, {
-                'instances': [{'state': 'state2'}],
-                'display_name': 'name2'
-            }]
+            "status": "OK",
+            "services": {
+                "name1": {
+                    "status": "state1",
+                    "extra_info": {
+                        "systemd": {}
+                    },
+                    "isExternal": False
+                },
+                "name2": {
+                    "status": "state2",
+                    "isExternal": True
+                }
+            }
         }
 
         self.client.manager.get_status = MagicMock(return_value=status_result)
