@@ -25,10 +25,14 @@ from ..logger import get_global_json_output
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 NODE_COLUMNS = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
-                'number_of_instances', 'planned_number_of_instances',
-                'visibility', 'tenant_name', 'created_by']
+                'visibility', 'tenant_name', 'actual_number_of_instances',
+                'actual_planned_number_of_instances', 'created_by']
 
 OPERATION_COLUMNS = ['name', 'inputs', 'plugin', 'executor', 'operation']
+NODE_TABLE_LABELS = {
+    'actual_number_of_instances': 'number_of_instances',
+    'actual_planned_number_of_instances': 'planned_number_of_instances'
+}
 NODES_SUMMARY_FIELDS = [
     'deployment_id',
 ] + BASE_SUMMARY_FIELDS
@@ -163,7 +167,7 @@ def list(deployment_id,
         raise CloudifyCliError('Deployment {0} does not exist'.format(
             deployment_id))
 
-    print_data(NODE_COLUMNS, nodes, 'Nodes:')
+    print_data(NODE_COLUMNS, nodes, 'Nodes:', labels=NODE_TABLE_LABELS)
     total = nodes.metadata.pagination.total
     logger.info('Showing {0} of {1} nodes'.format(len(nodes), total))
 
