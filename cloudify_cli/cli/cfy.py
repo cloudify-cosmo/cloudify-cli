@@ -1180,6 +1180,15 @@ class Options(object):
             help=helptexts.PORT,
         )
 
+        self.raw_json = click.option(
+            '-r',
+            '--raw-json',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.RAW_JSON
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 

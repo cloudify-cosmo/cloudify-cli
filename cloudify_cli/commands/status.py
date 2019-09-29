@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2014-2019 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,22 +14,26 @@
 # limitations under the License.
 ############
 
+import json
+
 from cloudify_rest_client.exceptions import CloudifyClientError, \
     UserUnauthorizedError
 
-from ..table import print_data
 from ..cli import cfy
 from ..env import profile
+from ..table import print_data
+from ..logger import CloudifyJSONEncoder, output
 
 STATUS_COLUMNS = ['service', 'status']
 
 
 @cfy.command(name='status', short_help="Show manager status [manager only]")
 @cfy.options.common_options
+@cfy.options.raw_json
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def status(logger, client):
+def status(logger, client, raw_json):
     """Show the status of the manager
     """
     rest_host = profile.manager_ip
@@ -54,16 +58,16 @@ def status(logger, client):
         logger.info('Retrieved manager services status... [ip={0}]'.format(
             actual_ip))
 
-    services = []
-    for service in status_result['services']:
-        state = service['instances'][0]['state'] \
-            if 'instances' in service and \
-               len(service['instances']) > 0 else 'unknown'
-        services.append({
-            'service': service['display_name'].ljust(30),
-            'status': state
-        })
-    print_data(STATUS_COLUMNS, services, 'Services:')
+    if raw_json:
+        output(json.dumps(status_result, cls=CloudifyJSONEncoder))
+    else:
+        services = []
+        for display_name, service in status_result['services'].items():
+            services.append({
+                'service': display_name.ljust(30),
+                'status': service.get('status')
+            })
+        print_data(STATUS_COLUMNS, services, 'Services:')
 
     maintenance_status = maintenance_response.status
     if maintenance_status != 'deactivated':

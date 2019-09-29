@@ -130,14 +130,11 @@ def status(client, logger):
             manager.update({'status': 'Active'})
             if get_global_verbosity() >= LOW_VERBOSE:
                 updated_columns += [
-                    service['display_name'] for service in services
-                    if service['display_name'] not in updated_columns
+                    display_name for display_name, service in services.items()
+                    if display_name not in updated_columns
                 ]
-            for service in services:
-                state = service['instances'][0]['state'] \
-                    if 'instances' in service and \
-                       len(service['instances']) > 0 else 'unknown'
-                manager.update({service['display_name']: state})
+            for display_name, service in services.items():
+                manager.update({display_name: service['status']})
         except (ConnectionError, CloudifyClientError) as e:
             if isinstance(e, CloudifyClientError) and e.status_code != 502:
                 raise

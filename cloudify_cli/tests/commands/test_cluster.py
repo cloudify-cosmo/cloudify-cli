@@ -92,37 +92,37 @@ class ClusterTest(CliCommandTest):
 
         self.client.manager.get_status.side_effect = [
             {
-                'services': [
-                    {
-                        'instances': [{'state': 'running'}],
-                        'display_name': 'Service-1'
+                'services': {
+                    'Service-1': {
+                        'status': 'Active',
+                        'is_external': False
                     },
-                    {
-                        'instances': [{'state': 'remote'}],
-                        'display_name': 'Service-2'
+                    'Service-2': {
+                        'status': 'Active',
+                        'is_external': True
                     },
-                    {
-                        'instances': [{'state': 'down'}],
-                        'display_name': 'Service-3'
+                    'Service-3': {
+                        'status': 'Inactive',
+                        'is_external': False
                     },
-                    {
-                        'instances': [{'state': 'running'}],
-                        'display_name': 'Service-4'
+                    'Service-4': {
+                        'status': 'Active',
+                        'is_external': False
                     }
-                ]
+                }
             },
             ConnectionError,
             {
-                'services': [
-                    {
-                        'instances': [{'state': 'running'}],
-                        'display_name': 'Service-BlaBla'
+                'services': {
+                    'Service-BlaBla': {
+                        'status': 'Active',
+                        'is_external': False
                     },
-                    {
-                        'instances': [{'state': 'down'}],
-                        'display_name': 'Service-1'
+                    'Service-1': {
+                        'status': 'Inactive',
+                        'is_external': False
                     }
-                ]
+                }
             }
         ]
         outcome = self.invoke('cfy cluster status')
@@ -158,37 +158,37 @@ class ClusterTest(CliCommandTest):
 
         self.client.manager.get_status.side_effect = [
             {
-                'services': [
-                    {
-                        'instances': [{'state': 'running'}],
-                        'display_name': 'Service-1'
+                'services': {
+                    'Service-1': {
+                        'status': 'Active',
+                        'is_external': False
                     },
-                    {
-                        'instances': [{'state': 'remote'}],
-                        'display_name': 'Service-2'
+                    'Service-2': {
+                        'status': 'Active',
+                        'is_external': True
                     },
-                    {
-                        'instances': [{'state': 'down'}],
-                        'display_name': 'Service-3'
+                    'Service-3': {
+                        'status': 'Inactive',
+                        'is_external': False
                     },
-                    {
-                        'instances': [{'state': 'running'}],
-                        'display_name': 'Service-4'
+                    'Service-4': {
+                        'status': 'Active',
+                        'is_external': False
                     }
-                ]
+                }
             },
             ConnectionError,
             {
-                'services': [
-                    {
-                        'instances': [{'state': 'running'}],
-                        'display_name': 'Service-BlaBla'
+                'services': {
+                    'Service-BlaBla': {
+                        'status': 'Active',
+                        'is_external': False
                     },
-                    {
-                        'instances': [{'state': 'down'}],
-                        'display_name': 'Service-1'
+                    'Service-1': {
+                        'status': 'Inactive',
+                        'is_external': False
                     }
-                ]
+                }
             }
         ]
         outcome = self.invoke('cfy cluster status -v')
@@ -198,9 +198,7 @@ class ClusterTest(CliCommandTest):
             'Service-3',
             'Service-4',
             'Service-BlaBla',
-            'down',
-            'remote',
-            'running',
+            'Inactive',
             'Active',
             'Offline',
             'hostname_1',
