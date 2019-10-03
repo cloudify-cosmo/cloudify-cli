@@ -29,12 +29,13 @@ def ldap():
 
 @ldap.command(name='set',
               short_help='Set the manager to use the LDAP authenticator.')
-@cfy.options.ldap_server()
-@cfy.options.ldap_username()
-@cfy.options.ldap_password()
-@cfy.options.ldap_domain()
-@cfy.options.ldap_is_active_directory()
-@cfy.options.ldap_dn_extra()
+@cfy.options.ldap_server
+@cfy.options.ldap_username
+@cfy.options.ldap_password
+@cfy.options.ldap_domain
+@cfy.options.ldap_is_active_directory
+@cfy.options.ldap_dn_extra
+@cfy.options.ldap_ca_path
 @cfy.pass_client()
 @cfy.pass_logger
 def set(ldap_server,
@@ -43,6 +44,7 @@ def set(ldap_server,
         ldap_domain,
         ldap_is_active_directory,
         ldap_dn_extra,
+        ldap_ca_path,
         client,
         logger):
     if (ldap_username and not ldap_password) \
@@ -56,7 +58,8 @@ def set(ldap_server,
                     ldap_password=ldap_password,
                     ldap_is_active_directory=ldap_is_active_directory,
                     ldap_domain=ldap_domain,
-                    ldap_dn_extra=ldap_dn_extra)
+                    ldap_dn_extra=ldap_dn_extra,
+                    ldap_ca_path=ldap_ca_path)
     logger.info('LDAP authentication set successfully')
 
 
