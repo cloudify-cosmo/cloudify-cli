@@ -1189,6 +1189,54 @@ class Options(object):
             help=helptexts.RAW_JSON
         )
 
+        # Args for configuring self.ldap
+        self.ldap_server = click.option(
+            '-s',
+            '--ldap-server',
+            required=True,
+            help=helptexts.LDAP_SERVER,
+        )
+        self.ldap_username = click.option(
+            '-u',
+            '--ldap-username',
+            required=False,
+            default=None,
+            help=helptexts.LDAP_USERNAME,
+        )
+        self.ldap_password = click.option(
+            '-p',
+            '--ldap-password',
+            required=False,
+            default=None,
+            help=helptexts.LDAP_PASSWORD,
+        )
+        self.ldap_domain = click.option(
+            '-d',
+            '--ldap-domain',
+            required=False,
+            help=helptexts.LDAP_DOMAIN,
+        )
+        self.ldap_is_active_directory = click.option(
+            '-a',
+            '--ldap-is-active-directory',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.LDAP_IS_ACTIVE_DIRECTORY,
+        )
+        self.ldap_dn_extra = click.option(
+            '-e',
+            '--ldap-dn-extra',
+            required=False,
+            help=helptexts.LDAP_DN_EXTRA,
+        )
+        self.ldap_ca_path = click.option(
+            '-c',
+            '--ldap-ca-path',
+            required=False,
+            help=helptexts.LDAP_CA_PATH,
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
@@ -1321,58 +1369,6 @@ class Options(object):
             kwargs.get('resource_name_for_help'))
         return Options.tenant_name(
             *args, **kwargs)
-
-    @staticmethod
-    def ldap_server():
-        return click.option(
-            '-s',
-            '--ldap-server',
-            required=True,
-            help=helptexts.LDAP_SERVER)
-
-    @staticmethod
-    def ldap_username():
-        return click.option(
-            '-u',
-            '--ldap-username',
-            required=False,
-            default=None,
-            help=helptexts.LDAP_USERNAME)
-
-    @staticmethod
-    def ldap_password():
-        return click.option(
-            '-p',
-            '--ldap-password',
-            required=False,
-            default=None,
-            help=helptexts.LDAP_PASSWORD)
-
-    @staticmethod
-    def ldap_domain():
-        return click.option(
-            '-d',
-            '--ldap-domain',
-            required=False,
-            help=helptexts.LDAP_DOMAIN)
-
-    @staticmethod
-    def ldap_is_active_directory():
-        return click.option(
-            '-a',
-            '--ldap-is-active-directory',
-            required=False,
-            is_flag=True,
-            default=False,
-            help=helptexts.LDAP_IS_ACTIVE_DIRECTORY)
-
-    @staticmethod
-    def ldap_dn_extra():
-        return click.option(
-            '-e',
-            '--ldap-dn-extra',
-            required=False,
-            help=helptexts.LDAP_DN_EXTRA)
 
     @staticmethod
     def force(help):

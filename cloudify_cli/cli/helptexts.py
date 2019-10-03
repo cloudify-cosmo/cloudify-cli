@@ -274,13 +274,22 @@ NO_REBOOT = 'Do not perform an automatic reboot to the Manager VM after ' \
             'Only relevant if the `--restore-certificates` flag was supplied'
 SKIP_CREDENTIALS_VALIDATION = 'Do not check that the passed credentials are ' \
                               'correct (default: False)'
-LDAP_SERVER = 'The LDAP server address to authenticate against'
+LDAP_SERVER = (
+    'The LDAP server address to authenticate against. '
+    'Should be prefixed with the protocol and include the port, '
+    'e.g. ldap://192.0.2.1:389 or ldaps://192.0.2.45:636'
+)
 LDAP_USERNAME = 'The LDAP admin username to be set on the Cloudify manager'
 LDAP_PASSWORD = 'The LDAP admin password to be set on the Cloudify manager'
 LDAP_DOMAIN = 'The LDAP domain to be used by the server'
 LDAP_IS_ACTIVE_DIRECTORY = 'Specify whether the LDAP used for authentication' \
                            ' is Active-Directory.'
 LDAP_DN_EXTRA = 'Extra LDAP DN options.'
+LDAP_CA_PATH = (
+    'Path to the CA certificate LDAP communications will be encrypted with. '
+    'Required if using ldaps. '
+    'Must not be provided if not using ldaps.'
+)
 
 GET_DATA = 'When set to True, displays the full list of connected resources ' \
            '(users/tenants/user-groups), for each listed resource. When set ' \
