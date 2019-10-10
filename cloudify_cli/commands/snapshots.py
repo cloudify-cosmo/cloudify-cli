@@ -256,4 +256,4 @@ def status(logger, client):
     try:
         logger.info(SNAPSHOT_STATUSES[status['status']])
     except KeyError:
-        logger.error("Unrecognized status received: %s", str(status))
+        logger.error("Unrecognized status received: %s", status)
