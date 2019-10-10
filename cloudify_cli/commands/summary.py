@@ -59,7 +59,7 @@ def structure_summary_results(results, target_field, sub_field,
             structured_result.append(
                 {
                     target_field: result[target_field],
-                    sub_field: '' if get_global_json_output() else 'TOTAL',
+                    sub_field: None if get_global_json_output() else 'TOTAL',
                     summary_type: result[summary_type],
                 }
             )
