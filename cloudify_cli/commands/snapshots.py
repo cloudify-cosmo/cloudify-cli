@@ -21,6 +21,12 @@ from ..cli import helptexts, cfy
 SNAPSHOT_COLUMNS = ['id', 'created_at', 'status', 'error',
                     'visibility', 'tenant_name', 'created_by']
 
+SNAPSHOT_STATUSES = {
+    'running': 'Snapshot restore in progress... This may take a while, '
+               'depending on the snapshot size',
+    'not-running': 'No snapshot is currently being restored'
+}
+
 
 @cfy.group(name='snapshots')
 @cfy.options.common_options
@@ -247,4 +253,7 @@ def status(logger, client):
     """
     logger.info('Retrieving snapshot restore status...')
     status = client.snapshots.get_status()
-    logger.info(status['status'])
+    try:
+        logger.info(SNAPSHOT_STATUSES[status['status']])
+    except KeyError:
+        logger.error("Unrecognized status received: %s", str(status))
