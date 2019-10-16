@@ -86,7 +86,6 @@ def restore(snapshot_id,
 @snapshots.command(name='create',
                    short_help='Create a snapshot [manager only]')
 @cfy.argument('snapshot-id', required=False, callback=cfy.validate_name)
-@cfy.options.include_metrics
 @cfy.options.exclude_credentials
 @cfy.options.exclude_logs
 @cfy.options.exclude_events
@@ -95,7 +94,6 @@ def restore(snapshot_id,
 @cfy.pass_client()
 @cfy.pass_logger
 def create(snapshot_id,
-           include_metrics,
            exclude_credentials,
            exclude_logs,
            exclude_events,
@@ -113,7 +111,6 @@ def create(snapshot_id,
     logger.info('Creating snapshot {0}...'.format(snapshot_id))
 
     execution = client.snapshots.create(snapshot_id,
-                                        include_metrics,
                                         not exclude_credentials,
                                         not exclude_logs,
                                         not exclude_events,
