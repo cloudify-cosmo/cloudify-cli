@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2013 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2013-2019 Cloudify Platform Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,8 +19,8 @@ from setuptools import setup
 setup(
     name='cloudify',
     version='5.0.5.dev1',
-    author='Gigaspaces',
-    author_email='cosmo-admin@gigaspaces.com',
+    author='Cloudify',
+    author_email='cosmo-admin@cloudify.co',
     packages=['cloudify_cli',
               'cloudify_cli.cli',
               'cloudify_cli.commands',
