@@ -95,19 +95,19 @@ class ClusterTest(CliCommandTest):
                 'services': {
                     'Service-1': {
                         'status': 'Active',
-                        'is_external': False
+                        'is_remote': False
                     },
                     'Service-2': {
                         'status': 'Active',
-                        'is_external': True
+                        'is_remote': True
                     },
                     'Service-3': {
                         'status': 'Inactive',
-                        'is_external': False
+                        'is_remote': False
                     },
                     'Service-4': {
                         'status': 'Active',
-                        'is_external': False
+                        'is_remote': False
                     }
                 }
             },
@@ -116,11 +116,11 @@ class ClusterTest(CliCommandTest):
                 'services': {
                     'Service-BlaBla': {
                         'status': 'Active',
-                        'is_external': False
+                        'is_remote': False
                     },
                     'Service-1': {
                         'status': 'Inactive',
-                        'is_external': False
+                        'is_remote': False
                     }
                 }
             }
@@ -161,19 +161,19 @@ class ClusterTest(CliCommandTest):
                 'services': {
                     'Service-1': {
                         'status': 'Active',
-                        'is_external': False
+                        'is_remote': False
                     },
                     'Service-2': {
                         'status': 'Active',
-                        'is_external': True
+                        'is_remote': True
                     },
                     'Service-3': {
                         'status': 'Inactive',
-                        'is_external': False
+                        'is_remote': False
                     },
                     'Service-4': {
                         'status': 'Active',
-                        'is_external': False
+                        'is_remote': False
                     }
                 }
             },
@@ -182,11 +182,11 @@ class ClusterTest(CliCommandTest):
                 'services': {
                     'Service-BlaBla': {
                         'status': 'Active',
-                        'is_external': False
+                        'is_remote': False
                     },
                     'Service-1': {
                         'status': 'Inactive',
-                        'is_external': False
+                        'is_remote': False
                     }
                 }
             }
