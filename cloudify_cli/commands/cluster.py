@@ -280,8 +280,10 @@ def _list_brokers(client, logger):
 @cfy.argument('address')
 @cfy.options.port
 @cfy.options.networks(required=False)
+@cfy.options.node_id
 @cfy.options.common_options
-def add_broker(client, logger, name, address, port=None, networks=None):
+def add_broker(client, logger, name, address, port=None, networks=None,
+               node_id=None):
     """Register a broker with the cluster.
 
     Note that this will not create the broker itself. The broker should have
@@ -290,7 +292,7 @@ def add_broker(client, logger, name, address, port=None, networks=None):
     check_broker_exists(client.manager.get_brokers().items, name,
                         must_exist=False)
 
-    client.manager.add_broker(name, address, port, networks)
+    client.manager.add_broker(name, address, port, networks, node_id)
 
     logger.info('Broker {0} was added successfully!'
                 .format(name))

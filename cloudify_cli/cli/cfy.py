@@ -1237,6 +1237,13 @@ class Options(object):
             help=helptexts.LDAP_CA_PATH,
         )
 
+        self.node_id = click.option(
+            '--node-id',
+            required=False,
+            help=helptexts.NODE_ID,
+            callback=self.parse_comma_separated
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
