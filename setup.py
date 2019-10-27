@@ -49,7 +49,7 @@ setup(
         'requests>=2.7.0,<3.0.0',
         'PrettyTable>=0.7,<0.8',
         'click_didyoumean==0.0.3',
-        'cloudify-common==5.0.5.dev1',
+        'cloudify-common==5.0.0',
         'backports.shutil_get_terminal_size==1.0.0',
         'ipaddress==1.0.19'
     ]
