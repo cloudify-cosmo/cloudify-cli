@@ -20,7 +20,7 @@ setup(
     name='cloudify',
     version='19.10.27',
     author='Cloudify',
-    author_email='cosmo-admin@cloudify.co',
+    author_email='cosmo-admin@gigaspaces.com',
     packages=['cloudify_cli',
               'cloudify_cli.cli',
               'cloudify_cli.commands',
