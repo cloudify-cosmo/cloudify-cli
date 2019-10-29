@@ -830,11 +830,6 @@ class Options(object):
             is_flag=True,
             help=helptexts.RESTORE_SNAPSHOT_EXCLUDE_EXISTING_DEPLOYMENTS)
 
-        self.include_metrics = click.option(
-            '--include-metrics',
-            is_flag=True,
-            help=helptexts.INCLUDE_METRICS_IN_SNAPSHOT)
-
         self.exclude_credentials = click.option(
             '--exclude-credentials',
             is_flag=True,

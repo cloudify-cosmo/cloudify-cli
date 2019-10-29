@@ -162,7 +162,6 @@ FORCE_RESTORE_ON_DIRTY_MANAGER = (
     "Restore a snapshot on a manager where there are existing blueprints or "
     "deployments"
 )
-INCLUDE_METRICS_IN_SNAPSHOT = "Include metrics data in the snapshot"
 EXCLUDE_CREDENTIALS_IN_SNAPSHOT = "Exclude credentials from the snapshot"
 EXCLUDE_LOGS_IN_SNAPSHOT = "Exclude logs from the snapshot"
 EXCLUDE_EVENTS_IN_SNAPSHOT = "Exclude events from the snapshot"
