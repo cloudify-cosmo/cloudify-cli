@@ -315,6 +315,8 @@ def set_profile(profile_name,
     password = manager_password or env.get_password()
     tenant = manager_tenant or env.get_tenant_name()
     protocol, port = _get_ssl_protocol_and_port(ssl)
+    if rest_port is not None:
+        port = rest_port
 
     if not skip_credentials_validation:
         _validate_credentials(username,
@@ -343,7 +345,7 @@ def set_profile(profile_name,
         logger.info('Setting tenant to `{0}`'.format(manager_tenant))
         env.profile.manager_tenant = manager_tenant
     if ssl is not None:
-        _set_profile_ssl(ssl, logger)
+        _set_profile_ssl(ssl, rest_port, logger)
     if rest_certificate:
         logger.info(
             'Setting rest certificate to `{0}`'.format(rest_certificate))
@@ -371,12 +373,14 @@ def set_profile(profile_name,
     logger.info('Settings saved successfully')
 
 
-def _set_profile_ssl(ssl, logger):
+def _set_profile_ssl(ssl, rest_port, logger):
     if ssl is None:
         raise CloudifyCliError('Internal error: SSL must be either `on` or '
                                '`off`')
 
     protocol, port = _get_ssl_protocol_and_port(ssl)
+    if rest_port is not None:
+        port = rest_port
     if protocol == constants.SECURED_REST_PROTOCOL:
         logger.info('Enabling SSL in the local profile')
     else:
