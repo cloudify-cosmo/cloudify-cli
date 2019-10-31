@@ -356,6 +356,15 @@ class ProfilesTest(CliCommandTest):
 
     @patch('cloudify_cli.commands.profiles._get_provider_context',
            return_value={})
+    def test_set_rest_port_overrides_protocol(self, *_):
+        self.invoke('profiles use 1.2.3.4')
+        self.invoke('profiles set --ssl on --rest-port 8090 '
+                    '--skip-credentials-validation')
+        added_profile = env.get_profile_context('1.2.3.4')
+        self.assertEqual(8090, added_profile.rest_port)
+
+    @patch('cloudify_cli.commands.profiles._get_provider_context',
+           return_value={})
     def test_use_cannot_update_profile(self, *_):
         self.use_manager()
         outcome = self.invoke('profiles use 10.10.1.10 -p abc')
