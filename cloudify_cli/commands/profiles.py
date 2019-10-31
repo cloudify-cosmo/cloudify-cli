@@ -297,6 +297,7 @@ def set_profile(profile_name,
                 ssh_port,
                 ssl,
                 rest_certificate,
+                rest_port,
                 kerberos_env,
                 skip_credentials_validation,
                 logger):
@@ -347,6 +348,9 @@ def set_profile(profile_name,
         logger.info(
             'Setting rest certificate to `{0}`'.format(rest_certificate))
         env.profile.rest_certificate = rest_certificate
+    if rest_port:
+        logger.info('Setting rest port to `{0}'.format(rest_port))
+        env.profile.rest_port = rest_port
     if ssh_user:
         logger.info('Setting ssh user to `{0}`'.format(ssh_user))
         env.profile.ssh_user = ssh_user
@@ -408,6 +412,7 @@ def _set_profile_ssl(ssl, logger):
 @cfy.options.ssh_port
 @cfy.options.ssl_state
 @cfy.options.rest_certificate
+@cfy.options.rest_port
 @cfy.options.kerberos_env
 @cfy.options.skip_credentials_validation
 @cfy.options.common_options
@@ -421,6 +426,7 @@ def set_cmd(profile_name,
             ssh_port,
             ssl,
             rest_certificate,
+            rest_port,
             kerberos_env,
             skip_credentials_validation,
             logger):
@@ -433,6 +439,7 @@ def set_cmd(profile_name,
                        ssh_port,
                        _get_ssl_indication(ssl),
                        rest_certificate,
+                       rest_port,
                        get_kerberos_indication(kerberos_env),
                        skip_credentials_validation,
                        logger)

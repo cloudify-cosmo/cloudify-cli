@@ -788,7 +788,8 @@ class Options(object):
         self.rest_port = click.option(
             '--rest-port',
             required=False,
-            help=helptexts.REST_PORT)
+            help=helptexts.REST_PORT,
+            type=int)
 
         self.ssl_rest = click.option(
             '--ssl',
