@@ -174,7 +174,7 @@ def init_manager_profile(profile_name,
 def _create_profiles_dir_and_config(hard, enable_colors):
     if not os.path.isdir(env.PROFILES_DIR):
         os.makedirs(env.PROFILES_DIR)
-    if not os.path.isfile(config.CLOUDIFY_CONFIG_PATH) or hard:
+    if not env.config_initialized_with_logging() or hard:
         set_config(enable_colors=enable_colors)
 
     configure_loggers()
@@ -200,6 +200,6 @@ def set_config(enable_colors=False):
         log_path=DEFAULT_LOG_FILE,
         enable_colors=enable_colors
     )
-    with open(config.CLOUDIFY_CONFIG_PATH, 'w') as f:
+    with open(config.CLOUDIFY_CONFIG_PATH, 'a') as f:
         f.write(rendered)
         f.write(os.linesep)

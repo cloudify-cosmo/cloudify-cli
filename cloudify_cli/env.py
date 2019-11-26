@@ -169,6 +169,19 @@ def get_profile_context(profile_name=None, suppress_error=False):
     return default
 
 
+def config_initialized_with_logging():
+    """
+    This is for the Windows agent: plugin URLs from
+    import_resolver are written to config.yaml during installation, so we can
+    have a scenario where config exists but has no logger paths defined.
+    """
+    has_logging = False
+    if os.path.isfile(os.path.join(CLOUDIFY_WORKDIR, 'config.yaml')):
+        with open(os.path.join(CLOUDIFY_WORKDIR, 'config.yaml'), 'r') as f:
+            has_logging = ('logging' in f.read())
+    return has_logging
+
+
 def is_initialized(profile_name=None):
     """
     Check if a profile or an environment is initialized.
@@ -179,7 +192,7 @@ def is_initialized(profile_name=None):
     if profile_name:
         return get_profile_dir(profile_name) is not None
     else:
-        return os.path.isfile(os.path.join(CLOUDIFY_WORKDIR, 'config.yaml'))
+        return config_initialized_with_logging()
 
 
 def get_context_path(profile_name, suppress_error=False):

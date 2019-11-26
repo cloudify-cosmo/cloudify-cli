@@ -86,7 +86,7 @@ var
   PackagesToInstall: String;
 begin
   ExtractTemporaryFiles('*.whl');
-
+  ForceDirectories(Expandconstant('{%HOMEPATH}\.cloudify'));
   PipArgs := 'install --pre --use-wheel --no-index --find-links . --force-reinstall --ignore-installed ' + mainPackagesName;
   Exec(Expandconstant('{app}\embedded\Scripts\pip.exe'), PipArgs, Expandconstant('{tmp}'), SW_SHOW, ewWaituntilterminated, ErrorCode);
   Log('Installting wheels return code: ' + IntToStr(ErrorCode));
@@ -121,7 +121,6 @@ begin
     StringChangeEx(MappingStrings[Index], 'CLOUDIFY_PATH', Expandconstant('{app}'), True);
     // replacing the tags to a current one
     StringChangeEx(MappingStrings[Index], 'CORE_TAG_NAME', ExpandConstant('{#CoreTagName}'), True);
-    StringChangeEx(MappingStrings[Index], 'PLUGINS_TAG_NAME', ExpandConstant('{#PluginsTagName}'), True);
     // replacing the end line from linux to both windows and linux
     StringChangeEx(MappingStrings[Index], LF, CRLF, False);
   end;
