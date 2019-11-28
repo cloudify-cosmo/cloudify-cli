@@ -296,6 +296,7 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.common_options
+@cfy.options.runtime_only_evaluation
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -322,7 +323,8 @@ def manager_update(ctx,
                    tenant_name,
                    blueprint_id,
                    visibility,
-                   validate):
+                   validate,
+                   runtime_only_evaluation):
     """Update a specified deployment according to the specified blueprint.
     The blueprint can be supplied as an id of a blueprint that already exists
     in the system (recommended).
@@ -398,7 +400,8 @@ def manager_update(ctx,
             install_first,
             reinstall_list,
             preview,
-            not dont_update_plugins
+            not dont_update_plugins,
+            runtime_only_evaluation=runtime_only_evaluation
         )
 
     if preview:
@@ -452,6 +455,7 @@ def manager_update(ctx,
 @cfy.options.site_name
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.options.runtime_only_evaluation
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -465,7 +469,8 @@ def manager_create(blueprint_id,
                    logger,
                    client,
                    tenant_name,
-                   skip_plugins_validation):
+                   skip_plugins_validation,
+                   runtime_only_evaluation):
     """Create a deployment on the manager.
 
     `DEPLOYMENT_ID` is the id of the deployment you'd like to create.
@@ -484,7 +489,8 @@ def manager_create(blueprint_id,
             inputs=inputs,
             visibility=visibility,
             skip_plugins_validation=skip_plugins_validation,
-            site_name=site_name
+            site_name=site_name,
+            runtime_only_evaluation=runtime_only_evaluation
         )
     except (MissingRequiredDeploymentInputError,
             UnknownDeploymentInputError) as e:
