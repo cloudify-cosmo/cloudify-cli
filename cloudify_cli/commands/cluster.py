@@ -18,20 +18,19 @@ from functools import wraps
 import json
 from logging import warning
 
-from requests.exceptions import ConnectionError
-
 from .. import env
 from ..cli import cfy
+from ..env import profile
 from ..table import print_data, print_details
 from ..exceptions import CloudifyCliError
 from ..logger import (
-    get_global_json_output,
-    get_global_verbosity,
-    LOW_VERBOSE
+    output,
+    CloudifyJSONEncoder,
+    get_global_json_output
 )
 
-from cloudify_rest_client.exceptions import CloudifyClientError
-
+from cloudify_rest_client.exceptions import CloudifyClientError, \
+    UserUnauthorizedError
 
 # The list will be updated with the services on each manager
 CLUSTER_COLUMNS = ['hostname', 'private_ip', 'public_ip', 'version', 'edition',
@@ -112,37 +111,70 @@ def cluster():
 @cluster.command(name='status',
                  short_help='Show the current cluster status')
 @pass_cluster_client()
+@cfy.options.raw_json
 @cfy.pass_logger
 @cfy.options.common_options
-def status(client, logger):
+def status(client, logger, raw_json):
     """
     Display the current status of the Cloudify Manager cluster
     """
-    managers = client.manager.get_managers().items
-    updated_columns = CLUSTER_COLUMNS
-    # After we get the managers list from either of the managers in the profile
-    # we retrieve each manager's status directly
-    for manager in managers:
-        direct_rest_client = env.get_rest_client(
-            rest_host=manager.public_ip, cluster=[])
-        try:
-            services = direct_rest_client.manager.get_status()['services']
-            manager.update({'status': 'Active'})
-            if get_global_verbosity() >= LOW_VERBOSE:
-                updated_columns += [
-                    display_name for display_name, service in services.items()
-                    if display_name not in updated_columns
-                ]
-            for display_name, service in services.items():
-                manager.update({display_name: service['status']})
-        except (ConnectionError, CloudifyClientError) as e:
-            if isinstance(e, CloudifyClientError) and e.status_code != 502:
-                raise
-            manager.update({'status': 'Offline'})
-            continue
-    print_data(updated_columns, managers, 'HA Cluster nodes')
+    # managers = client.manager.get_managers().items
+    # updated_columns = CLUSTER_COLUMNS
+    # # After we get the managers list from either of the managers in the profile
+    # # we retrieve each manager's status directly
+    # for manager in managers:
+    #     direct_rest_client = env.get_rest_client(
+    #         rest_host=manager.public_ip, cluster=[])
+    #     try:
+    #         services = direct_rest_client.manager.get_status()['services']
+    #         manager.update({'status': 'Active'})
+    #         if get_global_verbosity() >= LOW_VERBOSE:
+    #             updated_columns += [
+    #                 display_name for display_name, service in services.items()
+    #                 if display_name not in updated_columns
+    #             ]
+    #         for display_name, service in services.items():
+    #             manager.update({display_name: service['status']})
+    #     except (ConnectionError, CloudifyClientError) as e:
+    #         if isinstance(e, CloudifyClientError) and e.status_code != 502:
+    #             raise
+    #         manager.update({'status': 'Offline'})
+    #         continue
+    # print_data(updated_columns, managers, 'HA Cluster nodes')
+    #
+    # _list_brokers(client, logger)
+    rest_host = profile.manager_ip
+    logger.info('Retrieving manager services status... [ip={0}]'.format(
+        rest_host))
+    try:
+        status_result = client.cluster_status.get_status()
+        maintenance_response = client.maintenance_mode.status()
+    except UserUnauthorizedError:
+        logger.info(
+            'Failed to query manager service status: User is unauthorized')
+        return False
+    except CloudifyClientError:
+        logger.info('REST service at manager {0} is not responding!'.format(
+            rest_host))
+        return False
 
-    _list_brokers(client, logger)
+    # manager_ip can change if we're using a cluster client and failed over
+    # while getting the status
+    actual_ip = profile.manager_ip
+    if actual_ip != rest_host:
+        logger.info('Retrieved manager services status... [ip={0}]'.format(
+            actual_ip))
+
+    if raw_json:
+        output(json.dumps(status_result, cls=CloudifyJSONEncoder))
+    else:
+        services = []
+        for service_cluster, service in status_result['services'].items():
+            services.append({
+                'service': service_cluster.ljust(30),
+                'status': service.get('status')
+            })
+        print_data(['service', 'status'], services, 'Services:')
 
 
 @cluster.command(name='remove',
