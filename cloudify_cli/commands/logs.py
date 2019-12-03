@@ -52,9 +52,13 @@ def _archive_logs(logger,
     # We skip checking if the tar executable can be found on the machine
     # knowingly. We don't want to run another ssh command just to verify
     # something that will almost never happen.
-    ssh.run_command_on_manager('tar -czf {0} -C /var/log cloudify'.format(
-        archive_path), use_sudo=True,
-        host_string=host_string, key_filename=key_filename)
+    ssh.run_command_on_manager(
+        'tar -czf {0} -C /var/log cloudify -C /opt/cloudify cluster_statuses '
+        '--ignore-failed-read'.format(archive_path),
+        use_sudo=True,
+        host_string=host_string,
+        key_filename=key_filename
+    )
     ssh.run_command_on_manager(
         'rm {0}'.format(journalctl_destination_path), use_sudo=True,
         host_string=host_string, key_filename=key_filename)
