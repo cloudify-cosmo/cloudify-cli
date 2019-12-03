@@ -14,23 +14,23 @@
 # limitations under the License.
 ############
 
-from functools import wraps
 import json
+from functools import wraps
 from logging import warning
+
+from cloudify_rest_client.exceptions import CloudifyClientError, \
+    UserUnauthorizedError
 
 from .. import env
 from ..cli import cfy
 from ..env import profile
-from ..table import print_data, print_details
 from ..exceptions import CloudifyCliError
+from ..table import print_data, print_details
 from ..logger import (
     output,
     CloudifyJSONEncoder,
     get_global_json_output
 )
-
-from cloudify_rest_client.exceptions import CloudifyClientError, \
-    UserUnauthorizedError
 
 # The list will be updated with the services on each manager
 CLUSTER_COLUMNS = ['hostname', 'private_ip', 'public_ip', 'version', 'edition',
@@ -174,6 +174,8 @@ def status(client, logger, raw_json):
                 'service': service_cluster.ljust(30),
                 'status': service.get('status')
             })
+        logger.info('Current cluster status is {0}:'.format(
+            status_result.get('status')))
         print_data(['service', 'status'], services, 'Services:')
 
 
