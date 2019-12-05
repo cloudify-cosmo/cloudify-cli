@@ -51,6 +51,7 @@ setup(
         'click_didyoumean==0.0.3',
         'cloudify-common==5.0.5.dev1',
         'backports.shutil_get_terminal_size==1.0.0',
-        'ipaddress==1.0.19'
+        'ipaddress==1.0.19',
+        'setuptools<=40.7.3'
     ]
 )
