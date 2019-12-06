@@ -51,8 +51,8 @@ def status(logger, client, raw_json):
             rest_host))
         return False
 
-    # manager_ip can change if we're using a cluster client and failed over
-    # while getting the status
+    # manager_ip can change if we're using a cluster client and failed reaching
+    # the supplied managers' ips, while getting the status
     actual_ip = profile.manager_ip
     if actual_ip != rest_host:
         logger.info('Retrieved manager services status... [ip={0}]'.format(
