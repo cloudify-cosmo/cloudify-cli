@@ -2,7 +2,7 @@ diff --git a/cloudify_cli/config/config_template.yaml b/cloudify_cli/config/conf
 index 2ffe55d..6e6e3cb 100644
 --- a/cloudify_cli/config/config_template.yaml
 +++ b/cloudify_cli/config/config_template.yaml
-@@ -13,3 +13,13 @@ logging:
+@@ -13,3 +13,12 @@ logging:
 
      # rest client http logs, including headers.
      cloudify.rest_client.http: info
