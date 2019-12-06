@@ -128,8 +128,8 @@ def status(client, logger, raw_json):
             'Failed to query Cloudify cluster status: User is unauthorized')
         return False
     except CloudifyClientError as e:
-        logger.info('REST service at manager {0} is not responding! {1}'.format(
-            rest_host, e))
+        logger.info('REST service at manager {0} is not '
+                    'responding! {1}'.format(rest_host, e))
         return False
 
     # manager_ip can change if the cli's host has no connection
