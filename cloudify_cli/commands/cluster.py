@@ -16,7 +16,6 @@
 
 import json
 from functools import wraps
-from logging import warning
 
 from cloudify_rest_client.exceptions import CloudifyClientError, \
     UserUnauthorizedError
@@ -28,6 +27,7 @@ from ..exceptions import CloudifyCliError
 from ..table import print_data, print_details
 from ..logger import (
     output,
+    get_logger,
     CloudifyJSONEncoder,
     get_global_json_output
 )
@@ -91,8 +91,8 @@ def pass_cluster_client(*client_args, **client_kwargs):
         def _inner(client, *args, **kwargs):
             managers_list = client.manager.get_managers().items
             if len(managers_list) == 1:
-                warning(' It is highly recommended to have more than one '
-                        'manager in a Cloudify cluster')
+                get_logger().warning('It is highly recommended to have more '
+                                     'than one manager in a Cloudify cluster')
             return f(client=client, *args, **kwargs)
         return _inner
     return _deco
@@ -111,10 +111,10 @@ def cluster():
 @cluster.command(name='status',
                  short_help='Show the current cluster status')
 @pass_cluster_client()
-@cfy.options.raw_json
+@cfy.assert_manager_active()
 @cfy.pass_logger
 @cfy.options.common_options
-def status(client, logger, raw_json):
+def status(client, logger):
     """
     Display the current status of the Cloudify cluster
     """
@@ -136,11 +136,10 @@ def status(client, logger, raw_json):
     # with configured manager ips, while getting the status
     actual_ip = profile.manager_ip
     if actual_ip != rest_host:
-        logger.info('Retrieved Cloudify cluster status... [ip={0}]'.format(
+        logger.info('Retrieved Cloudify cluster status [ip={0}]'.format(
             actual_ip))
-
-    if raw_json:
-        output(json.dumps(status_result))
+    if get_global_json_output():
+        output(json.dumps(status_result, cls=CloudifyJSONEncoder))
     else:
         services = []
         for service_cluster, service in status_result['services'].items():

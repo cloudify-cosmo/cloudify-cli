@@ -1175,16 +1175,6 @@ class Options(object):
             type=click.IntRange(1, 65535),
             help=helptexts.PORT,
         )
-
-        self.raw_json = click.option(
-            '-r',
-            '--raw-json',
-            required=False,
-            is_flag=True,
-            default=False,
-            help=helptexts.RAW_JSON
-        )
-
         # Args for configuring self.ldap
         self.ldap_server = click.option(
             '-s',
