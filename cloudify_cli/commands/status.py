@@ -22,18 +22,17 @@ from cloudify_rest_client.exceptions import CloudifyClientError, \
 from ..cli import cfy
 from ..env import profile
 from ..table import print_data
-from ..logger import CloudifyJSONEncoder, output
+from ..logger import CloudifyJSONEncoder, output, get_global_json_output
 
 STATUS_COLUMNS = ['service', 'status']
 
 
 @cfy.command(name='status', short_help="Show manager status [manager only]")
 @cfy.options.common_options
-@cfy.options.raw_json
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def status(logger, client, raw_json):
+def status(logger, client):
     """Show the status of the manager
     """
     rest_host = profile.manager_ip
@@ -51,14 +50,7 @@ def status(logger, client, raw_json):
             rest_host))
         return False
 
-    # manager_ip can change if we're using a cluster client and failed over
-    # while getting the status
-    actual_ip = profile.manager_ip
-    if actual_ip != rest_host:
-        logger.info('Retrieved manager services status... [ip={0}]'.format(
-            actual_ip))
-
-    if raw_json:
+    if get_global_json_output():
         output(json.dumps(status_result, cls=CloudifyJSONEncoder))
     else:
         services = []

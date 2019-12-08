@@ -18,9 +18,11 @@ import mock
 
 from requests.exceptions import ConnectionError
 
-from .test_base import CliCommandTest
+from cloudify_rest_client.exceptions import UserUnauthorizedError
 from cloudify_rest_client.manager import ManagerItem, RabbitMQBrokerItem
-from cloudify_cli.tests.cfy import ClickInvocationException
+
+from .test_base import CliCommandTest
+from ..cfy import ClickInvocationException
 
 
 class ClusterTest(CliCommandTest):
@@ -80,18 +82,37 @@ class ClusterTest(CliCommandTest):
 
     def setUp(self):
         super(ClusterTest, self).setUp()
-        self.client.manager.get_status = mock.MagicMock()
-        self.client.maintenance_mode.status = mock.MagicMock()
+        self.client.cluster_status.get_status = mock.MagicMock()
         self.client.manager.get_managers = mock.MagicMock()
-        self.client.manager.get_brokers = mock.MagicMock(
-            return_value=self.BROKERS_LIST)
         self.client.manager.get_managers().items = self.MANAGERS_LIST
 
-    def test_list_nodes(self):
+    def test_command_basic_run(self):
+        self.use_manager()
+        self.invoke('cfy cluster status')
+
+    def test_cluster_status_by_unauthorized_user(self):
+        self.use_manager()
+        with mock.patch.object(self.client.cluster_status,
+                               'get_status') as status:
+            status.side_effect = UserUnauthorizedError('Unauthorized user')
+            outcome = self.invoke('cfy cluster status')
+            self.assertIn('User is unauthorized', outcome.logs)
+
+    def test_cluster_status_no_manager_server_defined(self):
+        # Running a command which requires a target manager server without
+        # first calling "cfy profiles use" or providing a target server
+        # explicitly
+        self.invoke(
+            'cfy cluster status',
+            'This command is only available when using a manager'
+        )
+
+    def test_cluster_status_content(self):
         self.use_manager()
 
-        self.client.manager.get_status.side_effect = [
+        self.client.cluster_status.get_status.side_effect = [
             {
+                'status': 'OK',
                 'services': {
                     'Service-1': {
                         'status': 'Active',
@@ -127,37 +148,28 @@ class ClusterTest(CliCommandTest):
         ]
         outcome = self.invoke('cfy cluster status')
         supposed_to_be_in_list = [
+            "OK",
             'Active',
-            'Offline',
-            'hostname_1',
-            '1.2.3.5',
-            'broker1',
-            '15671',
-            '3.2.3.4'
-        ]
-        not_supposed_to_be_in_list = [
             'Service-1',
             'Service-2',
             'Service-3',
             'Service-4',
-            'Service-BlaBla',
-            'N/A',
-            'down',
-            'remote',
-            'running',
-            'id',
-            'fs_sync_node_id'
+            'Inactive'
+        ]
+        not_supposed_to_be_in_list = [
+            'remote'
         ]
         for supposed_to_be_in in supposed_to_be_in_list:
             self.assertIn(supposed_to_be_in, outcome.output)
         for not_supposed_to_be_in in not_supposed_to_be_in_list:
             self.assertNotIn(not_supposed_to_be_in, outcome.output)
 
-    def test_list_nodes_verbose(self):
+    def test_cluster_status_json_format(self):
         self.use_manager()
 
-        self.client.manager.get_status.side_effect = [
+        self.client.cluster_status.get_status.side_effect = [
             {
+                'status': 'OK',
                 'services': {
                     'Service-1': {
                         'status': 'Active',
@@ -191,27 +203,20 @@ class ClusterTest(CliCommandTest):
                 }
             }
         ]
-        outcome = self.invoke('cfy cluster status -v')
+        outcome = self.invoke('cfy cluster status --json')
         supposed_to_be_in_list = [
+            "OK",
+            'Active',
             'Service-1',
             'Service-2',
             'Service-3',
             'Service-4',
-            'Service-BlaBla',
             'Inactive',
-            'Active',
-            'Offline',
-            'hostname_1',
-            '1.2.3.5',
-            'N/A',
-            'broker1',
-            '15671',
-            '3.2.3.4'
+            'remote'
         ]
+
         for supposed_to_be_in in supposed_to_be_in_list:
             self.assertIn(supposed_to_be_in, outcome.output)
-        self.assertNotIn('id', outcome.output)
-        self.assertNotIn('fs_sync_node_id', outcome.output)
 
     def test_remove_node(self):
         self.use_manager()

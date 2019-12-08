@@ -14,24 +14,23 @@
 # limitations under the License.
 ############
 
-from functools import wraps
 import json
-from logging import warning
+from functools import wraps
 
-from requests.exceptions import ConnectionError
+from cloudify_rest_client.exceptions import CloudifyClientError, \
+    UserUnauthorizedError
 
 from .. import env
 from ..cli import cfy
-from ..table import print_data, print_details
+from ..env import profile
 from ..exceptions import CloudifyCliError
+from ..table import print_data, print_details
 from ..logger import (
-    get_global_json_output,
-    get_global_verbosity,
-    LOW_VERBOSE
+    output,
+    get_logger,
+    CloudifyJSONEncoder,
+    get_global_json_output
 )
-
-from cloudify_rest_client.exceptions import CloudifyClientError
-
 
 # The list will be updated with the services on each manager
 CLUSTER_COLUMNS = ['hostname', 'private_ip', 'public_ip', 'version', 'edition',
@@ -92,8 +91,8 @@ def pass_cluster_client(*client_args, **client_kwargs):
         def _inner(client, *args, **kwargs):
             managers_list = client.manager.get_managers().items
             if len(managers_list) == 1:
-                warning(' It is highly recommended to have more than one '
-                        'manager in a Cloudify cluster')
+                get_logger().warning('It is highly recommended to have more '
+                                     'than one manager in a Cloudify cluster')
             return f(client=client, *args, **kwargs)
         return _inner
     return _deco
@@ -112,37 +111,39 @@ def cluster():
 @cluster.command(name='status',
                  short_help='Show the current cluster status')
 @pass_cluster_client()
+@cfy.assert_manager_active()
 @cfy.pass_logger
 @cfy.options.common_options
 def status(client, logger):
     """
-    Display the current status of the Cloudify Manager cluster
+    Display the current status of the Cloudify cluster
     """
-    managers = client.manager.get_managers().items
-    updated_columns = CLUSTER_COLUMNS
-    # After we get the managers list from either of the managers in the profile
-    # we retrieve each manager's status directly
-    for manager in managers:
-        direct_rest_client = env.get_rest_client(
-            rest_host=manager.public_ip, cluster=[])
-        try:
-            services = direct_rest_client.manager.get_status()['services']
-            manager.update({'status': 'Active'})
-            if get_global_verbosity() >= LOW_VERBOSE:
-                updated_columns += [
-                    display_name for display_name, service in services.items()
-                    if display_name not in updated_columns
-                ]
-            for display_name, service in services.items():
-                manager.update({display_name: service['status']})
-        except (ConnectionError, CloudifyClientError) as e:
-            if isinstance(e, CloudifyClientError) and e.status_code != 502:
-                raise
-            manager.update({'status': 'Offline'})
-            continue
-    print_data(updated_columns, managers, 'HA Cluster nodes')
+    rest_host = profile.manager_ip
+    logger.info('Retrieving Cloudify cluster status... [ip={0}]'.format(
+        rest_host))
+    try:
+        status_result = client.cluster_status.get_status()
+    except UserUnauthorizedError:
+        logger.info(
+            'Failed to query Cloudify cluster status: User is unauthorized')
+        return False
+    except CloudifyClientError as e:
+        logger.info('REST service at manager {0} is not '
+                    'responding! {1}'.format(rest_host, e))
+        return False
 
-    _list_brokers(client, logger)
+    if get_global_json_output():
+        output(json.dumps(status_result, cls=CloudifyJSONEncoder))
+    else:
+        services = []
+        for service_cluster, service in status_result['services'].items():
+            services.append({
+                'service': service_cluster.ljust(30),
+                'status': service.get('status')
+            })
+        logger.info('Current cluster status is {0}:'.format(
+            status_result.get('status')))
+        print_data(['service', 'status'], services, 'Cluster status services:')
 
 
 @cluster.command(name='remove',
