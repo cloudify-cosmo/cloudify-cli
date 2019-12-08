@@ -112,7 +112,7 @@ class ClusterTest(CliCommandTest):
 
         self.client.cluster_status.get_status.side_effect = [
             {
-                "status": "OK",
+                'status': 'OK',
                 'services': {
                     'Service-1': {
                         'status': 'Active',
@@ -169,7 +169,7 @@ class ClusterTest(CliCommandTest):
 
         self.client.cluster_status.get_status.side_effect = [
             {
-                "status": "OK",
+                'status': 'OK',
                 'services': {
                     'Service-1': {
                         'status': 'Active',

@@ -50,13 +50,6 @@ def status(logger, client):
             rest_host))
         return False
 
-    # manager_ip can change if we're using a cluster client and failed reaching
-    # the supplied managers' ips, while getting the status
-    actual_ip = profile.manager_ip
-    if actual_ip != rest_host:
-        logger.info('Retrieved manager services status [ip={0}]'.format(
-            actual_ip))
-
     if get_global_json_output():
         output(json.dumps(status_result, cls=CloudifyJSONEncoder))
     else:

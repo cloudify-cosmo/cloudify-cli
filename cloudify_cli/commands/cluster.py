@@ -132,12 +132,6 @@ def status(client, logger):
                     'responding! {1}'.format(rest_host, e))
         return False
 
-    # manager_ip can change if the cli's host has no connection
-    # with configured manager ips, while getting the status
-    actual_ip = profile.manager_ip
-    if actual_ip != rest_host:
-        logger.info('Retrieved Cloudify cluster status [ip={0}]'.format(
-            actual_ip))
     if get_global_json_output():
         output(json.dumps(status_result, cls=CloudifyJSONEncoder))
     else:
