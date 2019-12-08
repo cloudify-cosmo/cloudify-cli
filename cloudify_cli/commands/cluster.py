@@ -140,7 +140,7 @@ def status(client, logger, raw_json):
             actual_ip))
 
     if raw_json:
-        output(json.dumps(status_result, cls=CloudifyJSONEncoder))
+        output(json.dumps(status_result))
     else:
         services = []
         for service_cluster, service in status_result['services'].items():

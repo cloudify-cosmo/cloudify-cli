@@ -59,7 +59,7 @@ def status(logger, client, raw_json):
             actual_ip))
 
     if raw_json:
-        output(json.dumps(status_result, cls=CloudifyJSONEncoder))
+        output(json.dumps(status_result))
     else:
         services = []
         for display_name, service in status_result['services'].items():
