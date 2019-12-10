@@ -53,7 +53,8 @@ def _archive_logs(logger,
     # knowingly. We don't want to run another ssh command just to verify
     # something that will almost never happen.
     ssh.run_command_on_manager(
-        'tar -czf {0} -C /var/log cloudify -C /opt/cloudify cluster_statuses '
+        'tar -czf {0} -C /var/log cloudify '
+        '-C /opt/status-reporter cluster_statuses '
         '--ignore-failed-read'.format(archive_path),
         use_sudo=True,
         host_string=host_string,
