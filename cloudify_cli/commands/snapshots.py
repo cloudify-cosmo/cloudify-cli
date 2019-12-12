@@ -14,6 +14,8 @@
 # limitations under the License.
 ############
 
+from cloudify.snapshots import STATES
+
 from .. import utils
 from ..table import print_data
 from ..cli import helptexts, cfy
@@ -22,9 +24,9 @@ SNAPSHOT_COLUMNS = ['id', 'created_at', 'status', 'error',
                     'visibility', 'tenant_name', 'created_by']
 
 SNAPSHOT_STATUSES = {
-    'running': 'Snapshot restore in progress... This may take a while, '
-               'depending on the snapshot size',
-    'not-running': 'No snapshot is currently being restored'
+    STATES.RUNNING: 'Snapshot restore in progress... This may take a while, '
+                    'depending on the snapshot size',
+    STATES.NOT_RUNNING: 'No snapshot is currently being restored'
 }
 
 
