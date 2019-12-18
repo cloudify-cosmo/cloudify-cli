@@ -478,7 +478,7 @@ def set_cluster(cluster_node_name,
 
     changed_node = None
     for node in env.profile.cluster:
-        if node['name'] == cluster_node_name:
+        if node['hostname'] == cluster_node_name:
             changed_node = node
             break
     else:

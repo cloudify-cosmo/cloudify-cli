@@ -80,29 +80,32 @@ def download(output_path, all_nodes, logger):
             raise CloudifyCliError(
                 "No cluster nodes defined in this profile")
         for node in env.profile.cluster:
-            if 'ssh_user' not in node or 'ssh_key' not in node:
+            ssh_user = node.get('ssh_user') or env.profile.ssh_user
+            ssh_key = node.get('ssh_key') or env.profile.ssh_key
+            if not ssh_user or not ssh_key:
                 logger.info('No ssh details defined for manager {0} in '
                             'cluster profile. Skipping...'
                             .format(node['manager_ip']))
                 continue
+
             if not output_path:
                 output_path = os.getcwd()
             host_string = env.build_manager_host_string(
-                ssh_user=node['ssh_user'], ip=node['manager_ip'])
+                ssh_user=ssh_user, ip=node['manager_ip'])
             archive_path_on_manager = _archive_logs(
                 logger,
                 host_string=host_string,
-                key_filename=node['ssh_key'])
+                key_filename=ssh_key)
             logger.info('Downloading archive to: {0}'.format(output_path))
             ssh.get_file_from_manager(archive_path_on_manager,
                                       output_path,
                                       host_string=host_string,
-                                      key_filename=node['ssh_key'])
+                                      key_filename=ssh_key)
             logger.info('Removing archive from manager...')
             ssh.run_command_on_manager(
                 'rm {0}'.format(archive_path_on_manager), use_sudo=True,
                 host_string=host_string,
-                key_filename=node['ssh_key'])
+                key_filename=ssh_key)
     else:
         archive_path_on_manager = _archive_logs(logger)
         if not output_path:
