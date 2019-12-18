@@ -82,6 +82,11 @@ def download(output_path, all_nodes, logger):
         for node in env.profile.cluster:
             ssh_user = node.get('ssh_user') or env.profile.ssh_user
             ssh_key = node.get('ssh_key') or env.profile.ssh_key
+            if not ssh_user or not ssh_key:
+                logger.info('No ssh details defined for manager {0} in '
+                            'cluster profile. Skipping...'
+                            .format(node['manager_ip']))
+                continue
 
             if not output_path:
                 output_path = os.getcwd()
