@@ -18,7 +18,7 @@ from setuptools import setup
 
 setup(
     name='cloudify',
-    version='5.0.5.dev1',
+    version='5.0.5',
     author='Cloudify',
     author_email='cosmo-admin@cloudify.co',
     packages=['cloudify_cli',
@@ -49,7 +49,7 @@ setup(
         'requests>=2.7.0,<3.0.0',
         'PrettyTable>=0.7,<0.8',
         'click_didyoumean==0.0.3',
-        'cloudify-common==5.0.5.dev1',
+        'cloudify-common==5.0.5',
         'backports.shutil_get_terminal_size==1.0.0',
         'ipaddress==1.0.19',
         'setuptools<=40.7.3'
