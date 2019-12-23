@@ -1,3 +1,4 @@
 mock>=1.0.1
 testtools
 testfixtures
+coverage==4.5.3
