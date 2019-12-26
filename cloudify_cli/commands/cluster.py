@@ -186,8 +186,10 @@ def update_profile(client, logger):
     will be contacted in case of a manager failure.
     """
     logger.info('Fetching the cluster nodes list...')
-    nodes = client.manager.get_managers().items
-    _update_profile_cluster_settings(nodes, logger=logger)
+    manager_nodes = client.manager.get_managers().items
+    broker_nodes = client.manager.get_brokers().items
+    db_nodes = client.manager.get_db_nodes().itms
+    _update_profile_cluster_settings(manager_nodes, logger=logger)
     logger.info('Profile is up to date with {0} nodes'
                 .format(len(env.profile.cluster)))
 
