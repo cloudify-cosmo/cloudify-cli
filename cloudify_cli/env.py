@@ -32,6 +32,7 @@ from cloudify_rest_client.utils import is_kerberos_env
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.client import HTTPClient
 from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify.cluster_status import CloudifyNodeType
 from . import constants
 from .exceptions import CloudifyCliError
 
@@ -248,7 +249,7 @@ def get_rest_client(client_profile=None,
     trust_all = trust_all or get_ssl_trust_all()
     headers = get_auth_header(username, password)
     headers[constants.CLOUDIFY_TENANT_HEADER] = tenant_name
-    cluster = client_profile.cluster if cluster is None else cluster
+    cluster = cluster or client_profile.cluster[CloudifyNodeType.MANAGER]
     kerberos_env = kerberos_env \
         if kerberos_env is not None else client_profile.kerberos_env
 
@@ -412,7 +413,7 @@ class ProfileContext(yaml.YAMLObject):
         self.rest_protocol = constants.DEFAULT_REST_PROTOCOL
         self.rest_certificate = None
         self.kerberos_env = False
-        self._cluster = []
+        self._cluster = dict()
 
     def to_dict(self):
         return dict(
@@ -452,7 +453,7 @@ class ProfileContext(yaml.YAMLObject):
         # default the ._cluster attribute here, so that all callers can use it
         # as just ._cluster, even if it's not present in the source yaml
         if not hasattr(self, '_cluster'):
-            self._cluster = []
+            self._cluster = dict()
         return self._cluster
 
     @cluster.setter
@@ -512,8 +513,8 @@ def get_auth_header(username, password):
 # Only the IP is required.
 # Note that not all attributes are allowed - username/password will be
 # the same for every node in the cluster.
-CLUSTER_NODE_ATTRS = ['manager_ip', 'rest_port', 'rest_protocol', 'ssh_port',
-                      'ssh_user', 'ssh_key']
+CLUSTER_NODE_ATTRS = ['host_ip', 'host_type', 'rest_port', 'rest_protocol',
+                      'ssh_port', 'ssh_user', 'ssh_key']
 
 
 class ClusterHTTPClient(HTTPClient):
@@ -523,7 +524,7 @@ class ClusterHTTPClient(HTTPClient):
         super(ClusterHTTPClient, self).__init__(*args, **kwargs)
         if not profile.cluster:
             raise ValueError('Cluster client invoked for an empty cluster!')
-        self._cluster = list(profile.cluster)
+        self._cluster = list(profile.cluster[CloudifyNodeType.MANAGER])
         self._profile = profile
         first_node = self._cluster[0]
         self.cert = first_node.get('cert') or self.cert
@@ -535,13 +536,13 @@ class ClusterHTTPClient(HTTPClient):
         # a generator, we need to copy it, so we can send it more than once
         copied_data = None
         if isinstance(kwargs.get('data'), types.GeneratorType):
-            copied_data = itertools.tee(kwargs.pop('data'),
-                                        len(self._cluster))
+            copied_data = itertools.tee(kwargs.pop('data'), len(self._cluster))
 
         if kwargs.get('timeout') is None:
             kwargs['timeout'] = self.default_timeout_sec
 
-        for node_index, node in list(enumerate(self._profile.cluster)):
+        for node_index, node in list(enumerate(
+                self._profile.cluster[CloudifyNodeType.MANAGER])):
             self._use_node(node)
             if copied_data is not None:
                 kwargs['data'] = copied_data[node_index]
@@ -557,9 +558,9 @@ class ClusterHTTPClient(HTTPClient):
         raise CloudifyClientError('All cluster nodes are offline')
 
     def _use_node(self, node):
-        if node['manager_ip'] == self.host:
+        if node['host_ip'] == self.host:
             return
-        self.host = node['manager_ip']
+        self.host = node['host_ip']
         for attr in ['rest_port', 'rest_protocol', 'trust_all', 'cert']:
             new_value = node.get(attr)
             if new_value:
@@ -574,8 +575,9 @@ class ClusterHTTPClient(HTTPClient):
         the node first will make the client try it first next time. This makes
         the client always try the last-known-active-manager first.
         """
-        self._profile.cluster.remove(node)
-        self._profile.cluster = [node] + self._profile.cluster
+        self._profile.cluster[CloudifyNodeType.MANAGER].remove(node)
+        self._profile.cluster = (
+                [node] + self._profile.cluster[CloudifyNodeType.MANAGER])
         for node_attr in CLUSTER_NODE_ATTRS:
             if node_attr in node:
                 setattr(self._profile, node_attr, node[node_attr])
