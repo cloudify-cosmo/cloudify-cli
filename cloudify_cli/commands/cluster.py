@@ -185,7 +185,7 @@ def update_profile(client, logger):
     logger.info('Fetching the cluster nodes list...')
     manager_nodes = client.manager.get_managers().items
     broker_nodes = client.manager.get_brokers().items
-    db_nodes = client.manager.get_db_nodes().itms
+    db_nodes = client.manager.get_db_nodes().items
     _update_profile_cluster_settings(manager_nodes, logger=logger)
     logger.info('Profile is up to date with {0} nodes'
                 .format(len(env.profile.cluster)))
