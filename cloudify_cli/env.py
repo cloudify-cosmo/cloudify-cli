@@ -249,7 +249,7 @@ def get_rest_client(client_profile=None,
     trust_all = trust_all or get_ssl_trust_all()
     headers = get_auth_header(username, password)
     headers[constants.CLOUDIFY_TENANT_HEADER] = tenant_name
-    cluster = cluster or client_profile.cluster[CloudifyNodeType.MANAGER]
+    cluster = cluster or client_profile.cluster.get(CloudifyNodeType.MANAGER)
     kerberos_env = kerberos_env \
         if kerberos_env is not None else client_profile.kerberos_env
 
@@ -524,7 +524,7 @@ class ClusterHTTPClient(HTTPClient):
         super(ClusterHTTPClient, self).__init__(*args, **kwargs)
         if not profile.cluster:
             raise ValueError('Cluster client invoked for an empty cluster!')
-        self._cluster = list(profile.cluster[CloudifyNodeType.MANAGER])
+        self._cluster = list(profile.cluster.get(CloudifyNodeType.MANAGER))
         self._profile = profile
         first_node = self._cluster[0]
         self.cert = first_node.get('cert') or self.cert
