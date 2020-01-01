@@ -49,7 +49,7 @@ function download_resources() {
 
     # Downloading types.yaml
     pushd packaging/source/types
-        curl -LO http://www.getcloudify.org/spec/cloudify/${CORE_TAG_NAME}/types.yaml
+        curl -LO http://cloudify.co/spec/cloudify/${CORE_TAG_NAME}/types.yaml
     popd
 
     # Downloading Scripts
