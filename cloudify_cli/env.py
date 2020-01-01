@@ -517,7 +517,6 @@ CLUSTER_NODE_ATTRS = ['manager_ip', 'rest_port', 'rest_protocol', 'ssh_port',
 
 
 class ClusterHTTPClient(HTTPClient):
-    default_timeout_sec = (5, None)
 
     def __init__(self, *args, **kwargs):
         profile = kwargs.pop('profile')
@@ -529,6 +528,7 @@ class ClusterHTTPClient(HTTPClient):
         first_node = self._cluster[0]
         self.cert = first_node.get('cert') or self.cert
         self.trust_all = first_node.get('trust_all') or self.trust_all
+        self.default_timeout_sec = self.default_timeout_sec or (5, None)
 
     def do_request(self, *args, **kwargs):
         # this request can be retried for each manager - if the data is
