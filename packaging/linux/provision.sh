@@ -84,10 +84,21 @@ else
     prepare_linux
 fi
 
-curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
-source common_build_env.sh &&
-curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-common/${CORE_BRANCH}/packaging/common/provision.sh -o ./common-provision.sh &&
-source common-provision.sh
+
+set +x
+export current_branch=$CORE_BRANCH && curl -u $GITHUB_USERNAME:$GITHUB_TOKEN -fO "https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh" || \
+              export current_branch=master && curl -u $GITHUB_USERNAME:$GITHUB_TOKEN -fO "https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/master/packages-urls/common_build_env.sh"
+
+echo Gotten Environment Variables from here: https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${current_branch}/packages-urls/common_build_env.sh
+. $PWD/common_build_env.sh &&
+
+
+export current_branch=$CORE_BRANCH && curl -fO "https://raw.githubusercontent.com/cloudify-cosmo/cloudify-common/${CORE_BRANCH}/packaging/common/provision.sh" || \
+              export current_branch=master && curl -u $GITHUB_USERNAME:$GITHUB_TOKEN -fO "https://raw.githubusercontent.com/cloudify-cosmo/cloudify-common/master/packaging/common/provision.sh"
+
+echo Gotten provision script from here: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-common/${current_branch}/packaging/common/provision.sh
+. $PWD/provision.sh &&
+set -x
 
 install_common_prereqs &&
 rm -rf cloudify-cli
