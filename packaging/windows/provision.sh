@@ -52,6 +52,19 @@ function download_resources() {
         curl -LO http://cloudify.co/spec/cloudify/${CORE_TAG_NAME}/types.yaml
     popd
 
+    # Downloading plugin yamls
+    pushd packaging/source/plugins
+        mkdir -p {fabric-plugin,script-plugin,openstack-plugin,aws-plugin,vsphere-plugin,softlayer-plugin}
+
+        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-fabric-plugin/1.5.2/plugin.yaml -o fabric-plugin/plugin.yaml
+        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/2.0.1/plugin.yaml -o openstack-plugin/plugin.yaml
+        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.4.10/plugin.yaml -o aws-plugin/plugin.yaml
+        curl -L https://$GITHUB_USERNAME:$GITHUB_TOKEN@raw.githubusercontent.com/cloudify-cosmo/cloudify-softlayer-plugin/1.3.1/plugin.yaml -o softlayer-plugin/plugin.yaml
+
+        # Downloading commercial plugin yamls
+        curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-vsphere-plugin/2.4.0/plugin.yaml -o vsphere-plugin/plugin.yaml
+    popd
+
 }
 
 function update_remote_to_local_links() {
