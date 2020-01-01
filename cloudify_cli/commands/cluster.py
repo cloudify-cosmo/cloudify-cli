@@ -93,13 +93,28 @@ def pass_cluster_client(*client_args, **client_kwargs):
         @cfy.pass_client(*client_args, **client_kwargs)
         @wraps(f)
         def _inner(client, *args, **kwargs):
-            managers_list = client.manager.get_managers().items
-            if len(managers_list) == 1:
-                get_logger().warning('It is highly recommended to have more '
-                                     'than one manager in a Cloudify cluster')
+            if _all_in_one_manager(client):
+                raise CloudifyCliError('This is an all-in-one Manager')
             return f(client=client, *args, **kwargs)
         return _inner
     return _deco
+
+
+def _all_in_one_manager(client):
+    manager_nodes = client.manager.get_managers().items
+    broker_nodes = client.manager.get_brokers().items
+    db_nodes = client.manager.get_db_nodes().items
+    if len(manager_nodes) == len(broker_nodes) == len(db_nodes) == 1:
+        db_node_ip = db_nodes[0].get('host')
+        if db_node_ip == broker_nodes[0].get('host'):
+            if (db_node_ip == manager_nodes[0].get('private_ip') or
+                    db_node_ip == manager_nodes[0].get('public_ip')):
+                return True
+
+    if len(manager_nodes) == 1:
+        get_logger().warning('It is highly recommended to have more '
+                             'than one manager in a Cloudify cluster')
+    return False
 
 
 @cfy.group(name='cluster')
@@ -186,55 +201,13 @@ def update_profile(client, logger):
     another machine. Only the manager cluster nodes that are stored in
     the profile will be contacted in case of a manager failure.
     """
-    # import pydevd
-    # pydevd.settrace('192.168.8.43', port=53100, stdoutToServer=True,
-    #                 stderrToServer=True, suspend=True)
     manager_nodes = client.manager.get_managers().items
     broker_nodes = client.manager.get_brokers().items
     db_nodes = client.manager.get_db_nodes().items
-    if _all_in_one_manager(manager_nodes, broker_nodes, db_nodes):
-        raise CloudifyCliError('This is an all-in-one Manager')
     _update_profile_cluster_settings(manager_nodes, broker_nodes, db_nodes,
                                      logger=logger)
-    logger.info('Profile is up to date with {0} nodes'
-                .format(len(env.profile.cluster)))
-
-
-def _all_in_one_manager(manager_nodes, broker_nodes, db_nodes):
-    if len(manager_nodes) == len(broker_nodes) == len(db_nodes) == 1:
-        db_node_ip = db_nodes[0].get('host')
-        if db_node_ip == broker_nodes.get('host'):
-            if (db_node_ip == manager_nodes[0].get('private_ip') or
-                    db_node_ip == manager_nodes[0].get('public_ip')):
-                return True
-    return False
-
-
-def _update_cluster_nodes(nodes, nodes_type, logger):
-    stored_nodes = {node['hostname'] for node in
-                    env.profile.cluster.get(nodes_type)}
-    received_nodes = {node['hostname'] for node in nodes}
-    for node in nodes:
-        if node['hostname'] not in stored_nodes:
-            if nodes_type == CloudifyNodeType.MANAGER:
-                node_ip = node['public_ip'] or node['private_ip']
-            else:
-                node_ip = node['host']
-            if logger:
-                logger.info('Adding cluster node {0} to local profile'
-                            .format(node_ip))
-            env.profile.cluster[nodes_type].append({
-                'hostname': node['hostname'],
-                'host_type': nodes_type,
-                'host_ip': node_ip
-                # all other connection parameters will be defaulted to the
-                # ones from the last used manager
-            })
-    # filter out removed nodes
-    env.profile.cluster[nodes_type] = [node for node in
-                                       env.profile.cluster[nodes_type]
-                                       if node['hostname'] in received_nodes]
-    env.profile.save()
+    logger.info('Profile is up to date with {0} nodes'.format(
+        sum([len(env.profile.cluster[key]) for key in env.profile.cluster])))
 
 
 def _update_profile_cluster_settings(manager_nodes, broker_nodes, db_nodes,
@@ -252,6 +225,41 @@ def _update_profile_cluster_settings(manager_nodes, broker_nodes, db_nodes,
     _update_cluster_nodes(manager_nodes, CloudifyNodeType.MANAGER, logger)
     _update_cluster_nodes(broker_nodes, CloudifyNodeType.BROKER, logger)
     _update_cluster_nodes(db_nodes, CloudifyNodeType.DB, logger)
+
+
+def _update_cluster_nodes(nodes, nodes_type, logger):
+    stored_nodes = env.profile.cluster.get(nodes_type)
+    stored_nodes_names = ({node['hostname'] for node in stored_nodes}
+                          if stored_nodes else {})
+    received_nodes_names = {node.get('hostname') or node.get('name')
+                            for node in nodes}
+    for node in nodes:
+        _update_node(node, nodes_type, logger, stored_nodes_names)
+    # filter out removed nodes
+    env.profile.cluster[nodes_type] = [
+        node for node in env.profile.cluster[nodes_type]
+        if node.get('hostname') or node.get('name') in received_nodes_names]
+    env.profile.save()
+
+
+def _update_node(node, nodes_type, logger, stored_nodes_names):
+    if node.get('hostname') or node.get('name') not in stored_nodes_names:
+        if nodes_type == CloudifyNodeType.MANAGER:
+            node_ip = node['public_ip'] or node['private_ip']
+        else:
+            node_ip = node['host']
+        if logger:
+            logger.info('Adding cluster node {0} to local profile'
+                        .format(node_ip))
+        if not env.profile.cluster.get(nodes_type):
+            env.profile.cluster[nodes_type] = []
+        env.profile.cluster[nodes_type].append({
+            'hostname': node.get('hostname') or node.get('name'),
+            'host_type': nodes_type,
+            'host_ip': node_ip
+            # all other connection parameters will be defaulted to the
+            # ones from the last used manager
+        })
 
 
 @cluster.group(name='brokers',
