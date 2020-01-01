@@ -235,19 +235,19 @@ def _update_cluster_nodes(nodes, nodes_type, logger):
     # filter out removed nodes
     env.profile.cluster[nodes_type] = [
         node for node in env.profile.cluster[nodes_type]
-        if node.get('hostname') or node.get('name') in received_nodes_names]
+        if (node.get('hostname') or node.get('name')) in received_nodes_names]
     env.profile.save()
 
 
 def _update_node(node, nodes_type, logger, stored_nodes_names):
-    if node.get('hostname') or node.get('name') not in stored_nodes_names:
+    if (node.get('hostname') or node.get('name')) not in stored_nodes_names:
         if nodes_type == CloudifyNodeType.MANAGER:
             node_ip = node['public_ip'] or node['private_ip']
         else:
             node_ip = node['host']
         if logger:
-            logger.info('Adding cluster node {0} to local profile'
-                        .format(node_ip))
+            logger.info('Adding cluster node {0} to local profile {1} cluster'
+                        .format(node_ip, nodes_type))
         if not env.profile.cluster.get(nodes_type):
             env.profile.cluster[nodes_type] = []
         env.profile.cluster[nodes_type].append({
