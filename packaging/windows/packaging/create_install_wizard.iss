@@ -40,7 +40,6 @@ Source: "source\wheels\*.whl"; Flags: dontcopy
 Source: "source\icons\Cloudify.ico"; DestDir: "{app}"
 
 Source: "source\types\*"; DestDir: "{app}\cloudify\types"; Flags: recursesubdirs
-Source: "source\scripts\*"; DestDir: "{app}\cloudify\scripts"; Flags: recursesubdirs
 Source: "source\plugins\*"; DestDir: "{app}\cloudify\plugins"; Flags: recursesubdirs
 Source: "source\import_resolver.yaml"; Flags: dontcopy
 
