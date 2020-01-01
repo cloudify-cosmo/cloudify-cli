@@ -28,11 +28,11 @@ from base64 import urlsafe_b64encode
 import yaml
 import requests
 
-from cloudify_rest_client.utils import is_kerberos_env
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.client import HTTPClient
-from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify.cluster_status import CloudifyNodeType
+from cloudify_rest_client.utils import is_kerberos_env
+from cloudify_rest_client.exceptions import CloudifyClientError
 from . import constants
 from .exceptions import CloudifyCliError
 
@@ -576,7 +576,7 @@ class ClusterHTTPClient(HTTPClient):
         the client always try the last-known-active-manager first.
         """
         self._profile.cluster[CloudifyNodeType.MANAGER].remove(node)
-        self._profile.cluster = (
+        self._profile.cluster[CloudifyNodeType.MANAGER] = (
                 [node] + self._profile.cluster[CloudifyNodeType.MANAGER])
         for node_attr in CLUSTER_NODE_ATTRS:
             if node_attr in node:
