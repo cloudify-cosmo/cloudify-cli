@@ -91,7 +91,7 @@ def pass_cluster_client(*client_args, **client_kwargs):
         @wraps(f)
         def _inner(client, *args, **kwargs):
             if _all_in_one_manager(client):
-                raise CloudifyCliError('You cannot run cluster actions in an '
+                raise CloudifyCliError('You cannot run cluster actions on an '
                                        'all-in-one Manager')
             return f(client=client, *args, **kwargs)
         return _inner
@@ -226,20 +226,20 @@ def _update_profile_cluster_settings(manager_nodes, broker_nodes, db_nodes,
 
 def _update_cluster_nodes(nodes, nodes_type, logger):
     stored_nodes = env.profile.cluster.get(nodes_type)
-    stored_nodes_names = ({_get_node_name(node) for node in stored_nodes}
+    stored_nodes_names = ({_get_node_host(node) for node in stored_nodes}
                           if stored_nodes else {})
-    received_nodes_names = {_get_node_name(node) for node in nodes}
+    received_nodes_names = {_get_node_host(node) for node in nodes}
     for node in nodes:
         _update_node(node, nodes_type, logger, stored_nodes_names)
     # filter out removed nodes
     env.profile.cluster[nodes_type] = [
         node for node in env.profile.cluster[nodes_type]
-        if _get_node_name(node) in received_nodes_names]
+        if _get_node_host(node) in received_nodes_names]
     env.profile.save()
 
 
 def _update_node(node, node_type, logger, stored_nodes_names):
-    if _get_node_name(node) not in stored_nodes_names:
+    if _get_node_host(node) not in stored_nodes_names:
         if node_type == CloudifyNodeType.MANAGER:
             node_ip = node['public_ip'] or node['private_ip']
         else:
@@ -250,7 +250,7 @@ def _update_node(node, node_type, logger, stored_nodes_names):
         if not env.profile.cluster.get(node_type):
             env.profile.cluster[node_type] = []
         env.profile.cluster[node_type].append({
-            'hostname': _get_node_name(node),
+            'hostname': _get_node_host(node),
             'host_type': node_type,
             'host_ip': node_ip
             # all other connection parameters will be defaulted to the
@@ -258,7 +258,7 @@ def _update_node(node, node_type, logger, stored_nodes_names):
         })
 
 
-def _get_node_name(node):
+def _get_node_host(node):
     return node.get('hostname') or node.get('name')
 
 
