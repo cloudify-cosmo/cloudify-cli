@@ -381,7 +381,8 @@ NETWORKS = "Networks as a JSON string or as '\'net1=ip1;net2=ip2\'). " \
 PORT = "A non-default network port to use for this component."
 NON_ENCRYPTED = "Use this flag for none encrypted secrets' values."
 RAW_JSON = "If set, then output the manager status in a JSON format"
-NODE_ID = "Cloudify's auto-generated node id."
+NODE_ID = "Cloudify's auto-generated node id. " \
+          "Run `cfy_manager node get-id` on the node to retrieve it."
 
 RUNTIME_ONLY_EVALUATION = "If set, all intrinsic functions will only be "\
                           "evaluated at runtime, and no intrinsic functions "\
