@@ -1,4 +1,6 @@
-#/bin/bash -e -x
+#!/bin/bash
+
+set -e -x
 
 export GITHUB_USERNAME=$1
 export GITHUB_TOKEN=$2
@@ -6,6 +8,9 @@ export AWS_ACCESS_KEY_ID=$3
 export AWS_ACCESS_KEY=$4
 export REPO=$5
 export BRANCH=$6
+
+# These env vars are being updated by the bump version process
+export CORE_TAG_NAME="5.0.5"
 export CORE_BRANCH="master"
 
 
@@ -85,18 +90,13 @@ fi
 
 
 set +x
-export current_branch=$CORE_BRANCH && curl -u $GITHUB_USERNAME:$GITHUB_TOKEN -fO "https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh" || \
-              export current_branch=master && curl -u $GITHUB_USERNAME:$GITHUB_TOKEN -fO "https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/master/packages-urls/common_build_env.sh"
 
-echo Gotten Environment Variables from here: https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${current_branch}/packages-urls/common_build_env.sh
-. $PWD/common_build_env.sh &&
+curl -u ${GITHUB_USERNAME}:${GITHUB_TOKEN} https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
+source common_build_env.sh &&
 
+curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-common/${CORE_BRANCH}/packaging/common/provision.sh -o ./common-provision.sh &&
+source common-provision.sh
 
-export current_branch=$CORE_BRANCH && curl -fO "https://raw.githubusercontent.com/cloudify-cosmo/cloudify-common/${CORE_BRANCH}/packaging/common/provision.sh" || \
-              export current_branch=master && curl -u $GITHUB_USERNAME:$GITHUB_TOKEN -fO "https://raw.githubusercontent.com/cloudify-cosmo/cloudify-common/master/packaging/common/provision.sh"
-
-echo Gotten provision script from here: https://raw.githubusercontent.com/cloudify-cosmo/cloudify-common/${current_branch}/packaging/common/provision.sh
-. $PWD/provision.sh &&
 set -x
 
 install_common_prereqs &&
@@ -113,7 +113,7 @@ else
     git checkout $CLI_BRANCH
 fi
 
-if [[ ! -z $BRANCH	 ]] && [[ "$BRANCH" != "master" ]] && git show-ref --quiet origin/$BRANCH ; then
+if [[ ! -z $BRANCH ]] && [[ "$BRANCH" != "master" ]] && git show-ref --quiet origin/$BRANCH ; then
     export CLI_BRANCH="$BRANCH"
     git checkout $CLI_BRANCH
     AWS_S3_PATH="$AWS_S3_PATH/$BRANCH"
