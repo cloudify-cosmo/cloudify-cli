@@ -2,22 +2,27 @@
 set -ex
 
 export GITHUB_USERNAME=$1
-export GITHUB_PASSWORD=$2
+export GITHUB_TOKEN=$2
 export AWS_ACCESS_KEY_ID=$3
 export AWS_ACCESS_KEY=$4
 export REPO=$5
 export BRANCH=$6
-export CORE_TAG_NAME="5.0.dev1"
+
+# These env vars are being updated by the bump version process
+export CORE_TAG_NAME="5.0.5"
 export CORE_BRANCH="master"
 
 set +e
 . /etc/profile.d/rvm.sh
 set -e
 
-curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
+set +x
+curl -u ${GITHUB_USERNAME}:${GITHUB_TOKEN} https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
 source common_build_env.sh &&
+
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-common/${CORE_BRANCH}/packaging/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
+set -x
 
 install_common_prereqs
 cd packaging/omnibus

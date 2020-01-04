@@ -2,8 +2,8 @@
 #define AppVersion GetEnv('VERSION')
 #define AppMilestone GetEnv('PRERELEASE')
 #define AppBuild GetEnv('BUILD')
-#define AppPublisher "GigaSpaces Technologies"
-#define AppURL "http://getcloudify.org/"
+#define AppPublisher "Cloudify Platform"
+#define AppURL "http://cloudify.co/"
 #define PluginsTagName GetEnv('PLUGINS_TAG_NAME')
 #define CoreTagName GetEnv('CORE_TAG_NAME')
 
@@ -40,7 +40,6 @@ Source: "source\wheels\*.whl"; Flags: dontcopy
 Source: "source\icons\Cloudify.ico"; DestDir: "{app}"
 
 Source: "source\types\*"; DestDir: "{app}\cloudify\types"; Flags: recursesubdirs
-Source: "source\scripts\*"; DestDir: "{app}\cloudify\scripts"; Flags: recursesubdirs
 Source: "source\plugins\*"; DestDir: "{app}\cloudify\plugins"; Flags: recursesubdirs
 Source: "source\import_resolver.yaml"; Flags: dontcopy
 

@@ -21,9 +21,9 @@ ENV['CLI_BRANCH'] || raise('CLI_BRANCH environment variable not set')
 default_version ENV['CLI_BRANCH']
 
 ENV['GITHUB_USERNAME'] || raise('GITHUB_USERNAME environment variable not set (required for private repo)')
-ENV['GITHUB_PASSWORD'] || raise('GITHUB_PASSWORD environment variable not set (required for private repo)')
+ENV['GITHUB_TOKEN'] || raise('GITHUB_TOKEN environment variable not set (required for private repo)')
 github_username=ENV['GITHUB_USERNAME']
-github_password=ENV['GITHUB_PASSWORD']
+github_token=ENV['GITHUB_TOKEN']
 
 dependency "python"
 if ! windows?

@@ -6,7 +6,7 @@ function install_requirements() {
 
 function download_wheels() {
     GITHUB_USERNAME=$1
-    GITHUB_PASSWORD=$2
+    GITHUB_TOKEN=$2
 
     mkdir -p packaging/source/wheels
     curl -LO https://pypi.python.org/packages/2.7/l/lxml/lxml-3.5.0.win32-py2.7.exe
@@ -39,29 +39,17 @@ function download_wheels() {
 function download_resources() {
 
     GITHUB_USERNAME=$1
-    GITHUB_PASSWORD=$2
+    GITHUB_TOKEN=$2
 
     mkdir -p packaging/source/{python,types,scripts,plugins}
     pushd packaging/source/python
-        curl -L http://gigaspaces-repository-eu.s3.amazonaws.com/org/cloudify3/components/Python279_x32.tar.gz -o /tmp/Python279_x32.tar.gz
+        curl -L https://cloudify-release-eu.s3.amazonaws.com/cloudify/components/Python279_x32.tar.gz -o /tmp/Python279_x32.tar.gz
         tar -zxvf /tmp/Python279_x32.tar.gz --strip-components=1
     popd
 
     # Downloading types.yaml
     pushd packaging/source/types
-        curl -LO http://www.getcloudify.org/spec/cloudify/${CORE_TAG_NAME}/types.yaml
-    popd
-
-    # Downloading Scripts
-    pushd packaging/source/scripts
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_BRANCH}/resources/rest-service/cloudify/fs/mkfs.sh
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_BRANCH}/resources/rest-service/cloudify/fs/fdisk.sh
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_BRANCH}/resources/rest-service/cloudify/fs/mount.sh
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_BRANCH}/resources/rest-service/cloudify/fs/unmount.sh
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_BRANCH}/resources/rest-service/cloudify/policies/host_failure.clj
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_BRANCH}/resources/rest-service/cloudify/policies/threshold.clj
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_BRANCH}/resources/rest-service/cloudify/policies/ewma_stabilized.clj
-        curl -LO https://raw.githubusercontent.com/cloudify-cosmo/cloudify-manager/${CORE_BRANCH}/resources/rest-service/cloudify/triggers/execute_workflow.clj
+        curl -LO http://cloudify.co/spec/cloudify/${CORE_TAG_NAME}/types.yaml
     popd
 
     # Downloading plugin yamls
@@ -71,11 +59,12 @@ function download_resources() {
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-fabric-plugin/1.5.2/plugin.yaml -o fabric-plugin/plugin.yaml
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-openstack-plugin/2.0.1/plugin.yaml -o openstack-plugin/plugin.yaml
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-aws-plugin/1.4.10/plugin.yaml -o aws-plugin/plugin.yaml
-        curl -L https://$GITHUB_USERNAME:$GITHUB_PASSWORD@raw.githubusercontent.com/cloudify-cosmo/cloudify-softlayer-plugin/1.3.1/plugin.yaml -o softlayer-plugin/plugin.yaml
+        curl -L https://$GITHUB_USERNAME:$GITHUB_TOKEN@raw.githubusercontent.com/cloudify-cosmo/cloudify-softlayer-plugin/1.3.1/plugin.yaml -o softlayer-plugin/plugin.yaml
 
         # Downloading commercial plugin yamls
         curl -L https://raw.githubusercontent.com/cloudify-cosmo/cloudify-vsphere-plugin/2.4.0/plugin.yaml -o vsphere-plugin/plugin.yaml
     popd
+
 }
 
 function update_remote_to_local_links() {
@@ -85,7 +74,7 @@ function update_remote_to_local_links() {
 # VERSION/PRERELEASE/BUILD/CORE_BRANCH/PLUGINS_TAG_NAME must be exported as they are being read as an env var by the install wizard
 
 export GITHUB_USERNAME=$1
-export GITHUB_PASSWORD=$2
+export GITHUB_TOKEN=$2
 export AWS_ACCESS_KEY_ID=$3
 export AWS_ACCESS_KEY=$4
 export REPO=$5
@@ -93,10 +82,15 @@ export BRANCH=$6
 export CORE_TAG_NAME="5.0.5"
 export CORE_BRANCH="master"
 
-curl -u $GITHUB_USERNAME:$GITHUB_PASSWORD https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
+set +x
+
+curl -u ${GITHUB_USERNAME}:${GITHUB_TOKEN} https://raw.githubusercontent.com/cloudify-cosmo/${REPO}/${CORE_BRANCH}/packages-urls/common_build_env.sh -o ./common_build_env.sh &&
 source common_build_env.sh &&
+
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-common/${CORE_BRANCH}/packaging/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
+
+set -x
 
 export CLI_BRANCH="$CORE_BRANCH"
 if [ "$CORE_BRANCH" != "master" ] && [ "$REPO" == "cloudify-versions" ]; then
@@ -113,8 +107,8 @@ if [[ ! -z $BRANCH ]] && [[ "$BRANCH" != "master" ]];then
 fi
 install_common_prereqs &&
 #install_requirements && # moved to cloudify-common
-download_wheels $GITHUB_USERNAME $GITHUB_PASSWORD &&
-download_resources $GITHUB_USERNAME $GITHUB_PASSWORD &&
+download_wheels $GITHUB_USERNAME $GITHUB_TOKEN &&
+download_resources $GITHUB_USERNAME $GITHUB_TOKEN &&
 update_remote_to_local_links &&
 iscc packaging/create_install_wizard.iss &&
 cd /home/Administrator/packaging/output/ && create_md5 "exe"  &&
