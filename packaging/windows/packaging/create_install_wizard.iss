@@ -3,7 +3,7 @@
 #define AppMilestone GetEnv('PRERELEASE')
 #define AppBuild GetEnv('BUILD')
 #define AppPublisher "Cloudify Platform"
-#define AppURL "http://cloudify.co/"
+#define AppURL "https://cloudify.co/"
 #define PluginsTagName GetEnv('PLUGINS_TAG_NAME')
 #define CoreTagName GetEnv('CORE_TAG_NAME')
 
