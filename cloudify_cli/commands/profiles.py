@@ -390,14 +390,15 @@ def _set_profile_ssl(ssl, rest_port, logger):
     env.profile.rest_port = port
     env.profile.rest_protocol = protocol
 
-    if env.profile.cluster.get(CloudifyNodeType.MANAGER):
+    manager_cluster = env.profile.cluster.get(CloudifyNodeType.MANAGER)
+    if manager_cluster:
         missing_certs = []
-        for node in env.profile.cluster.get(CloudifyNodeType.MANAGER):
+        for node in manager_cluster:
             node['rest_port'] = port
             node['rest_protocol'] = protocol
-            logger.info('Enabling SSL for {0}'.format(node['manager_ip']))
+            logger.info('Enabling SSL for {0}'.format(node['host_ip']))
             if not node.get('cert'):
-                missing_certs.append(node['name'])
+                missing_certs.append(node['hostname'])
         if missing_certs:
             logger.warning('The following cluster nodes have no certificate '
                            'set: {0}'.format(', '.join(missing_certs)))
@@ -469,7 +470,8 @@ def set_cluster(cluster_node_name,
 
     `CLUSTER_NODE_NAME` is the Manager cluster node name to set options for.
     """
-    if not env.profile.cluster.get(CloudifyNodeType.MANAGER):
+    manager_cluster = env.profile.cluster.get(CloudifyNodeType.MANAGER)
+    if not manager_cluster:
         err = CloudifyCliError('The current profile is not a cluster profile!')
         err.possible_solutions = [
             "Select a different profile using `cfy profiles use`",
@@ -478,7 +480,7 @@ def set_cluster(cluster_node_name,
         raise err
 
     changed_node = None
-    for node in env.profile.cluster.get(CloudifyNodeType.MANAGER):
+    for node in manager_cluster:
         if node['hostname'] == cluster_node_name:
             changed_node = node
             break
