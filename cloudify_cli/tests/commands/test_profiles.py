@@ -382,15 +382,16 @@ class ProfilesTest(CliCommandTest):
            return_value={})
     def test_cluster_set_changes_cert(self, mock_get_context):
         self.use_manager()
-        env.profile.cluster = [{'hostname': 'first'}]
+        env.profile.cluster = {'manager': [{'hostname': 'first'}]}
         self.invoke('profiles set-cluster first --rest-certificate CERT_PATH')
-        self.assertIn('cert', env.profile.cluster[0])
-        self.assertEqual(env.profile.cluster[0]['cert'], 'CERT_PATH')
+        self.assertIn('cert', env.profile.cluster['manager'][0])
+        self.assertEqual(env.profile.cluster['manager'][0]['cert'],
+                         'CERT_PATH')
 
     @patch('cloudify_cli.commands.profiles._get_provider_context',
            return_value={})
     def test_cluster_set_nonexistent_node(self, mock_get_context):
         self.use_manager()
-        env.profile.cluster = [{'hostname': 'first'}]
+        env.profile.cluster = {'manager': [{'hostname': 'first'}]}
         self.invoke('profiles set-cluster second --rest-certificate CERT_PATH',
                     err_str_segment='second not found')
