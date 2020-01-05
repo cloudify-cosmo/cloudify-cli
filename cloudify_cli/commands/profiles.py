@@ -21,9 +21,9 @@ import tarfile
 from contextlib import closing
 
 from cloudify.utils import get_kerberos_indication
+from cloudify.cluster_status import CloudifyNodeType
 from cloudify_rest_client.exceptions import (CloudifyClientError,
                                              UserUnauthorizedError)
-from cloudify.cluster_status import CloudifyNodeType
 
 from . import init
 from .. import env
