@@ -103,7 +103,7 @@ source common-provision.sh
 
 set -x
 
-install_common_prereqs &&
+install_common_prereqs &
 rm -rf cloudify-cli
 git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd ~/cloudify-cli/packaging/omnibus
