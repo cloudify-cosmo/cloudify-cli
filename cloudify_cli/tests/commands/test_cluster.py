@@ -19,7 +19,8 @@ import mock
 from requests.exceptions import ConnectionError
 
 from cloudify_rest_client.exceptions import UserUnauthorizedError
-from cloudify_rest_client.manager import ManagerItem, RabbitMQBrokerItem
+from cloudify_rest_client.manager import (ManagerItem, RabbitMQBrokerItem,
+                                          DBNodeItem)
 
 from .test_base import CliCommandTest
 from ..cfy import ClickInvocationException
@@ -79,12 +80,25 @@ class ClusterTest(CliCommandTest):
             }
         )
     ]
+    DB_NODES_LIST = [
+        DBNodeItem(
+            {
+                'name': 'db_1',
+                'host': '3.2.3.5'
+            }
+        )
+
+    ]
 
     def setUp(self):
         super(ClusterTest, self).setUp()
         self.client.cluster_status.get_status = mock.MagicMock()
         self.client.manager.get_managers = mock.MagicMock()
+        self.client.manager.get_brokers = mock.MagicMock()
+        self.client.manager.get_db_nodes = mock.MagicMock()
         self.client.manager.get_managers().items = self.MANAGERS_LIST
+        self.client.manager.get_brokers().items = self.BROKERS_LIST
+        self.client.manager.get_db_nodes().items = self.DB_NODES_LIST
 
     def test_command_basic_run(self):
         self.use_manager()
