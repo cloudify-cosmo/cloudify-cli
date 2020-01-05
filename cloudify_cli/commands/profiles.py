@@ -23,6 +23,7 @@ from contextlib import closing
 from cloudify.utils import get_kerberos_indication
 from cloudify_rest_client.exceptions import (CloudifyClientError,
                                              UserUnauthorizedError)
+from cloudify.cluster_status import CloudifyNodeType
 
 from . import init
 from .. import env
@@ -67,7 +68,7 @@ def _format_cluster_profile(profile):
     """
     common_attributes = {k: profile.get(k) for k in PROFILE_COLUMNS}
     nodes = []
-    for node in profile['cluster']:
+    for node in profile['cluster'][CloudifyNodeType.MANAGER]:
         # merge the common attrs with node data, but rename node's name
         # attribute to cluster_node, because the attribute 'name' is
         # reserved for the profile name
@@ -389,9 +390,9 @@ def _set_profile_ssl(ssl, rest_port, logger):
     env.profile.rest_port = port
     env.profile.rest_protocol = protocol
 
-    if env.profile.cluster:
+    if env.profile.cluster.get(CloudifyNodeType.MANAGER):
         missing_certs = []
-        for node in env.profile.cluster:
+        for node in env.profile.cluster.get(CloudifyNodeType.MANAGER):
             node['rest_port'] = port
             node['rest_protocol'] = protocol
             logger.info('Enabling SSL for {0}'.format(node['manager_ip']))
@@ -464,11 +465,11 @@ def set_cluster(cluster_node_name,
                 ssh_port,
                 rest_certificate,
                 logger):
-    """Set connection options for a cluster node.
+    """Set connection options for a Manager cluster node.
 
-    `CLUSTER_NODE_NAME` is the name of the cluster node to set options for.
+    `CLUSTER_NODE_NAME` is the Manager cluster node name to set options for.
     """
-    if not env.profile.cluster:
+    if not env.profile.cluster.get(CloudifyNodeType.MANAGER):
         err = CloudifyCliError('The current profile is not a cluster profile!')
         err.possible_solutions = [
             "Select a different profile using `cfy profiles use`",
@@ -477,7 +478,7 @@ def set_cluster(cluster_node_name,
         raise err
 
     changed_node = None
-    for node in env.profile.cluster:
+    for node in env.profile.cluster.get(CloudifyNodeType.MANAGER):
         if node['hostname'] == cluster_node_name:
             changed_node = node
             break
