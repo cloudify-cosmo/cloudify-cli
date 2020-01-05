@@ -174,7 +174,7 @@ def status(client, logger):
 @cfy.options.common_options
 def remove_node(client, logger, hostname):
     """
-    Unregister a node from the cluster.
+    Unregister a Manager node from the cluster.
 
     Note that this will not teardown the removed node, only remove it from
     the cluster, it will still contact the cluster's DB and RabbitMQ.
