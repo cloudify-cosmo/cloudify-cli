@@ -18,13 +18,16 @@ export CORE_BRANCH="master"
 function prepare_osx () {
     which -s brew
     if [[ $? != 0 ]] ; then
-        echo "Missing Brew isntaller - Make sure your system has Brew"
+        echo "Missing Brew installer - Make sure your system has Brew"
         echo "Install Brew with sudo and run agian"
     else
         echo "Brew already installed. Updating"
         brew update
     fi
+
+    set +e
     brew install rbenv ruby-build
+    set -e
 
     if [[ 'grep "if which rbenv" ~/.bash_profile' != 0 ]]; then
         source ~/.bash_profile
@@ -33,13 +36,14 @@ function prepare_osx () {
         source ~/.bash_profile
     fi
 
-    if [[ $(rbenv version | cut -d' ' -f1) != '2.4.4' ]] ; then
-        echo "Installing rbenv version 2.4.4"
-        rbenv install 2.4.4 -s
+    if [[ $(rbenv version | cut -d' ' -f1) != '2.5.0' ]] ; then
+        echo "Installing rbenv version 2.5.0"
+        rbenv install 2.5.0 -s
     else
-        echo "rbenv 2.4.4 is installed"
+        echo "rbenv 2.5.0 is installed"
     fi
-    rbenv global 2.4.4
+    rbenv global 2.5.0
+
     if [[ $(gem list |grep bundler) != 'bundler (1.8.4)' ]] ; then
         gem install bundler -v '=1.16.0' --no-document
     fi
@@ -104,8 +108,8 @@ rm -rf cloudify-cli
 git clone https://github.com/cloudify-cosmo/cloudify-cli.git
 cd ~/cloudify-cli/packaging/omnibus
 export CLI_BRANCH="$CORE_BRANCH"
-if [ "$CORE_BRANCH" != "master" ]; then
-    if [ "$REPO" == "cloudify-versions" ]; then
+if [[ "$CORE_BRANCH" != "master" ]]; then
+    if [[ "$REPO" == "cloudify-versions" ]]; then
         source ~/cloudify-cli/packaging/source_branch
     fi
     git checkout -b $CLI_BRANCH origin/$CLI_BRANCH
