@@ -31,8 +31,11 @@ from .. import utils
 from ..cli import cfy
 from .. import constants
 from ..cli import helptexts
+from ..env import get_rest_client
 from ..exceptions import CloudifyCliError
 from ..table import print_data, print_single
+from ..commands.cluster import _all_in_one_manager
+from ..commands.cluster import update_profile_logic as update_cluster_profile
 
 
 EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
@@ -187,6 +190,15 @@ def use(manager_ip,
             skip_credentials_validation=skip_credentials_validation,
             logger=logger,
             **kwargs)
+    _get_profile(env.get_active_profile())
+    active_profile_context = env.get_profile_context()
+    if not active_profile_context.manager_username:
+        return
+    client = get_rest_client(username=active_profile_context.manager_username,
+                             password=active_profile_context.manager_password,
+                             tenant_name=active_profile_context.manager_tenant)
+    if not _all_in_one_manager(client):
+        update_cluster_profile(client, logger)
 
 
 def _switch_profile(manager_ip, profile_name, logger, **kwargs):
