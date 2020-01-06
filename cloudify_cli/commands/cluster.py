@@ -100,15 +100,21 @@ def pass_cluster_client(*client_args, **client_kwargs):
 
 def _all_in_one_manager(client):
     manager_nodes = client.manager.get_managers().items
+    if len(manager_nodes) > 1:
+        return False
     broker_nodes = client.manager.get_brokers().items
+    if len(broker_nodes) > 1:
+        return False
     db_nodes = client.manager.get_db_nodes().items
+    if len(db_nodes) > 1:
+        return False
     if len(manager_nodes) == 1:
         if len(broker_nodes) == len(db_nodes) == 1:
-            db_node_ip = db_nodes[0].get('host')
-            if db_node_ip == broker_nodes[0].get('host'):
-                if (db_node_ip == manager_nodes[0].get('private_ip') or
-                        db_node_ip == manager_nodes[0].get('public_ip')):
-                    return True
+            db_node_id = db_nodes[0].get('node_id')
+            broker_node_id = broker_nodes[0].get('node_id')
+            manager_node_id = manager_nodes[0].get('node_id')
+            if db_node_id == broker_node_id == manager_node_id:
+                return True
 
         get_logger().warning('It is highly recommended to have more '
                              'than one manager in a Cloudify cluster')
@@ -198,6 +204,14 @@ def update_profile(client, logger):
     Use this to update the profile if nodes are added to the cluster from
     another machine. Only the manager cluster nodes that are stored in
     the profile will be contacted in case of a manager failure.
+    """
+    update_profile_logic(client, logger)
+
+
+def update_profile_logic(client, logger):
+    """
+    The logic is separated so that the function can be called
+    without the Click decorators, e.g. as used in cfy profiles use
     """
     manager_nodes = client.manager.get_managers().items
     broker_nodes = client.manager.get_brokers().items
