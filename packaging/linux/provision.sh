@@ -27,6 +27,7 @@ function prepare_osx () {
 
     set +e
     brew install rbenv ruby-build
+    brew upgrade rbenv
     set -e
 
     if [[ 'grep "if which rbenv" ~/.bash_profile' != 0 ]]; then
@@ -47,10 +48,8 @@ function prepare_osx () {
     if [[ $(gem list |grep bundler) != 'bundler (1.8.4)' ]] ; then
         gem install bundler -v '=1.16.0' --no-document
     fi
-    which -s omnibus
-    if [[ $? != 0 ]] ; then
-        gem install omnibus --no-document
-    fi
+
+    gem install omnibus --no-document
 }
 
 # Linux Preperation
