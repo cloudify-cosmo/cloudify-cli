@@ -20,7 +20,7 @@ import fabric.api as fab
 
 from .logger import get_global_verbosity
 from .exceptions import CloudifyCliError
-from .env import profile, build_manager_host_string
+from .env import profile
 
 
 def get_host_date(host_string):
