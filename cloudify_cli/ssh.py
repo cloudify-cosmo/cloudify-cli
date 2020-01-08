@@ -22,6 +22,9 @@ from .logger import get_global_verbosity
 from .exceptions import CloudifyCliError
 from .env import profile
 
+SSH_ERR = '`ssh_{0}` is not set in the current profile. ' \
+          'Please run `cfy profiles set --ssh-{0} <ssh-{0}>`.'
+
 
 def get_host_date(host_string):
     # output here should be hidden anyway.
@@ -107,8 +110,6 @@ def run_command_on_host(command,
 
 
 def test_profile():
-    msg = '`ssh_{0}` is not set in the current profile. ' \
-          'Please run `cfy profiles set --ssh-{0} <ssh-{0}>.'
     missing_config = False
     missing_part = ''
 
@@ -123,4 +124,4 @@ def test_profile():
         missing_part = 'port'
 
     if missing_config:
-        raise CloudifyCliError(msg.format(missing_part))
+        raise CloudifyCliError(SSH_ERR.format(missing_part))

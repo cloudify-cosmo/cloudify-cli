@@ -288,8 +288,9 @@ def build_manager_host_string(ssh_user='', ip=''):
 def build_host_string(ip, ssh_user=''):
     ssh_user = ssh_user or profile.ssh_user
     if not ssh_user:
-        raise CloudifyCliError('Manager `ssh_user` is not set '
-                               'in Cloudify CLI settings')
+        raise CloudifyCliError('`ssh_user` is not set in the current '
+                               'profile. Please run '
+                               '`cfy profiles set --ssh-user <ssh-user>`.')
     return '{0}@{1}'.format(ssh_user, ip)
 
 
