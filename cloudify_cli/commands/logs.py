@@ -55,7 +55,7 @@ def _archive_logs(logger,
     ssh.run_command_on_host(
         'tar -czf {0} -C /var/log cloudify '
         '-C /opt/manager cluster_statuses '
-        '--ignore-failed-read'.format(archive_path),
+        '--ignore-failed-read --warning=no-file-changed'.format(archive_path),
         use_sudo=True,
         host_string=host_string,
         key_filename=key_filename
