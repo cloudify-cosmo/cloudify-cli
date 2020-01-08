@@ -77,9 +77,6 @@ def _archive_logs(logger,
 def download(output_path, all_nodes, logger):
     """Download an archive containing all of the manager's service logs
     """
-    import pydevd
-    pydevd.settrace('192.168.8.43', port=53100, stdoutToServer=True,
-                    stderrToServer=True, suspend=True)
     if all_nodes:
         if not env.profile.cluster:
             raise CloudifyCliError(
