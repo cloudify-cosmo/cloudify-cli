@@ -66,7 +66,8 @@ def run_command_on_host(command,
                         use_sudo=False,
                         open_shell=False,
                         force_output=False,
-                        key_filename=None):
+                        key_filename=None,
+                        ignore_failure=False):
     """Runs an SSH command on a Manager.
 
     `open_shell` opens an interactive shell to the server.
@@ -92,7 +93,7 @@ def run_command_on_host(command,
                 return None
             else:
                 output = fab.run(command)
-            if output.failed:
+            if output.failed and not ignore_failure:
                 raise CloudifyCliError(
                     'Failed to execute: {0} ({1})'.format(
                         output.real_command, output.stderr))

@@ -55,11 +55,13 @@ def _archive_logs(logger,
     ssh.run_command_on_host(
         'tar -czf {0} -C /var/log cloudify '
         '-C /opt/manager cluster_statuses '
-        '--ignore-failed-read --warning=no-file-changed'.format(archive_path),
+        '--warning=no-file-changed'.format(archive_path),
         use_sudo=True,
         host_string=host_string,
-        key_filename=key_filename
-    )
+        key_filename=key_filename,
+        ignore_failure=True)
+    ssh.run_command_on_host('test -e {0}'.format(archive_path),
+                            host_string=host_string)
     ssh.run_command_on_host(
         'rm {0}'.format(journalctl_destination_path), use_sudo=True,
         host_string=host_string, key_filename=key_filename)
