@@ -23,17 +23,16 @@ from .exceptions import CloudifyCliError
 from .env import profile, build_manager_host_string
 
 
-def get_manager_date():
+def get_host_date(host_string):
     # output here should be hidden anyway.
     with fab.settings(fab.hide('running', 'stdout')):
-        return run_command_on_manager('date +%Y%m%dT%H%M%S').stdout
+        return run_command_on_host('date +%Y%m%dT%H%M%S', host_string).stdout
 
 
-def get_file_from_manager(remote_source_path,
-                          destination_path,
-                          host_string='',
-                          key_filename=None):
-    host_string = host_string or build_manager_host_string()
+def get_file_from_host(remote_source_path,
+                       destination_path,
+                       host_string,
+                       key_filename=None):
     key_filename = key_filename or os.path.expanduser(profile.ssh_key)
     with fab.settings(
             fab.hide('running', 'stdout'),
@@ -43,18 +42,18 @@ def get_file_from_manager(remote_source_path,
         fab.get(remote_source_path, destination_path)
 
 
-def put_file_in_manager(source_path,
-                        remote_source_path,
-                        use_sudo=True,
-                        key_filename=None,
-                        user=None,
-                        port=''):
+def put_file_in_host(source_path,
+                     remote_source_path,
+                     host_string,
+                     use_sudo=True,
+                     key_filename=None,
+                     port=''):
     port = port or profile.ssh_port
     if not key_filename:
         key_filename = os.path.expanduser(profile.ssh_key)
     with fab.settings(
             fab.hide('running', 'stdout'),
-            host_string=build_manager_host_string(ssh_user=user),
+            host_string=host_string,
             key_filename=key_filename,
             port=port):
         fab.put(use_sudo=use_sudo,
@@ -62,12 +61,12 @@ def put_file_in_manager(source_path,
                 remote_path=remote_source_path)
 
 
-def run_command_on_manager(command,
-                           use_sudo=False,
-                           open_shell=False,
-                           host_string='',
-                           force_output=False,
-                           key_filename=None):
+def run_command_on_host(command,
+                        host_string,
+                        use_sudo=False,
+                        open_shell=False,
+                        force_output=False,
+                        key_filename=None):
     """Runs an SSH command on a Manager.
 
     `open_shell` opens an interactive shell to the server.
@@ -76,7 +75,6 @@ def run_command_on_manager(command,
     """
     test_profile()
 
-    host_string = host_string or build_manager_host_string()
     key_filename = key_filename or os.path.expanduser(profile.ssh_key)
     port = int(profile.ssh_port)
 
@@ -108,7 +106,8 @@ def run_command_on_manager(command,
 
 
 def test_profile():
-    msg = 'Manager `ssh_{0}` is not set in Cloudify CLI settings'
+    msg = '`ssh_{0}` is not set in the current profile. ' \
+          'Please run `cfy profiles set --ssh-{0} <ssh-{0}>.'
     missing_config = False
     missing_part = ''
 

@@ -281,11 +281,15 @@ def get_rest_client(client_profile=None,
 
 
 def build_manager_host_string(ssh_user='', ip=''):
+    ip = ip or profile.manager_ip
+    return build_host_string(ip, ssh_user)
+
+
+def build_host_string(ip, ssh_user=''):
     ssh_user = ssh_user or profile.ssh_user
     if not ssh_user:
         raise CloudifyCliError('Manager `ssh_user` is not set '
                                'in Cloudify CLI settings')
-    ip = ip or profile.manager_ip
     return '{0}@{1}'.format(ssh_user, ip)
 
 

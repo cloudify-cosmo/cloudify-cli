@@ -24,7 +24,7 @@ from .. import env
 from .. import utils
 from ..cli import cfy
 from ..exceptions import CloudifyCliError
-from ..ssh import run_command_on_manager, test_profile
+from ..ssh import run_command_on_host, test_profile
 
 
 @cfy.command(name='ssh', short_help='Connect using SSH [manager only]')
@@ -63,7 +63,7 @@ def ssh(command, host, sid, list_sessions, logger):
         sid = 'ssh_session_' + utils.generate_random_string()
         logger.info('Creating session {0}...'.format(sid))
         try:
-            run_command_on_manager(
+            run_command_on_host(
                 'tmux new -d -A -s {0}'.format(sid),
                 host_string=host_string)
             logger.info('Preparing environment...')
@@ -77,7 +77,7 @@ def ssh(command, host, sid, list_sessions, logger):
             logger.error('Failed to create session ({0})'.format(ex))
         logger.info('Killing session {0}...'.format(sid))
         try:
-            run_command_on_manager(
+            run_command_on_host(
                 'tmux kill-session -t {0}'.format(sid),
                 host_string=host_string)
         except Exception as ex:
@@ -93,7 +93,7 @@ def ssh(command, host, sid, list_sessions, logger):
     else:
         if command:
             logger.info('Executing command {0}...'.format(command))
-            run_command_on_manager(
+            run_command_on_host(
                 command,
                 host_string=host_string,
                 force_output=True)
@@ -116,7 +116,7 @@ def _open_interactive_shell(host_string, command=''):
 
 def _verify_tmux_exists_on_manager(host_string):
     try:
-        run_command_on_manager('which tmux', host_string=host_string)
+        run_command_on_host('which tmux', host_string=host_string)
     except Exception:
         raise CloudifyCliError(
             'tmux executable not found on manager {0}.\n'
@@ -129,7 +129,7 @@ def _verify_tmux_exists_on_manager(host_string):
 
 def _send_keys(logger, command, sid, host_string):
     logger.debug('Sending "{0}" to session...'.format(command))
-    run_command_on_manager(
+    run_command_on_host(
         'tmux send-keys -t {0} \'{1}\' C-m'.format(sid, command),
         host_string=host_string)
 
@@ -173,7 +173,7 @@ def _join_session(logger, sid, host_string):
 def _get_all_sessions(logger, host_string):
     logger.info('Retrieving list of existing sessions...')
     try:
-        output = run_command_on_manager(
+        output = run_command_on_host(
             'tmux list-sessions',
             host_string=host_string)
     except Exception:
