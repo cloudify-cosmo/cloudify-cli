@@ -190,13 +190,9 @@ def use(manager_ip,
             skip_credentials_validation=skip_credentials_validation,
             logger=logger,
             **kwargs)
-    _get_profile(env.get_active_profile())
-    active_profile_context = env.get_profile_context()
-    if not active_profile_context.manager_username:
+    if not env.profile.manager_username:
         return
-    client = get_rest_client(username=active_profile_context.manager_username,
-                             password=active_profile_context.manager_password,
-                             tenant_name=active_profile_context.manager_tenant)
+    client = get_rest_client()
     if not _all_in_one_manager(client):
         update_cluster_profile(client, logger)
 
@@ -259,13 +255,9 @@ def _create_profile(
         kerberos_env,
         skip_credentials_validation
     )
-
     init.init_manager_profile(profile_name=profile_name)
-    env.set_active_profile(profile_name)
-
     logger.info('Using manager {0} with port {1}'.format(
         manager_ip, rest_port))
-
     _set_profile_context(
         profile_name,
         provider_context,
@@ -281,6 +273,7 @@ def _create_profile(
         rest_certificate,
         kerberos_env
     )
+    env.set_active_profile(profile_name)
 
 
 @profiles.command(name='delete',
