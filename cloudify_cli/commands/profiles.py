@@ -192,6 +192,8 @@ def use(manager_ip,
             **kwargs)
     if not env.profile.manager_username:
         return
+    if type(env.profile.cluster) == type([]):   # noqa
+        env.profile.cluster = dict()
     client = get_rest_client()
     if not _all_in_one_manager(client):
         update_cluster_profile(client, logger)
