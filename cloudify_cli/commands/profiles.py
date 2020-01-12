@@ -31,8 +31,11 @@ from .. import utils
 from ..cli import cfy
 from .. import constants
 from ..cli import helptexts
+from ..env import get_rest_client
 from ..exceptions import CloudifyCliError
 from ..table import print_data, print_single
+from ..commands.cluster import _all_in_one_manager
+from ..commands.cluster import update_profile_logic as update_cluster_profile
 
 
 EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
@@ -187,6 +190,13 @@ def use(manager_ip,
             skip_credentials_validation=skip_credentials_validation,
             logger=logger,
             **kwargs)
+    if not env.profile.manager_username:
+        return
+    if type(env.profile.cluster) == type([]):   # noqa
+        env.profile.cluster = dict()
+    client = get_rest_client()
+    if not _all_in_one_manager(client):
+        update_cluster_profile(client, logger)
 
 
 def _switch_profile(manager_ip, profile_name, logger, **kwargs):
@@ -247,13 +257,9 @@ def _create_profile(
         kerberos_env,
         skip_credentials_validation
     )
-
     init.init_manager_profile(profile_name=profile_name)
-    env.set_active_profile(profile_name)
-
     logger.info('Using manager {0} with port {1}'.format(
         manager_ip, rest_port))
-
     _set_profile_context(
         profile_name,
         provider_context,
@@ -269,6 +275,7 @@ def _create_profile(
         rest_certificate,
         kerberos_env
     )
+    env.set_active_profile(profile_name)
 
 
 @profiles.command(name='delete',
