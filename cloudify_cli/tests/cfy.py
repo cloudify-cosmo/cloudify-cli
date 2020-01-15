@@ -50,7 +50,7 @@ default_manager_params = dict(
     manager_username='admin',
     manager_password='admin',
     manager_tenant=constants.DEFAULT_TENANT_NAME,
-    cluster=[]
+    cluster={}
 )
 
 

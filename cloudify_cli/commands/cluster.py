@@ -17,6 +17,7 @@
 import json
 from functools import wraps
 
+from cloudify.cluster_status import CloudifyNodeType
 from cloudify_rest_client.exceptions import CloudifyClientError, \
     UserUnauthorizedError
 
@@ -92,13 +93,35 @@ def pass_cluster_client(*client_args, **client_kwargs):
         @cfy.pass_client(*client_args, **client_kwargs)
         @wraps(f)
         def _inner(client, *args, **kwargs):
-            managers_list = client.manager.get_managers().items
-            if len(managers_list) == 1:
-                get_logger().warning('It is highly recommended to have more '
-                                     'than one manager in a Cloudify cluster')
+            if _all_in_one_manager(client):
+                raise CloudifyCliError('You cannot run cluster actions on an '
+                                       'all-in-one Manager')
             return f(client=client, *args, **kwargs)
         return _inner
     return _deco
+
+
+def _all_in_one_manager(client):
+    manager_nodes = client.manager.get_managers().items
+    if len(manager_nodes) > 1:
+        return False
+    broker_nodes = client.manager.get_brokers().items
+    if len(broker_nodes) > 1:
+        return False
+    db_nodes = client.manager.get_db_nodes().items
+    if len(db_nodes) > 1:
+        return False
+    if len(manager_nodes) == 1:
+        if len(broker_nodes) == len(db_nodes) == 1:
+            db_node_id = db_nodes[0].get('node_id')
+            broker_node_id = broker_nodes[0].get('node_id')
+            manager_node_id = manager_nodes[0].get('node_id')
+            if db_node_id == broker_node_id == manager_node_id:
+                return True
+
+        get_logger().warning('It is highly recommended to have more '
+                             'than one manager in a Cloudify cluster')
+    return False
 
 
 @cfy.group(name='cluster')
@@ -157,7 +180,7 @@ def status(client, logger):
 @cfy.options.common_options
 def remove_node(client, logger, hostname):
     """
-    Unregister a node from the cluster.
+    Unregister a Manager node from the cluster.
 
     Note that this will not teardown the removed node, only remove it from
     the cluster, it will still contact the cluster's DB and RabbitMQ.
@@ -182,17 +205,28 @@ def update_profile(client, logger):
     Fetch the list of the cluster nodes and update the current profile.
 
     Use this to update the profile if nodes are added to the cluster from
-    another machine. Only the cluster nodes that are stored in the profile
-    will be contacted in case of a manager failure.
+    another machine. Only the manager cluster nodes that are stored in
+    the profile will be contacted in case of a manager failure.
     """
-    logger.info('Fetching the cluster nodes list...')
-    nodes = client.manager.get_managers().items
-    _update_profile_cluster_settings(nodes, logger=logger)
-    logger.info('Profile is up to date with {0} nodes'
-                .format(len(env.profile.cluster)))
+    update_profile_logic(client, logger)
 
 
-def _update_profile_cluster_settings(nodes, logger=None):
+def update_profile_logic(client, logger):
+    """
+    The logic is separated so that the function can be called
+    without the Click decorators, e.g. as used in cfy profiles use
+    """
+    manager_nodes = client.manager.get_managers().items
+    broker_nodes = client.manager.get_brokers().items
+    db_nodes = client.manager.get_db_nodes().items
+    _update_profile_cluster_settings(manager_nodes, broker_nodes, db_nodes,
+                                     logger=logger)
+    logger.info('Profile is up to date with {0} nodes'.format(
+        sum([len(env.profile.cluster[key]) for key in env.profile.cluster])))
+
+
+def _update_profile_cluster_settings(manager_nodes, broker_nodes, db_nodes,
+                                     logger=None):
     """
     Update the cluster list set in profile with the received nodes
 
@@ -201,26 +235,48 @@ def _update_profile_cluster_settings(nodes, logger=None):
     received nodes, because the profile might have more details about
     the nodes (eg. a certificate path)
     """
-    stored_nodes = {node['hostname'] for node in env.profile.cluster}
-    received_nodes = {node['hostname'] for node in nodes}
-    if env.profile.cluster is None:
-        env.profile.cluster = []
+    env.profile.cluster = env.profile.cluster or dict()
+    _update_cluster_nodes(manager_nodes, CloudifyNodeType.MANAGER, logger)
+    _update_cluster_nodes(broker_nodes, CloudifyNodeType.BROKER, logger)
+    _update_cluster_nodes(db_nodes, CloudifyNodeType.DB, logger)
+
+
+def _update_cluster_nodes(nodes, nodes_type, logger):
+    stored_nodes = env.profile.cluster.get(nodes_type)
+    stored_nodes_names = ({_get_node_host(node) for node in stored_nodes}
+                          if stored_nodes else {})
+    received_nodes_names = {_get_node_host(node) for node in nodes}
     for node in nodes:
-        if node['hostname'] not in stored_nodes:
-            node_ip = node['public_ip'] or node['private_ip']
-            if logger:
-                logger.info('Adding cluster node {0} to local profile'
-                            .format(node_ip))
-            env.profile.cluster.append({
-                'hostname': node['hostname'],
-                # all other connection parameters will be defaulted to the
-                # ones from the last used manager
-                'manager_ip': node_ip
-            })
+        _update_node(node, nodes_type, logger, stored_nodes_names)
     # filter out removed nodes
-    env.profile.cluster = [n for n in env.profile.cluster
-                           if n['hostname'] in received_nodes]
+    env.profile.cluster[nodes_type] = [
+        node for node in env.profile.cluster[nodes_type]
+        if _get_node_host(node) in received_nodes_names]
     env.profile.save()
+
+
+def _update_node(node, node_type, logger, stored_nodes_names):
+    if _get_node_host(node) not in stored_nodes_names:
+        if node_type == CloudifyNodeType.MANAGER:
+            node_ip = node['public_ip'] or node['private_ip']
+        else:
+            node_ip = node['host']
+        if logger:
+            logger.info('Adding cluster node {0} to local profile {1} cluster'
+                        .format(node_ip, node_type))
+        if not env.profile.cluster.get(node_type):
+            env.profile.cluster[node_type] = []
+        env.profile.cluster[node_type].append({
+            'hostname': _get_node_host(node),
+            'host_type': node_type,
+            'host_ip': node_ip
+            # all other connection parameters will be defaulted to the
+            # ones from the last used manager
+        })
+
+
+def _get_node_host(node):
+    return node.get('hostname') or node.get('name')
 
 
 @cluster.group(name='brokers',

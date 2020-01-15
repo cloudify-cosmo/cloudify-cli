@@ -1224,10 +1224,8 @@ class TestClusterRestClient(CliCommandTest):
 
     def test_manager_offline(self):
         env.profile.manager_ip = '127.0.0.1'
-        env.profile.cluster = [
-            {'manager_ip': '127.0.0.1'},
-            {'manager_ip': '127.0.0.2'}
-        ]
+        env.profile.cluster = {'manager': [{'host_ip': '127.0.0.1'},
+                                           {'host_ip': '127.0.0.2'}]}
         c = env.CloudifyClusterClient(env.profile, host='127.0.0.1')
 
         with self._mock_get('127.0.0.2', ['127.0.0.1']) as mocked_get:
@@ -1235,4 +1233,5 @@ class TestClusterRestClient(CliCommandTest):
 
         self.assertEqual([], list(response))
         self.assertEqual(2, len(mocked_get.mock_calls))
-        self.assertEqual('127.0.0.2', env.profile.cluster[0]['manager_ip'])
+        self.assertEqual('127.0.0.2',
+                         env.profile.cluster['manager'][0]['host_ip'])

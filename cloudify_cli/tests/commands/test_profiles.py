@@ -363,6 +363,8 @@ class ProfilesTest(CliCommandTest):
         added_profile = env.get_profile_context('1.2.3.4')
         self.assertEqual(8090, added_profile.rest_port)
 
+    @patch('cloudify_cli.commands.profiles._all_in_one_manager',
+           return_value=True)
     @patch('cloudify_cli.commands.profiles._get_provider_context',
            return_value={})
     def test_use_cannot_update_profile(self, *_):
@@ -371,9 +373,11 @@ class ProfilesTest(CliCommandTest):
         self.assertIn('The passed in options are ignored: manager_password',
                       outcome.logs)
 
+    @patch('cloudify_cli.commands.profiles._all_in_one_manager',
+           return_value=True)
     @patch('cloudify_cli.commands.profiles._get_provider_context',
            return_value={})
-    def test_use_existing_only_switches(self, mock_get_context):
+    def test_use_existing_only_switches(self, mock_get_context, _):
         self.use_manager()
         self.invoke('profiles use 10.10.1.10')
         self.assertFalse(mock_get_context.called)
@@ -382,15 +386,39 @@ class ProfilesTest(CliCommandTest):
            return_value={})
     def test_cluster_set_changes_cert(self, mock_get_context):
         self.use_manager()
-        env.profile.cluster = [{'hostname': 'first'}]
+        env.profile.cluster = {'manager': [{'hostname': 'first'}]}
         self.invoke('profiles set-cluster first --rest-certificate CERT_PATH')
-        self.assertIn('cert', env.profile.cluster[0])
-        self.assertEqual(env.profile.cluster[0]['cert'], 'CERT_PATH')
+        self.assertIn('cert', env.profile.cluster['manager'][0])
+        self.assertEqual(env.profile.cluster['manager'][0]['cert'],
+                         'CERT_PATH')
 
     @patch('cloudify_cli.commands.profiles._get_provider_context',
            return_value={})
     def test_cluster_set_nonexistent_node(self, mock_get_context):
         self.use_manager()
-        env.profile.cluster = [{'hostname': 'first'}]
+        env.profile.cluster = {'manager': [{'hostname': 'first'}]}
         self.invoke('profiles set-cluster second --rest-certificate CERT_PATH',
                     err_str_segment='second not found')
+
+    @patch('cloudify_cli.commands.profiles.update_cluster_profile')
+    @patch('cloudify_cli.commands.profiles._all_in_one_manager',
+           return_value=False)
+    @patch('cloudify_cli.commands.profiles._get_provider_context',
+           return_value={})
+    def test_cluster_profile_use(self, _, mock_aio, mock_update_cluster):
+        self.use_manager()
+        self.invoke('profiles use 0.0.0.0 -u name_it -p swordfish')
+        self.assertTrue(mock_aio.called)
+        self.assertTrue(mock_update_cluster.called)
+
+    @patch('cloudify_cli.commands.profiles.update_cluster_profile')
+    @patch('cloudify_cli.commands.profiles._all_in_one_manager',
+           return_value=False)
+    @patch('cloudify_cli.commands.profiles._get_provider_context',
+           return_value={})
+    def test_cluster_profile_use_existing(self, _, mock_aio,
+                                          mock_update_cluster):
+        self.use_manager()
+        self.invoke('profiles use 10.10.1.10')
+        self.assertTrue(mock_aio.called)
+        self.assertTrue(mock_update_cluster.called)
