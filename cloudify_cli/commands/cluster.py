@@ -33,9 +33,12 @@ from ..logger import (
 )
 
 # The list will be updated with the services on each manager
-CLUSTER_COLUMNS = ['hostname', 'private_ip', 'public_ip', 'version', 'edition',
-                   'distribution', 'distro_release', 'status']
-BROKER_COLUMNS = ['name', 'port', 'networks']
+MANAGER_COLUMNS = ['hostname', 'private_ip', 'public_ip', 'version', 'edition',
+                   'distribution', 'distro_release', 'node_id', 'last_seen',
+                   'networks']
+BROKER_COLUMNS = ['name', 'node_id', 'port',
+                  'networks', 'is_external', 'host']
+DB_COLUMNS = ['name', 'node_id', 'host', 'is_external']
 
 
 def check_manager_exists(managers, hostname, must_exist=True):
@@ -350,3 +353,35 @@ def update_broker(client, logger, name, networks=None):
 
     logger.info('Broker {0} was updated successfully!'
                 .format(name))
+
+@cluster.group(name='db-nodes',
+               short_help="Handle the Cloudify DB cluster's nodes")
+@cfy.options.common_options
+def db_nodes():
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+@db_nodes.command(name='list',
+                  short_help="List the DB cluster's nodes")
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.options.common_options
+def list_db_nodes(client, logger):
+    db_nodes_list = client.manager.get_db_nodes()
+    print_data(DB_COLUMNS, db_nodes_list, 'HA Cluster db nodes')
+
+@cluster.group(name='managers',
+               short_help="Handle the Cloudify Manager cluster's nodes")
+@cfy.options.common_options
+def managers():
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+@managers.command(name='list',
+                  short_help="List the Cloudify Manager cluster's nodes")
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.options.common_options
+def list_managers(client, logger):
+    managers_list = client.manager.get_managers()
+    print_data(MANAGER_COLUMNS, managers_list, 'HA Cluster manager nodes')

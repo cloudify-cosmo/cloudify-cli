@@ -91,6 +91,8 @@ def _register_commands():
     _cfy.add_command(agents.agents)
     _cfy.add_command(events.events)
     _cfy.add_command(cluster.cluster)
+    _cfy.add_command(cluster.managers)
+    _cfy.add_command(cluster.db_nodes)
     _cfy.add_command(plugins.plugins)
     _cfy.add_command(tenants.tenants)
     _cfy.add_command(snapshots.snapshots)
