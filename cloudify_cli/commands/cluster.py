@@ -94,8 +94,9 @@ def pass_cluster_client(*client_args, **client_kwargs):
         @wraps(f)
         def _inner(client, *args, **kwargs):
             if _all_in_one_manager(client):
-                raise CloudifyCliError('You cannot run cluster actions on an '
-                                       'all-in-one Manager')
+                get_logger().warning('Notice: You are trying to run cluster '
+                                     'related commands on an all-in-one '
+                                     'Cloudify Manager!')
             return f(client=client, *args, **kwargs)
         return _inner
     return _deco
