@@ -94,7 +94,7 @@ def pass_cluster_client(*client_args, **client_kwargs):
         @wraps(f)
         def _inner(client, *args, **kwargs):
             if _all_in_one_manager(client):
-                get_logger().warning('Warning: You are trying to run cluster '
+                get_logger().warning('You are trying to run cluster '
                                      'related commands on an all-in-one '
                                      'Cloudify Manager!')
             return f(client=client, *args, **kwargs)
@@ -103,25 +103,37 @@ def pass_cluster_client(*client_args, **client_kwargs):
 
 
 def _all_in_one_manager(client):
-    manager_nodes = client.manager.get_managers().items
-    if len(manager_nodes) > 1:
-        return False
-    broker_nodes = client.manager.get_brokers().items
-    if len(broker_nodes) > 1:
-        return False
-    db_nodes = client.manager.get_db_nodes().items
-    if len(db_nodes) > 1:
-        return False
-    if len(manager_nodes) == 1:
-        if len(broker_nodes) == len(db_nodes) == 1:
-            db_node_id = db_nodes[0].get('node_id')
-            broker_node_id = broker_nodes[0].get('node_id')
-            manager_node_id = manager_nodes[0].get('node_id')
-            if db_node_id == broker_node_id == manager_node_id:
-                return True
+    try:
+        manager_nodes = client.manager.get_managers().items
+        if len(manager_nodes) > 1:
+            return False
+        broker_nodes = client.manager.get_brokers().items
+        if len(broker_nodes) > 1:
+            return False
+        db_nodes = client.manager.get_db_nodes().items
+        if len(db_nodes) > 1:
+            return False
+        if len(manager_nodes) == 1:
+            if len(broker_nodes) == len(db_nodes) == 1:
+                db_node_id = db_nodes[0].get('node_id')
+                broker_node_id = broker_nodes[0].get('node_id')
+                manager_node_id = manager_nodes[0].get('node_id')
+                if db_node_id == broker_node_id == manager_node_id:
+                    return True
 
-        get_logger().warning('It is highly recommended to have more '
-                             'than one manager in a Cloudify cluster')
+            get_logger().warning('It is highly recommended to have more '
+                                 'than one manager in a Cloudify cluster')
+    except CloudifyClientError as e:
+        if e.status_code == 404:
+            get_logger().warning('Used Cloudify Manager version is lower than'
+                                 ' 5.0.5, which requires at least Cloudify '
+                                 'CLI 5.0.5 or newer. Please install the '
+                                 'relevant version\'s CLI')
+            is_old_cluster = client._client.get('/cluster').get(
+                'initialized', False)
+            return not is_old_cluster
+        else:
+            raise e
     return False
 
 
@@ -411,12 +423,14 @@ def update_broker(client, logger, name, networks=None):
     logger.info('Broker {0} was updated successfully!'
                 .format(name))
 
+
 @cluster.group(name='db-nodes',
                short_help="Handle the Cloudify DB cluster's nodes")
 @cfy.options.common_options
 def db_nodes():
     if not env.is_initialized():
         env.raise_uninitialized()
+
 
 @db_nodes.command(name='list',
                   short_help="List the DB cluster's nodes")
@@ -427,12 +441,14 @@ def list_db_nodes(client, logger):
     db_nodes_list = client.manager.get_db_nodes()
     print_data(DB_COLUMNS, db_nodes_list, 'HA Cluster db nodes')
 
+
 @cluster.group(name='managers',
                short_help="Handle the Cloudify Manager cluster's nodes")
 @cfy.options.common_options
 def managers():
     if not env.is_initialized():
         env.raise_uninitialized()
+
 
 @managers.command(name='list',
                   short_help="List the Cloudify Manager cluster's nodes")
