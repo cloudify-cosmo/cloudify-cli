@@ -14,8 +14,6 @@
 # limitations under the License.
 ############
 
-import requests
-
 import json
 from functools import wraps
 
@@ -127,7 +125,8 @@ def _all_in_one_manager(client):
                                  'than one manager in a Cloudify cluster')
     except CloudifyClientError as e:
         if e.status_code == 404:
-            is_old_cluster = client._client.get('/cluster').get('initialized', False)
+            is_old_cluster = client._client.get('/cluster').get(
+                'initialized', False)
             return not is_old_cluster
         else:
             raise e
@@ -420,12 +419,14 @@ def update_broker(client, logger, name, networks=None):
     logger.info('Broker {0} was updated successfully!'
                 .format(name))
 
+
 @cluster.group(name='db-nodes',
                short_help="Handle the Cloudify DB cluster's nodes")
 @cfy.options.common_options
 def db_nodes():
     if not env.is_initialized():
         env.raise_uninitialized()
+
 
 @db_nodes.command(name='list',
                   short_help="List the DB cluster's nodes")
@@ -436,12 +437,14 @@ def list_db_nodes(client, logger):
     db_nodes_list = client.manager.get_db_nodes()
     print_data(DB_COLUMNS, db_nodes_list, 'HA Cluster db nodes')
 
+
 @cluster.group(name='managers',
                short_help="Handle the Cloudify Manager cluster's nodes")
 @cfy.options.common_options
 def managers():
     if not env.is_initialized():
         env.raise_uninitialized()
+
 
 @managers.command(name='list',
                   short_help="List the Cloudify Manager cluster's nodes")
