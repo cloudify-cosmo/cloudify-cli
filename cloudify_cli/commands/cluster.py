@@ -127,7 +127,7 @@ def _all_in_one_manager(client):
                                  'than one manager in a Cloudify cluster')
     except CloudifyClientError as e:
         if e.status_code == 404:
-            is_old_cluster = requests.get('/cluster').get('initialized', False)
+            is_old_cluster = client._client.get('/cluster').get('initialized', False)
             return not is_old_cluster
         else:
             raise e
