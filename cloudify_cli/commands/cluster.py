@@ -125,6 +125,10 @@ def _all_in_one_manager(client):
                                  'than one manager in a Cloudify cluster')
     except CloudifyClientError as e:
         if e.status_code == 404:
+            get_logger().warning('Used Cloudify Manager version is lower '
+                                 'than 5.0.5, which can work with newer '
+                                 'Cloudify CLI. Please install relevant '
+                                 'version CLI.')
             is_old_cluster = client._client.get('/cluster').get(
                 'initialized', False)
             return not is_old_cluster
