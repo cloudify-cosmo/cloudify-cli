@@ -14,6 +14,8 @@
 # limitations under the License.
 ############
 
+import requests
+
 import json
 from functools import wraps
 
@@ -103,25 +105,32 @@ def pass_cluster_client(*client_args, **client_kwargs):
 
 
 def _all_in_one_manager(client):
-    manager_nodes = client.manager.get_managers().items
-    if len(manager_nodes) > 1:
-        return False
-    broker_nodes = client.manager.get_brokers().items
-    if len(broker_nodes) > 1:
-        return False
-    db_nodes = client.manager.get_db_nodes().items
-    if len(db_nodes) > 1:
-        return False
-    if len(manager_nodes) == 1:
-        if len(broker_nodes) == len(db_nodes) == 1:
-            db_node_id = db_nodes[0].get('node_id')
-            broker_node_id = broker_nodes[0].get('node_id')
-            manager_node_id = manager_nodes[0].get('node_id')
-            if db_node_id == broker_node_id == manager_node_id:
-                return True
+    try:
+        manager_nodes = client.manager.get_managers().items
+        if len(manager_nodes) > 1:
+            return False
+        broker_nodes = client.manager.get_brokers().items
+        if len(broker_nodes) > 1:
+            return False
+        db_nodes = client.manager.get_db_nodes().items
+        if len(db_nodes) > 1:
+            return False
+        if len(manager_nodes) == 1:
+            if len(broker_nodes) == len(db_nodes) == 1:
+                db_node_id = db_nodes[0].get('node_id')
+                broker_node_id = broker_nodes[0].get('node_id')
+                manager_node_id = manager_nodes[0].get('node_id')
+                if db_node_id == broker_node_id == manager_node_id:
+                    return True
 
-        get_logger().warning('It is highly recommended to have more '
-                             'than one manager in a Cloudify cluster')
+            get_logger().warning('It is highly recommended to have more '
+                                 'than one manager in a Cloudify cluster')
+    except CloudifyClientError as e:
+        if e.status_code == 404:
+            is_old_cluster = requests.get('/cluster').get('initialized', False)
+            return not is_old_cluster
+        else:
+            raise e
     return False
 
 
