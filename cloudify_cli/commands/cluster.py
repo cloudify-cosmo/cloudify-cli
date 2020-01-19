@@ -110,12 +110,12 @@ def _all_in_one_manager(client):
         broker_nodes = client.manager.get_brokers().items
         if len(broker_nodes) > 1:
             return False
-        db_nodes = client.manager.get_db_nodes().items
-        if len(db_nodes) > 1:
+        db_nodes_items = client.manager.get_db_nodes().items
+        if len(db_nodes_items) > 1:
             return False
         if len(manager_nodes) == 1:
-            if len(broker_nodes) == len(db_nodes) == 1:
-                db_node_id = db_nodes[0].get('node_id')
+            if len(broker_nodes) == len(db_nodes_items) == 1:
+                db_node_id = db_nodes_items[0].get('node_id')
                 broker_node_id = broker_nodes[0].get('node_id')
                 manager_node_id = manager_nodes[0].get('node_id')
                 if db_node_id == broker_node_id == manager_node_id:
@@ -126,9 +126,9 @@ def _all_in_one_manager(client):
     except CloudifyClientError as e:
         if e.status_code == 404:
             get_logger().warning('Used Cloudify Manager version is lower than'
-                                 ' 5.0.5, which requires at least Cloudify '
-                                 'CLI 5.0.5 or newer. Please install the '
-                                 'relevant version\'s CLI')
+                                 ' 5.0.5 and requires a lower Cloudify CLI '
+                                 'version. Please install the relevant '
+                                 'Manager version\'s CLI')
             is_old_cluster = client._client.get('/cluster').get(
                 'initialized', False)
             return not is_old_cluster
@@ -231,15 +231,15 @@ def update_profile_logic(client, logger):
     """
     manager_nodes = client.manager.get_managers().items
     broker_nodes = client.manager.get_brokers().items
-    db_nodes = client.manager.get_db_nodes().items
-    _update_profile_cluster_settings(manager_nodes, broker_nodes, db_nodes,
-                                     logger=logger)
+    db_nodes_items = client.manager.get_db_nodes().items
+    _update_profile_cluster_settings(manager_nodes, broker_nodes,
+                                     db_nodes_items, logger=logger)
     logger.info('Profile is up to date with {0} nodes'.format(
         sum([len(env.profile.cluster[key]) for key in env.profile.cluster])))
 
 
-def _update_profile_cluster_settings(manager_nodes, broker_nodes, db_nodes,
-                                     logger=None):
+def _update_profile_cluster_settings(manager_nodes, broker_nodes,
+                                     db_nodes_items, logger=None):
     """
     Update the cluster list set in profile with the received nodes
 
@@ -251,7 +251,7 @@ def _update_profile_cluster_settings(manager_nodes, broker_nodes, db_nodes,
     env.profile.cluster = env.profile.cluster or dict()
     _update_cluster_nodes(manager_nodes, CloudifyNodeType.MANAGER, logger)
     _update_cluster_nodes(broker_nodes, CloudifyNodeType.BROKER, logger)
-    _update_cluster_nodes(db_nodes, CloudifyNodeType.DB, logger)
+    _update_cluster_nodes(db_nodes_items, CloudifyNodeType.DB, logger)
 
 
 def _update_cluster_nodes(nodes, nodes_type, logger):

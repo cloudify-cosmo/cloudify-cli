@@ -192,8 +192,13 @@ def use(manager_ip,
             **kwargs)
     if not env.profile.manager_username:
         return
+    _update_cluster_profile_to_dict(logger)
+
+
+def _update_cluster_profile_to_dict(logger):
     if type(env.profile.cluster) == type([]):   # noqa
         env.profile.cluster = dict()
+        env.profile.save()
     client = get_rest_client()
     if not _all_in_one_manager(client):
         update_cluster_profile(client, logger)
@@ -397,6 +402,7 @@ def _set_profile_ssl(ssl, rest_port, logger):
     env.profile.rest_port = port
     env.profile.rest_protocol = protocol
 
+    _update_cluster_profile_to_dict(logger)
     manager_cluster = env.profile.cluster.get(CloudifyNodeType.MANAGER)
     if manager_cluster:
         missing_certs = []
