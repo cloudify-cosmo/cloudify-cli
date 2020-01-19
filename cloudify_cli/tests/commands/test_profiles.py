@@ -354,6 +354,8 @@ class ProfilesTest(CliCommandTest):
         self.assertEqual('1.2.3.4', added_profile.manager_ip)
         self.assertEqual('5.6.7.8', added_profile.profile_name)
 
+    @patch('cloudify_cli.commands.profiles._update_cluster_profile_to_dict',
+           return_value=None)
     @patch('cloudify_cli.commands.profiles._get_provider_context',
            return_value={})
     def test_set_rest_port_overrides_protocol(self, *_):
