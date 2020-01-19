@@ -43,8 +43,8 @@ EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
 PROFILE_COLUMNS = ['name', 'manager_ip', 'manager_username', 'manager_tenant',
                    'ssh_user', 'ssh_key_path', 'ssh_port', 'kerberos_env',
                    'rest_port', 'rest_protocol', 'rest_certificate']
-CLUSTER_PROFILE_COLUMNS = ['profile_name', 'hostname'] \
-    + PROFILE_COLUMNS[1:]
+CLUSTER_PROFILE_COLUMNS = PROFILE_COLUMNS[:1] + ['hostname', 'host_ip'] \
+    + PROFILE_COLUMNS[2:]
 
 
 @cfy.group(name='profiles')
@@ -69,7 +69,7 @@ def _format_cluster_profile(profile):
     Format the list of cluster nodes for display in `cfy cluster show`,
     we show the profile details of every stored cluster node.
     """
-    common_attributes = {k: profile.get(k) for k in PROFILE_COLUMNS}
+    common_attributes = {k: profile.get(k) for k in CLUSTER_PROFILE_COLUMNS}
     nodes = []
     for node in profile['cluster'][CloudifyNodeType.MANAGER]:
         # merge the common attrs with node data, but rename node's name
@@ -98,14 +98,14 @@ def show(logger):
     active_profile = _get_profile(env.get_active_profile())
     if active_profile.get('cluster'):
 
-        columns = PROFILE_COLUMNS[:1] + ['hostname'] \
-                  + PROFILE_COLUMNS[1:]
-        print_data(columns, _format_cluster_profile(active_profile),
+        print_data(CLUSTER_PROFILE_COLUMNS,
+                   _format_cluster_profile(active_profile),
                    'Cluster nodes in profile {0}:'
                    .format(active_profile['name']),
                    labels={
                        'profile_name': 'Name',
-                       'hostname': 'Manager hostname'})
+                       'hostname': 'Manager hostname',
+                       'host_ip': 'Manager ip'})
     else:
         print_single(PROFILE_COLUMNS, active_profile, 'Active profile:')
 
