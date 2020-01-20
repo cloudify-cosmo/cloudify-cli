@@ -357,8 +357,6 @@ def set_profile(profile_name,
     if manager_tenant:
         logger.info('Setting tenant to `{0}`'.format(manager_tenant))
         env.profile.manager_tenant = manager_tenant
-    if ssl is not None:
-        _set_profile_ssl(ssl, rest_port, logger)
     if rest_certificate:
         logger.info(
             'Setting rest certificate to `{0}`'.format(rest_certificate))
@@ -378,6 +376,8 @@ def set_profile(profile_name,
     if kerberos_env is not None:
         logger.info('Setting kerberos_env to `{0}`'.format(kerberos_env))
         env.profile.kerberos_env = kerberos_env
+    if ssl is not None:
+        _set_profile_ssl(ssl, rest_port, logger)
 
     env.profile.save()
     if old_name is not None:
