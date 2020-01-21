@@ -548,21 +548,35 @@ class ClusterHTTPClient(HTTPClient):
         if kwargs.get('timeout') is None:
             kwargs['timeout'] = self.default_timeout_sec
 
+        # First try with the main manager ip given when creating the profile
+        # with `cfy profiles use`
+        self.host = self._profile.manager_ip
+        response = self._try_do_request(*args, **kwargs)
+        if response:
+            return response
+
         for node_index, node in list(enumerate(
                 self._profile.cluster[CloudifyNodeType.MANAGER])):
+            if self._profile.manager_ip in [node['host_ip'], node['hostname']]:
+                continue
             self._use_node(node)
             if copied_data is not None:
                 kwargs['data'] = copied_data[node_index]
 
-            try:
-                return super(ClusterHTTPClient, self).do_request(*args,
-                                                                 **kwargs)
-            except (requests.exceptions.ConnectionError,
-                    CloudifyClientError) as e:
-                if isinstance(e, CloudifyClientError) and e.status_code != 502:
-                    raise
+            response = self._try_do_request(*args, **kwargs)
+            if response:
+                return response
 
         raise CloudifyClientError('All cluster nodes are offline')
+
+    def _try_do_request(self, *args, **kwargs):
+        try:
+            return super(ClusterHTTPClient, self).do_request(*args,
+                                                             **kwargs)
+        except (requests.exceptions.ConnectionError,
+                CloudifyClientError) as e:
+            if isinstance(e, CloudifyClientError) and e.status_code != 502:
+                raise
 
     def _use_node(self, node):
         if node['host_ip'] == self.host:
