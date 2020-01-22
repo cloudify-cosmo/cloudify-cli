@@ -402,7 +402,6 @@ def _set_profile_ssl(ssl, rest_port, logger):
     env.profile.rest_port = port
     env.profile.rest_protocol = protocol
 
-    _update_cluster_profile_to_dict(logger)
     manager_cluster = env.profile.cluster.get(CloudifyNodeType.MANAGER)
     if manager_cluster:
         missing_certs = []
