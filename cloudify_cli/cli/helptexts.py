@@ -388,3 +388,4 @@ RUNTIME_ONLY_EVALUATION = "If set, all intrinsic functions will only be "\
                           "evaluated at runtime, and no intrinsic functions "\
                           "will be evaluated at parse time (such as "\
                           "get_input, get_property)"
+MANAGER = "Connect to a specific manager by IP or host"
