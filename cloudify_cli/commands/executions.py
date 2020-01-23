@@ -346,13 +346,16 @@ def manager_cancel(execution_id, force, kill, logger, client, tenant_name):
              short_help='Resume a workflow execution [manager only]')
 @cfy.argument('execution-id')
 @cfy.options.common_options
+@cfy.options.timeout()
+@cfy.options.include_logs
+@cfy.options.json_output
 @cfy.options.reset_operations
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def manager_resume(execution_id, reset_operations, logger, client,
-                   tenant_name):
+                   timeout, include_logs, json_output, tenant_name):
     """Resume the execution of a workflow in a failed or cancelled state.
 
     `EXECUTION_ID` is the ID of the execution to resume.
@@ -364,10 +367,29 @@ def manager_resume(execution_id, reset_operations, logger, client,
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Resuming execution {0}'.format(execution_id))
     client.executions.resume(execution_id, force=reset_operations)
-    logger.info(
-        "A resume request for execution {0} has been sent. "
-        "To track the execution's status, use:\n"
-        "cfy executions get {0}".format(execution_id))
+    execution = client.executions.get(execution_id)
+    execution = wait_for_execution(
+        client,
+        execution,
+        events_handler=get_events_logger(json_output),
+        include_logs=include_logs,
+        timeout=timeout,
+        logger=logger)
+
+    workflow_id = execution.workflow_id
+    deployment_id = execution.deployment_id
+
+    if execution.error:
+        logger.error(
+            "Resume of execution of workflow {0} for deployment "
+            "{1} failed. [error={2}]".format(
+                workflow_id,
+                deployment_id,
+                execution.error))
+    else:
+        logger.info("Finished executing workflow {0} on deployment {1}".format(
+            workflow_id,
+            deployment_id))
 
 
 @cfy.command(name='list',
