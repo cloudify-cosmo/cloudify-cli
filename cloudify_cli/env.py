@@ -33,6 +33,7 @@ from cloudify_rest_client.client import HTTPClient
 from cloudify.cluster_status import CloudifyNodeType
 from cloudify_rest_client.utils import is_kerberos_env
 from cloudify_rest_client.exceptions import CloudifyClientError
+
 from . import constants
 from .exceptions import CloudifyCliError
 
@@ -86,6 +87,15 @@ def get_active_profile():
     else:
         # We return None explicitly as no profile is active.
         return None
+
+
+def set_target_manager(manager_host):
+    global target_manager
+    target_manager = manager_host
+
+
+def get_target_manager():
+    return target_manager
 
 
 def get_profile_names():
@@ -226,6 +236,13 @@ def raise_uninitialized():
     raise error
 
 
+def is_cluster(client_profile=None):
+    if client_profile is None:
+        client_profile = profile
+    return (not isinstance(client_profile.cluster, list) and
+            client_profile.cluster.get(CloudifyNodeType.MANAGER))
+
+
 def get_rest_client(client_profile=None,
                     rest_host=None,
                     rest_port=None,
@@ -249,9 +266,7 @@ def get_rest_client(client_profile=None,
     trust_all = trust_all or get_ssl_trust_all()
     headers = get_auth_header(username, password)
     headers[constants.CLOUDIFY_TENANT_HEADER] = tenant_name
-    cluster = cluster or (not isinstance(client_profile.cluster, list) and
-                          client_profile.cluster.get(
-                              CloudifyNodeType.MANAGER))
+    cluster = cluster or is_cluster(client_profile)
     kerberos_env = kerberos_env \
         if kerberos_env is not None else client_profile.kerberos_env
 
@@ -548,6 +563,11 @@ class ClusterHTTPClient(HTTPClient):
         if kwargs.get('timeout') is None:
             kwargs['timeout'] = self.default_timeout_sec
 
+        manager_host = get_target_manager()
+        if manager_host:
+            self.host = manager_host
+            return self._try_do_request(*args, **kwargs)
+
         # First try with the main manager ip given when creating the profile
         # with `cfy profiles use`
         self.host = self._profile.manager_ip
@@ -625,3 +645,4 @@ class CloudifyClusterClient(CloudifyClient):
 
 
 profile = get_profile_context(suppress_error=True)
+target_manager = None

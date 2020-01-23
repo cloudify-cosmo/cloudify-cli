@@ -231,6 +231,18 @@ def set_format(ctx, param, value):
     return value
 
 
+def set_manager(ctx, param, value):
+    if value is None:
+        return
+    if env.is_cluster():
+        env.set_target_manager(value)
+    else:
+        get_logger().warning(
+            '--manager can only be used in a cluster topology and the '
+            'current profile is an all-in-one Cloudify Manager'
+        )
+
+
 def json_output_deprecate(ctx, param, value):
     if value:
         warnings.warn("Instead of --json-output, use the global "
@@ -1237,13 +1249,21 @@ class Options(object):
             required=False,
             help=helptexts.RUNTIME_ONLY_EVALUATION)
 
+        self.manager = click.option(
+            '--manager',
+            required=False,
+            expose_value=False,
+            help=helptexts.MANAGER,
+            callback=set_manager)
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
         To be used for arguments that are going to be applied for all or
         almost all commands.
         """
-        for arg in [self.json, self.verbose(), self.format, self.quiet()]:
+        for arg in [self.json, self.verbose(), self.format, self.quiet(),
+                    self.manager]:
             f = arg(f)
         return f
 
