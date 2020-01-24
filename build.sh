@@ -30,7 +30,10 @@ export CLI_BRANCH="$CORE_BRANCH"
 
 # Get Omnibus software from Chef Omnibus repo
 rm -rf omnibus-software
-git clone https://github.com/chef/omnibus-software.git --depth 1 -q
+git clone https://github.com/chef/omnibus-software.git
+pushd omnibus-software
+    git checkout 1b2dfe467cbc22e0e2e232e2648af3482830bfd7
+popd
 list_of_omnibus_softwares="gdbm cacerts config_guess gdbm libffi makedepend
     ncurses openssl pkg-config-lite setuptools
     util-macros version-manifest xproto zlib"
