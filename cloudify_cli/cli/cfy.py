@@ -1239,7 +1239,6 @@ class Options(object):
             '--node-id',
             required=False,
             help=helptexts.NODE_ID,
-            callback=self.parse_comma_separated
         )
 
         self.runtime_only_evaluation = click.option(
