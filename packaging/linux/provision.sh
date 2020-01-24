@@ -49,7 +49,7 @@ function prepare_osx () {
         gem install bundler -v '=1.16.0' --no-document
     fi
 
-    gem install omnibus --no-document
+    gem install omnibus -v 7.0.1 --no-document
 }
 
 # Linux Preperation
@@ -76,11 +76,11 @@ function prepare_linux () {
     else
         source $HOME/.rvm/scripts/rvm
     fi
-    rvm install 2.4.4 && rvm use 2.4.4
+    rvm install 2.5.0 && rvm use 2.5.0
     gem install bundler -v '=1.16.0' --no-document
     gem install mixlib-cli -v 1.7.0 --no-document
     gem install ohai -v 14.8.12 --no-document
-    gem install omnibus -v 6.0.25 --no-document
+    gem install omnibus -v 7.0.1 --no-document
 }
 
 echo "BRANCH=$BRANCH"
