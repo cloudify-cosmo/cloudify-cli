@@ -79,7 +79,7 @@ export AWS_ACCESS_KEY_ID=$3
 export AWS_ACCESS_KEY=$4
 export REPO=$5
 export BRANCH=$6
-export CORE_TAG_NAME="5.0.5"
+export CORE_TAG_NAME="5.1.0.dev1"
 export CORE_BRANCH="master"
 
 set +x
