@@ -558,10 +558,14 @@ class ClusterHTTPClient(HTTPClient):
         # a generator, we need to copy it, so we can send it more than once
         copied_data = None
         if isinstance(kwargs.get('data'), types.GeneratorType):
-            copied_data = itertools.tee(kwargs.pop('data'), len(self._cluster))
+            copied_data = itertools.tee(kwargs.pop('data'),
+                                        len(self._cluster) + 1)
 
         if kwargs.get('timeout') is None:
             kwargs['timeout'] = self.default_timeout_sec
+
+        if copied_data is not None:
+            kwargs['data'] = copied_data[-1]
 
         manager_host = get_target_manager()
         if manager_host:
