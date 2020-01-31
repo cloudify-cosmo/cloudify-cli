@@ -1,1 +1,1 @@
-export CORE_BRANCH="master"
+export CORE_BRANCH="5.0.5-build"
