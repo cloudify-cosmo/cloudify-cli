@@ -8,8 +8,7 @@ export AWS_ACCESS_KEY=$4
 export REPO=$5
 export BRANCH=$6
 
-# These env vars are being updated by the bump version process
-export CORE_TAG_NAME="5.0.5"
+# The build will be based on this branch
 export CORE_BRANCH="master"
 
 set +e
