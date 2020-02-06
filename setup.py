@@ -18,7 +18,7 @@ from setuptools import setup
 
 setup(
     name='cloudify',
-    version='20.01.05',
+    version='20.02.23',
     author='Cloudify',
     author_email='cosmo-admin@cloudify.co',
     packages=['cloudify_cli',
