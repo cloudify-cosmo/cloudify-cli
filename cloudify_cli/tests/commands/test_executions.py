@@ -84,7 +84,7 @@ class ExecutionsTest(CliCommandTest):
         try:
             self._test_executions_start_dep_env(ex=RuntimeError)
         except cfy.ClickInvocationException as e:
-            self.assertTrue(type(e.exception) == RuntimeError)
+            self.assertIsInstance(e.exception, RuntimeError)
 
     def _test_executions_start_dep_env(self, ex):
         start_mock = MagicMock(side_effect=[ex, execution_mock('started')])

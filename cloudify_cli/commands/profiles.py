@@ -114,7 +114,7 @@ def show(logger):
                   short_help='List profiles')
 @cfy.options.common_options
 @cfy.pass_logger
-def list(logger):
+def profiles_list(logger):
     """
     List all profiles
     """
@@ -196,7 +196,7 @@ def use(manager_ip,
 
 
 def _update_cluster_profile_to_dict(logger):
-    if type(env.profile.cluster) == type([]):   # noqa
+    if isinstance(env.profile.cluster, list):   # noqa
         env.profile.cluster = dict()
         env.profile.save()
     client = get_rest_client()
