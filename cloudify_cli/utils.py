@@ -292,7 +292,7 @@ def handle_client_error(status_code, message, logger):
     """
     try:
         yield
-    except CloudifyClientError, e:
+    except CloudifyClientError as e:
         if e.status_code != status_code:
             raise
         logger.info(message)
@@ -307,7 +307,7 @@ def prettify_client_error(status_codes, logger):
     """
     try:
         yield
-    except CloudifyClientError, e:
+    except CloudifyClientError as e:
         if e.status_code not in status_codes:
             raise
         logger.info(e.message)

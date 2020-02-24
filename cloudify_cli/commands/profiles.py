@@ -735,7 +735,7 @@ def _get_profile(profile_name):
 def _assert_manager_available(client, profile_name):
     try:
         return client.manager.get_status()
-    except UserUnauthorizedError, e:
+    except UserUnauthorizedError as e:
         raise CloudifyCliError(
             "Can't use manager {0}\n{1}.".format(
                 profile_name,
