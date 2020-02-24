@@ -17,6 +17,7 @@
 import os
 import json
 
+import click
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
 from .. import env
@@ -355,8 +356,8 @@ def _print_secrets_errors(secrets_errors_dict, logger):
                 ' to the the errors mentioned for each secret. The secrets`'
                 ' number refer to their position in the imported list:')
     for key, secret_errors in secrets_errors_list:
-        print('\n\tSecret {0}:'.format(int(key) + 1))
+        click.echo('\n\tSecret {0}:'.format(int(key) + 1))
         for attr, error in secret_errors.items():
             if attr == 'missing secret fields':
                 error = [str(param) for param in error]
-            print('\t\t{0}: {1}'.format(attr, error))
+            click.echo('\t\t{0}: {1}'.format(attr, error))
