@@ -63,6 +63,45 @@ def executions():
     pass
 
 
+def _execution_follower(client, execution, events_logger,
+                        include_logs, timeout, logger,
+                        parameters):
+    workflow_id = execution.workflow_id
+    deployment_id = execution.deployment_id
+    events_message = "* Run 'cfy events list {0}' to retrieve the " \
+                     "execution's events/logs"
+
+    execution = wait_for_execution(client,
+                                   execution,
+                                   events_handler=events_logger,
+                                   include_logs=include_logs,
+                                   timeout=timeout,
+                                   logger=logger)
+    if execution.error:
+        logger.info(
+            'Execution of workflow {0} for deployment '
+            '{1} failed. [error={2}]'.format(
+                workflow_id,
+                deployment_id,
+                execution.error))
+        logger.info(events_message.format(execution.id))
+        if workflow_id == DEFAULT_UNINSTALL_WORKFLOW and not str(
+                parameters.get('ignore_failure')).lower() == 'true':
+            logger.info(
+                "Note that, for the {0} workflow, you can use the 'ignore_failure' parameter "  # noqa
+                'to ignore operation failures and continue the execution '
+                "(for example: 'cfy executions start {0} -d {1} -p ignore_failure=true'). "  # noqa
+                "If your blueprint imports Cloudify's global definitions (types.yaml) "  # noqa
+                'of a version prior to 4.0, you will also need to include '
+                "'--allow-custom-parameters' in the command line."
+                    .format(workflow_id, deployment_id))
+        raise SuppressedCloudifyCliError()
+    else:
+        logger.info('Finished executing workflow {0} on deployment '
+                    '{1}'.format(workflow_id, deployment_id))
+        logger.info(events_message.format(execution.id))
+
+
 @cfy.command(name='get',
              short_help='Retrieve execution information [manager only]')
 @cfy.argument('execution-id')
@@ -203,8 +242,6 @@ def manager_start(workflow_id,
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     events_logger = get_events_logger(json_output)
-    events_message = "* Run 'cfy events list {0}' to retrieve the " \
-                     "execution's events/logs"
     original_timeout = timeout
     logger.info('Executing workflow `{0}` on deployment `{1}`'
                 ' [timeout={2} seconds]'.format(workflow_id,
@@ -264,35 +301,9 @@ def manager_start(workflow_id,
         if execution.status == 'scheduled':
             logger.info('Execution is scheduled for {0}.'.format(schedule))
             return
-        execution = wait_for_execution(client,
-                                       execution,
-                                       events_handler=events_logger,
-                                       include_logs=include_logs,
-                                       timeout=timeout,
-                                       logger=logger)
-        if execution.error:
-            logger.info('Execution of workflow {0} for deployment '
-                        '{1} failed. [error={2}]'.format(
-                            workflow_id,
-                            deployment_id,
-                            execution.error))
-            logger.info(events_message.format(execution.id))
-            if workflow_id == DEFAULT_UNINSTALL_WORKFLOW and not str(
-                    parameters.get('ignore_failure')).lower() == 'true':
-
-                logger.info(
-                    "Note that, for the {0} workflow, you can use the 'ignore_failure' parameter "  # noqa
-                    'to ignore operation failures and continue the execution '
-                    "(for example: 'cfy executions start {0} -d {1} -p ignore_failure=true'). "  # noqa
-                    "If your blueprint imports Cloudify's global definitions (types.yaml) "  # noqa
-                    'of a version prior to 4.0, you will also need to include '
-                    "'--allow-custom-parameters' in the command line."
-                    .format(workflow_id, deployment_id))
-            raise SuppressedCloudifyCliError()
-        else:
-            logger.info('Finished executing workflow {0} on deployment '
-                        '{1}'.format(workflow_id, deployment_id))
-            logger.info(events_message.format(execution.id))
+        _execution_follower(client, execution, events_logger,
+                            include_logs, timeout, logger,
+                            parameters)
     except ExecutionTimeoutError as e:
         logger.info(
             "Timed out waiting for workflow '{0}' of deployment '{1}' to "
@@ -368,28 +379,9 @@ def manager_resume(execution_id, reset_operations, logger, client,
     logger.info('Resuming execution {0}'.format(execution_id))
     client.executions.resume(execution_id, force=reset_operations)
     execution = client.executions.get(execution_id)
-    execution = wait_for_execution(
-        client,
-        execution,
-        events_handler=get_events_logger(json_output),
-        include_logs=include_logs,
-        timeout=timeout,
-        logger=logger)
-
-    workflow_id = execution.workflow_id
-    deployment_id = execution.deployment_id
-
-    if execution.error:
-        logger.error(
-            "Resume of execution of workflow {0} for deployment "
-            "{1} failed. [error={2}]".format(
-                workflow_id,
-                deployment_id,
-                execution.error))
-    else:
-        logger.info("Finished executing workflow {0} on deployment {1}".format(
-            workflow_id,
-            deployment_id))
+    _execution_follower(client, execution, get_events_logger(json_output),
+                        include_logs, timeout, logger,
+                        execution.parameters)
 
 
 @cfy.command(name='list',
