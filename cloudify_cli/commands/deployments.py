@@ -509,8 +509,13 @@ def manager_create(blueprint_id,
         logger.info('Unable to create deployment due to invalid secret')
         raise CloudifyCliError(str(e))
 
-    logger.info("Deployment created. The deployment's id is {0}".format(
-        deployment.id))
+    logger.info("Deployment %s is being created", deployment.id)
+    # May not exist if we're targeting an older Cloudify Manager.
+    creation_execution_id = deployment.creation_execution_id
+    if creation_execution_id:
+        logger.info(
+            "You can track the creation process by tracking execution "
+            "%s", creation_execution_id)
 
 
 @cfy.command(name='delete',
