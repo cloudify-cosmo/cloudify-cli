@@ -1,10 +1,12 @@
 import os
+import shutil
 
 from mock import patch
 from testtools import TestCase
-from testtools.matchers import Equals
+from testtools.matchers import Equals, EndsWith
 
 from .commands.constants import (
+    BLUEPRINTS_DIR,
     SAMPLE_ARCHIVE_PATH,
     SAMPLE_ARCHIVE_URL,
     SAMPLE_BLUEPRINT_PATH,
@@ -111,6 +113,36 @@ class TestGet(TestCase):
                 'https://github.com/cloudify-cosmo/'
                 'cloudify-hello-world-example/archive/master.tar.gz'
             ),
+        )
+
+    @patch('cloudify_cli.utils.download_file')
+    def test_github_path_download(self, download_file):
+        """Map github repository path to URL and download by url"""
+        download_file.return_value = os.path.join(
+           BLUEPRINTS_DIR,
+           'cloudify-hello-world-example-master.zip'
+        )
+        download_file.side_effect = None
+        blueprint_path = blueprint.get(
+            'cloudify-cosmo/cloudify-hello-world-example',
+            'openstack-blueprint.yaml',
+            download=True
+        )
+        self.addCleanup(
+            shutil.rmtree,
+            os.path.dirname(os.path.dirname(blueprint_path))
+        )
+        self.assertThat(
+            blueprint_path,
+            EndsWith(
+                'cloudify-hello-world-example-master/openstack-blueprint.yaml'
+            ),
+        )
+        self.assertEqual(download_file.call_count, 1)
+        self.assertIn(
+            'https://github.com/cloudify-cosmo/'
+            'cloudify-hello-world-example/archive/master.tar.gz',
+            download_file.call_args.args
         )
 
 

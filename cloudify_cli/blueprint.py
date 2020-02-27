@@ -63,7 +63,7 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH, download=False):
     elif len(source.split('/')) == 2:
         url = _map_to_github_url(source)
         if download:
-            downloaded_file = utils.download_file(source)
+            downloaded_file = utils.download_file(url)
             return _get_blueprint_file_from_archive(
                 downloaded_file, blueprint_filename)
         return url
