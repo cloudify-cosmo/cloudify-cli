@@ -256,8 +256,8 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
 
     # Shorten the file name if it's too long
     file_name = os.path.basename(file_path)
-    if len(file_name) > (bar_length / 4) + 3:
-        file_name = file_name[:bar_length / 4] + '...'
+    if len(file_name) > (bar_length // 4) + 3:
+        file_name = file_name[:bar_length // 4] + '...'
 
     bar_length -= len(file_name)
 
