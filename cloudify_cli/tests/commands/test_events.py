@@ -71,10 +71,10 @@ class EventsTest(CliCommandTest):
     def _get_events_before(self, end_time, include_logs=True):
         events = [event for event_time, event in self.events
                   if event_time < end_time]
-        return filter(
-            lambda event: include_logs or event['type'] == 'cloudify_event',
-            events
-        )
+        return [
+            event for event in events
+            if include_logs or event['type'] == 'cloudify_event'
+        ]
 
     def _mock_executions_get(self, execution_id):
         self.update_execution_status()

@@ -227,10 +227,11 @@ def get_filters_map(
                 )
 
                 # Find all unstarted Compute instances.
-                unstarted_computes = list(filter(
-                    lambda ni: ni.id == ni.host_id and ni.state !=
-                    _NODE_INSTANCE_STATE_STARTED,
-                    node_instances))
+                unstarted_computes = [
+                    ni for ni in node_instances
+                    if ni.id == ni.host_id and
+                    ni.state != _NODE_INSTANCE_STATE_STARTED
+                ]
 
                 for unstarted_ni in unstarted_computes:
                     logger.info("Node instance '%s' is not in '%s' state; "
