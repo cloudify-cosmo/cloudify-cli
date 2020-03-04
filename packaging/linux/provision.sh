@@ -12,6 +12,7 @@ export BRANCH=$6
 # These env vars are being updated by the bump version process
 export CORE_TAG_NAME="5.0.5"
 export CORE_BRANCH="20.03.03-build"
+export CORE_MANAGER="5.0.5-build"
 
 
 # OSX preparation
