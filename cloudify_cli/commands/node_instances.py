@@ -263,10 +263,6 @@ def local(node_id, blueprint_id, logger):
 
 
 def _print_node_instance(node_instance):
-    # Decode in-place so that it's decoded for both branches
-    node_instance.runtime_properties.update(
-        utils.decode_dict(node_instance.runtime_properties))
-
     if get_global_json_output():
         # For json output, make sure runtime properties are in the same object
         # so that the output is a single decode-able object

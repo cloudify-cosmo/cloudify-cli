@@ -305,8 +305,8 @@ def get(blueprint_id, logger, client, tenant_name):
 
         if blueprint_metadata:
             logger.info('Metadata:')
-            for property_name, property_value in utils.decode_dict(
-                    blueprint_dict['plan']['metadata']).items():
+            for property_name, property_value in \
+                    blueprint_dict['plan']['metadata'].items():
                 logger.info('\t{0}: {1}'.format(property_name, property_value))
             logger.info('')
 
