@@ -1,1 +1,2 @@
+virtualenv==15.1.0
 git+https://github.com/cloudify-cosmo/cloudify-common@5.0.5.1#egg=cloudify-common==master

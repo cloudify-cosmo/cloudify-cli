@@ -1,9 +1,9 @@
 name "cloudify-manager"
 
-ENV['CORE_BRANCH'] || raise('CORE_BRANCH environment variable not set')
+ENV['CORE_MANAGER'] || raise('CORE_MANAGER environment variable not set')
 
 
-default_version ENV['CORE_BRANCH']
+default_version ENV['CORE_MANAGER']
 
 source :git => "https://github.com/cloudify-cosmo/cloudify-manager"
 
