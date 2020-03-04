@@ -1,5 +1,5 @@
 import os
-from unittest import TestCase
+from testtools import TestCase
 
 from cloudify_cli import inputs
 from cloudify_cli.exceptions import CloudifyCliError
@@ -31,12 +31,10 @@ class InputsToDictTest(TestCase):
         self._verify_not_dict(resources)
 
     def _verify_root_cause(self, resources):
-        with self.assertRaises(CloudifyCliError) as ex:
+        with self.assertRaisesRegex(CloudifyCliError, 'Root cause'):
             inputs.inputs_to_dict(resources)
-        self.assertTrue('Root cause' in ex.exception.message)
 
     def _verify_not_dict(self, resources):
-        with self.assertRaises(CloudifyCliError) as ex:
+        with self.assertRaisesRegex(
+                CloudifyCliError, 'does not represent a dictionary'):
             inputs.inputs_to_dict(resources)
-        self.assertTrue('does not represent a dictionary'
-                        in ex.exception.message)

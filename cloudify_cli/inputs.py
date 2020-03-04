@@ -64,8 +64,8 @@ def inputs_to_dict(resources, **kwargs):
                     "- A string formatted as JSON/YAML\n" \
                     "- A string formatted as key1=value1;key2=value2\n"\
                     .format(resource)
-                if ex.message:
-                    ex_msg += "\nRoot cause: {0}".format(str(ex))
+                if str(ex):
+                    ex_msg += "\nRoot cause: {0}".format(ex)
                 raise CloudifyCliError(ex_msg)
 
     return parsed_dict

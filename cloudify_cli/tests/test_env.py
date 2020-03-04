@@ -350,38 +350,38 @@ class CliInputsTests(CliCommandTest):
                            "format is: key1=value1;key2=value2"
 
         input_str = "my_key1"
-        self.assertRaisesRegexp(CloudifyCliError,
-                                expected_err_msg.format(input_str),
-                                inputs.plain_string_to_dict, input_str)
+        self.assertRaisesRegex(CloudifyCliError,
+                               expected_err_msg.format(input_str),
+                               inputs.plain_string_to_dict, input_str)
 
         input_str = "my_key1;"
-        self.assertRaisesRegexp(CloudifyCliError,
-                                expected_err_msg.format(input_str),
-                                inputs.plain_string_to_dict, input_str)
+        self.assertRaisesRegex(CloudifyCliError,
+                               expected_err_msg.format(input_str),
+                               inputs.plain_string_to_dict, input_str)
 
         input_str = "my_key1=my_value1;myvalue2;"
-        self.assertRaisesRegexp(CloudifyCliError,
-                                expected_err_msg.format(input_str),
-                                inputs.plain_string_to_dict,
-                                input_str)
+        self.assertRaisesRegex(CloudifyCliError,
+                               expected_err_msg.format(input_str),
+                               inputs.plain_string_to_dict,
+                               input_str)
 
         input_str = "my_key1=my_value1;my_key2=myvalue2;my_other_value2;"
-        self.assertRaisesRegexp(CloudifyCliError,
-                                expected_err_msg.format(input_str),
-                                inputs.plain_string_to_dict,
-                                input_str)
+        self.assertRaisesRegex(CloudifyCliError,
+                               expected_err_msg.format(input_str),
+                               inputs.plain_string_to_dict,
+                               input_str)
 
         input_str = "my_key1=my_value1;my_key2=myvalue2;my_other_value2;"
-        self.assertRaisesRegexp(CloudifyCliError,
-                                expected_err_msg.format(input_str),
-                                inputs.plain_string_to_dict,
-                                input_str)
+        self.assertRaisesRegex(CloudifyCliError,
+                               expected_err_msg.format(input_str),
+                               inputs.plain_string_to_dict,
+                               input_str)
 
         input_str = "my_key1:my_value1;my_key2:my_value2"
-        self.assertRaisesRegexp(CloudifyCliError,
-                                expected_err_msg.format(input_str),
-                                inputs.plain_string_to_dict,
-                                input_str)
+        self.assertRaisesRegex(CloudifyCliError,
+                               expected_err_msg.format(input_str),
+                               inputs.plain_string_to_dict,
+                               input_str)
 
     def test_inputs_to_dict_strings(self):
         self._test_string_inputs(test_inputs_to_dict=True)
@@ -880,7 +880,7 @@ class TestCLIColors(CliCommandTest):
     @mock.patch('cloudify_cli.logger._configure_from_file', mock.MagicMock())
     @mock.patch('cloudify_cli.logger.is_use_colors', lambda: True)
     def test_configure_colors_for_events_and_logs(self):
-        self.assertNotEquals(ColorfulEvent, logs.EVENT_CLASS)
+        self.assertNotEqual(ColorfulEvent, logs.EVENT_CLASS)
 
         with mock.patch('colorama.init') as m:
             # calling logs configuration method

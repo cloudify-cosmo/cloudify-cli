@@ -60,7 +60,7 @@ LOGGER = {
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "file",
-            "maxBytes": "5000000",
+            "maxBytes": 5000000,
             "backupCount": "20"
         },
         "console": {
