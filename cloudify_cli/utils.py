@@ -160,12 +160,12 @@ def zip_files(files):
     destination_zip = source_folder + '.zip'
     for path in files:
         copy(path, source_folder)
-    zip(source_folder, destination_zip, include_folder=False)
+    create_zip(source_folder, destination_zip, include_folder=False)
     shutil.rmtree(source_folder)
     return destination_zip
 
 
-def zip(source, destination, include_folder=True):
+def create_zip(source, destination, include_folder=True):
     logger = get_logger()
 
     logger.debug('Creating zip archive: {0}...'.format(destination))

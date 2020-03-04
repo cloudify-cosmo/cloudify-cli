@@ -369,7 +369,7 @@ def package(ctx, blueprint_path, output_path, validate, logger):
             "You must provide a path to a blueprint's directory or to a "
             "blueprint yaml file residing in a blueprint's directory.")
     if os.name == 'nt':
-        utils.zip(path_to_package, destination + '.zip')
+        utils.create_zip(path_to_package, destination + '.zip')
     else:
         utils.tar(path_to_package, destination + '.tar.gz')
     logger.info('Packaging complete!')

@@ -45,16 +45,13 @@ def _format_direct_users(users):
 
 
 def _format_group_users(group_users):
-    group_users = dict(
-        (str(group),
-         dict(zip(
-             ('role',
-              'users'),
-             (str(group_users[group]['role']),
-              [str(user) for user in group_users[group]['users']])
-         )))
-        for group in group_users
-    )
+    group_users = {
+        group: {
+            'role': users['role'],
+            'users': users['users']
+        }
+        for group, users in group_users.items()
+    }
     return str(group_users)[1:-1]
 
 
