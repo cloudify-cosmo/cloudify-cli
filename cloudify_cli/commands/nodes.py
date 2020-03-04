@@ -99,7 +99,7 @@ def get(node_id, deployment_id, logger, client, tenant_name):
         print_details(node.properties, 'Node properties:')
 
         operations = []
-        for op_name, op in utils.decode_dict(node.operations).iteritems():
+        for op_name, op in utils.decode_dict(node.operations).items():
             # operations is a tuple (operation_name, dict_of_attributes)
             # we want to add the name to the dict
             # and build a new array in order to print it in a table
