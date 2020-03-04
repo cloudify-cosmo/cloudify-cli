@@ -43,11 +43,11 @@ class InstallTest(CliCommandTest):
 
         self.assertEqual(
             blueprint_upload_args['blueprint_filename'],
-            unicode(DEFAULT_BLUEPRINT_FILE_NAME)
+            DEFAULT_BLUEPRINT_FILE_NAME
         )
         self.assertEqual(
             blueprint_upload_args['blueprint_id'],
-            unicode(STUB_BLUEPRINT_ID)
+            STUB_BLUEPRINT_ID
         )
 
     @patch('cloudify_cli.commands.executions.manager_start')
@@ -67,11 +67,11 @@ class InstallTest(CliCommandTest):
 
         self.assertEqual(
             blueprint_upload_args['blueprint_filename'],
-            unicode(DEFAULT_BLUEPRINT_FILE_NAME)
+            DEFAULT_BLUEPRINT_FILE_NAME
         )
         self.assertEqual(
             blueprint_upload_args['blueprint_id'],
-            unicode(STUB_DIRECTORY_NAME)
+            STUB_DIRECTORY_NAME
         )
 
     @patch('cloudify_cli.commands.executions.manager_start')
@@ -91,11 +91,11 @@ class InstallTest(CliCommandTest):
 
         self.assertEqual(
             blueprint_upload_args['blueprint_filename'],
-            unicode(DEFAULT_BLUEPRINT_FILE_NAME)
+            DEFAULT_BLUEPRINT_FILE_NAME
         )
         self.assertEqual(
             blueprint_upload_args['blueprint_id'],
-            u'cloudify-hello-world-example-master'
+            'cloudify-hello-world-example-master'
         )
 
     @patch('cloudify_cli.commands.blueprints.upload')
@@ -112,14 +112,13 @@ class InstallTest(CliCommandTest):
         deployment_create_args = deployment_create_mock.call_args_list[0][1]
 
         self.assertDictEqual(deployment_create_args, {
-            'blueprint_id': unicode(STUB_BLUEPRINT_ID),
-            'deployment_id': unicode(STUB_BLUEPRINT_ID),
+            'blueprint_id': STUB_BLUEPRINT_ID,
+            'deployment_id': STUB_BLUEPRINT_ID,
             'inputs': {'key1': 'val1', 'key2': 'val2'},
             'skip_plugins_validation': False,
             'tenant_name': None,
             'visibility': 'tenant'
-        }
-                             )
+        })
 
     @patch('cloudify_cli.commands.blueprints.upload')
     @patch('cloudify_cli.commands.executions.manager_start')
@@ -139,14 +138,13 @@ class InstallTest(CliCommandTest):
         deployment_create_args = deployment_create_mock.call_args_list[0][1]
 
         self.assertDictEqual(deployment_create_args, {
-            'blueprint_id': unicode(STUB_BLUEPRINT_ID),
-            'deployment_id': unicode(STUB_DEPLOYMENT_ID),
+            'blueprint_id': STUB_BLUEPRINT_ID,
+            'deployment_id': STUB_DEPLOYMENT_ID,
             'inputs': {'key1': 'val1', 'key2': 'val2'},
             'skip_plugins_validation': False,
             'tenant_name': None,
             'visibility': 'tenant'
-        }
-                             )
+        })
 
     @patch('cloudify_cli.commands.blueprints.upload')
     @patch('cloudify_cli.commands.deployments.manager_create')
@@ -170,7 +168,7 @@ class InstallTest(CliCommandTest):
             executions_start_args,
             {
                 'allow_custom_parameters': False,
-                'deployment_id': unicode(STUB_DEPLOYMENT_ID),
+                'deployment_id': STUB_DEPLOYMENT_ID,
                 'force': False,
                 'include_logs': True,
                 'json_output': False,
@@ -197,9 +195,9 @@ class InstallTest(CliCommandTest):
         self.assertDictEqual(
             blueprints_upload_args,
             {
-                'blueprint_filename': unicode(DEFAULT_BLUEPRINT_FILE_NAME),
-                'blueprint_id': unicode(STUB_BLUEPRINT_ID),
-                'blueprint_path': unicode(SAMPLE_BLUEPRINT_PATH),
+                'blueprint_filename': DEFAULT_BLUEPRINT_FILE_NAME,
+                'blueprint_id': STUB_BLUEPRINT_ID,
+                'blueprint_path': SAMPLE_BLUEPRINT_PATH,
                 'validate': True,
                 'tenant_name': None,
                 'visibility': 'tenant'
@@ -225,12 +223,12 @@ class InstallTest(CliCommandTest):
 
         self.assertEqual(
             blueprints_upload_args['blueprint_filename'],
-            unicode(DEFAULT_BLUEPRINT_FILE_NAME)
+            DEFAULT_BLUEPRINT_FILE_NAME
         )
 
         self.assertEqual(
             blueprints_upload_args['blueprint_id'],
-            unicode(STUB_BLUEPRINT_ID)
+            STUB_BLUEPRINT_ID
         )
 
     @patch('cloudify_cli.commands.executions.manager_start')
@@ -252,8 +250,8 @@ class InstallTest(CliCommandTest):
         self.invoke(command, context='manager')
 
         deployments_create_mock.assert_called_with(
-            blueprint_id=unicode(STUB_BLUEPRINT_ID),
-            deployment_id=unicode(STUB_DEPLOYMENT_ID),
+            blueprint_id=STUB_BLUEPRINT_ID,
+            deployment_id=STUB_DEPLOYMENT_ID,
             inputs={'key1': 'val1', 'key2': 'val2'},
             tenant_name=None,
             visibility='tenant',
@@ -393,7 +391,7 @@ class InstallTest(CliCommandTest):
             {
                 'inputs': {},
                 'blueprint_id': 'local',
-                'blueprint_path': unicode(blueprint_path),
+                'blueprint_path': blueprint_path,
                 'install_plugins': False
             }
         )
