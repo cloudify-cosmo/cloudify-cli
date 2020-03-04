@@ -65,12 +65,12 @@ class TestMultipleLocalProfiles(TestCase):
         """Multiple blueprints with different id can coexist."""
         blueprint_count = 5
 
-        for blueprint_number in xrange(blueprint_count):
+        for blueprint_number in range(blueprint_count):
             cfy.invoke(
                 'init -b my-blueprint-{0} {1}'
                 .format(blueprint_number, self.LOCAL_BLUEPRINT_PATH)
             )
-        for blueprint_number in xrange(blueprint_count):
+        for blueprint_number in range(blueprint_count):
             self.assertThat(
                 os.path.join(
                     self.LOCAL_PROFILE_DIR,
