@@ -22,7 +22,6 @@ import subprocess
 
 from uuid import uuid4
 from functools import wraps
-from StringIO import StringIO
 from datetime import datetime
 from contextlib import contextmanager
 
@@ -30,6 +29,7 @@ from mock import patch
 
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
 
+from cloudify._compat import StringIO
 import cloudify.utils
 import cloudify.exceptions
 from cloudify import ctx as op_ctx

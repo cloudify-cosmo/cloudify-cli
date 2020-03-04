@@ -15,7 +15,8 @@
 ############
 
 import os
-from urlparse import urlparse
+
+from cloudify._compat import urlparse
 
 from . import utils
 from .exceptions import CloudifyCliError

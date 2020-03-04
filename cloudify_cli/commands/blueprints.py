@@ -17,12 +17,12 @@
 import os
 import json
 import shutil
-from urlparse import urlparse
 
 import click
 
 from dsl_parser.parser import parse_from_path
 from dsl_parser.exceptions import DSLParsingException
+from cloudify._compat import urlparse
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
 from .. import local
