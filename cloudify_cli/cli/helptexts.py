@@ -167,8 +167,6 @@ EXCLUDE_LOGS_IN_SNAPSHOT = "Exclude logs from the snapshot"
 EXCLUDE_EVENTS_IN_SNAPSHOT = "Exclude events from the snapshot"
 SNAPSHOT_ID = "The unique identifier for the snapshot"
 
-DEV_TASK_ARGS = "Arguments for the fabric task"
-
 MAINTENANCE_MODE_WAIT = (
     "Wait until there are no running executions and automatically activate "
     "maintenance-mode"
