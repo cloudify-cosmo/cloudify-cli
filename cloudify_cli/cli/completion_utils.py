@@ -17,7 +17,6 @@
 from argcomplete.completers import FilesCompleter
 
 from .. import env
-from ..commands import dev
 
 yaml_files_completer = FilesCompleter(['*.yml', '*.yaml'])
 archive_files_completer = FilesCompleter(
@@ -55,12 +54,3 @@ def workflow_id_completer(prefix, parsed_args, **kwargs):
     workflows = rest_client.deployments.get(
         deployment_id, _include=['workflows']).workflows
     return (wf.id for wf in workflows if wf.id.startswith(prefix))
-
-
-def dev_task_name_completer(prefix, parsed_args, **kwargs):
-    tasks_file = parsed_args.tasks_file or 'tasks.py'
-    try:
-        tasks = dev.exec_tasks_file(tasks_file)
-    except Exception:
-        return []
-    return (task_name.replace('_', '-') for task_name in tasks.keys())
