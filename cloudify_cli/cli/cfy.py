@@ -21,6 +21,7 @@ import difflib
 import StringIO
 import warnings
 import traceback
+import pkg_resources
 from functools import wraps
 
 import click
@@ -116,7 +117,9 @@ def show_version(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
 
-    cli_version_data = env.get_version_data()
+    cli_version_data = {
+        'version': pkg_resources.require('cloudify')[0].version
+    }
     rest_version_data = env.get_manager_version_data() \
         if env.is_manager_active() else None
     output = ''

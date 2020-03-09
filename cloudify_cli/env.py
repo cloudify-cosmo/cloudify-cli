@@ -16,10 +16,8 @@
 
 
 import os
-import json
 import types
 import shutil
-import pkgutil
 import getpass
 import tempfile
 import itertools
@@ -391,11 +389,6 @@ def get_ssl_trust_all():
     if trust_all is not None and len(trust_all) > 0:
         return True
     return False
-
-
-def get_version_data():
-    data = pkgutil.get_data('cloudify_cli', 'VERSION')
-    return json.loads(data)
 
 
 def get_manager_version_data(rest_client=None):
