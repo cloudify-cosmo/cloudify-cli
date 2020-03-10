@@ -15,10 +15,10 @@
 ############
 
 import os
+import posixpath
 
 from cloudify.cluster_status import CloudifyNodeType
 
-from .. import ssh
 from .. import env
 from ..cli import helptexts, cfy
 from ..exceptions import CloudifyCliError
@@ -33,43 +33,45 @@ def logs():
     pass
 
 
-def _archive_logs(logger,
-                  host_string,
-                  node_type,
-                  key_filename=None):
+def get_host_date(conn):
+    return conn.run('date +%Y%m%dT%H%M%S', hide=True).stdout.strip()
+
+
+def _archive_logs(conn, node_type, logger):
     """Creates an archive of all logs found under /var/log/cloudify plus
     journalctl.
     """
     archive_filename = 'cloudify-{node_type}-logs_{date}_{ip}.tar.gz'.format(
         node_type=node_type,
-        date=ssh.get_host_date(host_string),
-        ip=(env.profile.manager_ip if not host_string
-            else host_string.split('@')[1]))
+        date=get_host_date(conn),
+        ip=env.profile.manager_ip
+    )
     archive_path = os.path.join('/tmp', archive_filename)
     journalctl_destination_path = '/var/log/cloudify/journalctl.log'
-
-    ssh.run_command_on_host(
-        'journalctl > /tmp/jctl && '
-        'mv /tmp/jctl {0}'.format(journalctl_destination_path), use_sudo=True,
-        host_string=host_string, key_filename=key_filename)
+    conn.sudo(
+        'bash -c "journalctl > /tmp/jctl && mv /tmp/jctl {0}"'
+        .format(journalctl_destination_path),
+    )
     logger.info('Creating logs archive in manager: {0}'.format(archive_path))
-    # We skip checking if the tar executable can be found on the machine
-    # knowingly. We don't want to run another ssh command just to verify
-    # something that will almost never happen.
-    ssh.run_command_on_host(
+    conn.sudo(
         'tar -czf {0} -C /var/log cloudify '
         '-C /opt/manager cluster_statuses '
         '--warning=no-file-changed'.format(archive_path),
-        use_sudo=True,
-        host_string=host_string,
-        key_filename=key_filename,
-        ignore_failure=True)
-    ssh.run_command_on_host('test -e {0}'.format(archive_path),
-                            host_string=host_string)
-    ssh.run_command_on_host(
-        'rm {0}'.format(journalctl_destination_path), use_sudo=True,
-        host_string=host_string, key_filename=key_filename)
+        warn=True
+    )
+    conn.run('test -e {0}'.format(archive_path))
+    conn.sudo('rm {0}'.format(journalctl_destination_path))
     return archive_path
+
+
+def _download_archive(conn, host_type, output_path, logger):
+    archive_path_on_host = _archive_logs(conn, host_type, logger)
+    filename = posixpath.basename(archive_path_on_host)
+    output_path = os.path.join(output_path, filename)
+    logger.info('Downloading archive to: {0}'.format(output_path))
+    conn.get(archive_path_on_host, output_path)
+    logger.info('Removing archive from host...')
+    conn.sudo('rm {0}'.format(archive_path_on_host))
 
 
 @logs.command(name='download',
@@ -81,51 +83,34 @@ def _archive_logs(logger,
 def download(output_path, all_nodes, logger):
     """Download an archive containing all of the manager's service logs
     """
+    if not output_path:
+        output_path = os.getcwd()
     if all_nodes:
         if not env.profile.cluster:
             raise CloudifyCliError(
                 "No cluster nodes defined in this profile")
         cluster_nodes = _get_cluster_nodes()
         for node in cluster_nodes:
-            ssh_user = node.get('ssh_user') or env.profile.ssh_user
-            ssh_key = node.get('ssh_key') or env.profile.ssh_key
-            if not ssh_user or not ssh_key:
-                logger.info('No ssh details defined for host {0}, {1} in '
-                            'cluster profile. Skipping...'
-                            .format(node.get('hostname'), node.get('host_ip')))
-                continue
-
-            if not output_path:
-                output_path = os.getcwd()
-            host_string = env.build_host_string(ip=node.get('host_ip'),
-                                                ssh_user=ssh_user)
-            archive_path_on_host = _archive_logs(
-                logger, host_string=host_string,
-                node_type=node.get('host_type'), key_filename=ssh_key)
-            logger.info('Downloading archive to: {0}'.format(output_path))
-            ssh.get_file_from_host(archive_path_on_host,
-                                   output_path,
-                                   host_string=host_string,
-                                   key_filename=ssh_key)
-            logger.info('Removing archive from host...')
-            ssh.run_command_on_host('rm {0}'.format(archive_path_on_host),
-                                    use_sudo=True,
-                                    host_string=host_string,
-                                    key_filename=ssh_key)
+            try:
+                with env.ssh_connection(
+                        host=node['host_ip'],
+                        user=node.get('ssh_user'),
+                        key=node.get('ssh_key')) as conn:
+                    _download_archive(
+                        conn,
+                        node.get('host_type'),
+                        output_path,
+                        logger)
+            except CloudifyCliError as e:
+                logger.info('Skipping node {0}: {1}'
+                            .format(node['hostname'], e))
     else:
-        host_string = env.build_manager_host_string()
-        archive_path_on_manager = _archive_logs(logger, host_string,
-                                                CloudifyNodeType.MANAGER)
-        if not output_path:
-            output_path = os.getcwd()
-        logger.info('Downloading archive to: {0}'.format(output_path))
-        ssh.get_file_from_host(archive_path_on_manager,
-                               output_path,
-                               host_string)
-        logger.info('Removing archive from manager...')
-        ssh.run_command_on_host('rm {0}'.format(archive_path_on_manager),
-                                host_string,
-                                use_sudo=True)
+        with env.ssh_connection() as conn:
+            _download_archive(
+                conn,
+                CloudifyNodeType.MANAGER,
+                output_path,
+                logger)
 
 
 def _get_cluster_nodes():
@@ -156,15 +141,14 @@ def purge(force, backup_first, logger):
     if backup_first:
         backup()
 
-    host_string = env.build_manager_host_string()
     logger.info('Purging manager logs...')
-    # well, we could've just `find /var/log/cloudify -name "*" -type f -delete`
-    # thing is, it will delete all files and nothing will be written into them
-    # until the relevant service is restarted.
-    ssh.run_command_on_host(
-        'for f in $(sudo find /var/log/cloudify -name "*" -type f); '
-        'do sudo truncate -s 0 $f; '
-        'done', host_string, use_sudo=True)
+    with env.ssh_connection() as conn:
+        # truncate and not delete: running services can keep their open fds
+        conn.sudo(
+            'for f in $(sudo find /var/log/cloudify -name "*" -type f); '
+            'do sudo truncate -s 0 $f; '
+            'done'
+        )
 
 
 @logs.command(name='backup',
@@ -175,10 +159,9 @@ def backup(logger):
     """Create a backup of all logs under a single archive and save it
     on the manager under /var/log.
     """
-    host_string = env.build_manager_host_string()
-    archive_path_on_manager = _archive_logs(logger, host_string,
-                                            CloudifyNodeType.MANAGER)
-    logger.info('Backing up manager logs to /var/log/{0}'.format(
-        os.path.basename(archive_path_on_manager)))
-    ssh.run_command_on_host('mv {0} {1}'.format(
-        archive_path_on_manager, '/var/log/'), host_string, use_sudo=True)
+    with env.ssh_connection() as conn:
+        archive_path_on_manager = _archive_logs(
+            conn, CloudifyNodeType.MANAGER, logger)
+        logger.info('Backing up manager logs to /var/log/{0}'.format(
+            os.path.basename(archive_path_on_manager)))
+        conn.sudo('mv {0} {1}'.format(archive_path_on_manager, '/var/log/'))
