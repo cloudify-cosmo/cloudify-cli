@@ -55,7 +55,7 @@ def _print_maintenance_mode_status(client, logger):
 
     logger.info('\nMaintenance Mode Status:')
     for param_name, param_value in utils.decode_dict(
-            status_response).iteritems():
+            status_response).items():
         if param_value and param_name != 'remaining_executions':
             logger.info('\t{0}:\t{1}'.format(
                 param_name.title().replace("_", " "),

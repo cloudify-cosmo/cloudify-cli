@@ -1,1 +1,7 @@
 --stage1
+-f lib2to3.fixes.fix_filter
+# fix_dict is done, but we don't check it, because it's not idempotent
+# and would try to rewrite things that are already ported
+# -f lib2to3.fixes.fix_dict
+-f lib2to3.fixes.fix_zip
+-f lib2to3.fixes.fix_xrange

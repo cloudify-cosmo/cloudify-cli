@@ -124,8 +124,9 @@ class AgentsTests(CliCommandTest):
                      for x in all_node_instances}
             nodes = [Node({'id': c, 'deployment_id': b, 'tenant_name': a}) for
                      (a, b, c) in nodes]
-            return list(filter(
-                lambda x: (node_ids is None) or x['id'] in node_ids, nodes))
+            if node_ids is None:
+                return nodes
+            return [x for x in nodes if x['id'] in node_ids]
 
         self.client.node_instances.list = list_node_instances
         self.client.deployments.list = list_deployments

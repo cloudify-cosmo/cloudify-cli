@@ -349,9 +349,8 @@ def _print_import_response(response, logger, override_collisions):
 
 
 def _print_secrets_errors(secrets_errors_dict, logger):
-    secrets_errors_list = [(key, secrets_errors_dict[key]) for key
-                           in sorted(secrets_errors_dict.keys(),
-                                     key=lambda x: int(x))]
+    secrets_errors_list = sorted(
+        secrets_errors_dict.items(), key=lambda item: int(item[0]))
     logger.info('\nPlease note the following secrets were not imported due'
                 ' to the the errors mentioned for each secret. The secrets`'
                 ' number refer to their position in the imported list:')

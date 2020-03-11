@@ -217,20 +217,21 @@ def get_filters_map(
         # state.
         # We skip this check if specific deployment ID's were requested.
         if not requested_deployment_ids:
-            for tenant_name in tenants_to_deployments.keys():
+            for tenant_name in tenants_to_deployments:
                 tenant_client = env.get_rest_client(tenant_name=tenant_name)
                 deps_to_execute = tenants_to_deployments[tenant_name]
 
                 node_instances = tenant_client.node_instances.list(
-                    deployment_id=deps_to_execute.keys(),
+                    deployment_id=list(deps_to_execute),
                     _include=['id', 'host_id', 'deployment_id', 'state']
                 )
 
                 # Find all unstarted Compute instances.
-                unstarted_computes = list(filter(
-                    lambda ni: ni.id == ni.host_id and ni.state !=
-                    _NODE_INSTANCE_STATE_STARTED,
-                    node_instances))
+                unstarted_computes = [
+                    ni for ni in node_instances
+                    if ni.id == ni.host_id and
+                    ni.state != _NODE_INSTANCE_STATE_STARTED
+                ]
 
                 for unstarted_ni in unstarted_computes:
                     logger.info("Node instance '%s' is not in '%s' state; "

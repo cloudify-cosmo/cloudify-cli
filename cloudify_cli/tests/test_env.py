@@ -478,7 +478,7 @@ class TestProgressBar(CliCommandTest):
             progress_func = utils.generate_progress_handler(
                 file_path='test', max_bar_length=40)
             total_size = 5
-            for iteration in xrange(6):
+            for iteration in range(6):
                 sys.stdout = captured = StringIO()
                 progress_func(iteration, total_size)
                 self.assertEqual(captured.getvalue(), results[iteration])
@@ -502,7 +502,7 @@ class TestProgressBar(CliCommandTest):
         try:
             progress_func = utils.generate_progress_handler(
                 file_path='test', max_bar_length=50)
-            for iteration in xrange(7):
+            for iteration in range(7):
                 sys.stdout = captured = StringIO()
                 progress_func(increments[iteration], total_size)
                 self.assertEqual(captured.getvalue(), results[iteration])
@@ -579,7 +579,7 @@ class ExecutionEventsFetcherTest(CliCommandTest):
                 'message': '<message>',
                 'error_causes': '<error_causes>',
             }
-            for _ in xrange(count)
+            for _ in range(count)
         ]
         return events
 

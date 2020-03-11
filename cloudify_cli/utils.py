@@ -86,7 +86,7 @@ def decode_list(data):
 
 def decode_dict(data):
     rv = {}
-    for key, value in data.iteritems():
+    for key, value in data.items():
         if isinstance(key, unicode):
             key = key.encode('utf-8')
         if isinstance(value, unicode):
@@ -160,12 +160,12 @@ def zip_files(files):
     destination_zip = source_folder + '.zip'
     for path in files:
         copy(path, source_folder)
-    zip(source_folder, destination_zip, include_folder=False)
+    create_zip(source_folder, destination_zip, include_folder=False)
     shutil.rmtree(source_folder)
     return destination_zip
 
 
-def zip(source, destination, include_folder=True):
+def create_zip(source, destination, include_folder=True):
     logger = get_logger()
 
     logger.debug('Creating zip archive: {0}...'.format(destination))
@@ -256,8 +256,8 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
 
     # Shorten the file name if it's too long
     file_name = os.path.basename(file_path)
-    if len(file_name) > (bar_length / 4) + 3:
-        file_name = file_name[:bar_length / 4] + '...'
+    if len(file_name) > (bar_length // 4) + 3:
+        file_name = file_name[:bar_length // 4] + '...'
 
     bar_length -= len(file_name)
 
@@ -361,7 +361,7 @@ def explicit_tenant_name_message(tenant_name, logger):
 
 
 def deep_update_dict(dest_dict, src_dict):
-    for key, value in src_dict.iteritems():
+    for key, value in src_dict.items():
         if isinstance(dest_dict, collections.MutableMapping):
             if isinstance(value, collections.MutableMapping):
                 dest_dict[key] = deep_update_dict(dest_dict.get(key), value)
@@ -373,7 +373,7 @@ def deep_update_dict(dest_dict, src_dict):
 
 
 def deep_subtract_dict(dest_dict, src_dict):
-    for key, value in src_dict.iteritems():
+    for key, value in src_dict.items():
         if isinstance(value, collections.MutableMapping):
             deep_subtract_dict(dest_dict.get(key), value)
         else:
@@ -405,8 +405,8 @@ def assert_one_argument(arguments):
     """
     filtered = [k for k in arguments if arguments[k]]
     if len(filtered) != 1:
-        raise CloudifyCliError('Please provide one of the options: '
-                               '{0}'.format(arguments.keys()))
+        raise CloudifyCliError('Please provide one of the options: ' +
+                               ', '.join(arguments))
 
 
 def load_json(input_path):

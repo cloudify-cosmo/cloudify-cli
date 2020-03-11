@@ -77,14 +77,14 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
         mandatory_params = dict()
         optional_params = dict()
         for param_name, param in utils.decode_dict(
-                workflow.parameters).iteritems():
+                workflow.parameters).items():
             params_group = optional_params if 'default' in param else \
                 mandatory_params
             params_group[param_name] = param
 
         logger.info('Workflow Parameters:')
         logger.info('\tMandatory Parameters:')
-        for param_name, param in mandatory_params.iteritems():
+        for param_name, param in mandatory_params.items():
             if 'description' in param:
                 logger.info('\t\t{0}\t({1})'.format(param_name,
                                                     param['description']))
@@ -92,7 +92,7 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
                 logger.info('\t\t{0}'.format(param_name))
 
         logger.info('\tOptional Parameters:')
-        for param_name, param in optional_params.iteritems():
+        for param_name, param in optional_params.items():
             if 'description' in param:
                 logger.info('\t\t{0}: \t{1}\t({2})'.format(
                     param_name, param['default'], param['description']))

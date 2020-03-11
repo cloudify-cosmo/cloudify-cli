@@ -87,7 +87,7 @@ class DeploymentUpdatesTest(CliCommandTest):
         self.assertIn(new_value, outcome.output)
 
         for d in steps:
-            for k, v in d.iteritems():
+            for k, v in d.items():
                 self.assertIn(str(k), outcome.output)
                 self.assertIn(str(v), outcome.output)
 
@@ -676,7 +676,7 @@ class DeploymentsTest(CliCommandTest):
 
         inputs_line = ' '.join(
             ['-i {0}={1}'.format(key, value) for
-             key, value in inputs.iteritems()])
+             key, value in inputs.items()])
 
         outcome = self.invoke(
             'cfy deployments create deployment -b a-blueprint-id {0}'.format(
