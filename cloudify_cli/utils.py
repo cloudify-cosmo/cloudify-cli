@@ -27,7 +27,6 @@ import zipfile
 import tempfile
 import collections
 from shutil import copy
-from urlparse import urlparse
 from contextlib import closing, contextmanager
 from backports.shutil_get_terminal_size import get_terminal_size
 
@@ -37,6 +36,7 @@ from .logger import get_logger
 from .exceptions import CloudifyCliError
 from .constants import SUPPORTED_ARCHIVE_TYPES
 
+from cloudify._compat import urlparse
 from cloudify_rest_client.constants import VisibilityState
 from cloudify_rest_client.exceptions import CloudifyClientError
 

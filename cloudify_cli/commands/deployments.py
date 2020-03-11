@@ -19,6 +19,8 @@ import json
 import shutil
 
 import click
+
+from cloudify._compat import StringIO
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 from cloudify_rest_client.exceptions import (
     DeploymentPluginNotFound,
@@ -28,7 +30,6 @@ from cloudify_rest_client.exceptions import (
     UnsupportedDeploymentGetSecretError,
     CloudifyClientError
 )
-from StringIO import StringIO
 
 
 from . import blueprints

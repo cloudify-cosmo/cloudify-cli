@@ -16,15 +16,15 @@
 
 
 import sys
-import urllib
 import difflib
-import StringIO
 import warnings
 import traceback
 import pkg_resources
 from functools import wraps
 
 import click
+
+from cloudify._compat import StringIO, urlquote
 from cloudify_rest_client.constants import VisibilityState
 from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
@@ -93,7 +93,7 @@ def _format_version_data(version_data,
     all_data['prefix'] = prefix or ''
     all_data['suffix'] = suffix or ''
     all_data['infix'] = infix or ''
-    output = StringIO.StringIO()
+    output = StringIO()
     output.write('{prefix}{version}'.format(**all_data))
     output.write('{suffix}'.format(**all_data))
     return output.getvalue()
@@ -179,7 +179,7 @@ def validate_name(ctx, param, value):
             'ERROR: The `{0}` argument is empty'.format(param.name)
         )
 
-    quoted_value = urllib.quote(value, safe='')
+    quoted_value = urlquote(value, safe='')
     if value != quoted_value:
         raise CloudifyValidationError(
             'ERROR: The `{0}` argument contains illegal characters. Only '
@@ -302,7 +302,7 @@ def set_cli_except_hook(global_verbosity_level):
             output_message = False
         if global_verbosity_level:
             # print traceback if verbose
-            s_traceback = StringIO.StringIO()
+            s_traceback = StringIO()
             traceback.print_exception(
                 etype=tpe,
                 value=value,

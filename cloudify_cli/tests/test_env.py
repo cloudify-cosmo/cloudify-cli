@@ -26,12 +26,12 @@ import zipfile
 import requests
 import tempfile
 from contextlib import closing
-from cStringIO import StringIO
 from mock import MagicMock, patch
 from itertools import chain, repeat, count
 
 from cloudify import logs
 
+from cloudify._compat import StringIO
 from cloudify_rest_client.executions import Execution
 from cloudify_rest_client.client import CloudifyClient
 from cloudify_rest_client.client import DEFAULT_API_VERSION
