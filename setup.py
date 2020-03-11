@@ -42,7 +42,7 @@ setup(
         'click==6.7',
         'wagon[venv]==0.6.3',
         'pyyaml==3.10',
-        'fabric==1.13.1',
+        'fabric==2.5.0',
         'jinja2==2.10',
         'retrying==1.3.3',
         'colorama==0.3.3',
