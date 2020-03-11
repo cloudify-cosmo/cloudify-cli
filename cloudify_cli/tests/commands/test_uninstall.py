@@ -50,7 +50,7 @@ class UninstallTest(CliCommandTest):
                             '--allow-custom-parameters ' \
                             '--include-logs ' \
                             '--parameters key=value ' \
-                            '--json-output ' \
+                            '--json ' \
                             '--tenant-name tenant_name'
 
         self.invoke(uninstall_command, context='manager')
@@ -63,7 +63,7 @@ class UninstallTest(CliCommandTest):
             include_logs=True,
             allow_custom_parameters=True,
             parameters={'key': 'value'},
-            json_output=True,
+            json_output=False,
             tenant_name='tenant_name'
         )
 

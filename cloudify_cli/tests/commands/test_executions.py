@@ -66,8 +66,8 @@ class ExecutionsTest(CliCommandTest):
         try:
             self.client.executions.start = MagicMock(return_value=execution)
             executions.wait_for_execution = MagicMock(return_value=execution)
-            self.invoke('cfy executions start mock_wf -d dep --json-output')
-            get_events_logger_mock.assert_called_with(True)
+            self.invoke('cfy executions start mock_wf -d dep --json')
+            get_events_logger_mock.assert_called_with(False)
         finally:
             self.client.executions.start = original_client_execution_start
             executions.wait_for_execution = original_wait_for_executions

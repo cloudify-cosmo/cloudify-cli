@@ -277,7 +277,7 @@ class InstallTest(CliCommandTest):
             '--parameters {4} ' \
             '--allow-custom-parameters ' \
             '--include-logs ' \
-            '--json-output' \
+            '--json' \
             .format(SAMPLE_ARCHIVE_PATH,
                     STUB_WORKFLOW,
                     STUB_DEPLOYMENT_ID,
@@ -295,7 +295,7 @@ class InstallTest(CliCommandTest):
             allow_custom_parameters=True,
             include_logs=True,
             parameters={'key': 'value'},
-            json_output=True,
+            json_output=False,
             tenant_name=None
         )
 
