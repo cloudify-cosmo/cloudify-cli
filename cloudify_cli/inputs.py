@@ -12,12 +12,13 @@
 # * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # * See the License for the specific language governing permissions and
 #    * limitations under the License.
+from __future__ import absolute_import
 
 import os
 import glob
 import yaml
 
-from utils import deep_update_dict, insert_dotted_key_to_dict
+from .utils import deep_update_dict, insert_dotted_key_to_dict
 
 from .logger import get_logger
 from.exceptions import CloudifyCliError

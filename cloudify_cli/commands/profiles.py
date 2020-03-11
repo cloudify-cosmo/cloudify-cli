@@ -114,7 +114,7 @@ def show(logger):
                   short_help='List profiles')
 @cfy.options.common_options
 @cfy.pass_logger
-def list(logger):
+def profiles_list(logger):
     """
     List all profiles
     """
@@ -196,7 +196,7 @@ def use(manager_ip,
 
 
 def _update_cluster_profile_to_dict(logger):
-    if type(env.profile.cluster) == type([]):   # noqa
+    if isinstance(env.profile.cluster, list):   # noqa
         env.profile.cluster = dict()
         env.profile.save()
     client = get_rest_client()
@@ -735,7 +735,7 @@ def _get_profile(profile_name):
 def _assert_manager_available(client, profile_name):
     try:
         return client.manager.get_status()
-    except UserUnauthorizedError, e:
+    except UserUnauthorizedError as e:
         raise CloudifyCliError(
             "Can't use manager {0}\n{1}.".format(
                 profile_name,
