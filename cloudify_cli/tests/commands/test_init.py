@@ -1,4 +1,5 @@
 import os
+import json
 import shutil
 
 import yaml
@@ -75,14 +76,16 @@ class InitTest(CliCommandTest):
         self.invoke('cfy init {0}'.format(blueprint_path))
         cfy.register_commands()
 
-        output = self.invoke(
-            'cfy deployments outputs -b local').logs.split('\n')
-        self.assertIn('  "key1": "default_val1", ', output)
-        self.assertIn('  "key2": "default_val2", ', output)
-        self.assertIn('  "key3": "default_val3", ', output)
-        self.assertIn('  "param": null, ', output)
-        self.assertIn('  "custom_param": null, ', output)
-        self.assertIn('  "provider_context": null', output)
+        output = json.loads(self.invoke(
+            'cfy deployments outputs -b local').logs)
+        self.assertEqual(output, {
+            'key1': 'default_val1',
+            'key2': 'default_val2',
+            'key3': 'default_val3',
+            'param': None,
+            'custom_param': None,
+            'provider_context': None
+        })
 
     def test_init_default_inputs(self):
         blueprint_path = os.path.join(
@@ -95,11 +98,13 @@ class InitTest(CliCommandTest):
         self.invoke(command)
         cfy.register_commands()
 
-        output = self.invoke(
-            'cfy deployments inputs -b local').logs.split('\n')
-        self.assertIn('  "key1": "default_val1", ', output)
-        self.assertIn('  "key2": "default_val2", ', output)
-        self.assertIn('  "key3": "default_val3"', output)
+        output = json.loads(self.invoke(
+            'cfy deployments inputs -b local').logs)
+        self.assertEqual(output, {
+            'key1': 'default_val1',
+            'key2': 'default_val2',
+            'key3': 'default_val3'
+        })
 
     def test_init_with_inputs(self):
         blueprint_path = os.path.join(
@@ -115,11 +120,13 @@ class InitTest(CliCommandTest):
         self.invoke(command)
         cfy.register_commands()
 
-        output = self.invoke(
-            'cfy deployments inputs -b local').logs.split('\n')
-        self.assertIn('  "key1": "val1", ', output)
-        self.assertIn('  "key2": "val2", ', output)
-        self.assertIn('  "key3": "val3"', output)
+        output = json.loads(self.invoke(
+            'cfy deployments inputs -b local').logs)
+        self.assertEqual(output, {
+            'key1': 'val1',
+            'key2': 'val2',
+            'key3': 'val3'
+        })
 
     def test_init_validate_definitions_version_false(self):
         with open(config.CLOUDIFY_CONFIG_PATH) as f:
@@ -196,11 +203,13 @@ class InitTest(CliCommandTest):
         )
         cfy.register_commands()
 
-        output = self.invoke(
-            'cfy deployments inputs -b local').logs.split('\n')
-        self.assertIn('  "key1": "default_val1", ', output)
-        self.assertIn('  "key2": "default_val2", ', output)
-        self.assertIn('  "key3": "default_val3"', output)
+        output = json.loads(self.invoke(
+            'cfy deployments inputs -b local').logs)
+        self.assertEqual(output, {
+            'key1': 'default_val1',
+            'key2': 'default_val2',
+            'key3': 'default_val3',
+        })
 
     def test_set_config(self):
         shutil.rmtree(env.CLOUDIFY_WORKDIR)

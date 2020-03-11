@@ -108,7 +108,7 @@ class ExecutionsTest(CliCommandTest):
 
     def test_local_execution_default_param(self):
         self._init_local_env()
-        self._assert_outputs({'param': 'null'})
+        self._assert_outputs({'param': None})
         self.invoke(
             'cfy executions start {0} '
             '-b local'
@@ -151,14 +151,10 @@ class ExecutionsTest(CliCommandTest):
         )
 
     def _assert_outputs(self, expected_outputs):
-        output = self.invoke(
-            'cfy deployments outputs -b local').logs.split('\n')
-        for key, value in expected_outputs.iteritems():
-            if value == 'null':
-                key_val_string = '  "{0}": {1}, '.format(key, value)
-            else:
-                key_val_string = '  "{0}": "{1}", '.format(key, value)
-            self.assertIn(key_val_string, output)
+        output = json.loads(self.invoke(
+            'cfy deployments outputs -b local').logs)
+        for key, value in expected_outputs.items():
+            self.assertEqual(output[key], value)
 
     def _init_local_env(self):
         blueprint_path = os.path.join(
