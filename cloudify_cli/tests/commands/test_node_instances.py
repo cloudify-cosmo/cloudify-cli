@@ -303,10 +303,7 @@ class NodeInstancesTest(CliCommandTest):
         )
 
     def _assert_outputs(self, output, expected_outputs):
-        output = output.logs.split('\n')
-        for key, value in expected_outputs.iteritems():
-            if value == 'null':
-                key_val_string = '    "{0}": {1}, '.format(key, value)
-            else:
-                key_val_string = '    "{0}": "{1}", '.format(key, value)
-            self.assertIn(key_val_string, output)
+        output = json.loads(output.logs)
+        for item in output:
+            for key, value in expected_outputs.items():
+                self.assertEqual(item[key], value)

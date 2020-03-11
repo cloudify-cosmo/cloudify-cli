@@ -42,7 +42,7 @@ class TestMultipleLocalProfiles(TestCase):
     def tearDown(self):
         """Delete cloudify data directory."""
         super(TestMultipleLocalProfiles, self).tearDown()
-        shutil.rmtree(env.CLOUDIFY_WORKDIR)
+        shutil.rmtree(env.CLOUDIFY_WORKDIR, ignore_errors=True)
 
     def test_default_blueprint_id(self):
         """Default blueprint id is the directory name."""

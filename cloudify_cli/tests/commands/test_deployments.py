@@ -18,6 +18,7 @@
 import json
 import inspect
 import datetime
+import warnings
 
 from mock import patch, MagicMock, PropertyMock, Mock
 
@@ -202,10 +203,15 @@ class DeploymentUpdatesTest(CliCommandTest):
             'Failed updating deployment my_deployment', logs[-1])
 
     def test_deployment_update_json_parameter(self):
-        self.invoke(
-            'cfy deployments update -p '
-            '{0} my_deployment --json-output'
-            .format(SAMPLE_BLUEPRINT_PATH))
+        with warnings.catch_warnings(record=True) as warns:
+            self.invoke(
+                'cfy deployments update -p '
+                '{0} my_deployment --json-output'
+                .format(SAMPLE_BLUEPRINT_PATH))
+        # catch_warnings sometimes gets the same thing more than once,
+        # depending on how are the tests run. I don't know why.
+        self.assertTrue(warns)
+        self.assertIn('use the global', str(warns[0]))
 
     def test_deployment_update_include_logs_parameter(self):
         self.invoke(

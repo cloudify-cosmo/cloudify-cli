@@ -72,7 +72,7 @@ class AgentsTests(CliCommandTest):
         _node_instance('other_tenant', 't1d0node1_2', 'node1', 'd0'),
         _node_instance('other_tenant', 't1d1node3_1', 'node3', 'd1'),
         _node_instance('other_tenant', 't1d2node4_1', 'node4', 'd2'),
-        ]
+    ]
 
     def mock_client(self, topology):
         def _topology_filter(predicate, **kwargs):
@@ -345,9 +345,11 @@ class AgentsTests(CliCommandTest):
 
         with patch('cloudify_cli.commands.agents.wait_for_execution',
                    return_value=PropertyMock(error=False),
-                   side_effect=_wait_side_effect):
-            with patch.object(ExecutionsClient, 'start',
-                              _mock_execution_start):
+                   side_effect=_wait_side_effect), \
+            patch.object(ExecutionsClient, 'start',
+                         _mock_execution_start), \
+                patch('cloudify_cli.commands.agents.time.sleep'):
+
                 get_deployments_and_run_workers(
                     self.client, self._agent_filters(), True, self.logger,
                     'workflow', True)
