@@ -76,8 +76,7 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
         # print workflow parameters
         mandatory_params = dict()
         optional_params = dict()
-        for param_name, param in utils.decode_dict(
-                workflow.parameters).items():
+        for param_name, param in workflow.parameters.items():
             params_group = optional_params if 'default' in param else \
                 mandatory_params
             params_group[param_name] = param

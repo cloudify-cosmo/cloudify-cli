@@ -139,7 +139,7 @@ class NodeInstancesTest(CliCommandTest):
         self.client.node_instances.update = MagicMock(return_value={})
 
         yaml_path = tempfile.mktemp(suffix='.yaml')
-        with open(yaml_path, 'wb') as f:
+        with open(yaml_path, 'w') as f:
             f.write("""
                     x1:
                         y: 1
@@ -159,7 +159,7 @@ class NodeInstancesTest(CliCommandTest):
         self.client.node_instances.update = MagicMock(return_value={})
 
         yaml_path = tempfile.mktemp(suffix='.yaml')
-        with open(yaml_path, 'wb') as f:
+        with open(yaml_path, 'w') as f:
             f.write("""
                     x1:
                         y: 1
@@ -170,7 +170,7 @@ class NodeInstancesTest(CliCommandTest):
                     .format(yaml_path),
                     err_str_segment='is not a valid YAML',
                     exception=CloudifyCliError)
-        with open(yaml_path, 'wb') as f:
+        with open(yaml_path, 'w') as f:
             f.write("""
                     - x1
                     - x2
@@ -235,7 +235,7 @@ class NodeInstancesTest(CliCommandTest):
         self.client.node_instances.update = MagicMock(return_value={})
 
         yaml_path = tempfile.mktemp(suffix='.yaml')
-        with open(yaml_path, 'wb') as f:
+        with open(yaml_path, 'w') as f:
             f.write("""
                     x:
                         y:
@@ -245,7 +245,7 @@ class NodeInstancesTest(CliCommandTest):
         self.invoke('cfy node-instances update-runtime instance_id -p {0}'
                     .format(yaml_path))
         call_args = self.client.node_instances.update.call_args
-        with open(yaml_path, 'wb') as f:
+        with open(yaml_path, 'w') as f:
             f.write("""
                     x:
                         y:

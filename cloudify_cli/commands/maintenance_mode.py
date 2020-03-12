@@ -16,7 +16,6 @@
 
 import time
 
-from .. import utils
 from ..cli import cfy
 from .. import exceptions
 from ..table import print_data
@@ -54,8 +53,7 @@ def _print_maintenance_mode_status(client, logger):
     status_response = client.maintenance_mode.status()
 
     logger.info('\nMaintenance Mode Status:')
-    for param_name, param_value in utils.decode_dict(
-            status_response).items():
+    for param_name, param_value in status_response.items():
         if param_value and param_name != 'remaining_executions':
             logger.info('\t{0}:\t{1}'.format(
                 param_name.title().replace("_", " "),
