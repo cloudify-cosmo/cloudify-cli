@@ -26,8 +26,6 @@ from contextlib import contextmanager
 
 import yaml
 import requests
-from fabric import Connection
-from paramiko import AuthenticationException
 
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.client import HTTPClient
@@ -37,6 +35,13 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 
 from . import constants
 from .exceptions import CloudifyCliError
+
+try:
+    from fabric import Connection
+    from paramiko import AuthenticationException
+except ImportError:
+    Connection = None
+
 
 _ENV_NAME = 'manager'
 DEFAULT_LOG_FILE = os.path.expanduser(
@@ -646,6 +651,9 @@ class CloudifyClusterClient(CloudifyClient):
 
 @contextmanager
 def ssh_connection(host=None, user=None, key=None):
+    if Connection is None:
+        raise CloudifyCliError(
+            "SSH not available - fabric not installed")
     if host is None:
         host = profile.manager_ip
     if user is None:
