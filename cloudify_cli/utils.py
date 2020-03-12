@@ -61,6 +61,9 @@ def dump_to_file(collection, file_path):
 
 
 def is_virtual_env():
+    if hasattr(sys, 'base_prefix'):
+        # py3 case, with the stdlib venv
+        return sys.base_prefix != sys.prefix
     return hasattr(sys, 'real_prefix')
 
 

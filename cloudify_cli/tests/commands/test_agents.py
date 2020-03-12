@@ -351,6 +351,6 @@ class AgentsTests(CliCommandTest):
                          _mock_execution_start), \
                 patch('cloudify_cli.commands.agents.time.sleep'):
 
-                get_deployments_and_run_workers(
-                    self.client, self._agent_filters(), True, self.logger,
-                    'workflow', True)
+            get_deployments_and_run_workers(
+                self.client, self._agent_filters(), True, self.logger,
+                'workflow', True)

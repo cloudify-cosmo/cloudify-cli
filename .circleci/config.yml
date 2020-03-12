@@ -13,6 +13,9 @@ executors:
   py27:
     docker:
       - image: circleci/python:2.7
+  py36:
+    docker:
+      - image: circleci/python:3.6
 
 commands:
   install_test_dependencies:
@@ -44,18 +47,25 @@ commands:
 
 jobs:
   flake8_py27:
-    docker:
-      - image: circleci/python:2.7
+    executor: py27
     steps:
       - checkout
       - run: pip install flake8 --user
       - run:
           name: Run flake8
-          command: flake8 dsl_parser script_runner cloudify cloudify_rest_client
+          command: flake8 cloudify_cli
+
+  flake8_py36:
+    executor: py36
+    steps:
+      - checkout
+      - run: pip install flake8 --user
+      - run:
+          name: Run flake8
+          command: flake8 cloudify_cli
 
   test_py27:
-    executor:
-      py27
+    executor: py27
     steps:
       - checkout
       - run: virtualenv ~/venv
@@ -64,9 +74,19 @@ jobs:
       - store_test_results:
           path: test-results
 
+  test_py36:
+    executor: py36
+    steps:
+      - checkout
+      - run: python -m venv ~/venv
+      - install_test_dependencies:
+          cache_prefix: py36
+      - pytest
+      - store_test_results:
+          path: test-results
+
   py3_compat:
-    docker:
-      - image: circleci/python:2.7
+    executor: py27
     steps:
       - checkout
       - run:
@@ -97,7 +117,13 @@ workflows:
   build_and_test:
     jobs: &build_jobs
       - flake8_py27
-      - test_py27
+      - test_py27:
+          requires:
+            - flake8_py27
+      - flake8_py36
+      - test_py36:
+          requires:
+            - flake8_py36
       - py3_compat
   nightly:
     triggers:
