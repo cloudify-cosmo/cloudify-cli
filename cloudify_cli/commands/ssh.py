@@ -16,12 +16,16 @@
 
 import re
 
-from invoke.exceptions import UnexpectedExit
 
 from .. import env
 from .. import utils
 from ..cli import cfy
 from ..exceptions import CloudifyCliError
+
+try:
+    from invoke.exceptions import UnexpectedExit
+except ImportError:
+    UnexpectedExit = Exception
 
 
 @cfy.command(name='ssh', short_help='Connect using SSH [manager only]')

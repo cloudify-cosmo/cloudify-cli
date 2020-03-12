@@ -42,7 +42,6 @@ setup(
         'click==6.7',
         'wagon[venv]==0.6.3',
         'pyyaml==3.10',
-        'fabric==2.5.0',
         'jinja2==2.10',
         'retrying==1.3.3',
         'colorama==0.3.3',
@@ -53,5 +52,8 @@ setup(
         'backports.shutil_get_terminal_size==1.0.0',
         'ipaddress==1.0.19',
         'setuptools<=40.7.3'
-    ]
+    ],
+    extras_require={
+        'ssh': ['fabric==2.5.0']
+    }
 )
