@@ -513,8 +513,9 @@ def get_auth_header(username, password):
     header = {}
 
     if username and password:
-        credentials = '{0}:{1}'.format(username, password)
-        encoded_credentials = urlsafe_b64encode(credentials)
+        # encode/decode just to allow urlsafe_b64encode, which requires bytes
+        credentials = '{0}:{1}'.format(username, password).encode('utf-8')
+        encoded_credentials = urlsafe_b64encode(credentials).decode('utf-8')
         header = {
             constants.CLOUDIFY_AUTHENTICATION_HEADER:
                 constants.BASIC_AUTH_PREFIX + ' ' + encoded_credentials}

@@ -92,7 +92,6 @@ def init(blueprint_path,
             processed_blueprint_path,
             blueprint_filename
         )
-
         if os.path.isdir(local.storage_dir(blueprint_id)):
             shutil.rmtree(local.storage_dir(blueprint_id))
 
@@ -192,7 +191,7 @@ def _raise_initialized_error(profile_name):
 def set_config(enable_colors=False):
     cli_config = pkg_resources.resource_string(
         cloudify_cli.__name__,
-        'config/config_template.yaml')
+        'config/config_template.yaml').decode('utf-8')
 
     enable_colors = str(enable_colors).lower()
     template = Template(cli_config)
