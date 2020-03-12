@@ -548,11 +548,10 @@ def manager_delete(deployment_id, force, with_logs, logger, client,
             'execute `cfy deployments list` to check whether the '
             'deployment has been deleted.'.format(deployment_id))
 
-    # The deployemnt might be deleted from the DB before we are able to
-    # retrieve it, and that's fine
     except CloudifyClientError as e:
-        if ('`Deployment` with ID `{0}` was not found'.format(deployment_id)
-                not in str(e)):
+        # ignore 404 errors for the execution or deployment - it was already
+        # deleted before we were able to follow it
+        if 'not found' not in str(e):
             raise
 
     logger.info("Deployment deleted")
