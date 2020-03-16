@@ -111,11 +111,37 @@ jobs:
               exit 1
             fi
 
+  build-rpm:
+    docker:
+      - image: rpmbuild/centos7
+    working_directory: ~/rpm
+    steps:
+      - checkout
+      - run: sudo yum install python-setuptools -y
+      - run: sudo chmod a+wx /opt
+      - run:
+          name: Installing build dependencies
+          command: sudo yum-builddep -y packaging/cloudify-cli.spec
+      - run:
+          name: Building rpm
+          command: |
+            rpmbuild \
+              -D "CLOUDIFY_VERSION $(python setup.py --version | cut -d- -f1)" \
+              -D "CLOUDIFY_PACKAGE_RELEASE 1" \
+              -bb packaging/cloudify-cli.spec
+      - run: |
+          mkdir result
+          mv x86_64/*.rpm result
+      - store_artifacts:
+          path: result
+          destination: result
+
 workflows:
   version: 2
 
   build_and_test:
     jobs: &build_jobs
+      - build-rpm
       - flake8_py27
       - test_py27:
           requires:
