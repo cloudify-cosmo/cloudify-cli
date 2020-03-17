@@ -84,7 +84,39 @@ jobs:
       - pytest
       - store_test_results:
           path: test-results
-
+  build-deb:
+    docker:
+      - image: debian:9
+    steps:
+      - checkout
+      - run:
+          name: Set envvars
+          command: |
+            echo "export PROJECT_DIR=~/project" >>$BASH_ENV
+            echo "export BUILD_DIR=/tmp/build" >>$BASH_ENV
+            echo "export RESULT_DIR=/tmp/result" >>$BASH_ENV
+            echo "export CLOUDIFY_PACKAGE_RELEASE=1" >>$BASH_ENV
+            mkdir /tmp/result
+      - run:
+          name: Set CLOUDIFY_VERSION
+          command: |
+            set -ex
+            apt-get update
+            apt-get install python python-setuptools -y
+            echo "export CLOUDIFY_VERSION=$(python ~/project/setup.py --version)" >>$BASH_ENV
+      - run:
+          name: build the deb package
+          command: /bin/bash ~/project/packaging/debian/build.sh
+      - run:
+          name: sanity-test the deb package
+          command: |
+            set -ex
+            rm -rf /opt/cfy
+            dpkg -i /tmp/result/*.deb
+            cfy --version
+      - store_artifacts:
+          path: /tmp/result
+          destination: /
   py3_compat:
     executor: py27
     steps:
@@ -125,6 +157,7 @@ workflows:
           requires:
             - flake8_py36
       - py3_compat
+      - build-deb
   nightly:
     triggers:
       - schedule:
