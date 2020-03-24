@@ -14,7 +14,7 @@ set -e
 }
 set -xu
 
-BUILD_DIR=~/cloudify-cli_${CLOUDIFY_VERSION}~${CLOUDIFY_PACKAGE_RELEASE}_amd64
+BUILD_DIR=~/cloudify-cli_${CLOUDIFY_VERSION}-${CLOUDIFY_PACKAGE_RELEASE}_amd64
 
 apt-get update
 apt-get install python python-virtualenv git -y
