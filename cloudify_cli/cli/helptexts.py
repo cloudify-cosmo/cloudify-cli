@@ -315,6 +315,8 @@ VISIBILITY_FILTER = 'Filters the secrets exported according to their' \
                     ' visibility, can be set to one of the following {0}.'
 FILTER_BY_KEYWORD = 'Filters the secrets exported according to a keyword.'
 PLUGIN_YAML_PATH = "The path to the plugin's yaml file"
+PLUGIN_ICON_PATH = "The path to the plugin's icon file (must be a valid " \
+                   "PNG image)"
 PAGINATION_SIZE = 'The max number of results to retrieve per page ' \
                   '[default: 1000]'
 PAGINATION_OFFSET = 'The number of resources to skip; --pagination-offset=1 ' \

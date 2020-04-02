@@ -93,6 +93,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
                  short_help='Upload a plugin [manager only]')
 @cfy.argument('plugin-path')
 @cfy.options.plugin_yaml_path()
+@cfy.options.plugin_icon_path()
 @cfy.options.private_resource
 @cfy.options.visibility()
 @cfy.options.common_options
@@ -104,6 +105,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
 def upload(ctx,
            plugin_path,
            yaml_path,
+           icon_path,
            private_resource,
            visibility,
            logger,
@@ -119,20 +121,29 @@ def upload(ctx,
     logger.info('Creating plugin zip archive..')
     wagon_path = utils.get_local_path(plugin_path, create_temp=True)
     yaml_path = utils.get_local_path(yaml_path, create_temp=True)
-    zip_path = utils.zip_files([wagon_path, yaml_path])
+    zip_files = [wagon_path, yaml_path]
+    zip_descr = 'wagon + yaml'
+    if icon_path:
+        icon_path = utils.get_local_path(icon_path,
+                                         destination='icon.png',
+                                         create_temp=True)
+        zip_files.append(icon_path)
+        zip_descr += ' + icon'
+    zip_path = utils.zip_files(zip_files)
 
     progress_handler = utils.generate_progress_handler(zip_path, '')
 
     visibility = get_visibility(private_resource, visibility, logger)
-    logger.info('Uploading plugin archive (wagon + yaml)..')
+    logger.info('Uploading plugin archive ({0})..'.format(zip_descr))
+
     try:
         plugin = client.plugins.upload(zip_path,
                                        visibility,
                                        progress_handler)
         logger.info("Plugin uploaded. Plugin's id is {0}".format(plugin.id))
     finally:
-        os.remove(wagon_path)
-        os.remove(yaml_path)
+        for f in zip_files:
+            os.remove(f)
         os.remove(zip_path)
 
 
