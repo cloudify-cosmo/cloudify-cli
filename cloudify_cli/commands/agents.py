@@ -217,7 +217,7 @@ def get_filters_map(
         # state.
         # We skip this check if specific deployment ID's were requested.
         if not requested_deployment_ids:
-            for tenant_name in tenants_to_deployments:
+            for tenant_name in list(tenants_to_deployments):
                 tenant_client = env.get_rest_client(tenant_name=tenant_name)
                 deps_to_execute = tenants_to_deployments[tenant_name]
 
