@@ -134,7 +134,7 @@ def upload(ctx,
     progress_handler = utils.generate_progress_handler(zip_path, '')
 
     visibility = get_visibility(private_resource, visibility, logger)
-    logger.info('Uploading plugin archive ({0})..'.format(zip_descr))
+    logger.info('Uploading plugin archive (%s)..', zip_descr)
 
     try:
         plugin = client.plugins.upload(zip_path,
