@@ -1556,6 +1556,14 @@ class Options(object):
             help=helptexts.PLUGIN_YAML_PATH)
 
     @staticmethod
+    def plugin_icon_path():
+        return click.option(
+            '-i',
+            '--icon-path',
+            required=False,
+            help=helptexts.PLUGIN_ICON_PATH)
+
+    @staticmethod
     def new_name(resource_name_for_help=None):
         return click.option(
             '-n',

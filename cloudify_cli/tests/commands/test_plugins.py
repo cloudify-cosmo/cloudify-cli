@@ -121,6 +121,22 @@ class PluginsTest(CliCommandTest):
         self.invoke('cfy plugins upload {0} -l private -y {1}'
                     .format(yaml_path, yaml_path))
 
+    def test_plugins_upload_with_icon(self):
+        self.client.plugins.upload = MagicMock()
+        plugin_dest_dir = tempfile.mkdtemp()
+        try:
+            plugin_path = wagon.create(
+                'pip',
+                archive_destination_dir=plugin_dest_dir
+            )
+            yaml_path = os.path.join(PLUGINS_DIR, 'plugin.yaml')
+            icon_path = os.path.join(PLUGINS_DIR,
+                                     'Cute-Rain-Cloud-with-Rainbow.png')
+            self.invoke('cfy plugins upload {0} -y {1} -i {2}'.format(
+                plugin_path, yaml_path, icon_path))
+        finally:
+            shutil.rmtree(plugin_dest_dir, ignore_errors=True)
+
 
 class PluginsUpdateTest(CliCommandTest):
 
