@@ -1614,20 +1614,31 @@ class Options(object):
         )
 
     @staticmethod
-    def from_datetime(required=False, help=helptexts.FROM_DATETIME):
-        return click.option(
-            '--from-datetime',
-            required=required,
-            type=str,
-            help=help)
+    def from_datetime(required=False, mutually_exclusive_with=None,
+                      help=helptexts.FROM_DATETIME):
+        kwargs = {
+            'required': required,
+            'type': str,
+            'help': help,
+        }
+        if mutually_exclusive_with:
+            kwargs['cls'] = MutuallyExclusiveOption
+            kwargs['mutually_exclusive'] = mutually_exclusive_with
+
+        return click.option('--from-datetime', **kwargs)
 
     @staticmethod
-    def to_datetime(required=False, help=helptexts.TO_DATETIME):
-        return click.option(
-            '--to-datetime',
-            required=required,
-            type=str,
-            help=help)
+    def to_datetime(required=False, mutually_exclusive_with=None,
+                    help=helptexts.TO_DATETIME):
+        kwargs = {
+            'required': required,
+            'type': str,
+            'help': help,
+        }
+        if mutually_exclusive_with:
+            kwargs['cls'] = MutuallyExclusiveOption
+            kwargs['mutually_exclusive'] = mutually_exclusive_with
+        return click.option('--to-datetime', **kwargs)
 
 
 options = Options()
