@@ -389,3 +389,6 @@ RUNTIME_ONLY_EVALUATION = "If set, all intrinsic functions will only be "\
                           "will be evaluated at parse time (such as "\
                           "get_input, get_property)"
 MANAGER = "Connect to a specific manager by IP or host"
+
+FROM_DATETIME = "Beginning of a period"
+TO_DATETIME = "End of a period"

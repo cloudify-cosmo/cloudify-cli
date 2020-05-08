@@ -130,22 +130,37 @@ def list(execution_id,
 @cfy.options.include_logs
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.options.from_datetime(required=False,
+                           help="Events that occurred at this timestamp"
+                                " or after will be deleted")
+@cfy.options.to_datetime(required=False,
+                         help="Events that occurred at this timestamp"
+                              " or before will be deleted")
 @cfy.pass_client()
 @cfy.pass_logger
-def delete(deployment_id, include_logs, logger, client, tenant_name):
+def delete(deployment_id, include_logs, logger, client, tenant_name,
+           from_datetime, to_datetime):
     """Delete events attached to a deployment
 
-    `EXECUTION_ID` is the execution events to delete.
+    `DEPLOYMENT_ID` is the deployment_id of the executions from which
+    events/logs are deleted.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
+    filter_info = {'include_logs': u'{0}'.format(include_logs)}
+    if from_datetime:
+        filter_info['from_datetime'] = u'{0}'.format(from_datetime)
+    if to_datetime:
+        filter_info['to_datetime'] = u'{0}'.format(to_datetime)
     logger.info(
-        'Deleting events for deployment id {0} [include_logs={1}]'.format(
-            deployment_id, include_logs))
+        'Deleting events for deployment id {0} [{1}]'.format(
+            deployment_id, u', '.join(
+                [u'{0}={1}'.format(k, v) for k, v in filter_info.items()])))
 
     # Make sure the deployment exists - raise 404 otherwise
     client.deployments.get(deployment_id)
     deleted_events_count = client.events.delete(
-        deployment_id, include_logs=include_logs
+        deployment_id, include_logs=include_logs,
+        from_datetime=from_datetime, to_datetime=to_datetime
     )
     deleted_events_count = deleted_events_count.items[0]
     if deleted_events_count:

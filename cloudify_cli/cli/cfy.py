@@ -1613,5 +1613,21 @@ class Options(object):
             help=helptexts.NON_ENCRYPTED
         )
 
+    @staticmethod
+    def from_datetime(required=False, help=helptexts.FROM_DATETIME):
+        return click.option(
+            '--from-datetime',
+            required=required,
+            type=str,
+            help=help)
+
+    @staticmethod
+    def to_datetime(required=False, help=helptexts.TO_DATETIME):
+        return click.option(
+            '--to-datetime',
+            required=required,
+            type=str,
+            help=help)
+
 
 options = Options()
