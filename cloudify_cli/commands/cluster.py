@@ -141,7 +141,7 @@ def _all_in_one_manager(client):
 @cfy.options.common_options
 def cluster():
     """
-    Handle the Cloudify Manager cluster
+    Handle the Cloudify Manager cluster (Premium feature)
     """
     if not env.is_initialized():
         env.raise_uninitialized()
