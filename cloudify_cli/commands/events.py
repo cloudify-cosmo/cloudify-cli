@@ -193,25 +193,30 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
         if len(exec_list) > 0 and output_path:
             with open(output_path, 'w') as output_file:
                 click.echo(
-                    "Events for deployment id {0} [{1}]".format(
+                    'Events for deployment id {0} [{1}]\n'.format(
                         deployment_id,
                         u', '.join([u'{0}={1}'.format(k, v) for k, v in
                                     filter_info.items()])),
                     file=output_file,
                     nl=True)
         for execution in exec_list:
-            logger.info(
-                'Listing events for execution id {0}\n'.format(execution.id))
             execution_events = ExecutionEventsFetcher(
                 client, execution.id, include_logs=include_logs,
                 from_datetime=from_datetime, to_datetime=to_datetime)
             output_file = open(output_path, 'a') if output_path else None
+            click.echo(
+                'Listing events for execution id {0}\n'.format(execution.id),
+                file=output_file,
+                nl=True)
             events_logger = DeletedEventsLogger(output_file)
             total_events = execution_events.fetch_and_process_events(
                 events_handler=events_logger.log)
+            click.echo(
+                '\nListed {0} events'.format(total_events),
+                file=output_file,
+                nl=True)
             if output_file:
                 output_file.close()
-            logger.info('\nListed {0} events'.format(total_events))
 
     # Delete events
     delete_args = {}
