@@ -392,3 +392,6 @@ MANAGER = "Connect to a specific manager by IP or host"
 
 FROM_DATETIME = "Beginning of a period"
 TO_DATETIME = "End of a period"
+
+LIST_BEFORE_DELETION = "List events before deleting them"
+LIST_OUTPUT_PATH = "Save listed events to a specified file"

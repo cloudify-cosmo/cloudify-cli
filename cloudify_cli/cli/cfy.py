@@ -1640,5 +1640,23 @@ class Options(object):
             kwargs['mutually_exclusive'] = mutually_exclusive_with
         return click.option('--to-datetime', **kwargs)
 
+    @staticmethod
+    def list_before_deletion(default=False):
+        return click.option(
+            '--list-before-deletion',
+            is_flag=True,
+            default=default,
+            help=helptexts.LIST_BEFORE_DELETION
+        )
+
+    @staticmethod
+    def list_output_path():
+        return click.option(
+            '-o',
+            '--output-path',
+            required=False,
+            type=click.Path(file_okay=True, dir_okay=False),
+            help=helptexts.LIST_OUTPUT_PATH)
+
 
 options = Options()
