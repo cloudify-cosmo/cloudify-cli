@@ -149,19 +149,19 @@ def list(execution_id,
                            help="Events that occurred at this timestamp"
                                 " or after will be deleted")
 @cfy.options.to_datetime(required=False,
-                         mutually_exclusive_with=['to_datetime_ago'],
+                         mutually_exclusive_with=['before'],
                          help="Events that occurred at this timestamp"
                               " or before will be deleted")
-@cfy.options.to_datetime_ago(required=False,
-                             mutually_exclusive_with=['to_datetime'],
-                             help="Events that occurred this long ago"
-                                  " or earlier will be deleted")
+@cfy.options.before(required=False,
+                    mutually_exclusive_with=['to_datetime'],
+                    help="Events that occurred this long ago or earlier"
+                         "will be deleted")
 @cfy.options.list_before_deletion()
 @cfy.options.list_output_path()
 @cfy.pass_client()
 @cfy.pass_logger
 def delete(deployment_id, include_logs, logger, client, tenant_name,
-           from_datetime, to_datetime, to_datetime_ago,
+           from_datetime, to_datetime, before,
            list_before_deletion, output_path):
     """Delete events attached to a deployment
 
@@ -169,8 +169,8 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
     events/logs are deleted.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    if to_datetime_ago:
-        to_datetime = _parse_to_datetime_ago(to_datetime_ago)
+    if before:
+        to_datetime = _parse_before(before)
     filter_info = {'include_logs': u'{0}'.format(include_logs)}
     if from_datetime:
         filter_info['from_datetime'] = u'{0}'.format(from_datetime)
@@ -229,7 +229,7 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
         logger.info('\nNo events to delete')
 
 
-def _parse_to_datetime_ago(ago):
+def _parse_before(ago):
     """Change relative time (ago) to a valid timestamp"""
     parsed = re.findall(r"(\d+) (seconds?|minutes?|hours?|days?|weeks?"
                         "|months?|years?) ?(ago)?",
