@@ -1641,6 +1641,20 @@ class Options(object):
         return click.option('--to-datetime', **kwargs)
 
     @staticmethod
+    def to_datetime_ago(required=False,
+                        mutually_exclusive_with=None,
+                        help=helptexts.TO_DATETIME_AGO):
+        kwargs = {
+            'required': required,
+            'type': str,
+            'help': help,
+        }
+        if mutually_exclusive_with:
+            kwargs['cls'] = MutuallyExclusiveOption
+            kwargs['mutually_exclusive'] = mutually_exclusive_with
+        return click.option('--to-datetime-ago', **kwargs)
+
+    @staticmethod
     def list_before_deletion(default=False):
         return click.option(
             '--list-before-deletion',

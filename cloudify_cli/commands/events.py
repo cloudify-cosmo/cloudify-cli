@@ -19,6 +19,8 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify import logs
 
 import click
+import re
+import datetime
 
 from .. import utils
 from ..cli import cfy
@@ -147,20 +149,28 @@ def list(execution_id,
                            help="Events that occurred at this timestamp"
                                 " or after will be deleted")
 @cfy.options.to_datetime(required=False,
+                         mutually_exclusive_with=['to_datetime_ago'],
                          help="Events that occurred at this timestamp"
                               " or before will be deleted")
+@cfy.options.to_datetime_ago(required=False,
+                             mutually_exclusive_with=['to_datetime'],
+                             help="Events that occurred this long ago"
+                                  " or earlier will be deleted")
 @cfy.options.list_before_deletion()
 @cfy.options.list_output_path()
 @cfy.pass_client()
 @cfy.pass_logger
 def delete(deployment_id, include_logs, logger, client, tenant_name,
-           from_datetime, to_datetime, list_before_deletion, output_path):
+           from_datetime, to_datetime, to_datetime_ago,
+           list_before_deletion, output_path):
     """Delete events attached to a deployment
 
     `DEPLOYMENT_ID` is the deployment_id of the executions from which
     events/logs are deleted.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
+    if to_datetime_ago:
+        to_datetime = _parse_to_datetime_ago(to_datetime_ago)
     filter_info = {'include_logs': u'{0}'.format(include_logs)}
     if from_datetime:
         filter_info['from_datetime'] = u'{0}'.format(from_datetime)
@@ -204,15 +214,44 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
             logger.info('\nListed {0} events'.format(total_events))
 
     # Delete events
+    delete_args = {}
+    if list_before_deletion and not output_path:
+        delete_args['store_before_deletion'] = 'True'
     deleted_events_count = client.events.delete(
         deployment_id, include_logs=include_logs,
-        from_datetime=from_datetime, to_datetime=to_datetime
+        from_datetime=from_datetime, to_datetime=to_datetime,
+        **delete_args
     )
     deleted_events_count = deleted_events_count.items[0]
     if deleted_events_count:
         logger.info('\nDeleted {0} events'.format(deleted_events_count))
     else:
         logger.info('\nNo events to delete')
+
+
+def _parse_to_datetime_ago(ago):
+    """Change relative time (ago) to a valid timestamp"""
+    parsed = re.findall(r"(\d+) (seconds?|minutes?|hours?|days?|weeks?"
+                        "|months?|years?) ?(ago)?",
+                        ago)
+    if parsed and len(parsed[0]) > 1:
+        number = int(parsed[0][0])
+        period = parsed[0][1]
+        if period[-1] != u's':
+            period += u's'
+        now = datetime.datetime.utcnow()
+        if period == u'years':
+            result = now.replace(year=now.year - number)
+        elif period == u'months':
+            if now.month > number:
+                result = now.replace(month=now.month - number)
+            else:
+                result = now.replace(month=now.month - number + 12,
+                                     year=now.year - 1)
+        else:
+            delta = datetime.timedelta(**{period: number})
+            result = now - delta
+        return result.strftime('%Y-%m-%d %H:%M:%S.%f')
 
 
 class DeletedEventsLogger(object):
