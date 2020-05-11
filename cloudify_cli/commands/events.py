@@ -201,7 +201,7 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
                     nl=True)
         for execution in exec_list:
             logger.info(
-                'Listing events for execution id {0}'.format(execution.id))
+                'Listing events for execution id {0}\n'.format(execution.id))
             execution_events = ExecutionEventsFetcher(
                 client, execution.id, include_logs=include_logs,
                 from_datetime=from_datetime, to_datetime=to_datetime)
@@ -220,8 +220,7 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
     deleted_events_count = client.events.delete(
         deployment_id, include_logs=include_logs,
         from_datetime=from_datetime, to_datetime=to_datetime,
-        **delete_args
-    )
+        **delete_args)
     deleted_events_count = deleted_events_count.items[0]
     if deleted_events_count:
         logger.info('\nDeleted {0} events'.format(deleted_events_count))
@@ -251,7 +250,7 @@ def _parse_before(ago):
         else:
             delta = datetime.timedelta(**{period: number})
             result = now - delta
-        return result.strftime('%Y-%m-%d %H:%M:%S.%f')
+        return result.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
 
 
 class DeletedEventsLogger(object):
