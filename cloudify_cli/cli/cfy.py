@@ -1655,22 +1655,23 @@ class Options(object):
         return click.option('--before', **kwargs)
 
     @staticmethod
-    def list_before(default=False):
+    def store_before(default=False):
         return click.option(
-            '--list-before',
+            '--store-before',
             is_flag=True,
             default=default,
-            help=helptexts.LIST_BEFORE_DELETION
+            help=helptexts.STORE_BEFORE_DELETION
         )
 
     @staticmethod
-    def list_output_path():
+    def store_output_path():
         return click.option(
             '-o',
             '--output-path',
             required=False,
             type=click.Path(file_okay=True, dir_okay=False),
-            help=helptexts.LIST_OUTPUT_PATH)
+            help=helptexts.STORE_OUTPUT_PATH
+        )
 
 
 options = Options()

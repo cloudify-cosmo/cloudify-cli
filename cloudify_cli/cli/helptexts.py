@@ -394,5 +394,5 @@ FROM_DATETIME = "Beginning of a period"
 TO_DATETIME = "End of a period"
 BEFORE = "How long ago did the specified period ended"
 
-LIST_BEFORE_DELETION = "List events before deleting them"
-LIST_OUTPUT_PATH = "Save listed events to a specified file"
+STORE_BEFORE_DELETION = "List and store events before deleting them"
+STORE_OUTPUT_PATH = "Store listed events to a specified file (cli side)"

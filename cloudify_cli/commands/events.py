@@ -156,12 +156,12 @@ def list(execution_id,
                     mutually_exclusive_with=['to_datetime'],
                     help="Events that occurred this long ago or earlier"
                          "will be deleted")
-@cfy.options.list_before()
-@cfy.options.list_output_path()
+@cfy.options.store_before()
+@cfy.options.store_output_path()
 @cfy.pass_client()
 @cfy.pass_logger
 def delete(deployment_id, include_logs, logger, client, tenant_name,
-           from_datetime, to_datetime, before, list_before, output_path):
+           from_datetime, to_datetime, before, store_before, output_path):
     """Delete events attached to a deployment
 
     `DEPLOYMENT_ID` is the deployment_id of the executions from which
@@ -185,7 +185,7 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
     client.deployments.get(deployment_id)
 
     # List events prior to their deletion
-    if list_before and output_path:
+    if store_before and output_path:
         exec_list = client.executions.list(deployment_id=deployment_id,
                                            include_system_workflows=True,
                                            _all_tenants=True)
@@ -217,7 +217,7 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
 
     # Delete events
     delete_args = {}
-    if list_before and not output_path:
+    if store_before and not output_path:
         delete_args['store_before'] = 'true'
     deleted_events_count = client.events.delete(
         deployment_id, include_logs=include_logs,
