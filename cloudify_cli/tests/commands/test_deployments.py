@@ -283,7 +283,8 @@ class DeploymentUpdatesTest(CliCommandTest):
             err_str_segment='2',  # Exit code
             exception=SystemExit)
 
-        self.assertIn('Missing argument "deployment-id"', outcome.output)
+        self.assertIn('missing argument', outcome.output.lower())
+        self.assertIn('DEPLOYMENT_ID', outcome.output)
 
     def test_deployment_update_no_bp_path_nor_archive_loc_parameters(self):
         self.invoke(
@@ -578,7 +579,8 @@ class DeploymentsTest(CliCommandTest):
             err_str_segment='2',
             exception=SystemExit
         )
-        self.assertIn('Missing option "-l" / "--visibility"', outcome.output)
+        self.assertIn('missing option', outcome.output.lower())
+        self.assertIn('--visibility', outcome.output)
 
     def test_deployments_set_visibility_wrong_argument(self):
         outcome = self.invoke(
@@ -646,7 +648,9 @@ class DeploymentsTest(CliCommandTest):
         outcome = self.invoke('cfy deployments set-site',
                               err_str_segment='2',  # Exit code
                               exception=SystemExit)
-        self.assertIn('Missing argument "deployment-id"', outcome.output)
+
+        self.assertIn('missing argument', outcome.output.lower())
+        self.assertIn('DEPLOYMENT_ID', outcome.output)
 
     def test_deployment_set_site_invalid_site_name(self):
         error_msg = 'The `site_name` argument contains illegal characters'

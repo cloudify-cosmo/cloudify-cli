@@ -56,8 +56,8 @@ class NodesTest(CliCommandTest):
             err_str_segment='2',  # Exit code
             exception=SystemExit
         )
-
-        self.assertIn('Missing argument "node-id"', outcome.output)
+        self.assertIn('missing argument', outcome.output.lower())
+        self.assertIn('NODE_ID', outcome.output)
 
     def test_node_get_no_deployment_id(self):
         outcome = self.invoke(
@@ -65,11 +65,8 @@ class NodesTest(CliCommandTest):
             err_str_segment='2',  # Exit code
             exception=SystemExit,
         )
-
-        self.assertIn(
-            'Missing option "-d" / "--deployment-id"',
-            outcome.output
-        )
+        self.assertIn('missing option', outcome.output.lower())
+        self.assertIn('--deployment-id', outcome.output)
 
     def test_nodes_list(self):
         self.client.nodes.list = MagicMock(

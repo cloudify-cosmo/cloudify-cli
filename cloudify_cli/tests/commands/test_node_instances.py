@@ -40,8 +40,8 @@ class NodeInstancesTest(CliCommandTest):
             exception=SystemExit,
             context='node_instances'
         )
-
-        self.assertIn('Missing argument "node_instance_id"', outcome.output)
+        self.assertIn('missing argument', outcome.output.lower())
+        self.assertIn('NODE_INSTANCE_ID', outcome.output)
 
     def test_instances_list(self):
         self.client.node_instances.list = MagicMock(
@@ -260,17 +260,20 @@ class NodeInstancesTest(CliCommandTest):
         outcome = self.invoke('cfy node-instances {0}'.format(command),
                               err_str_segment='2',
                               exception=SystemExit)
-        self.assertIn('Missing argument "node_instance_id"', outcome.output)
+        self.assertIn('missing argument', outcome.output.lower())
+        self.assertIn('node_instance_id', outcome.output.lower())
         outcome = self.invoke('cfy node-instances {0} instance_id'
                               .format(command),
                               err_str_segment='2',
                               exception=SystemExit)
-        self.assertIn('Missing option "-p"', outcome.output)
+        self.assertIn('missing option', outcome.output.lower())
+        self.assertIn('-p', outcome.output)
         outcome = self.invoke('cfy node-instances {0} instance_id -p'
                               .format(command),
                               err_str_segment='2',
                               exception=SystemExit)
-        self.assertIn('-p option requires an argument', outcome.output)
+        self.assertIn('requires an argument', outcome.output)
+        self.assertIn('-p', outcome.output)
 
     def _common_runtime_invalid_dict(self, command):
         self.invoke('cfy node-instances {0} instance_id -p "{1}"'
