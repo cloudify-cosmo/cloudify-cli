@@ -1648,7 +1648,9 @@ class Options(object):
                       help=helptexts.FROM_DATETIME):
         kwargs = {
             'required': required,
-            'type': click.DateTime(),
+            'type': click.DateTime((
+                '%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S',
+                '%Y-%m-%d %H:%M:%S.%f',)),
             'help': help,
         }
         if mutually_exclusive_with:
@@ -1661,7 +1663,9 @@ class Options(object):
                     help=helptexts.TO_DATETIME):
         kwargs = {
             'required': required,
-            'type': click.DateTime(),
+            'type': click.DateTime((
+                '%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S',
+                '%Y-%m-%d %H:%M:%S.%f',)),
             'help': help,
         }
         if mutually_exclusive_with:
