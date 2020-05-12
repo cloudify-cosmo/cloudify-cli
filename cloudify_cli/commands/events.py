@@ -156,13 +156,12 @@ def list(execution_id,
                     mutually_exclusive_with=['to_datetime'],
                     help="Events that occurred this long ago or earlier"
                          "will be deleted")
-@cfy.options.list_before_deletion()
+@cfy.options.list_before()
 @cfy.options.list_output_path()
 @cfy.pass_client()
 @cfy.pass_logger
 def delete(deployment_id, include_logs, logger, client, tenant_name,
-           from_datetime, to_datetime, before,
-           list_before_deletion, output_path):
+           from_datetime, to_datetime, before, list_before, output_path):
     """Delete events attached to a deployment
 
     `DEPLOYMENT_ID` is the deployment_id of the executions from which
@@ -186,42 +185,40 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
     client.deployments.get(deployment_id)
 
     # List events prior to their deletion
-    if list_before_deletion:
+    if list_before and output_path:
         exec_list = client.executions.list(deployment_id=deployment_id,
                                            include_system_workflows=True,
                                            _all_tenants=True)
-        if len(exec_list) > 0 and output_path:
-            with open(output_path, 'w') as output_file:
-                click.echo(
-                    'Events for deployment id {0} [{1}]\n'.format(
-                        deployment_id,
-                        u', '.join([u'{0}={1}'.format(k, v) for k, v in
-                                    filter_info.items()])),
-                    file=output_file,
-                    nl=True)
-        for execution in exec_list:
-            execution_events = ExecutionEventsFetcher(
-                client, execution.id, include_logs=include_logs,
-                from_datetime=from_datetime, to_datetime=to_datetime)
-            output_file = open(output_path, 'a') if output_path else None
+        with open(output_path, 'w') as output_file:
             click.echo(
-                'Listing events for execution id {0}\n'.format(execution.id),
+                'Events for deployment id {0} [{1}]'.format(
+                    deployment_id,
+                    u', '.join([u'{0}={1}'.format(k, v) for k, v in
+                                filter_info.items()])),
                 file=output_file,
                 nl=True)
             events_logger = DeletedEventsLogger(output_file)
-            total_events = execution_events.fetch_and_process_events(
-                events_handler=events_logger.log)
-            click.echo(
-                '\nListed {0} events'.format(total_events),
-                file=output_file,
-                nl=True)
-            if output_file:
-                output_file.close()
+            for execution in exec_list:
+                execution_events = ExecutionEventsFetcher(
+                    client, execution.id, include_logs=include_logs,
+                    from_datetime=from_datetime, to_datetime=to_datetime)
+                output_file = open(output_path, 'a') if output_path else None
+                click.echo(
+                    '\nListing events for execution id {0}\n'.format(
+                        execution.id),
+                    file=output_file,
+                    nl=True)
+                total_events = execution_events.fetch_and_process_events(
+                    events_handler=events_logger.log)
+                click.echo(
+                    '\nListed {0} events'.format(total_events),
+                    file=output_file,
+                    nl=True)
 
     # Delete events
     delete_args = {}
-    if list_before_deletion and not output_path:
-        delete_args['store_before_deletion'] = 'True'
+    if list_before and not output_path:
+        delete_args['store_before'] = 'true'
     deleted_events_count = client.events.delete(
         deployment_id, include_logs=include_logs,
         from_datetime=from_datetime, to_datetime=to_datetime,
