@@ -92,7 +92,8 @@ class PluginsTest(CliCommandTest):
         outcome = self.invoke('cfy plugins set-visibility a-plugin-id',
                               err_str_segment='2',
                               exception=SystemExit)
-        self.assertIn('Missing option "-l" / "--visibility"', outcome.output)
+        self.assertIn('missing option', outcome.output.lower())
+        self.assertIn('--visibility', outcome.output)
 
     def test_blueprints_set_visibility_wrong_argument(self):
         outcome = self.invoke('cfy plugins set-visibility a-plugin-id -g',

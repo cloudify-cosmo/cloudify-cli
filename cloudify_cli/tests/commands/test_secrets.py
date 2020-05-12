@@ -30,7 +30,8 @@ class SecretsTest(CliCommandTest):
             err_str_segment='2',  # Exit code
             exception=SystemExit
         )
-        self.assertIn('Missing argument "key"', outcome.output)
+        self.assertIn('missing argument', outcome.output.lower())
+        self.assertIn('KEY', outcome.output)
 
     def test_get_secrets_invalid_key(self):
         self.invoke(
@@ -65,8 +66,8 @@ class SecretsTest(CliCommandTest):
         outcome = self.invoke('cfy secrets set-visibility a-secret-key',
                               err_str_segment='2',
                               exception=SystemExit)
-        self.assertIn('Missing option "-l" / "--visibility"',
-                      outcome.output)
+        self.assertIn('missing option', outcome.output.lower())
+        self.assertIn('--visibility', outcome.output)
 
     def test_secrets_set_visibility_wrong_argument(self):
         outcome = self.invoke('cfy secrets set-visibility a-secret-key -g',

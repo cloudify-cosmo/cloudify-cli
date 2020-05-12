@@ -37,7 +37,8 @@ class SitesTest(CliCommandTest):
 
     def test_get_missing_name(self):
         outcome = self.invoke('cfy sites get', **self.system_exit)
-        self.assertIn('Missing argument "name"', outcome.output)
+        self.assertIn('missing argument', outcome.output.lower())
+        self.assertIn('name', outcome.output.lower())
 
     def test_get_invalid_name(self):
         self.invoke(
@@ -68,7 +69,8 @@ class SitesTest(CliCommandTest):
 
     def test_create_missing_name(self):
         outcome = self.invoke('cfy sites create ', **self.system_exit)
-        self.assertIn('Missing argument "name"', outcome.output)
+        self.assertIn('missing argument', outcome.output.lower())
+        self.assertIn('name', outcome.output.lower())
 
     def test_create_invalid_visibility(self):
         self.invoke('cfy sites create test_site -l bla',
@@ -133,4 +135,5 @@ class SitesTest(CliCommandTest):
 
     def test_sites_invalid_command(self):
         outcome = self.invoke('cfy sites bla', **self.system_exit)
-        self.assertIn('Error: No such command "bla"', outcome.output)
+        self.assertIn('no such command', outcome.output.lower())
+        self.assertIn('bla', outcome.output)

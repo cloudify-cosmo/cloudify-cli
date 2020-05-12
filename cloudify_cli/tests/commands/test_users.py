@@ -36,7 +36,8 @@ class UsersTest(BaseUsersTest):
             err_str_segment='2',  # Exit code
             exception=SystemExit
         )
-        self.assertIn('Missing argument "username"', outcome.output)
+        self.assertIn('missing argument', outcome.output.lower())
+        self.assertIn('username', outcome.output.lower())
 
     def test_create_users_missing_password(self):
         outcome = self.invoke(
@@ -44,7 +45,8 @@ class UsersTest(BaseUsersTest):
             err_str_segment='2',  # Exit code
             exception=SystemExit
         )
-        self.assertIn('Missing option "-p" / "--password"', outcome.output)
+        self.assertIn('missing option', outcome.output.lower())
+        self.assertIn('--password', outcome.output)
 
     def test_create_users_default_role(self):
         self.invoke('cfy users create username -p password')
