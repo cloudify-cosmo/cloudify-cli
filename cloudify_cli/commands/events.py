@@ -19,8 +19,6 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify import logs
 
 import click
-import re
-import datetime
 
 from .. import utils
 from ..cli import cfy
@@ -169,7 +167,7 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     if before:
-        to_datetime = _parse_before(before)
+        to_datetime = before
     filter_info = {'include_logs': u'{0}'.format(include_logs)}
     if from_datetime:
         filter_info['from_datetime'] = u'{0}'.format(from_datetime)
@@ -228,31 +226,6 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
         logger.info('\nDeleted {0} events'.format(deleted_events_count))
     else:
         logger.info('\nNo events to delete')
-
-
-def _parse_before(ago):
-    """Change relative time (ago) to a valid timestamp"""
-    parsed = re.findall(r"(\d+) (seconds?|minutes?|hours?|days?|weeks?"
-                        "|months?|years?) ?(ago)?",
-                        ago)
-    if parsed and len(parsed[0]) > 1:
-        number = int(parsed[0][0])
-        period = parsed[0][1]
-        if period[-1] != u's':
-            period += u's'
-        now = datetime.datetime.utcnow()
-        if period == u'years':
-            result = now.replace(year=now.year - number)
-        elif period == u'months':
-            if now.month > number:
-                result = now.replace(month=now.month - number)
-            else:
-                result = now.replace(month=now.month - number + 12,
-                                     year=now.year - 1)
-        else:
-            delta = datetime.timedelta(**{period: number})
-            result = now - delta
-        return result.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
 
 
 class DeletedEventsLogger(object):
