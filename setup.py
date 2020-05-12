@@ -39,7 +39,7 @@ setup(
         ]
     },
     install_requires=[
-        'click==6.7',
+        'click>7,<8',
         'wagon[venv]==0.6.3',
         'pyyaml==3.12',
         'jinja2==2.10',
