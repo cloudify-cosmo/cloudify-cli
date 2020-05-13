@@ -389,3 +389,10 @@ RUNTIME_ONLY_EVALUATION = "If set, all intrinsic functions will only be "\
                           "will be evaluated at parse time (such as "\
                           "get_input, get_property)"
 MANAGER = "Connect to a specific manager by IP or host"
+
+FROM_DATETIME = "Beginning of a period"
+TO_DATETIME = "End of a period"
+BEFORE = "How long ago did the specified period ended"
+
+STORE_BEFORE_DELETION = "List and store events before deleting them"
+STORE_OUTPUT_PATH = "Store listed events to a specified file (cli side)"

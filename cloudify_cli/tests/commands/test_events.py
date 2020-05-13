@@ -1,5 +1,6 @@
 import json
 import time
+import datetime
 
 from mock import patch
 
@@ -7,6 +8,8 @@ from .test_base import CliCommandTest
 from .mocks import MockListResponse, mock_log_message_prefix
 
 from cloudify_rest_client import executions, deployments
+
+DATETIME_FORMAT = '%Y-%m-%d %H:%M:%S.%f'
 
 
 class EventsTest(CliCommandTest):
@@ -45,6 +48,8 @@ class EventsTest(CliCommandTest):
                 'type': event_type,
                 'message': '<message>',
                 'error_causes': '<error_causes>',
+                'timestamp': datetime.datetime.fromtimestamp(
+                    event_time).strftime(DATETIME_FORMAT),
             }
             events.append((event_time, event))
             event_time += 0.3
@@ -64,6 +69,8 @@ class EventsTest(CliCommandTest):
             'type': 'cloudify_event',
             'message': '<message>',
             'error_causes': '<error_causes>',
+            'timestamp': datetime.datetime.fromtimestamp(
+                event_time).strftime(DATETIME_FORMAT),
         }
         events.append((end_time, success_event))
         return events
@@ -106,6 +113,14 @@ class EventsTest(CliCommandTest):
         for event in self.events:
             if event[1]['deployment_id'] == deployment_id:
                 if not include_logs and event[1]['type'] == 'cloudify_log':
+                    continue
+                event_timestamp = datetime.datetime.strptime(
+                    event[1]['timestamp'], DATETIME_FORMAT)
+                if 'from_datetime' in kwargs and kwargs['from_datetime'] and \
+                        kwargs['from_datetime'] > event_timestamp:
+                    continue
+                if 'to_datetime' in kwargs and kwargs['to_datetime'] and \
+                        kwargs['to_datetime'] < event_timestamp:
                     continue
                 events_to_delete.append(event)
         self.events[:] = [event for event in self.events if event
@@ -218,3 +233,46 @@ class EventsTest(CliCommandTest):
         outcome = self.invoke('cfy events delete deployment_id_0 --no-logs')
         self.assertEqual(outcome.logs.split('\n')[-1], 'No events to delete')
         self.assertEqual(len(self.events), 2)
+
+    def test_delete_events_timeperiod(self):
+        self._patch_clients_for_deletion()
+        self.assertEqual(len(self.events), 5)
+        outcome = self.invoke(
+            'cfy events delete --to "{0}" deployment_id_1'.format(
+                datetime.datetime.fromtimestamp(
+                    self.execution_start_time + 0.5).strftime(
+                    DATETIME_FORMAT)[:-3]))
+        self.assertEqual(outcome.logs.split('\n')[-1], 'Deleted 1 events')
+        self.assertEqual(len(self.events), 4)
+
+        outcome = self.invoke(
+            'cfy events delete --from "{0}" --to "{1}" deployment_id_0'.format(
+                datetime.datetime.fromtimestamp(
+                    self.execution_start_time + 0.1).strftime(
+                    DATETIME_FORMAT)[:-3],
+                datetime.datetime.fromtimestamp(
+                    self.execution_start_time + 0.8).strftime(
+                    DATETIME_FORMAT)[:-3]))
+        self.assertEqual(outcome.logs.split('\n')[-1], 'Deleted 1 events')
+        self.assertEqual(len(self.events), 3)
+
+        outcome = self.invoke(
+            'cfy events delete --before "1 hour" deployment_id_0')
+        self.assertEqual(outcome.logs.split('\n')[-1], 'No events to delete')
+        self.assertEqual(len(self.events), 3)
+
+        outcome = self.invoke(
+            'cfy events delete --to "{0}" deployment_id_1'.format(
+                datetime.datetime.fromtimestamp(
+                    self.execution_termination_time).strftime(
+                    DATETIME_FORMAT)[:-3]))
+        self.assertEqual(outcome.logs.split('\n')[-1], 'Deleted 1 events')
+        self.assertEqual(len(self.events), 2)
+
+        outcome = self.invoke(
+            'cfy events delete --from "{0}" deployment_id_0'.format(
+                datetime.datetime.fromtimestamp(
+                    self.execution_start_time).strftime(
+                    DATETIME_FORMAT)[:-3]))
+        self.assertEqual(outcome.logs.split('\n')[-1], 'Deleted 2 events')
+        self.assertEqual(len(self.events), 0)
