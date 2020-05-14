@@ -53,6 +53,9 @@ def events():
                          mutually_exclusive_with=['tail', 'before'],
                          help="List events that occurred at this timestamp"
                               " or before", )
+@cfy.options.before(required=False,
+                    mutually_exclusive_with=['tail', 'to_datetime'],
+                    help="List events that occurred this long ago or earlier")
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
 @cfy.pass_client()
@@ -65,6 +68,7 @@ def list(execution_id,
          tenant_name,
          from_datetime,
          to_datetime,
+         before,
          pagination_offset,
          pagination_size,
          client,
@@ -86,6 +90,9 @@ def list(execution_id,
         logger.warning("Providing the execution ID as an option (using '-e') "
                        "is now deprecated. Please provide the execution ID as "
                        "a positional argument.")
+
+    if before:
+        to_datetime = before
 
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing events for execution id {0} [{1}]'.format(
