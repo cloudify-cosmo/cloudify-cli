@@ -47,12 +47,15 @@ def events():
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.options.from_datetime(required=False,
-                           help="Events that occurred at this timestamp"
-                                " or after will be listed")
+                           help="List events that occurred at this timestamp"
+                                " or after")
 @cfy.options.to_datetime(required=False,
-                         mutually_exclusive_with=['tail'],
-                         help="Events that occurred at this timestamp"
-                              " or before will be listed",)
+                         mutually_exclusive_with=['tail', 'before'],
+                         help="List events that occurred at this timestamp"
+                              " or before", )
+@cfy.options.before(required=False,
+                    mutually_exclusive_with=['tail', 'to_datetime'],
+                    help="List events that occurred this long ago or earlier")
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
 @cfy.pass_client()
@@ -65,6 +68,7 @@ def list(execution_id,
          tenant_name,
          from_datetime,
          to_datetime,
+         before,
          pagination_offset,
          pagination_size,
          client,
@@ -87,9 +91,13 @@ def list(execution_id,
                        "is now deprecated. Please provide the execution ID as "
                        "a positional argument.")
 
+    if before:
+        to_datetime = before
+
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Listing events for execution id {0} '
-                '[include_logs={1}]'.format(execution_id, include_logs))
+    logger.info('Listing events for execution id {0} [{1}]'.format(
+        execution_id,
+        _filter_description(include_logs, from_datetime, to_datetime)))
     try:
         execution_events = ExecutionEventsFetcher(
             client,
@@ -165,19 +173,14 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
     `DEPLOYMENT_ID` is the deployment_id of the executions from which
     events/logs are deleted.
     """
-    utils.explicit_tenant_name_message(tenant_name, logger)
     if before:
         to_datetime = before
-    filter_info = {'include_logs': u'{0}'.format(include_logs)}
-    if from_datetime:
-        filter_info['from_datetime'] = u'{0}'.format(from_datetime)
-    if to_datetime:
-        filter_info['to_datetime'] = u'{0}'.format(to_datetime)
-    logger.info(
-        'Deleting events for deployment id {0} [{1}]'.format(
-            deployment_id,
-            u', '.join([u'{0}={1}'.format(k, v) for k, v in
-                        filter_info.items()])))
+
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    filter_description = _filter_description(include_logs, from_datetime,
+                                             to_datetime)
+    logger.info('Deleting events for deployment id {0} [{1}]'.format(
+        deployment_id, filter_description))
 
     # Make sure the deployment exists - raise 404 otherwise
     client.deployments.get(deployment_id)
@@ -190,9 +193,7 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
         with open(output_path, 'w') as output_file:
             click.echo(
                 'Events for deployment id {0} [{1}]'.format(
-                    deployment_id,
-                    u', '.join([u'{0}={1}'.format(k, v) for k, v in
-                                filter_info.items()])),
+                    deployment_id, filter_description),
                 file=output_file,
                 nl=True)
             events_logger = DeletedEventsLogger(output_file)
@@ -226,6 +227,16 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
         logger.info('\nDeleted {0} events'.format(deleted_events_count))
     else:
         logger.info('\nNo events to delete')
+
+
+def _filter_description(include_logs, from_datetime, to_datetime):
+    filter_info = {'include_logs': u'{0}'.format(include_logs)}
+    if from_datetime:
+        filter_info['from_datetime'] = u'{0}'.format(from_datetime)
+    if to_datetime:
+        filter_info['to_datetime'] = u'{0}'.format(to_datetime)
+    return u', '.join(u'{0}={1}'.format(k, v) for k, v in
+                      filter_info.items())
 
 
 class DeletedEventsLogger(object):

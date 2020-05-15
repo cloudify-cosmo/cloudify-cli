@@ -115,6 +115,29 @@ def _parse_relative_datetime(ctx, param, rel_datetime):
     return result
 
 
+def _parse_unix_timestamp(unix_time):
+    parsed = re.findall(r"^(\d+)(\.(\d{1,6}))?$", unix_time)
+    if not parsed or len(parsed[0]) < 1:
+        return None
+    return datetime.datetime.utcfromtimestamp(float(unix_time))
+
+
+class Timestamp(click.DateTime):
+    """Timestamp is DateTime enhanced by the ability to parse Unix time"""
+
+    def convert(self, value, param, ctx):
+        parsed_unix_time = _parse_unix_timestamp(value)
+        if parsed_unix_time:
+            return parsed_unix_time
+        return super(Timestamp, self).convert(value, param, ctx)
+
+    def get_metavar(self, param):
+        return '[{0}|UNIX TIME FORMAT]'.format('|'.join(self.formats))
+
+    def __repr__(self):
+        return "Timestamp"
+
+
 def _format_version_data(version_data,
                          prefix=None,
                          suffix=None,
@@ -1648,7 +1671,7 @@ class Options(object):
                       help=helptexts.FROM_DATETIME):
         kwargs = {
             'required': required,
-            'type': click.DateTime((
+            'type': Timestamp((
                 '%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S',
                 '%Y-%m-%d %H:%M:%S.%f',)),
             'help': help,
@@ -1663,7 +1686,7 @@ class Options(object):
                     help=helptexts.TO_DATETIME):
         kwargs = {
             'required': required,
-            'type': click.DateTime((
+            'type': Timestamp((
                 '%Y-%m-%d', '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S',
                 '%Y-%m-%d %H:%M:%S.%f',)),
             'help': help,
