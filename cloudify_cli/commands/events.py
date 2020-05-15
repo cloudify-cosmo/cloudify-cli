@@ -235,8 +235,8 @@ def _filter_description(include_logs, from_datetime, to_datetime):
         filter_info['from_datetime'] = u'{0}'.format(from_datetime)
     if to_datetime:
         filter_info['to_datetime'] = u'{0}'.format(to_datetime)
-    return u', '.join([u'{0}={1}'.format(k, v) for k, v in
-                       filter_info.items()])
+    return u', '.join(u'{0}={1}'.format(k, v) for k, v in
+                      filter_info.items())
 
 
 class DeletedEventsLogger(object):
