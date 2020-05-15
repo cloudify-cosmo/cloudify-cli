@@ -94,6 +94,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
 @cfy.argument('plugin-path')
 @cfy.options.plugin_yaml_path()
 @cfy.options.plugin_icon_path()
+@cfy.options.plugin_title()
 @cfy.options.private_resource
 @cfy.options.visibility()
 @cfy.options.common_options
@@ -106,6 +107,7 @@ def upload(ctx,
            plugin_path,
            yaml_path,
            icon_path,
+           title,
            private_resource,
            visibility,
            logger,
@@ -138,8 +140,9 @@ def upload(ctx,
 
     try:
         plugin = client.plugins.upload(zip_path,
-                                       visibility,
-                                       progress_handler)
+                                       plugin_title=title,
+                                       visibility=visibility,
+                                       progress_callback=progress_handler)
         logger.info("Plugin uploaded. Plugin's id is {0}".format(plugin.id))
     finally:
         for f in zip_files:
