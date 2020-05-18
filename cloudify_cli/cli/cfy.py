@@ -1619,7 +1619,6 @@ class Options(object):
     @staticmethod
     def plugin_title():
         return click.option(
-            '-t',
             '--title',
             required=False,
             help=helptexts.PLUGIN_TITLE)

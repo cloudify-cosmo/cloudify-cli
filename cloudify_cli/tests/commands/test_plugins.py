@@ -141,8 +141,8 @@ class PluginsTest(CliCommandTest):
     def test_plugins_upload_with_title(self):
         self.client.plugins.upload = MagicMock()
         yaml_path = os.path.join(PLUGINS_DIR, 'plugin.yaml')
-        self.invoke('cfy plugins upload {0} -t "test title" -y {1}'
-                    .format(yaml_path, yaml_path))
+        self.invoke('cfy plugins upload {0} -y {1} --title "{2}"'
+                    .format(yaml_path, yaml_path, 'test title'))
 
 
 class PluginsUpdateTest(CliCommandTest):
