@@ -1617,6 +1617,13 @@ class Options(object):
             help=helptexts.PLUGIN_ICON_PATH)
 
     @staticmethod
+    def plugin_title():
+        return click.option(
+            '--title',
+            required=False,
+            help=helptexts.PLUGIN_TITLE)
+
+    @staticmethod
     def new_name(resource_name_for_help=None):
         return click.option(
             '-n',
