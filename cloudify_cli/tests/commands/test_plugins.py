@@ -138,6 +138,12 @@ class PluginsTest(CliCommandTest):
         finally:
             shutil.rmtree(plugin_dest_dir, ignore_errors=True)
 
+    def test_plugins_upload_with_title(self):
+        self.client.plugins.upload = MagicMock()
+        yaml_path = os.path.join(PLUGINS_DIR, 'plugin.yaml')
+        self.invoke('cfy plugins upload {0} -t "test title" -y {1}'
+                    .format(yaml_path, yaml_path))
+
 
 class PluginsUpdateTest(CliCommandTest):
 
