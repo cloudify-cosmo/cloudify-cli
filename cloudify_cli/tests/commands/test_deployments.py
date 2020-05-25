@@ -79,7 +79,8 @@ class DeploymentUpdatesTest(CliCommandTest):
             'id': 'update-id-1',
             'old_inputs': {'inp1': old_value},
             'new_inputs': {'inp1': new_value},
-            'steps': steps
+            'steps': steps,
+            'recursive_dependencies': {}
         })
         outcome = self.invoke('deployments get-update update-id-1')
 
@@ -103,7 +104,8 @@ class DeploymentUpdatesTest(CliCommandTest):
                 'id': 'update-id-1',
                 'old_inputs': {'inp1': old_value},
                 'new_inputs': {'inp1': new_value},
-                'steps': steps
+                'steps': steps,
+                'recursive_dependencies': {'deployment': 'dependent_dep'}
             })
         outcome = self.invoke(
             'deployments update dep-1 -b b2 --preview --json')
@@ -111,6 +113,8 @@ class DeploymentUpdatesTest(CliCommandTest):
 
         self.assertEqual(output['installed_nodes'], ['step1'])
         self.assertEqual(output['uninstalled_nodes'], ['step2'])
+        self.assertEqual(output['recursive_dependencies'],
+                         {'deployment': 'dependent_dep'})
 
         # find out if the preview=True argument has been set. It might have
         # been passed positionally or by name into the rest-client method,
