@@ -69,6 +69,8 @@ DEPLOYMENT_UPDATE_PREVIEW_COLUMNS = [
 ]
 NON_PREVIEW_COLUMNS = ['id', 'execution_id']
 STEPS_COLUMNS = ['entity_type', 'entity_id', 'action']
+DEPENDENCIES_COLUMNS = ['deployment', 'dependency_type', 'dependent_node',
+                        'tenant']
 TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
 DEPLOYMENTS_SUMMARY_FIELDS = (['blueprint_id', 'site_name'] +
                               BASE_SUMMARY_FIELDS)
@@ -77,7 +79,7 @@ DEPLOYMENTS_SUMMARY_FIELDS = (['blueprint_id', 'site_name'] +
 MACHINE_READABLE_UPDATE_PREVIEW_COLUMNS = [
     'old_inputs', 'new_inputs', 'steps', 'modified_entity_ids',
     'installed_nodes', 'uninstalled_nodes', 'reinstalled_nodes',
-    'explicit_reinstall'
+    'explicit_reinstall', 'recursive_dependencies'
 ]
 
 
@@ -146,6 +148,9 @@ def _print_single_update(deployment_update_dict,
                    'Automatically detected nodes to reinstall{0}:'
                    .format(skip_msg if skip_reinstall else ''))
         print_list(explicit_reinstall, 'Expicitly given nodes to reinstall:')
+        print_data(DEPENDENCIES_COLUMNS,
+                   deployment_update_dict['recursive_dependencies'] or {},
+                   'Affected (recursively) dependent deployments:')
 
 
 @cfy.command(name='list', short_help='List deployments [manager only]')
