@@ -281,8 +281,7 @@ class DeploymentUpdatesTest(CliCommandTest):
 
     def test_deployment_update_no_bp_path_nor_archive_loc_parameters(self):
         self.invoke(
-            'cfy deployments update my_deployment'.format(
-                BLUEPRINTS_DIR),
+            'cfy deployments update my_deployment',
             err_str_segment='Must supply either a blueprint '
                             '(by id of an existing blueprint, or a path to a '
                             'new blueprint), or new inputs',
@@ -594,8 +593,7 @@ class DeploymentsTest(CliCommandTest):
 
     def test_deployments_create_invalid_argument(self):
         self.invoke(
-            'cfy deployments create deployment -b a-blueprint-id -l bla'
-            .format(BLUEPRINTS_DIR),
+            'cfy deployments create deployment -b a-blueprint-id -l bla',
             err_str_segment='Invalid visibility: `bla`',
             exception=CloudifyCliError
         )
@@ -603,8 +601,7 @@ class DeploymentsTest(CliCommandTest):
     def test_deployments_create_with_visibility(self):
         self.client.deployments.create = MagicMock()
         self.invoke('cfy deployments create deployment -b a-blueprint-id '
-                    '-l private'
-                    .format(SAMPLE_ARCHIVE_PATH))
+                    '-l private')
 
     def test_deployments_set_site_with_site_name(self):
         self.client.deployments.set_site = MagicMock()

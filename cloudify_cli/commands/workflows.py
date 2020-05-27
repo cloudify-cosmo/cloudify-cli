@@ -55,7 +55,8 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
                          wf.name == workflow_id), None)
         if not workflow:
             raise CloudifyCliError(
-                'Workflow {0} not found'.format(workflow_id, deployment_id))
+                'Workflow {0} not found for deployment {1}'.format(
+                    workflow_id, deployment_id))
     except CloudifyClientError as e:
         if e.status_code != 404:
             raise
