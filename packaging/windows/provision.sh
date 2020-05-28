@@ -90,6 +90,10 @@ source common_build_env.sh &&
 curl https://raw.githubusercontent.com/cloudify-cosmo/cloudify-common/${CORE_BRANCH}/packaging/common/provision.sh -o ./common-provision.sh &&
 source common-provision.sh
 
+# Override the version to 5.0.5.1 so that we can have cli with 5.0.5.1
+# instead of 5.0.5
+export VERSION="5.0.5.1"
+
 set -x
 
 export CLI_BRANCH="$CORE_BRANCH"
