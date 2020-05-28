@@ -1,7 +1,5 @@
 %define _cli_env /opt/cfy
 
-%define _rpmfilename %%{NAME}-%%{VERSION}%%{RELEASE}.%%{ARCH}.rpm
-
 Name:           cloudify-cli
 Version:        %{CLOUDIFY_VERSION}
 Release:        %{CLOUDIFY_PACKAGE_RELEASE}%{?dist}
