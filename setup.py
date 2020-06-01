@@ -42,7 +42,7 @@ setup(
         'click>7,<8',
         'wagon[venv]>=0.9.1',
         'pyyaml==3.12',
-        'jinja2==2.10.1',
+        'jinja2>=2.10,<2.11',
         'retrying==1.3.3',
         'colorama==0.3.3',
         'requests>=2.7.0,<3.0.0',
