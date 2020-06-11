@@ -46,6 +46,7 @@ from .commands import user_groups
 from .commands import deployments
 from .commands import node_instances
 from .commands import maintenance_mode
+from .commands import replace_certificates
 
 
 @cfy.group(name='cfy')
@@ -106,6 +107,7 @@ def _register_commands():
     _cfy.add_command(deployments.deployments)
     _cfy.add_command(license.license)
     _cfy.add_command(sites.sites)
+    _cfy.add_command(replace_certificates.replace_certificates)
 
     deployments.deployments.add_command(deployments.manager_create)
     deployments.deployments.add_command(deployments.manager_delete)

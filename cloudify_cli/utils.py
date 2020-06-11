@@ -27,10 +27,13 @@ import zipfile
 import tempfile
 import collections
 from shutil import copy
+from collections import OrderedDict
 from contextlib import closing, contextmanager
 from backports.shutil_get_terminal_size import get_terminal_size
 
+import yaml
 import requests
+from yaml import resolver
 
 from .logger import get_logger
 from .exceptions import CloudifyCliError
@@ -396,3 +399,16 @@ def print_dict(keys_dict, logger):
     for key, values in keys_dict.items():
         str_values = [str(value) for value in values]
         logger.info('{0}: {1}'. format(key, str_values))
+
+
+def ordered_yaml_dump(data, stream=None, dumper=yaml.SafeDumper):
+    class OrderedDumper(dumper):
+        pass
+
+    def _dict_representer(dumper, data):
+        return dumper.represent_mapping(
+            resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+            data.items())
+
+    OrderedDumper.add_representer(OrderedDict, _dict_representer)
+    return yaml.dump(data, stream, OrderedDumper)
