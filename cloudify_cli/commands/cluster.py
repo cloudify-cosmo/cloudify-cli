@@ -93,7 +93,7 @@ def pass_cluster_client(*client_args, **client_kwargs):
         @cfy.pass_client(*client_args, **client_kwargs)
         @wraps(f)
         def _inner(client, *args, **kwargs):
-            if _all_in_one_manager(client):
+            if all_in_one_manager(client):
                 get_logger().warning('You are trying to run cluster '
                                      'related commands on an all-in-one '
                                      'Cloudify Manager!')
@@ -102,7 +102,7 @@ def pass_cluster_client(*client_args, **client_kwargs):
     return _deco
 
 
-def _all_in_one_manager(client):
+def all_in_one_manager(client):
     try:
         manager_nodes = client.manager.get_managers().items
         if len(manager_nodes) > 1:
