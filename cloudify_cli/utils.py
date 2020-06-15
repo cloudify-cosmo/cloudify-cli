@@ -412,3 +412,8 @@ def ordered_yaml_dump(data, stream=None, dumper=yaml.SafeDumper):
 
     OrderedDumper.add_representer(OrderedDict, _dict_representer)
     return yaml.dump(data, stream, OrderedDumper)
+
+
+def get_dict_from_yaml(yaml_path):
+    with open(yaml_path) as f:
+        return yaml.load(f, yaml.Loader)
