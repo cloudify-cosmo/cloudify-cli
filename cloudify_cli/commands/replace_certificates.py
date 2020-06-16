@@ -22,6 +22,7 @@ from ..cli import cfy
 from ..exceptions import CloudifyCliError
 from ..commands.cluster import all_in_one_manager
 from ..utils import ordered_yaml_dump, get_dict_from_yaml
+from ..replace_certificates_config import ReplaceCertificatesConfig
 
 CERTS_CONFIG_PATH = 'certificates_replacement_config.yaml'
 
@@ -62,7 +63,7 @@ def get_replace_certificates_config_file(output_path,
 @replace_certificates.command(name='start',
                               short_help='Replace certificates after updating '
                                          'the configuration file')
-@cfy.options.input_path
+@cfy.options.input_path()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -78,6 +79,9 @@ def start_replace_certificates(input_path,
     errors_list = validate_config_dict(config_dict, is_all_in_one)
     if errors_list:
         raise_errors_list(errors_list, logger)
+
+    main_config = ReplaceCertificatesConfig(config_dict, is_all_in_one, logger)
+    main_config.replace_certificates()
 
 
 def _get_cluster_configuration_dict(client):
@@ -116,11 +120,18 @@ def _basic_config_update(config):
     config.update(
         {'manager': {'new_ca_cert_path': '',
                      'new_ca_key_path': '',
+                     'new_ca_key_password': '',
                      'nodes': [],
                      'external_certificates': {
                          'new_external_cert_path': '',
                          'new_external_key_path': '',
-                         'new_external_ca_cert_path': ''
+                         'new_external_ca_cert_path': '',
+                         'new_external_ca_key_path': '',
+                         'new_external_ca_key_password': ''
+                     },
+                     'postgresql_client': {
+                         'new_postgresql_client_cert_path': '',
+                         'new_postgresql_client_key_path': ''
                      }
                      },
          'db': {'new_ca_cert_path': '',
@@ -155,19 +166,42 @@ def _validate_username_and_private_key(errors_list, config_dict):
                            'private_key_file_path were not specified')
 
     _check_path(errors_list, config_dict.get('private_key_file_path'))
-    if not os.path.exists(config_dict.get('private_key_file_path')):
-        errors_list.append('The private_key_file_path does not exist')
 
 
 def _validate_instances(errors_list, config_dict):
-    external_certificates = config_dict['manager']['external_certificates']
-    for path in external_certificates.values():
-        _check_path(errors_list, path)
-    _check_path(errors_list, config_dict['manager']['new_ca_cert_path'])
-    _check_path(errors_list, config_dict['manager']['new_ca_key_path'])
-    _validate_nodes(errors_list, config_dict['manager']['nodes'])
+    manager_section = config_dict.get('manager')
+    external_certificates = manager_section['external_certificates']
+    _validate_manager_ca_cert_and_key(errors_list, manager_section)
+    _validate_external_certs(errors_list, external_certificates)
+    _validate_nodes(errors_list, manager_section['nodes'])
     _validate_nodes(errors_list, config_dict['db']['nodes'])
     _validate_nodes(errors_list, config_dict['broker']['nodes'])
+
+
+def _validate_external_certs(errors_list, external_certs):
+    if (external_certs.get('new_external_ca_key_path') and
+            (not external_certs.get('new_external_ca_cert_path'))):
+        errors_list.append('Please provide the new_external_ca_cert_path '
+                           'in addition to the new_external_ca_key_path')
+
+    if (bool(external_certs.get('new_external_cert_path')) !=
+            bool(external_certs.get('new_external_key_path'))):
+        errors_list.append('Please specify both the new_cert_path '
+                           'and new_key_path or none of them for external '
+                           'certificates')
+
+    for path in external_certs.values():
+        _check_path(errors_list, path)
+
+
+def _validate_manager_ca_cert_and_key(errors_list, manager_section):
+    new_ca_cert_path = manager_section.get('new_ca_cert_path')
+    new_ca_key_path = manager_section.get('new_ca_key_path')
+    _check_path(errors_list, new_ca_cert_path)
+    _check_path(errors_list, new_ca_key_path)
+    if new_ca_key_path and (not new_ca_cert_path):
+        errors_list.append('Please provide the new_ca_cert_path in '
+                           'addition to the new_ca_key_path')
 
 
 def _validate_nodes(errors_list, nodes):
@@ -188,7 +222,8 @@ def _check_path(errors_list, path):
 
 
 def raise_errors_list(errors_list, logger):
+    logger.info('Errors:')
     for error in errors_list:
         # TODO: check the printing
         logger.info(error)
-    raise CloudifyCliError('Please go over the errors above')
+    raise CloudifyCliError('\nPlease go over the errors above')
