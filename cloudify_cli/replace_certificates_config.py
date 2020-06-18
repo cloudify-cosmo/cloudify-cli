@@ -18,6 +18,7 @@ from fabric import Connection
 from paramiko import AuthenticationException
 
 from .exceptions import CloudifyCliError
+from .constants import CERTS_TMP_DIR_PATH
 
 
 class Node(object):
@@ -37,9 +38,11 @@ class Node(object):
         self.connection = self._create_connection()
         self.new_cert_path = new_cert_path
         self.new_key_path = new_key_path
-        self.relevant = True if self.new_cert_path else False
         self.logger = logger
-        self.run_command('cfy_manager -h')
+        self.run_command('mkdir {0}'.format(CERTS_TMP_DIR_PATH))
+        self.put_file('/home/yoniitzhak/Desktop/test_yaml.yaml',
+                      CERTS_TMP_DIR_PATH)
+        # self.run_command('cfy_manager -h')
 
     def _create_connection(self):
         try:
@@ -57,6 +60,13 @@ class Node(object):
     def run_command(self, command):
         result = self.connection.run(command, hide=True)
         self.logger.info(result.ok)
+
+    def put_file(self, local_path, remote_path):
+        result = self.connection.put(local_path, remote_path)
+        self.logger.info(result.ok)
+
+    def needs_to_replace_certificates(self):
+        return True if self.new_cert_path else False
 
 
 class InstanceConfig(object):
