@@ -103,6 +103,21 @@ def _add_nodes_to_config_instance(config, instance_name, instance_ips):
         instance = {'host_ip': instance_ip,
                     'new_cert_path': '',
                     'new_key_path': ''}
+        if instance_name == 'manager':
+            external_certificates = {
+                'external_certificates': {
+                    'new_external_cert_path': '',
+                    'new_external_key_path': ''
+                }
+            }
+            postgresql_client = {
+                'postgresql_client': {
+                    'new_postgresql_client_cert_path': '',
+                    'new_postgresql_client_key_path': '',
+                }
+            }
+            instance.update(external_certificates)
+            instance.update(postgresql_client)
         config[instance_name]['nodes'].append(instance)
 
 
@@ -121,23 +136,18 @@ def _basic_config_update(config):
         {'manager': {'new_ca_cert_path': '',
                      'new_ca_key_path': '',
                      'new_ca_key_password': '',
-                     'nodes': [],
-                     'external_certificates': {
-                         'new_external_cert_path': '',
-                         'new_external_key_path': '',
-                         'new_external_ca_cert_path': '',
-                         'new_external_ca_key_path': '',
-                         'new_external_ca_key_password': ''
-                     },
-                     'postgresql_client': {
-                         'new_postgresql_client_cert_path': '',
-                         'new_postgresql_client_key_path': ''
-                     }
+                     'new_external_ca_cert_path': '',
+                     'new_external_ca_key_path': '',
+                     'new_external_ca_key_password': '',
+                     'new_postgresql_client_ca_cert_path': '',
+                     'nodes': []
                      },
          'db': {'new_ca_cert_path': '',
-                'nodes': []},
+                'nodes': []
+                },
          'broker': {'new_ca_cert_path': '',
-                    'nodes': []}
+                    'nodes': []
+                    }
          }
     )
 
