@@ -85,3 +85,12 @@ SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
 
 DELETE_DEP = 'delete_deployment_environment'
 CREATE_DEPLOYMENT = 'create_deployment_environment'
+
+CERTS_TMP_DIR_PATH = '/tmp/new_cloudify_certs/'
+CERT_FILE_NAME = 'new_node_cert.pem'
+KEY_FILE_NAME = 'new_node_key.pem'
+CA_CERT_FILE_NAME = 'new_ca_cert.pem'
+
+CERT_FILE_PATH = CERTS_TMP_DIR_PATH + CERT_FILE_NAME
+KEY_FILE_PATH = CERTS_TMP_DIR_PATH + KEY_FILE_NAME
+CA_CERT_FILE_PATH = CERTS_TMP_DIR_PATH + CA_CERT_FILE_NAME
