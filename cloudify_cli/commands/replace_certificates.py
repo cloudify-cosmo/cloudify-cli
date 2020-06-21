@@ -134,12 +134,7 @@ def _get_instances_ips(client):
 def _basic_config_update(config):
     config.update(
         {'manager': {'new_ca_cert_path': '',
-                     'new_ca_key_path': '',
-                     'new_ca_key_password': '',
                      'new_external_ca_cert_path': '',
-                     'new_external_ca_key_path': '',
-                     'new_external_ca_key_password': '',
-                     'new_postgresql_client_ca_cert_path': '',
                      'nodes': []
                      },
          'db': {'new_ca_cert_path': '',
@@ -183,9 +178,10 @@ def _validate_instances(errors_list, config_dict):
     external_certificates = manager_section['external_certificates']
     _validate_manager_ca_cert_and_key(errors_list, manager_section)
     _validate_external_certs(errors_list, external_certificates)
-    _validate_nodes(errors_list, manager_section['nodes'])
-    _validate_nodes(errors_list, config_dict['db']['nodes'])
-    _validate_nodes(errors_list, config_dict['broker']['nodes'])
+    for instance in 'manager', 'db', 'broker':
+        _validate_nodes(errors_list, config_dict[instance]['nodes'])
+    # TODO: Validate that if a new CA was given, also new certs are needed.
+    #  Maybe besides manager case where we're supposed to generate them?
 
 
 def _validate_external_certs(errors_list, external_certs):
