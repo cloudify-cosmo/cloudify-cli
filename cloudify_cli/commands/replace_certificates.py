@@ -20,7 +20,7 @@ from collections import OrderedDict
 from .. import env
 from ..cli import cfy
 from ..exceptions import CloudifyCliError
-from ..commands.cluster import all_in_one_manager
+from ..commands.cluster import _all_in_one_manager
 from ..utils import ordered_yaml_dump, get_dict_from_yaml
 from ..replace_certificates_config import ReplaceCertificatesConfig
 
@@ -48,7 +48,7 @@ def get_replace_certificates_config_file(output_path,
                                          logger,
                                          client):
     output_path = output_path if output_path else CERTS_CONFIG_PATH
-    if all_in_one_manager(client):
+    if _all_in_one_manager(client):
         # TODO: Take care of the AIO case
         pass
     else:
@@ -74,7 +74,7 @@ def start_replace_certificates(input_path,
     if not os.path.exists(input_path):
         raise_first_create_config_file()
 
-    is_all_in_one = all_in_one_manager(client)
+    is_all_in_one = _all_in_one_manager(client)
     config_dict = get_dict_from_yaml(input_path)
     errors_list = validate_config_dict(config_dict, is_all_in_one)
     if errors_list:
@@ -135,6 +135,7 @@ def _basic_config_update(config):
     config.update(
         {'manager': {'new_ca_cert_path': '',
                      'new_external_ca_cert_path': '',
+                     'new_ldap_ca_cert_path': '',
                      'nodes': []
                      },
          'db': {'new_ca_cert_path': '',

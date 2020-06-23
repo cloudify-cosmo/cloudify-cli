@@ -29,7 +29,6 @@ class Node(object):
                  new_cert_path,
                  new_key_path,
                  logger):
-        # TODO: verify cert and key match or should it be in cfy_manager
         # TODO: maybe add a revert mechanism
 
         self.host_ip = host_ip
@@ -65,14 +64,35 @@ class Node(object):
         result = self.connection.put(local_path, remote_path)
         self.logger.info(result.ok)
 
-    def needs_to_replace_certificates(self):
+    def needs_to_replace_cert_and_key(self):
         return True if self.new_cert_path else False
+
+
+class BrokerNode(Node):
+    def __init__(self, host_ip, username, key_file_path, new_cert_path,
+                 new_key_path, logger):
+        super(BrokerNode, self).__init__(host_ip, username, key_file_path,
+                                         new_cert_path, new_key_path, logger)
+
+
+class DBNode(Node):
+    def __init__(self, host_ip, username, key_file_path, new_cert_path,
+                 new_key_path, logger):
+        super(DBNode, self).__init__(host_ip, username, key_file_path,
+                                     new_cert_path, new_key_path, logger)
+
+
+class ManagerNode(Node):
+    def __init__(self, host_ip, username, key_file_path, new_cert_path,
+                 new_key_path, logger):
+        super(ManagerNode, self).__init__(host_ip, username, key_file_path,
+                                          new_cert_path, new_key_path, logger)
 
 
 class InstanceConfig(object):
     def __init__(self, instance_config_dict, username, key_file_path, logger):
         self.new_ca_cert_path = instance_config_dict.get('new_ca_cert_path')
-        self.relevant_nodes = []
+        self.need_certs_replacement_nodes = []
         self.all_nodes = []
         self.logger = logger
         self._create_instance_nodes(instance_config_dict,
@@ -94,7 +114,7 @@ class InstanceConfig(object):
                             self.logger)
             self.all_nodes.append(new_node)
             if new_cert_path and new_key_path:
-                self.relevant_nodes.append(new_node)
+                self.need_certs_replacement_nodes.append(new_node)
 
 
 class ManagerInstanceConfig(InstanceConfig):
@@ -103,10 +123,10 @@ class ManagerInstanceConfig(InstanceConfig):
                                                     username,
                                                     key_file_path,
                                                     logger)
-        self.external_certs = instance_config_dict.get('external_certificates')
-        self.new_ca_key_path = instance_config_dict.get('new_ca_key_password')
-        self.new_ca_key_path = instance_config_dict.get('new_ca_key_path')
-        self.postgres_client = instance_config_dict.get('postgresql_client')
+        self.new_external_ca_cert_path = instance_config_dict.get(
+            'new_external_ca_cert_path')
+        self.new_ldap_ca_cert_path = instance_config_dict.get(
+            'new_ldap_ca_cert_path')
 
 
 class DBInstanceConfig(InstanceConfig):
