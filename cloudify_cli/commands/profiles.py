@@ -34,7 +34,7 @@ from ..cli import helptexts
 from ..env import get_rest_client
 from ..exceptions import CloudifyCliError
 from ..table import print_data, print_single
-from ..commands.cluster import all_in_one_manager
+from ..commands.cluster import _all_in_one_manager
 from ..commands.cluster import update_profile_logic as update_cluster_profile
 
 
@@ -200,7 +200,7 @@ def _update_cluster_profile_to_dict(logger):
         env.profile.cluster = dict()
         env.profile.save()
     client = get_rest_client()
-    if not all_in_one_manager(client):
+    if not _all_in_one_manager(client):
         update_cluster_profile(client, logger)
 
 
