@@ -14,15 +14,12 @@
 # limitations under the License.
 ############
 
-import os
 from collections import OrderedDict
 
 from .. import env
 from ..cli import cfy
-from ..exceptions import CloudifyCliError
 from ..commands.cluster import _all_in_one_manager
-from ..utils import ordered_yaml_dump, get_dict_from_yaml
-from ..replace_certificates_config import ReplaceCertificatesConfig
+from ..utils import ordered_yaml_dump
 
 CERTS_CONFIG_PATH = 'certificates_replacement_config.yaml'
 
@@ -58,30 +55,6 @@ def get_replace_certificates_config_file(output_path,
 
     logger.info('The certificates replacement configuration file was '
                 'saved to {0}'.format(output_path))
-
-
-@replace_certificates.command(name='start',
-                              short_help='Replace certificates after updating '
-                                         'the configuration file')
-@cfy.options.input_path()
-@cfy.assert_manager_active()
-@cfy.pass_client()
-@cfy.pass_logger
-def start_replace_certificates(input_path,
-                               logger,
-                               client):
-    input_path = input_path if input_path else CERTS_CONFIG_PATH
-    if not os.path.exists(input_path):
-        raise_first_create_config_file()
-
-    is_all_in_one = _all_in_one_manager(client)
-    config_dict = get_dict_from_yaml(input_path)
-    errors_list = validate_config_dict(config_dict, is_all_in_one)
-    if errors_list:
-        raise_errors_list(errors_list, logger)
-
-    main_config = ReplaceCertificatesConfig(config_dict, is_all_in_one, logger)
-    main_config.replace_certificates()
 
 
 def _get_cluster_configuration_dict(client):
@@ -146,91 +119,3 @@ def _basic_config_update(config):
                     }
          }
     )
-
-
-def raise_first_create_config_file():
-    raise CloudifyCliError('Please create the replace-certificates '
-                           'configuration file first using the command'
-                           ' `cfy replace-certificates generate-file`')
-
-
-def validate_config_dict(config_dict, is_all_in_one):
-    errors_list = []
-    if is_all_in_one:
-        # TODO: implement for the AIO case
-        pass
-    else:
-        _validate_username_and_private_key(errors_list, config_dict)
-        _validate_instances(errors_list, config_dict)
-    return errors_list
-
-
-def _validate_username_and_private_key(errors_list, config_dict):
-    if ((not config_dict.get('instances_username')) or
-            (not config_dict.get('private_key_file_path'))):
-        errors_list.append('The instances_username or the '
-                           'private_key_file_path were not specified')
-
-    _check_path(errors_list, config_dict.get('private_key_file_path'))
-
-
-def _validate_instances(errors_list, config_dict):
-    manager_section = config_dict.get('manager')
-    external_certificates = manager_section['external_certificates']
-    _validate_manager_ca_cert_and_key(errors_list, manager_section)
-    _validate_external_certs(errors_list, external_certificates)
-    for instance in 'manager', 'db', 'broker':
-        _validate_nodes(errors_list, config_dict[instance]['nodes'])
-    # TODO: Validate that if a new CA was given, also new certs are needed.
-    #  Maybe besides manager case where we're supposed to generate them?
-
-
-def _validate_external_certs(errors_list, external_certs):
-    if (external_certs.get('new_external_ca_key_path') and
-            (not external_certs.get('new_external_ca_cert_path'))):
-        errors_list.append('Please provide the new_external_ca_cert_path '
-                           'in addition to the new_external_ca_key_path')
-
-    if (bool(external_certs.get('new_external_cert_path')) !=
-            bool(external_certs.get('new_external_key_path'))):
-        errors_list.append('Please specify both the new_cert_path '
-                           'and new_key_path or none of them for external '
-                           'certificates')
-
-    for path in external_certs.values():
-        _check_path(errors_list, path)
-
-
-def _validate_manager_ca_cert_and_key(errors_list, manager_section):
-    new_ca_cert_path = manager_section.get('new_ca_cert_path')
-    new_ca_key_path = manager_section.get('new_ca_key_path')
-    _check_path(errors_list, new_ca_cert_path)
-    _check_path(errors_list, new_ca_key_path)
-    if new_ca_key_path and (not new_ca_cert_path):
-        errors_list.append('Please provide the new_ca_cert_path in '
-                           'addition to the new_ca_key_path')
-
-
-def _validate_nodes(errors_list, nodes):
-    for node in nodes:
-        new_cert_path = node.get('new_cert_path')
-        new_key_path = node.get('new_key_path')
-        if bool(new_cert_path) != bool(new_key_path):
-            errors_list.append('Please specify both the new_cert_path '
-                               'and new_key_path or none of them for node '
-                               'with IP {0}'.format(node['host_ip']))
-        _check_path(errors_list, new_cert_path)
-        _check_path(errors_list, new_key_path)
-
-
-def _check_path(errors_list, path):
-    if path and (not os.path.exists(path)):
-        errors_list.append('The path {0} does not exist'.format(path))
-
-
-def raise_errors_list(errors_list, logger):
-    logger.info('Errors:')
-    for error in errors_list:
-        # TODO: check the printing
-        logger.info(error)
-    raise CloudifyCliError('\nPlease go over the errors above')
