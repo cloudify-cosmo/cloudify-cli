@@ -484,3 +484,45 @@ def summary(target_field, sub_field, logger, client, tenant_name,
         items,
         'Execution summary by {field}'.format(field=target_field),
     )
+
+
+@executions.command(name='delete',
+                    short_help='Delete finished executions')
+@cfy.options.common_options
+@cfy.options.tenant_name(required=False,
+                         resource_name_for_help='executions')
+@cfy.options.to_datetime(required=False,
+                         mutually_exclusive_with=['before', 'keep_last'],
+                         help="Executions that were created at this timestamp"
+                              " or before will be deleted")
+@cfy.options.before(required=False,
+                    mutually_exclusive_with=['to_datetime', 'keep_last'],
+                    help="Executions that were created this long ago or "
+                         "earlier will be deleted (e.g. '2 weeks')")
+@cfy.options.keep_last("executions",
+                       required=False,
+                       mutually_exclusive_with=['before', 'to_datetime'])
+@cfy.options.all_tenants
+@cfy.pass_logger
+@cfy.pass_client()
+def delete(logger, client, tenant_name, to_datetime, before, keep_last,
+           all_tenants):
+    """Delete executions from the executions list, by specifying a number of
+    executions to keep, a number of days to keep executions for, or a date
+    starting from which to keep executions.
+
+    * Only deletes finished executions, i.e. completed, failed or cancelled.
+
+    * Does not delete the latest deployment environment creation for each
+    deployment."""
+    if before:
+        to_datetime = before
+
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    deleted_executions_count = client.executions.delete(
+        to_datetime=to_datetime, keep_last=keep_last, _all_tenants=all_tenants)
+    deleted_executions_count = deleted_executions_count
+    if deleted_executions_count:
+        logger.info('\nDeleted %d executions', deleted_executions_count)
+    else:
+        logger.info('\nNo executions to delete')
