@@ -160,8 +160,8 @@ def list(execution_id,
                               " or before will be deleted")
 @cfy.options.before(required=False,
                     mutually_exclusive_with=['to_datetime'],
-                    help="Events that occurred this long ago or earlier"
-                         "will be deleted")
+                    help="Events that occurred this long ago or earlier "
+                         "will be deleted (e.g. '2 weeks')")
 @cfy.options.store_before()
 @cfy.options.store_output_path()
 @cfy.pass_client()

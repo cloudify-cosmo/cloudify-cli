@@ -395,6 +395,7 @@ MANAGER = "Connect to a specific manager by IP or host"
 FROM_DATETIME = "Beginning of a period"
 TO_DATETIME = "End of a period"
 BEFORE = "How long ago did the specified period ended"
+KEEP_LAST = "Keep the N most recent {0} from deletion"
 
 STORE_BEFORE_DELETION = "List and store events before deleting them"
 STORE_OUTPUT_PATH = "Store listed events to a specified file (cli side)"

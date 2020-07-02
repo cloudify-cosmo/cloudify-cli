@@ -1720,6 +1720,20 @@ class Options(object):
         return click.option('--before', **kwargs)
 
     @staticmethod
+    def keep_last(resource_name,
+                  required=False,
+                  mutually_exclusive_with=None):
+        kwargs = {
+            'required': required,
+            'type': click.IntRange(min=1),
+            'help': helptexts.KEEP_LAST.format(resource_name),
+        }
+        if mutually_exclusive_with:
+            kwargs['cls'] = MutuallyExclusiveOption
+            kwargs['mutually_exclusive'] = mutually_exclusive_with
+        return click.option('--keep-last', **kwargs)
+
+    @staticmethod
     def store_before(default=False):
         return click.option(
             '--store-before',
