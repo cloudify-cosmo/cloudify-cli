@@ -129,12 +129,12 @@ FORCE_PLUGINS_UPDATE = (
 
 DEPLOYMENT_ID = "The unique identifier for the deployment"
 EXECUTION_ID = "The unique identifier for the execution"
-IGNORE_LIVE_NODES = (
-    "Delete the deployment even if there are existing live nodes for it"
-)
-
 INCLUDE_SYSTEM_WORKFLOWS = "Include executions of system workflows"
 
+FORCE_DELETE_DEPLOYMENT = (
+    "Delete the deployment even if there are existing live nodes for it, "
+    "or existing installations which depend on it"
+)
 FORCE_CONCURRENT_EXECUTION = (
     "Execute the workflow even if there is an ongoing execution for the given "
     "deployment"
