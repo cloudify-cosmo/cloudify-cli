@@ -522,7 +522,7 @@ def manager_create(blueprint_id,
 @cfy.command(name='delete',
              short_help='Delete a deployment [manager only]')
 @cfy.argument('deployment-id')
-@cfy.options.force(help=helptexts.IGNORE_LIVE_NODES)
+@cfy.options.force(help=helptexts.FORCE_DELETE_DEPLOYMENT)
 @cfy.options.common_options
 @cfy.options.with_logs
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
