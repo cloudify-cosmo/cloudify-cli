@@ -34,7 +34,7 @@ def replace_certificates():
         env.raise_uninitialized()
 
 
-@replace_certificates.command(name='generate-file',
+@replace_certificates.command(name='generate-config',
                               short_help='Generate the configuration file '
                                          'needed for certificates replacement')
 @cfy.options.output_path
@@ -59,26 +59,26 @@ def get_replace_certificates_config_file(output_path,
 
 def _get_cluster_configuration_dict(client):
     instances_ips = _get_instances_ips(client)
-    config = OrderedDict([('instances_username', ''),
-                          ('private_key_file_path', '')])
+    config = OrderedDict()
     _basic_config_update(config)
     _add_nodes_to_config_instance(config, 'manager',
                                   instances_ips['manager_nodes_ips'])
-    _add_nodes_to_config_instance(config, 'db',
+    _add_nodes_to_config_instance(config, 'postgresql_server',
                                   instances_ips['db_nodes_ips'])
-    _add_nodes_to_config_instance(config, 'broker',
+    _add_nodes_to_config_instance(config, 'rabbitmq',
                                   instances_ips['broker_nodes_ips'])
     return config
 
 
 def _add_nodes_to_config_instance(config, instance_name, instance_ips):
-    for instance_ip in instance_ips:
-        instance = {'host_ip': instance_ip,
+    for node_ip in instance_ips:
+        instance = {'host_ip': node_ip,
                     'new_cert_path': '',
                     'new_key_path': ''}
+        config[instance_name]['cluster_members'].append(instance)
         if instance_name == 'manager':
             external_certificates = {
-                'external_certificates': {
+                'new_node_external_certificates': {
                     'new_external_cert_path': '',
                     'new_external_key_path': ''
                 }
@@ -91,7 +91,6 @@ def _add_nodes_to_config_instance(config, instance_name, instance_ips):
             }
             instance.update(external_certificates)
             instance.update(postgresql_client)
-        config[instance_name]['nodes'].append(instance)
 
 
 def _get_instances_ips(client):
@@ -109,13 +108,13 @@ def _basic_config_update(config):
         {'manager': {'new_ca_cert_path': '',
                      'new_external_ca_cert_path': '',
                      'new_ldap_ca_cert_path': '',
-                     'nodes': []
+                     'cluster_members': []
                      },
-         'db': {'new_ca_cert_path': '',
-                'nodes': []
-                },
-         'broker': {'new_ca_cert_path': '',
-                    'nodes': []
-                    }
+         'postgresql_server': {'new_ca_cert_path': '',
+                               'cluster_members': []
+                               },
+         'rabbitmq': {'new_ca_cert_path': '',
+                      'cluster_members': []
+                      }
          }
     )
