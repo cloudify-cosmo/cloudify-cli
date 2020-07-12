@@ -85,3 +85,37 @@ SUPPORTED_ARCHIVE_TYPES = ('zip', 'tar', 'tar.gz', 'tar.bz2')
 
 DELETE_DEP = 'delete_deployment_environment'
 CREATE_DEPLOYMENT = 'create_deployment_environment'
+
+# These constants are the same as on the cloudify-manager-install #
+
+NEW_CERTS_TMP_DIR_PATH = '/tmp/new_cloudify_certs/'
+
+NEW_BROKER_CERT_FILE_PATH = NEW_CERTS_TMP_DIR_PATH + 'new_rabbitmq_cert.pem'
+NEW_BROKER_KEY_FILE_PATH = NEW_CERTS_TMP_DIR_PATH + 'new_rabbitmq_key.pem'
+NEW_BROKER_CA_CERT_FILE_PATH = (NEW_CERTS_TMP_DIR_PATH +
+                                'new_rabbitmq_ca_cert.pem')
+
+NEW_POSTGRESQL_CERT_FILE_PATH = (NEW_CERTS_TMP_DIR_PATH +
+                                 'new_postgresql_cert.pem')
+NEW_POSTGRESQL_KEY_FILE_PATH = (NEW_CERTS_TMP_DIR_PATH +
+                                'new_postgresql_key.pem')
+NEW_POSTGRESQL_CLIENT_CERT_FILE_PATH = (NEW_CERTS_TMP_DIR_PATH +
+                                        'new_postgresql_client_cert.pem')
+NEW_POSTGRESQL_CLIENT_KEY_FILE_PATH = (NEW_CERTS_TMP_DIR_PATH +
+                                       'new_postgresql_client_key.pem')
+NEW_POSTGRESQL_CA_CERT_FILE_PATH = (NEW_CERTS_TMP_DIR_PATH +
+                                    'new_postgresql_ca_cert.pem')
+
+NEW_INTERNAL_CERT_FILE_PATH = NEW_CERTS_TMP_DIR_PATH + 'new_internal_cert.pem'
+NEW_INTERNAL_KEY_FILE_PATH = NEW_CERTS_TMP_DIR_PATH + 'new_internal_key.pem'
+NEW_INTERNAL_CA_CERT_FILE_PATH = (NEW_CERTS_TMP_DIR_PATH +
+                                  'new_internal_ca_cert.pem')
+
+NEW_EXTERNAL_CERT_FILE_PATH = NEW_CERTS_TMP_DIR_PATH + 'new_external_cert.pem'
+NEW_EXTERNAL_KEY_FILE_PATH = NEW_CERTS_TMP_DIR_PATH + 'new_external_key.pem'
+NEW_EXTERNAL_CA_CERT_FILE_PATH = (NEW_CERTS_TMP_DIR_PATH +
+                                  'new_external_ca_cert.pem')
+
+NEW_LDAP_CA_CERT_PATH = (NEW_CERTS_TMP_DIR_PATH + 'new_ldap_ca_cert.pem')
+
+##################################################################
