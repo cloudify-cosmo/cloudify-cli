@@ -17,8 +17,8 @@
 from fabric import Connection
 from paramiko import AuthenticationException
 
+from . import env
 from .exceptions import CloudifyCliError
-from .constants import CERTS_TMP_DIR_PATH
 
 
 class Node(object):
@@ -69,8 +69,8 @@ class Node(object):
     def replace_certificates(self):
         pass
 
-    def _prepare_new_certs_dir(self):
-        self.run_command('mkdir {0}'.format(CERTS_TMP_DIR_PATH))
+    # def _prepare_new_certs_dir(self):
+    #     self.run_command('mkdir {0}'.format(CERTS_TMP_DIR_PATH))
 
 
 class BrokerNode(Node):
@@ -165,17 +165,20 @@ class ReplaceCertificatesConfig(object):
         self.logger = logger
         self.is_all_in_one = is_all_in_one
         self.config_dict = config_dict
-        self.username = self.config_dict.get('instances_username')
-        self.key_file_path = self.config_dict.get('private_key_file_path')
+        self.username = env.profile.ssh_user
+        self.key_file_path = env.profile.ssh_key
         self.manager_instance = ManagerInstanceConfig(
             self.config_dict.get('manager'), self.username,
             self.key_file_path, self.logger)
         self.db_instance = DBInstanceConfig(
-            self.config_dict.get('db'), self.username,
+            self.config_dict.get('postgresql_server'), self.username,
             self.key_file_path, self.logger)
         self.broker_instance = BrokerInstanceConfig(
-            self.config_dict.get('broker'), self.username,
+            self.config_dict.get('rabbitmq'), self.username,
             self.key_file_path, self.logger)
+
+    def validate_certificates(self):
+        pass
 
     def replace_certificates(self):
         pass
