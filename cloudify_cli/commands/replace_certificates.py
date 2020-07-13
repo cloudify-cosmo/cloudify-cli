@@ -68,16 +68,16 @@ def start_replace_certificates(input_path,
                                force,
                                logger):
     # TODO: implement for the AIO case
-    input_path = _get_input_path(input_path)
     _validate_username_and_private_key()
-
-    config_dict = get_dict_from_yaml(input_path)
+    config_dict = get_dict_from_yaml(_get_input_path(input_path))
     errors_list = validate_config_dict(config_dict, force, logger)
     if errors_list:
         raise_errors_list(errors_list, logger)
 
     main_config = ReplaceCertificatesConfig(config_dict, False, logger)
-    main_config.replace_certificates()
+    are_certs_valid = main_config.validate_certificates()
+    if are_certs_valid:
+        main_config.replace_certificates()
 
 
 def _get_input_path(input_path):
@@ -242,9 +242,10 @@ def _validate_cert_and_key(errors_list, nodes, is_manager):
 def _validate_node_certs(errors_list, certs_dict, new_cert_name, new_key_name):
     new_cert_path = certs_dict.get(new_cert_name)
     new_key_path = certs_dict.get(new_key_name)
-    if new_key_path and not new_cert_path:
-        errors_list.append('Specify the {0} for host {1}'.format(
-            new_cert_name, certs_dict['host_ip']))
+    if bool(new_key_path) != bool(new_cert_path):
+        errors_list.append('Either both cert_path and key_path must be '
+                           'provided, or neither for host '
+                           '{0}'.format(certs_dict['host_ip']))
     _check_path(errors_list, new_cert_path)
     _check_path(errors_list, new_key_path)
 
