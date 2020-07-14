@@ -15,12 +15,13 @@
 ############
 
 import os
-from collections import OrderedDict
+
+import yaml
 
 from .. import env
 from ..cli import cfy
+from ..utils import get_dict_from_yaml
 from ..exceptions import CloudifyCliError
-from ..utils import ordered_yaml_dump, get_dict_from_yaml
 from ..replace_certificates_config import ReplaceCertificatesConfig
 
 CERTS_CONFIG_PATH = 'certificates_replacement_config.yaml'
@@ -50,7 +51,7 @@ def get_replace_certificates_config_file(output_path,
     output_path = output_path if output_path else CERTS_CONFIG_PATH
     config = _get_cluster_configuration_dict(client)
     with open(output_path, 'w') as output_file:
-        ordered_yaml_dump(config, output_file)
+        yaml.dump(config, output_file)
 
     logger.info('The certificates replacement configuration file was '
                 'saved to {0}'.format(output_path))
@@ -91,7 +92,7 @@ def _get_input_path(input_path):
 
 def _get_cluster_configuration_dict(client):
     instances_ips = _get_instances_ips(client)
-    config = OrderedDict()
+    config = {}
     _basic_config_update(config)
     _add_nodes_to_config_instance(config, 'manager',
                                   instances_ips['manager_nodes_ips'])
