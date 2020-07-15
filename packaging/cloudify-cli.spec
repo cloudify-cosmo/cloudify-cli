@@ -11,7 +11,7 @@ URL:            https://github.com/cloudify-cosmo/cloudify-cli
 Vendor:         Cloudify Platform Ltd.
 Packager:       Cloudify Platform Ltd.
 
-BuildRequires: python3 >= 3.6, python-virtualenv
+BuildRequires: python3 >= 3.6
 Requires:       python3 >= 3.6
 
 
