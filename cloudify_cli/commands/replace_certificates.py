@@ -51,7 +51,7 @@ def get_replace_certificates_config_file(output_path,
     output_path = output_path if output_path else CERTS_CONFIG_PATH
     config = _get_cluster_configuration_dict(client)
     with open(output_path, 'w') as output_file:
-        yaml.dump(config, output_file)
+        yaml.dump(config, output_file, default_flow_style=False)
 
     logger.info('The certificates replacement configuration file was '
                 'saved to {0}'.format(output_path))
@@ -69,8 +69,10 @@ def start_replace_certificates(input_path,
                                force,
                                logger):
     # TODO: implement for the AIO case
+    # TODO: Validate the user role = admin
     _validate_username_and_private_key()
     config_dict = get_dict_from_yaml(_get_input_path(input_path))
+    logger.info('Validating replace-certificates config file...')
     errors_list = validate_config_dict(config_dict, force, logger)
     if errors_list:
         raise_errors_list(errors_list, logger)
@@ -78,7 +80,11 @@ def start_replace_certificates(input_path,
     main_config = ReplaceCertificatesConfig(config_dict, False, logger)
     are_certs_valid = main_config.validate_certificates()
     if are_certs_valid:
-        main_config.replace_certificates()
+        logger.info('Replacing certificates')
+        replace_certs_succeeded = main_config.replace_certificates()
+        new_cli_cert = main_config.new_cli_ca_cert()
+        if replace_certs_succeeded and new_cli_cert:
+            os.system('cfy profiles set -c {0}'.format(new_cli_cert))
 
 
 def _get_input_path(input_path):
@@ -94,8 +100,8 @@ def _get_cluster_configuration_dict(client):
     instances_ips = _get_instances_ips(client)
     config = {}
     _basic_config_update(config)
-    _add_nodes_to_config_instance(config, 'manager',
-                                  instances_ips['manager_nodes_ips'])
+    _add_manager_nodes_to_config_instance(config,
+                                          instances_ips['manager_nodes_ips'])
     _add_nodes_to_config_instance(config, 'postgresql_server',
                                   instances_ips['db_nodes_ips'])
     _add_nodes_to_config_instance(config, 'rabbitmq',
@@ -103,27 +109,25 @@ def _get_cluster_configuration_dict(client):
     return config
 
 
+def _add_manager_nodes_to_config_instance(config, manager_ips):
+    for host_ip in manager_ips:
+        instance = {'host_ip': str(host_ip),
+                    'new_internal_cert_path': '',
+                    'new_internal_key_path': '',
+                    'new_external_cert_path': '',
+                    'new_external_key_path': '',
+                    'new_postgresql_client_cert_path': '',
+                    'new_postgresql_client_key_path': ''
+                    }
+        config['manager']['cluster_members'].append(instance)
+
+
 def _add_nodes_to_config_instance(config, instance_name, instance_ips):
     for node_ip in instance_ips:
-        instance = {'host_ip': node_ip,
+        instance = {'host_ip': str(node_ip),
                     'new_cert_path': '',
                     'new_key_path': ''}
         config[instance_name]['cluster_members'].append(instance)
-        if instance_name == 'manager':
-            external_certificates = {
-                'new_node_external_certificates': {
-                    'new_external_cert_path': '',
-                    'new_external_key_path': ''
-                }
-            }
-            postgresql_client = {
-                'postgresql_client': {
-                    'new_postgresql_client_cert_path': '',
-                    'new_postgresql_client_key_path': '',
-                }
-            }
-            instance.update(external_certificates)
-            instance.update(postgresql_client)
 
 
 def _get_instances_ips(client):
@@ -156,8 +160,6 @@ def _basic_config_update(config):
 def validate_config_dict(config_dict, force, logger):
     errors_list = []
     _validate_instances(errors_list, config_dict, force, logger)
-    _validate_external_ca_cert(errors_list, config_dict, force, logger)
-    _validate_postgresql_client_ca(errors_list, config_dict, force, logger)
     _check_path(errors_list, config_dict['manager']['new_ldap_ca_cert_path'])
     return errors_list
 
@@ -170,42 +172,44 @@ def _validate_username_and_private_key():
 
 
 def _validate_instances(errors_list, config_dict, force, logger):
-    for instance in 'manager', 'postgresql_server', 'rabbitmq':
+    for instance in 'postgresql_server', 'rabbitmq':
         _validate_cert_and_key(errors_list,
-                               config_dict[instance]['cluster_members'],
-                               instance == 'manager')
+                               config_dict[instance]['cluster_members'])
         _validate_new_ca_cert(errors_list, config_dict, instance, force,
                               logger)
 
-
-def _validate_new_ca_cert(errors_list, config_dict, instance, force, logger):
-    _validate_ca_cert(errors_list, config_dict[instance], instance,
-                      'new_ca_cert_path',
-                      config_dict[instance]['cluster_members'],
-                      'new_cert_path', force, logger)
+    _validate_manager_cert_and_key(errors_list,
+                                   config_dict['manager']['cluster_members'])
+    _validate_new_manager_ca_certs(errors_list, config_dict, force, logger)
 
 
-def _validate_external_ca_cert(errors_list, config_dict, force, logger):
-    external_certs_list = [member['new_node_external_certificates'] for
-                           member in config_dict['manager']['cluster_members']]
+def _validate_new_ca_cert(errors_list, config_dict, instance_name, force,
+                          logger):
+    _validate_ca_cert(errors_list, config_dict[instance_name], instance_name,
+                      'new_ca_cert_path', 'new_cert_path',
+                      config_dict[instance_name]['cluster_members'],
+                      force, logger)
 
+
+def _validate_new_manager_ca_certs(errors_list, config_dict, force, logger):
     _validate_ca_cert(errors_list, config_dict['manager'], 'manager',
-                      'new_external_ca_cert_path', external_certs_list,
-                      'new_external_cert_path', force, logger)
-
-
-def _validate_postgresql_client_ca(errors_list, config_dict, force, logger):
-    postgresql_certs_list = [member['postgresql_client'] for member in
-                             config_dict['manager']['cluster_members']]
-
-    _validate_ca_cert(errors_list, config_dict['postgresql_server'],
+                      'new_ca_cert_path', 'new_internal_cert_path',
+                      config_dict['manager']['cluster_members'],
+                      force, logger)
+    _validate_ca_cert(errors_list, config_dict['manager'],
+                      'manager', 'new_external_ca_cert_path',
+                      'new_external_cert_path',
+                      config_dict['manager']['cluster_members'],
+                      force, logger)
+    _validate_ca_cert(errors_list,  config_dict['postgresql_server'],
                       'postgresql_server', 'new_ca_cert_path',
-                      postgresql_certs_list, 'new_postgresql_client_cert_path',
+                      'new_postgresql_client_cert_path',
+                      config_dict['manager']['cluster_members'],
                       force, logger)
 
 
 def _validate_ca_cert(errors_list, instance, instance_name, new_ca_cert_name,
-                      cluster_members, cert_name, force, logger):
+                      cert_name, cluster_members, force, logger):
     err_msg = '{0} was specified for instance {1}, but {2} was not specified' \
               ' for all cluster members.'.format(new_ca_cert_name,
                                                  instance_name,
@@ -222,31 +226,33 @@ def _validate_ca_cert(errors_list, instance, instance_name, new_ca_cert_name,
                                    'to replace the certificates')
 
 
-def _validate_cert_and_key(errors_list, nodes, is_manager):
+def _validate_cert_and_key(errors_list, nodes):
     for node in nodes:
         _validate_node_certs(errors_list, node, 'new_cert_path',
                              'new_key_path')
-        if is_manager:
-            certs_dict = {'host_ip': node['host_ip']}
-            certs_dict.update(node['new_node_external_certificates'])
-            certs_dict.update(node['postgresql_client'])
-            _validate_node_certs(errors_list,
-                                 certs_dict,
-                                 'new_external_cert_path',
-                                 'new_external_key_path')
-            _validate_node_certs(errors_list,
-                                 certs_dict,
-                                 'new_postgresql_client_cert_path',
-                                 'new_postgresql_client_key_path')
+
+
+def _validate_manager_cert_and_key(errors_list, nodes):
+    for node in nodes:
+        _validate_node_certs(errors_list, node,
+                             'new_internal_cert_path',
+                             'new_internal_key_path')
+        _validate_node_certs(errors_list, node,
+                             'new_external_cert_path',
+                             'new_external_key_path')
+        _validate_node_certs(errors_list, node,
+                             'new_postgresql_client_cert_path',
+                             'new_postgresql_client_key_path')
 
 
 def _validate_node_certs(errors_list, certs_dict, new_cert_name, new_key_name):
     new_cert_path = certs_dict.get(new_cert_name)
     new_key_path = certs_dict.get(new_key_name)
     if bool(new_key_path) != bool(new_cert_path):
-        errors_list.append('Either both cert_path and key_path must be '
+        errors_list.append('Either both {0} and {1} must be '
                            'provided, or neither for host '
-                           '{0}'.format(certs_dict['host_ip']))
+                           '{2}'.format(new_cert_name, new_key_name,
+                                        certs_dict['host_ip']))
     _check_path(errors_list, new_cert_path)
     _check_path(errors_list, new_key_path)
 

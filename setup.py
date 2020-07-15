@@ -54,6 +54,6 @@ setup(
         'setuptools<=40.7.3'
     ],
     extras_require={
-        'ssh': ['fabric==2.5.0']
+        'ssh': ['fabric==2.5.0', 'paramiko==1.18.3']
     }
 )
