@@ -22,7 +22,8 @@ from .. import env
 from ..cli import cfy
 from ..utils import get_dict_from_yaml
 from ..exceptions import CloudifyCliError
-from ..replace_certificates_config import ReplaceCertificatesConfig
+from ..replace_certificates_config import (raise_errors_list,
+                                           ReplaceCertificatesConfig)
 
 CERTS_CONFIG_PATH = 'certificates_replacement_config.yaml'
 
@@ -54,7 +55,7 @@ def get_replace_certificates_config_file(output_path,
         yaml.dump(config, output_file, default_flow_style=False)
 
     logger.info('The certificates replacement configuration file was '
-                'saved to {0}'.format(output_path))
+                'saved to %s', output_path)
 
 
 @replace_certificates.command(name='start',
@@ -73,18 +74,14 @@ def start_replace_certificates(input_path,
     _validate_username_and_private_key()
     config_dict = get_dict_from_yaml(_get_input_path(input_path))
     logger.info('Validating replace-certificates config file...')
-    errors_list = validate_config_dict(config_dict, force, logger)
-    if errors_list:
-        raise_errors_list(errors_list, logger)
+    validate_config_dict(config_dict, force, logger)
 
     main_config = ReplaceCertificatesConfig(config_dict, False, logger)
-    are_certs_valid = main_config.validate_certificates()
-    if are_certs_valid:
-        logger.info('Replacing certificates')
-        replace_certs_succeeded = main_config.replace_certificates()
-        new_cli_cert = main_config.new_cli_ca_cert()
-        if replace_certs_succeeded and new_cli_cert:
-            os.system('cfy profiles set -c {0}'.format(new_cli_cert))
+    main_config.validate_certificates()
+    main_config.replace_certificates()
+    new_cli_cert = main_config.new_cli_ca_cert()
+    if new_cli_cert:
+        env.profile.rest_certificate = new_cli_cert
 
 
 def _get_input_path(input_path):
@@ -98,70 +95,54 @@ def _get_input_path(input_path):
 
 def _get_cluster_configuration_dict(client):
     instances_ips = _get_instances_ips(client)
-    config = {}
-    _basic_config_update(config)
-    _add_manager_nodes_to_config_instance(config,
-                                          instances_ips['manager_nodes_ips'])
-    _add_nodes_to_config_instance(config, 'postgresql_server',
-                                  instances_ips['db_nodes_ips'])
-    _add_nodes_to_config_instance(config, 'rabbitmq',
-                                  instances_ips['broker_nodes_ips'])
-    return config
+    return {
+        'manager': {'cluster_members': [{
+            'host_ip': str(host_ip),
+            'new_internal_cert': '',
+            'new_internal_key': '',
+            'new_external_cert': '',
+            'new_external_key': '',
+            'new_postgresql_client_cert': '',
+            'new_postgresql_client_key': ''
+        } for host_ip in instances_ips['manager_ips']],
+            'new_ca_cert': '',
+            'new_external_ca_cert': '',
+            'new_ldap_ca_cert': ''
+        },
+        'postgresql_server': {'cluster_members': [{
+            'host_ip': str(host_ip),
+            'new_cert': '',
+            'new_key': ''
+        } for host_ip in instances_ips['postgresql_ips']],
+            'new_ca_cert': ''
+        },
+        'rabbitmq': {'cluster_members': [{
+            'host_ip': str(host_ip),
+            'new_cert': '',
+            'new_key': ''
+        } for host_ip in instances_ips['rabbitmq_ips']],
+            'new_ca_cert': '',
+        }
 
-
-def _add_manager_nodes_to_config_instance(config, manager_ips):
-    for host_ip in manager_ips:
-        instance = {'host_ip': str(host_ip),
-                    'new_internal_cert_path': '',
-                    'new_internal_key_path': '',
-                    'new_external_cert_path': '',
-                    'new_external_key_path': '',
-                    'new_postgresql_client_cert_path': '',
-                    'new_postgresql_client_key_path': ''
-                    }
-        config['manager']['cluster_members'].append(instance)
-
-
-def _add_nodes_to_config_instance(config, instance_name, instance_ips):
-    for node_ip in instance_ips:
-        instance = {'host_ip': str(node_ip),
-                    'new_cert_path': '',
-                    'new_key_path': ''}
-        config[instance_name]['cluster_members'].append(instance)
+    }
 
 
 def _get_instances_ips(client):
-    return {'manager_nodes_ips': [manager.private_ip for manager in
-                                  client.manager.get_managers().items],
-            'broker_nodes_ips': [broker.host for broker in
-                                 client.manager.get_brokers().items],
-            'db_nodes_ips': [db.host for db in
-                             client.manager.get_db_nodes().items]
+    return {'manager_ips': [manager.private_ip for manager in
+                            client.manager.get_managers().items],
+            'rabbitmq_ips': [broker.host for broker in
+                             client.manager.get_brokers().items],
+            'postgresql_ips': [db.host for db in
+                               client.manager.get_db_nodes().items]
             }
-
-
-def _basic_config_update(config):
-    config.update(
-        {'manager': {'new_ca_cert_path': '',
-                     'new_external_ca_cert_path': '',
-                     'new_ldap_ca_cert_path': '',
-                     'cluster_members': []
-                     },
-         'postgresql_server': {'new_ca_cert_path': '',
-                               'cluster_members': []
-                               },
-         'rabbitmq': {'new_ca_cert_path': '',
-                      'cluster_members': []
-                      }
-         }
-    )
 
 
 def validate_config_dict(config_dict, force, logger):
     errors_list = []
     _validate_instances(errors_list, config_dict, force, logger)
-    _check_path(errors_list, config_dict['manager']['new_ldap_ca_cert_path'])
-    return errors_list
+    _check_path(errors_list, config_dict['manager']['new_ldap_ca_cert'])
+    if errors_list:
+        raise_errors_list(errors_list, logger)
 
 
 def _validate_username_and_private_key():
@@ -186,30 +167,35 @@ def _validate_instances(errors_list, config_dict, force, logger):
 def _validate_new_ca_cert(errors_list, config_dict, instance_name, force,
                           logger):
     _validate_ca_cert(errors_list, config_dict[instance_name], instance_name,
-                      'new_ca_cert_path', 'new_cert_path',
+                      'new_ca_cert', 'new_cert',
                       config_dict[instance_name]['cluster_members'],
                       force, logger)
 
 
 def _validate_new_manager_ca_certs(errors_list, config_dict, force, logger):
     _validate_ca_cert(errors_list, config_dict['manager'], 'manager',
-                      'new_ca_cert_path', 'new_internal_cert_path',
+                      'new_ca_cert', 'new_internal_cert',
                       config_dict['manager']['cluster_members'],
                       force, logger)
     _validate_ca_cert(errors_list, config_dict['manager'],
-                      'manager', 'new_external_ca_cert_path',
-                      'new_external_cert_path',
+                      'manager', 'new_external_ca_cert',
+                      'new_external_cert',
                       config_dict['manager']['cluster_members'],
                       force, logger)
-    _validate_ca_cert(errors_list,  config_dict['postgresql_server'],
-                      'postgresql_server', 'new_ca_cert_path',
-                      'new_postgresql_client_cert_path',
+    _validate_ca_cert(errors_list, config_dict['postgresql_server'],
+                      'postgresql_server', 'new_ca_cert',
+                      'new_postgresql_client_cert',
                       config_dict['manager']['cluster_members'],
                       force, logger)
 
 
 def _validate_ca_cert(errors_list, instance, instance_name, new_ca_cert_name,
                       cert_name, cluster_members, force, logger):
+    """Validates the CA cert.
+
+    Validates that the CA path is valid, and if it is, then a new cert was
+    specified for all cluster members.
+    """
     err_msg = '{0} was specified for instance {1}, but {2} was not specified' \
               ' for all cluster members.'.format(new_ca_cert_name,
                                                  instance_name,
@@ -228,21 +214,21 @@ def _validate_ca_cert(errors_list, instance, instance_name, new_ca_cert_name,
 
 def _validate_cert_and_key(errors_list, nodes):
     for node in nodes:
-        _validate_node_certs(errors_list, node, 'new_cert_path',
-                             'new_key_path')
+        _validate_node_certs(errors_list, node, 'new_cert',
+                             'new_key')
 
 
 def _validate_manager_cert_and_key(errors_list, nodes):
     for node in nodes:
         _validate_node_certs(errors_list, node,
-                             'new_internal_cert_path',
-                             'new_internal_key_path')
+                             'new_internal_cert',
+                             'new_internal_key')
         _validate_node_certs(errors_list, node,
-                             'new_external_cert_path',
-                             'new_external_key_path')
+                             'new_external_cert',
+                             'new_external_key')
         _validate_node_certs(errors_list, node,
-                             'new_postgresql_client_cert_path',
-                             'new_postgresql_client_key_path')
+                             'new_postgresql_client_cert',
+                             'new_postgresql_client_key')
 
 
 def _validate_node_certs(errors_list, certs_dict, new_cert_name, new_key_name):
@@ -263,11 +249,3 @@ def _check_path(errors_list, path):
             return True
         errors_list.append('The path {0} does not exist'.format(path))
     return False
-
-
-def raise_errors_list(errors_list, logger):
-    logger.info('Errors:')
-    for error in errors_list:
-        # TODO: check the printing
-        logger.info(error)
-    raise CloudifyCliError('\nPlease go over the errors above')
