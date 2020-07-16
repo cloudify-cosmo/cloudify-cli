@@ -1644,12 +1644,12 @@ class Options(object):
         )
 
     @staticmethod
-    def input_path(required=False, help=helptexts.INPUT_PATH):
+    def input_path(required=False):
         return click.option(
             '-i',
             '--input-path',
             required=required,
-            help=help
+            help=helptexts.INPUT_PATH
         )
 
     @staticmethod
