@@ -48,7 +48,7 @@ def replace_certificates():
 def get_replace_certificates_config_file(output_path,
                                          logger,
                                          client):
-    # TODO: Take care of the AIO case
+    # output_path is not a default param because of `cfy.options.output_path`
     output_path = output_path if output_path else CERTS_CONFIG_PATH
     config = _get_cluster_configuration_dict(client)
     with open(output_path, 'w') as output_file:
@@ -69,9 +69,8 @@ def get_replace_certificates_config_file(output_path,
 def start_replace_certificates(input_path,
                                force,
                                logger):
-    # TODO: implement for the AIO case
-    # TODO: Validate the user role = admin
     _validate_username_and_private_key()
+    # output_path is not a default param because of `cfy.options.output_path`
     config_dict = get_dict_from_yaml(_get_input_path(input_path))
     logger.info('Validating replace-certificates config file...')
     validate_config_dict(config_dict, force, logger)
@@ -146,7 +145,6 @@ def validate_config_dict(config_dict, force, logger):
 
 
 def _validate_username_and_private_key():
-    # TODO: what if the client is also the manager in the AIO case?
     if (not env.profile.ssh_user) or (not env.profile.ssh_key):
         raise CloudifyCliError('Please configure the profile ssh-key and '
                                'ssh-user using the `cfy profiles set` command')
