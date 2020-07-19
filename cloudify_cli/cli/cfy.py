@@ -16,13 +16,17 @@
 
 
 import sys
+import os
 import difflib
 import warnings
 import traceback
 import pkg_resources
-from functools import wraps
 import datetime
 import re
+import subprocess
+import locale
+import codecs
+from functools import wraps
 
 import click
 
@@ -455,7 +459,63 @@ def pass_context(func):
     return click.pass_context(func)
 
 
-class AliasedGroup(click.Group):
+class CommandMixin(object):
+
+    def __call__(self, *args, **kwargs):
+        super(CommandMixin, self).__call__(*args, **kwargs)
+
+    def main(
+        self,
+        args=None,
+        prog_name=None,
+        complete_var=None,
+        standalone_mode=True,
+        **extra
+    ):
+        self.set_locale_env()
+        super(CommandMixin, self).main(
+            args=args,
+            prog_name=prog_name,
+            complete_var=complete_var,
+            standalone_mode=standalone_mode,
+            **extra
+        )
+
+    @staticmethod
+    def set_locale_env():
+        # inspired by how click library handle unicode for python 3 environment
+        # https://github.com/pallets/click/blob/7.1.2/src/click/_unicodefun.py
+        try:
+            encoding = codecs.lookup(locale.getpreferredencoding()).name
+        except Exception:
+            encoding = 'ascii'
+        if encoding == 'ascii':
+            if os.name == "posix":
+                try:
+                    locales = subprocess.Popen(
+                        ["locale", "-a"], stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE
+                    ).communicate()[0]
+                except OSError:
+                    locales = b""
+
+                if isinstance(locales, bytes):
+                    locales = locales.decode("ascii", "replace")
+
+                local_to_set = None
+                for line in locales.splitlines():
+                    locale_env = line.strip()
+                    if locale_env.lower() in ("en_us.utf8", "en_us.utf-8"):
+                        local_to_set = locale_env
+                    elif locale_env.lower() in ("c.utf8", "c.utf-8"):
+                        local_to_set = locale_env
+                    if local_to_set:
+                        os.environ['LC_ALL'] = local_to_set
+                        os.environ['LANG'] = local_to_set
+                        break
+
+
+class AliasedGroup(CommandMixin, click.Group):
     def __init__(self, *args, **kwargs):
         self.max_suggestions = kwargs.pop("max_suggestions", 3)
         self.cutoff = kwargs.pop("cutoff", 0.5)
@@ -509,13 +569,14 @@ def group(name):
         cls=AliasedGroup)
 
 
-class CommandWithLoggers(click.Command):
+class CommandWithLoggers(CommandMixin, click.Command):
     """Like a click Command, but configure loggers first.
 
     We want loggers to be configured after argument parsing has been
     performed (ie. verbose/quiet callbacks have fired), but before the
     command was actually run.
     """
+
     def invoke(self, *a, **kw):
         logger.configure_loggers()
         return super(CommandWithLoggers, self).invoke(*a, **kw)
