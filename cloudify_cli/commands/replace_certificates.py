@@ -70,17 +70,18 @@ def start_replace_certificates(input_path,
                                force,
                                logger):
     _validate_username_and_private_key()
-    # output_path is not a default param because of `cfy.options.output_path`
     config_dict = get_dict_from_yaml(_get_input_path(input_path))
     logger.info('Validating replace-certificates config file...')
     validate_config_dict(config_dict, force, logger)
 
     main_config = ReplaceCertificatesConfig(config_dict, False, logger)
     main_config.validate_certificates()
+    logger.info('\nReplacing certificates...')
     main_config.replace_certificates()
     new_cli_cert = main_config.new_cli_ca_cert()
     if new_cli_cert:
         env.profile.rest_certificate = new_cli_cert
+    logger.info('\nSuccessfully replaced certificates')
 
 
 def _get_input_path(input_path):

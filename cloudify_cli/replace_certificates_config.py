@@ -62,8 +62,8 @@ class Node(object):
             self._command_failed(command, result.stderr)
 
     def put_file(self, local_path, remote_path):
-        self.logger.debug('Copying {0} to {1} on host {2}'.format(
-            local_path, remote_path, self.host_ip))
+        self.logger.debug('Copying %s to %s on host %a',
+                          local_path, remote_path, self.host_ip)
         self.connection.put(local_path, remote_path)
 
     def _command_failed(self, command, err_msg):
@@ -75,6 +75,7 @@ class Node(object):
     def replace_certificates(self):
         self.logger.info('Replacing certificates on host %s', self.host_ip)
         self.run_command('cfy_manager replace-certificates')
+        self.run_command('rm -rf {0}'.format(NEW_CERTS_TMP_DIR_PATH))
 
     def validate_certificates(self):
         self.logger.info('Validating certificates on host %s', self.host_ip)
@@ -93,7 +94,8 @@ class Node(object):
         return NEW_CERTS_TMP_DIR_PATH + new_cert_path + '.pem'
 
     def _prepare_new_certs_dir(self):
-        self.run_command('rm -r {0}; mkdir {0}'.format(NEW_CERTS_TMP_DIR_PATH))
+        self.run_command('rm -rf {0}; mkdir {0}'.format(
+            NEW_CERTS_TMP_DIR_PATH))
 
 
 class ReplaceCertificatesConfig(object):
@@ -131,12 +133,13 @@ class ReplaceCertificatesConfig(object):
         for node in self.relevant_nodes:
             node.validate_certificates()
         self.raise_if_nodes_have_errors()
+        self._close_clients_connection()
 
     def replace_certificates(self):
-        self.logger.info('Replacing certificates')
         for node in self.relevant_nodes:
             node.replace_certificates()
         self.raise_if_nodes_have_errors()
+        self._close_clients_connection()
 
     def new_cli_ca_cert(self):
         return self.config_dict['manager'].get('new_external_ca_cert_path')
@@ -171,6 +174,10 @@ class ReplaceCertificatesConfig(object):
                 'new_ca_cert')
             if postgresql_ca_cert:
                 node_dict['new_postgresql_server_ca_cert'] = postgresql_ca_cert
+
+            rabbitmq_ca_cert = self.config_dict['rabbitmq'].get('new_ca_cert')
+            if rabbitmq_ca_cert:
+                node_dict['new_rabbitmq_ca_cert'] = rabbitmq_ca_cert
 
         return node_dict
 
