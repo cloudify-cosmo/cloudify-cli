@@ -17,6 +17,7 @@
 from . import env
 from .exceptions import CloudifyCliError
 
+
 try:
     from fabric import Connection
     from paramiko import AuthenticationException
@@ -57,20 +58,16 @@ class Node(object):
 
     def run_command(self, command):
         self.logger.debug('Running `%s` on %s', command, self.host_ip)
-        result = self.connection.run(command, warn=True, hide='stderr')
+        result = self.connection.run(command, warn=True, hide=True)
         if result.failed:
-            self._command_failed(command, result.stderr)
+            raise CloudifyCliError(
+                'The command `{0}` on host {1} failed with the error: '
+                '{2}'.format(command, self.host_ip, result.stderr))
 
     def put_file(self, local_path, remote_path):
         self.logger.debug('Copying %s to %s on host %a',
                           local_path, remote_path, self.host_ip)
         self.connection.put(local_path, remote_path)
-
-    def _command_failed(self, command, err_msg):
-        err_list = [str(err) for err in err_msg.split('\n') if err]
-        self.errors_list.append(
-            'The command `{0}` on host {1} failed with the error(s): '
-            '{2}'.format(command, self.host_ip, err_list))
 
     def replace_certificates(self):
         self.logger.info('Replacing certificates on host %s', self.host_ip)
@@ -99,12 +96,12 @@ class Node(object):
 
 
 class ReplaceCertificatesConfig(object):
-    def __init__(self, config_dict, is_all_in_one, logger):
+    def __init__(self, config_dict, client, logger):
         if Connection is None:
             raise CloudifyCliError("SSH not available - fabric not installed")
 
+        self.client = client
         self.logger = logger
-        self.is_all_in_one = is_all_in_one
         self.config_dict = config_dict
         self.username = env.profile.ssh_user
         self.key_file_path = env.profile.ssh_key
@@ -122,24 +119,37 @@ class ReplaceCertificatesConfig(object):
         return relevant_nodes
 
     def validate_certificates(self):
-        self._validate_connection()
-        self._validate_certificates()
-
-    def _validate_connection(self):
-        # The connection is checked first for each node
-        self.raise_if_nodes_have_errors()
-
-    def _validate_certificates(self):
         for node in self.relevant_nodes:
-            node.validate_certificates()
-        self.raise_if_nodes_have_errors()
-        self._close_clients_connection()
+            try:
+                node.validate_certificates()
+            except CloudifyCliError as err:
+                self._close_clients_connection()
+                raise err
 
     def replace_certificates(self):
+        # Passing a bundle of the old+new CA certs to the agents
+        self._pass_new_ca_certs_to_agents(bundle=True)
         for node in self.relevant_nodes:
-            node.replace_certificates()
-        self.raise_if_nodes_have_errors()
-        self._close_clients_connection()
+            try:
+                node.replace_certificates()
+            except CloudifyCliError as err:
+                self._close_clients_connection()
+                raise err
+        # Passing only the new CA cert to the agents
+        self._pass_new_ca_certs_to_agents(bundle=False)
+
+    def _needs_to_update_agents(self):
+        return (self.config_dict['manager'].get('new_ca_cert') or
+                self.config_dict['rabbitmq'].get('new_ca_cert'))
+
+    def _pass_new_ca_certs_to_agents(self, bundle):
+        if not self._needs_to_update_agents():
+            return
+        new_manager_ca_cert = self.config_dict['manager'].get('new_ca_cert')
+        new_broker_ca_cert = self.config_dict['rabbitmq'].get('new_ca_cert')
+        self.client.agents.replace_ca_certs(bundle,
+                                            new_manager_ca_cert,
+                                            new_broker_ca_cert)
 
     def new_cli_ca_cert(self):
         return self.config_dict['manager'].get('new_external_ca_cert_path')
@@ -180,14 +190,6 @@ class ReplaceCertificatesConfig(object):
                 node_dict['new_rabbitmq_ca_cert'] = rabbitmq_ca_cert
 
         return node_dict
-
-    def raise_if_nodes_have_errors(self):
-        errors_list = []
-        for node in self.relevant_nodes:
-            errors_list.extend(node.errors_list)
-        if errors_list:
-            self._close_clients_connection()
-            raise_errors_list(errors_list, self.logger)
 
     def _close_clients_connection(self):
         for node in self.relevant_nodes:
