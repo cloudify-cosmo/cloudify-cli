@@ -71,6 +71,7 @@ def start_replace_certificates(input_path,
                                force,
                                logger,
                                client):
+    _validate_admin_user_role(client)
     _validate_username_and_private_key()
     config_dict = get_dict_from_yaml(_get_input_path(input_path))
     logger.info('Validating replace-certificates config file...')
@@ -85,6 +86,14 @@ def start_replace_certificates(input_path,
         logger.info('\nPlease replace the CLI CA cert in case you are not '
                     'using a load-balancer. You can do this by using '
                     '`cfy profiles set -c <ca-cert-path>`')
+
+
+def _validate_admin_user_role(client):
+    current_username = env.get_username()
+    user = client.users.get(current_username)
+    if not user.role == 'sys_admin':
+        raise CloudifyCliError('`cfy replace-certificates start` is '
+                               'restricted to users with sys-admin role.')
 
 
 def _get_input_path(input_path):
