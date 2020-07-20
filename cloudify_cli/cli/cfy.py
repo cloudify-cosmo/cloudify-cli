@@ -460,10 +460,12 @@ def pass_context(func):
 
 
 class CommandMixin(object):
-
-    def __call__(self, *args, **kwargs):
-        super(CommandMixin, self).__call__(*args, **kwargs)
-
+    """
+    This class mixin helps to set the right locale for system required
+    by python 3 for click library where "LC_ALL" & "LANG" are not set and
+    in order to avoid the RuntimeError raised by click library which
+    prevents invoking cfy commands
+    """
     def main(
         self,
         args=None,
@@ -472,6 +474,9 @@ class CommandMixin(object):
         standalone_mode=True,
         **extra
     ):
+        # Make sure to set the locale before calling the main method of
+        # click command/group that validate if the environment is
+        # good for unicode on Python 3 or not.
         self.set_locale_env()
         super(CommandMixin, self).main(
             args=args,
@@ -505,9 +510,12 @@ class CommandMixin(object):
                 local_to_set = None
                 for line in locales.splitlines():
                     locale_env = line.strip()
-                    if locale_env.lower() in ("en_us.utf8", "en_us.utf-8"):
-                        local_to_set = locale_env
-                    elif locale_env.lower() in ("c.utf8", "c.utf-8"):
+                    if locale_env.lower() in (
+                            "en_us.utf8",
+                            "en_us.utf-8",
+                            "c.utf8",
+                            "c.utf-8"
+                    ):
                         local_to_set = locale_env
                     if local_to_set:
                         os.environ['LC_ALL'] = local_to_set
