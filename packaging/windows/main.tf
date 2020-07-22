@@ -8,7 +8,7 @@ provider "aws" {
   region = "eu-west-1"
 }
 
-data "aws_ami" "windows_agent_builder" {
+data "aws_ami" "windows_cli_builder" {
   most_recent = true
 
   filter {
@@ -20,9 +20,9 @@ data "aws_ami" "windows_agent_builder" {
 }
 
 resource "aws_instance" "builder" {
-  ami           = "${data.aws_ami.windows_agent_builder.id}"
+  ami           = "${data.aws_ami.windows_cli_builder.id}"
   instance_type = "m3.medium"
-  iam_instance_profile = "windows_agent_builder"
+  iam_instance_profile = "windows_cli_builder"
 
   tags = {
     Name = "Windows Agent Builder"
@@ -52,7 +52,7 @@ resource "aws_instance" "builder" {
   EOT
 
   provisioner "file" {
-    source      = "win_agent_builder.ps1"
+    source      = "win_cli_builder.ps1"
     destination = "C:\\Users\\Administrator\\win_cli_builder.ps1"
     connection {
       type     = "winrm"
