@@ -22,7 +22,7 @@ data "aws_ami" "windows_cli_builder" {
 resource "aws_instance" "builder" {
   ami           = "${data.aws_ami.windows_cli_builder.id}"
   instance_type = "m3.medium"
-  iam_instance_profile = "windows_cli_builder"
+  iam_instance_profile = "windows_agent_builder"
 
   tags = {
     Name = "Windows Agent Builder"
