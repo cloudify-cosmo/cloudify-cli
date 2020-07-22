@@ -46,7 +46,6 @@ setup(
         'retrying==1.3.3',
         'colorama==0.3.3',
         'requests>=2.7.0,<3.0.0',
-        'PrettyTable>=0.7,<0.8',
         'click_didyoumean==0.0.3',
         'cloudify-common[dispatcher]==5.1.0.dev1',
         'backports.shutil_get_terminal_size==1.0.0',

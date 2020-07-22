@@ -18,7 +18,7 @@ import os
 import json
 from datetime import datetime
 
-from prettytable import PrettyTable
+from cloudify_cli.prettytable import PrettyTable
 from .logger import get_global_json_output, CloudifyJSONEncoder, output
 
 from cloudify._compat import text_type
