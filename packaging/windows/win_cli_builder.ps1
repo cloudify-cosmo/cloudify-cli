@@ -111,14 +111,16 @@ pushd cloudify-cli
     run $CLI_PATH\scripts\pip.exe install --prefix="$CLI_PATH" .
 popd
 
+Write-Host "Upload is: #$UPLOAD#"
 
 Write-Host "Building CLI package"
 $env:VERSION = $VERSION
 $env:PRERELEASE = $PRERELEASE
 run "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" cloudify-cli\packaging\windows\packaging\create_install_wizard.iss
 
+Write-Host "I might be about to upload"
 
-if ( $env:UPLOAD -eq "upload" ) {
+if ( $UPLOAD -eq "upload" ) {
     Write-Host "Preparing AWS CLI"
     run "$CLI_PATH\Scripts\pip.exe" install --prefix="$CLI_PATH" awscli
     Set-Content -Path "$CLI_PATH\scripts\aws.py" -Value "import awscli.clidriver
@@ -132,4 +134,6 @@ if ( $env:UPLOAD -eq "upload" ) {
         $s3_path = "s3://cloudify-release-eu/cloudify/$env:VERSION/$env:PRERELEASE-build"
         run "$CLI_PATH\python.exe" "$CLI_PATH\Scripts\aws.py" s3 cp .\ $s3_path --acl public-read --recursive
     popd
+} else {
+    Write-Host "I decided not to upload."
 }
