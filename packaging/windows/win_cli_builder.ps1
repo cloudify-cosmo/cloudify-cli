@@ -118,12 +118,12 @@ $env:PRERELEASE = $PRERELEASE
 run "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" cloudify-cli\packaging\windows\packaging\create_install_wizard.iss
 
 
-if ( UPLOAD -eq "upload" ) {
+if ( $UPLOAD -eq "upload" ) {
     Write-Host "Preparing AWS CLI"
     run "$CLI_PATH\Scripts\pip.exe" install --prefix="$CLI_PATH" awscli
     Set-Content -Path "$CLI_PATH\scripts\aws.py" -Value "import awscli.clidriver
-    import sys
-    sys.exit(awscli.clidriver.main())"
+import sys
+sys.exit(awscli.clidriver.main())"
 
     Write-Host "Uploading CLI to S3"
     pushd cloudify-cli\packaging\windows\packaging\output
