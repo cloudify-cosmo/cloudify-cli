@@ -31,6 +31,7 @@ from urlparse import urlparse
 from contextlib import closing, contextmanager
 from backports.shutil_get_terminal_size import get_terminal_size
 
+import yaml
 import requests
 
 from .logger import get_logger
@@ -421,3 +422,8 @@ def print_dict(keys_dict, logger):
     for key, values in keys_dict.items():
         str_values = [str(value) for value in values]
         logger.info('{0}: {1}'. format(key, str_values))
+
+
+def get_dict_from_yaml(yaml_path):
+    with open(yaml_path) as f:
+        return yaml.load(f, yaml.Loader)
