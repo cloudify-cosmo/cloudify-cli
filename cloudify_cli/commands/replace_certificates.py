@@ -65,23 +65,26 @@ def get_replace_certificates_config_file(output_path,
 @cfy.options.force('Use the force flag in case you want to change only a '
                    'CA and not the certificates signed by it')
 @cfy.assert_manager_active()
+@cfy.pass_client()
 @cfy.pass_logger
 def start_replace_certificates(input_path,
                                force,
-                               logger):
+                               logger,
+                               client):
     _validate_username_and_private_key()
     config_dict = get_dict_from_yaml(_get_input_path(input_path))
     logger.info('Validating replace-certificates config file...')
     validate_config_dict(config_dict, force, logger)
 
-    main_config = ReplaceCertificatesConfig(config_dict, False, logger)
+    main_config = ReplaceCertificatesConfig(config_dict, client, logger)
     main_config.validate_certificates()
     logger.info('\nReplacing certificates...')
     main_config.replace_certificates()
-    new_cli_cert = main_config.new_cli_ca_cert()
-    if new_cli_cert:
-        env.profile.rest_certificate = new_cli_cert
     logger.info('\nSuccessfully replaced certificates')
+    if main_config.new_cli_ca_cert():
+        logger.info('\nPlease replace the CLI CA cert in case you are not '
+                    'using a load-balancer. You can do this by using '
+                    '`cfy profiles set -c <ca-cert-path>`')
 
 
 def _get_input_path(input_path):
