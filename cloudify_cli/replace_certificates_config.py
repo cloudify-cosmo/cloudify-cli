@@ -85,9 +85,9 @@ class Node(object):
             self.put_file(new_cert_path, self._get_remote_cert_path(cert_name))
 
     def _get_remote_cert_path(self, cert_name):
-        new_cert_path = (('new_' + self.node_type + '_' + cert_name[4:])
-                         if self.node_type in ('postgresql_server', 'rabbitmq')
-                         else cert_name)
+        if (self.node_type == 'manager') or ('prometheus' in cert_name):
+            return NEW_CERTS_TMP_DIR_PATH + cert_name + '.pem'
+        new_cert_path = 'new_' + self.node_type + '_' + cert_name[4:]
         return NEW_CERTS_TMP_DIR_PATH + new_cert_path + '.pem'
 
     def _prepare_new_certs_dir(self):
@@ -188,6 +188,13 @@ class ReplaceCertificatesConfig(object):
             rabbitmq_ca_cert = self.config_dict['rabbitmq'].get('new_ca_cert')
             if rabbitmq_ca_cert:
                 node_dict['new_rabbitmq_ca_cert'] = rabbitmq_ca_cert
+
+        for cert_name, cert_path in self.config_dict['prometheus'].items():
+            if cert_path:
+                split_name = cert_name.split('_')
+                split_name.insert(1, 'prometheus')
+                modified_name = '_'.join(split_name)
+                node_dict[modified_name] = cert_path
 
         return node_dict
 

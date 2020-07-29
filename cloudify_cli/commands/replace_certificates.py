@@ -133,7 +133,12 @@ def _get_cluster_configuration_dict(client):
             'new_cert': '',
             'new_key': ''
         } for host_ip in instances_ips['rabbitmq_ips']],
-            'new_ca_cert': '',
+            'new_ca_cert': ''
+        },
+        'prometheus': {
+            'new_cert': '',
+            'new_key': '',
+            'new_ca_cert': ''
         }
 
     }
@@ -153,8 +158,24 @@ def validate_config_dict(config_dict, force, logger):
     errors_list = []
     _validate_instances(errors_list, config_dict, force, logger)
     _check_path(errors_list, config_dict['manager']['new_ldap_ca_cert'])
+    _validate_prometheus(errors_list, config_dict, force, logger)
     if errors_list:
         raise_errors_list(errors_list, logger)
+
+
+def _validate_prometheus(errors_list, config_dict, force, logger):
+    prometheus = config_dict['prometheus']
+    err_msg = 'A new CA cert was specified for prometheus but ' \
+              'a new_cert wasn`t.'
+    _validate_node_certs(errors_list, prometheus, 'new_cert', 'new_key')
+    ca_path_exists = _check_path(errors_list, prometheus.get('new_ca_cert'))
+    if ca_path_exists and not prometheus.get('new_cert'):
+        if force:
+            logger.info(err_msg)
+        else:
+            errors_list.append(err_msg +
+                               ' Please use `--force` if you still wish '
+                               'to replace the certificates')
 
 
 def _validate_username_and_private_key():
