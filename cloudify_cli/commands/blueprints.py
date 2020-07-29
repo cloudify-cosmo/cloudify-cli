@@ -117,7 +117,13 @@ def upload(ctx,
 
     # Take into account that `blueprint.get` might not return a URL
     # instead of a blueprint file (archive files are not locally downloaded)
-    is_url = bool(urlparse(processed_blueprint_path).scheme)
+    parsed_path = urlparse(processed_blueprint_path)
+    is_url = bool(
+        parsed_path.scheme
+        # But on windows there will always be a scheme, so check if the path
+        # exists
+        and not os.path.exists(processed_blueprint_path)
+    )
 
     progress_handler = utils.generate_progress_handler(blueprint_path, '')
     blueprint_id = blueprint_id or blueprint.generate_id(
