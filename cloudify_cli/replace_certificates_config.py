@@ -189,6 +189,13 @@ class ReplaceCertificatesConfig(object):
             if rabbitmq_ca_cert:
                 node_dict['new_rabbitmq_ca_cert'] = rabbitmq_ca_cert
 
+        for cert_name, cert_path in self.config_dict['prometheus'].items():
+            if cert_path:
+                split_name = cert_name.split('_')
+                split_name.insert(1, 'prometheus')
+                modified_name = '_'.join(split_name)
+                node_dict[modified_name] = cert_path
+
         return node_dict
 
     def _close_clients_connection(self):
