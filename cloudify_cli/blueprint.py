@@ -49,7 +49,8 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH, download=False):
     :rtype: str
 
     """
-    if urlparse(source).scheme:
+    # Cope with windows (where paths always have a scheme)
+    if urlparse(source).scheme and not os.path.exists(source):
         if download:
             downloaded_file = utils.download_file(source)
             return _get_blueprint_file_from_archive(
