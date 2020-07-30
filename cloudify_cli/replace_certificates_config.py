@@ -156,6 +156,8 @@ class ReplaceCertificatesConfig(object):
 
     def _create_nodes(self):
         for instance_type, instance_dict in self.config_dict.items():
+            if instance_type == 'prometheus':
+                continue
             for node in instance_dict['cluster_members']:
                 node_dict = self._create_node_dict(node, instance_type)
                 if node_dict:
@@ -191,10 +193,7 @@ class ReplaceCertificatesConfig(object):
 
         for cert_name, cert_path in self.config_dict['prometheus'].items():
             if cert_path:
-                split_name = cert_name.split('_')
-                split_name.insert(1, 'prometheus')
-                modified_name = '_'.join(split_name)
-                node_dict[modified_name] = cert_path
+                node_dict[cert_name] = cert_path
 
         return node_dict
 
