@@ -156,8 +156,6 @@ class ReplaceCertificatesConfig(object):
 
     def _create_nodes(self):
         for instance_type, instance_dict in self.config_dict.items():
-            if instance_type == 'prometheus':
-                continue
             for node in instance_dict['cluster_members']:
                 node_dict = self._create_node_dict(node, instance_type)
                 if node_dict:
@@ -190,10 +188,6 @@ class ReplaceCertificatesConfig(object):
             rabbitmq_ca_cert = self.config_dict['rabbitmq'].get('new_ca_cert')
             if rabbitmq_ca_cert:
                 node_dict['new_rabbitmq_ca_cert'] = rabbitmq_ca_cert
-
-        for cert_name, cert_path in self.config_dict['prometheus'].items():
-            if cert_path:
-                node_dict[cert_name] = cert_path
 
         return node_dict
 
