@@ -18,6 +18,8 @@ import os
 
 import yaml
 
+from cluster import _all_in_one_manager
+
 from .. import env
 from ..cli import cfy
 from ..utils import get_dict_from_yaml
@@ -73,11 +75,13 @@ def start_replace_certificates(input_path,
                                client):
     _validate_admin_user_role(client)
     _validate_username_and_private_key()
+    is_all_in_one = _all_in_one_manager(client)
     config_dict = get_dict_from_yaml(_get_input_path(input_path))
     logger.info('Validating replace-certificates config file...')
-    validate_config_dict(config_dict, force, logger)
+    validate_config_dict(config_dict, is_all_in_one, force, logger)
 
-    main_config = ReplaceCertificatesConfig(config_dict, client, logger)
+    main_config = ReplaceCertificatesConfig(config_dict, is_all_in_one,
+                                            client, logger)
     main_config.validate_certificates()
     logger.info('\nReplacing certificates...')
     main_config.replace_certificates()
@@ -106,6 +110,35 @@ def _get_input_path(input_path):
 
 
 def _get_cluster_configuration_dict(client):
+    if _all_in_one_manager(client):
+        return {
+            'manager': {
+                'new_internal_cert': '',
+                'new_internal_key': '',
+                'new_external_cert': '',
+                'new_external_key': '',
+                'new_postgresql_client_cert': '',
+                'new_postgresql_client_key': '',
+                'new_ca_cert': '',
+                'new_external_ca_cert': '',
+                'new_ldap_ca_cert': ''  # Relevant only if using LDAP
+                 },
+            'postgresql_server': {  # Relevant only if ssl_enabled==True
+                'new_postgresql_server_cert': '',
+                'new_postgresql_server_key': '',
+                'new_postgresql_server_ca_cert': ''
+            },
+            'rabbitmq': {  # Relevant only if specifying new_ca_cert
+                'new_rabbitmq_cert': '',
+                'new_rabbitmq_key': ''
+            },
+            'prometheus': {
+                'new_prometheus_cert': '',
+                'new_prometheus_key': '',
+                'new_prometheus_ca_cert': ''
+            }
+        }
+
     instances_ips = _get_instances_ips(client)
     return {
         'manager': {'cluster_members': [{
@@ -157,10 +190,14 @@ def _get_instances_ips(client):
             }
 
 
-def validate_config_dict(config_dict, force, logger):
+def validate_config_dict(config_dict, is_all_in_one, force, logger):
     errors_list = []
-    _validate_instances(errors_list, config_dict, force, logger)
-    _check_path(errors_list, config_dict['manager']['new_ldap_ca_cert'])
+    if is_all_in_one:
+        validate_all_in_one_config_dict(errors_list, config_dict)
+    else:
+        _validate_instances(errors_list, config_dict, force, logger)
+
+    _check_path(errors_list, config_dict['manager'].get('new_ldap_ca_cert'))
     if errors_list:
         raise_errors_list(errors_list, logger)
 
@@ -179,6 +216,42 @@ def _validate_prometheus(errors_list, node, force, logger):
             errors_list.append(err_msg +
                                ' Please use `--force` if you still wish '
                                'to replace the certificates')
+
+
+def validate_all_in_one_config_dict(errors_list, config_dict):
+    manager_section = config_dict['manager']
+    _validate_manager_node_cert_and_key(errors_list, manager_section)
+    err_msg = 'A {0} was specified for manager but a {1} was not specified'
+    if (manager_section.get('new_ca_cert') and
+            (not manager_section.get('new_internal_cert'))):
+        errors_list.append(err_msg.format('new_ca_cert', 'new_internal_cert'))
+
+    if (manager_section.get('new_external_ca_cert') and
+            (not manager_section.get('new_external_cert'))):
+        errors_list.append(err_msg.format('new_external_ca_cert',
+                                          'new_external_cert'))
+
+    if (manager_section.get('new_ca_cert') and
+            (not manager_section.get('new_postgresql_client_cert'))):
+        errors_list.append(err_msg.format('new_ca_cert',
+                                          'new_postgresql_client_cert'))
+
+    postgresql_section = config_dict['postgresql_server']
+    _validate_node_certs(errors_list, postgresql_section,
+                         'new_postgresql_server_cert',
+                         'new_postgresql_server_key')
+    if (postgresql_section.get('new_postgresql_server_ca_cert') and
+            (not postgresql_section.get('new_postgresql_server_cert'))):
+        errors_list.append('A new_ca_cert was specified for postgresql_server'
+                           'but a new_cert was not specified')
+
+    rabbitmq_section = config_dict['rabbitmq']
+    _validate_node_certs(errors_list, rabbitmq_section,
+                         'new_rabbitmq_cert', 'new_ravvitmq_key')
+    if (manager_section.get('new_rabbitmq_ca_cert') and
+            (not rabbitmq_section.get('new_rabbitmq_cert'))):
+        errors_list.append('A new_ca_cert was specified for manager'
+                           'but a new_cert was not specified for rabbitmq')
 
 
 def _validate_username_and_private_key():
@@ -257,16 +330,20 @@ def _validate_cert_and_key(errors_list, nodes, force, logger):
 
 def _validate_manager_cert_and_key(errors_list, nodes, force, logger):
     for node in nodes:
-        _validate_node_certs(errors_list, node,
-                             'new_internal_cert',
-                             'new_internal_key')
-        _validate_node_certs(errors_list, node,
-                             'new_external_cert',
-                             'new_external_key')
-        _validate_node_certs(errors_list, node,
-                             'new_postgresql_client_cert',
-                             'new_postgresql_client_key')
-        _validate_prometheus(errors_list, node, force, logger)
+        _validate_manager_node_cert_and_key(errors_list, node, force, logger)
+
+
+def _validate_manager_node_cert_and_key(errors_list, node, force, logger):
+    _validate_node_certs(errors_list, node,
+                         'new_internal_cert',
+                         'new_internal_key')
+    _validate_node_certs(errors_list, node,
+                         'new_external_cert',
+                         'new_external_key')
+    _validate_node_certs(errors_list, node,
+                         'new_postgresql_client_cert',
+                         'new_postgresql_client_key')
+    _validate_prometheus(errors_list, node, force, logger)
 
 
 def _validate_node_certs(errors_list, certs_dict, new_cert_name, new_key_name):

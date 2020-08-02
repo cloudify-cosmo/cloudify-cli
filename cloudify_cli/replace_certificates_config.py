@@ -96,13 +96,14 @@ class Node(object):
 
 
 class ReplaceCertificatesConfig(object):
-    def __init__(self, config_dict, client, logger):
+    def __init__(self, config_dict, is_all_in_one, client, logger):
         if Connection is None:
-            raise CloudifyCliError("SSH not available - fabric not installed")
+            raise CloudifyCliError('SSH not available - fabric not installed')
 
         self.client = client
         self.logger = logger
         self.config_dict = config_dict
+        self.is_all_in_one = is_all_in_one
         self.username = env.profile.ssh_user
         self.key_file_path = env.profile.ssh_key
         self.relevant_nodes_dict = {'manager': [],
@@ -150,6 +151,28 @@ class ReplaceCertificatesConfig(object):
         self.client.agents.replace_ca_certs(bundle,
                                             new_manager_ca_cert,
                                             new_broker_ca_cert)
+
+    def _create_all_in_one_node(self):
+        node_dict = self._create_all_in_one_node_dict()
+        if node_dict:
+            new_node = Node(
+                env.profile.manager_ip,
+                'manager',
+                node_dict,
+                self.logger
+            )
+            self.relevant_nodes_dict['manager'].append(new_node)
+
+    def _create_all_in_one_node_dict(self):
+        node_dict = {}
+        for instance_name in ['manager', 'postgresql_server',
+                              'rabbitmq', 'prometheus']:
+            instance_section = self.config_dict[instance_name]
+            for cert_name, cert_path in instance_section.items():
+                if cert_path:
+                    node_dict[cert_name] = cert_path
+
+        return node_dict
 
     def new_cli_ca_cert(self):
         return self.config_dict['manager'].get('new_external_ca_cert_path')
