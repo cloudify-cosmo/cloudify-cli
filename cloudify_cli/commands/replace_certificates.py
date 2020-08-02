@@ -161,7 +161,6 @@ def validate_config_dict(config_dict, force, logger):
     errors_list = []
     _validate_instances(errors_list, config_dict, force, logger)
     _check_path(errors_list, config_dict['manager']['new_ldap_ca_cert'])
-    _validate_prometheus(errors_list, config_dict, force, logger)
     if errors_list:
         raise_errors_list(errors_list, logger)
 
