@@ -73,6 +73,7 @@ def start_replace_certificates(input_path,
                                client):
     _validate_admin_user_role(client)
     _validate_username_and_private_key()
+    _validate_cluster_healthy(client, 'Cannot replace certificaets')
     config_dict = get_dict_from_yaml(_get_input_path(input_path))
     logger.info('Validating replace-certificates config file...')
     validate_config_dict(config_dict, force, logger)
@@ -81,11 +82,20 @@ def start_replace_certificates(input_path,
     main_config.validate_certificates()
     logger.info('\nReplacing certificates...')
     main_config.replace_certificates()
+    _validate_cluster_healthy(client, 'Replacing certificates failed, '
+                                      'please check the logs')
     logger.info('\nSuccessfully replaced certificates')
     if main_config.new_cli_ca_cert():
         logger.info('\nPlease replace the CLI CA cert in case you are not '
                     'using a load-balancer. You can do this by using '
                     '`cfy profiles set -c <ca-cert-path>`')
+
+
+def _validate_cluster_healthy(client, err_msg):
+    status_result = client.cluster_status.get_status()
+    if status_result.get('status') != 'OK':
+        raise CloudifyCliError('Cluster status is not healthy. '
+                               '{0}'.format(err_msg))
 
 
 def _validate_admin_user_role(client):
