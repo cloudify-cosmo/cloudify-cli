@@ -18,7 +18,7 @@ import os
 
 import yaml
 
-from cluster import _all_in_one_manager
+from .cluster import _all_in_one_manager
 
 from .. import env
 from ..cli import cfy
@@ -52,7 +52,7 @@ def get_replace_certificates_config_file(output_path,
                                          client):
     # output_path is not a default param because of `cfy.options.output_path`
     output_path = output_path if output_path else CERTS_CONFIG_PATH
-    config = _get_cluster_configuration_dict(client)
+    config = _get_configuration_dict(client)
     with open(output_path, 'w') as output_file:
         yaml.dump(config, output_file, default_flow_style=False)
 
@@ -109,7 +109,7 @@ def _get_input_path(input_path):
     return input_path
 
 
-def _get_cluster_configuration_dict(client):
+def _get_configuration_dict(client):
     if _all_in_one_manager(client):
         return {
             'manager': {
@@ -119,6 +119,9 @@ def _get_cluster_configuration_dict(client):
                 'new_external_key': '',
                 'new_postgresql_client_cert': '',
                 'new_postgresql_client_key': '',
+                'new_prometheus_cert': '',     # Relevant only if
+                'new_prometheus_key': '',      # monitoring_service
+                'new_prometheus_ca_cert': '',  # was installed
                 'new_ca_cert': '',
                 'new_external_ca_cert': '',
                 'new_ldap_ca_cert': ''  # Relevant only if using LDAP
@@ -131,11 +134,6 @@ def _get_cluster_configuration_dict(client):
             'rabbitmq': {  # Relevant only if specifying new_ca_cert
                 'new_rabbitmq_cert': '',
                 'new_rabbitmq_key': ''
-            },
-            'prometheus': {
-                'new_prometheus_cert': '',
-                'new_prometheus_key': '',
-                'new_prometheus_ca_cert': ''
             }
         }
 
@@ -193,7 +191,8 @@ def _get_instances_ips(client):
 def validate_config_dict(config_dict, is_all_in_one, force, logger):
     errors_list = []
     if is_all_in_one:
-        validate_all_in_one_config_dict(errors_list, config_dict)
+        validate_all_in_one_config_dict(errors_list, config_dict,
+                                        force, logger)
     else:
         _validate_instances(errors_list, config_dict, force, logger)
 
@@ -218,9 +217,10 @@ def _validate_prometheus(errors_list, node, force, logger):
                                'to replace the certificates')
 
 
-def validate_all_in_one_config_dict(errors_list, config_dict):
+def validate_all_in_one_config_dict(errors_list, config_dict, force, logger):
     manager_section = config_dict['manager']
-    _validate_manager_node_cert_and_key(errors_list, manager_section)
+    _validate_manager_node_cert_and_key(errors_list, manager_section,
+                                        force, logger)
     err_msg = 'A {0} was specified for manager but a {1} was not specified'
     if (manager_section.get('new_ca_cert') and
             (not manager_section.get('new_internal_cert'))):
@@ -247,7 +247,7 @@ def validate_all_in_one_config_dict(errors_list, config_dict):
 
     rabbitmq_section = config_dict['rabbitmq']
     _validate_node_certs(errors_list, rabbitmq_section,
-                         'new_rabbitmq_cert', 'new_ravvitmq_key')
+                         'new_rabbitmq_cert', 'new_rabbitmq_key')
     if (manager_section.get('new_rabbitmq_ca_cert') and
             (not rabbitmq_section.get('new_rabbitmq_cert'))):
         errors_list.append('A new_ca_cert was specified for manager'
@@ -350,10 +350,10 @@ def _validate_node_certs(errors_list, certs_dict, new_cert_name, new_key_name):
     new_cert_path = certs_dict.get(new_cert_name)
     new_key_path = certs_dict.get(new_key_name)
     if bool(new_key_path) != bool(new_cert_path):
+        host_ip = certs_dict.get('host_ip') or env.profile.manager_ip
         errors_list.append('Either both {0} and {1} must be '
                            'provided, or neither for host '
-                           '{2}'.format(new_cert_name, new_key_name,
-                                        certs_dict['host_ip']))
+                           '{2}'.format(new_cert_name, new_key_name, host_ip))
     _check_path(errors_list, new_cert_path)
     _check_path(errors_list, new_key_path)
 

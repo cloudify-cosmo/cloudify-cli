@@ -109,7 +109,10 @@ class ReplaceCertificatesConfig(object):
         self.relevant_nodes_dict = {'manager': [],
                                     'postgresql_server': [],
                                     'rabbitmq': []}
-        self._create_nodes()
+        if is_all_in_one:
+            self._create_all_in_one_node()
+        else:
+            self._create_nodes()
         self.needs_to_replace_certificates = len(self.relevant_nodes) > 0
 
     @property
@@ -165,8 +168,7 @@ class ReplaceCertificatesConfig(object):
 
     def _create_all_in_one_node_dict(self):
         node_dict = {}
-        for instance_name in ['manager', 'postgresql_server',
-                              'rabbitmq', 'prometheus']:
+        for instance_name in ['manager', 'postgresql_server', 'rabbitmq']:
             instance_section = self.config_dict[instance_name]
             for cert_name, cert_path in instance_section.items():
                 if cert_path:
