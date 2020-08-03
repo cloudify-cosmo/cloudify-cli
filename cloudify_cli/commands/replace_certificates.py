@@ -98,7 +98,8 @@ def _validate_status_ok(client, is_all_in_one):
     status = (client.manager.get_status() if is_all_in_one
               else client.cluster_status.get_status())
     if status.get('status') != 'OK':
-        raise CloudifyCliError('Cannot proceed, status is not healthy')
+        raise CloudifyCliError('Cannot proceed, status is not healthy: '
+                               '{0}'.format(status))
 
 
 def _validate_admin_user_role(client):
