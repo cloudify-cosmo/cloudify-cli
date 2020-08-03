@@ -71,13 +71,13 @@ class Node(object):
 
     def replace_certificates(self):
         self.logger.info('Replacing certificates on host %s', self.host_ip)
-        self.run_command('cfy_manager replace-certificates')
+        self.run_command('cfy_manager certificates replace')
         self.run_command('rm -rf {0}'.format(NEW_CERTS_TMP_DIR_PATH))
 
     def validate_certificates(self):
         self.logger.info('Validating certificates on host %s', self.host_ip)
         self._pass_certificates()
-        self.run_command('cfy_manager replace-certificates --only-validate')
+        self.run_command('cfy_manager certificates replace --only-validate')
 
     def _pass_certificates(self):
         self._prepare_new_certs_dir()

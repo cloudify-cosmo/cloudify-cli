@@ -30,19 +30,19 @@ from ..replace_certificates_config import (raise_errors_list,
 CERTS_CONFIG_PATH = 'certificates_replacement_config.yaml'
 
 
-@cfy.group(name='replace-certificates')
+@cfy.group(name='certificates')
 @cfy.options.common_options
-def replace_certificates():
+def certificates():
     """
-    Handle the certificates replacement procedure
+    Handle certificates related procedures
     """
     if not env.is_initialized():
         env.raise_uninitialized()
 
 
-@replace_certificates.command(name='generate-config',
-                              short_help='Generate the configuration file '
-                                         'needed for certificates replacement')
+@certificates.command(name='generate-replace-config',
+                      short_help='Generate the configuration file needed for '
+                                 'certificates replacement')
 @cfy.options.output_path
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -60,9 +60,9 @@ def get_replace_certificates_config_file(output_path,
                 'saved to %s', output_path)
 
 
-@replace_certificates.command(name='start',
-                              short_help='Replace certificates after updating '
-                                         'the configuration file')
+@certificates.command(name='replace',
+                      short_help='Replace certificates after updating the '
+                                 'configuration file')
 @cfy.options.input_path(help='The certificates replacement configuration file')
 @cfy.options.force('Use the force flag in case you want to change only a '
                    'CA and not the certificates signed by it')
@@ -114,8 +114,7 @@ def _get_input_path(input_path):
     input_path = input_path if input_path else CERTS_CONFIG_PATH
     if not os.path.exists(input_path):
         raise CloudifyCliError('Please create the replace-certificates '
-                               'configuration file first using the command'
-                               ' `cfy replace-certificates generate-file`')
+                               'configuration file first')
     return input_path
 
 
