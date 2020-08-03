@@ -115,7 +115,10 @@ def _get_cluster_configuration_dict(client):
             'new_external_cert': '',
             'new_external_key': '',
             'new_postgresql_client_cert': '',
-            'new_postgresql_client_key': ''
+            'new_postgresql_client_key': '',
+            'new_prometheus_cert': '',
+            'new_prometheus_key': '',
+            'new_prometheus_ca_cert': ''
         } for host_ip in instances_ips['manager_ips']],
             'new_ca_cert': '',
             'new_external_ca_cert': '',
@@ -124,18 +127,23 @@ def _get_cluster_configuration_dict(client):
         'postgresql_server': {'cluster_members': [{
             'host_ip': str(host_ip),
             'new_cert': '',
-            'new_key': ''
+            'new_key': '',
+            'new_prometheus_cert': '',
+            'new_prometheus_key': '',
+            'new_prometheus_ca_cert': ''
         } for host_ip in instances_ips['postgresql_ips']],
             'new_ca_cert': ''
         },
         'rabbitmq': {'cluster_members': [{
             'host_ip': str(host_ip),
             'new_cert': '',
-            'new_key': ''
+            'new_key': '',
+            'new_prometheus_cert': '',
+            'new_prometheus_key': '',
+            'new_prometheus_ca_cert': ''
         } for host_ip in instances_ips['rabbitmq_ips']],
-            'new_ca_cert': '',
+            'new_ca_cert': ''
         }
-
     }
 
 
@@ -157,6 +165,22 @@ def validate_config_dict(config_dict, force, logger):
         raise_errors_list(errors_list, logger)
 
 
+def _validate_prometheus(errors_list, node, force, logger):
+    err_msg = 'A new CA cert was specified for prometheus but ' \
+              'a new_cert was not.'
+    _validate_node_certs(errors_list, node,
+                         'new_prometheus_cert', 'new_prometheus_key')
+    ca_path_exists = _check_path(errors_list, node.get(
+        'new_prometheus_ca_cert'))
+    if ca_path_exists and not node.get('new_prometheus_cert'):
+        if force:
+            logger.info(err_msg)
+        else:
+            errors_list.append(err_msg +
+                               ' Please use `--force` if you still wish '
+                               'to replace the certificates')
+
+
 def _validate_username_and_private_key():
     if (not env.profile.ssh_user) or (not env.profile.ssh_key):
         raise CloudifyCliError('Please configure the profile ssh-key and '
@@ -166,12 +190,14 @@ def _validate_username_and_private_key():
 def _validate_instances(errors_list, config_dict, force, logger):
     for instance in 'postgresql_server', 'rabbitmq':
         _validate_cert_and_key(errors_list,
-                               config_dict[instance]['cluster_members'])
+                               config_dict[instance]['cluster_members'],
+                               force, logger)
         _validate_new_ca_cert(errors_list, config_dict, instance, force,
                               logger)
 
     _validate_manager_cert_and_key(errors_list,
-                                   config_dict['manager']['cluster_members'])
+                                   config_dict['manager']['cluster_members'],
+                                   force, logger)
     _validate_new_manager_ca_certs(errors_list, config_dict, force, logger)
 
 
@@ -223,13 +249,13 @@ def _validate_ca_cert(errors_list, instance, instance_name, new_ca_cert_name,
                                    'to replace the certificates')
 
 
-def _validate_cert_and_key(errors_list, nodes):
+def _validate_cert_and_key(errors_list, nodes, force, logger):
     for node in nodes:
-        _validate_node_certs(errors_list, node, 'new_cert',
-                             'new_key')
+        _validate_node_certs(errors_list, node, 'new_cert', 'new_key')
+        _validate_prometheus(errors_list, node, force, logger)
 
 
-def _validate_manager_cert_and_key(errors_list, nodes):
+def _validate_manager_cert_and_key(errors_list, nodes, force, logger):
     for node in nodes:
         _validate_node_certs(errors_list, node,
                              'new_internal_cert',
@@ -240,6 +266,7 @@ def _validate_manager_cert_and_key(errors_list, nodes):
         _validate_node_certs(errors_list, node,
                              'new_postgresql_client_cert',
                              'new_postgresql_client_key')
+        _validate_prometheus(errors_list, node, force, logger)
 
 
 def _validate_node_certs(errors_list, certs_dict, new_cert_name, new_key_name):

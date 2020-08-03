@@ -85,9 +85,9 @@ class Node(object):
             self.put_file(new_cert_path, self._get_remote_cert_path(cert_name))
 
     def _get_remote_cert_path(self, cert_name):
-        new_cert_path = (('new_' + self.node_type + '_' + cert_name[4:])
-                         if self.node_type in ('postgresql_server', 'rabbitmq')
-                         else cert_name)
+        if (self.node_type == 'manager') or ('prometheus' in cert_name):
+            return NEW_CERTS_TMP_DIR_PATH + cert_name + '.pem'
+        new_cert_path = 'new_' + self.node_type + '_' + cert_name[4:]
         return NEW_CERTS_TMP_DIR_PATH + new_cert_path + '.pem'
 
     def _prepare_new_certs_dir(self):
