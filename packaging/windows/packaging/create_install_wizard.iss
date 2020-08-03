@@ -39,4 +39,4 @@ Source: "source\icons\Cloudify.ico"; DestDir: "{app}"
 Name: "desktopicon"; Description: "Create a desktop icon";
 
 [Icons]
-Name: "{commondesktop}\Cloudify CLI"; Filename: "{cmd}"; Parameters: "/k SET ""PATH=%PATH%;{app}\Scripts\"""; WorkingDir: "{app}"; IconFilename: "{app}\Cloudify.ico"; Tasks: "desktopicon";
+Name: "{commondesktop}\Cloudify CLI"; Filename: "{cmd}"; Parameters: "/k SET ""PATH={app}\Scripts\;%PATH%"""; WorkingDir: "{app}"; IconFilename: "{app}\Cloudify.ico"; Tasks: "desktopicon";
