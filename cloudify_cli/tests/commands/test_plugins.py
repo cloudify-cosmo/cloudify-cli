@@ -145,6 +145,155 @@ class PluginsTest(CliCommandTest):
                     .format(yaml_path, yaml_path, 'test title'))
 
 
+class PluginsInstallTest(CliCommandTest):
+    def setUp(self):
+        super(PluginsInstallTest, self).setUp()
+        self.sleep_mock = patch('cloudify_cli.commands.plugins.time.sleep')
+        self.sleep_mock.start()
+        self.addCleanup(self.sleep_mock.stop)
+
+    def _make_plugins_state(self, managers=None, agents=None):
+        managers = managers or {}
+        agents = agents or {}
+        states = [
+            {'manager': name, 'state': state}
+            for name, state in managers.items()
+        ] + [
+            {'agent': name, 'state': state}
+            for name, state in agents.items()
+        ]
+        return {'installation_state': states}
+
+    def test_plugin_install(self):
+        """With no params, we install on all managers"""
+        hostname = 'manager1'
+        plugin_id = 'plugin-id'
+        self.client.manager.get_managers = Mock(return_value=[
+            manager.ManagerItem({'hostname': hostname})
+        ])
+        self.client.plugins.install = MagicMock(return_value={})
+        self.client.plugins.get = Mock(return_value=self._make_plugins_state({
+            hostname: PluginInstallationState.INSTALLED
+        }))
+        self.invoke('plugins install {0}'.format(plugin_id))
+        self.client.plugins.install.assert_called_once_with(
+            plugin_id,
+            agents=(),
+            managers=[hostname]
+        )
+
+    def test_plugin_install_timeout(self):
+        """With no params, we install on all managers"""
+        hostname = 'manager1'
+        plugin_id = 'plugin-id'
+        self.client.manager.get_managers = Mock(return_value=[
+            manager.ManagerItem({'hostname': hostname})
+        ])
+        self.client.plugins.install = MagicMock(return_value={})
+        self.invoke('plugins install {0} --timeout 0'.format(plugin_id),
+                    err_str_segment='Timed out')
+
+    def test_plugin_install_managers(self):
+        plugin_id = 'plugin-id'
+        self.client.plugins.install = MagicMock(return_value={})
+        self.client.plugins.get = Mock(return_value=self._make_plugins_state(
+            {'mgr1': PluginInstallationState.INSTALLED,
+             'mgr2': PluginInstallationState.INSTALLED}
+        ))
+        self.invoke('plugins install {0} '
+                    '--manager-hostname mgr1 '
+                    '--manager-hostname mgr2 '
+                    .format(plugin_id))
+        self.client.plugins.install.assert_called_once_with(
+            'plugin-id',
+            agents=(),
+            managers=('mgr1', 'mgr2')
+        )
+
+    def test_plugin_install_agents(self):
+        plugin_id = 'plugin-id'
+        self.client.plugins.install = MagicMock(return_value={})
+        self.client.plugins.get = Mock(return_value=self._make_plugins_state(
+            None, {'agent1': PluginInstallationState.INSTALLED}
+        ))
+        self.invoke('plugins install {0} '
+                    '--agent-name agent1 '
+                    .format(plugin_id))
+        self.client.plugins.install.assert_called_once_with(
+            'plugin-id',
+            agents=('agent1',),
+            managers=()
+        )
+
+    def test_plugin_install_wait(self):
+        plugin_id = 'plugin-id'
+        self.client.plugins.install = MagicMock(return_value={})
+        self.client.plugins.get = Mock(side_effect=[
+            self._make_plugins_state({
+                'mgr1': PluginInstallationState.INSTALLING
+            }),
+            self._make_plugins_state({
+                'mgr1': PluginInstallationState.INSTALLED
+            }),
+            RuntimeError('should not be called')
+        ])
+        self.invoke('plugins install {0} --manager-hostname mgr1'
+                    .format(plugin_id))
+        self.client.plugins.get.assert_has_calls([
+            call(plugin_id),
+            call(plugin_id)
+        ])
+
+    def test_plugin_install_wait_agent_and_manager(self):
+        plugin_id = 'plugin-id'
+        self.client.plugins.install = MagicMock(return_value={})
+        self.client.plugins.get = Mock(side_effect=[
+            # first, both are installing
+            self._make_plugins_state(
+                {'mgr1': PluginInstallationState.INSTALLING},
+                {'ag1': PluginInstallationState.INSTALLING},
+            ),
+            # then, manager is installed, and agent is still installing
+            self._make_plugins_state(
+                {'mgr1': PluginInstallationState.INSTALLED},
+                {'ag1': PluginInstallationState.INSTALLING},
+            ),
+            # and then both the agent and the manager are installed
+            self._make_plugins_state(
+                {'mgr1': PluginInstallationState.INSTALLED},
+                {'ag1': PluginInstallationState.INSTALLED},
+            ),
+            RuntimeError('should not be called')
+        ])
+        self.invoke('plugins install {0} '
+                    '--manager-hostname mgr1 '
+                    '--agent-name ag1'
+                    .format(plugin_id))
+        self.client.plugins.get.assert_has_calls([
+            call(plugin_id),
+            call(plugin_id),
+            call(plugin_id)
+        ])
+
+    def test_plugin_install_error(self):
+        plugin_id = 'plugin-id'
+        self.client.plugins.install = MagicMock(return_value={})
+        self.client.plugins.get = Mock(return_value={
+            'installation_state': [{
+                'manager': 'mgr1',
+                'error': 'error text here',
+                'state': PluginInstallationState.ERROR
+            }]
+        })
+        out = self.invoke(
+            'plugins install {0} --manager-hostname mgr1'.format(plugin_id),
+            err_str_segment='errors')
+        assert 'error text here' in out.logs
+        self.client.plugins.get.assert_has_calls([
+            call(plugin_id),
+        ])
+
+
 class PluginsUpdateTest(CliCommandTest):
 
     def _mock_wait_for_executions(self, value):
