@@ -15,12 +15,18 @@
 ############
 
 import os
+import time
 
+import click
 import wagon
+
+from cloudify.models_states import PluginInstallationState
 
 from cloudify_cli import execution_events_fetcher
 from cloudify_cli.logger import get_events_logger
-from cloudify_cli.exceptions import SuppressedCloudifyCliError
+from cloudify_cli.exceptions import (
+    SuppressedCloudifyCliError, CloudifyCliError
+)
 
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
@@ -213,6 +219,93 @@ def get(plugin_id, logger, client, tenant_name, get_data):
     _transform_plugin_response(plugin)
     columns = PLUGIN_COLUMNS + GET_DATA_COLUMNS if get_data else PLUGIN_COLUMNS
     print_single(columns, plugin, 'Plugin:')
+
+
+def _wait_for_plugin_to_be_installed(client, plugin_id, managers, agents,
+                                     timeout, logger):
+    logger.info(
+        'Waiting for plugin %s to be installed on the managers: [%s] '
+        'and agents: [%s]',
+        plugin_id, ', '.join(managers), ', '.join(agents)
+    )
+    wait_managers = set(managers)
+    wait_agents = set(agents)
+    errors = 0
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        for pstate in client.plugins.get(plugin_id)['installation_state']:
+
+            if pstate['state'] == PluginInstallationState.INSTALLED:
+                if pstate.get('manager') in wait_managers:
+                    wait_managers.remove(pstate['manager'])
+                    logger.info('Finished installing on manager %s',
+                                pstate['manager'])
+                if pstate.get('agent') in wait_agents:
+                    wait_agents.remove(pstate['agent'])
+                    logger.info('Finished installing on agent %s',
+                                pstate['agent'])
+
+            if pstate['state'] == PluginInstallationState.ERROR:
+                if pstate.get('manager') in wait_managers:
+                    errors += 1
+                    wait_managers.remove(pstate['manager'])
+                    logger.info('Error installing on manager %s: %s',
+                                pstate['manager'], pstate['error'])
+                if pstate.get('agent') in wait_agents:
+                    errors += 1
+                    wait_agents.remove(pstate['agent'])
+                    logger.info('Error installing on agent %s: %s',
+                                pstate['agent'], pstate['error'])
+
+        if not wait_managers and not wait_agents:
+            break
+        time.sleep(1)
+    else:
+        raise CloudifyCliError(
+            'Timed out waiting for plugin {0} to be installed on managers: '
+            '[{1}] and agents: [{2}]'
+            .format(plugin_id,
+                    ', '.join(managers),
+                    ', '.join(agents))
+        )
+    if errors:
+        raise CloudifyCliError('Encountered errors while installing plugins')
+
+
+@plugins.command(name='install',
+                 short_help='List plugins [manager only]')
+@cfy.argument('plugin-id')
+@cfy.options.common_options
+@click.option('--manager-hostname', multiple=True,
+              help='The hostname of the manager to install the plugin on '
+                   '(can be passed multiple times)')
+@click.option('--agent-name', multiple=True,
+              help='The name of the agent to install the plugin on'
+                   '(can be passed multiple times)')
+@cfy.options.timeout(300)
+@cfy.pass_client()
+@cfy.pass_logger
+def install(plugin_id, manager_hostname, agent_name, timeout, client, logger):
+    """Install the plugin on the given managers and agents.
+
+    Force plugin installation before it needs to be used.
+    If manager hostnames and agent names are not provided, default to
+    installing on all managers.
+
+    This will wait for the plugins to be installed, up to timeout seconds.
+    """
+    if not manager_hostname and not agent_name:
+        manager_hostname = [
+            manager.hostname for manager in client.manager.get_managers()
+        ]
+
+    client.plugins.install(
+        plugin_id,
+        agents=agent_name,
+        managers=manager_hostname
+    )
+    _wait_for_plugin_to_be_installed(
+        client, plugin_id, manager_hostname, agent_name, timeout, logger)
 
 
 @plugins.command(name='list',
