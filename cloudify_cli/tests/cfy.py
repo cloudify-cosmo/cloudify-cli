@@ -92,8 +92,7 @@ def invoke(command, capture, context=None):
         outcome = cfy.invoke(getattr(
             getattr(commands, func), sub_func), global_flags + params)
     outcome.command = command
-
-    logs = [capture.records[m].msg for m in range(len(capture.records))]
+    logs = [text for logger_name, level, text in capture.actual()]
     outcome.logs = '\n'.join(logs)
 
     return outcome
