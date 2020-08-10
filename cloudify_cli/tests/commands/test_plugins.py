@@ -1,17 +1,15 @@
 import os
-import shutil
 import inspect
 import tempfile
 
-from mock import MagicMock, PropertyMock, patch, Mock
-
-import wagon
+from mock import MagicMock, PropertyMock, patch, Mock, call
 
 from .constants import PLUGINS_DIR
 from .mocks import MockListResponse
 from .test_base import CliCommandTest
 
-from cloudify_rest_client import plugins, plugins_update
+from cloudify.models_states import PluginInstallationState
+from cloudify_rest_client import plugins, plugins_update, manager
 
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
 from cloudify_cli.exceptions import (CloudifyCliError,
@@ -63,17 +61,8 @@ class PluginsTest(CliCommandTest):
 
     def test_plugins_upload(self):
         self.client.plugins.upload = MagicMock()
-        plugin_dest_dir = tempfile.mkdtemp()
-        try:
-            plugin_path = wagon.create(
-                'pip',
-                archive_destination_dir=plugin_dest_dir
-            )
-            yaml_path = os.path.join(PLUGINS_DIR, 'plugin.yaml')
-            self.invoke('cfy plugins upload {0} -y {1}'.format(plugin_path,
-                                                               yaml_path))
-        finally:
-            shutil.rmtree(plugin_dest_dir, ignore_errors=True)
+        with tempfile.NamedTemporaryFile() as empty_file:
+            self.invoke('plugins upload {0} -y {0}'.format(empty_file.name))
 
     def test_plugins_download(self):
         self.client.plugins.download = MagicMock(return_value='some_file')
@@ -128,19 +117,10 @@ class PluginsTest(CliCommandTest):
 
     def test_plugins_upload_with_icon(self):
         self.client.plugins.upload = MagicMock()
-        plugin_dest_dir = tempfile.mkdtemp()
-        try:
-            plugin_path = wagon.create(
-                'pip',
-                archive_destination_dir=plugin_dest_dir
-            )
-            yaml_path = os.path.join(PLUGINS_DIR, 'plugin.yaml')
-            icon_path = os.path.join(PLUGINS_DIR,
-                                     'Cute-Rain-Cloud-with-Rainbow.png')
-            self.invoke('cfy plugins upload {0} -y {1} -i {2}'.format(
-                plugin_path, yaml_path, icon_path))
-        finally:
-            shutil.rmtree(plugin_dest_dir, ignore_errors=True)
+        self.client.plugins.upload = MagicMock()
+        with tempfile.NamedTemporaryFile() as empty_file:
+            self.invoke('plugins upload {0} -y {0} -i {0}'
+                        .format(empty_file.name))
 
     def test_plugins_upload_with_title(self):
         self.client.plugins.upload = MagicMock()
