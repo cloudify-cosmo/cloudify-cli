@@ -53,7 +53,7 @@ if py3k:
     iterzip = zip
     uni_chr = chr
     from html.parser import HTMLParser
-else: 
+else:
     itermap = itertools.imap
     iterzip = itertools.izip
     uni_chr = unichr
@@ -76,14 +76,14 @@ MSWORD_FRIENDLY = 11
 PLAIN_COLUMNS = 12
 RANDOM = 20
 
-_re = re.compile("\033\[[0-9;]*m")
+_re = re.compile("\033\\[[0-9;]*m")
 
 def _get_size(text):
     lines = text.split("\n")
     height = len(lines)
     width = max([_str_block_width(line) for line in lines])
     return (width, height)
-        
+
 class PrettyTable(object):
 
     def __init__(self, field_names=None, **kwargs):
@@ -170,7 +170,7 @@ class PrettyTable(object):
         self._vertical_char = kwargs["vertical_char"] or self._unicode("|")
         self._horizontal_char = kwargs["horizontal_char"] or self._unicode("-")
         self._junction_char = kwargs["junction_char"] or self._unicode("+")
-        
+
         if kwargs["print_empty"] in (True, False):
             self._print_empty = kwargs["print_empty"]
         else:
@@ -178,7 +178,7 @@ class PrettyTable(object):
         self._format = kwargs["format"] or False
         self._xhtml = kwargs["xhtml"] or False
         self._attributes = kwargs["attributes"] or {}
-   
+
     def _unicode(self, value):
         if not isinstance(value, basestring):
             value = str(value)
@@ -220,7 +220,7 @@ class PrettyTable(object):
                 return 0
         else:
             raise AttributeError(name)
- 
+
     def __getitem__(self, index):
 
         new = PrettyTable()
@@ -461,7 +461,7 @@ class PrettyTable(object):
         for field in self._field_names:
             self._max_width[field] = val
     max_width = property(_get_max_width, _set_max_width)
-    
+
     def _get_fields(self):
         """List or tuple of field names to include in displays
 
@@ -534,7 +534,7 @@ class PrettyTable(object):
         self._validate_option("sort_key", val)
         self._sort_key = val
     sort_key = property(_get_sort_key, _set_sort_key)
- 
+
     def _get_header(self):
         """Controls printing of table header with field names
 
@@ -802,9 +802,9 @@ class PrettyTable(object):
         self._vrules = random.choice((ALL, FRAME, NONE))
         self.left_padding_width = random.randint(0,5)
         self.right_padding_width = random.randint(0,5)
-        self.vertical_char = random.choice("~!@#$%^&*()_+|-=\{}[];':\",./;<>?")
-        self.horizontal_char = random.choice("~!@#$%^&*()_+|-=\{}[];':\",./;<>?")
-        self.junction_char = random.choice("~!@#$%^&*()_+|-=\{}[];':\",./;<>?")
+        self.vertical_char = random.choice(r"~!@#$%^&*()_+|-=\{}[];':\",./;<>?")
+        self.horizontal_char = random.choice(r"~!@#$%^&*()_+|-=\{}[];':\",./;<>?")
+        self.junction_char = random.choice(r"~!@#$%^&*()_+|-=\{}[];':\",./;<>?")
 
     ##############################
     # DATA INPUT METHODS         #
@@ -926,8 +926,8 @@ class PrettyTable(object):
         Arguments:
 
         options - dictionary of option settings."""
-       
-        # Make a copy of only those rows in the slice range 
+
+        # Make a copy of only those rows in the slice range
         rows = copy.deepcopy(self._rows[options["start"]:options["end"]])
         # Sort if necessary
         if options["sortby"]:
@@ -939,13 +939,13 @@ class PrettyTable(object):
             # Undecorate
             rows = [row[1:] for row in rows]
         return rows
-        
+
     def _format_row(self, row, options):
         return [self._format_value(field, value) for (field, value) in zip(self._field_names, row)]
 
     def _format_rows(self, rows, options):
         return [self._format_row(row, options) for row in rows]
- 
+
     ##############################
     # PLAIN TEXT STRING METHODS  #
     ##############################
@@ -1008,7 +1008,7 @@ class PrettyTable(object):
         # Add bottom of border
         if options["border"] and options["hrules"] == FRAME:
             lines.append(self._hrule)
-        
+
         return self._unicode("\n").join(lines)
 
     def _stringify_hrule(self, options):
@@ -1085,12 +1085,12 @@ class PrettyTable(object):
         return "".join(bits)
 
     def _stringify_row(self, row, options):
-       
+
         for index, field, value, width, in zip(range(0,len(row)), self._field_names, row, self._widths):
             # Enforce max widths
             lines = value.split("\n")
             new_lines = []
-            for line in lines: 
+            for line in lines:
                 if _str_block_width(line) > width:
                     line = textwrap.fill(line, width)
                 new_lines.append(line)
@@ -1146,7 +1146,7 @@ class PrettyTable(object):
             if options["border"] and options["vrules"] == FRAME:
                 bits[y].pop()
                 bits[y].append(options["vertical_char"])
-        
+
         if options["border"] and options["hrules"]== ALL:
             bits[row_height-1].append("\n")
             bits[row_height-1].append(self._hrule)
@@ -1475,7 +1475,7 @@ def main():
     x.add_row(["Melbourne", 1566, 3806092, 646.9])
     x.add_row(["Perth", 5386, 1554769, 869.4])
     print(x)
-    
+
 if __name__ == "__main__":
     main()
 

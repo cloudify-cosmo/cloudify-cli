@@ -1,17 +1,15 @@
 import os
-import shutil
 import inspect
 import tempfile
 
-from mock import MagicMock, PropertyMock, patch, Mock
-
-import wagon
+from mock import PropertyMock, patch, Mock, call
 
 from .constants import PLUGINS_DIR
 from .mocks import MockListResponse
 from .test_base import CliCommandTest
 
-from cloudify_rest_client import plugins, plugins_update
+from cloudify.models_states import PluginInstallationState
+from cloudify_rest_client import plugins, plugins_update, manager
 
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
 from cloudify_cli.exceptions import (CloudifyCliError,
@@ -25,62 +23,57 @@ class PluginsTest(CliCommandTest):
         self.use_manager()
 
     def test_plugins_list(self):
-        self.client.plugins.list = MagicMock(return_value=MockListResponse())
+        self.client.plugins.list = Mock(return_value=MockListResponse())
         self.invoke('cfy plugins list')
         self.invoke('cfy plugins list -t dummy_tenant')
         self.invoke('cfy plugins list -a')
 
     def test_plugin_get(self):
-        self.client.plugins.get = MagicMock(
-            return_value=plugins.Plugin({'id': 'id',
-                                         'package_name': 'dummy',
-                                         'package_version': '1.2',
-                                         'supported_platform': 'any',
-                                         'distribution_release': 'trusty',
-                                         'distribution': 'ubuntu',
-                                         'uploaded_at': 'now',
-                                         'visibility': 'private',
-                                         'created_by': 'admin',
-                                         'tenant_name': DEFAULT_TENANT_NAME}))
+        self.client.plugins.get = Mock(
+            return_value=plugins.Plugin({
+                'id': 'id',
+                'package_name': 'dummy',
+                'package_version': '1.2',
+                'supported_platform': 'any',
+                'distribution_release': 'trusty',
+                'distribution': 'ubuntu',
+                'uploaded_at': 'now',
+                'visibility': 'private',
+                'created_by': 'admin',
+                'tenant_name': DEFAULT_TENANT_NAME,
+                'installation_state': []
+            })
+        )
 
         self.invoke('cfy plugins get some_id')
 
     def test_plugins_delete(self):
-        self.client.plugins.delete = MagicMock()
+        self.client.plugins.delete = Mock()
         self.invoke('cfy plugins delete a-plugin-id')
 
     def test_plugins_delete_force(self):
         for flag in ['--force', '-f']:
-            mock = MagicMock()
+            mock = Mock()
             self.client.plugins.delete = mock
             self.invoke('cfy plugins delete a-plugin-id {0}'.format(
                 flag))
             mock.assert_called_once_with(plugin_id='a-plugin-id', force=True)
 
     def test_plugins_upload(self):
-        self.client.plugins.upload = MagicMock()
-        plugin_dest_dir = tempfile.mkdtemp()
-        try:
-            plugin_path = wagon.create(
-                'pip',
-                archive_destination_dir=plugin_dest_dir
-            )
-            yaml_path = os.path.join(PLUGINS_DIR, 'plugin.yaml')
-            self.invoke('cfy plugins upload {0} -y {1}'.format(plugin_path,
-                                                               yaml_path))
-        finally:
-            shutil.rmtree(plugin_dest_dir, ignore_errors=True)
+        self.client.plugins.upload = Mock()
+        with tempfile.NamedTemporaryFile() as empty_file:
+            self.invoke('plugins upload {0} -y {0}'.format(empty_file.name))
 
     def test_plugins_download(self):
-        self.client.plugins.download = MagicMock(return_value='some_file')
+        self.client.plugins.download = Mock(return_value='some_file')
         self.invoke('cfy plugins download a-plugin-id')
 
     def test_plugins_set_global(self):
-        self.client.plugins.set_global = MagicMock()
+        self.client.plugins.set_global = Mock()
         self.invoke('cfy plugins set-global a-plugin-id')
 
     def test_plugins_set_visibility(self):
-        self.client.plugins.set_visibility = MagicMock()
+        self.client.plugins.set_visibility = Mock()
         self.invoke('cfy plugins set-visibility a-plugin-id -l global')
 
     def test_plugins_set_visibility_invalid_argument(self):
@@ -117,32 +110,172 @@ class PluginsTest(CliCommandTest):
                     exception=CloudifyCliError)
 
     def test_plugins_upload_with_visibility(self):
-        self.client.plugins.upload = MagicMock()
+        self.client.plugins.upload = Mock()
         yaml_path = os.path.join(PLUGINS_DIR, 'plugin.yaml')
         self.invoke('cfy plugins upload {0} -l private -y {1}'
                     .format(yaml_path, yaml_path))
 
     def test_plugins_upload_with_icon(self):
-        self.client.plugins.upload = MagicMock()
-        plugin_dest_dir = tempfile.mkdtemp()
-        try:
-            plugin_path = wagon.create(
-                'pip',
-                archive_destination_dir=plugin_dest_dir
-            )
-            yaml_path = os.path.join(PLUGINS_DIR, 'plugin.yaml')
-            icon_path = os.path.join(PLUGINS_DIR,
-                                     'Cute-Rain-Cloud-with-Rainbow.png')
-            self.invoke('cfy plugins upload {0} -y {1} -i {2}'.format(
-                plugin_path, yaml_path, icon_path))
-        finally:
-            shutil.rmtree(plugin_dest_dir, ignore_errors=True)
+        self.client.plugins.upload = Mock()
+        self.client.plugins.upload = Mock()
+        with tempfile.NamedTemporaryFile() as empty_file:
+            self.invoke('plugins upload {0} -y {0} -i {0}'
+                        .format(empty_file.name))
 
     def test_plugins_upload_with_title(self):
-        self.client.plugins.upload = MagicMock()
+        self.client.plugins.upload = Mock()
         yaml_path = os.path.join(PLUGINS_DIR, 'plugin.yaml')
         self.invoke('cfy plugins upload {0} -y {1} --title "{2}"'
                     .format(yaml_path, yaml_path, 'test title'))
+
+
+class PluginsInstallTest(CliCommandTest):
+    def setUp(self):
+        super(PluginsInstallTest, self).setUp()
+        self.sleep_mock = patch('cloudify_cli.commands.plugins.time.sleep')
+        self.sleep_mock.start()
+        self.addCleanup(self.sleep_mock.stop)
+
+    def _make_plugins_state(self, managers=None, agents=None):
+        managers = managers or {}
+        agents = agents or {}
+        states = [
+            {'manager': name, 'state': state}
+            for name, state in managers.items()
+        ] + [
+            {'agent': name, 'state': state}
+            for name, state in agents.items()
+        ]
+        return {'installation_state': states}
+
+    def test_plugin_install(self):
+        """With no params, we install on all managers"""
+        hostname = 'manager1'
+        plugin_id = 'plugin-id'
+        self.client.manager.get_managers = Mock(return_value=[
+            manager.ManagerItem({'hostname': hostname})
+        ])
+        self.client.plugins.install = Mock(return_value={})
+        self.client.plugins.get = Mock(return_value=self._make_plugins_state({
+            hostname: PluginInstallationState.INSTALLED
+        }))
+        self.invoke('plugins install {0}'.format(plugin_id))
+        self.client.plugins.install.assert_called_once_with(
+            plugin_id,
+            agents=(),
+            managers=[hostname]
+        )
+
+    def test_plugin_install_timeout(self):
+        """With no params, we install on all managers"""
+        hostname = 'manager1'
+        plugin_id = 'plugin-id'
+        self.client.manager.get_managers = Mock(return_value=[
+            manager.ManagerItem({'hostname': hostname})
+        ])
+        self.client.plugins.install = Mock(return_value={})
+        self.invoke('plugins install {0} --timeout 0'.format(plugin_id),
+                    err_str_segment='Timed out')
+
+    def test_plugin_install_managers(self):
+        plugin_id = 'plugin-id'
+        self.client.plugins.install = Mock(return_value={})
+        self.client.plugins.get = Mock(return_value=self._make_plugins_state(
+            {'mgr1': PluginInstallationState.INSTALLED,
+             'mgr2': PluginInstallationState.INSTALLED}
+        ))
+        self.invoke('plugins install {0} '
+                    '--manager-hostname mgr1 '
+                    '--manager-hostname mgr2 '
+                    .format(plugin_id))
+        self.client.plugins.install.assert_called_once_with(
+            'plugin-id',
+            agents=(),
+            managers=('mgr1', 'mgr2')
+        )
+
+    def test_plugin_install_agents(self):
+        plugin_id = 'plugin-id'
+        self.client.plugins.install = Mock(return_value={})
+        self.client.plugins.get = Mock(return_value=self._make_plugins_state(
+            None, {'agent1': PluginInstallationState.INSTALLED}
+        ))
+        self.invoke('plugins install {0} '
+                    '--agent-name agent1 '
+                    .format(plugin_id))
+        self.client.plugins.install.assert_called_once_with(
+            'plugin-id',
+            agents=('agent1',),
+            managers=()
+        )
+
+    def test_plugin_install_wait(self):
+        plugin_id = 'plugin-id'
+        self.client.plugins.install = Mock(return_value={})
+        self.client.plugins.get = Mock(side_effect=[
+            self._make_plugins_state({
+                'mgr1': PluginInstallationState.INSTALLING
+            }),
+            self._make_plugins_state({
+                'mgr1': PluginInstallationState.INSTALLED
+            }),
+            RuntimeError('should not be called')
+        ])
+        self.invoke('plugins install {0} --manager-hostname mgr1'
+                    .format(plugin_id))
+        self.client.plugins.get.assert_has_calls([
+            call(plugin_id),
+            call(plugin_id)
+        ])
+
+    def test_plugin_install_wait_agent_and_manager(self):
+        plugin_id = 'plugin-id'
+        self.client.plugins.install = Mock(return_value={})
+        self.client.plugins.get = Mock(side_effect=[
+            # first, both are installing
+            self._make_plugins_state(
+                {'mgr1': PluginInstallationState.INSTALLING},
+                {'ag1': PluginInstallationState.INSTALLING},
+            ),
+            # then, manager is installed, and agent is still installing
+            self._make_plugins_state(
+                {'mgr1': PluginInstallationState.INSTALLED},
+                {'ag1': PluginInstallationState.INSTALLING},
+            ),
+            # and then both the agent and the manager are installed
+            self._make_plugins_state(
+                {'mgr1': PluginInstallationState.INSTALLED},
+                {'ag1': PluginInstallationState.INSTALLED},
+            ),
+            RuntimeError('should not be called')
+        ])
+        self.invoke('plugins install {0} '
+                    '--manager-hostname mgr1 '
+                    '--agent-name ag1'
+                    .format(plugin_id))
+        self.client.plugins.get.assert_has_calls([
+            call(plugin_id),
+            call(plugin_id),
+            call(plugin_id)
+        ])
+
+    def test_plugin_install_error(self):
+        plugin_id = 'plugin-id'
+        self.client.plugins.install = Mock(return_value={})
+        self.client.plugins.get = Mock(return_value={
+            'installation_state': [{
+                'manager': 'mgr1',
+                'error': 'error text here',
+                'state': PluginInstallationState.ERROR
+            }]
+        })
+        out = self.invoke(
+            'plugins install {0} --manager-hostname mgr1'.format(plugin_id),
+            err_str_segment='errors')
+        assert 'error text here' in out.logs
+        self.client.plugins.get.assert_has_calls([
+            call(plugin_id),
+        ])
 
 
 class PluginsUpdateTest(CliCommandTest):
@@ -150,7 +283,7 @@ class PluginsUpdateTest(CliCommandTest):
     def _mock_wait_for_executions(self, value):
         patcher = patch(
             'cloudify_cli.execution_events_fetcher.wait_for_execution',
-            MagicMock(return_value=PropertyMock(error=value))
+            Mock(return_value=PropertyMock(error=value))
         )
         self.addCleanup(patcher.stop)
         patcher.start()
@@ -158,12 +291,12 @@ class PluginsUpdateTest(CliCommandTest):
     def setUp(self):
         super(PluginsUpdateTest, self).setUp()
         self.use_manager()
-        self.client.executions = MagicMock()
-        self.client.plugins_update = MagicMock()
+        self.client.executions = Mock()
+        self.client.plugins_update = Mock()
         self._mock_wait_for_executions(False)
 
     def test_plugins_get(self):
-        self.client.plugins_update.get = MagicMock(
+        self.client.plugins_update.get = Mock(
             return_value=plugins_update.PluginsUpdate({
                 'id': 'asdf'
             }))
@@ -177,7 +310,7 @@ class PluginsUpdateTest(CliCommandTest):
             plugins_update.PluginsUpdate({'id': 'fdsa'})
         ])
         _plugins.metadata.pagination.total = 2
-        self.client.plugins_update.list = MagicMock(return_value=_plugins)
+        self.client.plugins_update.list = Mock(return_value=_plugins)
         outcome = self.invoke('cfy plugins history')
         self.assertIn('asdf', outcome.output)
         self.assertIn('fdsa', outcome.output)
@@ -190,7 +323,7 @@ class PluginsUpdateTest(CliCommandTest):
             {'blueprint_id': 'b2_blueprint'}
         ]
 
-        self.client.plugins_update.list = MagicMock(
+        self.client.plugins_update.list = Mock(
             return_value=MockListResponse(items=plugins_updates)
         )
         outcome = self.invoke('cfy plugins history -b b1_blueprint -v')
