@@ -32,16 +32,20 @@ class PluginsTest(CliCommandTest):
 
     def test_plugin_get(self):
         self.client.plugins.get = MagicMock(
-            return_value=plugins.Plugin({'id': 'id',
-                                         'package_name': 'dummy',
-                                         'package_version': '1.2',
-                                         'supported_platform': 'any',
-                                         'distribution_release': 'trusty',
-                                         'distribution': 'ubuntu',
-                                         'uploaded_at': 'now',
-                                         'visibility': 'private',
-                                         'created_by': 'admin',
-                                         'tenant_name': DEFAULT_TENANT_NAME}))
+            return_value=plugins.Plugin({
+                'id': 'id',
+                'package_name': 'dummy',
+                'package_version': '1.2',
+                'supported_platform': 'any',
+                'distribution_release': 'trusty',
+                'distribution': 'ubuntu',
+                'uploaded_at': 'now',
+                'visibility': 'private',
+                'created_by': 'admin',
+                'tenant_name': DEFAULT_TENANT_NAME,
+                'installation_state': []
+            })
+        )
 
         self.invoke('cfy plugins get some_id')
 
