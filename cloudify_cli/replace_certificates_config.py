@@ -14,9 +14,10 @@
 # limitations under the License.
 ############
 
+from retrying import retry
+
 from . import env
 from .exceptions import CloudifyCliError
-
 
 try:
     from fabric import Connection
@@ -123,6 +124,7 @@ class ReplaceCertificatesConfig(object):
         return relevant_nodes
 
     def validate_certificates(self):
+        self._validate_status_ok()
         for node in self.relevant_nodes:
             try:
                 node.validate_certificates()
@@ -131,6 +133,7 @@ class ReplaceCertificatesConfig(object):
                 raise err
 
     def replace_certificates(self):
+        self.logger.info('\nReplacing certificates...')
         # Passing a bundle of the old+new CA certs to the agents
         self._pass_new_ca_certs_to_agents(bundle=True)
         for node in self.relevant_nodes:
@@ -142,17 +145,26 @@ class ReplaceCertificatesConfig(object):
         self._handle_new_ca_certs()
         # Passing only the new CA cert to the agents
         self._pass_new_ca_certs_to_agents(bundle=False)
+        self._validate_status_ok()
         self._close_clients_connection()
+        self.logger.info('\nSuccessfully replaced certificates')
 
     def _handle_new_ca_certs(self):
-        new_cli_ca_cert = self.config_dict['manager'].get(
-            'new_external_ca_cert')
-        if new_cli_ca_cert and env.profile.rest_certificate:
-            env.profile.rest_certificate = new_cli_ca_cert
-            env.profile.save()
-        new_manager_ca_cert = self.config_dict['manager'].get('new_ca_cert')
-        if new_manager_ca_cert:
-            self.client.change_client_cert(new_manager_ca_cert)
+        if env.profile.rest_certificate:
+            new_manager_ca = self.config_dict['manager'].get('new_ca_cert')
+            if new_manager_ca:
+                env.profile.rest_certificate = new_manager_ca
+                env.profile.save()
+                self.client = env.get_rest_client(rest_cert=new_manager_ca)
+
+    # The services might take time to update
+    @retry(stop_max_attempt_number=15, wait_fixed=2000)
+    def _validate_status_ok(self):
+        status = (self.client.manager.get_status() if self.is_all_in_one
+                  else self.client.cluster_status.get_status())
+        if status.get('status') != 'OK':
+            raise CloudifyCliError('Cannot proceed, status is not healthy: '
+                                   '{0}'.format(status))
 
     def _needs_to_update_agents(self):
         return (self.config_dict['manager'].get('new_ca_cert') or

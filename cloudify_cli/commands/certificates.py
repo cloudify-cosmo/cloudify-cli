@@ -17,7 +17,6 @@
 import os
 
 import yaml
-from retrying import retry
 
 from .cluster import _all_in_one_manager
 
@@ -77,7 +76,6 @@ def start_replace_certificates(input_path,
     _validate_admin_user_role(client)
     _validate_username_and_private_key()
     is_all_in_one = _all_in_one_manager(client)
-    _validate_status_ok(client, is_all_in_one)
     config_dict = get_dict_from_yaml(_get_input_path(input_path))
     logger.info('Validating replace-certificates config file...')
     validate_config_dict(config_dict, is_all_in_one, force, logger)
@@ -85,20 +83,7 @@ def start_replace_certificates(input_path,
     main_config = ReplaceCertificatesConfig(config_dict, is_all_in_one,
                                             client, logger)
     main_config.validate_certificates()
-    logger.info('\nReplacing certificates...')
     main_config.replace_certificates()
-    _validate_status_ok(client, is_all_in_one)
-    logger.info('\nSuccessfully replaced certificates')
-
-
-# The services might take time to restart and this affects the cluster status
-@retry(stop_max_attempt_number=15, wait_fixed=2000)
-def _validate_status_ok(client, is_all_in_one):
-    status = (client.manager.get_status() if is_all_in_one
-              else client.cluster_status.get_status())
-    if status.get('status') != 'OK':
-        raise CloudifyCliError('Cannot proceed, status is not healthy: '
-                               '{0}'.format(status))
 
 
 def _validate_admin_user_role(client):
