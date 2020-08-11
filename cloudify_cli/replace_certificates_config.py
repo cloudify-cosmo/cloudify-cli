@@ -139,8 +139,20 @@ class ReplaceCertificatesConfig(object):
             except CloudifyCliError as err:
                 self._close_clients_connection()
                 raise err
+        self._handle_new_ca_certs()
         # Passing only the new CA cert to the agents
         self._pass_new_ca_certs_to_agents(bundle=False)
+        self._close_clients_connection()
+
+    def _handle_new_ca_certs(self):
+        new_cli_ca_cert = self.config_dict['manager'].get(
+            'new_external_ca_cert')
+        if new_cli_ca_cert and env.profile.rest_certificate:
+            env.profile.rest_certificate = new_cli_ca_cert
+            env.profile.save()
+        new_manager_ca_cert = self.config_dict['manager'].get('new_ca_cert')
+        if new_manager_ca_cert:
+            self.client.change_client_cert(new_manager_ca_cert)
 
     def _needs_to_update_agents(self):
         return (self.config_dict['manager'].get('new_ca_cert') or
@@ -175,9 +187,6 @@ class ReplaceCertificatesConfig(object):
                     node_dict[cert_name] = cert_path
 
         return node_dict
-
-    def new_cli_ca_cert(self):
-        return self.config_dict['manager'].get('new_external_ca_cert_path')
 
     def _create_nodes(self):
         for instance_type, instance_dict in self.config_dict.items():

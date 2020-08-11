@@ -17,6 +17,7 @@
 import os
 
 import yaml
+from retrying import retry
 
 from .cluster import _all_in_one_manager
 
@@ -88,12 +89,10 @@ def start_replace_certificates(input_path,
     main_config.replace_certificates()
     _validate_status_ok(client, is_all_in_one)
     logger.info('\nSuccessfully replaced certificates')
-    if main_config.new_cli_ca_cert():
-        logger.info('\nPlease replace the CLI CA cert in case you are not '
-                    'using a load-balancer. You can do this by using '
-                    '`cfy profiles set -c <ca-cert-path>`')
 
 
+# The services might take time to restart and this affects the cluster status
+@retry(stop_max_attempt_number=15, wait_fixed=2000)
 def _validate_status_ok(client, is_all_in_one):
     status = (client.manager.get_status() if is_all_in_one
               else client.cluster_status.get_status())
