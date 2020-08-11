@@ -44,7 +44,8 @@ PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'installed on',
 PLUGINS_UPDATE_COLUMNS = ['id', 'state', 'blueprint_id', 'temp_blueprint_id',
                           'execution_id', 'deployments_to_update',
                           'visibility', 'created_at', 'forced']
-GET_DATA_COLUMNS = ['file_server_path']
+GET_DATA_COLUMNS = ['file_server_path', 'supported_platform', 'distribution',
+                    'supported_py_versions', 'distribution_release']
 
 
 @cfy.group(name='plugins')
@@ -250,14 +251,16 @@ def get(plugin_id, logger, client, tenant_name, get_data):
         print_single(columns + ['installation_state'], plugin, 'Plugin:', 50)
         return
 
-    print_single(columns, plugin, 'Plugin:')
     states = {}
-    for state in plugin['installation_state']:
+    for state in plugin.pop('installation_state', []):
         if state.get('manager'):
             label = 'Manager {0}'.format(state['manager'])
         elif state.get('agent'):
             label = 'Agent {0}'.format(state['agent'])
         states[label] = state['state']
+    print_details({
+        col: plugin.get(col) for col in columns
+    }, 'Plugin:')
     print_details(states, 'Plugin installation state:')
 
 
