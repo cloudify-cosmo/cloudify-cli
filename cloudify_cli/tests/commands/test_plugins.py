@@ -1,6 +1,7 @@
 import os
 import inspect
 import tempfile
+import unittest
 
 from mock import PropertyMock, patch, Mock, call
 
@@ -14,6 +15,7 @@ from cloudify_rest_client import plugins, plugins_update, manager
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
 from cloudify_cli.exceptions import (CloudifyCliError,
                                      SuppressedCloudifyCliError)
+from cloudify_cli.commands.plugins import _format_installation_state
 
 
 class PluginsTest(CliCommandTest):
@@ -382,3 +384,75 @@ class PluginsUpdateTest(CliCommandTest):
         self.assertIn('Execution of workflow', logs[-2])
         self.assertIn('failed', logs[-2])
         self.assertIn('Failed updating plugins for blueprint asdf', logs[-1])
+
+
+class TestFormatInstallationState(unittest.TestCase):
+    """Tests for the _format_installation_state util"""
+    def test_empty(self):
+        assert _format_installation_state({}) == ''
+        assert _format_installation_state({
+            'installation_state': []
+        }) == ''
+
+    def test_managers(self):
+        assert _format_installation_state({
+            'installation_state': [
+                {
+                    'manager': 'mgr1',
+                    'state': PluginInstallationState.INSTALLED
+                },
+                {
+                    'manager': 'mgr2',
+                    'state': PluginInstallationState.INSTALLED
+                }
+            ]
+        }) == '2 managers'
+
+    def test_other_states(self):
+        assert _format_installation_state({
+            'installation_state': [
+                {
+                    'manager': 'mgr1',
+                    'state': PluginInstallationState.INSTALLING
+                },
+                {
+                    'manager': 'mgr2',
+                    'state': PluginInstallationState.UNINSTALLED
+                },
+                {
+                    'manager': 'mgr3',
+                    'state': 'some unknown state'
+                }
+            ]
+        }) == ''
+
+    def test_managers_agents(self):
+        assert _format_installation_state({
+            'installation_state': [
+                {
+                    'manager': 'mgr1',
+                    'state': PluginInstallationState.INSTALLED
+                },
+                {
+                    'agent': 'ag1',
+                    'state': PluginInstallationState.INSTALLED
+                }
+            ]
+        }) == '1 managers, 1 agents'
+
+    def test_managers_agents_errors(self):
+        assert _format_installation_state({
+            'installation_state': [
+                {
+                    'manager': 'mgr1',
+                    'state': PluginInstallationState.INSTALLED
+                },
+                {
+                    'agent': 'ag1',
+                    'state': PluginInstallationState.INSTALLED
+                },
+                {
+                    'state': PluginInstallationState.ERROR
+                }
+            ]
+        }) == '1 managers, 1 agents, 1 errors'

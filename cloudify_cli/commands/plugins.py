@@ -31,21 +31,20 @@ from cloudify_cli.exceptions import (
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
 from .. import utils
-from ..table import print_data, print_single
+from ..logger import get_global_json_output
+from ..table import print_data, print_single, print_details
 from ..cli import helptexts, cfy
 from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility)
 
-PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'distribution',
-                  'supported_platform', 'distribution_release', 'uploaded_at',
-                  'visibility', 'tenant_name', 'created_by', 'yaml_url_path']
+PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'installed on',
+                  'uploaded_at', 'visibility', 'tenant_name', 'created_by',
+                  'yaml_url_path']
 PLUGINS_UPDATE_COLUMNS = ['id', 'state', 'blueprint_id', 'temp_blueprint_id',
                           'execution_id', 'deployments_to_update',
                           'visibility', 'created_at', 'forced']
 GET_DATA_COLUMNS = ['file_server_path']
-EXCLUDED_COLUMNS = ['archive_name', 'distribution_version', 'excluded_wheels',
-                    'package_source', 'supported_py_versions', 'wheels']
 
 
 @cfy.group(name='plugins')
@@ -199,6 +198,33 @@ def download(plugin_id, output_path, logger, client, tenant_name):
     logger.info('Plugin downloaded as {0}'.format(target_file))
 
 
+def _format_installation_state(plugin):
+    """Format the 'installation_state' into a human-readable 'installed on'"""
+    if not plugin.get('installation_state'):
+        return ''
+    agents = 0
+    managers = 0
+    errors = 0
+    for state in plugin['installation_state']:
+        if state['state'] == PluginInstallationState.ERROR:
+            errors += 1
+        elif state['state'] != PluginInstallationState.INSTALLED:
+            continue
+
+        if state.get('manager'):
+            managers += 1
+        elif state.get('agent'):
+            agents += 1
+    parts = []
+    if managers:
+        parts.append('{0} managers'.format(managers))
+    if agents:
+        parts.append('{0} agents'.format(agents))
+    if errors:
+        parts.append('{0} errors'.format(errors))
+    return ', '.join(parts)
+
+
 @plugins.command(name='get',
                  short_help='Retrieve plugin information [manager only]')
 @cfy.argument('plugin-id')
@@ -216,9 +242,69 @@ def get(plugin_id, logger, client, tenant_name, get_data):
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving plugin {0}...'.format(plugin_id))
     plugin = client.plugins.get(plugin_id, _get_data=get_data)
-    _transform_plugin_response(plugin)
     columns = PLUGIN_COLUMNS + GET_DATA_COLUMNS if get_data else PLUGIN_COLUMNS
+    plugin['installed on'] = _format_installation_state(plugin)
+
+    if get_global_json_output():
+        # for json, also include installation_state because it's useful
+        print_single(columns + ['installation_state'], plugin, 'Plugin:', 50)
+        return
+
     print_single(columns, plugin, 'Plugin:')
+    states = {}
+    for state in plugin['installation_state']:
+        if state.get('manager'):
+            label = 'Manager {0}'.format(state['manager'])
+        elif state.get('agent'):
+            label = 'Agent {0}'.format(state['agent'])
+        states[label] = state['state']
+    print_details(states, 'Plugin installation state:')
+
+
+@plugins.command(name='list',
+                 short_help='List plugins [manager only]')
+@cfy.options.sort_by('uploaded_at')
+@cfy.options.descending
+@cfy.options.tenant_name_for_list(
+    required=False, resource_name_for_help='plugin')
+@cfy.options.all_tenants
+@cfy.options.search
+@cfy.options.common_options
+@cfy.options.get_data
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def list(sort_by,
+         descending,
+         tenant_name,
+         all_tenants,
+         search,
+         pagination_offset,
+         pagination_size,
+         logger,
+         client,
+         get_data):
+    """List all plugins on the manager
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Listing all plugins...')
+    plugins_list = client.plugins.list(sort=sort_by,
+                                       is_descending=descending,
+                                       _all_tenants=all_tenants,
+                                       _search=search,
+                                       _get_data=get_data,
+                                       _offset=pagination_offset,
+                                       _size=pagination_size)
+    for plugin in plugins_list:
+        plugin['installed on'] = _format_installation_state(plugin)
+    columns = PLUGIN_COLUMNS + GET_DATA_COLUMNS if get_data else PLUGIN_COLUMNS
+
+    print_data(columns, plugins_list, 'Plugins:')
+    total = plugins_list.metadata.pagination.total
+    logger.info('Showing {0} of {1} plugins'.format(len(plugins_list),
+                                                    total))
 
 
 def _wait_for_plugin_to_be_installed(client, plugin_id, managers, agents,
@@ -273,7 +359,7 @@ def _wait_for_plugin_to_be_installed(client, plugin_id, managers, agents,
 
 
 @plugins.command(name='install',
-                 short_help='List plugins [manager only]')
+                 short_help='Install a plugin [manager only]')
 @cfy.argument('plugin-id')
 @cfy.options.common_options
 @click.option('--manager-hostname', multiple=True,
@@ -306,58 +392,6 @@ def install(plugin_id, manager_hostname, agent_name, timeout, client, logger):
     )
     _wait_for_plugin_to_be_installed(
         client, plugin_id, manager_hostname, agent_name, timeout, logger)
-
-
-@plugins.command(name='list',
-                 short_help='List plugins [manager only]')
-@cfy.options.sort_by('uploaded_at')
-@cfy.options.descending
-@cfy.options.tenant_name_for_list(
-    required=False, resource_name_for_help='plugin')
-@cfy.options.all_tenants
-@cfy.options.search
-@cfy.options.common_options
-@cfy.options.get_data
-@cfy.options.pagination_offset
-@cfy.options.pagination_size
-@cfy.assert_manager_active()
-@cfy.pass_client()
-@cfy.pass_logger
-def list(sort_by,
-         descending,
-         tenant_name,
-         all_tenants,
-         search,
-         pagination_offset,
-         pagination_size,
-         logger,
-         client,
-         get_data):
-    """List all plugins on the manager
-    """
-    utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Listing all plugins...')
-    plugins_list = client.plugins.list(sort=sort_by,
-                                       is_descending=descending,
-                                       _all_tenants=all_tenants,
-                                       _search=search,
-                                       _get_data=get_data,
-                                       _offset=pagination_offset,
-                                       _size=pagination_size)
-    for plugin in plugins_list:
-        _transform_plugin_response(plugin)
-    columns = PLUGIN_COLUMNS + GET_DATA_COLUMNS if get_data else PLUGIN_COLUMNS
-    print_data(columns, plugins_list, 'Plugins:')
-    total = plugins_list.metadata.pagination.total
-    logger.info('Showing {0} of {1} plugins'.format(len(plugins_list),
-                                                    total))
-
-
-def _transform_plugin_response(plugin):
-    """Remove any columns that shouldn't be displayed in the CLI
-    """
-    for column in EXCLUDED_COLUMNS:
-        plugin.pop(column, None)
 
 
 @plugins.command(name='set-global',
