@@ -39,13 +39,14 @@ from ..utils import (prettify_client_error,
                      validate_visibility)
 
 PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'installed on',
-                  'uploaded_at', 'visibility', 'tenant_name', 'created_by',
+                  'distribution', 'distribution_release', 'uploaded_at',
+                  'visibility', 'tenant_name', 'created_by',
                   'yaml_url_path']
 PLUGINS_UPDATE_COLUMNS = ['id', 'state', 'blueprint_id', 'temp_blueprint_id',
                           'execution_id', 'deployments_to_update',
                           'visibility', 'created_at', 'forced']
-GET_DATA_COLUMNS = ['file_server_path', 'supported_platform', 'distribution',
-                    'supported_py_versions', 'distribution_release']
+GET_DATA_COLUMNS = ['file_server_path', 'supported_platform',
+                    'supported_py_versions']
 
 
 @cfy.group(name='plugins')
