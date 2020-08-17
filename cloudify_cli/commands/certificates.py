@@ -342,6 +342,6 @@ def raise_errors_list(errors_list, logger):
 
 def _errors_list_str(errors_list):
     err_str = 'Errors:\n'
-    err_lst = '\n'.join([' [{0}] {1}'.format(i+1, err) for i, err
-                         in enumerate(errors_list)])
+    err_lst = '\n'.join(' [{0}] {1}'.format(i+1, err) for i, err
+                        in enumerate(errors_list))
     return err_str + err_lst

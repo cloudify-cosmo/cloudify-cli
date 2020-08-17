@@ -53,7 +53,7 @@ class Node(object):
             connect_kwargs={'key_filename': self.key_file_path})
 
     def _raise_authentication_err(self, exc):
-        raise CloudifyCliError(
+        return CloudifyCliError(
             "SSH: could not connect to {host} "
             "(username: {user}, key: {key}): {exc}".format(
                 host=self.host_ip, user=self.username,
@@ -73,7 +73,7 @@ class Node(object):
                                                result.stderr))
                     raise CloudifyCliError()
         except (socket_error, AuthenticationException) as exc:
-            self._raise_authentication_err(exc)
+            raise self._raise_authentication_err(exc)
 
     def put_file(self, local_path, remote_path):
         try:
@@ -82,7 +82,7 @@ class Node(object):
                                   local_path, remote_path, self.host_ip)
                 connection.put(local_path, remote_path)
         except (socket_error, AuthenticationException) as exc:
-            self._raise_authentication_err(exc)
+            raise self._raise_authentication_err(exc)
 
     def replace_certificates(self):
         self.logger.info('Replacing certificates on host %s', self.host_ip)
@@ -147,6 +147,7 @@ class ReplaceCertificatesConfig(object):
         return relevant_nodes
 
     def validate_certificates(self):
+        self.logger.info('Validating status is healthy')
         self._validate_status_ok()
         for node in self.relevant_nodes:
             node.validate_certificates()
@@ -161,6 +162,7 @@ class ReplaceCertificatesConfig(object):
         self._handle_new_ca_certs()
         # Passing only the new CA cert to the agents
         self._pass_new_ca_certs_to_agents(bundle=False)
+        self.logger.info('Validating status is healthy')
         self._validate_status_ok()
         self.logger.info('\nSuccessfully replaced certificates')
 
@@ -176,7 +178,6 @@ class ReplaceCertificatesConfig(object):
     # The services might take time to update
     @retry(stop_max_attempt_number=15, wait_fixed=2000)
     def _validate_status_ok(self):
-        self.logger.info('Validating status is healthy')
         status = (self.client.manager.get_status() if self.is_all_in_one
                   else self.client.cluster_status.get_status())
         if status.get('status') != 'OK':
