@@ -52,7 +52,7 @@ class Node(object):
             host=self.host_ip, user=self.username, port=22,
             connect_kwargs={'key_filename': self.key_file_path})
 
-    def _raise_authentication_err(self, exc):
+    def _authentication_err(self, exc):
         return CloudifyCliError(
             "SSH: could not connect to {host} "
             "(username: {user}, key: {key}): {exc}".format(
@@ -73,7 +73,7 @@ class Node(object):
                                                result.stderr))
                     raise CloudifyCliError()
         except (socket_error, AuthenticationException) as exc:
-            raise self._raise_authentication_err(exc)
+            raise self._authentication_err(exc)
 
     def put_file(self, local_path, remote_path):
         try:
@@ -82,7 +82,7 @@ class Node(object):
                                   local_path, remote_path, self.host_ip)
                 connection.put(local_path, remote_path)
         except (socket_error, AuthenticationException) as exc:
-            raise self._raise_authentication_err(exc)
+            raise self._authentication_err(exc)
 
     def replace_certificates(self):
         self.logger.info('Replacing certificates on host %s', self.host_ip)
