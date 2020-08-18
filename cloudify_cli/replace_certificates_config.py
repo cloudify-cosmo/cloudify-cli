@@ -14,9 +14,12 @@
 # limitations under the License.
 ############
 
+from socket import error as socket_error
+
 from retrying import retry
 
 from . import env
+from .logger import get_global_verbosity
 from .exceptions import CloudifyCliError
 
 try:
@@ -24,6 +27,7 @@ try:
     from paramiko import AuthenticationException
 except ImportError:
     Connection = None
+    AuthenticationException = None
 
 
 NEW_CERTS_TMP_DIR_PATH = '/tmp/new_cloudify_certs/'
@@ -39,46 +43,65 @@ class Node(object):
         self.node_type = node_type
         self.username = env.profile.ssh_user
         self.key_file_path = env.profile.ssh_key
-        self.connection = self._create_connection()
         self.node_dict = node_dict
         self.errors_list = []
         self.logger = logger
 
-    def _create_connection(self):
-        try:
-            return Connection(
-                host=self.host_ip, user=self.username, port=22,
-                connect_kwargs={'key_filename': self.key_file_path})
+    def _get_connection(self):
+        return Connection(
+            host=self.host_ip, user=self.username, port=22,
+            connect_kwargs={'key_filename': self.key_file_path})
 
-        except AuthenticationException as e:
-            self.errors_list.append(
-                "SSH: could not connect to {host} "
-                "(username: {user}, key: {key}): {exc}".format(
-                    host=self.host_ip, user=self.username,
-                    key=self.key_file_path, exc=e))
+    def _authentication_err(self, exc):
+        return CloudifyCliError(
+            "SSH: could not connect to {host} "
+            "(username: {user}, key: {key}): {exc}".format(
+                host=self.host_ip, user=self.username,
+                key=self.key_file_path, exc=exc))
 
     def run_command(self, command):
-        self.logger.debug('Running `%s` on %s', command, self.host_ip)
-        result = self.connection.run(command, warn=True, hide=True)
-        if result.failed:
-            raise CloudifyCliError(
-                'The command `{0}` on host {1} failed with the error: '
-                '{2}'.format(command, self.host_ip, result.stderr))
+        try:
+            with self._get_connection() as connection:
+                self.logger.debug('Running `%s` on %s', command, self.host_ip)
+                hide = 'both' if get_global_verbosity() == 0 else 'stderr'
+                result = connection.run(command, warn=True, hide=hide)
+                if result.failed:
+                    if hide == 'both':  # No logs are shown
+                        raise CloudifyCliError(
+                            'The command `{0}` on host {1} failed with the '
+                            'error {2}'.format(command, self.host_ip,
+                                               result.stderr))
+                    raise CloudifyCliError()
+        except (socket_error, AuthenticationException) as exc:
+            raise self._authentication_err(exc)
 
     def put_file(self, local_path, remote_path):
-        self.logger.debug('Copying %s to %s on host %a',
-                          local_path, remote_path, self.host_ip)
-        self.connection.put(local_path, remote_path)
+        try:
+            with self._get_connection() as connection:
+                self.logger.debug('Copying %s to %s on host %a',
+                                  local_path, remote_path, self.host_ip)
+                connection.put(local_path, remote_path)
+        except (socket_error, AuthenticationException) as exc:
+            raise self._authentication_err(exc)
 
     def replace_certificates(self):
         self.logger.info('Replacing certificates on host %s', self.host_ip)
-        self.run_command('cfy_manager certificates replace')
+        command = self._append_verbose('cfy_manager certificates replace')
+        self.run_command(command)
         self.run_command('rm -rf {0}'.format(NEW_CERTS_TMP_DIR_PATH))
 
     def validate_certificates(self):
         self.logger.info('Validating certificates on host %s', self.host_ip)
         self._pass_certificates()
-        self.run_command('cfy_manager certificates replace --only-validate')
+        command = self._append_verbose(
+            'cfy_manager certificates replace --only-validate')
+        self.run_command(command)
+
+    @staticmethod
+    def _append_verbose(command):
+        if get_global_verbosity() > 1:
+            command += ' -v'
+        return command
 
     def _pass_certificates(self):
         self._prepare_new_certs_dir()
@@ -124,32 +147,27 @@ class ReplaceCertificatesConfig(object):
         return relevant_nodes
 
     def validate_certificates(self):
+        self.logger.info('Validating status is healthy')
         self._validate_status_ok()
         for node in self.relevant_nodes:
-            try:
-                node.validate_certificates()
-            except CloudifyCliError as err:
-                self._close_clients_connection()
-                raise err
+            node.validate_certificates()
 
     def replace_certificates(self):
         self.logger.info('\nReplacing certificates...')
         # Passing a bundle of the old+new CA certs to the agents
         self._pass_new_ca_certs_to_agents(bundle=True)
         for node in self.relevant_nodes:
-            try:
-                node.replace_certificates()
-            except CloudifyCliError as err:
-                self._close_clients_connection()
-                raise err
+            node.replace_certificates()
+
         self._handle_new_ca_certs()
         # Passing only the new CA cert to the agents
         self._pass_new_ca_certs_to_agents(bundle=False)
+        self.logger.info('Validating status is healthy')
         self._validate_status_ok()
-        self._close_clients_connection()
         self.logger.info('\nSuccessfully replaced certificates')
 
     def _handle_new_ca_certs(self):
+        """Replace the CLI and client CA certs"""
         if env.profile.rest_certificate:
             new_manager_ca = self.config_dict['manager'].get('new_ca_cert')
             if new_manager_ca:
@@ -236,19 +254,3 @@ class ReplaceCertificatesConfig(object):
                 node_dict['new_rabbitmq_ca_cert'] = rabbitmq_ca_cert
 
         return node_dict
-
-    def _close_clients_connection(self):
-        for node in self.relevant_nodes:
-            node.connection.close()
-
-
-def raise_errors_list(errors_list, logger):
-    logger.info(_errors_list_str(errors_list))
-    raise CloudifyCliError()
-
-
-def _errors_list_str(errors_list):
-    err_str = 'Errors:\n'
-    err_lst = '\n'.join([' [{0}] {1}'.format(i+1, err) for i, err
-                         in enumerate(errors_list)])
-    return err_str + err_lst

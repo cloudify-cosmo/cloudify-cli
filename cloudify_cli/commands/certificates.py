@@ -24,8 +24,7 @@ from .. import env
 from ..cli import cfy
 from ..utils import get_dict_from_yaml
 from ..exceptions import CloudifyCliError
-from ..replace_certificates_config import (raise_errors_list,
-                                           ReplaceCertificatesConfig)
+from ..replace_certificates_config import ReplaceCertificatesConfig
 
 CERTS_CONFIG_PATH = 'certificates_replacement_config.yaml'
 
@@ -64,6 +63,7 @@ def get_replace_certificates_config_file(output_path,
                       short_help='Replace certificates after updating the '
                                  'configuration file')
 @cfy.options.input_path(help='The certificates replacement configuration file')
+@cfy.options.verbose()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -333,3 +333,15 @@ def _check_path(errors_list, path):
             return True
         errors_list.append('The path {0} does not exist'.format(path))
     return False
+
+
+def raise_errors_list(errors_list, logger):
+    logger.info(_errors_list_str(errors_list))
+    raise CloudifyCliError()
+
+
+def _errors_list_str(errors_list):
+    err_str = 'Errors:\n'
+    err_lst = '\n'.join(' [{0}] {1}'.format(i+1, err) for i, err
+                        in enumerate(errors_list))
+    return err_str + err_lst
