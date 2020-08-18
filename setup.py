@@ -50,9 +50,7 @@ setup(
         'cloudify-common[dispatcher]==5.1.0.dev1',
         'backports.shutil_get_terminal_size==1.0.0',
         'ipaddress==1.0.19',
-        'setuptools<=40.7.3'
-    ],
-    extras_require={
-        'ssh': ['fabric==2.5.0']
-    }
+        'setuptools<=40.7.3',
+        'fabric==2.5.0'
+    ]
 )
