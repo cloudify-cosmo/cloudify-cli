@@ -329,7 +329,7 @@ def _validate_node_certs(errors_list, certs_dict, new_cert_name, new_key_name):
 
 def _check_path(errors_list, path):
     if path:
-        if os.path.exists(path):
+        if os.path.exists(os.path.expanduser(path)):
             return True
         errors_list.append('The path {0} does not exist'.format(path))
     return False
