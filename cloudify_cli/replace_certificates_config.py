@@ -14,6 +14,7 @@
 # limitations under the License.
 ############
 
+from os.path import expanduser
 from socket import error as socket_error
 
 from retrying import retry
@@ -80,7 +81,7 @@ class Node(object):
             with self._get_connection() as connection:
                 self.logger.debug('Copying %s to %s on host %a',
                                   local_path, remote_path, self.host_ip)
-                connection.put(local_path, remote_path)
+                connection.put(expanduser(local_path), remote_path)
         except (socket_error, AuthenticationException) as exc:
             raise self._authentication_err(exc)
 
@@ -162,18 +163,19 @@ class ReplaceCertificatesConfig(object):
         self._handle_new_ca_certs()
         # Passing only the new CA cert to the agents
         self._pass_new_ca_certs_to_agents(bundle=False)
-        self.logger.info('Validating status is healthy')
+        self.logger.info('\nValidating status is healthy')
         self._validate_status_ok()
-        self.logger.info('\nSuccessfully replaced certificates')
+        self.logger.info('Successfully replaced certificates')
 
     def _handle_new_ca_certs(self):
         """Replace the CLI and client CA certs"""
         if env.profile.rest_certificate:
             new_manager_ca = self.config_dict['manager'].get('new_ca_cert')
             if new_manager_ca:
-                env.profile.rest_certificate = new_manager_ca
+                expanded_path = expanduser(new_manager_ca)
+                env.profile.rest_certificate = expanded_path
                 env.profile.save()
-                self.client = env.get_rest_client(rest_cert=new_manager_ca)
+                self.client = env.get_rest_client(rest_cert=expanded_path)
 
     # The services might take time to update
     @retry(stop_max_attempt_number=15, wait_fixed=2000)
@@ -191,6 +193,7 @@ class ReplaceCertificatesConfig(object):
     def _pass_new_ca_certs_to_agents(self, bundle):
         if not self._needs_to_update_agents():
             return
+        self.logger.info('Passing CA certs to agents')
         new_manager_ca_cert = self.config_dict['manager'].get('new_ca_cert')
         new_broker_ca_cert = self.config_dict['rabbitmq'].get('new_ca_cert')
         self.client.agents.replace_ca_certs(bundle,
