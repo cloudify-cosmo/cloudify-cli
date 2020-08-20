@@ -195,7 +195,8 @@ class ReplaceCertificatesConfig(object):
             return
         self.logger.info('Passing CA certs to agents')
         new_manager_ca_cert = self.config_dict['manager'].get('new_ca_cert')
-        new_broker_ca_cert = self.config_dict['rabbitmq'].get('new_ca_cert')
+        new_broker_ca_cert = (new_manager_ca_cert if self.is_all_in_one else
+                              self.config_dict['rabbitmq'].get('new_ca_cert'))
         self.client.agents.replace_ca_certs(bundle,
                                             new_manager_ca_cert,
                                             new_broker_ca_cert)
