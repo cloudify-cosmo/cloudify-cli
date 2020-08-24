@@ -154,7 +154,7 @@ class ReplaceCertificatesConfig(object):
             node.validate_certificates()
 
     def replace_certificates(self):
-        self.logger.info('\nReplacing certificates...')
+        self.logger.info('Replacing certificates...')
         # Passing a bundle of the old+new CA certs to the agents
         self._pass_new_ca_certs_to_agents(bundle=True)
         for node in self.relevant_nodes:
@@ -163,7 +163,7 @@ class ReplaceCertificatesConfig(object):
         self._handle_new_ca_certs()
         # Passing only the new CA cert to the agents
         self._pass_new_ca_certs_to_agents(bundle=False)
-        self.logger.info('\nValidating status is healthy')
+        self.logger.info('Validating status is healthy')
         self._validate_status_ok()
         self.logger.info('Successfully replaced certificates')
 
