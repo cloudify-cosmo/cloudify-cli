@@ -35,11 +35,9 @@ from ..logger import (
 
 # The list will be updated with the services on each manager
 MANAGER_COLUMNS = ['hostname', 'private_ip', 'public_ip', 'version', 'edition',
-                   'distribution', 'distro_release', 'node_id', 'last_seen',
-                   'networks']
-BROKER_COLUMNS = ['name', 'node_id', 'port',
-                  'networks', 'is_external', 'host']
-DB_COLUMNS = ['name', 'node_id', 'host', 'is_external']
+                   'distribution', 'distro_release', 'last_seen', 'networks']
+BROKER_COLUMNS = ['name', 'port', 'networks', 'is_external', 'host']
+DB_COLUMNS = ['name', 'host', 'is_external']
 
 
 def check_manager_exists(managers, hostname, must_exist=True):
@@ -115,10 +113,10 @@ def _all_in_one_manager(client):
             return False
         if len(manager_nodes) == 1:
             if len(broker_nodes) == len(db_nodes_items) == 1:
-                db_node_id = db_nodes_items[0].get('node_id')
-                broker_node_id = broker_nodes[0].get('node_id')
-                manager_node_id = manager_nodes[0].get('node_id')
-                if db_node_id == broker_node_id == manager_node_id:
+                db_node_ip = db_nodes_items[0].get('host')
+                broker_node_ip = broker_nodes[0].get('host')
+                manager_node_ip = manager_nodes[0].get('private_ip')
+                if db_node_ip == broker_node_ip == manager_node_ip:
                     return True
 
             get_logger().warning('It is highly recommended to have more '
