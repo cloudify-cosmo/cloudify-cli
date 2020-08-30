@@ -49,41 +49,40 @@ class Node(object):
         self.logger = logger
 
     def _get_connection(self):
-        return Connection(
+        connection = Connection(
             host=self.host_ip, user=self.username, port=22,
             connect_kwargs={'key_filename': self.key_file_path})
+        try:  # Connection is lazy, so **we** need to check it can be opened
+            connection.open()
+        except (socket_error, AuthenticationException) as exc:
+            raise CloudifyCliError(
+                "SSH: could not connect to {host} (username: {user}, "
+                "key: {key}): {exc}".format(
+                    host=self.host_ip, user=self.username,
+                    key=self.key_file_path, exc=exc))
+        finally:
+            connection.close()
 
-    def _authentication_err(self, exc):
-        return CloudifyCliError(
-            "SSH: could not connect to {host} "
-            "(username: {user}, key: {key}): {exc}".format(
-                host=self.host_ip, user=self.username,
-                key=self.key_file_path, exc=exc))
+        return connection
 
     def run_command(self, command):
-        try:
-            with self._get_connection() as connection:
-                self.logger.debug('Running `%s` on %s', command, self.host_ip)
-                hide = 'both' if get_global_verbosity() == 0 else 'stderr'
-                result = connection.run(command, warn=True, hide=hide)
-                if result.failed:
-                    if hide == 'both':  # No logs are shown
-                        raise CloudifyCliError(
-                            'The command `{0}` on host {1} failed with the '
-                            'error {2}'.format(command, self.host_ip,
-                                               result.stderr))
-                    raise CloudifyCliError()
-        except (socket_error, AuthenticationException) as exc:
-            raise self._authentication_err(exc)
+        with self._get_connection() as connection:
+            self.logger.debug('Running `%s` on %s', command, self.host_ip)
+            hide = 'both' if get_global_verbosity() == 0 else 'stderr'
+            result = connection.run(command, warn=True, hide=hide)
+            if result.failed:
+                if hide == 'both':  # No logs are shown
+                    raise CloudifyCliError(
+                        'The command `{0}` on host {1} failed with the '
+                        'error {2}'.format(command, self.host_ip,
+                                           result.stderr.encode('utf-8')))
+                raise CloudifyCliError()
 
     def put_file(self, local_path, remote_path):
-        try:
-            with self._get_connection() as connection:
-                self.logger.debug('Copying %s to %s on host %a',
-                                  local_path, remote_path, self.host_ip)
-                connection.put(expanduser(local_path), remote_path)
-        except (socket_error, AuthenticationException) as exc:
-            raise self._authentication_err(exc)
+        with self._get_connection() as connection:
+            self.logger.debug('Copying %s to %s on host %a',
+                              local_path, remote_path, self.host_ip)
+            connection.put(expanduser(local_path), remote_path)
 
     def replace_certificates(self):
         self.logger.info('Replacing certificates on host %s', self.host_ip)
