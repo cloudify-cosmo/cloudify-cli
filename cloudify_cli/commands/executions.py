@@ -211,51 +211,16 @@ def manager_start(workflow_id,
                                                 deployment_id,
                                                 timeout))
     try:
-        try:
-            execution = client.executions.start(
-                deployment_id,
-                workflow_id,
-                parameters=parameters,
-                allow_custom_parameters=allow_custom_parameters,
-                force=force,
-                dry_run=dry_run,
-                queue=queue,
-                wait_after_fail=wait_after_fail,
-                schedule=schedule)
-        except (exceptions.DeploymentEnvironmentCreationInProgressError,
-                exceptions.DeploymentEnvironmentCreationPendingError) as e:
-            # wait for deployment environment creation workflow
-            if isinstance(
-                    e,
-                    exceptions.DeploymentEnvironmentCreationPendingError):
-                status = 'pending'
-            else:
-                status = 'in progress'
-
-            logger.info('Deployment environment creation is {0}...'.format(
-                status))
-            logger.debug('Waiting for create_deployment_environment '
-                         'workflow execution to finish...')
-            now = time.time()
-            wait_for_execution(client,
-                               get_deployment_environment_execution(
-                                   client, deployment_id, CREATE_DEPLOYMENT),
-                               events_handler=events_logger,
-                               include_logs=include_logs,
-                               timeout=timeout)
-            remaining_timeout = time.time() - now
-            timeout -= remaining_timeout
-            # try to execute user specified workflow
-            execution = client.executions.start(
-                deployment_id,
-                workflow_id,
-                parameters=parameters,
-                allow_custom_parameters=allow_custom_parameters,
-                force=force,
-                dry_run=dry_run,
-                queue=queue,
-                wait_after_fail=wait_after_fail,
-                schedule=schedule)
+        execution = client.executions.start(
+            deployment_id,
+            workflow_id,
+            parameters=parameters,
+            allow_custom_parameters=allow_custom_parameters,
+            force=force,
+            dry_run=dry_run,
+            queue=queue,
+            wait_after_fail=wait_after_fail,
+            schedule=schedule)
 
         if execution.status == 'queued':  # We don't need to wait for execution
             logger.info('Execution is being queued. It will automatically'

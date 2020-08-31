@@ -62,49 +62,12 @@ class ExecutionsTest(CliCommandTest):
     def test_executions_start_json(self, get_events_logger_mock):
         execution = execution_mock('started')
         original_client_execution_start = self.client.executions.start
-        original_wait_for_executions = executions.wait_for_execution
         try:
             self.client.executions.start = MagicMock(return_value=execution)
-            executions.wait_for_execution = MagicMock(return_value=execution)
             self.invoke('cfy executions start mock_wf -d dep --json')
             get_events_logger_mock.assert_called_with(False)
         finally:
             self.client.executions.start = original_client_execution_start
-            executions.wait_for_execution = original_wait_for_executions
-
-    def test_executions_start_dep_env_pending(self):
-        self._test_executions_start_dep_env(
-            ex=DeploymentEnvironmentCreationPendingError('m'))
-
-    def test_executions_start_dep_env_in_progress(self):
-        self._test_executions_start_dep_env(
-            ex=DeploymentEnvironmentCreationInProgressError('m'))
-
-    def test_executions_start_dep_other_ex_sanity(self):
-        try:
-            self._test_executions_start_dep_env(ex=RuntimeError)
-        except cfy.ClickInvocationException as e:
-            self.assertIsInstance(e.exception, RuntimeError)
-
-    def _test_executions_start_dep_env(self, ex):
-        start_mock = MagicMock(side_effect=[ex, execution_mock('started')])
-        self.client.executions.start = start_mock
-
-        list_mock = MagicMock(return_value=[
-            execution_mock('terminated', 'create_deployment_environment')])
-        self.client.executions.list = list_mock
-
-        wait_for_mock = MagicMock(return_value=execution_mock('terminated'))
-        original_wait_for = executions.wait_for_execution
-        try:
-            executions.wait_for_execution = wait_for_mock
-            self.invoke('cfy executions start mock_wf -d dep')
-            self.assertEqual(wait_for_mock.mock_calls[0][1][1].workflow_id,
-                             'create_deployment_environment')
-            self.assertEqual(wait_for_mock.mock_calls[1][1][1].workflow_id,
-                             'mock_wf')
-        finally:
-            executions.wait_for_execution = original_wait_for
 
     def test_local_execution_default_param(self):
         self._init_local_env()
