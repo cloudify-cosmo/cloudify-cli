@@ -15,7 +15,6 @@
 ############
 
 import json
-import time
 
 import click
 from cloudify_rest_client import exceptions
@@ -23,10 +22,9 @@ from cloudify_rest_client import exceptions
 from .. import local
 from .. import utils
 from ..table import print_data, print_single, print_details
-from ..utils import get_deployment_environment_execution
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger, get_global_json_output
-from ..constants import DEFAULT_UNINSTALL_WORKFLOW, CREATE_DEPLOYMENT
+from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 from ..execution_events_fetcher import wait_for_execution
 from ..exceptions import CloudifyCliError, ExecutionTimeoutError, \
     SuppressedCloudifyCliError

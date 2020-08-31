@@ -20,13 +20,9 @@ import json
 from mock import MagicMock, patch
 
 from .. import cfy
-from ...commands import executions
 from .test_base import CliCommandTest
 from .mocks import execution_mock, MockListResponse
 from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
-from cloudify_rest_client.exceptions import \
-    DeploymentEnvironmentCreationPendingError, \
-    DeploymentEnvironmentCreationInProgressError
 
 
 class ExecutionsTest(CliCommandTest):
