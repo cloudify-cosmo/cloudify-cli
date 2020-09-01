@@ -75,7 +75,7 @@ class Node(object):
                     raise CloudifyCliError(
                         'The command `{0}` on host {1} failed with the '
                         'error {2}'.format(command, self.host_ip,
-                                           result.stderr.encode('utf-8')))
+                                           result.stderr))
                 raise CloudifyCliError()
 
     def put_file(self, local_path, remote_path):
