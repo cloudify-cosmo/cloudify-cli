@@ -25,7 +25,7 @@ from cloudify.models_states import PluginInstallationState
 from cloudify_cli import execution_events_fetcher
 from cloudify_cli.logger import get_events_logger
 from cloudify_cli.exceptions import (
-    SuppressedCloudifyCliError, CloudifyCliError
+    SuppressedCloudifyCliError, CloudifyCliError, CloudifyValidationError,
 )
 
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
@@ -445,7 +445,11 @@ def set_visibility(plugin_id, visibility, logger, client):
 @plugins.command(name='update',
                  short_help='Update the plugins of all the deployments of '
                             'the blueprint [manager only]')
-@cfy.argument('blueprint-id')
+@cfy.argument('blueprint-id', required=False)
+@cfy.options.all_blueprints
+@cfy.options.plugin_name
+@cfy.options.minor
+@cfy.options.minor_except
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.assert_manager_active()
@@ -455,17 +459,35 @@ def set_visibility(plugin_id, visibility, logger, client):
 @cfy.pass_client()
 @cfy.options.force(help=helptexts.FORCE_PLUGINS_UPDATE)
 def update(blueprint_id,
+           all_blueprints,
+           plugin_name,
+           minor,
+           minor_except,
            include_logs,
            json_output,
            logger,
            client,
            tenant_name,
            force):
-    """Update the plugins of all the deployments of the given blueprint. This
-    will update the deployments one by one until all succeeded.
+    """Update the plugins of all the deployments of the given blueprint
+    or any blueprint in case `--all` flag was used instead of providing
+    a BLUEPRINT_ID.  This will update the deployments one by one until
+    all succeeded.
 
     `BLUEPRINT_ID` the blueprint's ID to perform the plugins update with.
+
+    `PLUGIN_NAME` is the name to be updated (if empty, all plugins will).
+
+    `MINOR` forces update to the newest minor version (as opposed to major).
+
+    `MINOR_EXCEPT` update the plugins to the minor release, except for
+                   the plugin(s) specified with this option.
     """
+    if ((blueprint_id and all_blueprints) or
+            (not blueprint_id and not all_blueprints)):
+        raise CloudifyValidationError(
+            'ERROR: Invalid command syntax. Either provide '
+            'a BLUEPRINT_ID or use --all flag.')
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Updating the plugins of the deployments of the blueprint '
                 '{}'.format(blueprint_id))

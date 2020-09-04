@@ -1380,6 +1380,34 @@ class Options(object):
             help=helptexts.MANAGER,
             callback=set_manager)
 
+        self.all_blueprints = click.option(
+            '-a',
+            '--all',
+            'all_blueprints',
+            is_flag=True,
+            default=False,
+            help=helptexts.PLUGINS_UPDATE_ALL)
+
+        self.plugin_name = click.option(
+            '--plugin-name',
+            multiple=True,
+            required=False,
+            help=helptexts.PLUGINS_UPDATE_NAME,
+            callback=self.parse_comma_separated)
+
+        self.minor = click.option(
+            '--minor',
+            is_flag=True,
+            default=False,
+            help=helptexts.PLUGINS_UPDATE_MINOR)
+
+        self.minor_except = click.option(
+            '--minor-except',
+            multiple=True,
+            required=False,
+            help=helptexts.PLUGINS_UPDATE_MINOR_EXCEPT,
+            callback=self.parse_comma_separated)
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 

@@ -399,3 +399,19 @@ KEEP_LAST = "Keep the N most recent {0} from deletion"
 
 STORE_BEFORE_DELETION = "List and store events before deleting them"
 STORE_OUTPUT_PATH = "Store listed events to a specified file (cli side)"
+
+PLUGINS_UPDATE_ALL = "Iterate over all blueprints in the system and update "\
+                     "all the plugins in use"
+PLUGINS_UPDATE_NAME = "Update just the specific plugin in all selected "\
+                      "deployments (can be passed multiple times or take "\
+                      "comma separated values)"
+PLUGINS_UPDATE_MINOR = "Update all selected plugins to the last minor "\
+                       "release, e.g. if plugin in version 2.3.14 is used "\
+                       "and there are versions 2.4.11, 2.5.2 and 3.1.2 "\
+                       "available, the upgrade will be done to the 2.5.2 "\
+                       "version"
+PLUGINS_UPDATE_MINOR_EXCEPT = "Update all the plugins to the latest minor "\
+                              "release, except for the plugins specified "\
+                              "with this option, which will be updated to "\
+                              "the latest version (can be passed multiple "\
+                              "times or take comma separated values)"

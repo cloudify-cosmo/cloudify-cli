@@ -8,6 +8,7 @@ from mock import PropertyMock, patch, Mock, call
 from .constants import PLUGINS_DIR
 from .mocks import MockListResponse
 from .test_base import CliCommandTest
+from ..cfy import ClickInvocationException
 
 from cloudify.models_states import PluginInstallationState
 from cloudify_rest_client import plugins, plugins_update, manager
@@ -384,6 +385,66 @@ class PluginsUpdateTest(CliCommandTest):
         self.assertIn('Execution of workflow', logs[-2])
         self.assertIn('failed', logs[-2])
         self.assertIn('Failed updating plugins for blueprint asdf', logs[-1])
+
+    def test_params_all_xor_blueprint_id(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.invoke('cfy plugins update --all')
+        self.assertEqual(len(update_client_mock.mock_calls), 1)
+
+        self.invoke('cfy plugins update asdf')
+        self.assertEqual(len(update_client_mock.mock_calls), 2)
+
+        self.assertRaises(ClickInvocationException,
+                          self.invoke,
+                          'cfy plugins update --all asdf')
+
+        self.assertRaises(ClickInvocationException,
+                          self.invoke,
+                          'cfy plugins update asdf --all')
+
+    def test_params_plugin_name_syntax_error(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.assertRaises(ClickInvocationException,
+                          self.invoke,
+                          'cfy plugins update --plugin-name asdf')
+
+    def test_params_plugin_name(self):
+        update_plugin_name = 'plugin-name'
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.invoke('cfy plugins update --plugin-name {0} asdf'.format(
+            update_plugin_name))
+
+        calls = update_client_mock.mock_calls
+        self.assertEqual(len(calls), 1)
+
+    def test_params_minor(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.invoke('cfy plugins update --minor asdf')
+
+        calls = update_client_mock.mock_calls
+        self.assertEqual(len(calls), 1)
+
+    def test_params_minor_except_multiple(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.invoke('cfy plugins update --minor-except plugin1-name '
+                    '--minor-except plugin2-name asdf')
+
+        calls = update_client_mock.mock_calls
+        self.assertEqual(len(calls), 1)
+
+    def test_params_minor_except_comma_separated(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.invoke('cfy plugins update --minor-except '
+                    'plugin1-name,plugin2-name asdf')
+
+        calls = update_client_mock.mock_calls
+        self.assertEqual(len(calls), 1)
 
 
 class TestFormatInstallationState(unittest.TestCase):
