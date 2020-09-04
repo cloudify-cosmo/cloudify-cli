@@ -446,6 +446,14 @@ class PluginsUpdateTest(CliCommandTest):
         calls = update_client_mock.mock_calls
         self.assertEqual(len(calls), 1)
 
+    def test_params_minor_xor_minor_except(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.assertRaises(ClickInvocationException,
+                          self.invoke,
+                          'cfy plugins update --minor '
+                          '--minor-except plugin1-name asdf')
+
 
 class TestFormatInstallationState(unittest.TestCase):
     """Tests for the _format_installation_state util"""

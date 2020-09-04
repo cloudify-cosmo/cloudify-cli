@@ -1399,12 +1399,16 @@ class Options(object):
             '--minor',
             is_flag=True,
             default=False,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['minor_except'],
             help=helptexts.PLUGINS_UPDATE_MINOR)
 
         self.minor_except = click.option(
             '--minor-except',
             multiple=True,
             required=False,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['minor'],
             help=helptexts.PLUGINS_UPDATE_MINOR_EXCEPT,
             callback=self.parse_comma_separated)
 
