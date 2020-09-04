@@ -298,6 +298,19 @@ class PluginsUpdateTest(CliCommandTest):
         self.client.plugins_update = Mock()
         self._mock_wait_for_executions(False)
 
+    def _inspect_calls(self, update_client_mock,
+                       arg_name_to_retrieve=None,
+                       number_of_calls=1):
+        calls = update_client_mock.mock_calls
+        self.assertEqual(len(calls), number_of_calls)
+        _, args, kwargs = calls[0]
+        call_args = inspect.getcallargs(
+            plugins_update.PluginsUpdateClient(None).update_plugins,
+            *args, **kwargs)
+        if arg_name_to_retrieve:
+            self.assertIn(arg_name_to_retrieve, call_args)
+            return call_args[arg_name_to_retrieve]
+
     def test_plugins_get(self):
         self.client.plugins_update.get = Mock(
             return_value=plugins_update.PluginsUpdate({
@@ -362,15 +375,8 @@ class PluginsUpdateTest(CliCommandTest):
         self.client.plugins_update.update_plugins = update_client_mock
         self.invoke('cfy plugins update asdf --force')
 
-        calls = update_client_mock.mock_calls
-        self.assertEqual(len(calls), 1)
-        _, args, kwargs = calls[0]
-        call_args = inspect.getcallargs(
-            plugins_update.PluginsUpdateClient(None).update_plugins,
-            *args, **kwargs)
-
-        self.assertIn('force', call_args)
-        self.assertTrue(call_args['force'])
+        is_force = self._inspect_calls(update_client_mock, 'force')
+        self.assertTrue(is_force)
 
     def test_plugins_update_failure(self):
         self._mock_wait_for_executions(True)
@@ -417,16 +423,16 @@ class PluginsUpdateTest(CliCommandTest):
         self.invoke('cfy plugins update --plugin-name {0} asdf'.format(
             update_plugin_name))
 
-        calls = update_client_mock.mock_calls
-        self.assertEqual(len(calls), 1)
+        a_plugin_name = self._inspect_calls(update_client_mock, 'plugin_name')
+        self.assertListEqual(a_plugin_name, [update_plugin_name])
 
     def test_params_minor(self):
         update_client_mock = Mock()
         self.client.plugins_update.update_plugins = update_client_mock
         self.invoke('cfy plugins update --minor asdf')
 
-        calls = update_client_mock.mock_calls
-        self.assertEqual(len(calls), 1)
+        is_minor = self._inspect_calls(update_client_mock, 'minor')
+        self.assertTrue(is_minor)
 
     def test_params_minor_except_multiple(self):
         update_client_mock = Mock()
@@ -434,8 +440,10 @@ class PluginsUpdateTest(CliCommandTest):
         self.invoke('cfy plugins update --minor-except plugin1-name '
                     '--minor-except plugin2-name asdf')
 
-        calls = update_client_mock.mock_calls
-        self.assertEqual(len(calls), 1)
+        minor_except_list = self._inspect_calls(update_client_mock,
+                                                'minor_except')
+        self.assertListEqual(minor_except_list,
+                             ['plugin1-name', 'plugin2-name'])
 
     def test_params_minor_except_comma_separated(self):
         update_client_mock = Mock()
@@ -443,8 +451,10 @@ class PluginsUpdateTest(CliCommandTest):
         self.invoke('cfy plugins update --minor-except '
                     'plugin1-name,plugin2-name asdf')
 
-        calls = update_client_mock.mock_calls
-        self.assertEqual(len(calls), 1)
+        minor_except_list = self._inspect_calls(update_client_mock,
+                                                'minor_except')
+        self.assertListEqual(minor_except_list,
+                             ['plugin1-name', 'plugin2-name'])
 
     def test_params_minor_xor_minor_except(self):
         update_client_mock = Mock()
