@@ -2,6 +2,7 @@ import os
 import inspect
 import tempfile
 import unittest
+from collections import namedtuple
 
 from mock import PropertyMock, patch, Mock, call
 
@@ -394,12 +395,16 @@ class PluginsUpdateTest(CliCommandTest):
 
     def test_params_all_xor_blueprint_id(self):
         update_client_mock = Mock()
+        bp_list_client_mock = Mock(return_value=[])
         self.client.plugins_update.update_plugins = update_client_mock
+        self.client.blueprints.list = bp_list_client_mock
         self.invoke('cfy plugins update --all')
-        self.assertEqual(len(update_client_mock.mock_calls), 1)
+        self.assertEqual(len(update_client_mock.mock_calls), 0)
+        self.assertEqual(len(bp_list_client_mock.mock_calls), 1)
 
         self.invoke('cfy plugins update asdf')
-        self.assertEqual(len(update_client_mock.mock_calls), 2)
+        self.assertEqual(len(update_client_mock.mock_calls), 1)
+        self.assertEqual(len(bp_list_client_mock.mock_calls), 1)
 
         self.assertRaises(ClickInvocationException,
                           self.invoke,
@@ -408,6 +413,22 @@ class PluginsUpdateTest(CliCommandTest):
         self.assertRaises(ClickInvocationException,
                           self.invoke,
                           'cfy plugins update asdf --all')
+
+    def test_all(self):
+        bp = namedtuple('Blueprint', 'id')
+        update_client_mock = Mock()
+        bp_list_client_mock = Mock(return_value=[bp(id='asdf'), bp(id='zxcv')])
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.client.blueprints.list = bp_list_client_mock
+        self.invoke('cfy plugins update --all')
+        self.assertEqual(len(bp_list_client_mock.mock_calls), 1)
+        self.assertEqual(len(update_client_mock.mock_calls), 2)
+        self.assertListEqual(
+            list(update_client_mock.call_args_list),
+            [call('asdf', force=False, plugin_name=[],
+                  minor=False, minor_except=[]),
+             call('zxcv', force=False, plugin_name=[],
+                  minor=False, minor_except=[])])
 
     def test_params_plugin_name_syntax_error(self):
         update_client_mock = Mock()

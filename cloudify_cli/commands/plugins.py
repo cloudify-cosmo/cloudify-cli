@@ -489,6 +489,28 @@ def update(blueprint_id,
             'ERROR: Invalid command syntax. Either provide '
             'a BLUEPRINT_ID or use --all flag.')
     utils.explicit_tenant_name_message(tenant_name, logger)
+    if blueprint_id:
+        _update_a_blueprint(blueprint_id,
+                            plugin_name, minor, minor_except,
+                            include_logs, json_output, logger,
+                            client, force)
+    elif all_blueprints:
+        for blueprint in client.blueprints.list():
+            _update_a_blueprint(blueprint.id,
+                                plugin_name, minor, minor_except,
+                                include_logs, json_output, logger,
+                                client, force)
+
+
+def _update_a_blueprint(blueprint_id,
+                        plugin_name,
+                        minor,
+                        minor_except,
+                        include_logs,
+                        json_output,
+                        logger,
+                        client,
+                        force):
     logger.info('Updating the plugins of the deployments of the blueprint '
                 '{}'.format(blueprint_id))
     plugins_update = client.plugins_update.update_plugins(
