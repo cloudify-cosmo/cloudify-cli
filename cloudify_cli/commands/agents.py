@@ -29,7 +29,7 @@ from ..cli import cfy
 from ..execution_events_fetcher import (wait_for_execution,
                                         WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
 from ..exceptions import CloudifyCliError
-from .. import env
+from .. import env, utils
 from ..table import print_data
 
 
@@ -52,11 +52,15 @@ def agents():
 @agents.command(name='list',
                 short_help='List installed agents [manager only]')
 @cfy.options.common_options
+@cfy.options.tenant_name(required=False,
+                         mutually_exclusive_with=['all_tenants'],
+                         resource_name_for_help='relevant agent(s)')
 @cfy.options.agent_filters
 @cfy.options.all_tenants
 @cfy.pass_logger
 @cfy.pass_client()
-def agents_list(agent_filters, client, logger, all_tenants):
+def agents_list(agent_filters, tenant_name, client, logger, all_tenants):
+    utils.explicit_tenant_name_message(tenant_name, logger)
     agent_filters['_all_tenants'] = all_tenants
     agent_list = client.agents.list(**agent_filters)
     logger.info('Listing agents...')
@@ -66,8 +70,9 @@ def agents_list(agent_filters, client, logger, all_tenants):
 @agents.command(name='install',
                 short_help='Install deployment agents [manager only]')
 @cfy.options.common_options
-@cfy.options.tenant_name_for_list(
-    required=False, resource_name_for_help='relevant deployment(s)')
+@cfy.options.tenant_name(required=False,
+                         mutually_exclusive_with=['all_tenants'],
+                         resource_name_for_help='relevant deployment(s)')
 @cfy.options.all_tenants
 @cfy.options.stop_old_agent
 @cfy.options.manager_ip
@@ -100,6 +105,7 @@ def install(agent_filters,
         params['manager_ip'] = manager_ip
         params['manager_certificate'] = manager_certificate
     params['install_agent_timeout'] = install_agent_timeout
+    utils.explicit_tenant_name_message(tenant_name, logger)
     get_deployments_and_run_workers(
         client, agent_filters, all_tenants,
         logger, 'install_new_agents', wait, params)
@@ -360,8 +366,9 @@ def get_deployments_and_run_workers(
                            ' (installed on remote hosts). [manager only]')
 @cfy.options.common_options
 @cfy.options.agent_filters
-@cfy.options.tenant_name_for_list(
-    required=False, resource_name_for_help='relevant deployment(s)')
+@cfy.options.tenant_name(required=False,
+                         mutually_exclusive_with=['all_tenants'],
+                         resource_name_for_help='relevant deployment(s)')
 @cfy.options.all_tenants
 @cfy.options.agents_wait
 @cfy.pass_logger
@@ -375,6 +382,7 @@ def validate(agent_filters,
     """Validates the connection between the Cloudify Manager and the
     live Cloudify Agents (installed on remote hosts).
     """
+    utils.explicit_tenant_name_message(tenant_name, logger)
     get_deployments_and_run_workers(
         client, agent_filters, all_tenants,
         logger, 'validate_agents', wait, None)
