@@ -72,7 +72,7 @@ def agents_list(agent_filters, tenant_name, client, logger, all_tenants):
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False,
                          mutually_exclusive_with=['all_tenants'],
-                         resource_name_for_help='relevant deployment(s)')
+                         resource_name_for_help='relevant deployment()')
 @cfy.options.all_tenants
 @cfy.options.stop_old_agent
 @cfy.options.manager_ip
