@@ -54,7 +54,7 @@ def agents():
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False,
                          mutually_exclusive_with=['all_tenants'],
-                         resource_name_for_help='relevant agent(s)')
+                         resource_name_for_help='relevant deployment(s)')
 @cfy.options.agent_filters
 @cfy.options.all_tenants
 @cfy.pass_logger

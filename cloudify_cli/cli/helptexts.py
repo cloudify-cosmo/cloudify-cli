@@ -356,7 +356,7 @@ _MULTIPLE_TIMES_FRAGMENT = ' (can be passed multiple times, ' \
                            'or comma-separated)'
 AGENT_NODE_INSTANCE_ID = 'The node instance id to be used for filtering ' \
                          + _MULTIPLE_TIMES_FRAGMENT
-AGENT_NODE_ID = 'The node id to filter to be used for filtering' \
+AGENT_NODE_ID = 'The node id to be used for filtering' \
                 + _MULTIPLE_TIMES_FRAGMENT
 AGENT_INSTALL_METHOD = 'Only show agents installed with this install_method' \
                        + _MULTIPLE_TIMES_FRAGMENT
