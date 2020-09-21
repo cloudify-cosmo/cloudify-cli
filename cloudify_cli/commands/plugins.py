@@ -25,7 +25,7 @@ from cloudify.models_states import PluginInstallationState
 from cloudify_cli import execution_events_fetcher
 from cloudify_cli.logger import get_events_logger
 from cloudify_cli.exceptions import (
-    SuppressedCloudifyCliError, CloudifyCliError
+    SuppressedCloudifyCliError, CloudifyCliError, CloudifyValidationError,
 )
 
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
@@ -445,7 +445,13 @@ def set_visibility(plugin_id, visibility, logger, client):
 @plugins.command(name='update',
                  short_help='Update the plugins of all the deployments of '
                             'the blueprint [manager only]')
-@cfy.argument('blueprint-id')
+@cfy.argument('blueprint-id', required=False)
+@cfy.options.all_blueprints
+@cfy.options.plugin_names
+@cfy.options.plugins_to_latest
+@cfy.options.plugins_all_to_latest
+@cfy.options.plugins_to_minor
+@cfy.options.plugins_all_to_minor
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.assert_manager_active()
@@ -455,21 +461,93 @@ def set_visibility(plugin_id, visibility, logger, client):
 @cfy.pass_client()
 @cfy.options.force(help=helptexts.FORCE_PLUGINS_UPDATE)
 def update(blueprint_id,
+           all_blueprints,
+           plugin_names,
+           to_latest,
+           all_to_latest,
+           to_minor,
+           all_to_minor,
            include_logs,
            json_output,
            logger,
            client,
            tenant_name,
            force):
-    """Update the plugins of all the deployments of the given blueprint. This
-    will update the deployments one by one until all succeeded.
+    """Update the plugins of all the deployments of the given blueprint
+    or any blueprint in case `--all` flag was used instead of providing
+    a BLUEPRINT_ID.  This will update the deployments one by one until
+    all succeeded.
 
-    `BLUEPRINT_ID` the blueprint's ID to perform the plugins update with.
+    `BLUEPRINT_ID`   the blueprint's ID to perform the plugins update with.
+
+    `PLUGIN_NAMES`   is the list of the plugins to be updated (if empty,
+                     all plugins will).
+    `TO_LATEST`      list of plugin names to be upgraded to the latest version.
+    `ALL_TO_LATEST`  update all (selected) plugins to the latest version
+                     of a plugin (this is the default behaviour).
+    `TO_MINOR`       list of plugin names to be upgraded to the latest
+                     minor version (i.e. major versions of the plugin in use
+                     and the upgraded one will match).
+    `ALL_TO_MINOR`   update all (selected) plugins to the latest minor version.
     """
+    # Validate input arguments
+    if ((blueprint_id and all_blueprints) or
+            (not blueprint_id and not all_blueprints)):
+        raise CloudifyValidationError(
+            'ERROR: Invalid command syntax. Either provide '
+            'a BLUEPRINT_ID or use --all flag.')
+    all_to_minor = bool(all_to_minor)
+    if all_to_latest is None:
+        all_to_latest = not all_to_minor
+    if (all_to_latest and all_to_minor) or \
+            (not all_to_latest and not all_to_minor):
+        raise CloudifyValidationError(
+            'ERROR: Invalid command syntax.  --all-to-latest and '
+            '--all-to-minor are mutually exclusive.')
+    if to_latest and all_to_latest:
+        raise CloudifyValidationError(
+            'ERROR: Invalid command syntax.  --all-to-latest and '
+            '--to-latest are mutually exclusive.  If you want to upgrade '
+            'only the specific plugins, use --plugin-name parameter instead.')
+    if to_minor and all_to_minor:
+        raise CloudifyValidationError(
+            'ERROR: Invalid command syntax.  --all-to-minor and '
+            '--to-minor are mutually exclusive.  If you want to upgrade '
+            'only the specific plugins, use --plugin-name parameter instead.')
+
     utils.explicit_tenant_name_message(tenant_name, logger)
+    if blueprint_id:
+        _update_a_blueprint(blueprint_id, plugin_names,
+                            to_latest, all_to_latest, to_minor, all_to_minor,
+                            include_logs, json_output, logger,
+                            client, force)
+    elif all_blueprints:
+        for blueprint in client.blueprints.list():
+            _update_a_blueprint(blueprint.id, plugin_names,
+                                to_latest, all_to_latest,
+                                to_minor, all_to_minor,
+                                include_logs, json_output, logger,
+                                client, force)
+
+
+def _update_a_blueprint(blueprint_id,
+                        plugin_names,
+                        to_latest,
+                        all_to_latest,
+                        to_minor,
+                        all_to_minor,
+                        include_logs,
+                        json_output,
+                        logger,
+                        client,
+                        force):
     logger.info('Updating the plugins of the deployments of the blueprint '
                 '{}'.format(blueprint_id))
-    plugins_update = client.plugins_update.update_plugins(blueprint_id, force)
+    plugins_update = client.plugins_update.update_plugins(
+        blueprint_id, force=force, plugin_names=plugin_names,
+        to_latest=to_latest, all_to_latest=all_to_latest,
+        to_minor=to_minor, all_to_minor=all_to_minor
+    )
     events_logger = get_events_logger(json_output)
     execution = execution_events_fetcher.wait_for_execution(
         client,

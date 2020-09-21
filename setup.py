@@ -49,7 +49,7 @@ setup(
         'click_didyoumean==0.0.3',
         'cloudify-common[dispatcher]==5.1.0.dev1',
         'backports.shutil_get_terminal_size==1.0.0',
-        'ipaddress==1.0.19',
+        'ipaddress==1.0.23',
         'setuptools<=40.7.3',
         'fabric==2.5.0'
     ]

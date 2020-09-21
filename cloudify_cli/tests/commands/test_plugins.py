@@ -2,12 +2,14 @@ import os
 import inspect
 import tempfile
 import unittest
+from collections import namedtuple
 
 from mock import PropertyMock, patch, Mock, call
 
 from .constants import PLUGINS_DIR
 from .mocks import MockListResponse
 from .test_base import CliCommandTest
+from ..cfy import ClickInvocationException
 
 from cloudify.models_states import PluginInstallationState
 from cloudify_rest_client import plugins, plugins_update, manager
@@ -297,6 +299,19 @@ class PluginsUpdateTest(CliCommandTest):
         self.client.plugins_update = Mock()
         self._mock_wait_for_executions(False)
 
+    def _inspect_calls(self, update_client_mock,
+                       arg_name_to_retrieve=None,
+                       number_of_calls=1):
+        calls = update_client_mock.mock_calls
+        self.assertEqual(len(calls), number_of_calls)
+        _, args, kwargs = calls[0]
+        call_args = inspect.getcallargs(
+            plugins_update.PluginsUpdateClient(None).update_plugins,
+            *args, **kwargs)
+        if arg_name_to_retrieve:
+            self.assertIn(arg_name_to_retrieve, call_args)
+            return call_args[arg_name_to_retrieve]
+
     def test_plugins_get(self):
         self.client.plugins_update.get = Mock(
             return_value=plugins_update.PluginsUpdate({
@@ -361,15 +376,8 @@ class PluginsUpdateTest(CliCommandTest):
         self.client.plugins_update.update_plugins = update_client_mock
         self.invoke('cfy plugins update asdf --force')
 
-        calls = update_client_mock.mock_calls
-        self.assertEqual(len(calls), 1)
-        _, args, kwargs = calls[0]
-        call_args = inspect.getcallargs(
-            plugins_update.PluginsUpdateClient(None).update_plugins,
-            *args, **kwargs)
-
-        self.assertIn('force', call_args)
-        self.assertTrue(call_args['force'])
+        is_force = self._inspect_calls(update_client_mock, 'force')
+        self.assertTrue(is_force)
 
     def test_plugins_update_failure(self):
         self._mock_wait_for_executions(True)
@@ -384,6 +392,139 @@ class PluginsUpdateTest(CliCommandTest):
         self.assertIn('Execution of workflow', logs[-2])
         self.assertIn('failed', logs[-2])
         self.assertIn('Failed updating plugins for blueprint asdf', logs[-1])
+
+    def test_params_all_xor_blueprint_id(self):
+        update_client_mock = Mock()
+        bp_list_client_mock = Mock(return_value=[])
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.client.blueprints.list = bp_list_client_mock
+        self.invoke('cfy plugins update --all')
+        self.assertEqual(len(update_client_mock.mock_calls), 0)
+        self.assertEqual(len(bp_list_client_mock.mock_calls), 1)
+
+        self.invoke('cfy plugins update asdf')
+        self.assertEqual(len(update_client_mock.mock_calls), 1)
+        self.assertEqual(len(bp_list_client_mock.mock_calls), 1)
+
+        self.assertRaises(ClickInvocationException,
+                          self.invoke,
+                          'cfy plugins update --all asdf')
+
+        self.assertRaises(ClickInvocationException,
+                          self.invoke,
+                          'cfy plugins update asdf --all')
+
+    def test_all(self):
+        bp = namedtuple('Blueprint', 'id')
+        update_client_mock = Mock()
+        bp_list_client_mock = Mock(return_value=[bp(id='asdf'), bp(id='zxcv')])
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.client.blueprints.list = bp_list_client_mock
+        self.invoke('cfy plugins update --all')
+        self.assertEqual(len(bp_list_client_mock.mock_calls), 1)
+        self.assertEqual(len(update_client_mock.mock_calls), 2)
+        self.assertListEqual(
+            list(update_client_mock.call_args_list),
+            [call('asdf', force=False, plugin_names=[],
+                  to_latest=[], all_to_latest=True,
+                  to_minor=[], all_to_minor=False),
+             call('zxcv', force=False, plugin_names=[],
+                  to_latest=[], all_to_latest=True,
+                  to_minor=[], all_to_minor=False)])
+
+    def test_params_plugin_name_syntax_error(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.assertRaises(ClickInvocationException,
+                          self.invoke,
+                          'cfy plugins update --plugin-name asdf')
+
+    def test_params_plugin_name(self):
+        update_plugin_name = 'plugin-name'
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.invoke('cfy plugins update --plugin-name {0} asdf'.format(
+            update_plugin_name))
+
+        a_plugin_names = self._inspect_calls(update_client_mock,
+                                             'plugin_names')
+        self.assertListEqual(a_plugin_names, [update_plugin_name])
+
+    def test_params_all_to_minor(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.invoke('cfy plugins update --all-to-minor asdf')
+
+        is_minor = self._inspect_calls(update_client_mock, 'all_to_minor')
+        self.assertTrue(is_minor)
+
+    def test_params_to_minor_multiple(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.invoke('cfy plugins update --to-minor plugin1-name '
+                    '--to-minor plugin2-name asdf')
+
+        to_minor_list = self._inspect_calls(update_client_mock, 'to_minor')
+        self.assertListEqual(to_minor_list, ['plugin1-name', 'plugin2-name'])
+
+    def test_params_to_minor_comma_separated(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.invoke('cfy plugins update --to-minor '
+                    'plugin1-name,plugin2-name asdf')
+
+        to_minor_list = self._inspect_calls(update_client_mock, 'to_minor')
+        self.assertListEqual(to_minor_list, ['plugin1-name', 'plugin2-name'])
+
+    def test_params_all_to_latest(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.invoke('cfy plugins update --all-to-latest asdf')
+
+        is_latest = self._inspect_calls(update_client_mock, 'all_to_latest')
+        self.assertTrue(is_latest)
+
+    def test_params_to_latest_multiple(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.invoke('cfy plugins update --all-to-minor '
+                    '--to-latest plugin1-name --to-latest plugin2-name asdf')
+
+        latest_list = self._inspect_calls(update_client_mock, 'to_latest')
+        self.assertListEqual(latest_list, ['plugin1-name', 'plugin2-name'])
+
+    def test_params_to_latest_comma_separated(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.invoke('cfy plugins update --all-to-minor '
+                    '--to-latest plugin1-name,plugin2-name asdf')
+
+        latest_list = self._inspect_calls(update_client_mock, 'to_latest')
+        self.assertListEqual(latest_list, ['plugin1-name', 'plugin2-name'])
+
+    def test_params_all_to_minor_xor_to_minor(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.assertRaises(ClickInvocationException,
+                          self.invoke,
+                          'cfy plugins update --all-to-minor '
+                          '--to-minor plugin1-name asdf')
+
+    def test_params_all_to_latest_xor_to_latest(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.assertRaises(ClickInvocationException,
+                          self.invoke,
+                          'cfy plugins update --all-to-latest '
+                          '--to-latest plugin1-name asdf')
+
+    def test_params_all_to_latest_xor_all_to_minor(self):
+        update_client_mock = Mock()
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.assertRaises(ClickInvocationException,
+                          self.invoke,
+                          'cfy plugins update '
+                          '--all-to-latest --all-to-minor asdf')
 
 
 class TestFormatInstallationState(unittest.TestCase):
