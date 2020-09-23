@@ -21,7 +21,7 @@ import shutil
 import getpass
 import tempfile
 import itertools
-from base64 import urlsafe_b64encode
+from base64 import b64encode
 from contextlib import contextmanager
 
 import yaml
@@ -518,9 +518,9 @@ def get_auth_header(username, password):
     header = {}
 
     if username and password:
-        # encode/decode just to allow urlsafe_b64encode, which requires bytes
+        # encode/decode just to allow b64encode, which requires bytes
         credentials = '{0}:{1}'.format(username, password).encode('utf-8')
-        encoded_credentials = urlsafe_b64encode(credentials).decode('utf-8')
+        encoded_credentials = b64encode(credentials).decode('utf-8')
         header = {
             constants.CLOUDIFY_AUTHENTICATION_HEADER:
                 constants.BASIC_AUTH_PREFIX + ' ' + encoded_credentials}
