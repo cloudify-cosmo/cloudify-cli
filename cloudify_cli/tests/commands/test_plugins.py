@@ -427,10 +427,12 @@ class PluginsUpdateTest(CliCommandTest):
             list(update_client_mock.call_args_list),
             [call('asdf', force=False, plugin_names=[],
                   to_latest=[], all_to_latest=True,
-                  to_minor=[], all_to_minor=False),
+                  to_minor=[], all_to_minor=False,
+                  mapping=None),
              call('zxcv', force=False, plugin_names=[],
                   to_latest=[], all_to_latest=True,
-                  to_minor=[], all_to_minor=False)])
+                  to_minor=[], all_to_minor=False,
+                  mapping=None)])
 
     def test_params_plugin_name_syntax_error(self):
         update_client_mock = Mock()
