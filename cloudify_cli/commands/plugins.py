@@ -30,6 +30,7 @@ from cloudify_cli.exceptions import (
 )
 
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
+from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
 from ..logger import get_global_json_output
@@ -529,13 +530,31 @@ def update(blueprint_id,
                             include_logs, json_output, logger,
                             client, force)
     elif all_blueprints:
+        update_results = {'successful': [], 'failed': []}
         for blueprint in client.blueprints.list():
-            _update_a_blueprint(blueprint.id, plugin_names,
-                                to_latest, all_to_latest,
-                                to_minor, all_to_minor,
-                                mappings.get(blueprint.id),
-                                include_logs, json_output, logger,
-                                client, force)
+            try:
+                _update_a_blueprint(blueprint.id, plugin_names,
+                                    to_latest, all_to_latest,
+                                    to_minor, all_to_minor,
+                                    mappings.get(blueprint.id),
+                                    include_logs, json_output, logger,
+                                    client, force)
+                update_results['successful'].append(blueprint.id)
+            except CloudifyClientError as ex:
+                update_results['failed'].append(blueprint.id)
+                logger.warning('Error during %s blueprint update.  %s',
+                               blueprint.id, ex)
+        if update_results['successful']:
+            logger.info('Successfully updated %d blueprints.',
+                        len(update_results['successful']))
+        if update_results['failed']:
+            logger.error('Failed updating %d blueprints.',
+                         len(update_results['failed']))
+            logger.error('Failed blueprints: %s.',
+                         ', '.join(update_results['failed']))
+            if mappings:
+                logger.info('Make sure all required plugins are installed in'
+                            'suggested versions.')
 
 
 def _load_mapping_file(mapping_file_name):
