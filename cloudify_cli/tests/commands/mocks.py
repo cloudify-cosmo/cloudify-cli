@@ -202,8 +202,8 @@ class MockMetadata(dict):
 
 
 class MockListResponse(object):
-    def __init__(self, items=[], _=None):
-        self.items = items
+    def __init__(self, items=None, _=None):
+        self.items = items or []
         self.metadata = MockMetadata()
 
     def __iter__(self):

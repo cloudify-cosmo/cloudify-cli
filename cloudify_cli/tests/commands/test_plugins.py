@@ -29,10 +29,10 @@ class MockPaginationWithSize(dict):
 
 class MockListResponseWithPaginationSize(MockListResponse):
 
-    def __init__(self, items=[], pagination_total=1000, _=None):
-        self.items = items
+    def __init__(self, items=None, pagination_total=1000, _=None):
+        super(MockListResponseWithPaginationSize, self).__init__(items=items)
         self.metadata = MockMetadata(pagination=MockPaginationWithSize(
-            pagination_total, len(items)))
+            pagination_total, len(self.items)))
         self._iter_has_been_called = False
         self._len_has_been_called = False
 
@@ -425,8 +425,7 @@ class PluginsUpdateTest(CliCommandTest):
     def test_params_all_xor_blueprint_id(self):
         update_client_mock = Mock()
         bp_list_client_mock = Mock(
-            return_value=MockListResponseWithPaginationSize(items=[]))
-
+            return_value=MockListResponseWithPaginationSize())
         self.client.plugins_update.update_plugins = update_client_mock
         self.client.blueprints.list = bp_list_client_mock
         self.invoke('cfy plugins update --all')
