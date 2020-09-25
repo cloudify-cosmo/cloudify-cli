@@ -562,8 +562,8 @@ def update(blueprint_id,
             logger.error('Failed blueprints: %s.',
                          ', '.join(update_results['failed']))
             if mappings:
-                logger.info('Make sure all required plugins are installed in '
-                            'the suggested versions.')
+                logger.info('Make sure all plugins required by the mapping '
+                            'are installed.')
 
 
 def _load_mapping_file(mapping_file_name):
