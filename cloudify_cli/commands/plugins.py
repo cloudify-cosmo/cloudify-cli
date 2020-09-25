@@ -19,6 +19,7 @@ import time
 
 import click
 import wagon
+import yaml
 
 from cloudify.models_states import PluginInstallationState
 
@@ -29,6 +30,7 @@ from cloudify_cli.exceptions import (
 )
 
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
+from cloudify_rest_client.exceptions import CloudifyClientError
 
 from .. import utils
 from ..logger import get_global_json_output
@@ -452,6 +454,7 @@ def set_visibility(plugin_id, visibility, logger, client):
 @cfy.options.plugins_all_to_latest
 @cfy.options.plugins_to_minor
 @cfy.options.plugins_all_to_minor
+@cfy.options.plugins_mapping_file
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
 @cfy.assert_manager_active()
@@ -467,6 +470,7 @@ def update(blueprint_id,
            all_to_latest,
            to_minor,
            all_to_minor,
+           mapping_file,
            include_logs,
            json_output,
            logger,
@@ -489,6 +493,8 @@ def update(blueprint_id,
                      minor version (i.e. major versions of the plugin in use
                      and the upgraded one will match).
     `ALL_TO_MINOR`   update all (selected) plugins to the latest minor version.
+    `MAPPING_FILE`   mapping file used to override any plugin version
+                     constraints.
     """
     # Validate input arguments
     if ((blueprint_id and all_blueprints) or
@@ -516,18 +522,54 @@ def update(blueprint_id,
             'only the specific plugins, use --plugin-name parameter instead.')
 
     utils.explicit_tenant_name_message(tenant_name, logger)
+    mappings = _load_mapping_file(mapping_file) if mapping_file else {}
     if blueprint_id:
         _update_a_blueprint(blueprint_id, plugin_names,
                             to_latest, all_to_latest, to_minor, all_to_minor,
+                            mappings.get(blueprint_id),
                             include_logs, json_output, logger,
                             client, force)
     elif all_blueprints:
-        for blueprint in client.blueprints.list():
-            _update_a_blueprint(blueprint.id, plugin_names,
-                                to_latest, all_to_latest,
-                                to_minor, all_to_minor,
-                                include_logs, json_output, logger,
-                                client, force)
+        update_results = {'successful': [], 'failed': []}
+        pagination_offset = 0
+        while True:
+            blueprints = client.blueprints.list(
+                sort='created_at',
+                _offset=pagination_offset,
+            )
+            for blueprint in blueprints:
+                try:
+                    _update_a_blueprint(blueprint.id, plugin_names,
+                                        to_latest, all_to_latest,
+                                        to_minor, all_to_minor,
+                                        mappings.get(blueprint.id),
+                                        include_logs, json_output, logger,
+                                        client, force)
+                    update_results['successful'].append(blueprint.id)
+                except CloudifyClientError as ex:
+                    update_results['failed'].append(blueprint.id)
+                    logger.warning('Error during %s blueprint update.  %s',
+                                   blueprint.id, ex)
+            pagination_offset += blueprints.metadata.pagination.size
+            if len(blueprints) < blueprints.metadata.pagination.size or \
+                    0 == blueprints.metadata.pagination.size:
+                break
+        if update_results['successful']:
+            logger.info('Successfully updated %d blueprints.',
+                        len(update_results['successful']))
+        if update_results['failed']:
+            logger.error('Failed updating %d blueprints.',
+                         len(update_results['failed']))
+            logger.error('Failed blueprints: %s.',
+                         ', '.join(update_results['failed']))
+            if mappings:
+                logger.info('Make sure all plugins required by the mapping '
+                            'are installed.')
+
+
+def _load_mapping_file(mapping_file_name):
+    with open(mapping_file_name) as mapping_file:
+        return yaml.safe_load(mapping_file)
 
 
 def _update_a_blueprint(blueprint_id,
@@ -536,6 +578,7 @@ def _update_a_blueprint(blueprint_id,
                         all_to_latest,
                         to_minor,
                         all_to_minor,
+                        mapping,
                         include_logs,
                         json_output,
                         logger,
@@ -546,7 +589,8 @@ def _update_a_blueprint(blueprint_id,
     plugins_update = client.plugins_update.update_plugins(
         blueprint_id, force=force, plugin_names=plugin_names,
         to_latest=to_latest, all_to_latest=all_to_latest,
-        to_minor=to_minor, all_to_minor=all_to_minor
+        to_minor=to_minor, all_to_minor=all_to_minor,
+        mapping=mapping
     )
     events_logger = get_events_logger(json_output)
     execution = execution_events_fetcher.wait_for_execution(
