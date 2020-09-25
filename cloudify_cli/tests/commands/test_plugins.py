@@ -33,18 +33,18 @@ class MockListResponseWithPaginationSize(MockListResponse):
         self.items = items
         self.metadata = MockMetadata(pagination=MockPaginationWithSize(
             pagination_total, len(items)))
-        self._iter_has_been_called = 0
-        self._len_has_been_called = 0
+        self._iter_has_been_called = False
+        self._len_has_been_called = False
 
     def __iter__(self):
-        self._iter_has_been_called += 1
-        if self._iter_has_been_called <= 1:
+        if not self._iter_has_been_called:
+            self._iter_has_been_called = True
             return iter(self.items)
         return iter([])
 
     def __len__(self):
-        self._len_has_been_called += 1
-        if self._len_has_been_called <= 1:
+        if not self._len_has_been_called:
+            self._len_has_been_called = True
             return len(self.items)
         return 0
 
