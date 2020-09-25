@@ -531,19 +531,32 @@ def update(blueprint_id,
                             client, force)
     elif all_blueprints:
         update_results = {'successful': [], 'failed': []}
-        for blueprint in client.blueprints.list():
-            try:
-                _update_a_blueprint(blueprint.id, plugin_names,
-                                    to_latest, all_to_latest,
-                                    to_minor, all_to_minor,
-                                    mappings.get(blueprint.id),
-                                    include_logs, json_output, logger,
-                                    client, force)
-                update_results['successful'].append(blueprint.id)
-            except CloudifyClientError as ex:
-                update_results['failed'].append(blueprint.id)
-                logger.warning('Error during %s blueprint update.  %s',
-                               blueprint.id, ex)
+        pagination_size = 100
+        pagination_offset = 0
+        while True:
+            blueprints_processed = 0
+            for blueprint in client.blueprints.list(
+                sort='created_at',
+                _offset=pagination_offset,
+                _size=pagination_size,
+            ):
+                try:
+                    _update_a_blueprint(blueprint.id, plugin_names,
+                                        to_latest, all_to_latest,
+                                        to_minor, all_to_minor,
+                                        mappings.get(blueprint.id),
+                                        include_logs, json_output, logger,
+                                        client, force)
+                    update_results['successful'].append(blueprint.id)
+                except CloudifyClientError as ex:
+                    update_results['failed'].append(blueprint.id)
+                    logger.warning('Error during %s blueprint update.  %s',
+                                   blueprint.id, ex)
+                finally:
+                    blueprints_processed += 1
+            pagination_offset += pagination_size
+            if blueprints_processed != pagination_size:
+                break
         if update_results['successful']:
             logger.info('Successfully updated %d blueprints.',
                         len(update_results['successful']))
