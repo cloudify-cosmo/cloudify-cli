@@ -551,7 +551,8 @@ def update(blueprint_id,
                     logger.warning('Error during %s blueprint update.  %s',
                                    blueprint.id, ex)
             pagination_offset += blueprints.metadata.pagination.size
-            if len(blueprints) < blueprints.metadata.pagination.size:
+            if len(blueprints) < blueprints.metadata.pagination.size or \
+                    0 == blueprints.metadata.pagination.size:
                 break
         if update_results['successful']:
             logger.info('Successfully updated %d blueprints.',

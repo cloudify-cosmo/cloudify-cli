@@ -7,7 +7,7 @@ from collections import namedtuple
 from mock import PropertyMock, patch, Mock, call
 
 from .constants import PLUGINS_DIR
-from .mocks import MockListResponse
+from .mocks import MockMetadata, MockListResponse
 from .test_base import CliCommandTest
 from ..cfy import ClickInvocationException
 
@@ -18,6 +18,35 @@ from cloudify_cli.constants import DEFAULT_TENANT_NAME
 from cloudify_cli.exceptions import (CloudifyCliError,
                                      SuppressedCloudifyCliError)
 from cloudify_cli.commands.plugins import _format_installation_state
+
+
+class MockPaginationWithSize(dict):
+
+    def __init__(self, total=0, size=0):
+        self.total = total
+        self.size = size
+
+
+class MockListResponseWithPaginationSize(MockListResponse):
+
+    def __init__(self, items=[], pagination_total=1000, _=None):
+        self.items = items
+        self.metadata = MockMetadata(pagination=MockPaginationWithSize(
+            pagination_total, len(items)))
+        self._iter_has_been_called = 0
+        self._len_has_been_called = 0
+
+    def __iter__(self):
+        self._iter_has_been_called += 1
+        if self._iter_has_been_called <= 1:
+            return iter(self.items)
+        return iter([])
+
+    def __len__(self):
+        self._len_has_been_called += 1
+        if self._len_has_been_called <= 1:
+            return len(self.items)
+        return 0
 
 
 class PluginsTest(CliCommandTest):
@@ -395,7 +424,9 @@ class PluginsUpdateTest(CliCommandTest):
 
     def test_params_all_xor_blueprint_id(self):
         update_client_mock = Mock()
-        bp_list_client_mock = Mock(return_value=[])
+        bp_list_client_mock = Mock(
+            return_value=MockListResponseWithPaginationSize(items=[]))
+
         self.client.plugins_update.update_plugins = update_client_mock
         self.client.blueprints.list = bp_list_client_mock
         self.invoke('cfy plugins update --all')
@@ -417,11 +448,13 @@ class PluginsUpdateTest(CliCommandTest):
     def test_all(self):
         bp = namedtuple('Blueprint', 'id')
         update_client_mock = Mock()
-        bp_list_client_mock = Mock(return_value=[bp(id='asdf'), bp(id='zxcv')])
+        bp_list_client_mock = Mock(
+            return_value=MockListResponseWithPaginationSize(
+                items=[bp(id='asdf'), bp(id='zxcv')]))
         self.client.plugins_update.update_plugins = update_client_mock
         self.client.blueprints.list = bp_list_client_mock
         self.invoke('cfy plugins update --all')
-        self.assertEqual(len(bp_list_client_mock.mock_calls), 1)
+        self.assertEqual(len(bp_list_client_mock.mock_calls), 2)
         self.assertEqual(len(update_client_mock.mock_calls), 2)
         self.assertListEqual(
             list(update_client_mock.call_args_list),
