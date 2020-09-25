@@ -531,15 +531,13 @@ def update(blueprint_id,
                             client, force)
     elif all_blueprints:
         update_results = {'successful': [], 'failed': []}
-        pagination_size = 100
         pagination_offset = 0
         while True:
-            blueprints_processed = 0
-            for blueprint in client.blueprints.list(
+            blueprints = client.blueprints.list(
                 sort='created_at',
                 _offset=pagination_offset,
-                _size=pagination_size,
-            ):
+            )
+            for blueprint in blueprints:
                 try:
                     _update_a_blueprint(blueprint.id, plugin_names,
                                         to_latest, all_to_latest,
@@ -552,10 +550,8 @@ def update(blueprint_id,
                     update_results['failed'].append(blueprint.id)
                     logger.warning('Error during %s blueprint update.  %s',
                                    blueprint.id, ex)
-                finally:
-                    blueprints_processed += 1
-            pagination_offset += pagination_size
-            if blueprints_processed != pagination_size:
+            pagination_offset += blueprints.metadata.pagination.size
+            if len(blueprints) < blueprints.metadata.pagination.size:
                 break
         if update_results['successful']:
             logger.info('Successfully updated %d blueprints.',
