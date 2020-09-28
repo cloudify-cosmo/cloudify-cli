@@ -866,14 +866,6 @@ class Options(object):
             default=False,
             help=helptexts.MANAGER_PASSWORD)
 
-        self.manager_tenant = click.option(
-            '-t',
-            '--manager-tenant',
-            required=False,
-            help=helptexts.MANAGER_TENANT,
-            callback=validate_name
-        )
-
         self.manager_tenant_flag = click.option(
             '-t',
             '--manager-tenant',
@@ -1867,6 +1859,17 @@ class Options(object):
             required=False,
             type=click.Path(file_okay=True, dir_okay=False),
             help=helptexts.STORE_OUTPUT_PATH
+        )
+
+    @staticmethod
+    def manager_tenant(default=None):
+        return click.option(
+            '-t',
+            '--manager-tenant',
+            required=False,
+            help=helptexts.MANAGER_TENANT,
+            callback=validate_name,
+            default=default
         )
 
 

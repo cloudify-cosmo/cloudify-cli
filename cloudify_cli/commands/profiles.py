@@ -148,7 +148,7 @@ def profiles_list(logger):
 @cfy.options.ssh_port
 @cfy.options.manager_username
 @cfy.options.manager_password
-@cfy.options.manager_tenant
+@cfy.options.manager_tenant(default='default_tenant')
 @cfy.options.rest_port
 @cfy.options.ssl_rest
 @cfy.options.rest_certificate
@@ -424,7 +424,7 @@ def _set_profile_ssl(ssl, rest_port, logger):
 @cfy.options.profile_name
 @cfy.options.manager_username
 @cfy.options.manager_password
-@cfy.options.manager_tenant
+@cfy.options.manager_tenant()
 @cfy.options.ssh_user
 @cfy.options.ssh_key
 @cfy.options.ssh_port
