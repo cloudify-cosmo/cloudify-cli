@@ -1414,12 +1414,6 @@ class Options(object):
             default=None,
             help=helptexts.PLUGINS_UPDATE_ALL_TO_MINOR)
 
-        self.plugins_mapping_file = click.option(
-            '--mapping',
-            'mapping_file',
-            multiple=False,
-            help=helptexts.PLUGINS_MAPPING_FILE)
-
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
