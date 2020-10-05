@@ -67,12 +67,12 @@ pipeline {
             sudo yum-builddep -y packaging/cloudify-cli.spec
           '''
           echo 'Building rpm'
-          sh """
+          sh '''
             rpmbuild \
               -D "CLOUDIFY_VERSION $(python setup.py --version | cut -d- -f1)" \
               -D "CLOUDIFY_PACKAGE_RELEASE 1" \
               -bb packaging/cloudify-cli.spec
-          """
+          '''
           echo 'Copy RPM to RPM folder'
           sh("mkdir -p ${env.WORKSPACE}/rpm && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm")
         }
