@@ -20,8 +20,8 @@ pipeline {
     PROJECT = 'cloudify-cli'
     WORKSPACE = "${env.WORKSPACE}"
     PATH = "/root/.local/bin:$PATH"
-    VERSION = getVersion("${env.BRANCH_NAME}").trim()
-    PRERELEASE = getPreRelease("${env.BRANCH_NAME}").trim()
+    VERSION = getVersion("master").trim()
+    PRERELEASE = getPreRelease("master").trim()
   }
 
   stages {
