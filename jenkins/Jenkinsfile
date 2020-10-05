@@ -18,6 +18,7 @@ pipeline {
     BRANCH = "${env.BRANCH_NAME}"
     PROJECT = 'cloudify-cli'
     WORKSPACE = "${env.WORKSPACE}"
+    PATH = "/root/.local/bin:$PATH"
   }
 
   stages {
