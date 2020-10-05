@@ -231,10 +231,8 @@ def wait_for_execution(client,
             execution = client.executions.get(execution.id)
             execution_ended = execution.status in Execution.END_STATES
 
-        if not events_watcher.end_log_received and \
-                execution.status != Execution.PENDING:
-            events_fetcher.fetch_and_process_events(
-                events_handler=events_watcher, timeout=timeout)
+        events_fetcher.fetch_and_process_events(
+            events_handler=events_watcher, timeout=timeout)
 
         if execution_ended and events_watcher.end_log_received:
             break
