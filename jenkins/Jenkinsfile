@@ -1,0 +1,53 @@
+pipeline {
+  agent {
+    kubernetes {
+      label 'cli'
+      defaultContainer 'jnlp'
+      yamlFile 'jenkins/build-pod.yaml'
+    }
+  }
+
+  options {
+    checkoutToSubdirectory('cloudify-cli')
+    buildDiscarder(logRotator(numToKeepStr:'10'))
+    timeout(time: 60, unit: 'MINUTES')
+    timestamps()
+  }
+  
+  environment {
+    BRANCH = "${env.BRANCH_NAME}"
+    PROJECT = 'cloudify-cli'
+    WORKSPACE = "${env.WORKSPACE}"
+  }
+
+  stages {
+    stage('flake8_py27') {
+      steps {
+        sh script: "mkdir -p ${env.WORKSPACE}/flake8 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/flake8", label: "copying repo to seperate workspace"
+        container('py27') {
+          dir("${env.WORKSPACE}/flake8") {
+            echo 'install and run flake8'
+            sh '''
+              pip install flake8 --user
+              flake8 cloudify_cli
+            '''
+          }
+        }
+      }
+    }
+    stage('flake8_py36') {
+      steps {
+        sh script: "mkdir -p ${env.WORKSPACE}/flake8 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/flake8", label: "copying repo to seperate workspace"
+        container('py36') {
+          dir("${env.WORKSPACE}/flake8") {
+            echo 'install and run flake8'
+            sh '''
+              pip install flake8 --user
+              flake8 cloudify_cli
+            '''
+          }
+        }
+      }
+    }
+  }
+}
