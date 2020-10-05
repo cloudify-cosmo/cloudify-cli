@@ -13,17 +13,17 @@ spec:
     securityContext:
       runAsUser: 0
       privileged: true
-  # - name: rpmbuild
-  #   image: rpmbuild/centos7
-  #   command:
-  #   - cat
-  #   tty: true
-  #   resources:
-  #     requests:
-  #       cpu: 1
-  #   securityContext:
-  #     runAsUser: 0
-  #     privileged: true
+  - name: rpmbuild
+    image: rpmbuild/centos7
+    command:
+    - cat
+    tty: true
+    resources:
+      requests:
+        cpu: 1
+    securityContext:
+      runAsUser: 0
+      privileged: true
   - name: py27
     image: circleci/python:2.7
     command:
