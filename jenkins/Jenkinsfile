@@ -86,6 +86,7 @@ pipeline {
     }
     stage('build-deb') {
       steps {
+        sh script: "mkdir -p ${env.WORKSPACE}/project && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/project", label: "copying repo to seperate workspace"
         container('debbuild') {
           sh "mkdir /tmp/result"
           sh '''
@@ -93,7 +94,7 @@ pipeline {
             apt-get update
             apt-get install python python-setuptools -y
           '''
-          sh '/bin/bash ~/project/packaging/debian/build.sh'
+          sh '/bin/bash ${env.WORKSPACE}/project/packaging/debian/build.sh'
         }
       }
     }
