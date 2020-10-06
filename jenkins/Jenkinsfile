@@ -26,7 +26,7 @@ pipeline {
     BUILD_DIR = "/tmp/build"
     RESULT_DIR = "/tmp/result"
     CLOUDIFY_PACKAGE_RELEASE = "1"
-    CLOUDIFY_VERSION = "$(python ~/project/setup.py --version)"
+    CLOUDIFY_VERSION = "\$(python ~/project/setup.py --version)"
   }
 
   stages {
