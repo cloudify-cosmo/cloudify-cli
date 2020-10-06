@@ -15,12 +15,12 @@ spec:
       privileged: true
   - name: rpmbuild
     image: rpmbuild/centos7
-    command:
-    - cat
-    tty: true
     resources:
       requests:
         cpu: 1
+    command:
+    - cat
+    tty: true
     securityContext:
       runAsUser: 0
       privileged: true
