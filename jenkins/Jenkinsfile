@@ -70,16 +70,15 @@ pipeline {
             yum install python-setuptools -y
             chmod a+wx /opt
           '''
-          dir("~/rpmbuild/SOURCES") {
-            echo 'Building dependencies and rpm'
-            sh '''
-              yum-builddep -y packaging/cloudify-cli.spec
-              rpmbuild \
-                -D "CLOUDIFY_VERSION $(python setup.py --version | cut -d- -f1)" \
-                -D "CLOUDIFY_PACKAGE_RELEASE 1" \
-                -bb packaging/cloudify-cli.spec
-            '''
-          }
+          echo 'Building dependencies and rpm'
+          sh '''
+            cd ~/rpmbuild/SOURCES
+            yum-builddep -y packaging/cloudify-cli.spec
+            rpmbuild \
+              -D "CLOUDIFY_VERSION $(python setup.py --version | cut -d- -f1)" \
+              -D "CLOUDIFY_PACKAGE_RELEASE 1" \
+              -bb packaging/cloudify-cli.spec
+          '''
           echo 'Copy RPM to RPM folder'
           sh("mkdir -p ${env.WORKSPACE}/rpm && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm")
         }
