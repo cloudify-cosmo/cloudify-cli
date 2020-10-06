@@ -22,7 +22,7 @@ pipeline {
     PATH = "/root/.local/bin:$PATH"
     VERSION = getVersion("master").trim()
     PRERELEASE = getPreRelease("master").trim()
-    PROJECT_DIR = "~/project"
+    PROJECT_DIR = "${env.WORKSPACE}/project"
     BUILD_DIR = "/tmp/build"
     RESULT_DIR = "/tmp/result"
     CLOUDIFY_PACKAGE_RELEASE = "1"
@@ -94,7 +94,7 @@ pipeline {
             apt-get update
             apt-get install python python-setuptools -y
           '''
-          sh '/bin/bash ${env.WORKSPACE}/project/packaging/debian/build.sh'
+          sh "/bin/bash ${env.WORKSPACE}/project/packaging/debian/build.sh"
         }
       }
     }
