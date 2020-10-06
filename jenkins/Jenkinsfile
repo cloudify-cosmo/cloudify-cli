@@ -22,6 +22,11 @@ pipeline {
     PATH = "/root/.local/bin:$PATH"
     VERSION = getVersion("master").trim()
     PRERELEASE = getPreRelease("master").trim()
+    PROJECT_DIR = "~/project"
+    BUILD_DIR = "/tmp/build"
+    RESULT_DIR = "/tmp/result"
+    CLOUDIFY_PACKAGE_RELEASE = "1"
+    CLOUDIFY_VERSION = "$(python ~/project/setup.py --version)"
   }
 
   stages {
@@ -77,6 +82,19 @@ pipeline {
           }
           echo 'Copy RPM to RPM folder'
           sh("mkdir -p ${env.WORKSPACE}/rpm && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm")
+        }
+      }
+    }
+    stage('build-deb') {
+      steps {
+        container('debbuild') {
+          sh "mkdir /tmp/result"
+          sh '''
+            set -ex
+            apt-get update
+            apt-get install python python-setuptools -y
+          '''
+          sh '/bin/bash ~/project/packaging/debian/build.sh'
         }
       }
     }
