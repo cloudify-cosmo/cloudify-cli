@@ -236,6 +236,15 @@ class AgentsTests(CliCommandTest):
             'other_tenant': {
                 'd0': {
                     'node_ids': ['node1']
+                },
+                # filtering by just node-id, still returns deployments
+                # that don't have that node; unfortunate but this is an
+                # optimization for the common case
+                'd1': {
+                    'node_ids': ['node1']
+                },
+                'd2': {
+                    'node_ids': ['node1']
                 }
             }
         }, results)
