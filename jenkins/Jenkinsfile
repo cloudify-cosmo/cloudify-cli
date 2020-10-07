@@ -26,75 +26,88 @@ pipeline {
     BUILD_DIR = "/tmp/build"
     RESULT_DIR = "/tmp/result"
     CLOUDIFY_PACKAGE_RELEASE = "1"
-    CLOUDIFY_VERSION = "\$(python ${env.WORKSPACE}/project/setup.py --version)"
+    CLOUDIFY_VERSION = "${env.VERSION}"
   }
 
   stages {
-    stage('flake8_py27') {
-      steps {
-        sh script: "mkdir -p ${env.WORKSPACE}/flake8 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/flake8", label: "copying repo to seperate workspace"
-        container('py27') {
-          dir("${env.WORKSPACE}/flake8") {
-            echo 'Install and run flake8'
-            sh '''
-              pip install flake8 --user
-              flake8 cloudify_cli
-            '''
+    stage('flake8, build rpm and deb-build') {
+      parallel {
+        stage('flake8_py27') {
+          steps {
+            sh script: "mkdir -p ${env.WORKSPACE}/flake8 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/flake8", label: "copying repo to seperate workspace"
+            container('py27') {
+              dir("${env.WORKSPACE}/flake8") {
+                echo 'Install and run flake8'
+                sh '''
+                  pip install flake8 --user
+                  flake8 cloudify_cli
+                '''
+              }
+            }
           }
         }
-      }
-    }
-    stage('flake8_py36') {
-      steps {
-        sh script: "mkdir -p ${env.WORKSPACE}/flake8 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/flake8", label: "copying repo to seperate workspace"
-        container('py36') {
-          dir("${env.WORKSPACE}/flake8") {
-            echo 'Install and run flake8'
-            sh '''
-              pip install flake8 --user
-              flake8 cloudify_cli
-            '''
+        stage('flake8_py36') {
+          steps {
+            sh script: "mkdir -p ${env.WORKSPACE}/flake8 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/flake8", label: "copying repo to seperate workspace"
+            container('py36') {
+              dir("${env.WORKSPACE}/flake8") {
+                echo 'Install and run flake8'
+                sh '''
+                  pip install flake8 --user
+                  flake8 cloudify_cli
+                '''
+              }
+            }
           }
         }
-      }
-    }
-    stage('build-rpm') {
-      steps {
-        container('rpmbuild') {
-          sh """
-            cd && mkdir rpmbuild && cd rpmbuild
-            git clone https://github.com/cloudify-cosmo/cloudify-cli.git SOURCES && cd SOURCES
-          """
-          echo 'Installing setup tools'
-          sh '''
-            yum install python-setuptools -y
-            chmod a+wx /opt
-          '''
-          echo 'Building dependencies and rpm'
-          sh '''
-            cd ~/rpmbuild/SOURCES
-            yum-builddep -y packaging/cloudify-cli.spec
-            rpmbuild \
-              -D "CLOUDIFY_VERSION $(python setup.py --version | cut -d- -f1)" \
-              -D "CLOUDIFY_PACKAGE_RELEASE 1" \
-              -bb packaging/cloudify-cli.spec
-          '''
-          echo 'Copy RPM to RPM folder'
-          sh("mkdir -p ${env.WORKSPACE}/rpm && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm")
+        stage('build-rpm') {
+          steps {
+            container('rpmbuild') {
+              sh """
+                cd && mkdir rpmbuild && cd rpmbuild
+                git clone https://github.com/cloudify-cosmo/cloudify-cli.git SOURCES && cd SOURCES
+              """
+              echo 'Installing setup tools'
+              sh '''
+                yum install python-setuptools -y
+                chmod a+wx /opt
+              '''
+              echo 'Building dependencies and rpm'
+              sh '''
+                cd ~/rpmbuild/SOURCES
+                yum-builddep -y packaging/cloudify-cli.spec
+                rpmbuild \
+                  -D "CLOUDIFY_VERSION $(python setup.py --version | cut -d- -f1)" \
+                  -D "CLOUDIFY_PACKAGE_RELEASE 1" \
+                  -bb packaging/cloudify-cli.spec
+              '''
+              echo 'Copy RPM to RPM folder'
+              sh("mkdir -p ${env.WORKSPACE}/rpm && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm")
+            }
+          }
         }
-      }
-    }
-    stage('build-deb') {
-      steps {
-        sh script: "mkdir -p ${env.WORKSPACE}/project && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/project", label: "copying repo to seperate workspace"
-        container('debbuild') {
-          sh "mkdir /tmp/result"
-          sh '''
-            set -ex
-            apt-get update
-            apt-get install python python-setuptools -y
-          '''
-          sh "/bin/bash ${env.WORKSPACE}/project/packaging/debian/build.sh"
+        stage('build-deb') {
+          steps {
+            sh script: "mkdir -p ${env.WORKSPACE}/project && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/project", label: "copying repo to seperate workspace"
+            container('debbuild') {
+              sh script: "mkdir /tmp/result", label: "create result folder"
+              echo 'install python setup tools'
+              sh '''
+                set -ex
+                apt-get update
+                apt-get install python python-setuptools -y
+              '''
+              echo 'build the deb package'
+              sh "/bin/bash ${env.WORKSPACE}/project/packaging/debian/build.sh"
+              echo 'sanity-test the deb package'
+              sh '''
+                set -ex
+                rm -rf /opt/cfy
+                dpkg -i /tmp/result/*.deb
+                cfy --version
+              '''
+            }
+          }
         }
       }
     }
