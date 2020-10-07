@@ -539,6 +539,7 @@ def get_auth_header(username, password):
 # the same for every node in the cluster.
 CLUSTER_NODE_ATTRS = ['host_ip', 'host_type', 'rest_port', 'rest_protocol',
                       'ssh_port', 'ssh_user', 'ssh_key']
+_TRY_NEXT_NODE = object()
 
 
 class ClusterHTTPClient(HTTPClient):
@@ -578,7 +579,7 @@ class ClusterHTTPClient(HTTPClient):
         # with `cfy profiles use`
         self.host = self._profile.manager_ip
         response = self._try_do_request(*args, **kwargs)
-        if response:
+        if response is not _TRY_NEXT_NODE:
             return response
 
         for node_index, node in list(enumerate(
@@ -590,8 +591,9 @@ class ClusterHTTPClient(HTTPClient):
                 kwargs['data'] = copied_data[node_index]
 
             response = self._try_do_request(*args, **kwargs)
-            if response:
-                return response
+            if response is _TRY_NEXT_NODE:
+                continue
+            return response
 
         raise CloudifyClientError('All cluster nodes are offline')
 
@@ -603,6 +605,7 @@ class ClusterHTTPClient(HTTPClient):
                 CloudifyClientError) as e:
             if isinstance(e, CloudifyClientError) and e.status_code != 502:
                 raise
+        return _TRY_NEXT_NODE
 
     def _use_node(self, node):
         if node['host_ip'] == self.host:
