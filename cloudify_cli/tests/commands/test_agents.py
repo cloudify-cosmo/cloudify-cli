@@ -98,7 +98,15 @@ class AgentsTests(CliCommandTest):
                     ni_node_id in kwargs.get('node_id', [ni_node_id]) and \
                     ni_dep_id in kwargs.get('deployment_id', [ni_dep_id])
 
-            return _topology_filter(_matcher, **kwargs)
+            instances = _topology_filter(_matcher, **kwargs)
+            return ListResponse(
+                instances, {
+                    'pagination': {
+                        'total': len(instances),
+                        'offset': 0,
+                        'size': len(instances)
+                    }
+                })
 
         def list_deployments(**kwargs):
             tenant_name = self.client._client.headers.get(
@@ -115,7 +123,7 @@ class AgentsTests(CliCommandTest):
             for dep in deployments:
                 if (not searched_ids) or dep.id in searched_ids:
                     results.append(dep)
-            return results
+            return ListResponse(results, {})
 
         def list_nodes(**kwargs):
             node_ids = kwargs.get('id')
@@ -125,8 +133,8 @@ class AgentsTests(CliCommandTest):
             nodes = [Node({'id': c, 'deployment_id': b, 'tenant_name': a}) for
                      (a, b, c) in nodes]
             if node_ids is None:
-                return nodes
-            return [x for x in nodes if x['id'] in node_ids]
+                nodes = [x for x in nodes if x['id'] in node_ids]
+            return ListResponse(nodes, {})
 
         self.client.node_instances.list = list_node_instances
         self.client.deployments.list = list_deployments
