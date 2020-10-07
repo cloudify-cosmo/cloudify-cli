@@ -1,15 +1,15 @@
-def install_test_dependencies(String dir) {
+def install_test_dependencies() {
   echo 'installing test dependencies'
   sh """#!/bin/bash
-    ${env.WORKSPACE}/${dir}/venv/bin/pip/install -r dev-requirements.txt
-    ${env.WORKSPACE}/${dir}/venv/bin/pip/install -r test-requirements.txt
-    ${env.WORKSPACE}/${dir}/venv/bin/pip/install -e .
+    ~/venv/bin/pip/ install -r dev-requirements.txt
+    ~/venv/bin/pip/ install -r test-requirements.txt
+    ~/venv/bin/pip/ install -e .
   """
 }
-def pytest(String dir){
+def pytest(){
   echo 'running pytest'
   sh '''
-    ${env.WORKSPACE}/${dir}/venv/bin/pytest \
+    ~/venv/bin/pytest \
       --cov-report term-missing \
       --cov=cloudify_cli \
       cloudify_cli/tests \
@@ -138,9 +138,9 @@ pipeline {
             container('py27') {
               dir("${env.WORKSPACE}/test_py27") {
                 echo 'create virtual env'
-                sh 'virtualenv venv'
-                install_test_dependencies('test_py27')
-                pytest('test_py27')
+                sh 'virtualenv ~/venv'
+                install_test_dependencies()
+                pytest()
               }
             }
           }
@@ -151,9 +151,9 @@ pipeline {
             container('py36') {
               dir("${env.WORKSPACE}/test_py36") {
                 echo 'create virtual env'
-                sh 'virtualenv venv'
-                install_test_dependencies('test_py36')
-                pytest('test_py36')
+                sh 'virtualenv ~/venv'
+                install_test_dependencies()
+                pytest()
               }
             }
           }
