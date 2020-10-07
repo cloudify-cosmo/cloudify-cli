@@ -148,7 +148,7 @@ def profiles_list(logger):
 @cfy.options.ssh_port
 @cfy.options.manager_username
 @cfy.options.manager_password
-@cfy.options.manager_tenant(default='default_tenant')
+@cfy.options.manager_tenant()
 @cfy.options.rest_port
 @cfy.options.ssl_rest
 @cfy.options.rest_certificate
@@ -184,6 +184,7 @@ def use(manager_ip,
             logger=logger,
             **kwargs)
     else:
+        kwargs.setdefault('manager_tenant', 'default_tenant')
         _create_profile(
             manager_ip=manager_ip,
             profile_name=profile_name,
@@ -207,7 +208,10 @@ def _update_cluster_profile_to_dict(logger):
 def _switch_profile(manager_ip, profile_name, logger, **kwargs):
     # if using an existing profile, it is an error to provide any --option,
     # because the way to update an existing profile is `cfy profiles set`
+    if kwargs.get('manager_tenant') == env.profile.manager_tenant:
+        del kwargs['manager_tenant']
     provided_options = [key for key, value in kwargs.items() if value]
+
     if any(provided_options):
         logger.warning('Profile {0} already exists. '
                        'The passed in options are ignored: {1}. '
