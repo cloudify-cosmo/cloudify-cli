@@ -1,3 +1,22 @@
+def install_test_dependencies(String cache_prefix) {
+  echo 'installing test dependencies'
+  sh '''#!/bin/bash
+    ~/venv/bin/pip/install -r dev-requirements.txt
+    ~/venv/bin/pip/install -r test-requirements.txt
+    ~/venv/bin/pip/install -e .
+  '''
+}
+def pytest(){
+  echo 'running pytest'
+  sh '''
+    ~/venv/bin/pytest \
+      --cov-report term-missing \
+      --cov=cloudify_cli \
+      cloudify_cli/tests \
+      --junitxml=test-results/cloudify_cli.xml
+  '''
+}
+
 @Library('pipeline-shared-library') _
 pipeline {
   agent {
@@ -106,6 +125,36 @@ pipeline {
                 dpkg -i /tmp/result/*.deb
                 cfy --version
               '''
+            }
+          }
+        }
+      }
+    }
+    stage('pytests') {
+      parallel {
+        stage('test_py27') {
+          steps {
+            sh script: "mkdir -p ${env.WORKSPACE}/test_py27 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/test_py27", label: "copying repo to seperate workspace"
+            container('py27') {
+              dir("${env.WORKSPACE}/test_py27") {
+                echo 'create virtual env'
+                sh 'virtualenv ~/venv'
+                install_test_dependencies('py27')
+                pytest()
+              }
+            }
+          }
+        }
+        stage('test_py36') {
+          steps {
+            sh script: "mkdir -p ${env.WORKSPACE}/test_py36 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/test_py36", label: "copying repo to seperate workspace"
+            container('py36') {
+              dir("${env.WORKSPACE}/test_py36") {
+                echo 'create virtual env'
+                sh 'virtualenv ~/venv'
+                install_test_dependencies('py36')
+                pytest()
+              }
             }
           }
         }
