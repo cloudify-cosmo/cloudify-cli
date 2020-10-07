@@ -99,12 +99,15 @@ class AgentsTests(CliCommandTest):
                     ni_dep_id in kwargs.get('deployment_id', [ni_dep_id])
 
             instances = _topology_filter(_matcher, **kwargs)
+            total = len(instances)
+            offset, size = kwargs.get('_offset', 0), kwargs.get('_size', 1000)
+            instances = instances[offset:offset + size]
             return ListResponse(
                 instances, {
                     'pagination': {
-                        'total': len(instances),
-                        'offset': 0,
-                        'size': len(instances)
+                        'size': size,
+                        'offset': offset,
+                        'total': total
                     }
                 })
 
