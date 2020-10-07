@@ -573,7 +573,7 @@ class ClusterHTTPClient(HTTPClient):
         manager_host = get_target_manager()
         if manager_host:
             self.host = manager_host
-            return self._try_do_request(*args, **kwargs)
+            return super(ClusterHTTPClient, self).do_request(*args, **kwargs)
 
         # First try with the main manager ip given when creating the profile
         # with `cfy profiles use`
