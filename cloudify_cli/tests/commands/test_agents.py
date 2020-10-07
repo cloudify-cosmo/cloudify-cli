@@ -289,6 +289,31 @@ class AgentsTests(CliCommandTest):
             AgentsTests._agent_filters(deployment_ids=['error']),
             False)
 
+    def test_filters_node_instance_pagination(self):
+        # with 2000 node-instances, the deployment with only uninitialized
+        # instances is skipped
+        self.mock_client([
+            _node_instance(
+                DEFAULT_TENANT_NAME,
+                'ni1_{0}'.format(i),
+                'node1',
+                'd0')
+            for i in range(2000)
+        ] + [
+            _node_instance(DEFAULT_TENANT_NAME, 'ni2_1', 'node2', 'd1'),
+            _node_instance(DEFAULT_TENANT_NAME, 'ni3_1', 'node3', 'd2',
+                           state='uninitialized')
+        ])
+        filters = get_filters_map(
+            self.client,
+            self.logger,
+            AgentsTests._agent_filters(),
+            False
+        )
+        self.assertIn('d0', filters[DEFAULT_TENANT_NAME])
+        self.assertIn('d1', filters[DEFAULT_TENANT_NAME])
+        self.assertNotIn('d2', filters[DEFAULT_TENANT_NAME])
+
     # Tests for get_deployments_and_run_workers
 
     def test_empty_node_instances_map(self):
