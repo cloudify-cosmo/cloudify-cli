@@ -226,28 +226,35 @@ def get_filters_map(
             for tenant_name in list(tenants_to_deployments):
                 tenant_client = env.get_rest_client(tenant_name=tenant_name)
                 deps_to_execute = tenants_to_deployments[tenant_name]
+                offset = 0
+                while True:
+                    node_instances = tenant_client.node_instances.list(
+                        _include=['id', 'host_id', 'deployment_id', 'state'],
+                        _offset=offset,
+                    )
+                    # Find all unstarted Compute instances.
+                    unstarted_computes = [
+                        ni for ni in node_instances
+                        if ni.id == ni.host_id and
+                        ni.state != _NODE_INSTANCE_STATE_STARTED
+                    ]
 
-                node_instances = tenant_client.node_instances.list(
-                    deployment_id=list(deps_to_execute),
-                    _include=['id', 'host_id', 'deployment_id', 'state']
-                )
+                    for unstarted_ni in unstarted_computes:
+                        logger.info("Node instance '%s' is not in '%s' state; "
+                                    "deployment '%s' will be skipped",
+                                    unstarted_ni.id,
+                                    _NODE_INSTANCE_STATE_STARTED,
+                                    unstarted_ni.deployment_id)
+                        deps_to_execute.pop(unstarted_ni.deployment_id, None)
 
-                # Find all unstarted Compute instances.
-                unstarted_computes = [
-                    ni for ni in node_instances
-                    if ni.id == ni.host_id and
-                    ni.state != _NODE_INSTANCE_STATE_STARTED
-                ]
+                    if not deps_to_execute:
+                        del tenants_to_deployments[tenant_name]
 
-                for unstarted_ni in unstarted_computes:
-                    logger.info("Node instance '%s' is not in '%s' state; "
-                                "deployment '%s' will be skipped",
-                                unstarted_ni.id, _NODE_INSTANCE_STATE_STARTED,
-                                unstarted_ni.deployment_id)
-                    deps_to_execute.pop(unstarted_ni.deployment_id, None)
-
-                if not deps_to_execute:
-                    del tenants_to_deployments[tenant_name]
+                    size = node_instances.metadata.pagination.size
+                    total = node_instances.metadata.pagination.total
+                    if len(node_instances) < size or size == total:
+                        break
+                    offset += size
 
     return tenants_to_deployments
 
@@ -262,7 +269,6 @@ def get_deployments_and_run_workers(
         parameters=None):
     tenants_to_deployments = get_filters_map(
         client, logger, agent_filters, all_tenants)
-
     if not tenants_to_deployments:
         raise CloudifyCliError("No eligible deployments found")
 
