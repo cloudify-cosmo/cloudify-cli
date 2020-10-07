@@ -1,15 +1,15 @@
-def install_test_dependencies(String cache_prefix) {
+def install_test_dependencies(String dir) {
   echo 'installing test dependencies'
-  sh '''#!/bin/bash
-    ~/venv/bin/pip/install -r dev-requirements.txt
-    ~/venv/bin/pip/install -r test-requirements.txt
-    ~/venv/bin/pip/install -e .
-  '''
+  sh """#!/bin/bash
+    ${env.WORKSPACE}/${dir}/venv/bin/pip/install -r dev-requirements.txt
+    ${env.WORKSPACE}/${dir}/venv/bin/pip/install -r test-requirements.txt
+    ${env.WORKSPACE}/${dir}/venv/bin/pip/install -e .
+  """
 }
-def pytest(){
+def pytest(String dir){
   echo 'running pytest'
   sh '''
-    ~/venv/bin/pytest \
+    ${env.WORKSPACE}/${dir}/venv/bin/pytest \
       --cov-report term-missing \
       --cov=cloudify_cli \
       cloudify_cli/tests \
@@ -79,55 +79,55 @@ pipeline {
             }
           }
         }
-        stage('build-rpm') {
-          steps {
-            container('rpmbuild') {
-              sh """
-                cd && mkdir rpmbuild && cd rpmbuild
-                git clone https://github.com/cloudify-cosmo/cloudify-cli.git SOURCES && cd SOURCES
-              """
-              echo 'Installing setup tools'
-              sh '''
-                yum install python-setuptools -y
-                chmod a+wx /opt
-              '''
-              echo 'Building dependencies and rpm'
-              sh '''
-                cd ~/rpmbuild/SOURCES
-                yum-builddep -y packaging/cloudify-cli.spec
-                rpmbuild \
-                  -D "CLOUDIFY_VERSION $(python setup.py --version | cut -d- -f1)" \
-                  -D "CLOUDIFY_PACKAGE_RELEASE 1" \
-                  -bb packaging/cloudify-cli.spec
-              '''
-              echo 'Copy RPM to RPM folder'
-              sh("mkdir -p ${env.WORKSPACE}/rpm && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm")
-            }
-          }
-        }
-        stage('build-deb') {
-          steps {
-            sh script: "mkdir -p ${env.WORKSPACE}/project && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/project", label: "copying repo to seperate workspace"
-            container('debbuild') {
-              sh script: "mkdir /tmp/result", label: "create result folder"
-              echo 'install python setup tools'
-              sh '''
-                set -ex
-                apt-get update
-                apt-get install python python-setuptools -y
-              '''
-              echo 'build the deb package'
-              sh "/bin/bash ${env.WORKSPACE}/project/packaging/debian/build.sh"
-              echo 'sanity-test the deb package'
-              sh '''
-                set -ex
-                rm -rf /opt/cfy
-                dpkg -i /tmp/result/*.deb
-                cfy --version
-              '''
-            }
-          }
-        }
+        // stage('build-rpm') {
+        //   steps {
+        //     container('rpmbuild') {
+        //       sh """
+        //         cd && mkdir rpmbuild && cd rpmbuild
+        //         git clone https://github.com/cloudify-cosmo/cloudify-cli.git SOURCES && cd SOURCES
+        //       """
+        //       echo 'Installing setup tools'
+        //       sh '''
+        //         yum install python-setuptools -y
+        //         chmod a+wx /opt
+        //       '''
+        //       echo 'Building dependencies and rpm'
+        //       sh '''
+        //         cd ~/rpmbuild/SOURCES
+        //         yum-builddep -y packaging/cloudify-cli.spec
+        //         rpmbuild \
+        //           -D "CLOUDIFY_VERSION $(python setup.py --version | cut -d- -f1)" \
+        //           -D "CLOUDIFY_PACKAGE_RELEASE 1" \
+        //           -bb packaging/cloudify-cli.spec
+        //       '''
+        //       echo 'Copy RPM to RPM folder'
+        //       sh("mkdir -p ${env.WORKSPACE}/rpm && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm")
+        //     }
+        //   }
+        // }
+        // stage('build-deb') {
+        //   steps {
+        //     sh script: "mkdir -p ${env.WORKSPACE}/project && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/project", label: "copying repo to seperate workspace"
+        //     container('debbuild') {
+        //       sh script: "mkdir /tmp/result", label: "create result folder"
+        //       echo 'install python setup tools'
+        //       sh '''
+        //         set -ex
+        //         apt-get update
+        //         apt-get install python python-setuptools -y
+        //       '''
+        //       echo 'build the deb package'
+        //       sh "/bin/bash ${env.WORKSPACE}/project/packaging/debian/build.sh"
+        //       echo 'sanity-test the deb package'
+        //       sh '''
+        //         set -ex
+        //         rm -rf /opt/cfy
+        //         dpkg -i /tmp/result/*.deb
+        //         cfy --version
+        //       '''
+        //     }
+        //   }
+        // }
       }
     }
     stage('pytests') {
@@ -138,9 +138,9 @@ pipeline {
             container('py27') {
               dir("${env.WORKSPACE}/test_py27") {
                 echo 'create virtual env'
-                sh 'virtualenv ~/venv'
-                install_test_dependencies('py27')
-                pytest()
+                sh 'virtualenv venv'
+                install_test_dependencies('test_py27')
+                pytest('test_py27')
               }
             }
           }
@@ -151,9 +151,9 @@ pipeline {
             container('py36') {
               dir("${env.WORKSPACE}/test_py36") {
                 echo 'create virtual env'
-                sh 'virtualenv ~/venv'
-                install_test_dependencies('py36')
-                pytest()
+                sh 'virtualenv venv'
+                install_test_dependencies('test_py36')
+                pytest('test_py36')
               }
             }
           }
