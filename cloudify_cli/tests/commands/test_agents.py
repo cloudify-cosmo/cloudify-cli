@@ -98,7 +98,18 @@ class AgentsTests(CliCommandTest):
                     ni_node_id in kwargs.get('node_id', [ni_node_id]) and \
                     ni_dep_id in kwargs.get('deployment_id', [ni_dep_id])
 
-            return _topology_filter(_matcher, **kwargs)
+            instances = _topology_filter(_matcher, **kwargs)
+            total = len(instances)
+            offset, size = kwargs.get('_offset', 0), kwargs.get('_size', 1000)
+            instances = instances[offset:offset + size]
+            return ListResponse(
+                instances, {
+                    'pagination': {
+                        'size': size,
+                        'offset': offset,
+                        'total': total
+                    }
+                })
 
         def list_deployments(**kwargs):
             tenant_name = self.client._client.headers.get(
@@ -115,7 +126,7 @@ class AgentsTests(CliCommandTest):
             for dep in deployments:
                 if (not searched_ids) or dep.id in searched_ids:
                     results.append(dep)
-            return results
+            return ListResponse(results, {})
 
         def list_nodes(**kwargs):
             node_ids = kwargs.get('id')
@@ -125,8 +136,8 @@ class AgentsTests(CliCommandTest):
             nodes = [Node({'id': c, 'deployment_id': b, 'tenant_name': a}) for
                      (a, b, c) in nodes]
             if node_ids is None:
-                return nodes
-            return [x for x in nodes if x['id'] in node_ids]
+                nodes = [x for x in nodes if x['id'] in node_ids]
+            return ListResponse(nodes, {})
 
         self.client.node_instances.list = list_node_instances
         self.client.deployments.list = list_deployments
@@ -228,6 +239,15 @@ class AgentsTests(CliCommandTest):
             'other_tenant': {
                 'd0': {
                     'node_ids': ['node1']
+                },
+                # filtering by just node-id, still returns deployments
+                # that don't have that node; unfortunate but this is an
+                # optimization for the common case
+                'd1': {
+                    'node_ids': ['node1']
+                },
+                'd2': {
+                    'node_ids': ['node1']
                 }
             }
         }, results)
@@ -268,6 +288,31 @@ class AgentsTests(CliCommandTest):
             self.logger,
             AgentsTests._agent_filters(deployment_ids=['error']),
             False)
+
+    def test_filters_node_instance_pagination(self):
+        # with 2000 node-instances, the deployment with only uninitialized
+        # instances is skipped
+        self.mock_client([
+            _node_instance(
+                DEFAULT_TENANT_NAME,
+                'ni1_{0}'.format(i),
+                'node1',
+                'd0')
+            for i in range(2000)
+        ] + [
+            _node_instance(DEFAULT_TENANT_NAME, 'ni2_1', 'node2', 'd1'),
+            _node_instance(DEFAULT_TENANT_NAME, 'ni3_1', 'node3', 'd2',
+                           state='uninitialized')
+        ])
+        filters = get_filters_map(
+            self.client,
+            self.logger,
+            AgentsTests._agent_filters(),
+            False
+        )
+        self.assertIn('d0', filters[DEFAULT_TENANT_NAME])
+        self.assertIn('d1', filters[DEFAULT_TENANT_NAME])
+        self.assertNotIn('d2', filters[DEFAULT_TENANT_NAME])
 
     # Tests for get_deployments_and_run_workers
 
