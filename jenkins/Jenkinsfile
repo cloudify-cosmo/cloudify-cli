@@ -137,6 +137,11 @@ pipeline {
               }
             }
           }
+          post {
+            always {
+              junit "${env.WORKSPACE}/test-results/*.xml"
+            }
+          }
         }
         stage('test_py36') {
           steps {
@@ -148,6 +153,11 @@ pipeline {
                 install_test_dependencies()
                 pytest()
               }
+            }
+          }
+          post {
+            always {
+              junit "${env.WORKSPACE}/test-results/*.xml"
             }
           }
         }
