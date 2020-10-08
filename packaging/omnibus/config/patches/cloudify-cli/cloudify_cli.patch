@@ -10,7 +10,7 @@ index 2ffe55d..6e6e3cb 100644
 +import_resolver:
 +  parameters:
 +    rules:
-+    - {'http://www.getcloudify.org/spec/cloudify/5.1.0.dev1/types.yaml': 'file:/opt/cfy/types/types.yaml'}
++    - {'http://www.getcloudify.org/spec/cloudify/5.1.0/types.yaml': 'file:/opt/cfy/types/types.yaml'}
 +    - {'http://www.getcloudify.org/spec/aws-plugin/1.4.10': 'file:/opt/cfy/plugins/aws-plugin'}
 +    - {'http://www.getcloudify.org/spec/openstack-plugin/2.0.1': 'file:/opt/cfy/plugins/openstack-plugin'}
 +    - {'http://www.getcloudify.org/spec/fabric-plugin/1.5.2': 'file:/opt/cfy/plugins/fabric-plugin'}
