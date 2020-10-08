@@ -88,7 +88,6 @@ pipeline {
                 yum install python-setuptools -y
                 chmod a+wx /opt
               '''
-              echo 'Building dependencies and rpm'
               sh script:'''
                 cd ~/rpmbuild/SOURCES
                 yum-builddep -y packaging/cloudify-cli.spec
@@ -97,7 +96,6 @@ pipeline {
                   -D "CLOUDIFY_PACKAGE_RELEASE 1" \
                   -bb packaging/cloudify-cli.spec
               ''', label: "building dependencies and rpm"
-              echo 'Copy RPM to RPM folder'
               sh script:("mkdir -p ${env.WORKSPACE}/rpm && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm"), label: "Copy RPM to RPM folder"
             }
           }
@@ -108,14 +106,12 @@ pipeline {
             container('debbuild') {
               sh script: "mkdir /tmp/result", label: "create result folder"
               echo 'install python setup tools'
-              sh script: '''
+              sh'''
                 set -ex
                 apt-get update
                 apt-get install python python-setuptools -y
-              ''', label: "install python setup tools"
-              echo 'build the deb package'
+              '''
               sh script: "/bin/bash ${env.WORKSPACE}/project/packaging/debian/build.sh", label: "build the deb package"
-              echo 'sanity-test the deb package'
               sh script: '''
                 set -ex
                 rm -rf /opt/cfy
