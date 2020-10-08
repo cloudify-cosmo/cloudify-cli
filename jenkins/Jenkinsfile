@@ -35,6 +35,7 @@ pipeline {
   }
   
   environment {
+    PATH = "/root/.local/bin:$PATH"
     PROJECT = 'cloudify-cli'
     WORKSPACE = "${env.WORKSPACE}"
     PROJECT_DIR = "${env.WORKSPACE}/project"
@@ -88,16 +89,16 @@ pipeline {
                 chmod a+wx /opt
               '''
               echo 'Building dependencies and rpm'
-              sh '''
+              sh script:'''
                 cd ~/rpmbuild/SOURCES
                 yum-builddep -y packaging/cloudify-cli.spec
                 rpmbuild \
                   -D "CLOUDIFY_VERSION $(python setup.py --version | cut -d- -f1)" \
                   -D "CLOUDIFY_PACKAGE_RELEASE 1" \
                   -bb packaging/cloudify-cli.spec
-              '''
+              ''', label: "building dependencies and rpm"
               echo 'Copy RPM to RPM folder'
-              sh("mkdir -p ${env.WORKSPACE}/rpm && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm")
+              sh script:("mkdir -p ${env.WORKSPACE}/rpm && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm"), label: "Copy RPM to RPM folder"
             }
           }
         }
@@ -107,20 +108,20 @@ pipeline {
             container('debbuild') {
               sh script: "mkdir /tmp/result", label: "create result folder"
               echo 'install python setup tools'
-              sh '''
+              sh script: '''
                 set -ex
                 apt-get update
                 apt-get install python python-setuptools -y
-              '''
+              ''', label: "install python setup tools"
               echo 'build the deb package'
-              sh "/bin/bash ${env.WORKSPACE}/project/packaging/debian/build.sh"
+              sh script: "/bin/bash ${env.WORKSPACE}/project/packaging/debian/build.sh", label: "build the deb package"
               echo 'sanity-test the deb package'
-              sh '''
+              sh script: '''
                 set -ex
                 rm -rf /opt/cfy
                 dpkg -i /tmp/result/*.deb
                 cfy --version
-              '''
+              ''', label: "sanity-test the deb package"
             }
           }
         }
