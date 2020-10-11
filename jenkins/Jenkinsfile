@@ -120,7 +120,7 @@ pipeline {
               sh script: """
                 set -ex
                 rm -rf /opt/cfy
-                dpkg -i ${env.RESULT_DIR}/artifacts/*.deb
+                dpkg -i ${env.RESULT_DIR}/*.deb
                 cfy --version
               """, label: "sanity-test the deb package"
             }
