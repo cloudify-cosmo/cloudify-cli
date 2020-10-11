@@ -40,7 +40,7 @@ pipeline {
     WORKSPACE = "${env.WORKSPACE}"
     PROJECT_DIR = "${env.WORKSPACE}/project"
     BUILD_DIR = "/tmp/build"
-    RESULT_DIR = "/tmp/result"
+    RESULT_DIR = "${env.WORKSPACE}/artifacts"
     CLOUDIFY_PACKAGE_RELEASE = "1"
     CLOUDIFY_VERSION = getVersion("master").trim()
   }
@@ -96,12 +96,12 @@ pipeline {
                   -D "CLOUDIFY_PACKAGE_RELEASE 1" \
                   -bb packaging/cloudify-cli.spec
               ''', label: "building dependencies and rpm"
-              sh script:("mkdir -p ${env.WORKSPACE}/rpm && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm"), label: "Copy RPM to RPM folder"
+              sh script:("mkdir -p ${env.WORKSPACE}/artifacts && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/artifacts"), label: "Copy RPM to artifacts folder"
             }
           }
           post {
             success {
-              archiveArtifacts '**/rpm/*.rpm'
+              archiveArtifacts '**/artifacts/*.rpm'
             }
           }
         }
@@ -117,12 +117,17 @@ pipeline {
                 apt-get install python python-setuptools -y
               '''
               sh script: "/bin/bash ${env.WORKSPACE}/project/packaging/debian/build.sh", label: "build the deb package"
-              sh script: '''
+              sh script: """
                 set -ex
                 rm -rf /opt/cfy
-                dpkg -i /tmp/result/*.deb
+                dpkg -i ${env.RESULT_DIR}/artifacts/*.deb
                 cfy --version
-              ''', label: "sanity-test the deb package"
+              """, label: "sanity-test the deb package"
+            }
+          }
+          post {
+            success {
+              archiveArtifacts '**/artifacts/*.deb'
             }
           }
         }
