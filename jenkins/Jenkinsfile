@@ -101,7 +101,7 @@ pipeline {
           }
           post {
             success {
-              archiveArtifacts "${env.WORKSPACE}/rpm/*.rpm"
+              archiveArtifacts '**/rpm/*.rpm'
             }
           }
         }
@@ -127,7 +127,7 @@ pipeline {
           }
           post {
             success {
-              archiveArtifacts "{env.RESULT_DIR}/*.deb"
+              archiveArtifacts "/tmp/result/*.deb"
             }
           }
         }
