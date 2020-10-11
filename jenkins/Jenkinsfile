@@ -105,7 +105,6 @@ pipeline {
             }
           }
         }
-      }
         stage('build-deb') {
           steps {
             sh script: "mkdir -p ${env.WORKSPACE}/project && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/project", label: "copying repo to seperate workspace"
@@ -128,7 +127,7 @@ pipeline {
           }
           post {
             success {
-              archiveArtifacts "{env.RESULT_DIR}"
+              archiveArtifacts "{env.RESULT_DIR}/*.deb"
             }
           }
         }
