@@ -125,11 +125,6 @@ pipeline {
               ''', label: "sanity-test the deb package"
             }
           }
-          post {
-            success {
-              archiveArtifacts "/tmp/result/*.deb"
-            }
-          }
         }
       }
     }
