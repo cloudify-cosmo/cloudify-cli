@@ -122,7 +122,7 @@ pipeline {
                 rm -rf /opt/cfy
                 dpkg -i /tmp/result/*.deb
                 cfy --version
-                cp -rf /tmp/result/*.deb ${env.WORKSPACE}/arifacts
+                cp -rf /tmp/result/*.deb ${env.WORKSPACE}/artifacts
               """, label: "sanity-test the deb package"
             }
           }
