@@ -40,7 +40,7 @@ pipeline {
     WORKSPACE = "${env.WORKSPACE}"
     PROJECT_DIR = "${env.WORKSPACE}/project"
     BUILD_DIR = "/tmp/build"
-    RESULT_DIR = "tmp/result"
+    RESULT_DIR = "/tmp/result"
     CLOUDIFY_PACKAGE_RELEASE = "1"
     CLOUDIFY_VERSION = getVersion("master").trim()
   }
