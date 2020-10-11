@@ -99,7 +99,13 @@ pipeline {
               sh script:("mkdir -p ${env.WORKSPACE}/rpm && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm"), label: "Copy RPM to RPM folder"
             }
           }
+          post {
+            success {
+              archiveArtifacts "${env.WORKSPACE}/rpm/*.rpm"
+            }
+          }
         }
+      }
         stage('build-deb') {
           steps {
             sh script: "mkdir -p ${env.WORKSPACE}/project && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/project", label: "copying repo to seperate workspace"
@@ -118,6 +124,11 @@ pipeline {
                 dpkg -i /tmp/result/*.deb
                 cfy --version
               ''', label: "sanity-test the deb package"
+            }
+          }
+          post {
+            success {
+              archiveArtifacts "{env.RESULT_DIR}"
             }
           }
         }
@@ -139,7 +150,7 @@ pipeline {
           }
           post {
             always {
-              junit "${env.WORKSPACE}/test-results/*.xml"
+              junit '**/test-results/*.xml'
             }
           }
         }
@@ -157,7 +168,7 @@ pipeline {
           }
           post {
             always {
-              junit "${env.WORKSPACE}/test-results/*.xml"
+              junit '**/test-results/*.xml'
             }
           }
         }
