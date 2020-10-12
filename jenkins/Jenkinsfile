@@ -79,10 +79,11 @@ pipeline {
         stage('build-rpm') {
           steps {
             container('rpmbuild') {
-              sh """
+              echo 'Copying repo to seperate workspace'
+              sh '''
                 cd && mkdir rpmbuild && cd rpmbuild
                 git clone https://github.com/cloudify-cosmo/cloudify-cli.git SOURCES && cd SOURCES
-              """
+              '''
               echo 'Installing setup tools'
               sh '''
                 yum install python-setuptools -y
@@ -109,7 +110,7 @@ pipeline {
           steps {
             sh script: "mkdir -p ${env.WORKSPACE}/project && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/project", label: "copying repo to seperate workspace"
             container('debbuild') {
-              sh script: "mkdir /tmp/result", label: "create result folder"
+              sh script: 'mkdir /tmp/result', label: "create result folder"
               echo 'install python setup tools'
               sh'''
                 set -ex
