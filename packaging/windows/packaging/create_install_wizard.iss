@@ -14,7 +14,7 @@ AppPublisher={#AppPublisher}
 AppPublisherURL={#AppURL}
 AppSupportURL={#AppURL}
 AppUpdatesURL={#AppURL}
-DefaultDirName={commonpf}\Cloudify CLI
+DefaultDirName={commonpf}\Cloudify {#AppVersion}-{#AppMilestone} CLI
 DisableProgramGroupPage=yes
 DisableDirPage=yes
 OutputBaseFilename=cloudify-windows-cli_{#AppVersion}-{#AppMilestone}
@@ -32,11 +32,11 @@ OutputDir=output\
 Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Files]
-Source: "C:\Program Files\Cloudify CLI\*"; DestDir: "{app}"; Excludes: "\__pycache__\*"; Flags: createallsubdirs recursesubdirs
+Source: "C:\Program Files\Cloudify {#AppVersion}-{#AppMilestone} CLI\*"; DestDir: "{app}"; Excludes: "\__pycache__\*"; Flags: createallsubdirs recursesubdirs
 Source: "source\icons\Cloudify.ico"; DestDir: "{app}"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a desktop icon";
 
 [Icons]
-Name: "{commondesktop}\Cloudify CLI"; Filename: "{cmd}"; Parameters: "/k SET ""PATH={app}\Scripts\;%PATH%"""; WorkingDir: "{app}"; IconFilename: "{app}\Cloudify.ico"; Tasks: "desktopicon";
+Name: "{commondesktop}\Cloudify {#AppVersion}-{#AppMilestone} CLI"; Filename: "{cmd}"; Parameters: "/k SET ""PATH={app}\Scripts\;%PATH%"""; WorkingDir: "{app}"; IconFilename: "{app}\Cloudify.ico"; Tasks: "desktopicon";
