@@ -98,10 +98,10 @@ def _parse_yaml_path(resource):
         # if resource is a path - parse as a yaml file
         if os.path.isfile(resource):
             with open(resource) as f:
-                content = yaml.load(f.read())
+                content = yaml.safe_load(f.read())
         else:
             # parse resource content as yaml
-            content = yaml.load(resource)
+            content = yaml.safe_load(resource)
     except yaml.error.YAMLError as e:
         raise CloudifyCliError("'{0}' is not a valid YAML. {1}".format(
             resource, str(e)))
