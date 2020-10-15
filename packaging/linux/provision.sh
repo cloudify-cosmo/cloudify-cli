@@ -11,7 +11,7 @@ export BRANCH=$6
 
 # These env vars are being updated by the bump version process
 export CORE_TAG_NAME="5.1.0"
-export CORE_BRANCH="5.1.0-build"
+export CORE_BRANCH="20.03.18-build"
 
 # Linux Preperation
 function prepare_linux () {
