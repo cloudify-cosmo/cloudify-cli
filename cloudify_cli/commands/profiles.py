@@ -191,15 +191,16 @@ def use(manager_ip,
             skip_credentials_validation=skip_credentials_validation,
             logger=logger,
             **kwargs)
-    if not env.profile.manager_username:
-        return
-    _update_cluster_profile_to_dict(logger)
 
-
-def _update_cluster_profile_to_dict(logger):
     if isinstance(env.profile.cluster, list):   # noqa
         env.profile.cluster = dict()
         env.profile.save()
+
+    if env.profile.manager_username and not skip_credentials_validation:
+        _update_cluster_profile_to_dict(logger)
+
+
+def _update_cluster_profile_to_dict(logger):
     client = get_rest_client()
     if not _all_in_one_manager(client):
         update_cluster_profile(client, logger)
