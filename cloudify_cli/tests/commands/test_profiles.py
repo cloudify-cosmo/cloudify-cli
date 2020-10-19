@@ -106,7 +106,7 @@ class ProfilesTest(CliCommandTest):
         os.close(fd2)
         with open(key, 'w') as f:
             f.write('aaa')
-        self.use_manager(ssh_key_path=key)
+        self.use_manager(ssh_key=key)
         self.invoke('profiles list')
         try:
             self.invoke('cfy profiles export -o {0} --include-keys'.format(

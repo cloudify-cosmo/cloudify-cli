@@ -41,7 +41,7 @@ from ..commands.cluster import update_profile_logic as update_cluster_profile
 EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
 EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
 PROFILE_COLUMNS = ['name', 'manager_ip', 'manager_username', 'manager_tenant',
-                   'ssh_user', 'ssh_key_path', 'ssh_port', 'kerberos_env',
+                   'ssh_user', 'ssh_key', 'ssh_port', 'kerberos_env',
                    'rest_port', 'rest_protocol', 'rest_certificate']
 CLUSTER_PROFILE_COLUMNS = PROFILE_COLUMNS[:1] + ['hostname', 'host_ip'] \
     + PROFILE_COLUMNS[2:]
