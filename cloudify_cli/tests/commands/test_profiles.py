@@ -329,14 +329,6 @@ class ProfilesTest(CliCommandTest):
         p.manager_ip = '1.2.3.4'
         self.assertEquals('1.2.3.4', p.profile_name)
 
-        # pyyaml creates the object like that - skipping __init__; check that
-        # this doesn't break to allow correct handling pre-profile_name
-        # profiles
-        p = env.ProfileContext.__new__(env.ProfileContext)
-        self.assertIs(None, p.profile_name)
-        p.manager_ip = '1.2.3.4'
-        self.assertEquals('1.2.3.4', p.profile_name)
-
     @patch('cloudify_cli.commands.profiles._get_provider_context',
            return_value={})
     def test_use_defaults_ip_to_profile_name(self, *_):
