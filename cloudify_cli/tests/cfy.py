@@ -32,7 +32,7 @@ from .. import commands
 from .. import constants
 
 
-WORKDIR = os.path.join(tempfile.gettempdir(), '.cloudify-tests')
+WORKDIR = os.path.join(tempfile.gettempdir(), '.cloudify-cli-test')
 runner_lgr = setup_logger('cli_runner')
 
 

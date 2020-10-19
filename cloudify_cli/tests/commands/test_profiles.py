@@ -83,13 +83,13 @@ class ProfilesTest(CliCommandTest):
             self.invoke('cfy profiles export -o {0}'.format(profiles_archive))
             with closing(tarfile.open(name=profiles_archive)) as tar:
                 members = [member.name for member in tar.getmembers()]
-            self.assertIn('profiles/10.10.1.10/context', members)
+            self.assertIn('profiles/10.10.1.10/context.json', members)
             cfy.purge_dot_cloudify()
             self.assertFalse(os.path.isdir(env.PROFILES_DIR))
             self.invoke('cfy init')
             self.invoke('cfy profiles import {0}'.format(profiles_archive))
             self.assertTrue(os.path.isfile(
-                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context')))
+                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context.json')))
         finally:
             os.remove(profiles_archive)
 
@@ -113,7 +113,7 @@ class ProfilesTest(CliCommandTest):
                 profiles_archive))
             with closing(tarfile.open(name=profiles_archive)) as tar:
                 members = [member.name for member in tar.getmembers()]
-            self.assertIn('profiles/10.10.1.10/context', members)
+            self.assertIn('profiles/10.10.1.10/context.json', members)
             self.assertIn('profiles/{0}/{1}.10.10.1.10.profile'.format(
                 profiles.EXPORTED_KEYS_DIRNAME,
                 os.path.basename(key)), members)
@@ -141,7 +141,7 @@ class ProfilesTest(CliCommandTest):
             )
 
             self.assertTrue(os.path.isfile(
-                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context')))
+                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context.json')))
             self.assertTrue(os.path.isfile(key))
         finally:
             os.remove(key)

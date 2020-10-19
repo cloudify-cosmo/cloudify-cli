@@ -113,7 +113,7 @@ class CliEnvTests(CliCommandTest):
     def _make_mock_profile(self, profile_name='10.10.1.10'):
         profile_path = os.path.join(env.PROFILES_DIR, profile_name)
         os.makedirs(profile_path)
-        with open(os.path.join(profile_path, 'context'), 'w') as profile:
+        with open(os.path.join(profile_path, 'context.json'), 'w') as profile:
             profile.write('nothing_for_now')
         return profile_path
 
@@ -1095,12 +1095,12 @@ class TestLocal(CliCommandTest):
     def test_storage_dir(self):
         self.assertEqual(
             cli_local.storage_dir(),
-            '/tmp/.cloudify-test/profiles/local'
+            os.path.join(env.PROFILES_DIR, 'local')
         )
 
         self.assertEqual(
             cli_local.storage_dir('blueprint_id'),
-            '/tmp/.cloudify-test/profiles/local/blueprint_id'
+            os.path.join(env.PROFILES_DIR, 'local', 'blueprint_id')
         )
 
     def test_initialize_blueprint_default_single_env(self):
