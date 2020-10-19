@@ -32,14 +32,14 @@ from .. import commands
 from .. import constants
 
 
-WORKDIR = os.path.join(tempfile.gettempdir(), '.cloudify-tests')
+WORKDIR = os.path.join(tempfile.gettempdir(), '.cloudify-cli-test')
 runner_lgr = setup_logger('cli_runner')
 
 
 default_manager_params = dict(
     name='10.10.1.10',
     manager_ip='10.10.1.10',
-    ssh_key_path='key',
+    ssh_key='key',
     ssh_user='test',
     ssh_port='22',
     provider_context={},
@@ -147,7 +147,7 @@ def use_manager(**manager_params):
     provider_context = manager_params['provider_context'] or {}
     profile = env.ProfileContext()
     profile.manager_ip = manager_params['manager_ip']
-    profile.ssh_key = manager_params['ssh_key_path']
+    profile.ssh_key = manager_params['ssh_key']
     profile.ssh_user = manager_params['ssh_user']
     profile.ssh_port = manager_params['ssh_port']
     profile.rest_port = manager_params['rest_port']

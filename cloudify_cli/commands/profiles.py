@@ -41,7 +41,7 @@ from ..commands.cluster import update_profile_logic as update_cluster_profile
 EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
 EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
 PROFILE_COLUMNS = ['name', 'manager_ip', 'manager_username', 'manager_tenant',
-                   'ssh_user', 'ssh_key_path', 'ssh_port', 'kerberos_env',
+                   'ssh_user', 'ssh_key', 'ssh_port', 'kerberos_env',
                    'rest_port', 'rest_protocol', 'rest_certificate']
 CLUSTER_PROFILE_COLUMNS = PROFILE_COLUMNS[:1] + ['hostname', 'host_ip'] \
     + PROFILE_COLUMNS[2:]
@@ -298,11 +298,11 @@ def delete(profile_name, logger):
     `PROFILE_NAME` is the IP of the manager the profile manages.
     """
     logger.info('Deleting profile {0}...'.format(profile_name))
-    try:
-        env.delete_profile(profile_name)
-        logger.info('Profile deleted')
-    except CloudifyCliError as ex:
-        logger.info(str(ex))
+    if not env.is_profile_exists(profile_name):
+        raise CloudifyCliError('Profile {0} does not exist'
+                               .format(profile_name))
+    env.delete_profile(profile_name)
+    logger.info('Profile deleted')
 
 
 def set_profile(profile_name,

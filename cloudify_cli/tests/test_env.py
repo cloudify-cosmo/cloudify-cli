@@ -60,7 +60,11 @@ from . import cfy
 
 from .commands.test_base import CliCommandTest
 from .commands.mocks import mock_stdout, MockListResponse
-from .commands.constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH
+from .commands.constants import (
+    BLUEPRINTS_DIR,
+    SAMPLE_BLUEPRINT_PATH,
+    OLD_CONTEXT_PATH
+)
 
 
 class TestCLIBase(CliCommandTest):
@@ -113,7 +117,7 @@ class CliEnvTests(CliCommandTest):
     def _make_mock_profile(self, profile_name='10.10.1.10'):
         profile_path = os.path.join(env.PROFILES_DIR, profile_name)
         os.makedirs(profile_path)
-        with open(os.path.join(profile_path, 'context'), 'w') as profile:
+        with open(os.path.join(profile_path, 'context.json'), 'w') as profile:
             profile.write('nothing_for_now')
         return profile_path
 
@@ -121,16 +125,6 @@ class CliEnvTests(CliCommandTest):
         profile_path = self._make_mock_profile()
         env.delete_profile('10.10.1.10')
         self.assertFalse(os.path.isdir(profile_path))
-
-    def test_delete_non_existing_profile(self):
-        profile = 'non-existing-profile'
-        ex = self.assertRaises(
-            CloudifyCliError,
-            env.delete_profile,
-            profile_name=profile)
-        self.assertEqual(
-            'Profile {0} does not exist'.format(profile),
-            str(ex))
 
     def test_profile_exists(self):
         self.assertFalse(env.is_profile_exists('non-existing-profile'))
@@ -206,37 +200,16 @@ class CliEnvTests(CliCommandTest):
         self.assertTrue(hasattr(context, 'manager_ip'))
         self.assertEqual(context.manager_ip, '10.10.1.10')
 
-    def test_get_profile_context_for_local(self):
-        ex = self.assertRaises(
-            CloudifyCliError,
-            env.get_profile_context)
-        self.assertEqual('Local profile does not have context', str(ex))
-
     def test_get_context_path(self):
         profile = self.use_manager()
         context_path = env.get_context_path(profile.manager_ip)
         self.assertEqual(
             context_path,
-            os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context'))
+            os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context.json'))
 
     def test_fail_get_context_for_local_profile(self):
-        ex = self.assertRaises(
-            CloudifyCliError,
-            env.get_profile_context)
-        self.assertEqual('Local profile does not have context', str(ex))
-
-    def test_get_context_path_suppress_error(self):
-        profile = self.use_manager()
-        context_path = env.get_context_path(profile.manager_ip,
-                                            suppress_error=True)
-        self.assertEqual(
-            context_path,
-            os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context'))
-
-    def test_fail_get_context_path_suppress_error(self):
-        context_path = env.get_context_path('not.existing.profile',
-                                            suppress_error=True)
-        self.assertIs(None, context_path)
+        with self.assertRaisesRegex(CloudifyCliError, 'No context'):
+            env.get_profile_context()
 
     def test_get_default_rest_cert_local_path(self):
         profile = self.use_manager()
@@ -254,12 +227,7 @@ class CliEnvTests(CliCommandTest):
 
     def test_fail_get_context_not_initialized(self):
         shutil.rmtree(env.CLOUDIFY_WORKDIR)
-        ex = self.assertRaises(
-            CloudifyCliError,
-            env.get_context_path,
-            'test'
-        )
-        self.assertEqual('Profile directory does not exist', str(ex))
+        self.assertIsNone(env.get_context_path('test'))
 
     def test_get_profile_dir(self):
         self.use_manager()
@@ -270,22 +238,7 @@ class CliEnvTests(CliCommandTest):
         self.assertTrue(os.path.isdir(profile_dir))
 
     def test_get_non_existing_profile_dir(self):
-        ex = self.assertRaises(
-            CloudifyCliError,
-            env.get_profile_dir)
-        self.assertEqual('Profile directory does not exist', str(ex))
-
-    def test_get_profile_dir_suppress_error(self):
-        self.use_manager()
-        profile_dir = env.get_profile_dir(suppress_error=True)
-        self.assertEqual(
-            profile_dir,
-            os.path.join(env.PROFILES_DIR, '10.10.1.10'))
-        self.assertTrue(os.path.isdir(profile_dir))
-
-    def test_get_non_existing_profile_dir_suppress_error(self):
-        profile_dir = env.get_profile_dir(suppress_error=True)
-        self.assertIs(None, profile_dir)
+        self.assertIsNone(env.get_profile_dir())
 
     def test_set_empty_profile_context(self):
         manager_ip = '10.10.1.10'
@@ -304,6 +257,24 @@ class CliEnvTests(CliCommandTest):
 
         context = env.get_profile_context(manager_ip)
         self.assertEqual(context.manager_ip, manager_ip)
+
+    def test_load_old_save_new(self):
+        # Saving over an old-style yaml profile, creates a new-style
+        # json profile with the updated data
+        profile_name = 'a'
+        profile_dir = os.path.join(env.PROFILES_DIR, profile_name)
+        os.makedirs(profile_dir)
+        shutil.copyfile(OLD_CONTEXT_PATH, os.path.join(profile_dir, 'context'))
+
+        loaded_profile = env.get_profile_context('a')
+        self.assertEqual(loaded_profile.profile_name, profile_name)
+        self.assertEqual(loaded_profile.manager_ip, '192.0.2.1')
+        loaded_profile.manager_password = 'changed'
+        loaded_profile.save()
+
+        updated_profile = env.get_profile_context('a')
+        self.assertEqual(updated_profile.profile_name, profile_name)
+        self.assertEqual(updated_profile.manager_password, 'changed')
 
     def test_raise_uninitialized(self):
         ex = self.assertRaises(
@@ -1146,12 +1117,12 @@ class TestLocal(CliCommandTest):
     def test_storage_dir(self):
         self.assertEqual(
             cli_local.storage_dir(),
-            '/tmp/.cloudify-test/profiles/local'
+            os.path.join(env.PROFILES_DIR, 'local')
         )
 
         self.assertEqual(
             cli_local.storage_dir('blueprint_id'),
-            '/tmp/.cloudify-test/profiles/local/blueprint_id'
+            os.path.join(env.PROFILES_DIR, 'local', 'blueprint_id')
         )
 
     def test_initialize_blueprint_default_single_env(self):

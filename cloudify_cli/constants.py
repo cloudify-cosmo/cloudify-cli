@@ -14,7 +14,6 @@
 # limitations under the License.
 ############
 
-CLOUDIFY_PROFILE_CONTEXT_FILE_NAME = 'context'
 CLOUDIFY_BASE_DIRECTORY_NAME = '.cloudify'
 CONFIG_FILE_NAME = 'cloudify-config.yaml'
 DEFAULTS_CONFIG_FILE_NAME = 'cloudify-config.defaults.yaml'
