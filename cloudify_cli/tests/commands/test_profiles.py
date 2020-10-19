@@ -70,9 +70,10 @@ class ProfilesTest(CliCommandTest):
 
     def test_delete_non_existing_profile(self):
         manager_ip = '10.10.1.10'
-        outcome = self.invoke('cfy profiles delete {0}'.format(manager_ip))
-        self.assertIn('Profile {0} does not exist'.format(manager_ip),
-                      outcome.logs)
+        self.invoke(
+            'cfy profiles delete {0}'.format(manager_ip),
+            err_str_segment='does not exist'
+        )
 
     def test_export_import_profiles(self):
         fd, profiles_archive = tempfile.mkstemp()

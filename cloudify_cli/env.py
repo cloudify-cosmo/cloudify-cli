@@ -61,17 +61,16 @@ CLUSTER_RETRY_INTERVAL = 5
 def delete_profile(profile_name):
     if is_profile_exists(profile_name):
         profile_dir = get_profile_dir(profile_name)
-        shutil.rmtree(profile_dir)
-    else:
-        raise CloudifyCliError(
-            'Profile {0} does not exist'.format(profile_name))
+        if profile_dir:
+            shutil.rmtree(profile_dir)
 
 
 def is_profile_exists(profile_name):
-    try:
-        return os.path.isfile(get_context_path(profile_name))
-    except CloudifyCliError:
+    base_dir = get_profile_dir(profile_name)
+    if not base_dir:
         return False
+    return (os.path.isfile(os.path.join(base_dir, 'context.json')) or
+            os.path.isfile(os.path.join(base_dir, 'context')))
 
 
 def assert_profile_exists(profile_name):
@@ -89,11 +88,12 @@ def set_active_profile(profile_name):
 
 
 def get_active_profile():
-    if os.path.isfile(ACTIVE_PROFILE):
+    try:
         with open(ACTIVE_PROFILE) as active_profile:
             return active_profile.read().strip()
-    else:
-        # We return None explicitly as no profile is active.
+    except IOError as e:
+        if e.errno != errno.ENOENT:
+            raise
         return None
 
 
@@ -240,25 +240,18 @@ def is_initialized(profile_name=None):
         return config_initialized_with_logging()
 
 
-def get_context_path(profile_name, suppress_error=False):
-    base_dir = get_profile_dir(profile_name, suppress_error)
+def get_context_path(profile_name):
+    base_dir = get_profile_dir(profile_name)
     if not base_dir:
         return
-    return os.path.join(
-        base_dir,
-        constants.CLOUDIFY_PROFILE_CONTEXT_FILE_NAME
-    )
+    return os.path.join(base_dir, 'context.json')
 
 
-def get_profile_dir(profile_name=None, suppress_error=False):
+def get_profile_dir(profile_name=None):
     active_profile = profile_name or get_active_profile()
     if active_profile and os.path.isdir(
             os.path.join(PROFILES_DIR, active_profile)):
         return os.path.join(PROFILES_DIR, active_profile)
-    elif suppress_error:
-        return
-    else:
-        raise CloudifyCliError('Profile directory does not exist')
 
 
 def raise_uninitialized():
@@ -346,7 +339,7 @@ def build_host_string(ip, ssh_user=''):
 
 
 def get_default_rest_cert_local_path():
-    base_dir = get_profile_dir(suppress_error=True) or CLOUDIFY_WORKDIR
+    base_dir = get_profile_dir() or CLOUDIFY_WORKDIR
     return os.path.join(base_dir, constants.PUBLIC_REST_CERT)
 
 
@@ -619,7 +612,7 @@ class ClusterHTTPClient(HTTPClient):
         """
         self._profile.cluster[CloudifyNodeType.MANAGER].remove(node)
         self._profile.cluster[CloudifyNodeType.MANAGER] = (
-                [node] + self._profile.cluster[CloudifyNodeType.MANAGER])
+            [node] + self._profile.cluster[CloudifyNodeType.MANAGER])
         for node_attr in CLUSTER_NODE_ATTRS:
             if node_attr in node:
                 setattr(self._profile, node_attr, node[node_attr])

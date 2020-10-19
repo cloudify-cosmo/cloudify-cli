@@ -150,7 +150,7 @@ def init_manager_profile(profile_name,
                          logger=None):
     logger.info('Initializing profile {0}...'.format(profile_name))
 
-    context_file_path = env.get_context_path(profile_name, suppress_error=True)
+    context_file_path = env.get_context_path(profile_name)
 
     if context_file_path and os.path.isfile(context_file_path):
         if reset_context:

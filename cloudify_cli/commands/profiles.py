@@ -298,11 +298,11 @@ def delete(profile_name, logger):
     `PROFILE_NAME` is the IP of the manager the profile manages.
     """
     logger.info('Deleting profile {0}...'.format(profile_name))
-    try:
-        env.delete_profile(profile_name)
-        logger.info('Profile deleted')
-    except CloudifyCliError as ex:
-        logger.info(str(ex))
+    if not env.is_profile_exists(profile_name):
+        raise CloudifyCliError('Profile {0} does not exist'
+                               .format(profile_name))
+    env.delete_profile(profile_name)
+    logger.info('Profile deleted')
 
 
 def set_profile(profile_name,

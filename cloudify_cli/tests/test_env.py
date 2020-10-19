@@ -122,16 +122,6 @@ class CliEnvTests(CliCommandTest):
         env.delete_profile('10.10.1.10')
         self.assertFalse(os.path.isdir(profile_path))
 
-    def test_delete_non_existing_profile(self):
-        profile = 'non-existing-profile'
-        ex = self.assertRaises(
-            CloudifyCliError,
-            env.delete_profile,
-            profile_name=profile)
-        self.assertEqual(
-            'Profile {0} does not exist'.format(profile),
-            str(ex))
-
     def test_profile_exists(self):
         self.assertFalse(env.is_profile_exists('non-existing-profile'))
 
@@ -206,37 +196,16 @@ class CliEnvTests(CliCommandTest):
         self.assertTrue(hasattr(context, 'manager_ip'))
         self.assertEqual(context.manager_ip, '10.10.1.10')
 
-    def test_get_profile_context_for_local(self):
-        ex = self.assertRaises(
-            CloudifyCliError,
-            env.get_profile_context)
-        self.assertEqual('Local profile does not have context', str(ex))
-
     def test_get_context_path(self):
         profile = self.use_manager()
         context_path = env.get_context_path(profile.manager_ip)
         self.assertEqual(
             context_path,
-            os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context'))
+            os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context.json'))
 
     def test_fail_get_context_for_local_profile(self):
-        ex = self.assertRaises(
-            CloudifyCliError,
-            env.get_profile_context)
-        self.assertEqual('Local profile does not have context', str(ex))
-
-    def test_get_context_path_suppress_error(self):
-        profile = self.use_manager()
-        context_path = env.get_context_path(profile.manager_ip,
-                                            suppress_error=True)
-        self.assertEqual(
-            context_path,
-            os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context'))
-
-    def test_fail_get_context_path_suppress_error(self):
-        context_path = env.get_context_path('not.existing.profile',
-                                            suppress_error=True)
-        self.assertIs(None, context_path)
+        with self.assertRaisesRegex(CloudifyCliError, 'No context'):
+            env.get_profile_context()
 
     def test_get_default_rest_cert_local_path(self):
         profile = self.use_manager()
@@ -254,12 +223,7 @@ class CliEnvTests(CliCommandTest):
 
     def test_fail_get_context_not_initialized(self):
         shutil.rmtree(env.CLOUDIFY_WORKDIR)
-        ex = self.assertRaises(
-            CloudifyCliError,
-            env.get_context_path,
-            'test'
-        )
-        self.assertEqual('Profile directory does not exist', str(ex))
+        self.assertIsNone(env.get_context_path('test'))
 
     def test_get_profile_dir(self):
         self.use_manager()
@@ -270,22 +234,7 @@ class CliEnvTests(CliCommandTest):
         self.assertTrue(os.path.isdir(profile_dir))
 
     def test_get_non_existing_profile_dir(self):
-        ex = self.assertRaises(
-            CloudifyCliError,
-            env.get_profile_dir)
-        self.assertEqual('Profile directory does not exist', str(ex))
-
-    def test_get_profile_dir_suppress_error(self):
-        self.use_manager()
-        profile_dir = env.get_profile_dir(suppress_error=True)
-        self.assertEqual(
-            profile_dir,
-            os.path.join(env.PROFILES_DIR, '10.10.1.10'))
-        self.assertTrue(os.path.isdir(profile_dir))
-
-    def test_get_non_existing_profile_dir_suppress_error(self):
-        profile_dir = env.get_profile_dir(suppress_error=True)
-        self.assertIs(None, profile_dir)
+        self.assertIsNone(env.get_profile_dir())
 
     def test_set_empty_profile_context(self):
         manager_ip = '10.10.1.10'
