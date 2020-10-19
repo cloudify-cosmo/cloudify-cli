@@ -1,0 +1,29 @@
+# a more-or-less complete old-style yaml context, to be used in
+# old-context loading tests
+!CloudifyProfileContext
+_cluster: {}
+_profile_name: a
+_ssh_port: '22'
+kerberos_env: false
+manager_ip: 192.0.2.1
+manager_password: admin
+manager_tenant: default_tenant
+manager_username: admin
+provider_context:
+  cloudify:
+    cloudify_agent: {broker_port: 5671, heartbeat: 30, log_level: INFO, max_workers: 5,
+      min_workers: 2}
+    import_resolver:
+      parameters:
+        fallback: true
+        rules:
+        - {'http://www.getcloudify.org/spec': 'file:///opt/manager/resources/spec'}
+        - {'http://cloudify.co/spec': 'file:///opt/manager/resources/spec'}
+        - {'https://www.getcloudify.org/spec': 'file:///opt/manager/resources/spec'}
+        - {'https://cloudify.co/spec': 'file:///opt/manager/resources/spec'}
+    policy_engine: {start_timeout: 30}
+rest_certificate: null
+rest_port: 80
+rest_protocol: http
+ssh_key: null
+ssh_user: null

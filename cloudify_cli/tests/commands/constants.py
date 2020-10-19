@@ -34,6 +34,7 @@ THIS_DIR = os.path.dirname(os.path.dirname(__file__))
 BLUEPRINTS_DIR = os.path.join(THIS_DIR, 'resources', 'blueprints')
 SNAPSHOTS_DIR = os.path.join(THIS_DIR, 'resources', 'snapshots')
 PLUGINS_DIR = os.path.join(THIS_DIR, 'resources', 'plugins')
+OLD_CONTEXT_PATH = os.path.join(THIS_DIR, 'resources', 'profile.yaml')
 SAMPLE_INPUTS_PATH = os.path.join(
     BLUEPRINTS_DIR, STUB_DIRECTORY_NAME, 'inputs.yaml')
 SAMPLE_BLUEPRINT_PATH = os.path.join(

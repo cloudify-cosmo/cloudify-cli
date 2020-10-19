@@ -60,7 +60,11 @@ from . import cfy
 
 from .commands.test_base import CliCommandTest
 from .commands.mocks import mock_stdout, MockListResponse
-from .commands.constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH
+from .commands.constants import (
+    BLUEPRINTS_DIR,
+    SAMPLE_BLUEPRINT_PATH,
+    OLD_CONTEXT_PATH
+)
 
 
 class TestCLIBase(CliCommandTest):
@@ -253,6 +257,24 @@ class CliEnvTests(CliCommandTest):
 
         context = env.get_profile_context(manager_ip)
         self.assertEqual(context.manager_ip, manager_ip)
+
+    def test_load_old_save_new(self):
+        # Saving over an old-style yaml profile, creates a new-style
+        # json profile with the updated data
+        profile_name = 'a'
+        profile_dir = os.path.join(env.PROFILES_DIR, profile_name)
+        os.makedirs(profile_dir)
+        shutil.copyfile(OLD_CONTEXT_PATH, os.path.join(profile_dir, 'context'))
+
+        loaded_profile = env.get_profile_context('a')
+        self.assertEqual(loaded_profile.profile_name, profile_name)
+        self.assertEqual(loaded_profile.manager_ip, '192.0.2.1')
+        loaded_profile.manager_password = 'changed'
+        loaded_profile.save()
+
+        updated_profile = env.get_profile_context('a')
+        self.assertEqual(updated_profile.profile_name, profile_name)
+        self.assertEqual(updated_profile.manager_password, 'changed')
 
     def test_raise_uninitialized(self):
         ex = self.assertRaises(
