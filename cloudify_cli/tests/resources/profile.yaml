@@ -6,7 +6,7 @@ _profile_name: a
 _ssh_port: '22'
 kerberos_env: false
 manager_ip: 192.0.2.1
-manager_password: admin
+manager_password: !!python/unicode admin
 manager_tenant: default_tenant
 manager_username: admin
 provider_context:

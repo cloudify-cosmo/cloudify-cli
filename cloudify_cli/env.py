@@ -191,6 +191,21 @@ def get_profile_context(profile_name=None, suppress_error=False):
     return ProfileContext(loaded, profile_name)
 
 
+class _ProfileLoader(yaml.SafeLoader):
+    """A yaml Loader that can load Cloudify 5.1 profiles
+
+    It supports python/unicode, which was commonly present in py2-created
+    profiles.
+    """
+
+
+def _load_str(loader, node):
+    return node.value
+
+
+_ProfileLoader.add_constructor(u'tag:yaml.org,2002:python/unicode', _load_str)
+
+
 def _try_load_yaml_profile(profile_name):
     """Try to load the profile from the yaml context file.
 
@@ -206,7 +221,7 @@ def _try_load_yaml_profile(profile_name):
             # dropping the object tag from yaml, so that we load the
             # yaml as just a dict and not as an object
             data = f.read().replace('!CloudifyProfileContext', '')
-            context = yaml.safe_load(data)
+            context = yaml.load(data, Loader=_ProfileLoader)
     except IOError as e:
         if e.errno != errno.ENOENT:
             raise
