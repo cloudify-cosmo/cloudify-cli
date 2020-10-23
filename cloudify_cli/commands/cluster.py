@@ -428,6 +428,16 @@ def db_nodes():
         env.raise_uninitialized()
 
 
+@db_nodes.command(name='update',
+                  short_help="Make managers act upon changes to the DB nodes")
+@pass_cluster_client()
+@cfy.pass_logger
+@cfy.options.common_options
+def update_db_nodes(client, logger):
+    db_nodes_list = client.manager.update_db_nodes()
+    print_data(DB_COLUMNS, db_nodes_list, 'HA Cluster db nodes')
+
+
 @db_nodes.command(name='list',
                   short_help="List the DB cluster's nodes")
 @pass_cluster_client()
