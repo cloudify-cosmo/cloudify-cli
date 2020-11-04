@@ -17,7 +17,7 @@ set -xu
 BUILD_DIR=~/cloudify-cli_${CLOUDIFY_VERSION}-${CLOUDIFY_PACKAGE_RELEASE}_amd64
 
 apt-get update
-apt-get install python python-virtualenv git -y
+apt-get install python3 python3-venv git -y
 mkdir -p "${BUILD_DIR}/DEBIAN" "${BUILD_DIR}/opt"
 cat >"${BUILD_DIR}/DEBIAN/control" <<EOF
 Package: cloudify
@@ -25,11 +25,11 @@ Version: ${CLOUDIFY_VERSION}
 Section: base
 Priority: optional
 Architecture: amd64
-Depends: python (>= 2.7)
+Depends: python3 (<< 3.7), python3-distutils
 Maintainer: Cloudify Platform Ltd. <cosmo-admin@cloudify.co>
 Description: Cloudify's Command Line Interface
 EOF
-virtualenv /opt/cfy
+python3 -mvenv /opt/cfy
 /opt/cfy/bin/pip install -r "${PROJECT_DIR}/dev-requirements.txt"
 /opt/cfy/bin/pip install "${PROJECT_DIR}"
 cp /opt/cfy "${BUILD_DIR}/opt/cfy" -fr
