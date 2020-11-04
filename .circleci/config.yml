@@ -86,7 +86,7 @@ jobs:
           path: test-results
   build-deb:
     docker:
-      - image: debian:9
+      - image: ubuntu:18.04
     steps:
       - checkout
       - run:
@@ -102,8 +102,8 @@ jobs:
           command: |
             set -ex
             apt-get update
-            apt-get install python python-setuptools -y
-            echo "export CLOUDIFY_VERSION=$(python ~/project/setup.py --version)" >>$BASH_ENV
+            apt-get install python3 python3-setuptools -y
+            echo "export CLOUDIFY_VERSION=$(python3 ~/project/setup.py --version)" >>$BASH_ENV
       - run:
           name: build the deb package
           command: /bin/bash ~/project/packaging/debian/build.sh
