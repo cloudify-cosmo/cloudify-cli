@@ -22,7 +22,6 @@ Compression=lzma
 SolidCompression=yes
 ArchitecturesInstallIn64BitMode=x64 arm64 ia64
 ArchitecturesAllowed=x64 arm64 ia64
-LicenseFile=source\license.txt
 MinVersion=6.0
 SetupIconFile=source\icons\Cloudify.ico
 UninstallDisplayIcon={app}\Cloudify.ico
