@@ -19,6 +19,11 @@ def pytest(){
 
 @Library('pipeline-shared-library') _
 pipeline {
+  triggers {
+    if ("{env.BRANCH_NAME}=='CY-3105-migrate-jenkinsfile'") {
+      cron ('H/15 * * * *')
+    }
+  }
   agent {
     kubernetes {
       label 'cli'
