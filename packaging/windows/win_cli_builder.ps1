@@ -9,7 +9,7 @@ $ErrorActionPreference="stop"
 # Use TLSv1.2 for Invoke-Restmethod
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
-$CLI_PATH = "C:\Program Files\Cloudify CLI"
+$CLI_PATH = "C:\Program Files\Cloudify $VERSION-$PRERELEASE CLI"
 $GET_PIP_URL = "http://repository.cloudifysource.org/cloudify/components/win-cli-package-resources/get-pip-20.py"
 $PIP_VERSION = "20.1.1"
 $REPO_URL = "https://github.com/cloudify-cosmo/cloudify-cli/archive/$DEV_BRANCH.zip"

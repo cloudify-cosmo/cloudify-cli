@@ -16,6 +16,8 @@
 
 
 import os
+import json
+import errno
 import types
 import shutil
 import getpass
@@ -59,17 +61,16 @@ CLUSTER_RETRY_INTERVAL = 5
 def delete_profile(profile_name):
     if is_profile_exists(profile_name):
         profile_dir = get_profile_dir(profile_name)
-        shutil.rmtree(profile_dir)
-    else:
-        raise CloudifyCliError(
-            'Profile {0} does not exist'.format(profile_name))
+        if profile_dir:
+            shutil.rmtree(profile_dir)
 
 
 def is_profile_exists(profile_name):
-    try:
-        return os.path.isfile(get_context_path(profile_name))
-    except CloudifyCliError:
+    base_dir = get_profile_dir(profile_name)
+    if not base_dir:
         return False
+    return (os.path.isfile(os.path.join(base_dir, 'context.json')) or
+            os.path.isfile(os.path.join(base_dir, 'context')))
 
 
 def assert_profile_exists(profile_name):
@@ -87,11 +88,12 @@ def set_active_profile(profile_name):
 
 
 def get_active_profile():
-    if os.path.isfile(ACTIVE_PROFILE):
+    try:
         with open(ACTIVE_PROFILE) as active_profile:
             return active_profile.read().strip()
-    else:
-        # We return None explicitly as no profile is active.
+    except IOError as e:
+        if e.errno != errno.ENOENT:
+            raise
         return None
 
 
@@ -164,26 +166,67 @@ def is_manager_active():
 
 
 def get_profile_context(profile_name=None, suppress_error=False):
-    # empty profile with nothing but default values
-    default = ProfileContext()
-    profile_name = profile_name or get_active_profile()
     if profile_name == 'local':
+        return ProfileContext({}, profile_name='local')
+
+    profile_name = profile_name or get_active_profile()
+    loaded = None
+    path = get_context_path(profile_name)
+    if path:
+        try:
+            with open(path) as f:
+                loaded = json.load(f)
+        except IOError as e:
+            if e.errno != errno.ENOENT:
+                raise
+
+    if not loaded:
+        loaded = _try_load_yaml_profile(profile_name)
+
+    if not loaded:
         if suppress_error:
-            return default
-        raise CloudifyCliError('Local profile does not have context')
+            return ProfileContext({})
+        raise CloudifyCliError('No context for profile {0}'
+                               .format(profile_name))
+    return ProfileContext(loaded, profile_name)
+
+
+class _ProfileLoader(yaml.SafeLoader):
+    """A yaml Loader that can load Cloudify 5.1 profiles
+
+    It supports python/unicode, which was commonly present in py2-created
+    profiles.
+    """
+
+
+def _load_str(loader, node):
+    return node.value
+
+
+_ProfileLoader.add_constructor(u'tag:yaml.org,2002:python/unicode', _load_str)
+
+
+def _try_load_yaml_profile(profile_name):
+    """Try to load the profile from the yaml context file.
+
+    This keeps compatibility with Cloudify 5.1 and earlier, who stored
+    the context in a yaml file. We will still load them, but we won't
+    store them anymore.
+    """
+    base_dir = get_profile_dir(profile_name)
+    if not base_dir:
+        return
     try:
-        path = get_context_path(profile_name)
-        with open(path) as f:
-            context = yaml.load(f.read())
-        # fill the default with values from existing profile (the default is
-        # used as base because some of the attributes may not be in the
-        # existing profile file)
-        for key, value in context.__dict__.items():
-            setattr(default, key, value)
-    except CloudifyCliError:
-        if not suppress_error:
+        with open(os.path.join(base_dir, 'context')) as f:
+            # dropping the object tag from yaml, so that we load the
+            # yaml as just a dict and not as an object
+            data = f.read().replace('!CloudifyProfileContext', '')
+            context = yaml.load(data, Loader=_ProfileLoader)
+    except IOError as e:
+        if e.errno != errno.ENOENT:
             raise
-    return default
+        return
+    return context
 
 
 def config_initialized_with_logging():
@@ -212,25 +255,18 @@ def is_initialized(profile_name=None):
         return config_initialized_with_logging()
 
 
-def get_context_path(profile_name, suppress_error=False):
-    base_dir = get_profile_dir(profile_name, suppress_error)
+def get_context_path(profile_name):
+    base_dir = get_profile_dir(profile_name)
     if not base_dir:
         return
-    return os.path.join(
-        base_dir,
-        constants.CLOUDIFY_PROFILE_CONTEXT_FILE_NAME
-    )
+    return os.path.join(base_dir, 'context.json')
 
 
-def get_profile_dir(profile_name=None, suppress_error=False):
+def get_profile_dir(profile_name=None):
     active_profile = profile_name or get_active_profile()
     if active_profile and os.path.isdir(
             os.path.join(PROFILES_DIR, active_profile)):
         return os.path.join(PROFILES_DIR, active_profile)
-    elif suppress_error:
-        return
-    else:
-        raise CloudifyCliError('Profile directory does not exist')
 
 
 def raise_uninitialized():
@@ -318,7 +354,7 @@ def build_host_string(ip, ssh_user=''):
 
 
 def get_default_rest_cert_local_path():
-    base_dir = get_profile_dir(suppress_error=True) or CLOUDIFY_WORKDIR
+    base_dir = get_profile_dir() or CLOUDIFY_WORKDIR
     return os.path.join(base_dir, constants.PUBLIC_REST_CERT)
 
 
@@ -415,84 +451,48 @@ def get_manager_version_data(rest_client=None):
     return version_data
 
 
-class ProfileContext(yaml.YAMLObject):
-    yaml_tag = u'!CloudifyProfileContext'
-    yaml_loader = yaml.Loader
+class ProfileContext(object):
+    def __init__(self, context=None, profile_name=None):
+        self._context = {
+            'name': profile_name,
+            'manager_ip': None,
+            'ssh_key': None,
+            'ssh_port': 22,
+            'ssh_user': None,
+            'provider_context': {},
+            'manager_username': None,
+            'manager_password': None,
+            'manager_tenant': None,
+            'rest_port': constants.DEFAULT_REST_PORT,
+            'rest_protocol': constants.DEFAULT_REST_PROTOCOL,
+            'rest_certificate': None,
+            'kerberos_env': False,
+            'cluster': {}
+        }
+        if context:
+            self._context.update(context)
 
-    def __init__(self, profile_name=None):
-        # Note that __init__ is not called when loading from yaml.
-        # When adding a new ProfileContext attribute, make sure that
-        # all methods handle the case when the attribute is missing
-        self._profile_name = profile_name
-        self.manager_ip = None
-        self.ssh_key = None
-        self._ssh_port = None
-        self.ssh_user = None
-        self.provider_context = dict()
-        self.manager_username = None
-        self.manager_password = None
-        self.manager_tenant = None
-        self.rest_port = constants.DEFAULT_REST_PORT
-        self.rest_protocol = constants.DEFAULT_REST_PROTOCOL
-        self.rest_certificate = None
-        self.kerberos_env = False
-        self._cluster = dict()
+    def __getattr__(self, name):
+        return self._context[name]
+
+    def __setattr__(self, name, value):
+        if name in ['_context', 'profile_name']:
+            super(ProfileContext, self).__setattr__(name, value)
+        else:
+            self._context[name] = value
 
     def to_dict(self):
-        return dict(
-            name=self.profile_name,
-            manager_ip=self.manager_ip,
-            ssh_key_path=self.ssh_key,
-            ssh_port=self.ssh_port,
-            ssh_user=self.ssh_user,
-            provider_context=self.provider_context,
-            manager_username=self.manager_username,
-            manager_tenant=self.manager_tenant,
-            rest_port=self.rest_port,
-            rest_protocol=self.rest_protocol,
-            rest_certificate=self.rest_certificate,
-            kerberos_env=self.kerberos_env,
-            cluster=self.cluster
-        )
-
-    @property
-    def ssh_port(self):
-        return self._ssh_port
-
-    @ssh_port.setter
-    def ssh_port(self, ssh_port):
-        # If the port is int, we want to change it to a string. Otherwise,
-        # leave None as is
-        ssh_port = str(ssh_port) if ssh_port else None
-        self._ssh_port = ssh_port
+        ctx = self._context.copy()
+        ctx['name'] = self.profile_name
+        return ctx
 
     @property
     def profile_name(self):
-        return getattr(self, '_profile_name', None) \
-            or getattr(self, 'manager_ip', None)
-
-    @property
-    def cluster(self):
-        # default the ._cluster attribute here, so that all callers can use it
-        # as just ._cluster, even if it's not present in the source yaml
-        if not hasattr(self, '_cluster'):
-            self._cluster = dict()
-        return self._cluster
-
-    @cluster.setter
-    def cluster(self, cluster):
-        self._cluster = cluster
+        return self._context['name'] or self._context['manager_ip']
 
     @profile_name.setter
-    def profile_name(self, profile_name):
-        self._profile_name = profile_name
-
-    def _get_context_path(self):
-        init_path = get_profile_dir(self.profile_name)
-        context_path = os.path.join(
-            init_path,
-            constants.CLOUDIFY_PROFILE_CONTEXT_FILE_NAME)
-        return context_path
+    def profile_name(self, value):
+        self._context['name'] = value
 
     @property
     def workdir(self):
@@ -508,10 +508,10 @@ class ProfileContext(yaml.YAMLObject):
             os.makedirs(workdir)
         target_file_path = os.path.join(
             workdir,
-            constants.CLOUDIFY_PROFILE_CONTEXT_FILE_NAME)
-
+            'context.json')
         with open(target_file_path, 'w') as f:
-            f.write(yaml.dump(self))
+            json.dump(self.to_dict(), f, sort_keys=True, indent=4)
+            f.write('\n')
 
 
 def get_auth_header(username, password):
@@ -627,7 +627,7 @@ class ClusterHTTPClient(HTTPClient):
         """
         self._profile.cluster[CloudifyNodeType.MANAGER].remove(node)
         self._profile.cluster[CloudifyNodeType.MANAGER] = (
-                [node] + self._profile.cluster[CloudifyNodeType.MANAGER])
+            [node] + self._profile.cluster[CloudifyNodeType.MANAGER])
         for node_attr in CLUSTER_NODE_ATTRS:
             if node_attr in node:
                 setattr(self._profile, node_attr, node[node_attr])

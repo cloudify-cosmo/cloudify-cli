@@ -36,7 +36,7 @@ spec:
       runAsUser: 0
       privileged: true
   - name: debbuild
-    image: debian:9
+    image: ubuntu:18.04
     command:
     - cat
     tty: true

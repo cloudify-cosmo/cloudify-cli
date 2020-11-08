@@ -70,9 +70,10 @@ class ProfilesTest(CliCommandTest):
 
     def test_delete_non_existing_profile(self):
         manager_ip = '10.10.1.10'
-        outcome = self.invoke('cfy profiles delete {0}'.format(manager_ip))
-        self.assertIn('Profile {0} does not exist'.format(manager_ip),
-                      outcome.logs)
+        self.invoke(
+            'cfy profiles delete {0}'.format(manager_ip),
+            err_str_segment='does not exist'
+        )
 
     def test_export_import_profiles(self):
         fd, profiles_archive = tempfile.mkstemp()
@@ -82,13 +83,13 @@ class ProfilesTest(CliCommandTest):
             self.invoke('cfy profiles export -o {0}'.format(profiles_archive))
             with closing(tarfile.open(name=profiles_archive)) as tar:
                 members = [member.name for member in tar.getmembers()]
-            self.assertIn('profiles/10.10.1.10/context', members)
+            self.assertIn('profiles/10.10.1.10/context.json', members)
             cfy.purge_dot_cloudify()
             self.assertFalse(os.path.isdir(env.PROFILES_DIR))
             self.invoke('cfy init')
             self.invoke('cfy profiles import {0}'.format(profiles_archive))
             self.assertTrue(os.path.isfile(
-                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context')))
+                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context.json')))
         finally:
             os.remove(profiles_archive)
 
@@ -105,14 +106,14 @@ class ProfilesTest(CliCommandTest):
         os.close(fd2)
         with open(key, 'w') as f:
             f.write('aaa')
-        self.use_manager(ssh_key_path=key)
+        self.use_manager(ssh_key=key)
         self.invoke('profiles list')
         try:
             self.invoke('cfy profiles export -o {0} --include-keys'.format(
                 profiles_archive))
             with closing(tarfile.open(name=profiles_archive)) as tar:
                 members = [member.name for member in tar.getmembers()]
-            self.assertIn('profiles/10.10.1.10/context', members)
+            self.assertIn('profiles/10.10.1.10/context.json', members)
             self.assertIn('profiles/{0}/{1}.10.10.1.10.profile'.format(
                 profiles.EXPORTED_KEYS_DIRNAME,
                 os.path.basename(key)), members)
@@ -140,7 +141,7 @@ class ProfilesTest(CliCommandTest):
             )
 
             self.assertTrue(os.path.isfile(
-                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context')))
+                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context.json')))
             self.assertTrue(os.path.isfile(key))
         finally:
             os.remove(key)
@@ -325,14 +326,6 @@ class ProfilesTest(CliCommandTest):
 
     def test_profile_name_defaults_to_ip(self):
         p = env.ProfileContext()
-        p.manager_ip = '1.2.3.4'
-        self.assertEquals('1.2.3.4', p.profile_name)
-
-        # pyyaml creates the object like that - skipping __init__; check that
-        # this doesn't break to allow correct handling pre-profile_name
-        # profiles
-        p = env.ProfileContext.__new__(env.ProfileContext)
-        self.assertIs(None, p.profile_name)
         p.manager_ip = '1.2.3.4'
         self.assertEquals('1.2.3.4', p.profile_name)
 

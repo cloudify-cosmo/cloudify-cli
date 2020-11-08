@@ -3,7 +3,7 @@ import os
 from .. import env
 from ..config import config
 
-env.CLOUDIFY_WORKDIR = '/tmp/.cloudify-test'
+env.CLOUDIFY_WORKDIR = '/tmp/cloudify-cli-test/.cloudify'
 env.PROFILES_DIR = os.path.join(env.CLOUDIFY_WORKDIR, 'profiles')
 env.ACTIVE_PROFILE = os.path.join(env.CLOUDIFY_WORKDIR, 'active.profile')
 
