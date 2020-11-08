@@ -21,7 +21,7 @@ def pytest(){
 pipeline {
   agent {
     kubernetes {
-      label 'cli'
+      label "cli-${env.BUILD_NUMBER}"
       defaultContainer 'jnlp'
       yamlFile 'jenkins/build-pod.yaml'
     }
@@ -33,7 +33,6 @@ pipeline {
     timeout(time: 60, unit: 'MINUTES')
     timestamps()
   }
-
   environment {
     PATH = "/root/.local/bin:$PATH"
     PROJECT = 'cloudify-cli'
