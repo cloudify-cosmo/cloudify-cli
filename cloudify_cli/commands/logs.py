@@ -55,7 +55,6 @@ def _archive_logs(conn, node_type, logger):
     logger.info('Creating logs archive in manager: {0}'.format(archive_path))
     conn.sudo(
         'tar -czf {0} -C /var/log cloudify '
-        '-C /opt/manager cluster_statuses '
         '--warning=no-file-changed'.format(archive_path),
         warn=True
     )
@@ -69,6 +68,7 @@ def _download_archive(conn, host_type, output_path, logger):
     filename = posixpath.basename(archive_path_on_host)
     output_path = os.path.join(output_path, filename)
     logger.info('Downloading archive to: {0}'.format(output_path))
+    conn.sudo('chmod 644 {0}'.format(archive_path_on_host))
     conn.get(archive_path_on_host, output_path)
     logger.info('Removing archive from host...')
     conn.sudo('rm {0}'.format(archive_path_on_host))
