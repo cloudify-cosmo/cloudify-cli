@@ -15,9 +15,6 @@ spec:
       privileged: true
   - name: rpmbuild
     image: rpmbuild/centos7
-    resources:
-      requests:
-        cpu: 1
     command:
     - cat
     tty: true
@@ -28,7 +25,7 @@ spec:
     image: circleci/python:2.7
     resources:
       requests:
-        cpu: 1
+        cpu: 0.6
     command:
     - cat
     tty: true
@@ -44,4 +41,4 @@ spec:
       runAsUser: 0
       privileged: true
   nodeSelector:
-  instance-type: spot-large
+    instance-type: spot
