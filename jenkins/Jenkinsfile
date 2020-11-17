@@ -96,12 +96,12 @@ pipeline {
                   -D "CLOUDIFY_PACKAGE_RELEASE 1" \
                   -bb packaging/cloudify-cli.spec
               ''', label: "building dependencies and rpm"
-              sh script:("mkdir -p ${env.WORKSPACE}/artifacts && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/artifacts"), label: "Copy RPM to artifacts folder"
+              sh script:("mkdir -p ${env.WORKSPACE}/rpm_aritfacts && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm_aritfacts"), label: "Copy RPM to rpm_aritfacts folder"
             }
           }
           post {
             success {
-              archiveArtifacts '**/artifacts/*.rpm'
+              archiveArtifacts '**/rpm_aritfacts/*.rpm'
             }
           }
         }
@@ -122,13 +122,13 @@ pipeline {
                 rm -rf /opt/cfy
                 dpkg -i /tmp/result/*.deb
                 cfy --version
-                cp -rf /tmp/result/*.deb ${env.WORKSPACE}/artifacts
               """, label: "sanity-test the deb package"
+              sh script:("mkdir -p ${env.WORKSPACE}/deb_aritfacts && cp -rf /tmp/result/*.deb ${env.WORKSPACE}/deb_aritfacts"), label: "Copy RPM to deb_aritfacts folder"
             }
           }
           post {
             success {
-              archiveArtifacts '**/artifacts/*.deb'
+              archiveArtifacts '**/deb_artifacts/*.deb'
             }
           }
         }
