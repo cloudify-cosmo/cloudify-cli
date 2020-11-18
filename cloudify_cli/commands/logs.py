@@ -46,7 +46,7 @@ def _archive_logs(conn, node_type, logger):
         date=get_host_date(conn),
         ip=env.profile.manager_ip
     )
-    archive_path = os.path.join('/tmp', archive_filename)
+    archive_path = '/tmp/{}'.format(archive_filename)
     journalctl_destination_path = '/var/log/cloudify/journalctl.log'
     conn.sudo(
         'bash -c "journalctl > /tmp/jctl && mv /tmp/jctl {0}"'
@@ -144,7 +144,7 @@ def purge(force, backup_first, logger):
     logger.info('Purging manager logs...')
     with env.ssh_connection() as conn:
         # truncate and not delete: running services can keep their open fds
-        conn.sudo(
+        conn.run(
             'for f in $(sudo find /var/log/cloudify -name "*" -type f); '
             'do sudo truncate -s 0 $f; '
             'done'
