@@ -15,6 +15,7 @@
 ############
 
 import os
+import json
 import posixpath
 
 from cloudify.cluster_status import CloudifyNodeType
@@ -22,6 +23,9 @@ from cloudify.cluster_status import CloudifyNodeType
 from .. import env
 from ..cli import helptexts, cfy
 from ..exceptions import CloudifyCliError
+from ..logger import (output,
+                      CloudifyJSONEncoder,
+                      get_global_json_output)
 
 
 @cfy.group(name='logs')
@@ -63,7 +67,7 @@ def _archive_logs(conn, node_type, logger):
     return archive_path
 
 
-def _download_archive(conn, host_type, output_path, logger):
+def _download_archive(conn, host_type, output_path, logger, output_json):
     archive_path_on_host = _archive_logs(conn, host_type, logger)
     filename = posixpath.basename(archive_path_on_host)
     output_path = os.path.join(output_path, filename)
@@ -72,6 +76,8 @@ def _download_archive(conn, host_type, output_path, logger):
     conn.get(archive_path_on_host, output_path)
     logger.info('Removing archive from host...')
     conn.sudo('rm {0}'.format(archive_path_on_host))
+    output_json['archive paths'].setdefault(host_type, {})[conn.host] =\
+        output_path
 
 
 @logs.command(name='download',
@@ -83,6 +89,8 @@ def _download_archive(conn, host_type, output_path, logger):
 def download(output_path, all_nodes, logger):
     """Download an archive containing all of the manager's service logs
     """
+    output_json = {'archive paths': {}}
+
     if not output_path:
         output_path = os.getcwd()
     if all_nodes:
@@ -100,7 +108,8 @@ def download(output_path, all_nodes, logger):
                         conn,
                         node.get('host_type'),
                         output_path,
-                        logger)
+                        logger,
+                        output_json)
             except CloudifyCliError as e:
                 logger.info('Skipping node {0}: {1}'
                             .format(node['hostname'], e))
@@ -110,7 +119,11 @@ def download(output_path, all_nodes, logger):
                 conn,
                 CloudifyNodeType.MANAGER,
                 output_path,
-                logger)
+                logger,
+                output_json)
+
+    if get_global_json_output():
+        output(json.dumps(output_json, cls=CloudifyJSONEncoder))
 
 
 def _get_cluster_nodes():
