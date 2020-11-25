@@ -415,3 +415,5 @@ PLUGINS_UPDATE__TO_MINOR = "List of plugin names to be upgraded to the "\
                            "times or take comma separated values"
 PLUGINS_UPDATE_ALL_TO_MINOR = "Update all (selected) plugins to the latest "\
                               "minor version"
+
+LABELS = "A labels list of the form <key>:<value>,<key>:<value>"

@@ -459,6 +459,7 @@ def manager_update(ctx,
 @cfy.options.private_resource
 @cfy.options.visibility()
 @cfy.options.site_name
+@cfy.options.labels
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.options.runtime_only_evaluation
@@ -472,6 +473,7 @@ def manager_create(blueprint_id,
                    private_resource,
                    visibility,
                    site_name,
+                   labels,
                    logger,
                    client,
                    tenant_name,
@@ -496,7 +498,8 @@ def manager_create(blueprint_id,
             visibility=visibility,
             skip_plugins_validation=skip_plugins_validation,
             site_name=site_name,
-            runtime_only_evaluation=runtime_only_evaluation
+            runtime_only_evaluation=runtime_only_evaluation,
+            labels=labels
         )
     except (MissingRequiredDeploymentInputError,
             UnknownDeploymentInputError) as e:
