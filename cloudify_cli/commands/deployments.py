@@ -823,3 +823,55 @@ def list_labels(deployment_id,
                printable_deployments_labels,
                'Deployment labels',
                max_width=50)
+
+
+@labels.command(name='add',
+                short_help="Add labels to a specific deployment")
+@cfy.argument('labels-list',
+              callback=cfy.parse_and_validate_labels)
+@cfy.argument('deployment-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def add_labels(labels_list,
+               deployment_id,
+               logger,
+               client,
+               tenant_name):
+    """LABELS_LIST: <key>:<value>,<key>:<value>"""
+
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Adding labels to deployment {0}...'.format(deployment_id))
+
+    raw_deployment_labels = client.deployments.get(deployment_id)['labels']
+    curr_deployment_labels = [{label['key']: label['value']}
+                              for label in raw_deployment_labels]
+    curr_labels_set = _labels_list_to_set(curr_deployment_labels)
+    received_labels_set = _labels_list_to_set(labels_list)
+
+    new_labels = received_labels_set.difference(curr_labels_set)
+    if new_labels:
+        updated_labels = _labels_set_to_list(
+            curr_labels_set.union(received_labels_set))
+        client.deployments.update_labels(deployment_id, updated_labels)
+        logger.info(
+            'The following label(s) were added successfully to deployment '
+            '{0}: {1}'.format(deployment_id, _labels_set_to_list(new_labels)))
+    else:
+        logger.info('The provided labels are already assigned to deployment '
+                    '{0}. Nothing added.'.format(deployment_id))
+
+
+def _labels_set_to_list(labels_set):
+    return [{key: value} for key, value in labels_set]
+
+
+def _labels_list_to_set(labels_list):
+    labels_set = set()
+    for label in labels_list:
+        [(key, value)] = label.items()
+        labels_set.add((key, value))
+
+    return labels_set
