@@ -227,22 +227,45 @@ def properties_callback(ctx, param, value):
     return inputs_to_dict(value, dot_hierarchy=True, deleting=deleting)
 
 
-def validate_name(ctx, param, value):
+def parse_and_validate_labels(ctx, param, value):
     if value is None or ctx.resilient_parsing:
         return
 
     if not value:
         raise CloudifyValidationError(
-            'ERROR: The `{0}` argument is empty'.format(param.name)
-        )
+            'ERROR: The `{0}` argument is empty'.format(param.name))
+
+    labels_list = []
+    raw_labels_list = value.split(',')
+    for label in raw_labels_list:
+        if label.count(':') != 1:
+            raise CloudifyValidationError('ERROR: Labels should be of the '
+                                          'form <key>:<value>,<key>:<value>')
+
+        label_key, label_value = label.split(':')
+        validate_param_value('The key of one or more labels', label_key)
+        validate_param_value('The value of one or more labels', label_value)
+        labels_list.append({label_key: label_value})
+
+    return labels_list
+
+
+def validate_name(ctx, param, value):
+    if value is None or ctx.resilient_parsing:
+        return
+
+    return validate_param_value('The `{0}` argument'.format(param.name), value)
+
+
+def validate_param_value(err_prefix, value):
+    if not value:
+        raise CloudifyValidationError('ERROR: {0} is empty'.format(err_prefix))
 
     quoted_value = urlquote(value, safe='')
     if value != quoted_value:
         raise CloudifyValidationError(
-            'ERROR: The `{0}` argument contains illegal characters. Only '
-            'letters, digits and the characters "-", "." and "_" are '
-            'allowed'.format(param.name)
-        )
+            'ERROR: {0} contains illegal characters. Only letters, digits and '
+            'the characters "-", "." and "_" are allowed'.format(err_prefix))
 
     return value
 
@@ -1413,6 +1436,13 @@ class Options(object):
             is_flag=True,
             default=None,
             help=helptexts.PLUGINS_UPDATE_ALL_TO_MINOR)
+
+        self.labels = click.option(
+            '--labels',
+            required=False,
+            callback=parse_and_validate_labels,
+            help=helptexts.LABELS
+        )
 
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
