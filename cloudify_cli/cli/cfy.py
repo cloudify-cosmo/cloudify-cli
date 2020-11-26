@@ -263,10 +263,14 @@ def parse_and_validate_label_to_delete(ctx, param, value):
             'LABEL can be either <key>:<value> or <key>')
 
     label = value.split(':')
-    for label_part in label:
-        validate_param_value('The provided label', label_part)
-
-    return label[0] if len(label) == 1 else {label[0]: label[1]}
+    if len(label) == 1:
+        validate_param_value('The provided key', label[0])
+        return label[0]
+    else:
+        label_key, label_value = label
+        validate_param_value('The key of the provided label', label_key)
+        validate_param_value('The value of the provided label', label_value)
+        return {label_key: label_value}
 
 
 def validate_name(ctx, param, value):

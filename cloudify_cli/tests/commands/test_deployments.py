@@ -35,6 +35,7 @@ from cloudify_rest_client.exceptions import (
 )
 
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
+from cloudify_cli.commands.deployments import labels_list_to_set
 from cloudify_cli.exceptions import CloudifyCliError, CloudifyValidationError
 
 from ... import exceptions
@@ -300,6 +301,18 @@ class DeploymentUpdatesTest(CliCommandTest):
 
 
 class DeploymentsTest(CliCommandTest):
+
+    LABELED_DEPLOYMENT = deployments.Deployment({
+            'deployment_id': 'dep1',
+            'labels': [
+                {'key': 'key1', 'value': 'val1',
+                 'created_at': '1', 'creator_id': 0},
+                {'key': 'key2', 'value': 'val2',
+                 'created_at': '2', 'creator_id': 0},
+                {'key': 'key2', 'value': 'val3',
+                 'created_at': '2', 'creator_id': 0},
+            ]
+        })
 
     def setUp(self):
         super(DeploymentsTest, self).setUp()
@@ -661,6 +674,85 @@ class DeploymentsTest(CliCommandTest):
         self.invoke('cfy deployments set-site deployment_1 --site-name :site',
                     err_str_segment=error_msg,
                     exception=CloudifyValidationError)
+
+    def test_deployment_create_failure_with_invalid_labels(self):
+        self.invoke('cfy deployments create dep1 --labels env:',
+                    err_str_segment='The value of one or more labels is empty',
+                    exception=CloudifyValidationError)
+
+        self.invoke('cfy deployments create dep1 --labels :aws',
+                    err_str_segment='The key of one or more labels is empty',
+                    exception=CloudifyValidationError)
+
+        self.invoke('cfy deployments create dep1 --labels aws',
+                    err_str_segment='form <key>:<value>,<key>:<value>',
+                    exception=CloudifyValidationError)
+
+    def test_deployment_create_with_labels(self):
+        self.client.deployments.create = Mock()
+        self.invoke('cfy deployments create -b bp1 dep1 '
+                    '--labels key1:val1,key2:val2')
+        call_args = list(self.client.deployments.create.call_args)
+        self.assertEqual(call_args[1]['labels'],
+                         [{'key1': 'val1'}, {'key2': 'val2'}])
+
+    def test_deployment_labels_list(self):
+        self.client.deployments.get = Mock(
+            return_value=self.LABELED_DEPLOYMENT)
+        raw_outcome = self.invoke('cfy deployments labels list dep1 --json')
+        labels = json.loads(raw_outcome.output)
+        self.assertEqual(labels, {'key1': ['val1'], 'key2': ['val2', 'val3']})
+
+    def test_deployment_labels_add(self):
+        self.client.deployments.get = Mock(
+            return_value=self.LABELED_DEPLOYMENT)
+        self.client.deployments.update_labels = Mock()
+        self.invoke(
+            'cfy deployments labels add key1:val1,key2:val1,key3:val1 dep1')
+        call_args = list(self.client.deployments.update_labels.call_args)
+        self.assertEqual(labels_list_to_set(call_args[0][1]),
+                         labels_list_to_set([{'key1': 'val1'},
+                                             {'key2': 'val1'},
+                                             {'key2': 'val2'},
+                                             {'key2': 'val3'},
+                                             {'key3': 'val1'}]))
+
+    def test_deployment_labels_delete_failure_with_invalid_label(self):
+        self.invoke('cfy deployments labels delete key1:val1,key2:val2 dep1',
+                    err_str_segment='either <key>:<value> or <key>',
+                    exception=CloudifyValidationError)
+
+        self.invoke('cfy deployments labels delete a@ dep1',
+                    err_str_segment='provided key contains illegal characters',
+                    exception=CloudifyValidationError)
+
+        self.invoke('cfy deployments labels delete key1: dep1',
+                    err_str_segment='value of the provided label is empty',
+                    exception=CloudifyValidationError)
+
+        self.invoke('cfy deployments labels delete :val1 dep1',
+                    err_str_segment='key of the provided label is empty',
+                    exception=CloudifyValidationError)
+
+    def test_deployment_labels_delete_label(self):
+        self.client.deployments.get = Mock(
+            return_value=self.LABELED_DEPLOYMENT)
+        self.client.deployments.update_labels = Mock()
+        self.invoke(
+            'cfy deployments labels delete key2:val2 dep1')
+        call_args = list(self.client.deployments.update_labels.call_args)
+        self.assertEqual(labels_list_to_set(call_args[0][1]),
+                         labels_list_to_set([{'key1': 'val1'},
+                                             {'key2': 'val3'}]))
+
+    def test_deployment_labels_delete_key(self):
+        self.client.deployments.get = Mock(
+            return_value=self.LABELED_DEPLOYMENT)
+        self.client.deployments.update_labels = Mock()
+        self.invoke(
+            'cfy deployments labels delete key2 dep1')
+        call_args = list(self.client.deployments.update_labels.call_args)
+        self.assertEqual(call_args[0][1], [{'key1': 'val1'}])
 
     def _test_deployment_inputs(self, exception_type,
                                 inputs, expected_outputs=None):

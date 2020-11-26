@@ -31,7 +31,6 @@ from cloudify_rest_client.exceptions import (
     CloudifyClientError
 )
 
-
 from . import blueprints
 from ..local import load_env
 from ..table import (
@@ -41,7 +40,10 @@ from ..table import (
     print_list
 )
 from ..cli import cfy, helptexts
-from ..logger import get_events_logger, get_global_json_output
+from ..logger import (CloudifyJSONEncoder,
+                      get_events_logger,
+                      get_global_json_output,
+                      output)
 from .. import env, execution_events_fetcher, utils
 from ..constants import DEFAULT_BLUEPRINT_PATH, DELETE_DEP
 from ..blueprint import get_blueprint_path_and_id
@@ -819,10 +821,13 @@ def list_labels(deployment_id,
         for dep_label_key, dep_label_values in deployment_labels.items()
     ]
 
-    print_data(['key', 'values'],
-               printable_deployments_labels,
-               'Deployment labels',
-               max_width=50)
+    if get_global_json_output():
+        output(json.dumps(deployment_labels, cls=CloudifyJSONEncoder))
+    else:
+        print_data(['key', 'values'],
+                   printable_deployments_labels,
+                   'Deployment labels',
+                   max_width=50)
 
 
 @labels.command(name='add',
@@ -846,8 +851,8 @@ def add_labels(labels_list,
     logger.info('Adding labels to deployment {0}...'.format(deployment_id))
 
     deployment_labels = _get_deployment_labels(client, deployment_id)
-    curr_labels_set = _labels_list_to_set(deployment_labels)
-    provided_labels_set = _labels_list_to_set(labels_list)
+    curr_labels_set = labels_list_to_set(deployment_labels)
+    provided_labels_set = labels_list_to_set(labels_list)
 
     new_labels = provided_labels_set.difference(curr_labels_set)
     if new_labels:
@@ -919,7 +924,7 @@ def _labels_set_to_list(labels_set):
     return [{key: value} for key, value in labels_set]
 
 
-def _labels_list_to_set(labels_list):
+def labels_list_to_set(labels_list):
     labels_set = set()
     for label in labels_list:
         [(key, value)] = label.items()
