@@ -250,6 +250,25 @@ def parse_and_validate_labels(ctx, param, value):
     return labels_list
 
 
+def parse_and_validate_label_to_delete(ctx, param, value):
+    if value is None or ctx.resilient_parsing:
+        return
+
+    if not value:
+        raise CloudifyValidationError(
+            'ERROR: The `{0}` argument is empty'.format(param.name))
+
+    if ',' in value or value.count(':') > 1:
+        raise CloudifyValidationError(
+            'LABEL can be either <key>:<value> or <key>')
+
+    label = value.split(':')
+    for label_part in label:
+        validate_param_value('The provided label', label_part)
+
+    return label[0] if len(label) == 1 else {label[0]: label[1]}
+
+
 def validate_name(ctx, param, value):
     if value is None or ctx.resilient_parsing:
         return
