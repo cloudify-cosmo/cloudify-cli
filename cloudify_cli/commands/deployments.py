@@ -42,7 +42,7 @@ from ..table import (
 )
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger, get_global_json_output
-from .. import execution_events_fetcher, utils
+from .. import env, execution_events_fetcher, utils
 from ..constants import DEFAULT_BLUEPRINT_PATH, DELETE_DEP
 from ..blueprint import get_blueprint_path_and_id
 from ..exceptions import (CloudifyCliError,
@@ -782,3 +782,44 @@ def manager_set_site(deployment_id, site_name, detach_site, client, logger):
     else:
         logger.info('The site of `{0}` was set to {1}'.format(deployment_id,
                                                               site_name))
+
+
+@deployments.group(name='labels',
+                   short_help="Handle the deployments' labels")
+@cfy.options.common_options
+def labels():
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+
+@labels.command(name='list',
+                short_help="List the deployments' labels")
+@cfy.argument('deployment-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def list_labels(deployment_id,
+                logger,
+                client,
+                tenant_name):
+    deployment_labels = {}
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Listing labels of deployment {0}...'.format(deployment_id))
+
+    raw_deployment_labels = client.deployments.get(deployment_id)['labels']
+    for label in raw_deployment_labels:
+        label_key, label_value = label['key'], label['value']
+        deployment_labels.setdefault(label_key, [])
+        deployment_labels[label_key].append(label_value)
+
+    printable_deployments_labels = [
+        {'key': dep_label_key, 'values': dep_label_values}
+        for dep_label_key, dep_label_values in deployment_labels.items()
+    ]
+
+    print_data(['key', 'values'],
+               printable_deployments_labels,
+               'Deployment labels',
+               max_width=50)
