@@ -845,23 +845,74 @@ def add_labels(labels_list,
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Adding labels to deployment {0}...'.format(deployment_id))
 
-    raw_deployment_labels = client.deployments.get(deployment_id)['labels']
-    curr_deployment_labels = [{label['key']: label['value']}
-                              for label in raw_deployment_labels]
-    curr_labels_set = _labels_list_to_set(curr_deployment_labels)
-    received_labels_set = _labels_list_to_set(labels_list)
+    deployment_labels = _get_deployment_labels(client, deployment_id)
+    curr_labels_set = _labels_list_to_set(deployment_labels)
+    provided_labels_set = _labels_list_to_set(labels_list)
 
-    new_labels = received_labels_set.difference(curr_labels_set)
+    new_labels = provided_labels_set.difference(curr_labels_set)
     if new_labels:
         updated_labels = _labels_set_to_list(
-            curr_labels_set.union(received_labels_set))
+            curr_labels_set.union(provided_labels_set))
         client.deployments.update_labels(deployment_id, updated_labels)
         logger.info(
             'The following label(s) were added successfully to deployment '
             '{0}: {1}'.format(deployment_id, _labels_set_to_list(new_labels)))
     else:
         logger.info('The provided labels are already assigned to deployment '
-                    '{0}. Nothing added.'.format(deployment_id))
+                    '{0}. No labels were added.'.format(deployment_id))
+
+
+@labels.command(name='delete',
+                short_help="Delete labels from a specific deployment")
+@cfy.argument('label', callback=cfy.parse_and_validate_label_to_delete)
+@cfy.argument('deployment-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def delete_labels(label,
+                  deployment_id,
+                  logger,
+                  client,
+                  tenant_name):
+    """
+    LABEL: Can be either <key>:<value> or <key>. If <key> is provided,
+    all labels associated with this key will be deleted from the deployment.
+    """
+
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Deleting labels from deployment {0}...'.format(deployment_id))
+    deployment_labels = _get_deployment_labels(client, deployment_id)
+
+    updated_labels = []
+    labels_to_delete = []
+    if isinstance(label, dict):
+        if label in deployment_labels:
+            labels_to_delete = [label]
+            deployment_labels.remove(label)
+            updated_labels = deployment_labels
+    else:  # A label key was provided
+        for dep_label in deployment_labels:
+            if label in dep_label:
+                labels_to_delete.append(dep_label)
+            else:
+                updated_labels.append(dep_label)
+
+    if labels_to_delete:
+        client.deployments.update_labels(deployment_id, updated_labels)
+        logger.info(
+            'The following label(s) were deleted successfully from deployment '
+            '{0}: {1}'.format(deployment_id, labels_to_delete))
+    else:
+        logger.info('The provided labels are not assigned to deployment '
+                    '{0}. No labels were deleted.'.format(deployment_id))
+
+
+def _get_deployment_labels(client, deployment_id):
+    raw_deployment_labels = client.deployments.get(deployment_id)['labels']
+    return [{dep_label['key']: dep_label['value']}
+            for dep_label in raw_deployment_labels]
 
 
 def _labels_set_to_list(labels_set):
