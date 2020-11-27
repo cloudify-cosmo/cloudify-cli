@@ -43,11 +43,10 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 
 
 def get_deployment_environment_execution(client, deployment_id, workflow):
-
-    executions = client.executions.list(deployment_id=deployment_id)
-    for execution in executions:
-        if execution.workflow_id == workflow:
-            return execution
+    executions = client.executions.list(deployment_id=deployment_id,
+                                        workflow_id=workflow)
+    if executions and len(executions) > 0:
+        return executions[0]
 
     raise RuntimeError(
         'Failed to get {0} workflow execution.'
