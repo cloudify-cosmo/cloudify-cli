@@ -564,6 +564,12 @@ def manager_delete(deployment_id, force, with_logs, logger, client,
         if 'not found' not in str(e):
             raise
 
+    except RuntimeError as e:
+        # ignore the failure to get the execution - it was already deleted
+        # before we were able to follow it
+        if 'Failed to get' not in str(e):
+            raise
+
     logger.info("Deployment deleted")
 
 
