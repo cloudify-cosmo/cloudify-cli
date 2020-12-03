@@ -1011,12 +1011,37 @@ def get_modification(deployment_modification_id,
 
 
 def _print_deployment_modification(deployment_modification):
+    def print_node_instance(genre, title, modified_only=False):
+        if genre not in deployment_modification['node_instances'] or \
+                not deployment_modification['node_instances'].get(genre):
+            return
+        print_list(
+            [
+                '{0} ({1})'.format(ni.get('id'), ni.get('node_id'))
+                for ni in deployment_modification['node_instances'].get(genre)
+                if not modified_only or ni.get('modification')
+            ],
+            title
+        )
+
     columns = DEPLOYMENT_MODIFICATION_COLUMNS
     if get_global_json_output():
         columns += MACHINE_READABLE_MODIFICATION_COLUMNS
     dm = (dict(deployment_modification, **deployment_modification.context)
           if deployment_modification.context else deployment_modification)
-    print_single(columns,
-                 dm,
-                 'Deployment Modification:',
-                 max_width=50)
+    print_single(columns, dm, 'Deployment Modification:')
+    if not get_global_json_output():
+        # import pdb; pdb.set_trace()
+        if 'modified_nodes' in dm and dm['modified_nodes']:
+            print_list(dm['modified_nodes'].keys(), 'Modified nodes:')
+        if 'node_instances' in dm and dm['node_instances']:
+            print_node_instance('before_modification',
+                                '\nNode instances before modifications:')
+            print_node_instance('before_rollback',
+                                '\nNode instances before rollback:')
+            print_node_instance('added_and_related',
+                                '\nAdded node instances:',
+                                modified_only=True)
+            print_node_instance('removed_and_related',
+                                '\nRemoved node instances:',
+                                modified_only=True)
