@@ -69,6 +69,10 @@ DEPLOYMENT_UPDATE_PREVIEW_COLUMNS = [
     'deployment_id', 'tenant_name', 'state', 'created_at', 'visibility',
     'old_blueprint_id', 'new_blueprint_id'
 ]
+DEPLOYMENT_MODIFICATION_COLUMNS = [
+    'id', 'workflow_id', 'execution_id', 'status', 'tenant_name',
+    'created_at', 'visibility',
+]
 NON_PREVIEW_COLUMNS = ['id', 'execution_id']
 STEPS_COLUMNS = ['entity_type', 'entity_id', 'action']
 DEPENDENCIES_COLUMNS = ['deployment', 'dependency_type', 'dependent_node',
@@ -937,3 +941,47 @@ def labels_list_to_set(labels_list):
         labels_set.add((key, value))
 
     return labels_set
+
+
+@deployments.group(name='modifications',
+                   short_help="Handle the deployments' modifications")
+@cfy.options.common_options
+def modifications():
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+
+@modifications.command(name='list',
+                       short_help="List the deployments' modifications")
+@cfy.argument('deployment-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def list_modifications(deployment_id,
+                       pagination_offset,
+                       pagination_size,
+                       logger,
+                       client,
+                       tenant_name):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Listing modifications of the deployment {0}...'
+                .format(deployment_id))
+    deployment_modifications = client.deployment_modifications.list(
+        deployment_id,
+        _offset=pagination_offset,
+        _size=pagination_size,
+    )
+    flattened = []
+    for dm in deployment_modifications:
+        d = dict(dm)
+        d.update(dm.context)
+        flattened.append(d)
+    total = deployment_modifications.metadata.pagination.total
+    print_data(DEPLOYMENT_MODIFICATION_COLUMNS, flattened,
+               'Deployment modifications:')
+    logger.info('Showing {0} of {1} deployment modifications'
+                .format(len(deployment_modifications), total))
