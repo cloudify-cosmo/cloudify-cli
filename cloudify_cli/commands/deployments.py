@@ -87,6 +87,10 @@ MACHINE_READABLE_UPDATE_PREVIEW_COLUMNS = [
     'installed_nodes', 'uninstalled_nodes', 'reinstalled_nodes',
     'explicit_reinstall', 'recursive_dependencies'
 ]
+MACHINE_READABLE_MODIFICATION_COLUMNS = [
+    'ended_at', 'node_instances', 'deployment_id', 'blueprint_id',
+    'modified_nodes', 'resource_availability',
+]
 
 
 @cfy.group(name='deployments')
@@ -982,3 +986,37 @@ def list_modifications(deployment_id,
                'Deployment modifications:')
     logger.info('Showing {0} of {1} deployment modifications'
                 .format(len(deployment_modifications), total))
+
+
+@modifications.command(name='get',
+                       short_help="Retrieve information for a deployment's "
+                                  "modification")
+@cfy.argument('deployment-modification-id')
+@cfy.options.tenant_name(required=False,
+                         resource_name_for_help='deployment modification')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def get_modification(deployment_modification_id,
+                     logger,
+                     client,
+                     tenant_name):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Retrieving deployment modification {0}...'
+                .format(deployment_modification_id))
+    deployment_modification = client.deployment_modifications.get(
+        deployment_modification_id)
+    _print_deployment_modification(deployment_modification)
+
+
+def _print_deployment_modification(deployment_modification):
+    columns = DEPLOYMENT_MODIFICATION_COLUMNS
+    if get_global_json_output():
+        columns += MACHINE_READABLE_MODIFICATION_COLUMNS
+    dm = (dict(deployment_modification, **deployment_modification.context)
+          if deployment_modification.context else deployment_modification)
+    print_single(columns,
+                 dm,
+                 'Deployment Modification:',
+                 max_width=50)
