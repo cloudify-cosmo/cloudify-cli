@@ -979,7 +979,7 @@ def list_modifications(deployment_id,
         _offset=pagination_offset,
         _size=pagination_size,
     )
-    flattened = [dict(dm, **dm.context) if dm.context else dm
+    flattened = [dict(dm, **dm.context) if dm.get('context') else dm
                  for dm in deployment_modifications]
     total = deployment_modifications.metadata.pagination.total
     print_data(DEPLOYMENT_MODIFICATION_COLUMNS, flattened,
