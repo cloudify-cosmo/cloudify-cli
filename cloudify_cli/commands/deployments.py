@@ -1010,6 +1010,27 @@ def get_modification(deployment_modification_id,
     _print_deployment_modification(deployment_modification)
 
 
+@modifications.command(name='rollback',
+                       short_help="Rollback a deployment's modification")
+@cfy.argument('deployment-modification-id')
+@cfy.options.tenant_name(required=False,
+                         resource_name_for_help='deployment modification')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def rollback_modification(deployment_modification_id,
+                          logger,
+                          client,
+                          tenant_name):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Rolling back a deployment modification {0}...'
+                .format(deployment_modification_id))
+    deployment_modification = client.deployment_modifications.rollback(
+        deployment_modification_id)
+    _print_deployment_modification(deployment_modification)
+
+
 def _print_deployment_modification(deployment_modification):
     def print_node_instance(genre, title, modified_only=False):
         if genre not in deployment_modification['node_instances'] or \
@@ -1031,7 +1052,6 @@ def _print_deployment_modification(deployment_modification):
           if deployment_modification.context else deployment_modification)
     print_single(columns, dm, 'Deployment Modification:')
     if not get_global_json_output():
-        # import pdb; pdb.set_trace()
         if 'modified_nodes' in dm and dm['modified_nodes']:
             print_list(dm['modified_nodes'].keys(), 'Modified nodes:')
         if 'node_instances' in dm and dm['node_instances']:
