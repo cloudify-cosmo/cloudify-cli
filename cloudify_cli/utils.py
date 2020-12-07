@@ -52,8 +52,8 @@ def get_deployment_environment_execution(client, deployment_id, workflow):
         return executions[0]
 
     raise RuntimeError(
-        'Failed to get {0} workflow execution.'
-        ' Available executions: {1}'.format(workflow, executions)
+        'Failed to get {0} workflow execution for deployment {1}'.format(
+            workflow, deployment_id)
     )
 
 
