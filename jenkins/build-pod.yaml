@@ -13,6 +13,30 @@ spec:
     securityContext:
       runAsUser: 0
       privileged: true
+  - name: py37
+    image: circleci/python:3.7
+    command:
+    - cat
+    tty: true
+    securityContext:
+      runAsUser: 0
+      privileged: true
+  - name: py38
+    image: circleci/python:3.8
+    command:
+    - cat
+    tty: true
+    securityContext:
+      runAsUser: 0
+      privileged: true
+  - name: py39
+    image: circleci/python:3.9
+    command:
+    - cat
+    tty: true
+    securityContext:
+      runAsUser: 0
+      privileged: true
   - name: rpmbuild
     image: rpmbuild/centos7
     command:
