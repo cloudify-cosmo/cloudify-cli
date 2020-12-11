@@ -17,7 +17,6 @@
 from . import env
 from .cli import cfy
 from .commands import ssh
-from .commands import ssl_cmd
 from .commands import init
 from .commands import logs
 from .commands import ldap
@@ -83,7 +82,6 @@ def _register_commands():
 
     # Manager only commands
     _cfy.add_command(ssh.ssh)
-    _cfy.add_command(ssl_cmd.ssl)
     _cfy.add_command(logs.logs)
     _cfy.add_command(ldap.ldap)
     _cfy.add_command(users.users)
