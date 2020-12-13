@@ -18,7 +18,7 @@ import os
 import json
 import yaml
 import tempfile
-from mock import Mock, MagicMock, patch
+from mock import Mock, MagicMock, PropertyMock, patch
 
 from cloudify.exceptions import CommandExecutionException
 from ..cfy import ClickInvocationException
@@ -33,10 +33,18 @@ from .constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH, \
 
 
 class BlueprintsTest(CliCommandTest):
+    def _mock_wait_for_blueprint_upload(self, value):
+        patcher = patch(
+            'cloudify_cli.utils.wait_for_blueprint_upload',
+            MagicMock(return_value=PropertyMock(error=value))
+        )
+        self.addCleanup(patcher.stop)
+        patcher.start()
 
     def setUp(self):
         super(BlueprintsTest, self).setUp()
         self.use_manager()
+        self._mock_wait_for_blueprint_upload(False)
 
     def test_blueprints_list(self):
         self.client.blueprints.list = MagicMock(
@@ -68,7 +76,9 @@ class BlueprintsTest(CliCommandTest):
                 'updated_at',
                 'visibility',
                 'tenant_name',
-                'created_by'
+                'created_by',
+                'state',
+                'error'
             ],
             data=[{'description': '123456789012345678..'},
                   {'description': 'abcdefg'}],
@@ -143,6 +153,12 @@ class BlueprintsTest(CliCommandTest):
         self.client.blueprints.upload = MagicMock()
         self.invoke(
             'blueprints upload {0}'.format(SAMPLE_BLUEPRINT_PATH))
+
+    def test_blueprints_upload_async(self):
+        self.client.blueprints.upload = MagicMock()
+        self.invoke(
+            'blueprints upload {0} --async-upload'.format(
+                SAMPLE_BLUEPRINT_PATH))
 
     def test_blueprints_upload_invalid(self):
         self.client.blueprints.upload = MagicMock()

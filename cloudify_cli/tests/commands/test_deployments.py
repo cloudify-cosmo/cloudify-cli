@@ -60,6 +60,14 @@ class DeploymentUpdatesTest(CliCommandTest):
         self.addCleanup(patcher.stop)
         patcher.start()
 
+    def _mock_wait_for_blueprint_upload(self, value):
+        patcher = patch(
+            'cloudify_cli.utils.wait_for_blueprint_upload',
+            MagicMock(return_value=PropertyMock(error=value))
+        )
+        self.addCleanup(patcher.stop)
+        patcher.start()
+
     def setUp(self):
         super(DeploymentUpdatesTest, self).setUp()
         self.use_manager()
@@ -71,6 +79,7 @@ class DeploymentUpdatesTest(CliCommandTest):
             MagicMock()
 
         self._mock_wait_for_executions(False)
+        self._mock_wait_for_blueprint_upload(False)
 
         patcher = patch('cloudify_cli.inputs.inputs_to_dict', MagicMock())
         self.addCleanup(patcher.stop)

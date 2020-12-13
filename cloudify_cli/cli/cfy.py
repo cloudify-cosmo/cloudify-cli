@@ -1467,6 +1467,14 @@ class Options(object):
             help=helptexts.LABELS
         )
 
+        self.async_upload = click.option(
+            '-a',
+            '--async-upload',
+            is_flag=True,
+            default=False,
+            help=helptexts.ASYNC_UPLOAD,
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
