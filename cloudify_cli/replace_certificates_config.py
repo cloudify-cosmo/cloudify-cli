@@ -177,7 +177,7 @@ class ReplaceCertificatesConfig(object):
                 self.client = env.get_rest_client(rest_cert=expanded_path)
 
     # The services might take time to update
-    @retry(stop_max_attempt_number=15, wait_fixed=2000)
+    @retry(stop_max_attempt_number=30, wait_fixed=2000)
     def _validate_status_ok(self):
         status = (self.client.manager.get_status() if self.is_all_in_one
                   else self.client.cluster_status.get_status())
