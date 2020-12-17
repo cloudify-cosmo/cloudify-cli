@@ -972,8 +972,7 @@ def list_modifications(deployment_id,
                        client,
                        tenant_name):
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Listing modifications of the deployment {0}...'
-                .format(deployment_id))
+    logger.info('Listing modifications of the deployment %s...', deployment_id)
     deployment_modifications = client.deployment_modifications.list(
         deployment_id,
         _offset=pagination_offset,
@@ -984,8 +983,8 @@ def list_modifications(deployment_id,
     total = deployment_modifications.metadata.pagination.total
     print_data(DEPLOYMENT_MODIFICATION_COLUMNS, flattened,
                'Deployment modifications:')
-    logger.info('Showing {0} of {1} deployment modifications'
-                .format(len(deployment_modifications), total))
+    logger.info('Showing %d of %d deployment modifications',
+                len(deployment_modifications), total)
 
 
 @modifications.command(name='get',
@@ -1003,8 +1002,8 @@ def get_modification(deployment_modification_id,
                      client,
                      tenant_name):
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Retrieving deployment modification {0}...'
-                .format(deployment_modification_id))
+    logger.info('Retrieving deployment modification %s...',
+                deployment_modification_id)
     deployment_modification = client.deployment_modifications.get(
         deployment_modification_id)
     _print_deployment_modification(deployment_modification)
@@ -1024,8 +1023,8 @@ def rollback_modification(deployment_modification_id,
                           client,
                           tenant_name):
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Rolling back a deployment modification {0}...'
-                .format(deployment_modification_id))
+    logger.info('Rolling back a deployment modification %s...',
+                deployment_modification_id)
     deployment_modification = client.deployment_modifications.rollback(
         deployment_modification_id)
     _print_deployment_modification(deployment_modification)
