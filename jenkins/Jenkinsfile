@@ -21,7 +21,6 @@ def pytest(){
 pipeline {
   agent {
     kubernetes {
-      label "cli-${env.BUILD_NUMBER}"
       defaultContainer 'jnlp'
       yamlFile 'jenkins/build-pod.yaml'
     }
