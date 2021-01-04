@@ -33,6 +33,10 @@ from cloudify_rest_client.exceptions import (
     UnknownDeploymentInputError,
     MissingRequiredDeploymentInputError
 )
+from cloudify_rest_client.deployment_modifications import (
+    DeploymentModification
+)
+from cloudify_rest_client.responses import ListResponse, Metadata
 
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
 from cloudify_cli.commands.deployments import labels_list_to_set
@@ -794,3 +798,131 @@ class DeploymentsTest(CliCommandTest):
                     break
             self.assertTrue(found, 'String ''{0}'' not found in outcome {1}'
                             .format(output, outcome))
+
+
+class DeploymentModificationsTest(CliCommandTest):
+    def _mock_wait_for_executions(self, value):
+        patcher = patch(
+            'cloudify_cli.execution_events_fetcher.wait_for_execution',
+            MagicMock(return_value=PropertyMock(error=value))
+        )
+        self.addCleanup(patcher.stop)
+        patcher.start()
+
+    def setUp(self):
+        super(DeploymentModificationsTest, self).setUp()
+        self.use_manager()
+        self._deployment_modifications = [
+            DeploymentModification({
+                'id': '0229a7d4-0bef-4d95-910d-a341663172e1',
+                'deployment_id': 'dep1',
+                'context': {
+                    'workflow_id': 'scale',
+                    'execution_id': '842686d6-e960-48a6-95b5-250fc26a7ed4',
+                },
+                'status': 'finished',
+                'tenant_name': 'default_tenant',
+                'created_at': datetime.datetime(2019, 8, 27, 16, 5, 24),
+                'visibility': 'tenant'
+            }),
+            DeploymentModification({
+                'id': 'e8962cbd-6645-4c60-9d6d-ee3215b39808',
+                'deployment_id': 'dep1',
+                'context': {
+                    'workflow_id': 'scale',
+                    'execution_id': 'c6bfc3de-ca19-4335-be77-b12edccba582',
+                },
+                'status': 'started',
+                'tenant_name': 'default_tenant',
+                'created_at': datetime.datetime(2019, 8, 27, 16, 35, 24),
+                'visibility': 'tenant'
+            }),
+        ]
+
+    def test_deployment_modifications_list(self):
+        self.client.deployment_modifications.list = Mock(
+            return_value=ListResponse(
+                items=self._deployment_modifications,
+                metadata=Metadata({'pagination': {'total': 2}})
+            )
+        )
+        dps = self.invoke('cfy deployments modifications list dep1')
+        assert dps.logs == """Listing modifications of the deployment dep1...
+Showing 2 of 2 deployment modifications"""
+        output_lines = dps.output.split('\n')
+        deployment_modification_found = 0
+        for line in output_lines:
+            if '0229a7d4-0bef-4d95-910d-a341663172e1' in line:
+                deployment_modification_found += 1
+                assert 'scale' in line
+                assert '842686d6-e960-48a6-95b5-250fc26a7ed4' in line
+                assert 'finished' in line
+                assert 'default_tenant' in line
+                assert '2019-08-27 16:05:24' in line
+            if 'e8962cbd-6645-4c60-9d6d-ee3215b39808' in line:
+                deployment_modification_found += 1
+                assert 'scale' in line
+                assert 'c6bfc3de-ca19-4335-be77-b12edccba582' in line
+                assert 'started' in line
+                assert 'default_tenant' in line
+                assert '2019-08-27 16:35:24' in line
+        assert deployment_modification_found == 2
+
+    def test_deployment_modifications_no_context(self):
+        deployment_modification = self._deployment_modifications[0]
+        deployment_modification.pop('context')
+        self.client.deployment_modifications.list = Mock(
+            return_value=ListResponse(
+                items=[deployment_modification],
+                metadata=Metadata({'pagination': {'total': 1}})
+            )
+        )
+        dps = self.invoke('cfy deployments modifications list dep1')
+        assert dps.logs == """Listing modifications of the deployment dep1...
+Showing 1 of 1 deployment modifications"""
+        output_lines = dps.output.split('\n')
+        deployment_modification_found = 0
+        for line in output_lines:
+            if '0229a7d4-0bef-4d95-910d-a341663172e1' in line:
+                deployment_modification_found += 1
+                assert 'N/A' in line
+                assert 'finished' in line
+                assert 'default_tenant' in line
+                assert '2019-08-27 16:05:24' in line
+        assert deployment_modification_found == 1
+
+    def test_deployment_modifications_get(self):
+        deployment_modification = self._deployment_modifications[0]
+        deployment_modification.update(
+            {
+                'modified_nodes': {
+                    'node1': []
+                },
+                'node_instances': {
+                    'before_modification': [
+                        {'id': 'node1_18fda8', 'node_id': 'node1'},
+                        {'id': 'node2_z3t4uc', 'node_id': 'node2'},
+                    ],
+                    'added_and_related': [
+                        {'id': 'node2_z3t4uc', 'node_id': 'node2'},
+                        {'id': 'node1_olbbe0', 'node_id': 'node1',
+                         'modification': 'added'},
+                    ]
+                },
+            }
+        )
+        self.client.deployment_modifications.get = Mock(
+            return_value=deployment_modification
+        )
+        dps = self.invoke('cfy deployments modifications get '
+                          '0229a7d4-0bef-4d95-910d-a341663172e1')
+        assert dps.logs == 'Retrieving deployment modification ' \
+                           '0229a7d4-0bef-4d95-910d-a341663172e1...'
+        output_lines = dps.output.split('\n')
+        assert 'Modified nodes:' in output_lines
+        assert 'Node instances before modifications:' in output_lines
+        assert 'Added node instances:' in output_lines
+        assert 'Node instances before rollback:' not in output_lines
+        assert 'Removed node instances:' not in output_lines
+        added_title_idx = output_lines.index('Added node instances:')
+        assert 'node1_olbbe0 (node1)' in output_lines[added_title_idx + 1]

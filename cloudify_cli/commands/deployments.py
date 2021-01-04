@@ -69,6 +69,10 @@ DEPLOYMENT_UPDATE_PREVIEW_COLUMNS = [
     'deployment_id', 'tenant_name', 'state', 'created_at', 'visibility',
     'old_blueprint_id', 'new_blueprint_id'
 ]
+DEPLOYMENT_MODIFICATION_COLUMNS = [
+    'id', 'workflow_id', 'execution_id', 'status', 'tenant_name',
+    'created_at', 'visibility',
+]
 NON_PREVIEW_COLUMNS = ['id', 'execution_id']
 STEPS_COLUMNS = ['entity_type', 'entity_id', 'action']
 DEPENDENCIES_COLUMNS = ['deployment', 'dependency_type', 'dependent_node',
@@ -82,6 +86,10 @@ MACHINE_READABLE_UPDATE_PREVIEW_COLUMNS = [
     'old_inputs', 'new_inputs', 'steps', 'modified_entity_ids',
     'installed_nodes', 'uninstalled_nodes', 'reinstalled_nodes',
     'explicit_reinstall', 'recursive_dependencies'
+]
+MACHINE_READABLE_MODIFICATION_COLUMNS = [
+    'ended_at', 'node_instances', 'deployment_id', 'blueprint_id',
+    'modified_nodes', 'resource_availability',
 ]
 
 
@@ -937,3 +945,122 @@ def labels_list_to_set(labels_list):
         labels_set.add((key, value))
 
     return labels_set
+
+
+@deployments.group(name='modifications',
+                   short_help="Handle the deployments' modifications")
+@cfy.options.common_options
+def modifications():
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+
+@modifications.command(name='list',
+                       short_help="List the deployments' modifications")
+@cfy.argument('deployment-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def list_modifications(deployment_id,
+                       pagination_offset,
+                       pagination_size,
+                       logger,
+                       client,
+                       tenant_name):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Listing modifications of the deployment %s...', deployment_id)
+    deployment_modifications = client.deployment_modifications.list(
+        deployment_id,
+        _offset=pagination_offset,
+        _size=pagination_size,
+    )
+    flattened = [dict(dm, **dm.context) if dm.get('context') else dm
+                 for dm in deployment_modifications]
+    total = deployment_modifications.metadata.pagination.total
+    print_data(DEPLOYMENT_MODIFICATION_COLUMNS, flattened,
+               'Deployment modifications:')
+    logger.info('Showing %d of %d deployment modifications',
+                len(deployment_modifications), total)
+
+
+@modifications.command(name='get',
+                       short_help="Retrieve information for a deployment's "
+                                  "modification")
+@cfy.argument('deployment-modification-id')
+@cfy.options.tenant_name(required=False,
+                         resource_name_for_help='deployment modification')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def get_modification(deployment_modification_id,
+                     logger,
+                     client,
+                     tenant_name):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Retrieving deployment modification %s...',
+                deployment_modification_id)
+    deployment_modification = client.deployment_modifications.get(
+        deployment_modification_id)
+    _print_deployment_modification(deployment_modification)
+
+
+@modifications.command(name='rollback',
+                       short_help="Rollback a deployment's modification")
+@cfy.argument('deployment-modification-id')
+@cfy.options.tenant_name(required=False,
+                         resource_name_for_help='deployment modification')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def rollback_modification(deployment_modification_id,
+                          logger,
+                          client,
+                          tenant_name):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Rolling back a deployment modification %s...',
+                deployment_modification_id)
+    deployment_modification = client.deployment_modifications.rollback(
+        deployment_modification_id)
+    _print_deployment_modification(deployment_modification)
+
+
+def _print_deployment_modification(deployment_modification):
+    def print_node_instance(genre, title, modified_only=False):
+        if genre not in deployment_modification['node_instances'] or \
+                not deployment_modification['node_instances'].get(genre):
+            return
+        print_list(
+            [
+                '{0} ({1})'.format(ni.get('id'), ni.get('node_id'))
+                for ni in deployment_modification['node_instances'].get(genre)
+                if not modified_only or ni.get('modification')
+            ],
+            title
+        )
+
+    columns = DEPLOYMENT_MODIFICATION_COLUMNS
+    if get_global_json_output():
+        columns += MACHINE_READABLE_MODIFICATION_COLUMNS
+    dm = (dict(deployment_modification, **deployment_modification.context)
+          if deployment_modification.context else deployment_modification)
+    print_single(columns, dm, 'Deployment Modification:')
+    if not get_global_json_output():
+        if 'modified_nodes' in dm and dm['modified_nodes']:
+            print_list(dm['modified_nodes'].keys(), 'Modified nodes:')
+        if 'node_instances' in dm and dm['node_instances']:
+            print_node_instance('before_modification',
+                                '\nNode instances before modifications:')
+            print_node_instance('before_rollback',
+                                '\nNode instances before rollback:')
+            print_node_instance('added_and_related',
+                                '\nAdded node instances:',
+                                modified_only=True)
+            print_node_instance('removed_and_related',
+                                '\nRemoved node instances:',
+                                modified_only=True)
