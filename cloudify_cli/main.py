@@ -41,6 +41,7 @@ from .commands import uninstall
 from .commands import workflows
 from .commands import blueprints
 from .commands import executions
+from .commands import permissions
 from .commands import user_groups
 from .commands import deployments
 from .commands import certificates
@@ -125,6 +126,7 @@ def _register_commands():
         _cfy.add_command(install.manager)
         _cfy.add_command(uninstall.manager)
         _cfy.add_command(node_instances.node_instances)
+        _cfy.add_command(permissions.permissions)
 
         deployments.deployments.add_command(deployments.manager_inputs)
         deployments.deployments.add_command(deployments.manager_outputs)
