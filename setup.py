@@ -44,7 +44,7 @@ setup(
         'pyyaml==5.3.1',
         'jinja2>=2.10,<2.11',
         'retrying==1.3.3',
-        'colorama==0.3.3',
+        'colorama==0.4.4',
         'requests>=2.7.0,<3.0.0',
         'click_didyoumean==0.0.3',
         'cloudify-common[dispatcher]==5.2.0.dev1',
