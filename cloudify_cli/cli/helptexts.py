@@ -195,6 +195,12 @@ SET_MANAGEMENT_CREDS = (
     '(e.g. `cfy profiles use -s my_user -k ~/my/key/path`)'
 )
 
+ASYNC_UPLOAD = (
+    "Don't wait for the upload workflow to finish. Upload state can be "
+    "checked at any time using the `cfy blueprints get` or `cfy "
+    "blueprints list` commands."
+)
+
 MANAGEMENT_IP = 'The IP of the manager host machine'
 SSH_USER = 'The SSH user on the manager host machine'
 SSH_KEY = 'The path to the ssh key-file to use when connecting'

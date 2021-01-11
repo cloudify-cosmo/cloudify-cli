@@ -17,11 +17,13 @@
 import os
 import sys
 import json
+import time
 import click
 import errno
 import string
 import random
 import shutil
+import logging
 import tarfile
 import zipfile
 import tempfile
@@ -33,13 +35,17 @@ from backports.shutil_get_terminal_size import get_terminal_size
 import yaml
 import requests
 
-from .logger import get_logger
-from .exceptions import CloudifyCliError
-from .constants import SUPPORTED_ARCHIVE_TYPES
+from .logger import get_logger, get_events_logger
+from .exceptions import CloudifyCliError, CloudifyTimeoutError
+from .constants import SUPPORTED_ARCHIVE_TYPES, DEFAULT_TIMEOUT
+from .execution_events_fetcher import ExecutionEventsFetcher, EventsWatcher
 
 from cloudify._compat import urlparse
+from cloudify.models_states import BlueprintUploadState
 from cloudify_rest_client.constants import VisibilityState
 from cloudify_rest_client.exceptions import CloudifyClientError
+
+WAIT_FOR_BLUEPRINT_UPLOAD_SLEEP_INTERVAL = 1
 
 
 def get_deployment_environment_execution(client, deployment_id, workflow):
@@ -404,3 +410,62 @@ def print_dict(keys_dict, logger):
 def get_dict_from_yaml(yaml_path):
     with open(yaml_path) as f:
         return yaml.load(f, yaml.Loader)
+
+
+def wait_for_blueprint_upload(client, blueprint_id, logging_level):
+
+    def _handle_errors():
+        if blueprint['state'] in BlueprintUploadState.FAILED_STATES:
+            error_msg = '{error_type} blueprint: {description}.'.format(
+                error_type=blueprint['state'].capitalize().replace('_', ' '),
+                description=blueprint['error']
+            )
+            if logging_level == logging.DEBUG:
+                error_msg += '\nError traceback: {}'.format(
+                    blueprint['error_traceback'])
+            raise CloudifyCliError(error_msg)
+
+    blueprint = client.blueprints.get(blueprint_id)
+
+    # if blueprint upload already ended - return without waiting
+    if blueprint['state'] in BlueprintUploadState.END_STATES:
+        _handle_errors()
+        return blueprint
+
+    deadline = time.time() + DEFAULT_TIMEOUT
+
+    execution = [
+        ex for ex in client.executions.list(workflow_id='upload_blueprint')
+        if ex['parameters']['blueprint_id'] == blueprint_id
+    ][-1]   # is there are several matching executions, we want the latest
+    events_fetcher = ExecutionEventsFetcher(client,
+                                            execution.id,
+                                            include_logs=True)
+
+    # Poll for execution status and execution logs, until execution ends
+    # and we receive an event of type in WORKFLOW_END_TYPES
+    upload_ended = False
+    events_watcher = EventsWatcher(get_events_logger(None))
+
+    # Poll for blueprint upload status, until the upload ends
+    while True:
+        if time.time() > deadline:
+            raise CloudifyTimeoutError('Blueprint {0} upload timed '
+                                       'out'.format(blueprint.id))
+        timeout = deadline - time.time()  # update remaining timeout
+
+        if not upload_ended:
+            blueprint = client.blueprints.get(blueprint.id)
+            upload_ended = \
+                blueprint['state'] in BlueprintUploadState.END_STATES
+
+        events_fetcher.fetch_and_process_events(
+            events_handler=events_watcher, timeout=timeout)
+
+        if upload_ended and events_watcher.end_log_received:
+            break
+
+        time.sleep(WAIT_FOR_BLUEPRINT_UPLOAD_SLEEP_INTERVAL)
+
+    _handle_errors()
+    return blueprint

@@ -31,6 +31,10 @@ class SuppressedCloudifyCliError(Exception):
     pass
 
 
+class CloudifyTimeoutError(Exception):
+    pass
+
+
 class ExecutionTimeoutError(RuntimeError):
 
     def __init__(self, execution_id, message):
