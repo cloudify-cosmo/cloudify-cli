@@ -43,7 +43,8 @@ from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 DESCRIPTION_LIMIT = 20
 BASE_BLUEPRINT_COLUMNS = ['id', 'description', 'main_file_name', 'created_at']
 BLUEPRINT_COLUMNS = BASE_BLUEPRINT_COLUMNS + ['updated_at', 'visibility',
-                                              'tenant_name', 'created_by']
+                                              'tenant_name', 'created_by',
+                                              'state', 'error']
 INPUTS_COLUMNS = ['name', 'type', 'default', 'description']
 BLUEPRINTS_SUMMARY_FIELDS = BASE_SUMMARY_FIELDS
 
@@ -84,6 +85,7 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.argument('blueprint-path')
 @cfy.options.blueprint_id(validate=True)
 @cfy.options.blueprint_filename()
+@cfy.options.async_upload
 @cfy.options.validate
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
@@ -97,6 +99,7 @@ def upload(ctx,
            blueprint_path,
            blueprint_id,
            blueprint_filename,
+           async_upload,
            validate,
            private_resource,
            visibility,
@@ -136,7 +139,7 @@ def upload(ctx,
         # API call is the one that should be used.
         logger.info('Publishing blueprint archive %s...',
                     processed_blueprint_path)
-        blueprint_obj = client.blueprints.publish_archive(
+        client.blueprints.publish_archive(
             processed_blueprint_path,
             blueprint_id,
             blueprint_filename,
@@ -153,7 +156,7 @@ def upload(ctx,
             # When the blueprint file is already available locally, it can be
             # uploaded directly using the `upload` API call.
             logger.info('Uploading blueprint %s...', blueprint_path)
-            blueprint_obj = client.blueprints.upload(
+            client.blueprints.upload(
                 processed_blueprint_path,
                 blueprint_id,
                 visibility,
@@ -171,8 +174,14 @@ def upload(ctx,
                 )
                 shutil.rmtree(temp_directory)
 
-    logger.info("Blueprint uploaded. The blueprint's id is {0}".format(
-        blueprint_obj.id))
+    logger.info("Blueprint `{0}` upload started.".format(blueprint_id))
+
+    if not async_upload:
+        blueprint_obj = utils.wait_for_blueprint_upload(client,
+                                                        blueprint_id,
+                                                        logger.level)
+        logger.info("Blueprint uploaded. The blueprint's id is {0}".format(
+            blueprint_obj.id))
 
 
 @blueprints.command(name='download',
@@ -299,7 +308,8 @@ def get(blueprint_id, logger, client, tenant_name):
     blueprint_deployments = [d['id'] for d in deployments]
 
     if get_global_json_output():
-        columns += ['description', 'metadata', 'deployments']
+        columns += ['description', 'metadata', 'deployments',
+                    'error_traceback']
         blueprint_dict['metadata'] = blueprint_metadata
         blueprint_dict['deployments'] = blueprint_deployments
         print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
