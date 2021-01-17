@@ -120,6 +120,7 @@ def _register_commands():
     deployments.deployments.add_command(deployments.manager_set_site)
 
     executions.executions.add_command(executions.manager_cancel)
+    executions.executions.add_command(executions.schedule)
 
     # Commands which should be both in manager and local context
     # But change depending on the context.

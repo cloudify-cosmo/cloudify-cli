@@ -358,6 +358,21 @@ SCHEDULE_EXECUTIONS = 'The time (including timezone) this workflow will be' \
                       'YYYYMMDDHHMM-HHMM. e.g.: 201801182230-0500' \
                       ' (18th January 2018 10:30pm EST)'
 
+SCHEDULE_FREQUENCY = "Frequency with which to run the execution, e.g. " \
+                     "'2 weeks'"
+SCHEDULE_COUNT = "Maximum number of times to run the execution. " \
+                 "If left empty, there's no limit on repetition"
+SCHEDULE_WEEKDAYS = "Weekdays on which to run the execution, e.g. " \
+                    "'su,mo,tu'. If left empty, will run on any weekday"
+SCHEDULE_RRULE = "A scheduling rule in the iCalendar format, e.g. " \
+                 "'RRULE:FREQ=DAILY;INTERVAL=3', which means run every 3 " \
+                 "days"
+SCHEDULE_SLIP = "Maximum time window after the target time has passed, " \
+                "in which the scheduled execution can run " \
+                "[in minutes, default=0]"
+SCHEDULE_STOP_ON_FAIL = "Whether to stop scheduling the execution in case " \
+                        "it failed"
+
 _MULTIPLE_TIMES_FRAGMENT = ' (can be passed multiple times, ' \
                            'or comma-separated)'
 AGENT_NODE_INSTANCE_ID = 'The node instance id to be used for filtering ' \
