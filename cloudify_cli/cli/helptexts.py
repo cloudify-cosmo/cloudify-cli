@@ -423,3 +423,12 @@ PLUGINS_UPDATE_ALL_TO_MINOR = "Update all (selected) plugins to the latest "\
                               "minor version"
 
 LABELS = "A labels list of the form <key>:<value>,<key>:<value>"
+
+FILTER_RULES = 'List of filter rules separated with "and". Filter rules ' \
+               'must be one of: <key>=<value>, ' \
+               '<key>=[<value1>,<value2>,...], <key>!=<value>, ' \
+               '<key>!=[<value1>,<value2>,...], <key> is null, ' \
+               '<key> is not null. E.g. "a=b and c!=[d,e] and f is not ' \
+               'null". The filter rules will be saved in lower case.'
+
+FILTER_RULES_OR_ID = 'A filter ID or a {0}'.format(FILTER_RULES)

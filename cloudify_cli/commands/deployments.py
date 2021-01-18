@@ -165,6 +165,7 @@ def _print_single_update(deployment_update_dict,
 
 @cfy.command(name='list', short_help='List deployments [manager only]')
 @cfy.options.blueprint_id()
+@cfy.options.filter_rules
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.tenant_name_for_list(
@@ -178,6 +179,7 @@ def _print_single_update(deployment_update_dict,
 @cfy.pass_client()
 @cfy.pass_logger
 def manager_list(blueprint_id,
+                 filter,
                  sort_by,
                  descending,
                  all_tenants,
@@ -201,6 +203,7 @@ def manager_list(blueprint_id,
 
     deployments = client.deployments.list(sort=sort_by,
                                           is_descending=descending,
+                                          filter_rules=filter,
                                           _all_tenants=all_tenants,
                                           _search=search,
                                           _offset=pagination_offset,

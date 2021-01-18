@@ -808,6 +808,21 @@ class DeploymentsTest(CliCommandTest):
             self.assertTrue(found, 'String ''{0}'' not found in outcome {1}'
                             .format(output, outcome))
 
+    def test_deployments_list_with_filters(self):
+        self.client.deployments.list = MagicMock(
+            return_value=MockListResponse()
+        )
+        self.invoke('cfy deployments list --filter filter')
+        self.invoke('cfy deployments list --filter "a=b and c!=[d,f]"')
+
+    def test_deployments_list_with_invalid_filters(self):
+        self.invoke('cfy deployments list --filter a%d',
+                    err_str_segment='The filter ID contains illegal',
+                    exception=CloudifyValidationError)
+        self.invoke('cfy deployments list --filter "a=b and e is nu"',
+                    err_str_segment='Filter rules must be one of',
+                    exception=CloudifyValidationError)
+
 
 class DeploymentModificationsTest(CliCommandTest):
     def _mock_wait_for_executions(self, value):
