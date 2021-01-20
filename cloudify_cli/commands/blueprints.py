@@ -144,7 +144,9 @@ def upload(ctx,
             blueprint_id,
             blueprint_filename,
             visibility,
-            progress_handler)
+            progress_handler,
+            async_upload=True
+        )
     else:
         try:
             if validate:
@@ -162,7 +164,8 @@ def upload(ctx,
                 visibility,
                 progress_handler,
                 # if blueprint is in an archive we skip the size limit check
-                utils.is_archive(blueprint_path)
+                utils.is_archive(blueprint_path),
+                async_upload=True
             )
         finally:
             # When an archive file is passed, it's extracted to a temporary
