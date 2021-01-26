@@ -1532,6 +1532,56 @@ class Options(object):
             help=helptexts.FILTER_RULES_OR_ID
         )
 
+        self.frequency = click.option(
+            '--freq',
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['rrule'],
+            required=False,
+            help=helptexts.SCHEDULE_FREQUENCY
+        )
+
+        self.count = click.option(
+            '-c',
+            '--count',
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['rrule'],
+            required=False,
+            type=int,
+            help=helptexts.SCHEDULE_COUNT
+        )
+
+        self.weekdays = click.option(
+            '--weekdays',
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['rrule'],
+            required=False,
+            help=helptexts.SCHEDULE_WEEKDAYS
+        )
+
+        self.rrule = click.option(
+            '--rrule',
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['frequency', 'count', 'weekdays'],
+            required=False,
+            help=helptexts.SCHEDULE_RRULE
+        )
+
+        self.slip = click.option(
+            '--slip',
+            required=False,
+            default=0,
+            type=int,
+            help=helptexts.SCHEDULE_SLIP
+        )
+
+        self.stop_on_fail = click.option(
+            '--stop-on-fail',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.SCHEDULE_STOP_ON_FAIL
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
@@ -1691,11 +1741,12 @@ class Options(object):
             help=helptexts.BLUEPRINT_FILENAME + extra_message)
 
     @staticmethod
-    def workflow_id(default=None):
+    def workflow_id(default=None, required=False):
         return click.option(
             '-w',
             '--workflow-id',
             default=default,
+            required=required,
             help=helptexts.WORKFLOW_TO_EXECUTE.format(default))
 
     @staticmethod
