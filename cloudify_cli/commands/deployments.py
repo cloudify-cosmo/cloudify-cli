@@ -59,7 +59,7 @@ from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 DEPLOYMENT_COLUMNS = [
     'id', 'blueprint_id', 'created_at', 'updated_at', 'visibility',
-    'tenant_name', 'created_by', 'site_name'
+    'tenant_name', 'created_by', 'site_name', 'labels'
 ]
 DEPLOYMENT_UPDATE_COLUMNS = [
     'id', 'deployment_id', 'tenant_name', 'state', 'execution_id',
@@ -209,10 +209,19 @@ def manager_list(blueprint_id,
                                           _offset=pagination_offset,
                                           _size=pagination_size,
                                           blueprint_id=blueprint_id)
+    _modify_deployments_labels(deployments)
     total = deployments.metadata.pagination.total
     print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:')
     logger.info('Showing {0} of {1} deployments'.format(len(deployments),
                                                         total))
+
+
+def _modify_deployments_labels(deployments_list):
+    for dep in deployments_list:
+        dep_labels_list = []
+        for raw_label in dep.get('labels', []):
+            dep_labels_list.append(raw_label.key + ':' + raw_label.value)
+        dep['labels'] = ','.join(dep_labels_list)
 
 
 @cfy.command(name='history', short_help='List deployment updates '
