@@ -221,7 +221,6 @@ def _modify_deployments_labels(deployments_list):
         dep_labels_list = []
         for raw_label in dep.get('labels', []):
             dep_labels_list.append(raw_label.key + ':' + raw_label.value)
-        dep.pop('labels', None)
         dep['labels'] = ','.join(dep_labels_list)
 
 
