@@ -218,8 +218,13 @@ def manager_list(blueprint_id,
     _modify_deployments_labels(deployments)
     total = deployments.metadata.pagination.total
     print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:')
-    logger.info('Showing {0} of {1} deployments'.format(len(deployments),
-                                                        total))
+
+    if filter and ('filtered' in deployments.metadata):
+        filtered = deployments.metadata['filtered']
+        logger.info('Filtered %s deployments out of %s',
+                    filtered.get('filtered'), filtered.get('total'))
+
+    logger.info('Showing %s of %s deployments', len(deployments), total)
 
 
 def _modify_deployments_labels(deployments_list):
