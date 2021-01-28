@@ -451,3 +451,9 @@ FILTER_RULES = 'List of filter rules separated with "and". ' + \
 
 FILTER_RULES_OR_ID = 'A filter ID or a list of filter rules separated with ' \
                      '"and". ' + _FILTER_RULES_FORMS
+FILTER_RULES_OR_ID = 'A filter ID or a {0}'.format(FILTER_RULES)
+
+DEP_GROUP_BLUEPRINT = 'Default blueprint for this deployment group'
+DEP_GROUP_DESCRIPTION = 'Description of this deployment group'
+DEP_GROUP_DEP_ID = 'Deployment ID to add or remove from the group'
+DEP_GROUP_COUNT = 'Create this many deployments in the group'

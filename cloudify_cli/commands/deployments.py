@@ -77,6 +77,9 @@ NON_PREVIEW_COLUMNS = ['id', 'execution_id']
 STEPS_COLUMNS = ['entity_type', 'entity_id', 'action']
 DEPENDENCIES_COLUMNS = ['deployment', 'dependency_type', 'dependent_node',
                         'tenant']
+DEP_GROUP_COLUMNS = [
+    'id', 'deployments', 'description', 'default_blueprint_id'
+]
 TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
 DEPLOYMENTS_SUMMARY_FIELDS = (['blueprint_id', 'site_name'] +
                               BASE_SUMMARY_FIELDS)
@@ -165,6 +168,7 @@ def _print_single_update(deployment_update_dict,
 
 @cfy.command(name='list', short_help='List deployments [manager only]')
 @cfy.options.blueprint_id()
+@click.option('--group-id', '-g')
 @cfy.options.filter_rules
 @cfy.options.sort_by()
 @cfy.options.descending
@@ -179,6 +183,7 @@ def _print_single_update(deployment_update_dict,
 @cfy.pass_client()
 @cfy.pass_logger
 def manager_list(blueprint_id,
+                 group_id,
                  filter,
                  sort_by,
                  descending,
@@ -208,6 +213,7 @@ def manager_list(blueprint_id,
                                           _search=search,
                                           _offset=pagination_offset,
                                           _size=pagination_size,
+                                          _group_id=group_id,
                                           blueprint_id=blueprint_id)
     _modify_deployments_labels(deployments)
     total = deployments.metadata.pagination.total
@@ -1076,3 +1082,97 @@ def _print_deployment_modification(deployment_modification):
             print_node_instance('removed_and_related',
                                 '\nRemoved node instances:',
                                 modified_only=True)
+
+
+@deployments.group('groups')
+def groups():
+    """Manage deployment groups"""
+
+
+def _format_group(g):
+    """Format a restclient deployment group for display"""
+    return {
+        'id': g['id'],
+        'description': g['description'],
+        'default_blueprint_id': g['default_blueprint_id'],
+        'deployments': str(len(g['deployment_ids']))
+    }
+
+
+@groups.command('list', short_help='List all deployment groups')
+@cfy.pass_client()
+@cfy.pass_logger
+def groups_list(client, logger):
+    groups = [_format_group(g) for g in client.deployment_groups.list()]
+    print_data(DEP_GROUP_COLUMNS, groups, 'Deployment groups:')
+
+
+@groups.command('create', short_help='Create a new deployment group')
+@click.argument('deployment-group-name')
+@cfy.options.inputs
+@cfy.options.group_default_blueprint
+@cfy.options.group_description
+@cfy.pass_client()
+@cfy.pass_logger
+def groups_create(deployment_group_name, inputs, default_blueprint,
+                  description, client, logger):
+    client.deployment_groups.put(
+        deployment_group_name,
+        default_inputs=inputs,
+        blueprint_id=default_blueprint,
+        description=description
+    )
+    logger.info('Group %s created', deployment_group_name)
+
+
+@groups.command('update', short_help='Update a deployment group')
+@click.argument('deployment-group-name')
+@cfy.options.inputs
+@cfy.options.group_default_blueprint
+@cfy.options.group_description
+@cfy.pass_client()
+@cfy.pass_logger
+def groups_update(deployment_group_name, inputs, default_blueprint,
+                  description, client, logger):
+    client.deployment_groups.put(
+        deployment_group_name,
+        default_inputs=inputs,
+        blueprint_id=default_blueprint,
+        description=description
+    )
+    logger.info('Group %s updated', deployment_group_name)
+
+
+@groups.command('extend', short_help='Add deployments to a group')
+@click.argument('deployment-group-name')
+@cfy.options.group_deployment_id
+@cfy.options.group_count
+@cfy.pass_client()
+@cfy.pass_logger
+def groups_extend(deployment_group_name, deployment_id, count,
+                  client, logger):
+    group = client.deployment_groups.add_deployments(
+        deployment_group_name,
+        count=count,
+        deployment_ids=deployment_id or None
+    )
+    logger.info(
+        'Group %s updated. It now contains %d deployments',
+        deployment_group_name, len(group.deployment_ids)
+    )
+
+
+@groups.command('shrink', short_help='Remove deployments from a group')
+@click.argument('deployment-group-name')
+@cfy.options.group_deployment_id
+@cfy.pass_client()
+@cfy.pass_logger
+def groups_shrink(deployment_group_name, deployment_id, client, logger):
+    group = client.deployment_groups.remove_deployments(
+        deployment_group_name,
+        deployment_id
+    )
+    logger.info(
+        'Unlinked deployments %s. Group %s now has %d deployments',
+        list(deployment_id), deployment_group_name, len(group.deployment_ids)
+    )
