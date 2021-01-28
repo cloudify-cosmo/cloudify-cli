@@ -1582,6 +1582,28 @@ class Options(object):
             help=helptexts.SCHEDULE_STOP_ON_FAIL
         )
 
+        self.group_default_blueprint = click.option(
+            '--default-blueprint', '-b',
+            help=helptexts.DEP_GROUP_BLUEPRINT
+        )
+
+        self.group_description = click.option(
+            '--description',
+            help=helptexts.DEP_GROUP_DESCRIPTION
+        )
+
+        self.group_deployment_id = click.option(
+            '--deployment-id', 'd',
+            help=helptexts.DEP_GROUP_DEP_ID,
+            multiple=True
+        )
+
+        self.group_count = click.option(
+            '--count',
+            help=helptexts.DEP_GROUP_COUNT,
+            type=int
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
