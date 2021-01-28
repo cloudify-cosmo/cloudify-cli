@@ -1,20 +1,3 @@
-########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-############
-
-
 import sys
 import os
 import difflib
@@ -1395,7 +1378,8 @@ class Options(object):
             type=click.IntRange(1, 65535),
             help=helptexts.PORT,
         )
-        # Args for configuring self.ldap
+
+        # Args for configuring ldap
         self.ldap_server = click.option(
             '-s',
             '--ldap-server',
@@ -1441,6 +1425,61 @@ class Options(object):
             '--ldap-ca-path',
             required=False,
             help=helptexts.LDAP_CA_PATH,
+        )
+        self.ldap_base_dn = click.option(
+            '--ldap-base-dn',
+            required=False,
+            help=helptexts.LDAP_BASE_DN,
+        )
+        self.ldap_group_dn = click.option(
+            '--ldap-group-dn',
+            required=False,
+            help=helptexts.LDAP_GROUP_DN,
+        )
+        self.ldap_bind_format = click.option(
+            '--ldap-bind-format',
+            required=False,
+            help=helptexts.LDAP_BIND_FORMAT,
+        )
+        self.ldap_user_filter = click.option(
+            '--ldap-user-filter',
+            required=False,
+            help=helptexts.LDAP_USER_FILTER,
+        )
+        self.ldap_group_member_filter = click.option(
+            '--ldap-group-member-filter',
+            required=False,
+            help=helptexts.LDAP_GROUP_MEMBER_FILTER,
+        )
+        self.ldap_attribute_email = click.option(
+            '--ldap-attribute-email',
+            required=False,
+            help=helptexts.LDAP_ATTRIBUTE_EMAIL,
+        )
+        self.ldap_attribute_first_name = click.option(
+            '--ldap-attribute-first-name',
+            required=False,
+            help=helptexts.LDAP_ATTRIBUTE_FIRST_NAME,
+        )
+        self.ldap_attribute_last_name = click.option(
+            '--ldap-attribute-last-name',
+            required=False,
+            help=helptexts.LDAP_ATTRIBUTE_LAST_NAME,
+        )
+        self.ldap_attribute_uid = click.option(
+            '--ldap-attribute-uid',
+            required=False,
+            help=helptexts.LDAP_ATTRIBUTE_UID,
+        )
+        self.ldap_attribute_group_membership = click.option(
+            '--ldap-attribute-group-membership',
+            required=False,
+            help=helptexts.LDAP_ATTRIBUTE_GROUP_MEMBERSHIP,
+        )
+        self.ldap_nested_levels = click.option(
+            '--ldap-nested-levels',
+            required=False,
+            help=helptexts.LDAP_NESTED_LEVELS,
         )
 
         self.node_id = click.option(
