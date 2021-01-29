@@ -1,19 +1,3 @@
-########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-############
-
 VERBOSE = \
     "Show verbose output. You can supply this up to three times (i.e. -vvv)"
 QUIET = "Show only critical logs"
@@ -282,16 +266,53 @@ LDAP_SERVER = (
     'Should be prefixed with the protocol and include the port, '
     'e.g. ldap://192.0.2.1:389 or ldaps://192.0.2.45:636'
 )
-LDAP_USERNAME = 'The LDAP admin username to be set on the Cloudify manager'
-LDAP_PASSWORD = 'The LDAP admin password to be set on the Cloudify manager'
+LDAP_USERNAME = 'LDAP username to bind with. If not set, binds will '\
+                'be performed using the credentials of the user attempting '\
+                'to log in. If this is set, the --ldap-password option must '\
+                'also be set.'
+LDAP_PASSWORD = 'LDAP password to bind with. See ldap username for details.'
 LDAP_DOMAIN = 'The LDAP domain to be used by the server'
 LDAP_IS_ACTIVE_DIRECTORY = 'Specify whether the LDAP used for authentication' \
                            ' is Active-Directory.'
-LDAP_DN_EXTRA = 'Extra LDAP DN options.'
+LDAP_DN_EXTRA = 'Extra LDAP DN options. '\
+                '(deprecated, use --ldap-base-dn instead)'
 LDAP_CA_PATH = (
     'Path to the CA certificate LDAP communications will be encrypted with. '
     'Required if using ldaps. '
     'Must not be provided if not using ldaps.'
+)
+LDAP_BASE_DN = (
+    'The base DN for searches, etc. If not provided, this will be derived '
+    'from the domain used, e.g. a domain of example.com will result in a '
+    'base dn of dc=example,dc=com'
+)
+LDAP_GROUP_DN = (
+    'The base DN for searching for groups when performing user group '
+    'lookups. This will only be used if the group membership is not '
+    'available on the user object.'
+)
+LDAP_BIND_FORMAT = (
+    'The format to use when binding to the LDAP server.'
+)
+LDAP_USER_FILTER = (
+    'The search filter when searching for the LDAP user.'
+)
+LDAP_GROUP_MEMBER_FILTER = (
+    'The filter used when searching recursively for group membership.'
+)
+LDAP_ATTRIBUTE_EMAIL = \
+    "The name of the ldap attribute giving the user's email address."
+LDAP_ATTRIBUTE_FIRST_NAME = \
+    "The name of the ldap attribute giving the user's first name."
+LDAP_ATTRIBUTE_LAST_NAME = \
+    "The name of the ldap attribute giving the user's last name."
+LDAP_ATTRIBUTE_UID = "The name of the ldap attribute giving the user's uid."
+LDAP_ATTRIBUTE_GROUP_MEMBERSHIP = \
+    "The name of the ldap attribute giving the user's group membership."
+LDAP_NESTED_LEVELS = (
+    "How many levels of group membership to check to find the groups the "
+    "LDAP user is in. If set to 1 (the default), only the groups the user "
+    "is directly a member of will be available."
 )
 
 GET_DATA = 'When set to True, displays the full list of connected resources ' \
@@ -451,7 +472,6 @@ FILTER_RULES = 'List of filter rules separated with "and". ' + \
 
 FILTER_RULES_OR_ID = 'A filter ID or a list of filter rules separated with ' \
                      '"and". ' + _FILTER_RULES_FORMS
-FILTER_RULES_OR_ID = 'A filter ID or a {0}'.format(FILTER_RULES)
 
 DEP_GROUP_BLUEPRINT = 'Default blueprint for this deployment group'
 DEP_GROUP_DESCRIPTION = 'Description of this deployment group'

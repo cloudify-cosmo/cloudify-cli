@@ -1,19 +1,3 @@
-########
-# Copyright (c) 2017 GigaSpaces Technologies Ltd. All rights reserved
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-############
-
 from ..cli import cfy
 from ..exceptions import CloudifyCliError
 
@@ -36,6 +20,17 @@ def ldap():
 @cfy.options.ldap_is_active_directory
 @cfy.options.ldap_dn_extra
 @cfy.options.ldap_ca_path
+@cfy.options.ldap_base_dn
+@cfy.options.ldap_group_dn
+@cfy.options.ldap_bind_format
+@cfy.options.ldap_user_filter
+@cfy.options.ldap_group_member_filter
+@cfy.options.ldap_attribute_email
+@cfy.options.ldap_attribute_first_name
+@cfy.options.ldap_attribute_last_name
+@cfy.options.ldap_attribute_uid
+@cfy.options.ldap_attribute_group_membership
+@cfy.options.ldap_nested_levels
 @cfy.pass_client()
 @cfy.pass_logger
 def set(ldap_server,
@@ -44,6 +39,17 @@ def set(ldap_server,
         ldap_domain,
         ldap_is_active_directory,
         ldap_dn_extra,
+        ldap_base_dn,
+        ldap_group_dn,
+        ldap_bind_format,
+        ldap_user_filter,
+        ldap_group_member_filter,
+        ldap_attribute_email,
+        ldap_attribute_first_name,
+        ldap_attribute_last_name,
+        ldap_attribute_uid,
+        ldap_attribute_group_membership,
+        ldap_nested_levels,
         ldap_ca_path,
         client,
         logger):
@@ -59,6 +65,19 @@ def set(ldap_server,
                     ldap_is_active_directory=ldap_is_active_directory,
                     ldap_domain=ldap_domain,
                     ldap_dn_extra=ldap_dn_extra,
+                    ldap_base_dn=ldap_base_dn,
+                    ldap_group_dn=ldap_group_dn,
+                    ldap_bind_format=ldap_bind_format,
+                    ldap_user_filter=ldap_user_filter,
+                    ldap_group_member_filter=ldap_group_member_filter,
+                    ldap_attribute_email=ldap_attribute_email,
+                    ldap_attribute_first_name=ldap_attribute_first_name,
+                    ldap_attribute_last_name=ldap_attribute_last_name,
+                    ldap_attribute_uid=ldap_attribute_uid,
+                    ldap_attribute_group_membership=(
+                        ldap_attribute_group_membership
+                    ),
+                    ldap_nested_levels=ldap_nested_levels,
                     ldap_ca_path=ldap_ca_path)
     logger.info('LDAP authentication set successfully')
 
