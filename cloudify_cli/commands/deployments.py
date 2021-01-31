@@ -220,9 +220,10 @@ def manager_list(blueprint_id,
     print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:')
 
     base_str = 'Showing {0} of {1} deployments'.format(len(deployments), total)
-    if filter and ('filtered' in deployments.metadata):
-        filtered = deployments.metadata['filtered']
-        base_str += ' ({} hidden by filter)'.format(filtered.get('filtered'))
+    if filter:
+        filtered = deployments.metadata.get('filtered')
+        if filtered is not None:
+            base_str += ' ({} hidden by filter)'.format(filtered)
     logger.info(base_str)
 
 
