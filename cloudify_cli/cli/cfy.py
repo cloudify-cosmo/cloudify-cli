@@ -1632,7 +1632,7 @@ class Options(object):
         )
 
         self.group_deployment_id = click.option(
-            '--deployment-id', 'd',
+            '--deployment-id', '-d',
             help=helptexts.DEP_GROUP_DEP_ID,
             multiple=True
         )
