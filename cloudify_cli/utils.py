@@ -294,7 +294,7 @@ def prettify_client_error(status_codes, logger):
     except CloudifyClientError as e:
         if e.status_code not in status_codes:
             raise
-        logger.info(e.message)
+        logger.error('Error: %s', e)
 
 
 def get_visibility(private_resource,
