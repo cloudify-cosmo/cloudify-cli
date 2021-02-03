@@ -294,7 +294,7 @@ def prettify_client_error(status_codes, logger):
     except CloudifyClientError as e:
         if e.status_code not in status_codes:
             raise
-        logger.info(e.message)
+        logger.error('Error: %s', e)
 
 
 def get_visibility(private_resource,
@@ -438,9 +438,8 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
         ex for ex in client.executions.list(workflow_id='upload_blueprint')
         if ex['parameters']['blueprint_id'] == blueprint_id
     ][-1]   # is there are several matching executions, we want the latest
-    events_fetcher = ExecutionEventsFetcher(client,
-                                            execution.id,
-                                            include_logs=True)
+    events_fetcher = ExecutionEventsFetcher(
+        client, execution_id=execution.id, include_logs=True)
 
     # Poll for execution status and execution logs, until execution ends
     # and we receive an event of type in WORKFLOW_END_TYPES
