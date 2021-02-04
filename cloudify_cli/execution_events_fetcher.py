@@ -159,24 +159,25 @@ class EventsWatcher(object):
     """Wraps an event_handler function, examines events to check if an
     workflow execution finished has arrived.
 
-    This will set its .end_log_received instance attribute to True,
+    This will increase its.end_logs_received instance attribute by 1,
     when it receives an event of type workflow_succeeded, workflow_cancelled
     or workflow_failed.
 
-    :ivar end_log_received: was a "workflow execution finished" event seen?
-    :vartype end_log_received: bool
+    :ivar end_logs_received: how many was a "workflow execution finished"
+        events have been seen?
+    :vartype end_logs_received: int
     """
 
     def __init__(self, events_handler=None):
         self._events_handler = events_handler
-        self.end_log_received = False
+        self.end_logs_received = 0
 
     def __call__(self, events):
         if self._events_handler is not None:
             self._events_handler(events)
 
         if any(self._is_end_event(evt) for evt in events):
-            self.end_log_received = True
+            self.end_logs_received += 1
 
     def _is_end_event(self, event):
         """Is event a 'workflow execution finished' event?"""
@@ -231,7 +232,7 @@ def wait_for_execution(client,
         events_fetcher.fetch_and_process_events(
             events_handler=events_watcher, timeout=timeout)
 
-        if execution_ended and events_watcher.end_log_received:
+        if execution_ended and events_watcher.end_logs_received > 0:
             break
 
         # if the execution ended, wait one iteration for additional logs

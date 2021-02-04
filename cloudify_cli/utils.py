@@ -461,7 +461,7 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
         events_fetcher.fetch_and_process_events(
             events_handler=events_watcher, timeout=timeout)
 
-        if upload_ended and events_watcher.end_log_received:
+        if upload_ended and events_watcher.end_logs_received > 0:
             break
 
         time.sleep(WAIT_FOR_BLUEPRINT_UPLOAD_SLEEP_INTERVAL)
