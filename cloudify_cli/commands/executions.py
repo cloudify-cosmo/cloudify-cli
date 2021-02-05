@@ -27,7 +27,10 @@ from ..utils import get_deployment_environment_execution
 from ..cli import cfy, helptexts
 from ..logger import get_events_logger, get_global_json_output
 from ..constants import DEFAULT_UNINSTALL_WORKFLOW, CREATE_DEPLOYMENT
-from ..execution_events_fetcher import wait_for_execution
+from ..execution_events_fetcher import (
+    wait_for_execution,
+    wait_for_execution_group
+)
 from ..exceptions import CloudifyCliError, ExecutionTimeoutError, \
     SuppressedCloudifyCliError
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
@@ -774,4 +777,72 @@ def schedule_get(name, preview, logger, client, tenant_name):
             for i, date in enumerate(next_occurrences):
                 if i == preview:
                     break
-                logger.info('  {:<5d} {}'.format(i+1, date))
+                logger.info('  {:<5d} {}'.format(i + 1, date))
+
+
+@executions.group('groups')
+@cfy.options.common_options
+def groups():
+    pass
+
+
+@groups.command('get',
+                short_help='Retrieve execution group information')
+@cfy.argument('execution_group_id')
+@cfy.options.common_options
+@cfy.pass_client()
+@cfy.pass_logger
+def execution_groups_get(execution_group_id, client, logger):
+    group = client.execution_groups.get(execution_group_id)
+    print_single(
+        ['id', 'executions', 'workflow_id', 'deployment_group'],
+        group,
+        'Execution group {0}:'.format(execution_group_id)
+    )
+
+
+def _format_group(g):
+    return {
+        'id': g['id'],
+        'workflow_id': g['workflow_id'],
+        'deployment_group': g['deployment_group_id'],
+    }
+
+
+@groups.command('list',
+                short_help='List all execution groups')
+@cfy.options.common_options
+@cfy.pass_client()
+@cfy.pass_logger
+def execution_groups_list(client, logger):
+    groups = [_format_group(g) for g in client.execution_groups.list()]
+    print_data(
+        ['id', 'workflow_id', 'deployment_group'],
+        groups,
+        'Execution groups:'
+    )
+
+
+@groups.command('start',
+                short_help='Execute a workflow on each deployment in a group')
+@click.option('--deployment-group', '-g',
+              help='The deployment group ID to run the workflow on')
+@click.argument('workflow-id')
+@cfy.options.common_options
+@cfy.options.parameters
+@cfy.options.json_output
+@cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
+@cfy.options.timeout()
+@cfy.pass_client()
+@cfy.pass_logger
+def execution_groups_start(deployment_group, workflow_id, parameters,
+                           json_output, force, timeout, client, logger):
+    events_logger = get_events_logger(json_output)
+    group = client.execution_groups.start(
+        deployment_group_id=deployment_group,
+        workflow_id=workflow_id,
+        default_parameters=parameters,
+        force=force
+    )
+    wait_for_execution_group(
+        client, group, events_handler=events_logger, timeout=timeout)
