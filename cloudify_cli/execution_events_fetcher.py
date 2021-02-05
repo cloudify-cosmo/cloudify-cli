@@ -253,3 +253,76 @@ def wait_for_execution(client,
         time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
 
     return execution
+
+
+def wait_for_execution_group(client,
+                             execution_group,
+                             events_handler=None,
+                             include_logs=False,
+                             timeout=900,
+                             logger=None,
+                             from_datetime=None):
+    """Like wait_for_execution, but for a group"""
+    if execution_group.status in Execution.END_STATES:
+        return execution_group
+
+    if timeout is not None:
+        deadline = time.time() + timeout
+
+    events_fetcher = ExecutionEventsFetcher(
+        client,
+        execution_group_id=execution_group.id,
+        include_logs=include_logs,
+        from_datetime=from_datetime)
+
+    # Poll for execution status and execution logs, until execution ends
+    # and we receive an event of type in WORKFLOW_END_TYPES
+    execution_amount = len(execution_group.execution_ids)
+    group_finished = False
+    events_watcher = EventsWatcher(events_handler)
+
+    # did we already see the execution status change, and are only waiting
+    # for additional logs now?
+    waiting_for_logs = False
+
+    while True:
+        if timeout is not None:
+            if time.time() > deadline:
+                raise ExecutionTimeoutError(
+                    execution_group.id,
+                    'execution of operation {0} for deployment group {1} '
+                    'timed out'.format(execution_group.workflow_id,
+                                       execution_group.deployment_group_id))
+            else:
+                # update the remaining timeout
+                timeout = deadline - time.time()
+
+        if not group_finished:
+            execution_group = client.execution_groups.get(execution_group.id)
+            group_finished = execution_group.status in Execution.END_STATES
+
+        events_fetcher.fetch_and_process_events(
+            events_handler=events_watcher, timeout=timeout)
+
+        if group_finished and \
+                events_watcher.end_logs_received >= execution_amount:
+            break
+
+        # if the execution ended, wait one iteration for additional logs
+        if group_finished:
+            if waiting_for_logs:
+                if logger:
+                    logger.info('Execution ended, but no end log message '
+                                'received. Some logs might not have been '
+                                'displayed.')
+                break
+            else:
+                if logger:
+                    logger.info('Execution ended, waiting {0} seconds for '
+                                'additional log messages'
+                                .format(WAIT_FOR_EXECUTION_SLEEP_INTERVAL))
+                waiting_for_logs = True
+
+        time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
+
+    return execution_group
