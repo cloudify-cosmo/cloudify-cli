@@ -101,7 +101,7 @@ def list(execution_id,
     try:
         execution_events = ExecutionEventsFetcher(
             client,
-            execution_id,
+            execution_id=execution_id,
             include_logs=include_logs,
             from_datetime=from_datetime,
             to_datetime=to_datetime,
@@ -199,8 +199,11 @@ def delete(deployment_id, include_logs, logger, client, tenant_name,
             events_logger = DeletedEventsLogger(output_file)
             for execution in exec_list:
                 execution_events = ExecutionEventsFetcher(
-                    client, execution.id, include_logs=include_logs,
-                    from_datetime=from_datetime, to_datetime=to_datetime)
+                    client,
+                    execution_id=execution.id,
+                    include_logs=include_logs,
+                    from_datetime=from_datetime,
+                    to_datetime=to_datetime)
                 output_file = open(output_path, 'a') if output_path else None
                 click.echo(
                     '\nListing events for execution id {0}\n'.format(
