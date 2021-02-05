@@ -556,7 +556,7 @@ class ExecutionEventsFetcherTest(CliCommandTest):
 
     def test_no_events(self):
         events_fetcher = ExecutionEventsFetcher(self.client,
-                                                'execution_id',
+                                                execution_id='execution_id',
                                                 batch_size=2)
         events_count = events_fetcher.fetch_and_process_events()
         self.assertEqual(0, events_count)
@@ -571,7 +571,8 @@ class ExecutionEventsFetcherTest(CliCommandTest):
         for event in self.events:
             event['source_id'] = 'source_id'
             event['target_id'] = 'target_id'
-        events_fetcher = ExecutionEventsFetcher(self.client, 'execution_id')
+        events_fetcher = ExecutionEventsFetcher(
+            self.client, execution_id='execution_id')
         events_fetcher.fetch_and_process_events(events_handler=events_handler)
 
         for event in self._parsed_events:
@@ -582,7 +583,8 @@ class ExecutionEventsFetcherTest(CliCommandTest):
 
     def test_new_events_after_fetched_all(self):
         self.events = self._generate_events(10)
-        events_fetcher = ExecutionEventsFetcher(self.client, 'execution_id')
+        events_fetcher = ExecutionEventsFetcher(
+            self.client, execution_id='execution_id')
         events_fetcher.fetch_and_process_events()
         added_events = self._generate_events(5)
         self.events.extend(added_events)
@@ -591,8 +593,8 @@ class ExecutionEventsFetcherTest(CliCommandTest):
 
     def test_fetch_and_process_events_implicit_single_batch(self):
         self.events = self._generate_events(10)
-        events_fetcher = ExecutionEventsFetcher(self.client, 'execution_id',
-                                                batch_size=100)
+        events_fetcher = ExecutionEventsFetcher(
+            self.client, execution_id='execution_id', batch_size=100)
         events_count = events_fetcher.fetch_and_process_events()
         self.assertEqual(len(self.events), events_count)
 
@@ -607,9 +609,8 @@ class ExecutionEventsFetcherTest(CliCommandTest):
                 event_log[index] = 'event {0} of {1} in batch {2}'.\
                     format(index + 1, len(events), self.batch_counter)
 
-        events_fetcher = ExecutionEventsFetcher(self.client,
-                                                'execution_id',
-                                                batch_size=2)
+        events_fetcher = ExecutionEventsFetcher(
+            self.client, execution_id='execution_id', batch_size=2)
         # internally this will get 10 events in 2 batches of 2 events each
         # and a last batch of 1 event
         events_count = events_fetcher.fetch_and_process_events(
@@ -630,9 +631,8 @@ class ExecutionEventsFetcherTest(CliCommandTest):
         total_events_count = 0
         self.events = self._generate_events(9)
         batch_size = 2
-        events_fetcher = ExecutionEventsFetcher(self.client,
-                                                'execution_id',
-                                                batch_size=batch_size)
+        events_fetcher = ExecutionEventsFetcher(
+            self.client, execution_id='execution_id', batch_size=batch_size)
         for i in range(0, 4):
             events_batch_count, _ = \
                 events_fetcher.fetch_and_process_events_batch()
@@ -646,8 +646,8 @@ class ExecutionEventsFetcherTest(CliCommandTest):
 
     def test_fetch_events_explicit_single_batch(self):
         self.events = self._generate_events(10)
-        events_fetcher = ExecutionEventsFetcher(self.client, 'execution_id',
-                                                batch_size=100)
+        events_fetcher = ExecutionEventsFetcher(
+            self.client, execution_id='execution_id', batch_size=100)
         batch_events = events_fetcher._fetch_events_batch().items
         self.assertListEqual(self.events, batch_events)
 
@@ -655,9 +655,8 @@ class ExecutionEventsFetcherTest(CliCommandTest):
         all_fetched_events = []
         self.events = self._generate_events(9)
         batch_size = 2
-        events_fetcher = ExecutionEventsFetcher(self.client,
-                                                'execution_id',
-                                                batch_size=batch_size)
+        events_fetcher = ExecutionEventsFetcher(
+            self.client, execution_id='execution_id', batch_size=batch_size)
 
         for i in range(0, 4):
             events_batch = events_fetcher._fetch_events_batch()
@@ -671,18 +670,16 @@ class ExecutionEventsFetcherTest(CliCommandTest):
 
     def test_fetch_and_process_events_timeout(self):
         self.events = self._generate_events(2000000)
-        events_fetcher = ExecutionEventsFetcher(self.client,
-                                                'execution_id',
-                                                batch_size=1)
+        events_fetcher = ExecutionEventsFetcher(
+            self.client, execution_id='execution_id', batch_size=1)
         self.assertRaises(EventProcessingTimeoutError,
                           events_fetcher.fetch_and_process_events, timeout=2)
 
     def test_events_processing_progress(self):
         events_bulk1 = self._generate_events(5)
         self.events = events_bulk1
-        events_fetcher = ExecutionEventsFetcher(self.client,
-                                                'execution_id',
-                                                batch_size=100)
+        events_fetcher = ExecutionEventsFetcher(
+            self.client, execution_id='execution_id', batch_size=100)
         events_count = events_fetcher.fetch_and_process_events()
         self.assertEqual(len(events_bulk1), events_count)
         events_bulk2 = self._generate_events(10)

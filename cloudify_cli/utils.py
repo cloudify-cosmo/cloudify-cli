@@ -438,9 +438,8 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
         ex for ex in client.executions.list(workflow_id='upload_blueprint')
         if ex['parameters']['blueprint_id'] == blueprint_id
     ][-1]   # is there are several matching executions, we want the latest
-    events_fetcher = ExecutionEventsFetcher(client,
-                                            execution.id,
-                                            include_logs=True)
+    events_fetcher = ExecutionEventsFetcher(
+        client, execution_id=execution.id, include_logs=True)
 
     # Poll for execution status and execution logs, until execution ends
     # and we receive an event of type in WORKFLOW_END_TYPES
@@ -462,7 +461,7 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
         events_fetcher.fetch_and_process_events(
             events_handler=events_watcher, timeout=timeout)
 
-        if upload_ended and events_watcher.end_log_received:
+        if upload_ended and events_watcher.end_logs_received > 0:
             break
 
         time.sleep(WAIT_FOR_BLUEPRINT_UPLOAD_SLEEP_INTERVAL)
