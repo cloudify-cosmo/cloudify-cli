@@ -12,9 +12,7 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
-
 from setuptools import setup
-
 
 setup(
     name='cloudify',
@@ -51,6 +49,11 @@ setup(
         'backports.shutil_get_terminal_size==1.0.0',
         'ipaddress==1.0.23',
         'setuptools<=40.7.3',
+        'cryptography==3.3.2',
+        # Fabric depend on paramiko that depends on cryptography so we need
+        # to install the correct version of cryptography before installing
+        # the fabric so that fabric can be installed correctly in both py2 +
+        # py3
         'fabric==2.5.0'
     ]
 )
