@@ -118,9 +118,9 @@ def _register_commands():
     deployments.deployments.add_command(deployments.manager_get_update)
     deployments.deployments.add_command(deployments.manager_set_visibility)
     deployments.deployments.add_command(deployments.manager_set_site)
+    deployments.deployments.add_command(deployments.schedule)
 
     executions.executions.add_command(executions.manager_cancel)
-    executions.executions.add_command(executions.schedule)
 
     # Commands which should be both in manager and local context
     # But change depending on the context.
