@@ -94,6 +94,9 @@ MACHINE_READABLE_MODIFICATION_COLUMNS = [
     'ended_at', 'node_instances', 'deployment_id', 'blueprint_id',
     'modified_nodes', 'resource_availability',
 ]
+SCHEDULE_TABLE_COLUMNS = ['id', 'deployment_id', 'workflow_id', 'created_at',
+                          'next_occurrence', 'since', 'until', 'stop_on_fail',
+                          'enabled', 'visibility', 'tenant_name', 'created_by']
 
 
 @cfy.group(name='deployments')
@@ -1181,3 +1184,290 @@ def groups_shrink(deployment_group_name, deployment_id, client, logger):
         'Unlinked deployments %s. Group %s now has %d deployments',
         list(deployment_id), deployment_group_name, len(group.deployment_ids)
     )
+
+
+@cfy.group(name='schedule')
+@cfy.options.common_options
+def schedule():
+    """Handle deployments' execution scheduling [manager only]
+    """
+    pass
+
+
+@schedule.command(name='create',
+                  short_help='Schedule a deployment\'s workflow execution')
+@cfy.argument('name')
+@cfy.options.workflow_id(required=True)
+@cfy.options.deployment_id(required=True)
+@cfy.options.parameters
+@cfy.options.allow_custom_parameters
+@cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
+@cfy.options.dry_run
+@cfy.options.wait_after_fail
+@cfy.options.queue
+@cfy.options.common_options
+@cfy.options.from_datetime(required=True, help="Time to schedule from.")
+@cfy.options.to_datetime(required=False, help="Time to schedule until.")
+@cfy.options.frequency
+@cfy.options.count
+@cfy.options.weekdays
+@cfy.options.rrule
+@cfy.options.slip
+@cfy.options.stop_on_fail
+@cfy.assert_manager_active()
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.pass_client()
+@cfy.pass_logger
+def schedule_create(name,
+                    workflow_id,
+                    deployment_id,
+                    parameters,
+                    allow_custom_parameters,
+                    force,
+                    dry_run,
+                    wait_after_fail,
+                    queue,
+                    from_datetime,
+                    to_datetime,
+                    freq,
+                    count,
+                    weekdays,
+                    rrule,
+                    slip,
+                    stop_on_fail,
+                    tenant_name,
+                    client,
+                    logger):
+    """Schedule the execution of a workflow on a given deployment
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Scheduling the execution of workflow `%s` on deployment '
+                '`%s`. Schedule name: %s', workflow_id, deployment_id, name)
+    client.execution_schedules.create(
+        name,
+        deployment_id,
+        workflow_id,
+        execution_arguments={
+            'allow_custom_parameters': allow_custom_parameters,
+            'force': force,
+            'dry_run': dry_run,
+            'queue': queue,
+            'wait_after_fail': wait_after_fail,
+        },
+        parameters=parameters,
+        since=from_datetime,
+        until=to_datetime,
+        frequency=freq,
+        count=count,
+        weekdays=weekdays,
+        rrule=rrule,
+        slip=slip,
+        stop_on_fail=stop_on_fail)
+
+    logger.info('Deployment schedule created successfully')
+
+
+@schedule.command(name='update',
+                  short_help='Update a deployment schedule')
+@cfy.argument('name')
+@cfy.options.common_options
+@cfy.options.from_datetime(required=False, help="Time to schedule from.")
+@cfy.options.to_datetime(required=False, help="Time to schedule until.")
+@cfy.options.frequency
+@cfy.options.count
+@cfy.options.weekdays
+@cfy.options.rrule
+@cfy.options.slip
+@click.option(
+    '--stop-on-fail/--continue-on-fail',
+    required=False,
+    help=helptexts.SCHEDULE_STOP_ON_FAIL
+)
+@cfy.assert_manager_active()
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.pass_client()
+@cfy.pass_logger
+def schedule_update(name,
+                    from_datetime,
+                    to_datetime,
+                    freq,
+                    count,
+                    weekdays,
+                    rrule,
+                    slip,
+                    stop_on_fail,
+                    tenant_name,
+                    client,
+                    logger):
+    """Update an existing schedule for a workflow execution
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Updating deployment schedule %s...', name)
+    client.execution_schedules.update(
+        name,
+        since=from_datetime,
+        until=to_datetime,
+        frequency=freq,
+        count=count,
+        weekdays=weekdays,
+        rrule=rrule,
+        slip=slip,
+        stop_on_fail=stop_on_fail)
+
+    logger.info('Deployment schedule updated successfully')
+
+
+@schedule.command(name='disable',
+                  short_help='Disable a deployment schedule')
+@cfy.argument('name')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.pass_client()
+@cfy.pass_logger
+def schedule_disable(name, tenant_name, client, logger):
+    """Disable a schedule for a workflow execution
+    """
+    dep_schedule = client.execution_schedules.get(name)
+    if not dep_schedule.enabled:
+        raise CloudifyCliError(
+            'Deployment schedule {} is already disabled'.format(name))
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Disabling deployment schedule %s...', name)
+    client.execution_schedules.update(name, enabled=False)
+    logger.info('Deployment schedule disabled successfully')
+
+
+@schedule.command(name='enable',
+                  short_help='Enable a disabled deployment schedule')
+@cfy.argument('name')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.pass_client()
+@cfy.pass_logger
+def schedule_enable(name, tenant_name, client, logger):
+    """Enable a previously-disabled schedule for a workflow execution
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    dep_schedule = client.execution_schedules.get(name)
+    if dep_schedule.enabled:
+        raise CloudifyCliError(
+            'Deployment schedule {} is already enabled'.format(name))
+    logger.info('Enabling deployment schedule %s...', name)
+    client.execution_schedules.update(name, enabled=True)
+    logger.info('Deployment schedule enabled successfully')
+
+
+@schedule.command(name='delete',
+                  short_help='Delete a deployment schedule')
+@cfy.argument('name')
+@cfy.options.common_options
+@cfy.options.tenant_name(required=False,
+                         resource_name_for_help='deployment schedule')
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def schedule_delete(name, logger, client, tenant_name):
+    """Delete a schedule for a workflow execution"""
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Deleting deployment schedule %s...', name)
+    client.execution_schedules.delete(name)
+    logger.info('Deployment schedule deleted successfully')
+
+
+@schedule.command(name='list',
+                  short_help='List deployment schedules')
+@cfy.options.sort_by()
+@cfy.options.descending
+@cfy.options.tenant_name_for_list(
+    required=False, resource_name_for_help='deployment schedule')
+@cfy.options.all_tenants
+@cfy.options.search
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
+@cfy.options.common_options
+@cfy.pass_client()
+@cfy.pass_logger
+def schedule_list(sort_by,
+                  descending,
+                  tenant_name,
+                  all_tenants,
+                  search,
+                  pagination_offset,
+                  pagination_size,
+                  logger,
+                  client):
+    """List all deployment schedules on the manager
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Listing deployment schedules...')
+    schedules = client.execution_schedules.list(sort=sort_by,
+                                                is_descending=descending,
+                                                _all_tenants=all_tenants,
+                                                _search=search,
+                                                _offset=pagination_offset,
+                                                _size=pagination_size)
+
+    print_data(SCHEDULE_TABLE_COLUMNS, schedules, 'Deployment schedules:')
+    total = schedules.metadata.pagination.total
+    logger.info('Showing %s of %s deployment schedules', len(schedules), total)
+
+
+@schedule.command(name='get',
+                  short_help='Retrieve deployment schedule information')
+@cfy.argument('name')
+@click.option(
+    '--preview',
+    required=False,
+    type=int,
+    help="Preview N next dates for the workflow execution to run."
+)
+@cfy.options.common_options
+@cfy.options.tenant_name(required=False,
+                         resource_name_for_help='deployment schedule')
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def schedule_get(name, preview, logger, client, tenant_name):
+    """Retrieve information for a specific deployment schedule
+
+    `NAME` is the name of the deployment schedule to get information on.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Retrieving execution schedule %s', name)
+    dep_schedule = client.execution_schedules.get(name)
+
+    columns = SCHEDULE_TABLE_COLUMNS
+    extra_columns = ['rule', 'execution_arguments', 'all_next_occurrences']
+    additional_data = {k.replace('_', ' '): v for k, v in dep_schedule.items()
+                       if k not in SCHEDULE_TABLE_COLUMNS + extra_columns}
+    if get_global_json_output():
+        columns += additional_data.keys() + extra_columns
+    print_single(columns, dep_schedule, 'Execution schedule:', max_width=50)
+
+    if not get_global_json_output():
+        print_details(dep_schedule['rule'], 'Scheduling rule:')
+        print_details(dep_schedule['execution_arguments'],
+                      'Execution arguments:')
+        print_details(additional_data, 'Additional data:')
+
+        if preview:
+            if not dep_schedule.enabled:
+                raise CloudifyCliError(
+                    'Deployment schedule {} is disabled, no upcoming '
+                    'occurrences'.format(name))
+            next_occurrences = dep_schedule['all_next_occurrences']
+
+            computed_msg = 'Computed {} upcoming ' \
+                           'occurrences.'.format(len(next_occurrences))
+            listing_msg = ''
+            if len(next_occurrences) > preview:
+                listing_msg = 'Listing first {}:'.format(preview)
+            elif len(next_occurrences) > 0:
+                listing_msg = 'Listing:'
+            logger.info('%s %s', computed_msg, listing_msg)
+            for i, date in enumerate(next_occurrences):
+                if i == preview:
+                    break
+                logger.info('  {:<5d} {}'.format(i + 1, date))
