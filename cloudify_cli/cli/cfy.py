@@ -1571,12 +1571,25 @@ class Options(object):
             help=helptexts.FILTER_RULES_OR_ID
         )
 
-        self.frequency = click.option(
-            '--freq',
+        self.schedule_name = click.option(
+            '-n',
+            '--schedule-name',
+            required=False,
+            help=helptexts.SCHEDULE_NAME)
+
+        self.recurrence = click.option(
+            '-r',
+            '--recurrence',
             cls=MutuallyExclusiveOption,
             mutually_exclusive=['rrule'],
             required=False,
-            help=helptexts.SCHEDULE_FREQUENCY
+            help=helptexts.SCHEDULE_RECURRENCE
+        )
+
+        self.tz = click.option(
+            '--tz',
+            required=False,
+            help=helptexts.TIMEZONE
         )
 
         self.count = click.option(
@@ -2035,6 +2048,34 @@ class Options(object):
             kwargs['cls'] = MutuallyExclusiveOption
             kwargs['mutually_exclusive'] = mutually_exclusive_with
         return click.option('to_datetime', '--to', **kwargs)
+
+    @staticmethod
+    def since(required=False, mutually_exclusive_with=None, help_lead=None):
+        help_lead = help_lead or 'Set the earliest possible time to run'
+        kwargs = {
+            'required': required,
+            'type': str,
+            'expose_value': True,
+            'help': helptexts.TIME_EXPRESSION.format(help_lead),
+        }
+        if mutually_exclusive_with:
+            kwargs['cls'] = MutuallyExclusiveOption
+            kwargs['mutually_exclusive'] = mutually_exclusive_with
+        return click.option('-s', '--since', **kwargs)
+
+    @staticmethod
+    def until(required=False, mutually_exclusive_with=None, help_lead=None):
+        help_lead = help_lead or 'Set the latest possible time to run'
+        kwargs = {
+            'required': required,
+            'type': str,
+            'expose_value': True,
+            'help': helptexts.TIME_EXPRESSION.format(help_lead),
+        }
+        if mutually_exclusive_with:
+            kwargs['cls'] = MutuallyExclusiveOption
+            kwargs['mutually_exclusive'] = mutually_exclusive_with
+        return click.option('-u', '--until', **kwargs)
 
     @staticmethod
     def before(required=False,

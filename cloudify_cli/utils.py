@@ -14,10 +14,12 @@
 # limitations under the License.
 ############
 
+import re
 import os
 import sys
 import json
 import time
+import pytz
 import click
 import errno
 import string
@@ -29,6 +31,7 @@ import zipfile
 import tempfile
 import collections
 from shutil import copy
+from datetime import datetime, timedelta
 from contextlib import closing, contextmanager
 from backports.shutil_get_terminal_size import get_terminal_size
 
@@ -468,3 +471,72 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
 
     _handle_errors()
     return blueprint
+
+
+def parse_utc_datetime_from_expression(time_expression, timezone):
+    if not time_expression:
+        return None
+
+    # time expression is time delta from now
+    if time_expression.startswith('+'):
+        deltas = re.findall(r"(\+\d+\ ?[a-z]+\ ?)", time_expression)
+        if not deltas:
+            raise CloudifyCliError(
+                "{} is not a legal time delta".format(time_expression))
+        date_time = datetime.utcnow().replace(second=0, microsecond=0)
+        for delta in deltas:
+            date_time = parse_and_apply_timedelta(
+                delta.rstrip().lstrip('+'), date_time)
+        return date_time
+
+    # time expression is datetime
+    date_time = parse_schedule_datetime_string(time_expression)
+    if timezone:
+        if timezone not in pytz.all_timezones:
+            raise CloudifyCliError(
+                "{} is not a recognized timezone".format(timezone))
+        return pytz.timezone(timezone).localize(date_time).astimezone(
+            pytz.utc).replace(tzinfo=None)
+    else:
+        ts = time.time()
+        return date_time - (datetime.fromtimestamp(ts) -
+                            datetime.utcfromtimestamp(ts))
+
+
+def parse_and_apply_timedelta(expr, date_time):
+    match = r"^(\d+)\ ?(min(ute)?|h(our)?|d(ay)?|w(eek)?|mo(nth)?|y(ear)?)s?$"
+    parsed = re.findall(match, expr)
+    if not parsed or len(parsed[0]) < 2:
+        raise CloudifyCliError("{} is not a legal time delta".format(expr))
+    number = int(parsed[0][0])
+    period = parsed[0][1]
+
+    if period in ['y', 'year']:
+        return date_time.replace(year=date_time.year + number)
+    if period in ['mo', 'month']:
+        new_month = (date_time.month + number) % 12
+        new_year = date_time.year + (date_time.month + number) // 12
+        return date_time.replace(month=new_month, year=new_year)
+    if period in ['w', 'week']:
+        return date_time + timedelta(days=number * 7)
+    if period in ['d', 'day']:
+        return date_time + timedelta(days=number)
+    if period in ['h', 'hour']:
+        period = 'hours'
+    elif period in ['min', 'minute']:
+        period = 'minutes'
+    return date_time + timedelta(**{period: number})
+
+
+def parse_schedule_datetime_string(date_str):
+    try:
+        return datetime.strptime(date_str, '%Y-%m-%d %H:%M')
+    except ValueError:
+        pass
+    try:
+        return datetime.combine(
+            datetime.today(), datetime.strptime(date_str, '%H:%M').time())
+    except ValueError:
+        raise CloudifyCliError(
+            "{} is not a legal time format. accepted formats are "
+            "YYYY-MM-DD HH:MM | HH:MM".format(date_str))

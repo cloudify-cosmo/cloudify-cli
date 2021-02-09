@@ -17,6 +17,7 @@
 import os
 import json
 import shutil
+from datetime import datetime
 
 import click
 
@@ -53,6 +54,7 @@ from ..exceptions import (CloudifyCliError,
 from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility,
+                     parse_utc_datetime_from_expression,
                      get_deployment_environment_execution)
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
@@ -97,6 +99,7 @@ MACHINE_READABLE_MODIFICATION_COLUMNS = [
 SCHEDULE_TABLE_COLUMNS = ['id', 'deployment_id', 'workflow_id', 'created_at',
                           'next_occurrence', 'since', 'until', 'stop_on_fail',
                           'enabled', 'visibility', 'tenant_name', 'created_by']
+SCHEDULE_NAME_FORMAT = '{}_{}'
 
 
 @cfy.group(name='deployments')
@@ -1189,16 +1192,17 @@ def groups_shrink(deployment_group_name, deployment_id, client, logger):
 @cfy.group(name='schedule')
 @cfy.options.common_options
 def schedule():
-    """Handle deployments' execution scheduling [manager only]
+    """
+    Handle deployments' execution scheduling [manager only]
     """
     pass
 
 
 @schedule.command(name='create',
                   short_help='Schedule a deployment\'s workflow execution')
-@cfy.argument('name')
-@cfy.options.workflow_id(required=True)
+@cfy.argument('workflow-id')
 @cfy.options.deployment_id(required=True)
+@cfy.options.schedule_name
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
 @cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
@@ -1206,9 +1210,10 @@ def schedule():
 @cfy.options.wait_after_fail
 @cfy.options.queue
 @cfy.options.common_options
-@cfy.options.from_datetime(required=True, help="Time to schedule from.")
-@cfy.options.to_datetime(required=False, help="Time to schedule until.")
-@cfy.options.frequency
+@cfy.options.since(required=True)
+@cfy.options.until(required=False)
+@cfy.options.tz
+@cfy.options.recurrence
 @cfy.options.count
 @cfy.options.weekdays
 @cfy.options.rrule
@@ -1218,18 +1223,19 @@ def schedule():
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_client()
 @cfy.pass_logger
-def schedule_create(name,
-                    workflow_id,
+def schedule_create(workflow_id,
                     deployment_id,
+                    schedule_name,
+                    since,
+                    until,
+                    tz,
                     parameters,
                     allow_custom_parameters,
                     force,
                     dry_run,
                     wait_after_fail,
                     queue,
-                    from_datetime,
-                    to_datetime,
-                    freq,
+                    recurrence,
                     count,
                     weekdays,
                     rrule,
@@ -1238,13 +1244,24 @@ def schedule_create(name,
                     tenant_name,
                     client,
                     logger):
-    """Schedule the execution of a workflow on a given deployment
+    """
+    Schedule the execution of a workflow on a given deployment
+
+    `WORKFLOW_ID` is the name of the workflow.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Scheduling the execution of workflow `%s` on deployment '
-                '`%s`. Schedule name: %s', workflow_id, deployment_id, name)
+    if not schedule_name:
+        schedule_name = SCHEDULE_NAME_FORMAT.format(deployment_id, workflow_id)
+    logger.info(
+        'Scheduling the execution of workflow `%s` on deployment `%s`. '
+        'Schedule name: %s', workflow_id, deployment_id, schedule_name)
+
+    # calculate naive UTC datetimes from time expressions in since and until
+    since_datetime = parse_utc_datetime_from_expression(since, tz)
+    until_datetime = parse_utc_datetime_from_expression(until, tz)
+
     client.execution_schedules.create(
-        name,
+        schedule_name,
         deployment_id,
         workflow_id,
         execution_arguments={
@@ -1255,9 +1272,9 @@ def schedule_create(name,
             'wait_after_fail': wait_after_fail,
         },
         parameters=parameters,
-        since=from_datetime,
-        until=to_datetime,
-        frequency=freq,
+        since=since_datetime,
+        until=until_datetime,
+        frequency=recurrence,
         count=count,
         weekdays=weekdays,
         rrule=rrule,
@@ -1269,11 +1286,14 @@ def schedule_create(name,
 
 @schedule.command(name='update',
                   short_help='Update a deployment schedule')
-@cfy.argument('name')
+@cfy.argument('workflow-id', required=False)
+@cfy.options.deployment_id()
+@cfy.options.schedule_name
 @cfy.options.common_options
-@cfy.options.from_datetime(required=False, help="Time to schedule from.")
-@cfy.options.to_datetime(required=False, help="Time to schedule until.")
-@cfy.options.frequency
+@cfy.options.since(required=False)
+@cfy.options.until(required=False)
+@cfy.options.tz
+@cfy.options.recurrence
 @cfy.options.count
 @cfy.options.weekdays
 @cfy.options.rrule
@@ -1287,10 +1307,13 @@ def schedule_create(name,
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_client()
 @cfy.pass_logger
-def schedule_update(name,
-                    from_datetime,
-                    to_datetime,
-                    freq,
+def schedule_update(workflow_id,
+                    deployment_id,
+                    schedule_name,
+                    since,
+                    until,
+                    tz,
+                    recurrence,
                     count,
                     weekdays,
                     rrule,
@@ -1299,15 +1322,23 @@ def schedule_update(name,
                     tenant_name,
                     client,
                     logger):
-    """Update an existing schedule for a workflow execution
+    """
+    Update an existing schedule for a workflow execution
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Updating deployment schedule %s...', name)
+    schedule_name = schedule_name or _get_schedule_name(
+        workflow_id, deployment_id, 'update')
+    logger.info('Updating deployment schedule %s...', schedule_name)
+
+    # calculate naive UTC datetimes from time expressions in since and until
+    since_datetime = parse_utc_datetime_from_expression(since, tz)
+    until_datetime = parse_utc_datetime_from_expression(until, tz)
+
     client.execution_schedules.update(
-        name,
-        since=from_datetime,
-        until=to_datetime,
-        frequency=freq,
+        schedule_name,
+        since=since_datetime,
+        until=until_datetime,
+        frequency=recurrence,
         count=count,
         weekdays=weekdays,
         rrule=rrule,
@@ -1326,7 +1357,10 @@ def schedule_update(name,
 @cfy.pass_client()
 @cfy.pass_logger
 def schedule_disable(name, tenant_name, client, logger):
-    """Disable a schedule for a workflow execution
+    """
+    Disable a schedule for a workflow execution
+
+    `NAME` is the name of the deployment schedule.
     """
     dep_schedule = client.execution_schedules.get(name)
     if not dep_schedule.enabled:
@@ -1347,7 +1381,10 @@ def schedule_disable(name, tenant_name, client, logger):
 @cfy.pass_client()
 @cfy.pass_logger
 def schedule_enable(name, tenant_name, client, logger):
-    """Enable a previously-disabled schedule for a workflow execution
+    """
+    Enable a previously-disabled schedule for a workflow execution
+
+    `NAME` is the name of the deployment schedule.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     dep_schedule = client.execution_schedules.get(name)
@@ -1369,7 +1406,11 @@ def schedule_enable(name, tenant_name, client, logger):
 @cfy.pass_client()
 @cfy.pass_logger
 def schedule_delete(name, logger, client, tenant_name):
-    """Delete a schedule for a workflow execution"""
+    """
+    Delete a schedule for a workflow execution
+
+    `NAME` is the name of the deployment schedule.
+    """
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Deleting deployment schedule %s...', name)
     client.execution_schedules.delete(name)
@@ -1378,6 +1419,7 @@ def schedule_delete(name, logger, client, tenant_name):
 
 @schedule.command(name='list',
                   short_help='List deployment schedules')
+@cfy.argument('deployment_id', required=False)
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.tenant_name_for_list(
@@ -1387,19 +1429,42 @@ def schedule_delete(name, logger, client, tenant_name):
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
 @cfy.options.common_options
+@cfy.options.since(required=False,
+                   help_lead='List only schedules which have occurrences '
+                             'after this time')
+@cfy.options.until(required=False,
+                   help_lead='List only schedules which have occurrences '
+                             'before this time')
+@cfy.options.tz
 @cfy.pass_client()
 @cfy.pass_logger
 def schedule_list(sort_by,
+                  deployment_id,
                   descending,
                   tenant_name,
                   all_tenants,
                   search,
                   pagination_offset,
                   pagination_size,
+                  since,
+                  until,
+                  tz,
                   logger,
                   client):
-    """List all deployment schedules on the manager
     """
+    List all deployment schedules on the manager. If DEPLOYMENT_ID is
+    provided, list only schedules of this deployment.
+    """
+    # calculate naive UTC datetimes from time expressions in since and until
+    since_datetime = parse_utc_datetime_from_expression(since, tz)
+    until_datetime = parse_utc_datetime_from_expression(until, tz)
+
+    if not sort_by:
+        sort_by = 'next_occurrence'
+    kwargs = {}
+    if deployment_id:
+        kwargs['deployment_id'] = deployment_id
+
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing deployment schedules...')
     schedules = client.execution_schedules.list(sort=sort_by,
@@ -1407,16 +1472,22 @@ def schedule_list(sort_by,
                                                 _all_tenants=all_tenants,
                                                 _search=search,
                                                 _offset=pagination_offset,
-                                                _size=pagination_size)
-
-    print_data(SCHEDULE_TABLE_COLUMNS, schedules, 'Deployment schedules:')
+                                                _size=pagination_size,
+                                                **kwargs)
     total = schedules.metadata.pagination.total
+    if since_datetime or until_datetime:
+        schedules = _list_schedules_in_time_range(schedules,
+                                                  since_datetime,
+                                                  until_datetime)
+    print_data(SCHEDULE_TABLE_COLUMNS, schedules, 'Deployment schedules:')
     logger.info('Showing %s of %s deployment schedules', len(schedules), total)
 
 
 @schedule.command(name='get',
                   short_help='Retrieve deployment schedule information')
-@cfy.argument('name')
+@cfy.argument('workflow-id', required=False)
+@cfy.options.deployment_id()
+@cfy.options.schedule_name
 @click.option(
     '--preview',
     required=False,
@@ -1429,14 +1500,21 @@ def schedule_list(sort_by,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def schedule_get(name, preview, logger, client, tenant_name):
-    """Retrieve information for a specific deployment schedule
-
-    `NAME` is the name of the deployment schedule to get information on.
+def schedule_get(workflow_id,
+                 deployment_id,
+                 schedule_name,
+                 preview,
+                 logger,
+                 client,
+                 tenant_name):
+    """
+    Retrieve information for a specific deployment schedule
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Retrieving execution schedule %s', name)
-    dep_schedule = client.execution_schedules.get(name)
+    schedule_name = schedule_name or _get_schedule_name(
+        workflow_id, deployment_id, 'get')
+    logger.info('Retrieving execution schedule %s', schedule_name)
+    dep_schedule = client.execution_schedules.get(schedule_name)
 
     columns = SCHEDULE_TABLE_COLUMNS
     extra_columns = ['rule', 'execution_arguments', 'all_next_occurrences']
@@ -1456,7 +1534,7 @@ def schedule_get(name, preview, logger, client, tenant_name):
             if not dep_schedule.enabled:
                 raise CloudifyCliError(
                     'Deployment schedule {} is disabled, no upcoming '
-                    'occurrences'.format(name))
+                    'occurrences'.format(schedule_name))
             next_occurrences = dep_schedule['all_next_occurrences']
 
             computed_msg = 'Computed {} upcoming ' \
@@ -1471,3 +1549,28 @@ def schedule_get(name, preview, logger, client, tenant_name):
                 if i == preview:
                     break
                 logger.info('  {:<5d} {}'.format(i + 1, date))
+
+
+def _list_schedules_in_time_range(schedules, since, until):
+    listed_schedules = []
+    for sched in schedules:
+        occurs_within_range = False
+        for occurrence in sched['all_next_occurrences']:
+            occurrence_dt = datetime.strptime(occurrence, '%Y-%m-%d %H:%M:%S')
+            if since and occurrence_dt < since:
+                continue
+            if until and occurrence_dt > until:
+                continue
+            occurs_within_range = True
+            break
+        if occurs_within_range:
+            listed_schedules.append(sched)
+    return listed_schedules
+
+
+def _get_schedule_name(workflow_id, deployment_id, cmd_type):
+    if not (workflow_id and deployment_id):
+        raise CloudifyCliError(
+            'Please provide either the name of the schedule to '
+            '{}, or a workflow id and a deployment id'.format(cmd_type))
+    return SCHEDULE_NAME_FORMAT.format(deployment_id, workflow_id)
