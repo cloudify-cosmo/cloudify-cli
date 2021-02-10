@@ -23,7 +23,8 @@ from .exceptions import (ExecutionTimeoutError,
                          EventProcessingTimeoutError)
 
 
-WAIT_FOR_EXECUTION_SLEEP_INTERVAL = 3
+WAIT_FOR_EXECUTION_SLEEP_INTERVAL = 1
+WAIT_FOR_LAST_MESSAGES_SLEEP_INTERVAL = 3
 WORKFLOW_END_TYPES = {u'workflow_succeeded', u'workflow_failed',
                       u'workflow_cancelled'}
 
@@ -236,6 +237,7 @@ def wait_for_execution(client,
             break
 
         # if the execution ended, wait one iteration for additional logs
+        sleep_interval = WAIT_FOR_EXECUTION_SLEEP_INTERVAL
         if execution_ended:
             if waiting_for_logs:
                 if logger:
@@ -244,13 +246,14 @@ def wait_for_execution(client,
                                 'displayed.')
                 break
             else:
+                sleep_interval = WAIT_FOR_LAST_MESSAGES_SLEEP_INTERVAL
                 if logger:
                     logger.info('Execution ended, waiting {0} seconds for '
                                 'additional log messages'
-                                .format(WAIT_FOR_EXECUTION_SLEEP_INTERVAL))
+                                .format(sleep_interval))
                 waiting_for_logs = True
 
-        time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
+        time.sleep(sleep_interval)
 
     return execution
 
@@ -309,6 +312,7 @@ def wait_for_execution_group(client,
             break
 
         # if the execution ended, wait one iteration for additional logs
+        sleep_interval = WAIT_FOR_EXECUTION_SLEEP_INTERVAL
         if group_finished:
             if waiting_for_logs:
                 if logger:
@@ -317,12 +321,13 @@ def wait_for_execution_group(client,
                                 'displayed.')
                 break
             else:
+                sleep_interval = WAIT_FOR_LAST_MESSAGES_SLEEP_INTERVAL
                 if logger:
                     logger.info('Execution ended, waiting {0} seconds for '
                                 'additional log messages'
-                                .format(WAIT_FOR_EXECUTION_SLEEP_INTERVAL))
+                                .format(sleep_interval))
                 waiting_for_logs = True
 
-        time.sleep(WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
+        time.sleep(sleep_interval)
 
     return execution_group
