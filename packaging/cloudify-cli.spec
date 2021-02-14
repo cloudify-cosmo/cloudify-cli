@@ -23,6 +23,7 @@ Cloudify CLI
 
 %build
 python3 -m venv %_cli_env
+%_cli_env/bin/pip install --upgrade pip==20.3.4
 %_cli_env/bin/pip install -r "${RPM_SOURCE_DIR}/dev-requirements.txt"
 %_cli_env/bin/pip install "${RPM_SOURCE_DIR}"
 
