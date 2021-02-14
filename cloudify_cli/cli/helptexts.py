@@ -379,8 +379,10 @@ SCHEDULE_EXECUTIONS = 'The time (including timezone) this workflow will be' \
                       'YYYYMMDDHHMM-HHMM. e.g.: 201801182230-0500' \
                       ' (18th January 2018 10:30pm EST)'
 
-SCHEDULE_FREQUENCY = "Frequency with which to run the execution, e.g. " \
-                     "'2 weeks'"
+SCHEDULE_NAME = "A name for the schedule. If not provided, defaults to " \
+                "{deployment-id}_{workflow-id}"
+SCHEDULE_RECURRENCE = "Recurrence on the scheduled execution. e.g. " \
+                     "'2 weeks', '30 min' or '1d'"
 SCHEDULE_COUNT = "Maximum number of times to run the execution. " \
                  "If left empty, there's no limit on repetition"
 SCHEDULE_WEEKDAYS = "Weekdays on which to run the execution, e.g. " \
@@ -436,6 +438,13 @@ MANAGER = "Connect to a specific manager by IP or host"
 
 FROM_DATETIME = "Beginning of a period"
 TO_DATETIME = "End of a period"
+
+TIME_EXPRESSION = "{}. The following formats " \
+                  "are possible: YYYY-MM-DD HH:MM, HH:MM, or a time delta " \
+                  "expression such as '+2 weeks' or '+1day+10min'"
+TIMEZONE = "Set the timezone to be used for timing options, e.g. 'EST' or " \
+           "'Asia/Jerusalem'. By default, the local timezone will be used"
+
 BEFORE = "How long ago did the specified period ended"
 KEEP_LAST = "Keep the N most recent {0} from deletion"
 

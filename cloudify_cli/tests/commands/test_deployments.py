@@ -26,7 +26,8 @@ from cloudify_rest_client import (
     deployments,
     executions,
     blueprints,
-    deployment_updates
+    deployment_updates,
+    execution_schedules
 )
 from cloudify_rest_client.exceptions import (
     CloudifyClientError,
@@ -950,3 +951,289 @@ Showing 1 of 1 deployment modifications"""
         assert 'Removed node instances:' not in output_lines
         added_title_idx = output_lines.index('Added node instances:')
         assert 'node1_olbbe0 (node1)' in output_lines[added_title_idx + 1]
+
+
+class DeploymentScheduleTest(CliCommandTest):
+    def setUp(self):
+        super(DeploymentScheduleTest, self).setUp()
+        self.use_manager()
+
+    def test_deployment_schedule_create(self):
+        self.client.execution_schedules.create = MagicMock(
+            return_value=execution_schedules.ExecutionSchedule({}))
+        self.invoke('cfy deployments schedule create backup -d dep1 '
+                    '-s "12:00" -u "+1w +1d" -r 2d --tz EST')
+
+        now = datetime.datetime.utcnow()
+        expected_since = now.replace(
+            hour=17, minute=0, second=0, microsecond=0)
+        expected_until = now.replace(second=0, microsecond=0) + \
+            datetime.timedelta(days=8)
+
+        call_args = list(self.client.execution_schedules.create.call_args)
+        assert call_args[0][0] == 'dep1_backup'
+        assert call_args[1]['since'] == expected_since
+        assert call_args[1]['until'] == expected_until
+        assert call_args[1]['frequency'] == '2d'
+
+    def test_deployment_schedule_create_with_schedule_name(self):
+        self.client.execution_schedules.create = MagicMock(
+            return_value=execution_schedules.ExecutionSchedule({}))
+        self.invoke('cfy deployments schedule create backup -d dep1 -n '
+                    'back_me_up -s "1905-6-13 12:00" --tz GMT')
+
+        expected_since = \
+            datetime.datetime.strptime('1905-6-13 12:00', '%Y-%m-%d %H:%M')
+
+        call_args = list(self.client.execution_schedules.create.call_args)
+        assert call_args[0][0] == 'back_me_up'
+        assert call_args[1]['since'] == expected_since
+        assert not call_args[1]['frequency']
+        assert not call_args[1]['until']
+
+    def test_deployment_schedule_create_missing_since(self):
+        outcome = self.invoke(
+            'cfy deployments schedule create backup -d dep1',
+            err_str_segment='2',  # Exit code
+            exception=SystemExit
+        )
+        self.assertIn("Missing option '-s' / '--since'", outcome.output)
+
+    def test_deployment_schedule_create_missing_deployment_id(self):
+        outcome = self.invoke(
+            'cfy deployments schedule create uninstall -s "12:33"',
+            err_str_segment='2',  # Exit code
+            exception=SystemExit
+        )
+        self.assertIn("Missing option '-d' / '--deployment-id'",
+                      outcome.output)
+
+    def test_deployment_schedule_create_bad_time_expressions(self):
+        self.client.execution_schedules.create = MagicMock(
+            return_value=execution_schedules.ExecutionSchedule({}))
+        command = 'cfy deployments schedule create install -d dep1 -s "{}"'
+        error_msg = '{} is not a legal time format. accepted formats are ' \
+                    'YYYY-MM-DD HH:MM | HH:MM'
+
+        illegal_time_formats = ['blah', '15:33:18', '99:99',
+                                '2000/1/1 09:17', '-1 min']
+        for time_format in illegal_time_formats:
+            self.invoke(
+                command.format(time_format),
+                err_str_segment=error_msg.format(time_format),
+                exception=CloudifyCliError)
+
+        illegal_time_deltas = ['+10 dobosh', '+rez']
+        for delta in illegal_time_deltas:
+            self.invoke(
+                command.format(delta),
+                err_str_segment='{} is not a legal time delta'.format(
+                    delta.strip('+')),
+                exception=CloudifyCliError)
+
+    def test_deployment_schedule_create_bad_timezone(self):
+        self.invoke('cfy deployments schedule create install -d dep1 -s '
+                    '"7:15" --tz Mars/SpaceX',
+                    err_str_segment='Mars/SpaceX is not a recognized timezone',
+                    exception=CloudifyCliError)
+
+    def test_deployment_schedule_create_months_delta(self):
+        self.client.execution_schedules.create = MagicMock(
+            return_value=execution_schedules.ExecutionSchedule({}))
+        self.invoke('cfy deployments schedule create backup -d dep -s "+13mo"')
+        call_args = list(self.client.execution_schedules.create.call_args)
+
+        now = datetime.datetime.utcnow()
+        current_month = now.month
+        current_year = now.year
+        expected_month = 1 if current_month == 12 else current_month + 1
+        expected_year = current_year + (2 if current_month == 12 else 1)
+        expected_since = now.replace(
+            second=0, microsecond=0, year=expected_year, month=expected_month)
+        assert call_args[1]['since'] == expected_since
+
+    def test_deployment_schedule_create_years_delta(self):
+        self.client.execution_schedules.create = MagicMock(
+            return_value=execution_schedules.ExecutionSchedule({}))
+        self.invoke('cfy deployments schedule create backup -d dep -s "+2y"')
+        call_args = list(self.client.execution_schedules.create.call_args)
+        now = datetime.datetime.utcnow()
+        expected_since = now.replace(second=0, microsecond=0, year=now.year+2)
+        assert call_args[1]['since'] == expected_since
+
+    def test_deployment_schedule_create_hours_minutes_delta(self):
+        self.client.execution_schedules.create = MagicMock(
+            return_value=execution_schedules.ExecutionSchedule({}))
+        self.invoke('cfy deployments schedule create backup -d dep -s '
+                    '"+25 hours+119min"')
+        call_args = list(self.client.execution_schedules.create.call_args)
+        expected_since = \
+            (datetime.datetime.utcnow().replace(second=0, microsecond=0) +
+             datetime.timedelta(days=1, hours=2, minutes=59))
+        assert call_args[1]['since'] == expected_since
+
+    def test_deployment_schedule_update(self):
+        self.client.execution_schedules.update = MagicMock(
+            return_value=execution_schedules.ExecutionSchedule({}))
+        self.invoke('cfy deployments schedule update -n sched-1 -r "3 weeks"')
+        call_args = list(self.client.execution_schedules.update.call_args)
+        assert call_args[0][0] == 'sched-1'
+        assert call_args[1]['frequency'] == '3 weeks'
+
+    def test_deployment_schedule_update_auto_schedule_name(self):
+        self.client.execution_schedules.update = MagicMock(
+            return_value=execution_schedules.ExecutionSchedule({}))
+        self.invoke(
+            'cfy deployments schedule update install -d dep -u "22:00" '
+            '--tz "Asia/Shanghai"')
+        call_args = list(self.client.execution_schedules.update.call_args)
+        assert call_args[0][0] == 'dep_install'
+        expected_until = datetime.datetime.utcnow().replace(
+                hour=14, minute=0, second=0, microsecond=0)
+        assert call_args[1]['until'] == expected_until
+
+    def test_deployment_schedule_update_missing_fields_for_name(self):
+        self.invoke(
+            'cfy deployments schedule update install -u "22:00" '
+            '--tz "Asia/Shanghai"',
+            err_str_segment='Please provide either the name of the schedule',
+            exception=CloudifyCliError)
+
+    def test_deployment_schedule_enable(self):
+        mock_schedule = MagicMock()
+        mock_schedule.enabled = False
+        self.client.execution_schedules.get = MagicMock(
+            return_value=mock_schedule)
+        self.client.execution_schedules.update = MagicMock(
+            return_value=execution_schedules.ExecutionSchedule({}))
+        self.invoke('cfy deployments schedule enable sched-1')
+        call_args = list(self.client.execution_schedules.update.call_args)
+        assert call_args[1]['enabled']
+
+    def test_deployment_schedule_enable_already_enabled(self):
+        mock_schedule = MagicMock()
+        mock_schedule.enabled = True
+        self.client.execution_schedules.get = MagicMock(
+            return_value=mock_schedule)
+        self.invoke(
+            'cfy deployments schedule enable sched-1',
+            err_str_segment='Deployment schedule sched-1 is already enabled',
+            exception=CloudifyCliError)
+
+    def test_deployment_schedule_disable(self):
+        mock_schedule = MagicMock()
+        mock_schedule.enabled = True
+        self.client.execution_schedules.get = MagicMock(
+            return_value=mock_schedule)
+        self.client.execution_schedules.update = MagicMock(
+            return_value=execution_schedules.ExecutionSchedule({}))
+        self.invoke('cfy deployments schedule disable sched-1')
+        call_args = list(self.client.execution_schedules.update.call_args)
+        assert not call_args[1]['enabled']
+
+    def test_deployment_schedule_disable_already_disabled(self):
+        mock_schedule = MagicMock()
+        mock_schedule.enabled = False
+        self.client.execution_schedules.get = MagicMock(
+            return_value=mock_schedule)
+        self.invoke(
+            'cfy deployments schedule disable sched-1',
+            err_str_segment='Deployment schedule sched-1 is already disabled',
+            exception=CloudifyCliError)
+
+    def test_deployment_schedule_delete(self):
+        self.client.execution_schedules.delete = MagicMock(
+            return_value=execution_schedules.ExecutionSchedule({}))
+        self.invoke('cfy deployments schedule delete sched-1')
+
+    def test_deployment_schedule_list(self):
+        self.client.execution_schedules.list = \
+            self._get_deployment_schedules_list()
+        output = json.loads(
+            self.invoke('cfy deployments schedule list --json').output)
+        assert len(output) == 3
+
+    def test_deployment_schedule_list_filter_since(self):
+        self.client.execution_schedules.list = \
+            self._get_deployment_schedules_list()
+        # jan1 will be excluded: has no occurrences at/after Jan 2nd
+        output = json.loads(
+            self.invoke('cfy deployments schedule list -s "1900-1-2 0:00" '
+                        '--tz GMT --json').output)
+        assert len(output) == 2
+
+    def test_deployment_schedule_list_filter_until(self):
+        self.client.execution_schedules.list = \
+            self._get_deployment_schedules_list()
+        # jan2_jan3 will be excluded: has no occurrences before Jan 2nd
+        output = json.loads(
+            self.invoke('cfy deployments schedule list -u "1900-1-2 0:00" '
+                        '--tz GMT --json').output)
+        assert len(output) == 2
+
+    @staticmethod
+    def _get_deployment_schedules_list():
+        schedules = [
+            {
+                'id': 'jan1_jan2',
+                'deployment_id': 'dep1',
+                'all_next_occurrences': ['1900-1-1 12:00:00',
+                                         '1900-1-2 12:00:00'],
+            },
+            {
+                'id': 'jan2_jan3',
+                'deployment_id': 'dep1',
+                'all_next_occurrences': ['1900-1-2 12:00:00',
+                                         '1900-1-3 12:00:00'],
+            },
+            {
+                'id': 'jan1',
+                'deployment_id': 'dep2',
+                'all_next_occurrences': ['1900-1-1 12:00:00'],
+            }
+        ]
+        return MagicMock(return_value=MockListResponse(items=schedules))
+
+    @staticmethod
+    def _get_deployment_schedule_detailed(enabled=True):
+        return MagicMock(
+            return_value=execution_schedules.ExecutionSchedule({
+                'id': 'sched_get',
+                'deployment_id': 'dep3',
+                'rule': {},
+                'execution_arguments': {},
+                'parameters': {},
+                'enabled': enabled,
+                'all_next_occurrences': ['1900-1-1 12:00:00',
+                                         '1900-1-2 12:00:00',
+                                         '1900-1-3 12:00:00']
+
+            }))
+
+    def test_deployment_schedule_get(self):
+        self.client.execution_schedules.get = \
+            self._get_deployment_schedule_detailed()
+        output = self.invoke('cfy deployments schedule get -n sched_get '
+                             '--preview 2')
+        self.assertIn('Computed 3 upcoming occurrences. Listing first 2:',
+                      output.output)
+        self.assertIn('| sched_get |      dep3     |', output.output)
+        self.assertIn('1     1900-1-1 12:00:00', output.output)
+        self.assertIn('2     1900-1-2 12:00:00', output.output)
+
+    def test_deployment_schedule_get_no_preview(self):
+        self.client.execution_schedules.get = \
+            self._get_deployment_schedule_detailed()
+        output = self.invoke('cfy deployments schedule get -n sched_get')
+        self.assertIn('| sched_get |      dep3     |', output.output)
+        self.assertNotIn('Computed 3 upcoming occurrences', output.output)
+
+    def test_deployment_schedule_get_no_preview_because_disabled(self):
+        self.client.execution_schedules.get = \
+            self._get_deployment_schedule_detailed(enabled=False)
+        output = self.invoke(
+            'cfy deployments schedule get -n sched_get --preview 1',
+            err_str_segment='Deployment schedule sched_get is disabled, '
+                            'no upcoming occurrences',
+            exception=CloudifyCliError)
+        self.assertIn('| sched_get |      dep3     |', output.output)

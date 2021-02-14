@@ -54,6 +54,7 @@ setup(
         # to install the correct version of cryptography before installing
         # the fabric so that fabric can be installed correctly in both py2 +
         # py3
-        'fabric==2.5.0'
+        'fabric==2.5.0',
+        'pytz==2021.1'
     ]
 )
