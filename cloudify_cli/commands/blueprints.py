@@ -25,6 +25,7 @@ from dsl_parser.exceptions import DSLParsingException
 from cloudify._compat import urlparse
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
+from .. import env
 from .. import local
 from .. import utils
 from ..cli import cfy, helptexts
@@ -34,9 +35,11 @@ from ..config import config
 from ..logger import get_global_json_output
 from ..table import print_data, print_single
 from ..exceptions import CloudifyCliError
-from ..utils import (prettify_client_error,
-                     get_visibility,
-                     validate_visibility)
+from ..utils import prettify_client_error, get_visibility, validate_visibility
+from ..labels_utils import (add_labels,
+                            delete_labels,
+                            list_labels,
+                            modify_resource_labels)
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 
@@ -44,7 +47,7 @@ DESCRIPTION_LIMIT = 20
 BASE_BLUEPRINT_COLUMNS = ['id', 'description', 'main_file_name', 'created_at']
 BLUEPRINT_COLUMNS = BASE_BLUEPRINT_COLUMNS + ['updated_at', 'visibility',
                                               'tenant_name', 'created_by',
-                                              'state', 'error']
+                                              'state', 'error', 'labels']
 INPUTS_COLUMNS = ['name', 'type', 'default', 'description']
 BLUEPRINTS_SUMMARY_FIELDS = BASE_SUMMARY_FIELDS
 
@@ -86,6 +89,7 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.options.blueprint_id(validate=True)
 @cfy.options.blueprint_filename()
 @cfy.options.async_upload
+@cfy.options.labels
 @cfy.options.validate
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
@@ -100,6 +104,7 @@ def upload(ctx,
            blueprint_id,
            blueprint_filename,
            async_upload,
+           labels,
            validate,
            private_resource,
            visibility,
@@ -145,7 +150,8 @@ def upload(ctx,
             blueprint_filename,
             visibility,
             progress_handler,
-            async_upload=True
+            async_upload=True,
+            labels=labels
         )
     else:
         try:
@@ -165,7 +171,8 @@ def upload(ctx,
                 progress_handler,
                 # if blueprint is in an archive we skip the size limit check
                 utils.is_archive(blueprint_path),
-                async_upload=True
+                async_upload=True,
+                labels=labels
             )
         finally:
             # When an archive file is passed, it's extracted to a temporary
@@ -275,6 +282,7 @@ def manager_list(sort_by,
         _size=pagination_size
     )
     blueprints = [trim_description(b) for b in blueprints_list]
+    modify_resource_labels(blueprints)
     print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
     total = blueprints_list.metadata.pagination.total
     logger.info('Showing {0} of {1} blueprints'.format(len(blueprints), total))
@@ -520,3 +528,69 @@ def summary(target_field, sub_field, logger, client, tenant_name,
         items,
         'Blueprint summary by {field}'.format(field=target_field),
     )
+
+
+@blueprints.group(name='labels',
+                  short_help="Handle the blueprints' labels")
+@cfy.options.common_options
+def labels():
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+
+@labels.command(name='list',
+                short_help="List the blueprints' labels")
+@cfy.argument('blueprint-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def list_blueprint_labels(blueprint_id,
+                          logger,
+                          client,
+                          tenant_name):
+    list_labels(blueprint_id, 'blueprint', client.blueprints,
+                logger, tenant_name)
+
+
+@labels.command(name='add',
+                short_help="Add labels to a specific blueprint")
+@cfy.argument('labels-list',
+              callback=cfy.parse_and_validate_labels)
+@cfy.argument('blueprint-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def add_blueprint_labels(labels_list,
+                         blueprint_id,
+                         logger,
+                         client,
+                         tenant_name):
+    """LABELS_LIST: <key>:<value>,<key>:<value>"""
+    add_labels(blueprint_id, 'blueprint', client.blueprints, labels_list,
+               logger, tenant_name)
+
+
+@labels.command(name='delete',
+                short_help="Delete labels from a specific blueprint")
+@cfy.argument('label', callback=cfy.parse_and_validate_label_to_delete)
+@cfy.argument('blueprint-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def delete_blueprint_labels(label,
+                            blueprint_id,
+                            logger,
+                            client,
+                            tenant_name):
+    """
+    LABEL: Can be either <key>:<value> or <key>. If <key> is provided,
+    all labels associated with this key will be deleted from the blueprint.
+    """
+    delete_labels(blueprint_id, 'blueprint', client.blueprints, label,
+                  logger, tenant_name)

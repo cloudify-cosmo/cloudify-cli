@@ -40,7 +40,7 @@ from cloudify_rest_client.deployment_modifications import (
 from cloudify_rest_client.responses import ListResponse, Metadata
 
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
-from cloudify_cli.commands.deployments import labels_list_to_set
+from cloudify_cli.labels_utils import labels_list_to_set
 from cloudify_cli.exceptions import CloudifyCliError, CloudifyValidationError
 
 from ... import exceptions

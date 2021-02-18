@@ -41,10 +41,7 @@ from ..table import (
     print_list
 )
 from ..cli import cfy, helptexts
-from ..logger import (CloudifyJSONEncoder,
-                      get_events_logger,
-                      get_global_json_output,
-                      output)
+from ..logger import get_events_logger, get_global_json_output
 from .. import env, execution_events_fetcher, utils
 from ..constants import DEFAULT_BLUEPRINT_PATH, DELETE_DEP
 from ..blueprint import get_blueprint_path_and_id
@@ -56,6 +53,10 @@ from ..utils import (prettify_client_error,
                      validate_visibility,
                      parse_utc_datetime_from_expression,
                      get_deployment_environment_execution)
+from ..labels_utils import (add_labels,
+                            delete_labels,
+                            list_labels,
+                            modify_resource_labels)
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 
@@ -221,7 +222,7 @@ def manager_list(blueprint_id,
                                           _size=pagination_size,
                                           _group_id=group_id,
                                           blueprint_id=blueprint_id)
-    _modify_deployments_labels(deployments)
+    modify_resource_labels(deployments)
     total = deployments.metadata.pagination.total
     print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:')
 
@@ -231,14 +232,6 @@ def manager_list(blueprint_id,
         if filtered is not None:
             base_str += ' ({} hidden by filter)'.format(filtered)
     logger.info(base_str)
-
-
-def _modify_deployments_labels(deployments_list):
-    for dep in deployments_list:
-        dep_labels_list = []
-        for raw_label in dep.get('labels', []):
-            dep_labels_list.append(raw_label.key + ':' + raw_label.value)
-        dep['labels'] = ','.join(dep_labels_list)
 
 
 @cfy.command(name='history', short_help='List deployment updates '
@@ -845,32 +838,12 @@ def labels():
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def list_labels(deployment_id,
-                logger,
-                client,
-                tenant_name):
-    deployment_labels = {}
-    utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Listing labels of deployment {0}...'.format(deployment_id))
-
-    raw_deployment_labels = client.deployments.get(deployment_id)['labels']
-    for label in raw_deployment_labels:
-        label_key, label_value = label['key'], label['value']
-        deployment_labels.setdefault(label_key, [])
-        deployment_labels[label_key].append(label_value)
-
-    printable_deployments_labels = [
-        {'key': dep_label_key, 'values': dep_label_values}
-        for dep_label_key, dep_label_values in deployment_labels.items()
-    ]
-
-    if get_global_json_output():
-        output(json.dumps(deployment_labels, cls=CloudifyJSONEncoder))
-    else:
-        print_data(['key', 'values'],
-                   printable_deployments_labels,
-                   'Deployment labels',
-                   max_width=50)
+def list_deployment_labels(deployment_id,
+                           logger,
+                           client,
+                           tenant_name):
+    list_labels(deployment_id, 'deployment', client.deployments,
+                logger, tenant_name)
 
 
 @labels.command(name='add',
@@ -883,31 +856,14 @@ def list_labels(deployment_id,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def add_labels(labels_list,
-               deployment_id,
-               logger,
-               client,
-               tenant_name):
+def add_deployment_labels(labels_list,
+                          deployment_id,
+                          logger,
+                          client,
+                          tenant_name):
     """LABELS_LIST: <key>:<value>,<key>:<value>"""
-
-    utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Adding labels to deployment {0}...'.format(deployment_id))
-
-    deployment_labels = _get_deployment_labels(client, deployment_id)
-    curr_labels_set = labels_list_to_set(deployment_labels)
-    provided_labels_set = labels_list_to_set(labels_list)
-
-    new_labels = provided_labels_set.difference(curr_labels_set)
-    if new_labels:
-        updated_labels = _labels_set_to_list(
-            curr_labels_set.union(provided_labels_set))
-        client.deployments.update_labels(deployment_id, updated_labels)
-        logger.info(
-            'The following label(s) were added successfully to deployment '
-            '{0}: {1}'.format(deployment_id, _labels_set_to_list(new_labels)))
-    else:
-        logger.info('The provided labels are already assigned to deployment '
-                    '{0}. No labels were added.'.format(deployment_id))
+    add_labels(deployment_id, 'deployment', client.deployments, labels_list,
+               logger, tenant_name)
 
 
 @labels.command(name='delete',
@@ -919,61 +875,17 @@ def add_labels(labels_list,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def delete_labels(label,
-                  deployment_id,
-                  logger,
-                  client,
-                  tenant_name):
+def delete_deployment_labels(label,
+                             deployment_id,
+                             logger,
+                             client,
+                             tenant_name):
     """
     LABEL: Can be either <key>:<value> or <key>. If <key> is provided,
     all labels associated with this key will be deleted from the deployment.
     """
-
-    utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Deleting labels from deployment {0}...'.format(deployment_id))
-    deployment_labels = _get_deployment_labels(client, deployment_id)
-
-    updated_labels = []
-    labels_to_delete = []
-    if isinstance(label, dict):
-        if label in deployment_labels:
-            labels_to_delete = [label]
-            deployment_labels.remove(label)
-            updated_labels = deployment_labels
-    else:  # A label key was provided
-        for dep_label in deployment_labels:
-            if label in dep_label:
-                labels_to_delete.append(dep_label)
-            else:
-                updated_labels.append(dep_label)
-
-    if labels_to_delete:
-        client.deployments.update_labels(deployment_id, updated_labels)
-        logger.info(
-            'The following label(s) were deleted successfully from deployment '
-            '{0}: {1}'.format(deployment_id, labels_to_delete))
-    else:
-        logger.info('The provided labels are not assigned to deployment '
-                    '{0}. No labels were deleted.'.format(deployment_id))
-
-
-def _get_deployment_labels(client, deployment_id):
-    raw_deployment_labels = client.deployments.get(deployment_id)['labels']
-    return [{dep_label['key']: dep_label['value']}
-            for dep_label in raw_deployment_labels]
-
-
-def _labels_set_to_list(labels_set):
-    return [{key: value} for key, value in labels_set]
-
-
-def labels_list_to_set(labels_list):
-    labels_set = set()
-    for label in labels_list:
-        [(key, value)] = label.items()
-        labels_set.add((key, value))
-
-    return labels_set
+    delete_labels(deployment_id, 'deployment', client.deployments, label,
+                  logger, tenant_name)
 
 
 @deployments.group(name='modifications',
