@@ -21,18 +21,34 @@ import tempfile
 from mock import Mock, MagicMock, PropertyMock, patch
 
 from cloudify.exceptions import CommandExecutionException
-from ..cfy import ClickInvocationException
+from cloudify_rest_client import blueprints
+
+from cloudify_cli.labels_utils import labels_list_to_set
+from cloudify_cli.exceptions import CloudifyCliError, CloudifyValidationError
 
 from ... import env
 from ...config import config
+from ..cfy import ClickInvocationException
 from .mocks import MockListResponse
 from .test_base import CliCommandTest
-from cloudify_cli.exceptions import CloudifyCliError
-from .constants import BLUEPRINTS_DIR, SAMPLE_BLUEPRINT_PATH, \
-    SAMPLE_ARCHIVE_PATH
+from .constants import (BLUEPRINTS_DIR,
+                        SAMPLE_BLUEPRINT_PATH,
+                        SAMPLE_ARCHIVE_PATH)
 
 
 class BlueprintsTest(CliCommandTest):
+    LABELED_BLUEPRINT = blueprints.Blueprint({
+            'blueprint_id': 'bp1',
+            'labels': [
+                {'key': 'key1', 'value': 'val1',
+                 'created_at': '1', 'creator_id': 0},
+                {'key': 'key2', 'value': 'val2',
+                 'created_at': '2', 'creator_id': 0},
+                {'key': 'key2', 'value': 'val3',
+                 'created_at': '2', 'creator_id': 0},
+            ]
+        })
+
     def _mock_wait_for_blueprint_upload(self, value):
         patcher = patch(
             'cloudify_cli.utils.wait_for_blueprint_upload',
@@ -437,3 +453,77 @@ class BlueprintsTest(CliCommandTest):
         self.invoke('cfy blueprints upload {0} -b my_blueprint_id '
                     '--blueprint-filename blueprint.yaml -l private'
                     .format(SAMPLE_ARCHIVE_PATH))
+
+    def test_blueprint_upload_failure_with_invalid_labels(self):
+        cmd = 'cfy blueprints upload {0} -b bp1 '.format(SAMPLE_ARCHIVE_PATH)
+        self.invoke(cmd + '--labels env:',
+                    err_str_segment='The value of one or more labels is empty',
+                    exception=CloudifyValidationError)
+
+        self.invoke(cmd + '--labels :aws',
+                    err_str_segment='The key of one or more labels is empty',
+                    exception=CloudifyValidationError)
+
+        self.invoke(cmd + '--labels aws',
+                    err_str_segment='form <key>:<value>,<key>:<value>',
+                    exception=CloudifyValidationError)
+
+    def test_blueprint_upload_with_labels(self):
+        cmd = 'cfy blueprints upload {0} -b bp1 '.format(SAMPLE_ARCHIVE_PATH)
+        self.client.blueprints.upload = Mock()
+        self.invoke(cmd + '--labels key1:val1,key2:val2')
+        call_args = list(self.client.blueprints.upload.call_args)
+        self.assertEqual(call_args[1]['labels'],
+                         [{'key1': 'val1'}, {'key2': 'val2'}])
+
+    def test_blueprint_labels_list(self):
+        self.client.blueprints.get = Mock(return_value=self.LABELED_BLUEPRINT)
+        raw_outcome = self.invoke('cfy blueprints labels list bp1 --json')
+        labels = json.loads(raw_outcome.output)
+        self.assertEqual(labels, {'key1': ['val1'], 'key2': ['val2', 'val3']})
+
+    def test_blueprint_labels_add(self):
+        self.client.blueprints.get = Mock(return_value=self.LABELED_BLUEPRINT)
+        self.client.blueprints.update = Mock()
+        self.invoke(
+            'cfy blueprints labels add key1:val1,key2:val1,key3:val1 bp1')
+        call_args = list(self.client.blueprints.update.call_args)
+        self.assertEqual(labels_list_to_set(call_args[0][1]['labels']),
+                         labels_list_to_set([{'key1': 'val1'},
+                                             {'key2': 'val1'},
+                                             {'key2': 'val2'},
+                                             {'key2': 'val3'},
+                                             {'key3': 'val1'}]))
+
+    def test_blueprint_labels_delete_failure_with_invalid_label(self):
+        self.invoke('cfy blueprints labels delete key1:val1,key2:val2 bp1',
+                    err_str_segment='either <key>:<value> or <key>',
+                    exception=CloudifyValidationError)
+
+        self.invoke('cfy blueprints labels delete a@ bp1',
+                    err_str_segment='provided key contains illegal characters',
+                    exception=CloudifyValidationError)
+
+        self.invoke('cfy blueprints labels delete key1: bp1',
+                    err_str_segment='value of the provided label is empty',
+                    exception=CloudifyValidationError)
+
+        self.invoke('cfy blueprints labels delete :val1 bp1',
+                    err_str_segment='key of the provided label is empty',
+                    exception=CloudifyValidationError)
+
+    def test_blueprint_labels_delete_label(self):
+        self.client.blueprints.get = Mock(return_value=self.LABELED_BLUEPRINT)
+        self.client.blueprints.update = Mock()
+        self.invoke('cfy blueprints labels delete key2:val2 bp1')
+        call_args = list(self.client.blueprints.update.call_args)
+        self.assertEqual(labels_list_to_set(call_args[0][1]['labels']),
+                         labels_list_to_set([{'key1': 'val1'},
+                                             {'key2': 'val3'}]))
+
+    def test_blueprint_labels_delete_key(self):
+        self.client.blueprints.get = Mock(return_value=self.LABELED_BLUEPRINT)
+        self.client.blueprints.update = Mock()
+        self.invoke('cfy blueprints labels delete key2 bp1')
+        call_args = list(self.client.blueprints.update.call_args)
+        self.assertEqual(call_args[0][1]['labels'], [{'key1': 'val1'}])
