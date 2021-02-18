@@ -428,7 +428,7 @@ class PluginsUpdateTest(CliCommandTest):
             return_value=MockListResponseWithPaginationSize())
         self.client.plugins_update.update_plugins = update_client_mock
         self.client.blueprints.list = bp_list_client_mock
-        self.invoke('cfy plugins update --all')
+        self.invoke('cfy plugins update --all-blueprints')
         self.assertEqual(len(update_client_mock.mock_calls), 0)
         self.assertEqual(len(bp_list_client_mock.mock_calls), 1)
 
@@ -438,11 +438,11 @@ class PluginsUpdateTest(CliCommandTest):
 
         self.assertRaises(ClickInvocationException,
                           self.invoke,
-                          'cfy plugins update --all asdf')
+                          'cfy plugins update --all-blueprints asdf')
 
         self.assertRaises(ClickInvocationException,
                           self.invoke,
-                          'cfy plugins update asdf --all')
+                          'cfy plugins update asdf --all-blueprints')
 
     def test_all(self):
         bp = namedtuple('Blueprint', 'id')
@@ -452,7 +452,7 @@ class PluginsUpdateTest(CliCommandTest):
                 items=[bp(id='asdf'), bp(id='zxcv')]))
         self.client.plugins_update.update_plugins = update_client_mock
         self.client.blueprints.list = bp_list_client_mock
-        self.invoke('cfy plugins update --all')
+        self.invoke('cfy plugins update --all-blueprints')
         self.assertEqual(len(bp_list_client_mock.mock_calls), 2)
         self.assertEqual(len(update_client_mock.mock_calls), 2)
         self.assertListEqual(
