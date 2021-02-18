@@ -19,8 +19,7 @@ def list_labels(resource_id,
                 logger,
                 tenant_name):
     explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Listing labels of {0} {1}...'.format(
-        resource_name, resource_id))
+    logger.info('Listing labels of %s %s...', resource_name, resource_id)
 
     resource_labels = {}
     raw_resource_labels = resource_client.get(resource_id)['labels']
@@ -50,8 +49,7 @@ def add_labels(resource_id,
                logger,
                tenant_name):
     explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Adding labels to {0} {1}...'.format(
-        resource_name, resource_id))
+    logger.info('Adding labels to %s %s...', resource_name, resource_id)
 
     resource_labels = _get_resource_labels(resource_client, resource_id)
     curr_labels_set = labels_list_to_set(resource_labels)
@@ -66,12 +64,11 @@ def add_labels(resource_id,
         elif resource_name == 'blueprint':
             resource_client.update(resource_id, {'labels': updated_labels})
         logger.info(
-            'The following label(s) were added successfully to {0} '
-            '{1}: {2}'.format(resource_name, resource_id,
-                              _labels_set_to_list(new_labels)))
+            'The following label(s) were added successfully to %s %s: %s',
+            resource_name, resource_id, _labels_set_to_list(new_labels))
     else:
-        logger.info('The provided labels are already assigned to {0} {1}. '
-                    'No labels were added.'.format(resource_name, resource_id))
+        logger.info('The provided labels are already assigned to %s %s. '
+                    'No labels were added.', resource_name, resource_id)
 
 
 def delete_labels(resource_id,
@@ -81,8 +78,7 @@ def delete_labels(resource_id,
                   logger,
                   tenant_name):
     explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Deleting labels from {0} {1}...'.format(
-        resource_name, resource_id))
+    logger.info('Deleting labels from %s %s...', resource_name, resource_id)
     resource_labels = _get_resource_labels(resource_client, resource_id)
 
     updated_labels = []
@@ -104,12 +100,11 @@ def delete_labels(resource_id,
             resource_client.update_labels(resource_id, updated_labels)
         elif resource_name == 'blueprint':
             resource_client.update(resource_id, {'labels': updated_labels})
-        logger.info(
-            'The following label(s) were deleted successfully from {0} '
-            '{1}: {2}'.format(resource_name, resource_id, labels_to_delete))
+        logger.info('The following label(s) were deleted successfully from %s '
+                    '%s: %s', resource_name, resource_id, labels_to_delete)
     else:
-        logger.info('The provided labels are not assigned to {0} {1}. No '
-                    'labels were deleted.'.format(resource_name, resource_id))
+        logger.info('The provided labels are not assigned to %s %s. No '
+                    'labels were deleted.', resource_name, resource_id)
 
 
 def _get_resource_labels(resource_client, resource_id):

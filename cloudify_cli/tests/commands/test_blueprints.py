@@ -94,7 +94,8 @@ class BlueprintsTest(CliCommandTest):
                 'tenant_name',
                 'created_by',
                 'state',
-                'error'
+                'error',
+                'labels'
             ],
             data=[{'description': '123456789012345678..'},
                   {'description': 'abcdefg'}],
