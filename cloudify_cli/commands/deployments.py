@@ -191,7 +191,7 @@ def _print_single_update(deployment_update_dict,
 @cfy.pass_logger
 def manager_list(blueprint_id,
                  group_id,
-                 filter,
+                 filter_rules,
                  sort_by,
                  descending,
                  all_tenants,
@@ -215,7 +215,7 @@ def manager_list(blueprint_id,
 
     deployments = client.deployments.list(sort=sort_by,
                                           is_descending=descending,
-                                          filter_rules=filter,
+                                          filter_rules=filter_rules,
                                           _all_tenants=all_tenants,
                                           _search=search,
                                           _offset=pagination_offset,
@@ -227,7 +227,7 @@ def manager_list(blueprint_id,
     print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:')
 
     base_str = 'Showing {0} of {1} deployments'.format(len(deployments), total)
-    if filter:
+    if filter_rules:
         filtered = deployments.metadata.get('filtered')
         if filtered is not None:
             base_str += ' ({} hidden by filter)'.format(filtered)

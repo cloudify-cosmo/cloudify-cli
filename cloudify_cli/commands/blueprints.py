@@ -241,6 +241,7 @@ def delete(blueprint_id, force, logger, client, tenant_name):
 @cfy.command(name='list', short_help='List blueprints')
 @cfy.options.sort_by()
 @cfy.options.descending
+@cfy.options.filter_rules
 @cfy.options.common_options
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='blueprint')
@@ -253,6 +254,7 @@ def delete(blueprint_id, force, logger, client, tenant_name):
 @cfy.pass_logger
 def manager_list(sort_by,
                  descending,
+                 filter_rules,
                  tenant_name,
                  all_tenants,
                  search,
@@ -279,13 +281,21 @@ def manager_list(sort_by,
         _all_tenants=all_tenants,
         _search=search,
         _offset=pagination_offset,
-        _size=pagination_size
+        _size=pagination_size,
+        filter_rules=filter_rules
     )
     blueprints = [trim_description(b) for b in blueprints_list]
     modify_resource_labels(blueprints)
     print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
+
     total = blueprints_list.metadata.pagination.total
-    logger.info('Showing {0} of {1} blueprints'.format(len(blueprints), total))
+    base_str = 'Showing {0} of {1} blueprints'.format(
+        len(blueprints_list), total)
+    if filter_rules:
+        filtered = blueprints_list.metadata.get('filtered')
+        if filtered is not None:
+            base_str += ' ({} hidden by filter)'.format(filtered)
+    logger.info(base_str)
 
 
 @cfy.command(name='list', short_help='List blueprints')

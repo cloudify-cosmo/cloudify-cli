@@ -1566,7 +1566,7 @@ class Options(object):
         )
 
         self.filter_rules = click.option(
-            '--filter',
+            '--filter', 'filter_rules',
             callback=parse_and_validate_filter_rules,
             help=helptexts.FILTER_RULES_OR_ID
         )
