@@ -8,9 +8,12 @@ from .logger import CloudifyJSONEncoder, get_global_json_output, output
 def modify_resource_labels(resource_list):
     for element in resource_list:
         resource_labels_list = []
-        for raw_label in element.get('labels', []):
-            resource_labels_list.append(raw_label.key + ':' + raw_label.value)
-        element['labels'] = ','.join(resource_labels_list)
+        raw_labels_list = element.get('labels')
+        if raw_labels_list:
+            for raw_label in raw_labels_list:
+                resource_labels_list.append(
+                    raw_label.key + ':' + raw_label.value)
+            element['labels'] = ','.join(resource_labels_list)
 
 
 def list_labels(resource_id,
