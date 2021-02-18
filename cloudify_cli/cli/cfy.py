@@ -1491,7 +1491,7 @@ class Options(object):
 
         self.all_blueprints = click.option(
             '-a',
-            '--all',
+            '--all-blueprints',
             'all_blueprints',
             is_flag=True,
             default=False,

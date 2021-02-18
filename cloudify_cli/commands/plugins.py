@@ -484,12 +484,11 @@ def update(blueprint_id,
            auto_correct_types,
            reevaluate_active_statuses):
     """Update the plugins of all the deployments of the given blueprint
-    or any blueprint in case `--all` flag was used instead of providing
-    a BLUEPRINT_ID.  This will update the deployments one by one until
-    all succeeded.
+    or any blueprint in case `--all-blueprints` flag was used instead of
+    providing a BLUEPRINT_ID.  This will update the deployments one by one
+    until all succeeded.
 
     `BLUEPRINT_ID`   the blueprint's ID to perform the plugins update with.
-
     `PLUGIN_NAMES`   is the list of the plugins to be updated (if empty,
                      all plugins will).
     `TO_LATEST`      list of plugin names to be upgraded to the latest version.
@@ -505,11 +504,11 @@ def update(blueprint_id,
             (not blueprint_id and not all_blueprints)):
         raise CloudifyValidationError(
             'ERROR: Invalid command syntax. Either provide '
-            'a BLUEPRINT_ID or use --all flag.')
+            'a BLUEPRINT_ID or use --all-blueprints flag.')
     if except_blueprints and not all_blueprints:
         raise CloudifyValidationError(
             'ERROR: Invalid command syntax. Cannot list blueprints '
-            'exceptions unless used with --all flag.')
+            'exceptions unless used with --all-blueprints flag.')
     all_to_minor = bool(all_to_minor)
     if all_to_latest is None:
         all_to_latest = not all_to_minor
