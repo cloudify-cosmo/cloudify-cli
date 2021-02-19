@@ -451,8 +451,8 @@ KEEP_LAST = "Keep the N most recent {0} from deletion"
 STORE_BEFORE_DELETION = "List and store events before deleting them"
 STORE_OUTPUT_PATH = "Store listed events to a specified file (cli side)"
 
-PLUGINS_UPDATE_ALL = "Iterate over all blueprints in the system and update "\
-                     "all the plugins in use"
+PLUGINS_UPDATE_ALL = "Iterate through all blueprints of the current tenant "\
+                     "and update all used plugins"
 PLUGINS_UPDATE_NAME = "Update only the specific plugin in all selected "\
                       "deployments (can be passed multiple times or take "\
                       "comma separated values)"
