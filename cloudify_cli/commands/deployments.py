@@ -31,6 +31,7 @@ from cloudify_rest_client.exceptions import (
     UnsupportedDeploymentGetSecretError,
     CloudifyClientError
 )
+from cloudify.utils import parse_utc_datetime
 
 from . import blueprints
 from ..local import load_env
@@ -51,7 +52,6 @@ from ..exceptions import (CloudifyCliError,
 from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility,
-                     parse_utc_datetime_from_expression,
                      get_deployment_environment_execution)
 from ..labels_utils import (add_labels,
                             delete_labels,
@@ -1169,8 +1169,8 @@ def schedule_create(workflow_id,
         'Schedule name: %s', workflow_id, deployment_id, schedule_name)
 
     # calculate naive UTC datetimes from time expressions in since and until
-    since_datetime = parse_utc_datetime_from_expression(since, tz)
-    until_datetime = parse_utc_datetime_from_expression(until, tz)
+    since_datetime = parse_utc_datetime(since, tz)
+    until_datetime = parse_utc_datetime(until, tz)
 
     client.execution_schedules.create(
         schedule_name,
@@ -1243,8 +1243,8 @@ def schedule_update(workflow_id,
     logger.info('Updating deployment schedule %s...', schedule_name)
 
     # calculate naive UTC datetimes from time expressions in since and until
-    since_datetime = parse_utc_datetime_from_expression(since, tz)
-    until_datetime = parse_utc_datetime_from_expression(until, tz)
+    since_datetime = parse_utc_datetime(since, tz)
+    until_datetime = parse_utc_datetime(until, tz)
 
     client.execution_schedules.update(
         schedule_name,
@@ -1368,8 +1368,8 @@ def schedule_list(sort_by,
     provided, list only schedules of this deployment.
     """
     # calculate naive UTC datetimes from time expressions in since and until
-    since_datetime = parse_utc_datetime_from_expression(since, tz)
-    until_datetime = parse_utc_datetime_from_expression(until, tz)
+    since_datetime = parse_utc_datetime(since, tz)
+    until_datetime = parse_utc_datetime(until, tz)
 
     if not sort_by:
         sort_by = 'next_occurrence'
