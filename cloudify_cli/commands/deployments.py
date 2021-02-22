@@ -31,6 +31,7 @@ from cloudify_rest_client.exceptions import (
     UnsupportedDeploymentGetSecretError,
     CloudifyClientError
 )
+from cloudify.utils import parse_utc_datetime_from_expression
 
 from . import blueprints
 from ..local import load_env
@@ -51,7 +52,6 @@ from ..exceptions import (CloudifyCliError,
 from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility,
-                     parse_utc_datetime_from_expression,
                      get_deployment_environment_execution)
 from ..labels_utils import (add_labels,
                             delete_labels,
