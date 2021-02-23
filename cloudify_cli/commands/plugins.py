@@ -461,7 +461,6 @@ def set_visibility(plugin_id, visibility, logger, client):
 @cfy.pass_logger
 @cfy.pass_client()
 @cfy.options.force(help=helptexts.FORCE_PLUGINS_UPDATE)
-@cfy.options.auto_correct_types
 def update(blueprint_id,
            all_blueprints,
            plugin_names,
@@ -474,8 +473,7 @@ def update(blueprint_id,
            logger,
            client,
            tenant_name,
-           force,
-           auto_correct_types):
+           force):
     """Update the plugins of all the deployments of the given blueprint
     or any blueprint in case `--all` flag was used instead of providing
     a BLUEPRINT_ID.  This will update the deployments one by one until
@@ -523,7 +521,7 @@ def update(blueprint_id,
         _update_a_blueprint(blueprint_id, plugin_names,
                             to_latest, all_to_latest, to_minor, all_to_minor,
                             include_logs, json_output, logger,
-                            client, force, auto_correct_types)
+                            client, force)
     elif all_blueprints:
         update_results = {'successful': [], 'failed': []}
         pagination_offset = 0
@@ -538,7 +536,7 @@ def update(blueprint_id,
                                         to_latest, all_to_latest,
                                         to_minor, all_to_minor,
                                         include_logs, json_output, logger,
-                                        client, force, auto_correct_types)
+                                        client, force)
                     update_results['successful'].append(blueprint.id)
                 except CloudifyClientError as ex:
                     update_results['failed'].append(blueprint.id)
@@ -568,15 +566,13 @@ def _update_a_blueprint(blueprint_id,
                         json_output,
                         logger,
                         client,
-                        force,
-                        auto_correct_types):
+                        force):
     logger.info('Updating the plugins of the deployments of the blueprint '
                 '{}'.format(blueprint_id))
     plugins_update = client.plugins_update.update_plugins(
         blueprint_id, force=force, plugin_names=plugin_names,
         to_latest=to_latest, all_to_latest=all_to_latest,
-        to_minor=to_minor, all_to_minor=all_to_minor,
-        auto_correct_types=auto_correct_types,
+        to_minor=to_minor, all_to_minor=all_to_minor
     )
     events_logger = get_events_logger(json_output)
     execution = execution_events_fetcher.wait_for_execution(

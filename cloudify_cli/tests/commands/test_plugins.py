@@ -558,29 +558,6 @@ class PluginsUpdateTest(CliCommandTest):
                           'cfy plugins update '
                           '--all-to-latest --all-to-minor asdf')
 
-    def test_params_auto_correct_types(self):
-        update_plugin_name = 'plugin-name'
-        update_client_mock = Mock()
-        self.client.plugins_update.update_plugins = update_client_mock
-        self.invoke('cfy plugins update --plugin-name {0} --auto-correct-types asdf'.format(
-            update_plugin_name))
-
-        auto_correct_types = self._inspect_calls(update_client_mock,
-                                                 'auto_correct_types')
-        self.assertTrue(auto_correct_types)
-
-    def test_params_not_auto_correct_types(self):
-        update_plugin_name = 'plugin-name'
-        update_client_mock = Mock()
-        self.client.plugins_update.update_plugins = update_client_mock
-        self.invoke('cfy plugins update --plugin-name {0} asdf'.format(
-            update_plugin_name))
-
-        auto_correct_types = self._inspect_calls(update_client_mock,
-                                                 'auto_correct_types')
-        self.assertFalse(auto_correct_types)
-
-
 
 class TestFormatInstallationState(unittest.TestCase):
     """Tests for the _format_installation_state util"""
