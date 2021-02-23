@@ -29,6 +29,7 @@ from cloudify_rest_client import (
     deployment_updates,
     execution_schedules
 )
+from cloudify.exceptions import NonRecoverableError
 from cloudify_rest_client.exceptions import (
     CloudifyClientError,
     UnknownDeploymentInputError,
@@ -42,6 +43,7 @@ from cloudify_rest_client.responses import ListResponse, Metadata
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
 from cloudify_cli.labels_utils import labels_list_to_set
 from cloudify_cli.exceptions import CloudifyCliError, CloudifyValidationError
+
 
 from ... import exceptions
 from .mocks import MockListResponse
@@ -1021,7 +1023,7 @@ class DeploymentScheduleTest(CliCommandTest):
             self.invoke(
                 command.format(time_format),
                 err_str_segment=error_msg.format(time_format),
-                exception=CloudifyCliError)
+                exception=NonRecoverableError)
 
         illegal_time_deltas = ['+10 dobosh', '+rez']
         for delta in illegal_time_deltas:
@@ -1029,13 +1031,13 @@ class DeploymentScheduleTest(CliCommandTest):
                 command.format(delta),
                 err_str_segment='{} is not a legal time delta'.format(
                     delta.strip('+')),
-                exception=CloudifyCliError)
+                exception=NonRecoverableError)
 
     def test_deployment_schedule_create_bad_timezone(self):
         self.invoke('cfy deployments schedule create install -d dep1 -s '
                     '"7:15" --tz Mars/SpaceX',
                     err_str_segment='Mars/SpaceX is not a recognized timezone',
-                    exception=CloudifyCliError)
+                    exception=NonRecoverableError)
 
     def test_deployment_schedule_create_months_delta(self):
         self.client.execution_schedules.create = MagicMock(
