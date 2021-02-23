@@ -434,6 +434,9 @@ RUNTIME_ONLY_EVALUATION = "If set, all intrinsic functions will only be "\
                           "evaluated at runtime, and no intrinsic functions "\
                           "will be evaluated at parse time (such as "\
                           "get_input, get_property)"
+AUTO_CORRECT_TYPES = "If set, before creating plan for a new deployment, an "\
+                     "attempt will be made to cast old inputs' values to "\
+                     "the valid types declared in blueprint"
 MANAGER = "Connect to a specific manager by IP or host"
 
 FROM_DATETIME = "Beginning of a period"
