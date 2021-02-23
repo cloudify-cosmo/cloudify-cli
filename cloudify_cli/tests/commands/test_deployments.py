@@ -312,6 +312,12 @@ class DeploymentUpdatesTest(CliCommandTest):
                             'new blueprint), or new inputs',
             exception=CloudifyCliError)
 
+    def test_deployment_update_inputs_correct(self):
+        self.invoke(
+            'cfy deployments update -p '
+            '{0} -i {1} my_deployment --auto-correct-types'
+            .format(SAMPLE_ARCHIVE_PATH, SAMPLE_INPUTS_PATH))
+
 
 class DeploymentsTest(CliCommandTest):
 
