@@ -1495,6 +1495,13 @@ class Options(object):
             required=False,
             help=helptexts.RUNTIME_ONLY_EVALUATION)
 
+        self.auto_correct_types = click.option(
+            '--auto-correct-types',
+            is_flag=True,
+            default=False,
+            required=False,
+            help=helptexts.AUTO_CORRECT_TYPES)
+
         self.manager = click.option(
             '--manager',
             required=False,
