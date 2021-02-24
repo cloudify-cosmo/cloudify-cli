@@ -86,6 +86,8 @@ DEP_GROUP_COLUMNS = [
 TENANT_HELP_MESSAGE = 'The name of the tenant of the deployment'
 DEPLOYMENTS_SUMMARY_FIELDS = (['blueprint_id', 'site_name'] +
                               BASE_SUMMARY_FIELDS)
+SCHEDULES_SUMMARY_FIELDS = (['deployment_id', 'workflow_id'] +
+                            BASE_SUMMARY_FIELDS)
 # for human-redable outputs, those fields are formatted separately. In
 # machine-readable (json) output, they are just part of the output
 MACHINE_READABLE_UPDATE_PREVIEW_COLUMNS = [
@@ -1464,6 +1466,44 @@ def schedule_get(workflow_id,
                 if i == preview:
                     break
                 logger.info('  {:<5d} {}'.format(i + 1, date))
+
+
+@schedule.command(name='summary',
+                  short_help='Retrieve summary of deployment schedule details '
+                             '[manager only]')
+@cfy.argument('target_field', type=click.Choice(SCHEDULES_SUMMARY_FIELDS))
+@cfy.options.common_options
+@cfy.options.tenant_name(required=False, resource_name_for_help='summary')
+@cfy.options.all_tenants
+@cfy.pass_logger
+@cfy.pass_client()
+def schedule_summary(target_field, logger, client, tenant_name, all_tenants):
+    """
+    Retrieve summary of deployment schedules, e.g. a count of each
+    deployment with the same blueprint ID.
+
+    `TARGET_FIELD` is the field to summarise deployment schedules on.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Retrieving summary of deployment schedules on field '
+                '{field}'.format(field=target_field))
+
+    sched_summary = client.summary.execution_schedules.get(
+        _target_field=target_field,
+        _sub_field='recurrence',
+        _all_tenants=all_tenants,
+    )
+    columns, items = structure_summary_results(
+        sched_summary.items,
+        target_field,
+        'recurrence',
+        'execution_schedules',
+    )
+    print_data(
+        columns,
+        items,
+        'Deployment schedules summary by {field}'.format(field=target_field),
+    )
 
 
 def _list_schedules_in_time_range(schedules, since, until):
