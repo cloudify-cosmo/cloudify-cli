@@ -459,10 +459,12 @@ class PluginsUpdateTest(CliCommandTest):
             list(update_client_mock.call_args_list),
             [call('asdf', force=False, plugin_names=[],
                   to_latest=[], all_to_latest=True,
-                  to_minor=[], all_to_minor=False),
+                  to_minor=[], all_to_minor=False,
+                  auto_correct_types=False),
              call('zxcv', force=False, plugin_names=[],
                   to_latest=[], all_to_latest=True,
-                  to_minor=[], all_to_minor=False)])
+                  to_minor=[], all_to_minor=False,
+                  auto_correct_types=False)])
 
     def test_params_plugin_name_syntax_error(self):
         update_client_mock = Mock()
@@ -562,8 +564,9 @@ class PluginsUpdateTest(CliCommandTest):
         update_plugin_name = 'plugin-name'
         update_client_mock = Mock()
         self.client.plugins_update.update_plugins = update_client_mock
-        self.invoke('cfy plugins update --plugin-name {0} --auto-correct-types asdf'.format(
-            update_plugin_name))
+        self.invoke('cfy plugins update --plugin-name {0} '
+                    '--auto-correct-types asdf'.format(
+                        update_plugin_name))
 
         auto_correct_types = self._inspect_calls(update_client_mock,
                                                  'auto_correct_types')
@@ -579,7 +582,6 @@ class PluginsUpdateTest(CliCommandTest):
         auto_correct_types = self._inspect_calls(update_client_mock,
                                                  'auto_correct_types')
         self.assertFalse(auto_correct_types)
-
 
 
 class TestFormatInstallationState(unittest.TestCase):
