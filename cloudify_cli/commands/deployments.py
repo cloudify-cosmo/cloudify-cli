@@ -1075,12 +1075,14 @@ def groups_update(deployment_group_name, inputs, default_blueprint,
 @click.argument('deployment-group-name')
 @cfy.options.group_deployment_id
 @cfy.options.group_count
+@cfy.options.deployment_group_filter_id
 @cfy.pass_client()
 @cfy.pass_logger
-def groups_extend(deployment_group_name, deployment_id, count,
+def groups_extend(deployment_group_name, deployment_id, count, filter_id,
                   client, logger):
     group = client.deployment_groups.add_deployments(
         deployment_group_name,
+        filter_id=filter_id,
         count=count,
         deployment_ids=deployment_id or None
     )
@@ -1093,12 +1095,15 @@ def groups_extend(deployment_group_name, deployment_id, count,
 @groups.command('shrink', short_help='Remove deployments from a group')
 @click.argument('deployment-group-name')
 @cfy.options.group_deployment_id
+@cfy.options.deployment_group_filter_id
 @cfy.pass_client()
 @cfy.pass_logger
-def groups_shrink(deployment_group_name, deployment_id, client, logger):
+def groups_shrink(deployment_group_name, deployment_id, filter_id,
+                  client, logger):
     group = client.deployment_groups.remove_deployments(
         deployment_group_name,
-        deployment_id
+        deployment_id,
+        filter_id=filter_id
     )
     logger.info(
         'Unlinked deployments %s. Group %s now has %d deployments',

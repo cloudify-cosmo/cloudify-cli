@@ -1663,6 +1663,11 @@ class Options(object):
             type=int
         )
 
+        self.deployment_group_filter_id = click.option(
+            '--filter-id',
+            help=helptexts.DEP_GROUP_FILTER_ID
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
