@@ -62,7 +62,8 @@ from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 DEPLOYMENT_COLUMNS = [
     'id', 'blueprint_id', 'created_at', 'updated_at', 'visibility',
-    'tenant_name', 'created_by', 'site_name', 'labels'
+    'tenant_name', 'created_by', 'site_name', 'labels',
+    'deployment_status', 'installation_status'
 ]
 DEPLOYMENT_UPDATE_COLUMNS = [
     'id', 'deployment_id', 'tenant_name', 'state', 'execution_id',
