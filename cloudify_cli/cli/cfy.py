@@ -2063,7 +2063,7 @@ class Options(object):
 
     @staticmethod
     def since(required=False, mutually_exclusive_with=None, help_lead=None):
-        help_lead = help_lead or 'Set the earliest possible time to run'
+        help_lead = help_lead or 'The earliest possible time to run'
         kwargs = {
             'required': required,
             'type': str,
@@ -2077,7 +2077,7 @@ class Options(object):
 
     @staticmethod
     def until(required=False, mutually_exclusive_with=None, help_lead=None):
-        help_lead = help_lead or 'Set the latest possible time to run'
+        help_lead = help_lead or 'The latest possible time to run'
         kwargs = {
             'required': required,
             'type': str,
