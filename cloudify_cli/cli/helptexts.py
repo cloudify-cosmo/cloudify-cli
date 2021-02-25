@@ -374,6 +374,10 @@ QUEUE_SNAPSHOTS = 'If set, snapshot-creation-workflows that can`t currently ' \
                   'run will be queued and run automatically when possible'
 QUEUE_EXECUTIONS = 'If set, executions that can`t currently run will be '\
                    'queued and run automatically when possible'
+
+TIME_UNITS = 'Supported time units are: min|minute(s)|h|hour(s)|d|day' \
+             '(s)|w|week(s)|mo| month(s)|y|year(s)'
+
 SCHEDULE_EXECUTIONS = 'The time (including timezone) this workflow will be' \
                       ' executed at; expected format: YYYYMMDDHHMM+HHMM or ' \
                       'YYYYMMDDHHMM-HHMM. e.g.: 201801182230-0500' \
@@ -382,11 +386,13 @@ SCHEDULE_EXECUTIONS = 'The time (including timezone) this workflow will be' \
 SCHEDULE_NAME = "A name for the schedule. If not provided, defaults to " \
                 "{deployment-id}_{workflow-id}"
 SCHEDULE_RECURRENCE = "Recurrence on the scheduled execution. e.g. " \
-                     "'2 weeks', '30 min' or '1d'"
+                     "'2 weeks', '30 min' or '1d'. " + TIME_UNITS
 SCHEDULE_COUNT = "Maximum number of times to run the execution. " \
                  "If left empty, there's no limit on repetition"
 SCHEDULE_WEEKDAYS = "Weekdays on which to run the execution, e.g. " \
-                    "'su,mo,tu'. If left empty, will run on any weekday"
+                    "'su,mo,tu'. You can also prefix 1 to 4 or l-, e.g. " \
+                    "'1su, l-fr' for running on the 1st Sunday and last " \
+                    "Friday of a month. If left empty, will run on any weekday"
 SCHEDULE_RRULE = "A scheduling rule in the iCalendar format, e.g. " \
                  "'RRULE:FREQ=DAILY;INTERVAL=3', which means run every 3 " \
                  "days"
@@ -442,11 +448,13 @@ MANAGER = "Connect to a specific manager by IP or host"
 FROM_DATETIME = "Beginning of a period"
 TO_DATETIME = "End of a period"
 
-TIME_EXPRESSION = "{}. The following formats " \
-                  "are possible: YYYY-MM-DD HH:MM, HH:MM, or a time delta " \
-                  "expression such as '+2 weeks' or '+1day+10min'"
-TIMEZONE = "Set the timezone to be used for timing options, e.g. 'EST' or " \
-           "'Asia/Jerusalem'. By default, the local timezone will be used"
+TIME_EXPRESSION = "{}. Supported formats: YYYY-MM-DD HH:MM, HH:MM, or a time" \
+                  " delta expression such as '+2 weeks' or '+1day+10min'. " \
+                  + TIME_UNITS
+TIMEZONE = "The timezone to be used for scheduling, e.g. 'EST' or " \
+           "'Asia/Jerusalem'. By default, the local timezone will be used. " \
+           "Supports any timezone in the tz database (" \
+           "en.wikipedia.org/wiki/List_of_tz_database_time_zones)"
 
 BEFORE = "How long ago did the specified period ended"
 KEEP_LAST = "Keep the N most recent {0} from deletion"

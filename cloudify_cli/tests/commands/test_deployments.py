@@ -1083,7 +1083,7 @@ class DeploymentScheduleTest(CliCommandTest):
     def test_deployment_schedule_update(self):
         self.client.execution_schedules.update = MagicMock(
             return_value=execution_schedules.ExecutionSchedule({}))
-        self.invoke('cfy deployments schedule update -n sched-1 -r "3 weeks"')
+        self.invoke('cfy deployments schedule update sched-1 -r "3 weeks"')
         call_args = list(self.client.execution_schedules.update.call_args)
         assert call_args[0][0] == 'sched-1'
         assert call_args[1]['frequency'] == '3 weeks'
@@ -1092,20 +1092,13 @@ class DeploymentScheduleTest(CliCommandTest):
         self.client.execution_schedules.update = MagicMock(
             return_value=execution_schedules.ExecutionSchedule({}))
         self.invoke(
-            'cfy deployments schedule update install -d dep -u "22:00" '
+            'cfy deployments schedule update dep_install -u "22:00" '
             '--tz "Asia/Shanghai"')
         call_args = list(self.client.execution_schedules.update.call_args)
         assert call_args[0][0] == 'dep_install'
         expected_until = datetime.datetime.utcnow().replace(
                 hour=14, minute=0, second=0, microsecond=0)
         assert call_args[1]['until'] == expected_until
-
-    def test_deployment_schedule_update_missing_fields_for_name(self):
-        self.invoke(
-            'cfy deployments schedule update install -u "22:00" '
-            '--tz "Asia/Shanghai"',
-            err_str_segment='Please provide either the name of the schedule',
-            exception=CloudifyCliError)
 
     def test_deployment_schedule_enable(self):
         mock_schedule = MagicMock()
@@ -1221,7 +1214,7 @@ class DeploymentScheduleTest(CliCommandTest):
     def test_deployment_schedule_get(self):
         self.client.execution_schedules.get = \
             self._get_deployment_schedule_detailed()
-        output = self.invoke('cfy deployments schedule get -n sched_get '
+        output = self.invoke('cfy deployments schedule get sched_get '
                              '--preview 2')
         self.assertIn('Computed 3 upcoming occurrences. Listing first 2:',
                       output.output)
@@ -1232,7 +1225,7 @@ class DeploymentScheduleTest(CliCommandTest):
     def test_deployment_schedule_get_no_preview(self):
         self.client.execution_schedules.get = \
             self._get_deployment_schedule_detailed()
-        output = self.invoke('cfy deployments schedule get -n sched_get')
+        output = self.invoke('cfy deployments schedule get sched_get')
         self.assertIn('| sched_get |      dep3     |', output.output)
         self.assertNotIn('Computed 3 upcoming occurrences', output.output)
 
@@ -1240,7 +1233,7 @@ class DeploymentScheduleTest(CliCommandTest):
         self.client.execution_schedules.get = \
             self._get_deployment_schedule_detailed(enabled=False)
         output = self.invoke(
-            'cfy deployments schedule get -n sched_get --preview 1',
+            'cfy deployments schedule get sched_get --preview 1',
             err_str_segment='Deployment schedule sched_get is disabled, '
                             'no upcoming occurrences',
             exception=CloudifyCliError)

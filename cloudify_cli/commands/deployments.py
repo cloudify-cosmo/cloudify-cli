@@ -1208,9 +1208,7 @@ def schedule_create(workflow_id,
 
 @schedule.command(name='update',
                   short_help='Update a deployment schedule')
-@cfy.argument('workflow-id', required=False)
-@cfy.options.deployment_id()
-@cfy.options.schedule_name
+@cfy.argument('name')
 @cfy.options.common_options
 @cfy.options.since(required=False)
 @cfy.options.until(required=False)
@@ -1229,9 +1227,7 @@ def schedule_create(workflow_id,
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_client()
 @cfy.pass_logger
-def schedule_update(workflow_id,
-                    deployment_id,
-                    schedule_name,
+def schedule_update(name,
                     since,
                     until,
                     tz,
@@ -1246,18 +1242,18 @@ def schedule_update(workflow_id,
                     logger):
     """
     Update an existing schedule for a workflow execution
+
+    `NAME` is the name of the deployment schedule.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    schedule_name = schedule_name or _get_schedule_name(
-        workflow_id, deployment_id, 'update')
-    logger.info('Updating deployment schedule %s...', schedule_name)
+    logger.info('Updating deployment schedule %s...', name)
 
     # calculate naive UTC datetimes from time expressions in since and until
     since_datetime = parse_utc_datetime(since, tz)
     until_datetime = parse_utc_datetime(until, tz)
 
     client.execution_schedules.update(
-        schedule_name,
+        name,
         since=since_datetime,
         until=until_datetime,
         frequency=recurrence,
@@ -1407,9 +1403,7 @@ def schedule_list(sort_by,
 
 @schedule.command(name='get',
                   short_help='Retrieve deployment schedule information')
-@cfy.argument('workflow-id', required=False)
-@cfy.options.deployment_id()
-@cfy.options.schedule_name
+@cfy.argument('name')
 @click.option(
     '--preview',
     required=False,
@@ -1422,21 +1416,19 @@ def schedule_list(sort_by,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def schedule_get(workflow_id,
-                 deployment_id,
-                 schedule_name,
+def schedule_get(name,
                  preview,
                  logger,
                  client,
                  tenant_name):
     """
     Retrieve information for a specific deployment schedule
+
+    `NAME` is the name of the deployment schedule.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    schedule_name = schedule_name or _get_schedule_name(
-        workflow_id, deployment_id, 'get')
-    logger.info('Retrieving execution schedule %s', schedule_name)
-    dep_schedule = client.execution_schedules.get(schedule_name)
+    logger.info('Retrieving execution schedule %s', name)
+    dep_schedule = client.execution_schedules.get(name)
 
     columns = SCHEDULE_TABLE_COLUMNS
     extra_columns = ['rule', 'execution_arguments', 'all_next_occurrences']
@@ -1450,13 +1442,16 @@ def schedule_get(workflow_id,
         print_details(dep_schedule['rule'], 'Scheduling rule:')
         print_details(dep_schedule['execution_arguments'],
                       'Execution arguments:')
+
+        if additional_data.get('latest execution status') == 'terminated':
+            additional_data['latest execution status'] = 'completed'
         print_details(additional_data, 'Additional data:')
 
         if preview:
             if not dep_schedule.enabled:
                 raise CloudifyCliError(
                     'Deployment schedule {} is disabled, no upcoming '
-                    'occurrences'.format(schedule_name))
+                    'occurrences'.format(name))
             next_occurrences = dep_schedule['all_next_occurrences']
 
             computed_msg = 'Computed {} upcoming ' \
@@ -1526,11 +1521,3 @@ def _list_schedules_in_time_range(schedules, since, until):
         if occurs_within_range:
             listed_schedules.append(sched)
     return listed_schedules
-
-
-def _get_schedule_name(workflow_id, deployment_id, cmd_type):
-    if not (workflow_id and deployment_id):
-        raise CloudifyCliError(
-            'Please provide either the name of the schedule to '
-            '{}, or a workflow id and a deployment id'.format(cmd_type))
-    return SCHEDULE_NAME_FORMAT.format(deployment_id, workflow_id)
