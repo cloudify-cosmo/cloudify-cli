@@ -605,9 +605,8 @@ class ClusterHTTPClient(HTTPClient):
                 CloudifyClientError) as e:
             if isinstance(e, CloudifyClientError) and e.status_code != 502:
                 raise
-            self.logger.warning('Could not connect to manager {manager} on '
-                                'port {port}'.format(manager=self.host,
-                                                     port=self.port))
+            self.logger.warning('Could not connect to manager %s on port %s',
+                                self.host, self.port)
             self.logger.debug(str(e))
         return _TRY_NEXT_NODE
 
