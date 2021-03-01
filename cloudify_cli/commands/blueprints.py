@@ -549,7 +549,7 @@ def labels():
 
 
 @labels.command(name='list',
-                short_help="List the blueprints' labels")
+                short_help="List the labels of a specific blueprint")
 @cfy.argument('blueprint-id')
 @cfy.options.tenant_name(required=False, resource_name_for_help='blueprint')
 @cfy.options.common_options

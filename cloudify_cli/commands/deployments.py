@@ -836,7 +836,7 @@ def labels():
 
 
 @labels.command(name='list',
-                short_help="List the deployments' labels")
+                short_help="List the labels of a specific deployment")
 @cfy.argument('deployment-id')
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.options.common_options
