@@ -42,7 +42,7 @@ from ..table import (
     print_list
 )
 from ..cli import cfy, helptexts
-from ..logger import get_events_logger, get_global_json_output
+from ..logger import get_events_logger, get_global_json_output, output
 from .. import env, execution_events_fetcher, utils
 from ..constants import DEFAULT_BLUEPRINT_PATH, DELETE_DEP
 from ..blueprint import get_blueprint_path_and_id
@@ -173,6 +173,14 @@ def _print_single_update(deployment_update_dict,
         print_data(DEPENDENCIES_COLUMNS,
                    deployment_update_dict['recursive_dependencies'] or {},
                    'Affected (recursively) dependent deployments:')
+
+        output('Will delete the following schedules: {}'.format(
+            ', '.join(sorted(deployment_update_dict['schedules_to_delete']))))
+        print_data(
+            ['id', 'workflow', 'since', 'until', 'recurring',
+             'count', 'weekdays'],
+            deployment_update_dict['schedules_to_create'] or [],
+            'Then, will create the following schedules: ')
 
 
 @cfy.command(name='list', short_help='List deployments [manager only]')
