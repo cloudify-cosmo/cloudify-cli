@@ -175,11 +175,11 @@ def _print_single_update(deployment_update_dict,
                    'Affected (recursively) dependent deployments:')
 
         output('Will delete the following schedules: {}'.format(
-            ', '.join(sorted(deployment_update_dict['schedules_to_delete']))))
+            ', '.join(deployment_update_dict.get('schedules_to_delete', []))))
         print_data(
             ['id', 'workflow', 'since', 'until', 'recurring',
              'count', 'weekdays'],
-            deployment_update_dict['schedules_to_create'] or [],
+            deployment_update_dict.get('schedules_to_create', []),
             'Then, will create the following schedules: ')
 
 
