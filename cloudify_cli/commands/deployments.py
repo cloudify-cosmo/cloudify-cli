@@ -62,7 +62,8 @@ from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 DEPLOYMENT_COLUMNS = [
     'id', 'blueprint_id', 'created_at', 'updated_at', 'visibility',
-    'tenant_name', 'created_by', 'site_name', 'labels'
+    'tenant_name', 'created_by', 'site_name', 'labels',
+    'deployment_status', 'installation_status'
 ]
 DEPLOYMENT_UPDATE_COLUMNS = [
     'id', 'deployment_id', 'tenant_name', 'state', 'execution_id',
@@ -844,7 +845,7 @@ def labels():
 
 
 @labels.command(name='list',
-                short_help="List the deployments' labels")
+                short_help="List the labels of a specific deployment")
 @cfy.argument('deployment-id')
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.options.common_options
