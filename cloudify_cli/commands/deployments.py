@@ -1139,7 +1139,6 @@ def schedule():
 @cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
 @cfy.options.dry_run
 @cfy.options.wait_after_fail
-@cfy.options.queue
 @cfy.options.common_options
 @cfy.options.since(required=True)
 @cfy.options.until(required=False)
@@ -1165,7 +1164,6 @@ def schedule_create(workflow_id,
                     force,
                     dry_run,
                     wait_after_fail,
-                    queue,
                     recurrence,
                     count,
                     weekdays,
@@ -1199,7 +1197,6 @@ def schedule_create(workflow_id,
             'allow_custom_parameters': allow_custom_parameters,
             'force': force,
             'dry_run': dry_run,
-            'queue': queue,
             'wait_after_fail': wait_after_fail,
         },
         parameters=parameters,
@@ -1488,10 +1485,10 @@ def schedule_get(name,
 @cfy.pass_client()
 def schedule_summary(target_field, logger, client, tenant_name, all_tenants):
     """
-    Retrieve summary of deployment schedules, e.g. a count of each
-    deployment with the same blueprint ID.
+    Retrieve summary of deployment schedules, e.g. a count of schedules with
+    the same deployment ID.
 
-    `TARGET_FIELD` is the field to summarise deployment schedules on.
+    `TARGET_FIELD` is the field to summarize deployment schedules on.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving summary of deployment schedules on field '
