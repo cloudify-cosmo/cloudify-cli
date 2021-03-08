@@ -484,7 +484,9 @@ REEVALUATE_ACTIVE_STATUSES = "If set, before attempting to update plugins, " \
                              "`terminated` executions will be mapped to " \
                              "`successful` plugins updates, while `failed` " \
                              "and any `*cancel*` statuses will be mapped to " \
-                             "`failed`."
+                             "`failed`.  This flag is also passed down to " \
+                             "the deployment update flows and has a similar " \
+                             "effect on those."
 
 LABELS = "A labels list of the form <key>:<value>,<key>:<value>"
 
