@@ -448,6 +448,7 @@ def set_visibility(plugin_id, visibility, logger, client):
                             'the blueprint [manager only]')
 @cfy.argument('blueprint-id', required=False)
 @cfy.options.all_blueprints
+@cfy.options.except_blueprints
 @cfy.options.plugin_names
 @cfy.options.plugins_to_latest
 @cfy.options.plugins_all_to_latest
@@ -465,6 +466,7 @@ def set_visibility(plugin_id, visibility, logger, client):
 @cfy.options.reevaluate_active_statuses
 def update(blueprint_id,
            all_blueprints,
+           except_blueprints,
            plugin_names,
            to_latest,
            all_to_latest,
@@ -501,6 +503,10 @@ def update(blueprint_id,
         raise CloudifyValidationError(
             'ERROR: Invalid command syntax. Either provide '
             'a BLUEPRINT_ID or use --all flag.')
+    if except_blueprints and not all_blueprints:
+        raise CloudifyValidationError(
+            'ERROR: Invalid command syntax. Cannot list blueprints '
+            'exceptions unless used with --all flag.')
     all_to_minor = bool(all_to_minor)
     if all_to_latest is None:
         all_to_latest = not all_to_minor
@@ -536,6 +542,8 @@ def update(blueprint_id,
                 _offset=pagination_offset,
             )
             for blueprint in blueprints:
+                if blueprint.id in except_blueprints:
+                    continue
                 try:
                     _update_a_blueprint(blueprint.id, plugin_names,
                                         to_latest, all_to_latest,

@@ -405,17 +405,21 @@ STORE_OUTPUT_PATH = "Store listed events to a specified file (cli side)"
 
 PLUGINS_UPDATE_ALL = "Iterate through all blueprints of the current tenant "\
                      "and update all used plugins"
+PLUGINS_UPDATE_EXCEPT_BLUEPRINT = "List of blueprint IDs to be excluded "\
+                                  "from all blueprints update (can be passed "\
+                                  "multiple times or take comma separated "\
+                                  "values)"
 PLUGINS_UPDATE_NAME = "Update only the specific plugin in all selected "\
                       "deployments (can be passed multiple times or take "\
                       "comma separated values)"
 PLUGINS_UPDATE_TO_LATEST = "List of plugin names to be upgraded to the "\
                            "latest version (can be passed multiple times "\
-                           "or take comma separated values"
+                           "or take comma separated values)"
 PLUGINS_UPDATE_ALL_TO_LATEST = "Update all (selected) plugins to the latest "\
                                "version of a plugin"
 PLUGINS_UPDATE__TO_MINOR = "List of plugin names to be upgraded to the "\
                            "latest minor version (can be passed multiple "\
-                           "times or take comma separated values"
+                           "times or take comma separated values)"
 PLUGINS_UPDATE_ALL_TO_MINOR = "Update all (selected) plugins to the latest "\
                               "minor version"
 REEVALUATE_ACTIVE_STATUSES = "If set, before attempting to update plugins, " \
