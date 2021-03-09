@@ -418,5 +418,15 @@ PLUGINS_UPDATE__TO_MINOR = "List of plugin names to be upgraded to the "\
                            "times or take comma separated values"
 PLUGINS_UPDATE_ALL_TO_MINOR = "Update all (selected) plugins to the latest "\
                               "minor version"
+REEVALUATE_ACTIVE_STATUSES = "If set, before attempting to update plugins, " \
+                             "the statuses of previous active plugins " \
+                             "updates operations will be reevaluated based " \
+                             "on relevant executions' statuses. " \
+                             "`terminated` executions will be mapped to " \
+                             "`successful` plugins updates, while `failed` " \
+                             "and any `*cancel*` statuses will be mapped to " \
+                             "`failed`.  This flag is also passed down to " \
+                             "the deployment update flows and has a similar " \
+                             "effect on those."
 
 LABELS = "A labels list of the form <key>:<value>,<key>:<value>"
