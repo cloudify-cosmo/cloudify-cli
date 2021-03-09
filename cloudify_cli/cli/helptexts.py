@@ -384,7 +384,7 @@ SCHEDULE_EXECUTIONS = 'The time (including timezone) this workflow will be' \
                       ' (18th January 2018 10:30pm EST)'
 
 SCHEDULE_NAME = "A name for the schedule. If not provided, defaults to " \
-                "{deployment-id}_{workflow-id}"
+                "{workflow-id}"
 SCHEDULE_RECURRENCE = "Recurrence on the scheduled execution. e.g. " \
                      "'2 weeks', '30 min' or '1d'. " + TIME_UNITS
 SCHEDULE_COUNT = "Maximum number of times to run the execution. " \
