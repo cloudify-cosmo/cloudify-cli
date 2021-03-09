@@ -103,7 +103,6 @@ MACHINE_READABLE_MODIFICATION_COLUMNS = [
 SCHEDULE_TABLE_COLUMNS = ['id', 'deployment_id', 'workflow_id', 'created_at',
                           'next_occurrence', 'since', 'until', 'stop_on_fail',
                           'enabled', 'visibility', 'tenant_name', 'created_by']
-SCHEDULE_NAME_FORMAT = '{}_{}'
 
 
 @cfy.group(name='deployments')
@@ -1131,8 +1130,8 @@ def schedule():
 
 @schedule.command(name='create',
                   short_help='Schedule a deployment\'s workflow execution')
+@cfy.argument('deployment-id')
 @cfy.argument('workflow-id')
-@cfy.options.deployment_id(required=True)
 @cfy.options.schedule_name
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
@@ -1153,8 +1152,8 @@ def schedule():
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_client()
 @cfy.pass_logger
-def schedule_create(workflow_id,
-                    deployment_id,
+def schedule_create(deployment_id,
+                    workflow_id,
                     schedule_name,
                     since,
                     until,
@@ -1176,11 +1175,13 @@ def schedule_create(workflow_id,
     """
     Schedule the execution of a workflow on a given deployment
 
-    `WORKFLOW_ID` is the name of the workflow.
+    `DEPLOYMENT_ID` is the ID of the deployment for which to create the
+        schedule.
+    `WORKFLOW_ID` is the ID of the workflow the schedule will run.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     if not schedule_name:
-        schedule_name = SCHEDULE_NAME_FORMAT.format(deployment_id, workflow_id)
+        schedule_name = workflow_id
     logger.info(
         'Scheduling the execution of workflow `%s` on deployment `%s`. '
         'Schedule name: %s', workflow_id, deployment_id, schedule_name)
@@ -1214,7 +1215,8 @@ def schedule_create(workflow_id,
 
 @schedule.command(name='update',
                   short_help='Update a deployment schedule')
-@cfy.argument('name')
+@cfy.argument('deployment-id')
+@cfy.argument('schedule-id')
 @cfy.options.common_options
 @cfy.options.since(required=False)
 @cfy.options.until(required=False)
@@ -1233,7 +1235,8 @@ def schedule_create(workflow_id,
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_client()
 @cfy.pass_logger
-def schedule_update(name,
+def schedule_update(deployment_id,
+                    schedule_id,
                     since,
                     until,
                     tz,
@@ -1249,17 +1252,20 @@ def schedule_update(name,
     """
     Update an existing schedule for a workflow execution
 
-    `NAME` is the name of the deployment schedule.
+    `DEPLOYMENT_ID` is the ID of the deployment to which the schedule belongs.
+    `SCHEDULE_ID` is the ID of the deployment schedule to update.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Updating deployment schedule %s...', name)
+    logger.info('Updating schedule `%s` on deployment `%s`...',
+                schedule_id, deployment_id)
 
     # calculate naive UTC datetimes from time expressions in since and until
     since_datetime = parse_utc_datetime(since, tz)
     until_datetime = parse_utc_datetime(until, tz)
 
     client.execution_schedules.update(
-        name,
+        schedule_id,
+        deployment_id,
         since=since_datetime,
         until=until_datetime,
         frequency=recurrence,
@@ -1274,76 +1280,89 @@ def schedule_update(name,
 
 @schedule.command(name='disable',
                   short_help='Disable a deployment schedule')
-@cfy.argument('name')
+@cfy.argument('deployment-id')
+@cfy.argument('schedule-id')
 @cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_client()
 @cfy.pass_logger
-def schedule_disable(name, tenant_name, client, logger):
+def schedule_disable(deployment_id, schedule_id, tenant_name, client, logger):
     """
     Disable a schedule for a workflow execution
 
-    `NAME` is the name of the deployment schedule.
+    `DEPLOYMENT_ID` is the ID of the deployment to which the schedule belongs.
+    `SCHEDULE_ID` is the ID of the deployment schedule to disable.
     """
-    dep_schedule = client.execution_schedules.get(name)
+    dep_schedule = client.execution_schedules.get(schedule_id, deployment_id)
     if not dep_schedule.enabled:
         raise CloudifyCliError(
-            'Deployment schedule {} is already disabled'.format(name))
+            'Schedule `{}` on deployment `{}` is already disabled'.format(
+                schedule_id, deployment_id))
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Disabling deployment schedule %s...', name)
-    client.execution_schedules.update(name, enabled=False)
+    logger.info('Disabling schedule `%s` on deployment `%s`...',
+                schedule_id, deployment_id)
+    client.execution_schedules.update(
+        schedule_id, deployment_id, enabled=False)
     logger.info('Deployment schedule disabled successfully')
 
 
 @schedule.command(name='enable',
                   short_help='Enable a disabled deployment schedule')
-@cfy.argument('name')
+@cfy.argument('deployment-id')
+@cfy.argument('schedule-id')
 @cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_client()
 @cfy.pass_logger
-def schedule_enable(name, tenant_name, client, logger):
+def schedule_enable(deployment_id, schedule_id, tenant_name, client, logger):
     """
     Enable a previously-disabled schedule for a workflow execution
 
-    `NAME` is the name of the deployment schedule.
+    `DEPLOYMENT_ID` is the ID of the deployment to which the schedule belongs.
+    `SCHEDULE_ID` is the ID of the deployment schedule to enable.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    dep_schedule = client.execution_schedules.get(name)
+    dep_schedule = client.execution_schedules.get(schedule_id, deployment_id)
     if dep_schedule.enabled:
         raise CloudifyCliError(
-            'Deployment schedule {} is already enabled'.format(name))
-    logger.info('Enabling deployment schedule %s...', name)
-    client.execution_schedules.update(name, enabled=True)
+            'Schedule `{}` on deployment `{}` is already enabled'.format(
+                schedule_id, deployment_id))
+    logger.info('Enabling schedule `%s` on deployment `%s`...',
+                schedule_id, deployment_id)
+    client.execution_schedules.update(
+        schedule_id, deployment_id, enabled=True)
     logger.info('Deployment schedule enabled successfully')
 
 
 @schedule.command(name='delete',
                   short_help='Delete a deployment schedule')
-@cfy.argument('name')
+@cfy.argument('deployment-id')
+@cfy.argument('schedule-id')
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False,
                          resource_name_for_help='deployment schedule')
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def schedule_delete(name, logger, client, tenant_name):
+def schedule_delete(deployment_id, schedule_id, logger, client, tenant_name):
     """
     Delete a schedule for a workflow execution
 
-    `NAME` is the name of the deployment schedule.
+    `DEPLOYMENT_ID` is the ID of the deployment to which the schedule belongs.
+    `SCHEDULE_ID` is the ID of the deployment schedule to delete.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Deleting deployment schedule %s...', name)
-    client.execution_schedules.delete(name)
+    logger.info('Deleting schedule `%s` on deployment `%s`...',
+                schedule_id, deployment_id)
+    client.execution_schedules.delete(schedule_id, deployment_id)
     logger.info('Deployment schedule deleted successfully')
 
 
 @schedule.command(name='list',
                   short_help='List deployment schedules')
-@cfy.argument('deployment_id', required=False)
+@cfy.argument('deployment-id', required=False)
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.tenant_name_for_list(
@@ -1362,8 +1381,8 @@ def schedule_delete(name, logger, client, tenant_name):
 @cfy.options.tz
 @cfy.pass_client()
 @cfy.pass_logger
-def schedule_list(sort_by,
-                  deployment_id,
+def schedule_list(deployment_id,
+                  sort_by,
                   descending,
                   tenant_name,
                   all_tenants,
@@ -1409,7 +1428,8 @@ def schedule_list(sort_by,
 
 @schedule.command(name='get',
                   short_help='Retrieve deployment schedule information')
-@cfy.argument('name')
+@cfy.argument('deployment-id')
+@cfy.argument('schedule-id')
 @click.option(
     '--preview',
     required=False,
@@ -1422,7 +1442,8 @@ def schedule_list(sort_by,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def schedule_get(name,
+def schedule_get(deployment_id,
+                 schedule_id,
                  preview,
                  logger,
                  client,
@@ -1430,11 +1451,13 @@ def schedule_get(name,
     """
     Retrieve information for a specific deployment schedule
 
-    `NAME` is the name of the deployment schedule.
+    `DEPLOYMENT_ID` is the ID of the deployment to which the schedule belongs.
+    `SCHEDULE_ID` is the ID of the deployment schedule for which to
+        retrieve information.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Retrieving execution schedule %s', name)
-    dep_schedule = client.execution_schedules.get(name)
+    logger.info('Retrieving execution schedule %s', schedule_id)
+    dep_schedule = client.execution_schedules.get(schedule_id, deployment_id)
 
     columns = SCHEDULE_TABLE_COLUMNS
     extra_columns = ['rule', 'execution_arguments', 'all_next_occurrences']
@@ -1457,7 +1480,7 @@ def schedule_get(name,
             if not dep_schedule.enabled:
                 raise CloudifyCliError(
                     'Deployment schedule {} is disabled, no upcoming '
-                    'occurrences'.format(name))
+                    'occurrences'.format(schedule_id))
             next_occurrences = dep_schedule['all_next_occurrences']
 
             computed_msg = 'Computed {} upcoming ' \
