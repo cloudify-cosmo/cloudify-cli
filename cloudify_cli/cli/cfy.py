@@ -1502,6 +1502,13 @@ class Options(object):
             required=False,
             help=helptexts.AUTO_CORRECT_TYPES)
 
+        self.reevaluate_active_statuses = click.option(
+            '--reevaluate-active-statuses',
+            is_flag=True,
+            default=False,
+            required=False,
+            help=helptexts.REEVALUATE_ACTIVE_STATUSES)
+
         self.manager = click.option(
             '--manager',
             required=False,
