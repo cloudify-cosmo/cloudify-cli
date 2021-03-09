@@ -468,6 +468,37 @@ class PluginsUpdateTest(CliCommandTest):
                   auto_correct_types=False,
                   reevaluate_active_statuses=False)])
 
+    def test_except_blueprints_must_be_with_all(self):
+        bp = namedtuple('Blueprint', 'id')
+        update_client_mock = Mock()
+        bp_list_client_mock = Mock(
+            return_value=MockListResponseWithPaginationSize(
+                items=[bp(id='asdf'), bp(id='zxcv')]))
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.client.blueprints.list = bp_list_client_mock
+        self.assertRaises(ClickInvocationException,
+                          self.invoke,
+                          'cfy plugins update --except-blueprint asdf')
+
+    def test_except_blueprints(self):
+        bp = namedtuple('Blueprint', 'id')
+        update_client_mock = Mock()
+        bp_list_client_mock = Mock(
+            return_value=MockListResponseWithPaginationSize(
+                items=[bp(id='asdf'), bp(id='zxcv'), bp(id='1234')]))
+        self.client.plugins_update.update_plugins = update_client_mock
+        self.client.blueprints.list = bp_list_client_mock
+        self.invoke('cfy plugins update --all --except-blueprint asdf,1234')
+        self.assertEqual(len(bp_list_client_mock.mock_calls), 2)
+        self.assertEqual(len(update_client_mock.mock_calls), 1)
+        self.assertListEqual(
+            list(update_client_mock.call_args_list),
+            [call('zxcv', force=False, plugin_names=[],
+                  to_latest=[], all_to_latest=True,
+                  to_minor=[], all_to_minor=False,
+                  auto_correct_types=False,
+                  reevaluate_active_statuses=False)])
+
     def test_params_plugin_name_syntax_error(self):
         update_client_mock = Mock()
         self.client.plugins_update.update_plugins = update_client_mock
