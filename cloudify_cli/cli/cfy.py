@@ -1440,6 +1440,14 @@ class Options(object):
             default=False,
             help=helptexts.PLUGINS_UPDATE_ALL)
 
+        self.except_blueprints = click.option(
+            '--except-blueprint',
+            'except_blueprints',
+            multiple=True,
+            required=False,
+            help=helptexts.PLUGINS_UPDATE_EXCEPT_BLUEPRINT,
+            callback=self.parse_comma_separated)
+
         self.plugin_names = click.option(
             '--plugin-name',
             'plugin_names',
