@@ -432,6 +432,9 @@ RUNTIME_ONLY_EVALUATION = "If set, all intrinsic functions will only be "\
                           "evaluated at runtime, and no intrinsic functions "\
                           "will be evaluated at parse time (such as "\
                           "get_input, get_property)"
+AUTO_CORRECT_TYPES = "If set, before creating plan for a new deployment, an "\
+                     "attempt will be made to cast old inputs' values to "\
+                     "the valid types declared in blueprint"
 MANAGER = "Connect to a specific manager by IP or host"
 
 FROM_DATETIME = "Beginning of a period"
@@ -444,19 +447,33 @@ STORE_OUTPUT_PATH = "Store listed events to a specified file (cli side)"
 
 PLUGINS_UPDATE_ALL = "Iterate through all blueprints of the current tenant "\
                      "and update all used plugins"
+PLUGINS_UPDATE_EXCEPT_BLUEPRINT = "List of blueprint IDs to be excluded "\
+                                  "from all blueprints update (can be passed "\
+                                  "multiple times or take comma separated "\
+                                  "values)"
 PLUGINS_UPDATE_NAME = "Update only the specific plugin in all selected "\
                       "deployments (can be passed multiple times or take "\
                       "comma separated values)"
 PLUGINS_UPDATE_TO_LATEST = "List of plugin names to be upgraded to the "\
                            "latest version (can be passed multiple times "\
-                           "or take comma separated values"
+                           "or take comma separated values)"
 PLUGINS_UPDATE_ALL_TO_LATEST = "Update all (selected) plugins to the latest "\
                                "version of a plugin"
 PLUGINS_UPDATE__TO_MINOR = "List of plugin names to be upgraded to the "\
                            "latest minor version (can be passed multiple "\
-                           "times or take comma separated values"
+                           "times or take comma separated values)"
 PLUGINS_UPDATE_ALL_TO_MINOR = "Update all (selected) plugins to the latest "\
                               "minor version"
+REEVALUATE_ACTIVE_STATUSES = "If set, before attempting to update plugins, " \
+                             "the statuses of previous active plugins " \
+                             "updates operations will be reevaluated based " \
+                             "on relevant executions' statuses. " \
+                             "`terminated` executions will be mapped to " \
+                             "`successful` plugins updates, while `failed` " \
+                             "and any `*cancel*` statuses will be mapped to " \
+                             "`failed`.  This flag is also passed down to " \
+                             "the deployment update flows and has a similar " \
+                             "effect on those."
 
 LABELS = "A labels list of the form <key>:<value>,<key>:<value>"
 

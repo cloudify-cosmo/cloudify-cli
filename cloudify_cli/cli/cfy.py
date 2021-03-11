@@ -1495,6 +1495,20 @@ class Options(object):
             required=False,
             help=helptexts.RUNTIME_ONLY_EVALUATION)
 
+        self.auto_correct_types = click.option(
+            '--auto-correct-types',
+            is_flag=True,
+            default=False,
+            required=False,
+            help=helptexts.AUTO_CORRECT_TYPES)
+
+        self.reevaluate_active_statuses = click.option(
+            '--reevaluate-active-statuses',
+            is_flag=True,
+            default=False,
+            required=False,
+            help=helptexts.REEVALUATE_ACTIVE_STATUSES)
+
         self.manager = click.option(
             '--manager',
             required=False,
@@ -1509,6 +1523,14 @@ class Options(object):
             is_flag=True,
             default=False,
             help=helptexts.PLUGINS_UPDATE_ALL)
+
+        self.except_blueprints = click.option(
+            '--except-blueprint',
+            'except_blueprints',
+            multiple=True,
+            required=False,
+            help=helptexts.PLUGINS_UPDATE_EXCEPT_BLUEPRINT,
+            callback=self.parse_comma_separated)
 
         self.plugin_names = click.option(
             '--plugin-name',

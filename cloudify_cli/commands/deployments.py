@@ -339,6 +339,7 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
 @cfy.options.json_output
 @cfy.options.common_options
 @cfy.options.runtime_only_evaluation
+@cfy.options.auto_correct_types
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -366,7 +367,8 @@ def manager_update(ctx,
                    blueprint_id,
                    visibility,
                    validate,
-                   runtime_only_evaluation):
+                   runtime_only_evaluation,
+                   auto_correct_types):
     """Update a specified deployment according to the specified blueprint.
     The blueprint can be supplied as an id of a blueprint that already exists
     in the system (recommended).
@@ -443,7 +445,8 @@ def manager_update(ctx,
             reinstall_list,
             preview,
             not dont_update_plugins,
-            runtime_only_evaluation=runtime_only_evaluation
+            runtime_only_evaluation=runtime_only_evaluation,
+            auto_correct_types=auto_correct_types,
         )
 
     if preview:
