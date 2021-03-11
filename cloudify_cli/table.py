@@ -44,7 +44,7 @@ def generate(cols, data, defaults=None, labels=None):
                    key's that don't exist in the data itself.
 
                    for example: {'deploymentId':'123'} will set the
-                   deploymentId value for all rows to '123'.
+                   deploymentId va lue for all rows to '123'.
 
         labels - A dictionary mapping a column name to a label that
                  will be used for the table header

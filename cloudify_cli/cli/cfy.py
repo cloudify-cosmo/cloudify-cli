@@ -32,6 +32,8 @@ from ..logger import (
     set_global_verbosity_level,
     DEFAULT_LOG_FILE,
     set_global_json_output)
+from ..filters_utils import (create_labels_filter_rules_list,
+                             create_attributes_filter_rules_list)
 
 
 CLICK_CONTEXT_SETTINGS = dict(
@@ -256,7 +258,7 @@ def parse_and_validate_label_to_delete(ctx, param, value):
         return {label_key: label_value}
 
 
-def parse_and_validate_filter_rules(ctx, param, value):
+def parse_labels_filter_rules(ctx, param, value):
     if value is None or ctx.resilient_parsing:
         return
 
@@ -264,17 +266,10 @@ def parse_and_validate_filter_rules(ctx, param, value):
         raise CloudifyValidationError(
             'ERROR: The `{0}` argument is empty'.format(param.name))
 
-    if any(pattern in value for pattern in
-           ['and', '!=', '=', 'is null', 'is not null']):
-        filter_rules_list = parse_filter_rules_list(value)
-        return {'_filter_rules': filter_rules_list}
-
-    else:
-        validate_param_value('The filter ID', value)
-        return {'_filter_id': value}
+    return create_labels_filter_rules_list(value)
 
 
-def parse_and_validate_filter_rules_list(ctx, param, value):
+def parse_attributes_filter_rules(ctx, param, value):
     if value is None or ctx.resilient_parsing:
         return
 
@@ -282,23 +277,7 @@ def parse_and_validate_filter_rules_list(ctx, param, value):
         raise CloudifyValidationError(
             'ERROR: The `{0}` argument is empty'.format(param.name))
 
-    return parse_filter_rules_list(value)
-
-
-def parse_filter_rules_list(raw_filter_rules):
-    filter_rules = []
-    for filter_rule in raw_filter_rules.split('and'):
-        if all(pattern not in filter_rule for pattern in
-               ['=', 'is null', 'is not null']):
-            raise CloudifyValidationError(
-                'ERROR: Filter rules must be one of: <key>=<value>, '
-                '<key>=[<value1>,<value2>,...], <key>!=<value>, '
-                '<key>!=[<value1>,<value2>,...], <key> is null, '
-                '<key> is not null')
-        filter_rules.append(filter_rule.strip().lower())
-        # The rest of the validation is done in the rest-service
-
-    return filter_rules
+    return create_attributes_filter_rules_list(value)
 
 
 def validate_name(ctx, param, value):
@@ -1574,16 +1553,22 @@ class Options(object):
             help=helptexts.ASYNC_UPLOAD,
         )
 
-        self.update_filter_rules = click.option(
-            '--filter-rules',
-            callback=parse_and_validate_filter_rules_list,
-            help=helptexts.FILTER_RULES
+        self.labels_filter = click.option(
+            '--labels-filter',
+            callback=parse_labels_filter_rules,
+            help=helptexts.LABELS_FILTER_RULES
         )
 
-        self.filter_rules = click.option(
-            '--filter', 'filter_rules',
-            callback=parse_and_validate_filter_rules,
-            help=helptexts.FILTER_RULES_OR_ID
+        self.labels_rules = click.option(
+            '--labels-rules',
+            callback=parse_labels_filter_rules,
+            help=helptexts.LABELS_FILTER_RULES
+        )
+
+        self.filter_id = click.option(
+            '--filter-id',
+            callback=validate_name,
+            help=helptexts.FILTER_ID
         )
 
         self.schedule_name = click.option(
@@ -2168,6 +2153,28 @@ class Options(object):
             default=False,
             required=False,
             help=help)
+
+    @staticmethod
+    def attrs_filter(resource):
+        help_text = (helptexts.DEPLOYMENTS_ATTRS_FILTER_RULES if
+                     resource == 'deployment' else
+                     helptexts.BLUEPRINTS_ATTRS_FILTER_RULES)
+        return click.option(
+           '--attrs-filter',
+           callback=parse_attributes_filter_rules,
+           help=help_text
+        )
+
+    @staticmethod
+    def attrs_rules(resource):
+        help_text = (helptexts.DEPLOYMENTS_ATTRS_FILTER_RULES if
+                     resource == 'deployment' else
+                     helptexts.BLUEPRINTS_ATTRS_FILTER_RULES)
+        return click.option(
+            '--attrs-rules',
+            callback=parse_attributes_filter_rules,
+            help=help_text
+        )
 
 
 options = Options()

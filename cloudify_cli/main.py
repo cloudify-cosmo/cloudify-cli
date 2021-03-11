@@ -32,7 +32,6 @@ from .commands import config
 from .commands import cluster
 from .commands import install
 from .commands import plugins
-from .commands import filters
 from .commands import tenants
 from .commands import secrets
 from .commands import license
@@ -108,7 +107,6 @@ def _register_commands():
     _cfy.add_command(license.license)
     _cfy.add_command(sites.sites)
     _cfy.add_command(certificates.certificates)
-    _cfy.add_command(filters.filters)
 
     deployments.deployments.add_command(deployments.manager_create)
     deployments.deployments.add_command(deployments.manager_delete)
