@@ -468,3 +468,24 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
 
     _handle_errors()
     return blueprint
+
+
+def verify_active_license(func):
+    """
+    :param func: a CLI command function.
+    This decorator assumes a client was passed to the function,
+    thus should be placed below a @cfy.pass_client() decorator.
+    """
+    def wrapper(*args, **kwargs):
+        for cfy_license in kwargs['client'].license.list():
+            if not cfy_license['expired']:
+                return func(*args, **kwargs)
+
+        error_message = 'ERROR: No active license. To activate this product,' \
+                        ' please upload a valid license using the' \
+                        ' `cfy license upload` command. If you do not' \
+                        ' have a license, please visit the Cloudify' \
+                        ' website at https://cloudify.co/download/#trial' \
+                        ' to learn more and acquire a free trial license.'
+        raise CloudifyCliError(error_message)
+    return wrapper

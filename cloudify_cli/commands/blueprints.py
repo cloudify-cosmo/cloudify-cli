@@ -99,6 +99,7 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.pass_context
+@utils.verify_active_license
 def upload(ctx,
            blueprint_path,
            blueprint_id,

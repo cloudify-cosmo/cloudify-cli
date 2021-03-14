@@ -158,6 +158,7 @@ def delete(snapshot_id, logger, client, tenant_name):
 @cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.pass_client()
 @cfy.pass_logger
+@utils.verify_active_license
 def upload(snapshot_path,
            snapshot_id,
            logger,
