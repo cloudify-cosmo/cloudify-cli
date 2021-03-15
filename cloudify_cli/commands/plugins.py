@@ -111,6 +111,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@utils.verify_active_license
 def upload(ctx,
            plugin_path,
            yaml_path,
@@ -163,6 +164,7 @@ def upload(ctx,
 @cfy.options.plugins_bundle_path
 @cfy.pass_client()
 @cfy.pass_logger
+@utils.verify_active_license
 def upload_caravan(client, logger, path):
     if not path:
         logger.info("Starting upload of plugins bundle, "
