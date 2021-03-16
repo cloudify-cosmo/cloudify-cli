@@ -209,10 +209,16 @@ def manager_start(workflow_id,
     events_message = "* Run 'cfy events list {0}' to retrieve the " \
                      "execution's events/logs"
     original_timeout = timeout
-    logger.info('Executing workflow `{0}` on deployment `{1}`'
-                ' [timeout={2} seconds]'.format(workflow_id,
-                                                deployment_id,
-                                                timeout))
+
+    if schedule:
+        logger.info(
+            'Scheduling the execution of workflow `%s` on deployment `%s`. ',
+            workflow_id, deployment_id)
+    else:
+        logger.info('Executing workflow `{0}` on deployment `{1}`'
+                    ' [timeout={2} seconds]'.format(workflow_id,
+                                                    deployment_id,
+                                                    timeout))
     try:
         try:
             execution = client.executions.start(
@@ -265,7 +271,9 @@ def manager_start(workflow_id,
                         ' start when possible.')
             return
         if execution.status == 'scheduled':
-            logger.info('Execution is scheduled for {0}.'.format(schedule))
+            logger.info('Execution is scheduled for %s.\nYou can see the '
+                        'execution schedule using `cfy deployments schedule '
+                        'list`.', schedule)
             return
         execution = wait_for_execution(client,
                                        execution,
