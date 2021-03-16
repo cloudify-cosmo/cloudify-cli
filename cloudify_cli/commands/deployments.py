@@ -1061,6 +1061,15 @@ def groups_create(deployment_group_name, inputs, default_blueprint,
     logger.info('Group %s created', deployment_group_name)
 
 
+@groups.command('delete', short_help='Delete a deployment group')
+@click.argument('deployment-group-name')
+@cfy.pass_client()
+@cfy.pass_logger
+def groups_delete(deployment_group_name, client, logger):
+    client.deployment_groups.delete(deployment_group_name)
+    logger.info('Group %s deleted', deployment_group_name)
+
+
 @groups.command('update', short_help='Update a deployment group')
 @click.argument('deployment-group-name')
 @cfy.options.inputs
