@@ -463,7 +463,8 @@ def set_visibility(plugin_id, visibility, logger, client):
 @cfy.pass_client()
 @cfy.options.force(help=helptexts.FORCE_PLUGINS_UPDATE)
 @cfy.options.auto_correct_types
-@cfy.options.reevaluate_active_statuses
+@cfy.options.reevaluate_active_statuses(help=helptexts.
+                                        REEVALUATE_ACTIVE_STATUSES_PLUGINS)
 def update(blueprint_id,
            all_blueprints,
            except_blueprints,
