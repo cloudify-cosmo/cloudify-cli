@@ -586,6 +586,8 @@ def execution_groups_list(client, logger):
                 short_help='Execute a workflow on each deployment in a group')
 @click.option('--deployment-group', '-g',
               help='The deployment group ID to run the workflow on')
+@click.option('--concurrency', help='Run this many executions at a time',
+              type=int, default=5)
 @click.argument('workflow-id')
 @cfy.options.common_options
 @cfy.options.parameters
@@ -595,13 +597,15 @@ def execution_groups_list(client, logger):
 @cfy.pass_client()
 @cfy.pass_logger
 def execution_groups_start(deployment_group, workflow_id, parameters,
-                           json_output, force, timeout, client, logger):
+                           json_output, force, timeout, concurrency,
+                           client, logger):
     events_logger = get_events_logger(json_output)
     group = client.execution_groups.start(
         deployment_group_id=deployment_group,
         workflow_id=workflow_id,
         default_parameters=parameters,
-        force=force
+        force=force,
+        concurrency=concurrency
     )
     wait_for_execution_group(
         client, group, events_handler=events_logger, timeout=timeout)
