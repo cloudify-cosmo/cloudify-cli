@@ -86,6 +86,11 @@ SKIP_REINSTALL = (
     "been modified, as part of a deployment update. Node instances that were "
     "explicitly given to the reinstall list will still be reinstalled"
 )
+DONT_SKIP_REINSTALL = (
+    "Reinstall node-instances that their properties has been modified, as part"
+    " of a deployment update. Node instances that were explicitly given to the"
+    " reinstall list will be reinstalled too."
+)
 IGNORE_FAILURE = (
     "Supply the parameter `ignore_failure` with the value `true` to the "
     "uninstall workflow"

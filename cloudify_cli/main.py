@@ -23,6 +23,7 @@ from .commands import ldap
 from .commands import users
 from .commands import nodes
 from .commands import sites
+from .commands import apply
 from .commands import agents
 from .commands import events
 from .commands import groups
@@ -109,6 +110,7 @@ def _register_commands():
     _cfy.add_command(sites.sites)
     _cfy.add_command(certificates.certificates)
     _cfy.add_command(filters.filters)
+    _cfy.add_command(apply.apply)
 
     deployments.deployments.add_command(deployments.manager_create)
     deployments.deployments.add_command(deployments.manager_delete)

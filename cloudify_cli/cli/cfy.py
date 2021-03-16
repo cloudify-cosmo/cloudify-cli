@@ -850,6 +850,11 @@ class Options(object):
             is_flag=True,
             help=helptexts.SKIP_REINSTALL)
 
+        self.dont_skip_reinstall = click.option(
+            '--dont-skip-reinstall',
+            is_flag=True,
+            help=helptexts.DONT_SKIP_REINSTALL)
+
         self.ignore_failure = click.option(
             '--ignore-failure',
             is_flag=True,
