@@ -1,4 +1,4 @@
-from mock import MagicMock
+from mock import Mock, MagicMock
 
 from .mocks import MockListResponse
 from .constants import SNAPSHOTS_DIR
@@ -11,6 +11,7 @@ class SnapshotsTest(CliCommandTest):
 
     def setUp(self):
         super(SnapshotsTest, self).setUp()
+        self.client.license.list = Mock(return_value=[{'expired': False}])
         self.use_manager()
 
     def test_snapshots_list(self):

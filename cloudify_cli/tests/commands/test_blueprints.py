@@ -59,6 +59,7 @@ class BlueprintsTest(CliCommandTest):
 
     def setUp(self):
         super(BlueprintsTest, self).setUp()
+        self.client.license.list = Mock(return_value=[{'expired': False}])
         self.use_manager()
         self._mock_wait_for_blueprint_upload(False)
 
