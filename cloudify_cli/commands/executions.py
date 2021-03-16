@@ -605,7 +605,7 @@ def execution_groups_start(deployment_group, workflow_id, parameters,
         workflow_id=workflow_id,
         default_parameters=parameters,
         force=force,
-        concurrency=concurrency
+        concurrency=concurrency,
     )
     wait_for_execution_group(
         client, group, events_handler=events_logger, timeout=timeout)
