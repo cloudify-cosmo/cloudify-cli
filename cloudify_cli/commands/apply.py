@@ -22,11 +22,12 @@ from ..cli import cfy, helptexts
 from ..blueprint import get_blueprint_path_and_id
 from . import blueprints, install, deployments
 
+
 @cfy.command(name='apply',
              short_help='Install a blueprint or update existing deployment '
                         'with blueprint [manager only]')
+@cfy.argument('blueprint-path')
 @cfy.argument('deployment-id')
-@cfy.options.blueprint_path(required=True)
 @cfy.options.blueprint_filename()
 @cfy.options.blueprint_id()
 @cfy.options.inputs
@@ -34,7 +35,6 @@ from . import blueprints, install, deployments
 @cfy.options.workflow_id()
 @cfy.options.skip_install
 @cfy.options.skip_uninstall
-# @cfy.options.skip_reinstall
 @cfy.options.dont_skip_reinstall
 @cfy.options.ignore_failure
 @cfy.options.install_first
@@ -59,8 +59,8 @@ from . import blueprints, install, deployments
 @cfy.pass_logger
 @cfy.pass_context
 def apply(ctx,
-          deployment_id,
           blueprint_path,
+          deployment_id,
           blueprint_filename,
           blueprint_id,
           inputs,
@@ -68,7 +68,6 @@ def apply(ctx,
           workflow_id,
           skip_install,
           skip_uninstall,
-          # skip_reinstall,
           dont_skip_reinstall,
           ignore_failure,
           install_first,
@@ -88,11 +87,14 @@ def apply(ctx,
           logger,
           client
           ):
-    """apply command uses cfy install or deployment update depends on
-      existence of DEPLOYMENT_ID deployment.
+    """Apply command uses cfy install or deployment update depends on
+    existence of DEPLOYMENT_ID deployment.
 
-      If the deployment exists, the deployment will be updated with the given blueprint.
-      otherwise the blueprint will be installed(the deployment name will be DEPLOYMENT_ID)
+    If the deployment exists, the deployment will be updated with the
+    given blueprint.
+    otherwise the blueprint will installed (the deployment name will be
+    DEPLOYMENT_ID).
+    In both cases the blueprint is being uploaded to the manager.
 
     `BLUEPRINT_PATH` can be a:
         - local blueprint yaml file
@@ -101,6 +103,8 @@ def apply(ctx,
         - github repo (`organization/blueprint_repo[:tag/branch]`)
 
     Supported archive types are: zip, tar, tar.gz and tar.bz2
+
+    `DEPLOYMENT_ID` is the deployment's id to install/update.
     """
     # check if deployment exists
     if deployment_id not in [deployment.id for deployment in
@@ -125,8 +129,10 @@ def apply(ctx,
         )
     else:
         # Blueprint upload and deployment update
+        logger.info("Deployment {id} found, updating deployment.".format(
+            id=deployment_id))
         update_bp_name = blueprint_id or deployment_id + '-' + datetime.now(
-            ).strftime("%d-%m-%Y-%H-%M-%S")
+        ).strftime("%d-%m-%Y-%H-%M-%S")
         processed_blueprint_path, blueprint_id = get_blueprint_path_and_id(
             blueprint_path,
             blueprint_filename,
@@ -159,12 +165,12 @@ def apply(ctx,
                    blueprint_filename=blueprint_filename,
                    skip_install=skip_install,
                    skip_uninstall=skip_uninstall,
-                   skip_reinstall= not dont_skip_reinstall,
-                   ignore_failure =ignore_failure,
+                   skip_reinstall=not dont_skip_reinstall,
+                   ignore_failure=ignore_failure,
                    install_first=install_first,
                    preview=preview,
                    dont_update_plugins=dont_update_plugins,
-                   workflow_id='update',
+                   workflow_id=workflow_id,
                    force=force,
                    include_logs=include_logs,
                    json_output=json_output,
@@ -175,4 +181,3 @@ def apply(ctx,
                    runtime_only_evaluation=runtime_only_evaluation,
                    auto_correct_types=auto_correct_types
                    )
-
