@@ -123,8 +123,8 @@ FORCE_UPDATE = (
     "failed to finish successfully [This option is deprecated]"
 )
 FORCE_PLUGINS_UPDATE = (
-    "Force running the update in case a previous update on this blueprint has "
-    "failed to finish successfully [This option is deprecated]"
+    "Force running the update also in case a blueprint (for which the update "
+    "is executed) is used as a component"
 )
 
 DEPLOYMENT_ID = "The unique identifier for the deployment"
