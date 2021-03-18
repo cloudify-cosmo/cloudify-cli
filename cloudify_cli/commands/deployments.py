@@ -177,7 +177,7 @@ def _print_single_update(deployment_update_dict,
         output('Will delete the following schedules: {}'.format(
             ', '.join(deployment_update_dict.get('schedules_to_delete', []))))
         print_data(
-            ['id', 'workflow', 'since', 'until', 'recurring',
+            ['id', 'workflow', 'since', 'until', 'recurrence',
              'count', 'weekdays'],
             deployment_update_dict.get('schedules_to_create', []),
             'Then, will create the following schedules: ')
