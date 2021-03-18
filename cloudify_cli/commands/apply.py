@@ -149,20 +149,23 @@ def apply(ctx,
                 visibility=visibility,
                 tenant_name=tenant_name
             )
+
         finally:
-            # Every situation other than the user providing a path of a local
-            # yaml means a temp folder will be created that should be later
-            # removed.
+            # When an archive file is passed, it's extracted to a temporary
+            # directory to get the blueprint file. Once the blueprint has been
+            # uploaded, the temporary directory needs to be cleaned up.
             if processed_blueprint_path != blueprint_path:
-                shutil.rmtree(os.path.dirname(os.path.dirname(
-                    processed_blueprint_path)))
+                temp_directory = os.path.dirname(
+                    os.path.dirname(processed_blueprint_path)
+                )
+                shutil.rmtree(temp_directory)
 
         ctx.invoke(deployments.manager_update,
                    deployment_id=deployment_id,
                    blueprint_path=None,
                    inputs=inputs,
                    reinstall_list=reinstall_list,
-                   blueprint_filename=blueprint_filename,
+                   # blueprint_filename=blueprint_filename,
                    skip_install=skip_install,
                    skip_uninstall=skip_uninstall,
                    skip_reinstall=not dont_skip_reinstall,
