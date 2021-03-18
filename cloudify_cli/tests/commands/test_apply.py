@@ -133,10 +133,10 @@ class ApplyTest(CliCommandTest):
         self._mock_client_deployment_id(deployment_id=STUB_DEPLOYMENT_ID)
         apply_command = 'cfy apply {bl_path} {dep_id} ' \
                         '-n {bl_file_name} -b {bl_id}'.format(
-            bl_path=SAMPLE_ARCHIVE_PATH,
-            dep_id=STUB_DEPLOYMENT_ID,
-            bl_file_name=DEFAULT_BLUEPRINT_FILE_NAME,
-            bl_id=STUB_BLUEPRINT_ID)
+                            bl_path=SAMPLE_ARCHIVE_PATH,
+                            dep_id=STUB_DEPLOYMENT_ID,
+                            bl_file_name=DEFAULT_BLUEPRINT_FILE_NAME,
+                            bl_id=STUB_BLUEPRINT_ID)
         self.invoke(apply_command)
         install_args = blueprint_upload_mock.call_args_list[0][1]
 
@@ -159,10 +159,10 @@ class ApplyTest(CliCommandTest):
         self._mock_client_deployment_id(deployment_id=STUB_DEPLOYMENT_ID)
         apply_command = 'cfy apply {bl_path} {dep_id} -b {bl_id} ' \
                         '--inputs={inputs} '.format(
-            bl_path=SAMPLE_BLUEPRINT_PATH,
-            dep_id=STUB_DEPLOYMENT_ID,
-            bl_id=STUB_BLUEPRINT_ID,
-            inputs=SAMPLE_INPUTS_PATH)
+                            bl_path=SAMPLE_BLUEPRINT_PATH,
+                            dep_id=STUB_DEPLOYMENT_ID,
+                            bl_id=STUB_BLUEPRINT_ID,
+                            inputs=SAMPLE_INPUTS_PATH)
 
         self.invoke(apply_command)
 
@@ -194,15 +194,15 @@ class ApplyTest(CliCommandTest):
     @patch('cloudify_cli.commands.deployments.manager_update')
     def test_apply_call_to_update_with_dont_skip_reinstall(
             self,
-            deployment_update_mock, *_):
+            deployment_update_mock,
+            *_):
         self._mock_client_deployment_id(deployment_id=STUB_DEPLOYMENT_ID)
         apply_command = 'cfy apply {bl_path} {dep_id} -b {bl_id} ' \
                         '--dont-skip-reinstall --reinstall-list node_a' \
                         ' --reinstall-list node_b '.format(
-            bl_path=SAMPLE_BLUEPRINT_PATH,
-            dep_id=STUB_DEPLOYMENT_ID,
-            bl_id=STUB_BLUEPRINT_ID,
-            inputs=SAMPLE_INPUTS_PATH)
+                            bl_path=SAMPLE_BLUEPRINT_PATH,
+                            dep_id=STUB_DEPLOYMENT_ID,
+                            bl_id=STUB_BLUEPRINT_ID)
 
         self.invoke(apply_command)
 
