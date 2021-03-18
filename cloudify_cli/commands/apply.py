@@ -1,5 +1,5 @@
 ########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
+# Copyright (c) 2021 Cloudify.co Ltd. All rights reserved
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -167,7 +167,6 @@ def apply(ctx,
                    blueprint_path=None,
                    inputs=inputs,
                    reinstall_list=reinstall_list,
-                   # blueprint_filename=blueprint_filename,
                    skip_install=skip_install,
                    skip_uninstall=skip_uninstall,
                    skip_reinstall=not dont_skip_reinstall,
