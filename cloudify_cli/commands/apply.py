@@ -50,6 +50,7 @@ from . import blueprints, install, deployments
 @cfy.options.common_options
 @cfy.options.runtime_only_evaluation
 @cfy.options.auto_correct_types
+@cfy.options.reevaluate_active_statuses()
 # From install command
 @cfy.options.skip_plugins_validation
 @cfy.options.parameters
@@ -81,6 +82,7 @@ def apply(ctx,
           json_output,
           runtime_only_evaluation,
           auto_correct_types,
+          reevaluate_active_statuses,
           skip_plugins_validation,
           parameters,
           allow_custom_parameters,
@@ -182,5 +184,6 @@ def apply(ctx,
                    visibility=visibility,
                    validate=validate,
                    runtime_only_evaluation=runtime_only_evaluation,
-                   auto_correct_types=auto_correct_types
+                   auto_correct_types=auto_correct_types,
+                   reevaluate_active_statuses=reevaluate_active_statuses
                    )

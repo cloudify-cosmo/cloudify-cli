@@ -187,7 +187,8 @@ class ApplyTest(CliCommandTest):
             visibility='tenant',
             validate=False,
             runtime_only_evaluation=False,
-            auto_correct_types=False)
+            auto_correct_types=False,
+            reevaluate_active_statuses=False)
 
     @patch('cloudify_cli.commands.blueprints.upload')
     @patch('cloudify_cli.commands.deployments.manager_update')
@@ -226,4 +227,5 @@ class ApplyTest(CliCommandTest):
             visibility='tenant',
             validate=False,
             runtime_only_evaluation=False,
-            auto_correct_types=False)
+            auto_correct_types=False,
+            reevaluate_active_statuses=False)
