@@ -53,7 +53,7 @@ class PluginsTest(CliCommandTest):
 
     def setUp(self):
         super(PluginsTest, self).setUp()
-        self.client.license.list = Mock(return_value=[{'expired': False}])
+        self.client.license.check = Mock()
         self.use_manager()
 
     def test_plugins_list(self):

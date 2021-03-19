@@ -11,7 +11,7 @@ class SnapshotsTest(CliCommandTest):
 
     def setUp(self):
         super(SnapshotsTest, self).setUp()
-        self.client.license.list = Mock(return_value=[{'expired': False}])
+        self.client.license.check = Mock()
         self.use_manager()
 
     def test_snapshots_list(self):

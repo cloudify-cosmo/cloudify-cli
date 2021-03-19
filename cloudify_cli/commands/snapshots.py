@@ -158,7 +158,6 @@ def delete(snapshot_id, logger, client, tenant_name):
 @cfy.options.tenant_name(required=False, resource_name_for_help='snapshot')
 @cfy.pass_client()
 @cfy.pass_logger
-@utils.verify_active_license
 def upload(snapshot_path,
            snapshot_id,
            logger,
@@ -168,6 +167,7 @@ def upload(snapshot_path,
 
     `SNAPSHOT_PATH` is the path to the snapshot to upload.
     """
+    client.license.check()
     utils.explicit_tenant_name_message(tenant_name, logger)
     snapshot_id = snapshot_id or utils.generate_suffixed_id('snapshot')
 

@@ -99,7 +99,6 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.pass_context
-@utils.verify_active_license
 def upload(ctx,
            blueprint_path,
            blueprint_id,
@@ -120,6 +119,7 @@ def upload(ctx,
     retrieved from GitHub).
     Supported archive types are: zip, tar, tar.gz and tar.bz2
     """
+    client.license.check()
     utils.explicit_tenant_name_message(tenant_name, logger)
     processed_blueprint_path = blueprint.get(
         blueprint_path, blueprint_filename)
