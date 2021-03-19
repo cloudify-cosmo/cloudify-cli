@@ -73,7 +73,7 @@ class DeploymentUpdatesTest(CliCommandTest):
 
     def setUp(self):
         super(DeploymentUpdatesTest, self).setUp()
-        self.client.license.list = Mock(return_value=[{'expired': False}])
+        self.client.license.check = Mock()
         self.use_manager()
 
         self.client.deployment_updates.update = MagicMock()

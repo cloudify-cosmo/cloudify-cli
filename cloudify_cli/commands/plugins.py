@@ -111,7 +111,6 @@ def delete(plugin_id, force, logger, client, tenant_name):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-@utils.verify_active_license
 def upload(ctx,
            plugin_path,
            yaml_path,
@@ -126,6 +125,7 @@ def upload(ctx,
 
     `PLUGIN_PATH` is the path to wagon archive to upload.
     """
+    client.license.check()
     # Test whether the path is a valid URL. If it is, no point in doing local
     # validations - it will be validated on the server side anyway
     utils.explicit_tenant_name_message(tenant_name, logger)
@@ -164,8 +164,8 @@ def upload(ctx,
 @cfy.options.plugins_bundle_path
 @cfy.pass_client()
 @cfy.pass_logger
-@utils.verify_active_license
 def upload_caravan(client, logger, path):
+    client.license.check()
     if not path:
         logger.info("Starting upload of plugins bundle, "
                     "this may take few minutes to complete.")
