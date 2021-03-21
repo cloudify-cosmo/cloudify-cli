@@ -18,7 +18,10 @@ import os
 import shutil
 from datetime import datetime
 
+from cloudify_rest_client.exceptions import CloudifyClientError
+
 from ..cli import cfy, helptexts
+from ..exceptions import CloudifyCliError
 from ..blueprint import get_blueprint_path_and_id
 from . import blueprints, install, deployments
 
@@ -89,12 +92,12 @@ def apply(ctx,
           logger,
           client
           ):
-    """Apply command uses cfy install or deployment update depends on
+    """Apply command uses `cfy install` or `cfy deployments update` depends on
     existence of DEPLOYMENT_ID deployment.
 
     If the deployment exists, the deployment will be updated with the
     given blueprint.
-    otherwise the blueprint will installed (the deployment name will be
+    Otherwise the blueprint will installed (the deployment name will be
     DEPLOYMENT_ID).
     In both cases the blueprint is being uploaded to the manager.
 
@@ -109,8 +112,16 @@ def apply(ctx,
     `DEPLOYMENT_ID` is the deployment's id to install/update.
     """
     # check if deployment exists
-    if deployment_id not in [deployment.id for deployment in
-                             client.deployments.list()]:
+    try:
+        deployment = client.deployments.get(deployment_id=deployment_id)
+    except CloudifyClientError as e:
+        if e.status_code != 404:
+            raise CloudifyCliError(
+                'deployment %s not found and error code is not 404',
+                deployment_id)
+        deployment = None
+
+    if not deployment:
         ctx.invoke(
             install.manager,
             blueprint_path=blueprint_path,
@@ -131,8 +142,7 @@ def apply(ctx,
         )
     else:
         # Blueprint upload and deployment update
-        logger.info("Deployment {id} found, updating deployment.".format(
-            id=deployment_id))
+        logger.info("Deployment %s found, updating deployment.", deployment_id)
         update_bp_name = blueprint_id or deployment_id + '-' + datetime.now(
         ).strftime("%d-%m-%Y-%H-%M-%S")
         processed_blueprint_path, blueprint_id = get_blueprint_path_and_id(
