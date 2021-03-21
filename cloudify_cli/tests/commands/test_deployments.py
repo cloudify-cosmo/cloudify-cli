@@ -983,7 +983,7 @@ class DeploymentScheduleTest(CliCommandTest):
         assert call_args[0][0] == 'backup'
         assert call_args[1]['since'] == expected_since
         assert call_args[1]['until'] == expected_until
-        assert call_args[1]['frequency'] == '2d'
+        assert call_args[1]['recurrence'] == '2d'
 
     def test_deployment_schedule_create_with_schedule_name(self):
         self.client.execution_schedules.create = MagicMock(
@@ -997,7 +997,7 @@ class DeploymentScheduleTest(CliCommandTest):
         call_args = list(self.client.execution_schedules.create.call_args)
         assert call_args[0][0] == 'back_me_up'
         assert call_args[1]['since'] == expected_since
-        assert not call_args[1]['frequency']
+        assert not call_args[1]['recurrence']
         assert not call_args[1]['until']
 
     def test_deployment_schedule_create_missing_since(self):
@@ -1089,7 +1089,7 @@ class DeploymentScheduleTest(CliCommandTest):
             hour=14, minute=0, second=0, microsecond=0)
         call_args = list(self.client.execution_schedules.update.call_args)
         assert call_args[0][0] == 'sched-1'
-        assert call_args[1]['frequency'] == '3 weeks'
+        assert call_args[1]['recurrence'] == '3 weeks'
         assert call_args[1]['until'] == expected_until
 
     def test_deployment_schedule_enable(self):
