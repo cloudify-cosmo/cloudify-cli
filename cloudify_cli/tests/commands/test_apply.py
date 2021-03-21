@@ -34,7 +34,7 @@ class ApplyTest(CliCommandTest):
     def _mock_client_deployment_id(self, deployment_id):
         deployment_mock = Mock()
         deployment_mock.id = deployment_id
-        self.client.deployments.list = Mock(return_value=[deployment_mock])
+        self.client.deployments.get = Mock(return_value=deployment_mock)
 
     def test_apply_no_deployment_id_argument(self):
         outcome = self.invoke(
@@ -54,7 +54,7 @@ class ApplyTest(CliCommandTest):
 
     @patch('cloudify_cli.commands.install.manager')
     def test_apply_call_to_install_with_blueprint_id(self, install_mock):
-        self._mock_client_deployment_id(deployment_id='test-dep')
+        self.client.deployments.get = Mock(return_value=None)
         apply_command = 'cfy apply {bl_path} {dep_id} -b {bl_id} --inputs={' \
                         'inputs} '.format(bl_path=SAMPLE_BLUEPRINT_PATH,
                                           dep_id=STUB_DEPLOYMENT_ID,
