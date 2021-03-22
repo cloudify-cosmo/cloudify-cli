@@ -119,8 +119,7 @@ DONT_UPDATE_PLUGINS = (
 )
 
 FORCE_UPDATE = (
-    "Force running update in case a previous update on this deployment has "
-    "failed to finish successfully [This option is deprecated]"
+    "Force running the update also in case a deployment is used as a component"
 )
 FORCE_PLUGINS_UPDATE = (
     "Force running the update also in case a blueprint (for which the update "
