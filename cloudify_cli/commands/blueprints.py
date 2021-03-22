@@ -241,9 +241,7 @@ def delete(blueprint_id, force, logger, client, tenant_name):
 
 
 @cfy.command(name='list', short_help='List blueprints')
-@cfy.options.filter_id
-@cfy.options.labels_filter
-@cfy.options.attrs_filter('blueprint')
+@cfy.options.blueprint_filter_methods
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.common_options
@@ -256,9 +254,7 @@ def delete(blueprint_id, force, logger, client, tenant_name):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def manager_list(filter_id,
-                 labels_filter,
-                 attrs_filter,
+def manager_list(resource_filter_methods,
                  sort_by,
                  descending,
                  tenant_name,
@@ -281,7 +277,11 @@ def manager_list(filter_id,
 
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing all blueprints...')
-    filter_rules = filters_utils.get_filter_rules(labels_filter, attrs_filter)
+    filter_id = resource_filter_methods['filter_id']
+    filter_rules = filters_utils.get_filter_rules(
+        resource_filter_methods['labels_filter'],
+        resource_filter_methods['attrs_filter'])
+
     blueprints_list = client.blueprints.list(
         sort=sort_by,
         is_descending=descending,
@@ -660,8 +660,7 @@ def list_blueprints_filters(sort_by,
 
 @filters.command(name='create', short_help="Create a new blueprints' filter")
 @cfy.argument('filter-id', callback=cfy.validate_name)
-@cfy.options.labels_rules
-@cfy.options.attrs_rules('blueprint')
+@cfy.options.blueprint_filter_rules_types
 @cfy.options.visibility(mutually_exclusive_required=False)
 @cfy.options.tenant_name(required=False, resource_name_for_help='filter')
 @cfy.options.common_options
@@ -669,8 +668,7 @@ def list_blueprints_filters(sort_by,
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
 def create_blueprints_filter(filter_id,
-                             labels_rules,
-                             attrs_rules,
+                             filter_rules_types,
                              visibility,
                              tenant_name,
                              logger,
@@ -681,8 +679,8 @@ def create_blueprints_filter(filter_id,
     """
     filters_utils.create_filter('blueprints',
                                 filter_id,
-                                labels_rules,
-                                attrs_rules,
+                                filter_rules_types['labels_rules'],
+                                filter_rules_types['attrs_rules'],
                                 visibility,
                                 tenant_name,
                                 logger,
@@ -712,8 +710,7 @@ def get_blueprints_filter(filter_id, tenant_name, logger, client):
 @filters.command(name='update',
                  short_help="Update an existing blueprints' filter")
 @cfy.argument('filter-id', callback=cfy.validate_name)
-@cfy.options.labels_rules
-@cfy.options.attrs_rules('blueprint')
+@cfy.options.blueprint_filter_rules_types
 @cfy.options.update_visibility
 @cfy.options.tenant_name(required=False, resource_name_for_help='filter')
 @cfy.options.common_options
@@ -721,8 +718,7 @@ def get_blueprints_filter(filter_id, tenant_name, logger, client):
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
 def update_blueprints_filter(filter_id,
-                             labels_rules,
-                             attrs_rules,
+                             filter_rules_types,
                              visibility,
                              tenant_name,
                              logger,
@@ -733,8 +729,8 @@ def update_blueprints_filter(filter_id,
     """
     filters_utils.update_filter('blueprints',
                                 filter_id,
-                                labels_rules,
-                                attrs_rules,
+                                filter_rules_types['labels_rules'],
+                                filter_rules_types['attrs_rules'],
                                 visibility,
                                 tenant_name,
                                 logger,

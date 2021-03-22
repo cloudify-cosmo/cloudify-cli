@@ -188,9 +188,7 @@ def _print_single_update(deployment_update_dict,
 @cfy.command(name='list', short_help='List deployments [manager only]')
 @cfy.options.blueprint_id()
 @click.option('--group-id', '-g')
-@cfy.options.filter_id
-@cfy.options.labels_filter
-@cfy.options.attrs_filter('deployment')
+@cfy.options.deployment_filter_methods
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.tenant_name_for_list(
@@ -205,9 +203,7 @@ def _print_single_update(deployment_update_dict,
 @cfy.pass_logger
 def manager_list(blueprint_id,
                  group_id,
-                 filter_id,
-                 labels_filter,
-                 attrs_filter,
+                 resource_filter_methods,
                  sort_by,
                  descending,
                  all_tenants,
@@ -229,7 +225,11 @@ def manager_list(blueprint_id,
     else:
         logger.info('Listing all deployments...')
 
-    filter_rules = filters_utils.get_filter_rules(labels_filter, attrs_filter)
+    filter_id = resource_filter_methods['filter_id']
+    filter_rules = filters_utils.get_filter_rules(
+        resource_filter_methods['labels_filter'],
+        resource_filter_methods['attrs_filter'])
+
     deployments = client.deployments.list(sort=sort_by,
                                           is_descending=descending,
                                           filter_rules=filter_rules,
@@ -1618,8 +1618,7 @@ def list_deployments_filters(sort_by,
 
 @filters.command(name='create', short_help="Create a new deployments' filter")
 @cfy.argument('filter-id', callback=cfy.validate_name)
-@cfy.options.labels_rules
-@cfy.options.attrs_rules('deployment')
+@cfy.options.deployment_filter_rules_types
 @cfy.options.visibility(mutually_exclusive_required=False)
 @cfy.options.tenant_name(required=False, resource_name_for_help='filter')
 @cfy.options.common_options
@@ -1627,8 +1626,7 @@ def list_deployments_filters(sort_by,
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
 def create_deployments_filter(filter_id,
-                              labels_rules,
-                              attrs_rules,
+                              filter_rules_types,
                               visibility,
                               tenant_name,
                               logger,
@@ -1639,8 +1637,8 @@ def create_deployments_filter(filter_id,
     """
     filters_utils.create_filter('deployments',
                                 filter_id,
-                                labels_rules,
-                                attrs_rules,
+                                filter_rules_types['labels_rules'],
+                                filter_rules_types['attrs_rules'],
                                 visibility,
                                 tenant_name,
                                 logger,
@@ -1670,8 +1668,7 @@ def get_deployments_filter(filter_id, tenant_name, logger, client):
 @filters.command(name='update',
                  short_help="Update an existing deployments' filter")
 @cfy.argument('filter-id', callback=cfy.validate_name)
-@cfy.options.labels_rules
-@cfy.options.attrs_rules('deployment')
+@cfy.options.deployment_filter_rules_types
 @cfy.options.update_visibility
 @cfy.options.tenant_name(required=False, resource_name_for_help='filter')
 @cfy.options.common_options
@@ -1679,8 +1676,7 @@ def get_deployments_filter(filter_id, tenant_name, logger, client):
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
 def update_deployments_filter(filter_id,
-                              labels_rules,
-                              attrs_rules,
+                              filter_rules_types,
                               visibility,
                               tenant_name,
                               logger,
@@ -1691,8 +1687,8 @@ def update_deployments_filter(filter_id,
     """
     filters_utils.update_filter('deployments',
                                 filter_id,
-                                labels_rules,
-                                attrs_rules,
+                                filter_rules_types['labels_rules'],
+                                filter_rules_types['attrs_rules'],
                                 visibility,
                                 tenant_name,
                                 logger,

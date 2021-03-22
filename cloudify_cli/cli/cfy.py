@@ -1553,24 +1553,6 @@ class Options(object):
             help=helptexts.ASYNC_UPLOAD,
         )
 
-        self.labels_filter = click.option(
-            '--labels-filter',
-            callback=parse_labels_filter_rules,
-            help=helptexts.LABELS_FILTER_RULES
-        )
-
-        self.labels_rules = click.option(
-            '--labels-rules',
-            callback=parse_labels_filter_rules,
-            help=helptexts.LABELS_FILTER_RULES
-        )
-
-        self.filter_id = click.option(
-            '--filter-id',
-            callback=validate_name,
-            help=helptexts.FILTER_ID
-        )
-
         self.schedule_name = click.option(
             '-n',
             '--schedule-name',
@@ -2155,26 +2137,95 @@ class Options(object):
             help=help)
 
     @staticmethod
-    def attrs_filter(resource):
+    def _resource_filter_methods(f, resource):
         help_text = (helptexts.DEPLOYMENTS_ATTRS_FILTER_RULES if
                      resource == 'deployment' else
                      helptexts.BLUEPRINTS_ATTRS_FILTER_RULES)
-        return click.option(
+        filter_id = click.option(
+            '--filter-id',
+            callback=validate_name,
+            help=helptexts.FILTER_ID
+        )
+
+        labels_filter = click.option(
+            '--labels-filter',
+            callback=parse_labels_filter_rules,
+            help=helptexts.LABELS_FILTER_RULES
+        )
+
+        attrs_filter = click.option(
            '--attrs-filter',
            callback=parse_attributes_filter_rules,
            help=help_text
         )
 
+        def _resource_filter_methods_deco(f):
+            @wraps(f)
+            def _inner(*args, **kwargs):
+                filter_methods = {}
+                for arg_name, filter_method in [
+                        ('filter_id', 'filter_id'),
+                        ('labels_filter', 'labels_filter'),
+                        ('attrs_filter', 'attrs_filter')]:
+                    filter_methods[filter_method] = kwargs.pop(arg_name, None)
+
+                kwargs['resource_filter_methods'] = filter_methods
+                return f(*args, **kwargs)
+            return _inner
+
+        for arg in [attrs_filter, labels_filter, filter_id,
+                    _resource_filter_methods_deco]:
+            f = arg(f)
+
+        return f
+
+    def blueprint_filter_methods(self, f):
+        return self._resource_filter_methods(f, 'blueprint')
+
+    def deployment_filter_methods(self, f):
+        return self._resource_filter_methods(f, 'deployment')
+
     @staticmethod
-    def attrs_rules(resource):
+    def _filter_rules_types(f, resource):
         help_text = (helptexts.DEPLOYMENTS_ATTRS_FILTER_RULES if
                      resource == 'deployment' else
                      helptexts.BLUEPRINTS_ATTRS_FILTER_RULES)
-        return click.option(
+        attrs_rules = click.option(
             '--attrs-rules',
             callback=parse_attributes_filter_rules,
             help=help_text
         )
+
+        labels_rules = click.option(
+            '--labels-rules',
+            callback=parse_labels_filter_rules,
+            help=helptexts.LABELS_FILTER_RULES
+        )
+
+        def _filter_rules_types_deco(f):
+            @wraps(f)
+            def _inner(*args, **kwargs):
+                filter_rules_types = {}
+                for arg_name, filter_rules_type in [
+                        ('attrs_rules', 'attrs_rules'),
+                        ('labels_rules', 'labels_rules')]:
+                    filter_rules_types[filter_rules_type] = kwargs.pop(
+                        arg_name, None)
+
+                kwargs['filter_rules_types'] = filter_rules_types
+                return f(*args, **kwargs)
+            return _inner
+
+        for arg in [attrs_rules, labels_rules, _filter_rules_types_deco]:
+            f = arg(f)
+
+        return f
+
+    def blueprint_filter_rules_types(self, f):
+        return self._filter_rules_types(f, 'blueprint')
+
+    def deployment_filter_rules_types(self, f):
+        return self._filter_rules_types(f, 'deployment')
 
 
 options = Options()

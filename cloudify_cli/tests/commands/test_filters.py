@@ -1,8 +1,8 @@
 from mock import MagicMock
 
 from cloudify_cli.exceptions import CloudifyCliError
-from cloudify_cli.filters_utils import (BadLabelsFilterRule,
-                                        BadAttributesFilterRule)
+from cloudify_cli.filters_utils import (InvalidLabelsFilterRuleFormat,
+                                        InvalidAttributesFilterRuleFormat)
 
 from .mocks import MockListResponse
 from .test_base import CliCommandTest
@@ -182,11 +182,11 @@ class FiltersTest(CliCommandTest):
     def test_deployments_list_with_invalid_filters(self):
         self.invoke('cfy {} list --attrs-filter "e~1"'.format(self.resource),
                     err_str_segment='The attributes filter rule `e~1`',
-                    exception=BadAttributesFilterRule)
+                    exception=InvalidAttributesFilterRuleFormat)
 
         self.invoke('cfy {} list --labels-filter "e is"'.format(self.resource),
                     err_str_segment='The labels filter rule `e is`',
-                    exception=BadLabelsFilterRule)
+                    exception=InvalidLabelsFilterRuleFormat)
 
     def _test_missing_argument(self, command, argument):
         outcome = self.invoke(
@@ -211,13 +211,13 @@ class FiltersTest(CliCommandTest):
         self.invoke(
             err_labels_cmd,
             err_str_segment='The labels filter rule `e is`',
-            exception=BadLabelsFilterRule
+            exception=InvalidLabelsFilterRuleFormat
         )
 
         self.invoke(
             err_attrs_cmd,
             err_str_segment='The attributes filter rule `c is`',
-            exception=BadAttributesFilterRule
+            exception=InvalidAttributesFilterRuleFormat
         )
 
 
