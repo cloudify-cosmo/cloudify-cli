@@ -1622,7 +1622,9 @@ class Options(object):
             cls=MutuallyExclusiveOption,
             mutually_exclusive=['rrule'],
             required=False,
-            help=helptexts.SCHEDULE_WEEKDAYS
+            help=helptexts.SCHEDULE_WEEKDAYS,
+            multiple=True,
+            callback=self.parse_comma_separated,
         )
 
         self.rrule = click.option(
