@@ -32,6 +32,9 @@ from ..logger import (
     set_global_verbosity_level,
     DEFAULT_LOG_FILE,
     set_global_json_output)
+from ..filters_utils import (get_filter_rules,
+                             create_labels_filter_rules_list,
+                             create_attributes_filter_rules_list)
 
 
 CLICK_CONTEXT_SETTINGS = dict(
@@ -256,7 +259,7 @@ def parse_and_validate_label_to_delete(ctx, param, value):
         return {label_key: label_value}
 
 
-def parse_and_validate_filter_rules(ctx, param, value):
+def parse_labels_filter_rules(ctx, param, value):
     if value is None or ctx.resilient_parsing:
         return
 
@@ -264,17 +267,10 @@ def parse_and_validate_filter_rules(ctx, param, value):
         raise CloudifyValidationError(
             'ERROR: The `{0}` argument is empty'.format(param.name))
 
-    if any(pattern in value for pattern in
-           ['and', '!=', '=', 'is null', 'is not null']):
-        filter_rules_list = parse_filter_rules_list(value)
-        return {'_filter_rules': filter_rules_list}
-
-    else:
-        validate_param_value('The filter ID', value)
-        return {'_filter_id': value}
+    return create_labels_filter_rules_list(value)
 
 
-def parse_and_validate_filter_rules_list(ctx, param, value):
+def parse_attributes_filter_rules(ctx, param, value):
     if value is None or ctx.resilient_parsing:
         return
 
@@ -282,23 +278,7 @@ def parse_and_validate_filter_rules_list(ctx, param, value):
         raise CloudifyValidationError(
             'ERROR: The `{0}` argument is empty'.format(param.name))
 
-    return parse_filter_rules_list(value)
-
-
-def parse_filter_rules_list(raw_filter_rules):
-    filter_rules = []
-    for filter_rule in raw_filter_rules.split('and'):
-        if all(pattern not in filter_rule for pattern in
-               ['=', 'is null', 'is not null']):
-            raise CloudifyValidationError(
-                'ERROR: Filter rules must be one of: <key>=<value>, '
-                '<key>=[<value1>,<value2>,...], <key>!=<value>, '
-                '<key>!=[<value1>,<value2>,...], <key> is null, '
-                '<key> is not null')
-        filter_rules.append(filter_rule.strip().lower())
-        # The rest of the validation is done in the rest-service
-
-    return filter_rules
+    return create_attributes_filter_rules_list(value)
 
 
 def validate_name(ctx, param, value):
@@ -1574,18 +1554,6 @@ class Options(object):
             help=helptexts.ASYNC_UPLOAD,
         )
 
-        self.update_filter_rules = click.option(
-            '--filter-rules',
-            callback=parse_and_validate_filter_rules_list,
-            help=helptexts.FILTER_RULES
-        )
-
-        self.filter_rules = click.option(
-            '--filter', 'filter_rules',
-            callback=parse_and_validate_filter_rules,
-            help=helptexts.FILTER_RULES_OR_ID
-        )
-
         self.schedule_name = click.option(
             '-n',
             '--schedule-name',
@@ -2168,6 +2136,94 @@ class Options(object):
             default=False,
             required=False,
             help=help)
+
+    @staticmethod
+    def _resource_filter_methods(f, resource):
+        help_text = (helptexts.DEPLOYMENTS_ATTRS_FILTER_RULES if
+                     resource == 'deployment' else
+                     helptexts.BLUEPRINTS_ATTRS_FILTER_RULES)
+        filter_id = click.option(
+            '--filter-id',
+            callback=validate_name,
+            help=helptexts.FILTER_ID
+        )
+
+        labels_filter = click.option(
+            '--labels-filter',
+            callback=parse_labels_filter_rules,
+            help=helptexts.LABELS_FILTER_RULES
+        )
+
+        attrs_filter = click.option(
+           '--attrs-filter',
+           callback=parse_attributes_filter_rules,
+           help=help_text
+        )
+
+        def _resource_filter_methods_deco(f):
+            @wraps(f)
+            def _inner(*args, **kwargs):
+                filter_methods = {}
+                filter_rules = get_filter_rules(
+                    kwargs.pop('labels_filter', None),
+                    kwargs.pop('attrs_filter', None))
+                filter_methods['filter_id'] = kwargs.pop('filter_id', None)
+                filter_methods['filter_rules'] = filter_rules
+
+                kwargs['resource_filter_methods'] = filter_methods
+                return f(*args, **kwargs)
+            return _inner
+
+        for arg in [attrs_filter, labels_filter, filter_id,
+                    _resource_filter_methods_deco]:
+            f = arg(f)
+
+        return f
+
+    def blueprint_filter_methods(self, f):
+        return self._resource_filter_methods(f, 'blueprint')
+
+    def deployment_filter_methods(self, f):
+        return self._resource_filter_methods(f, 'deployment')
+
+    @staticmethod
+    def _filter_rules(f, resource):
+        help_text = (helptexts.DEPLOYMENTS_ATTRS_FILTER_RULES if
+                     resource == 'deployment' else
+                     helptexts.BLUEPRINTS_ATTRS_FILTER_RULES)
+        attrs_rules = click.option(
+            '--attrs-rules',
+            callback=parse_attributes_filter_rules,
+            help=help_text
+        )
+
+        labels_rules = click.option(
+            '--labels-rules',
+            callback=parse_labels_filter_rules,
+            help=helptexts.LABELS_FILTER_RULES
+        )
+
+        def _filter_rules_deco(f):
+            @wraps(f)
+            def _inner(*args, **kwargs):
+                filter_rules = get_filter_rules(
+                    kwargs.pop('labels_rules', None),
+                    kwargs.pop('attrs_rules', None))
+
+                kwargs['filter_rules'] = filter_rules
+                return f(*args, **kwargs)
+            return _inner
+
+        for arg in [attrs_rules, labels_rules, _filter_rules_deco]:
+            f = arg(f)
+
+        return f
+
+    def blueprint_filter_rules(self, f):
+        return self._filter_rules(f, 'blueprint')
+
+    def deployment_filter_rules(self, f):
+        return self._filter_rules(f, 'deployment')
 
 
 options = Options()
