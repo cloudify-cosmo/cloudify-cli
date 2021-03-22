@@ -32,7 +32,8 @@ from ..logger import (
     set_global_verbosity_level,
     DEFAULT_LOG_FILE,
     set_global_json_output)
-from ..filters_utils import (create_labels_filter_rules_list,
+from ..filters_utils import (get_filter_rules,
+                             create_labels_filter_rules_list,
                              create_attributes_filter_rules_list)
 
 
@@ -2163,11 +2164,11 @@ class Options(object):
             @wraps(f)
             def _inner(*args, **kwargs):
                 filter_methods = {}
-                for arg_name, filter_method in [
-                        ('filter_id', 'filter_id'),
-                        ('labels_filter', 'labels_filter'),
-                        ('attrs_filter', 'attrs_filter')]:
-                    filter_methods[filter_method] = kwargs.pop(arg_name, None)
+                filter_rules = get_filter_rules(
+                    kwargs.pop('labels_filter', None),
+                    kwargs.pop('attrs_filter', None))
+                filter_methods['filter_id'] = kwargs.pop('filter_id', None)
+                filter_methods['filter_rules'] = filter_rules
 
                 kwargs['resource_filter_methods'] = filter_methods
                 return f(*args, **kwargs)
@@ -2186,7 +2187,7 @@ class Options(object):
         return self._resource_filter_methods(f, 'deployment')
 
     @staticmethod
-    def _filter_rules_types(f, resource):
+    def _filter_rules(f, resource):
         help_text = (helptexts.DEPLOYMENTS_ATTRS_FILTER_RULES if
                      resource == 'deployment' else
                      helptexts.BLUEPRINTS_ATTRS_FILTER_RULES)
@@ -2202,30 +2203,27 @@ class Options(object):
             help=helptexts.LABELS_FILTER_RULES
         )
 
-        def _filter_rules_types_deco(f):
+        def _filter_rules_deco(f):
             @wraps(f)
             def _inner(*args, **kwargs):
-                filter_rules_types = {}
-                for arg_name, filter_rules_type in [
-                        ('attrs_rules', 'attrs_rules'),
-                        ('labels_rules', 'labels_rules')]:
-                    filter_rules_types[filter_rules_type] = kwargs.pop(
-                        arg_name, None)
+                filter_rules = get_filter_rules(
+                    kwargs.pop('labels_rules', None),
+                    kwargs.pop('attrs_rules', None))
 
-                kwargs['filter_rules_types'] = filter_rules_types
+                kwargs['filter_rules'] = filter_rules
                 return f(*args, **kwargs)
             return _inner
 
-        for arg in [attrs_rules, labels_rules, _filter_rules_types_deco]:
+        for arg in [attrs_rules, labels_rules, _filter_rules_deco]:
             f = arg(f)
 
         return f
 
-    def blueprint_filter_rules_types(self, f):
-        return self._filter_rules_types(f, 'blueprint')
+    def blueprint_filter_rules(self, f):
+        return self._filter_rules(f, 'blueprint')
 
-    def deployment_filter_rules_types(self, f):
-        return self._filter_rules_types(f, 'deployment')
+    def deployment_filter_rules(self, f):
+        return self._filter_rules(f, 'deployment')
 
 
 options = Options()

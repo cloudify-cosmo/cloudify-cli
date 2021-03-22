@@ -187,8 +187,7 @@ class AttrsFilterRule(FilterRule):
 
 def create_filter(resource_name,
                   filter_id,
-                  labels_rules,
-                  attrs_rules,
+                  filter_rules,
                   visibility,
                   tenant_name,
                   logger,
@@ -196,7 +195,6 @@ def create_filter(resource_name,
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
 
-    filter_rules = get_filter_rules(labels_rules, attrs_rules)
     try:
         new_filter = filters_client.create(filter_id, filter_rules, visibility)
     except InvalidFilterRule as e:
@@ -221,8 +219,7 @@ def get_filter(resource_name, filter_id, tenant_name, logger, client):
 
 def update_filter(resource_name,
                   filter_id,
-                  labels_rules,
-                  attrs_rules,
+                  filter_rules,
                   visibility,
                   tenant_name,
                   logger,
@@ -230,7 +227,6 @@ def update_filter(resource_name,
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
     graceful_msg = NOT_FOUND_MSG.format(resource_name, filter_id)
-    filter_rules = get_filter_rules(labels_rules, attrs_rules)
     with handle_client_error(404, graceful_msg, logger):
         try:
             new_filter = filters_client.update(filter_id,
