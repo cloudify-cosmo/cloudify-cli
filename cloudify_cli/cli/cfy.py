@@ -1628,7 +1628,7 @@ class Options(object):
         self.rrule = click.option(
             '--rrule',
             cls=MutuallyExclusiveOption,
-            mutually_exclusive=['frequency', 'count', 'weekdays'],
+            mutually_exclusive=['recurrence', 'count', 'weekdays'],
             required=False,
             help=helptexts.SCHEDULE_RRULE
         )
