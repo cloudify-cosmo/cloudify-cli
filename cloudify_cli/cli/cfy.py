@@ -1645,6 +1645,11 @@ class Options(object):
             help=helptexts.DEP_GROUP_FILTER_ID
         )
 
+        self.deployment_group_deployments_from_group = click.option(
+            '--from-group',
+            help=helptexts.DEP_GROUP_FROM_GROUP,
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
