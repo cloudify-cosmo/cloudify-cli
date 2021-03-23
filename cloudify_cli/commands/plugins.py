@@ -450,6 +450,7 @@ def set_visibility(plugin_id, visibility, logger, client):
                             'the blueprint [manager only]')
 @cfy.argument('blueprint-id', required=False)
 @cfy.options.all_blueprints
+@cfy.options.all_tenants
 @cfy.options.except_blueprints
 @cfy.options.plugin_names
 @cfy.options.plugins_to_latest
@@ -457,7 +458,9 @@ def set_visibility(plugin_id, visibility, logger, client):
 @cfy.options.plugins_to_minor
 @cfy.options.plugins_all_to_minor
 @cfy.options.common_options
-@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.tenant_name(required=False,
+                         mutually_exclusive_with=['all_tenants'],
+                         resource_name_for_help='plugin')
 @cfy.assert_manager_active()
 @cfy.options.include_logs
 @cfy.options.json_output
@@ -469,6 +472,7 @@ def set_visibility(plugin_id, visibility, logger, client):
                                         REEVALUATE_ACTIVE_STATUSES_PLUGINS)
 def update(blueprint_id,
            all_blueprints,
+           all_tenants,
            except_blueprints,
            plugin_names,
            to_latest,
@@ -541,6 +545,7 @@ def update(blueprint_id,
         while True:
             blueprints = client.blueprints.list(
                 sort='created_at',
+                _all_tenants=all_tenants,
                 _offset=pagination_offset,
             )
             for blueprint in blueprints:
