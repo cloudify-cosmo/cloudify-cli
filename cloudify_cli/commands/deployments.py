@@ -1135,9 +1135,18 @@ def groups_shrink(deployment_group_name, deployment_id, filter_id,
         filter_id=filter_id,
         deployments_from_group=from_group,
     )
+    removed_what_message = []
+    if deployment_id:
+        removed_what_message.append(', '.join(deployment_id))
+    if filter_id:
+        removed_what_message.append('given by filter {0}'.format(filter_id))
+    if from_group:
+        removed_what_message.append(
+            'belonging to the group {0}'.format(from_group))
     logger.info(
         'Unlinked deployments %s. Group %s now has %d deployments',
-        list(deployment_id), deployment_group_name, len(group.deployment_ids)
+        '; '.join(removed_what_message), deployment_group_name,
+        len(group.deployment_ids)
     )
 
 
