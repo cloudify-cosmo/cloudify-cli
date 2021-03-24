@@ -1103,15 +1103,17 @@ def groups_update(deployment_group_name, inputs, default_blueprint,
 @cfy.options.group_deployment_id
 @cfy.options.group_count
 @cfy.options.deployment_group_filter_id
+@cfy.options.deployment_group_deployments_from_group
 @cfy.pass_client()
 @cfy.pass_logger
 def groups_extend(deployment_group_name, deployment_id, count, filter_id,
-                  client, logger):
+                  from_group, client, logger):
     group = client.deployment_groups.add_deployments(
         deployment_group_name,
         filter_id=filter_id,
         count=count,
-        deployment_ids=deployment_id or None
+        deployment_ids=deployment_id or None,
+        deployments_from_group=from_group,
     )
     logger.info(
         'Group %s updated. It now contains %d deployments',
@@ -1123,18 +1125,29 @@ def groups_extend(deployment_group_name, deployment_id, count, filter_id,
 @click.argument('deployment-group-name')
 @cfy.options.group_deployment_id
 @cfy.options.deployment_group_filter_id
+@cfy.options.deployment_group_deployments_from_group
 @cfy.pass_client()
 @cfy.pass_logger
 def groups_shrink(deployment_group_name, deployment_id, filter_id,
-                  client, logger):
+                  from_group, client, logger):
     group = client.deployment_groups.remove_deployments(
         deployment_group_name,
         deployment_id,
-        filter_id=filter_id
+        filter_id=filter_id,
+        deployments_from_group=from_group,
     )
+    removed_what_message = []
+    if deployment_id:
+        removed_what_message.append(', '.join(deployment_id))
+    if filter_id:
+        removed_what_message.append('given by filter {0}'.format(filter_id))
+    if from_group:
+        removed_what_message.append(
+            'belonging to the group {0}'.format(from_group))
     logger.info(
         'Unlinked deployments %s. Group %s now has %d deployments',
-        list(deployment_id), deployment_group_name, len(group.deployment_ids)
+        '; '.join(removed_what_message), deployment_group_name,
+        len(group.deployment_ids)
     )
 
 
