@@ -55,6 +55,8 @@ from ..utils import (prettify_client_error,
                      get_deployment_environment_execution)
 from ..labels_utils import (add_labels,
                             delete_labels,
+                            get_output_resource_labels,
+                            get_printable_resource_labels,
                             list_labels,
                             modify_resource_labels)
 
@@ -97,7 +99,7 @@ MACHINE_READABLE_UPDATE_PREVIEW_COLUMNS = [
     'old_inputs', 'new_inputs', 'steps', 'modified_entity_ids',
     'installed_nodes', 'uninstalled_nodes', 'reinstalled_nodes',
     'explicit_reinstall', 'recursive_dependencies', 'schedules_to_delete',
-    'schedules_to_create'
+    'schedules_to_create', 'labels_to_create'
 ]
 MACHINE_READABLE_MODIFICATION_COLUMNS = [
     'ended_at', 'node_instances', 'deployment_id', 'blueprint_id',
@@ -143,6 +145,9 @@ def _print_single_update(deployment_update_dict,
             deployment_update_dict['uninstalled_nodes'].append(entity[1])
         elif step['action'] == 'modify':
             deployment_update_dict['reinstalled_nodes'].append(entity[1])
+    raw_new_labels = deployment_update_dict.get('labels_to_create', [])
+    new_labels = get_output_resource_labels(raw_new_labels)
+    deployment_update_dict['labels_to_create'] = new_labels
 
     if get_global_json_output():
         columns += MACHINE_READABLE_UPDATE_PREVIEW_COLUMNS
@@ -184,6 +189,9 @@ def _print_single_update(deployment_update_dict,
              'count', 'weekdays'],
             deployment_update_dict.get('schedules_to_create', []),
             'Then, will create the following schedules: ')
+        print_data(['key', 'values'],
+                   get_printable_resource_labels(new_labels),
+                   'The following labels will be created: ')
 
 
 @cfy.command(name='list', short_help='List deployments [manager only]')
