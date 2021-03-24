@@ -96,7 +96,8 @@ SCHEDULES_SUMMARY_FIELDS = (['deployment_id', 'workflow_id'] +
 MACHINE_READABLE_UPDATE_PREVIEW_COLUMNS = [
     'old_inputs', 'new_inputs', 'steps', 'modified_entity_ids',
     'installed_nodes', 'uninstalled_nodes', 'reinstalled_nodes',
-    'explicit_reinstall', 'recursive_dependencies'
+    'explicit_reinstall', 'recursive_dependencies', 'schedules_to_delete',
+    'schedules_to_create'
 ]
 MACHINE_READABLE_MODIFICATION_COLUMNS = [
     'ended_at', 'node_instances', 'deployment_id', 'blueprint_id',
