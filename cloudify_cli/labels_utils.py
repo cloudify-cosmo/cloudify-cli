@@ -5,6 +5,10 @@ from .utils import explicit_tenant_name_message
 from .logger import CloudifyJSONEncoder, get_global_json_output, output
 
 
+from cloudify_rest_client.utils import (get_resource_labels,
+                                        get_printable_resource_labels)
+
+
 def modify_resource_labels(resource_list):
     for element in resource_list:
         resource_labels_list = []
@@ -24,21 +28,13 @@ def list_labels(resource_id,
     explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing labels of %s %s...', resource_name, resource_id)
 
-    resource_labels = {}
     raw_resource_labels = resource_client.get(resource_id)['labels']
-    for label in raw_resource_labels:
-        label_key, label_value = label['key'], label['value']
-        resource_labels.setdefault(label_key, [])
-        resource_labels[label_key].append(label_value)
-
-    printable_resource_labels = [
-        {'key': resource_label_key, 'values': resource_label_values} for
-        resource_label_key, resource_label_values in resource_labels.items()
-    ]
-
+    resource_labels = get_resource_labels(raw_resource_labels)
     if get_global_json_output():
         output(json.dumps(resource_labels, cls=CloudifyJSONEncoder))
     else:
+        printable_resource_labels = get_printable_resource_labels(
+            resource_labels)
         print_data(['key', 'values'],
                    printable_resource_labels,
                    '{0} labels'.format(resource_name.capitalize()),
