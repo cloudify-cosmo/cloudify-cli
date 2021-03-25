@@ -482,7 +482,7 @@ def summary(target_field, sub_field, group_id, logger, client, tenant_name,
         _target_field=target_field,
         _sub_field=sub_field,
         _all_tenants=all_tenants,
-        execution_group_id=group_id
+        execution_group_id=group_id,
     )
 
     columns, items = structure_summary_results(
