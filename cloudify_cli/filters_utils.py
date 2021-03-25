@@ -61,7 +61,7 @@ class FilterRule(dict):
         super(FilterRule, self).__init__()
         self['key'] = key
         self['values'] = values
-        self['operator'] = OPERATOR_MAPPING[operator]
+        self['operator'] = operator
         self['type'] = filter_rule_type
 
     @classmethod
@@ -119,21 +119,21 @@ class LabelsFilterRule(FilterRule):
     def from_string(cls, str_filter_rule):
         if '!=' in str_filter_rule:
             key, values = cls._parse_filter_rule(str_filter_rule, '!=')
-            return cls(key, values, '!=')
+            return cls(key, values, OPERATOR_MAPPING['!='])
 
         elif '=' in str_filter_rule:
             key, values = cls._parse_filter_rule(str_filter_rule, '=')
-            return cls(key, values, '=')
+            return cls(key, values, OPERATOR_MAPPING['='])
 
         elif 'null' in str_filter_rule:
             match_null = re.match(r'(\S+) is null', str_filter_rule)
             match_not_null = re.match(r'(\S+) is not null', str_filter_rule)
             if match_null:
                 key = match_null.group(1).lower()
-                return cls(key, [], 'is null')
+                return cls(key, [], OPERATOR_MAPPING['is null'])
             elif match_not_null:
                 key = match_not_null.group(1).lower()
-                return cls(key, [], 'is not null')
+                return cls(key, [], OPERATOR_MAPPING['is not null'])
             else:
                 raise cls.format_exception(str_filter_rule)
 
@@ -161,13 +161,13 @@ class AttrsFilterRule(FilterRule):
                          'starts-with', 'ends-with']:
             if operator in str_filter_rule:
                 key, values = cls._parse_filter_rule(str_filter_rule, operator)
-                return cls(key, values, operator)
+                return cls(key, values, OPERATOR_MAPPING[operator])
 
         # None of the operators in the list is in str_filter_rule
         match_not_empty = re.match(r'(\S+) is not empty', str_filter_rule)
         if match_not_empty:
             key = match_not_empty.group(1).lower()
-            return cls(key, [], 'is not empty')
+            return cls(key, [], OPERATOR_MAPPING['is not empty'])
 
         else:
             raise cls.format_exception(str_filter_rule)
