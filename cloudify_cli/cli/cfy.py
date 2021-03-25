@@ -1650,6 +1650,11 @@ class Options(object):
             help=helptexts.DEP_GROUP_FROM_GROUP,
         )
 
+        self.group_id_filter = click.option(
+            '--group-id',
+            help=helptexts.GROUP_ID_FILTER,
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 

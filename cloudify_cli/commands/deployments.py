@@ -788,10 +788,11 @@ def local_outputs(blueprint_id, logger):
               default=None, required=False)
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='summary')
+@cfy.options.group_id_filter
 @cfy.options.all_tenants
 @cfy.pass_logger
 @cfy.pass_client()
-def summary(target_field, sub_field, logger, client, tenant_name,
+def summary(target_field, sub_field, group_id, logger, client, tenant_name,
             all_tenants):
     """Retrieve summary of deployments, e.g. a count of each deployment with
     the same blueprint ID.
@@ -806,6 +807,7 @@ def summary(target_field, sub_field, logger, client, tenant_name,
         _target_field=target_field,
         _sub_field=sub_field,
         _all_tenants=all_tenants,
+        deployment_group_id=group_id,
     )
 
     columns, items = structure_summary_results(
