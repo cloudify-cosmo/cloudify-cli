@@ -303,19 +303,68 @@ def delete(profile_name, logger):
     logger.info('Profile deleted')
 
 
-def set_profile(profile_name,
-                manager_username,
-                manager_password,
-                manager_tenant,
-                ssh_user,
-                ssh_key,
-                ssh_port,
-                ssl,
-                rest_certificate,
-                rest_port,
-                kerberos_env,
-                skip_credentials_validation,
-                logger):
+def _set_profile_ssl(ssl, rest_port, logger):
+    if ssl is None:
+        raise CloudifyCliError('Internal error: SSL must be either `on` or '
+                               '`off`')
+
+    protocol, port = _get_ssl_protocol_and_port(ssl)
+    if rest_port is not None:
+        port = rest_port
+    if protocol == constants.SECURED_REST_PROTOCOL:
+        logger.info('Enabling SSL in the local profile')
+    else:
+        logger.info('Disabling SSL in the local profile')
+
+    env.profile.rest_port = port
+    env.profile.rest_protocol = protocol
+
+    manager_cluster = env.profile.cluster.get(CloudifyNodeType.MANAGER)
+    if manager_cluster:
+        missing_certs = []
+        for node in manager_cluster:
+            node['rest_port'] = port
+            node['rest_protocol'] = protocol
+            logger.info('Enabling SSL for %(host_ip)s', node)
+            if not node.get('cert'):
+                missing_certs.append(node['hostname'])
+        if missing_certs:
+            logger.warning('The following cluster nodes have no certificate '
+                           'set: %s', ', '.join(missing_certs))
+            logger.warning('If required, set the certificates for those '
+                           'nodes using `cfy profiles set-cluster`')
+
+
+@profiles.command(
+    name='set',
+    short_help='Set name/manager username/password/tenant in current profile')
+@cfy.options.profile_name
+@cfy.options.manager_username
+@cfy.options.manager_password
+@cfy.options.manager_tenant()
+@cfy.options.ssh_user
+@cfy.options.ssh_key
+@cfy.options.ssh_port
+@cfy.options.ssl_state
+@cfy.options.rest_certificate
+@cfy.options.rest_port
+@cfy.options.kerberos_env
+@cfy.options.skip_credentials_validation
+@cfy.options.common_options
+@cfy.pass_logger
+def set_cmd(profile_name,
+            manager_username,
+            manager_password,
+            manager_tenant,
+            ssh_user,
+            ssh_key,
+            ssh_port,
+            ssl,
+            rest_certificate,
+            rest_port,
+            kerberos_env,
+            skip_credentials_validation,
+            logger):
     """Set the profile name, manager username and/or password and/or tenant
     and/or ssl state (on/off) in the *current* profile
     """
@@ -385,83 +434,6 @@ def set_profile(profile_name,
         env.set_active_profile(profile_name)
         env.delete_profile(old_name)
     logger.info('Settings saved successfully')
-
-
-def _set_profile_ssl(ssl, rest_port, logger):
-    if ssl is None:
-        raise CloudifyCliError('Internal error: SSL must be either `on` or '
-                               '`off`')
-
-    protocol, port = _get_ssl_protocol_and_port(ssl)
-    if rest_port is not None:
-        port = rest_port
-    if protocol == constants.SECURED_REST_PROTOCOL:
-        logger.info('Enabling SSL in the local profile')
-    else:
-        logger.info('Disabling SSL in the local profile')
-
-    env.profile.rest_port = port
-    env.profile.rest_protocol = protocol
-
-    manager_cluster = env.profile.cluster.get(CloudifyNodeType.MANAGER)
-    if manager_cluster:
-        missing_certs = []
-        for node in manager_cluster:
-            node['rest_port'] = port
-            node['rest_protocol'] = protocol
-            logger.info('Enabling SSL for %(host_ip)s', node)
-            if not node.get('cert'):
-                missing_certs.append(node['hostname'])
-        if missing_certs:
-            logger.warning('The following cluster nodes have no certificate '
-                           'set: %s', ', '.join(missing_certs))
-            logger.warning('If required, set the certificates for those '
-                           'nodes using `cfy profiles set-cluster`')
-
-
-@profiles.command(
-    name='set',
-    short_help='Set name/manager username/password/tenant in current profile')
-@cfy.options.profile_name
-@cfy.options.manager_username
-@cfy.options.manager_password
-@cfy.options.manager_tenant()
-@cfy.options.ssh_user
-@cfy.options.ssh_key
-@cfy.options.ssh_port
-@cfy.options.ssl_state
-@cfy.options.rest_certificate
-@cfy.options.rest_port
-@cfy.options.kerberos_env
-@cfy.options.skip_credentials_validation
-@cfy.options.common_options
-@cfy.pass_logger
-def set_cmd(profile_name,
-            manager_username,
-            manager_password,
-            manager_tenant,
-            ssh_user,
-            ssh_key,
-            ssh_port,
-            ssl,
-            rest_certificate,
-            rest_port,
-            kerberos_env,
-            skip_credentials_validation,
-            logger):
-    return set_profile(profile_name,
-                       manager_username,
-                       manager_password,
-                       manager_tenant,
-                       ssh_user,
-                       ssh_key,
-                       ssh_port,
-                       _get_ssl_indication(ssl),
-                       rest_certificate,
-                       rest_port,
-                       get_kerberos_indication(kerberos_env),
-                       skip_credentials_validation,
-                       logger)
 
 
 @profiles.command(
