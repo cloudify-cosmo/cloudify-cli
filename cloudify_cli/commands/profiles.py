@@ -213,13 +213,13 @@ def _switch_profile(manager_ip, profile_name, logger, **kwargs):
     provided_options = [key for key, value in kwargs.items() if value]
 
     if any(provided_options):
-        logger.warning('Profile {0} already exists. '
-                       'The passed in options are ignored: {1}. '
-                       'To update the profile, use `cfy profiles set`'
-                       .format(profile_name, ', '.join(provided_options)))
+        logger.warning('Profile %s already exists. '
+                       'The passed in options are ignored: %s. '
+                       'To update the profile, use `cfy profiles set`',
+                       profile_name, ', '.join(provided_options))
 
     env.set_active_profile(profile_name)
-    logger.info('Using manager {0}'.format(profile_name))
+    logger.info('Using manager %s', profile_name)
 
 
 def _create_profile(
@@ -248,9 +248,8 @@ def _create_profile(
     # kerberos_env default is `False` and not `None`
     kerberos_env = get_kerberos_indication(kerberos_env) or False
 
-    logger.info('Attempting to connect to {0} through port {1}, using {2} '
-                '(SSL mode: {3})...'.format(manager_ip, rest_port,
-                                            rest_protocol, ssl))
+    logger.info('Attempting to connect to %s through port %s, using %s '
+                '(SSL mode: %s)...', manager_ip, rest_port, rest_protocol, ssl)
 
     # First, attempt to get the provider from the manager - should it fail,
     # the manager's profile directory won't be created
@@ -267,8 +266,7 @@ def _create_profile(
         skip_credentials_validation
     )
     init.init_manager_profile(profile_name=profile_name)
-    logger.info('Using manager {0} with port {1}'.format(
-        manager_ip, rest_port))
+    logger.info('Using manager %s with port %s', manager_ip, rest_port)
     _set_profile_context(
         profile_name,
         provider_context,
@@ -297,7 +295,7 @@ def delete(profile_name, logger):
 
     `PROFILE_NAME` is the IP of the manager the profile manages.
     """
-    logger.info('Deleting profile {0}...'.format(profile_name))
+    logger.info('Deleting profile %s...', profile_name)
     if not env.is_profile_exists(profile_name):
         raise CloudifyCliError('Profile {0} does not exist'
                                .format(profile_name))
@@ -353,32 +351,31 @@ def set_profile(profile_name,
         old_name = env.profile.profile_name
         env.profile.profile_name = profile_name
     if manager_username:
-        logger.info('Setting username to `{0}`'.format(manager_username))
+        logger.info('Setting username to `%s`', manager_username)
         env.profile.manager_username = manager_username
     if manager_password:
-        logger.info('Setting password to `{0}`'.format(manager_password))
+        logger.info('Setting password to `%s`', manager_password)
         env.profile.manager_password = manager_password
     if manager_tenant:
-        logger.info('Setting tenant to `{0}`'.format(manager_tenant))
+        logger.info('Setting tenant to `%s`', manager_tenant)
         env.profile.manager_tenant = manager_tenant
     if rest_certificate:
-        logger.info(
-            'Setting rest certificate to `{0}`'.format(rest_certificate))
+        logger.info('Setting rest certificate to `%s`', rest_certificate)
         env.profile.rest_certificate = rest_certificate
     if rest_port:
-        logger.info('Setting rest port to `{0}'.format(rest_port))
+        logger.info('Setting rest port to `%s', rest_port)
         env.profile.rest_port = rest_port
     if ssh_user:
-        logger.info('Setting ssh user to `{0}`'.format(ssh_user))
+        logger.info('Setting ssh user to `%s`', ssh_user)
         env.profile.ssh_user = ssh_user
     if ssh_key:
-        logger.info('Setting ssh key to `{0}`'.format(ssh_key))
+        logger.info('Setting ssh key to `%s`', ssh_key)
         env.profile.ssh_key = ssh_key
     if ssh_port:
-        logger.info('Setting ssh port to `{0}`'.format(ssh_port))
+        logger.info('Setting ssh port to `%s`', ssh_port)
         env.profile.ssh_port = ssh_port
     if kerberos_env is not None:
-        logger.info('Setting kerberos_env to `{0}`'.format(kerberos_env))
+        logger.info('Setting kerberos_env to `%s`', kerberos_env)
         env.profile.kerberos_env = kerberos_env
     if ssl is not None:
         _set_profile_ssl(ssl, rest_port, logger)
@@ -412,12 +409,12 @@ def _set_profile_ssl(ssl, rest_port, logger):
         for node in manager_cluster:
             node['rest_port'] = port
             node['rest_protocol'] = protocol
-            logger.info('Enabling SSL for {0}'.format(node['host_ip']))
+            logger.info('Enabling SSL for %(host_ip)s', node)
             if not node.get('cert'):
                 missing_certs.append(node['hostname'])
         if missing_certs:
             logger.warning('The following cluster nodes have no certificate '
-                           'set: {0}'.format(', '.join(missing_certs)))
+                           'set: %s', ', '.join(missing_certs))
             logger.warning('If required, set the certificates for those '
                            'nodes using `cfy profiles set-cluster`')
 
@@ -511,15 +508,14 @@ def set_cluster(cluster_node_name,
     ]:
         if source:
             changed_node[target] = source
-            logger.info('Node {0}: setting {1} to `{2}`'
-                        .format(cluster_node_name, label, source))
+            logger.info('Node %s: setting %s to `%s`',
+                        cluster_node_name, label, source)
     if rest_certificate:
         changed_node['cert'] = rest_certificate
         changed_node['trust_all'] = False
         changed_node['rest_protocol'] = 'https'
-        logger.info('Node {0}: setting rest-certificate to `{1}` and enabling '
-                    'certificate verification'
-                    .format(cluster_node_name, source))
+        logger.info('Node %s: setting rest-certificate to `%s` and enabling '
+                    'certificate verification', cluster_node_name, source)
     env.profile.save()
     logger.info('Settings saved successfully')
 
@@ -628,7 +624,7 @@ def export_profiles(include_keys, output_path, logger):
         os.path.join(os.getcwd(), 'cfy-profiles.tar.gz')
 
     # TODO: Copy exported ssh keys to each profile's directory
-    logger.info('Exporting profiles to {0}...'.format(destination))
+    logger.info('Exporting profiles to %s...', destination)
     if include_keys:
         for profile in env.get_profile_names():
             _backup_ssh_key(profile)
@@ -658,7 +654,7 @@ def import_profiles(archive_path, include_keys, logger):
     _assert_is_tarfile(archive_path)
     _assert_profiles_archive(archive_path)
 
-    logger.info('Importing profiles from {0}...'.format(archive_path))
+    logger.info('Importing profiles from %s...', archive_path)
     utils.untar(archive_path, os.path.dirname(env.PROFILES_DIR))
 
     if include_keys:
@@ -669,8 +665,8 @@ def import_profiles(archive_path, include_keys, logger):
             logger.info("The profiles archive you provided contains ssh keys "
                         "for one or more profiles. To restore those keys to "
                         "their original locations, you can use the "
-                        "`--include-keys flag or copy them manually from {0} "
-                        .format(EXPORTED_SSH_KEYS_DIR))
+                        "`--include-keys flag or copy them manually from %s ",
+                        EXPORTED_SSH_KEYS_DIR)
     logger.info('Import complete!')
     logger.info('You can list profiles using `cfy profiles list`')
 
@@ -716,14 +712,13 @@ def _move_ssh_key(profile, logger, is_backup):
         if is_backup:
             if not os.path.isdir(EXPORTED_SSH_KEYS_DIR):
                 os.makedirs(EXPORTED_SSH_KEYS_DIR)
-            logger.info('Copying ssh key {0} to {1}...'.format(
-                key_filepath, backup_path))
+            logger.info('Copying ssh key %s to %s...',
+                        key_filepath, backup_path)
             shutil.copy2(key_filepath, backup_path)
         else:
             if os.path.isfile(backup_path):
-                logger.info(
-                    'Restoring ssh key for profile {0} to {1}...'.format(
-                        profile, key_filepath))
+                logger.info('Restoring ssh key for profile %s to %s...',
+                            profile, key_filepath)
                 shutil.move(backup_path, key_filepath)
 
 
