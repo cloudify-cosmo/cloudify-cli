@@ -5,7 +5,7 @@ description: >
     with a local `cfy blueprints validate`
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/5.1.4.dev1/types.yaml
+  - http://www.getcloudify.org/spec/cloudify/5.1.3/types.yaml
   - ns--blueprint:test
 
 node_templates:
