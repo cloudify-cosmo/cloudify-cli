@@ -44,7 +44,6 @@ from cloudify_cli.constants import DEFAULT_TENANT_NAME
 from cloudify_cli.labels_utils import labels_list_to_set
 from cloudify_cli.exceptions import CloudifyCliError, CloudifyValidationError
 
-
 from ... import exceptions
 from .mocks import MockListResponse
 from .test_base import CliCommandTest
@@ -73,7 +72,7 @@ class DeploymentUpdatesTest(CliCommandTest):
 
     def setUp(self):
         super(DeploymentUpdatesTest, self).setUp()
-        self.client.license.list = Mock(return_value=[{'expired': False}])
+        self.client.license.check = Mock()
         self.use_manager()
 
         self.client.deployment_updates.update = MagicMock()
@@ -818,21 +817,6 @@ class DeploymentsTest(CliCommandTest):
             self.assertTrue(found, 'String ''{0}'' not found in outcome {1}'
                             .format(output, outcome))
 
-    def test_deployments_list_with_filters(self):
-        self.client.deployments.list = MagicMock(
-            return_value=MockListResponse()
-        )
-        self.invoke('cfy deployments list --filter filter')
-        self.invoke('cfy deployments list --filter "a=b and c!=[d,f]"')
-
-    def test_deployments_list_with_invalid_filters(self):
-        self.invoke('cfy deployments list --filter a%d',
-                    err_str_segment='The filter ID contains illegal',
-                    exception=CloudifyValidationError)
-        self.invoke('cfy deployments list --filter "a=b and e is nu"',
-                    err_str_segment='Filter rules must be one of',
-                    exception=CloudifyValidationError)
-
 
 class DeploymentModificationsTest(CliCommandTest):
     def _mock_wait_for_executions(self, value):
@@ -983,7 +967,7 @@ class DeploymentScheduleTest(CliCommandTest):
         assert call_args[0][0] == 'backup'
         assert call_args[1]['since'] == expected_since
         assert call_args[1]['until'] == expected_until
-        assert call_args[1]['frequency'] == '2d'
+        assert call_args[1]['recurrence'] == '2d'
 
     def test_deployment_schedule_create_with_schedule_name(self):
         self.client.execution_schedules.create = MagicMock(
@@ -997,7 +981,7 @@ class DeploymentScheduleTest(CliCommandTest):
         call_args = list(self.client.execution_schedules.create.call_args)
         assert call_args[0][0] == 'back_me_up'
         assert call_args[1]['since'] == expected_since
-        assert not call_args[1]['frequency']
+        assert not call_args[1]['recurrence']
         assert not call_args[1]['until']
 
     def test_deployment_schedule_create_missing_since(self):
@@ -1089,7 +1073,7 @@ class DeploymentScheduleTest(CliCommandTest):
             hour=14, minute=0, second=0, microsecond=0)
         call_args = list(self.client.execution_schedules.update.call_args)
         assert call_args[0][0] == 'sched-1'
-        assert call_args[1]['frequency'] == '3 weeks'
+        assert call_args[1]['recurrence'] == '3 weeks'
         assert call_args[1]['until'] == expected_until
 
     def test_deployment_schedule_enable(self):

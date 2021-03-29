@@ -24,25 +24,32 @@ def list_labels(resource_id,
     explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing labels of %s %s...', resource_name, resource_id)
 
-    resource_labels = {}
     raw_resource_labels = resource_client.get(resource_id)['labels']
+    resource_labels = get_output_resource_labels(raw_resource_labels)
+    if get_global_json_output():
+        output(json.dumps(resource_labels, cls=CloudifyJSONEncoder))
+    else:
+        print_data(['key', 'values'],
+                   get_printable_resource_labels(resource_labels),
+                   '{0} labels'.format(resource_name.capitalize()),
+                   max_width=50)
+
+
+def get_output_resource_labels(raw_resource_labels):
+    resource_labels = {}
     for label in raw_resource_labels:
         label_key, label_value = label['key'], label['value']
         resource_labels.setdefault(label_key, [])
         resource_labels[label_key].append(label_value)
 
-    printable_resource_labels = [
+    return resource_labels
+
+
+def get_printable_resource_labels(resource_labels):
+    return [
         {'key': resource_label_key, 'values': resource_label_values} for
         resource_label_key, resource_label_values in resource_labels.items()
     ]
-
-    if get_global_json_output():
-        output(json.dumps(resource_labels, cls=CloudifyJSONEncoder))
-    else:
-        print_data(['key', 'values'],
-                   printable_resource_labels,
-                   '{0} labels'.format(resource_name.capitalize()),
-                   max_width=50)
 
 
 def add_labels(resource_id,

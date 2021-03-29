@@ -111,7 +111,6 @@ def delete(plugin_id, force, logger, client, tenant_name):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-@utils.verify_active_license
 def upload(ctx,
            plugin_path,
            yaml_path,
@@ -126,6 +125,7 @@ def upload(ctx,
 
     `PLUGIN_PATH` is the path to wagon archive to upload.
     """
+    client.license.check()
     # Test whether the path is a valid URL. If it is, no point in doing local
     # validations - it will be validated on the server side anyway
     utils.explicit_tenant_name_message(tenant_name, logger)
@@ -164,8 +164,8 @@ def upload(ctx,
 @cfy.options.plugins_bundle_path
 @cfy.pass_client()
 @cfy.pass_logger
-@utils.verify_active_license
 def upload_caravan(client, logger, path):
+    client.license.check()
     if not path:
         logger.info("Starting upload of plugins bundle, "
                     "this may take few minutes to complete.")
@@ -450,6 +450,7 @@ def set_visibility(plugin_id, visibility, logger, client):
                             'the blueprint [manager only]')
 @cfy.argument('blueprint-id', required=False)
 @cfy.options.all_blueprints
+@cfy.options.all_tenants
 @cfy.options.except_blueprints
 @cfy.options.plugin_names
 @cfy.options.plugins_to_latest
@@ -457,7 +458,9 @@ def set_visibility(plugin_id, visibility, logger, client):
 @cfy.options.plugins_to_minor
 @cfy.options.plugins_all_to_minor
 @cfy.options.common_options
-@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.tenant_name(required=False,
+                         mutually_exclusive_with=['all_tenants'],
+                         resource_name_for_help='plugin')
 @cfy.assert_manager_active()
 @cfy.options.include_logs
 @cfy.options.json_output
@@ -469,6 +472,7 @@ def set_visibility(plugin_id, visibility, logger, client):
                                         REEVALUATE_ACTIVE_STATUSES_PLUGINS)
 def update(blueprint_id,
            all_blueprints,
+           all_tenants,
            except_blueprints,
            plugin_names,
            to_latest,
@@ -484,12 +488,11 @@ def update(blueprint_id,
            auto_correct_types,
            reevaluate_active_statuses):
     """Update the plugins of all the deployments of the given blueprint
-    or any blueprint in case `--all` flag was used instead of providing
-    a BLUEPRINT_ID.  This will update the deployments one by one until
-    all succeeded.
+    or any blueprint in case `--all-blueprints` flag was used instead of
+    providing a BLUEPRINT_ID.  This will update the deployments one by one
+    until all succeeded.
 
     `BLUEPRINT_ID`   the blueprint's ID to perform the plugins update with.
-
     `PLUGIN_NAMES`   is the list of the plugins to be updated (if empty,
                      all plugins will).
     `TO_LATEST`      list of plugin names to be upgraded to the latest version.
@@ -505,11 +508,11 @@ def update(blueprint_id,
             (not blueprint_id and not all_blueprints)):
         raise CloudifyValidationError(
             'ERROR: Invalid command syntax. Either provide '
-            'a BLUEPRINT_ID or use --all flag.')
+            'a BLUEPRINT_ID or use --all-blueprints flag.')
     if except_blueprints and not all_blueprints:
         raise CloudifyValidationError(
             'ERROR: Invalid command syntax. Cannot list blueprints '
-            'exceptions unless used with --all flag.')
+            'exceptions unless used with --all-blueprints flag.')
     all_to_minor = bool(all_to_minor)
     if all_to_latest is None:
         all_to_latest = not all_to_minor
@@ -542,6 +545,7 @@ def update(blueprint_id,
         while True:
             blueprints = client.blueprints.list(
                 sort='created_at',
+                _all_tenants=all_tenants,
                 _offset=pagination_offset,
             )
             for blueprint in blueprints:

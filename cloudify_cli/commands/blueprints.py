@@ -40,6 +40,7 @@ from ..labels_utils import (add_labels,
                             delete_labels,
                             list_labels,
                             modify_resource_labels)
+from .. import filters_utils
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 
@@ -99,7 +100,6 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.pass_context
-@utils.verify_active_license
 def upload(ctx,
            blueprint_path,
            blueprint_id,
@@ -120,6 +120,7 @@ def upload(ctx,
     retrieved from GitHub).
     Supported archive types are: zip, tar, tar.gz and tar.bz2
     """
+    client.license.check()
     utils.explicit_tenant_name_message(tenant_name, logger)
     processed_blueprint_path = blueprint.get(
         blueprint_path, blueprint_filename)
@@ -240,9 +241,9 @@ def delete(blueprint_id, force, logger, client, tenant_name):
 
 
 @cfy.command(name='list', short_help='List blueprints')
+@cfy.options.blueprint_filter_methods
 @cfy.options.sort_by()
 @cfy.options.descending
-@cfy.options.filter_rules
 @cfy.options.common_options
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='blueprint')
@@ -253,9 +254,9 @@ def delete(blueprint_id, force, logger, client, tenant_name):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def manager_list(sort_by,
+def manager_list(resource_filter_methods,
+                 sort_by,
                  descending,
-                 filter_rules,
                  tenant_name,
                  all_tenants,
                  search,
@@ -276,6 +277,9 @@ def manager_list(sort_by,
 
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing all blueprints...')
+    filter_id = resource_filter_methods['filter_id']
+    filter_rules = resource_filter_methods['filter_rules']
+
     blueprints_list = client.blueprints.list(
         sort=sort_by,
         is_descending=descending,
@@ -283,7 +287,8 @@ def manager_list(sort_by,
         _search=search,
         _offset=pagination_offset,
         _size=pagination_size,
-        filter_rules=filter_rules
+        filter_rules=filter_rules,
+        filter_id=filter_id
     )
     blueprints = [trim_description(b) for b in blueprints_list]
     modify_resource_labels(blueprints)
@@ -292,7 +297,7 @@ def manager_list(sort_by,
     total = blueprints_list.metadata.pagination.total
     base_str = 'Showing {0} of {1} blueprints'.format(
         len(blueprints_list), total)
-    if filter_rules:
+    if filter_rules or filter_id:
         filtered = blueprints_list.metadata.get('filtered')
         if filtered is not None:
             base_str += ' ({} hidden by filter)'.format(filtered)
@@ -605,3 +610,143 @@ def delete_blueprint_labels(label,
     """
     delete_labels(blueprint_id, 'blueprint', client.blueprints, label,
                   logger, tenant_name)
+
+
+@blueprints.group(name='filters',
+                  short_help="Handle the blueprints' filters")
+@cfy.options.common_options
+def filters():
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+
+@filters.command(name='list',
+                 short_help="List all filters associated with blueprints")
+@cfy.options.sort_by('id')
+@cfy.options.descending
+@cfy.options.common_options
+@cfy.options.tenant_name_for_list(required=False,
+                                  resource_name_for_help='filter')
+@cfy.options.all_tenants
+@cfy.options.search
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def list_blueprints_filters(sort_by,
+                            descending,
+                            tenant_name,
+                            all_tenants,
+                            search,
+                            pagination_offset,
+                            pagination_size,
+                            logger,
+                            client):
+    """List all blueprints' filters"""
+    filters_utils.list_filters('blueprints',
+                               sort_by,
+                               descending,
+                               tenant_name,
+                               all_tenants,
+                               search,
+                               pagination_offset,
+                               pagination_size,
+                               logger,
+                               client.blueprints_filters)
+
+
+@filters.command(name='create', short_help="Create a new blueprints' filter")
+@cfy.argument('filter-id', callback=cfy.validate_name)
+@cfy.options.blueprint_filter_rules
+@cfy.options.visibility(mutually_exclusive_required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='filter')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client(use_tenant_in_header=True)
+@cfy.pass_logger
+def create_blueprints_filter(filter_id,
+                             filter_rules,
+                             visibility,
+                             tenant_name,
+                             logger,
+                             client):
+    """Create a new blueprints' filter
+
+    `FILTER-ID` is the new filter's ID
+    """
+    filters_utils.create_filter('blueprints',
+                                filter_id,
+                                filter_rules,
+                                visibility,
+                                tenant_name,
+                                logger,
+                                client.blueprints_filters)
+
+
+@filters.command(name='get',
+                 short_help="Get details for a single blueprints' filter")
+@cfy.argument('filter-id', callback=cfy.validate_name)
+@cfy.options.tenant_name(required=False, resource_name_for_help='filter')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client(use_tenant_in_header=True)
+@cfy.pass_logger
+def get_blueprints_filter(filter_id, tenant_name, logger, client):
+    """Get details for a single blueprints' filter
+
+    `FILTER-ID` is the filter's ID
+    """
+    filters_utils.get_filter('blueprints',
+                             filter_id,
+                             tenant_name,
+                             logger,
+                             client.blueprints_filters)
+
+
+@filters.command(name='update',
+                 short_help="Update an existing blueprints' filter")
+@cfy.argument('filter-id', callback=cfy.validate_name)
+@cfy.options.blueprint_filter_rules
+@cfy.options.update_visibility
+@cfy.options.tenant_name(required=False, resource_name_for_help='filter')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client(use_tenant_in_header=True)
+@cfy.pass_logger
+def update_blueprints_filter(filter_id,
+                             filter_rules,
+                             visibility,
+                             tenant_name,
+                             logger,
+                             client):
+    """Update an existing blueprints' filter's filter rules or visibility
+
+    `FILTER-ID` is the filter's ID
+    """
+    filters_utils.update_filter('blueprints',
+                                filter_id,
+                                filter_rules,
+                                visibility,
+                                tenant_name,
+                                logger,
+                                client.blueprints_filters)
+
+
+@filters.command(name='delete', short_help="Delete a blueprints' filter")
+@cfy.argument('filter-id', callback=cfy.validate_name)
+@cfy.options.tenant_name(required=False, resource_name_for_help='filter')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def delete_deployments_filter(filter_id, tenant_name, logger, client):
+    """Delete a blueprints' filter
+
+    `FILTER-ID` is the filter's ID
+    """
+    filters_utils.delete_filter('blueprints',
+                                filter_id,
+                                tenant_name,
+                                logger,
+                                client.blueprints_filters)

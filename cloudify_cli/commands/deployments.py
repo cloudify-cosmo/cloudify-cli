@@ -55,8 +55,12 @@ from ..utils import (prettify_client_error,
                      get_deployment_environment_execution)
 from ..labels_utils import (add_labels,
                             delete_labels,
+                            get_output_resource_labels,
+                            get_printable_resource_labels,
                             list_labels,
                             modify_resource_labels)
+
+from .. import filters_utils
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 
@@ -94,7 +98,8 @@ SCHEDULES_SUMMARY_FIELDS = (['deployment_id', 'workflow_id'] +
 MACHINE_READABLE_UPDATE_PREVIEW_COLUMNS = [
     'old_inputs', 'new_inputs', 'steps', 'modified_entity_ids',
     'installed_nodes', 'uninstalled_nodes', 'reinstalled_nodes',
-    'explicit_reinstall', 'recursive_dependencies'
+    'explicit_reinstall', 'recursive_dependencies', 'schedules_to_delete',
+    'schedules_to_create', 'labels_to_create'
 ]
 MACHINE_READABLE_MODIFICATION_COLUMNS = [
     'ended_at', 'node_instances', 'deployment_id', 'blueprint_id',
@@ -140,6 +145,9 @@ def _print_single_update(deployment_update_dict,
             deployment_update_dict['uninstalled_nodes'].append(entity[1])
         elif step['action'] == 'modify':
             deployment_update_dict['reinstalled_nodes'].append(entity[1])
+    raw_new_labels = deployment_update_dict.get('labels_to_create', [])
+    new_labels = get_output_resource_labels(raw_new_labels)
+    deployment_update_dict['labels_to_create'] = new_labels
 
     if get_global_json_output():
         columns += MACHINE_READABLE_UPDATE_PREVIEW_COLUMNS
@@ -177,16 +185,19 @@ def _print_single_update(deployment_update_dict,
         output('Will delete the following schedules: {}'.format(
             ', '.join(deployment_update_dict.get('schedules_to_delete', []))))
         print_data(
-            ['id', 'workflow', 'since', 'until', 'recurring',
+            ['id', 'workflow', 'since', 'until', 'recurrence',
              'count', 'weekdays'],
             deployment_update_dict.get('schedules_to_create', []),
             'Then, will create the following schedules: ')
+        print_data(['key', 'values'],
+                   get_printable_resource_labels(new_labels),
+                   'The following labels will be created: ')
 
 
 @cfy.command(name='list', short_help='List deployments [manager only]')
 @cfy.options.blueprint_id()
 @click.option('--group-id', '-g')
-@cfy.options.filter_rules
+@cfy.options.deployment_filter_methods
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.tenant_name_for_list(
@@ -201,7 +212,7 @@ def _print_single_update(deployment_update_dict,
 @cfy.pass_logger
 def manager_list(blueprint_id,
                  group_id,
-                 filter_rules,
+                 resource_filter_methods,
                  sort_by,
                  descending,
                  all_tenants,
@@ -223,9 +234,13 @@ def manager_list(blueprint_id,
     else:
         logger.info('Listing all deployments...')
 
+    filter_id = resource_filter_methods['filter_id']
+    filter_rules = resource_filter_methods['filter_rules']
+
     deployments = client.deployments.list(sort=sort_by,
                                           is_descending=descending,
                                           filter_rules=filter_rules,
+                                          filter_id=filter_id,
                                           _all_tenants=all_tenants,
                                           _search=search,
                                           _offset=pagination_offset,
@@ -237,7 +252,7 @@ def manager_list(blueprint_id,
     print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:')
 
     base_str = 'Showing {0} of {1} deployments'.format(len(deployments), total)
-    if filter_rules:
+    if filter_rules or filter_id:
         filtered = deployments.metadata.get('filtered')
         if filtered is not None:
             base_str += ' ({} hidden by filter)'.format(filtered)
@@ -773,10 +788,11 @@ def local_outputs(blueprint_id, logger):
               default=None, required=False)
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='summary')
+@cfy.options.group_id_filter
 @cfy.options.all_tenants
 @cfy.pass_logger
 @cfy.pass_client()
-def summary(target_field, sub_field, logger, client, tenant_name,
+def summary(target_field, sub_field, group_id, logger, client, tenant_name,
             all_tenants):
     """Retrieve summary of deployments, e.g. a count of each deployment with
     the same blueprint ID.
@@ -791,6 +807,7 @@ def summary(target_field, sub_field, logger, client, tenant_name,
         _target_field=target_field,
         _sub_field=sub_field,
         _all_tenants=all_tenants,
+        deployment_group_id=group_id,
     )
 
     columns, items = structure_summary_results(
@@ -1096,15 +1113,17 @@ def groups_update(deployment_group_name, inputs, default_blueprint,
 @cfy.options.group_deployment_id
 @cfy.options.group_count
 @cfy.options.deployment_group_filter_id
+@cfy.options.deployment_group_deployments_from_group
 @cfy.pass_client()
 @cfy.pass_logger
 def groups_extend(deployment_group_name, deployment_id, count, filter_id,
-                  client, logger):
+                  from_group, client, logger):
     group = client.deployment_groups.add_deployments(
         deployment_group_name,
         filter_id=filter_id,
         count=count,
-        deployment_ids=deployment_id or None
+        deployment_ids=deployment_id or None,
+        deployments_from_group=from_group,
     )
     logger.info(
         'Group %s updated. It now contains %d deployments',
@@ -1116,18 +1135,29 @@ def groups_extend(deployment_group_name, deployment_id, count, filter_id,
 @click.argument('deployment-group-name')
 @cfy.options.group_deployment_id
 @cfy.options.deployment_group_filter_id
+@cfy.options.deployment_group_deployments_from_group
 @cfy.pass_client()
 @cfy.pass_logger
 def groups_shrink(deployment_group_name, deployment_id, filter_id,
-                  client, logger):
+                  from_group, client, logger):
     group = client.deployment_groups.remove_deployments(
         deployment_group_name,
         deployment_id,
-        filter_id=filter_id
+        filter_id=filter_id,
+        deployments_from_group=from_group,
     )
+    removed_what_message = []
+    if deployment_id:
+        removed_what_message.append(', '.join(deployment_id))
+    if filter_id:
+        removed_what_message.append('given by filter {0}'.format(filter_id))
+    if from_group:
+        removed_what_message.append(
+            'belonging to the group {0}'.format(from_group))
     logger.info(
         'Unlinked deployments %s. Group %s now has %d deployments',
-        list(deployment_id), deployment_group_name, len(group.deployment_ids)
+        '; '.join(removed_what_message), deployment_group_name,
+        len(group.deployment_ids)
     )
 
 
@@ -1215,7 +1245,7 @@ def schedule_create(deployment_id,
         parameters=parameters,
         since=since_datetime,
         until=until_datetime,
-        frequency=recurrence,
+        recurrence=recurrence,
         count=count,
         weekdays=weekdays,
         rrule=rrule,
@@ -1280,7 +1310,7 @@ def schedule_update(deployment_id,
         deployment_id,
         since=since_datetime,
         until=until_datetime,
-        frequency=recurrence,
+        recurrence=recurrence,
         count=count,
         weekdays=weekdays,
         rrule=rrule,
@@ -1562,3 +1592,143 @@ def _list_schedules_in_time_range(schedules, since, until):
         if occurs_within_range:
             listed_schedules.append(sched)
     return listed_schedules
+
+
+@deployments.group(name='filters',
+                   short_help="Handle the deployments' filters")
+@cfy.options.common_options
+def filters():
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+
+@filters.command(name='list',
+                 short_help="List all filters associated with deployments")
+@cfy.options.sort_by('id')
+@cfy.options.descending
+@cfy.options.common_options
+@cfy.options.tenant_name_for_list(required=False,
+                                  resource_name_for_help='filter')
+@cfy.options.all_tenants
+@cfy.options.search
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def list_deployments_filters(sort_by,
+                             descending,
+                             tenant_name,
+                             all_tenants,
+                             search,
+                             pagination_offset,
+                             pagination_size,
+                             logger,
+                             client):
+    """List all deployments' filters"""
+    filters_utils.list_filters('deployments',
+                               sort_by,
+                               descending,
+                               tenant_name,
+                               all_tenants,
+                               search,
+                               pagination_offset,
+                               pagination_size,
+                               logger,
+                               client.deployments_filters)
+
+
+@filters.command(name='create', short_help="Create a new deployments' filter")
+@cfy.argument('filter-id', callback=cfy.validate_name)
+@cfy.options.deployment_filter_rules
+@cfy.options.visibility(mutually_exclusive_required=False)
+@cfy.options.tenant_name(required=False, resource_name_for_help='filter')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client(use_tenant_in_header=True)
+@cfy.pass_logger
+def create_deployments_filter(filter_id,
+                              filter_rules,
+                              visibility,
+                              tenant_name,
+                              logger,
+                              client):
+    """Create a new deployments' filter
+
+    `FILTER-ID` is the new filter's ID
+    """
+    filters_utils.create_filter('deployments',
+                                filter_id,
+                                filter_rules,
+                                visibility,
+                                tenant_name,
+                                logger,
+                                client.deployments_filters)
+
+
+@filters.command(name='get',
+                 short_help="Get details for a single deployments' filter")
+@cfy.argument('filter-id', callback=cfy.validate_name)
+@cfy.options.tenant_name(required=False, resource_name_for_help='filter')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client(use_tenant_in_header=True)
+@cfy.pass_logger
+def get_deployments_filter(filter_id, tenant_name, logger, client):
+    """Get details for a single deployments' filter
+
+    `FILTER-ID` is the filter's ID
+    """
+    filters_utils.get_filter('deployments',
+                             filter_id,
+                             tenant_name,
+                             logger,
+                             client.deployments_filters)
+
+
+@filters.command(name='update',
+                 short_help="Update an existing deployments' filter")
+@cfy.argument('filter-id', callback=cfy.validate_name)
+@cfy.options.deployment_filter_rules
+@cfy.options.update_visibility
+@cfy.options.tenant_name(required=False, resource_name_for_help='filter')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client(use_tenant_in_header=True)
+@cfy.pass_logger
+def update_deployments_filter(filter_id,
+                              filter_rules,
+                              visibility,
+                              tenant_name,
+                              logger,
+                              client):
+    """Update an existing deployments' filter's filter rules or visibility
+
+    `FILTER-ID` is the filter's ID
+    """
+    filters_utils.update_filter('deployments',
+                                filter_id,
+                                filter_rules,
+                                visibility,
+                                tenant_name,
+                                logger,
+                                client.deployments_filters)
+
+
+@filters.command(name='delete', short_help="Delete a deployments' filter")
+@cfy.argument('filter-id', callback=cfy.validate_name)
+@cfy.options.tenant_name(required=False, resource_name_for_help='filter')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def delete_deployments_filter(filter_id, tenant_name, logger, client):
+    """Delete a deployments' filter
+
+    `FILTER-ID` is the filter's ID
+    """
+    filters_utils.delete_filter('deployments',
+                                filter_id,
+                                tenant_name,
+                                logger,
+                                client.deployments_filters)

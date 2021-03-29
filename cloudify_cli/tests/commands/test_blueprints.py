@@ -59,7 +59,7 @@ class BlueprintsTest(CliCommandTest):
 
     def setUp(self):
         super(BlueprintsTest, self).setUp()
-        self.client.license.list = Mock(return_value=[{'expired': False}])
+        self.client.license.check = Mock()
         self.use_manager()
         self._mock_wait_for_blueprint_upload(False)
 
@@ -529,18 +529,3 @@ class BlueprintsTest(CliCommandTest):
         self.invoke('cfy blueprints labels delete key2 bp1')
         call_args = list(self.client.blueprints.update.call_args)
         self.assertEqual(call_args[0][1]['labels'], [{'key1': 'val1'}])
-
-    def test_blueprints_list_with_filters(self):
-        self.client.blueprints.list = MagicMock(
-            return_value=MockListResponse()
-        )
-        self.invoke('cfy blueprints list --filter filter')
-        self.invoke('cfy blueprints list --filter "a=b and c!=[d,f]"')
-
-    def test_blueprints_list_with_invalid_filters(self):
-        self.invoke('cfy blueprints list --filter a%d',
-                    err_str_segment='The filter ID contains illegal',
-                    exception=CloudifyValidationError)
-        self.invoke('cfy blueprints list --filter "a=b and e is nu"',
-                    err_str_segment='Filter rules must be one of',
-                    exception=CloudifyValidationError)
