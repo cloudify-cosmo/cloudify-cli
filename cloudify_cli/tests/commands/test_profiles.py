@@ -324,6 +324,16 @@ class ProfilesTest(CliCommandTest):
                     '--skip-credentials-validation')
         self.assertEquals('some-profile', env.profile.profile_name)
 
+    def test_set_manager_ip(self):
+        self.use_manager()
+        name = env.profile.profile_name
+        password = env.profile.manager_password
+        self.invoke('profiles set --manager-ip example.com '
+                    '--skip-credentials-validation')
+        self.assertEqual(env.profile.manager_ip, 'example.com')
+        self.assertEqual(env.profile.profile_name, name)
+        self.assertEqual(env.profile.manager_password, password)
+
     def test_profile_name_defaults_to_ip(self):
         p = env.ProfileContext()
         p.manager_ip = '1.2.3.4'

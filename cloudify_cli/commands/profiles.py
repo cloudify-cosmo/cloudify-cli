@@ -339,6 +339,7 @@ def _set_profile_ssl(ssl, rest_port, logger):
     name='set',
     short_help='Set name/manager username/password/tenant in current profile')
 @cfy.options.profile_name
+@cfy.options.profile_manager_ip
 @cfy.options.manager_username
 @cfy.options.manager_password
 @cfy.options.manager_tenant()
@@ -353,6 +354,7 @@ def _set_profile_ssl(ssl, rest_port, logger):
 @cfy.options.common_options
 @cfy.pass_logger
 def set_cmd(profile_name,
+            manager_ip,
             manager_username,
             manager_password,
             manager_tenant,
@@ -368,9 +370,9 @@ def set_cmd(profile_name,
     """Set the profile name, manager username and/or password and/or tenant
     and/or ssl state (on/off) in the *current* profile
     """
-    if not any([profile_name, ssh_user, ssh_key, ssh_port, manager_username,
-                manager_password, manager_tenant, ssl is not None,
-                rest_certificate, kerberos_env is not None]):
+    if not any([profile_name, manager_ip, ssh_user, ssh_key, ssh_port,
+                manager_username, manager_password, manager_tenant,
+                ssl is not None, rest_certificate, kerberos_env is not None]):
         raise CloudifyCliError(
             "You must supply at least one of the following:  "
             "profile name, username, password, tenant, "
@@ -399,6 +401,9 @@ def set_cmd(profile_name,
                                    .format(profile_name))
         old_name = env.profile.profile_name
         env.profile.profile_name = profile_name
+    if manager_ip:
+        env.profile.manager_ip = manager_ip
+        logger.info('Setting the manager address to `%s`', manager_ip)
     if manager_username:
         logger.info('Setting username to `%s`', manager_username)
         env.profile.manager_username = manager_username
