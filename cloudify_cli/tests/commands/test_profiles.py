@@ -291,13 +291,14 @@ class ProfilesTest(CliCommandTest):
             err_str_segment="Can't use manager"
         )
 
+    @patch('cloudify_cli.commands.profiles._update_cluster_profile_to_dict')
     @patch('cloudify_cli.commands.profiles._validate_credentials')
-    def test_set_works_without_skip(self, validate_credentials_mock):
+    def test_set_works_without_skip(self, validate_credentials_mock, _):
         self.use_manager()
         self.invoke('profiles set -u 0 -p 0 -t 0 -c 0')
 
-        validate_credentials_mock.assert_called_once_with('0', '0', '0', '0',
-                                                          None, None, None)
+        validate_credentials_mock.assert_called_once_with(
+            None, '0', '0', '0', '0', None, None, None)
         self.assertEquals('0', env.profile.manager_username)
         self.assertEquals('0', env.profile.manager_password)
         self.assertEquals('0', env.profile.manager_tenant)

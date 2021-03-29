@@ -193,7 +193,8 @@ def use(manager_ip,
             **kwargs)
     if not env.profile.manager_username:
         return
-    _update_cluster_profile_to_dict(logger)
+    if not skip_credentials_validation:
+        _update_cluster_profile_to_dict(logger)
 
 
 def _update_cluster_profile_to_dict(logger):
@@ -440,6 +441,8 @@ def set_cmd(profile_name,
         env.set_active_profile(profile_name)
         env.delete_profile(old_name)
     logger.info('Settings saved successfully')
+    if not skip_credentials_validation:
+        _update_cluster_profile_to_dict(logger)
 
 
 @profiles.command(
