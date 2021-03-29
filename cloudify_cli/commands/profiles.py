@@ -385,7 +385,8 @@ def set_cmd(profile_name,
         port = rest_port
 
     if not skip_credentials_validation:
-        _validate_credentials(username,
+        _validate_credentials(manager_ip,
+                              username,
                               password,
                               tenant,
                               rest_certificate,
@@ -546,7 +547,8 @@ def unset(manager_username,
         cert = None
 
     if not skip_credentials_validation:
-        _validate_credentials(username,
+        _validate_credentials(env.profile.manager_ip,
+                              username,
                               password,
                               tenant,
                               cert,
@@ -861,11 +863,12 @@ def _get_ssl_protocol_and_port(ssl):
 
 
 @cfy.pass_logger
-def _validate_credentials(username, password, tenant, certificate, protocol,
-                          rest_port, kerberos_env, logger):
+def _validate_credentials(manager_ip, username, password, tenant, certificate,
+                          protocol, rest_port, kerberos_env, logger):
     logger.info('Validating credentials...')
     _get_client_and_assert_manager(
         profile_name=env.profile.profile_name,
+        manager_ip=manager_ip,
         manager_username=username,
         manager_password=password,
         manager_tenant=tenant,
