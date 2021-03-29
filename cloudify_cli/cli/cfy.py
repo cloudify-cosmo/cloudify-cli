@@ -909,6 +909,11 @@ class Options(object):
             required=False,
             help=helptexts.PROFILE_NAME)
 
+        self.profile_manager_ip = click.option(
+            '-m', '--manager-ip',
+            help=helptexts.PROFILE_MANAGER_IP,
+        )
+
         self.manager_username = click.option(
             '-u',
             '--manager-username',
