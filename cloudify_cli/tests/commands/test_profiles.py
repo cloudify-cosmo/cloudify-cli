@@ -291,6 +291,17 @@ class ProfilesTest(CliCommandTest):
             err_str_segment="Can't use manager"
         )
 
+    def test_set_disable_ssl(self):
+        self.use_manager()
+        self.assertEqual(env.profile.rest_port, 80)
+        self.assertEqual(env.profile.rest_protocol, 'http')
+        self.invoke('profiles set --ssl on --skip-credentials-validation')
+        self.assertEqual(env.profile.rest_port, 443)
+        self.assertEqual(env.profile.rest_protocol, 'https')
+        self.invoke('profiles set --ssl off --skip-credentials-validation')
+        self.assertEqual(env.profile.rest_port, 80)
+        self.assertEqual(env.profile.rest_protocol, 'http')
+
     @patch('cloudify_cli.commands.profiles._update_cluster_profile_to_dict')
     @patch('cloudify_cli.commands.profiles._validate_credentials')
     def test_set_works_without_skip(self, validate_credentials_mock, _):
