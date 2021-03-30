@@ -58,6 +58,8 @@ from . import blueprints, install, deployments
 @cfy.options.skip_plugins_validation
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
+@cfy.options.blueprint_labels
+@cfy.options.deployment_labels
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
@@ -89,6 +91,8 @@ def apply(ctx,
           skip_plugins_validation,
           parameters,
           allow_custom_parameters,
+          blueprint_labels,
+          deployment_labels,
           logger,
           client
           ):
@@ -139,6 +143,8 @@ def apply(ctx,
             allow_custom_parameters=allow_custom_parameters,
             include_logs=include_logs,
             json_output=json_output,
+            blueprint_labels=blueprint_labels,
+            deployment_labels=deployment_labels
         )
     else:
         # Blueprint upload and deployment update
@@ -159,7 +165,8 @@ def apply(ctx,
                 blueprint_filename=blueprint_filename,
                 validate=validate,
                 visibility=visibility,
-                tenant_name=tenant_name
+                tenant_name=tenant_name,
+                labels=blueprint_labels
             )
 
         finally:
@@ -196,3 +203,10 @@ def apply(ctx,
                    auto_correct_types=auto_correct_types,
                    reevaluate_active_statuses=reevaluate_active_statuses
                    )
+
+        ctx.invoke(deployments.add_deployment_labels,
+                   labels_list=deployment_labels,
+                   deployment_id=deployment_id,
+                   logger=logger,
+                   client=client,
+                   tenant_name=tenant_name)

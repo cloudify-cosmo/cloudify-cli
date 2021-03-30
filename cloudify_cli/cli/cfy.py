@@ -1554,7 +1554,18 @@ class Options(object):
             callback=parse_and_validate_labels,
             help=helptexts.LABELS
         )
-
+        self.deployment_labels = click.option(
+            '--deployment-labels',
+            required=False,
+            callback=parse_and_validate_labels,
+            help=helptexts.LABELS
+        )
+        self.blueprint_labels = click.option(
+            '--blueprint-labels',
+            required=False,
+            callback=parse_and_validate_labels,
+            help=helptexts.LABELS
+        )
         self.async_upload = click.option(
             '-a',
             '--async-upload',
