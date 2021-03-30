@@ -849,12 +849,6 @@ def _is_manager_secured(response_history):
     return False
 
 
-def _get_ssl_indication(ssl):
-    if ssl is None:
-        return None
-    return str(ssl).lower() == 'on'
-
-
 def _get_ssl_protocol_and_port(ssl):
     if ssl is not None:
         protocol, port = (constants.SECURED_REST_PROTOCOL,
