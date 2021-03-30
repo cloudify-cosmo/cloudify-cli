@@ -24,13 +24,13 @@ from ..cli import cfy, helptexts
 from ..exceptions import CloudifyCliError
 from ..blueprint import get_blueprint_path_and_id
 from . import blueprints, install, deployments
-
+from ..constants import DEFAULT_BLUEPRINT_PATH
 
 @cfy.command(name='apply',
              short_help='Install a blueprint or update existing deployment '
                         'with blueprint [manager only]')
-@cfy.argument('blueprint-path')
-@cfy.argument('deployment-id')
+@cfy.options.blueprint_path()
+@cfy.options.deployment_id(validate=True)
 @cfy.options.blueprint_filename()
 @cfy.options.blueprint_id()
 @cfy.options.inputs
@@ -115,6 +115,7 @@ def apply(ctx,
 
     `DEPLOYMENT_ID` is the deployment's id to install/update.
     """
+
     # check if deployment exists
     try:
         deployment = client.deployments.get(deployment_id=deployment_id)
@@ -207,6 +208,7 @@ def apply(ctx,
         ctx.invoke(deployments.add_deployment_labels,
                    labels_list=deployment_labels,
                    deployment_id=deployment_id,
-                   logger=logger,
-                   client=client,
                    tenant_name=tenant_name)
+
+
+def get_blueprint_path_and_deployment_id_from_blueprint_path(blueprint_path):

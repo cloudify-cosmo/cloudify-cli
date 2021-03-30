@@ -13,7 +13,7 @@ INPUTS_PARAMS_USAGE = (
 )
 WORKFLOW_TO_EXECUTE = "The workflow to execute [default: {0}]"
 
-BLUEPRINT_PATH = "The path to the application's blueprint file [DEPRECATED]"
+BLUEPRINT_PATH = "The path to the application's blueprint file"
 BLUEPRINT_ID = "The unique identifier for the blueprint"
 VALIDATE_BLUEPRINT = "Validate the blueprint first"
 

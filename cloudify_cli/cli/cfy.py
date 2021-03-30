@@ -1932,13 +1932,13 @@ class Options(object):
             callback=_get_validate_callback(validate))
 
     @staticmethod
-    def blueprint_path(required=False):
+    def blueprint_path(required=False, extra_message=''):
         return click.option(
             '-p',
             '--blueprint-path',
             required=required,
             type=click.Path(exists=True),
-            help=helptexts.BLUEPRINT_PATH)
+            help=helptexts.BLUEPRINT_PATH + extra_message)
 
     @staticmethod
     def tenant_role(help_text, required, options_flags=None):
