@@ -213,6 +213,18 @@ def properties_callback(ctx, param, value):
     return inputs_to_dict(value, dot_hierarchy=True, deleting=deleting)
 
 
+def parse_on_off(ctx, param, value):
+    if value is None or ctx.resilient_parsing:
+        return
+    if value.lower() == 'off':
+        return False
+    elif value.lower() == 'on':
+        return True
+    else:
+        raise CloudifyValidationError(
+            'Value must be on/off, but got: {0}'.format(value))
+
+
 def parse_and_validate_labels(ctx, param, value):
     if value is None or ctx.resilient_parsing:
         return
@@ -965,7 +977,7 @@ class Options(object):
             '--ssl',
             required=False,
             help=helptexts.SSL_STATE,
-            callback=validate_name
+            callback=parse_on_off,
         )
 
         self.ssh_port = click.option(
