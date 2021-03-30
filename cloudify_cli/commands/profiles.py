@@ -856,7 +856,6 @@ def _get_ssl_indication(ssl):
 
 
 def _get_ssl_protocol_and_port(ssl):
-    ssl = _get_ssl_indication(ssl)
     if ssl is not None:
         protocol, port = (constants.SECURED_REST_PROTOCOL,
                           constants.SECURED_REST_PORT) if ssl else \
