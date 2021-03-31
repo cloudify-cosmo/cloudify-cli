@@ -73,6 +73,8 @@ def add_labels(resource_id,
             resource_client.update_labels(resource_id, updated_labels)
         elif resource_name == 'blueprint':
             resource_client.update(resource_id, {'labels': updated_labels})
+        elif resource_name == 'deployment group':
+            resource_client.put(resource_id, labels=updated_labels)
         logger.info(
             'The following label(s) were added successfully to %s %s: %s',
             resource_name, resource_id, _labels_set_to_list(new_labels))
@@ -110,6 +112,8 @@ def delete_labels(resource_id,
             resource_client.update_labels(resource_id, updated_labels)
         elif resource_name == 'blueprint':
             resource_client.update(resource_id, {'labels': updated_labels})
+        elif resource_name == 'deployment group':
+            resource_client.put(resource_id, labels=updated_labels)
         logger.info('The following label(s) were deleted successfully from %s '
                     '%s: %s', resource_name, resource_id, labels_to_delete)
     else:
