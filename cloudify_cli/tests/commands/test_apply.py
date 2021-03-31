@@ -14,15 +14,18 @@
 # limitations under the License.
 ############
 
+import os
 from datetime import date
 from mock import patch, Mock
 
 from .test_base import CliCommandTest
-from .constants import (SAMPLE_BLUEPRINT_PATH,
+from .constants import (BLUEPRINTS_DIR,
+                        SAMPLE_BLUEPRINT_PATH,
                         SAMPLE_ARCHIVE_PATH,
                         STUB_BLUEPRINT_ID,
                         SAMPLE_INPUTS_PATH,
                         STUB_DEPLOYMENT_ID,
+                        STUB_DIRECTORY_NAME,
                         DEFAULT_BLUEPRINT_FILE_NAME)
 
 
@@ -36,30 +39,63 @@ class ApplyTest(CliCommandTest):
         deployment_mock.id = deployment_id
         self.client.deployments.get = Mock(return_value=deployment_mock)
 
-    def test_apply_no_deployment_id_argument(self):
-        outcome = self.invoke(
-            'cfy apply {path} '.format(path=SAMPLE_BLUEPRINT_PATH),
-            err_str_segment='2',  # Exit code
-            exception=SystemExit)
-        self.assertIn('missing argument', outcome.output.lower())
-        self.assertIn('DEPLOYMENT_ID', outcome.output)
+    @patch('cloudify_cli.commands.install.manager')
+    def test_apply_no_deployment_id_argument(self, install_mock):
+        self.client.deployments.get = Mock(return_value=None)
+        self.invoke('cfy apply --blueprint-path {path} '.format(
+            path=SAMPLE_BLUEPRINT_PATH))
+        install_mock.assert_called()
+        install_args = install_mock.call_args_list[0][1]
 
-    def test_apply_no_blueprint_path_argument(self):
-        outcome = self.invoke(
-            'cfy apply ',
-            err_str_segment='2',  # Exit code
-            exception=SystemExit)
-        self.assertIn('missing argument', outcome.output.lower())
-        self.assertIn('BLUEPRINT_PATH', outcome.output)
+        self.assertEqual(
+            install_args['blueprint_path'],
+            SAMPLE_BLUEPRINT_PATH
+        )
+        # Infer deployment id and blueprint id from blueprint path.
+        self.assertEqual(
+            install_args['blueprint_id'],
+            STUB_DIRECTORY_NAME
+        )
+
+        self.assertEqual(
+            install_args['deployment_id'],
+            STUB_DIRECTORY_NAME
+        )
+
+    @patch('cloudify_cli.commands.apply.os.getcwd',
+           return_value=os.path.join(BLUEPRINTS_DIR, STUB_DIRECTORY_NAME))
+    @patch('cloudify_cli.commands.install.manager')
+    def test_apply_default_values(self, install_mock, *_):
+        self.client.deployments.get = Mock(return_value=None)
+        self.invoke('cfy apply ')
+        install_mock.assert_called()
+        install_args = install_mock.call_args_list[0][1]
+
+        self.assertEqual(
+            install_args['blueprint_path'],
+            SAMPLE_BLUEPRINT_PATH
+        )
+        # Infer deployment id and blueprint id from default blueprint path.
+        self.assertEqual(
+            install_args['blueprint_id'],
+            STUB_DIRECTORY_NAME
+        )
+
+        self.assertEqual(
+            install_args['deployment_id'],
+            STUB_DIRECTORY_NAME
+        )
 
     @patch('cloudify_cli.commands.install.manager')
     def test_apply_call_to_install_with_blueprint_id(self, install_mock):
         self.client.deployments.get = Mock(return_value=None)
-        apply_command = 'cfy apply {bl_path} {dep_id} -b {bl_id} --inputs={' \
-                        'inputs} '.format(bl_path=SAMPLE_BLUEPRINT_PATH,
-                                          dep_id=STUB_DEPLOYMENT_ID,
-                                          bl_id=STUB_BLUEPRINT_ID,
-                                          inputs=SAMPLE_INPUTS_PATH)
+        apply_command = 'cfy apply --blueprint-path {bl_path}' \
+                        ' --deployment-id {dep_id} -b {bl_id}' \
+                        ' --inputs={inputs} '.format(
+                                                bl_path=SAMPLE_BLUEPRINT_PATH,
+                                                dep_id=STUB_DEPLOYMENT_ID,
+                                                bl_id=STUB_BLUEPRINT_ID,
+                                                inputs=SAMPLE_INPUTS_PATH)
         self.invoke(apply_command)
         install_mock.assert_called()
         install_args = install_mock.call_args_list[0][1]
@@ -92,17 +128,20 @@ class ApplyTest(CliCommandTest):
                                             *_):
         self._mock_client_deployment_id(deployment_id=STUB_DEPLOYMENT_ID)
         datetime_mock.now.return_value = date(2021, 1, 1)
-        apply_command = 'cfy apply {bl_path} {dep_id} --validate'.format(
+        apply_command = 'cfy apply --blueprint-path {bl_path} ' \
+                        '--deployment-id {dep_id} --validate ' \
+                        '--blueprint-labels a:b'.format(
             bl_path=SAMPLE_BLUEPRINT_PATH,
             dep_id=STUB_DEPLOYMENT_ID)
         self.invoke(apply_command)
         blueprint_upload_mock.assert_called_with(
             blueprint_path=SAMPLE_BLUEPRINT_PATH,
             blueprint_id=STUB_DEPLOYMENT_ID + '-01-01-2021-00-00-00',
-            blueprint_filename=DEFAULT_BLUEPRINT_FILE_NAME,
+            # blueprint_filename=DEFAULT_BLUEPRINT_FILE_NAME,
             validate=True,
             visibility='tenant',
-            tenant_name=None)
+            tenant_name=None,
+            labels=[{'a': 'b'}])
 
     @patch('cloudify_cli.commands.deployments.manager_update')
     @patch('cloudify_cli.commands.blueprints.upload')
@@ -111,7 +150,9 @@ class ApplyTest(CliCommandTest):
             blueprint_upload_mock,
             *_):
         self._mock_client_deployment_id(deployment_id=STUB_DEPLOYMENT_ID)
-        apply_command = 'cfy apply {bl_path} {dep_id} -b {bl_id} ' \
+        apply_command = 'cfy apply --blueprint-path {bl_path} ' \
+                        '--deployment-id {dep_id} -b {bl_id} ' \
+                        '--blueprint-labels a:b ' \
                         '--validate'.format(bl_path=SAMPLE_BLUEPRINT_PATH,
                                             dep_id=STUB_DEPLOYMENT_ID,
                                             bl_id=STUB_BLUEPRINT_ID)
@@ -119,10 +160,11 @@ class ApplyTest(CliCommandTest):
         blueprint_upload_mock.assert_called_with(
             blueprint_path=SAMPLE_BLUEPRINT_PATH,
             blueprint_id=STUB_BLUEPRINT_ID,
-            blueprint_filename=DEFAULT_BLUEPRINT_FILE_NAME,
+            # blueprint_filename=DEFAULT_BLUEPRINT_FILE_NAME,
             validate=True,
             visibility='tenant',
-            tenant_name=None)
+            tenant_name=None,
+            labels=[{'a': 'b'}])
 
     @patch('cloudify_cli.commands.deployments.manager_update')
     @patch('cloudify_cli.commands.blueprints.upload')
@@ -131,8 +173,9 @@ class ApplyTest(CliCommandTest):
             blueprint_upload_mock,
             *_):
         self._mock_client_deployment_id(deployment_id=STUB_DEPLOYMENT_ID)
-        apply_command = 'cfy apply {bl_path} {dep_id} ' \
-                        '-n {bl_file_name} -b {bl_id}'.format(
+        apply_command = 'cfy apply --blueprint-path {bl_path} ' \
+                        '--deployment-id {dep_id} -n {bl_file_name} ' \
+                        '-b {bl_id}'.format(
                             bl_path=SAMPLE_ARCHIVE_PATH,
                             dep_id=STUB_DEPLOYMENT_ID,
                             bl_file_name=DEFAULT_BLUEPRINT_FILE_NAME,
@@ -148,16 +191,14 @@ class ApplyTest(CliCommandTest):
             install_args['blueprint_id'],
             STUB_BLUEPRINT_ID
         )
-        self.assertEqual(
-            install_args['blueprint_filename'],
-            DEFAULT_BLUEPRINT_FILE_NAME
-        )
 
+    #TODO add call to deployment-lables
     @patch('cloudify_cli.commands.blueprints.upload')
     @patch('cloudify_cli.commands.deployments.manager_update')
     def test_apply_call_deployment_update(self, deployment_update_mock, *_):
         self._mock_client_deployment_id(deployment_id=STUB_DEPLOYMENT_ID)
-        apply_command = 'cfy apply {bl_path} {dep_id} -b {bl_id} ' \
+        apply_command = 'cfy apply --blueprint-path {bl_path} ' \
+                        '--deployment-id  {dep_id} -b {bl_id} ' \
                         '--inputs={inputs} '.format(
                             bl_path=SAMPLE_BLUEPRINT_PATH,
                             dep_id=STUB_DEPLOYMENT_ID,
@@ -197,7 +238,8 @@ class ApplyTest(CliCommandTest):
             deployment_update_mock,
             *_):
         self._mock_client_deployment_id(deployment_id=STUB_DEPLOYMENT_ID)
-        apply_command = 'cfy apply {bl_path} {dep_id} -b {bl_id} ' \
+        apply_command = 'cfy apply --blueprint-path {bl_path} ' \
+                        '--deployment-id {dep_id} -b {bl_id} ' \
                         '--dont-skip-reinstall --reinstall-list node_a' \
                         ' --reinstall-list node_b '.format(
                             bl_path=SAMPLE_BLUEPRINT_PATH,
@@ -229,3 +271,4 @@ class ApplyTest(CliCommandTest):
             runtime_only_evaluation=False,
             auto_correct_types=False,
             reevaluate_active_statuses=False)
+
