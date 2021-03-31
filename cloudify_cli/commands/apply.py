@@ -110,7 +110,7 @@ def apply(ctx,
 
     If the deployment exists, the deployment will be updated with the
     given blueprint.
-    Otherwise the blueprint will installed (the deployment name will be
+    Otherwise, the blueprint will be installed (the deployment name will be
     DEPLOYMENT_ID).
     In both cases the blueprint is being uploaded to the manager.
 
@@ -126,13 +126,13 @@ def apply(ctx,
 
     Default values:
 
-    If BLUEPRINT_PATH not provided, the default blueprint path
-    'blueprint.yaml' in the current work directory will be used.
+    If BLUEPRINT_PATH not provided, the default blueprint path is
+    'blueprint.yaml' in the current work directory.
     If DEPLOYMENT_ID is not provided it will be inferred from BLUEPRINT_PATH
     as follows:
     - Directory name for local blueprint path or archive with default
       --blueprint-filename(blueprint.yaml).
-    - <Directory name>.<blueprint_filename> if its an archive and
+    - <Directory name>.<blueprint_filename> if it's an archive and
       --blueprint-filename is not default.
     """
     if not blueprint_path:
