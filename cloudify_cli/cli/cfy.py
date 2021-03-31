@@ -1932,12 +1932,14 @@ class Options(object):
             callback=_get_validate_callback(validate))
 
     @staticmethod
-    def blueprint_path(required=False, extra_message=''):
+    def blueprint_path(required=False,
+                       extra_message='',
+                       exists=True):
         return click.option(
             '-p',
             '--blueprint-path',
             required=required,
-            type=click.Path(exists=True),
+            type=click.Path(exists=exists),
             help=helptexts.BLUEPRINT_PATH + extra_message)
 
     @staticmethod

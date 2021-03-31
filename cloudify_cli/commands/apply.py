@@ -17,6 +17,9 @@
 import os
 import shutil
 from datetime import datetime
+from contextlib import  contextmanager
+
+import click
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
@@ -29,7 +32,7 @@ from ..constants import DEFAULT_BLUEPRINT_PATH
 @cfy.command(name='apply',
              short_help='Install a blueprint or update existing deployment '
                         'with blueprint [manager only]')
-@cfy.options.blueprint_path()
+@cfy.options.blueprint_path(exists=False)
 @cfy.options.deployment_id(validate=True)
 @cfy.options.blueprint_filename()
 @cfy.options.blueprint_id()
@@ -115,100 +118,159 @@ def apply(ctx,
 
     `DEPLOYMENT_ID` is the deployment's id to install/update.
     """
+    # check if default blueprint path exists.
+    # blueprint_path = blueprint_path or os.path.join(os.getcwd(), DEFAULT_BLUEPRINT_PATH)
+    # if not blueprint_path or os.path.isfile(blueprint_path):
+    #     blueprint_path = blueprint_path or os.path.join(os.getcwd(), DEFAULT_BLUEPRINT_PATH)
+    #     logger.info("No blueprint path provided, using default: %s",
+    #                 blueprint_path)
+    #     logger.info("cwd:{}".format(os.getcwd()))
+    #     _, blueprint_id = get_blueprint_path_and_id(
+    #         blueprint_path,
+    #         blueprint_filename,
+    #         blueprint_id
+    #     )
+    #     deployment_id = deployment_id or blueprint_id
+    #     logger.info("blueprint id {}".format(blueprint_id))
+    #     logger.info("dep id: {}".format(deployment_id))
+    #     return
 
-    # check if deployment exists
-    try:
-        deployment = client.deployments.get(deployment_id=deployment_id)
-    except CloudifyClientError as e:
-        if e.status_code != 404:
-            raise CloudifyCliError(
-                'deployment %s not found and error code is not 404',
-                deployment_id)
-        deployment = None
+    if not blueprint_path:
+        blueprint_path = blueprint_path or os.path.join(os.getcwd(),
+                                                        DEFAULT_BLUEPRINT_PATH)
+        logger.info("No blueprint path provided, using default: %s",
+                    blueprint_path)
 
-    if not deployment:
-        ctx.invoke(
-            install.manager,
-            blueprint_path=blueprint_path,
-            blueprint_id=blueprint_id,
-            blueprint_filename=blueprint_filename,
-            validate=validate,
-            deployment_id=deployment_id,
-            inputs=inputs,
-            workflow_id=workflow_id,
-            force=force,
-            visibility=visibility,
-            tenant_name=tenant_name,
-            skip_plugins_validation=skip_plugins_validation,
-            parameters=parameters,
-            allow_custom_parameters=allow_custom_parameters,
-            include_logs=include_logs,
-            json_output=json_output,
-            blueprint_labels=blueprint_labels,
-            deployment_labels=deployment_labels
-        )
-    else:
-        # Blueprint upload and deployment update
-        logger.info("Deployment %s found, updating deployment.", deployment_id)
-        update_bp_name = blueprint_id or deployment_id + '-' + datetime.now(
-        ).strftime("%d-%m-%Y-%H-%M-%S")
-        processed_blueprint_path, blueprint_id = get_blueprint_path_and_id(
-            blueprint_path,
-            blueprint_filename,
-            update_bp_name
-        )
+    # # infer blueprint id and deployment id.
+    # processed_blueprint_path, processed_blueprint_id = get_blueprint_path_and_id(
+    #     blueprint_path,
+    #     blueprint_filename,
+    #     blueprint_id
+    # )
+    # deployment_id = deployment_id or blueprint_id
+    with process_blueprint_and_infer_deployment_id(blueprint_path,
+                                                   blueprint_filename,
+                                                   blueprint_id,
+                                                   deployment_id) as\
+            processed_inputs:
+        logger.info("processed_inputs {}".format(processed_inputs))
+        logger.info("blueprint id {}".format(blueprint_id))
+        logger.info("dep id: {}".format(deployment_id))
 
+        return
+
+        # check if deployment exists
         try:
+            deployment = client.deployments.get(deployment_id=processed_inputs['deployment_id'])
+        except CloudifyClientError as e:
+            if e.status_code != 404:
+                raise CloudifyCliError(
+                    'deployment %s not found and error code is not 404',
+                    deployment_id)
+            deployment = None
+
+        if not deployment:
+            ctx.invoke(
+                install.manager,
+                blueprint_path=processed_inputs['processed_blueprint_path'],
+                blueprint_id=processed_inputs['processed_blueprint_id'],
+                # blueprint_filename=blueprint_filename,
+                validate=validate,
+                deployment_id=processed_inputs['deployment_id'],
+                inputs=inputs,
+                workflow_id=workflow_id,
+                force=force,
+                visibility=visibility,
+                tenant_name=tenant_name,
+                skip_plugins_validation=skip_plugins_validation,
+                parameters=parameters,
+                allow_custom_parameters=allow_custom_parameters,
+                include_logs=include_logs,
+                json_output=json_output,
+                blueprint_labels=blueprint_labels,
+                deployment_labels=deployment_labels
+            )
+        else:
+            # Blueprint upload and deployment update
+            logger.info("Deployment %s found, updating deployment.", deployment_id)
+            update_bp_name = blueprint_id or deployment_id + '-' + datetime.now(
+            ).strftime("%d-%m-%Y-%H-%M-%S")
+            # processed_blueprint_path, blueprint_id = get_blueprint_path_and_id(
+            #     blueprint_path,
+            #     blueprint_filename,
+            #     update_bp_name
+            # )
+
+            # try:
             ctx.invoke(
                 blueprints.upload,
-                blueprint_path=processed_blueprint_path,
-                blueprint_id=blueprint_id,
-                blueprint_filename=blueprint_filename,
+                blueprint_path=processed_inputs['processed_blueprint_path'],
+                blueprint_id=update_bp_name,
+                # blueprint_filename=blueprint_filename,
                 validate=validate,
                 visibility=visibility,
                 tenant_name=tenant_name,
                 labels=blueprint_labels
             )
 
-        finally:
-            # When an archive file is passed, it's extracted to a temporary
-            # directory to get the blueprint file. Once the blueprint has been
-            # uploaded, the temporary directory needs to be cleaned up.
-            if processed_blueprint_path != blueprint_path:
-                temp_directory = os.path.dirname(
-                    os.path.dirname(processed_blueprint_path)
-                )
-                shutil.rmtree(temp_directory)
+            # finally:
+            #     # When an archive file is passed, it's extracted to a temporary
+            #     # directory to get the blueprint file. Once the blueprint has been
+            #     # uploaded, the temporary directory needs to be cleaned up.
+            #     if processed_blueprint_path != blueprint_path:
+            #         temp_directory = os.path.dirname(
+            #             os.path.dirname(processed_blueprint_path)
+            #         )
+            #         shutil.rmtree(temp_directory)
 
-        ctx.invoke(deployments.manager_update,
-                   deployment_id=deployment_id,
-                   blueprint_path=None,
-                   inputs=inputs,
-                   reinstall_list=reinstall_list,
-                   skip_install=skip_install,
-                   skip_uninstall=skip_uninstall,
-                   skip_reinstall=not dont_skip_reinstall,
-                   ignore_failure=ignore_failure,
-                   install_first=install_first,
-                   preview=preview,
-                   dont_update_plugins=dont_update_plugins,
-                   workflow_id=workflow_id,
-                   force=force,
-                   include_logs=include_logs,
-                   json_output=json_output,
-                   tenant_name=tenant_name,
-                   blueprint_id=update_bp_name,
-                   visibility=visibility,
-                   validate=validate,
-                   runtime_only_evaluation=runtime_only_evaluation,
-                   auto_correct_types=auto_correct_types,
-                   reevaluate_active_statuses=reevaluate_active_statuses
-                   )
+            ctx.invoke(deployments.manager_update,
+                       deployment_id=deployment_id,
+                       blueprint_path=None,
+                       inputs=inputs,
+                       reinstall_list=reinstall_list,
+                       skip_install=skip_install,
+                       skip_uninstall=skip_uninstall,
+                       skip_reinstall=not dont_skip_reinstall,
+                       ignore_failure=ignore_failure,
+                       install_first=install_first,
+                       preview=preview,
+                       dont_update_plugins=dont_update_plugins,
+                       workflow_id=workflow_id,
+                       force=force,
+                       include_logs=include_logs,
+                       json_output=json_output,
+                       tenant_name=tenant_name,
+                       blueprint_id=update_bp_name,
+                       visibility=visibility,
+                       validate=validate,
+                       runtime_only_evaluation=runtime_only_evaluation,
+                       auto_correct_types=auto_correct_types,
+                       reevaluate_active_statuses=reevaluate_active_statuses
+                       )
 
-        ctx.invoke(deployments.add_deployment_labels,
-                   labels_list=deployment_labels,
-                   deployment_id=deployment_id,
-                   tenant_name=tenant_name)
+            ctx.invoke(deployments.add_deployment_labels,
+                       labels_list=deployment_labels,
+                       deployment_id=deployment_id,
+                       tenant_name=tenant_name)
 
-
-def get_blueprint_path_and_deployment_id_from_blueprint_path(blueprint_path):
+@contextmanager
+def process_blueprint_and_infer_deployment_id(blueprint_path,
+                                              blueprint_filename,
+                                              blueprint_id,
+                                              deployment_id):
+    processed_blueprint_path, processed_blueprint_id = get_blueprint_path_and_id(
+        blueprint_path,
+        blueprint_filename,
+        blueprint_id
+    )
+    deployment_id = deployment_id or processed_blueprint_id
+    try:
+        yield {'processed_blueprint_path':processed_blueprint_path,
+               'processed_blueprint_id':processed_blueprint_id,
+               'deployment_id':deployment_id}
+    finally:
+        if processed_blueprint_path != blueprint_path:
+            temp_directory = os.path.dirname(
+                os.path.dirname(processed_blueprint_path)
+            )
+            shutil.rmtree(temp_directory)
