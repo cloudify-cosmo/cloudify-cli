@@ -117,7 +117,8 @@ class InstallTest(CliCommandTest):
             'inputs': {'key1': 'val1', 'key2': 'val2'},
             'skip_plugins_validation': False,
             'tenant_name': None,
-            'visibility': 'tenant'
+            'visibility': 'tenant',
+            'labels': None
         })
 
     @patch('cloudify_cli.commands.blueprints.upload')
@@ -143,7 +144,8 @@ class InstallTest(CliCommandTest):
             'inputs': {'key1': 'val1', 'key2': 'val2'},
             'skip_plugins_validation': False,
             'tenant_name': None,
-            'visibility': 'tenant'
+            'visibility': 'tenant',
+            'labels': None
         })
 
     @patch('cloudify_cli.commands.blueprints.upload')
@@ -200,7 +202,8 @@ class InstallTest(CliCommandTest):
                 'blueprint_path': SAMPLE_BLUEPRINT_PATH,
                 'validate': True,
                 'tenant_name': None,
-                'visibility': 'tenant'
+                'visibility': 'tenant',
+                'labels': None
             }
         )
 
@@ -255,7 +258,8 @@ class InstallTest(CliCommandTest):
             inputs={'key1': 'val1', 'key2': 'val2'},
             tenant_name=None,
             visibility='tenant',
-            skip_plugins_validation=False
+            skip_plugins_validation=False,
+            labels=None
         )
 
     @patch('cloudify_cli.commands.deployments.manager_create')
