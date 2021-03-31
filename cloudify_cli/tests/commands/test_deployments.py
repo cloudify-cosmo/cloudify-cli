@@ -1038,10 +1038,13 @@ class DeploymentScheduleTest(CliCommandTest):
         now = datetime.datetime.utcnow()
         current_month = now.month
         current_year = now.year
+        current_day = now.day
         expected_month = 1 if current_month == 12 else current_month + 1
         expected_year = current_year + (2 if current_month == 12 else 1)
         expected_since = now.replace(
-            second=0, microsecond=0, year=expected_year, month=expected_month)
+            second=0, microsecond=0,
+            year=expected_year, month=expected_month, day=1)
+        expected_since += datetime.timedelta(days=current_day - 1)
         assert call_args[1]['since'] == expected_since
 
     def test_deployment_schedule_create_years_delta(self):
