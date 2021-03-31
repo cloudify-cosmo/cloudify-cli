@@ -19,8 +19,6 @@ import shutil
 from datetime import datetime
 from contextlib import  contextmanager
 
-import click
-
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from ..cli import cfy, helptexts
@@ -153,20 +151,17 @@ def apply(ctx,
                                                    blueprint_id,
                                                    deployment_id) as\
             processed_inputs:
-        logger.info("processed_inputs {}".format(processed_inputs))
-        logger.info("blueprint id {}".format(blueprint_id))
-        logger.info("dep id: {}".format(deployment_id))
-
-        return
-
+        logger.debug("processed_inputs {}".format(processed_inputs))
         # check if deployment exists
         try:
+            logger.info("Trying to find deployment {}",
+                        processed_inputs['deployment_id'])
             deployment = client.deployments.get(deployment_id=processed_inputs['deployment_id'])
         except CloudifyClientError as e:
             if e.status_code != 404:
                 raise CloudifyCliError(
                     'deployment %s not found and error code is not 404',
-                    deployment_id)
+                    processed_inputs['deployment_id'])
             deployment = None
 
         if not deployment:
@@ -192,8 +187,10 @@ def apply(ctx,
             )
         else:
             # Blueprint upload and deployment update
-            logger.info("Deployment %s found, updating deployment.", deployment_id)
-            update_bp_name = blueprint_id or deployment_id + '-' + datetime.now(
+            logger.info("Deployment %s found, updating deployment.",
+                        processed_inputs['deployment_id'])
+            update_bp_name = blueprint_id or processed_inputs[
+                'deployment_id'] + '-' + datetime.now(
             ).strftime("%d-%m-%Y-%H-%M-%S")
             # processed_blueprint_path, blueprint_id = get_blueprint_path_and_id(
             #     blueprint_path,
@@ -224,7 +221,7 @@ def apply(ctx,
             #         shutil.rmtree(temp_directory)
 
             ctx.invoke(deployments.manager_update,
-                       deployment_id=deployment_id,
+                       deployment_id=processed_inputs['deployment_id'],
                        blueprint_path=None,
                        inputs=inputs,
                        reinstall_list=reinstall_list,
@@ -250,7 +247,7 @@ def apply(ctx,
 
             ctx.invoke(deployments.add_deployment_labels,
                        labels_list=deployment_labels,
-                       deployment_id=deployment_id,
+                       deployment_id=processed_inputs['deployment_id'],
                        tenant_name=tenant_name)
 
 @contextmanager
