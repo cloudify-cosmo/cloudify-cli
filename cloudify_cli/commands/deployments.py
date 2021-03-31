@@ -1207,7 +1207,7 @@ def delete_group_labels(label, deployment_group_name,
                         logger, client, tenant_name):
     """
     LABEL: Can be either <key>:<value> or <key>. If <key> is provided,
-    all labels associated with this key will be deleted from the deployment.
+    all labels associated with this key will be deleted from the group.
     """
     delete_labels(deployment_group_name, 'deployment group',
                   client.deployment_groups, label, logger, tenant_name)
