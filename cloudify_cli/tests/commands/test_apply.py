@@ -131,13 +131,12 @@ class ApplyTest(CliCommandTest):
         apply_command = 'cfy apply --blueprint-path {bl_path} ' \
                         '--deployment-id {dep_id} --validate ' \
                         '--blueprint-labels a:b'.format(
-            bl_path=SAMPLE_BLUEPRINT_PATH,
-            dep_id=STUB_DEPLOYMENT_ID)
+                                                bl_path=SAMPLE_BLUEPRINT_PATH,
+                                                dep_id=STUB_DEPLOYMENT_ID)
         self.invoke(apply_command)
         blueprint_upload_mock.assert_called_with(
             blueprint_path=SAMPLE_BLUEPRINT_PATH,
             blueprint_id=STUB_DEPLOYMENT_ID + '-01-01-2021-00-00-00',
-            # blueprint_filename=DEFAULT_BLUEPRINT_FILE_NAME,
             validate=True,
             visibility='tenant',
             tenant_name=None,
@@ -160,7 +159,6 @@ class ApplyTest(CliCommandTest):
         blueprint_upload_mock.assert_called_with(
             blueprint_path=SAMPLE_BLUEPRINT_PATH,
             blueprint_id=STUB_BLUEPRINT_ID,
-            # blueprint_filename=DEFAULT_BLUEPRINT_FILE_NAME,
             validate=True,
             visibility='tenant',
             tenant_name=None,
@@ -192,14 +190,17 @@ class ApplyTest(CliCommandTest):
             STUB_BLUEPRINT_ID
         )
 
-    #TODO add call to deployment-lables
     @patch('cloudify_cli.commands.blueprints.upload')
+    @patch('cloudify_cli.commands.deployments.add_deployment_labels')
     @patch('cloudify_cli.commands.deployments.manager_update')
-    def test_apply_call_deployment_update(self, deployment_update_mock, *_):
+    def test_apply_call_deployment_update(self,
+                                          deployment_update_mock,
+                                          add_deployment_labels_mock,
+                                          *_):
         self._mock_client_deployment_id(deployment_id=STUB_DEPLOYMENT_ID)
         apply_command = 'cfy apply --blueprint-path {bl_path} ' \
-                        '--deployment-id  {dep_id} -b {bl_id} ' \
-                        '--inputs={inputs} '.format(
+                        '--deployment-id {dep_id} -b {bl_id} ' \
+                        '--inputs={inputs} --deployment-labels a:b'.format(
                             bl_path=SAMPLE_BLUEPRINT_PATH,
                             dep_id=STUB_DEPLOYMENT_ID,
                             bl_id=STUB_BLUEPRINT_ID,
@@ -230,6 +231,10 @@ class ApplyTest(CliCommandTest):
             runtime_only_evaluation=False,
             auto_correct_types=False,
             reevaluate_active_statuses=False)
+        add_deployment_labels_mock.assert_called_with(
+            labels_list=[{'a': 'b'}],
+            deployment_id=STUB_DEPLOYMENT_ID,
+            tenant_name=None)
 
     @patch('cloudify_cli.commands.blueprints.upload')
     @patch('cloudify_cli.commands.deployments.manager_update')
@@ -271,4 +276,3 @@ class ApplyTest(CliCommandTest):
             runtime_only_evaluation=False,
             auto_correct_types=False,
             reevaluate_active_statuses=False)
-
