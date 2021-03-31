@@ -1161,6 +1161,58 @@ def groups_shrink(deployment_group_name, deployment_id, filter_id,
     )
 
 
+@groups.group(name='labels', short_help="Handle the groups' labels")
+@cfy.options.common_options
+def group_labels():
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+
+@group_labels.command(name='list', short_help="List the labels of a group")
+@click.argument('deployment-group-name')
+@cfy.options.tenant_name(required=False, resource_name_for_help='group')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def list_group_labels(deployment_group_name, logger, client, tenant_name):
+    list_labels(deployment_group_name, 'deployment group',
+                client.deployment_groups, logger, tenant_name)
+
+
+@group_labels.command(name='add', short_help="Add labels to a group")
+@cfy.argument('labels-list', callback=cfy.parse_and_validate_labels)
+@click.argument('deployment-group-name')
+@cfy.options.tenant_name(required=False, resource_name_for_help='group')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def add_group_labels(labels_list, deployment_group_name,
+                     logger, client, tenant_name):
+    """LABELS_LIST: <key>:<value>,<key>:<value>"""
+    add_labels(deployment_group_name, 'deployment group',
+               client.deployment_groups, labels_list, logger, tenant_name)
+
+
+@group_labels.command(name='delete', short_help="Delete labels from a group")
+@cfy.argument('label', callback=cfy.parse_and_validate_label_to_delete)
+@click.argument('deployment-group-name')
+@cfy.options.tenant_name(required=False, resource_name_for_help='group')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def delete_group_labels(label, deployment_group_name,
+                        logger, client, tenant_name):
+    """
+    LABEL: Can be either <key>:<value> or <key>. If <key> is provided,
+    all labels associated with this key will be deleted from the deployment.
+    """
+    delete_labels(deployment_group_name, 'deployment group',
+                  client.deployment_groups, label, logger, tenant_name)
+
+
 @cfy.group(name='schedule')
 @cfy.options.common_options
 def schedule():
