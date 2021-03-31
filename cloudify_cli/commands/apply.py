@@ -17,7 +17,7 @@
 import os
 import shutil
 from datetime import datetime
-from contextlib import  contextmanager
+from contextlib import contextmanager
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
@@ -27,10 +27,18 @@ from ..blueprint import get_blueprint_path_and_id
 from . import blueprints, install, deployments
 from ..constants import DEFAULT_BLUEPRINT_PATH
 
+
 @cfy.command(name='apply',
              short_help='Install a blueprint or update existing deployment '
                         'with blueprint [manager only]')
-@cfy.options.blueprint_path(exists=False)
+@cfy.options.blueprint_path(exists=False,
+                            extra_message=' can be a: '
+                                          '- local blueprint yaml file '
+                                          '- blueprint archive '
+                                          '- url to a blueprint archive '
+                                          '- github repo '
+                                          '(`organization/blueprint_repo'
+                                          '[:tag/branch]`)')
 @cfy.options.deployment_id(validate=True)
 @cfy.options.blueprint_filename()
 @cfy.options.blueprint_id()
@@ -115,48 +123,35 @@ def apply(ctx,
     Supported archive types are: zip, tar, tar.gz and tar.bz2
 
     `DEPLOYMENT_ID` is the deployment's id to install/update.
-    """
-    # check if default blueprint path exists.
-    # blueprint_path = blueprint_path or os.path.join(os.getcwd(), DEFAULT_BLUEPRINT_PATH)
-    # if not blueprint_path or os.path.isfile(blueprint_path):
-    #     blueprint_path = blueprint_path or os.path.join(os.getcwd(), DEFAULT_BLUEPRINT_PATH)
-    #     logger.info("No blueprint path provided, using default: %s",
-    #                 blueprint_path)
-    #     logger.info("cwd:{}".format(os.getcwd()))
-    #     _, blueprint_id = get_blueprint_path_and_id(
-    #         blueprint_path,
-    #         blueprint_filename,
-    #         blueprint_id
-    #     )
-    #     deployment_id = deployment_id or blueprint_id
-    #     logger.info("blueprint id {}".format(blueprint_id))
-    #     logger.info("dep id: {}".format(deployment_id))
-    #     return
 
+    Default values:
+
+    If BLUEPRINT_PATH not provided, the default blueprint path
+    'blueprint.yaml' in the current work directory will be used.
+    If DEPLOYMENT_ID is not provided it will be inferred from BLUEPRINT_PATH
+    as follows:
+    - Directory name for local blueprint path or archive with default
+      --blueprint-filename(blueprint.yaml).
+    - <Directory name>.<blueprint_filename> if its an archive and
+      --blueprint-filename is not default.
+    """
     if not blueprint_path:
         blueprint_path = blueprint_path or os.path.join(os.getcwd(),
                                                         DEFAULT_BLUEPRINT_PATH)
         logger.info("No blueprint path provided, using default: %s",
                     blueprint_path)
 
-    # # infer blueprint id and deployment id.
-    # processed_blueprint_path, processed_blueprint_id = get_blueprint_path_and_id(
-    #     blueprint_path,
-    #     blueprint_filename,
-    #     blueprint_id
-    # )
-    # deployment_id = deployment_id or blueprint_id
     with process_blueprint_and_infer_deployment_id(blueprint_path,
                                                    blueprint_filename,
                                                    blueprint_id,
-                                                   deployment_id) as\
+                                                   deployment_id) as \
             processed_inputs:
-        logger.debug("processed_inputs {}".format(processed_inputs))
-        # check if deployment exists
+        logger.debug("processed_inputs %s", processed_inputs)
         try:
-            logger.info("Trying to find deployment {}",
+            logger.info("Trying to find deployment %s",
                         processed_inputs['deployment_id'])
-            deployment = client.deployments.get(deployment_id=processed_inputs['deployment_id'])
+            deployment = client.deployments.get(
+                deployment_id=processed_inputs['deployment_id'])
         except CloudifyClientError as e:
             if e.status_code != 404:
                 raise CloudifyCliError(
@@ -192,13 +187,7 @@ def apply(ctx,
             update_bp_name = blueprint_id or processed_inputs[
                 'deployment_id'] + '-' + datetime.now(
             ).strftime("%d-%m-%Y-%H-%M-%S")
-            # processed_blueprint_path, blueprint_id = get_blueprint_path_and_id(
-            #     blueprint_path,
-            #     blueprint_filename,
-            #     update_bp_name
-            # )
 
-            # try:
             ctx.invoke(
                 blueprints.upload,
                 blueprint_path=processed_inputs['processed_blueprint_path'],
@@ -209,16 +198,6 @@ def apply(ctx,
                 tenant_name=tenant_name,
                 labels=blueprint_labels
             )
-
-            # finally:
-            #     # When an archive file is passed, it's extracted to a temporary
-            #     # directory to get the blueprint file. Once the blueprint has been
-            #     # uploaded, the temporary directory needs to be cleaned up.
-            #     if processed_blueprint_path != blueprint_path:
-            #         temp_directory = os.path.dirname(
-            #             os.path.dirname(processed_blueprint_path)
-            #         )
-            #         shutil.rmtree(temp_directory)
 
             ctx.invoke(deployments.manager_update,
                        deployment_id=processed_inputs['deployment_id'],
@@ -245,26 +224,32 @@ def apply(ctx,
                        reevaluate_active_statuses=reevaluate_active_statuses
                        )
 
-            ctx.invoke(deployments.add_deployment_labels,
-                       labels_list=deployment_labels,
-                       deployment_id=processed_inputs['deployment_id'],
-                       tenant_name=tenant_name)
+            if deployment_labels:
+                ctx.invoke(deployments.add_deployment_labels,
+                           labels_list=deployment_labels,
+                           deployment_id=processed_inputs['deployment_id'],
+                           tenant_name=tenant_name)
+
 
 @contextmanager
 def process_blueprint_and_infer_deployment_id(blueprint_path,
                                               blueprint_filename,
                                               blueprint_id,
                                               deployment_id):
-    processed_blueprint_path, processed_blueprint_id = get_blueprint_path_and_id(
-        blueprint_path,
-        blueprint_filename,
-        blueprint_id
-    )
+    """
+    Handle blueprint download and infer blueprint path and deployment id.
+    """
+    processed_blueprint_path, processed_blueprint_id = \
+        get_blueprint_path_and_id(
+            blueprint_path,
+            blueprint_filename,
+            blueprint_id
+        )
     deployment_id = deployment_id or processed_blueprint_id
     try:
-        yield {'processed_blueprint_path':processed_blueprint_path,
-               'processed_blueprint_id':processed_blueprint_id,
-               'deployment_id':deployment_id}
+        yield {'processed_blueprint_path': processed_blueprint_path,
+               'processed_blueprint_id': processed_blueprint_id,
+               'deployment_id': deployment_id}
     finally:
         if processed_blueprint_path != blueprint_path:
             temp_directory = os.path.dirname(
