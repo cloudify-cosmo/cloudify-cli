@@ -547,7 +547,7 @@ def summary(target_field, sub_field, logger, client, tenant_name,
 
 
 @blueprints.group(name='labels',
-                  short_help="Handle the blueprints' labels")
+                  short_help="Handle a blueprint's labels")
 @cfy.options.common_options
 def labels():
     if not env.is_initialized():

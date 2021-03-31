@@ -856,7 +856,7 @@ def manager_set_site(deployment_id, site_name, detach_site, client, logger):
 
 
 @deployments.group(name='labels',
-                   short_help="Handle the deployments' labels")
+                   short_help="Handle a deployment's labels")
 @cfy.options.common_options
 def labels():
     if not env.is_initialized():
@@ -1161,7 +1161,7 @@ def groups_shrink(deployment_group_name, deployment_id, filter_id,
     )
 
 
-@groups.group(name='labels', short_help="Handle the groups' labels")
+@groups.group(name='labels', short_help="Handle a group's labels")
 @cfy.options.common_options
 def group_labels():
     if not env.is_initialized():
