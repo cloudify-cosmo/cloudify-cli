@@ -29,8 +29,8 @@ from ..constants import DEFAULT_BLUEPRINT_PATH
 
 
 @cfy.command(name='apply',
-             short_help='Install a blueprint or update existing deployment '
-                        'with blueprint [manager only]')
+             short_help='Install a blueprint or update an existing deployment '
+                        'with a new blueprint [manager only]')
 @cfy.options.blueprint_path(exists=False,
                             extra_message=' can be a: '
                                           '- local blueprint yaml file '
@@ -105,8 +105,8 @@ def apply(ctx,
           logger,
           client
           ):
-    """Apply command uses `cfy install` or `cfy deployments update` depends on
-    existence of DEPLOYMENT_ID deployment.
+    """Apply command uses the `cfy install` or `cfy deployments update`
+    depending on the existence the deployment specified by `DEPLOYMENT_ID`.
 
     If the deployment exists, the deployment will be updated with the
     given blueprint.
