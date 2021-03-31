@@ -49,7 +49,7 @@ setup(
         'backports.shutil_get_terminal_size==1.0.0',
         'ipaddress==1.0.23',
         'setuptools<=40.7.3',
-        'cryptography==3.3.2',
+        'cryptography==3.4.7',
         # Fabric depend on paramiko that depends on cryptography so we need
         # to install the correct version of cryptography before installing
         # the fabric so that fabric can be installed correctly in both py2 +
