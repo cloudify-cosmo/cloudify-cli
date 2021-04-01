@@ -22,7 +22,6 @@ from contextlib import contextmanager
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from ..cli import cfy, helptexts
-from ..exceptions import CloudifyCliError
 from ..blueprint import get_blueprint_path_and_id
 from . import blueprints, install, deployments
 from ..constants import DEFAULT_BLUEPRINT_PATH
@@ -121,7 +120,7 @@ def apply(ctx,
     - blueprint archive.
 
     - URL to a blueprint archive.
-    
+
     - GitHub repo (`organization/blueprint_repo[:tag/branch]`).
 
     Supported archive types are zip, tar, tar.gz, and tar.bz2

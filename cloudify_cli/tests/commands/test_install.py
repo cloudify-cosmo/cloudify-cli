@@ -261,7 +261,7 @@ class InstallTest(CliCommandTest):
             tenant_name=None,
             visibility='tenant',
             skip_plugins_validation=False,
-            labels= [{'label_key': 'label_value'}]
+            labels=[{'label_key': 'label_value'}]
         )
 
     @patch('cloudify_cli.commands.deployments.manager_create')
