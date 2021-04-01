@@ -106,35 +106,41 @@ def apply(ctx,
           client
           ):
     """The `cfy apply` command uses the `cfy install` or `cfy deployments
-     update' depending on the existence the deployment specified by
-      `DEPLOYMENT_ID`.
+    update`depending on the existence of the deployment specified by
+    `DEPLOYMENT_ID`.
 
-    If the deployment exists, the deployment will be updated with the
-    given blueprint.
-    Otherwise, the blueprint will be installed (the deployment name will be
-    DEPLOYMENT_ID).
+    If the deployment exists, the deployment will be updated with the given
+    blueprint. Otherwise, the blueprint will be installed
+    (the deployment name will be DEPLOYMENT_ID).
     In both cases, the blueprint is being uploaded to the manager.
 
     `BLUEPRINT_PATH` can be a:
-        - local blueprint yaml file
-        - blueprint archive
-        - url to a blueprint archive
-        - github repo (`organization/blueprint_repo[:tag/branch]`)
 
-    Supported archive types are: zip, tar, tar.gz and tar.bz2
+    - local blueprint yaml file.
+
+    - blueprint archive.
+
+    - URL to a blueprint archive.
+    
+    - GitHub repo (`organization/blueprint_repo[:tag/branch]`).
+
+    Supported archive types are zip, tar, tar.gz, and tar.bz2
 
     `DEPLOYMENT_ID` is the deployment's id to install/update.
 
     Default values:
 
-    If BLUEPRINT_PATH is not provided, the default blueprint path is
+    If `BLUEPRINT_PATH` is not provided, the default blueprint path is
     'blueprint.yaml' in the current work directory.
+
     If DEPLOYMENT_ID is not provided, it will be inferred from the
-    BLUEPRINT_PATH in one of the following ways:
-    - <Directory name>, for local blueprint path or archive with default
-      --blueprint-filename(blueprint.yaml).
-    - <Directory name>.<blueprint_filename>, for an archive with
-      --blueprint-filename that is not default.
+    `BLUEPRINT_PATH` in one of the following ways:
+
+    1. <Directory name>, for local blueprint path or archive with default
+    --blueprint-filename(blueprint.yaml).
+
+    2. <Directory name>.<blueprint_filename>, for an archive with
+    --blueprint-filename that is not default.
     """
     if not blueprint_path:
         blueprint_path = blueprint_path or os.path.join(os.getcwd(),
