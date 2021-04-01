@@ -19,7 +19,8 @@ from datetime import date
 from mock import patch, Mock
 
 from .test_base import CliCommandTest
-from .constants import (BLUEPRINTS_DIR,
+from .constants import (TEST_LABELS,
+                        BLUEPRINTS_DIR,
                         SAMPLE_BLUEPRINT_PATH,
                         SAMPLE_ARCHIVE_PATH,
                         STUB_BLUEPRINT_ID,
@@ -67,7 +68,7 @@ class ApplyTest(CliCommandTest):
     @patch('cloudify_cli.commands.install.manager')
     def test_apply_default_values(self, install_mock, *_):
         self.client.deployments.get = Mock(return_value=None)
-        self.invoke('cfy apply ')
+        self.invoke('cfy apply')
         install_mock.assert_called()
         install_args = install_mock.call_args_list[0][1]
 
@@ -130,9 +131,10 @@ class ApplyTest(CliCommandTest):
         datetime_mock.now.return_value = date(2021, 1, 1)
         apply_command = 'cfy apply --blueprint-path {bl_path} ' \
                         '--deployment-id {dep_id} --validate ' \
-                        '--blueprint-labels a:b'.format(
+                        '--blueprint-labels {labels}'.format(
                                                 bl_path=SAMPLE_BLUEPRINT_PATH,
-                                                dep_id=STUB_DEPLOYMENT_ID)
+                                                dep_id=STUB_DEPLOYMENT_ID,
+                                                labels=TEST_LABELS)
         self.invoke(apply_command)
         blueprint_upload_mock.assert_called_with(
             blueprint_path=SAMPLE_BLUEPRINT_PATH,
@@ -140,7 +142,7 @@ class ApplyTest(CliCommandTest):
             validate=True,
             visibility='tenant',
             tenant_name=None,
-            labels=[{'a': 'b'}])
+            labels=[{'label_key': 'label_value'}])
 
     @patch('cloudify_cli.commands.deployments.manager_update')
     @patch('cloudify_cli.commands.blueprints.upload')
@@ -151,10 +153,11 @@ class ApplyTest(CliCommandTest):
         self._mock_client_deployment_id(deployment_id=STUB_DEPLOYMENT_ID)
         apply_command = 'cfy apply --blueprint-path {bl_path} ' \
                         '--deployment-id {dep_id} -b {bl_id} ' \
-                        '--blueprint-labels a:b ' \
+                        '--blueprint-labels {labels} ' \
                         '--validate'.format(bl_path=SAMPLE_BLUEPRINT_PATH,
                                             dep_id=STUB_DEPLOYMENT_ID,
-                                            bl_id=STUB_BLUEPRINT_ID)
+                                            bl_id=STUB_BLUEPRINT_ID,
+                                            labels=TEST_LABELS)
         self.invoke(apply_command)
         blueprint_upload_mock.assert_called_with(
             blueprint_path=SAMPLE_BLUEPRINT_PATH,
@@ -162,7 +165,7 @@ class ApplyTest(CliCommandTest):
             validate=True,
             visibility='tenant',
             tenant_name=None,
-            labels=[{'a': 'b'}])
+            labels=[{'label_key': 'label_value'}])
 
     @patch('cloudify_cli.commands.deployments.manager_update')
     @patch('cloudify_cli.commands.blueprints.upload')
@@ -200,11 +203,12 @@ class ApplyTest(CliCommandTest):
         self._mock_client_deployment_id(deployment_id=STUB_DEPLOYMENT_ID)
         apply_command = 'cfy apply --blueprint-path {bl_path} ' \
                         '--deployment-id {dep_id} -b {bl_id} ' \
-                        '--inputs={inputs} --deployment-labels a:b'.format(
-                            bl_path=SAMPLE_BLUEPRINT_PATH,
-                            dep_id=STUB_DEPLOYMENT_ID,
-                            bl_id=STUB_BLUEPRINT_ID,
-                            inputs=SAMPLE_INPUTS_PATH)
+                        '--inputs={inputs} --deployment-labels {labels}'\
+            .format(bl_path=SAMPLE_BLUEPRINT_PATH,
+                    dep_id=STUB_DEPLOYMENT_ID,
+                    bl_id=STUB_BLUEPRINT_ID,
+                    inputs=SAMPLE_INPUTS_PATH,
+                    labels=TEST_LABELS)
 
         self.invoke(apply_command)
 
@@ -232,7 +236,7 @@ class ApplyTest(CliCommandTest):
             auto_correct_types=False,
             reevaluate_active_statuses=False)
         add_deployment_labels_mock.assert_called_with(
-            labels_list=[{'a': 'b'}],
+            labels_list=[{'label_key': 'label_value'}],
             deployment_id=STUB_DEPLOYMENT_ID,
             tenant_name=None)
 

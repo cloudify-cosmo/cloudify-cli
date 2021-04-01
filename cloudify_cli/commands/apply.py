@@ -105,14 +105,15 @@ def apply(ctx,
           logger,
           client
           ):
-    """Apply command uses the `cfy install` or `cfy deployments update`
-    depending on the existence the deployment specified by `DEPLOYMENT_ID`.
+    """The `cfy apply` command uses the `cfy install` or `cfy deployments
+     update' depending on the existence the deployment specified by
+      `DEPLOYMENT_ID`.
 
     If the deployment exists, the deployment will be updated with the
     given blueprint.
     Otherwise, the blueprint will be installed (the deployment name will be
     DEPLOYMENT_ID).
-    In both cases the blueprint is being uploaded to the manager.
+    In both cases, the blueprint is being uploaded to the manager.
 
     `BLUEPRINT_PATH` can be a:
         - local blueprint yaml file
@@ -126,14 +127,14 @@ def apply(ctx,
 
     Default values:
 
-    If BLUEPRINT_PATH not provided, the default blueprint path is
+    If BLUEPRINT_PATH is not provided, the default blueprint path is
     'blueprint.yaml' in the current work directory.
-    If DEPLOYMENT_ID is not provided it will be inferred from BLUEPRINT_PATH
-    as follows:
-    - Directory name for local blueprint path or archive with default
+    If DEPLOYMENT_ID is not provided, it will be inferred from the
+    BLUEPRINT_PATH in one of the following ways:
+    - <Directory name>, for local blueprint path or archive with default
       --blueprint-filename(blueprint.yaml).
-    - <Directory name>.<blueprint_filename> if it's an archive and
-      --blueprint-filename is not default.
+    - <Directory name>.<blueprint_filename>, for an archive with
+      --blueprint-filename that is not default.
     """
     if not blueprint_path:
         blueprint_path = blueprint_path or os.path.join(os.getcwd(),
@@ -153,13 +154,14 @@ def apply(ctx,
             deployment = client.deployments.get(
                 deployment_id=processed_inputs['deployment_id'])
         except CloudifyClientError as e:
-            if e.status_code != 404:
-                raise CloudifyCliError(
-                    'deployment %s not found and error code is not 404',
-                    processed_inputs['deployment_id'])
-            deployment = None
+            if e.status_code == 404:
+                deployment = None
+            else:
+                raise
 
         if not deployment:
+            logger.info("Deployment %s not found, installing.",
+                        processed_inputs['deployment_id'])
             ctx.invoke(
                 install.manager,
                 blueprint_path=processed_inputs['processed_blueprint_path'],

@@ -46,3 +46,4 @@ SAMPLE_CUSTOM_NAME_ARCHIVE = os.path.join(
     BLUEPRINTS_DIR,
     'helloworld_custom_name.zip'
 )
+TEST_LABELS = 'label_key:label_value'
