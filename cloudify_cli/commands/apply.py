@@ -105,12 +105,12 @@ def apply(ctx,
           client
           ):
     """The `cfy apply` command uses the `cfy install` or `cfy deployments
-    update`depending on the existence of the deployment specified by
+    update` depending on the existence of the deployment specified by
     `DEPLOYMENT_ID`.
 
     If the deployment exists, the deployment will be updated with the given
-    blueprint. Otherwise, the blueprint will be installed
-    (the deployment name will be DEPLOYMENT_ID).
+    blueprint. Otherwise, the blueprint will be installed, and the deployment
+    name will be DEPLOYMENT_ID.
     In both cases, the blueprint is being uploaded to the manager.
 
     `BLUEPRINT_PATH` can be a:
@@ -130,7 +130,7 @@ def apply(ctx,
     Default values:
 
     If `BLUEPRINT_PATH` is not provided, the default blueprint path is
-    'blueprint.yaml' in the current work directory.
+    'blueprint.yaml' in the current working directory.
 
     If DEPLOYMENT_ID is not provided, it will be inferred from the
     `BLUEPRINT_PATH` in one of the following ways:
@@ -165,8 +165,8 @@ def apply(ctx,
                 raise
 
         if not deployment:
-            logger.info("Deployment %s not found, installing.",
-                        processed_inputs['deployment_id'])
+            logger.info("Deployment %s was not found. Installing "
+                        "the blueprint.", processed_inputs['deployment_id'])
             ctx.invoke(
                 install.manager,
                 blueprint_path=processed_inputs['processed_blueprint_path'],
