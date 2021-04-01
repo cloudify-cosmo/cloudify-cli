@@ -8,7 +8,7 @@ from .constants import SAMPLE_BLUEPRINT_PATH, \
     SAMPLE_ARCHIVE_PATH, STUB_BLUEPRINT_ID, STUB_DIRECTORY_NAME, \
     SAMPLE_ARCHIVE_URL, STUB_BLUEPRINT_FILENAME, SAMPLE_INPUTS_PATH, \
     STUB_DEPLOYMENT_ID, STUB_PARAMETERS, STUB_WORKFLOW, STUB_TIMEOUT, \
-    BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
+    BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME, TEST_LABELS
 
 
 class InstallTest(CliCommandTest):
@@ -117,7 +117,8 @@ class InstallTest(CliCommandTest):
             'inputs': {'key1': 'val1', 'key2': 'val2'},
             'skip_plugins_validation': False,
             'tenant_name': None,
-            'visibility': 'tenant'
+            'visibility': 'tenant',
+            'labels': None
         })
 
     @patch('cloudify_cli.commands.blueprints.upload')
@@ -143,7 +144,8 @@ class InstallTest(CliCommandTest):
             'inputs': {'key1': 'val1', 'key2': 'val2'},
             'skip_plugins_validation': False,
             'tenant_name': None,
-            'visibility': 'tenant'
+            'visibility': 'tenant',
+            'labels': None
         })
 
     @patch('cloudify_cli.commands.blueprints.upload')
@@ -186,9 +188,10 @@ class InstallTest(CliCommandTest):
                                                 blueprints_upload_mock,
                                                 *_):
         command = \
-            'cfy install {0} -b {1} --validate'\
+            'cfy install {0} -b {1} --validate --blueprint-labels {2}'\
             .format(SAMPLE_BLUEPRINT_PATH,
-                    STUB_BLUEPRINT_ID)
+                    STUB_BLUEPRINT_ID,
+                    TEST_LABELS)
 
         self.invoke(command, context='manager')
         blueprints_upload_args = blueprints_upload_mock.call_args_list[0][1]
@@ -200,7 +203,8 @@ class InstallTest(CliCommandTest):
                 'blueprint_path': SAMPLE_BLUEPRINT_PATH,
                 'validate': True,
                 'tenant_name': None,
-                'visibility': 'tenant'
+                'visibility': 'tenant',
+                'labels': [{'label_key': 'label_value'}]
             }
         )
 
@@ -241,11 +245,12 @@ class InstallTest(CliCommandTest):
         # with the fact that 'upload mode' needs the blueprint_path argument
         # to lead to an existing file
         command = \
-            'cfy install {0} -b {1} -d {2} -i {3}' \
+            'cfy install {0} -b {1} -d {2} -i {3} --deployment-labels {4}' \
             .format(SAMPLE_ARCHIVE_PATH,
                     STUB_BLUEPRINT_ID,
                     STUB_DEPLOYMENT_ID,
-                    SAMPLE_INPUTS_PATH)
+                    SAMPLE_INPUTS_PATH,
+                    TEST_LABELS)
 
         self.invoke(command, context='manager')
 
@@ -255,7 +260,8 @@ class InstallTest(CliCommandTest):
             inputs={'key1': 'val1', 'key2': 'val2'},
             tenant_name=None,
             visibility='tenant',
-            skip_plugins_validation=False
+            skip_plugins_validation=False,
+            labels=[{'label_key': 'label_value'}]
         )
 
     @patch('cloudify_cli.commands.deployments.manager_create')

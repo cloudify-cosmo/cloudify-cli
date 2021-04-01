@@ -13,7 +13,7 @@ INPUTS_PARAMS_USAGE = (
 )
 WORKFLOW_TO_EXECUTE = "The workflow to execute [default: {0}]"
 
-BLUEPRINT_PATH = "The path to the application's blueprint file [DEPRECATED]"
+BLUEPRINT_PATH = "The path to the application's blueprint file."
 BLUEPRINT_ID = "The unique identifier for the blueprint"
 VALIDATE_BLUEPRINT = "Validate the blueprint first"
 
@@ -85,6 +85,11 @@ SKIP_REINSTALL = (
     "Skip automatically reinstall node-instances that their properties has "
     "been modified, as part of a deployment update. Node instances that were "
     "explicitly given to the reinstall list will still be reinstalled"
+)
+DONT_SKIP_REINSTALL = (
+    "Reinstall node-instances that their properties have been modified as part"
+    " of a deployment update. Node instances that were explicitly specified"
+    " in the reinstall list will be reinstalled too."
 )
 IGNORE_FAILURE = (
     "Supply the parameter `ignore_failure` with the value `true` to the "

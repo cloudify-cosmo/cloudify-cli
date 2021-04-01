@@ -842,6 +842,11 @@ class Options(object):
             is_flag=True,
             help=helptexts.SKIP_REINSTALL)
 
+        self.dont_skip_reinstall = click.option(
+            '--dont-skip-reinstall',
+            is_flag=True,
+            help=helptexts.DONT_SKIP_REINSTALL)
+
         self.ignore_failure = click.option(
             '--ignore-failure',
             is_flag=True,
@@ -1561,7 +1566,18 @@ class Options(object):
             callback=parse_and_validate_labels,
             help=helptexts.LABELS
         )
-
+        self.deployment_labels = click.option(
+            '--deployment-labels',
+            required=False,
+            callback=parse_and_validate_labels,
+            help=helptexts.LABELS
+        )
+        self.blueprint_labels = click.option(
+            '--blueprint-labels',
+            required=False,
+            callback=parse_and_validate_labels,
+            help=helptexts.LABELS
+        )
         self.async_upload = click.option(
             '-a',
             '--async-upload',
@@ -1916,13 +1932,15 @@ class Options(object):
             callback=_get_validate_callback(validate))
 
     @staticmethod
-    def blueprint_path(required=False):
+    def blueprint_path(required=False,
+                       extra_message='',
+                       exists=True):
         return click.option(
             '-p',
             '--blueprint-path',
             required=required,
-            type=click.Path(exists=True),
-            help=helptexts.BLUEPRINT_PATH)
+            type=click.Path(exists=exists),
+            help=helptexts.BLUEPRINT_PATH + extra_message)
 
     @staticmethod
     def tenant_role(help_text, required, options_flags=None):

@@ -42,6 +42,8 @@ from . import init, executions, blueprints, deployments
 @cfy.options.timeout()
 @cfy.options.include_logs
 @cfy.options.json_output
+@cfy.options.blueprint_labels
+@cfy.options.deployment_labels
 @cfy.options.common_options
 @cfy.pass_context
 def manager(ctx,
@@ -60,7 +62,9 @@ def manager(ctx,
             allow_custom_parameters,
             timeout,
             include_logs,
-            json_output):
+            json_output,
+            blueprint_labels,
+            deployment_labels):
     """Install an application via the manager
 
     `BLUEPRINT_PATH` can be either a local blueprint yaml file or
@@ -88,7 +92,8 @@ def manager(ctx,
             blueprint_filename=blueprint_filename,
             validate=validate,
             visibility=visibility,
-            tenant_name=tenant_name
+            tenant_name=tenant_name,
+            labels=blueprint_labels
         )
     finally:
         # Every situation other than the user providing a path of a local
@@ -104,7 +109,8 @@ def manager(ctx,
         inputs=inputs,
         visibility=visibility,
         tenant_name=tenant_name,
-        skip_plugins_validation=skip_plugins_validation
+        skip_plugins_validation=skip_plugins_validation,
+        labels=deployment_labels
     )
     ctx.invoke(
         executions.manager_start,

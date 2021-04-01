@@ -339,7 +339,7 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
 
 @cfy.command(name='update', short_help='Update a deployment [manager only]')
 @cfy.argument('deployment-id')
-@cfy.options.blueprint_path()
+@cfy.options.blueprint_path(extra_message=' [DEPRECATED]')
 @cfy.options.blueprint_filename(' [DEPRECATED]')
 @cfy.options.blueprint_id()
 @cfy.options.inputs
