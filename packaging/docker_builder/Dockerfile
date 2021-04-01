@@ -15,4 +15,4 @@ RUN /bin/bash -c '''\
     gem install ohai -v 14.8.12 --no-document && \
     gem install omnibus -v 6.1.4 --no-document \
 '''
-RUN yum install sudo -y
+RUN yum install https://github.com/sudo-project/sudo/releases/download/SUDO_1_9_6p1/sudo-1.9.6-2.el6.x86_64.rpm -y
