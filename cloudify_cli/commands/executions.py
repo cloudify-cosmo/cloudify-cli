@@ -611,3 +611,27 @@ def execution_groups_start(deployment_group, workflow_id, parameters,
     )
     wait_for_execution_group(
         client, group, events_handler=events_logger, timeout=timeout)
+
+
+@groups.command('cancel', short_help='Cancel an execution group')
+@cfy.argument('group-id')
+@cfy.options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
+@cfy.options.kill()
+@cfy.options.tenant_name(
+    required=False, resource_name_for_help='execution group')
+@cfy.options.common_options
+@cfy.options.json_output
+@cfy.pass_client()
+@cfy.pass_logger
+def execution_groups_cancel(group_id, force, kill,
+                            client, logger, tenant_name):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    if kill:
+        message = 'Killing'
+    elif force:
+        message = 'Force-cancelling'
+    else:
+        message = 'Cancelling'
+    logger.info('%s execution group %s', message, group_id)
+    client.execution_groups.cancel(group_id, force=force, kill=kill)
+    logger.info("A cancel request for group %s has been sent", group_id)
