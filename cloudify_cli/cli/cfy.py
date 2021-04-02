@@ -1374,6 +1374,14 @@ class Options(object):
             help=helptexts.WITH_LOGS
         )
 
+        self.with_logs = click.option(
+            '--delete-deployments',
+            required=False,
+            is_flag=True,
+            default=False,
+            help=helptexts.DELETE_GROUP_DEPLOYMENTS
+        )
+
         self.port = click.option(
             '--port',
             required=False,
