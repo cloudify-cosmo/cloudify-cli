@@ -1374,7 +1374,7 @@ class Options(object):
             help=helptexts.WITH_LOGS
         )
 
-        self.with_logs = click.option(
+        self.delete_deployments = click.option(
             '--delete-deployments',
             required=False,
             is_flag=True,
