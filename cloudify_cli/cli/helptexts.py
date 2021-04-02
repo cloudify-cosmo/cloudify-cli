@@ -537,4 +537,3 @@ DEP_GROUP_FILTER_ID = 'Use deployments selected by this filter'
 DEP_GROUP_FROM_GROUP = 'Use deployments belonging to this group'
 GROUP_ID_FILTER = 'Show only results belonging to this group'
 DELETE_GROUP_DEPLOYMENTS = 'Delete all deployments belonging to this group'
-
