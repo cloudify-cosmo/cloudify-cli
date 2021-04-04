@@ -36,7 +36,10 @@ class InvalidLabelsFilterRuleFormat(CloudifyCliError):
             'The labels filter rule `{0}` is not in the right format. It must '
             'be one of: <key>=<value>, <key>!=<value>, <key> is null, '
             '<key> is not null. <value> can be a single string or a list of '
-            'strings of the form [<value1>,<value2>,...]'.format(
+            'strings of the form [<value1>,<value2>,...]. '
+            '<value> cannot contain `"`, `\\n` and `\\t`, plus, any comma in '
+            '<value> must be escaped with `\\`. <key> can contain only '
+            'letters, digits and the characters `-`, `.` and `_`'.format(
                 labels_filter_value)
         )
 
@@ -49,14 +52,13 @@ class InvalidAttributesFilterRuleFormat(CloudifyCliError):
             '<key> contains <value>, <key> does-not-contain <value>, '
             '<key> starts-with <value>, <key> ends-with <value>, '
             '<key> is not empty. <value> can be a single string or a list of '
-            'strings of the form [<value1>,<value2>,...]'.format(
-                labels_filter_value)
+            'strings of the form [<value1>,<value2>,...]. <key> and <value> '
+            'can contain only letters, digits and the characters `-`, `.` '
+            'and `_`'.format(labels_filter_value)
         )
 
 
 class FilterRule(dict):
-    format_exception = None
-
     def __init__(self, key, values, operator, filter_rule_type):
         super(FilterRule, self).__init__()
         self['key'] = key
@@ -64,113 +66,90 @@ class FilterRule(dict):
         self['operator'] = operator
         self['type'] = filter_rule_type
 
-    @classmethod
-    def _parse_filter_rule(cls, str_filter_rule, operator):
-        """Parse a filter rule
-
-        :param str_filter_rule: One of:
-               <key>=<value>,<key>=[<value1>,<value2>,...],
-               <key>!=<value>, <key>!=[<value1>,<value2>,...],
-               <key> contains <value>, <key> contains [<value1>,<value2>,..],
-               <key> does-not-contain  <value>,
-               <key> does-not-contain [<value1>,<value2>,..],
-               <key> starts-with <value>, <key> starts-with [<value1>,
-               <value2>,..],
-               <key> ends-with <value>, <key> ends-with [<value1>,<value2>,..],
-        :param operator: Either '=' / '!=' / 'contains' / 'not-contains' /
-               'starts-with' / 'ends-with'
-        :return: The filter_rule's key and value(s) stripped of whitespaces
-        """
-        try:
-            raw_rule_key, raw_rule_value = str_filter_rule.split(operator)
-        except ValueError:  # e.g. a=b=c
-            raise cls.format_exception(str_filter_rule)
-
-        rule_key = raw_rule_key.strip()
-        rule_values = cls._get_rule_values(raw_rule_value.strip())
-
-        return rule_key, rule_values
-
     @staticmethod
     def _get_rule_values(raw_rule_value):
+        raw_rule_value = raw_rule_value.replace('\\,', '\x00')
         if raw_rule_value.startswith('[') and raw_rule_value.endswith(']'):
-            return raw_rule_value.strip('[]').split(',')
+            raw_values_list = raw_rule_value.strip('[]').split(',')
+        else:
+            raw_values_list = [raw_rule_value]
 
-        return [raw_rule_value]
+        return [value.replace('\x00', ',') for value in raw_values_list]
 
     def __str__(self, cli_operator):
-        if len(self['values']) == 1:
-            return '{key}{operator}{values}'.format(key=self['key'],
-                                                    operator=cli_operator,
-                                                    values=self['values'][0])
+        values = (self['values'][0] if len(self['values']) == 1 else
+                  '[{0}]'.format(','.join(self['values'])))
 
-        return '{key}{operator}[{values}]'.format(
-            key=self['key'], operator=cli_operator,
-            values=','.join(self['values']))
+        return '"{key}{operator}{values}"'.format(key=self['key'],
+                                                  operator=cli_operator,
+                                                  values=values)
 
 
 class LabelsFilterRule(FilterRule):
-    format_exception = InvalidLabelsFilterRuleFormat
-
     def __init__(self, key, values, operator):
         super(LabelsFilterRule, self).__init__(key, values, operator, 'label')
 
     @classmethod
     def from_string(cls, str_filter_rule):
-        if '!=' in str_filter_rule:
-            key, values = cls._parse_filter_rule(str_filter_rule, '!=')
-            return cls(key, values, OPERATOR_MAPPING['!='])
+        match_equal = re.match(r'^([\w\-\.]+)(=)([^\n\t\"]+)$',
+                               str_filter_rule)
+        match_not_equal = re.match(r'^([\w\-\.]+)(!=)([^\n\t\"]+)$',
+                                   str_filter_rule)
+        equal_matching = match_equal or match_not_equal
+        if equal_matching:
+            key = equal_matching.group(1).lower()
+            operator = equal_matching.group(2)
+            values = cls._get_rule_values(equal_matching.group(3))
+            return cls(key, values, OPERATOR_MAPPING[operator])
 
-        elif '=' in str_filter_rule:
-            key, values = cls._parse_filter_rule(str_filter_rule, '=')
-            return cls(key, values, OPERATOR_MAPPING['='])
+        match_null = re.match(r'^([\w\-\.]+) (is null)$', str_filter_rule)
+        match_not_null = re.match(r'^([\w\-\.]+) (is not null)$',
+                                  str_filter_rule)
+        null_matching = match_null or match_not_null
 
-        elif 'null' in str_filter_rule:
-            match_null = re.match(r'(\S+) is null', str_filter_rule)
-            match_not_null = re.match(r'(\S+) is not null', str_filter_rule)
-            if match_null:
-                key = match_null.group(1).lower()
-                return cls(key, [], OPERATOR_MAPPING['is null'])
-            elif match_not_null:
-                key = match_not_null.group(1).lower()
-                return cls(key, [], OPERATOR_MAPPING['is not null'])
-            else:
-                raise cls.format_exception(str_filter_rule)
+        if null_matching:
+            key = null_matching.group(1).lower()
+            operator = null_matching.group(2)
+            return cls(key, [], OPERATOR_MAPPING[operator])
 
-        else:
-            raise cls.format_exception(str_filter_rule)
+        # If we got here, the labels filter is not in the right format
+        raise InvalidLabelsFilterRuleFormat(str_filter_rule)
 
     def __str__(self):
         cli_operator = REVERSED_OPERATOR_MAPPING[self['operator']]
         if self['operator'] in ('is_null', 'is_not_null'):
             return '{0} {1}'.format(self['key'], cli_operator)
-
+        self['values'] = [val.replace(',', '\\,').replace('$', '\\$')
+                          for val in self['values']]
         return super(LabelsFilterRule, self).__str__(cli_operator)
 
 
 class AttrsFilterRule(FilterRule):
-    format_exception = InvalidAttributesFilterRuleFormat
-
     def __init__(self, key, values, operator):
         super(AttrsFilterRule, self).__init__(key, values, operator,
                                               'attribute')
 
     @classmethod
     def from_string(cls, str_filter_rule):
-        for operator in ['!=', '=', 'contains', 'does-not-contain',
-                         'starts-with', 'ends-with']:
-            if operator in str_filter_rule:
-                key, values = cls._parse_filter_rule(str_filter_rule, operator)
-                return cls(key, values, OPERATOR_MAPPING[operator])
+        for operator in ['!=', '=', ' contains ', ' does-not-contain ',
+                         ' starts-with ', ' ends-with ']:
+            matching = re.match(
+                r'^([\w\-\.]+)({0})([\w\-\.]+|\[[\w\-\.\,]+\])$'.format(
+                    operator), str_filter_rule)
+            if matching:
+                key = matching.group(1).lower()
+                operator = matching.group(2)
+                values = cls._get_rule_values(matching.group(3))
+                return cls(key, values, OPERATOR_MAPPING[operator.strip()])
 
-        # None of the operators in the list is in str_filter_rule
-        match_not_empty = re.match(r'(\S+) is not empty', str_filter_rule)
+        # The str_filter_rule didn't match the pattern with any operator
+        match_not_empty = re.match(r'^([\w\-\.]+) is not empty$',
+                                   str_filter_rule)
         if match_not_empty:
             key = match_not_empty.group(1).lower()
             return cls(key, [], OPERATOR_MAPPING['is not empty'])
 
-        else:
-            raise cls.format_exception(str_filter_rule)
+        raise InvalidAttributesFilterRuleFormat(str_filter_rule)
 
     def __str__(self):
         filter_rule_operator = self['operator']
@@ -283,30 +262,28 @@ def _modify_filter_details(filter_details):
         filter_details['labels_filter_rules'])
 
 
-def create_labels_filter_rules_list(labels_filter_rules_string):
+def create_labels_filter_rules_list(raw_labels_filter_rules_list):
     """Validate and parse a string of labels filter rules
 
-    :param labels_filter_rules_string: A string of filter rules of type `label`
-           separated with an `and`.
+    :param raw_labels_filter_rules_list: A list of filter rules of type
+           `label`, formatted as strings.
     :return The list of filter rules that matches the provided string.
     """
-    raw_labels_filter_rules = labels_filter_rules_string.split(' and ')
     labels_filter_rules = [LabelsFilterRule.from_string(raw_filter_rule) for
-                           raw_filter_rule in raw_labels_filter_rules]
+                           raw_filter_rule in raw_labels_filter_rules_list]
 
     return labels_filter_rules
 
 
-def create_attributes_filter_rules_list(attributes_filter_rules_string):
+def create_attributes_filter_rules_list(raw_attributes_filter_rules_list):
     """Validate and parse a list of attributes filter rules
 
-    :param attributes_filter_rules_string: A string of filter rules of type
-           `attribute` separated with an `and`.
+    :param raw_attributes_filter_rules_list: A list of filter rules of type
+           `attribute`, formatted as strings.
     :return The list of filter rules that matches the provided string.
     """
-    raw_attrs_filter_rules = attributes_filter_rules_string.split(' and ')
     attrs_filter_rules = [AttrsFilterRule.from_string(raw_filter_rule) for
-                          raw_filter_rule in raw_attrs_filter_rules]
+                          raw_filter_rule in raw_attributes_filter_rules_list]
 
     return attrs_filter_rules
 
@@ -339,10 +316,11 @@ def _filter_rules_to_string(filter_rules):
 
         str_filter_rules_list.append(str(filter_rule))
 
-    return '"{0}"'.format(' and '.join(str_filter_rules_list))
+    return (str_filter_rules_list[0] if len(str_filter_rules_list) == 1
+            else str_filter_rules_list)
 
 
 def _modify_err_msg(err_filter_rule, err_reason):
     str_filter_rule = _filter_rules_to_string([err_filter_rule])
-    return 'The filter rule {0} is invalid. {1}'.format(str_filter_rule,
-                                                        err_reason)
+    return 'The filter rule `{0}` is invalid. {1}'.format(str_filter_rule,
+                                                          err_reason)

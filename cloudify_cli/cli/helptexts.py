@@ -499,21 +499,21 @@ REEVALUATE_ACTIVE_STATUSES_PLUGINS = REEVALUATE_ACTIVE_STATUSES + "  This " \
                                      "deployment update flows and has " \
                                      "a similar effect on those."
 
-LABELS = "A labels list of the form <key>:<value>,<key>:<value>"
+LABELS = "A labels list of the form <key>:<value>,<key>:<value>. " \
+         "Any comma and colon in <value> must be escaped with `\\`."
 
-LABELS_FILTER_RULES = "A list of labels' filter rules separated with an " \
-                      "`and`. Labels' filter rules must be one of: " \
-                      "<key>=<value>, <key>!=<value>, <key> is null, " \
-                      "<key> is not null. <value> can be a single string or " \
-                      "a list of strings of the form " \
-                      "[<value1>,<value2>,...]. E.g. \"a=b and c!=[d,e] and " \
-                      "f is not null\". The labels' filter rules will be " \
-                      "saved in lower case."
+LABELS_FILTER_RULES = "A labels' filter rule. Labels' filter rules must be " \
+                      "one of: <key>=<value>, <key>!=<value>, <key> is null," \
+                      " <key> is not null. <value> can be a single string " \
+                      "or a list of strings of the form " \
+                      "[<value1>,<value2>,...]. Any comma in <value> must " \
+                      "be escaped with `\\`. The labels' filter rules " \
+                      "will be saved in lower case."
 
-ATTRS_FILTER_RULES = "A list of attributes' filter rules separated with an " \
-                     "`and`. Attributes' filter rules must be one of:  " \
-                     "<key>=<value>, <key>!=<value>, <key> contains " \
-                     "<value>, <key> does-not-contain <value>, " \
+ATTRS_FILTER_RULES = "An attributes' filter rule. Attributes' filter rules " \
+                     "must be one of:  <key>=<value>, <key>!=<value>, " \
+                     "<key> contains <value>, " \
+                     "<key> does-not-contain <value>, " \
                      "<key> starts-with <value>, <key> ends-with <value>. " \
                      "<key> is not empty. <value> can be a single string or " \
                      "a list of strings of the form [<value1>,<value2>,...]." \
@@ -521,11 +521,12 @@ ATTRS_FILTER_RULES = "A list of attributes' filter rules separated with an " \
 
 DEPLOYMENTS_ATTRS_FILTER_RULES = ATTRS_FILTER_RULES + \
                                  '[blueprint_id, created_by, site_name, ' \
-                                 'schedules]. E.g. \"blueprint_id contains ' \
-                                 'app and created_by starts-with john\".'
+                                 'schedules]. This argument can be used ' \
+                                 'multiple times'
 
-BLUEPRINTS_ATTRS_FILTER_RULES = ATTRS_FILTER_RULES + '[created_by]. E.g. ' \
-                                                     '\"created_by=admin\"'
+BLUEPRINTS_ATTRS_FILTER_RULES = ATTRS_FILTER_RULES + \
+                                '[created_by]. This argument can be ' \
+                                'used multiple times'
 
 FILTER_ID = 'Filter results according to the specified filter'
 
