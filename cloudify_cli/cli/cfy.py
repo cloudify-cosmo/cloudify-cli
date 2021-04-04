@@ -10,6 +10,7 @@ import subprocess
 import locale
 import codecs
 from functools import wraps
+import unicodedata
 
 import click
 
@@ -256,13 +257,16 @@ def parse_and_validate_label_to_delete(ctx, param, value):
     return label_key
 
 
-def get_formatted_labels_list(raw_labels_list, allow_only_key=False):
+def get_formatted_labels_list(raw_labels_string, allow_only_key=False):
     labels_list = []
-    if '\x00' in raw_labels_list:
-        raise CloudifyValidationError('Error: labels cannot contain null')
+    if any(unicodedata.category(char)[0] == 'C' or char == '"'
+           for char in raw_labels_string):
+        raise CloudifyValidationError(
+            'Error: labels cannot contain control characters or `"`')
+
     format_err_msg = 'Labels should be of the form <key>:<value>,<key>:<value>'
-    raw_labels_list = raw_labels_list.replace('\\,', '\x00').split(',')
-    for label in raw_labels_list:
+    raw_labels_string = raw_labels_string.replace('\\,', '\x00').split(',')
+    for label in raw_labels_string:
         label = label.replace('\x00', ',')
         label = label.replace('\\:', '\x00')
         colons_count = label.count(':')
@@ -276,10 +280,6 @@ def get_formatted_labels_list(raw_labels_list, allow_only_key=False):
             if not label_key or not label_value:
                 raise LabelsValidationError(label, format_err_msg)
             label_value = label_value.replace('\x00', ':')
-            if any(char in label_value for char in ['"', '\n', '\t']):
-                raise LabelsValidationError(
-                    label_value,
-                    "The label's value contains one of `\"`, `\\n`, `\\t`")
 
         else:
             if allow_only_key:

@@ -50,7 +50,7 @@ class LabelsFunctionalityTest(CliCommandTest):
         self.assertEqual(formatted_labels_list, list(matching_labels.values()))
 
     def test_null_label_fails(self):
-        with self.assertRaisesRegex(CloudifyValidationError, 'contain null'):
+        with self.assertRaisesRegex(CloudifyValidationError, 'control char'):
             get_formatted_labels_list('key:val\x00ue')
 
     def test_invalid_label_key_fails(self):
@@ -58,7 +58,7 @@ class LabelsFunctionalityTest(CliCommandTest):
             get_formatted_labels_list('ke&y:value')
 
     def test_invalid_label_value_fails(self):
-        with self.assertRaisesRegex(LabelsValidationError, 'value contains'):
+        with self.assertRaisesRegex(CloudifyValidationError, 'control char'):
             get_formatted_labels_list('key:val"ue')
 
     def test_no_colons_in_labels_fails(self):
@@ -93,8 +93,8 @@ class LabelsTest(CliCommandTest):
                     exception=LabelsValidationError)
 
         self.invoke(self.create_resource_cmd + ' --labels "key:val\tue"',
-                    err_str_segment='value contains',
-                    exception=LabelsValidationError)
+                    err_str_segment='control char',
+                    exception=CloudifyValidationError)
 
         self.invoke(self.create_resource_cmd + ' --labels ke&y:value',
                     err_str_segment='key contains',
@@ -111,8 +111,8 @@ class LabelsTest(CliCommandTest):
                     exception=LabelsValidationError)
 
         self.invoke(self.labels_cmd + ' delete key:"val\tue" res',
-                    err_str_segment='value contains',
-                    exception=LabelsValidationError)
+                    err_str_segment='control char',
+                    exception=CloudifyValidationError)
 
         self.invoke(self.labels_cmd + ' delete :value res',
                     err_str_segment='form <key>',

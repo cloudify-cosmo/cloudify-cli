@@ -1,5 +1,4 @@
 import json
-from string import ascii_letters
 
 from .table import print_data
 from .utils import explicit_tenant_name_message
@@ -60,14 +59,7 @@ def get_printable_resource_labels(resource_labels):
 def _format_label_value(label_value):
     label_value = label_value.replace(',', '\\,').replace(':', '\\:').\
         replace('$', '\\$')
-    if label_value_needs_quotes(label_value):
-        label_value = '"{0}"'.format(label_value)
-    return label_value
-
-
-def label_value_needs_quotes(label_value):
-    allowed_chars = ascii_letters + '-_.0123456789'
-    return any(char not in allowed_chars for char in label_value)
+    return '"{0}"'.format(label_value)
 
 
 def add_labels(resource_id,

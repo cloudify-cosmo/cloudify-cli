@@ -7,7 +7,6 @@ from .utils import validate_visibility, handle_client_error
 
 from cloudify_rest_client.exceptions import InvalidFilterRule
 
-
 FILTERS_COLUMNS = ['id', 'labels_filter_rules', 'attrs_filter_rules',
                    'created_at', 'updated_at', 'visibility',
                    'tenant_name', 'created_by']
@@ -37,10 +36,10 @@ class InvalidLabelsFilterRuleFormat(CloudifyCliError):
             'be one of: <key>=<value>, <key>!=<value>, <key> is null, '
             '<key> is not null. <value> can be a single string or a list of '
             'strings of the form [<value1>,<value2>,...]. '
-            '<value> cannot contain `"`, `\\n` and `\\t`, plus, any comma in '
-            '<value> must be escaped with `\\`. <key> can contain only '
-            'letters, digits and the characters `-`, `.` and `_`'.format(
-                labels_filter_value)
+            '<value> cannot contain control characters, plus, any comma and '
+            'colon in <value> must be escaped with `\\`. <key> can '
+            'contain only letters, digits and the characters '
+            '`-`, `.` and `_`'.format(labels_filter_value)
         )
 
 
@@ -74,7 +73,8 @@ class FilterRule(dict):
         else:
             raw_values_list = [raw_rule_value]
 
-        return [value.replace('\x00', ',') for value in raw_values_list]
+        return [value.replace('\x00', ',').replace('\\:', ':')
+                for value in raw_values_list]
 
     def __str__(self, cli_operator):
         values = (self['values'][0] if len(self['values']) == 1 else
@@ -119,8 +119,8 @@ class LabelsFilterRule(FilterRule):
         cli_operator = REVERSED_OPERATOR_MAPPING[self['operator']]
         if self['operator'] in ('is_null', 'is_not_null'):
             return '{0} {1}'.format(self['key'], cli_operator)
-        self['values'] = [val.replace(',', '\\,').replace('$', '\\$')
-                          for val in self['values']]
+        self['values'] = [val.replace(',', '\\,').replace(':', '\\:')
+                          .replace('$', '\\$') for val in self['values']]
         return super(LabelsFilterRule, self).__str__(cli_operator)
 
 
