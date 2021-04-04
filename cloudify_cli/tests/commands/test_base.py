@@ -16,7 +16,7 @@ import os
 import os as utils_os
 
 import testtools
-from mock import patch
+from mock import patch, Mock, PropertyMock
 
 from cloudify.utils import setup_logger
 from cloudify_rest_client import CloudifyClient
@@ -142,3 +142,11 @@ class CliCommandTest(testtools.TestCase):
 
     def _read_context(self):
         return env.get_profile_context()
+
+    def mock_wait_for_blueprint_upload(self, value):
+        patcher = patch(
+            'cloudify_cli.utils.wait_for_blueprint_upload',
+            Mock(return_value=PropertyMock(error=value))
+        )
+        self.addCleanup(patcher.stop)
+        patcher.start()
