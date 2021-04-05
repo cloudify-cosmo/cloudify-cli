@@ -43,7 +43,6 @@ def snapshots():
                    short_help='Restore a manager from a snapshot '
                    '[manager only]')
 @cfy.argument('snapshot-id')
-@cfy.options.without_deployment_envs
 @cfy.options.force(help=helptexts.FORCE_RESTORE_ON_DIRTY_MANAGER)
 @cfy.options.restore_certificates
 @cfy.options.no_reboot
@@ -52,7 +51,6 @@ def snapshots():
 @cfy.pass_client(use_tenant_in_header=False)
 @cfy.pass_logger
 def restore(snapshot_id,
-            without_deployment_envs,
             force,
             restore_certificates,
             no_reboot,
@@ -64,10 +62,8 @@ def restore(snapshot_id,
     `SNAPSHOT_ID` is the id of the snapshot to use for restoration.
     """
     logger.info('Restoring snapshot {0}...'.format(snapshot_id))
-    recreate_deployments_envs = not without_deployment_envs
     execution = client.snapshots.restore(
         snapshot_id,
-        recreate_deployments_envs,
         force,
         restore_certificates,
         no_reboot,

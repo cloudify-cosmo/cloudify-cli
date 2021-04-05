@@ -1031,11 +1031,6 @@ class Options(object):
             required=False,
             help=helptexts.NODE_NAME)
 
-        self.without_deployment_envs = click.option(
-            '--without-deployment-envs',
-            is_flag=True,
-            help=helptexts.RESTORE_SNAPSHOT_EXCLUDE_EXISTING_DEPLOYMENTS)
-
         self.exclude_credentials = click.option(
             '--exclude-credentials',
             is_flag=True,
