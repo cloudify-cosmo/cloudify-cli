@@ -10,7 +10,7 @@ export REPO=$5
 export BRANCH=$6
 
 # These env vars are being updated by the bump version process
-export CORE_TAG_NAME="5.1.4.dev1"
+export CORE_TAG_NAME="5.1.4"
 export CORE_BRANCH="5.1.4-build"
 
 # Linux Preperation
