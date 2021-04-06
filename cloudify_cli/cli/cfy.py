@@ -10,6 +10,7 @@ import subprocess
 import locale
 import codecs
 from functools import wraps
+import unicodedata
 
 import click
 
@@ -26,7 +27,9 @@ from ..inputs import inputs_to_dict
 from ..utils import generate_random_string
 from ..constants import DEFAULT_BLUEPRINT_PATH
 from ..exceptions import SuppressedCloudifyCliError
-from ..exceptions import CloudifyBootstrapError, CloudifyValidationError
+from ..exceptions import (LabelsValidationError,
+                          CloudifyBootstrapError,
+                          CloudifyValidationError,)
 from ..logger import (
     get_logger,
     set_global_verbosity_level,
@@ -233,19 +236,7 @@ def parse_and_validate_labels(ctx, param, value):
         raise CloudifyValidationError(
             'ERROR: The `{0}` argument is empty'.format(param.name))
 
-    labels_list = []
-    raw_labels_list = value.split(',')
-    for label in raw_labels_list:
-        if label.count(':') != 1:
-            raise CloudifyValidationError('ERROR: Labels should be of the '
-                                          'form <key>:<value>,<key>:<value>')
-
-        label_key, label_value = label.split(':')
-        validate_param_value('The key of one or more labels', label_key)
-        validate_param_value('The value of one or more labels', label_value)
-        labels_list.append({label_key: label_value})
-
-    return labels_list
+    return get_formatted_labels_list(value)
 
 
 def parse_and_validate_label_to_delete(ctx, param, value):
@@ -256,40 +247,76 @@ def parse_and_validate_label_to_delete(ctx, param, value):
         raise CloudifyValidationError(
             'ERROR: The `{0}` argument is empty'.format(param.name))
 
-    if ',' in value or value.count(':') > 1:
+    labels_list = get_formatted_labels_list(value, allow_only_key=True)
+    if len(labels_list) > 1:
         raise CloudifyValidationError(
             'LABEL can be either <key>:<value> or <key>')
-
-    label = value.split(':')
-    if len(label) == 1:
-        validate_param_value('The provided key', label[0])
-        return label[0]
-    else:
-        label_key, label_value = label
-        validate_param_value('The key of the provided label', label_key)
-        validate_param_value('The value of the provided label', label_value)
-        return {label_key: label_value}
+    [(label_key, label_value)] = labels_list[0].items()
+    if label_value:
+        return labels_list[0]
+    return label_key
 
 
-def parse_labels_filter_rules(ctx, param, value):
-    if value is None or ctx.resilient_parsing:
+def get_formatted_labels_list(raw_labels_string, allow_only_key=False):
+    labels_list = []
+    if any(unicodedata.category(char)[0] == 'C' or char == '"'
+           for char in raw_labels_string):
+        raise CloudifyValidationError(
+            'Error: labels cannot contain control characters or `"`')
+
+    format_err_msg = 'Labels should be of the form <key>:<value>,<key>:<value>'
+    raw_labels_string = raw_labels_string.replace('\\,', '\x00').split(',')
+    for label in raw_labels_string:
+        label = label.replace('\x00', ',')
+        label = label.replace('\\:', '\x00')
+        colons_count = label.count(':')
+        if colons_count == 0:
+            if not allow_only_key:
+                raise LabelsValidationError(label, format_err_msg)
+            label_key, label_value = label, None
+
+        elif colons_count == 1:
+            label_key, label_value = label.split(':')
+            if not label_key or not label_value:
+                raise LabelsValidationError(label, format_err_msg)
+            label_value = label_value.replace('\x00', ':')
+
+        else:
+            if allow_only_key:
+                raise CloudifyValidationError(
+                    'LABEL can be either <key>:<value> or <key>')
+            raise LabelsValidationError(label, format_err_msg)
+
+        label_key = label_key.replace('\x00', ':').strip()
+        try:
+            validate_param_value('label_key', label_key)
+        except CloudifyValidationError:
+            raise LabelsValidationError(
+                label, "The label's key contains illegal characters. "
+                       "Only letters, digits and the characters `-`, `.` and "
+                       "`_` are allowed")
+
+        labels_list.append({label_key: label_value})
+
+    return labels_list
+
+
+def _validate_filter_rules_not_empty(ctx, param, value):
+    if value is None or value == () or ctx.resilient_parsing:
         return
 
     if not value:
         raise CloudifyValidationError(
             'ERROR: The `{0}` argument is empty'.format(param.name))
 
+
+def parse_labels_filter_rules(ctx, param, value):
+    _validate_filter_rules_not_empty(ctx, param, value)
     return create_labels_filter_rules_list(value)
 
 
 def parse_attributes_filter_rules(ctx, param, value):
-    if value is None or ctx.resilient_parsing:
-        return
-
-    if not value:
-        raise CloudifyValidationError(
-            'ERROR: The `{0}` argument is empty'.format(param.name))
-
+    _validate_filter_rules_not_empty(ctx, param, value)
     return create_attributes_filter_rules_list(value)
 
 
@@ -1691,6 +1718,12 @@ class Options(object):
             help=helptexts.GROUP_ID_FILTER,
         )
 
+        self.filter_id = click.option(
+            '--filter-id',
+            callback=validate_name,
+            help=helptexts.FILTER_ID
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
@@ -2185,83 +2218,38 @@ class Options(object):
             help=help)
 
     @staticmethod
-    def _resource_filter_methods(f, resource):
-        help_text = (helptexts.DEPLOYMENTS_ATTRS_FILTER_RULES if
-                     resource == 'deployment' else
-                     helptexts.BLUEPRINTS_ATTRS_FILTER_RULES)
-        filter_id = click.option(
-            '--filter-id',
-            callback=validate_name,
-            help=helptexts.FILTER_ID
-        )
-
-        labels_filter = click.option(
-            '--labels-filter',
-            callback=parse_labels_filter_rules,
-            help=helptexts.LABELS_FILTER_RULES
-        )
-
-        attrs_filter = click.option(
-           '--attrs-filter',
-           callback=parse_attributes_filter_rules,
-           help=help_text
-        )
-
-        def _resource_filter_methods_deco(f):
-            @wraps(f)
-            def _inner(*args, **kwargs):
-                filter_methods = {}
-                filter_rules = get_filter_rules(
-                    kwargs.pop('labels_filter', None),
-                    kwargs.pop('attrs_filter', None))
-                filter_methods['filter_id'] = kwargs.pop('filter_id', None)
-                filter_methods['filter_rules'] = filter_rules
-
-                kwargs['resource_filter_methods'] = filter_methods
-                return f(*args, **kwargs)
-            return _inner
-
-        for arg in [attrs_filter, labels_filter, filter_id,
-                    _resource_filter_methods_deco]:
-            f = arg(f)
-
-        return f
-
-    def blueprint_filter_methods(self, f):
-        return self._resource_filter_methods(f, 'blueprint')
-
-    def deployment_filter_methods(self, f):
-        return self._resource_filter_methods(f, 'deployment')
-
-    @staticmethod
     def _filter_rules(f, resource):
         help_text = (helptexts.DEPLOYMENTS_ATTRS_FILTER_RULES if
                      resource == 'deployment' else
                      helptexts.BLUEPRINTS_ATTRS_FILTER_RULES)
-        attrs_rules = click.option(
-            '--attrs-rules',
+        attrs_rule = click.option(
+            '-ar',
+            '--attrs-rule',
             callback=parse_attributes_filter_rules,
-            help=help_text
+            help=help_text,
+            multiple=True
         )
 
-        labels_rules = click.option(
-            '--labels-rules',
+        labels_rule = click.option(
+            '-lr',
+            '--labels-rule',
             callback=parse_labels_filter_rules,
-            help=helptexts.LABELS_FILTER_RULES
+            help=helptexts.LABELS_FILTER_RULES,
+            multiple=True
         )
 
         def _filter_rules_deco(f):
             @wraps(f)
             def _inner(*args, **kwargs):
                 filter_rules = get_filter_rules(
-                    kwargs.pop('labels_rules', None),
-                    kwargs.pop('attrs_rules', None))
+                    kwargs.pop('labels_rule', None),
+                    kwargs.pop('attrs_rule', None))
 
                 kwargs['filter_rules'] = filter_rules
                 return f(*args, **kwargs)
             return _inner
 
-        for arg in [attrs_rules, labels_rules, _filter_rules_deco]:
+        for arg in [attrs_rule, labels_rule, _filter_rules_deco]:
             f = arg(f)
 
         return f

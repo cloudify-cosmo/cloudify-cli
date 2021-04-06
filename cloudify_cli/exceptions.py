@@ -47,3 +47,11 @@ class EventProcessingTimeoutError(RuntimeError):
     def __init__(self, execution_id, message):
         self.execution_id = execution_id
         self.message = message
+
+
+class LabelsValidationError(CloudifyValidationError):
+    def __init__(self, err_label, err_reason):
+        super(LabelsValidationError, self).__init__(
+            'ERROR: The label `{0}` is invalid. '
+            '{1}'.format(err_label, err_reason)
+        )

@@ -197,7 +197,8 @@ def _print_single_update(deployment_update_dict,
 @cfy.command(name='list', short_help='List deployments [manager only]')
 @cfy.options.blueprint_id()
 @click.option('--group-id', '-g')
-@cfy.options.deployment_filter_methods
+@cfy.options.filter_id
+@cfy.options.deployment_filter_rules
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.tenant_name_for_list(
@@ -212,7 +213,8 @@ def _print_single_update(deployment_update_dict,
 @cfy.pass_logger
 def manager_list(blueprint_id,
                  group_id,
-                 resource_filter_methods,
+                 filter_id,
+                 filter_rules,
                  sort_by,
                  descending,
                  all_tenants,
@@ -233,9 +235,6 @@ def manager_list(blueprint_id,
             blueprint_id))
     else:
         logger.info('Listing all deployments...')
-
-    filter_id = resource_filter_methods['filter_id']
-    filter_rules = resource_filter_methods['filter_rules']
 
     deployments = client.deployments.list(sort=sort_by,
                                           is_descending=descending,
@@ -894,7 +893,10 @@ def add_deployment_labels(labels_list,
                           logger,
                           client,
                           tenant_name):
-    """LABELS_LIST: <key>:<value>,<key>:<value>"""
+    """
+    LABELS_LIST: <key>:<value>,<key>:<value>.
+    Any comma and colon in <value> must be escaped with '\\'.
+    """
     add_labels(deployment_id, 'deployment', client.deployments, labels_list,
                logger, tenant_name)
 
