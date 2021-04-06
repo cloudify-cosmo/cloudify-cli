@@ -195,6 +195,14 @@ def get_filter(resource_name, filter_id, tenant_name, logger, client):
                     filter_id)
         filter_details = client.get(filter_id)
         _modify_filter_details(filter_details)
+        labels_filter_rules = filter_details['labels_filter_rules']
+        attrs_filter_rules = filter_details['attrs_filter_rules']
+        if labels_filter_rules and isinstance(labels_filter_rules, list):
+            filter_details['labels_filter_rules'] = ', '.join(
+                labels_filter_rules)
+        if attrs_filter_rules and isinstance(attrs_filter_rules, list):
+            filter_details['attrs_filter_rules'] = ', '.join(
+                attrs_filter_rules)
         print_details(filter_details,
                       "Requested {0}' filter info:".format(resource_name))
 

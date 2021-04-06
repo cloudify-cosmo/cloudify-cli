@@ -126,10 +126,13 @@ class FiltersTest(CliCommandTest):
 
     def test_get_filters(self):
         cmd = '{0} get {1}'.format(self.prefix, FILTER_ID)
-        self.filters_client.get = Mock()
-        self.invoke(cmd)
+        self.filters_client.get = Mock(return_value=self.example_filter)
+        raw_output = self.invoke(cmd).output
         call_args = list(self.filters_client.get.call_args)
         self.assertEqual(call_args[0][0], FILTER_ID)
+        self.assertIn('"key=va\\, l\xf3e", "ke.y=[val\\:\\$,va\xf3lue]"',
+                      raw_output)
+        self.assertIn('"created_by=val-u.e"', raw_output)
 
     def test_get_filters_missing_filter_id(self):
         self._test_missing_argument('{} get'.format(self.prefix), 'FILTER_ID')
@@ -203,9 +206,7 @@ class FiltersTest(CliCommandTest):
                                     'FILTER_ID')
 
     def test_list_with_filters(self):
-        self.resource_client.list = Mock(
-            return_value=MockListResponse()
-        )
+        self.resource_client.list = Mock(return_value=MockListResponse())
         self.invoke('cfy {resource} list --filter-id {filter_id} '
                     '-ar {attrs_rules} -lr {labels_rules}'.format(
                      resource=self.resource, filter_id=FILTER_ID,
