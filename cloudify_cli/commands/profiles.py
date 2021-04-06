@@ -693,7 +693,7 @@ def _move_ssh_key(profile, logger, is_backup):
             '.{0}.profile'.format(profile)
         if is_backup:
             if not os.path.isdir(EXPORTED_SSH_KEYS_DIR):
-                os.makedirs(EXPORTED_SSH_KEYS_DIR)
+                os.makedirs(EXPORTED_SSH_KEYS_DIR, mode=0o700)
             logger.info('Copying ssh key %s to %s...',
                         key_filepath, backup_path)
             shutil.copy2(key_filepath, backup_path)
