@@ -11,9 +11,10 @@ def modify_resource_labels(resource_list):
         raw_labels_list = element.get('labels')
         if raw_labels_list:
             for raw_label in raw_labels_list:
-                resource_labels_list.append(
-                    raw_label.key + ':' + raw_label.value)
-            element['labels'] = ','.join(resource_labels_list)
+                label_value = _format_label_value(raw_label.value)
+                resource_labels_list.append(raw_label.key + ':' +
+                                            label_value.strip('""'))
+            element['labels'] = '"{0}"'.format(','.join(resource_labels_list))
 
 
 def list_labels(resource_id,
@@ -46,10 +47,19 @@ def get_output_resource_labels(raw_resource_labels):
 
 
 def get_printable_resource_labels(resource_labels):
-    return [
-        {'key': resource_label_key, 'values': resource_label_values} for
-        resource_label_key, resource_label_values in resource_labels.items()
-    ]
+    printable_labels = []
+    for resource_label_key, resource_label_values in resource_labels.items():
+        formatted_label_values = [_format_label_value(label_value) for
+                                  label_value in resource_label_values]
+        printable_labels.append({'key': resource_label_key,
+                                 'values': formatted_label_values})
+    return printable_labels
+
+
+def _format_label_value(label_value):
+    label_value = label_value.replace(',', '\\,').replace(':', '\\:').\
+        replace('$', '\\$')
+    return '"{0}"'.format(label_value)
 
 
 def add_labels(resource_id,

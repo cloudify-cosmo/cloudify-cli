@@ -241,7 +241,8 @@ def delete(blueprint_id, force, logger, client, tenant_name):
 
 
 @cfy.command(name='list', short_help='List blueprints')
-@cfy.options.blueprint_filter_methods
+@cfy.options.filter_id
+@cfy.options.blueprint_filter_rules
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.common_options
@@ -254,7 +255,8 @@ def delete(blueprint_id, force, logger, client, tenant_name):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def manager_list(resource_filter_methods,
+def manager_list(filter_id,
+                 filter_rules,
                  sort_by,
                  descending,
                  tenant_name,
@@ -277,8 +279,6 @@ def manager_list(resource_filter_methods,
 
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing all blueprints...')
-    filter_id = resource_filter_methods['filter_id']
-    filter_rules = resource_filter_methods['filter_rules']
 
     blueprints_list = client.blueprints.list(
         sort=sort_by,
@@ -585,7 +585,8 @@ def add_blueprint_labels(labels_list,
                          logger,
                          client,
                          tenant_name):
-    """LABELS_LIST: <key>:<value>,<key>:<value>"""
+    """LABELS_LIST: <key>:<value>,<key>:<value>.
+    Any comma and colon in <value> must be escaped with '\\'."""
     add_labels(blueprint_id, 'blueprint', client.blueprints, labels_list,
                logger, tenant_name)
 
@@ -606,7 +607,7 @@ def delete_blueprint_labels(label,
                             tenant_name):
     """
     LABEL: Can be either <key>:<value> or <key>. If <key> is provided,
-    all labels associated with this key will be deleted from the blueprint.
+    all labels associated with this key will be deleted from the deployment.
     """
     delete_labels(blueprint_id, 'blueprint', client.blueprints, label,
                   logger, tenant_name)

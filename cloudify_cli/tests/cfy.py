@@ -24,6 +24,7 @@ import click.testing as clicktest
 from testfixtures import log_capture
 
 from cloudify.utils import setup_logger
+from cloudify._compat import PY2, text_type
 
 from .. import main  # NOQA
 from .. import env
@@ -61,7 +62,17 @@ def invoke(command, capture, context=None):
 
     cfy = clicktest.CliRunner()
 
-    lexed_command = shlex.split(command)
+    if PY2:
+        if isinstance(command, text_type):
+            command = command.encode('utf-8')
+            parts = shlex.split(command)
+            lexed_command = [p.decode('utf-8') for p in parts]
+        else:
+            lexed_command = shlex.split(command)
+
+    else:
+        lexed_command = shlex.split(command)
+
     # Safety measure in case someone wrote `cfy` at the beginning
     # of the command
     if lexed_command[0] == 'cfy':
