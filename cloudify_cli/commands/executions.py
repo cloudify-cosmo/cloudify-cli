@@ -635,3 +635,20 @@ def execution_groups_cancel(group_id, force, kill,
     logger.info('%s execution group %s', message, group_id)
     client.execution_groups.cancel(group_id, force=force, kill=kill)
     logger.info("A cancel request for group %s has been sent", group_id)
+
+
+@groups.command('resume', short_help='Resume an execution group')
+@cfy.argument('group-id')
+@cfy.options.reset_operations
+@cfy.options.tenant_name(
+    required=False, resource_name_for_help='execution group')
+@cfy.options.common_options
+@cfy.options.json_output
+@cfy.pass_client()
+@cfy.pass_logger
+def execution_groups_resume(group_id, reset_operations,
+                            client, logger, tenant_name):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Resuming execution group %s', group_id)
+    client.execution_groups.resume(group_id, force=reset_operations)
+    logger.info("A resume request for group %s has been sent", group_id)
