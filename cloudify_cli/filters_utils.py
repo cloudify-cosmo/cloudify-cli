@@ -5,6 +5,7 @@ from .exceptions import CloudifyCliError
 from .table import print_data, print_details
 from .utils import validate_visibility, handle_client_error
 
+from cloudify._compat import PY2
 from cloudify_rest_client.exceptions import InvalidFilterRule
 
 FILTERS_COLUMNS = ['id', 'labels_filter_rules', 'attrs_filter_rules',
@@ -78,7 +79,9 @@ class FilterRule(dict):
 
     def __str__(self, cli_operator):
         values = (self['values'][0] if len(self['values']) == 1 else
-                  '[{0}]'.format(','.join(self['values'])))
+                  u'[{0}]'.format(','.join(self['values'])))
+        if PY2:
+            values = values.encode('utf-8')
 
         return '"{key}{operator}{values}"'.format(key=self['key'],
                                                   operator=cli_operator,

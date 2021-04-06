@@ -81,8 +81,8 @@ class FiltersTest(CliCommandTest):
             'value': [
                 {'key': 'key', 'values': ['va, l\xf3e'], 'operator': 'any_of',
                  'type': 'label'},
-                {'key': 'ke.y', 'values': ['val:$'], 'operator': 'any_of',
-                 'type': 'label'},
+                {'key': 'ke.y', 'values': ['val:$', 'va\xf3lue'],
+                 'operator': 'any_of', 'type': 'label'},
                 {'key': 'created_by', 'values': ['val-u.e'],
                  'operator': 'not_any_of', 'type': 'attribute'}],
             'updated_at': '2021-04-05T15:25:40.310Z',
@@ -94,7 +94,7 @@ class FiltersTest(CliCommandTest):
             'labels_filter_rules': [
                 {'key': 'key', 'values': ['va, l\xf3e'], 'operator': 'any_of',
                  'type': 'label'},
-                {'key': 'ke.y', 'values': ['val:$'],
+                {'key': 'ke.y', 'values': ['val:$', 'va\xf3lue'],
                  'operator': 'any_of', 'type': 'label'}
             ],
             'attrs_filter_rules': [
@@ -143,7 +143,8 @@ class FiltersTest(CliCommandTest):
                          {'sort': 'id', 'is_descending': False,
                           '_all_tenants': False, '_search': None,
                           '_offset': 0, '_size': 1000})
-        self.assertIn('"key=va\\, l\xf3e","ke.y=val\\:\\$"', raw_output)
+        self.assertIn('"key=va\\, l\xf3e","ke.y=[val\\:\\$,va\xf3lue]"',
+                      raw_output)
         self.assertIn('"created_by=val-u.e"', raw_output)
 
     def test_filters_update(self):
