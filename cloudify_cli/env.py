@@ -169,6 +169,7 @@ def get_profile_context(profile_name=None, suppress_error=False):
     if profile_name == 'local':
         return ProfileContext({}, profile_name='local')
 
+    profile_name = profile_name or get_active_profile()
     loaded = None
     path = get_context_path(profile_name)
     if path:
