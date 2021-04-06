@@ -116,7 +116,7 @@ class CliEnvTests(CliCommandTest):
 
     def _make_mock_profile(self, profile_name='10.10.1.10'):
         profile_path = os.path.join(env.PROFILES_DIR, profile_name)
-        os.makedirs(profile_path)
+        os.makedirs(profile_path, mode=0o700)
         with open(os.path.join(profile_path, 'context.json'), 'w') as profile:
             profile.write('nothing_for_now')
         return profile_path
@@ -263,7 +263,7 @@ class CliEnvTests(CliCommandTest):
         # json profile with the updated data
         profile_name = 'a'
         profile_dir = os.path.join(env.PROFILES_DIR, profile_name)
-        os.makedirs(profile_dir)
+        os.makedirs(profile_dir, mode=0o700)
         shutil.copyfile(OLD_CONTEXT_PATH, os.path.join(profile_dir, 'context'))
 
         loaded_profile = env.get_profile_context('a')

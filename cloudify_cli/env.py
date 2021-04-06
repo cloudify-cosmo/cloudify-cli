@@ -505,7 +505,7 @@ class ProfileContext(object):
         workdir = destination or self.workdir
         # Create a new file
         if not os.path.exists(workdir):
-            os.makedirs(workdir)
+            os.makedirs(workdir, mode=0o700)
         target_file_path = os.path.join(
             workdir,
             'context.json')
