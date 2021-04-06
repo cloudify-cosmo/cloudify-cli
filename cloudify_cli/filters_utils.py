@@ -118,7 +118,7 @@ class LabelsFilterRule(FilterRule):
     def __str__(self):
         cli_operator = REVERSED_OPERATOR_MAPPING[self['operator']]
         if self['operator'] in ('is_null', 'is_not_null'):
-            return '{0} {1}'.format(self['key'], cli_operator)
+            return '"{0} {1}"'.format(self['key'], cli_operator)
         self['values'] = [val.replace(',', '\\,').replace(':', '\\:')
                           .replace('$', '\\$') for val in self['values']]
         return super(LabelsFilterRule, self).__str__(cli_operator)
@@ -155,8 +155,8 @@ class AttrsFilterRule(FilterRule):
         filter_rule_operator = self['operator']
         cli_operator = REVERSED_OPERATOR_MAPPING[filter_rule_operator]
         if filter_rule_operator == 'is_not_empty':
-            return '{key} {operator}'.format(key=self['key'],
-                                             operator=cli_operator)
+            return '"{key} {operator}"'.format(key=self['key'],
+                                               operator=cli_operator)
         if filter_rule_operator in ('starts_with', 'ends_with', 'contains',
                                     'not_contains'):
             cli_operator = ' {0} '.format(cli_operator)

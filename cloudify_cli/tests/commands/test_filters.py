@@ -1,7 +1,9 @@
 from __future__ import unicode_literals
 
-from mock import MagicMock
+from mock import Mock
 from collections import OrderedDict
+
+from cloudify_rest_client.filters import Filter
 
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.filters_utils import (InvalidLabelsFilterRuleFormat,
@@ -72,9 +74,37 @@ class FiltersTest(CliCommandTest):
         self.resource_client = getattr(self.client, resource)
         self.filters_client = getattr(self.client,
                                       '{}_filters'.format(resource))
+        self.example_filter = Filter({
+            'id': 'filter1',
+            'visibility': 'tenant',
+            'created_at': '2021-04-05T15:25:40.310Z',
+            'value': [
+                {'key': 'key', 'values': ['va, l\xf3e'], 'operator': 'any_of',
+                 'type': 'label'},
+                {'key': 'ke.y', 'values': ['val:$'], 'operator': 'any_of',
+                 'type': 'label'},
+                {'key': 'created_by', 'values': ['val-u.e'],
+                 'operator': 'not_any_of', 'type': 'attribute'}],
+            'updated_at': '2021-04-05T15:25:40.310Z',
+            'is_system_filter': False,
+            'tenant_name': 'default_tenant',
+            'created_by': 'admin',
+            'resource_availability': 'tenant',
+            'private_resource': False,
+            'labels_filter_rules': [
+                {'key': 'key', 'values': ['va, l\xf3e'], 'operator': 'any_of',
+                 'type': 'label'},
+                {'key': 'ke.y', 'values': ['val:$'],
+                 'operator': 'any_of', 'type': 'label'}
+            ],
+            'attrs_filter_rules': [
+                {'key': 'created_by', 'values': ['val-u.e'],
+                 'operator': 'any_of', 'type': 'attribute'}
+            ]
+        })
 
     def test_create_filters(self):
-        self.filters_client.create = MagicMock()
+        self.filters_client.create = Mock()
         cmd_prefix = self.prefix + ' create ' + FILTER_ID
         labels_rules = ' -lr '.join(MATCHING_LABELS_RULES.keys())
         attrs_rules = ' -ar '.join(MATCHING_ATTRS_RULES.keys())
@@ -96,7 +126,7 @@ class FiltersTest(CliCommandTest):
 
     def test_get_filters(self):
         cmd = '{0} get {1}'.format(self.prefix, FILTER_ID)
-        self.filters_client.get = MagicMock()
+        self.filters_client.get = Mock()
         self.invoke(cmd)
         call_args = list(self.filters_client.get.call_args)
         self.assertEqual(call_args[0][0], FILTER_ID)
@@ -105,16 +135,19 @@ class FiltersTest(CliCommandTest):
         self._test_missing_argument('{} get'.format(self.prefix), 'FILTER_ID')
 
     def test_filters_list(self):
-        self.filters_client.list = MagicMock()
-        self.invoke('{} list'.format(self.prefix))
+        self.filters_client.list = Mock(return_value=MockListResponse(
+            items=[self.example_filter]))
+        raw_output = self.invoke('{} list'.format(self.prefix)).output
         call_args = list(self.filters_client.list.call_args)
         self.assertEqual(call_args[1],
                          {'sort': 'id', 'is_descending': False,
                           '_all_tenants': False, '_search': None,
                           '_offset': 0, '_size': 1000})
+        self.assertIn('"key=va\\, l\xf3e","ke.y=val\\:\\$"', raw_output)
+        self.assertIn('"created_by=val-u.e"', raw_output)
 
     def test_filters_update(self):
-        self.filters_client.update = MagicMock()
+        self.filters_client.update = Mock()
         cmd_prefix = self.prefix + ' update ' + FILTER_ID
         labels_rules = ' -lr '.join(MATCHING_LABELS_RULES.keys())
         attrs_rules = ' -ar '.join(MATCHING_ATTRS_RULES.keys())
@@ -159,7 +192,7 @@ class FiltersTest(CliCommandTest):
         )
 
     def test_filters_delete(self):
-        self.filters_client.delete = MagicMock()
+        self.filters_client.delete = Mock()
         self.invoke('{0} delete {1}'.format(self.prefix, FILTER_ID))
         call_args = list(self.filters_client.delete.call_args)
         self.assertEqual(call_args[0][0], FILTER_ID)
@@ -169,7 +202,7 @@ class FiltersTest(CliCommandTest):
                                     'FILTER_ID')
 
     def test_list_with_filters(self):
-        self.resource_client.list = MagicMock(
+        self.resource_client.list = Mock(
             return_value=MockListResponse()
         )
         self.invoke('cfy {resource} list --filter-id {filter_id} '
