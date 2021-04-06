@@ -136,7 +136,7 @@ def _configure_defaults(logger_config):
     logger_config['handlers']['file']['filename'] = DEFAULT_LOG_FILE
     logfile_dir = os.path.dirname(DEFAULT_LOG_FILE)
     if not os.path.exists(logfile_dir):
-        os.makedirs(logfile_dir)
+        os.makedirs(logfile_dir, mode=0o700)
 
 
 def _configure_from_file(loggers_config):
@@ -147,7 +147,7 @@ def _configure_from_file(loggers_config):
     loggers_config['handlers']['file']['filename'] = config.logging.filename
     logfile_dir = os.path.dirname(config.logging.filename)
     if not os.path.exists(logfile_dir):
-        os.makedirs(logfile_dir)
+        os.makedirs(logfile_dir, mode=0o700)
 
     # add handlers to every logger specified in the file
     for logger_name, logging_level in config.logging.loggers.items():

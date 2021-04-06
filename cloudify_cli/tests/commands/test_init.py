@@ -213,7 +213,7 @@ class InitTest(CliCommandTest):
 
     def test_set_config(self):
         shutil.rmtree(env.CLOUDIFY_WORKDIR)
-        os.makedirs(env.CLOUDIFY_WORKDIR)
+        os.makedirs(env.CLOUDIFY_WORKDIR, mode=0o700)
         self.assertFalse(os.path.isfile(
             os.path.join(env.CLOUDIFY_WORKDIR, 'config.yaml')))
         init.set_config()

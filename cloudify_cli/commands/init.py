@@ -172,7 +172,7 @@ def init_manager_profile(profile_name,
 
 def _create_profiles_dir_and_config(hard, enable_colors):
     if not os.path.isdir(env.PROFILES_DIR):
-        os.makedirs(env.PROFILES_DIR)
+        os.makedirs(env.PROFILES_DIR, mode=0o700)
     if not env.config_initialized_with_logging() or hard:
         set_config(enable_colors=enable_colors)
 

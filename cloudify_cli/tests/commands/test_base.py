@@ -42,7 +42,7 @@ class CliCommandTest(testtools.TestCase):
         cfy.invoke('init -r')
         # create log folder
         if not os.path.exists(logdir):
-            os.makedirs(logdir)
+            os.makedirs(logdir, mode=0o700)
 
         self.client = CloudifyClient()
 
