@@ -546,8 +546,7 @@ def summary(target_field, sub_field, logger, client, tenant_name,
     )
 
 
-@blueprints.group(name='labels',
-                  short_help="Handle a blueprint's labels")
+@cfy.group(name='labels')
 @cfy.options.common_options
 def labels():
     if not env.is_initialized():
@@ -615,8 +614,7 @@ def delete_blueprint_labels(label,
                   logger, tenant_name)
 
 
-@blueprints.group(name='filters',
-                  short_help="Handle the blueprints' filters")
+@cfy.group(name='filters')
 @cfy.options.common_options
 def filters():
     if not env.is_initialized():

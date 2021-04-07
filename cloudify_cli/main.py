@@ -119,6 +119,11 @@ def _register_commands():
     deployments.deployments.add_command(deployments.manager_set_visibility)
     deployments.deployments.add_command(deployments.manager_set_site)
     deployments.deployments.add_command(deployments.schedule)
+    deployments.deployments.add_command(deployments.labels)
+    deployments.deployments.add_command(deployments.filters)
+
+    blueprints.blueprints.add_command(blueprints.labels)
+    blueprints.blueprints.add_command(blueprints.filters)
 
     executions.executions.add_command(executions.manager_cancel)
 

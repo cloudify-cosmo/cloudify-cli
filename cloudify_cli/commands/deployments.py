@@ -854,8 +854,7 @@ def manager_set_site(deployment_id, site_name, detach_site, client, logger):
                                                               site_name))
 
 
-@deployments.group(name='labels',
-                   short_help="Handle a deployment's labels")
+@cfy.group(name='labels')
 @cfy.options.common_options
 def labels():
     if not env.is_initialized():
@@ -1659,8 +1658,7 @@ def _list_schedules_in_time_range(schedules, since, until):
     return listed_schedules
 
 
-@deployments.group(name='filters',
-                   short_help="Handle the deployments' filters")
+@cfy.group(name='filters')
 @cfy.options.common_options
 def filters():
     if not env.is_initialized():
