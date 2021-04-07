@@ -247,14 +247,7 @@ def parse_and_validate_label_to_delete(ctx, param, value):
         raise CloudifyValidationError(
             'ERROR: The `{0}` argument is empty'.format(param.name))
 
-    labels_list = get_formatted_labels_list(value, allow_only_key=True)
-    if len(labels_list) > 1:
-        raise CloudifyValidationError(
-            'LABEL can be either <key>:<value> or <key>')
-    [(label_key, label_value)] = labels_list[0].items()
-    if label_value:
-        return labels_list[0]
-    return label_key
+    return get_formatted_labels_list(value, allow_only_key=True)
 
 
 def get_formatted_labels_list(raw_labels_string, allow_only_key=False):
@@ -284,7 +277,8 @@ def get_formatted_labels_list(raw_labels_string, allow_only_key=False):
         else:
             if allow_only_key:
                 raise CloudifyValidationError(
-                    'LABEL can be either <key>:<value> or <key>')
+                    'LABEL should be a mixed list of labels and keys. I.e. '
+                    '<key>:<value>,<key>,<key>:<value>')
             raise LabelsValidationError(label, format_err_msg)
 
         label_key = label_key.replace('\x00', ':').strip()
