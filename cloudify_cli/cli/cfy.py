@@ -652,6 +652,10 @@ class AliasedGroup(CommandMixin, click.Group):
         kw.setdefault('cls', CommandWithLoggers)
         return super(AliasedGroup, self).command(*a, **kw)
 
+    def group(self, *a, **kw):
+        kw.setdefault('cls', self.__class__)
+        return super(AliasedGroup, self).group(*a, **kw)
+
 
 def group(name):
     """Allow to create a group with a default click context
