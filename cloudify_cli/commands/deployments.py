@@ -916,8 +916,10 @@ def delete_deployment_labels(label,
                              client,
                              tenant_name):
     """
-    LABEL: Can be either <key>:<value> or <key>. If <key> is provided,
+    LABEL: A mixed list of labels and keys, i.e.
+    <key>:<value>,<key>,<key>:<value>. If <key> is provided,
     all labels associated with this key will be deleted from the deployment.
+    Any comma and colon in <value> must be escaped with `\\`
     """
     delete_labels(deployment_id, 'deployment', client.deployments, label,
                   logger, tenant_name)

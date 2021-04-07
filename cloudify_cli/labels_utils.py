@@ -96,7 +96,7 @@ def add_labels(resource_id,
 def delete_labels(resource_id,
                   resource_name,
                   resource_client,
-                  label,
+                  labels_list,
                   logger,
                   tenant_name):
     explicit_tenant_name_message(tenant_name, logger)
@@ -105,17 +105,22 @@ def delete_labels(resource_id,
 
     updated_labels = []
     labels_to_delete = []
-    if isinstance(label, dict):
-        if label in resource_labels:
-            labels_to_delete = [label]
-            resource_labels.remove(label)
-            updated_labels = resource_labels
-    else:  # A label key was provided
-        for resource_label in resource_labels:
-            if label in resource_label:
-                labels_to_delete.append(resource_label)
-            else:
-                updated_labels.append(resource_label)
+    keys_to_delete = set()
+    for label in labels_list:
+        [(key, value)] = label.items()
+        if value:
+            if label in resource_labels:
+                resource_labels.remove(label)
+                labels_to_delete.append(label)
+        else:  # key was provided
+            keys_to_delete.add(key)
+
+    for resource_label in resource_labels:
+        [(key, value)] = resource_label.items()
+        if key in keys_to_delete:
+            labels_to_delete.append(resource_label)
+        else:
+            updated_labels.append(resource_label)
 
     if labels_to_delete:
         if resource_name == 'deployment':

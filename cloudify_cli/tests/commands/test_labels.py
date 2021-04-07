@@ -104,8 +104,8 @@ class LabelsTest(CliCommandTest):
 
     def test_resource_labels_delete_failure_with_invalid_label(self):
         self.invoke(
-            self.labels_cmd + ' delete key1:val1,key2:val2 res',
-            err_str_segment='<key>:<value> or <key>',
+            self.labels_cmd + ' delete key1:val1:val2 res',
+            err_str_segment='labels and keys',
             exception=CloudifyValidationError)
 
         self.invoke(self.labels_cmd + ' delete ke&y res',
@@ -160,18 +160,11 @@ class DeploymentsLabelsTest(LabelsTest):
     def test_resource_labels_delete_label(self):
         self.client.deployments.get = Mock(return_value=LABELED_DEPLOYMENT)
         self.client.deployments.update_labels = Mock()
-        self.invoke('cfy deployments labels delete key2:"val\\,ue " dep1')
+        self.invoke('cfy deployments labels delete '
+                    '"key2:val\\,ue ,key1,key3,key4:value" bp1')
         call_args = list(self.client.deployments.update_labels.call_args)
         self.assertEqual(labels_list_to_set(call_args[0][1]),
-                         labels_list_to_set([{'key1': 'val ue'},
-                                             {'key2': 'val\xf3ue'}]))
-
-    def test_deployment_labels_delete_key(self):
-        self.client.deployments.get = Mock(return_value=LABELED_DEPLOYMENT)
-        self.client.deployments.update_labels = Mock()
-        self.invoke('cfy deployments labels delete key2 dep1')
-        call_args = list(self.client.deployments.update_labels.call_args)
-        self.assertEqual(call_args[0][1], [{'key1': 'val ue'}])
+                         labels_list_to_set([{'key2': 'val\xf3ue'}]))
 
 
 class BlueprintsLabelsTest(LabelsTest):
@@ -212,18 +205,11 @@ class BlueprintsLabelsTest(LabelsTest):
                                              {'key2': 'val,ue '},
                                              {'key3': 'val:'}]))
 
-    def test_blueprint_labels_delete_label(self):
+    def test_blueprint_labels_delete_labels(self):
         self.client.blueprints.get = Mock(return_value=LABELED_BLUEPRINT)
         self.client.blueprints.update = Mock()
-        self.invoke('cfy blueprints labels delete key2:"val\\,ue " bp1')
+        self.invoke('cfy blueprints labels delete '
+                    '"key2:val\\,ue ,key1,key3,key4:value" bp1')
         call_args = list(self.client.blueprints.update.call_args)
         self.assertEqual(labels_list_to_set(call_args[0][1]['labels']),
-                         labels_list_to_set([{'key1': 'val ue'},
-                                             {'key2': 'val\xf3ue'}]))
-
-    def test_blueprint_labels_delete_key(self):
-        self.client.blueprints.get = Mock(return_value=LABELED_BLUEPRINT)
-        self.client.blueprints.update = Mock()
-        self.invoke('cfy blueprints labels delete key2 bp1')
-        call_args = list(self.client.blueprints.update.call_args)
-        self.assertEqual(call_args[0][1]['labels'], [{'key1': 'val ue'}])
+                         labels_list_to_set([{'key2': 'val\xf3ue'}]))
