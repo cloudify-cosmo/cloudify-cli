@@ -129,10 +129,10 @@ def list(execution_id,
     try:
         execution_events = ExecutionEventsFetcher(
             client,
-            **execution_selection,
             include_logs=include_logs,
             from_datetime=from_datetime,
             to_datetime=to_datetime,
+            **execution_selection
         )
 
         events_logger = get_events_logger(json_output)
@@ -163,7 +163,8 @@ def list(execution_id,
                                     execution.workflow_id,
                                     execution.deployment_group_id))
             else:
-                logger.info('Finished executing {0}'.format(wait_for_record.id))
+                logger.info('Finished executing {0}'.format(
+                    wait_for_record.id))
 
         else:
             # don't tail, get only the events created until now and return
