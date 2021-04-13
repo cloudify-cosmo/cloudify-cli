@@ -25,7 +25,7 @@ from ..cli import cfy
 from ..logger import get_events_logger
 from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
 from ..execution_events_fetcher import ExecutionEventsFetcher, \
-    wait_for_execution
+    wait_for_execution, wait_for_execution_group
 
 
 @cfy.group(name='events')
@@ -41,6 +41,10 @@ def events():
                 short_help='List deployments events [manager only]')
 @cfy.argument('execution-id', required=False)
 @cfy.options.execution_id(required=False, dest='execution_id_opt')
+@click.option('--execution-group', '-g',
+              help='The execution group ID to list the events for',
+              cls=cfy.MutuallyExclusiveOption,
+              mutually_exclusive=['execution_id_opt'])
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.tail
@@ -62,6 +66,7 @@ def events():
 @cfy.pass_logger
 def list(execution_id,
          execution_id_opt,
+         execution_group,
          include_logs,
          json_output,
          tail,
@@ -85,49 +90,82 @@ def list(execution_id,
 
     if not execution_id:
         execution_id = execution_id_opt
-        if not execution_id:
-            raise click.UsageError('Execution ID not provided')
-        logger.warning("Providing the execution ID as an option (using '-e') "
-                       "is now deprecated. Please provide the execution ID as "
-                       "a positional argument.")
+        if execution_id:
+            logger.warning("Providing the execution ID as an option (using "
+                           "'-e') is now deprecated. Please provide the "
+                           "execution ID as a positional argument.")
+
+    if not (execution_id or execution_group):
+        raise click.UsageError('Provide one of the following: Execution ID or '
+                               'Execution Group ID')
+
+    if execution_id and execution_group:
+        raise click.UsageError('Provide either Execution ID or Execution '
+                               'Group ID, not both')
 
     if before:
         to_datetime = before
 
+    if execution_id:
+        logger.info('Listing events for execution id {0} [{1}]'.format(
+            execution_id,
+            _filter_description(include_logs, from_datetime, to_datetime)))
+        execution_selection = {
+            'execution_id': execution_id
+        }
+        wait_for_method = wait_for_execution
+        wait_for_record = client.executions.get(execution_id)
+    else:
+        logger.info('Listing events for execution group {0} [{1}]'.format(
+            execution_group,
+            _filter_description(include_logs, from_datetime, to_datetime)))
+        execution_selection = {
+            'execution_group_id': execution_group
+        }
+        wait_for_method = wait_for_execution_group
+        wait_for_record = client.execution_groups.get(execution_group)
+
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Listing events for execution id {0} [{1}]'.format(
-        execution_id,
-        _filter_description(include_logs, from_datetime, to_datetime)))
     try:
         execution_events = ExecutionEventsFetcher(
             client,
-            execution_id=execution_id,
             include_logs=include_logs,
             from_datetime=from_datetime,
             to_datetime=to_datetime,
+            **execution_selection
         )
 
         events_logger = get_events_logger(json_output)
 
         if tail:
-            execution = wait_for_execution(client,
-                                           client.executions.get(execution_id),
-                                           events_handler=events_logger,
-                                           include_logs=include_logs,
-                                           timeout=None,  # don't timeout ever
-                                           from_datetime=from_datetime)
-            if execution.error:
+            execution = wait_for_method(client,
+                                        wait_for_record,
+                                        events_handler=events_logger,
+                                        include_logs=include_logs,
+                                        timeout=None,  # don't timeout ever
+                                        from_datetime=from_datetime)
+            if hasattr(execution, 'error') and execution.error:
                 logger.info('Execution of workflow {0} for deployment '
                             '{1} failed. [error={2}]'.format(
                                 execution.workflow_id,
                                 execution.deployment_id,
                                 execution.error))
                 raise SuppressedCloudifyCliError()
+            if hasattr(execution, 'workflow_id'):
+                if hasattr(execution, 'deployment_id'):
+                    logger.info('Finished executing workflow {0} on '
+                                'deployment {1}'.format(
+                                    execution.workflow_id,
+                                    execution.deployment_id))
+                elif hasattr(execution, 'deployment_group_id'):
+                    logger.info('Finished executing workflow {0} on '
+                                'deployment group {1}'.format(
+                                    execution.workflow_id,
+                                    execution.deployment_group_id))
             else:
-                logger.info('Finished executing workflow {0} on deployment '
-                            '{1}'.format(
-                                execution.workflow_id,
-                                execution.deployment_id))
+                logger.info('Finished executing {0}'.format(
+                    wait_for_record.id))
+
         else:
             # don't tail, get only the events created until now and return
             current_events, total_events = execution_events. \
