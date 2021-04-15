@@ -610,7 +610,8 @@ def execution_groups_start(deployment_group, workflow_id, parameters,
         concurrency=concurrency,
     )
     wait_for_execution_group(
-        client, group, events_handler=events_logger, timeout=timeout)
+        client, group, include_logs=True, events_handler=events_logger,
+        timeout=timeout)
 
 
 @groups.command('cancel', short_help='Cancel an execution group')
