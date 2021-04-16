@@ -621,7 +621,6 @@ def execution_groups_start(deployment_group, workflow_id, parameters,
 @cfy.options.tenant_name(
     required=False, resource_name_for_help='execution group')
 @cfy.options.common_options
-@cfy.options.json_output
 @cfy.pass_client()
 @cfy.pass_logger
 def execution_groups_cancel(group_id, force, kill,
@@ -644,7 +643,6 @@ def execution_groups_cancel(group_id, force, kill,
 @cfy.options.tenant_name(
     required=False, resource_name_for_help='execution group')
 @cfy.options.common_options
-@cfy.options.json_output
 @cfy.pass_client()
 @cfy.pass_logger
 def execution_groups_resume(group_id, reset_operations,
