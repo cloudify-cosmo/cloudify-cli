@@ -1711,6 +1711,11 @@ class Options(object):
             help=helptexts.DEP_GROUP_FROM_GROUP,
         )
 
+        self.into_environments_group = click.option(
+            '--into-environments', 'environments_group',
+            help=helptexts.DEP_GROUP_INTO_ENVIRONMENTS,
+        )
+
         self.group_id_filter = click.option(
             '--group-id',
             help=helptexts.GROUP_ID_FILTER,

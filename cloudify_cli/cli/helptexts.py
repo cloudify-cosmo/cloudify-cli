@@ -536,5 +536,7 @@ DEP_GROUP_DEP_ID = 'Deployment ID to add or remove from the group'
 DEP_GROUP_COUNT = 'Create this many deployments in the group'
 DEP_GROUP_FILTER_ID = 'Use deployments selected by this filter'
 DEP_GROUP_FROM_GROUP = 'Use deployments belonging to this group'
+DEP_GROUP_INTO_ENVIRONMENTS = 'Add created deployments to the environments ' \
+                              'already existing in this group.'
 GROUP_ID_FILTER = 'Show only results belonging to this group'
 DELETE_GROUP_DEPLOYMENTS = 'Delete all deployments belonging to this group'
