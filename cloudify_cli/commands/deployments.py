@@ -610,7 +610,7 @@ def manager_delete(deployment_id, force, with_logs, logger, client,
             client, deployment_id, DELETE_DEP)
         if execution:
             execution_events_fetcher.wait_for_execution(
-                client, execution, timeout=18, logger=logger)
+                client, execution, logger=logger)
 
     except ExecutionTimeoutError:
         raise CloudifyCliError(
