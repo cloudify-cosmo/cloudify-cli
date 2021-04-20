@@ -1226,6 +1226,56 @@ def delete_group_labels(label, deployment_group_name,
                   client.deployment_groups, label, logger, tenant_name)
 
 
+@groups.command(name='update-deployments',
+                short_help='Update all deployments in the group')
+@cfy.argument('group-id')
+@cfy.options.blueprint_id()
+@cfy.options.inputs
+@cfy.options.reinstall_list
+@cfy.options.workflow_id()
+@cfy.options.skip_install
+@cfy.options.skip_uninstall
+@cfy.options.skip_reinstall
+@cfy.options.ignore_failure
+@cfy.options.install_first
+@cfy.options.dont_update_plugins
+@cfy.options.force(help=helptexts.FORCE_UPDATE)
+@cfy.options.tenant_name(required=False, resource_name_for_help='group')
+@cfy.options.common_options
+@cfy.options.runtime_only_evaluation
+@cfy.options.auto_correct_types
+@cfy.options.reevaluate_active_statuses()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+@cfy.pass_context
+def groups_update_deployments(ctx, group_id, logger, client, tenant_name,
+                              **kwargs):
+    """Update all deployments in the given group.
+
+    If updating with a new blueprint, the blueprint must already be
+    uploaded.
+    Arguments have the same meaning as in single-deployment update,
+    except that preview is not supported.
+    This creates an execution-group with an update workflow for each
+    deployment in the group.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Starting update of all deployments in group %s', group_id)
+    if 'blueprint_id' in kwargs:
+        # check that the blueprint exists ahead of time, throw otherwise
+        client.blueprints.get(kwargs['blueprint_id'])
+    if 'dont_update_plugins' in kwargs:
+        kwargs['update_plugins'] = not kwargs.pop('dont_update_plugins')
+    execution_group = client.execution_groups.start(
+        deployment_group_id=group_id,
+        workflow_id='csys_update_deployment',
+        default_parameters=kwargs,
+    )
+    logger.info('For update status, follow this execution group: %s',
+                execution_group.id)
+
+
 @cfy.group(name='schedule')
 @cfy.options.common_options
 def schedule():
