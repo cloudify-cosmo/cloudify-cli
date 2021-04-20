@@ -1134,12 +1134,11 @@ def groups_extend(deployment_group_name, deployment_id, count, filter_id,
                   from_group, environments_group, client, logger):
     new_deployments = []
     if environments_group:
-        for environ in [d for d in client.deployments.list(
-                        deployment_group_id=environments_group)
-                        if d.is_environment()]:
-            new_deployments.append({
-                'inputs': {'csys-environment': environ.id},
-            })
+        for deployment in client.deployments.list(
+                deployment_group_id=environments_group):
+            if deployment.is_environment():
+                new_deployments.append(
+                    {'inputs': {'csys-environment': deployment.id}})
     group = client.deployment_groups.add_deployments(
         deployment_group_name,
         filter_id=filter_id,
