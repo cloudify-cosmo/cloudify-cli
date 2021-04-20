@@ -1127,16 +1127,25 @@ def groups_update(deployment_group_name, inputs, default_blueprint,
 @cfy.options.group_count
 @cfy.options.deployment_group_filter_id
 @cfy.options.deployment_group_deployments_from_group
+@cfy.options.into_environments_group
 @cfy.pass_client()
 @cfy.pass_logger
 def groups_extend(deployment_group_name, deployment_id, count, filter_id,
-                  from_group, client, logger):
+                  from_group, environments_group, client, logger):
+    new_deployments = []
+    if environments_group:
+        for deployment in client.deployments.list(
+                deployment_group_id=environments_group):
+            if deployment.is_environment():
+                new_deployments.append(
+                    {'inputs': {'csys-environment': deployment.id}})
     group = client.deployment_groups.add_deployments(
         deployment_group_name,
         filter_id=filter_id,
         count=count,
         deployment_ids=deployment_id or None,
         deployments_from_group=from_group,
+        new_deployments=new_deployments or None,
     )
     logger.info(
         'Group %s updated. It now contains %d deployments',
