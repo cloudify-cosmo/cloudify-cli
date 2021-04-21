@@ -28,6 +28,7 @@ from ..cli import cfy, helptexts
 from ..logger import get_events_logger, get_global_json_output
 from ..constants import DEFAULT_UNINSTALL_WORKFLOW, CREATE_DEPLOYMENT
 from ..execution_events_fetcher import (
+    ExecutionEventsFetcher,
     wait_for_execution,
     wait_for_execution_group
 )
@@ -593,16 +594,35 @@ def execution_groups_list(client, logger):
 def execution_groups_details(execution_group_id, client, logger):
     group = client.execution_groups.get(execution_group_id)
     group.update({'#executions': len(group.get('execution_ids'))})
-    print_single(['workflow_id', '#executions', 'deployment_group_id',
+    print_single(['workflow_id', 'deployment_group_id', '#executions',
                   'created_at', 'status'],
                  group,
                  'Execution group {0}:'.format(execution_group_id))
+
+    # Let's find out the total number of events
+    events = client.events.list(
+        execution_group_id=execution_group_id,
+        include_logs=True, _size=1)
+    events_total = events.metadata.get('pagination', {}).get('total')
+    execution_events = ExecutionEventsFetcher(
+            client,
+            include_logs=True,
+            execution_group_id=execution_group_id
+    )
+    events_logger = get_events_logger(json_output=False)
+    pagination_size = 10 if events_total >= 10 else events_total
+    print_details(None, f'Last {pagination_size} logs:')
+    execution_events.fetch_and_process_events_batch(
+        events_handler=events_logger,
+        offset=events_total - pagination_size,
+        size=pagination_size)
+
     summary = client.summary.executions.get(
         _target_field='status',
         execution_group_id=execution_group_id,
     )
     print_details({s['status']: s['executions'] for s in summary},
-                  'Status summary:')
+                  '\nExecutions\' status summary:')
 
 
 @groups.command('start',
