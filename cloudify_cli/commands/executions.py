@@ -611,7 +611,7 @@ def execution_groups_details(execution_group_id, client, logger):
     )
     events_logger = get_events_logger(json_output=False)
     pagination_size = 10 if events_total >= 10 else events_total
-    print_details(None, f'Last {pagination_size} logs:')
+    print_details(None, 'Last {0} logs:'.format(pagination_size))
     execution_events.fetch_and_process_events_batch(
         events_handler=events_logger,
         offset=events_total - pagination_size,
