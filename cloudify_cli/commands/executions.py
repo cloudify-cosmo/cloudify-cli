@@ -556,7 +556,7 @@ def groups():
 def execution_groups_get(execution_group_id, client, logger):
     group = client.execution_groups.get(execution_group_id)
     print_single(
-        ['id', 'executions', 'workflow_id', 'deployment_group'],
+        ['id', 'workflow_id', 'deployment_group_id'],
         group,
         'Execution group {0}:'.format(execution_group_id)
     )
