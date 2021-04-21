@@ -584,6 +584,27 @@ def execution_groups_list(client, logger):
     )
 
 
+@groups.command('details',
+                short_help='Details of an execution group [manager only]')
+@cfy.argument('execution_group_id')
+@cfy.options.common_options
+@cfy.pass_client()
+@cfy.pass_logger
+def execution_groups_details(execution_group_id, client, logger):
+    group = client.execution_groups.get(execution_group_id)
+    group.update({'#executions': len(group.get('execution_ids'))})
+    print_single(['workflow_id', '#executions', 'deployment_group_id',
+                  'created_at', 'status'],
+                 group,
+                 'Execution group {0}:'.format(execution_group_id))
+    summary = client.summary.executions.get(
+        _target_field='status',
+        execution_group_id=execution_group_id,
+    )
+    print_details({s['status']: s['executions'] for s in summary},
+                  'Status summary:')
+
+
 @groups.command('start',
                 short_help='Execute a workflow on each deployment in a group')
 @click.option('--deployment-group', '-g',
