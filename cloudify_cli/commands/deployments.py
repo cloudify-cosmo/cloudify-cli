@@ -1138,7 +1138,7 @@ def groups_extend(deployment_group_name, deployment_id, count, filter_id,
                 deployment_group_id=environments_group):
             if deployment.is_environment():
                 new_deployments.append(
-                    {'labels': {'csys-environment': deployment.id}})
+                    {'labels': [{'csys-environment': deployment.id}]})
     group = client.deployment_groups.add_deployments(
         deployment_group_name,
         filter_id=filter_id,
