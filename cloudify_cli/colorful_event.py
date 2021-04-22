@@ -151,3 +151,36 @@ class ColorfulEvent(Event):
             color,
             val,
             self._color_context)
+
+
+class ColorfulGroupEvent(ColorfulEvent):
+    @property
+    def text(self):
+        event_type = super(ColorfulEvent, self).event_type  # might be None
+        if event_type == 'execution_state_change':
+            color = self._message_color_by_content()
+        else:
+            color = self._message_color_by_event_type.get(event_type)
+
+        with self._nest_colors(color):
+            msg = super(ColorfulEvent, self).text
+
+        if event_type == 'execution_state_change':
+            msg = self._strip_traceback(msg)
+
+        # import pdb; pdb.set_trace()  # noqa
+        return self._color_message(msg, color)
+
+    def _message_color_by_content(self):
+        message = self._event['message']['text']
+        if "'failed'" in message:
+            return self._message_color_by_event_type.get('task_failed')
+
+    def _strip_traceback(self, msg):
+        snippet = 'Traceback (most recent call last):'
+        if snippet in msg:
+            err_prefix = msg[:msg.index(snippet)]
+            for line in reversed(msg.split('\n')):
+                if len(line) > 5 and not line.startswith(' '):
+                    return err_prefix + line + "'"
+        return msg

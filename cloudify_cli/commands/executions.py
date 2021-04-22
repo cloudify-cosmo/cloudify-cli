@@ -623,6 +623,7 @@ def execution_groups_details(execution_group_id, client, logger):
     )
     print_details({s['status']: s['executions'] for s in summary},
                   '\nExecutions\' status summary:')
+    logger.info('')
 
 
 @groups.command('start',
