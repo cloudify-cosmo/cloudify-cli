@@ -154,6 +154,22 @@ class ColorfulEvent(Event):
 
 
 class ColorfulGroupEvent(ColorfulEvent):
+
+    def __str__(self):
+        printable_timestamp = self.printable_timestamp
+        event_type_indicator = self.event_type_indicator
+        message = self.text
+        info = self.operation_info
+
+        if info:  # spacing in between of the info and the message
+            info += ' '
+
+        return u'{0}  {1} {2}{3}'.format(
+            printable_timestamp,
+            event_type_indicator,
+            info,
+            message)
+
     @property
     def text(self):
         event_type = super(ColorfulEvent, self).event_type  # might be None
@@ -168,7 +184,6 @@ class ColorfulGroupEvent(ColorfulEvent):
         if event_type == 'execution_state_change':
             msg = self._strip_traceback(msg)
 
-        # import pdb; pdb.set_trace()  # noqa
         return self._color_message(msg, color)
 
     def _message_color_by_content(self):
