@@ -509,7 +509,8 @@ LABELS_FILTER_RULES = "A labels' filter rule. Labels' filter rules must be " \
                       "or a list of strings of the form " \
                       "[<value1>,<value2>,...]. Any comma and colon in " \
                       "<value> must be escaped with `\\`. The labels' " \
-                      "filter rules will be saved in lower case."
+                      "The labels' keys specified in the filter rules will " \
+                      "be saved in lower case."
 
 ATTRS_FILTER_RULES = "An attributes' filter rule. Attributes' filter rules " \
                      "must be one of:  <key>=<value>, <key>!=<value>, " \
