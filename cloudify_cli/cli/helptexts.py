@@ -500,7 +500,8 @@ REEVALUATE_ACTIVE_STATUSES_PLUGINS = REEVALUATE_ACTIVE_STATUSES + "  This " \
                                      "a similar effect on those."
 
 LABELS = "A labels list of the form <key>:<value>,<key>:<value>. " \
-         "Any comma and colon in <value> must be escaped with `\\`."
+         "Any comma and colon in <value> must be escaped with `\\`. " \
+         "The labels' keys are saved in lowercase."
 
 LABELS_FILTER_RULES = "A labels' filter rule. Labels' filter rules must be " \
                       "one of: <key>=<value>, <key>!=<value>, <key> is null," \
