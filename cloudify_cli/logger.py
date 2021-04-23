@@ -24,13 +24,14 @@ import logging
 import logging.config
 
 import colorama
+from contextlib import contextmanager
 
 from cloudify import logs
 
 from . import env
 from .config.config import is_use_colors
 from .config.config import CloudifyConfig
-from .colorful_event import ColorfulEvent
+from .colorful_event import ColorfulEvent, ColorfulGroupEvent
 
 DEFAULT_LOG_FILE = os.path.join(env.CLOUDIFY_WORKDIR, 'logs', 'cli.log')
 
@@ -177,7 +178,11 @@ def get_events_logger(json_output):
         :return:
         """
         for event in events:
-            output = logs.create_event_message_prefix(event)
+            event_class = None
+            if event.get('execution_group_id') is not None:
+                event_class = ColorfulGroupEvent
+            with _nest_event_class(event_class):
+                output = logs.create_event_message_prefix(event)
             if output:
                 click.echo(output)
 
@@ -217,3 +222,12 @@ class CloudifyJSONEncoder(json.JSONEncoder):
         if isinstance(obj, uuid.UUID):
             return obj.hex
         return super(CloudifyJSONEncoder, self).default(obj)
+
+
+@contextmanager
+def _nest_event_class(event_class):
+    prev_event_class = logs.EVENT_CLASS
+    if event_class:
+        logs.EVENT_CLASS = event_class
+    yield
+    logs.EVENT_CLASS = prev_event_class
