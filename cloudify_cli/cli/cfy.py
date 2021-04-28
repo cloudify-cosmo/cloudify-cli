@@ -1718,6 +1718,11 @@ class Options(object):
             mutually_exclusive=['count'],
         )
 
+        self.deployment_group_id = click.option(
+            '-g', '--deployment-group-id',
+            help=helptexts.DEP_GROUP_ID,
+        )
+
         self.group_id_filter = click.option(
             '--group-id',
             help=helptexts.GROUP_ID_FILTER,
