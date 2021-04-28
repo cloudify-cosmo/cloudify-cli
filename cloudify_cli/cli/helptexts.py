@@ -532,6 +532,7 @@ BLUEPRINTS_ATTRS_FILTER_RULES = ATTRS_FILTER_RULES + \
 
 FILTER_ID = 'Filter results according to the specified filter'
 
+DEP_GROUP_ID = 'Deployment group id (a name).'
 DEP_GROUP_BLUEPRINT = 'Default blueprint for this deployment group'
 DEP_GROUP_DESCRIPTION = 'Description of this deployment group'
 DEP_GROUP_DEP_ID = 'Deployment ID to add or remove from the group'

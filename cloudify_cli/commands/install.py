@@ -20,6 +20,7 @@ import shutil
 from ..cli import cfy, helptexts
 from ..constants import DEFAULT_INSTALL_WORKFLOW
 from ..blueprint import get_blueprint_path_and_id
+from ..exceptions import CloudifyCliError
 from . import init, executions, blueprints, deployments
 
 
@@ -30,6 +31,8 @@ from . import init, executions, blueprints, deployments
 @cfy.options.blueprint_filename()
 @cfy.options.validate
 @cfy.options.deployment_id(validate=True)
+@cfy.options.deployment_group_id
+@cfy.options.group_count
 @cfy.options.inputs
 @cfy.options.workflow_id('install')
 @cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
@@ -52,6 +55,8 @@ def manager(ctx,
             blueprint_filename,
             validate,
             deployment_id,
+            deployment_group_id,
+            count,
             inputs,
             workflow_id,
             force,
@@ -81,7 +86,21 @@ def manager(ctx,
         blueprint_filename,
         blueprint_id
     )
-    deployment_id = deployment_id or blueprint_id
+    if count is not None:
+        if int(count) > 0:
+            deployment_group_id = deployment_group_id or blueprint_id
+        else:
+            raise CloudifyCliError('Count must be a positive number.')
+    else:
+        deployment_id = deployment_id or blueprint_id
+
+    if (deployment_group_id is None) != (count is None):
+        raise CloudifyCliError('Both parameters must be provided: '
+                               'deployment_group_id and count.')
+    if (deployment_group_id is None) == (deployment_id is None):
+        raise CloudifyCliError('One of the parameters must be provided: '
+                               'deployment_group_id and deployment_id.')
+
     workflow_id = workflow_id or DEFAULT_INSTALL_WORKFLOW
 
     try:
@@ -102,28 +121,50 @@ def manager(ctx,
         if processed_blueprint_path != blueprint_path:
             shutil.rmtree(os.path.dirname(os.path.dirname(
                 processed_blueprint_path)))
-    ctx.invoke(
-        deployments.manager_create,
-        blueprint_id=blueprint_id,
-        deployment_id=deployment_id,
-        inputs=inputs,
-        visibility=visibility,
-        tenant_name=tenant_name,
-        skip_plugins_validation=skip_plugins_validation,
-        labels=deployment_labels
-    )
-    ctx.invoke(
-        executions.manager_start,
-        workflow_id=workflow_id,
-        deployment_id=deployment_id,
-        timeout=timeout,
-        force=force,
-        allow_custom_parameters=allow_custom_parameters,
-        include_logs=include_logs,
-        parameters=parameters,
-        json_output=json_output,
-        tenant_name=tenant_name
-    )
+    if deployment_id:
+        ctx.invoke(
+            deployments.manager_create,
+            blueprint_id=blueprint_id,
+            deployment_id=deployment_id,
+            inputs=inputs,
+            visibility=visibility,
+            tenant_name=tenant_name,
+            skip_plugins_validation=skip_plugins_validation,
+            labels=deployment_labels
+        )
+        ctx.invoke(
+            executions.manager_start,
+            workflow_id=workflow_id,
+            deployment_id=deployment_id,
+            timeout=timeout,
+            force=force,
+            allow_custom_parameters=allow_custom_parameters,
+            include_logs=include_logs,
+            parameters=parameters,
+            json_output=json_output,
+            tenant_name=tenant_name
+        )
+    else:
+        ctx.invoke(
+            deployments.groups_create,
+            deployment_group_name=deployment_group_id,
+            inputs=inputs,
+            default_blueprint=blueprint_id,
+        )
+        ctx.invoke(
+            deployments.groups_extend,
+            deployment_group_name=deployment_group_id,
+            count=count,
+        )
+        ctx.invoke(
+            executions.execution_groups_start,
+            deployment_group=deployment_group_id,
+            workflow_id=workflow_id,
+            parameters=parameters,
+            json_output=json_output,
+            force=force,
+            timeout=timeout
+        )
 
 
 @cfy.command(name='install',
