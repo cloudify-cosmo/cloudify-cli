@@ -15,6 +15,7 @@
 ############
 
 import os
+import uuid
 import json
 import shutil
 from datetime import datetime
@@ -65,8 +66,8 @@ from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 
 DEPLOYMENT_COLUMNS = [
-    'id', 'blueprint_id', 'created_at', 'updated_at', 'visibility',
-    'tenant_name', 'created_by', 'site_name', 'labels',
+    'id', 'display_name', 'blueprint_id', 'created_at', 'updated_at',
+    'visibility', 'tenant_name', 'created_by', 'site_name', 'labels',
     'deployment_status', 'installation_status'
 ]
 DEPLOYMENT_UPDATE_COLUMNS = [
@@ -205,6 +206,7 @@ def _print_single_update(deployment_update_dict,
     required=False, resource_name_for_help='deployment')
 @cfy.options.all_tenants
 @cfy.options.search
+@cfy.options.search_name
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
 @cfy.options.common_options
@@ -219,6 +221,7 @@ def manager_list(blueprint_id,
                  descending,
                  all_tenants,
                  search,
+                 search_name,
                  pagination_offset,
                  pagination_size,
                  logger,
@@ -245,7 +248,8 @@ def manager_list(blueprint_id,
                                           _offset=pagination_offset,
                                           _size=pagination_size,
                                           _group_id=group_id,
-                                          blueprint_id=blueprint_id)
+                                          blueprint_id=blueprint_id,
+                                          _search_name=search_name)
     modify_resource_labels(deployments)
     total = deployments.metadata.pagination.total
     print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:')
@@ -522,6 +526,8 @@ def manager_update(ctx,
 @cfy.options.visibility()
 @cfy.options.site_name
 @cfy.options.labels
+@cfy.options.generate_id
+@cfy.options.display_name
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.options.runtime_only_evaluation
@@ -536,6 +542,8 @@ def manager_create(blueprint_id,
                    visibility,
                    site_name,
                    labels,
+                   generate_id,
+                   display_name,
                    logger,
                    client,
                    tenant_name,
@@ -549,8 +557,18 @@ def manager_create(blueprint_id,
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Creating new deployment from blueprint {0}...'.format(
         blueprint_id))
-    deployment_id = deployment_id or blueprint_id
     visibility = get_visibility(private_resource, visibility, logger)
+    if deployment_id:
+        if generate_id:
+            raise CloudifyCliError('`--generate-id` cannot be provided if a '
+                                   'deployment ID is specified')
+    else:
+        if generate_id:
+            deployment_id = str(uuid.uuid4())
+        else:
+            deployment_id = blueprint_id
+
+    display_name = display_name or deployment_id
 
     try:
         deployment = client.deployments.create(
@@ -561,7 +579,8 @@ def manager_create(blueprint_id,
             skip_plugins_validation=skip_plugins_validation,
             site_name=site_name,
             runtime_only_evaluation=runtime_only_evaluation,
-            labels=labels
+            labels=labels,
+            display_name=display_name
         )
     except (MissingRequiredDeploymentInputError,
             UnknownDeploymentInputError) as e:
@@ -580,8 +599,8 @@ def manager_create(blueprint_id,
         logger.info('Unable to create deployment due to invalid secret')
         raise CloudifyCliError(str(e))
 
-    logger.info("Deployment created. The deployment's id is {0}".format(
-        deployment.id))
+    logger.info("Deployment `{0}` created. The deployment's id is "
+                "{1}".format(deployment.display_name, deployment.id))
 
 
 @cfy.command(name='delete',

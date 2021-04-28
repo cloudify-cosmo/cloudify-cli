@@ -209,7 +209,7 @@ IMPORT_SSH_KEYS = 'WARNING: Import exported keys to their original locations'
 
 SORT_BY = "Key for sorting the list"
 DESCENDING = "Sort list in descending order [default: False]"
-SEARCH = 'Search resources by name/id. The returned list will include only ' \
+SEARCH = 'Search resources by id. The returned list will include only ' \
          'resources that contain the given search pattern'
 
 TENANT = 'The name of the tenant'
@@ -543,3 +543,13 @@ DEP_GROUP_INTO_ENVIRONMENTS = 'Add created deployments to the environments ' \
                               'already existing in this group.'
 GROUP_ID_FILTER = 'Show only results belonging to this group'
 DELETE_GROUP_DEPLOYMENTS = 'Delete all deployments belonging to this group'
+
+GENERATE_ID = 'Generate a UUID to serve as the deployment ID. This flag ' \
+              'cannot be provided if a deployment ID is specified'
+
+DISPLAY_NAME = 'The display name of the deployment. If not specified, ' \
+               'the deployment ID will be used instead.'
+
+SEARCH_NAME = 'Search deployments by their display name. The returned list ' \
+              'will include only deployments that contain the given search ' \
+              'pattern'
