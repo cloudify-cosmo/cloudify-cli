@@ -14,11 +14,14 @@
 # limitations under the License.
 ############
 
+from __future__ import unicode_literals
+
 
 import json
 import inspect
 import datetime
 import warnings
+from uuid import UUID
 
 from mock import patch, MagicMock, PropertyMock, Mock
 
@@ -723,6 +726,43 @@ class DeploymentsTest(CliCommandTest):
                     break
             self.assertTrue(found, 'String ''{0}'' not found in outcome {1}'
                             .format(output, outcome))
+
+    def test_create_deployment_with_display_name(self):
+        dep_display_name = 'Depl\xf3yment'
+        self.client.deployments.create = Mock()
+        self.invoke('cfy deployments create -b bp1 -n {0} '
+                    'dep1'.format(dep_display_name))
+        call_args = list(self.client.deployments.create.call_args)
+        self.assertEqual(call_args[1]['display_name'], dep_display_name)
+
+    def test_create_deployment_display_name_defaults_to_id(self):
+        dep_id = 'dep1'
+        self.client.deployments.create = Mock()
+        self.invoke('cfy deployments create -b bp1 {0}'.format(dep_id))
+        call_args = list(self.client.deployments.create.call_args)
+        self.assertEqual(call_args[1]['display_name'], dep_id)
+
+    def test_create_deployment_with_generated_id(self):
+        self.client.deployments.create = Mock()
+        self.invoke('cfy deployments create -b bp1 --generate-id')
+        call_args = list(self.client.deployments.create.call_args)
+        try:
+            UUID(call_args[0][1], version=4)
+        except ValueError:
+            raise Exception('The deployment was not created with a valid UUID')
+
+    def test_create_deployment_with_id_and_generate_id_fails(self):
+        self.invoke('cfy deployments create -b bp1 --generate-id dep1',
+                    err_str_segment='cannot be provided',
+                    exception=CloudifyCliError)
+
+    def test_list_deployments_with_search_name(self):
+        search_name_pattern = 'De#pl\xf3yment 1'
+        self.client.deployments.list = Mock(return_value=MockListResponse())
+        self.invoke('cfy deployments list --search-name '
+                    '"{0}"'.format(search_name_pattern))
+        call_args = list(self.client.deployments.list.call_args)
+        self.assertEqual(call_args[1].get('_search_name'), search_name_pattern)
 
 
 class DeploymentModificationsTest(CliCommandTest):

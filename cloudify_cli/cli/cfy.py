@@ -250,6 +250,17 @@ def parse_and_validate_label_to_delete(ctx, param, value):
     return get_formatted_labels_list(value, allow_only_key=True)
 
 
+def validate_value_not_empty(ctx, param, value):
+    if value is None or ctx.resilient_parsing:
+        return
+
+    if not value:
+        raise CloudifyValidationError(
+            'ERROR: The `{0}` argument is empty'.format(param.name))
+
+    return value
+
+
 def get_formatted_labels_list(raw_labels_string, allow_only_key=False):
     labels_list = []
     if any(unicodedata.category(char)[0] == 'C' or char == '"'
@@ -1732,6 +1743,26 @@ class Options(object):
             '--filter-id',
             callback=validate_name,
             help=helptexts.FILTER_ID
+        )
+
+        self.generate_id = click.option(
+            '--generate-id',
+            is_flag=True,
+            default=False,
+            help=helptexts.GENERATE_ID
+        )
+
+        self.display_name = click.option(
+            '-n',
+            '--display-name',
+            callback=validate_value_not_empty,
+            help=helptexts.DISPLAY_NAME
+        )
+
+        self.search_name = click.option(
+            '--search-name',
+            callback=validate_value_not_empty,
+            help=helptexts.SEARCH_NAME
         )
 
     def common_options(self, f):
