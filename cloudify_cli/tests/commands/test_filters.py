@@ -24,7 +24,9 @@ MATCHING_LABELS_RULES = OrderedDict([
     ('"k_l is null"', {'key': 'k_l', 'values': [], 'operator': 'is_null',
                        'type': 'label'}),
     ('"l_m-n.o is not null"', {'key': 'l_m-n.o', 'values': [],
-                               'operator': 'is_not_null', 'type': 'label'})
+                               'operator': 'is_not_null', 'type': 'label'}),
+    ('p!!=["i#:,j k\xf3"]', {'key': 'p', 'values': ['i#:', 'j k\xf3'],
+                             'operator': 'is_not', 'type': 'label'}),
 ])
 
 # These are not real attributes, but it doesn't matter for the CLI tests
