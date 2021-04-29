@@ -505,9 +505,10 @@ LABELS = "A labels list of the form <key>:<value>,<key>:<value>. " \
 
 LABELS_FILTER_RULES = "A labels' filter rule. Labels' filter rules must be " \
                       "one of: <key>=<value>, <key>!=<value>, " \
-                      "<key>!!=<value>, <key> is null, <key> is not null. " \
-                      "<value> can be a single string or a list of strings " \
-                      "of the form [<value1>,<value2>,...]. Any comma and " \
+                      "<key> is-not <value>, <key> is null, " \
+                      "<key> is not null. <value> can be a single string or " \
+                      "a list of strings of the form " \
+                      "[<value1>,<value2>,...]. Any comma and " \
                       "colon in <value> must be escaped with `\\`. " \
                       "The labels' keys specified in the filter rules will " \
                       "be saved in lower case."
