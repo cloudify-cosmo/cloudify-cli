@@ -18,6 +18,7 @@ NOT_FOUND_MSG = 'Requested {0} filter with ID `{1}` was not found in ' \
 OPERATOR_MAPPING = {
     '=': 'any_of',
     '!=': 'not_any_of',
+    'is-not': 'is_not',
     'contains': 'contains',
     'does-not-contain': 'not_contains',
     'starts-with': 'starts_with',
@@ -34,9 +35,9 @@ class InvalidLabelsFilterRuleFormat(CloudifyCliError):
     def __init__(self, labels_filter_value):
         super(CloudifyCliError, self).__init__(
             'The labels filter rule `{0}` is not in the right format. It must '
-            'be one of: <key>=<value>, <key>!=<value>, <key> is null, '
-            '<key> is not null. <value> can be a single string or a list of '
-            'strings of the form [<value1>,<value2>,...]. '
+            'be one of: <key>=<value>, <key>!=<value>, <key> is-not <value>,'
+            ' <key> is null, <key> is not null. <value> can be a single '
+            'string or a list of strings of the form [<value1>,<value2>,...]. '
             '<value> cannot contain control characters, plus, any comma and '
             'colon in <value> must be escaped with `\\`. <key> can '
             'contain only letters, digits and the characters '
@@ -94,16 +95,15 @@ class LabelsFilterRule(FilterRule):
 
     @classmethod
     def from_string(cls, str_filter_rule):
-        match_equal = re.match(r'^([\w\-\.]+)(=)([^\n\t\"]+)$',
-                               str_filter_rule)
-        match_not_equal = re.match(r'^([\w\-\.]+)(!=)([^\n\t\"]+)$',
-                                   str_filter_rule)
-        equal_matching = match_equal or match_not_equal
-        if equal_matching:
-            key = equal_matching.group(1).lower()
-            operator = equal_matching.group(2)
-            values = cls._get_rule_values(equal_matching.group(3))
-            return cls(key, values, OPERATOR_MAPPING[operator])
+        for operator in ['!=', '=', ' is-not ']:
+            matching = re.match(
+                r'^([\w\-\.]+)({0})([^\n\t\"]+)$'.format(operator),
+                str_filter_rule)
+            if matching:
+                key = matching.group(1).lower()
+                operator = matching.group(2)
+                values = cls._get_rule_values(matching.group(3))
+                return cls(key, values, OPERATOR_MAPPING[operator.strip()])
 
         match_null = re.match(r'^([\w\-\.]+) (is null)$', str_filter_rule)
         match_not_null = re.match(r'^([\w\-\.]+) (is not null)$',
@@ -122,6 +122,8 @@ class LabelsFilterRule(FilterRule):
         cli_operator = REVERSED_OPERATOR_MAPPING[self['operator']]
         if self['operator'] in ('is_null', 'is_not_null'):
             return '"{0} {1}"'.format(self['key'], cli_operator)
+        if cli_operator == 'is-not':
+            cli_operator = ' is-not '
         self['values'] = [val.replace(',', '\\,').replace(':', '\\:')
                           .replace('$', '\\$') for val in self['values']]
         return super(LabelsFilterRule, self).__str__(cli_operator)
