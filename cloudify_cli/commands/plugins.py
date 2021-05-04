@@ -491,17 +491,6 @@ def update(blueprint_id,
     or any blueprint in case `--all-blueprints` flag was used instead of
     providing a BLUEPRINT_ID.  This will update the deployments one by one
     until all succeeded.
-
-    `BLUEPRINT_ID`   the blueprint's ID to perform the plugins update with.
-    `PLUGIN_NAMES`   is the list of the plugins to be updated (if empty,
-                     all plugins will).
-    `TO_LATEST`      list of plugin names to be upgraded to the latest version.
-    `ALL_TO_LATEST`  update all (selected) plugins to the latest version
-                     of a plugin (this is the default behaviour).
-    `TO_MINOR`       list of plugin names to be upgraded to the latest
-                     minor version (i.e. major versions of the plugin in use
-                     and the upgraded one will match).
-    `ALL_TO_MINOR`   update all (selected) plugins to the latest minor version.
     """
     # Validate input arguments
     if ((blueprint_id and all_blueprints) or
