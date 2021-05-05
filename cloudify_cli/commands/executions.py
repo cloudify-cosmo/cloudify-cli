@@ -651,9 +651,31 @@ def execution_groups_start(deployment_group, workflow_id, parameters,
         force=force,
         concurrency=concurrency,
     )
-    wait_for_execution_group(
-        client, group, include_logs=True, events_handler=events_logger,
-        timeout=timeout)
+    try:
+        execution = wait_for_execution_group(client, group,
+                                             events_handler=events_logger,
+                                             include_logs=True,
+                                             timeout=timeout,
+                                             logger=logger)
+        logger.info("Finished executing workflow {0} on deployment group "
+                    "{1}.\n\n"
+                    "* Run 'cfy events list -g {2}' to retrieve the "
+                    "execution group's events/logs".format(
+                        workflow_id, deployment_group, execution.id)
+                    )
+
+    except ExecutionTimeoutError as e:
+        logger.info("Timed out waiting for workflow '{0}' on deployment group "
+                    "'{1}' to end. The execution group may still be running, "
+                    "however, the command-line utility was instructed to wait "
+                    "up to {3} seconds for its completion.\n\n"
+                    "* Run 'cfy executions groups cancel {2}' to cancel the "
+                    "running workflow.\n"
+                    "* Run 'cfy events list -g {2} --tail' to retrieve the "
+                    "execution group's events/logs".format(
+                        workflow_id, deployment_group, e.execution_id, timeout)
+                    )
+        raise SuppressedCloudifyCliError()
 
 
 @groups.command('cancel', short_help='Cancel an execution group')
