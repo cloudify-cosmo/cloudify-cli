@@ -269,6 +269,10 @@ def wait_for_execution_group(client,
     if execution_group.status in Execution.END_STATES:
         return execution_group
 
+    if logger is not None and execution_group.status == Execution.QUEUED:
+        logger.info("Executions have been queued: you can keep waiting "
+                    "for the executions to start or interrupt (eg. ^C).\n")
+
     if timeout is not None:
         deadline = time.time() + timeout
 
