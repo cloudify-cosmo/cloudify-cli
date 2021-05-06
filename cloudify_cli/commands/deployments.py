@@ -1145,12 +1145,14 @@ def groups_update(deployment_group_name, inputs, default_blueprint,
 @cfy.options.group_deployment_id
 @cfy.options.group_count
 @cfy.options.deployment_group_filter_id
+@cfy.options.deployment_filter_rules
 @cfy.options.deployment_group_deployments_from_group
 @cfy.options.into_environments_group
 @cfy.pass_client()
 @cfy.pass_logger
 def groups_extend(deployment_group_name, deployment_id, count, filter_id,
-                  from_group, environments_group, client, logger):
+                  filter_rules, from_group, environments_group,
+                  client, logger):
     new_deployments = []
     if environments_group:
         for deployment in client.deployments.list(
@@ -1161,6 +1163,7 @@ def groups_extend(deployment_group_name, deployment_id, count, filter_id,
     group = client.deployment_groups.add_deployments(
         deployment_group_name,
         filter_id=filter_id,
+        filter_rules=filter_rules,
         count=count,
         deployment_ids=deployment_id or None,
         deployments_from_group=from_group,
@@ -1176,15 +1179,17 @@ def groups_extend(deployment_group_name, deployment_id, count, filter_id,
 @click.argument('deployment-group-name')
 @cfy.options.group_deployment_id
 @cfy.options.deployment_group_filter_id
+@cfy.options.deployment_filter_rules
 @cfy.options.deployment_group_deployments_from_group
 @cfy.pass_client()
 @cfy.pass_logger
 def groups_shrink(deployment_group_name, deployment_id, filter_id,
-                  from_group, client, logger):
+                  filter_rules, from_group, client, logger):
     group = client.deployment_groups.remove_deployments(
         deployment_group_name,
         deployment_id,
         filter_id=filter_id,
+        filter_rules=filter_rules,
         deployments_from_group=from_group,
     )
     removed_what_message = []
