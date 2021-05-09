@@ -514,10 +514,10 @@ LABELS_FILTER_RULES = "A labels' filter rule. Labels' filter rules must be " \
                       "be saved in lower case."
 
 ATTRS_FILTER_RULES = "An attributes' filter rule. Attributes' filter rules " \
-                     "must be one of:  <key>=<value>, <key>!=<value>, " \
+                     "must be one of: <key>=<value>, <key>!=<value>, " \
                      "<key> contains <value>, " \
                      "<key> does-not-contain <value>, " \
-                     "<key> starts-with <value>, <key> ends-with <value>. " \
+                     "<key> starts-with <value>, <key> ends-with <value>, " \
                      "<key> is not empty. <value> can be a single string or " \
                      "a list of strings of the form [<value1>,<value2>,...]." \
                      " Allowed attributes to filter by are: "
