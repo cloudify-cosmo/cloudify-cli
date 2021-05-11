@@ -1155,7 +1155,6 @@ def groups_extend(deployment_group_name, deployment_id, count, filter_id,
                   client, logger):
     new_deployments = []
     if environments_group:
-        deployment_group = client.deployment_groups.get(deployment_group_name)
         for deployment in client.deployments.list(
                 deployment_group_id=environments_group):
             if deployment.is_environment():
