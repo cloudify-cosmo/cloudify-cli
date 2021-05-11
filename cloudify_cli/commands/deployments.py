@@ -1155,17 +1155,12 @@ def groups_extend(deployment_group_name, deployment_id, count, filter_id,
                   client, logger):
     new_deployments = []
     if environments_group:
-        deployment_group = client.deployment_groups.get(deployment_group_name)
         for deployment in client.deployments.list(
                 deployment_group_id=environments_group):
             if deployment.is_environment():
-                new_id = str(uuid.uuid4())
                 new_deployments.append({
-                    'id': new_id,
-                    'display_name': "{blueprint_id}-{uuid}".format(
-                        blueprint_id=deployment_group.default_blueprint_id,
-                        uuid=new_id,
-                    ),
+                    'id': '{uuid}',
+                    'display_name': '{blueprint_id}-{uuid}',
                     'labels': [{'csys-obj-parent': deployment.id}],
                 })
     group = client.deployment_groups.add_deployments(
