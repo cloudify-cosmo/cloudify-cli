@@ -50,8 +50,13 @@ def update_config(client, inputs, logger):
     Pass INPUTS as a yaml-formatted dict with {"config name": "new value"},
     or as a path to a file containing yaml.
 
+    Note: strings passed as input must be surrounded by '...' or "..."
+
     To resolve ambiguous names, config name can be prefixed with scope,
-    eg. "rest.ldap_username".
+    e.g.:
+    cfy config update '{"rest.ldap_username": "adminuser",
+    "rest.ldap_password": "adminpassword"}'
+
     """
     for name, value in inputs.items():
         updated = client.manager.put_config(name, value)
