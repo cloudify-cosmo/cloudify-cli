@@ -65,6 +65,8 @@ def inputs_to_dict(resources, **kwargs):
                     "(e.g. '*-inputs.yaml')\n" \
                     "- A string formatted as JSON/YAML\n" \
                     "- A string formatted as key1=value1;key2=value2\n"\
+                    "Note: strings passed as input must be surrounded by " \
+                    "'...' or \"...\"\n"\
                     .format(resource)
                 if str(ex):
                     ex_msg += "\nRoot cause: {0}".format(ex)
