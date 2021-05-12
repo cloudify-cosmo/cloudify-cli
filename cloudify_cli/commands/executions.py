@@ -715,3 +715,49 @@ def execution_groups_resume(group_id, reset_operations,
     logger.info('Resuming execution group %s', group_id)
     client.execution_groups.resume(group_id, force=reset_operations)
     logger.info("A resume request for group %s has been sent", group_id)
+
+
+@groups.command('set-success-group',
+                short_help='Set a target group for successful deployments')
+@cfy.argument('group-id')
+@cfy.argument('success-group-id')
+@cfy.options.tenant_name(
+    required=False, resource_name_for_help='execution group')
+@cfy.options.common_options
+@cfy.pass_client()
+@cfy.pass_logger
+def execution_groups_set_success(group_id, success_group_id,
+                                 client, logger, tenant_name):
+    """Set success target group for this execution-group.
+
+    Deployments for which the execution succeeds, will be added to the
+    success target deployments group.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    client.execution_groups.set_target_group(
+        group_id, success_group=success_group_id)
+    logger.info('Execution group %s: success target group set to %s',
+                group_id, success_group_id)
+
+
+@groups.command('set-failure-group',
+                short_help='Set a target group for failed deployments')
+@cfy.argument('group-id')
+@cfy.argument('failure-group-id')
+@cfy.options.tenant_name(
+    required=False, resource_name_for_help='execution group')
+@cfy.options.common_options
+@cfy.pass_client()
+@cfy.pass_logger
+def execution_groups_set_failure(group_id, failure_group_id,
+                                 client, logger, tenant_name):
+    """Set success target group for this execution-group.
+
+    Deployments for which the execution succeeds, will be added to the
+    success target deployments group.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    client.execution_groups.set_target_group(
+        group_id, failed_group=failure_group_id)
+    logger.info('Execution group %s: success target group set to %s',
+                group_id, failure_group_id)
