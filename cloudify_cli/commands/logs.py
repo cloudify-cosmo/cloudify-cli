@@ -41,14 +41,14 @@ def get_host_date(conn):
     return conn.run('date +%Y%m%dT%H%M%S', hide=True).stdout.strip()
 
 
-def _archive_logs(conn, node_type, logger):
+def _archive_logs(conn, node_type, logger, node_ip):
     """Creates an archive of all logs found under /var/log/cloudify plus
     journalctl.
     """
     archive_filename = 'cloudify-{node_type}-logs_{date}_{ip}.tar.gz'.format(
         node_type=node_type,
         date=get_host_date(conn),
-        ip=env.profile.manager_ip
+        ip=node_ip
     )
     archive_path = '/tmp/{}'.format(archive_filename)
     journalctl_destination_path = '/var/log/cloudify/journalctl.log'
@@ -56,7 +56,8 @@ def _archive_logs(conn, node_type, logger):
         'bash -c "journalctl > /tmp/jctl && mv /tmp/jctl {0}"'
         .format(journalctl_destination_path),
     )
-    logger.info('Creating logs archive in manager: {0}'.format(archive_path))
+    logger.info('Creating logs archive in {0}: {1}'.format(node_type,
+                                                           archive_path))
     conn.sudo(
         'tar -czf {0} -C /var/log cloudify '
         '--warning=no-file-changed'.format(archive_path),
@@ -67,8 +68,9 @@ def _archive_logs(conn, node_type, logger):
     return archive_path
 
 
-def _download_archive(conn, host_type, output_path, logger, output_json):
-    archive_path_on_host = _archive_logs(conn, host_type, logger)
+def _download_archive(conn, host_type, output_path,
+                      logger, output_json, node_ip):
+    archive_path_on_host = _archive_logs(conn, host_type, logger, node_ip)
     filename = posixpath.basename(archive_path_on_host)
     output_path = os.path.join(output_path, filename)
     logger.info('Downloading archive to: {0}'.format(output_path))
@@ -93,6 +95,9 @@ def download(output_path, all_nodes, logger):
 
     if not output_path:
         output_path = os.getcwd()
+
+    if not (env.profile.ssh_user and env.profile.ssh_key):
+        raise CloudifyCliError('Make sure both `ssh_user` & `ssh_key` are set')
     if all_nodes:
         if not env.profile.cluster:
             raise CloudifyCliError(
@@ -109,7 +114,8 @@ def download(output_path, all_nodes, logger):
                         node.get('host_type'),
                         output_path,
                         logger,
-                        output_json)
+                        output_json,
+                        node['host_ip'])
             except CloudifyCliError as e:
                 logger.info('Skipping node {0}: {1}'
                             .format(node['hostname'], e))
@@ -120,7 +126,8 @@ def download(output_path, all_nodes, logger):
                 CloudifyNodeType.MANAGER,
                 output_path,
                 logger,
-                output_json)
+                output_json,
+                env.profile.manager_ip)
 
     if get_global_json_output():
         output(json.dumps(output_json, cls=CloudifyJSONEncoder))
@@ -174,7 +181,7 @@ def backup(logger):
     """
     with env.ssh_connection() as conn:
         archive_path_on_manager = _archive_logs(
-            conn, CloudifyNodeType.MANAGER, logger)
+            conn, CloudifyNodeType.MANAGER, logger, env.profile.manager_ip)
         logger.info('Backing up manager logs to /var/log/{0}'.format(
             os.path.basename(archive_path_on_manager)))
         conn.sudo('mv {0} {1}'.format(archive_path_on_manager, '/var/log/'))
