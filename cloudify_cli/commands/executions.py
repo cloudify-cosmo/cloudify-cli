@@ -651,6 +651,10 @@ def execution_groups_start(deployment_group, workflow_id, parameters,
         force=force,
         concurrency=concurrency,
     )
+    logger.info('Execution group %s started: running %s on '
+                'deployment group %s [concurrency=%s]',
+                group.id, group.workflow_id, group.deployment_group_id,
+                group.concurrency)
     try:
         execution = wait_for_execution_group(client, group,
                                              events_handler=events_logger,
