@@ -291,13 +291,25 @@ class ProfilesTest(CliCommandTest):
             err_str_segment="Can't use manager"
         )
 
+    def test_set_disable_ssl(self):
+        self.use_manager()
+        self.assertEqual(env.profile.rest_port, 80)
+        self.assertEqual(env.profile.rest_protocol, 'http')
+        self.invoke('profiles set --ssl on --skip-credentials-validation')
+        self.assertEqual(env.profile.rest_port, 443)
+        self.assertEqual(env.profile.rest_protocol, 'https')
+        self.invoke('profiles set --ssl off --skip-credentials-validation')
+        self.assertEqual(env.profile.rest_port, 80)
+        self.assertEqual(env.profile.rest_protocol, 'http')
+
+    @patch('cloudify_cli.commands.profiles._update_cluster_profile_to_dict')
     @patch('cloudify_cli.commands.profiles._validate_credentials')
-    def test_set_works_without_skip(self, validate_credentials_mock):
+    def test_set_works_without_skip(self, validate_credentials_mock, _):
         self.use_manager()
         self.invoke('profiles set -u 0 -p 0 -t 0 -c 0')
 
-        validate_credentials_mock.assert_called_once_with('0', '0', '0', '0',
-                                                          None, None, None)
+        validate_credentials_mock.assert_called_once_with(
+            None, '0', '0', '0', '0', None, None, None)
         self.assertEquals('0', env.profile.manager_username)
         self.assertEquals('0', env.profile.manager_password)
         self.assertEquals('0', env.profile.manager_tenant)
@@ -323,6 +335,16 @@ class ProfilesTest(CliCommandTest):
         self.invoke('profiles set --profile-name some-profile '
                     '--skip-credentials-validation')
         self.assertEquals('some-profile', env.profile.profile_name)
+
+    def test_set_manager_ip(self):
+        self.use_manager()
+        name = env.profile.profile_name
+        password = env.profile.manager_password
+        self.invoke('profiles set --manager-ip example.com '
+                    '--skip-credentials-validation')
+        self.assertEqual(env.profile.manager_ip, 'example.com')
+        self.assertEqual(env.profile.profile_name, name)
+        self.assertEqual(env.profile.manager_password, password)
 
     def test_profile_name_defaults_to_ip(self):
         p = env.ProfileContext()
