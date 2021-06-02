@@ -35,6 +35,7 @@ STATUS_COLUMNS = ['service', 'status']
 def status(logger, client):
     """Show the status of the manager
     """
+    print('Hey This Me')
     rest_host = profile.manager_ip
     logger.info('Retrieving manager services status... [ip={0}]'.format(
         rest_host))
