@@ -465,6 +465,6 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
             break
 
         time.sleep(WAIT_FOR_BLUEPRINT_UPLOAD_SLEEP_INTERVAL)
-
+    blueprint = client.blueprints.get(blueprint_id)
     _handle_errors()
     return blueprint
