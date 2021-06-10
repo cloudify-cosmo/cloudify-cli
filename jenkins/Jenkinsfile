@@ -39,8 +39,11 @@ pipeline {
     PROJECT_DIR = "${env.WORKSPACE}/project"
     BUILD_DIR = "/tmp/build"
     RESULT_DIR = "/tmp/result"
-    CLOUDIFY_PACKAGE_RELEASE = "1"
+    CLOUDIFY_PACKAGE_RELEASE = getPreRelease("${env.PROJECT}", "${env.BRANCH_NAME}").trim()
     CLOUDIFY_VERSION = getVersion("${env.PROJECT}", "${env.BRANCH_NAME}").trim()
+    S3_BASE_URL = "${env.CLOUDIFY_VERSION}/${env.CLOUDIFY_PACKAGE_RELEASE}-build/${env.PROJECT}/${env.BRANCH_NAME}"
+    S3_BUILD_PATH = "${env.S3_BASE_URL}/${env.BUILD_NUMBER}"
+    S3_LATEST_BUILD_PATH = "${env.S3_BASE_URL}/latest"
   }
 
   stages {
@@ -83,23 +86,35 @@ pipeline {
                 git clone --single-branch --branch ${env.BRANCH_NAME} https://github.com/cloudify-cosmo/cloudify-cli.git SOURCES && cd SOURCES
               """
               echo 'Installing setup tools'
-              sh '''
+              sh """
                 yum install python-setuptools -y
                 chmod a+wx /opt
-              '''
-              sh script:'''
+              """
+              sh script:"""
                 cd ~/rpmbuild/SOURCES
-                yum-builddep -y packaging/cloudify-cli.spec
+                yum install rpmdevtools -y
+                for i in {1..30}; do yum-builddep -y packaging/cloudify-cli.spec && break || sleep 10; done
+
+                spectool \
+                  -d "CLOUDIFY_VERSION ${env.CLOUDIFY_VERSION}" \
+                  -d "CLOUDIFY_PACKAGE_RELEASE ${env.CLOUDIFY_PACKAGE_RELEASE}" \
+                  -P packaging/cloudify-cli.spec \
+                  -S -g
+
                 rpmbuild \
-                  -D "CLOUDIFY_VERSION $(python setup.py --version | cut -d- -f1)" \
-                  -D "CLOUDIFY_PACKAGE_RELEASE 1" \
+                  -D "CLOUDIFY_VERSION ${env.CLOUDIFY_VERSION}" \
+                  -D "CLOUDIFY_PACKAGE_RELEASE ${env.CLOUDIFY_PACKAGE_RELEASE}" \
+                  -D "dist .el7" \
                   -bb packaging/cloudify-cli.spec
-              ''', label: "building dependencies and rpm"
+
+              """, label: "building dependencies and rpm"
               sh script:("mkdir -p ${env.WORKSPACE}/rpm_artifacts && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm_artifacts"), label: "Copy RPM to rpm_artifacts folder"
             }
           }
           post {
             success {
+              uploadToReleaseS3("${env.WORKSPACE}/rpm_artifacts/","${env.S3_BUILD_PATH}")
+              uploadToReleaseS3("${env.WORKSPACE}/rpm_artifacts/","${env.S3_LATEST_BUILD_PATH}")
               archiveArtifacts '**/rpm_artifacts/*.rpm'
             }
           }
@@ -127,6 +142,8 @@ pipeline {
           }
           post {
             success {
+              uploadToReleaseS3("${env.WORKSPACE}/deb_artifacts/","${env.S3_BUILD_PATH}")
+              uploadToReleaseS3("${env.WORKSPACE}/deb_artifacts/","${env.S3_LATEST_BUILD_PATH}")
               archiveArtifacts '**/deb_artifacts/*.deb'
             }
           }

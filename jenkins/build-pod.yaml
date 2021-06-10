@@ -40,6 +40,15 @@ spec:
     securityContext:
       runAsUser: 0
       privileged: true
+  - name: awscli
+    image: amazon/aws-cli
+    command:
+    - cat
+    tty: true
+    resources:
+      limits:
+        cpu: 0.2
+        memory: 256Mi
   imagePullSecrets:
     - name: dockerhub
   nodeSelector:
