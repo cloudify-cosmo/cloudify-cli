@@ -139,6 +139,9 @@ def create(username,
         logger.info(
             'User `{0}` added successfully to tenant `{1}` with `{2}` role'
             .format(username, tenant_name, user_tenant_role))
+    elif user_tenant_role and not tenant_name:
+        logger.warning('User tenant role `%s` specified, but no tenant '
+                       'provided, ignoring the tenant role')
 
 
 @users.command(name='set-password',
