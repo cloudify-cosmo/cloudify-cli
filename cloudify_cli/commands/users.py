@@ -131,14 +131,20 @@ def create(username,
     `USERNAME` is the username of the user
     """
     client.users.create(username, password, security_role)
-    logger.info('User `{0}` created with `{1}` security role'.format(
-        username, security_role))
+    logger.info('User `%s` created with `%s` security role',
+                username, security_role)
 
     if tenant_name and user_tenant_role:
         client.tenants.add_user(username, tenant_name, user_tenant_role)
         logger.info(
-            'User `{0}` added successfully to tenant `{1}` with `{2}` role'
-            .format(username, tenant_name, user_tenant_role))
+            'User `%s` added successfully to tenant `%s` with `%s` role',
+            username, tenant_name, user_tenant_role)
+    elif user_tenant_role and not tenant_name:
+        logger.warning('User tenant role `%s` specified, but no tenant '
+                       'provided, ignoring the tenant role', user_tenant_role)
+    elif tenant_name and not user_tenant_role:
+        logger.warning('Tenant `%s` specified, but no user tenant role '
+                       'provided, ignoring the tenant', tenant_name)
 
 
 @users.command(name='set-password',
