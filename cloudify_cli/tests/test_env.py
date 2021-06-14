@@ -1187,8 +1187,7 @@ class TestClusterRestClient(CliCommandTest):
 
             self.fail('Unexpected url: {0}'.format(request_url))
 
-        return mock.patch('cloudify_rest_client.client.requests.get',
-                          side_effect=_mocked_get)
+        return mock.patch('requests.Session.get', side_effect=_mocked_get)
 
     def test_manager_offline(self):
         env.profile.manager_ip = '127.0.0.1'
