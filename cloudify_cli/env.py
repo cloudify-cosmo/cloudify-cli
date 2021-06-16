@@ -34,6 +34,7 @@ from cloudify_rest_client.client import HTTPClient
 from cloudify.cluster_status import CloudifyNodeType
 from cloudify_rest_client.utils import is_kerberos_env
 from cloudify_rest_client.exceptions import CloudifyClientError
+from cloudify.utils import ipv6_url_compat
 
 from . import constants
 from .exceptions import CloudifyCliError
@@ -572,12 +573,12 @@ class ClusterHTTPClient(HTTPClient):
 
         manager_host = get_target_manager()
         if manager_host:
-            self.host = manager_host
+            self.host = ipv6_url_compat(manager_host)
             return super(ClusterHTTPClient, self).do_request(*args, **kwargs)
 
         # First try with the main manager ip given when creating the profile
         # with `cfy profiles use`
-        self.host = self._profile.manager_ip
+        self.host = ipv6_url_compat(self._profile.manager_ip)
         response = self._try_do_request(*args, **kwargs)
         if response is not _TRY_NEXT_NODE:
             return response
@@ -611,9 +612,9 @@ class ClusterHTTPClient(HTTPClient):
         return _TRY_NEXT_NODE
 
     def _use_node(self, node):
-        if node['host_ip'] == self.host:
+        if ipv6_url_compat(node['host_ip']) == self.host:
             return
-        self.host = node['host_ip']
+        self.host = ipv6_url_compat(node['host_ip'])
         for attr in ['rest_port', 'rest_protocol', 'trust_all', 'cert']:
             new_value = node.get(attr)
             if new_value:
