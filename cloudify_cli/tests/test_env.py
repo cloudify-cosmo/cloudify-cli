@@ -711,51 +711,6 @@ class WaitForExecutionTests(CliCommandTest):
         # prepare mock time.time() calls - return 0, 1, 2, 3...
         self.time.time.side_effect = count(0)
 
-    def test_wait_for_log_after_execution_finishes(self):
-        """wait_for_execution polls logs once, after execution status
-        is terminated
-        """
-
-        # prepare mock executions.get() calls - first return a status='started'
-        # then continue returning status='terminated'
-        executions = chain(
-            [MagicMock(status=Execution.STARTED)],
-            repeat(MagicMock(status=Execution.TERMINATED))
-        )
-
-        # prepare mock events.list() calls - first return empty,
-        # and only then return a 'workflow_succeeded' event
-        events = chain(
-            [
-                MockListResponse([], 0),
-                MockListResponse([{
-                    'deployment_id': '<deployment_id>',
-                    'execution_id': '<execution_id>',
-                    'node_name': '<node_name>',
-                    'operation': '<operation>',
-                    'workflow_id': '<workflow_id>',
-                    'node_instance_id': '<node_instance_id>',
-                    'source_id': None,
-                    'target_id': None,
-                    'message': '<message>',
-                    'error_causes': '<error_causes>',
-                    'event_type': 'workflow_succeeded',
-                }], 1)
-            ],
-            repeat(MockListResponse([], 0))
-        )
-
-        self.client.executions.get = MagicMock(side_effect=executions)
-        self.client.events.list = MagicMock(side_effect=events)
-
-        mock_execution = MagicMock(status=Execution.STARTED)
-        wait_for_execution(self.client, mock_execution, timeout=None)
-
-        calls_count = len(self.client.events.list.mock_calls)
-        self.assertEqual(calls_count, 2, """wait_for_execution didnt poll
-            events once after execution terminated (expected 2
-            call, got %d)""" % calls_count)
-
     def test_wait_for_execution_after_log_succeeded(self):
         """wait_for_execution continues polling the execution status,
         even after it received a "workflow succeeded" log
