@@ -38,7 +38,7 @@ import requests
 from .logger import get_logger, get_events_logger
 from .exceptions import CloudifyCliError, CloudifyTimeoutError
 from .constants import SUPPORTED_ARCHIVE_TYPES, DEFAULT_TIMEOUT
-from .execution_events_fetcher import ExecutionEventsFetcher, EventsWatcher
+from .execution_events_fetcher import ExecutionEventsFetcher
 
 from cloudify._compat import urlparse
 from cloudify.models_states import BlueprintUploadState
@@ -444,7 +444,7 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
     # Poll for execution status and execution logs, until execution ends
     # and we receive an event of type in WORKFLOW_END_TYPES
     upload_ended = False
-    events_watcher = EventsWatcher(get_events_logger(None))
+    events_handler = get_events_logger(None)
 
     # Poll for blueprint upload status, until the upload ends
     while True:
@@ -459,9 +459,9 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
                 blueprint['state'] in BlueprintUploadState.END_STATES
 
         events_fetcher.fetch_and_process_events(
-            events_handler=events_watcher, timeout=timeout)
+            events_handler=events_handler, timeout=timeout)
 
-        if upload_ended and events_watcher.end_logs_received > 0:
+        if upload_ended:
             break
 
         time.sleep(WAIT_FOR_BLUEPRINT_UPLOAD_SLEEP_INTERVAL)
