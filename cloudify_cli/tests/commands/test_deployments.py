@@ -51,7 +51,6 @@ from .mocks import MockListResponse
 from .test_base import CliCommandTest
 from .constants import (BLUEPRINTS_DIR,
                         SAMPLE_BLUEPRINT_PATH,
-                        SAMPLE_ARCHIVE_PATH,
                         SAMPLE_INPUTS_PATH,
                         UPDATED_BLUEPRINT_ID)
 
@@ -75,8 +74,7 @@ class DeploymentUpdatesTest(CliCommandTest):
 
     def _upload_update_blueprint(self):
         self.invoke('cfy blueprints upload -b {0} {1}'
-                    .format(UPDATED_BLUEPRINT_ID, SAMPLE_BLUEPRINT_PATH)
-        )
+                    .format(UPDATED_BLUEPRINT_ID, SAMPLE_BLUEPRINT_PATH))
 
     def setUp(self):
         super(DeploymentUpdatesTest, self).setUp()

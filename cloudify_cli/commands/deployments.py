@@ -15,10 +15,8 @@
 ############
 
 import os
-import sys
 import uuid
 import json
-import shutil
 from datetime import datetime
 
 import click
@@ -35,7 +33,6 @@ from cloudify_rest_client.exceptions import (
 )
 from cloudify.utils import parse_utc_datetime
 
-from . import blueprints
 from ..local import load_env
 from ..table import (
     print_data,
@@ -47,7 +44,6 @@ from ..cli import cfy, helptexts
 from ..logger import get_events_logger, get_global_json_output, output
 from .. import env, execution_events_fetcher, utils
 from ..constants import DEFAULT_BLUEPRINT_PATH, DELETE_DEP
-from ..blueprint import get_blueprint_path_and_id
 from ..exceptions import (CloudifyCliError,
                           SuppressedCloudifyCliError,
                           ExecutionTimeoutError)
