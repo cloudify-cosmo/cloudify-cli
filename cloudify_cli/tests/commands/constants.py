@@ -47,3 +47,4 @@ SAMPLE_CUSTOM_NAME_ARCHIVE = os.path.join(
     'helloworld_custom_name.zip'
 )
 TEST_LABELS = 'label_key:label_value'
+UPDATED_BLUEPRINT_ID = 'updated'

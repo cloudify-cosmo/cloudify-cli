@@ -17,7 +17,6 @@
 import os
 import uuid
 import json
-import shutil
 from datetime import datetime
 
 import click
@@ -34,7 +33,6 @@ from cloudify_rest_client.exceptions import (
 )
 from cloudify.utils import parse_utc_datetime
 
-from . import blueprints
 from ..local import load_env
 from ..table import (
     print_data,
@@ -46,7 +44,6 @@ from ..cli import cfy, helptexts
 from ..logger import get_events_logger, get_global_json_output, output
 from .. import env, execution_events_fetcher, utils
 from ..constants import DEFAULT_BLUEPRINT_PATH, DELETE_DEP
-from ..blueprint import get_blueprint_path_and_id
 from ..exceptions import (CloudifyCliError,
                           SuppressedCloudifyCliError,
                           ExecutionTimeoutError)
@@ -342,8 +339,8 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
 
 @cfy.command(name='update', short_help='Update a deployment [manager only]')
 @cfy.argument('deployment-id')
-@cfy.options.blueprint_path(extra_message=' [DEPRECATED]')
-@cfy.options.blueprint_filename(' [DEPRECATED]')
+@cfy.options.blueprint_path(extra_message=' [UNSUPPORTED]')
+@cfy.options.blueprint_filename(' [UNSUPPORTED]')
 @cfy.options.blueprint_id()
 @cfy.options.inputs
 @cfy.options.reinstall_list
@@ -408,6 +405,12 @@ def manager_update(ctx,
 
     `DEPLOYMENT_ID` is the deployment's id to update.
     """
+    if blueprint_path:
+        raise CloudifyCliError(
+            'Passing a path to blueprint for deployment update is no longer '
+            'supported.  Use -b, --blueprint-id option instead to pass an ID '
+            'of a blueprint that is already in the system, e.g. '
+            '`cfy deployments update -b UPDATED_BLUEPRINT_ID DEPLOYMENT_ID`.')
     if not any([blueprint_id, blueprint_path, inputs]):
         raise CloudifyCliError(
             'Must supply either a blueprint (by id of an existing blueprint, '
@@ -421,32 +424,7 @@ def manager_update(ctx,
             'a blueprint archive'
         )
 
-    if blueprint_path:
-        logger.warning(
-            'DEPRECATED: passing a path to blueprint for deployment update '
-            'is deprecated, and it is recommended instead to pass an id of '
-            'a blueprint that is already in the system. Note that '
-            'the blueprint passed will be added to the system and '
-            'then deployment update will start.'
-        )
-        processed_blueprint_path, blueprint_id = get_blueprint_path_and_id(
-            blueprint_path, blueprint_filename, blueprint_id)
-        try:
-            ctx.invoke(blueprints.upload,
-                       blueprint_path=processed_blueprint_path,
-                       blueprint_id=blueprint_id,
-                       blueprint_filename=blueprint_filename,
-                       validate=validate,
-                       visibility=visibility,
-                       tenant_name=tenant_name)
-        finally:
-            # Every situation other than the user providing a path of a local
-            # yaml means a temp folder will be created that should be later
-            # removed.
-            if processed_blueprint_path != blueprint_path:
-                shutil.rmtree(os.path.dirname(os.path.dirname(
-                    processed_blueprint_path)))
-    elif tenant_name:
+    if tenant_name:
         logger.info('Explicitly using tenant `{0}`'.format(tenant_name))
 
     msg = 'Updating deployment {0}'.format(deployment_id)
