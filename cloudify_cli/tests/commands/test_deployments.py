@@ -52,7 +52,8 @@ from .test_base import CliCommandTest
 from .constants import (BLUEPRINTS_DIR,
                         SAMPLE_BLUEPRINT_PATH,
                         SAMPLE_ARCHIVE_PATH,
-                        SAMPLE_INPUTS_PATH)
+                        SAMPLE_INPUTS_PATH,
+                        UPDATED_BLUEPRINT_ID)
 
 
 class DeploymentUpdatesTest(CliCommandTest):
@@ -71,6 +72,11 @@ class DeploymentUpdatesTest(CliCommandTest):
         )
         self.addCleanup(patcher.stop)
         patcher.start()
+
+    def _upload_update_blueprint(self):
+        self.invoke('cfy blueprints upload -b {0} {1}'
+                    .format(UPDATED_BLUEPRINT_ID, SAMPLE_BLUEPRINT_PATH)
+        )
 
     def setUp(self):
         super(DeploymentUpdatesTest, self).setUp()
@@ -201,9 +207,10 @@ class DeploymentUpdatesTest(CliCommandTest):
         self.assertEqual(parsed['new_inputs'], {'inp1': new_value})
 
     def test_deployment_update_successful(self):
+        self._upload_update_blueprint()
         outcome = self.invoke(
-            'cfy deployments update -p {0} '
-            'my_deployment'.format(SAMPLE_BLUEPRINT_PATH))
+            'cfy deployments update -b {0} my_deployment'
+            .format(UPDATED_BLUEPRINT_ID))
         self.assertIn('Updating deployment my_deployment', outcome.logs)
         self.assertIn('Finished executing workflow', outcome.logs)
         self.assertIn(
@@ -211,10 +218,10 @@ class DeploymentUpdatesTest(CliCommandTest):
 
     def test_deployment_update_failure(self):
         self._mock_wait_for_executions(True)
-
+        self._upload_update_blueprint()
         outcome = self.invoke(
-            'cfy deployments update -p {0} my_deployment'
-            .format(SAMPLE_BLUEPRINT_PATH),
+            'cfy deployments update -b {0} my_deployment'
+            .format(UPDATED_BLUEPRINT_ID),
             err_str_segment='',
             exception=exceptions.SuppressedCloudifyCliError)
 
@@ -226,86 +233,95 @@ class DeploymentUpdatesTest(CliCommandTest):
             'Failed updating deployment my_deployment', logs[-1])
 
     def test_deployment_update_json_parameter(self):
+        self._upload_update_blueprint()
         with warnings.catch_warnings(record=True) as warns:
             self.invoke(
-                'cfy deployments update -p '
-                '{0} my_deployment --json-output'
-                .format(SAMPLE_BLUEPRINT_PATH))
+                'cfy deployments update my_deployment '
+                '-b {0} --json-output'
+                .format(UPDATED_BLUEPRINT_ID))
         # catch_warnings sometimes gets the same thing more than once,
         # depending on how are the tests run. I don't know why.
         self.assertTrue(warns)
         self.assertIn('use the global', str(warns[0]))
 
     def test_deployment_update_include_logs_parameter(self):
+        self._upload_update_blueprint()
         self.invoke(
-            'cfy deployments update -p '
-            '{0} my_deployment --include-logs'
-            .format(SAMPLE_BLUEPRINT_PATH))
+            'cfy deployments update my_deployment '
+            '-b {0} --include-logs'
+            .format(UPDATED_BLUEPRINT_ID))
 
     def test_deployment_update_skip_install_flag(self):
+        self._upload_update_blueprint()
         self.invoke(
-            'cfy deployments update -p '
-            '{0} my_deployment --skip-install'
-            .format(SAMPLE_BLUEPRINT_PATH))
+            'cfy deployments update my_deployment '
+            '-b {0}  --skip-install'
+            .format(UPDATED_BLUEPRINT_ID))
 
     def test_deployment_update_skip_uninstall_flag(self):
+        self._upload_update_blueprint()
         self.invoke(
-            'cfy deployments update -p '
-            '{0} my_deployment --skip-uninstall'
-            .format(SAMPLE_BLUEPRINT_PATH))
+            'cfy deployments update my_deployment '
+            '-b {0} --skip-uninstall'
+            .format(UPDATED_BLUEPRINT_ID))
 
     def test_deployment_update_force_flag(self):
         self.invoke(
-            'cfy deployments update -p '
-            '{0} my_deployment --force'
-            .format(SAMPLE_BLUEPRINT_PATH))
+            'cfy deployments update my_deployment '
+            '-b {0} --force'
+            .format(UPDATED_BLUEPRINT_ID))
 
     def test_deployment_update_override_workflow_parameter(self):
+        self._upload_update_blueprint()
         self.invoke(
-            'cfy deployments update -p '
-            '{0} my_deployment -w override-wf'
-            .format(SAMPLE_BLUEPRINT_PATH))
+            'cfy deployments update my_deployment '
+            '-b {0}  -w override-wf'
+            .format(UPDATED_BLUEPRINT_ID))
 
-    def test_deployment_update_archive_location_parameter(self):
+    def test_deployment_update_blueprint_id_parameter(self):
+        self._upload_update_blueprint()
         self.invoke(
-            'cfy deployments update -p {0} my_deployment'
-            .format(SAMPLE_ARCHIVE_PATH))
+            'cfy deployments update -b {0} my_deployment'
+            .format(UPDATED_BLUEPRINT_ID))
 
-    def test_dep_update_archive_loc_and_bp_path_parameters_exclusion(self):
+    def test_dep_update_blueprint_id_and_bp_path_parameters_exclusion(self):
+        self._upload_update_blueprint()
         self.invoke(
-            'cfy deployments update -p '
-            '{0} -n {1}/helloworld/'
-            'blueprint2.yaml my_deployment'
-            .format(SAMPLE_BLUEPRINT_PATH, BLUEPRINTS_DIR),
+            'cfy deployments update my_deployment '
+            '-b {0} -n {1}/helloworld/blueprint2.yaml'
+            .format(UPDATED_BLUEPRINT_ID, BLUEPRINTS_DIR),
             err_str_segment='param should be passed only when updating'
                             ' from an archive'
         )
 
     def test_deployment_update_blueprint_filename_parameter(self):
+        self._upload_update_blueprint()
         self.invoke(
-            'cfy deployments update -p '
-            '{0} -n blueprint.yaml my_deployment'
-            .format(SAMPLE_ARCHIVE_PATH))
+            'cfy deployments update my_deployment '
+            '-b {0} -n blueprint.yaml '
+            .format(UPDATED_BLUEPRINT_ID))
 
     def test_deployment_update_inputs_parameter(self):
+        self._upload_update_blueprint()
         self.invoke(
-            'cfy deployments update -p '
-            '{0} -i {1} my_deployment'
-            .format(SAMPLE_ARCHIVE_PATH, SAMPLE_INPUTS_PATH))
+            'cfy deployments update my_deployment '
+            '-b {0} -i {1} '
+            .format(UPDATED_BLUEPRINT_ID, SAMPLE_INPUTS_PATH))
 
     def test_deployment_update_multiple_inputs_parameter(self):
+        self._upload_update_blueprint()
         self.invoke(
-            'cfy deployments update -p '
-            '{0} -i {1} -i {1} my_deployment'
-            .format(SAMPLE_ARCHIVE_PATH, SAMPLE_INPUTS_PATH))
+            'cfy deployments update my_deployment '
+            '-b {0} -i {1} -i {1} '
+            .format(UPDATED_BLUEPRINT_ID, SAMPLE_INPUTS_PATH))
 
     def test_deployment_update_no_deployment_id_parameter(self):
+        self._upload_update_blueprint()
         outcome = self.invoke(
-            'cfy deployments update -p '
-            '{0}'.format(SAMPLE_ARCHIVE_PATH),
+            'cfy deployments update -b '
+            '{0}'.format(UPDATED_BLUEPRINT_ID),
             err_str_segment='2',  # Exit code
             exception=SystemExit)
-
         self.assertIn('missing argument', outcome.output.lower())
         self.assertIn('DEPLOYMENT_ID', outcome.output)
 
@@ -318,10 +334,11 @@ class DeploymentUpdatesTest(CliCommandTest):
             exception=CloudifyCliError)
 
     def test_deployment_update_inputs_correct(self):
+        self._upload_update_blueprint()
         self.invoke(
-            'cfy deployments update -p '
-            '{0} -i {1} my_deployment --auto-correct-types'
-            .format(SAMPLE_ARCHIVE_PATH, SAMPLE_INPUTS_PATH))
+            'cfy deployments update my_deployment '
+            '-b {0} -i {1} --auto-correct-types'
+            .format(UPDATED_BLUEPRINT_ID, SAMPLE_INPUTS_PATH))
 
 
 class DeploymentsTest(CliCommandTest):
