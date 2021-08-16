@@ -6,7 +6,11 @@ spec:
     image: circleci/python:3.6
     resources:
       requests:
+        cpu: 0.3
+        memory: 512Mi
+      limits:
         cpu: 1
+        memory: 512Mi
     command:
     - cat
     tty: true
@@ -21,17 +25,28 @@ spec:
     securityContext:
       runAsUser: 0
       privileged: true
-  - name: py27
-    image: circleci/python:2.7
     resources:
       requests:
-        cpu: 0.6
+        cpu: 0.4
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 512Mi
+  - name: py27
+    image: circleci/python:2.7
     command:
     - cat
     tty: true
     securityContext:
       runAsUser: 0
       privileged: true
+    resources:
+      requests:
+        cpu: 0.3
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 512Mi
   - name: debbuild
     image: ubuntu:18.04
     command:
@@ -40,6 +55,13 @@ spec:
     securityContext:
       runAsUser: 0
       privileged: true
+    resources:
+      requests:
+        cpu: 0.4
+        memory: 512Mi
+      limits:
+        cpu: 1
+        memory: 512Mi
   - name: awscli
     image: amazon/aws-cli
     command:
@@ -52,4 +74,4 @@ spec:
   imagePullSecrets:
     - name: dockerhub
   nodeSelector:
-    instance-type: spot-xlarge
+    instance-type: spot
