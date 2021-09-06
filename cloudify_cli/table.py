@@ -144,7 +144,7 @@ def print_details(data, title):
     """Utility for printing structured key/value pairs.
 
     Note that this is not for printing the standard output table, but
-    rather for auxilliary data.
+    rather for auxiliary data.
     """
     if get_global_json_output():
         output(json.dumps(data, cls=CloudifyJSONEncoder))
