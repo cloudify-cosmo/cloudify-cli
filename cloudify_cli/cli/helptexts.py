@@ -554,3 +554,8 @@ DISPLAY_NAME = 'The display name of the deployment. If not specified, ' \
 SEARCH_NAME = 'Search deployments by their display name. The returned list ' \
               'will include only deployments that contain the given search ' \
               'pattern'
+
+AUDIT_CREATOR_NAME = 'Name of a user who introduced changes recorded in the ' \
+                     'audit log.'
+AUDIT_EXECUTION_ID = 'ID of an execution which introduced changes recorded ' \
+                     'in the audit log.'

@@ -62,6 +62,8 @@ def generate(cols, data, defaults=None, labels=None):
                 row_data[column] = ','.join(row_data[column])
             elif isinstance(row_data[column], bool):
                 pass  # Taking care of False (otherwise would be changed to '')
+            elif isinstance(row_data[column], int):
+                pass  # Taking care of zero (otherwise would be changed to '')
             elif not row_data[column]:
                 # if it's empty list, don't print []
                 row_data[column] = ''

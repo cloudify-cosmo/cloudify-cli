@@ -48,6 +48,7 @@ from .commands import deployments
 from .commands import certificates
 from .commands import node_instances
 from .commands import maintenance_mode
+from .commands import audit_log
 
 
 @cfy.group(name='cfy')
@@ -109,6 +110,7 @@ def _register_commands():
     _cfy.add_command(sites.sites)
     _cfy.add_command(certificates.certificates)
     _cfy.add_command(apply.apply)
+    _cfy.add_command(audit_log.auditlogs)
 
     deployments.deployments.add_command(deployments.manager_create)
     deployments.deployments.add_command(deployments.manager_delete)
