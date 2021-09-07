@@ -81,6 +81,7 @@ class UninstallTest(CliCommandTest):
 
         self.invoke('cfy uninstall did', context='manager')
         mock_blueprints_delete.assert_called_with(blueprint_id=u'bid',
+                                                  force=False,
                                                   tenant_name=None)
 
     @patch('cloudify_cli.commands.blueprints.delete')
