@@ -110,7 +110,7 @@ def _register_commands():
     _cfy.add_command(sites.sites)
     _cfy.add_command(certificates.certificates)
     _cfy.add_command(apply.apply)
-    _cfy.add_command(audit_log.auditlogs)
+    _cfy.add_command(audit_log.auditlog)
 
     deployments.deployments.add_command(deployments.manager_create)
     deployments.deployments.add_command(deployments.manager_delete)

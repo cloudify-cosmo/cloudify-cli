@@ -7,15 +7,15 @@ AUDITLOG_COLUMNS = ['ref_table', 'ref_id', 'operation', 'creator_name',
                     'execution_id', 'created_at']
 
 
-@cfy.group(name='auditlogs')
+@cfy.group(name='auditlog')
 @cfy.assert_manager_active()
-def auditlogs():
+def auditlog():
     """Manage the audit log"""
     pass
 
 
-@auditlogs.command(name='list',
-                   short_help='List audit log entries')
+@auditlog.command(name='list',
+                  short_help='List audit log entries')
 @click.option('-c', '--creator-name',
               help=helptexts.AUDIT_CREATOR_NAME)
 @click.option('-e', '--execution-id',
@@ -27,15 +27,15 @@ def auditlogs():
 @cfy.options.common_options
 @cfy.pass_logger
 @cfy.pass_client()
-def get(creator_name,
-        execution_id,
-        sort_by,
-        descending,
-        pagination_offset,
-        pagination_size,
-        logger,
-        client,
-        ):
+def list_logs(creator_name,
+              execution_id,
+              sort_by,
+              descending,
+              pagination_offset,
+              pagination_size,
+              logger,
+              client,
+              ):
     """List audit_log entries"""
     logger.info('Listing audit log entries...')
     logs = client.auditlog.list(
@@ -44,8 +44,8 @@ def get(creator_name,
         order_by=sort_by,
         desc=descending,
         offset=pagination_offset,
-        size=pagination_size
+        size=pagination_size,
     )
     print_data(AUDITLOG_COLUMNS, logs, 'AuditLogs:')
-    logger.info('Showing %s of %s nodes',
+    logger.info('Showing %d of %d audit log entries',
                 len(logs), logs.metadata.pagination.total)
