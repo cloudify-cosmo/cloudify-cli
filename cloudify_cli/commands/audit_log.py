@@ -34,7 +34,7 @@ def get(creator_name,
         pagination_offset,
         pagination_size,
         logger,
-        client
+        client,
         ):
     """List audit_log entries"""
     logger.info('Listing audit logs...')
