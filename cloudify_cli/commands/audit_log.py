@@ -37,7 +37,7 @@ def get(creator_name,
         client,
         ):
     """List audit_log entries"""
-    logger.info('Listing audit logs...')
+    logger.info('Listing audit log entries...')
     logs = client.auditlog.list(
         creator_name=creator_name,
         execution_id=execution_id,
