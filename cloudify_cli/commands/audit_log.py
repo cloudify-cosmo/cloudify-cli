@@ -47,5 +47,5 @@ def get(creator_name,
         size=pagination_size
     )
     print_data(AUDITLOG_COLUMNS, logs, 'AuditLogs:')
-    logger.info('Showing {0} of {1} nodes'
-                .format(len(logs), logs.metadata.pagination.total))
+    logger.info('Showing %s of %s nodes',
+                len(logs), logs.metadata.pagination.total)
