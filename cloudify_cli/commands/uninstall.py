@@ -86,6 +86,7 @@ def manager(ctx,
     ctx.invoke(
         blueprints.delete,
         blueprint_id=blueprint_id,
+        force=force,
         tenant_name=tenant_name)
 
 
