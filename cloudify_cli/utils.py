@@ -34,6 +34,7 @@ from backports.shutil_get_terminal_size import get_terminal_size
 
 import yaml
 import requests
+from retrying import retry
 
 from .logger import get_logger, get_events_logger
 from .exceptions import CloudifyCliError, CloudifyTimeoutError
@@ -425,7 +426,21 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
                     blueprint['error_traceback'])
             raise CloudifyCliError(error_msg)
 
-    blueprint = client.blueprints.get(blueprint_id)
+    @retry(stop_max_attempt_number=10, wait_incrementing_start=0)
+    def _get_blueprint_and_upload_execution_id():
+        bp = client.blueprints.get(blueprint_id)
+        # upload_execution['id'] might not be available at first, hence retry
+        return bp, bp.upload_execution['id']
+
+    try:
+        blueprint, execution_id = _get_blueprint_and_upload_execution_id()
+    except KeyError:
+        raise RuntimeError(
+            'Failed to get upload_blueprint workflow execution for blueprint '
+            '{0}.  That may indicate a problem with blueprint upload.  Verify '
+            'blueprint\'s state by running command `cfy blueprints get {0}`.'
+            .format(blueprint_id)
+        )
 
     # if blueprint upload already ended - return without waiting
     if blueprint['state'] in BlueprintUploadState.END_STATES:
@@ -434,12 +449,8 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
 
     deadline = time.time() + DEFAULT_TIMEOUT
 
-    execution = [
-        ex for ex in client.executions.list(workflow_id='upload_blueprint')
-        if ex['parameters']['blueprint_id'] == blueprint_id
-    ][-1]   # is there are several matching executions, we want the latest
     events_fetcher = ExecutionEventsFetcher(
-        client, execution_id=execution.id, include_logs=True)
+        client, execution_id=execution_id, include_logs=True)
 
     # Poll for execution status and execution logs, until execution ends
     # and we receive an event of type in WORKFLOW_END_TYPES
