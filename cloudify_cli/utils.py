@@ -426,7 +426,7 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
                     blueprint['error_traceback'])
             raise CloudifyCliError(error_msg)
 
-    @retry(stop_max_attempt_number=10, wait_incrementing_start=0)
+    @retry(stop_max_attempt_number=5, wait_fixed=1000)
     def _get_blueprint_and_upload_execution_id():
         bp = client.blueprints.get(blueprint_id)
         # upload_execution['id'] might not be available at first, hence retry
