@@ -34,6 +34,7 @@ from backports.shutil_get_terminal_size import get_terminal_size
 
 import yaml
 import requests
+from retrying import retry
 
 from .logger import get_logger, get_events_logger
 from .exceptions import CloudifyCliError, CloudifyTimeoutError
@@ -425,6 +426,14 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
                     blueprint['error_traceback'])
             raise CloudifyCliError(error_msg)
 
+    @retry(stop_max_attempt_number=10, wait_incrementing_start=0)
+    def _get_execution():
+        return [
+            ex for ex in client.executions.list(workflow_id='upload_blueprint',
+                                                sort={'created_at': 'desc'}, )
+            if ex['parameters']['blueprint_id'] == blueprint_id
+        ][-1]  # is there are several matching executions, we want the latest
+
     blueprint = client.blueprints.get(blueprint_id)
 
     # if blueprint upload already ended - return without waiting
@@ -434,10 +443,7 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
 
     deadline = time.time() + DEFAULT_TIMEOUT
 
-    execution = [
-        ex for ex in client.executions.list(workflow_id='upload_blueprint')
-        if ex['parameters']['blueprint_id'] == blueprint_id
-    ][-1]   # is there are several matching executions, we want the latest
+    execution = _get_execution()
     events_fetcher = ExecutionEventsFetcher(
         client, execution_id=execution.id, include_logs=True)
 
