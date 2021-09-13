@@ -16,7 +16,7 @@ from setuptools import setup
 
 setup(
     name='cloudify',
-    version='5.2.6.dev1',
+    version='5.2.6',
     author='Cloudify',
     author_email='cosmo-admin@cloudify.co',
     packages=['cloudify_cli',
@@ -45,7 +45,7 @@ setup(
         'colorama==0.4.4',
         'requests>=2.7.0,<3.0.0',
         'click_didyoumean==0.0.3',
-        'cloudify-common[dispatcher]==5.2.6.dev1',
+        'cloudify-common[dispatcher]==5.2.6',
         'backports.shutil_get_terminal_size==1.0.0',
         'ipaddress==1.0.23',
         'setuptools<=40.7.3',
