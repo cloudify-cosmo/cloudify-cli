@@ -1,7 +1,9 @@
 import click
 
 from ..cli import cfy, helptexts
+from ..exceptions import CloudifyCliError
 from ..table import print_data
+from ..utils import before_to_utc_timestamp
 
 AUDITLOG_COLUMNS = ['ref_table', 'ref_id', 'operation', 'creator_name',
                     'execution_id', 'created_at']
@@ -49,3 +51,37 @@ def list_logs(creator_name,
     print_data(AUDITLOG_COLUMNS, logs, 'AuditLogs:')
     logger.info('Showing %d of %d audit log entries',
                 len(logs), logs.metadata.pagination.total)
+
+
+@auditlog.command(name='truncate',
+                  short_help='Truncate audit log')
+@click.option('-b', '--before',
+              required=True,
+              help=helptexts.AUDIT_TRUNCATE_BEFORE)
+@click.option('-c', '--creator-name',
+              help=helptexts.AUDIT_CREATOR_NAME)
+@click.option('-e', '--execution-id',
+              help=helptexts.AUDIT_EXECUTION_ID)
+@cfy.pass_logger
+@cfy.pass_client()
+def truncate_logs(before,
+                  creator_name,
+                  execution_id,
+                  logger,
+                  client
+                  ):
+    """Truncate audit_log entries"""
+    before_timestamp = before_to_utc_timestamp(before)
+    if before_timestamp is None:
+        raise CloudifyCliError('Failed to parse timestamp: {0}'
+                               .format(before))
+
+    logger.info("Truncating audit log entries...")
+    params = {'before': before_timestamp.isoformat()}
+    if creator_name:
+        params.update({'creator_name': creator_name})
+    if execution_id:
+        params.update({'execution_id': execution_id})
+    result = client.auditlog.post('truncate', **params)
+    logger.info('%d audit log entries have been truncated',
+                result.processed)
