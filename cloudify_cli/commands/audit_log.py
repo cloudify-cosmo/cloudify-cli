@@ -82,6 +82,5 @@ def truncate_logs(before,
         params.update({'creator_name': creator_name})
     if execution_id:
         params.update({'execution_id': execution_id})
-    result = client.auditlog.post('truncate', **params)
-    logger.info('%d audit log entries have been truncated',
-                result.processed)
+    result = client.auditlog.delete(**params)
+    logger.info('%d audit log entries have been truncated', result.deleted)
