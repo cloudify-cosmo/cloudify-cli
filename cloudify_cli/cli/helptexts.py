@@ -559,3 +559,10 @@ AUDIT_CREATOR_NAME = 'Name of a user who introduced changes recorded in the ' \
                      'audit log.'
 AUDIT_EXECUTION_ID = 'ID of an execution which introduced changes recorded ' \
                      'in the audit log.'
+AUDIT_TRUNCATE_BEFORE = 'Truncate audit logs which were stored this long ' \
+                        'ago or earlier.  Can be specified either as the ' \
+                        'difference counted from the current time (e.g. ' \
+                        '6.5h for 6:30 hours ago, 2d - 2 days ago, 7w - 7 '\
+                        'weeks ago), or an ordinary UTC timestamp ' \
+                        '(2021-08-18, 2021-08-18T14:25:36, 2021-08-18 '\
+                        '14:25:36, 2021-08-18 14:25:36.99, @1629296736)'
