@@ -124,12 +124,6 @@ pipeline {
             sh script: "mkdir -p ${env.WORKSPACE}/project && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/project", label: "copying repo to seperate workspace"
             container('debbuild') {
               sh script: 'mkdir /tmp/result', label: "create result folder"
-              echo 'install python setup tools'
-              sh'''
-                set -ex
-                apt-get update
-                apt-get install python3 python3-setuptools python3-distutils -y
-              '''
               sh script: "/bin/bash ${env.WORKSPACE}/project/packaging/debian/build.sh", label: "build the deb package"
               sh script: """
                 set -ex
