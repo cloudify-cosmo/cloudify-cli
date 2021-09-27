@@ -14,7 +14,7 @@
 # limitations under the License.
 ############
 
-from . import env
+from . import env, PY2
 from .cli import cfy
 from .commands import ssh
 from .commands import init
@@ -48,7 +48,10 @@ from .commands import deployments
 from .commands import certificates
 from .commands import node_instances
 from .commands import maintenance_mode
-from .commands import audit_log
+if PY2:
+    from .commands import audit_log
+else:
+    from .async_commands import audit_log
 
 
 @cfy.group(name='cfy')

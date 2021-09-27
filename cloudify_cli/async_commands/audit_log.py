@@ -1,7 +1,11 @@
+import asyncio
+import json
+
 import click
 
 from ..cli import cfy, helptexts
 from ..exceptions import CloudifyCliError
+from ..logger import get_global_json_output
 from ..table import print_data
 from ..utils import before_to_utc_timestamp
 
@@ -49,9 +53,18 @@ def list_logs(creator_name,
               ):
     since_timestamp = before_to_utc_timestamp(since) if since else None
     if follow:
-        raise CloudifyCliError('Streaming not available older Python versions.'
-                               '  Consider upgrading your installation to one '
-                               'based on Python>=3.6.')
+        loop = asyncio.get_event_loop()
+        if not loop:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        loop.run_until_complete(
+            _stream_logs(creator_name,
+                         execution_id,
+                         since_timestamp,
+                         timeout,
+                         logger,
+                         client))
+        loop.close()
     else:
         _list_logs(creator_name,
                    execution_id,
@@ -87,6 +100,46 @@ def _list_logs(creator_name,
     print_data(AUDITLOG_COLUMNS, logs, 'AuditLogs:')
     logger.info('Showing %d of %d audit log entries',
                 len(logs), logs.metadata.pagination.total)
+
+
+async def _stream_logs(creator_name,
+                       execution_id,
+                       since,
+                       timeout,
+                       logger,
+                       client):
+    if not hasattr(client.auditlog, 'stream'):
+        raise CloudifyCliError('Streaming endpoint client not available. '
+                               'Consider upgrading your installation to one '
+                               'based on Python>=3.6.')
+    logger.info('Streaming audit log entries...')
+    response = await client.auditlog.stream(timeout=timeout,
+                                            creator_name=creator_name,
+                                            execution_id=execution_id,
+                                            since=since)
+    async for data in response.content:
+        for audit_log in _streamed_audit_log(data):
+            if get_global_json_output():
+                print(audit_log)
+            else:
+                print(_format_audit_log(audit_log))
+
+
+def _streamed_audit_log(data):
+    line = data.strip().decode(errors='ignore')
+    if line:
+        yield json.loads(line)
+
+
+def _format_audit_log(data):
+    result = f"[{data['created_at']}]"
+    if 'creator_name' in data and data['creator_name']:
+        result = f"{result} user {data['creator_name']}"
+    if 'execution_id' in data and data['execution_id']:
+        result = f"{result} execution {data['execution_id']}"
+    result = f"{result} {data['operation'].upper()}D"
+    result = f"{result} {data['ref_table']} {data['ref_id']}"
+    return result
 
 
 @auditlog.command(name='truncate',
