@@ -162,8 +162,7 @@ def truncate_logs(before,
     """Truncate audit_log entries"""
     before_timestamp = before_to_utc_timestamp(before)
     if before_timestamp is None:
-        raise CloudifyCliError('Failed to parse timestamp: {0}'
-                               .format(before))
+        raise CloudifyCliError(f'Failed to parse timestamp: {before}')
 
     logger.info("Truncating audit log entries...")
     params = {'before': before_timestamp.isoformat()}
