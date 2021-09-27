@@ -14,7 +14,9 @@
 # limitations under the License.
 ############
 
-from . import env, PY2
+from cloudify._compat import PY2
+
+from . import env
 from .cli import cfy
 from .commands import ssh
 from .commands import init

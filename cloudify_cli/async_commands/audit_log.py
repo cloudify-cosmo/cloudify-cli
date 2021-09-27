@@ -54,9 +54,6 @@ def list_logs(creator_name,
     since_timestamp = before_to_utc_timestamp(since) if since else None
     if follow:
         loop = asyncio.get_event_loop()
-        if not loop:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
         loop.run_until_complete(
             _stream_logs(creator_name,
                          execution_id,
