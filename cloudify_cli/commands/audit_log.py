@@ -49,9 +49,7 @@ def list_logs(creator_name,
               ):
     since_timestamp = before_to_utc_timestamp(since) if since else None
     if follow:
-        raise CloudifyCliError('Streaming not available older Python versions.'
-                               '  Consider upgrading your installation to one '
-                               'based on Python>=3.6.')
+        raise CloudifyCliError('Streaming requires Python>=3.6.')
     else:
         _list_logs(creator_name,
                    execution_id,
