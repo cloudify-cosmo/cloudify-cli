@@ -57,7 +57,7 @@ pipeline {
                 echo 'Install and run flake8'
                 sh '''
                   pip install flake8 --user
-                  flake8 cloudify_cli
+                  flake8 --extend-exclude "async*" cloudify_cli
                 '''
               }
             }

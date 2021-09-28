@@ -1,9 +1,11 @@
 import click
 
+from cloudify._compat import PY2
+
 from ..cli import cfy, helptexts
 from ..exceptions import CloudifyCliError
 from ..table import print_data
-from ..utils import before_to_utc_timestamp
+from ..utils import to_utc_timestamp
 
 AUDITLOG_COLUMNS = ['ref_table', 'ref_id', 'operation', 'creator_name',
                     'execution_id', 'created_at']
@@ -22,6 +24,12 @@ def auditlog():
               help=helptexts.AUDIT_CREATOR_NAME)
 @click.option('-e', '--execution-id',
               help=helptexts.AUDIT_EXECUTION_ID)
+@click.option('-i', '--since',
+              help=helptexts.AUDIT_SINCE)
+@click.option('-f', '--follow',
+              help=helptexts.AUDIT_FOLLOW,
+              is_flag=True)
+@cfy.options.timeout(default=300)
 @cfy.options.sort_by()
 @cfy.options.descending
 @cfy.options.pagination_offset
@@ -31,6 +39,9 @@ def auditlog():
 @cfy.pass_client()
 def list_logs(creator_name,
               execution_id,
+              since,
+              follow,
+              timeout,
               sort_by,
               descending,
               pagination_offset,
@@ -38,11 +49,44 @@ def list_logs(creator_name,
               logger,
               client,
               ):
+    since_timestamp = to_utc_timestamp(since) if since else None
+    if follow:
+        if PY2:
+            raise CloudifyCliError('Streaming requires Python>=3.6.')
+        from ..async_commands.audit_log import stream_logs
+        stream_logs(creator_name,
+                    execution_id,
+                    since_timestamp,
+                    timeout,
+                    logger,
+                    client)
+    else:
+        _list_logs(creator_name,
+                   execution_id,
+                   since_timestamp,
+                   sort_by,
+                   descending,
+                   pagination_offset,
+                   pagination_size,
+                   logger,
+                   client)
+
+
+def _list_logs(creator_name,
+               execution_id,
+               since,
+               sort_by,
+               descending,
+               pagination_offset,
+               pagination_size,
+               logger,
+               client):
     """List audit_log entries"""
     logger.info('Listing audit log entries...')
     logs = client.auditlog.list(
         creator_name=creator_name,
         execution_id=execution_id,
+        since=since,
         order_by=sort_by,
         desc=descending,
         offset=pagination_offset,
@@ -71,7 +115,7 @@ def truncate_logs(before,
                   client
                   ):
     """Truncate audit_log entries"""
-    before_timestamp = before_to_utc_timestamp(before)
+    before_timestamp = to_utc_timestamp(before)
     if before_timestamp is None:
         raise CloudifyCliError('Failed to parse timestamp: {0}'
                                .format(before))

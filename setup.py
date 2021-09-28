@@ -12,17 +12,23 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
+import sys
+
 from setuptools import setup
+
+packages = ['cloudify_cli',
+            'cloudify_cli.cli',
+            'cloudify_cli.commands',
+            'cloudify_cli.config']
+if sys.version_info[:2] >= (3, 6):
+    packages += ['cloudify_cli.async_commands']
 
 setup(
     name='cloudify',
     version='6.3.0.dev1',
     author='Cloudify',
     author_email='cosmo-admin@cloudify.co',
-    packages=['cloudify_cli',
-              'cloudify_cli.cli',
-              'cloudify_cli.commands',
-              'cloudify_cli.config'],
+    packages=packages,
     package_data={
         'cloudify_cli': [
             'VERSION',
