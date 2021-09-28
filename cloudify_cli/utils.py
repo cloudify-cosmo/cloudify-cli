@@ -483,11 +483,11 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
     return blueprint
 
 
-def before_to_utc_timestamp(before_spec):
-    r = re.match(r'^([.\d]+)([hdw])$', before_spec, re.IGNORECASE)
+def to_utc_timestamp(spec):
+    r = re.match(r'^([.\d]+)([hdw])$', spec, re.IGNORECASE)
     if r:
-        # before specification e.g. 10.5h, 15d, 7w
-        count, unit = int(r.groups()[0]), r.groups()[1].lower()
+        # timestamp specification e.g. 10.5h, 15d, 7w
+        count, unit = float(r.groups()[0]), r.groups()[1].lower()
         if unit == 'h':
             delta = timedelta(hours=count)
         elif unit == 'd':
@@ -495,15 +495,15 @@ def before_to_utc_timestamp(before_spec):
         else:  # 'w'
             delta = timedelta(weeks=count)
         return datetime.utcnow() - delta
-    elif before_spec.startswith('@'):
+    elif spec.startswith('@'):
         try:
-            return datetime.utcfromtimestamp(int(before_spec[1:]))
+            return datetime.utcfromtimestamp(int(spec[1:]))
         except ValueError:
             return None
     else:
         for fmt in ['%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S.%f',
                     '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d']:
             try:
-                return datetime.strptime(before_spec, fmt)
+                return datetime.strptime(spec, fmt)
             except ValueError:
                 pass

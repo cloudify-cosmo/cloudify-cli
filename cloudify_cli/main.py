@@ -14,8 +14,6 @@
 # limitations under the License.
 ############
 
-from cloudify._compat import PY2
-
 from . import env
 from .cli import cfy
 from .commands import ssh
@@ -50,10 +48,7 @@ from .commands import deployments
 from .commands import certificates
 from .commands import node_instances
 from .commands import maintenance_mode
-if PY2:
-    from .commands import audit_log
-else:
-    from .async_commands import audit_log
+from .commands import audit_log
 
 
 @cfy.group(name='cfy')
