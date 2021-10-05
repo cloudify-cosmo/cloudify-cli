@@ -305,6 +305,7 @@ def manager_list(filter_id,
 
 
 @cfy.command(name='list', short_help='List blueprints')
+@cfy.options.local_common_options
 @cfy.pass_logger
 def local_list(logger):
     blueprints = local.list_blueprints()

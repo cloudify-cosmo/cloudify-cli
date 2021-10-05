@@ -69,7 +69,13 @@ def storage_dir(blueprint_id=None):
 
 def list_blueprints():
     blueprints = []
-    for bp_id in os.listdir(os.path.join(env.PROFILES_DIR, _ENV_NAME)):
+    try:
+        bp_names = os.listdir(os.path.join(env.PROFILES_DIR, _ENV_NAME))
+    except IOError as e:
+        if e.errno != 2:  # file not found
+            raise
+        bp_names = []
+    for bp_id in bp_names:
         bp_env = load_env(bp_id)
         blueprints.append({
             'id': bp_id,
