@@ -1776,6 +1776,16 @@ class Options(object):
             f = arg(f)
         return f
 
+    def local_common_options(self, f):
+        """A shorthand for applying commonly used arguments for local profiles.
+
+        Similar to common_options, but doesn't apply the options that are only
+        relevant to managers.
+        """
+        for arg in [self.json, self.verbose(), self.format, self.quiet()]:
+            f = arg(f)
+        return f
+
     def parse_comma_separated(self, ctx, param, value):
         """Callback for parsing multiple comma-separated arguments.
 
