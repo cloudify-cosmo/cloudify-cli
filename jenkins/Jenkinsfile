@@ -92,6 +92,7 @@ pipeline {
               """
               sh script:"""
                 cd ~/rpmbuild/SOURCES
+                yum update -y
                 yum install rpmdevtools -y
                 yum-builddep -y packaging/cloudify-cli.spec
 
