@@ -39,10 +39,11 @@ from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility)
 
-PLUGIN_COLUMNS = ['id', 'package_name', 'package_version', 'installed on',
-                  'distribution', 'distribution_release', 'uploaded_at',
-                  'visibility', 'tenant_name', 'created_by',
-                  'yaml_url_path']
+PLUGINS_BUNDLE_COLUMNS = ['id', 'package_name', 'package_version',
+                          'distribution', 'distribution_release']
+PLUGIN_COLUMNS = PLUGINS_BUNDLE_COLUMNS + \
+                 ['installed on', 'uploaded_at', 'visibility', 'tenant_name',
+                  'created_by', 'yaml_url_path']
 PLUGINS_UPDATE_COLUMNS = ['id', 'state', 'blueprint_id', 'temp_blueprint_id',
                           'execution_id', 'deployments_to_update',
                           'visibility', 'created_at', 'forced']
@@ -176,8 +177,7 @@ def upload_caravan(client, logger, path):
     logger.info("Bundle uploaded, {0} Plugins installed."
                 .format(len(plugins_)))
     if len(plugins_) > 0:
-        logger.info("The plugins' ids are:\n{0}\n".
-                    format('\n'.join([p.id for p in plugins_])))
+        print_data(PLUGINS_BUNDLE_COLUMNS, plugins_, 'Plugins:')
 
 
 @plugins.command(name='download',
