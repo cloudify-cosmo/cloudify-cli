@@ -1934,11 +1934,11 @@ class Options(object):
             help=helptexts.BLUEPRINT_FILENAME + extra_message)
 
     @staticmethod
-    def blueprint_icon_path():
+    def blueprint_icon_path(required=False):
         return click.option(
             '-i',
             '--icon-path',
-            required=False,
+            required=required,
             help=helptexts.BLUEPRINT_ICON_PATH)
 
     @staticmethod
