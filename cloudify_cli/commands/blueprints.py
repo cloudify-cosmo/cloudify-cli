@@ -89,7 +89,7 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.argument('blueprint-path')
 @cfy.options.blueprint_id(validate=True)
 @cfy.options.blueprint_filename()
-@cfy.options.plugin_icon_path()
+@cfy.options.blueprint_icon_path()
 @cfy.options.async_upload
 @cfy.options.labels
 @cfy.options.validate
