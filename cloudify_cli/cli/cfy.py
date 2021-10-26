@@ -1934,6 +1934,14 @@ class Options(object):
             help=helptexts.BLUEPRINT_FILENAME + extra_message)
 
     @staticmethod
+    def blueprint_icon_path():
+        return click.option(
+            '-i',
+            '--icon-path',
+            required=False,
+            help=helptexts.BLUEPRINT_ICON_PATH)
+
+    @staticmethod
     def workflow_id(default=None, required=False):
         return click.option(
             '-w',

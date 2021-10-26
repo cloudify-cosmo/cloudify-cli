@@ -15,6 +15,8 @@
 ############
 
 import os
+import tempfile
+from shutil import copy, copytree
 
 from cloudify._compat import urlparse
 
@@ -23,7 +25,11 @@ from .exceptions import CloudifyCliError
 from .constants import DEFAULT_BLUEPRINT_PATH
 
 
-def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH, download=False):
+ICON_FILENAME = 'icon.png'
+
+
+def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH, icon_path=None,
+        download=False):
     """Get a source and return a directory containing the blueprint
 
     The behavior based on then source argument content is:
@@ -43,6 +49,8 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH, download=False):
     :type source: str
     :param blueprint_filename: Path to blueprint (if source is an archive file)
     :type blueprint_filename: str
+    :param icon_path: Path to blueprint's icon file
+    :type icon_path: str
     :param download: Download blueprint file if source is URL/github repo
     :type download: bool
     :return: Path to file (if archive/blueprint file passsed) or url
@@ -54,11 +62,14 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH, download=False):
         if download:
             downloaded_file = utils.download_file(source)
             return _get_blueprint_file_from_archive(
-                downloaded_file, blueprint_filename)
+                downloaded_file, blueprint_filename, icon_path)
         return source
     elif os.path.isfile(source):
         if utils.is_archive(source):
-            return _get_blueprint_file_from_archive(source, blueprint_filename)
+            return _get_blueprint_file_from_archive(
+                source, blueprint_filename, icon_path)
+        elif icon_path:
+            return _get_blueprint_file_with_icon(source, icon_path)
         else:
             # Maybe check if yaml. If not, verified by dsl parser
             return source
@@ -67,7 +78,7 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH, download=False):
         if download:
             downloaded_file = utils.download_file(url)
             return _get_blueprint_file_from_archive(
-                downloaded_file, blueprint_filename)
+                downloaded_file, blueprint_filename, icon_path)
         return url
     else:
         raise CloudifyCliError(
@@ -75,13 +86,15 @@ def get(source, blueprint_filename=DEFAULT_BLUEPRINT_PATH, download=False):
             'or a GitHub `organization/repository[:tag/branch]`')
 
 
-def _get_blueprint_file_from_archive(archive, blueprint_filename):
+def _get_blueprint_file_from_archive(archive, blueprint_filename, icon_path):
     """Extract archive to temporary location and get path to blueprint file.
 
     :param archive: Path to archive file
     :type archive: str
     :param blueprint_filename: Path to blueprint file relative to archive
     :type blueprint_filename: str
+    :param icon_path: Absolute path to blueprint's icon
+    :type icon_path: str
     :return: Absolute path to blueprint file
     :rtype: str
 
@@ -97,7 +110,30 @@ def _get_blueprint_file_from_archive(archive, blueprint_filename):
             'Could not find `{0}`. Please provide the name of the main '
             'blueprint file by using the `-n/--blueprint-filename` flag'
             .format(blueprint_filename))
+    if icon_path:
+        icon_file = os.path.join(blueprint_directory, ICON_FILENAME)
+        copy(icon_path, icon_file)
+
     return blueprint_file
+
+
+def _get_blueprint_file_with_icon(blueprint_path, icon_path):
+    """Create a temporary directory with a blueprint file and its icon.
+
+    :param blueprint_path: Absolute path to the blueprint file
+    :type blueprint_path: str
+    :param icon_path: Absolute path to blueprint's icon
+    :type icon_path: str
+    :return: Absolute path to blueprint file
+    :rtype: str
+
+    """
+    source, blueprint_filename = os.path.split(blueprint_path)
+    blueprint_directory = os.path.join(tempfile.mkdtemp(),
+                                       blueprint_filename.rpartition('.')[0])
+    copytree(source, blueprint_directory)
+    copy(icon_path, os.path.join(blueprint_directory, ICON_FILENAME))
+    return os.path.join(blueprint_directory, blueprint_filename)
 
 
 def _map_to_github_url(source):

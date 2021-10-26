@@ -89,6 +89,7 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.argument('blueprint-path')
 @cfy.options.blueprint_id(validate=True)
 @cfy.options.blueprint_filename()
+@cfy.options.plugin_icon_path()
 @cfy.options.async_upload
 @cfy.options.labels
 @cfy.options.validate
@@ -104,6 +105,7 @@ def upload(ctx,
            blueprint_path,
            blueprint_id,
            blueprint_filename,
+           icon_path,
            async_upload,
            labels,
            validate,
@@ -123,7 +125,7 @@ def upload(ctx,
     client.license.check()
     utils.explicit_tenant_name_message(tenant_name, logger)
     processed_blueprint_path = blueprint.get(
-        blueprint_path, blueprint_filename)
+        blueprint_path, blueprint_filename, icon_path)
 
     # Take into account that `blueprint.get` might not return a URL
     # instead of a blueprint file (archive files are not locally downloaded)
