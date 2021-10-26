@@ -157,6 +157,8 @@ def upload(ctx,
             async_upload=True,
             labels=labels
         )
+        if icon_path:
+            client.blueprints.upload_icon(blueprint_id, icon_path)
     else:
         try:
             if validate:
