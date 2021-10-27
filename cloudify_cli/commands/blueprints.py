@@ -552,14 +552,18 @@ def summary(target_field, sub_field, logger, client, tenant_name,
 
 
 @blueprints.command(name='set-icon',
-                    short_help="Set the blueprint's icon")
+                    short_help="Set or remove blueprint's icon")
 @cfy.argument('blueprint-id')
 @cfy.options.blueprint_icon_path()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 def set_icon(blueprint_id, icon_path, logger, client):
-    """Set an icon which will be used to describe/identify the blueprint."""
+    """Set an icon which will be used to describe/identify the blueprint.
+    In case `-i [ICON_PATH]` is provided, the [ICON_PATH] should point to
+    a valid PNG image. If this parameter is omitted, the icon will be removed
+    from the blueprint's resources.
+    """
     status_codes = [400, 403, 404]
     with prettify_client_error(status_codes, logger):
         if icon_path:
