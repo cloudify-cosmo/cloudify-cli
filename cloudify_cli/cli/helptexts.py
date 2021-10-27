@@ -49,6 +49,10 @@ ALL_NODES = "Perform operation on all cluster nodes"
 BLUEPRINT_FILENAME = (
     "The name of the archive's main blueprint file. "
     "This is only relevant if uploading an archive")
+BLUEPRINT_ICON_PATH = "The path to the blueprint's icon file (must be a " \
+                      "valid image in PNG format); the file will be saved " \
+                      "as `icon.png` in the blueprint's resources and will "\
+                      "overwrite any existing file with that name"
 INPUTS = "Inputs for the deployment {0}".format(INPUTS_PARAMS_USAGE)
 RUNTIME_PROPERTIES = "Runtime properties to be changed for the node " \
                      "instance {0}".format(INPUTS_PARAMS_USAGE)
