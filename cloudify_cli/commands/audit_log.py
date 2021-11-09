@@ -33,12 +33,7 @@ def _parse_before(ctx, spec):
           raise CloudifyCliError('Failed to parse timestamp: {0}'
                                  .format(before))
     else:
-        for fmt in ['%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S.%f',
-                    '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d']:
-            try:
-                return datetime.strptime(spec, fmt)
-            except ValueError:
-                pass
+        return spec
 
 
 @cfy.group(name='auditlog')
