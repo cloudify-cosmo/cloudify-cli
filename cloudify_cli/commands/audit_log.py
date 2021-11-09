@@ -1,3 +1,6 @@
+import re
+from datetime import datetime, timedelta
+
 import click
 
 from cloudify._compat import PY2
@@ -5,10 +8,35 @@ from cloudify._compat import PY2
 from ..cli import cfy, helptexts
 from ..exceptions import CloudifyCliError
 from ..table import print_data
-from ..utils import to_utc_timestamp
 
 AUDITLOG_COLUMNS = ['ref_table', 'ref_id', 'operation', 'creator_name',
                     'execution_id', 'created_at']
+
+
+def to_utc_timestamp(spec):
+    r = re.match(r'^([.\d]+)([hdw])$', spec, re.IGNORECASE)
+    if r:
+        # timestamp specification e.g. 10.5h, 15d, 7w
+        count, unit = float(r.groups()[0]), r.groups()[1].lower()
+        if unit == 'h':
+            delta = timedelta(hours=count)
+        elif unit == 'd':
+            delta = timedelta(days=count)
+        else:  # 'w'
+            delta = timedelta(weeks=count)
+        return datetime.utcnow() - delta
+    elif spec.startswith('@'):
+        try:
+            return datetime.utcfromtimestamp(int(spec[1:]))
+        except ValueError:
+            return None
+    else:
+        for fmt in ['%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S.%f',
+                    '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d']:
+            try:
+                return datetime.strptime(spec, fmt)
+            except ValueError:
+                pass
 
 
 @cfy.group(name='auditlog')
