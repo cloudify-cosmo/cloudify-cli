@@ -13,7 +13,8 @@ AUDITLOG_COLUMNS = ['ref_table', 'ref_id', 'operation', 'creator_name',
                     'execution_id', 'created_at']
 
 
-def to_utc_timestamp(spec):
+def _parse_before(spec):
+    """Parse the --before/--since parameter"""
     r = re.match(r'^([.\d]+)([hdw])$', spec, re.IGNORECASE)
     if r:
         # timestamp specification e.g. 10.5h, 15d, 7w
@@ -77,7 +78,7 @@ def list_logs(creator_name,
               logger,
               client,
               ):
-    since_timestamp = to_utc_timestamp(since) if since else None
+    since_timestamp = _parse_before(since) if since else None
     if follow:
         if PY2:
             raise CloudifyCliError('Streaming requires Python>=3.6.')
@@ -143,7 +144,7 @@ def truncate_logs(before,
                   client
                   ):
     """Truncate audit_log entries"""
-    before_timestamp = to_utc_timestamp(before)
+    before_timestamp = _parse_before(before)
     if before_timestamp is None:
         raise CloudifyCliError('Failed to parse timestamp: {0}'
                                .format(before))
