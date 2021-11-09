@@ -32,8 +32,8 @@ def _parse_before(ctx, spec):
         try:
             return datetime.utcfromtimestamp(int(spec[1:]))
         except ValueError:
-          raise CloudifyCliError('Failed to parse timestamp: {0}'
-                                 .format(before))
+            raise CloudifyCliError('Failed to parse timestamp: {0}'
+                                   .format(spec))
     else:
         return spec
 
