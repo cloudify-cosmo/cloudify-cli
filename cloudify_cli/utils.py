@@ -28,11 +28,9 @@ import tarfile
 import zipfile
 import tempfile
 import collections
-import re
 from shutil import copy
 from contextlib import closing, contextmanager
 from backports.shutil_get_terminal_size import get_terminal_size
-from datetime import datetime, timedelta
 
 import yaml
 import requests
@@ -481,29 +479,3 @@ def wait_for_blueprint_upload(client, blueprint_id, logging_level):
     blueprint = client.blueprints.get(blueprint_id)
     _handle_errors()
     return blueprint
-
-
-def to_utc_timestamp(spec):
-    r = re.match(r'^([.\d]+)([hdw])$', spec, re.IGNORECASE)
-    if r:
-        # timestamp specification e.g. 10.5h, 15d, 7w
-        count, unit = float(r.groups()[0]), r.groups()[1].lower()
-        if unit == 'h':
-            delta = timedelta(hours=count)
-        elif unit == 'd':
-            delta = timedelta(days=count)
-        else:  # 'w'
-            delta = timedelta(weeks=count)
-        return datetime.utcnow() - delta
-    elif spec.startswith('@'):
-        try:
-            return datetime.utcfromtimestamp(int(spec[1:]))
-        except ValueError:
-            return None
-    else:
-        for fmt in ['%Y-%m-%dT%H:%M:%S.%f', '%Y-%m-%d %H:%M:%S.%f',
-                    '%Y-%m-%dT%H:%M:%S', '%Y-%m-%d %H:%M:%S', '%Y-%m-%d']:
-            try:
-                return datetime.strptime(spec, fmt)
-            except ValueError:
-                pass

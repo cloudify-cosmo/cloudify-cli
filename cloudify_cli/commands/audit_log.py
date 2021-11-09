@@ -1,3 +1,6 @@
+import re
+from datetime import datetime, timedelta
+
 import click
 
 from cloudify._compat import PY2
@@ -5,10 +8,34 @@ from cloudify._compat import PY2
 from ..cli import cfy, helptexts
 from ..exceptions import CloudifyCliError
 from ..table import print_data
-from ..utils import to_utc_timestamp
 
 AUDITLOG_COLUMNS = ['ref_table', 'ref_id', 'operation', 'creator_name',
                     'execution_id', 'created_at']
+
+
+def _parse_before(ctx, spec):
+    """Parse the --before/--since parameter"""
+    if spec == "now":
+        return datetime.utcnow()
+    r = re.match(r'^([.\d]+)([hdw])$', spec, re.IGNORECASE)
+    if r:
+        # timestamp specification e.g. 10.5h, 15d, 7w
+        count, unit = float(r.groups()[0]), r.groups()[1].lower()
+        if unit == 'h':
+            delta = timedelta(hours=count)
+        elif unit == 'd':
+            delta = timedelta(days=count)
+        else:  # 'w'
+            delta = timedelta(weeks=count)
+        return datetime.utcnow() - delta
+    elif spec.startswith('@'):
+        try:
+            return datetime.utcfromtimestamp(int(spec[1:]))
+        except ValueError:
+            raise CloudifyCliError('Failed to parse timestamp: {0}'
+                                   .format(spec))
+    else:
+        return spec
 
 
 @cfy.group(name='auditlog')
@@ -25,7 +52,8 @@ def auditlog():
 @click.option('-e', '--execution-id',
               help=helptexts.AUDIT_EXECUTION_ID)
 @click.option('-i', '--since',
-              help=helptexts.AUDIT_SINCE)
+              help=helptexts.AUDIT_SINCE,
+              callback=_parse_before)
 @click.option('-f', '--follow',
               help=helptexts.AUDIT_FOLLOW,
               is_flag=True)
@@ -49,21 +77,20 @@ def list_logs(creator_name,
               logger,
               client,
               ):
-    since_timestamp = to_utc_timestamp(since) if since else None
     if follow:
         if PY2:
             raise CloudifyCliError('Streaming requires Python>=3.6.')
         from ..async_commands.audit_log import stream_logs
         stream_logs(creator_name,
                     execution_id,
-                    since_timestamp,
+                    since,
                     timeout,
                     logger,
                     client)
     else:
         _list_logs(creator_name,
                    execution_id,
-                   since_timestamp,
+                   since,
                    sort_by,
                    descending,
                    pagination_offset,
@@ -101,7 +128,8 @@ def _list_logs(creator_name,
                   short_help='Truncate audit log')
 @click.option('-b', '--before',
               required=True,
-              help=helptexts.AUDIT_TRUNCATE_BEFORE)
+              help=helptexts.AUDIT_TRUNCATE_BEFORE,
+              callback=_parse_before)
 @click.option('-c', '--creator-name',
               help=helptexts.AUDIT_CREATOR_NAME)
 @click.option('-e', '--execution-id',
@@ -115,13 +143,8 @@ def truncate_logs(before,
                   client
                   ):
     """Truncate audit_log entries"""
-    before_timestamp = to_utc_timestamp(before)
-    if before_timestamp is None:
-        raise CloudifyCliError('Failed to parse timestamp: {0}'
-                               .format(before))
-
     logger.info("Truncating audit log entries...")
-    params = {'before': before_timestamp.isoformat()}
+    params = {'before': before}
     if creator_name:
         params.update({'creator_name': creator_name})
     if execution_id:
