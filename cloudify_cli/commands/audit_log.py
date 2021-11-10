@@ -15,6 +15,8 @@ AUDITLOG_COLUMNS = ['ref_table', 'ref_id', 'operation', 'creator_name',
 
 def _parse_before(ctx, spec):
     """Parse the --before/--since parameter"""
+    if not spec:
+        return spec
     if spec == "now":
         return datetime.utcnow()
     r = re.match(r'^([.\d]+)([hdw])$', spec, re.IGNORECASE)
