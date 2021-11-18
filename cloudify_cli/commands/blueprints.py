@@ -89,6 +89,7 @@ def validate_blueprint(blueprint_path, logger):
 @cfy.argument('blueprint-path')
 @cfy.options.blueprint_id(validate=True)
 @cfy.options.blueprint_filename()
+@cfy.options.blueprint_icon_path()
 @cfy.options.async_upload
 @cfy.options.labels
 @cfy.options.validate
@@ -104,6 +105,7 @@ def upload(ctx,
            blueprint_path,
            blueprint_id,
            blueprint_filename,
+           icon_path,
            async_upload,
            labels,
            validate,
@@ -123,7 +125,7 @@ def upload(ctx,
     client.license.check()
     utils.explicit_tenant_name_message(tenant_name, logger)
     processed_blueprint_path = blueprint.get(
-        blueprint_path, blueprint_filename)
+        blueprint_path, blueprint_filename, icon_path)
 
     # Take into account that `blueprint.get` might not return a URL
     # instead of a blueprint file (archive files are not locally downloaded)
@@ -155,6 +157,8 @@ def upload(ctx,
             async_upload=True,
             labels=labels
         )
+        if icon_path:
+            client.blueprints.upload_icon(blueprint_id, icon_path)
     else:
         try:
             if validate:
@@ -305,6 +309,7 @@ def manager_list(filter_id,
 
 
 @cfy.command(name='list', short_help='List blueprints')
+@cfy.options.local_common_options
 @cfy.pass_logger
 def local_list(logger):
     blueprints = local.list_blueprints()
@@ -544,6 +549,31 @@ def summary(target_field, sub_field, logger, client, tenant_name,
         items,
         'Blueprint summary by {field}'.format(field=target_field),
     )
+
+
+@blueprints.command(name='set-icon',
+                    short_help="Set or remove blueprint's icon")
+@cfy.argument('blueprint-id')
+@cfy.options.blueprint_icon_path()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def set_icon(blueprint_id, icon_path, logger, client):
+    """Set an icon which will be used to describe/identify the blueprint.
+    In case `-i [ICON_PATH]` is provided, the [ICON_PATH] should point to
+    a valid PNG image. If this parameter is omitted, the icon will be removed
+    from the blueprint's resources.
+    """
+    status_codes = [400, 403, 404]
+    with prettify_client_error(status_codes, logger):
+        if icon_path:
+            client.blueprints.upload_icon(blueprint_id, icon_path)
+            logger.info('Blueprint `{0}` has a new icon set.'
+                        .format(blueprint_id))
+        else:
+            client.blueprints.remove_icon(blueprint_id)
+            logger.info('Blueprint `{0}` has its icon removed.'
+                        .format(blueprint_id))
 
 
 @blueprints.group(name='labels',

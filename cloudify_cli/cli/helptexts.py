@@ -49,6 +49,10 @@ ALL_NODES = "Perform operation on all cluster nodes"
 BLUEPRINT_FILENAME = (
     "The name of the archive's main blueprint file. "
     "This is only relevant if uploading an archive")
+BLUEPRINT_ICON_PATH = "The path to the blueprint's icon file (must be a " \
+                      "valid image in PNG format); the file will be saved " \
+                      "as `icon.png` in the blueprint's resources and will "\
+                      "overwrite any existing file with that name"
 INPUTS = "Inputs for the deployment {0}".format(INPUTS_PARAMS_USAGE)
 RUNTIME_PROPERTIES = "Runtime properties to be changed for the node " \
                      "instance {0}".format(INPUTS_PARAMS_USAGE)
@@ -554,3 +558,22 @@ DISPLAY_NAME = 'The display name of the deployment. If not specified, ' \
 SEARCH_NAME = 'Search deployments by their display name. The returned list ' \
               'will include only deployments that contain the given search ' \
               'pattern'
+
+AUDIT_CREATOR_NAME = 'Name of a user who introduced changes recorded in the ' \
+                     'audit log.'
+AUDIT_EXECUTION_ID = 'ID of an execution which introduced changes recorded ' \
+                     'in the audit log.'
+AUDIT_SINCE = 'List audit logs starting from this timestamp.  Can be ' \
+              'specified either as the difference counted from the current ' \
+              'time (e.g. 6.5h for 6:30 hours ago, 2d - 2 days ago, 7w - 7 ' \
+              'weeks ago), or an ordinary UTC timestamp (2021-08-18, ' \
+              '2021-08-18T14:25:36, 2021-08-18 14:25:36, 2021-08-18 ' \
+              '14:25:36.99, @1629296736).'
+AUDIT_FOLLOW = 'Specify if the logs should be streamed.'
+AUDIT_TRUNCATE_BEFORE = 'Truncate audit logs which were stored this long ' \
+                        'ago or earlier.  Can be specified either as the ' \
+                        'difference counted from the current time (e.g. ' \
+                        '6.5h for 6:30 hours ago, 2d - 2 days ago, 7w - 7 '\
+                        'weeks ago), or an ordinary UTC timestamp ' \
+                        '(2021-08-18, 2021-08-18T14:25:36, 2021-08-18 '\
+                        '14:25:36, 2021-08-18 14:25:36.99, @1629296736).'

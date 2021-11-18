@@ -1776,6 +1776,16 @@ class Options(object):
             f = arg(f)
         return f
 
+    def local_common_options(self, f):
+        """A shorthand for applying commonly used arguments for local profiles.
+
+        Similar to common_options, but doesn't apply the options that are only
+        relevant to managers.
+        """
+        for arg in [self.json, self.verbose(), self.format, self.quiet()]:
+            f = arg(f)
+        return f
+
     def parse_comma_separated(self, ctx, param, value):
         """Callback for parsing multiple comma-separated arguments.
 
@@ -1922,6 +1932,14 @@ class Options(object):
             '--blueprint-filename',
             default=DEFAULT_BLUEPRINT_PATH,
             help=helptexts.BLUEPRINT_FILENAME + extra_message)
+
+    @staticmethod
+    def blueprint_icon_path(required=False):
+        return click.option(
+            '-i',
+            '--icon-path',
+            required=required,
+            help=helptexts.BLUEPRINT_ICON_PATH)
 
     @staticmethod
     def workflow_id(default=None, required=False):

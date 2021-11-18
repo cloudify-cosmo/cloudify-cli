@@ -57,7 +57,7 @@ pipeline {
                 echo 'Install and run flake8'
                 sh '''
                   pip install flake8 --user
-                  flake8 cloudify_cli
+                  flake8 --extend-exclude "async*" cloudify_cli
                 '''
               }
             }
@@ -87,7 +87,7 @@ pipeline {
               """
               sh script:"""
                 cd ~/rpmbuild/SOURCES
-                for i in {1..30}; do yum-builddep -y packaging/cloudify-cli.spec && break || sleep 10; done
+                yum-builddep -y packaging/cloudify-cli.spec
 
                 spectool \
                   -d "CLOUDIFY_VERSION ${env.CLOUDIFY_VERSION}" \
@@ -118,12 +118,6 @@ pipeline {
             sh script: "mkdir -p ${env.WORKSPACE}/project && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/project", label: "copying repo to seperate workspace"
             container('debbuild') {
               sh script: 'mkdir /tmp/result', label: "create result folder"
-              echo 'install python setup tools'
-              sh'''
-                set -ex
-                apt-get update
-                apt-get install python3 python3-setuptools python3-distutils -y
-              '''
               sh script: "/bin/bash ${env.WORKSPACE}/project/packaging/debian/build.sh", label: "build the deb package"
               sh script: """
                 set -ex

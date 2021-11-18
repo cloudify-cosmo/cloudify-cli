@@ -10,4 +10,4 @@ Cloudify's Command Line Interface.
 
 ## Usage
 
-See [Cloudify CLI](http://docs.getcloudify.org/latest/cli/overview/)
+See [Cloudify CLI](https://docs.cloudify.co/latest/cli/)

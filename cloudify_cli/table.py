@@ -62,6 +62,8 @@ def generate(cols, data, defaults=None, labels=None):
                 row_data[column] = ','.join(row_data[column])
             elif isinstance(row_data[column], bool):
                 pass  # Taking care of False (otherwise would be changed to '')
+            elif isinstance(row_data[column], int):
+                pass  # Taking care of zero (otherwise would be changed to '')
             elif not row_data[column]:
                 # if it's empty list, don't print []
                 row_data[column] = ''
@@ -142,7 +144,7 @@ def print_details(data, title):
     """Utility for printing structured key/value pairs.
 
     Note that this is not for printing the standard output table, but
-    rather for auxilliary data.
+    rather for auxiliary data.
     """
     if get_global_json_output():
         output(json.dumps(data, cls=CloudifyJSONEncoder))

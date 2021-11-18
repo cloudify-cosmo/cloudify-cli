@@ -17,7 +17,7 @@ set -xu
 BUILD_DIR=~/cloudify-cli_${CLOUDIFY_VERSION}-${CLOUDIFY_PACKAGE_RELEASE}_amd64
 
 apt-get update
-apt-get install python3 python3-venv git -y
+apt-get install python3 python3-venv git gcc python3-dev -y
 mkdir -p "${BUILD_DIR}/DEBIAN" "${BUILD_DIR}/opt"
 cat >"${BUILD_DIR}/DEBIAN/control" <<EOF
 Package: cloudify

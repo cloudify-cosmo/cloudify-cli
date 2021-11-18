@@ -35,7 +35,7 @@ def list(role, logger, client):
 @cfy.pass_logger
 @cfy.pass_client()
 def allow(role, permission, logger, client):
-    """List defined permissions."""
+    """Define a new permission."""
     client.permissions.add(permission, role)
     logger.info('Allowed role %s the permission %s', role, permission)
     logger.warning('Updating manager permissions only takes effect after '
@@ -49,7 +49,7 @@ def allow(role, permission, logger, client):
 @cfy.pass_logger
 @cfy.pass_client()
 def disallow(role, permission, logger, client):
-    """List defined permissions."""
+    """Remove a defined permission."""
     client.permissions.delete(permission, role)
     logger.info('Disallowed role %s the permission %s', role, permission)
     logger.warning('Updating manager permissions only takes effect after '

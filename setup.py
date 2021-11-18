@@ -12,17 +12,23 @@
 #    * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
+import sys
+
 from setuptools import setup
+
+packages = ['cloudify_cli',
+            'cloudify_cli.cli',
+            'cloudify_cli.commands',
+            'cloudify_cli.config']
+if sys.version_info[:2] >= (3, 6):
+    packages += ['cloudify_cli.async_commands']
 
 setup(
     name='cloudify',
-    version='6.2.0.dev1',
+    version='6.3.0.dev1',
     author='Cloudify',
     author_email='cosmo-admin@cloudify.co',
-    packages=['cloudify_cli',
-              'cloudify_cli.cli',
-              'cloudify_cli.commands',
-              'cloudify_cli.config'],
+    packages=packages,
     package_data={
         'cloudify_cli': [
             'VERSION',
@@ -45,11 +51,12 @@ setup(
         'colorama==0.4.4',
         'requests>=2.7.0,<3.0.0',
         'click_didyoumean==0.0.3',
-        'cloudify-common[dispatcher]==6.2.0.dev1',
+        'cloudify-common[dispatcher]==6.3.0.dev1',
         'backports.shutil_get_terminal_size==1.0.0',
         'ipaddress==1.0.23',
         'setuptools<=40.7.3',
         'cryptography==3.3.2',
+        'cffi>=1.14,<1.15',
         # Fabric depend on paramiko that depends on cryptography so we need
         # to install the correct version of cryptography before installing
         # the fabric so that fabric can be installed correctly in both py2 +
