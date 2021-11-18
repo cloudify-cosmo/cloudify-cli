@@ -3,7 +3,7 @@ kind: Pod
 spec:
   containers:
   - name: jnlp
-    image: jenkins/inbound-agent
+    image: jenkins/inbound-agent:4.3-4
     resources:
       limits:
         cpu: 0.2
