@@ -76,6 +76,7 @@ def users():
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def list(sort_by,
          descending,
          get_data,
@@ -83,7 +84,8 @@ def list(sort_by,
          pagination_offset,
          pagination_size,
          logger,
-         client):
+         client,
+         extended_view):
     """List all users
     """
     logger.info('Listing all users...')
@@ -104,7 +106,8 @@ def list(sort_by,
         columns += GET_DATA_COLUMNS
     else:
         columns += NO_GET_DATA_COLUMNS
-    print_data(columns, users_list, 'Users:', labels=USER_LABELS)
+    print_data(columns, users_list, 'Users:', labels=USER_LABELS,
+               extended=extended_view)
     logger.info('Showing {0} of {1} users'.format(len(users_list), total))
 
 
@@ -192,7 +195,8 @@ def set_role(username, security_role, logger, client):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def get(username, get_data, logger, client):
+@cfy.options.extended_view
+def get(username, get_data, logger, client, extended_view):
     """Get details for a single user
 
     `USERNAME` is the username of the user. (default: current user)
@@ -212,7 +216,8 @@ def get(username, get_data, logger, client):
     print_single(columns,
                  user_details,
                  'Requested user info:',
-                 labels=USER_LABELS)
+                 labels=USER_LABELS,
+                 extended=extended_view)
 
 
 @users.command(name='delete',

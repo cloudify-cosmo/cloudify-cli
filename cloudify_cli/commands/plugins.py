@@ -165,7 +165,8 @@ def upload(ctx,
 @cfy.options.plugins_bundle_path
 @cfy.pass_client()
 @cfy.pass_logger
-def upload_caravan(client, logger, path):
+@cfy.options.extended_view
+def upload_caravan(client, logger, path, extended_view):
     client.license.check()
     if not path:
         logger.info("Starting upload of plugins bundle, "
@@ -177,7 +178,8 @@ def upload_caravan(client, logger, path):
     logger.info("Bundle uploaded, {0} Plugins installed."
                 .format(len(plugins_)))
     if len(plugins_) > 0:
-        print_data(PLUGINS_BUNDLE_COLUMNS, plugins_, 'Plugins:')
+        print_data(PLUGINS_BUNDLE_COLUMNS, plugins_, 'Plugins:',
+                   extended=extended_view)
 
 
 @plugins.command(name='download',
@@ -283,6 +285,7 @@ def get(plugin_id, logger, client, tenant_name, get_data):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def list(sort_by,
          descending,
          tenant_name,
@@ -292,7 +295,8 @@ def list(sort_by,
          pagination_size,
          logger,
          client,
-         get_data):
+         get_data,
+         extended_view):
     """List all plugins on the manager
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
@@ -311,7 +315,7 @@ def list(sort_by,
     if get_global_json_output():
         columns += ['installation_state']
 
-    print_data(columns, plugins_list, 'Plugins:')
+    print_data(columns, plugins_list, 'Plugins:', extended=extended_view)
     total = plugins_list.metadata.pagination.total
     logger.info('Showing {0} of {1} plugins'.format(len(plugins_list),
                                                     total))
@@ -629,7 +633,9 @@ def _update_a_blueprint(blueprint_id,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def manager_get_update(plugins_update_id, logger, client, tenant_name):
+@cfy.options.extended_view
+def manager_get_update(plugins_update_id, logger, client, tenant_name,
+                       extended_view):
     """Retrieve information for a specific plugins update
 
     `PLUGINS_UPDATE_ID` is the id of the plugins update to get information on.
@@ -638,7 +644,8 @@ def manager_get_update(plugins_update_id, logger, client, tenant_name):
     logger.info('Retrieving plugins update {0}...'.format(plugins_update_id))
     plugins_update_dict = client.plugins_update.get(plugins_update_id)
     print_single(
-        PLUGINS_UPDATE_COLUMNS, plugins_update_dict, 'Plugins update:')
+        PLUGINS_UPDATE_COLUMNS, plugins_update_dict, 'Plugins update:',
+        extended=extended_view)
 
 
 @plugins.command(name='history', short_help='List plugins updates '
@@ -656,6 +663,7 @@ def manager_get_update(plugins_update_id, logger, client, tenant_name):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def manager_history(blueprint_id,
                     sort_by,
                     descending,
@@ -665,7 +673,8 @@ def manager_history(blueprint_id,
                     pagination_size,
                     logger,
                     client,
-                    tenant_name):
+                    tenant_name,
+                    extended_view):
     """Show blueprint history by listing plugins updates
 
     If `--blueprint-id` is provided, list plugins updates for that
@@ -689,6 +698,7 @@ def manager_history(blueprint_id,
     )
     total = plugins_updates.metadata.pagination.total
     print_data(
-        PLUGINS_UPDATE_COLUMNS, plugins_updates, 'Plugins updates:')
+        PLUGINS_UPDATE_COLUMNS, plugins_updates, 'Plugins updates:',
+        extended=extended_view)
     logger.info('Showing {0} of {1} plugins updates'.format(
         len(plugins_updates), total))

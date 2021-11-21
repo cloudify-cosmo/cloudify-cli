@@ -5,6 +5,7 @@ VERSION = (
     "Display the version and exit (if a manager is used, its version will "
     "also show)"
 )
+EXTENDED_VIEW = "Display results in a vertical table format"
 
 INPUTS_PARAMS_USAGE = (
     '(Can be provided as wildcard based paths '

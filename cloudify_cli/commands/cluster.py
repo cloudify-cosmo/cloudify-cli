@@ -324,9 +324,10 @@ def get_broker(client, logger, name):
 @pass_cluster_client()
 @cfy.pass_logger
 @cfy.options.common_options
-def list_brokers(client, logger):
+@cfy.options.extended_view
+def list_brokers(client, logger, extended_view):
     """List brokers associated with the cluster."""
-    _list_brokers(client, logger)
+    _list_brokers(client, logger, extended_view)
 
 
 def _clean_up_broker_for_output(broker):
@@ -336,11 +337,12 @@ def _clean_up_broker_for_output(broker):
         broker['networks'] = json.dumps(broker['networks'])
 
 
-def _list_brokers(client, logger):
+def _list_brokers(client, logger, extended_view=False):
     brokers = client.manager.get_brokers()
     for broker in brokers:
         _clean_up_broker_for_output(broker)
-    print_data(BROKER_COLUMNS, brokers, 'HA Cluster brokers')
+    print_data(BROKER_COLUMNS, brokers, 'HA Cluster brokers',
+               extended=extended_view)
 
 
 @brokers.command(name='add',
@@ -433,9 +435,11 @@ def db_nodes():
 @pass_cluster_client()
 @cfy.pass_logger
 @cfy.options.common_options
-def update_db_nodes(client, logger):
+@cfy.options.extended_view
+def update_db_nodes(client, logger, extended_view):
     db_nodes_list = client.manager.update_db_nodes()
-    print_data(DB_COLUMNS, db_nodes_list, 'HA Cluster db nodes')
+    print_data(DB_COLUMNS, db_nodes_list, 'HA Cluster db nodes',
+               extended=extended_view)
 
 
 @db_nodes.command(name='list',
@@ -443,9 +447,11 @@ def update_db_nodes(client, logger):
 @pass_cluster_client()
 @cfy.pass_logger
 @cfy.options.common_options
-def list_db_nodes(client, logger):
+@cfy.options.extended_view
+def list_db_nodes(client, logger, extended_view):
     db_nodes_list = client.manager.get_db_nodes()
-    print_data(DB_COLUMNS, db_nodes_list, 'HA Cluster db nodes')
+    print_data(DB_COLUMNS, db_nodes_list, 'HA Cluster db nodes',
+               extended=extended_view)
 
 
 @cluster.group(name='managers',
@@ -461,6 +467,8 @@ def managers():
 @pass_cluster_client()
 @cfy.pass_logger
 @cfy.options.common_options
-def list_managers(client, logger):
+@cfy.options.extended_view
+def list_managers(client, logger, extended_view):
     managers_list = client.manager.get_managers()
-    print_data(MANAGER_COLUMNS, managers_list, 'HA Cluster manager nodes')
+    print_data(MANAGER_COLUMNS, managers_list, 'HA Cluster manager nodes',
+               extended=extended_view)

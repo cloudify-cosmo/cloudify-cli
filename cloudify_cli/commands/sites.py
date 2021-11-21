@@ -62,7 +62,8 @@ def create(name, location, visibility, tenant_name, client, logger):
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def get(name, tenant_name, client, logger):
+@cfy.options.extended_view
+def get(name, tenant_name, client, logger, extended_view):
     """Get details for a single site
 
     `NAME` is the site's name
@@ -73,7 +74,8 @@ def get(name, tenant_name, client, logger):
     with handle_client_error(404, graceful_msg, logger):
         logger.info('Getting info for site `{0}`...'.format(name))
         site_details = client.sites.get(name)
-        print_single(SITES_COLUMNS, site_details, 'Requested site info:')
+        print_single(SITES_COLUMNS, site_details, 'Requested site info:',
+                     extended=extended_view)
 
 
 @sites.command(name='update', short_help='Update an existing site')
@@ -112,6 +114,7 @@ def update(name, location, visibility, new_name, tenant_name, client, logger):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def list(sort_by,
          descending,
          tenant_name,
@@ -120,7 +123,8 @@ def list(sort_by,
          pagination_offset,
          pagination_size,
          client,
-         logger):
+         logger,
+         extended_view):
     """
     List all sites
     """
@@ -134,7 +138,7 @@ def list(sort_by,
         _offset=pagination_offset,
         _size=pagination_size
     )
-    print_data(SITES_COLUMNS, sites_list, 'Sites:')
+    print_data(SITES_COLUMNS, sites_list, 'Sites:', extended=extended_view)
     total = sites_list.metadata.pagination.total
     logger.info('Showing {0} of {1} sites'.format(len(sites_list), total))
 

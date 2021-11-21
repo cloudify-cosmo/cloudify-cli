@@ -210,6 +210,7 @@ def _print_single_update(deployment_update_dict,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def manager_list(blueprint_id,
                  group_id,
                  filter_id,
@@ -223,7 +224,8 @@ def manager_list(blueprint_id,
                  pagination_size,
                  logger,
                  client,
-                 tenant_name):
+                 tenant_name,
+                 extended_view):
     """List deployments
 
     If `--blueprint-id` is provided, list deployments for that blueprint.
@@ -249,7 +251,8 @@ def manager_list(blueprint_id,
                                           _search_name=search_name)
     modify_resource_labels(deployments)
     total = deployments.metadata.pagination.total
-    print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:')
+    print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:',
+               extended=extended_view)
 
     base_str = 'Showing {0} of {1} deployments'.format(len(deployments), total)
     if filter_rules or filter_id:
@@ -274,6 +277,7 @@ def manager_list(blueprint_id,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def manager_history(deployment_id,
                     sort_by,
                     descending,
@@ -283,7 +287,8 @@ def manager_history(deployment_id,
                     pagination_size,
                     logger,
                     client,
-                    tenant_name):
+                    tenant_name,
+                    extended_view):
     """Show deployment history by listing deployment updates
 
     If `--deployment-id` is provided, list deployment updates for that
@@ -307,7 +312,8 @@ def manager_history(deployment_id,
     )
     total = deployment_updates.metadata.pagination.total
     print_data(
-        DEPLOYMENT_UPDATE_COLUMNS, deployment_updates, 'Deployment updates:')
+        DEPLOYMENT_UPDATE_COLUMNS, deployment_updates, 'Deployment updates:',
+        extended=extended_view)
     logger.info('Showing {0} of {1} deployment updates'.format(
         len(deployment_updates), total))
 
@@ -940,12 +946,14 @@ def modifications():
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def list_modifications(deployment_id,
                        pagination_offset,
                        pagination_size,
                        logger,
                        client,
-                       tenant_name):
+                       tenant_name,
+                       extended_view):
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing modifications of the deployment %s...', deployment_id)
     deployment_modifications = client.deployment_modifications.list(
@@ -957,7 +965,7 @@ def list_modifications(deployment_id,
                  for dm in deployment_modifications]
     total = deployment_modifications.metadata.pagination.total
     print_data(DEPLOYMENT_MODIFICATION_COLUMNS, flattened,
-               'Deployment modifications:')
+               'Deployment modifications:', extended=extended_view)
     logger.info('Showing %d of %d deployment modifications',
                 len(deployment_modifications), total)
 
@@ -1059,9 +1067,11 @@ def _format_group(g):
 @groups.command('list', short_help='List all deployment groups')
 @cfy.pass_client()
 @cfy.pass_logger
-def groups_list(client, logger):
+@cfy.options.extended_view
+def groups_list(client, logger, extended_view):
     groups = [_format_group(g) for g in client.deployment_groups.list()]
-    print_data(DEP_GROUP_COLUMNS, groups, 'Deployment groups:')
+    print_data(DEP_GROUP_COLUMNS, groups, 'Deployment groups:',
+               extended=extended_view)
 
 
 @groups.command('create', short_help='Create a new deployment group')
@@ -1552,6 +1562,7 @@ def schedule_delete(deployment_id, schedule_id, logger, client, tenant_name):
 @cfy.options.tz
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def schedule_list(deployment_id,
                   sort_by,
                   descending,
@@ -1564,7 +1575,8 @@ def schedule_list(deployment_id,
                   until,
                   tz,
                   logger,
-                  client):
+                  client,
+                  extended_view):
     """
     List all deployment schedules on the manager. If DEPLOYMENT_ID is
     provided, list only schedules of this deployment.
@@ -1593,7 +1605,8 @@ def schedule_list(deployment_id,
         schedules = _list_schedules_in_time_range(schedules,
                                                   since_datetime,
                                                   until_datetime)
-    print_data(SCHEDULE_TABLE_COLUMNS, schedules, 'Deployment schedules:')
+    print_data(SCHEDULE_TABLE_COLUMNS, schedules, 'Deployment schedules:',
+               extended=extended_view)
     logger.info('Showing %s of %s deployment schedules', len(schedules), total)
 
 
@@ -1613,12 +1626,14 @@ def schedule_list(deployment_id,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def schedule_get(deployment_id,
                  schedule_id,
                  preview,
                  logger,
                  client,
-                 tenant_name):
+                 tenant_name,
+                 extended_view):
     """
     Retrieve information for a specific deployment schedule
 
@@ -1636,7 +1651,8 @@ def schedule_get(deployment_id,
                        if k not in SCHEDULE_TABLE_COLUMNS + extra_columns}
     if get_global_json_output():
         columns += additional_data.keys() + extra_columns
-    print_single(columns, dep_schedule, 'Execution schedule:', max_width=50)
+    print_single(columns, dep_schedule, 'Execution schedule:', max_width=50,
+                 extended=extended_view)
 
     if not get_global_json_output():
         print_details(dep_schedule['rule'], 'Scheduling rule:')

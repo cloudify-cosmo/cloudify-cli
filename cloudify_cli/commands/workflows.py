@@ -41,7 +41,9 @@ def workflows():
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_logger
 @cfy.pass_client()
-def get(workflow_id, deployment_id, logger, client, tenant_name):
+@cfy.options.extended_view
+def get(workflow_id, deployment_id, logger, client, tenant_name,
+        extended_view):
     """Retrieve information for a specific workflow of a specific deployment
 
     `WORKFLOW_ID` is the id of the workflow to get information on.
@@ -71,7 +73,8 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
 
     if get_global_json_output():
         columns += ['parameters']
-    print_single(columns, workflow, 'Workflows:', defaults=defaults)
+    print_single(columns, workflow, 'Workflows:', defaults=defaults,
+                 extended=extended_view)
 
     if not get_global_json_output():
         # print workflow parameters
@@ -109,7 +112,8 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_logger
 @cfy.pass_client()
-def list(deployment_id, logger, client, tenant_name):
+@cfy.options.extended_view
+def list(deployment_id, logger, client, tenant_name, extended_view):
     """List all workflows on the manager for a specific deployment
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
@@ -122,4 +126,5 @@ def list(deployment_id, logger, client, tenant_name):
         'blueprint_id': deployment.blueprint_id,
         'deployment_id': deployment.id
     }
-    print_data(WORKFLOW_COLUMNS, workflows, 'Workflows:', defaults=defaults)
+    print_data(WORKFLOW_COLUMNS, workflows, 'Workflows:', defaults=defaults,
+               extended=extended_view)

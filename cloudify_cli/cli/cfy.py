@@ -898,6 +898,13 @@ class Options(object):
             is_flag=True,
             help=helptexts.PREVIEW)
 
+        self.extended_view = click.option(
+            '-x',
+            '--extended-view',
+            is_flag=True,
+            default=False,
+            help=helptexts.EXTENDED_VIEW)
+
         self.dont_update_plugins = click.option(
             '--dont-update-plugins',
             is_flag=True,

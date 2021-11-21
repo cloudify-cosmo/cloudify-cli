@@ -57,7 +57,8 @@ def node_instances():
     required=False, resource_name_for_help='node-instance')
 @cfy.pass_logger
 @cfy.pass_client()
-def get(node_instance_id, logger, client, tenant_name):
+@cfy.options.extended_view
+def get(node_instance_id, logger, client, tenant_name, extended_view):
     """Retrieve information for a specific node-instance
 
     `NODE_INSTANCE_ID` is the id of the node-instance to get information on.
@@ -72,7 +73,7 @@ def get(node_instance_id, logger, client, tenant_name):
         raise CloudifyCliError('Node instance {0} not found'.format(
             node_instance_id))
 
-    _print_node_instance(node_instance)
+    _print_node_instance(node_instance, extended_view)
     logger.info('')
 
 
@@ -92,6 +93,7 @@ def get(node_instance_id, logger, client, tenant_name):
 @cfy.options.common_options
 @cfy.pass_logger
 @cfy.pass_client()
+@cfy.options.extended_view
 def list(deployment_id,
          node_name,
          sort_by,
@@ -102,7 +104,8 @@ def list(deployment_id,
          pagination_size,
          logger,
          client,
-         tenant_name):
+         tenant_name,
+         extended_view):
     """List node-instances
 
     If `DEPLOYMENT_ID` is provided, list node-instances for that deployment.
@@ -130,7 +133,8 @@ def list(deployment_id,
         raise CloudifyCliError('Deployment {0} does not exist'.format(
             deployment_id))
 
-    print_data(NODE_INSTANCE_COLUMNS, node_instances, 'Node-instances:')
+    print_data(NODE_INSTANCE_COLUMNS, node_instances, 'Node-instances:',
+               extended=extended_view)
     total = node_instances.metadata.pagination.total
     logger.info('Showing {0} of {1} node-instances'
                 .format(len(node_instances), total))
@@ -193,13 +197,15 @@ def summary(target_field, sub_field, logger, client, tenant_name,
                          resource_name_for_help='node-instance')
 @cfy.pass_logger
 @cfy.pass_client()
-def update_runtime(node_instance_id, logger, client, tenant_name, properties):
+@cfy.options.extended_view
+def update_runtime(node_instance_id, logger, client, tenant_name, properties,
+                   extended_view):
     """Update the runtime properties of a specific node-instance
 
     `NODE_INSTANCE_ID` is the id of the node-instance to update.
     """
     _modify_runtime(node_instance_id, logger, client, tenant_name,
-                    properties, deep_update_dict)
+                    properties, deep_update_dict, extended_view)
 
 
 @node_instances.command(name='delete-runtime',
@@ -212,17 +218,19 @@ def update_runtime(node_instance_id, logger, client, tenant_name, properties):
                          resource_name_for_help='node-instance')
 @cfy.pass_logger
 @cfy.pass_client()
-def delete_runtime(node_instance_id, logger, client, tenant_name, properties):
+@cfy.options.extended_view
+def delete_runtime(node_instance_id, logger, client, tenant_name, properties,
+                   extended_view):
     """Delete specified runtime properties of a specific node-instance
 
     `NODE_INSTANCE_ID` is the id of the node-instance to update.
     """
     _modify_runtime(node_instance_id, logger, client, tenant_name,
-                    properties, deep_subtract_dict)
+                    properties, deep_subtract_dict, extended_view)
 
 
 def _modify_runtime(node_instance_id, logger, client, tenant_name,
-                    properties, modifier_function):
+                    properties, modifier_function, extended_view=None):
     """Update or delete the runtime properties of a specific node-instance"""
     utils.explicit_tenant_name_message(tenant_name, logger)
     node_instance = client.node_instances.get(node_instance_id)
@@ -237,7 +245,7 @@ def _modify_runtime(node_instance_id, logger, client, tenant_name,
     logger.info('Successfully updated the runtime properties of "{0}"'
                 .format(node_instance_id))
     node_instance = client.node_instances.get(node_instance_id)
-    _print_node_instance(node_instance)
+    _print_node_instance(node_instance, extended_view)
 
 
 @cfy.command(name='node-instances',
@@ -262,7 +270,7 @@ def local(node_id, blueprint_id, logger):
     logger.info(json.dumps(node_instances, sort_keys=True, indent=2))
 
 
-def _print_node_instance(node_instance):
+def _print_node_instance(node_instance, extended_view=False):
     if get_global_json_output():
         # For json output, make sure runtime properties are in the same object
         # so that the output is a single decode-able object
@@ -270,7 +278,7 @@ def _print_node_instance(node_instance):
         print_single(columns, node_instance, 'Node-instance:', 50)
     else:
         print_single(NODE_INSTANCE_COLUMNS, node_instance,
-                     'Node-instance:', 50)
+                     'Node-instance:', 50, extended=extended_view)
 
         print_details(node_instance.runtime_properties,
                       'Instance runtime properties:')

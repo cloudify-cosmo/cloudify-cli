@@ -212,6 +212,7 @@ def download(snapshot_id, output_path, logger, client, tenant_name):
 @cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def list(sort_by,
          descending,
          tenant_name,
@@ -220,7 +221,8 @@ def list(sort_by,
          pagination_offset,
          pagination_size,
          logger,
-         client):
+         client,
+         extended_view):
     """List all snapshots on the manager
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
@@ -232,7 +234,8 @@ def list(sort_by,
                                       _offset=pagination_offset,
                                       _size=pagination_size)
 
-    print_data(SNAPSHOT_COLUMNS, snapshots, 'Snapshots:')
+    print_data(SNAPSHOT_COLUMNS, snapshots, 'Snapshots:',
+               extended=extended_view)
     total = snapshots.metadata.pagination.total
     logger.info('Showing {0} of {1} snapshots'.format(len(snapshots), total))
 
