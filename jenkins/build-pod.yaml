@@ -6,10 +6,10 @@ spec:
     image: jenkins/inbound-agent:4.3-4
     resources:
       limits:
-        cpu: 0.3
+        cpu: 0.2
         memory: 256Mi
   - name: py36
-    image: circleci/python:3.6
+    image: 263721492972.dkr.ecr.eu-west-1.amazonaws.com/cloudify-python3.6
     resources:
       requests:
         cpu: 0.8
@@ -24,7 +24,7 @@ spec:
       runAsUser: 0
       privileged: true
   - name: rpmbuild
-    image: rpmbuild/centos7
+    image: 263721492972.dkr.ecr.eu-west-1.amazonaws.com/cloudify-rpmbuild
     command:
     - cat
     tty: true
