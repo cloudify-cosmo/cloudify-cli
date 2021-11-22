@@ -212,6 +212,7 @@ def download(snapshot_id, output_path, logger, client, tenant_name):
 @cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def list(sort_by,
          descending,
          tenant_name,

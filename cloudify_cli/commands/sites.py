@@ -62,6 +62,7 @@ def create(name, location, visibility, tenant_name, client, logger):
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
+@cfy.options.extended_view
 def get(name, tenant_name, client, logger):
     """Get details for a single site
 
@@ -112,6 +113,7 @@ def update(name, location, visibility, new_name, tenant_name, client, logger):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def list(sort_by,
          descending,
          tenant_name,

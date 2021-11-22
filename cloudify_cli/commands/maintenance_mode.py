@@ -42,6 +42,7 @@ def maintenance_mode():
                           '[manager only]')
 @cfy.options.common_options
 @cfy.pass_client()
+@cfy.options.extended_view
 def status(client):
     """Retrieve the current maintenance-mode status.
     """

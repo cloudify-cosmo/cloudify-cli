@@ -324,6 +324,7 @@ def get_broker(client, logger, name):
 @pass_cluster_client()
 @cfy.pass_logger
 @cfy.options.common_options
+@cfy.options.extended_view
 def list_brokers(client, logger):
     """List brokers associated with the cluster."""
     _list_brokers(client, logger)
@@ -433,6 +434,7 @@ def db_nodes():
 @pass_cluster_client()
 @cfy.pass_logger
 @cfy.options.common_options
+@cfy.options.extended_view
 def update_db_nodes(client, logger):
     db_nodes_list = client.manager.update_db_nodes()
     print_data(DB_COLUMNS, db_nodes_list, 'HA Cluster db nodes')
@@ -443,6 +445,7 @@ def update_db_nodes(client, logger):
 @pass_cluster_client()
 @cfy.pass_logger
 @cfy.options.common_options
+@cfy.options.extended_view
 def list_db_nodes(client, logger):
     db_nodes_list = client.manager.get_db_nodes()
     print_data(DB_COLUMNS, db_nodes_list, 'HA Cluster db nodes')
@@ -461,6 +464,7 @@ def managers():
 @pass_cluster_client()
 @cfy.pass_logger
 @cfy.options.common_options
+@cfy.options.extended_view
 def list_managers(client, logger):
     managers_list = client.manager.get_managers()
     print_data(MANAGER_COLUMNS, managers_list, 'HA Cluster manager nodes')

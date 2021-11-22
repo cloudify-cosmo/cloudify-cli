@@ -41,6 +41,7 @@ def workflows():
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_logger
 @cfy.pass_client()
+@cfy.options.extended_view
 def get(workflow_id, deployment_id, logger, client, tenant_name):
     """Retrieve information for a specific workflow of a specific deployment
 
@@ -109,6 +110,7 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_logger
 @cfy.pass_client()
+@cfy.options.extended_view
 def list(deployment_id, logger, client, tenant_name):
     """List all workflows on the manager for a specific deployment
     """

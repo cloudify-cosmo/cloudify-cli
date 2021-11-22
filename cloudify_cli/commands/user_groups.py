@@ -50,6 +50,7 @@ def user_groups():
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def list(sort_by,
          descending,
          get_data,
@@ -110,6 +111,7 @@ def create(user_group_name,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def get(user_group_name, get_data, logger, client):
     """Get details for a single user group
 

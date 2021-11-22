@@ -210,6 +210,7 @@ def _print_single_update(deployment_update_dict,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def manager_list(blueprint_id,
                  group_id,
                  filter_id,
@@ -274,6 +275,7 @@ def manager_list(blueprint_id,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def manager_history(deployment_id,
                     sort_by,
                     descending,
@@ -940,6 +942,7 @@ def modifications():
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def list_modifications(deployment_id,
                        pagination_offset,
                        pagination_size,
@@ -1059,6 +1062,7 @@ def _format_group(g):
 @groups.command('list', short_help='List all deployment groups')
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def groups_list(client, logger):
     groups = [_format_group(g) for g in client.deployment_groups.list()]
     print_data(DEP_GROUP_COLUMNS, groups, 'Deployment groups:')
@@ -1552,6 +1556,7 @@ def schedule_delete(deployment_id, schedule_id, logger, client, tenant_name):
 @cfy.options.tz
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def schedule_list(deployment_id,
                   sort_by,
                   descending,
@@ -1613,6 +1618,7 @@ def schedule_list(deployment_id,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def schedule_get(deployment_id,
                  schedule_id,
                  preview,

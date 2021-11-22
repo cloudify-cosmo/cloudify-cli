@@ -25,7 +25,9 @@ from .. import utils
 from ..table import print_data, print_single, print_details
 from ..utils import get_deployment_environment_execution
 from ..cli import cfy, helptexts
-from ..logger import get_events_logger, get_global_json_output
+from ..logger import (get_events_logger,
+                      get_global_json_output,
+                      get_global_extended_view)
 from ..constants import DEFAULT_UNINSTALL_WORKFLOW, CREATE_DEPLOYMENT
 from ..execution_events_fetcher import (
     ExecutionEventsFetcher,
@@ -75,6 +77,7 @@ def executions():
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def manager_get(execution_id, logger, client, tenant_name):
     """Retrieve information for a specific execution
 
@@ -92,7 +95,8 @@ def manager_get(execution_id, logger, client, tenant_name):
     columns = FULL_EXECUTION_COLUMNS
     if get_global_json_output():
         columns += ['parameters']
-    print_single(columns, execution, 'Execution:', max_width=50,
+    max_width = None if get_global_extended_view() else 50
+    print_single(columns, execution, 'Execution:', max_width=max_width,
                  labels=EXECUTION_TABLE_LABELS)
 
     if not get_global_json_output():
@@ -117,6 +121,7 @@ def manager_get(execution_id, logger, client, tenant_name):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def manager_list(
         deployment_id,
         include_system_workflows,
@@ -387,6 +392,7 @@ def manager_resume(execution_id, reset_operations, logger, client,
 @cfy.options.blueprint_id(required=True)
 @cfy.options.common_options
 @cfy.pass_logger
+@cfy.options.extended_view
 def local_list(blueprint_id, logger):
     """Execute a workflow
 
@@ -404,6 +410,7 @@ def local_list(blueprint_id, logger):
 @cfy.options.blueprint_id(required=True)
 @cfy.options.common_options
 @cfy.pass_logger
+@cfy.options.extended_view
 def local_get(execution_id, blueprint_id, logger):
     """Retrieve information for a specific execution
 
@@ -554,6 +561,7 @@ def groups():
 @cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def execution_groups_get(execution_group_id, client, logger):
     group = client.execution_groups.get(execution_group_id)
     print_single(
@@ -576,6 +584,7 @@ def _format_group(g):
 @cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def execution_groups_list(client, logger):
     groups = [_format_group(g) for g in client.execution_groups.list()]
     print_data(
@@ -591,6 +600,7 @@ def execution_groups_list(client, logger):
 @cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def execution_groups_details(execution_group_id, client, logger):
     group = client.execution_groups.get(execution_group_id)
     group.update({'#executions': len(group.get('execution_ids'))})

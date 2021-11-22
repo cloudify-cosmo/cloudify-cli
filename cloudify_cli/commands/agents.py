@@ -59,6 +59,7 @@ def agents():
 @cfy.options.all_tenants
 @cfy.pass_logger
 @cfy.pass_client()
+@cfy.options.extended_view
 def agents_list(agent_filters, tenant_name, client, logger, all_tenants):
     utils.explicit_tenant_name_message(tenant_name, logger)
     agent_filters['_all_tenants'] = all_tenants

@@ -57,6 +57,7 @@ def node_instances():
     required=False, resource_name_for_help='node-instance')
 @cfy.pass_logger
 @cfy.pass_client()
+@cfy.options.extended_view
 def get(node_instance_id, logger, client, tenant_name):
     """Retrieve information for a specific node-instance
 
@@ -92,6 +93,7 @@ def get(node_instance_id, logger, client, tenant_name):
 @cfy.options.common_options
 @cfy.pass_logger
 @cfy.pass_client()
+@cfy.options.extended_view
 def list(deployment_id,
          node_name,
          sort_by,
@@ -193,6 +195,7 @@ def summary(target_field, sub_field, logger, client, tenant_name,
                          resource_name_for_help='node-instance')
 @cfy.pass_logger
 @cfy.pass_client()
+@cfy.options.extended_view
 def update_runtime(node_instance_id, logger, client, tenant_name, properties):
     """Update the runtime properties of a specific node-instance
 
@@ -212,6 +215,7 @@ def update_runtime(node_instance_id, logger, client, tenant_name, properties):
                          resource_name_for_help='node-instance')
 @cfy.pass_logger
 @cfy.pass_client()
+@cfy.options.extended_view
 def delete_runtime(node_instance_id, logger, client, tenant_name, properties):
     """Delete specified runtime properties of a specific node-instance
 

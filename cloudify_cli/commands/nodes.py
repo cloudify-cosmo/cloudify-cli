@@ -55,6 +55,7 @@ def nodes():
 @cfy.options.tenant_name(required=False, resource_name_for_help='node')
 @cfy.pass_logger
 @cfy.pass_client()
+@cfy.options.extended_view
 def get(node_id, deployment_id, logger, client, tenant_name):
     """Retrieve information for a specific node of a specific deployment
 
@@ -131,6 +132,7 @@ def get(node_id, deployment_id, logger, client, tenant_name):
 @cfy.options.common_options
 @cfy.pass_logger
 @cfy.pass_client()
+@cfy.options.extended_view
 def list(deployment_id,
          sort_by,
          descending,

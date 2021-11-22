@@ -232,6 +232,7 @@ def update(key,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def list(sort_by,
          descending,
          tenant_name,

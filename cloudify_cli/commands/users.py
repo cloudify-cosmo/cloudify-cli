@@ -76,6 +76,7 @@ def users():
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def list(sort_by,
          descending,
          get_data,
@@ -192,6 +193,7 @@ def set_role(username, security_role, logger, client):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def get(username, get_data, logger, client):
     """Get details for a single user
 

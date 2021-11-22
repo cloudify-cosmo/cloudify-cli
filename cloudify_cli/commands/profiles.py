@@ -85,6 +85,7 @@ def _format_cluster_profile(profile):
                   short_help='Retrieve current profile information')
 @cfy.options.common_options
 @cfy.pass_logger
+@cfy.options.extended_view
 def show(logger):
     """
     Shows your current active profile and it's properties
@@ -114,6 +115,7 @@ def show(logger):
                   short_help='List profiles')
 @cfy.options.common_options
 @cfy.pass_logger
+@cfy.options.extended_view
 def profiles_list(logger):
     """
     List all profiles

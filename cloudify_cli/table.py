@@ -19,7 +19,10 @@ import json
 from datetime import datetime
 
 from cloudify_cli.prettytable import PrettyTable
-from .logger import get_global_json_output, CloudifyJSONEncoder, output
+from .logger import (get_global_json_output,
+                     get_global_extended_view,
+                     CloudifyJSONEncoder,
+                     output)
 
 from cloudify._compat import text_type
 
@@ -52,34 +55,46 @@ def generate(cols, data, defaults=None, labels=None):
     """
     defaults = defaults or {}
     labels = labels or {}
-
-    def get_values_per_column(column, row_data):
-        if column in row_data:
-            if row_data[column] and isinstance(row_data[column], text_type):
-                row_data[column] = get_timestamp(row_data[column]) \
-                    or row_data[column]
-            elif row_data[column] and isinstance(row_data[column], list):
-                row_data[column] = ','.join(row_data[column])
-            elif isinstance(row_data[column], bool):
-                pass  # Taking care of False (otherwise would be changed to '')
-            elif isinstance(row_data[column], int):
-                pass  # Taking care of zero (otherwise would be changed to '')
-            elif not row_data[column]:
-                # if it's empty list, don't print []
-                row_data[column] = ''
-            return row_data[column]
-        else:
-            return defaults.get(column, 'N/A')
-
     pt = PrettyTable([labels.get(col, col) for col in cols])
 
     for d in data:
         values_row = []
         for c in cols:
-            values_row.append(get_values_per_column(c, d))
+            values_row.append(get_values_per_column(c, d, defaults))
         pt.add_row(values_row)
 
     return pt
+
+
+def generate_extended(cols, data, defaults=None, labels=None):
+    defaults = defaults or {}
+    labels = labels or {}
+    pt = PrettyTable(["Field", "Value"])
+    pt.align["Field"] = "l"
+    pt.align["Value"] = "l"
+    for c in cols:
+        display_value = get_values_per_column(c, data, defaults)
+        pt.add_row([labels.get(c, c), display_value])
+    return pt
+
+
+def get_values_per_column(column, row_data, defaults):
+    if column in row_data:
+        if row_data[column] and isinstance(row_data[column], text_type):
+            row_data[column] = get_timestamp(row_data[column]) \
+                or row_data[column]
+        elif row_data[column] and isinstance(row_data[column], list):
+            row_data[column] = ','.join(row_data[column])
+        elif isinstance(row_data[column], bool):
+            pass  # Taking care of False (otherwise would be changed to '')
+        elif isinstance(row_data[column], int):
+            pass  # Taking care of zero (otherwise would be changed to '')
+        elif not row_data[column]:
+            # if it's empty list, don't print []
+            row_data[column] = ''
+        return row_data[column]
+    else:
+        return defaults.get(column, 'N/A')
 
 
 def display(title, tb):
@@ -112,6 +127,15 @@ def print_data(columns, items, header_text, max_width=None, defaults=None,
     """
     if get_global_json_output():
         format_json_output(columns, items, defaults=defaults, labels=labels)
+    elif get_global_extended_view():
+        if not items:
+            output("{0}[NO RECORDS]{0}".format(os.linesep))
+        for i, entry in enumerate(items):
+            pt = generate_extended(
+                columns, data=entry, defaults=defaults, labels=labels)
+            if max_width:
+                pt.max_width = max_width
+            display("{0} [RECORD {1}]".format(header_text, i+1), pt)
     else:
         pt = generate(columns, data=items, defaults=defaults, labels=labels)
         if max_width:
@@ -129,6 +153,12 @@ def print_single(columns, item, header_text, max_width=None, defaults=None,
     if get_global_json_output():
         output(format_json_object(
             columns, item, defaults=defaults, labels=labels))
+    elif get_global_extended_view():
+        pt = generate_extended(
+            columns, data=item, defaults=defaults, labels=labels)
+        if max_width:
+            pt.max_width = max_width
+        display(header_text, pt)
     else:
         print_data(columns, [item], header_text, max_width, defaults, labels)
 

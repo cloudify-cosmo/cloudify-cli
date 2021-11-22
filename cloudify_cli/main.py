@@ -53,8 +53,9 @@ from .commands import audit_log
 
 @cfy.group(name='cfy')
 @cfy.options.verbose(expose_value=True)
-@cfy.options.version
 @cfy.options.json
+@cfy.options.version
+@cfy.options.extended_view
 def _cfy(verbose):
     """Cloudify's Command Line Interface
 

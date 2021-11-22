@@ -259,6 +259,7 @@ def delete(blueprint_id, force, logger, client, tenant_name):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def manager_list(filter_id,
                  filter_rules,
                  sort_by,
@@ -311,6 +312,7 @@ def manager_list(filter_id,
 @cfy.command(name='list', short_help='List blueprints')
 @cfy.options.local_common_options
 @cfy.pass_logger
+@cfy.options.extended_view
 def local_list(logger):
     blueprints = local.list_blueprints()
     print_data(BASE_BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
@@ -324,6 +326,7 @@ def local_list(logger):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def get(blueprint_id, logger, client, tenant_name):
     """Retrieve information for a specific blueprint
 
@@ -370,6 +373,7 @@ def get(blueprint_id, logger, client, tenant_name):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def inputs(blueprint_id, logger, client, tenant_name):
     """Retrieve inputs for a specific blueprint
 

@@ -165,6 +165,7 @@ def upload(ctx,
 @cfy.options.plugins_bundle_path
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def upload_caravan(client, logger, path):
     client.license.check()
     if not path:
@@ -283,6 +284,7 @@ def get(plugin_id, logger, client, tenant_name, get_data):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def list(sort_by,
          descending,
          tenant_name,
@@ -629,6 +631,7 @@ def _update_a_blueprint(blueprint_id,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def manager_get_update(plugins_update_id, logger, client, tenant_name):
     """Retrieve information for a specific plugins update
 
@@ -656,6 +659,7 @@ def manager_get_update(plugins_update_id, logger, client, tenant_name):
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def manager_history(blueprint_id,
                     sort_by,
                     descending,

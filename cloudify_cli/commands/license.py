@@ -37,6 +37,7 @@ def check(logger, client):
 @cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
+@cfy.options.extended_view
 def list(logger, client):
     """Returns the Cloudify license from the Manager.
     """
