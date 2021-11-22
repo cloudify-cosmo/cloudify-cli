@@ -56,7 +56,7 @@ def nodes():
 @cfy.pass_logger
 @cfy.pass_client()
 @cfy.options.extended_view
-def get(node_id, deployment_id, logger, client, tenant_name, extended_view):
+def get(node_id, deployment_id, logger, client, tenant_name):
     """Retrieve information for a specific node of a specific deployment
 
     `NODE_ID` is the node id to get information on.
@@ -106,8 +106,7 @@ def get(node_id, deployment_id, logger, client, tenant_name, extended_view):
             # and build a new array in order to print it in a table
             op['name'] = op_name
             operations += [op]
-        print_data(OPERATION_COLUMNS, operations, 'Operations:',
-                   extended=extended_view)
+        print_data(OPERATION_COLUMNS, operations, 'Operations:')
 
         # print node instances IDs
         logger.info('Node instance IDs:')
@@ -142,7 +141,7 @@ def list(deployment_id,
          search,
          pagination_offset,
          pagination_size,
-         logger, client, extended_view):
+         logger, client):
     """List nodes
 
     If `DEPLOYMENT_ID` is provided, list nodes for that deployment.
@@ -170,8 +169,7 @@ def list(deployment_id,
         raise CloudifyCliError('Deployment {0} does not exist'.format(
             deployment_id))
 
-    print_data(NODE_COLUMNS, nodes, 'Nodes:', labels=NODE_TABLE_LABELS,
-               extended=extended_view)
+    print_data(NODE_COLUMNS, nodes, 'Nodes:', labels=NODE_TABLE_LABELS)
     total = nodes.metadata.pagination.total
     logger.info('Showing {0} of {1} nodes'.format(len(nodes), total))
 

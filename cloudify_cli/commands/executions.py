@@ -25,7 +25,9 @@ from .. import utils
 from ..table import print_data, print_single, print_details
 from ..utils import get_deployment_environment_execution
 from ..cli import cfy, helptexts
-from ..logger import get_events_logger, get_global_json_output
+from ..logger import (get_events_logger,
+                      get_global_json_output,
+                      get_global_extended_view)
 from ..constants import DEFAULT_UNINSTALL_WORKFLOW, CREATE_DEPLOYMENT
 from ..execution_events_fetcher import (
     ExecutionEventsFetcher,
@@ -76,7 +78,7 @@ def executions():
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.extended_view
-def manager_get(execution_id, logger, client, tenant_name, extended_view):
+def manager_get(execution_id, logger, client, tenant_name):
     """Retrieve information for a specific execution
 
     `EXECUTION_ID` is the execution to get information on.
@@ -93,9 +95,9 @@ def manager_get(execution_id, logger, client, tenant_name, extended_view):
     columns = FULL_EXECUTION_COLUMNS
     if get_global_json_output():
         columns += ['parameters']
-    max_width = None if extended_view else 50
+    max_width = None if get_global_extended_view() else 50
     print_single(columns, execution, 'Execution:', max_width=max_width,
-                 labels=EXECUTION_TABLE_LABELS, extended=extended_view)
+                 labels=EXECUTION_TABLE_LABELS)
 
     if not get_global_json_output():
         print_details(execution.parameters, 'Execution Parameters:')
@@ -130,8 +132,7 @@ def manager_list(
         pagination_size,
         logger,
         client,
-        tenant_name,
-        extended_view):
+        tenant_name):
     """List executions
 
     If `DEPLOYMENT_ID` is provided, list executions for that deployment.
@@ -161,7 +162,7 @@ def manager_list(
             deployment_id))
 
     print_data(MINIMAL_EXECUTION_COLUMNS, executions, 'Executions:',
-               labels=EXECUTION_TABLE_LABELS, extended=extended_view)
+               labels=EXECUTION_TABLE_LABELS)
     total = executions.metadata.pagination.total
     logger.info('Showing {0} of {1} executions'.format(len(executions), total))
 
@@ -392,7 +393,7 @@ def manager_resume(execution_id, reset_operations, logger, client,
 @cfy.options.common_options
 @cfy.pass_logger
 @cfy.options.extended_view
-def local_list(blueprint_id, logger, extended_view):
+def local_list(blueprint_id, logger):
     """Execute a workflow
 
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
@@ -400,7 +401,7 @@ def local_list(blueprint_id, logger, extended_view):
     env = local.load_env(blueprint_id)
     executions = env.storage.get_executions()
     print_data(LOCAL_EXECUTION_COLUMNS, executions, 'Executions:',
-               labels=EXECUTION_TABLE_LABELS, extended=extended_view)
+               labels=EXECUTION_TABLE_LABELS)
 
 
 @cfy.command(name='get',
@@ -410,7 +411,7 @@ def local_list(blueprint_id, logger, extended_view):
 @cfy.options.common_options
 @cfy.pass_logger
 @cfy.options.extended_view
-def local_get(execution_id, blueprint_id, logger, extended_view):
+def local_get(execution_id, blueprint_id, logger):
     """Retrieve information for a specific execution
 
     `EXECUTION_ID` is the execution to get information on.
@@ -423,7 +424,7 @@ def local_get(execution_id, blueprint_id, logger, extended_view):
     if get_global_json_output():
         columns += ['parameters']
     print_single(LOCAL_EXECUTION_COLUMNS, execution, 'Execution:',
-                 labels=EXECUTION_TABLE_LABELS, extended=extended_view)
+                 labels=EXECUTION_TABLE_LABELS)
     if not get_global_json_output():
         print_details(execution['parameters'], 'Execution Parameters:')
 
@@ -561,13 +562,12 @@ def groups():
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.extended_view
-def execution_groups_get(execution_group_id, client, logger, extended_view):
+def execution_groups_get(execution_group_id, client, logger):
     group = client.execution_groups.get(execution_group_id)
     print_single(
         ['id', 'workflow_id', 'deployment_group_id'],
         group,
-        'Execution group {0}:'.format(execution_group_id),
-        extended=extended_view
+        'Execution group {0}:'.format(execution_group_id)
     )
 
 
@@ -585,13 +585,12 @@ def _format_group(g):
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.extended_view
-def execution_groups_list(client, logger, extended_view):
+def execution_groups_list(client, logger):
     groups = [_format_group(g) for g in client.execution_groups.list()]
     print_data(
         ['id', 'workflow_id', 'deployment_group'],
         groups,
-        'Execution groups:',
-        extended=extended_view
+        'Execution groups:'
     )
 
 
@@ -602,15 +601,13 @@ def execution_groups_list(client, logger, extended_view):
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.extended_view
-def execution_groups_details(execution_group_id, client, logger,
-                             extended_view):
+def execution_groups_details(execution_group_id, client, logger):
     group = client.execution_groups.get(execution_group_id)
     group.update({'#executions': len(group.get('execution_ids'))})
     print_single(['workflow_id', 'deployment_group_id', '#executions',
                   'created_at', 'status'],
                  group,
-                 'Execution group {0}:'.format(execution_group_id),
-                 extended=extended_view)
+                 'Execution group {0}:'.format(execution_group_id))
 
     # Let's find out the total number of events
     events = client.events.list(

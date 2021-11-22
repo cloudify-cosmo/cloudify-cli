@@ -58,8 +58,7 @@ def list(sort_by,
          pagination_offset,
          pagination_size,
          logger,
-         client,
-         extended_view):
+         client):
     """List all user groups
     """
     logger.info('Listing all user groups...')
@@ -74,8 +73,7 @@ def list(sort_by,
     total = user_groups_list.metadata.pagination.total
     if get_data:
         user_groups_list = [_format_group(group) for group in user_groups_list]
-    print_data(GROUP_COLUMNS, user_groups_list, 'User groups:',
-               extended=extended_view)
+    print_data(GROUP_COLUMNS, user_groups_list, 'User groups:')
     logger.info('Showing {0} of {1} user groups'.format(len(user_groups_list),
                                                         total))
 
@@ -114,7 +112,7 @@ def create(user_group_name,
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.extended_view
-def get(user_group_name, get_data, logger, client, extended_view):
+def get(user_group_name, get_data, logger, client):
     """Get details for a single user group
 
     `USER_GROUP_NAME` is the name of the user group
@@ -127,8 +125,7 @@ def get(user_group_name, get_data, logger, client, extended_view):
     if get_data:
         _format_group(user_group_details)
     print_single(GROUP_COLUMNS, user_group_details,
-                 'Requested user group info:',
-                 extended=extended_view)
+                 'Requested user group info:')
 
 
 @user_groups.command(name='set-role',

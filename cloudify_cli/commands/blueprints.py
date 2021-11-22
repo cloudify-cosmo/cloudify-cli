@@ -270,8 +270,7 @@ def manager_list(filter_id,
                  pagination_offset,
                  pagination_size,
                  logger,
-                 client,
-                 extended_view):
+                 client):
     """List all blueprints
     """
     def trim_description(blueprint):
@@ -298,8 +297,7 @@ def manager_list(filter_id,
     )
     blueprints = [trim_description(b) for b in blueprints_list]
     modify_resource_labels(blueprints)
-    print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:',
-               extended=extended_view)
+    print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
     total = blueprints_list.metadata.pagination.total
     base_str = 'Showing {0} of {1} blueprints'.format(
@@ -315,10 +313,9 @@ def manager_list(filter_id,
 @cfy.options.local_common_options
 @cfy.pass_logger
 @cfy.options.extended_view
-def local_list(logger, extended_view):
+def local_list(logger):
     blueprints = local.list_blueprints()
-    print_data(BASE_BLUEPRINT_COLUMNS, blueprints, 'Blueprints:',
-               extended=extended_view)
+    print_data(BASE_BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
 
 @blueprints.command(name='get',
@@ -330,7 +327,7 @@ def local_list(logger, extended_view):
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.extended_view
-def get(blueprint_id, logger, client, tenant_name, extended_view):
+def get(blueprint_id, logger, client, tenant_name):
     """Retrieve information for a specific blueprint
 
     `BLUEPRINT_ID` is the id of the blueprint to get information on.
@@ -352,8 +349,7 @@ def get(blueprint_id, logger, client, tenant_name, extended_view):
         blueprint_dict['deployments'] = blueprint_deployments
         print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
     else:
-        print_single(columns, blueprint_dict, 'Blueprint:', max_width=50,
-                     extended=extended_view)
+        print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
 
         logger.info('Description:')
         logger.info('{0}\n'.format(blueprint_dict['description'] or ''))
@@ -378,7 +374,7 @@ def get(blueprint_id, logger, client, tenant_name, extended_view):
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.extended_view
-def inputs(blueprint_id, logger, client, tenant_name, extended_view):
+def inputs(blueprint_id, logger, client, tenant_name):
     """Retrieve inputs for a specific blueprint
 
     `BLUEPRINT_ID` is the path of the blueprint to get inputs for.
@@ -393,7 +389,7 @@ def inputs(blueprint_id, logger, client, tenant_name, extended_view):
              'description': input.get('description', '-')}
             for name, input in inputs.items()]
 
-    print_data(INPUTS_COLUMNS, data, 'Inputs:', extended=extended_view)
+    print_data(INPUTS_COLUMNS, data, 'Inputs:')
 
 
 @blueprints.command(name='package',

@@ -43,6 +43,7 @@ QUIET = -1
 
 verbosity_level = NO_VERBOSE
 json_output = False
+extended_view = False
 
 _lgr = None
 
@@ -210,6 +211,15 @@ def set_global_json_output(enabled=False):
 
 def get_global_json_output():
     return json_output
+
+
+def set_global_extended_view(enabled=False):
+    global extended_view
+    extended_view = enabled
+
+
+def get_global_extended_view():
+    return extended_view
 
 
 def output(line):

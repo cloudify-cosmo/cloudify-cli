@@ -19,7 +19,10 @@ import json
 from datetime import datetime
 
 from cloudify_cli.prettytable import PrettyTable
-from .logger import get_global_json_output, CloudifyJSONEncoder, output
+from .logger import (get_global_json_output,
+                     get_global_extended_view,
+                     CloudifyJSONEncoder,
+                     output)
 
 from cloudify._compat import text_type
 
@@ -119,12 +122,12 @@ def format_json_output(cols, data, defaults=None, labels=None):
 
 
 def print_data(columns, items, header_text, max_width=None, defaults=None,
-               labels=None, extended=False):
+               labels=None):
     """Display the items in a tabular manner.
     """
     if get_global_json_output():
         format_json_output(columns, items, defaults=defaults, labels=labels)
-    elif extended:
+    elif get_global_extended_view():
         if not items:
             output("{0}[NO RECORDS]{0}".format(os.linesep))
         for i, entry in enumerate(items):
@@ -141,7 +144,7 @@ def print_data(columns, items, header_text, max_width=None, defaults=None,
 
 
 def print_single(columns, item, header_text, max_width=None, defaults=None,
-                 labels=None, extended=False):
+                 labels=None):
     """Print out a single item.
 
     This is similar to the table-generating print_data, but for use when
@@ -150,7 +153,7 @@ def print_single(columns, item, header_text, max_width=None, defaults=None,
     if get_global_json_output():
         output(format_json_object(
             columns, item, defaults=defaults, labels=labels))
-    elif extended:
+    elif get_global_extended_view():
         pt = generate_extended(
             columns, data=item, defaults=defaults, labels=labels)
         if max_width:

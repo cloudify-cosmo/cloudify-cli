@@ -43,14 +43,14 @@ def maintenance_mode():
 @cfy.options.common_options
 @cfy.pass_client()
 @cfy.options.extended_view
-def status(client, extended_view):
+def status(client):
     """Retrieve the current maintenance-mode status.
     """
-    _print_maintenance_mode_status(client, extended_view=extended_view)
+    _print_maintenance_mode_status(client)
 
 
 @cfy.pass_logger
-def _print_maintenance_mode_status(client, logger, extended_view=None):
+def _print_maintenance_mode_status(client, logger):
     status_response = client.maintenance_mode.status()
 
     logger.info('\nMaintenance Mode Status:')
@@ -81,8 +81,7 @@ def _print_maintenance_mode_status(client, logger, extended_view=None):
                 columns=EXECUTION_COLUMNS,
                 items=remaining_executions,
                 header_text='Remaining executions:',
-                max_width=50,
-                extended=extended_view
+                max_width=50
             )
 
     if status_response.status == MAINTENANCE_MODE_ACTIVE:

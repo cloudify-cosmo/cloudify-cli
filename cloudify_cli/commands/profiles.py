@@ -86,7 +86,7 @@ def _format_cluster_profile(profile):
 @cfy.options.common_options
 @cfy.pass_logger
 @cfy.options.extended_view
-def show(logger, extended_view):
+def show(logger):
     """
     Shows your current active profile and it's properties
     """
@@ -106,11 +106,9 @@ def show(logger, extended_view):
                    labels={
                        'profile_name': 'Name',
                        'hostname': 'Manager hostname',
-                       'host_ip': 'Manager ip'},
-                   extended=extended_view)
+                       'host_ip': 'Manager ip'})
     else:
-        print_single(PROFILE_COLUMNS, active_profile, 'Active profile:',
-                     extended=extended_view)
+        print_single(PROFILE_COLUMNS, active_profile, 'Active profile:')
 
 
 @profiles.command(name='list',
@@ -118,7 +116,7 @@ def show(logger, extended_view):
 @cfy.options.common_options
 @cfy.pass_logger
 @cfy.options.extended_view
-def profiles_list(logger, extended_view):
+def profiles_list(logger):
     """
     List all profiles
     """
@@ -135,8 +133,7 @@ def profiles_list(logger, extended_view):
 
     if profiles:
         logger.info('Listing all profiles...')
-        print_data(PROFILE_COLUMNS, profiles, 'Profiles:',
-                   extended=extended_view)
+        print_data(PROFILE_COLUMNS, profiles, 'Profiles:')
 
     if not profile_names:
         logger.info(

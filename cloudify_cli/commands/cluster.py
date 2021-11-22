@@ -325,9 +325,9 @@ def get_broker(client, logger, name):
 @cfy.pass_logger
 @cfy.options.common_options
 @cfy.options.extended_view
-def list_brokers(client, logger, extended_view):
+def list_brokers(client, logger):
     """List brokers associated with the cluster."""
-    _list_brokers(client, logger, extended_view)
+    _list_brokers(client, logger)
 
 
 def _clean_up_broker_for_output(broker):
@@ -337,12 +337,11 @@ def _clean_up_broker_for_output(broker):
         broker['networks'] = json.dumps(broker['networks'])
 
 
-def _list_brokers(client, logger, extended_view=False):
+def _list_brokers(client, logger):
     brokers = client.manager.get_brokers()
     for broker in brokers:
         _clean_up_broker_for_output(broker)
-    print_data(BROKER_COLUMNS, brokers, 'HA Cluster brokers',
-               extended=extended_view)
+    print_data(BROKER_COLUMNS, brokers, 'HA Cluster brokers')
 
 
 @brokers.command(name='add',
@@ -436,10 +435,9 @@ def db_nodes():
 @cfy.pass_logger
 @cfy.options.common_options
 @cfy.options.extended_view
-def update_db_nodes(client, logger, extended_view):
+def update_db_nodes(client, logger):
     db_nodes_list = client.manager.update_db_nodes()
-    print_data(DB_COLUMNS, db_nodes_list, 'HA Cluster db nodes',
-               extended=extended_view)
+    print_data(DB_COLUMNS, db_nodes_list, 'HA Cluster db nodes')
 
 
 @db_nodes.command(name='list',
@@ -448,10 +446,9 @@ def update_db_nodes(client, logger, extended_view):
 @cfy.pass_logger
 @cfy.options.common_options
 @cfy.options.extended_view
-def list_db_nodes(client, logger, extended_view):
+def list_db_nodes(client, logger):
     db_nodes_list = client.manager.get_db_nodes()
-    print_data(DB_COLUMNS, db_nodes_list, 'HA Cluster db nodes',
-               extended=extended_view)
+    print_data(DB_COLUMNS, db_nodes_list, 'HA Cluster db nodes')
 
 
 @cluster.group(name='managers',
@@ -468,7 +465,6 @@ def managers():
 @cfy.pass_logger
 @cfy.options.common_options
 @cfy.options.extended_view
-def list_managers(client, logger, extended_view):
+def list_managers(client, logger):
     managers_list = client.manager.get_managers()
-    print_data(MANAGER_COLUMNS, managers_list, 'HA Cluster manager nodes',
-               extended=extended_view)
+    print_data(MANAGER_COLUMNS, managers_list, 'HA Cluster manager nodes')

@@ -60,13 +60,12 @@ def agents():
 @cfy.pass_logger
 @cfy.pass_client()
 @cfy.options.extended_view
-def agents_list(agent_filters, tenant_name, client, logger, all_tenants,
-                extended_view):
+def agents_list(agent_filters, tenant_name, client, logger, all_tenants):
     utils.explicit_tenant_name_message(tenant_name, logger)
     agent_filters['_all_tenants'] = all_tenants
     agent_list = client.agents.list(**agent_filters)
     logger.info('Listing agents...')
-    print_data(AGENT_COLUMNS, agent_list, 'Agents:', extended=extended_view)
+    print_data(AGENT_COLUMNS, agent_list, 'Agents:')
 
 
 @agents.command(name='install',

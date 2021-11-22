@@ -224,8 +224,7 @@ def manager_list(blueprint_id,
                  pagination_size,
                  logger,
                  client,
-                 tenant_name,
-                 extended_view):
+                 tenant_name):
     """List deployments
 
     If `--blueprint-id` is provided, list deployments for that blueprint.
@@ -251,8 +250,7 @@ def manager_list(blueprint_id,
                                           _search_name=search_name)
     modify_resource_labels(deployments)
     total = deployments.metadata.pagination.total
-    print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:',
-               extended=extended_view)
+    print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:')
 
     base_str = 'Showing {0} of {1} deployments'.format(len(deployments), total)
     if filter_rules or filter_id:
@@ -287,8 +285,7 @@ def manager_history(deployment_id,
                     pagination_size,
                     logger,
                     client,
-                    tenant_name,
-                    extended_view):
+                    tenant_name):
     """Show deployment history by listing deployment updates
 
     If `--deployment-id` is provided, list deployment updates for that
@@ -312,8 +309,7 @@ def manager_history(deployment_id,
     )
     total = deployment_updates.metadata.pagination.total
     print_data(
-        DEPLOYMENT_UPDATE_COLUMNS, deployment_updates, 'Deployment updates:',
-        extended=extended_view)
+        DEPLOYMENT_UPDATE_COLUMNS, deployment_updates, 'Deployment updates:')
     logger.info('Showing {0} of {1} deployment updates'.format(
         len(deployment_updates), total))
 
@@ -952,8 +948,7 @@ def list_modifications(deployment_id,
                        pagination_size,
                        logger,
                        client,
-                       tenant_name,
-                       extended_view):
+                       tenant_name):
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing modifications of the deployment %s...', deployment_id)
     deployment_modifications = client.deployment_modifications.list(
@@ -965,7 +960,7 @@ def list_modifications(deployment_id,
                  for dm in deployment_modifications]
     total = deployment_modifications.metadata.pagination.total
     print_data(DEPLOYMENT_MODIFICATION_COLUMNS, flattened,
-               'Deployment modifications:', extended=extended_view)
+               'Deployment modifications:')
     logger.info('Showing %d of %d deployment modifications',
                 len(deployment_modifications), total)
 
@@ -1068,10 +1063,9 @@ def _format_group(g):
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.extended_view
-def groups_list(client, logger, extended_view):
+def groups_list(client, logger):
     groups = [_format_group(g) for g in client.deployment_groups.list()]
-    print_data(DEP_GROUP_COLUMNS, groups, 'Deployment groups:',
-               extended=extended_view)
+    print_data(DEP_GROUP_COLUMNS, groups, 'Deployment groups:')
 
 
 @groups.command('create', short_help='Create a new deployment group')
@@ -1575,8 +1569,7 @@ def schedule_list(deployment_id,
                   until,
                   tz,
                   logger,
-                  client,
-                  extended_view):
+                  client):
     """
     List all deployment schedules on the manager. If DEPLOYMENT_ID is
     provided, list only schedules of this deployment.
@@ -1605,8 +1598,7 @@ def schedule_list(deployment_id,
         schedules = _list_schedules_in_time_range(schedules,
                                                   since_datetime,
                                                   until_datetime)
-    print_data(SCHEDULE_TABLE_COLUMNS, schedules, 'Deployment schedules:',
-               extended=extended_view)
+    print_data(SCHEDULE_TABLE_COLUMNS, schedules, 'Deployment schedules:')
     logger.info('Showing %s of %s deployment schedules', len(schedules), total)
 
 
@@ -1632,8 +1624,7 @@ def schedule_get(deployment_id,
                  preview,
                  logger,
                  client,
-                 tenant_name,
-                 extended_view):
+                 tenant_name):
     """
     Retrieve information for a specific deployment schedule
 
@@ -1651,8 +1642,7 @@ def schedule_get(deployment_id,
                        if k not in SCHEDULE_TABLE_COLUMNS + extra_columns}
     if get_global_json_output():
         columns += additional_data.keys() + extra_columns
-    print_single(columns, dep_schedule, 'Execution schedule:', max_width=50,
-                 extended=extended_view)
+    print_single(columns, dep_schedule, 'Execution schedule:', max_width=50)
 
     if not get_global_json_output():
         print_details(dep_schedule['rule'], 'Scheduling rule:')

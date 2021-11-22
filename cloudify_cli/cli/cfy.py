@@ -34,7 +34,8 @@ from ..logger import (
     get_logger,
     set_global_verbosity_level,
     DEFAULT_LOG_FILE,
-    set_global_json_output)
+    set_global_json_output,
+    set_global_extended_view)
 from ..filters_utils import (get_filter_rules,
                              create_labels_filter_rules_list,
                              create_attributes_filter_rules_list)
@@ -386,6 +387,14 @@ def set_json(ctx, param, value):
 def set_format(ctx, param, value):
     if value == 'json':
         set_global_json_output(True)
+    elif value == 'extended':
+        set_global_extended_view(True)
+    return value
+
+
+def set_extended_view(ctx, param, value):
+    if value is not None:
+        set_global_extended_view(value)
     return value
 
 
@@ -902,8 +911,10 @@ class Options(object):
             '-x',
             '--extended-view',
             is_flag=True,
-            default=False,
-            help=helptexts.EXTENDED_VIEW)
+            expose_value=False,
+            default=None,
+            help=helptexts.EXTENDED_VIEW,
+            callback=set_extended_view)
 
         self.dont_update_plugins = click.option(
             '--dont-update-plugins',

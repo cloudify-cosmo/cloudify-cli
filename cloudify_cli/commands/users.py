@@ -84,8 +84,7 @@ def list(sort_by,
          pagination_offset,
          pagination_size,
          logger,
-         client,
-         extended_view):
+         client):
     """List all users
     """
     logger.info('Listing all users...')
@@ -106,8 +105,7 @@ def list(sort_by,
         columns += GET_DATA_COLUMNS
     else:
         columns += NO_GET_DATA_COLUMNS
-    print_data(columns, users_list, 'Users:', labels=USER_LABELS,
-               extended=extended_view)
+    print_data(columns, users_list, 'Users:', labels=USER_LABELS)
     logger.info('Showing {0} of {1} users'.format(len(users_list), total))
 
 
@@ -196,7 +194,7 @@ def set_role(username, security_role, logger, client):
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.extended_view
-def get(username, get_data, logger, client, extended_view):
+def get(username, get_data, logger, client):
     """Get details for a single user
 
     `USERNAME` is the username of the user. (default: current user)
@@ -216,8 +214,7 @@ def get(username, get_data, logger, client, extended_view):
     print_single(columns,
                  user_details,
                  'Requested user info:',
-                 labels=USER_LABELS,
-                 extended=extended_view)
+                 labels=USER_LABELS)
 
 
 @users.command(name='delete',

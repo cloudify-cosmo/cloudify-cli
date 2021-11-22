@@ -241,8 +241,7 @@ def list(sort_by,
          pagination_offset,
          pagination_size,
          logger,
-         client,
-         extended_view):
+         client):
     """List all secrets
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
@@ -255,8 +254,7 @@ def list(sort_by,
         _offset=pagination_offset,
         _size=pagination_size
     )
-    print_data(SECRETS_COLUMNS, secrets_list, 'Secrets:',
-               extended=extended_view)
+    print_data(SECRETS_COLUMNS, secrets_list, 'Secrets:')
     total = secrets_list.metadata.pagination.total
     logger.info('Showing {0} of {1} secrets'.format(len(secrets_list), total))
 
