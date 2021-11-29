@@ -49,6 +49,7 @@ setup(
         'backports.shutil_get_terminal_size==1.0.0',
         'ipaddress==1.0.23',
         'setuptools<=40.7.3',
+        'cffi>=1.14,<1.15',
         'cryptography==3.3.2',
         # Fabric depend on paramiko that depends on cryptography so we need
         # to install the correct version of cryptography before installing
