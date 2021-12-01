@@ -580,6 +580,20 @@ def set_icon(blueprint_id, icon_path, logger, client):
                         .format(blueprint_id))
 
 
+@blueprints.command(name='chown',
+                    short_help="Change blueprint's ownership")
+@cfy.argument('blueprint-id')
+@cfy.options.chown_username()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def chown(blueprint_id, username, logger, client):
+    """Set a new owner for the blueprint."""
+    client.blueprints.update(blueprint_id, {'creator': username})
+    logger.info('Blueprint `{0}` is now owned by user `{1}`.'
+                .format(blueprint_id, username))
+
+
 @blueprints.group(name='labels',
                   short_help="Handle a blueprint's labels")
 @cfy.options.common_options

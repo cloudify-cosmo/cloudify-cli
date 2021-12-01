@@ -2295,6 +2295,14 @@ class Options(object):
             help=help)
 
     @staticmethod
+    def chown_username(required=True):
+        return click.option(
+            '-s',
+            '--username',
+            required=required,
+            help=helptexts.CHOWN_USERNAME)
+
+    @staticmethod
     def _filter_rules(f, resource):
         help_text = (helptexts.DEPLOYMENTS_ATTRS_FILTER_RULES if
                      resource == 'deployment' else
