@@ -578,3 +578,6 @@ AUDIT_TRUNCATE_BEFORE = 'Truncate audit logs which were stored this long ' \
                         'weeks ago), or an ordinary UTC timestamp ' \
                         '(2021-08-18, 2021-08-18T14:25:36, 2021-08-18 '\
                         '14:25:36, 2021-08-18 14:25:36.99, @1629296736).'
+
+SET_USERNAME = 'The name of the user who will be the new owner '\
+               'of the resource.'
