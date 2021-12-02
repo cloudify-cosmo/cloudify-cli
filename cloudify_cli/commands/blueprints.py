@@ -589,9 +589,9 @@ def set_icon(blueprint_id, icon_path, logger, client):
 @cfy.pass_logger
 def set_owner(blueprint_id, username, logger, client):
     """Set a new owner for the blueprint."""
-    client.blueprints.update(blueprint_id, {'creator': username})
+    bp = client.blueprints.update(blueprint_id, {'creator': username})
     logger.info('Blueprint `%s` is now owned by user `%s`.',
-                blueprint_id, username)
+                blueprint_id, bp.get('created_by'))
 
 
 @blueprints.group(name='labels',
