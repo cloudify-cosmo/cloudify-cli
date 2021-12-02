@@ -590,8 +590,8 @@ def set_icon(blueprint_id, icon_path, logger, client):
 def chown(blueprint_id, username, logger, client):
     """Set a new owner for the blueprint."""
     client.blueprints.update(blueprint_id, {'creator': username})
-    logger.info('Blueprint `{0}` is now owned by user `{1}`.'
-                .format(blueprint_id, username))
+    logger.info('Blueprint `%s` is now owned by user `%s`.',
+                blueprint_id, username)
 
 
 @blueprints.group(name='labels',
