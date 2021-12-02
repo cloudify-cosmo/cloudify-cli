@@ -323,6 +323,20 @@ def set_visibility(key, visibility, tenant_name, logger, client):
         logger.info('Secret `{0}` was set to {1}'.format(key, visibility))
 
 
+@secrets.command(name='set-owner',
+                 short_help="Change secret's ownership")
+@cfy.argument('key', callback=cfy.validate_name)
+@cfy.options.new_username()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def set_owner(key, username, logger, client):
+    """Set a new owner for the secret."""
+    secret = client.secrets.update(key, creator=username)
+    logger.info('Secret `%s` is now owned by user `%s`.',
+                key, secret.get('created_by'))
+
+
 def _get_secret_string(secret_file, secret_string):
     if secret_file:
         if not os.path.exists(secret_file):
