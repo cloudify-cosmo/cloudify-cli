@@ -853,6 +853,20 @@ def manager_set_site(deployment_id, site_name, detach_site, client, logger):
                                                               site_name))
 
 
+@deployments.command(name='set-owner',
+                     short_help="Change deployment's ownership")
+@cfy.argument('deployment-id')
+@cfy.options.new_username()
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def set_owner(deployment_id, username, logger, client):
+    """Set a new owner for the deployment."""
+    client.deployments.set_attributes(deployment_id, creator=username)
+    logger.info('Deployment `%s` is now owned by user `%s`.',
+                deployment_id, username)
+
+
 @deployments.group(name='labels',
                    short_help="Handle a deployment's labels")
 @cfy.options.common_options
