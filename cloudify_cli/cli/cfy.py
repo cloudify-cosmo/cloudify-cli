@@ -2295,12 +2295,12 @@ class Options(object):
             help=help)
 
     @staticmethod
-    def chown_username(required=True):
+    def new_username(required=True):
         return click.option(
             '-s',
             '--username',
             required=required,
-            help=helptexts.CHOWN_USERNAME)
+            help=helptexts.SET_USERNAME)
 
     @staticmethod
     def _filter_rules(f, resource):
