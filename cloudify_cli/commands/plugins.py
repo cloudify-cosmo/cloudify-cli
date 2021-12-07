@@ -550,7 +550,7 @@ def update(blueprint_id,
                                         client, force, auto_correct_types,
                                         reevaluate_active_statuses)
                     update_results['successful'].append(blueprint.id)
-                except CloudifyClientError as ex:
+                except (CloudifyClientError, SuppressedCloudifyCliError) as ex:
                     update_results['failed'].append(blueprint.id)
                     logger.warning('Error during %s blueprint update.  %s',
                                    blueprint.id, ex)
