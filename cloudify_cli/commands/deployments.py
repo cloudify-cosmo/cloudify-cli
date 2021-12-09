@@ -41,7 +41,12 @@ from ..table import (
     print_list
 )
 from ..cli import cfy, helptexts
-from ..logger import get_events_logger, get_global_json_output, output
+from ..logger import (
+    get_events_logger,
+    get_global_json_output,
+    output,
+    get_global_extended_view
+)
 from .. import env, execution_events_fetcher, utils
 from ..constants import DEFAULT_BLUEPRINT_PATH, DELETE_DEP
 from ..exceptions import (CloudifyCliError,
@@ -66,6 +71,10 @@ DEPLOYMENT_COLUMNS = [
     'id', 'display_name', 'blueprint_id', 'created_at', 'updated_at',
     'visibility', 'tenant_name', 'created_by', 'site_name', 'labels',
     'deployment_status', 'installation_status'
+]
+EXTENDED_DEPLOYMENT_COLUMNS = DEPLOYMENT_COLUMNS + [
+    'sub_services_count', 'sub_services_status', 'sub_environments_count',
+    'sub_environments_status'
 ]
 DEPLOYMENT_UPDATE_COLUMNS = [
     'id', 'deployment_id', 'tenant_name', 'state', 'execution_id',
@@ -250,7 +259,11 @@ def manager_list(blueprint_id,
                                           _search_name=search_name)
     modify_resource_labels(deployments)
     total = deployments.metadata.pagination.total
-    print_data(DEPLOYMENT_COLUMNS, deployments, 'Deployments:')
+    if get_global_extended_view() or get_global_json_output():
+        columns = EXTENDED_DEPLOYMENT_COLUMNS
+    else:
+        columns = DEPLOYMENT_COLUMNS
+    print_data(columns, deployments, 'Deployments:')
 
     base_str = 'Showing {0} of {1} deployments'.format(len(deployments), total)
     if filter_rules or filter_id:
