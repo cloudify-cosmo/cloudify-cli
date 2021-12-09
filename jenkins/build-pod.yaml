@@ -3,10 +3,14 @@ kind: Pod
 spec:
   containers:
   - name: py36
-    image: circleci/python:3.6
+    image: 263721492972.dkr.ecr.eu-west-1.amazonaws.com/cloudify-python3.6
     resources:
       requests:
-        cpu: 1
+        cpu: 0.8
+        memory: 1Gi
+      limits:
+        cpu: 2.5
+        memory: 2Gi
     command:
     - cat
     tty: true
@@ -14,13 +18,20 @@ spec:
       runAsUser: 0
       privileged: true
   - name: rpmbuild
-    image: rpmbuild/centos7
+    image: 263721492972.dkr.ecr.eu-west-1.amazonaws.com/cloudify-rpmbuild
     command:
     - cat
     tty: true
     securityContext:
       runAsUser: 0
       privileged: true
+    resources:
+      requests:
+        cpu: 0.8
+        memory: 1Gi
+      limits:
+        cpu: 2.5
+        memory: 2Gi
   - name: py27
     image: circleci/python:2.7
     resources:
