@@ -61,10 +61,9 @@ def update_config(client, inputs, logger):
     for name, value in inputs.items():
         updated = client.manager.put_config(name, value)
         logger.info('Updated %s to %s', name, value)
-        if updated.scope in ('rest', 'mgmtworker'):
-            logger.info('Updating {0} config will only take effect after '
-                        'the service has been restarted'
-                        .format(updated.scope))
+        if updated.scope == 'mgmtworker':
+            logger.info('Updating mgmtworker config will only take effect '
+                        'after the service has been restarted')
         elif updated.scope == 'agent':
             logger.info('Updating agent config will only take effect for '
                         'agents installed from now on. It will NOT update '
