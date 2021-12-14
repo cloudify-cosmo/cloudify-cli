@@ -447,6 +447,20 @@ def set_visibility(plugin_id, visibility, logger, client):
                                                          visibility))
 
 
+@plugins.command(name='set-owner',
+                 short_help="Change plugin's ownership")
+@cfy.argument('plugin-id')
+@cfy.options.new_username()
+@cfy.assert_manager_active()
+@cfy.pass_client(use_tenant_in_header=True)
+@cfy.pass_logger
+def set_owner(plugin_id, username, logger, client):
+    """Set a new owner for the plugin."""
+    plugin = client.plugins.set_owner(plugin_id, username)
+    logger.info('Plugin `%s` is now owned by user `%s`.',
+                plugin_id, plugin.get('created_by'))
+
+
 @plugins.command(name='update',
                  short_help='Update the plugins of all the deployments of '
                             'the blueprint [manager only]')
