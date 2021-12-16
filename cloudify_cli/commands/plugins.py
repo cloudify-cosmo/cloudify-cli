@@ -204,6 +204,29 @@ def download(plugin_id, output_path, logger, client, tenant_name):
     logger.info('Plugin downloaded as {0}'.format(target_file))
 
 
+@plugins.command(name='download_yaml',
+                 short_help='Download a plugin yaml [manager only]')
+@cfy.argument('plugin-id')
+@cfy.options.output_path
+@cfy.options.common_options
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.pass_logger
+@cfy.pass_client()
+def download_yaml(plugin_id, output_path, logger, client, tenant_name):
+    """Download a plugin yaml from the manager
+
+    `PLUGIN_ID` is the id of the plugin yaml to download.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Downloading plugin yaml {0}...'.format(plugin_id))
+    plugin_name = output_path if output_path else plugin_id
+    progress_handler = utils.generate_progress_handler(plugin_name, '')
+    target_file = client.plugins.download_yaml(plugin_id,
+                                               output_path,
+                                               progress_handler)
+    logger.info('Plugin yaml downloaded as {0}'.format(target_file))
+
+
 def _format_installation_state(plugin):
     """Format the 'installation_state' into a human-readable 'installed on'"""
     if not plugin.get('installation_state'):
