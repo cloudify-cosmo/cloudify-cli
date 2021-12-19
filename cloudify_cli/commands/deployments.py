@@ -213,6 +213,7 @@ def _print_single_update(deployment_update_dict,
 @cfy.options.all_tenants
 @cfy.options.search
 @cfy.options.search_name
+@cfy.options.dependencies_of
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
 @cfy.options.common_options
@@ -229,6 +230,7 @@ def manager_list(blueprint_id,
                  all_tenants,
                  search,
                  search_name,
+                 dependencies_of,
                  pagination_offset,
                  pagination_size,
                  logger,
@@ -256,7 +258,8 @@ def manager_list(blueprint_id,
                                           _size=pagination_size,
                                           _group_id=group_id,
                                           blueprint_id=blueprint_id,
-                                          _search_name=search_name)
+                                          _search_name=search_name,
+                                          _dependencies_of=dependencies_of)
     modify_resource_labels(deployments)
     total = deployments.metadata.pagination.total
     if get_global_extended_view() or get_global_json_output():
