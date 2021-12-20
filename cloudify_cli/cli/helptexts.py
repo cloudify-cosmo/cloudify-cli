@@ -559,7 +559,7 @@ DISPLAY_NAME = 'The display name of the deployment. If not specified, ' \
 SEARCH_NAME = 'Search deployments by their display name. The returned list ' \
               'will include only deployments that contain the given search ' \
               'pattern'
-DEPENDENCIES_OF = 'List only deployments on which a given deployment ID ' \
+DEPENDENCIES_OF = 'List only deployments on which the given deployment ID ' \
                   'depends.'
 AUDIT_CREATOR_NAME = 'Name of a user who introduced changes recorded in the ' \
                      'audit log.'
