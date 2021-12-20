@@ -268,9 +268,10 @@ def local(node_id, blueprint_id, logger):
 
 def _print_node_instance(node_instance):
     if get_global_json_output():
-        # For json output, make sure runtime properties are in the same object
+        # For json output, make sure the properties are in the same object
         # so that the output is a single decode-able object
-        columns = NODE_INSTANCE_COLUMNS + ['runtime_properties']
+        columns = NODE_INSTANCE_COLUMNS + \
+            ['runtime_properties', 'system_properties']
         print_single(columns, node_instance, 'Node-instance:', 50)
     else:
         print_single(NODE_INSTANCE_COLUMNS, node_instance,
@@ -278,3 +279,7 @@ def _print_node_instance(node_instance):
 
         print_details(node_instance.runtime_properties,
                       'Instance runtime properties:')
+
+        if hasattr(node_instance, 'system_properties'):
+            print_details(node_instance.system_properties,
+                          'Instance system properties:')
