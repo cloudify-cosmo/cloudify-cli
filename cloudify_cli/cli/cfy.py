@@ -1783,6 +1783,12 @@ class Options(object):
             help=helptexts.SEARCH_NAME
         )
 
+        self.dependencies_of = click.option(
+            '--dependencies-of',
+            callback=validate_value_not_empty,
+            help=helptexts.DEPENDENCIES_OF
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
