@@ -111,6 +111,8 @@ def _register_commands():
 
     executions.executions.add_command(executions.manager_cancel)
 
+    license.license.add_command(license.environments)
+
     # Commands which should be both in manager and local context
     # But change depending on the context.
     if env.is_manager_active():
