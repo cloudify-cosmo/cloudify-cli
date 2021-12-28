@@ -953,8 +953,6 @@ class ImportResolverLocalUseTests(CliCommandTest):
         self._test_using_import_resolver(
             'blueprints validate', blueprint_path, blueprints)
 
-    @mock.patch('cloudify_cli.local.get_storage', new=mock.MagicMock)
-    @mock.patch('cloudify.workflows.local._prepare_nodes_and_instances')
     @mock.patch('dsl_parser.tasks.prepare_deployment_plan')
     def test_local_init(self, *_):
         blueprint_path = '{0}/local/{1}.yaml'.format(
