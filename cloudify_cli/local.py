@@ -60,29 +60,27 @@ def initialize_blueprint(blueprint_path,
         validate_version=config.validate_definitions_version)
 
 
-def storage_dir(blueprint_id=None):
-    if blueprint_id:
-        return os.path.join(env.PROFILES_DIR, _ENV_NAME, blueprint_id)
-    else:
-        return os.path.join(env.PROFILES_DIR, _ENV_NAME)
+def storage_dir():
+    storage = os.path.join(env.PROFILES_DIR, _ENV_NAME)
+    return storage
 
 
 def list_blueprints():
     blueprints = []
+    storage = get_storage()
     try:
-        bp_names = os.listdir(os.path.join(env.PROFILES_DIR, _ENV_NAME))
+        bp_names = storage.blueprint_ids()
     except IOError as e:
         if e.errno != 2:  # file not found
             raise
         bp_names = []
     for bp_id in bp_names:
-        bp_env = load_env(bp_id)
+        bp = storage.get_blueprint(bp_id)
         blueprints.append({
             'id': bp_id,
-            'description': bp_env.plan['description'],
-            'main_file_name': os.path.basename(
-                bp_env.storage.get_blueprint_path()),
-            'created_at': bp_env.created_at,
+            'description': bp['plan']['description'],
+            'main_file_name': bp['blueprint_filename'],
+            'created_at': bp['created_at'],
         })
     return blueprints
 
@@ -92,12 +90,23 @@ def get_storage():
 
 
 def load_env(blueprint_id):
-    if not os.path.isdir(storage_dir(blueprint_id)):
+    env = local.load_env(name=blueprint_id or 'local', storage=get_storage())
+    if env is None:
         error = exceptions.CloudifyCliError('Please initialize a blueprint')
         error.possible_solutions = ["Run `cfy init BLUEPRINT_PATH`"]
         raise error
-    return local.load_env(name=blueprint_id or 'local',
-                          storage=get_storage())
+    return env
+
+
+def blueprint_exists(blueprint_id):
+    storage = local.FileStorage(storage_dir=storage_dir())
+    return storage.get_blueprint(blueprint_id) is not None
+
+
+def remove(blueprint_id):
+    storage = get_storage()
+    storage.remove_deployment(blueprint_id)
+    storage.remove_blueprint(blueprint_id)
 
 
 def _install_plugins(blueprint_path):
