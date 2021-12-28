@@ -169,7 +169,7 @@ class UninstallTest(CliCommandTest):
             'local',
             DEFAULT_BLUEPRINT_FILE_NAME
         )
-        storage_dir = os.path.join(local.storage_dir(), 'local')
+        storage_dir = os.path.join(local.storage_dir(), 'blueprints', 'local')
 
         # Using run_test_op_on_nodes because the blueprint doesn't have
         # install/uninstall workflows
