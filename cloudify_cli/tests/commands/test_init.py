@@ -1,6 +1,7 @@
 import os
 import json
 import shutil
+import tempfile
 
 import yaml
 from mock import patch
@@ -12,8 +13,10 @@ from ... import env
 from ...config import config
 from ...commands import init
 from .test_base import CliCommandTest
-from .constants import BLUEPRINTS_DIR, SAMPLE_INPUTS_PATH, \
+from .constants import (
+    BLUEPRINTS_DIR, SAMPLE_INPUTS_PATH, RESOURCES_DIR,
     DEFAULT_BLUEPRINT_FILE_NAME, SAMPLE_CUSTOM_NAME_ARCHIVE
+)
 
 
 class InitTest(CliCommandTest):
@@ -219,3 +222,35 @@ class InitTest(CliCommandTest):
         init.set_config()
         self.assertTrue(os.path.isfile(
             os.path.join(env.CLOUDIFY_WORKDIR, 'config.yaml')))
+
+
+class LocalProfileUpdateTest(CliCommandTest):
+    def setUp(self):
+        shutil.copytree(
+            os.path.join(RESOURCES_DIR, 'old_local_profile'),
+            os.path.join(env.CLOUDIFY_WORKDIR, 'profiles', 'local')
+        )
+        super(LocalProfileUpdateTest, self).setUp()
+
+    def test_list_blueprints(self):
+        out = self.invoke('blueprints list --json')
+        blueprints = json.loads(out.output)
+        assert len(blueprints) == 1
+        assert {'bp1'} == {b['id'] for b in blueprints}
+
+    def test_list_executions(self):
+        out = self.invoke('executions list -b bp1 --json')
+        executions = json.loads(out.output)
+        assert len(executions) == 1
+
+    def test_get_outputs(self):
+        out = self.invoke('deployments outputs -b bp1')
+        outputs = json.loads(out.output)
+        assert outputs['out1'] == 1
+
+    def test_run_execution(self):
+        self.invoke('executions start -b bp1 '
+                    'execute_operation -p operation=int1.op1')
+        out = self.invoke('deployments outputs -b bp1')
+        outputs = json.loads(out.output)
+        assert outputs['out1'] == 2
