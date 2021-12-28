@@ -17,7 +17,10 @@
 
 import os
 import sys
+import json
+import shutil
 import tempfile
+from datetime import datetime
 
 from cloudify.workflows import local
 from cloudify.utils import LocalCommandRunner
@@ -60,8 +63,92 @@ def initialize_blueprint(blueprint_path,
         validate_version=config.validate_definitions_version)
 
 
+def _is_old_local_profile(storage_dir):
+    try:
+        entries = os.listdir(storage_dir)
+    except (IOError, OSError):
+        return False
+    return (
+        entries
+        and 'blueprints' not in entries
+        and 'deployments' not in entries
+    )
+
+def _update_local_profile(storage_dir):
+    backup_dirname = '{0}_backup_{1}'.format(
+        os.path.basename(storage_dir),
+        datetime.utcnow().strftime('%Y_%m_%d_%H_%M_%S')
+    )
+    backup_target = os.path.join(
+        os.path.dirname(storage_dir),
+        backup_dirname,
+    )
+    shutil.copytree(storage_dir, backup_target)
+    blueprints_dir = os.path.join(storage_dir, 'blueprints')
+    deployments_dir = os.path.join(storage_dir, 'deployments')
+    for blueprint_id in os.listdir(storage_dir):
+        source_blueprint_dir = os.path.join(storage_dir, blueprint_id)
+        with open(os.path.join(source_blueprint_dir, 'data')) as f:
+            data = json.load(f)
+        target_blueprint_dir = os.path.join(blueprints_dir, blueprint_id)
+        target_resources_dir = os.path.join(target_blueprint_dir, 'resources')
+        os.makedirs(target_blueprint_dir)
+
+        blueprint_fn = os.path.join(target_blueprint_dir, 'blueprint.json')
+        blueprint_data = data.copy()
+        blueprint_data['id'] = blueprint_id
+        blueprint_data['resources'] = target_resources_dir
+        with open(blueprint_fn, 'w') as f:
+            json.dump(blueprint_data, f)
+
+        shutil.copy(
+            os.path.join(source_blueprint_dir, 'payload'),
+            os.path.join(target_blueprint_dir, 'payload'),
+        )
+        shutil.copytree(
+            os.path.join(source_blueprint_dir, 'resources'),
+            target_resources_dir,
+        )
+        target_deployment_dir = os.path.join(deployments_dir, blueprint_id)
+        os.makedirs(target_deployment_dir)
+
+        shutil.copy(
+            os.path.join(source_blueprint_dir, 'executions'),
+            os.path.join(target_deployment_dir, 'executions.json'),
+        )
+
+        source_instances_dir = os.path.join(
+            source_blueprint_dir, 'node-instances')
+        target_instances_dir = os.path.join(
+            target_deployment_dir, 'node-instances')
+        os.makedirs(target_instances_dir)
+        for instance_fn in os.listdir(source_instances_dir):
+            shutil.copy(
+                os.path.join(source_instances_dir, instance_fn),
+                os.path.join(target_instances_dir, instance_fn + '.json')
+            )
+        shutil.copytree(
+            os.path.join(source_blueprint_dir, 'work'),
+            os.path.join(target_deployment_dir, 'work'),
+        )
+
+        deployment_fn = os.path.join(target_deployment_dir, 'deployment.json')
+        deployment_data = data.copy()
+        deployment_data['id'] = blueprint_id
+        deployment_data['blueprint_id'] = blueprint_id
+        deployment_data['nodes'] = {
+            n['id']: n for n in deployment_data['plan']['nodes']
+        }
+        with open(deployment_fn, 'w') as f:
+            json.dump(deployment_data, f)
+
+        shutil.rmtree(source_blueprint_dir)
+
+
 def storage_dir():
     storage = os.path.join(env.PROFILES_DIR, _ENV_NAME)
+    if _is_old_local_profile(storage):
+        _update_local_profile(storage)
     return storage
 
 
