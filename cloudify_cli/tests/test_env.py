@@ -1066,17 +1066,6 @@ class TestLocal(CliCommandTest):
         'key3': 'default_val3'
     }
 
-    def test_storage_dir(self):
-        self.assertEqual(
-            cli_local.storage_dir(),
-            os.path.join(env.PROFILES_DIR, 'local')
-        )
-
-        self.assertEqual(
-            cli_local.storage_dir('blueprint_id'),
-            os.path.join(env.PROFILES_DIR, 'local', 'blueprint_id')
-        )
-
     def test_initialize_blueprint_default_single_env(self):
         self._test_initialize_blueprint(
             name='local',
