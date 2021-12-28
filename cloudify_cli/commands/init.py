@@ -16,7 +16,6 @@
 
 
 import os
-import shutil
 import pkg_resources
 
 from jinja2.environment import Template

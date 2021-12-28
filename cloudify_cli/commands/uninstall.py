@@ -15,7 +15,6 @@
 ############
 
 from .. import env
-from .. import utils
 from . import blueprints
 from . import executions
 from . import deployments

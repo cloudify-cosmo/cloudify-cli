@@ -1,7 +1,6 @@
 import os
 import json
 import shutil
-import tempfile
 
 import yaml
 from mock import patch

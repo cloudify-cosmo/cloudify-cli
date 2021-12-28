@@ -74,6 +74,7 @@ def _is_old_local_profile(storage_dir):
         and 'deployments' not in entries
     )
 
+
 def _update_local_profile(storage_dir):
     backup_dirname = '{0}_backup_{1}'.format(
         os.path.basename(storage_dir),
