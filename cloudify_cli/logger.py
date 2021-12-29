@@ -22,9 +22,10 @@ import uuid
 import click
 import logging
 import logging.config
+from datetime import datetime
+from contextlib import contextmanager
 
 import colorama
-from contextlib import contextmanager
 
 from cloudify import logs
 
@@ -231,6 +232,8 @@ class CloudifyJSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, uuid.UUID):
             return obj.hex
+        if isinstance(obj, datetime):
+            return obj.isoformat()
         return super(CloudifyJSONEncoder, self).default(obj)
 
 

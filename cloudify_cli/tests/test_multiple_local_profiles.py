@@ -48,7 +48,7 @@ class TestMultipleLocalProfiles(TestCase):
         """Default blueprint id is the directory name."""
         cfy.invoke('init {0}'.format(self.LOCAL_BLUEPRINT_PATH))
         self.assertThat(
-            os.path.join(self.LOCAL_PROFILE_DIR, 'local'),
+            os.path.join(self.LOCAL_PROFILE_DIR, 'blueprints', 'local'),
             DirExists(),
         )
 
@@ -57,7 +57,7 @@ class TestMultipleLocalProfiles(TestCase):
         cfy.invoke(
             'init -b my-blueprint {0}'.format(self.LOCAL_BLUEPRINT_PATH))
         self.assertThat(
-            os.path.join(self.LOCAL_PROFILE_DIR, 'my-blueprint'),
+            os.path.join(self.LOCAL_PROFILE_DIR, 'blueprints', 'my-blueprint'),
             DirExists(),
         )
 
@@ -73,7 +73,7 @@ class TestMultipleLocalProfiles(TestCase):
         for blueprint_number in range(blueprint_count):
             self.assertThat(
                 os.path.join(
-                    self.LOCAL_PROFILE_DIR,
+                    self.LOCAL_PROFILE_DIR, 'blueprints',
                     'my-blueprint-{0}'.format(blueprint_number),
                 ),
                 DirExists(),

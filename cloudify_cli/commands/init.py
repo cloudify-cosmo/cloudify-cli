@@ -16,7 +16,6 @@
 
 
 import os
-import shutil
 import pkg_resources
 
 from jinja2.environment import Template
@@ -92,8 +91,8 @@ def init(blueprint_path,
             processed_blueprint_path,
             blueprint_filename
         )
-        if os.path.isdir(local.storage_dir(blueprint_id)):
-            shutil.rmtree(local.storage_dir(blueprint_id))
+        if local.blueprint_exists(blueprint_id):
+            local.remove(blueprint_id)
 
         try:
             storage = local.get_storage()

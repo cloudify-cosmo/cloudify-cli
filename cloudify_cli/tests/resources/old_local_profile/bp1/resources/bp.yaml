@@ -1,0 +1,44 @@
+tosca_definitions_version: cloudify_dsl_1_3
+
+plugins:
+  script:
+    executor: central_deployment_agent
+    install: false
+
+  default_workflows:
+    executor: central_deployment_agent
+    install: false
+
+workflows:
+  execute_operation:
+    mapping: default_workflows.cloudify.plugins.workflows.execute_operation
+    is_cascading: false
+    parameters:
+      operation: {}
+      operation_kwargs:
+        default: {}
+      allow_kwargs_override:
+        default: null
+      run_by_dependency_order:
+        default: false
+      type_names:
+        default: []
+      node_ids:
+        default: []
+      node_instance_ids:
+        default: []
+
+node_types:
+  Root: {}
+
+node_templates:
+  x:
+    type: Root
+    interfaces:
+      int1:
+        op1:
+          implementation: scripts/increase.py
+
+outputs:
+  out1:
+    value: {get_attribute: [x, a]}
