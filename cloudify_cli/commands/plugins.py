@@ -14,6 +14,7 @@
 # limitations under the License.
 ############
 
+import json
 import os
 import time
 
@@ -23,7 +24,7 @@ import wagon
 from cloudify.models_states import PluginInstallationState
 
 from cloudify_cli import execution_events_fetcher
-from cloudify_cli.logger import get_events_logger
+from cloudify_cli.logger import get_events_logger, CloudifyJSONEncoder, output
 from cloudify_cli.exceptions import (
     SuppressedCloudifyCliError, CloudifyCliError, CloudifyValidationError,
 )
@@ -31,13 +32,14 @@ from cloudify_cli.exceptions import (
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import utils
+from .. import env, utils
 from ..logger import get_global_json_output
 from ..table import print_data, print_single, print_details
 from ..cli import helptexts, cfy
 from ..utils import (prettify_client_error,
                      get_visibility,
                      validate_visibility)
+from ..labels_utils import get_printable_resource_labels
 
 PLUGINS_BUNDLE_COLUMNS = ['id', 'package_name', 'package_version',
                           'distribution', 'distribution_release']
@@ -733,3 +735,217 @@ def manager_history(blueprint_id,
         PLUGINS_UPDATE_COLUMNS, plugins_updates, 'Plugins updates:')
     logger.info('Showing {0} of {1} plugins updates'.format(
         len(plugins_updates), total))
+
+
+@plugins.group(name='blueprint-labels',
+               short_help="Handle plugin's blueprint labels")
+@cfy.options.common_options
+def blueprint_labels():
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+
+@blueprint_labels.command(name='list',
+                          short_help="List blueprint-labels of a specific "
+                                     "plugin")
+@cfy.argument('plugin-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def list_blueprint_labels(plugin_id,
+                          logger,
+                          client,
+                          tenant_name):
+    _list_metadata(plugin_id, 'blueprint_labels', tenant_name,
+                   client.plugins, logger)
+
+
+@blueprint_labels.command(name='add',
+                          short_help="Add blueprint-labels to a specific "
+                                     "plugin")
+@cfy.argument('labels-list',
+              callback=cfy.parse_and_validate_labels)
+@cfy.argument('plugin-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def add_blueprint_labels(labels_list,
+                         plugin_id,
+                         logger,
+                         client,
+                         tenant_name):
+    """LABELS_LIST: <key>:<value>,<key>:<value>.
+    Any comma and colon in <value> must be escaped with '\\'."""
+    _add_metadata(plugin_id, 'blueprint_labels', labels_list, tenant_name,
+                  client.plugins, logger)
+
+
+@blueprint_labels.command(name='delete',
+                          short_help="Delete blueprint-labels from a specific "
+                                     "plugin")
+@cfy.argument('label', callback=cfy.parse_and_validate_label_to_delete)
+@cfy.argument('plugin-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def delete_blueprint_labels(label,
+                            plugin_id,
+                            logger,
+                            client,
+                            tenant_name):
+    """
+    LABEL: A mixed list of labels and keys, i.e.
+    <key>:<value>,<key>,<key>:<value>. If <key> is provided,
+    all labels associated with this key will be deleted from the deployment.
+    Any comma and colon in <value> must be escaped with `\\`
+    """
+    _delete_metadata(plugin_id, 'blueprint_labels', label, tenant_name,
+                     client.plugins, logger)
+
+
+@plugins.group(name='deployment-labels',
+               short_help="Handle plugin's (deployment) labels")
+@cfy.options.common_options
+def deployment_labels():
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+
+@deployment_labels.command(name='list',
+                           short_help="List (deployment) labels of a specific "
+                                      "plugin")
+@cfy.argument('plugin-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def list_deployment_labels(plugin_id,
+                           logger,
+                           client,
+                           tenant_name):
+    _list_metadata(plugin_id, 'labels', tenant_name, client.plugins, logger)
+
+
+@deployment_labels.command(name='add',
+                           short_help="Add (deployment) labels to a specific "
+                                      "plugin")
+@cfy.argument('labels-list',
+              callback=cfy.parse_and_validate_labels)
+@cfy.argument('plugin-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def add_deployment_labels(labels_list,
+                          plugin_id,
+                          logger,
+                          client,
+                          tenant_name):
+    """LABELS_LIST: <key>:<value>,<key>:<value>.
+    Any comma and colon in <value> must be escaped with '\\'."""
+    _add_metadata(plugin_id, 'labels', labels_list, tenant_name,
+                  client.plugins, logger)
+
+
+@deployment_labels.command(name='delete',
+                           short_help="Delete (deployment) labels from "
+                                      "a specific plugin")
+@cfy.argument('label', callback=cfy.parse_and_validate_label_to_delete)
+@cfy.argument('plugin-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def delete_deployment_labels(label,
+                             plugin_id,
+                             logger,
+                             client,
+                             tenant_name):
+    """
+    LABEL: A mixed list of labels and keys, i.e.
+    <key>:<value>,<key>,<key>:<value>. If <key> is provided,
+    all labels associated with this key will be deleted from the deployment.
+    Any comma and colon in <value> must be escaped with `\\`
+    """
+    _delete_metadata(plugin_id, 'labels', label, tenant_name,
+                     client.plugins, logger)
+
+
+def _list_metadata(plugin_id,
+                   metadata_type,
+                   tenant_name,
+                   client,
+                   logger):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Listing %s of plugin %s...', metadata_type, plugin_id)
+    metadata = client.get(plugin_id)[metadata_type]
+    if get_global_json_output():
+        output(json.dumps(metadata, cls=CloudifyJSONEncoder))
+    else:
+        print_data(['key', 'values'],
+                   get_printable_resource_labels(metadata),
+                   '{0} labels'.format('Plugin'),
+                   max_width=50)
+
+
+def _add_metadata(plugin_id,
+                  metadata_type,
+                  metadata_list,
+                  tenant_name,
+                  client,
+                  logger):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Adding %s to plugin %s...', metadata_type, plugin_id)
+
+    metadata = client.get(plugin_id)[metadata_type]
+    for added_metadata in metadata_list:
+        for k, v in added_metadata.items():
+            if k in metadata:
+                if v not in metadata[k]:
+                    metadata[k].append(v)
+            else:
+                metadata[k] = [v]
+    _update_metadata(plugin_id, metadata_type, client,
+                     **{metadata_type: metadata})
+    logger.info('The %s of plugin %s were added: %s',
+                metadata_type, plugin_id, metadata_list)
+
+
+def _delete_metadata(plugin_id,
+                     metadata_type,
+                     metadata_list,
+                     tenant_name,
+                     client,
+                     logger):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    logger.info('Deleting %s from plugin %s...', metadata_type, plugin_id)
+
+    metadata = client.get(plugin_id)[metadata_type]
+    for deleted_metadata in metadata_list:
+        for k, v in deleted_metadata.items():
+            if k in metadata:
+                if v in metadata[k]:
+                    metadata[k].remove(v)
+                elif v is None:
+                    del metadata[k]
+    _update_metadata(plugin_id, metadata_type, client,
+                     **{metadata_type: metadata})
+    logger.info('The %s of plugin %s were deleted: %s',
+                metadata_type, plugin_id, metadata_list)
+
+
+def _update_metadata(plugin_id,
+                     metadata_type,
+                     client,
+                     **kwargs):
+    plugin = client.update(plugin_id, **kwargs)
+    return plugin[metadata_type]
