@@ -15,14 +15,12 @@
 ############
 
 import json
-import logging
 import os
 import time
 
 import click
 import wagon
 
-import cloudify_rest_client.plugins
 from cloudify.models_states import PluginInstallationState
 
 from cloudify_cli import execution_events_fetcher
@@ -882,11 +880,11 @@ def delete_deployment_labels(label,
                      client.plugins, logger)
 
 
-def _list_metadata(plugin_id: str,
-                   metadata_type: str,
-                   tenant_name: str,
-                   client: 'cloudify_rest_client.plugins.PluginsClient',
-                   logger: logging.Logger):
+def _list_metadata(plugin_id,
+                   metadata_type,
+                   tenant_name,
+                   client,
+                   logger):
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing %s of plugin %s...', metadata_type, plugin_id)
     metadata = client.get(plugin_id)[metadata_type]
@@ -899,12 +897,12 @@ def _list_metadata(plugin_id: str,
                    max_width=50)
 
 
-def _add_metadata(plugin_id: str,
-                  metadata_type: str,
-                  metadata_list: list,
-                  tenant_name: str,
-                  client: 'cloudify_rest_client.plugins.PluginsClient',
-                  logger: logging.Logger):
+def _add_metadata(plugin_id,
+                  metadata_type,
+                  metadata_list,
+                  tenant_name,
+                  client,
+                  logger):
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Adding %s to plugin %s...', metadata_type, plugin_id)
 
@@ -922,12 +920,12 @@ def _add_metadata(plugin_id: str,
                 metadata_type, plugin_id, metadata_list)
 
 
-def _delete_metadata(plugin_id: str,
-                     metadata_type: str,
-                     metadata_list: list,
-                     tenant_name: str,
-                     client: 'cloudify_rest_client.plugins.PluginsClient',
-                     logger: logging.Logger):
+def _delete_metadata(plugin_id,
+                     metadata_type,
+                     metadata_list,
+                     tenant_name,
+                     client,
+                     logger):
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Deleting %s from plugin %s...', metadata_type, plugin_id)
 
@@ -945,9 +943,9 @@ def _delete_metadata(plugin_id: str,
                 metadata_type, plugin_id, metadata_list)
 
 
-def _update_metadata(plugin_id: str,
-                     metadata_type: str,
-                     client: 'cloudify_rest_client.plugins.PluginsClient',
+def _update_metadata(plugin_id,
+                     metadata_type,
+                     client,
                      **kwargs):
     plugin = client.update(plugin_id, **kwargs)
     return plugin[metadata_type]
