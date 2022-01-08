@@ -121,7 +121,6 @@ class ExecutionEventsFetcher(object):
 
     def fetch_and_process_events(self, events_handler=None, timeout=60):
         total_events_count = 0
-
         # timeout can be None (never time out), for example when tail is used
         if timeout is not None:
             deadline = time.time() + timeout

@@ -18,6 +18,7 @@ import os
 import sys
 import mock
 import json
+import time
 import yaml
 import shutil
 import logging
@@ -669,11 +670,16 @@ class ExecutionEventsFetcherTest(CliCommandTest):
         self.assertEqual(self.events, all_fetched_events)
 
     def test_fetch_and_process_events_timeout(self):
+        now = time.time()
         self.events = self._generate_events(2000000)
-        events_fetcher = ExecutionEventsFetcher(
-            self.client, execution_id='execution_id', batch_size=1)
-        self.assertRaises(EventProcessingTimeoutError,
-                          events_fetcher.fetch_and_process_events, timeout=2)
+        with patch(
+            'cloudify_cli.execution_events_fetcher.time.time',
+            side_effect=[now, now + 1, now + 2, now + 3]
+        ):
+            events_fetcher = ExecutionEventsFetcher(
+                self.client, execution_id='execution_id', batch_size=1)
+            self.assertRaises(EventProcessingTimeoutError,
+                              events_fetcher.fetch_and_process_events, timeout=2)
 
     def test_events_processing_progress(self):
         events_bulk1 = self._generate_events(5)
@@ -694,9 +700,20 @@ class ExecutionEventsFetcherTest(CliCommandTest):
     def test_wait_for_execution_timeout(self):
         self.events = self._generate_events(5)
         mock_execution = self.client.executions.get('deployment_id')
-        self.assertRaises(ExecutionTimeoutError, wait_for_execution,
-                          self.client, mock_execution,
-                          timeout=2)
+        now = time.time()
+        # execution polling times out by itself: no matter the events (so
+        # mock out ExecutionEventsFetcher)
+        with patch(
+            'cloudify_cli.execution_events_fetcher.time.time',
+            side_effect=[now, now + 1, now + 2, now + 3]
+        ), patch(
+            'cloudify_cli.execution_events_fetcher.ExecutionEventsFetcher',
+        ), patch(
+            'cloudify_cli.execution_events_fetcher.time.sleep'
+        ):
+            self.assertRaises(ExecutionTimeoutError, wait_for_execution,
+                              self.client, mock_execution,
+                              timeout=2)
 
 
 class WaitForExecutionTests(CliCommandTest):
