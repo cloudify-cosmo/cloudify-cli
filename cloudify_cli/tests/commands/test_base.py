@@ -14,17 +14,23 @@
 #    * limitations under the License.
 import os
 import os as utils_os
+import shlex
 
 import testtools
+from testfixtures import log_capture
 from mock import patch, Mock, PropertyMock
 
 from cloudify.utils import setup_logger
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
-
+import click.testing as clicktest
+from cloudify._compat import PY2, text_type
 from .. import cfy
 from ... import env
 from ... import utils
+from ... import logger
+from ... import commands
+from ... import main
 from ...exceptions import CloudifyCliError
 from ...logger import set_global_json_output
 
@@ -74,13 +80,66 @@ class CliCommandTest(testtools.TestCase):
             with open(env.DEFAULT_LOG_FILE, 'w') as f:
                 f.write('')
 
+    @log_capture()
+    def _do_invoke(self, command, capture, context=None):
+
+        logger.set_global_verbosity_level(verbose=logger.NO_VERBOSE)
+
+        cfy = clicktest.CliRunner()
+
+        if PY2:
+            if isinstance(command, text_type):
+                command = command.encode('utf-8')
+                parts = shlex.split(command)
+                lexed_command = [p.decode('utf-8') for p in parts]
+            else:
+                lexed_command = shlex.split(command)
+
+        else:
+            lexed_command = shlex.split(command)
+
+        # Safety measure in case someone wrote `cfy` at the beginning
+        # of the command
+        if lexed_command[0] == 'cfy':
+            del lexed_command[0]
+
+        is_version = False
+        global_flags = []
+        if lexed_command[0] == '--version':
+            func = lexed_command[0]
+            is_version = True
+        elif lexed_command[0].startswith('--'):
+            # for --json and --format
+            while lexed_command[0].startswith('--'):
+                global_flags.append(lexed_command.pop(0))
+
+        if not is_version:
+            # For commands which contain a dash (like maintenance-mode)
+            func = lexed_command[0].replace('-', '_')
+        params = lexed_command[1:]
+
+        sub_func = context or func
+        # If we call `cfy init`, what we actually want to do is get the
+        # init module from `commands` and then get the `init` command
+        # from that module, hence the attribute getting.
+        if is_version:
+            outcome = cfy.invoke(getattr(main, '_cfy'), ['--version'])
+        else:
+            outcome = cfy.invoke(getattr(
+                getattr(commands, func), sub_func), global_flags + params)
+        outcome.command = command
+        logs = [text for logger_name, level, text in capture.actual()]
+        outcome.logs = '\n'.join(logs)
+
+        return outcome
+
     # TODO: Consider separating
     def invoke(self,
                command,
                err_str_segment=None,
                exception=CloudifyCliError,
                context=None):
-        outcome = cfy.invoke(command, context=context)
+        outcome = self._do_invoke(command, context=context)
 
         # An empty string might be passed, so it's best to check against None
         should_fail = err_str_segment is not None
