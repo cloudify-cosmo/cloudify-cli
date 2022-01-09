@@ -305,7 +305,7 @@ class NodeInstancesTest(CliCommandTest):
         )
 
     def _assert_outputs(self, output, expected_outputs):
-        output = json.loads(output.logs)
+        output = json.loads(output.output)
         for item in output:
             for key, value in expected_outputs.items():
                 self.assertEqual(item[key], value)

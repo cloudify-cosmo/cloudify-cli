@@ -153,8 +153,8 @@ class ExecutionsTest(CliCommandTest):
         )
 
     def _assert_outputs(self, expected_outputs):
-        output = json.loads(self.invoke(
-            'cfy deployments outputs -b local').logs)
+        outcome = self.invoke('cfy deployments outputs -b local')
+        output = json.loads(outcome.output)
         for key, value in expected_outputs.items():
             self.assertEqual(output[key], value)
 

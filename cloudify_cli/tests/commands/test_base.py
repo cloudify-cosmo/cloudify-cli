@@ -13,11 +13,12 @@
 #    * See the License for the specific language governing permissions and
 #    * limitations under the License.
 import os
+import logging
 import os as utils_os
 import shlex
+import pytest
 
 import testtools
-from testfixtures import log_capture
 from mock import patch, Mock, PropertyMock
 
 from cloudify.utils import setup_logger
@@ -35,6 +36,7 @@ from ...exceptions import CloudifyCliError
 from ...logger import set_global_json_output
 
 
+@pytest.mark.usefixtures('class_caplog')
 class CliCommandTest(testtools.TestCase):
 
     @classmethod
@@ -65,6 +67,7 @@ class CliCommandTest(testtools.TestCase):
         for p in self._patchers:
             p.start()
         set_global_json_output(False)
+        self.caplog.set_level(logging.INFO)
 
     def tearDown(self):
         super(CliCommandTest, self).tearDown()
@@ -78,8 +81,7 @@ class CliCommandTest(testtools.TestCase):
             with open(env.DEFAULT_LOG_FILE, 'w') as f:
                 f.write('')
 
-    @log_capture()
-    def _do_invoke(self, command, capture):
+    def _do_invoke(self, command):
         logger.set_global_verbosity_level(verbose=logger.NO_VERBOSE)
 
         if PY2:
@@ -101,8 +103,7 @@ class CliCommandTest(testtools.TestCase):
         _cfy = main._make_cfy()
         outcome = runner.invoke(_cfy, lexed_command)
         outcome.command = command
-        logs = [text for logger_name, level, text in capture.actual()]
-        outcome.logs = '\n'.join(logs)
+        outcome.logs = '\n'.join(lr.message for lr in self.caplog.records)
         return outcome
 
     def invoke(self,

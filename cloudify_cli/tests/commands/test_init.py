@@ -81,7 +81,7 @@ class InitTest(CliCommandTest):
         self.invoke('cfy init {0}'.format(blueprint_path))
 
         output = json.loads(self.invoke(
-            'cfy deployments outputs -b local').logs)
+            'cfy deployments outputs -b local').output)
         self.assertEqual(output, {
             'key1': 'default_val1',
             'key2': 'default_val2',
@@ -102,7 +102,7 @@ class InitTest(CliCommandTest):
         self.invoke(command)
 
         output = json.loads(self.invoke(
-            'cfy deployments inputs -b local').logs)
+            'cfy deployments inputs -b local').output)
         self.assertEqual(output, {
             'key1': 'default_val1',
             'key2': 'default_val2',
@@ -123,7 +123,7 @@ class InitTest(CliCommandTest):
         self.invoke(command)
 
         output = json.loads(self.invoke(
-            'cfy deployments inputs -b local').logs)
+            'cfy deployments inputs -b local').output)
         self.assertEqual(output, {
             'key1': 'val1',
             'key2': 'val2',
@@ -205,7 +205,7 @@ class InitTest(CliCommandTest):
         )
 
         output = json.loads(self.invoke(
-            'cfy deployments inputs -b local').logs)
+            'cfy deployments inputs -b local').output)
         self.assertEqual(output, {
             'key1': 'default_val1',
             'key2': 'default_val2',
