@@ -1,10 +1,10 @@
+import click
 import importlib
 
 from . import env
 from .cli import cfy
 from .commands import ssh
 from .commands import idp
-from .commands import init
 from .commands import logs
 from .commands import ldap
 from .commands import users
@@ -36,7 +36,29 @@ from .commands import node_instances
 from .commands import maintenance_mode
 from .commands import audit_log
 
-import click
+
+class LazyLoadedCommand(click.Command):
+    def __init__(self, import_spec, **kwargs):
+        super(LazyLoadedCommand, self).__init__(**kwargs)
+        self._import_spec = import_spec
+        self._command = None
+
+    def _get_command(self):
+        if self._command is None:
+            module_name, group_name = self._import_spec
+            module = importlib.import_module(module_name)
+            self._command = getattr(module, group_name)
+        return self._command
+
+    def invoke(self, *a, **kw):
+        return self._get_command().invoke(*a, **kw)
+
+    def get_usage(self, *a, **kw):
+        return self._get_command().get_usage(*a, **kw)
+
+    def get_params(self, *a, **kw):
+        return self._get_command().get_params(*a, **kw)
+
 
 class LazyLoadedGroup(click.Group):
     def __init__(self, import_spec, **kwargs):
@@ -87,6 +109,32 @@ def local_blueprints():
     """Handle local blueprints"""
 
 
+@click.command(
+    name='init',
+    cls=LazyLoadedCommand,
+    short_help='Initialize a working env',
+    import_spec=('cloudify_cli.commands.init', 'init'),
+)
+@cfy.options.common_options
+def init():
+    """Initialize a Cloudify environment.
+
+    This is required to perform many actions and should be the first
+    action performed after installing Cloudify.
+
+    Note: Running `cfy install` or `cfy profiles use` will
+    initialize an environment automatically.
+
+    Providing a `BLUEPRINT_PATH` will also initialize a blueprint to
+    work on.
+
+    After initialization, the CLI's configuration can be found under
+    ~/.cloudify/config.yaml. For more information refer to the docs
+    at http://docs.getcloudify.org
+    """
+
+
+
 def _make_cfy():
     """Register the CLI's commands.
 
@@ -115,7 +163,7 @@ def _make_cfy():
         cfy.set_cli_except_hook(verbose)
 
     # Manager agnostic commands
-    _cfy.add_command(init.init)
+    _cfy.add_command(init)
     _cfy.add_command(status.status)
     _cfy.add_command(profiles.profiles)
 
