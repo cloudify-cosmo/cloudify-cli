@@ -53,35 +53,10 @@ INPUTS_COLUMNS = ['name', 'type', 'default', 'description']
 BLUEPRINTS_SUMMARY_FIELDS = BASE_SUMMARY_FIELDS
 
 
-@cfy.group(name='blueprints')
+@click.group(name='blueprints')
 @cfy.options.common_options
 def blueprints():
-    """Handle blueprints on the manager
-    """
     pass
-
-
-@blueprints.command(name='validate',
-                    short_help='Validate a blueprint')
-@cfy.argument('blueprint-path')
-@cfy.options.common_options
-@cfy.pass_logger
-def validate_blueprint(blueprint_path, logger):
-    """Validate a blueprint
-
-    `BLUEPRINT_PATH` is the path of the blueprint to validate.
-    """
-    logger.info('Validating blueprint: {0}'.format(blueprint_path))
-    try:
-        resolver = config.get_import_resolver()
-        validate_version = config.is_validate_definitions_version()
-        parse_from_path(
-            dsl_file_path=blueprint_path,
-            resolver=resolver,
-            validate_version=validate_version)
-    except DSLParsingException as ex:
-        raise CloudifyCliError('Failed to validate blueprint: {0}'.format(ex))
-    logger.info('Blueprint validated successfully')
 
 
 @blueprints.command(name='upload',
@@ -244,7 +219,7 @@ def delete(blueprint_id, force, logger, client, tenant_name):
     logger.info('Blueprint deleted')
 
 
-@cfy.command(name='list', short_help='List blueprints')
+@blueprints.command(name='list', short_help='List blueprints')
 @cfy.options.filter_id
 @cfy.options.blueprint_filter_rules
 @cfy.options.sort_by()
@@ -307,15 +282,6 @@ def manager_list(filter_id,
         if filtered is not None:
             base_str += ' ({} hidden by filter)'.format(filtered)
     logger.info(base_str)
-
-
-@cfy.command(name='list', short_help='List blueprints')
-@cfy.options.local_common_options
-@cfy.pass_logger
-@cfy.options.extended_view
-def local_list(logger):
-    blueprints = local.list_blueprints()
-    print_data(BASE_BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
 
 @blueprints.command(name='get',
@@ -452,24 +418,6 @@ def create_requirements(blueprint_path, output_path, logger):
     else:
         for requirement in requirements:
             logger.info(requirement)
-
-
-@blueprints.command(name='install-plugins',
-                    short_help='Install plugins [locally]')
-@cfy.argument('blueprint-path', type=click.Path(exists=True))
-@cfy.options.common_options
-@cfy.assert_local_active
-@cfy.pass_logger
-def install_plugins(blueprint_path, logger):
-    """Install the necessary plugins for a given blueprint in the
-    local environment.
-
-    Currently only supports passing the YAML of the blueprint directly.
-
-    `BLUEPRINT_PATH` is the path to the blueprint to install plugins for.
-    """
-    logger.info('Installing plugins...')
-    local._install_plugins(blueprint_path=blueprint_path)
 
 
 @blueprints.command(name='set-global',
@@ -801,3 +749,64 @@ def delete_deployments_filter(filter_id, tenant_name, logger, client):
                                 tenant_name,
                                 logger,
                                 client.blueprints_filters)
+
+
+@click.group(name='blueprints')
+@cfy.options.common_options
+def local_blueprints():
+    pass
+
+
+@local_blueprints.command(name='list', short_help='List blueprints')
+@cfy.options.local_common_options
+@cfy.pass_logger
+@cfy.options.extended_view
+def local_list(logger):
+    blueprints = local.list_blueprints()
+    print_data(BASE_BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
+
+
+
+@local_blueprints.command(name='install-plugins',
+                    short_help='Install plugins [locally]')
+@cfy.argument('blueprint-path', type=click.Path(exists=True))
+@cfy.options.common_options
+@cfy.assert_local_active
+@cfy.pass_logger
+def install_plugins(blueprint_path, logger):
+    """Install the necessary plugins for a given blueprint in the
+    local environment.
+
+    Currently only supports passing the YAML of the blueprint directly.
+
+    `BLUEPRINT_PATH` is the path to the blueprint to install plugins for.
+    """
+    logger.info('Installing plugins...')
+    local._install_plugins(blueprint_path=blueprint_path)
+
+
+
+@click.command(name='validate', short_help='Validate a blueprint')
+@cfy.argument('blueprint-path')
+@cfy.options.common_options
+@cfy.pass_logger
+def validate_blueprint(blueprint_path, logger):
+    """Validate a blueprint
+
+    `BLUEPRINT_PATH` is the path of the blueprint to validate.
+    """
+    logger.info('Validating blueprint: {0}'.format(blueprint_path))
+    try:
+        resolver = config.get_import_resolver()
+        validate_version = config.is_validate_definitions_version()
+        parse_from_path(
+            dsl_file_path=blueprint_path,
+            resolver=resolver,
+            validate_version=validate_version)
+    except DSLParsingException as ex:
+        raise CloudifyCliError('Failed to validate blueprint: {0}'.format(ex))
+    logger.info('Blueprint validated successfully')
+
+
+blueprints.add_command(validate_blueprint)
+local_blueprints.add_command(validate_blueprint)

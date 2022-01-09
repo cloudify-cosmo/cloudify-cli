@@ -1,3 +1,5 @@
+import importlib
+
 from . import env
 from .cli import cfy
 from .commands import ssh
@@ -25,7 +27,6 @@ from .commands import profiles
 from .commands import snapshots
 from .commands import uninstall
 from .commands import workflows
-from .commands import blueprints
 from .commands import executions
 from .commands import permissions
 from .commands import user_groups
@@ -35,6 +36,55 @@ from .commands import node_instances
 from .commands import maintenance_mode
 from .commands import audit_log
 
+import click
+
+class LazyLoadedGroup(click.Group):
+    def __init__(self, import_spec, **kwargs):
+        super(LazyLoadedGroup, self).__init__(**kwargs)
+        self._import_spec = import_spec
+        self._group = None
+
+    def _get_group(self):
+        if self._group is None:
+            module_name, group_name = self._import_spec
+            module = importlib.import_module(module_name)
+            self._group = getattr(module, group_name)
+        return self._group
+
+    def get_command(self, *a, **kw):
+        return self._get_group().get_command(*a, **kw)
+
+    def list_commands(self, *a, **kw):
+        return self._get_group().list_commands(*a, **kw)
+
+    def invoke(self, *a, **kw):
+        return self._get_group().invoke(*a, **kw)
+
+    def get_usage(self, *a, **kw):
+        return self._get_group().get_usage(*a, **kw)
+
+    def get_params(self, *a, **kw):
+        return self._get_group().get_params(*a, **kw)
+
+
+@click.group(
+    name='blueprints',
+    cls=LazyLoadedGroup,
+    import_spec=('cloudify_cli.commands.blueprints', 'blueprints')
+)
+@cfy.options.common_options
+def manager_blueprints():
+    """Handle blueprints on the manager"""
+
+
+@click.group(
+    name='blueprints',
+    cls=LazyLoadedGroup,
+    import_spec=('cloudify_cli.commands.blueprints', 'local_blueprints')
+)
+@cfy.options.common_options
+def local_blueprints():
+    """Handle local blueprints"""
 
 
 def _make_cfy():
@@ -90,7 +140,7 @@ def _make_cfy():
     _cfy.add_command(nodes.nodes)
     _cfy.add_command(groups.groups)
     _cfy.add_command(workflows.workflows)
-    _cfy.add_command(blueprints.blueprints)
+
     _cfy.add_command(executions.executions)
     _cfy.add_command(deployments.deployments)
     _cfy.add_command(license.license)
@@ -116,6 +166,8 @@ def _make_cfy():
     # Commands which should be both in manager and local context
     # But change depending on the context.
     if env.is_manager_active():
+        _cfy.add_command(manager_blueprints)
+
         _cfy.add_command(config.config)
         _cfy.add_command(install.manager)
         _cfy.add_command(uninstall.manager)
@@ -130,9 +182,9 @@ def _make_cfy():
         executions.executions.add_command(executions.manager_list)
         executions.executions.add_command(executions.manager_get)
 
-        blueprints.blueprints.add_command(blueprints.manager_list)
         executions.executions.add_command(executions.manager_resume)
     else:
+        _cfy.add_command(local_blueprints)
         _cfy.add_command(install.local)
         _cfy.add_command(uninstall.local)
         _cfy.add_command(node_instances.local)
@@ -144,7 +196,6 @@ def _make_cfy():
         executions.executions.add_command(executions.local_list)
         executions.executions.add_command(executions.local_get)
 
-        blueprints.blueprints.add_command(blueprints.local_list)
     return _cfy
 
 _cfy = _make_cfy()
