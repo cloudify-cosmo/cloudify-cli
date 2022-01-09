@@ -29,7 +29,6 @@ from cloudify_cli.tests.commands.test_base import CliCommandTest
 
 
 class TestMultipleLocalProfiles(CliCommandTest):
-
     """Verify that multple local profiles can be used."""
 
     LOCAL_BLUEPRINT_PATH = os.path.join(
@@ -38,18 +37,11 @@ class TestMultipleLocalProfiles(CliCommandTest):
         DEFAULT_BLUEPRINT_FILE_NAME,
     )
 
-    LOCAL_PROFILE_DIR = os.path.join(env.PROFILES_DIR, 'local')
-
-    # def tearDown(self):
-    #     """Delete cloudify data directory."""
-    #     super(TestMultipleLocalProfiles, self).tearDown()
-    #     shutil.rmtree(env.CLOUDIFY_WORKDIR, ignore_errors=True)
-
     def test_default_blueprint_id(self):
         """Default blueprint id is the directory name."""
         self.invoke('init {0}'.format(self.LOCAL_BLUEPRINT_PATH))
         self.assertThat(
-            os.path.join(self.LOCAL_PROFILE_DIR, 'blueprints', 'local'),
+            os.path.join(env.PROFILES_DIR, 'local', 'blueprints', 'local'),
             DirExists(),
         )
 
@@ -58,7 +50,8 @@ class TestMultipleLocalProfiles(CliCommandTest):
         self.invoke(
             'init -b my-blueprint {0}'.format(self.LOCAL_BLUEPRINT_PATH))
         self.assertThat(
-            os.path.join(self.LOCAL_PROFILE_DIR, 'blueprints', 'my-blueprint'),
+            os.path.join(
+                env.PROFILES_DIR, 'local', 'blueprints', 'my-blueprint'),
             DirExists(),
         )
 
@@ -74,7 +67,7 @@ class TestMultipleLocalProfiles(CliCommandTest):
         for blueprint_number in range(blueprint_count):
             self.assertThat(
                 os.path.join(
-                    self.LOCAL_PROFILE_DIR, 'blueprints',
+                    env.PROFILES_DIR, 'local', 'blueprints',
                     'my-blueprint-{0}'.format(blueprint_number),
                 ),
                 DirExists(),

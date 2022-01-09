@@ -95,7 +95,6 @@ class CliCommandTest(testtools.TestCase):
 
     def setUp(self):
         super(CliCommandTest, self).setUp()
-        self.use_manager()
         logdir = os.path.dirname(env.DEFAULT_LOG_FILE)
 
         # create log folder
@@ -109,13 +108,21 @@ class CliCommandTest(testtools.TestCase):
                 self.client._client.headers[CLOUDIFY_TENANT_HEADER] = \
                     kwargs['tenant_name']
             return self.client
-
+        workdir = '/tmp/cloudify-cli-test/.cloudify'
         self._patchers = [
             patch('cloudify_cli.env.get_rest_client', get_mock_rest_client),
-            patch('os.getcwd', return_value=env.CLOUDIFY_WORKDIR)
+            patch('os.getcwd', return_value=workdir),
+            patch('cloudify_cli.env.CLOUDIFY_WORKDIR', workdir),
+            patch('cloudify_cli.env.PROFILES_DIR',
+                  os.path.join(workdir, 'profiles')),
+            patch('cloudify_cli.env.ACTIVE_PROFILE',
+                  os.path.join(workdir, 'active.profile')),
+            patch('cloudify_cli.config.config.CLOUDIFY_CONFIG_PATH',
+                  os.path.join(workdir, 'config.yaml')),
         ]
         for p in self._patchers:
             p.start()
+        self.use_manager()
         set_global_json_output(False)
         self.caplog.set_level(logging.INFO)
 
@@ -148,7 +155,6 @@ class CliCommandTest(testtools.TestCase):
         # of the command
         if lexed_command[0] == 'cfy':
             del lexed_command[0]
-
         runner = clicktest.CliRunner()
         _cfy = main._make_cfy()
         outcome = runner.invoke(_cfy, lexed_command)

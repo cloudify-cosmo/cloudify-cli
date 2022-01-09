@@ -39,12 +39,15 @@ from ..commands.cluster import update_profile_logic as update_cluster_profile
 
 
 EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
-EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
 PROFILE_COLUMNS = ['name', 'manager_ip', 'manager_username', 'manager_tenant',
                    'ssh_user', 'ssh_key', 'ssh_port', 'kerberos_env',
                    'rest_port', 'rest_protocol', 'rest_certificate']
 CLUSTER_PROFILE_COLUMNS = PROFILE_COLUMNS[:1] + ['hostname', 'host_ip'] \
     + PROFILE_COLUMNS[2:]
+
+
+def _exported_ssh_keys_dir():
+    return os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
 
 
 @cfy.group(name='profiles')
@@ -614,7 +617,7 @@ def export_profiles(include_keys, output_path, logger):
             _backup_ssh_key(profile)
     utils.tar(env.PROFILES_DIR, destination)
     if include_keys:
-        shutil.rmtree(EXPORTED_SSH_KEYS_DIR)
+        shutil.rmtree(_exported_ssh_keys_dir())
     logger.info('Export complete!')
     logger.info(
         'You can import the profiles by running '
@@ -650,7 +653,7 @@ def import_profiles(archive_path, include_keys, logger):
                         "for one or more profiles. To restore those keys to "
                         "their original locations, you can use the "
                         "`--include-keys flag or copy them manually from %s ",
-                        EXPORTED_SSH_KEYS_DIR)
+                        _exported_ssh_keys_dir())
     logger.info('Import complete!')
     logger.info('You can list profiles using `cfy profiles list`')
 
@@ -691,11 +694,11 @@ def _move_ssh_key(profile, logger, is_backup):
     key_filepath = context.ssh_key
     if key_filepath:
         backup_path = os.path.join(
-            EXPORTED_SSH_KEYS_DIR, os.path.basename(key_filepath)) + \
+            _exported_ssh_keys_dir(), os.path.basename(key_filepath)) + \
             '.{0}.profile'.format(profile)
         if is_backup:
-            if not os.path.isdir(EXPORTED_SSH_KEYS_DIR):
-                os.makedirs(EXPORTED_SSH_KEYS_DIR, mode=0o700)
+            if not os.path.isdir(_exported_ssh_keys_dir()):
+                os.makedirs(_exported_ssh_keys_dir(), mode=0o700)
             logger.info('Copying ssh key %s to %s...',
                         key_filepath, backup_path)
             shutil.copy2(key_filepath, backup_path)

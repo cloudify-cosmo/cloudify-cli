@@ -223,11 +223,11 @@ class InitTest(CliCommandTest):
 
 class LocalProfileUpdateTest(CliCommandTest):
     def setUp(self):
+        super(LocalProfileUpdateTest, self).setUp()
         shutil.copytree(
             os.path.join(RESOURCES_DIR, 'old_local_profile'),
             os.path.join(env.CLOUDIFY_WORKDIR, 'profiles', 'local')
         )
-        super(LocalProfileUpdateTest, self).setUp()
         self.use_local_profile()
 
     def test_list_blueprints(self):
