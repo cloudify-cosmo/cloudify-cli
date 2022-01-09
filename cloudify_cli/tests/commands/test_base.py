@@ -31,7 +31,7 @@ from cloudify._compat import PY2, text_type
 from ... import env
 from ... import utils
 from ... import logger
-from ... import commands
+from ...commands import init
 from ... import main
 from ...exceptions import CloudifyCliError
 from ...logger import set_global_json_output
@@ -247,7 +247,7 @@ class CliCommandTest(testtools.TestCase):
 
         profile.save()
         env.profile = profile
-        commands.init.set_config()
+        init.set_config()
         env.set_active_profile(manager_params['manager_ip'])
         return profile
 
