@@ -87,6 +87,7 @@ class ClickInvocationException(Exception):
 
 
 @pytest.mark.usefixtures('class_caplog')
+@pytest.mark.usefixtures('class_tmpdir')
 class CliCommandTest(testtools.TestCase):
 
     @classmethod
@@ -108,7 +109,8 @@ class CliCommandTest(testtools.TestCase):
                 self.client._client.headers[CLOUDIFY_TENANT_HEADER] = \
                     kwargs['tenant_name']
             return self.client
-        workdir = '/tmp/cloudify-cli-test/.cloudify'
+
+        workdir = self.tmpdir / '.cloudify'
         self._patchers = [
             patch('cloudify_cli.env.get_rest_client', get_mock_rest_client),
             patch('os.getcwd', return_value=workdir),
