@@ -36,34 +36,34 @@ from .commands import maintenance_mode
 from .commands import audit_log
 
 
-@cfy.group(name='cfy')
-@cfy.options.verbose(expose_value=True)
-@cfy.options.json
-@cfy.options.version
-@cfy.options.extended_view
-def _cfy(verbose):
-    """Cloudify's Command Line Interface
 
-    Note that some commands are only available if you're using a manager.
-    You can use a manager by running the `cfy profiles use` command and
-    providing it with the IP of your manager (and ssh credentials if
-    applicable).
-
-    To activate bash-completion. Run: `eval "$(_CFY_COMPLETE=source cfy)"`
-
-    Cloudify's working directory resides in ~/.cloudify. To change it, set
-    the variable `CFY_WORKDIR` to something else (e.g. /tmp/).
-    """
-    cfy.set_cli_except_hook(verbose)
-
-
-def _register_commands():
+def _make_cfy():
     """Register the CLI's commands.
 
     Here is where we decide which commands register with the cli
     and which don't. We should decide that according to whether
     a manager is currently `use`d or not.
     """
+    @cfy.group(name='cfy')
+    @cfy.options.verbose(expose_value=True)
+    @cfy.options.json
+    @cfy.options.version
+    @cfy.options.extended_view
+    def _cfy(verbose):
+        """Cloudify's Command Line Interface
+
+        Note that some commands are only available if you're using a manager.
+        You can use a manager by running the `cfy profiles use` command and
+        providing it with the IP of your manager (and ssh credentials if
+        applicable).
+
+        To activate bash-completion. Run: `eval "$(_CFY_COMPLETE=source cfy)"`
+
+        Cloudify's working directory resides in ~/.cloudify. To change it, set
+        the variable `CFY_WORKDIR` to something else (e.g. /tmp/).
+        """
+        cfy.set_cli_except_hook(verbose)
+
     # Manager agnostic commands
     _cfy.add_command(init.init)
     _cfy.add_command(status.status)
@@ -145,9 +145,9 @@ def _register_commands():
         executions.executions.add_command(executions.local_get)
 
         blueprints.blueprints.add_command(blueprints.local_list)
+    return _cfy
 
-
-_register_commands()
+_cfy = _make_cfy()
 
 
 if __name__ == '__main__':

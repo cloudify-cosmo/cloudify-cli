@@ -19,6 +19,8 @@ import json
 
 from mock import MagicMock, patch
 
+from cloudify_cli import local
+
 from .. import cfy
 from ...commands import executions
 from .test_base import CliCommandTest
@@ -162,6 +164,5 @@ class ExecutionsTest(CliCommandTest):
             'local',
             DEFAULT_BLUEPRINT_FILE_NAME
         )
-
+        self.use_local_profile()
         self.invoke('cfy init {0}'.format(blueprint_path))
-        cfy.register_commands()

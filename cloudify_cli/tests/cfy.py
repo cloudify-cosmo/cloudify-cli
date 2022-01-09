@@ -175,8 +175,6 @@ def use_manager(**manager_params):
 
     commands.init.set_config()
     env.set_active_profile(manager_params['manager_ip'])
-    register_commands()
-
     return profile
 
 

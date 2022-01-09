@@ -35,6 +35,7 @@ class ProfilesTest(CliCommandTest):
             profile_output, cfy.default_manager_params)
 
     def test_get_profile_no_active_manager(self):
+        self.use_local_profile()
         outcome = self.invoke('profiles show-current')
         self.assertIn("You're currently working in local mode", outcome.logs)
 
@@ -47,6 +48,7 @@ class ProfilesTest(CliCommandTest):
         self.assertIn('80', outcome.output)
 
     def test_list_profiles_no_profiles(self):
+        self.delete_current_profile()
         outcome = self.invoke('profiles list')
         self.assertIn('No profiles found.', outcome.logs)
 
@@ -69,7 +71,7 @@ class ProfilesTest(CliCommandTest):
         # self.assertNotIn('localhost', outcome.logs)
 
     def test_delete_non_existing_profile(self):
-        manager_ip = '10.10.1.10'
+        manager_ip = '10.10.1.11'
         self.invoke(
             'cfy profiles delete {0}'.format(manager_ip),
             err_str_segment='does not exist'
@@ -148,6 +150,7 @@ class ProfilesTest(CliCommandTest):
             os.remove(profiles_archive)
 
     def test_export_profiles_no_profiles_to_export(self):
+        self.delete_current_profile()
         self.invoke(
             'cfy profiles export',
             err_str_segment='No profiles to export')

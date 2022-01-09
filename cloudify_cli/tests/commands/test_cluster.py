@@ -116,6 +116,7 @@ class ClusterTest(CliCommandTest):
         # Running a command which requires a target manager server without
         # first calling "cfy profiles use" or providing a target server
         # explicitly
+        self.delete_current_profile()
         self.invoke(
             'cfy cluster status',
             'This command is only available when using a manager'

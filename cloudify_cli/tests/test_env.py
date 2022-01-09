@@ -115,7 +115,7 @@ class CliEnvTests(CliCommandTest):
         super(CliEnvTests, self).tearDown()
         cfy.purge_dot_cloudify()
 
-    def _make_mock_profile(self, profile_name='10.10.1.10'):
+    def _make_mock_profile(self, profile_name='10.10.1.11'):
         profile_path = os.path.join(env.PROFILES_DIR, profile_name)
         os.makedirs(profile_path, mode=0o700)
         with open(os.path.join(profile_path, 'context.json'), 'w') as profile:
@@ -124,7 +124,7 @@ class CliEnvTests(CliCommandTest):
 
     def test_delete_profile(self):
         profile_path = self._make_mock_profile()
-        env.delete_profile('10.10.1.10')
+        env.delete_profile('10.10.1.11')
         self.assertFalse(os.path.isdir(profile_path))
 
     def test_profile_exists(self):
@@ -132,11 +132,11 @@ class CliEnvTests(CliCommandTest):
 
     def test_profile_does_not_exist(self):
         self._make_mock_profile()
-        self.assertTrue(env.is_profile_exists('10.10.1.10'))
+        self.assertTrue(env.is_profile_exists('10.10.1.11'))
 
     def test_assert_profile_exists(self):
         self._make_mock_profile()
-        env.assert_profile_exists('10.10.1.10')
+        env.assert_profile_exists('10.10.1.11')
 
     def test_assert_non_existing_profile_exists(self):
         ex = self.assertRaises(

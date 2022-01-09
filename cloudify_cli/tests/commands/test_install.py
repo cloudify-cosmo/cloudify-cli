@@ -21,9 +21,7 @@ class InstallTest(CliCommandTest):
                                         blueprints_upload_mock,
                                         deployments_create_mock):
         self.invoke(
-            'cfy install {0}'.format(SAMPLE_BLUEPRINT_PATH),
-            context='manager'
-        )
+            'cfy install {0}'.format(SAMPLE_BLUEPRINT_PATH))
 
         self.assertTrue(executions_start_mock.called)
         self.assertTrue(blueprints_upload_mock.called)
@@ -38,7 +36,7 @@ class InstallTest(CliCommandTest):
             'cfy install --blueprint-id={1} {0}'\
             .format(SAMPLE_ARCHIVE_PATH, STUB_BLUEPRINT_ID)
 
-        self.invoke(install_command, context='manager')
+        self.invoke(install_command)
         blueprint_upload_args = blueprints_upload_mock.call_args_list[0][1]
 
         self.assertEqual(
@@ -61,7 +59,7 @@ class InstallTest(CliCommandTest):
         install_command = 'cfy install -n {0} {1}'\
             .format(DEFAULT_BLUEPRINT_FILE_NAME, SAMPLE_ARCHIVE_PATH)
 
-        self.invoke(install_command, context='manager')
+        self.invoke(install_command)
 
         blueprint_upload_args = blueprints_upload_mock.call_args_list[0][1]
 
@@ -85,7 +83,7 @@ class InstallTest(CliCommandTest):
         install_command = 'cfy install -n {0} {1}' \
             .format(DEFAULT_BLUEPRINT_FILE_NAME, SAMPLE_ARCHIVE_URL)
 
-        self.invoke(install_command, context='manager')
+        self.invoke(install_command)
 
         blueprint_upload_args = blueprints_upload_mock.call_args_list[0][1]
 
@@ -108,7 +106,7 @@ class InstallTest(CliCommandTest):
             .format(STUB_BLUEPRINT_FILENAME, SAMPLE_BLUEPRINT_PATH,
                     SAMPLE_INPUTS_PATH, STUB_BLUEPRINT_ID)
 
-        self.invoke(install_command, context='manager')
+        self.invoke(install_command)
         deployment_create_args = deployment_create_mock.call_args_list[0][1]
 
         self.assertDictEqual(deployment_create_args, {
@@ -135,7 +133,7 @@ class InstallTest(CliCommandTest):
                 STUB_DEPLOYMENT_ID
             )
 
-        self.invoke(command, context='manager')
+        self.invoke(command)
         deployment_create_args = deployment_create_mock.call_args_list[0][1]
 
         self.assertDictEqual(deployment_create_args, {
@@ -163,7 +161,7 @@ class InstallTest(CliCommandTest):
                 STUB_PARAMETERS
             )
 
-        self.invoke(command, context='manager')
+        self.invoke(command)
         executions_start_args = executions_start_mock.call_args_list[0][1]
 
         self.assertDictEqual(
@@ -193,7 +191,7 @@ class InstallTest(CliCommandTest):
                     STUB_BLUEPRINT_ID,
                     TEST_LABELS)
 
-        self.invoke(command, context='manager')
+        self.invoke(command)
         blueprints_upload_args = blueprints_upload_mock.call_args_list[0][1]
         self.assertDictEqual(
             blueprints_upload_args,
@@ -222,7 +220,7 @@ class InstallTest(CliCommandTest):
                     DEFAULT_BLUEPRINT_FILE_NAME,
                     STUB_BLUEPRINT_ID)
 
-        self.invoke(command, context='manager')
+        self.invoke(command)
         blueprints_upload_args = blueprints_upload_mock.call_args_list[0][1]
 
         self.assertEqual(
@@ -252,7 +250,7 @@ class InstallTest(CliCommandTest):
                     SAMPLE_INPUTS_PATH,
                     TEST_LABELS)
 
-        self.invoke(command, context='manager')
+        self.invoke(command)
 
         deployments_create_mock.assert_called_with(
             blueprint_id=STUB_BLUEPRINT_ID,
@@ -289,7 +287,7 @@ class InstallTest(CliCommandTest):
                     STUB_PARAMETERS
                     )
 
-        self.invoke(command, context='manager')
+        self.invoke(command)
 
         executions_start_mock.assert_called_with(
             workflow_id=STUB_WORKFLOW,
@@ -317,7 +315,7 @@ class InstallTest(CliCommandTest):
         publish_archive_mode_command = \
             'cfy install {0}'.format(SAMPLE_BLUEPRINT_PATH)
 
-        self.invoke(publish_archive_mode_command, context='manager')
+        self.invoke(publish_archive_mode_command)
 
         self.assertEqual(
             blueprints_upload_mock.call_args_list[0][1]['blueprint_id'],
@@ -330,12 +328,13 @@ class InstallTest(CliCommandTest):
 
     @patch('cloudify_cli.commands.executions.local_start')
     def test_local_install_default_start_values(self, local_start_mock):
+        self.use_local_profile()
         blueprint_path = os.path.join(
             BLUEPRINTS_DIR,
             'local',
             DEFAULT_BLUEPRINT_FILE_NAME
         )
-        self.invoke('cfy install {0}'.format(blueprint_path), context='local')
+        self.invoke('cfy install {0}'.format(blueprint_path))
 
         args = local_start_mock.call_args_list[0][1]
         self.assertDictEqual(
@@ -353,6 +352,8 @@ class InstallTest(CliCommandTest):
 
     @patch('cloudify_cli.commands.executions.local_start')
     def test_local_install_custom_start_values(self, local_start_mock):
+        self.use_local_profile()
+
         blueprint_path = os.path.join(
             BLUEPRINTS_DIR,
             'local',
@@ -365,7 +366,7 @@ class InstallTest(CliCommandTest):
                     ' --task-retries 14'
                     ' --task-retry-interval 7'
                     ' --task-thread-pool-size 87'
-                    .format(blueprint_path), context='local')
+                    .format(blueprint_path))
 
         args = local_start_mock.call_args_list[0][1]
         self.assertDictEqual(
@@ -384,12 +385,13 @@ class InstallTest(CliCommandTest):
     @patch('cloudify_cli.commands.executions.local_start')
     @patch('cloudify_cli.commands.init.init')
     def test_local_install_default_values(self, init_mock, _):
+        self.use_local_profile()
         blueprint_path = os.path.join(
             BLUEPRINTS_DIR,
             'local',
             DEFAULT_BLUEPRINT_FILE_NAME
         )
-        self.invoke('cfy install {0}'.format(blueprint_path), context='local')
+        self.invoke('cfy install {0}'.format(blueprint_path))
 
         args = init_mock.call_args_list[0][1]
         self.assertDictEqual(
@@ -405,15 +407,15 @@ class InstallTest(CliCommandTest):
     @patch('cloudify_cli.commands.executions.local_start')
     @patch('cloudify_cli.commands.init.init')
     def test_local_install_validate(self, *_):
+        self.use_local_profile()
+
         blueprint_path = os.path.join(
             BLUEPRINTS_DIR,
             'local',
             DEFAULT_BLUEPRINT_FILE_NAME
         )
         outcome = self.invoke(
-            'cfy install {0} --validate'.format(blueprint_path),
-            context='local'
-        )
+            'cfy install {0} --validate'.format(blueprint_path))
 
         outcome = [o.strip() for o in outcome.logs.split('\n')]
         self.assertIn('Blueprint validated successfully', outcome)
@@ -421,9 +423,10 @@ class InstallTest(CliCommandTest):
     @patch('cloudify_cli.commands.executions.local_start')
     @patch('cloudify_cli.commands.init.init')
     def test_local_install_custom_values(self, init_mock, _):
+        self.use_local_profile()
         self.invoke(
             'cfy install {0} -i key=value --install-plugins'
-            .format(SAMPLE_ARCHIVE_PATH), context='local')
+            .format(SAMPLE_ARCHIVE_PATH))
 
         args = init_mock.call_args_list[0][1]
         self.assertEqual(args['inputs'], {u'key': u'value'})

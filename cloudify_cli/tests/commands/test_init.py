@@ -19,6 +19,9 @@ from .constants import (
 
 
 class InitTest(CliCommandTest):
+    def setUp(self):
+        super(InitTest, self).setUp()
+        self.use_local_profile()
 
     def test_init_initialized_directory(self):
         self.use_manager()
@@ -76,7 +79,6 @@ class InitTest(CliCommandTest):
             DEFAULT_BLUEPRINT_FILE_NAME
         )
         self.invoke('cfy init {0}'.format(blueprint_path))
-        cfy.register_commands()
 
         output = json.loads(self.invoke(
             'cfy deployments outputs -b local').logs)
@@ -98,7 +100,6 @@ class InitTest(CliCommandTest):
         command = 'cfy init {0}'.format(blueprint_path)
 
         self.invoke(command)
-        cfy.register_commands()
 
         output = json.loads(self.invoke(
             'cfy deployments inputs -b local').logs)
@@ -120,7 +121,6 @@ class InitTest(CliCommandTest):
         )
 
         self.invoke(command)
-        cfy.register_commands()
 
         output = json.loads(self.invoke(
             'cfy deployments inputs -b local').logs)
@@ -203,7 +203,6 @@ class InitTest(CliCommandTest):
             'cfy init {0} -b local -n simple_blueprint.yaml'
             .format(SAMPLE_CUSTOM_NAME_ARCHIVE)
         )
-        cfy.register_commands()
 
         output = json.loads(self.invoke(
             'cfy deployments inputs -b local').logs)
@@ -230,6 +229,7 @@ class LocalProfileUpdateTest(CliCommandTest):
             os.path.join(env.CLOUDIFY_WORKDIR, 'profiles', 'local')
         )
         super(LocalProfileUpdateTest, self).setUp()
+        self.use_local_profile()
 
     def test_list_blueprints(self):
         out = self.invoke('blueprints list --json')

@@ -12,10 +12,6 @@ from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
 
 
 class UninstallTest(CliCommandTest):
-    def setUp(self):
-        super(UninstallTest, self).setUp()
-        self.use_manager()
-
     @patch('cloudify_cli.commands.blueprints.delete')
     @patch('cloudify_cli.commands.deployments.manager_delete')
     @patch('cloudify_cli.env.get_rest_client')
@@ -164,6 +160,7 @@ class UninstallTest(CliCommandTest):
         )
 
     def test_uninstall_removes_local_storage_dir(self):
+        self.use_local_profile()
         blueprint_path = os.path.join(
             BLUEPRINTS_DIR,
             'local',

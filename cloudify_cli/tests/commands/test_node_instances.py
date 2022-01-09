@@ -277,7 +277,7 @@ class NodeInstancesTest(CliCommandTest):
 
     def _common_runtime_invalid_dict(self, command):
         self.invoke('cfy node-instances {0} instance_id -p "{1}"'
-                    .format(command, '{a: {b: c}'),  # unbalanced brackets
+                    .format(command, r'{a: {b: c}'),  # unbalanced brackets
                     err_str_segment='It must represent a dictionary',
                     exception=CloudifyCliError)
 
@@ -297,9 +297,8 @@ class NodeInstancesTest(CliCommandTest):
             'local',
             DEFAULT_BLUEPRINT_FILE_NAME
         )
-
+        self.use_local_profile()
         self.invoke('cfy init {0}'.format(blueprint_path))
-        cfy.register_commands()
         self.invoke(
             'cfy executions start -b local {0}'
             .format('run_test_op_on_nodes')

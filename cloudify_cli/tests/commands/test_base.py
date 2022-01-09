@@ -45,7 +45,9 @@ class CliCommandTest(testtools.TestCase):
         super(CliCommandTest, self).setUp()
         logdir = os.path.dirname(env.DEFAULT_LOG_FILE)
         env.profile = env.ProfileContext()
-        cfy.invoke('init -r')
+        # cfy.invoke('init -r')
+        self.use_manager()
+
         # create log folder
         if not os.path.exists(logdir):
             os.makedirs(logdir, mode=0o700)
@@ -97,7 +99,6 @@ class CliCommandTest(testtools.TestCase):
 
         else:
             lexed_command = shlex.split(command)
-
         # Safety measure in case someone wrote `cfy` at the beginning
         # of the command
         if lexed_command[0] == 'cfy':
@@ -122,11 +123,11 @@ class CliCommandTest(testtools.TestCase):
         # If we call `cfy init`, what we actually want to do is get the
         # init module from `commands` and then get the `init` command
         # from that module, hence the attribute getting.
+        _cfy = main._make_cfy()
         if is_version:
-            outcome = cfy.invoke(getattr(main, '_cfy'), ['--version'])
+            outcome = cfy.invoke(_cfy, ['--version'])
         else:
-            outcome = cfy.invoke(getattr(
-                getattr(commands, func), sub_func), global_flags + params)
+            outcome = cfy.invoke(_cfy, lexed_command)
         outcome.command = command
         logs = [text for logger_name, level, text in capture.actual()]
         outcome.logs = '\n'.join(logs)
@@ -198,6 +199,12 @@ class CliCommandTest(testtools.TestCase):
         default_manager_params = cfy.default_manager_params.copy()
         default_manager_params.update(manager_params)
         return cfy.use_manager(**default_manager_params)
+
+    def delete_current_profile(self):
+        env.delete_profile(env.profile.name)
+
+    def use_local_profile(self, **manager_params):
+        env.set_active_profile('local')
 
     def _read_context(self):
         return env.get_profile_context()
