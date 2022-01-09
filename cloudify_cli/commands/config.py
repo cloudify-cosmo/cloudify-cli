@@ -26,7 +26,7 @@ CONFIG_COLUMNS = [
 @cfy.group(name='config')
 @cfy.options.common_options
 def config():
-    pass
+    """Handle manager configuration"""
 
 
 @config.command(name='list',

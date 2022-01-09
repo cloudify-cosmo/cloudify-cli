@@ -120,9 +120,7 @@ SCHEDULE_TABLE_COLUMNS = ['id', 'deployment_id', 'workflow_id', 'created_at',
 @cfy.group(name='deployments')
 @cfy.options.common_options
 def deployments():
-    """Handle deployments on the Manager
-    """
-    pass
+    """Handle deployments on the Manager"""
 
 
 def _print_single_update(deployment_update_dict,
@@ -201,7 +199,7 @@ def _print_single_update(deployment_update_dict,
                    'The following labels will be created: ')
 
 
-@cfy.command(name='list', short_help='List deployments [manager only]')
+@deployments.command(name='list', short_help='List deployments [manager only]')
 @cfy.options.blueprint_id()
 @click.option('--group-id', '-g')
 @cfy.options.filter_id
@@ -276,8 +274,8 @@ def manager_list(blueprint_id,
     logger.info(base_str)
 
 
-@cfy.command(name='history', short_help='List deployment updates '
-                                        '[manager only]')
+@deployments.command(name='history',
+                     short_help='List deployment updates [manager only]')
 @cfy.options.deployment_id()
 @cfy.options.sort_by()
 @cfy.options.descending
@@ -330,7 +328,7 @@ def manager_history(deployment_id,
         len(deployment_updates), total))
 
 
-@cfy.command(
+@deployments.command(
     name='get-update',
     short_help='Retrieve deployment update information [manager only]'
 )
@@ -355,7 +353,8 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
     _print_single_update(deployment_update_dict)
 
 
-@cfy.command(name='update', short_help='Update a deployment [manager only]')
+@deployments.command(
+    name='update', short_help='Update a deployment [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.blueprint_path(extra_message=' [UNSUPPORTED]')
 @cfy.options.blueprint_filename(' [UNSUPPORTED]')
@@ -513,8 +512,8 @@ def manager_update(ctx,
                             exec_id=execution.id))
 
 
-@cfy.command(name='create',
-             short_help='Create a deployment [manager only]')
+@deployments.command(name='create',
+                     short_help='Create a deployment [manager only]')
 @cfy.argument('deployment-id', required=False, callback=cfy.validate_name)
 @cfy.options.blueprint_id(required=True)
 @cfy.options.inputs
@@ -599,8 +598,8 @@ def manager_create(blueprint_id,
                 "{1}".format(deployment.display_name, deployment.id))
 
 
-@cfy.command(name='delete',
-             short_help='Delete a deployment [manager only]')
+@deployments.command(name='delete',
+                     short_help='Delete a deployment [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.force(help=helptexts.FORCE_DELETE_DEPLOYMENT)
 @cfy.options.common_options
@@ -648,8 +647,8 @@ def manager_delete(deployment_id, force, with_logs, logger, client,
     logger.info("Deployment deleted")
 
 
-@cfy.command(name='outputs',
-             short_help='Show deployment outputs [manager only]')
+@deployments.command(name='outputs',
+                     short_help='Show deployment outputs [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
@@ -670,8 +669,8 @@ def manager_outputs(deployment_id, logger, client, tenant_name):
     )
 
 
-@cfy.command(name='capabilities',
-             short_help='Show deployment capabilities [manager only]')
+@deployments.command(name='capabilities',
+                     short_help='Show deployment capabilities [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
@@ -724,8 +723,8 @@ def _present_outputs_or_capabilities(
         logger.info(values.getvalue())
 
 
-@cfy.command(name='inputs',
-             short_help='Show deployment inputs [manager only]')
+@deployments.command(name='inputs',
+                     short_help='Show deployment inputs [manager only]')
 @cfy.argument('deployment-id')
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
@@ -751,8 +750,10 @@ def manager_inputs(deployment_id, logger, client, tenant_name):
         logger.info(inputs_.getvalue())
 
 
-@cfy.command(name='set-visibility',
-             short_help="Set the deployment's visibility [manager only]")
+@deployments.command(
+    name='set-visibility',
+    short_help="Set the deployment's visibility [manager only]"
+)
 @cfy.argument('deployment-id')
 @cfy.options.visibility(required=True, valid_values=VISIBILITY_EXCEPT_PRIVATE)
 @cfy.options.common_options
@@ -770,28 +771,6 @@ def manager_set_visibility(deployment_id, visibility, logger, client):
         client.deployments.set_visibility(deployment_id, visibility)
         logger.info('Deployment `{0}` was set to {1}'.format(deployment_id,
                                                              visibility))
-
-
-@cfy.command(name='inputs', short_help='Show deployment inputs [locally]')
-@cfy.options.common_options
-@cfy.options.blueprint_id(required=True)
-@cfy.pass_logger
-def local_inputs(blueprint_id, logger):
-    """Display inputs for the execution
-    """
-    env = load_env(blueprint_id)
-    logger.info(json.dumps(env.plan['inputs'] or {}, sort_keys=True, indent=2))
-
-
-@cfy.command(name='outputs', short_help='Show deployment outputs [locally]')
-@cfy.options.common_options
-@cfy.options.blueprint_id(required=True)
-@cfy.pass_logger
-def local_outputs(blueprint_id, logger):
-    """Display outputs for the execution
-    """
-    env = load_env(blueprint_id)
-    logger.info(json.dumps(env.outputs() or {}, sort_keys=True, indent=2))
 
 
 @deployments.command(name='summary',
@@ -838,8 +817,8 @@ def summary(target_field, sub_field, group_id, logger, client, tenant_name,
     )
 
 
-@cfy.command(name='set-site',
-             short_help="Set the deployment's site [manager only]")
+@deployments.command(name='set-site',
+                     short_help="Set the deployment's site [manager only]")
 @cfy.argument('deployment-id')
 @cfy.options.site_name
 @cfy.options.detach_site
@@ -1324,13 +1303,10 @@ def groups_update_deployments(ctx, group_id, logger, client, tenant_name,
                 execution_group.id)
 
 
-@cfy.group(name='schedule')
+@deployments.group(name='schedule')
 @cfy.options.common_options
 def schedule():
-    """
-    Handle deployments' execution scheduling [manager only]
-    """
-    pass
+    """Handle deployments' execution scheduling [manager only]"""
 
 
 @schedule.command(name='create',
@@ -1897,3 +1873,33 @@ def delete_deployments_filter(filter_id, tenant_name, logger, client):
                                 tenant_name,
                                 logger,
                                 client.deployments_filters)
+
+
+@cfy.group(name='deployments')
+@cfy.options.common_options
+def local_deployments():
+    """Handle local deployments"""
+
+
+@local_deployments.command(
+    name='inputs', short_help='Show deployment inputs [locally]')
+@cfy.options.common_options
+@cfy.options.blueprint_id(required=True)
+@cfy.pass_logger
+def local_inputs(blueprint_id, logger):
+    """Display inputs for the execution
+    """
+    env = load_env(blueprint_id)
+    logger.info(json.dumps(env.plan['inputs'] or {}, sort_keys=True, indent=2))
+
+
+@local_deployments.command(
+    name='outputs', short_help='Show deployment outputs [locally]')
+@cfy.options.common_options
+@cfy.options.blueprint_id(required=True)
+@cfy.pass_logger
+def local_outputs(blueprint_id, logger):
+    """Display outputs for the execution
+    """
+    env = load_env(blueprint_id)
+    logger.info(json.dumps(env.outputs() or {}, sort_keys=True, indent=2))
