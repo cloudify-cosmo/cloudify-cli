@@ -39,7 +39,7 @@ pipeline {
     PROJECT_DIR = "${env.WORKSPACE}/project"
     BUILD_DIR = "/tmp/build"
     RESULT_DIR = "/tmp/result"
-    CLOUDIFY_PACKAGE_RELEASE = getPreRelease("${env.PROJECT}", "${env.BRANCH_NAME}").trim()
+    CLOUDIFY_PACKAGE_RELEASE = "1"
     CLOUDIFY_VERSION = getVersion("${env.PROJECT}", "${env.BRANCH_NAME}").trim()
   }
 
