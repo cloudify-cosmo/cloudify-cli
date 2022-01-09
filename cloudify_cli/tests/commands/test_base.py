@@ -83,11 +83,8 @@ class CliCommandTest(testtools.TestCase):
                 f.write('')
 
     @log_capture()
-    def _do_invoke(self, command, capture, context=None):
-
+    def _do_invoke(self, command, capture):
         logger.set_global_verbosity_level(verbose=logger.NO_VERBOSE)
-
-        cfy = clicktest.CliRunner()
 
         if PY2:
             if isinstance(command, text_type):
@@ -96,51 +93,28 @@ class CliCommandTest(testtools.TestCase):
                 lexed_command = [p.decode('utf-8') for p in parts]
             else:
                 lexed_command = shlex.split(command)
-
         else:
             lexed_command = shlex.split(command)
+
         # Safety measure in case someone wrote `cfy` at the beginning
         # of the command
         if lexed_command[0] == 'cfy':
             del lexed_command[0]
 
-        is_version = False
-        global_flags = []
-        if lexed_command[0] == '--version':
-            func = lexed_command[0]
-            is_version = True
-        elif lexed_command[0].startswith('--'):
-            # for --json and --format
-            while lexed_command[0].startswith('--'):
-                global_flags.append(lexed_command.pop(0))
-
-        if not is_version:
-            # For commands which contain a dash (like maintenance-mode)
-            func = lexed_command[0].replace('-', '_')
-        params = lexed_command[1:]
-
-        sub_func = context or func
-        # If we call `cfy init`, what we actually want to do is get the
-        # init module from `commands` and then get the `init` command
-        # from that module, hence the attribute getting.
+        runner = clicktest.CliRunner()
         _cfy = main._make_cfy()
-        if is_version:
-            outcome = cfy.invoke(_cfy, ['--version'])
-        else:
-            outcome = cfy.invoke(_cfy, lexed_command)
+        outcome = runner.invoke(_cfy, lexed_command)
         outcome.command = command
         logs = [text for logger_name, level, text in capture.actual()]
         outcome.logs = '\n'.join(logs)
-
         return outcome
 
-    # TODO: Consider separating
     def invoke(self,
                command,
                err_str_segment=None,
                exception=CloudifyCliError,
                context=None):
-        outcome = self._do_invoke(command, context=context)
+        outcome = self._do_invoke(command)
 
         # An empty string might be passed, so it's best to check against None
         should_fail = err_str_segment is not None
