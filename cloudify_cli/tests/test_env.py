@@ -985,6 +985,7 @@ CERT_PATH = 'path-to-certificate'
 class TestGetRestClient(CliCommandTest):
 
     def setUp(self):
+        self.original_utils_get_rest_client = env.get_rest_client
         super(TestGetRestClient, self).setUp()
         cfy.invoke('init -r')
 

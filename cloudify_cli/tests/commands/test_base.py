@@ -43,10 +43,8 @@ class CliCommandTest(testtools.TestCase):
 
     def setUp(self):
         super(CliCommandTest, self).setUp()
-        logdir = os.path.dirname(env.DEFAULT_LOG_FILE)
-        env.profile = env.ProfileContext()
-        # cfy.invoke('init -r')
         self.use_manager()
+        logdir = os.path.dirname(env.DEFAULT_LOG_FILE)
 
         # create log folder
         if not os.path.exists(logdir):
@@ -60,22 +58,20 @@ class CliCommandTest(testtools.TestCase):
                     kwargs['tenant_name']
             return self.client
 
-        self.original_utils_get_rest_client = env.get_rest_client
-        env.get_rest_client = get_mock_rest_client
-        self.original_utils_get_cwd = utils.get_cwd
-        utils.get_cwd = lambda: env.CLOUDIFY_WORKDIR
-        self.original_utils_os_getcwd = utils_os.getcwd
-        utils_os.getcwd = lambda: env.CLOUDIFY_WORKDIR
-        # reset in case a test set it
+        self._patchers = [
+            patch('cloudify_cli.env.get_rest_client', get_mock_rest_client),
+            patch('os.getcwd', return_value=env.CLOUDIFY_WORKDIR)
+        ]
+        for p in self._patchers:
+            p.start()
         set_global_json_output(False)
 
     def tearDown(self):
         super(CliCommandTest, self).tearDown()
         cfy.purge_dot_cloudify()
 
-        env.get_rest_client = self.original_utils_get_rest_client
-        utils.get_cwd = self.original_utils_get_cwd = utils.get_cwd
-        utils_os.getcwd = self.original_utils_os_getcwd = utils_os.getcwd
+        for p in self._patchers:
+            p.stop()
 
         # empty log file
         if os.path.exists(env.DEFAULT_LOG_FILE):
