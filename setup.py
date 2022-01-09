@@ -57,6 +57,7 @@ setup(
         'setuptools<=40.7.3',
         'cryptography==3.3.2',
         'cffi>=1.14,<1.15',
+        'pynacl==1.4.0',
         # Fabric depend on paramiko that depends on cryptography so we need
         # to install the correct version of cryptography before installing
         # the fabric so that fabric can be installed correctly in both py2 +
