@@ -18,6 +18,7 @@ import os as utils_os
 import shlex
 import shutil
 import pytest
+import traceback
 
 import testtools
 from mock import patch, Mock, PropertyMock
@@ -63,6 +64,7 @@ class ClickInvocationException(Exception):
                  exit_code=1,
                  exception=None,
                  exc_info=None):
+        super(ClickInvocationException, self).__init__(message)
         self.message = message
         self.output = output
         self.logs = logs
@@ -85,6 +87,7 @@ class ClickInvocationException(Exception):
         string += 'EXC_INFO:\n{0}\n'.format(''.join(exc_info_str_list))
         return string
 
+    __repr__ = __str__
 
 @pytest.mark.usefixtures('class_caplog')
 @pytest.mark.usefixtures('class_tmpdir')
