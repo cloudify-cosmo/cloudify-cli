@@ -33,7 +33,7 @@ from ..logger import configure_loggers
 from ..exceptions import CloudifyCliError
 
 
-@click.command(name='init',)
+@cfy.command(name='init',)
 @cfy.argument('blueprint-path', required=False)
 @cfy.options.blueprint_filename()
 @cfy.options.blueprint_id(required=False, validate=True)
@@ -53,6 +53,21 @@ def init(blueprint_path,
          hard,
          enable_colors,
          logger):
+    """Initialize a Cloudify environment.
+
+    This is required to perform many actions and should be the first
+    action performed after installing Cloudify.
+
+    Note: Running `cfy install` or `cfy profiles use` will
+    initialize an environment automatically.
+
+    Providing a `BLUEPRINT_PATH` will also initialize a blueprint to
+    work on.
+
+    After initialization, the CLI's configuration can be found under
+    ~/.cloudify/config.yaml. For more information refer to the docs
+    at http://docs.getcloudify.org
+    """
 
     profile_name = 'local'
 

@@ -14,7 +14,6 @@ from .commands import apply
 from .commands import agents
 from .commands import events
 from .commands import groups
-from .commands import status
 from .commands import tokens
 from .commands import config
 from .commands import cluster
@@ -23,7 +22,6 @@ from .commands import plugins
 from .commands import tenants
 from .commands import secrets
 from .commands import license
-from .commands import profiles
 from .commands import snapshots
 from .commands import uninstall
 from .commands import workflows
@@ -56,6 +54,9 @@ class LazyLoadedCommand(click.Command):
     def get_usage(self, *a, **kw):
         return self._get_command().get_usage(*a, **kw)
 
+    def get_help(self, *a, **kw):
+        return self._get_command().get_help(*a, **kw)
+
     def get_params(self, *a, **kw):
         return self._get_command().get_params(*a, **kw)
 
@@ -85,6 +86,9 @@ class LazyLoadedGroup(click.Group):
     def get_usage(self, *a, **kw):
         return self._get_group().get_usage(*a, **kw)
 
+    def get_help(self, *a, **kw):
+        return self._get_group().get_help(*a, **kw)
+
     def get_params(self, *a, **kw):
         return self._get_group().get_params(*a, **kw)
 
@@ -94,9 +98,8 @@ class LazyLoadedGroup(click.Group):
     cls=LazyLoadedGroup,
     import_spec=('cloudify_cli.commands.blueprints', 'blueprints')
 )
-@cfy.options.common_options
 def manager_blueprints():
-    """Handle blueprints on the manager"""
+    pass
 
 
 @click.group(
@@ -104,9 +107,8 @@ def manager_blueprints():
     cls=LazyLoadedGroup,
     import_spec=('cloudify_cli.commands.blueprints', 'local_blueprints')
 )
-@cfy.options.common_options
 def local_blueprints():
-    """Handle local blueprints"""
+    pass
 
 
 @click.command(
@@ -115,24 +117,28 @@ def local_blueprints():
     short_help='Initialize a working env',
     import_spec=('cloudify_cli.commands.init', 'init'),
 )
-@cfy.options.common_options
 def init():
-    """Initialize a Cloudify environment.
+    pass
 
-    This is required to perform many actions and should be the first
-    action performed after installing Cloudify.
 
-    Note: Running `cfy install` or `cfy profiles use` will
-    initialize an environment automatically.
+@click.command(
+    name='status',
+    cls=LazyLoadedCommand,
+    short_help='Show manager status ',
+    import_spec=('cloudify_cli.commands.status', 'status'),
+)
+def status():
+    pass
 
-    Providing a `BLUEPRINT_PATH` will also initialize a blueprint to
-    work on.
 
-    After initialization, the CLI's configuration can be found under
-    ~/.cloudify/config.yaml. For more information refer to the docs
-    at http://docs.getcloudify.org
-    """
-
+@click.group(
+    name='profiles',
+    cls=LazyLoadedGroup,
+    import_spec=('cloudify_cli.commands.profiles', 'profiles'),
+    short_help='Handle Cloudify CLI profiles'
+)
+def profiles():
+    pass
 
 
 def _make_cfy():
@@ -164,8 +170,8 @@ def _make_cfy():
 
     # Manager agnostic commands
     _cfy.add_command(init)
-    _cfy.add_command(status.status)
-    _cfy.add_command(profiles.profiles)
+    _cfy.add_command(status)
+    _cfy.add_command(profiles)
 
     # Manager only commands
     _cfy.add_command(ssh.ssh)

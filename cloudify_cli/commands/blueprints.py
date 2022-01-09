@@ -53,10 +53,10 @@ INPUTS_COLUMNS = ['name', 'type', 'default', 'description']
 BLUEPRINTS_SUMMARY_FIELDS = BASE_SUMMARY_FIELDS
 
 
-@click.group(name='blueprints')
+@cfy.group(name='blueprints')
 @cfy.options.common_options
 def blueprints():
-    pass
+    """Handle blueprints on the manager"""
 
 
 @blueprints.command(name='upload',
@@ -751,10 +751,10 @@ def delete_deployments_filter(filter_id, tenant_name, logger, client):
                                 client.blueprints_filters)
 
 
-@click.group(name='blueprints')
+@cfy.group(name='blueprints')
 @cfy.options.common_options
 def local_blueprints():
-    pass
+    """Handle local blueprints"""
 
 
 @local_blueprints.command(name='list', short_help='List blueprints')

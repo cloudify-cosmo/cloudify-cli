@@ -15,6 +15,7 @@
 ############
 
 import os
+import click
 import shutil
 import tarfile
 
@@ -53,8 +54,7 @@ def _exported_ssh_keys_dir():
 @cfy.group(name='profiles')
 @cfy.options.common_options
 def profiles():
-    """
-    Handle Cloudify CLI profiles
+    """Handle Cloudify CLI profiles
 
     Each profile can manage a single Cloudify manager.
 
