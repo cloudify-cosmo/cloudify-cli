@@ -16,6 +16,7 @@ import os
 import logging
 import os as utils_os
 import shlex
+import shutil
 import pytest
 
 import testtools
@@ -26,7 +27,6 @@ from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
 import click.testing as clicktest
 from cloudify._compat import PY2, text_type
-from .. import cfy
 from ... import env
 from ... import utils
 from ... import logger
@@ -34,6 +34,56 @@ from ... import commands
 from ... import main
 from ...exceptions import CloudifyCliError
 from ...logger import set_global_json_output
+from ... import constants
+
+
+default_manager_params = dict(
+    name='10.10.1.10',
+    manager_ip='10.10.1.10',
+    ssh_key='key',
+    ssh_user='test',
+    ssh_port='22',
+    provider_context={},
+    rest_port=80,
+    rest_protocol='http',
+    rest_certificate=None,
+    kerberos_env=False,
+    manager_username='admin',
+    manager_password='admin',
+    manager_tenant=constants.DEFAULT_TENANT_NAME,
+    cluster={}
+)
+
+
+class ClickInvocationException(Exception):
+    def __init__(self,
+                 message,
+                 output=None,
+                 logs=None,
+                 exit_code=1,
+                 exception=None,
+                 exc_info=None):
+        self.message = message
+        self.output = output
+        self.logs = logs
+        self.exit_code = exit_code
+        self.exception = exception
+        self.ex_type, self.ex_value, self.ex_tb = exc_info if exc_info else \
+            (None, None, None)
+
+    def __str__(self):
+        string = '\nMESSAGE: {0}\n'.format(self.message)
+        string += 'STDOUT: {0}\n'.format(self.output)
+        string += 'EXIT_CODE: {0}\n'.format(self.exit_code)
+        string += 'LOGS: {0}\n'.format(self.logs)
+        if self.ex_type:
+            exc_info_str_list = traceback.format_exception(
+                self.ex_type, self.ex_value, self.ex_tb)
+        else:
+            exc_info_str_list = ["<None>"]
+
+        string += 'EXC_INFO:\n{0}\n'.format(''.join(exc_info_str_list))
+        return string
 
 
 @pytest.mark.usefixtures('class_caplog')
@@ -71,7 +121,7 @@ class CliCommandTest(testtools.TestCase):
 
     def tearDown(self):
         super(CliCommandTest, self).tearDown()
-        cfy.purge_dot_cloudify()
+        self.purge_dot_cloudify()
 
         for p in self._patchers:
             p.stop()
@@ -123,7 +173,7 @@ class CliCommandTest(testtools.TestCase):
             message_to_raise = 'Command {0} should not have failed'
 
         if message_to_raise:
-            raise cfy.ClickInvocationException(
+            raise ClickInvocationException(
                 message_to_raise.format(outcome.command),
                 output=outcome.output,
                 logs=outcome.logs,
@@ -147,7 +197,7 @@ class CliCommandTest(testtools.TestCase):
 
         with patch.object(module, function_name) as mock:
             try:
-                cfy.invoke(command)
+                self.invoke(command)
             except BaseException as e:
                 self.logger.info(e.message)
             mock.assert_called_with(*args, **kwargs)
@@ -159,17 +209,41 @@ class CliCommandTest(testtools.TestCase):
                                  ignore_errors=False):
         with patch.object(module, function_name) as mock:
             try:
-                cfy.invoke(command)
+                self.invoke(command)
             except BaseException as e:
                 if not ignore_errors:
                     raise
                 self.logger.info(e.message)
             self.assertFalse(mock.called)
 
-    def use_manager(self, **manager_params):
-        default_manager_params = cfy.default_manager_params.copy()
-        default_manager_params.update(manager_params)
-        return cfy.use_manager(**default_manager_params)
+    def use_manager(self, **overrides):
+        manager_params = default_manager_params.copy()
+        manager_params.update(overrides)
+
+        provider_context = manager_params['provider_context'] or {}
+        profile = env.ProfileContext()
+        profile.manager_ip = manager_params['manager_ip']
+        profile.ssh_key = manager_params['ssh_key']
+        profile.ssh_user = manager_params['ssh_user']
+        profile.ssh_port = manager_params['ssh_port']
+        profile.rest_port = manager_params['rest_port']
+        profile.rest_protocol = manager_params['rest_protocol']
+        profile.manager_username = manager_params['manager_username']
+        profile.manager_password = manager_params['manager_password']
+        profile.manager_tenant = manager_params['manager_tenant']
+        profile.cluster = manager_params['cluster']
+        profile.provider_context = provider_context
+
+        profile.save()
+        env.profile = profile
+        commands.init.set_config()
+        env.set_active_profile(manager_params['manager_ip'])
+        return profile
+
+    def purge_dot_cloudify(self):
+        dot_cloudify_dir = env.CLOUDIFY_WORKDIR
+        if os.path.isdir(dot_cloudify_dir):
+            shutil.rmtree(dot_cloudify_dir)
 
     def delete_current_profile(self):
         env.delete_profile(env.profile.name)

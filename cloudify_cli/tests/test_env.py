@@ -57,8 +57,6 @@ from ..exceptions import EventProcessingTimeoutError
 from ..execution_events_fetcher import wait_for_execution
 from ..execution_events_fetcher import ExecutionEventsFetcher
 
-from . import cfy
-
 from .commands.test_base import CliCommandTest
 from .commands.mocks import mock_stdout, MockListResponse
 from .commands.constants import (
@@ -69,16 +67,6 @@ from .commands.constants import (
 
 
 class TestCLIBase(CliCommandTest):
-
-    def setUp(self):
-        super(TestCLIBase, self).setUp()
-        cfy.invoke('init -r')
-
-    def tearDown(self):
-        super(TestCLIBase, self).tearDown()
-        self._reset_verbosity_and_loggers()
-        cfy.purge_dot_cloudify()
-
     def test_verbosity(self):
         def test(flag, expected):
             self._reset_verbosity_and_loggers()
@@ -109,11 +97,7 @@ class CliEnvTests(CliCommandTest):
 
     def setUp(self):
         super(CliEnvTests, self).setUp()
-        cfy.invoke('init -r')
-
-    def tearDown(self):
-        super(CliEnvTests, self).tearDown()
-        cfy.purge_dot_cloudify()
+        self.invoke('init -r')
 
     def _make_mock_profile(self, profile_name='10.10.1.11'):
         profile_path = os.path.join(env.PROFILES_DIR, profile_name)
@@ -895,15 +879,6 @@ def create_resolver_configuration(implementation=None, parameters=None):
 
 class GetImportResolverTests(CliCommandTest):
 
-    def setUp(self):
-        super(GetImportResolverTests, self).setUp()
-        cfy.invoke('cfy init -r')
-        self.use_manager()
-
-    def tearDown(self):
-        super(GetImportResolverTests, self).tearDown()
-        cfy.purge_dot_cloudify()
-
     def test_get_resolver(self):
         resolver_configuration = create_resolver_configuration(
             implementation='mock implementation',
@@ -928,18 +903,13 @@ class GetImportResolverTests(CliCommandTest):
 
 
 class ImportResolverLocalUseTests(CliCommandTest):
-
-    def setUp(self):
-        super(ImportResolverLocalUseTests, self).setUp()
-        self.use_manager()
-
     @mock.patch('cloudify_cli.config.config.get_import_resolver')
     def _test_using_import_resolver(self,
                                     command,
                                     blueprint_path,
                                     mocked_module,
                                     mock_get_resolver):
-        cfy.invoke('cfy init -r')
+        self.invoke('cfy init -r')
 
         # create an import resolver
         parameters = {
@@ -962,7 +932,6 @@ class ImportResolverLocalUseTests(CliCommandTest):
         }
         self.assert_method_called(
             cli_command, mocked_module, 'parse_from_path', kwargs=kwargs)
-        cfy.purge_dot_cloudify()
 
     def test_validate_blueprint_uses_import_resolver(self):
         from cloudify_cli.commands import blueprints
@@ -987,7 +956,7 @@ class TestGetRestClient(CliCommandTest):
     def setUp(self):
         self.original_utils_get_rest_client = env.get_rest_client
         super(TestGetRestClient, self).setUp()
-        cfy.invoke('init -r')
+        self.invoke('init -r')
 
         os.environ[constants.CLOUDIFY_USERNAME_ENV] = 'test_username'
         os.environ[constants.CLOUDIFY_PASSWORD_ENV] = 'test_password'
@@ -1003,7 +972,6 @@ class TestGetRestClient(CliCommandTest):
         del os.environ[constants.CLOUDIFY_PASSWORD_ENV]
         del os.environ[constants.CLOUDIFY_SSL_TRUST_ALL]
         del os.environ[constants.LOCAL_REST_CERT_FILE]
-        cfy.purge_dot_cloudify()
 
     def test_get_rest_client(self):
         client = self.original_utils_get_rest_client(rest_host='localhost')

@@ -22,8 +22,7 @@ from cloudify_rest_client.exceptions import UserUnauthorizedError
 from cloudify_rest_client.manager import (ManagerItem, RabbitMQBrokerItem,
                                           DBNodeItem)
 
-from .test_base import CliCommandTest
-from ..cfy import ClickInvocationException
+from .test_base import CliCommandTest, ClickInvocationException
 
 
 class ClusterTest(CliCommandTest):

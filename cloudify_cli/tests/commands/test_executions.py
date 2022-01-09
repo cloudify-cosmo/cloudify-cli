@@ -21,9 +21,8 @@ from mock import MagicMock, patch
 
 from cloudify_cli import local
 
-from .. import cfy
 from ...commands import executions
-from .test_base import CliCommandTest
+from .test_base import CliCommandTest, ClickInvocationException
 from .mocks import execution_mock, MockListResponse
 from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
 from cloudify_rest_client.exceptions import \
@@ -85,7 +84,7 @@ class ExecutionsTest(CliCommandTest):
     def test_executions_start_dep_other_ex_sanity(self):
         try:
             self._test_executions_start_dep_env(ex=RuntimeError)
-        except cfy.ClickInvocationException as e:
+        except ClickInvocationException as e:
             self.assertIsInstance(e.exception, RuntimeError)
 
     def _test_executions_start_dep_env(self, ex):

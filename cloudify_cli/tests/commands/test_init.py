@@ -7,7 +7,6 @@ from mock import patch
 
 from dsl_parser.exceptions import DSLParsingLogicException
 
-from .. import cfy
 from ... import env
 from ...config import config
 from ...commands import init
@@ -39,7 +38,7 @@ class InitTest(CliCommandTest):
             conf['colors'] = True
             f.write(yaml.safe_dump(conf))
 
-        cfy.invoke('init -r')
+        self.invoke('init -r')
         with open(config.CLOUDIFY_CONFIG_PATH) as f:
             conf = yaml.safe_load(f.read())
 
@@ -63,7 +62,7 @@ class InitTest(CliCommandTest):
 
     def test_init_overwrite_on_initial_init(self):
         # Simply verifying the overwrite flag doesn't break the first init
-        cfy.purge_dot_cloudify()
+        self.purge_dot_cloudify()
         self.invoke('cfy init -r')
 
     def test_init_invalid_blueprint_path(self):
@@ -189,7 +188,7 @@ class InitTest(CliCommandTest):
 
     def test_no_init(self):
         # make sure no error is thrown
-        cfy.purge_dot_cloudify()
+        self.purge_dot_cloudify()
         self.invoke('cfy profiles list')
 
     def test_init_blueprint_archive_default_name(self):

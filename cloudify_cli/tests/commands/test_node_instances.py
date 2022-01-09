@@ -4,7 +4,6 @@ import tempfile
 
 from mock import MagicMock
 
-from .. import cfy
 from .test_base import CliCommandTest
 from cloudify_cli.exceptions import CloudifyCliError
 from .mocks import node_instance_get_mock, MockListResponse

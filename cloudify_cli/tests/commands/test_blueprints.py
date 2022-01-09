@@ -26,9 +26,8 @@ from cloudify_cli.exceptions import CloudifyCliError
 
 from ... import env
 from ...config import config
-from ..cfy import ClickInvocationException
 from .mocks import MockListResponse
-from .test_base import CliCommandTest
+from .test_base import CliCommandTest, ClickInvocationException
 from .constants import (BLUEPRINTS_DIR,
                         SAMPLE_BLUEPRINT_PATH,
                         SAMPLE_ARCHIVE_PATH)

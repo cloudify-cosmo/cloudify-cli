@@ -6,17 +6,16 @@ from contextlib import closing
 
 from mock import MagicMock, patch
 
-from .. import cfy
 from ... import env
 from ... import utils
 from ...commands import profiles
 from .mocks import MockListResponse
-from .test_base import CliCommandTest
+from .test_base import CliCommandTest, default_manager_params
 
 
 class ProfilesTest(CliCommandTest):
     def test_profiles_uninitialized_env(self):
-        cfy.purge_dot_cloudify()
+        self.purge_dot_cloudify()
         result = self.invoke('profiles list')
         self.assertIn('No profiles found', result.output)
 
@@ -32,7 +31,7 @@ class ProfilesTest(CliCommandTest):
         self.use_manager()
         profile_output = profiles._get_profile('10.10.1.10')
         self.assertDictContainsSubset(
-            profile_output, cfy.default_manager_params)
+            profile_output, default_manager_params)
 
     def test_get_profile_no_active_manager(self):
         self.use_local_profile()
@@ -86,7 +85,7 @@ class ProfilesTest(CliCommandTest):
             with closing(tarfile.open(name=profiles_archive)) as tar:
                 members = [member.name for member in tar.getmembers()]
             self.assertIn('profiles/10.10.1.10/context.json', members)
-            cfy.purge_dot_cloudify()
+            self.purge_dot_cloudify()
             self.assertFalse(os.path.isdir(env.PROFILES_DIR))
             self.invoke('cfy init')
             self.invoke('cfy profiles import {0}'.format(profiles_archive))
@@ -119,7 +118,7 @@ class ProfilesTest(CliCommandTest):
             self.assertIn('profiles/{0}/{1}.10.10.1.10.profile'.format(
                 profiles.EXPORTED_KEYS_DIRNAME,
                 os.path.basename(key)), members)
-            cfy.purge_dot_cloudify()
+            self.purge_dot_cloudify()
             os.remove(key)
             self.assertFalse(os.path.isdir(env.PROFILES_DIR))
 
@@ -135,7 +134,7 @@ class ProfilesTest(CliCommandTest):
             )
 
             # Then actually import the profile with the keys
-            cfy.purge_dot_cloudify()
+            self.purge_dot_cloudify()
             self.invoke('cfy init')
             self.invoke(
                 'cfy profiles import {0} --include-keys'
@@ -156,7 +155,7 @@ class ProfilesTest(CliCommandTest):
             err_str_segment='No profiles to export')
 
     def test_export_env_not_initialized(self):
-        cfy.purge_dot_cloudify()
+        self.purge_dot_cloudify()
         self.invoke(
             'cfy profiles export',
             err_str_segment='No profiles to export')
@@ -167,7 +166,7 @@ class ProfilesTest(CliCommandTest):
         self.use_manager()
         try:
             self.invoke('cfy profiles export -o {0}'.format(profiles_archive))
-            cfy.purge_dot_cloudify()
+            self.purge_dot_cloudify()
             self.invoke('cfy profiles import {0}'.format(profiles_archive))
         finally:
             os.remove(profiles_archive)

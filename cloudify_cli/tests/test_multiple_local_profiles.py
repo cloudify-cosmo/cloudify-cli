@@ -18,7 +18,6 @@ import os
 import shutil
 
 from .. import env
-from . import cfy
 from .commands.constants import (
     BLUEPRINTS_DIR,
     DEFAULT_BLUEPRINT_FILE_NAME,
@@ -26,8 +25,10 @@ from .commands.constants import (
 from testtools import TestCase
 from testtools.matchers import DirExists
 
+from cloudify_cli.tests.commands.test_base import CliCommandTest
 
-class TestMultipleLocalProfiles(TestCase):
+
+class TestMultipleLocalProfiles(CliCommandTest):
 
     """Verify that multple local profiles can be used."""
 
@@ -39,14 +40,14 @@ class TestMultipleLocalProfiles(TestCase):
 
     LOCAL_PROFILE_DIR = os.path.join(env.PROFILES_DIR, 'local')
 
-    def tearDown(self):
-        """Delete cloudify data directory."""
-        super(TestMultipleLocalProfiles, self).tearDown()
-        shutil.rmtree(env.CLOUDIFY_WORKDIR, ignore_errors=True)
+    # def tearDown(self):
+    #     """Delete cloudify data directory."""
+    #     super(TestMultipleLocalProfiles, self).tearDown()
+    #     shutil.rmtree(env.CLOUDIFY_WORKDIR, ignore_errors=True)
 
     def test_default_blueprint_id(self):
         """Default blueprint id is the directory name."""
-        cfy.invoke('init {0}'.format(self.LOCAL_BLUEPRINT_PATH))
+        self.invoke('init {0}'.format(self.LOCAL_BLUEPRINT_PATH))
         self.assertThat(
             os.path.join(self.LOCAL_PROFILE_DIR, 'blueprints', 'local'),
             DirExists(),
@@ -54,7 +55,7 @@ class TestMultipleLocalProfiles(TestCase):
 
     def test_blueprint_id(self):
         """Blueprint id passed as argument is used."""
-        cfy.invoke(
+        self.invoke(
             'init -b my-blueprint {0}'.format(self.LOCAL_BLUEPRINT_PATH))
         self.assertThat(
             os.path.join(self.LOCAL_PROFILE_DIR, 'blueprints', 'my-blueprint'),
@@ -66,7 +67,7 @@ class TestMultipleLocalProfiles(TestCase):
         blueprint_count = 5
 
         for blueprint_number in range(blueprint_count):
-            cfy.invoke(
+            self.invoke(
                 'init -b my-blueprint-{0} {1}'
                 .format(blueprint_number, self.LOCAL_BLUEPRINT_PATH)
             )

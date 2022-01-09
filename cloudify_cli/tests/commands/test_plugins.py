@@ -8,8 +8,7 @@ from mock import PropertyMock, patch, Mock, call
 
 from .constants import PLUGINS_DIR
 from .mocks import MockMetadata, MockListResponse
-from .test_base import CliCommandTest
-from ..cfy import ClickInvocationException
+from .test_base import CliCommandTest, ClickInvocationException
 
 from cloudify.models_states import PluginInstallationState
 from cloudify_rest_client import plugins, plugins_update, manager
