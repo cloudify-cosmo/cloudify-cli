@@ -113,7 +113,7 @@ pipeline {
               sh'''
                 set -ex
                 apt-get update
-                apt-get install python3 python3-setuptools python3-distutils -y
+                apt-get install make python3 python3-setuptools python3-distutils -y
               '''
               sh script: "/bin/bash ${env.WORKSPACE}/project/packaging/debian/build.sh", label: "build the deb package"
               sh script: """
