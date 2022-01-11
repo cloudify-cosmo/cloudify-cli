@@ -127,7 +127,7 @@ def _parse_key_value_pair(mapped_input, input_string):
     except IndexError:
         raise CloudifyCliError(
             "Invalid input format: {0}, the expected format is: "
-            "key1=value1;key2=value2".format(input_string))
+            "'key1=value1;key2=value2'".format(input_string))
 
 
 def _is_not_plain_string_input(mapped_input):
