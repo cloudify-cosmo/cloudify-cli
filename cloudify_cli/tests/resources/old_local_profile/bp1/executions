@@ -1,0 +1,30 @@
+[
+  {
+    "id": "e82b4acf-947c-4119-96c2-165fd6e29781",
+    "workflow_id": "execute_operation",
+    "deployment_id": "bp1",
+    "blueprint_id": "bp1",
+    "is_dry_run": false,
+    "status": "terminated",
+    "status_display": "completed",
+    "parameters": {
+      "operation": "int1.op1",
+      "operation_kwargs": {},
+      "allow_kwargs_override": null,
+      "run_by_dependency_order": false,
+      "type_names": [],
+      "node_ids": [],
+      "node_instance_ids": []
+    },
+    "created_at": {
+      "__datetime__": 1640650834.0
+    },
+    "started_at": {
+      "__datetime__": 1640650834.0
+    },
+    "ended_at": {
+      "__datetime__": 1640650834.0
+    },
+    "error": null
+  }
+]

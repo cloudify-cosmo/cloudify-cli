@@ -15,11 +15,10 @@
 ############
 
 from .. import env
-from .. import utils
 from . import blueprints
 from . import executions
 from . import deployments
-from ..local import storage_dir
+from ..local import remove as local_remove
 from ..cli import cfy, helptexts
 from ..constants import DEFAULT_UNINSTALL_WORKFLOW
 
@@ -123,5 +122,4 @@ def local(ctx,
         task_retry_interval=task_retry_interval,
         task_thread_pool_size=task_thread_pool_size)
 
-    # Remove the local-storage dir
-    utils.remove_if_exists(storage_dir(blueprint_id))
+    local_remove(blueprint_id)

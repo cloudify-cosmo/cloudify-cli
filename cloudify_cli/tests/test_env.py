@@ -953,8 +953,6 @@ class ImportResolverLocalUseTests(CliCommandTest):
         self._test_using_import_resolver(
             'blueprints validate', blueprint_path, blueprints)
 
-    @mock.patch('cloudify_cli.local.get_storage', new=mock.MagicMock)
-    @mock.patch('cloudify.workflows.local._prepare_nodes_and_instances')
     @mock.patch('dsl_parser.tasks.prepare_deployment_plan')
     def test_local_init(self, *_):
         blueprint_path = '{0}/local/{1}.yaml'.format(
@@ -1065,17 +1063,6 @@ class TestLocal(CliCommandTest):
         'key2': 'default_val2',
         'key3': 'default_val3'
     }
-
-    def test_storage_dir(self):
-        self.assertEqual(
-            cli_local.storage_dir(),
-            os.path.join(env.PROFILES_DIR, 'local')
-        )
-
-        self.assertEqual(
-            cli_local.storage_dir('blueprint_id'),
-            os.path.join(env.PROFILES_DIR, 'local', 'blueprint_id')
-        )
 
     def test_initialize_blueprint_default_single_env(self):
         self._test_initialize_blueprint(
