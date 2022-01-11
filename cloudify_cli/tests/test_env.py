@@ -318,7 +318,7 @@ class CliInputsTests(CliCommandTest):
     def test_string_to_dict_error_handling(self):
 
         expected_err_msg = "Invalid input format: {0}, the expected " \
-                           "format is: key1=value1;key2=value2"
+                           "format is: 'key1=value1;key2=value2'"
 
         input_str = "my_key1"
         self.assertRaisesRegex(CloudifyCliError,
