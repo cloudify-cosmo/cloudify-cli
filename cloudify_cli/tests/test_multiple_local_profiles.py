@@ -15,14 +15,12 @@
 ############
 
 import os
-import shutil
 
 from .. import env
 from .commands.constants import (
     BLUEPRINTS_DIR,
     DEFAULT_BLUEPRINT_FILE_NAME,
 )
-from testtools import TestCase
 from testtools.matchers import DirExists
 
 from cloudify_cli.tests.commands.test_base import CliCommandTest

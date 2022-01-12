@@ -697,7 +697,6 @@ def execution_groups_set_failure(group_id, failure_group_id,
                 group_id, failure_group_id)
 
 
-
 @cfy.group(name='executions')
 @cfy.options.common_options
 def local_executions():
@@ -776,4 +775,3 @@ def local_get(execution_id, blueprint_id, logger):
                  labels=EXECUTION_TABLE_LABELS)
     if not get_global_json_output():
         print_details(execution['parameters'], 'Execution Parameters:')
-

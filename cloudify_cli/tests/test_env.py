@@ -662,8 +662,11 @@ class ExecutionEventsFetcherTest(CliCommandTest):
         ):
             events_fetcher = ExecutionEventsFetcher(
                 self.client, execution_id='execution_id', batch_size=1)
-            self.assertRaises(EventProcessingTimeoutError,
-                              events_fetcher.fetch_and_process_events, timeout=2)
+            self.assertRaises(
+                EventProcessingTimeoutError,
+                events_fetcher.fetch_and_process_events,
+                timeout=2
+            )
 
     def test_events_processing_progress(self):
         events_bulk1 = self._generate_events(5)

@@ -19,8 +19,6 @@ import json
 
 from mock import MagicMock, patch
 
-from cloudify_cli import local
-
 from ...commands import executions
 from .test_base import CliCommandTest, ClickInvocationException
 from .mocks import execution_mock, MockListResponse

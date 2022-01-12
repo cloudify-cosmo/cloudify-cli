@@ -173,7 +173,6 @@ def agents():
     pass
 
 
-
 @click.group(
     name='events',
     cls=LazyLoadedGroup,
@@ -342,6 +341,7 @@ def local_executions():
 )
 def manager_deployments():
     pass
+
 
 @click.group(
     name='deployments',
@@ -559,6 +559,7 @@ def _make_cfy():
         _cfy.add_command(local_uninstall)
 
     return _cfy
+
 
 _cfy = _make_cfy()
 

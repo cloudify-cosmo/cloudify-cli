@@ -766,16 +766,15 @@ def local_list(logger):
     print_data(BASE_BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
 
-
 @local_blueprints.command(name='install-plugins',
-                    short_help='Install plugins [locally]')
+                          short_help='Install plugins [locally]')
 @cfy.argument('blueprint-path', type=click.Path(exists=True))
 @cfy.options.common_options
 @cfy.assert_local_active
 @cfy.pass_logger
 def install_plugins(blueprint_path, logger):
     """Install the necessary plugins for a given blueprint in the
-    local environment.
+       local environment.
 
     Currently only supports passing the YAML of the blueprint directly.
 
@@ -783,7 +782,6 @@ def install_plugins(blueprint_path, logger):
     """
     logger.info('Installing plugins...')
     local._install_plugins(blueprint_path=blueprint_path)
-
 
 
 @click.command(name='validate', short_help='Validate a blueprint')

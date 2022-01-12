@@ -14,7 +14,6 @@
 #    * limitations under the License.
 import os
 import logging
-import os as utils_os
 import shlex
 import shutil
 import pytest
@@ -29,7 +28,6 @@ from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
 import click.testing as clicktest
 from cloudify._compat import PY2, text_type
 from ... import env
-from ... import utils
 from ... import logger
 from ...commands import init
 from ... import main
@@ -88,6 +86,7 @@ class ClickInvocationException(Exception):
         return string
 
     __repr__ = __str__
+
 
 @pytest.mark.usefixtures('class_caplog')
 @pytest.mark.usefixtures('class_tmpdir')
