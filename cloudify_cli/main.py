@@ -485,11 +485,10 @@ def local_uninstall():
 
 
 def _make_cfy():
-    """Register the CLI's commands.
+    """Make the commandline click app object
 
-    Here is where we decide which commands register with the cli
-    and which don't. We should decide that according to whether
-    a manager is currently `use`d or not.
+    Create the app object and register all the commands on it, based on
+    the current profile.
     """
     @cfy.group(name='cfy')
     @cfy.options.verbose(expose_value=True)
