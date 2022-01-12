@@ -112,7 +112,7 @@ class CliCommandTest(testtools.TestCase):
                     kwargs['tenant_name']
             return self.client
 
-        workdir = self.tmpdir / '.cloudify'
+        workdir = str(self.tmpdir / '.cloudify')
         self._patchers = [
             patch('cloudify_cli.env.get_rest_client', get_mock_rest_client),
             patch('os.getcwd', return_value=workdir),
