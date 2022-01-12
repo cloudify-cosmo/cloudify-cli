@@ -26,9 +26,8 @@ from cloudify_cli.exceptions import CloudifyCliError
 
 from ... import env
 from ...config import config
-from ..cfy import ClickInvocationException
 from .mocks import MockListResponse
-from .test_base import CliCommandTest
+from .test_base import CliCommandTest, ClickInvocationException
 from .constants import (BLUEPRINTS_DIR,
                         SAMPLE_BLUEPRINT_PATH,
                         SAMPLE_ARCHIVE_PATH)
@@ -121,7 +120,7 @@ class BlueprintsTest(CliCommandTest):
         ])
         outcome = self.invoke('blueprints get a-blueprint-id')
         for expected in [deployment_id, metadata_value, description]:
-            self.assertIn(expected, outcome.output)
+            self.assertIn(expected, outcome.logs)
 
     def test_blueprints_get_json(self, *args):
         deployment_id = 'deployment id 1'
@@ -367,7 +366,6 @@ class BlueprintsTest(CliCommandTest):
             'local',
             'blueprint_with_plugins.yaml'
         )
-
         output = self.invoke(
             'cfy blueprints install-plugins {0}'.format(blueprint_path),
             err_str_segment='Invalid requirement',

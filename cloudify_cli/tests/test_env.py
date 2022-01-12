@@ -18,6 +18,7 @@ import os
 import sys
 import mock
 import json
+import time
 import yaml
 import shutil
 import logging
@@ -56,8 +57,6 @@ from ..exceptions import EventProcessingTimeoutError
 from ..execution_events_fetcher import wait_for_execution
 from ..execution_events_fetcher import ExecutionEventsFetcher
 
-from . import cfy
-
 from .commands.test_base import CliCommandTest
 from .commands.mocks import mock_stdout, MockListResponse
 from .commands.constants import (
@@ -68,16 +67,6 @@ from .commands.constants import (
 
 
 class TestCLIBase(CliCommandTest):
-
-    def setUp(self):
-        super(TestCLIBase, self).setUp()
-        cfy.invoke('init -r')
-
-    def tearDown(self):
-        super(TestCLIBase, self).tearDown()
-        self._reset_verbosity_and_loggers()
-        cfy.purge_dot_cloudify()
-
     def test_verbosity(self):
         def test(flag, expected):
             self._reset_verbosity_and_loggers()
@@ -108,13 +97,9 @@ class CliEnvTests(CliCommandTest):
 
     def setUp(self):
         super(CliEnvTests, self).setUp()
-        cfy.invoke('init -r')
+        self.invoke('init -r')
 
-    def tearDown(self):
-        super(CliEnvTests, self).tearDown()
-        cfy.purge_dot_cloudify()
-
-    def _make_mock_profile(self, profile_name='10.10.1.10'):
+    def _make_mock_profile(self, profile_name='10.10.1.11'):
         profile_path = os.path.join(env.PROFILES_DIR, profile_name)
         os.makedirs(profile_path, mode=0o700)
         with open(os.path.join(profile_path, 'context.json'), 'w') as profile:
@@ -123,7 +108,7 @@ class CliEnvTests(CliCommandTest):
 
     def test_delete_profile(self):
         profile_path = self._make_mock_profile()
-        env.delete_profile('10.10.1.10')
+        env.delete_profile('10.10.1.11')
         self.assertFalse(os.path.isdir(profile_path))
 
     def test_profile_exists(self):
@@ -131,11 +116,11 @@ class CliEnvTests(CliCommandTest):
 
     def test_profile_does_not_exist(self):
         self._make_mock_profile()
-        self.assertTrue(env.is_profile_exists('10.10.1.10'))
+        self.assertTrue(env.is_profile_exists('10.10.1.11'))
 
     def test_assert_profile_exists(self):
         self._make_mock_profile()
-        env.assert_profile_exists('10.10.1.10')
+        env.assert_profile_exists('10.10.1.11')
 
     def test_assert_non_existing_profile_exists(self):
         ex = self.assertRaises(
@@ -669,11 +654,19 @@ class ExecutionEventsFetcherTest(CliCommandTest):
         self.assertEqual(self.events, all_fetched_events)
 
     def test_fetch_and_process_events_timeout(self):
+        now = time.time()
         self.events = self._generate_events(2000000)
-        events_fetcher = ExecutionEventsFetcher(
-            self.client, execution_id='execution_id', batch_size=1)
-        self.assertRaises(EventProcessingTimeoutError,
-                          events_fetcher.fetch_and_process_events, timeout=2)
+        with patch(
+            'cloudify_cli.execution_events_fetcher.time.time',
+            side_effect=[now, now + 1, now + 2, now + 3]
+        ):
+            events_fetcher = ExecutionEventsFetcher(
+                self.client, execution_id='execution_id', batch_size=1)
+            self.assertRaises(
+                EventProcessingTimeoutError,
+                events_fetcher.fetch_and_process_events,
+                timeout=2
+            )
 
     def test_events_processing_progress(self):
         events_bulk1 = self._generate_events(5)
@@ -694,9 +687,20 @@ class ExecutionEventsFetcherTest(CliCommandTest):
     def test_wait_for_execution_timeout(self):
         self.events = self._generate_events(5)
         mock_execution = self.client.executions.get('deployment_id')
-        self.assertRaises(ExecutionTimeoutError, wait_for_execution,
-                          self.client, mock_execution,
-                          timeout=2)
+        now = time.time()
+        # execution polling times out by itself: no matter the events (so
+        # mock out ExecutionEventsFetcher)
+        with patch(
+            'cloudify_cli.execution_events_fetcher.time.time',
+            side_effect=[now, now + 1, now + 2, now + 3]
+        ), patch(
+            'cloudify_cli.execution_events_fetcher.ExecutionEventsFetcher',
+        ), patch(
+            'cloudify_cli.execution_events_fetcher.time.sleep'
+        ):
+            self.assertRaises(ExecutionTimeoutError, wait_for_execution,
+                              self.client, mock_execution,
+                              timeout=2)
 
 
 class WaitForExecutionTests(CliCommandTest):
@@ -878,15 +882,6 @@ def create_resolver_configuration(implementation=None, parameters=None):
 
 class GetImportResolverTests(CliCommandTest):
 
-    def setUp(self):
-        super(GetImportResolverTests, self).setUp()
-        cfy.invoke('cfy init -r')
-        self.use_manager()
-
-    def tearDown(self):
-        super(GetImportResolverTests, self).tearDown()
-        cfy.purge_dot_cloudify()
-
     def test_get_resolver(self):
         resolver_configuration = create_resolver_configuration(
             implementation='mock implementation',
@@ -911,18 +906,13 @@ class GetImportResolverTests(CliCommandTest):
 
 
 class ImportResolverLocalUseTests(CliCommandTest):
-
-    def setUp(self):
-        super(ImportResolverLocalUseTests, self).setUp()
-        self.use_manager()
-
     @mock.patch('cloudify_cli.config.config.get_import_resolver')
     def _test_using_import_resolver(self,
                                     command,
                                     blueprint_path,
                                     mocked_module,
                                     mock_get_resolver):
-        cfy.invoke('cfy init -r')
+        self.invoke('cfy init -r')
 
         # create an import resolver
         parameters = {
@@ -945,7 +935,6 @@ class ImportResolverLocalUseTests(CliCommandTest):
         }
         self.assert_method_called(
             cli_command, mocked_module, 'parse_from_path', kwargs=kwargs)
-        cfy.purge_dot_cloudify()
 
     def test_validate_blueprint_uses_import_resolver(self):
         from cloudify_cli.commands import blueprints
@@ -968,8 +957,9 @@ CERT_PATH = 'path-to-certificate'
 class TestGetRestClient(CliCommandTest):
 
     def setUp(self):
+        self.original_utils_get_rest_client = env.get_rest_client
         super(TestGetRestClient, self).setUp()
-        cfy.invoke('init -r')
+        self.invoke('init -r')
 
         os.environ[constants.CLOUDIFY_USERNAME_ENV] = 'test_username'
         os.environ[constants.CLOUDIFY_PASSWORD_ENV] = 'test_password'
@@ -985,7 +975,6 @@ class TestGetRestClient(CliCommandTest):
         del os.environ[constants.CLOUDIFY_PASSWORD_ENV]
         del os.environ[constants.CLOUDIFY_SSL_TRUST_ALL]
         del os.environ[constants.LOCAL_REST_CERT_FILE]
-        cfy.purge_dot_cloudify()
 
     def test_get_rest_client(self):
         client = self.original_utils_get_rest_client(rest_host='localhost')

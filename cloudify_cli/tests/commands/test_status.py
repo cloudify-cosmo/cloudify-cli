@@ -13,10 +13,10 @@ class StatusTest(CliCommandTest):
         self.client.maintenance_mode.status = MagicMock()
 
     def test_status_command(self):
-        self.use_manager()
         self.invoke('cfy status')
 
     def test_status_no_manager_server_defined(self):
+        self.use_local_profile()
         # Running a command which requires a target manager server without
         # first calling "cfy profiles use" or providing a target server
         # explicitly
@@ -26,15 +26,12 @@ class StatusTest(CliCommandTest):
         )
 
     def test_status_by_unauthorized_user(self):
-        self.use_manager()
         with patch.object(self.client.manager, 'get_status') as mock:
             mock.side_effect = UserUnauthorizedError('Unauthorized user')
             outcome = self.invoke('cfy status')
             self.assertIn('User is unauthorized', outcome.logs)
 
     def test_status_result_services(self):
-        self.use_manager()
-
         status_result = {
             "status": "OK",
             "services": {

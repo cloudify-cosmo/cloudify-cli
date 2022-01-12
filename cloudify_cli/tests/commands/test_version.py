@@ -16,6 +16,7 @@ def manager_data():
 class VersionTest(CliCommandTest):
 
     def test_version(self):
+        self.use_local_profile()
         outcome = self.invoke('cfy --version')
         self.assertIn('Cloudify CLI', outcome.logs)
 

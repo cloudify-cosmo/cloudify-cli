@@ -68,7 +68,7 @@ def upload(logger, client, license_path):
     logger.info('Cloudify license successfully uploaded.')
 
 
-@cfy.group(name='environments')
+@license.group(name='environments')
 @cfy.options.common_options
 @cfy.assert_manager_active()
 def environments():

@@ -19,9 +19,8 @@ import json
 
 from mock import MagicMock, patch
 
-from .. import cfy
 from ...commands import executions
-from .test_base import CliCommandTest
+from .test_base import CliCommandTest, ClickInvocationException
 from .mocks import execution_mock, MockListResponse
 from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
 from cloudify_rest_client.exceptions import \
@@ -83,7 +82,7 @@ class ExecutionsTest(CliCommandTest):
     def test_executions_start_dep_other_ex_sanity(self):
         try:
             self._test_executions_start_dep_env(ex=RuntimeError)
-        except cfy.ClickInvocationException as e:
+        except ClickInvocationException as e:
             self.assertIsInstance(e.exception, RuntimeError)
 
     def _test_executions_start_dep_env(self, ex):
@@ -151,8 +150,8 @@ class ExecutionsTest(CliCommandTest):
         )
 
     def _assert_outputs(self, expected_outputs):
-        output = json.loads(self.invoke(
-            'cfy deployments outputs -b local').logs)
+        outcome = self.invoke('cfy deployments outputs -b local')
+        output = json.loads(outcome.output)
         for key, value in expected_outputs.items():
             self.assertEqual(output[key], value)
 
@@ -162,6 +161,5 @@ class ExecutionsTest(CliCommandTest):
             'local',
             DEFAULT_BLUEPRINT_FILE_NAME
         )
-
+        self.use_local_profile()
         self.invoke('cfy init {0}'.format(blueprint_path))
-        cfy.register_commands()
