@@ -532,11 +532,13 @@ def set_icon(blueprint_id, icon_path, logger, client):
                     short_help="Change blueprint's ownership")
 @cfy.argument('blueprint-id')
 @cfy.options.new_username()
+@cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.assert_manager_active()
-@cfy.pass_client()
+@cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def set_owner(blueprint_id, username, logger, client):
+def set_owner(blueprint_id, username, tenant_name, logger, client):
     """Set a new owner for the blueprint."""
+    utils.explicit_tenant_name_message(tenant_name, logger)
     bp = client.blueprints.update(blueprint_id, {'creator': username})
     logger.info('Blueprint `%s` is now owned by user `%s`.',
                 blueprint_id, bp.get('created_by'))
