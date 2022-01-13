@@ -852,11 +852,13 @@ def manager_set_site(deployment_id, site_name, detach_site, client, logger):
                      short_help="Change deployment's ownership")
 @cfy.argument('deployment-id')
 @cfy.options.new_username()
+@cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.assert_manager_active()
-@cfy.pass_client()
+@cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def set_owner(deployment_id, username, logger, client):
+def set_owner(deployment_id, username, tenant_name, logger, client):
     """Set a new owner for the deployment."""
+    utils.explicit_tenant_name_message(tenant_name, logger)
     dep = client.deployments.set_attributes(deployment_id, creator=username)
     logger.info('Deployment `%s` is now owned by user `%s`.',
                 deployment_id, dep.get('created_by'))
