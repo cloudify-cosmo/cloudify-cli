@@ -5,7 +5,7 @@ from .utils import explicit_tenant_name_message
 from .logger import CloudifyJSONEncoder, get_global_json_output, output
 
 
-def modify_resource_labels(resource_list):
+def serialize_resource_labels(resource_list):
     for element in resource_list:
         resource_labels_list = []
         raw_labels_list = element.get('labels')

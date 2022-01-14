@@ -39,7 +39,7 @@ from ..utils import prettify_client_error, get_visibility, validate_visibility
 from ..labels_utils import (add_labels,
                             delete_labels,
                             list_labels,
-                            modify_resource_labels)
+                            serialize_resource_labels)
 from .. import filters_utils
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
@@ -271,7 +271,7 @@ def manager_list(filter_id,
         filter_id=filter_id
     )
     blueprints = [trim_description(b) for b in blueprints_list]
-    modify_resource_labels(blueprints)
+    serialize_resource_labels(blueprints)
     print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
     total = blueprints_list.metadata.pagination.total
@@ -306,6 +306,13 @@ def get(blueprint_id, logger, client, tenant_name):
     blueprint_dict['#deployments'] = len(deployments)
     columns = BLUEPRINT_COLUMNS + ['#deployments']
     blueprint_metadata = blueprint_dict['plan']['metadata'] or {}
+    blueprint_plugins = {k: [p for p in blueprint_dict['plan'][k]
+                             if p['package_name'] and p['package_version']]
+                         for k in ['deployment_plugins_to_install',
+                                   'workflow_plugins_to_install',
+                                   'host_agent_plugins_to_install']
+                         if k in blueprint_dict['plan']
+                         and blueprint_dict['plan'][k]}
     blueprint_deployments = [d['id'] for d in deployments]
 
     if get_global_json_output():
@@ -315,6 +322,7 @@ def get(blueprint_id, logger, client, tenant_name):
         blueprint_dict['deployments'] = blueprint_deployments
         print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
     else:
+        serialize_resource_labels([blueprint_dict])
         print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
 
         logger.info('Description:')
@@ -325,6 +333,23 @@ def get(blueprint_id, logger, client, tenant_name):
             for property_name, property_value in \
                     blueprint_dict['plan']['metadata'].items():
                 logger.info('\t{0}: {1}'.format(property_name, property_value))
+            logger.info('')
+
+        if blueprint_plugins:
+            plugins_dict = {}
+            for plugin_key, plugins in blueprint_plugins.items():
+                plugin_purpose = plugin_key.partition('_')[0]
+                for plugin in plugins:
+                    plugin_id = '{0}=={1}'.format(plugin['package_name'],
+                                                  plugin['package_version'])
+                    if plugin_id in plugins_dict:
+                        plugins_dict[plugin_id].append(plugin_purpose)
+                    else:
+                        plugins_dict[plugin_id] = [plugin_purpose]
+            logger.info('Plugins:')
+            for plugin, plugin_purpose in plugins_dict.items():
+                logger.info('\t{0} ({1})'.format(plugin,
+                                                 ', '.join(plugin_purpose)))
             logger.info('')
 
         logger.info('Existing deployments:')
