@@ -39,7 +39,7 @@ from ..utils import prettify_client_error, get_visibility, validate_visibility
 from ..labels_utils import (add_labels,
                             delete_labels,
                             list_labels,
-                            modify_resource_labels)
+                            serialize_resource_labels)
 from .. import filters_utils
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
@@ -271,7 +271,7 @@ def manager_list(filter_id,
         filter_id=filter_id
     )
     blueprints = [trim_description(b) for b in blueprints_list]
-    modify_resource_labels(blueprints)
+    serialize_resource_labels(blueprints)
     print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
     total = blueprints_list.metadata.pagination.total
@@ -322,7 +322,7 @@ def get(blueprint_id, logger, client, tenant_name):
         blueprint_dict['deployments'] = blueprint_deployments
         print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
     else:
-        modify_resource_labels([blueprint_dict])
+        serialize_resource_labels([blueprint_dict])
         print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
 
         logger.info('Description:')

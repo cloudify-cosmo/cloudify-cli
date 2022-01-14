@@ -61,7 +61,7 @@ from ..labels_utils import (add_labels,
                             get_output_resource_labels,
                             get_printable_resource_labels,
                             list_labels,
-                            modify_resource_labels)
+                            serialize_resource_labels)
 
 from .. import filters_utils
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
@@ -258,7 +258,7 @@ def manager_list(blueprint_id,
                                           blueprint_id=blueprint_id,
                                           _search_name=search_name,
                                           _dependencies_of=dependencies_of)
-    modify_resource_labels(deployments)
+    serialize_resource_labels(deployments)
     total = deployments.metadata.pagination.total
     if get_global_extended_view() or get_global_json_output():
         columns = EXTENDED_DEPLOYMENT_COLUMNS
