@@ -315,6 +315,7 @@ def get(blueprint_id, logger, client, tenant_name):
         blueprint_dict['deployments'] = blueprint_deployments
         print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
     else:
+        modify_resource_labels([blueprint_dict])
         print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
 
         logger.info('Description:')
