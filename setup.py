@@ -19,7 +19,7 @@ from setuptools import setup
 install_requires = [
         'click>7,<8',
         'wagon[venv]>=0.10.1',
-        'jinja2>=2.10,<2.11',
+        'jinja2==2.11.3',
         'retrying==1.3.3',
         'colorama==0.4.4',
         'requests>=2.7.0,<3.0.0',
