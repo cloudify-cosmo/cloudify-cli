@@ -45,7 +45,7 @@ setup(
     install_requires=[
         'click>7,<8',
         'wagon[venv]>=0.10.1',
-        'pyyaml==5.4.1',
+        'pyyaml==6.0.0',
         'jinja2==2.11.3',
         'retrying==1.3.3',
         'colorama==0.4.4',
