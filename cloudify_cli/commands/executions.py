@@ -472,7 +472,7 @@ def delete(logger, client, tenant_name, to_datetime, before, keep_last,
 @executions.group('groups')
 @cfy.options.common_options
 def groups():
-    pass
+    """Manage execution groups"""
 
 
 @groups.command('get',
