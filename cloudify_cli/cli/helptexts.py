@@ -549,6 +549,7 @@ DEP_GROUP_INTO_ENVIRONMENTS = 'Add created deployments to the environments ' \
                               'already existing in this group.'
 GROUP_ID_FILTER = 'Show only results belonging to this group'
 DELETE_GROUP_DEPLOYMENTS = 'Delete all deployments belonging to this group'
+EXECUTION_GROUP_CONCURRENCY = 'Run this many executions at a time'
 
 GENERATE_ID = 'Generate a UUID to serve as the deployment ID. This flag ' \
               'cannot be provided if a deployment ID is specified'
