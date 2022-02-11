@@ -1274,12 +1274,13 @@ def delete_group_labels(label, deployment_group_name,
 @cfy.options.runtime_only_evaluation
 @cfy.options.auto_correct_types
 @cfy.options.reevaluate_active_statuses()
+@cfy.options.execution_group_concurrency
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.pass_context
 def groups_update_deployments(ctx, group_id, logger, client, tenant_name,
-                              **kwargs):
+                              concurrency, **kwargs):
     """Update all deployments in the given group.
 
     If updating with a new blueprint, the blueprint must already be
@@ -1300,6 +1301,7 @@ def groups_update_deployments(ctx, group_id, logger, client, tenant_name,
         deployment_group_id=group_id,
         workflow_id='csys_update_deployment',
         default_parameters=kwargs,
+        concurrency=concurrency,
     )
     logger.info('For update status, follow this execution group: %s',
                 execution_group.id)

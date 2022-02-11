@@ -1789,6 +1789,13 @@ class Options(object):
             help=helptexts.DEPENDENCIES_OF
         )
 
+        self.execution_group_concurrency = click.option(
+            '--concurrency',
+            type=int,
+            default=5,
+            help=helptexts.EXECUTION_GROUP_CONCURRENCY
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
