@@ -85,13 +85,15 @@ class Node(object):
             connection.put(expanduser(local_path), remote_path)
 
     def replace_certificates(self):
-        self.logger.info('Replacing certificates on host %s', self.host_ip)
+        self.logger.info('Replacing certificates on host %s [%s]',
+                         self.host_ip, self.node_type)
         command = self._append_verbose('cfy_manager certificates replace')
         self.run_command(command)
         self.run_command('rm -rf {0}'.format(NEW_CERTS_TMP_DIR_PATH))
 
     def validate_certificates(self):
-        self.logger.info('Validating certificates on host %s', self.host_ip)
+        self.logger.info('Validating certificates on host %s [%s]',
+                         self.host_ip, self.node_type)
         self._pass_certificates()
         command = self._append_verbose(
             'cfy_manager certificates replace --only-validate')
@@ -252,8 +254,18 @@ class ReplaceCertificatesConfig(object):
             if postgresql_ca_cert:
                 node_dict['new_postgresql_server_ca_cert'] = postgresql_ca_cert
 
-            rabbitmq_ca_cert = self.config_dict['rabbitmq'].get('new_ca_cert')
+            rabbit_config = self.config_dict['rabbitmq']
+            rabbitmq_ca_cert = rabbit_config.get('new_ca_cert')
             if rabbitmq_ca_cert:
                 node_dict['new_rabbitmq_ca_cert'] = rabbitmq_ca_cert
+
+            # deal with 3-node cluster:
+            rabbit_cluster_members = rabbit_config.get('cluster_members')
+            if rabbit_cluster_members:
+                mgr_rabbit = [r for r in rabbit_cluster_members
+                              if r['host_ip'] == node['host_ip']]
+                if mgr_rabbit:
+                    node_dict['new_rabbitmq_cert'] = mgr_rabbit[0]['new_cert']
+                    node_dict['new_rabbitmq_key'] = mgr_rabbit[0]['new_key']
 
         return node_dict
