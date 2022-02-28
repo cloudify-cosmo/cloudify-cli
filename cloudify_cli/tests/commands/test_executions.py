@@ -163,3 +163,69 @@ class ExecutionsTest(CliCommandTest):
         )
         self.use_local_profile()
         self.invoke('cfy init {0}'.format(blueprint_path))
+
+
+class OperationsTest(CliCommandTest):
+    def test_get_operation(self):
+        with patch.object(self.client.operations, 'get') as mock_get:
+            mock_get.return_value = {
+                'id': '11-22-33',
+                'type': 'RemoteWorkflowTask',
+            }
+            out = self.invoke('executions operations get 11-22-33')
+        mock_get.assert_called_with('11-22-33')
+        assert 'RemoteWorkflowTask' in out.output
+
+    def test_list_operations_exc_id(self):
+        with patch.object(self.client.operations, 'list') as mock_list:
+            self.invoke('executions operations list 1234-5678')
+        kws = mock_list.mock_calls[0][2]
+        assert kws['execution_id'] == '1234-5678'
+
+    def test_list_operations_graph_id(self):
+        with patch.object(self.client.operations, 'list') as mock_list:
+            self.invoke('executions operations list --graph-id 1234-5678')
+        kws = mock_list.mock_calls[0][2]
+        assert not kws['execution_id']
+        assert kws['graph_id'] == '1234-5678'
+
+    def test_list_operations_show_internal(self):
+        with patch.object(self.client.operations, 'list') as mock_list:
+            self.invoke('executions operations list 1')
+        kws = mock_list.mock_calls[0][2]
+        assert kws.get('skip_internal', True)
+
+        with patch.object(self.client.operations, 'list') as mock_list:
+            self.invoke('executions operations list 1 --show-internal')
+        kws = mock_list.mock_calls[0][2]
+        assert not kws.get('skip_internal', True)
+
+    def test_list_operations_state(self):
+        with patch.object(self.client.operations, 'list') as mock_list:
+            self.invoke('executions operations list 1')
+        kws = mock_list.mock_calls[0][2]
+        assert not kws.get('state')
+
+        with patch.object(self.client.operations, 'list') as mock_list:
+            self.invoke('executions operations list 1 --state xyz')
+        kws = mock_list.mock_calls[0][2]
+        assert kws['state'] == 'xyz'
+
+
+class TasksGraphsTest(CliCommandTest):
+    def test_list_execution_id(self):
+        with patch.object(self.client.tasks_graphs, 'list') as mock_list:
+            self.invoke('executions graphs list 1234-5678')
+        kws = mock_list.mock_calls[0][2]
+        assert kws['execution_id'] == '1234-5678'
+
+    def test_list_name(self):
+        with patch.object(self.client.tasks_graphs, 'list') as mock_list:
+            self.invoke('executions graphs list 1234-5678')
+        kws = mock_list.mock_calls[0][2]
+        assert not kws.get('name')
+
+        with patch.object(self.client.tasks_graphs, 'list') as mock_list:
+            self.invoke('executions graphs list 1234-5678 --name install')
+        kws = mock_list.mock_calls[0][2]
+        assert kws['name'] == 'install'

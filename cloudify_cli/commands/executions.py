@@ -469,6 +469,65 @@ def delete(logger, client, tenant_name, to_datetime, before, keep_last,
         logger.info('\nNo executions to delete')
 
 
+@executions.group('graphs')
+@cfy.options.common_options
+def graphs():
+    """Handle executions' tasks-graphs"""
+
+
+@graphs.command('list')
+@cfy.options.common_options
+@cfy.argument('execution-id', required=True)
+@click.option('--name', help='List graphs with this name')
+@cfy.pass_logger
+@cfy.pass_client()
+def graphs_list(execution_id, name, client, logger):
+    """List tasks-graphs for an execution"""
+    tgs = client.tasks_graphs.list(execution_id=execution_id, name=name)
+    print_data(['id', 'name', 'created_at'], tgs,
+               'Tasks graphs of execution {0}:'.format(execution_id))
+
+
+@executions.group('operations')
+@cfy.options.common_options
+def operations():
+    """Handle executions' operations"""
+
+
+@operations.command('get')
+@cfy.options.common_options
+@cfy.argument('operation-id', required=True)
+@cfy.pass_logger
+@cfy.pass_client()
+def operations_get(operation_id, client, logger):
+    """Display the details of an operation"""
+    op = client.operations.get(operation_id)
+    print_details(op, 'Operation {0}:'.format(operation_id))
+
+
+@operations.command('list')
+@cfy.options.common_options
+@cfy.argument('execution-id', required=False)
+@click.option('--graph-id', required=False,
+              help='List operations of this graph '
+                   '(exclusive with execution-id)')
+@click.option('--show-internal', type=bool, is_flag=True, default=False,
+              help='Also list internal operations')
+@click.option('--state', default=False, help='List operations in this state')
+@cfy.pass_logger
+@cfy.pass_client()
+def operations_list(execution_id, graph_id, state, show_internal,
+                    client, logger):
+    """List operations for an execution or a graph"""
+    ops = client.operations.list(
+        graph_id=graph_id,
+        execution_id=execution_id,
+        state=state,
+        skip_internal=not show_internal,
+    )
+    print_data(['id', 'name', 'type', 'state'], ops, 'Operations')
+
+
 @executions.group('groups')
 @cfy.options.common_options
 def groups():
