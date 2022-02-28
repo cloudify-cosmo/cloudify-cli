@@ -880,6 +880,62 @@ def delete_deployment_labels(label,
                      client.plugins, logger)
 
 
+@plugins.group(name='resource-tags',
+               short_help="Handle plugin's resource tags")
+@cfy.options.common_options
+def resource_tags():
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+
+@resource_tags.command(name='list',
+                       short_help="List resource tags of a specific plugin")
+@cfy.argument('plugin-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def list_resource_tags(plugin_id, logger, client, tenant_name):
+    _list_metadata(plugin_id, 'resource_tags', tenant_name, client.plugins,
+                   logger)
+
+
+@resource_tags.command(name='add',
+                       short_help="Add resource tags to a specific plugin")
+@cfy.argument('key-values',
+              callback=cfy.parse_and_validate_labels)
+@cfy.argument('plugin-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def add_resource_tags(key_values, plugin_id, logger, client, tenant_name):
+    """KEY_VALUES: <key>:<value>,<key>:<value>.
+    Any comma and colon in <value> must be escaped with '\\'."""
+    _add_metadata(plugin_id, 'resource_tags', key_values, tenant_name,
+                  client.plugins, logger)
+
+
+@resource_tags.command(name='delete',
+                       short_help="Delete resource tags from "
+                                  "a specific plugin")
+@cfy.argument('key', callback=cfy.parse_and_validate_label_to_delete)
+@cfy.argument('plugin-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def delete_resource_tags(key, plugin_id, logger, client, tenant_name):
+    """
+    KEY: A resource tag's key to be deleted.
+    """
+    _delete_metadata(plugin_id, 'resource_tags', key, tenant_name,
+                     client.plugins, logger)
+
+
 def _list_metadata(plugin_id,
                    metadata_type,
                    tenant_name,
@@ -890,9 +946,14 @@ def _list_metadata(plugin_id,
     metadata = client.get(plugin_id)[metadata_type]
     if get_global_json_output():
         output(json.dumps(metadata, cls=CloudifyJSONEncoder))
-    else:
+    elif metadata_type.endswith('labels'):
         print_data(['key', 'values'],
                    get_printable_resource_labels(metadata),
+                   '{0} labels'.format('Plugin'),
+                   max_width=50)
+    else:
+        print_data(['key', 'value'],
+                   [{'key': k, 'value': v} for k, v in metadata.items()],
                    '{0} labels'.format('Plugin'),
                    max_width=50)
 
@@ -939,8 +1000,13 @@ def _delete_metadata(plugin_id,
                     del metadata[k]
     _update_metadata(plugin_id, metadata_type, client,
                      **{metadata_type: metadata})
-    logger.info('The %s of plugin %s were deleted: %s',
-                metadata_type, plugin_id, metadata_list)
+    if metadata_type.endswith('labels'):
+        logger.info('The %s of plugin %s were deleted: %s',
+                    metadata_type, plugin_id, metadata_list)
+    else:
+        logger.info('The %s of plugin %s were deleted: %s',
+                    metadata_type, plugin_id,
+                    ", ".join(k for m in metadata_list for k in m.keys()))
 
 
 def _update_metadata(plugin_id,
