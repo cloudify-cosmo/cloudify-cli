@@ -901,6 +901,23 @@ def list_resource_tags(plugin_id, logger, client, tenant_name):
                    logger)
 
 
+@resource_tags.command(name='add',
+                       short_help="Add resource tags to a specific plugin")
+@cfy.argument('key-values',
+              callback=cfy.parse_and_validate_labels)
+@cfy.argument('plugin-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def add_resource_tags(key_values, plugin_id, logger, client, tenant_name):
+    """KEY_VALUES: <key>:<value>,<key>:<value>.
+    Any comma and colon in <value> must be escaped with '\\'."""
+    _add_metadata(plugin_id, 'resource_tags', key_values, tenant_name,
+                  client.plugins, logger)
+
+
 def _list_metadata(plugin_id,
                    metadata_type,
                    tenant_name,
