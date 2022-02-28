@@ -880,6 +880,27 @@ def delete_deployment_labels(label,
                      client.plugins, logger)
 
 
+@plugins.group(name='resource-tags',
+               short_help="Handle plugin's resource tags")
+@cfy.options.common_options
+def resource_tags():
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+
+@resource_tags.command(name='list',
+                       short_help="List resource tags of a specific plugin")
+@cfy.argument('plugin-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def list_resource_tags(plugin_id, logger, client, tenant_name):
+    _list_metadata(plugin_id, 'resource_tags', tenant_name, client.plugins,
+                   logger)
+
+
 def _list_metadata(plugin_id,
                    metadata_type,
                    tenant_name,
@@ -890,9 +911,14 @@ def _list_metadata(plugin_id,
     metadata = client.get(plugin_id)[metadata_type]
     if get_global_json_output():
         output(json.dumps(metadata, cls=CloudifyJSONEncoder))
-    else:
+    elif metadata_type.endswith('labels'):
         print_data(['key', 'values'],
                    get_printable_resource_labels(metadata),
+                   '{0} labels'.format('Plugin'),
+                   max_width=50)
+    else:
+        print_data(['key', 'value'],
+                   [{'key': k, 'value': v} for k, v in metadata.items()],
                    '{0} labels'.format('Plugin'),
                    max_width=50)
 
