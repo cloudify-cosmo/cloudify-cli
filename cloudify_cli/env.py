@@ -187,7 +187,8 @@ def get_profile_context(profile_name=None, suppress_error=False):
     if not loaded:
         if suppress_error:
             return ProfileContext({})
-        raise CloudifyCliError('No context for profile {0}'
+        raise CloudifyCliError('No context for profile {0}.\nPlease define '
+                               'the profile using `cfy profiles use`'
                                .format(profile_name))
     return ProfileContext(loaded, profile_name)
 
