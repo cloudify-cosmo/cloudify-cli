@@ -784,6 +784,10 @@ def _get_client_and_assert_manager(profile_name,
     # or a password, and was expecting them to be taken from the old profile
     env.profile = env.get_profile_context(profile_name, suppress_error=True)
 
+    if not manager_ip and not env.profile.manager_ip:
+        raise CloudifyCliError('No profile defined for Cloudify CLI '
+                               'usage.\nPlease define a profile using '
+                               '`cfy profiles use`')
     client = env.get_rest_client(
         rest_host=manager_ip,
         rest_port=rest_port,
