@@ -564,7 +564,7 @@ def update(blueprint_id,
 
     utils.explicit_tenant_name_message(tenant_name, logger)
     if blueprint_id:
-        _update_a_blueprint(blueprint_id, plugin_names,
+        _update_a_blueprint(blueprint_id, all_tenants, plugin_names,
                             to_latest, all_to_latest, to_minor, all_to_minor,
                             include_logs, json_output, logger,
                             client, force, auto_correct_types,
@@ -582,8 +582,8 @@ def update(blueprint_id,
                 if blueprint.id in except_blueprints:
                     continue
                 try:
-                    _update_a_blueprint(blueprint.id, plugin_names,
-                                        to_latest, all_to_latest,
+                    _update_a_blueprint(blueprint.id, all_tenants,
+                                        plugin_names, to_latest, all_to_latest,
                                         to_minor, all_to_minor,
                                         include_logs, json_output, logger,
                                         client, force, auto_correct_types,
@@ -608,6 +608,7 @@ def update(blueprint_id,
 
 
 def _update_a_blueprint(blueprint_id,
+                        all_tenants,
                         plugin_names,
                         to_latest,
                         all_to_latest,
@@ -628,6 +629,7 @@ def _update_a_blueprint(blueprint_id,
         to_minor=to_minor, all_to_minor=all_to_minor,
         auto_correct_types=auto_correct_types,
         reevaluate_active_statuses=reevaluate_active_statuses,
+        all_tenants=all_tenants,
     )
     events_logger = get_events_logger(json_output)
     execution = execution_events_fetcher.wait_for_execution(
