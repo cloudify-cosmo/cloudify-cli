@@ -496,7 +496,7 @@ class PluginsUpdateTest(CliCommandTest):
         self.assertEqual(len(update_client_mock.mock_calls), 1)
         self.assertListEqual(
             list(update_client_mock.call_args_list),
-            [call('zxcv', force=False, plugin_names=[],
+            [call('zxcv', force=False, plugin_names=[], all_tenants=False,
                   to_latest=[], all_to_latest=True,
                   to_minor=[], all_to_minor=False,
                   auto_correct_types=False,
