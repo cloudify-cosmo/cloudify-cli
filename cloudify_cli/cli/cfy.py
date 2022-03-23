@@ -164,21 +164,26 @@ def show_version(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
 
-    cli_version_data = {
-        'version': pkg_resources.require('cloudify')[0].version
-    }
-    rest_version_data = env.get_manager_version_data() \
-        if env.is_manager_active() else None
+    cli_version_output = _format_version_data(
+        {'version': pkg_resources.require('cloudify')[0].version},
+        prefix='Cloudify CLI ',
+        infix=' ' * 5,
+        suffix='\n')
+
+    try:
+        rest_version_data = env.get_manager_version_data() \
+            if env.is_manager_active() else None
+    except Exception as e:
+        get_logger().info(cli_version_output)
+        sys.stderr.write("Cannot get Cloudify Manager version. {}: "
+                         "{}\n".format(type(e).__name__, str(e)))
+        ctx.exit(1)
+
     output = ''
     if rest_version_data:
         edition = rest_version_data['edition'].title()
         output += '{0} edition\n\n'.format(edition)
-
-    output += _format_version_data(
-        cli_version_data,
-        prefix='Cloudify CLI ',
-        infix=' ' * 5,
-        suffix='\n')
+    output += cli_version_output
     if rest_version_data:
         output += _format_version_data(
             rest_version_data,
