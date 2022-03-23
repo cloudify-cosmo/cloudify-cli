@@ -112,20 +112,7 @@ def assert_local_active():
             'You can run `cfy profiles use local` to stop using a manager.')
 
 
-def assert_credentials_set():
-    error_msg = 'Manager {0} must be set in order to use a manager.\n' \
-                'You can set it in the profile by running ' \
-                '`cfy profiles set {1}`, or you can set the `CLOUDIFY_{2}` ' \
-                'environment variable.'
-    if not get_tenant_name():
-        raise CloudifyCliError(
-            error_msg.format('Tenant', '--manager-tenant', 'TENANT')
-        )
-
-    kerberos = get_kerberos_env()
-    token = get_token()
-
-    credentials = (get_username(), get_password())
+def check_configured_auth(credentials, token, kerberos_env, extra_help=''):
     if all(item is None for item in credentials):
         credentials = None
 
@@ -135,12 +122,42 @@ def assert_credentials_set():
         )
 
     configured_auth = []
-    if kerberos:
+    if kerberos_env:
         configured_auth.append('kerberos')
     if token:
         configured_auth.append('token')
     if credentials:
         configured_auth.append('username+password')
+
+    if not configured_auth:
+        raise CloudifyCliError(
+            'At least one auth method must be set.\n' + extra_help
+        )
+    if len(configured_auth) > 1:
+        raise CloudifyCliError(
+            'Only one auth method may be set at a time.\n'
+            'You may need to unset env vars for auth such as '
+            'CLOUDIFY_USERNAME, CLOUDIFY_PASSWORD, CLOUDIFY_TOKEN, '
+            'or CLOUDIFY_KERBEROS_ENV\n'
+            '{extra_help}'.format(extra_help=extra_help)
+        )
+
+
+def assert_credentials_set(client_profile=None):
+    if client_profile is None:
+        client_profile = profile
+    error_msg = 'Manager {0} must be set in order to use a manager.\n' \
+                'You can set it in the profile by running ' \
+                '`cfy profiles set {1}`, or you can set the `CLOUDIFY_{2}` ' \
+                'environment variable.'
+    if not get_tenant_name(client_profile):
+        raise CloudifyCliError(
+            error_msg.format('Tenant', '--manager-tenant', 'TENANT')
+        )
+
+    kerberos_env = get_kerberos_env(client_profile)
+    token = get_token(client_profile)
+    credentials = (get_username(client_profile), get_password(client_profile))
 
     configure_help = (
         'Please configure either a token, kerberos, or a username+password. '
@@ -150,18 +167,9 @@ def assert_credentials_set():
         '`cfy profiles set --manager-username <username> '
         '--manager-password <password>`\n'
     )
-    if not configured_auth:
-        raise CloudifyCliError(
-            'At least one auth method must be set.\n' + configure_help
-        )
-    if len(configured_auth) > 1:
-        raise CloudifyCliError(
-            'Only one auth method may be set at a time.\n'
-            + configure_help + '\n'
-            'You may also need to unset env vars for auth such as '
-            'CLOUDIFY_USERNAME, CLOUDIFY_PASSWORD, CLOUDIFY_TOKEN, '
-            'or CLOUDIFY_KERBEROS_ENV'
-        )
+
+    check_configured_auth(credentials, token, kerberos_env,
+                          extra_help=configure_help)
 
 
 def is_manager_active():
@@ -311,9 +319,9 @@ def get_rest_client(client_profile=None,
                     cluster=None,
                     kerberos_env=None,
                     token=None):
-    assert_credentials_set()
     if client_profile is None:
         client_profile = profile
+    assert_credentials_set(client_profile)
     username = username or get_username(client_profile)
     password = password or get_password(client_profile)
     token = token or get_token(client_profile)
