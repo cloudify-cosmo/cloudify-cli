@@ -68,6 +68,19 @@ def upload(logger, client, license_path):
     logger.info('Cloudify license successfully uploaded.')
 
 
+@license.command(
+    name='remove',
+    short_help='Remove a Cloudify license from the Manager')
+@cfy.assert_manager_active()
+@cfy.options.common_options
+@cfy.pass_client()
+@cfy.pass_logger
+def remove(logger, client):
+    logger.info('Removing Cloudify License from the Manager...')
+    client.license.delete()
+    logger.info('Cloudify license successfully removed.')
+
+
 @license.group(name='environments')
 @cfy.options.common_options
 @cfy.assert_manager_active()
