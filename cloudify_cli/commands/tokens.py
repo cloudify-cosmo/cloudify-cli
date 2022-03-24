@@ -52,8 +52,7 @@ def list(logger, client):
         'Token listing',
     )
     total = tokens.metadata.pagination.total
-    logger.info('Showing {0} of {1} tokens'.format(
-        len(tokens), total))
+    logger.info('Showing %s of %s tokens', len(tokens), total)
 
 
 @tokens.command(
