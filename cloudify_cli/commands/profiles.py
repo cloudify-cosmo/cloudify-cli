@@ -157,12 +157,6 @@ def use(manager_ip,
     Additional CLI commands will be added after a manager is used.
     To stop using a manager, you can run `cfy init -r`.
     """
-    env.check_configured_auth(
-        credentials=(kwargs['manager_username'], kwargs['manager_password']),
-        token=kwargs['manager_token'],
-        kerberos_env=kwargs['kerberos_env'],
-    )
-
     if not profile_name:
         profile_name = manager_ip
     if profile_name == 'local':
@@ -180,6 +174,12 @@ def use(manager_ip,
             **kwargs)
     else:
         kwargs.setdefault('manager_tenant', 'default_tenant')
+        env.check_configured_auth(
+            credentials=(kwargs['manager_username'],
+                         kwargs['manager_password']),
+            token=kwargs['manager_token'],
+            kerberos_env=kwargs['kerberos_env'],
+        )
         _create_profile(
             manager_ip=manager_ip,
             profile_name=profile_name,
