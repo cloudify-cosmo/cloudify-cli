@@ -1,43 +1,90 @@
-########
-# Copyright (c) 2018 GigaSpaces Technologies Ltd. All rights reserved
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-############
+import click
 
 from ..cli import cfy
-from ..table import print_single
+from cloudify_cli.exceptions import CloudifyCliError
+from ..table import print_single, print_data
 
-REST_TOKEN_COLUMN = ['role', 'value']
+REST_TOKEN_COLUMNS = ['id', 'value', 'role', 'description',
+                      'expiration_date', 'last_used']
 
 
 @cfy.group(name='tokens')
 @cfy.assert_manager_active()
 def tokens():
-    """ Returns a valid REST token from the Cloudify Manager
-    """
-    pass
+    """Handle tokens on the manager"""
 
 
 @tokens.command(
-    name='get',
-    short_help='returns a valid REST token from the Cloudify Manager')
+    name='create',
+    short_help='Create a token for this user on the Cloudify Manager')
+@cfy.assert_manager_active()
+@cfy.options.common_options
+@click.option('-e', '--expiry', type=str, default=None, required=False,
+              help="Token expiration, e.g. +10h or 2121-03-09 14:52")
+@click.option('-d', '--description', type=str, default=None, required=False,
+              help="Token description")
+@cfy.pass_client()
+@cfy.pass_logger
+def create(logger, client, description, expiry):
+    logger.info('Listing REST tokens')
+    token = client.tokens.create(expiration=expiry, description=description)
+    print_single(REST_TOKEN_COLUMNS, token, 'REST token')
+
+
+@tokens.command(
+    name='list',
+    short_help='Lists tokens from the Cloudify Manager')
 @cfy.assert_manager_active()
 @cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
-def get(logger, client):
-    """returns a valid REST token from the Cloudify Manager.
-    """
+def list(logger, client):
+    logger.info('Listing REST tokens')
+    tokens = client.tokens.list()
+    columns = REST_TOKEN_COLUMNS
+    if tokens:
+        # An admin listing tokens will see tokens for other users
+        if any(token.username != tokens[0].username
+               for token in tokens):
+            columns = columns + ['username']
+    print_data(
+        columns,
+        tokens,
+        'Token listing',
+    )
+    total = tokens.metadata.pagination.total
+    logger.info('Showing {0} of {1} tokens'.format(
+        len(tokens), total))
+
+
+@tokens.command(
+    name='get',
+    short_help='Get details of a REST token from the Cloudify Manager.')
+@cfy.assert_manager_active()
+@cfy.options.common_options
+@cfy.argument('token_id', type=str, default=None, required=False)
+@cfy.pass_client()
+@cfy.pass_logger
+def get(logger, client, token_id):
+    if token_id is None:
+        # Give a helpful error because of the back compat break
+        raise CloudifyCliError(
+            'Token ID must now be provided to get a token.\n'
+            'For old `cfy tokens get` functionality, use `cfy tokens create`.'
+        )
     logger.info('Retrieving REST token')
-    token = client.tokens.get()
-    print_single(REST_TOKEN_COLUMN, token, 'REST token')
+    token = client.tokens.get(token_id)
+    print_single(REST_TOKEN_COLUMNS, token, 'REST token')
+
+
+@tokens.command(
+    name='delete',
+    short_help='Delete a REST token from the Cloudify Manager, disabling it.')
+@cfy.assert_manager_active()
+@cfy.options.common_options
+@cfy.argument('token_id', type=str, default=None, required=True)
+@cfy.pass_client()
+@cfy.pass_logger
+def delete(logger, client, token_id):
+    logger.info('Deleting REST token %s', token_id)
+    client.tokens.delete(token_id)
