@@ -27,10 +27,14 @@ import logging
 import tarfile
 import zipfile
 import tempfile
-import collections
 from shutil import copy
 from contextlib import closing, contextmanager
 from backports.shutil_get_terminal_size import get_terminal_size
+
+try:
+    from collections.abc import MutableMapping
+except ImportError:
+    from collections import MutableMapping
 
 import yaml
 import requests
@@ -347,8 +351,8 @@ def explicit_tenant_name_message(tenant_name, logger):
 
 def deep_update_dict(dest_dict, src_dict):
     for key, value in src_dict.items():
-        if isinstance(dest_dict, collections.MutableMapping):
-            if isinstance(value, collections.MutableMapping):
+        if isinstance(dest_dict, MutableMapping):
+            if isinstance(value, MutableMapping):
                 dest_dict[key] = deep_update_dict(dest_dict.get(key), value)
             else:
                 dest_dict[key] = src_dict[key]
@@ -359,7 +363,7 @@ def deep_update_dict(dest_dict, src_dict):
 
 def deep_subtract_dict(dest_dict, src_dict):
     for key, value in src_dict.items():
-        if isinstance(value, collections.MutableMapping):
+        if isinstance(value, MutableMapping):
             deep_subtract_dict(dest_dict.get(key), value)
         else:
             if key not in dest_dict:
