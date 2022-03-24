@@ -19,10 +19,7 @@ class TokensTest(CliCommandTest):
 
     def setUp(self):
         super(TokensTest, self).setUp()
-        self.client.tokens.get = Mock()
-        self.client.tokens.list = Mock()
-        self.client.tokens.delete = Mock()
-        self.client.tokens.create = Mock()
+        self.client.tokens = Mock()
         self.use_manager()
 
     def test_old_command_error(self):
