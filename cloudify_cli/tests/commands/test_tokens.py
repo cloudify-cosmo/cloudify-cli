@@ -22,6 +22,7 @@ class TokensTest(CliCommandTest):
         self.client.tokens.get = Mock()
         self.client.tokens.list = Mock()
         self.client.tokens.delete = Mock()
+        self.client.tokens.create = Mock()
         self.use_manager()
 
     def test_old_command_error(self):
@@ -29,9 +30,9 @@ class TokensTest(CliCommandTest):
         self.invoke('cfy tokens get', err_str_segment='`cfy tokens create`')
 
     def _check_output(self, tokens, output, expect_users=False,
-                      expect_count=True):
+                      expect_count=True, expect_value=False):
         for token in tokens:
-            for key in ['id', 'role', 'description', 'value',
+            for key in ['id', 'role', 'description',
                         'expiration_date', 'last_used']:
                 if token.get(key):
                     assert token.get(key) in output
@@ -41,6 +42,10 @@ class TokensTest(CliCommandTest):
             else:
                 assert token['username'] not in output
 
+            if expect_value:
+                assert token['value'] in output
+            else:
+                assert token['value'] not in output
         if expect_count:
             assert '{0} of {0}'.format(len(tokens)) in output
 
@@ -71,3 +76,23 @@ class TokensTest(CliCommandTest):
         output = self.invoke('cfy tokens list').output
         self.client.tokens.list.assert_called_once_with()
         self._check_output(tokens.items, output, expect_users=True)
+
+    def test_create_token(self):
+        token = Token(TOKEN1)
+        self.client.tokens.create.return_value = token
+        output = self.invoke('cfy tokens create').output
+        self.client.tokens.create.assert_called_once_with(
+            expiration=None, description=None,
+        )
+        self._check_output([token], output, expect_value=True,
+                           expect_count=False)
+
+    def test_create_token_extras(self):
+        token = Token(TOKEN1)
+        self.client.tokens.create.return_value = token
+        self.invoke('cfy tokens create '
+                    '--expiry something '
+                    '--description descr')
+        self.client.tokens.create.assert_called_once_with(
+            expiration='something', description='descr',
+        )
