@@ -41,11 +41,10 @@ def list(logger, client):
     logger.info('Listing REST tokens')
     tokens = client.tokens.list()
     columns = REST_TOKEN_COLUMNS
-    if tokens:
-        # An admin listing tokens will see tokens for other users
-        if any(token.username != tokens[0].username
-               for token in tokens):
-            columns = columns + ['username']
+    # An admin listing tokens will see tokens for other users
+    if any(token.username != tokens[0].username
+           for token in tokens):
+        columns = columns + ['username']
     print_data(
         columns,
         tokens,
