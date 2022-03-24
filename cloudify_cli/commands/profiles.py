@@ -157,6 +157,13 @@ def use(manager_ip,
     Additional CLI commands will be added after a manager is used.
     To stop using a manager, you can run `cfy init -r`.
     """
+    def _auth_args_present(kwargs):
+        return any(
+            kwargs.get(kwarg)
+            for kwarg in ['manager_username', 'manager_password',
+                          'manager_token', 'kerberos_env']
+        )
+
     if not profile_name:
         profile_name = manager_ip
     if profile_name == 'local':
@@ -174,12 +181,13 @@ def use(manager_ip,
             **kwargs)
     else:
         kwargs.setdefault('manager_tenant', 'default_tenant')
-        env.check_configured_auth(
-            credentials=(kwargs['manager_username'],
-                         kwargs['manager_password']),
-            token=kwargs['manager_token'],
-            kerberos_env=kwargs['kerberos_env'],
-        )
+        if _auth_args_present(kwargs):
+            env.check_configured_auth(
+                credentials=(kwargs['manager_username'],
+                             kwargs['manager_password']),
+                token=kwargs['manager_token'],
+                kerberos_env=kwargs['kerberos_env'],
+            )
         _create_profile(
             manager_ip=manager_ip,
             profile_name=profile_name,
@@ -187,12 +195,11 @@ def use(manager_ip,
             logger=logger,
             **kwargs)
     if (
-        env.profile.manager_username
-        or env.profile.manager_token
-        or env.profile.kerberos_env
+        # We test with the env here in case of switching to an existing one
+        _auth_args_present(env.profile.to_dict())
+        and not skip_credentials_validation
     ):
-        if not skip_credentials_validation:
-            _update_cluster_profile_to_dict(logger)
+        _update_cluster_profile_to_dict(logger)
 
 
 def _update_cluster_profile_to_dict(logger):
