@@ -49,6 +49,7 @@ default_manager_params = dict(
     kerberos_env=False,
     manager_username='admin',
     manager_password='admin',
+    manager_token=None,
     manager_tenant=constants.DEFAULT_TENANT_NAME,
     cluster={}
 )
