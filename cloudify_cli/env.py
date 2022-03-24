@@ -417,7 +417,10 @@ def get_kerberos_env(from_profile=None):
 
 
 def get_tenant_name(from_profile=None):
-    return get_from_profile_or_env_var('tenant', from_profile)
+    return (
+        get_from_profile_or_env_var('tenant', from_profile)
+        or 'default_tenant'
+    )
 
 
 def get_ssl_cert(from_profile=None):
