@@ -237,6 +237,7 @@ def _create_profile(
         manager_username,
         manager_password,
         manager_tenant,
+        manager_token,
         rest_port,
         ssl,
         rest_certificate,
@@ -267,6 +268,7 @@ def _create_profile(
         rest_certificate,
         manager_username,
         manager_password,
+        manager_token,
         manager_tenant,
         kerberos_env,
         skip_credentials_validation
@@ -282,11 +284,12 @@ def _create_profile(
         ssh_port,
         manager_username,
         manager_password,
+        manager_token,
         manager_tenant,
         rest_port,
         rest_protocol,
         rest_certificate,
-        kerberos_env
+        kerberos_env,
     )
     env.set_active_profile(profile_name)
 
@@ -730,6 +733,7 @@ def _get_provider_context(profile_name,
                           rest_certificate,
                           manager_username,
                           manager_password,
+                          manager_token,
                           manager_tenant,
                           kerberos_env,
                           skip_credentials_validation):
@@ -743,7 +747,8 @@ def _get_provider_context(profile_name,
             manager_username,
             manager_password,
             manager_tenant,
-            kerberos_env
+            kerberos_env,
+            manager_token,
         )
     except CloudifyCliError:
         if skip_credentials_validation:
@@ -804,6 +809,7 @@ def _set_profile_context(profile_name,
                          ssh_port,
                          manager_username,
                          manager_password,
+                         manager_token,
                          manager_tenant,
                          rest_port,
                          rest_protocol,
@@ -826,6 +832,8 @@ def _set_profile_context(profile_name,
         profile.manager_username = manager_username
     if manager_password:
         profile.manager_password = manager_password
+    if manager_token:
+        profile.manager_token = manager_token
     if manager_tenant:
         profile.manager_tenant = manager_tenant
     profile.ssh_port = ssh_port or constants.REMOTE_EXECUTION_PORT
