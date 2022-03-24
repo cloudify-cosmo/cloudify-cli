@@ -4,7 +4,7 @@ from ..cli import cfy
 from cloudify_cli.exceptions import CloudifyCliError
 from ..table import print_single, print_data
 
-REST_TOKEN_COLUMNS = ['id', 'value', 'role', 'description',
+REST_TOKEN_COLUMNS = ['id', 'role', 'description',
                       'expiration_date', 'last_used']
 
 
@@ -27,7 +27,8 @@ def tokens():
 def create(logger, client, description, expiry):
     logger.info('Listing REST tokens')
     token = client.tokens.create(expiration=expiry, description=description)
-    print_single(REST_TOKEN_COLUMNS, token, 'REST token')
+    columns = REST_TOKEN_COLUMNS + ['value']
+    print_single(columns, token, 'REST token')
 
 
 @tokens.command(
