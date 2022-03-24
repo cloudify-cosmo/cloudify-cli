@@ -970,6 +970,13 @@ class Options(object):
             help=helptexts.PROFILE_MANAGER_IP,
         )
 
+        self.manager_token = click.option(
+            '-T',
+            '--manager-token',
+            required=False,
+            help=helptexts.MANAGER_TOKEN,
+        )
+
         self.manager_username = click.option(
             '-u',
             '--manager-username',

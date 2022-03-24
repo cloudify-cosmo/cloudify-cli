@@ -198,6 +198,7 @@ PROFILE_MANAGER_IP = 'The address of the Manager'
 SSH_USER = 'The SSH user on the manager host machine'
 SSH_KEY = 'The path to the ssh key-file to use when connecting'
 SSH_PORT = 'The SSH port to use when connecting to the manager'
+MANAGER_TOKEN = 'Manager token used to run commands on the manager'
 MANAGER_USERNAME = 'Manager username used to run commands on the manager'
 MANAGER_PASSWORD = 'Manager password used to run commands on the manager'
 MANAGER_TENANT = 'The tenant associated with the current user operating the ' \
