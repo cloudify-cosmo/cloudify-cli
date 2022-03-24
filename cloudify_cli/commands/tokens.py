@@ -19,10 +19,9 @@ def tokens():
     short_help='Create a token for this user on the Cloudify Manager')
 @cfy.assert_manager_active()
 @cfy.options.common_options
-@click.option('-e', '--expiry', type=str, default=None, required=False,
+@click.option('-e', '--expiry',
               help="Token expiration, e.g. +10h or 2121-03-09 14:52")
-@click.option('-d', '--description', type=str, default=None, required=False,
-              help="Token description")
+@click.option('-d', '--description', help="Token description")
 @cfy.pass_client()
 @cfy.pass_logger
 def create(logger, client, description, expiry):
