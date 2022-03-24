@@ -61,8 +61,8 @@ class ProfilesTest(CliCommandTest):
 
     def test_delete_profile(self):
         self.use_manager()
-        self.assertTrue(os.path.isdir(
-            os.path.join(env.PROFILES_DIR, '10.10.1.10')))
+        assert os.path.isdir(
+            os.path.join(env.PROFILES_DIR, '10.10.1.10'))
         self.invoke('cfy profiles delete 10.10.1.10')
         self.invoke('cfy profiles list')
         # TODO: This isn't tested right due to the logs containing
@@ -86,11 +86,11 @@ class ProfilesTest(CliCommandTest):
                 members = [member.name for member in tar.getmembers()]
             self.assertIn('profiles/10.10.1.10/context.json', members)
             self.purge_dot_cloudify()
-            self.assertFalse(os.path.isdir(env.PROFILES_DIR))
+            assert not os.path.isdir(env.PROFILES_DIR)
             self.invoke('cfy init')
             self.invoke('cfy profiles import {0}'.format(profiles_archive))
-            self.assertTrue(os.path.isfile(
-                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context.json')))
+            assert os.path.isfile(
+                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context.json'))
         finally:
             os.remove(profiles_archive)
 
@@ -141,9 +141,9 @@ class ProfilesTest(CliCommandTest):
                 .format(profiles_archive)
             )
 
-            self.assertTrue(os.path.isfile(
-                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context.json')))
-            self.assertTrue(os.path.isfile(key))
+            assert os.path.isfile(
+                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context.json'))
+            assert os.path.isfile(key)
         finally:
             os.remove(key)
             os.remove(profiles_archive)
@@ -427,8 +427,8 @@ class ProfilesTest(CliCommandTest):
     def test_cluster_profile_use(self, _, mock_aio, mock_update_cluster):
         self.use_manager()
         self.invoke('profiles use 0.0.0.0 -u name_it -p swordfish')
-        self.assertTrue(mock_aio.called)
-        self.assertTrue(mock_update_cluster.called)
+        assert mock_aio.called
+        assert mock_update_cluster.called
 
     @patch('cloudify_cli.commands.profiles.update_cluster_profile')
     @patch('cloudify_cli.commands.profiles._all_in_one_manager',
@@ -439,5 +439,5 @@ class ProfilesTest(CliCommandTest):
                                           mock_update_cluster):
         self.use_manager()
         self.invoke('profiles use 10.10.1.10')
-        self.assertTrue(mock_aio.called)
-        self.assertTrue(mock_update_cluster.called)
+        assert mock_aio.called
+        assert mock_update_cluster.called
