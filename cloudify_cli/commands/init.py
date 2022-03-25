@@ -147,7 +147,8 @@ def init_manager_profile(profile_name,
                          reset_context=False,
                          hard=False,
                          enable_colors=False,
-                         logger=None):
+                         logger=None,
+                         profile=None):
     logger.info('Initializing profile {0}...'.format(profile_name))
 
     context_file_path = env.get_context_path(profile_name)
@@ -163,8 +164,9 @@ def init_manager_profile(profile_name,
 
     _create_profiles_dir_and_config(hard, enable_colors)
 
-    profile = env.ProfileContext()
-    profile.manager_ip = profile_name
+    if not profile:
+        profile = env.ProfileContext()
+        profile.manager_ip = profile_name
     profile.save()
 
     logger.info('Initialization completed successfully')
