@@ -258,26 +258,9 @@ def _create_profile(
     logger.info('Attempting to connect to %s through port %s, using %s '
                 '(SSL mode: %s)...', manager_ip, rest_port, rest_protocol, ssl)
 
-    # First, attempt to get the provider from the manager - should it fail,
-    # the manager's profile directory won't be created
-    provider_context = _get_provider_context(
-        profile_name,
-        manager_ip,
-        rest_port,
-        rest_protocol,
-        rest_certificate,
-        manager_username,
-        manager_password,
-        manager_token,
-        manager_tenant,
-        kerberos_env,
-        skip_credentials_validation
-    )
-    init.init_manager_profile(profile_name=profile_name)
     logger.info('Using manager %s with port %s', manager_ip, rest_port)
     _set_profile_context(
         profile_name,
-        provider_context,
         manager_ip,
         ssh_key,
         ssh_user,
@@ -290,6 +273,7 @@ def _create_profile(
         rest_protocol,
         rest_certificate,
         kerberos_env,
+        skip_credentials_validation,
     )
     env.set_active_profile(profile_name)
 
@@ -727,30 +711,9 @@ def _assert_manager_available(client, profile_name):
             "Can't use manager {0}. {1}".format(profile_name, ex))
 
 
-def _get_provider_context(profile_name,
-                          manager_ip,
-                          rest_port,
-                          rest_protocol,
-                          rest_certificate,
-                          manager_username,
-                          manager_password,
-                          manager_token,
-                          manager_tenant,
-                          kerberos_env,
-                          skip_credentials_validation):
+def _get_provider_context(profile, skip_credentials_validation):
     try:
-        client = _get_client_and_assert_manager(
-            profile_name,
-            manager_ip,
-            rest_port,
-            rest_protocol,
-            rest_certificate,
-            manager_username,
-            manager_password,
-            manager_tenant,
-            kerberos_env,
-            manager_token,
-        )
+        client = _get_client_and_assert_manager(profile=profile)
     except CloudifyCliError:
         if skip_credentials_validation:
             return None
@@ -763,47 +726,17 @@ def _get_provider_context(profile_name,
         return None
 
 
-def _get_client_and_assert_manager(profile_name=None,
-                                   manager_ip=None,
-                                   rest_port=None,
-                                   rest_protocol=None,
-                                   rest_certificate=None,
-                                   manager_username=None,
-                                   manager_password=None,
-                                   manager_tenant=None,
-                                   kerberos_env=None,
-                                   token=None,
-                                   profile=None):
-    # Attempt to update the profile with an existing profile context, if one
-    # is available. This is relevant in case the user didn't pass a username
-    # or a password, and was expecting them to be taken from the old profile
-    if not profile:
-        env.profile = env.get_profile_context(profile_name,
-                                              suppress_error=True)
-
-    if not manager_ip and not env.profile.manager_ip:
-        raise CloudifyCliError('No profile defined for Cloudify CLI '
+def _get_client_and_assert_manager(profile):
+    if not env.profile.manager_ip:
+        raise CloudifyCliError('No manager IP defined for Cloudify CLI '
                                'usage.\nPlease define a profile using '
                                '`cfy profiles use`')
-    client = env.get_rest_client(
-        client_profile=profile,
-        rest_host=manager_ip,
-        rest_port=rest_port,
-        rest_protocol=rest_protocol,
-        rest_cert=rest_certificate,
-        username=manager_username,
-        password=manager_password,
-        tenant_name=manager_tenant,
-        kerberos_env=kerberos_env,
-        token=token,
-    )
-
-    _assert_manager_available(client, profile_name or profile.name)
+    client = env.get_rest_client(client_profile=profile)
+    _assert_manager_available(client, profile.name)
     return client
 
 
 def _set_profile_context(profile_name,
-                         provider_context,
                          manager_ip,
                          ssh_key,
                          ssh_user,
@@ -815,10 +748,9 @@ def _set_profile_context(profile_name,
                          rest_port,
                          rest_protocol,
                          rest_certificate,
-                         kerberos_env):
-
-    profile = env.get_profile_context(profile_name)
-    profile.provider_context = provider_context
+                         kerberos_env,
+                         skip_credentials_validation):
+    profile = env.ProfileContext()
     if profile_name:
         profile.profile_name = profile_name
     if manager_ip:
@@ -842,7 +774,11 @@ def _set_profile_context(profile_name,
     profile.rest_certificate = rest_certificate
     profile.kerberos_env = kerberos_env
 
-    profile.save()
+    profile.provider_context = _get_provider_context(
+        profile, skip_credentials_validation)
+    # We initialise the profile here so that the profile dir doesn't get
+    # created if we unexpectedly fail to get the provider context
+    init.init_manager_profile(profile_name=profile_name, profile=profile)
 
 
 def _is_manager_secured(response_history):
