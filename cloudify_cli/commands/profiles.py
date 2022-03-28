@@ -727,7 +727,7 @@ def _get_provider_context(profile, skip_credentials_validation):
 
 
 def _get_client_and_assert_manager(profile):
-    if not env.profile.manager_ip:
+    if not profile.manager_ip:
         raise CloudifyCliError('No manager IP defined for Cloudify CLI '
                                'usage.\nPlease define a profile using '
                                '`cfy profiles use`')
