@@ -373,13 +373,6 @@ def set_cmd(profile_name,
             "You must supply at least one of the following:  "
             "profile name, username, password, token, tenant, "
             "ssl, rest certificate, ssh user, ssh key, ssh port, kerberos env")
-    if not skip_credentials_validation:
-        env.check_configured_auth(
-            credentials=(manager_username, manager_password),
-            token=manager_token,
-            kerberos_env=kerberos_env,
-        )
-
     old_name = None
     if profile_name:
         if profile_name == 'local':
