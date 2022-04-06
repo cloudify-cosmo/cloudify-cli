@@ -219,7 +219,7 @@ def get(username, get_data, logger, client):
 
 @users.command(name='delete',
                short_help='Delete a user [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
