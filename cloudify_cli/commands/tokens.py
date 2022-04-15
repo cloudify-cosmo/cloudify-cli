@@ -20,7 +20,10 @@ def tokens():
 @cfy.assert_manager_active()
 @cfy.options.common_options
 @click.option('-e', '--expiry',
-              help="Token expiration, e.g. +10h or 2121-03-09 14:52")
+              help=(
+                  "Token expiration, e.g. +10h or 2121-03-09 14:52. "
+                  "Absolute times are considered to be in UTC."
+              ))
 @click.option('-d', '--description', help="Token description")
 @cfy.pass_client()
 @cfy.pass_logger
