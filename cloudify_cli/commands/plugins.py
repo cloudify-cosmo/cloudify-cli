@@ -618,6 +618,7 @@ def update(blueprint_id,
 @cfy.options.pagination_size
 @cfy.options.sort_by('created_at')
 @cfy.options.descending
+@cfy.options.get_data
 @cfy.pass_logger
 @cfy.pass_client()
 def updates_list(tenant_name,
@@ -625,6 +626,7 @@ def updates_list(tenant_name,
                  pagination_size,
                  sort_by,
                  descending,
+                 get_data,
                  logger,
                  client):
     utils.explicit_tenant_name_message(tenant_name, logger)
@@ -633,10 +635,12 @@ def updates_list(tenant_name,
                                               _offset=pagination_offset,
                                               _size=pagination_size)
     columns = [
-        'created_at', 'id', 'visibility', 'state', 'deployments_to_update',
-        'deployments_per_tenant', 'forced', 'all_tenants', 'blueprint_id',
-        'temp_blueprint_id', 'execution_id', 'tenant_name', 'created_by',
+        'id', 'visibility', 'state', 'forced', 'all_tenants',
+        'blueprint_id', 'execution_id', 'created_by', 'created_at',
     ]
+    if get_data:
+        columns.extend(['deployments_to_update', 'deployments_per_tenant',
+                        'temp_blueprint_id'])
 
     print_data(columns, updates_list, 'Plugins updates:')
     total = updates_list.metadata.pagination.total
