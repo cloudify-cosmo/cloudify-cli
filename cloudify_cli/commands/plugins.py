@@ -607,6 +607,43 @@ def update(blueprint_id,
                          ', '.join(update_results['failed']))
 
 
+@plugins.command(name='list_updates',
+                 short_help='Update the plugins of all the deployments of '
+                            'the blueprint [manager only]')
+@cfy.options.tenant_name(required=False,
+                         mutually_exclusive_with=['all_tenants'],
+                         resource_name_for_help='plugin')
+@cfy.assert_manager_active()
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
+@cfy.options.sort_by('created_at')
+@cfy.options.descending
+@cfy.pass_logger
+@cfy.pass_client()
+def updates_list(tenant_name,
+                 pagination_offset,
+                 pagination_size,
+                 sort_by,
+                 descending,
+                 logger,
+                 client):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    updates_list = client.plugins_update.list(sort=sort_by,
+                                              is_descending=descending,
+                                              _offset=pagination_offset,
+                                              _size=pagination_size)
+    columns = [
+        'created_at', 'id', 'visibility', 'state', 'deployments_to_update',
+        'deployments_per_tenant', 'forced', 'all_tenants', 'blueprint_id',
+        'temp_blueprint_id', 'execution_id', 'tenant_name', 'created_by',
+    ]
+
+    print_data(columns, updates_list, 'Plugins updates:')
+    total = updates_list.metadata.pagination.total
+    logger.info('Showing {0} of {1} plugins updates'.format(len(updates_list),
+                                                            total))
+
+
 def _update_a_blueprint(blueprint_id,
                         all_tenants,
                         plugin_names,
