@@ -605,7 +605,7 @@ def update(blueprint_id,
 
 
 @plugins.command(name='list_updates',
-                 short_help='List previous or active plugin updates')
+                 short_help='List all plugin updates for the tenant')
 @cfy.options.tenant_name(required=False,
                          mutually_exclusive_with=['all_tenants'],
                          resource_name_for_help='plugin')
