@@ -21,10 +21,10 @@ from contextlib import contextmanager
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from ..cli import cfy, helptexts
-from ..blueprint import get_blueprint_path_and_id
-from . import blueprints, install, deployments
-from ..constants import DEFAULT_BLUEPRINT_PATH
+from cloudify_cli.blueprint import get_blueprint_path_and_id
+from cloudify_cli.cli import cfy, helptexts
+from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
+from cloudify_cli.commands import blueprints, install, deployments
 
 
 @cfy.command(name='apply',

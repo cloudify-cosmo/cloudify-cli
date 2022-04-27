@@ -20,12 +20,13 @@ import posixpath
 
 from cloudify.cluster_status import CloudifyNodeType
 
-from .. import env
-from ..cli import helptexts, cfy
-from ..exceptions import CloudifyCliError
-from ..logger import (output,
-                      CloudifyJSONEncoder,
-                      get_global_json_output)
+from cloudify_cli import env
+from cloudify_cli.cli import helptexts, cfy
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import (
+    output,
+    CloudifyJSONEncoder,
+    get_global_json_output)
 
 
 @cfy.group(name='logs')

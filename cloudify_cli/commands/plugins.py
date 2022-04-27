@@ -32,14 +32,15 @@ from cloudify_cli.exceptions import (
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import env, utils
-from ..logger import get_global_json_output
-from ..table import print_data, print_single, print_details
-from ..cli import helptexts, cfy
-from ..utils import (prettify_client_error,
-                     get_visibility,
-                     validate_visibility)
-from ..labels_utils import get_printable_resource_labels
+from cloudify_cli import env, utils
+from cloudify_cli.cli import helptexts, cfy
+from cloudify_cli.labels_utils import get_printable_resource_labels
+from cloudify_cli.logger import get_global_json_output
+from cloudify_cli.table import print_data, print_single, print_details
+from cloudify_cli.utils import (
+    prettify_client_error,
+    get_visibility,
+    validate_visibility)
 
 PLUGINS_BUNDLE_COLUMNS = ['id', 'package_name', 'package_version',
                           'distribution', 'distribution_release']

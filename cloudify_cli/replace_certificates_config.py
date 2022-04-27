@@ -19,9 +19,9 @@ from socket import error as socket_error
 
 from retrying import retry
 
-from . import env
-from .logger import get_global_verbosity
-from .exceptions import CloudifyCliError
+from cloudify_cli import env
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import get_global_verbosity
 
 try:
     from fabric import Connection

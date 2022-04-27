@@ -20,12 +20,16 @@ from cloudify import logs
 
 import click
 
-from .. import utils
-from ..cli import cfy
-from ..logger import get_events_logger
-from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
-from ..execution_events_fetcher import ExecutionEventsFetcher, \
-    wait_for_execution, wait_for_execution_group
+from cloudify_cli import utils
+from cloudify_cli.cli import cfy
+from cloudify_cli.logger import get_events_logger
+from cloudify_cli.exceptions import (
+    CloudifyCliError,
+    SuppressedCloudifyCliError)
+from cloudify_cli.execution_events_fetcher import (
+    ExecutionEventsFetcher,
+    wait_for_execution,
+    wait_for_execution_group)
 
 
 @cfy.group(name='events')

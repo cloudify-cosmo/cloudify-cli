@@ -20,23 +20,29 @@ import time
 import click
 from cloudify_rest_client import exceptions
 
-from .. import local
-from .. import utils
-from ..table import print_data, print_single, print_details
-from ..utils import get_deployment_environment_execution
-from ..cli import cfy, helptexts
-from ..logger import (get_events_logger,
-                      get_global_json_output,
-                      get_global_extended_view)
-from ..constants import DEFAULT_UNINSTALL_WORKFLOW, CREATE_DEPLOYMENT
-from ..execution_events_fetcher import (
+from cloudify_cli import local, utils
+from cloudify_cli.cli import cfy, helptexts
+from cloudify_cli.constants import (
+    DEFAULT_UNINSTALL_WORKFLOW,
+    CREATE_DEPLOYMENT)
+from cloudify_cli.exceptions import (
+    CloudifyCliError,
+    ExecutionTimeoutError,
+    SuppressedCloudifyCliError)
+from cloudify_cli.execution_events_fetcher import (
     ExecutionEventsFetcher,
     wait_for_execution,
-    wait_for_execution_group
-)
-from ..exceptions import CloudifyCliError, ExecutionTimeoutError, \
-    SuppressedCloudifyCliError
-from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
+    wait_for_execution_group)
+from cloudify_cli.logger import (
+    get_events_logger,
+    get_global_json_output,
+    get_global_extended_view)
+from cloudify_cli.table import print_data, print_single, print_details
+from cloudify_cli.utils import get_deployment_environment_execution
+
+from cloudify_cli.commands.summary import (
+    BASE_SUMMARY_FIELDS,
+    structure_summary_results)
 
 _STATUS_CANCELING_MESSAGE = (
     'NOTE: Executions currently in a "canceling/force-canceling" status '

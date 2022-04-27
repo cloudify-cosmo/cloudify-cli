@@ -25,12 +25,13 @@ except ImportError:
 
 from cloudify.logs import create_event_message_prefix
 
-from ..cli import cfy
-from ..execution_events_fetcher import (wait_for_execution,
-                                        WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
-from ..exceptions import CloudifyCliError
-from .. import env, utils
-from ..table import print_data
+from cloudify_cli import env, utils
+from cloudify_cli.cli import cfy
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.execution_events_fetcher import (
+    wait_for_execution,
+    WAIT_FOR_EXECUTION_SLEEP_INTERVAL)
+from cloudify_cli.table import print_data
 
 
 _NODE_INSTANCE_STATE_STARTED = 'started'

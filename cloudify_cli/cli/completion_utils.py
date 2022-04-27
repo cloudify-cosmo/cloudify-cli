@@ -16,7 +16,7 @@
 
 from argcomplete.completers import FilesCompleter
 
-from .. import env
+from cloudify_cli import env
 
 yaml_files_completer = FilesCompleter(['*.yml', '*.yaml'])
 archive_files_completer = FilesCompleter(

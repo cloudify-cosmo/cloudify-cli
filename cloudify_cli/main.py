@@ -1,8 +1,8 @@
 import click
 import importlib
 
-from . import env
-from .cli import cfy
+from cloudify_cli import env
+from cloudify_cli.cli import cfy
 
 
 class LazyLoadedCommand(click.Command):

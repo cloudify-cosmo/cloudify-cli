@@ -21,24 +21,26 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
-from .. import env, logger
-from ..cli import helptexts
-from ..inputs import inputs_to_dict
-from ..utils import generate_random_string
-from ..constants import DEFAULT_BLUEPRINT_PATH
-from ..exceptions import SuppressedCloudifyCliError
-from ..exceptions import (LabelsValidationError,
-                          CloudifyBootstrapError,
-                          CloudifyValidationError,)
-from ..logger import (
+from cloudify_cli import env, logger
+from cloudify_cli.cli import helptexts
+from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
+from cloudify_cli.exceptions import (
+    LabelsValidationError,
+    CloudifyBootstrapError,
+    CloudifyValidationError,
+    SuppressedCloudifyCliError)
+from cloudify_cli.filters_utils import (
+    get_filter_rules,
+    create_labels_filter_rules_list,
+    create_attributes_filter_rules_list)
+from cloudify_cli.inputs import inputs_to_dict
+from cloudify_cli.logger import (
     get_logger,
     set_global_verbosity_level,
     DEFAULT_LOG_FILE,
     set_global_json_output,
     set_global_extended_view)
-from ..filters_utils import (get_filter_rules,
-                             create_labels_filter_rules_list,
-                             create_attributes_filter_rules_list)
+from cloudify_cli.utils import generate_random_string
 
 
 CLICK_CONTEXT_SETTINGS = dict(

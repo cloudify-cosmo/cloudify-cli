@@ -15,11 +15,10 @@
 ############
 
 
-from .. import env
-from .. import utils
-from ..cli import cfy
-from ..table import print_data, print_single
-from ..utils import handle_client_error, validate_visibility
+from cloudify_cli import env, utils
+from cloudify_cli.cli import cfy
+from cloudify_cli.table import print_data, print_single
+from cloudify_cli.utils import handle_client_error, validate_visibility
 
 SITES_COLUMNS = ['name', 'location', 'visibility', 'tenant_name',
                  'created_at', 'created_by']

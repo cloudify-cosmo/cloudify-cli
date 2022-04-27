@@ -20,10 +20,9 @@ import yaml
 
 from cloudify._compat import text_type
 
-from .utils import deep_update_dict, insert_dotted_key_to_dict
-
-from .logger import get_logger
-from.exceptions import CloudifyCliError
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import get_logger
+from cloudify_cli.utils import deep_update_dict, insert_dotted_key_to_dict
 
 
 # TODO: Add test for inputs as JSON/YAML string
@@ -108,7 +107,7 @@ def _parse_yaml_path(resource):
         raise CloudifyCliError("'{0}' is not a valid YAML. {1}".format(
             resource, str(e)))
 
-    # Emtpy files return None
+    # Empty files return None
     content = content or dict()
     if not isinstance(content, dict):
         raise CloudifyCliError('Resource is valid YAML, but does not '

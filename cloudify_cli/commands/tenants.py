@@ -14,10 +14,10 @@
 # limitations under the License.
 ############
 
-from .. import env
-from ..cli import cfy
-from ..table import print_data, print_single
-from ..utils import handle_client_error
+from cloudify_cli import env
+from cloudify_cli.cli import cfy
+from cloudify_cli.table import print_data, print_single
+from cloudify_cli.utils import handle_client_error
 
 TENANT_COLUMNS = ['name', 'groups']
 GET_DATA_COLUMNS = ['direct_users', 'group_users']
