@@ -23,7 +23,7 @@ from .. import utils
 from ..cli import cfy
 from ..exceptions import CloudifyCliError
 
-WORKFLOW_COLUMNS = ['blueprint_id', 'deployment_id', 'name',]
+WORKFLOW_COLUMNS = ['blueprint_id', 'deployment_id', 'name']
 
 
 @cfy.group(name='workflows')
@@ -108,7 +108,8 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
                    short_help='List workflows for a deployment [manager only]')
 @cfy.options.deployment_id(required=True)
 @cfy.options.common_options
-@click.option('--all', 'all_workflows', is_flag=True, help='Also show unavailable workflows')
+@click.option('--all', 'all_workflows', is_flag=True,
+              help='Also show unavailable workflows')
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_logger
 @cfy.pass_client()
