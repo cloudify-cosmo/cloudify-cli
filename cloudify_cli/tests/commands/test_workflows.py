@@ -18,6 +18,8 @@ import json
 
 from mock import MagicMock
 
+from cloudify_cli.logger import set_global_json_output
+
 from .test_base import CliCommandTest
 
 from cloudify_rest_client import deployments
@@ -193,3 +195,33 @@ class WorkflowsTest(CliCommandTest):
         self.invoke('cfy workflows get wf -d nonexistent-dep -v',
                     err_str_segment=expected_message,
                     exception=CloudifyClientError)
+
+    def test_workflows_list_hides_unavailable(self):
+        deployment = deployments.Deployment({
+            'workflows': [
+                {
+                    'name': 'wf1',
+                    'is_available': False,
+                },
+                {
+                    'name': 'wf2',
+                    'is_available': True,
+                }
+            ]
+        })
+        self.client.deployments.get = MagicMock(return_value=deployment)
+
+        # listing by default only shows available wfs
+        outcome = self.invoke('workflows list -d d1 --json')
+        parsed = json.loads(outcome.output)
+        assert len(parsed) == 1
+
+        # with --all, all workflows are shown
+        outcome = self.invoke('workflows list -d d1 --json --all')
+        parsed = json.loads(outcome.output)
+        assert len(parsed) == 2
+
+        # when some workflows are hidden, we also emit a log
+        set_global_json_output(False)
+        outcome = self.invoke('workflows list -d d1')
+        assert 'unavailable workflows hidden' in outcome.logs
