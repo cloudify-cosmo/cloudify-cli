@@ -23,7 +23,7 @@ from .. import utils
 from ..cli import cfy
 from ..exceptions import CloudifyCliError
 
-WORKFLOW_COLUMNS = ['blueprint_id', 'deployment_id', 'name', 'created_at']
+WORKFLOW_COLUMNS = ['blueprint_id', 'deployment_id', 'name',]
 
 
 @cfy.group(name='workflows')
