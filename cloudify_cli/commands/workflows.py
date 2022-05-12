@@ -23,7 +23,8 @@ from .. import utils
 from ..cli import cfy
 from ..exceptions import CloudifyCliError
 
-WORKFLOW_COLUMNS = ['blueprint_id', 'deployment_id', 'name']
+WORKFLOW_COLUMNS = ['blueprint_id', 'deployment_id', 'name',
+                    'availability_rules']
 
 
 @cfy.group(name='workflows')
@@ -104,6 +105,12 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
         logger.info('')
 
 
+def _format_workflow(wf):
+    if wf.get('availability_rules'):
+        wf['availability_rules'] = ', '.join(wf['availability_rules'].keys())
+    return wf
+
+
 @workflows.command(name='list',
                    short_help='List workflows for a deployment [manager only]')
 @cfy.options.deployment_id(required=True)
@@ -122,7 +129,6 @@ def list(deployment_id, all_workflows, logger, client, tenant_name):
     deployment = client.deployments.get(deployment_id)
 
     workflows = sorted(deployment.workflows, key=lambda w: w.name)
-
     columns = WORKFLOW_COLUMNS
     hidden_count = 0
     if not all_workflows:
@@ -136,6 +142,8 @@ def list(deployment_id, all_workflows, logger, client, tenant_name):
         'blueprint_id': deployment.blueprint_id,
         'deployment_id': deployment.id
     }
+    if not get_global_json_output():
+        workflows = [_format_workflow(wf) for wf in workflows]
     print_data(columns, workflows, 'Workflows:', defaults=defaults)
     if hidden_count:
         logger.info('%d unavailable workflows hidden (use --all to show)',
