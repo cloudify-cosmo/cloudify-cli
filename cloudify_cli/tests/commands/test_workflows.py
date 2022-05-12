@@ -206,6 +206,9 @@ class WorkflowsTest(CliCommandTest):
                 {
                     'name': 'wf2',
                     'is_available': True,
+                    'availability_rules': {
+                        'rule1': True,
+                    },
                 }
             ]
         })
@@ -220,8 +223,11 @@ class WorkflowsTest(CliCommandTest):
         outcome = self.invoke('workflows list -d d1 --json --all')
         parsed = json.loads(outcome.output)
         assert len(parsed) == 2
+        assert 'availability_rules' in parsed[1]
+        assert 'rule1' in parsed[1]['availability_rules']
 
         # when some workflows are hidden, we also emit a log
         set_global_json_output(False)
         outcome = self.invoke('workflows list -d d1')
         assert 'unavailable workflows hidden' in outcome.logs
+        assert 'rule1' in outcome.output
