@@ -21,7 +21,7 @@ from .. import utils
 from ..cli import cfy
 from ..table import print_data, print_single, print_details
 from ..exceptions import CloudifyCliError
-from ..logger import get_global_json_output
+from ..logger import get_global_json_output, get_global_extended_view
 from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
 
 NODE_COLUMNS = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
@@ -133,15 +133,18 @@ def get(node_id, deployment_id, logger, client, tenant_name):
 @cfy.pass_logger
 @cfy.pass_client()
 @cfy.options.extended_view
-def list(deployment_id,
-         sort_by,
-         descending,
-         tenant_name,
-         all_tenants,
-         search,
-         pagination_offset,
-         pagination_size,
-         logger, client):
+def nodes_list(
+    deployment_id,
+    sort_by,
+    descending,
+    tenant_name,
+    all_tenants,
+    search,
+    pagination_offset,
+    pagination_size,
+    logger,
+    client
+):
     """List nodes
 
     If `DEPLOYMENT_ID` is provided, list nodes for that deployment.
@@ -150,8 +153,7 @@ def list(deployment_id,
     utils.explicit_tenant_name_message(tenant_name, logger)
     try:
         if deployment_id:
-            logger.info('Listing nodes for deployment {0}...'.format(
-                deployment_id))
+            logger.info('Listing nodes for deployment %s...', deployment_id)
         else:
             logger.info('Listing all nodes...')
         nodes = client.nodes.list(
@@ -161,7 +163,8 @@ def list(deployment_id,
             _all_tenants=all_tenants,
             _search=search,
             _offset=pagination_offset,
-            _size=pagination_size
+            _size=pagination_size,
+            _instance_counts=True,
         )
     except CloudifyClientError as e:
         if e.status_code != 404:
@@ -169,9 +172,12 @@ def list(deployment_id,
         raise CloudifyCliError('Deployment {0} does not exist'.format(
             deployment_id))
 
-    print_data(NODE_COLUMNS, nodes, 'Nodes:', labels=NODE_TABLE_LABELS)
+    columns = list(NODE_COLUMNS)
+    if get_global_json_output() or get_global_extended_view():
+        columns = columns + ['drifted_instances', 'unavailable_instances']
+    print_data(columns, nodes, 'Nodes:', labels=NODE_TABLE_LABELS)
     total = nodes.metadata.pagination.total
-    logger.info('Showing {0} of {1} nodes'.format(len(nodes), total))
+    logger.info('Showing %d of %d nodes', len(nodes), total)
 
 
 @nodes.command(name='summary',
