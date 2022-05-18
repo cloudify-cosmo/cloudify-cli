@@ -525,7 +525,11 @@ def operations_list(execution_id, graph_id, state, show_internal,
         state=state,
         skip_internal=not show_internal,
     )
-    print_data(['id', 'name', 'type', 'state'], ops, 'Operations')
+    print_data(
+        ['id', 'name', 'type', 'state', 'manager_name', 'agent_name'],
+        ops,
+        'Operations'
+    )
 
 
 @executions.group('groups')
