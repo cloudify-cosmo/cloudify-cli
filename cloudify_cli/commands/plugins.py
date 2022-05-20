@@ -134,8 +134,8 @@ def upload(ctx,
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Creating plugin zip archive..')
     wagon_path = utils.get_local_path(plugin_path, create_temp=True)
-    yaml_path = utils.get_local_path(yaml_path, create_temp=True)
-    zip_files = [wagon_path, yaml_path]
+    zip_files = [wagon_path] + \
+                [utils.get_local_path(p, create_temp=True) for p in yaml_path]
     zip_descr = 'wagon + yaml'
     if icon_path:
         icon_path = utils.get_local_path(icon_path,
