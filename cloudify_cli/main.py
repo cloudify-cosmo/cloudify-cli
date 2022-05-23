@@ -244,6 +244,16 @@ def snapshots():
 
 
 @click.group(
+    name='log-bundles',
+    cls=LazyLoadedGroup,
+    import_spec=('cloudify_cli.commands.log_bundles', 'log_bundles'),
+    short_help="Handle manager log bundles"
+)
+def log_bundles():
+    pass
+
+
+@click.group(
     name='user-groups',
     cls=LazyLoadedGroup,
     import_spec=('cloudify_cli.commands.user_groups', 'user_groups'),
@@ -527,6 +537,7 @@ def _make_cfy():
     _cfy.add_command(plugins)
     _cfy.add_command(tenants)
     _cfy.add_command(snapshots)
+    _cfy.add_command(log_bundles)
     _cfy.add_command(user_groups)
     _cfy.add_command(maintenance_mode)
     _cfy.add_command(secrets)

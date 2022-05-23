@@ -1380,6 +1380,13 @@ class Options(object):
             help=helptexts.QUEUE_SNAPSHOTS
         )
 
+        self.queue_log_bundle = click.option(
+            '--queue',
+            is_flag=True,
+            default=False,
+            help=helptexts.QUEUE_LOG_BUNDLES,
+        )
+
         self.wait_after_fail = click.option(
             '--wait-after-fail',
             default=600,

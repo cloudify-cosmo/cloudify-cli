@@ -382,6 +382,9 @@ IGNORE_PLUGIN_FAILURE = 'If set, plugin installation errors during snapshot ' \
                         'not fail the snapshot restore workflow'
 QUEUE_SNAPSHOTS = 'If set, snapshot-creation-workflows that can`t currently ' \
                   'run will be queued and run automatically when possible'
+QUEUE_LOG_BUNDLES = 'If set, log-bundle-creation-workflows that can`t ' \
+                    'currently run will be queued and run automatically ' \
+                    'when possible'
 QUEUE_EXECUTIONS = 'If set, executions that can`t currently run will be '\
                    'queued and run automatically when possible'
 
