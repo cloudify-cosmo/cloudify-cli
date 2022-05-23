@@ -141,7 +141,7 @@ def _print_single_update(deployment_update_dict,
     deployment_update_dict['uninstalled_nodes'] = []
     deployment_update_dict['reinstalled_nodes'] = []
     for step in deployment_update_dict['steps']:
-        entity = step['entity_id'].split(':')
+        entity = step['entity_id']
         if entity[0] != 'nodes':
             continue
         if step['action'] == 'add':
@@ -150,7 +150,7 @@ def _print_single_update(deployment_update_dict,
             deployment_update_dict['uninstalled_nodes'].append(entity[1])
         elif step['action'] == 'modify':
             deployment_update_dict['reinstalled_nodes'].append(entity[1])
-    raw_new_labels = deployment_update_dict.get('labels_to_create', [])
+    raw_new_labels = deployment_update_dict.get('labels_to_create') or []
     new_labels = get_output_resource_labels(raw_new_labels)
     deployment_update_dict['labels_to_create'] = new_labels
 
@@ -163,6 +163,10 @@ def _print_single_update(deployment_update_dict,
                  max_width=50)
 
     if not get_global_json_output():
+        # beautify steps entity IDs for display
+        for step in deployment_update_dict['steps']:
+            step['entity_id'] = ': '.join(step['entity_id'])
+
         skip_msg = ' (will be skipped)'
         print_details(deployment_update_dict['old_inputs'] or {},
                       'Old inputs:')
@@ -187,12 +191,12 @@ def _print_single_update(deployment_update_dict,
                    deployment_update_dict['recursive_dependencies'] or {},
                    'Affected (recursively) dependent deployments:')
 
-        output('Will delete the following schedules: {}'.format(
-            ', '.join(deployment_update_dict.get('schedules_to_delete', []))))
+        output('Will delete the following schedules: {}'.format(', '.join(
+            deployment_update_dict.get('schedules_to_delete') or [])))
         print_data(
             ['id', 'workflow', 'since', 'until', 'recurrence',
              'count', 'weekdays'],
-            deployment_update_dict.get('schedules_to_create', []),
+            deployment_update_dict.get('schedules_to_create') or [],
             'Then, will create the following schedules: ')
         print_data(['key', 'values'],
                    get_printable_resource_labels(new_labels),
