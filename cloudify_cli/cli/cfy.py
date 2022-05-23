@@ -1808,6 +1808,14 @@ class Options(object):
             help=helptexts.EXECUTION_GROUP_CONCURRENCY
         )
 
+        self.worker_names = click.option(
+            '-w', '--with-worker-names/--without-worker-names',
+            'with_worker_names',
+            is_flag=True,
+            help=helptexts.WORKER_NAMES,
+            default=False,
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 

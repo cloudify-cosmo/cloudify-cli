@@ -180,6 +180,7 @@ def manager_list(
 @cfy.options.json_output
 @cfy.options.dry_run
 @cfy.options.wait_after_fail
+@cfy.options.worker_names
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.options.schedule
@@ -199,6 +200,7 @@ def manager_start(workflow_id,
                   wait_after_fail,
                   queue,
                   schedule,
+                  with_worker_names,
                   logger,
                   client,
                   tenant_name):
@@ -207,7 +209,7 @@ def manager_start(workflow_id,
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    events_logger = get_events_logger(json_output)
+    events_logger = get_events_logger(json_output, with_worker_names)
     events_message = "* Run 'cfy events list {0}' to retrieve the " \
                      "execution's events/logs"
     original_timeout = timeout
@@ -627,6 +629,7 @@ def execution_groups_details(execution_group_id, client, logger):
 @click.argument('workflow-id')
 @cfy.options.common_options
 @cfy.options.parameters
+@cfy.options.worker_names
 @cfy.options.json_output
 @cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
 @cfy.options.timeout()
@@ -634,8 +637,8 @@ def execution_groups_details(execution_group_id, client, logger):
 @cfy.pass_logger
 def execution_groups_start(deployment_group, workflow_id, parameters,
                            json_output, force, timeout, concurrency,
-                           client, logger):
-    events_logger = get_events_logger(json_output)
+                           with_worker_names, client, logger):
+    events_logger = get_events_logger(json_output, with_worker_names)
     group = client.execution_groups.start(
         deployment_group_id=deployment_group,
         workflow_id=workflow_id,
