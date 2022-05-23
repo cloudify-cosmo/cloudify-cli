@@ -2132,6 +2132,7 @@ class Options(object):
             '-y',
             '--yaml-path',
             required=True,
+            multiple=True,
             help=helptexts.PLUGIN_YAML_PATH)
 
     @staticmethod
