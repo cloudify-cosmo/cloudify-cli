@@ -69,7 +69,7 @@ def execution_mock(status, wf_id='mock_wf'):
     })
 
 
-def mock_log_message_prefix(event):
+def mock_log_message_prefix(event, with_name=False):
     return event['event_name']
 
 
