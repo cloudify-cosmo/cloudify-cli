@@ -45,6 +45,7 @@ def events():
               help='The execution group ID to list the events for',
               cls=cfy.MutuallyExclusiveOption,
               mutually_exclusive=['execution_id_opt'])
+@cfy.options.worker_names
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.tail
@@ -76,6 +77,7 @@ def list(execution_id,
          before,
          pagination_offset,
          pagination_size,
+         with_worker_names,
          client,
          logger):
     """Display events for an execution"""
@@ -135,7 +137,7 @@ def list(execution_id,
             **execution_selection
         )
 
-        events_logger = get_events_logger(json_output)
+        events_logger = get_events_logger(json_output, with_worker_names)
 
         if tail:
             execution = wait_for_method(client,
