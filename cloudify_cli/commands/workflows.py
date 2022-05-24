@@ -17,11 +17,11 @@
 import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from ..logger import get_global_json_output
-from ..table import print_data, print_single
-from .. import utils
-from ..cli import cfy
-from ..exceptions import CloudifyCliError
+from cloudify_cli import utils
+from cloudify_cli.cli import cfy
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import get_global_json_output
+from cloudify_cli.table import print_data, print_single
 
 WORKFLOW_COLUMNS = ['blueprint_id', 'deployment_id', 'name',
                     'availability_rules']

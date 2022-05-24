@@ -1,8 +1,8 @@
 import click
 
-from ..cli import cfy
+from cloudify_cli.cli import cfy
 from cloudify_cli.exceptions import CloudifyCliError
-from ..table import print_single, print_data
+from cloudify_cli.table import print_single, print_data
 
 REST_TOKEN_COLUMNS = ['id', 'role', 'description',
                       'expiration_date', 'last_used']

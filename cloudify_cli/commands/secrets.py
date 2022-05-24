@@ -20,17 +20,17 @@ import json
 import click
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
-from .. import env
-from .. import utils
-from ..cli import cfy
-from ..exceptions import CloudifyCliError
-from ..table import print_data, print_details
-from ..utils import (load_json,
-                     print_dict,
-                     validate_visibility,
-                     assert_one_argument,
-                     handle_client_error,
-                     prettify_client_error)
+from cloudify_cli import env, utils
+from cloudify_cli.cli import cfy
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.table import print_data, print_details
+from cloudify_cli.utils import (
+    load_json,
+    print_dict,
+    validate_visibility,
+    assert_one_argument,
+    handle_client_error,
+    prettify_client_error)
 
 SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'visibility',
                    'tenant_name', 'created_by', 'is_hidden_value']

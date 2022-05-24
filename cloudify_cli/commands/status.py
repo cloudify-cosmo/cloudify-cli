@@ -19,10 +19,13 @@ import json
 from cloudify_rest_client.exceptions import CloudifyClientError, \
     UserUnauthorizedError
 
-from ..cli import cfy
-from ..env import profile
-from ..table import print_data
-from ..logger import CloudifyJSONEncoder, output, get_global_json_output
+from cloudify_cli.cli import cfy
+from cloudify_cli.env import profile
+from cloudify_cli.logger import (
+    CloudifyJSONEncoder,
+    output,
+    get_global_json_output)
+from cloudify_cli.table import print_data
 
 STATUS_COLUMNS = ['service', 'status']
 

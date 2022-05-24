@@ -25,23 +25,30 @@ from dsl_parser.exceptions import DSLParsingException
 from cloudify._compat import urlparse
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
-from .. import env
-from .. import local
-from .. import utils
-from ..cli import cfy, helptexts
-from .. import blueprint
-from .. import exceptions
-from ..config import config
-from ..logger import get_global_json_output
-from ..table import print_data, print_single
-from ..exceptions import CloudifyCliError
-from ..utils import prettify_client_error, get_visibility, validate_visibility
-from ..labels_utils import (add_labels,
-                            delete_labels,
-                            list_labels,
-                            serialize_resource_labels)
-from .. import filters_utils
-from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
+from cloudify_cli import (
+    blueprint,
+    env,
+    exceptions,
+    filters_utils,
+    local,
+    utils)
+from cloudify_cli.cli import cfy, helptexts
+from cloudify_cli.config import config
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.labels_utils import (
+    add_labels,
+    delete_labels,
+    list_labels,
+    serialize_resource_labels)
+from cloudify_cli.logger import get_global_json_output
+from cloudify_cli.table import print_data, print_single
+from cloudify_cli.utils import (
+    prettify_client_error,
+    get_visibility,
+    validate_visibility)
+from cloudify_cli.commands.summary import (
+    BASE_SUMMARY_FIELDS,
+    structure_summary_results)
 
 
 DESCRIPTION_LIMIT = 20

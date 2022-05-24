@@ -18,9 +18,9 @@ import json
 
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import utils
-from ..cli import cfy
-from ..exceptions import CloudifyCliError
+from cloudify_cli import utils
+from cloudify_cli.cli import cfy
+from cloudify_cli.exceptions import CloudifyCliError
 
 
 @cfy.group(name='groups')

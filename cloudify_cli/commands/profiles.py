@@ -9,17 +9,15 @@ from cloudify.cluster_status import CloudifyNodeType
 from cloudify_rest_client.exceptions import (CloudifyClientError,
                                              UserUnauthorizedError)
 
-from . import init
-from .. import env
-from .. import utils
-from ..cli import cfy
-from .. import constants
-from ..cli import helptexts
-from ..env import get_rest_client
-from ..exceptions import CloudifyCliError
-from ..table import print_data, print_single
-from ..commands.cluster import _all_in_one_manager
-from ..commands.cluster import update_profile_logic as update_cluster_profile
+from cloudify_cli import constants, env, utils
+from cloudify_cli.cli import cfy, helptexts
+from cloudify_cli.env import get_rest_client
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.table import print_data, print_single
+from cloudify_cli.commands import init
+from cloudify_cli.commands.cluster import (
+    _all_in_one_manager,
+    update_profile_logic as update_cluster_profile)
 
 
 EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'

@@ -24,7 +24,7 @@ from dsl_parser.import_resolver.default_import_resolver import (
     DefaultImportResolver
 )
 
-from .. import env, exceptions
+from cloudify_cli import env, exceptions
 
 
 CLOUDIFY_CONFIG_PATH = os.path.join(env.CLOUDIFY_WORKDIR, 'config.yaml')

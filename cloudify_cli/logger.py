@@ -29,10 +29,9 @@ import colorama
 
 from cloudify import logs
 
-from . import env
-from .config.config import is_use_colors
-from .config.config import CloudifyConfig
-from .colorful_event import ColorfulEvent, ColorfulGroupEvent
+from cloudify_cli import env
+from cloudify_cli.config.config import CloudifyConfig, is_use_colors
+from cloudify_cli.colorful_event import ColorfulEvent, ColorfulGroupEvent
 
 DEFAULT_LOG_FILE = os.path.join(env.CLOUDIFY_WORKDIR, 'logs', 'cli.log')
 

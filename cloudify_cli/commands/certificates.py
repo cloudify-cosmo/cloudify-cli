@@ -18,13 +18,14 @@ import os
 
 import yaml
 
-from .cluster import _all_in_one_manager
 
-from .. import env
-from ..cli import cfy
-from ..utils import get_dict_from_yaml
-from ..exceptions import CloudifyCliError
-from ..replace_certificates_config import ReplaceCertificatesConfig
+from cloudify_cli import env
+from cloudify_cli.cli import cfy
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.replace_certificates_config import ReplaceCertificatesConfig
+from cloudify_cli.utils import get_dict_from_yaml
+
+from cloudify_cli.commands.cluster import _all_in_one_manager
 
 CERTS_CONFIG_PATH = 'certificates_replacement_config.yaml'
 

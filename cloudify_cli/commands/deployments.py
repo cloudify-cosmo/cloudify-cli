@@ -33,38 +33,41 @@ from cloudify_rest_client.exceptions import (
 )
 from cloudify.utils import parse_utc_datetime
 
-from ..local import load_env
-from ..table import (
+from cloudify_cli.local import load_env
+from cloudify_cli.table import (
     print_data,
     print_single,
     print_details,
     print_list
 )
-from ..cli import cfy, helptexts
-from ..logger import (
+from cloudify_cli.cli import cfy, helptexts
+from cloudify_cli.logger import (
     get_events_logger,
     get_global_json_output,
     output,
     get_global_extended_view
 )
-from .. import env, execution_events_fetcher, utils
-from ..constants import DEFAULT_BLUEPRINT_PATH, DELETE_DEP
-from ..exceptions import (CloudifyCliError,
-                          SuppressedCloudifyCliError,
-                          ExecutionTimeoutError)
-from ..utils import (prettify_client_error,
-                     get_visibility,
-                     validate_visibility,
-                     get_deployment_environment_execution)
-from ..labels_utils import (add_labels,
-                            delete_labels,
-                            get_output_resource_labels,
-                            get_printable_resource_labels,
-                            list_labels,
-                            serialize_resource_labels)
-
-from .. import filters_utils
-from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
+from cloudify_cli import env, execution_events_fetcher, filters_utils, utils
+from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH, DELETE_DEP
+from cloudify_cli.exceptions import (
+    CloudifyCliError,
+    SuppressedCloudifyCliError,
+    ExecutionTimeoutError)
+from cloudify_cli.labels_utils import (
+    add_labels,
+    delete_labels,
+    get_output_resource_labels,
+    get_printable_resource_labels,
+    list_labels,
+    serialize_resource_labels)
+from cloudify_cli.utils import (
+    prettify_client_error,
+    get_visibility,
+    validate_visibility,
+    get_deployment_environment_execution)
+from cloudify_cli.commands.summary import (
+    BASE_SUMMARY_FIELDS,
+    structure_summary_results)
 
 
 DEPLOYMENT_COLUMNS = [

@@ -17,12 +17,17 @@
 import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import utils
-from ..cli import cfy
-from ..table import print_data, print_single, print_details
-from ..exceptions import CloudifyCliError
-from ..logger import get_global_json_output, get_global_extended_view
-from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
+from cloudify_cli import utils
+from cloudify_cli.cli import cfy
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import (
+    get_global_json_output,
+    get_global_extended_view,
+)
+from cloudify_cli.table import print_data, print_single, print_details
+from cloudify_cli.commands.summary import (
+    BASE_SUMMARY_FIELDS,
+    structure_summary_results)
 
 NODE_COLUMNS = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                 'visibility', 'tenant_name', 'actual_number_of_instances',

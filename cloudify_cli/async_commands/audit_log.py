@@ -1,8 +1,8 @@
 import asyncio
 import json
 
-from ..exceptions import CloudifyCliError
-from ..logger import get_global_json_output
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import get_global_json_output
 
 
 def stream_logs(creator_name,

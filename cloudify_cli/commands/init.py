@@ -21,15 +21,11 @@ import pkg_resources
 from jinja2.environment import Template
 
 import cloudify_cli
-from .. import env
-from .. import local
-from ..cli import cfy
-from .. import blueprint
-from .. import exceptions
-from ..config import config
-from ..logger import DEFAULT_LOG_FILE
-from ..logger import configure_loggers
-from ..exceptions import CloudifyCliError
+from cloudify_cli import blueprint, env, exceptions, local
+from cloudify_cli.cli import cfy
+from cloudify_cli.config import config
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import DEFAULT_LOG_FILE, configure_loggers
 
 
 @cfy.command(name='init',)
