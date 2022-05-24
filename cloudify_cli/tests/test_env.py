@@ -753,7 +753,7 @@ class WaitForExecutionTests(CliCommandTest):
         wait_for_execution(self.client, mock_execution, timeout=None)
 
         calls_count = len(self.client.executions.get.mock_calls)
-        self.assertEqual(calls_count, 101, """wait_for_execution didnt keep
+        self.assertEqual(calls_count, 101, """wait_for_execution didn't keep
             polling the execution status after it received a workflow_succeeded
             event (expected 101 calls, got %d)""" % calls_count)
 
@@ -937,10 +937,9 @@ class ImportResolverLocalUseTests(CliCommandTest):
             cli_command, mocked_module, 'parse_from_path', kwargs=kwargs)
 
     def test_validate_blueprint_uses_import_resolver(self):
-        from cloudify_cli.commands import blueprints
         blueprint_path = '{0}/local/blueprint.yaml'.format(BLUEPRINTS_DIR)
         self._test_using_import_resolver(
-            'blueprints validate', blueprint_path, blueprints)
+            'blueprints validate', blueprint_path, dsl_parser.parser)
 
     @mock.patch('dsl_parser.tasks.prepare_deployment_plan')
     def test_local_init(self, *_):
