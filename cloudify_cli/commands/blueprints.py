@@ -20,8 +20,6 @@ import shutil
 
 import click
 
-from dsl_parser.parser import parse_from_path
-from dsl_parser.exceptions import DSLParsingException
 from cloudify._compat import urlparse
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
@@ -828,6 +826,10 @@ def validate_blueprint(blueprint_path, logger):
     `BLUEPRINT_PATH` is the path of the blueprint to validate.
     """
     logger.info('Validating blueprint: {0}'.format(blueprint_path))
+
+    from dsl_parser.parser import parse_from_path
+    from dsl_parser.exceptions import DSLParsingException
+
     try:
         resolver = config.get_import_resolver()
         validate_version = config.is_validate_definitions_version()

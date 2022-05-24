@@ -22,11 +22,7 @@ import shutil
 import tempfile
 from datetime import datetime
 
-from cloudify.workflows import local
 from cloudify.utils import LocalCommandRunner
-
-from dsl_parser.parser import parse_from_path
-from dsl_parser import constants as dsl_constants
 
 from cloudify_cli import constants, env, exceptions, utils
 from cloudify_cli.logger import get_logger
@@ -48,8 +44,10 @@ def initialize_blueprint(blueprint_path,
     if install_plugins:
         _install_plugins(blueprint_path=blueprint_path)
 
+    from cloudify.workflows.local import init_env
+
     config = CloudifyConfig()
-    return local.init_env(
+    return init_env(
         blueprint_path=blueprint_path,
         name=name,
         inputs=inputs,
@@ -171,11 +169,13 @@ def list_blueprints():
 
 
 def get_storage():
-    return local.FileStorage(storage_dir=storage_dir())
+    from cloudify.workflows.local import FileStorage
+    return FileStorage(storage_dir=storage_dir())
 
 
 def load_env(blueprint_id):
-    env = local.load_env(name=blueprint_id or 'local', storage=get_storage())
+    from cloudify.workflows.local import load_env as local_load_env
+    env = local_load_env(name=blueprint_id or 'local', storage=get_storage())
     if env is None:
         error = exceptions.CloudifyCliError('Please initialize a blueprint')
         error.possible_solutions = ["Run `cfy init BLUEPRINT_PATH`"]
@@ -184,7 +184,8 @@ def load_env(blueprint_id):
 
 
 def blueprint_exists(blueprint_id):
-    storage = local.FileStorage(storage_dir=storage_dir())
+    from cloudify.workflows.local import FileStorage
+    storage = FileStorage(storage_dir=storage_dir())
     return storage.get_blueprint(blueprint_id) is not None
 
 
@@ -219,6 +220,9 @@ def _install_plugins(blueprint_path):
 
 
 def create_requirements(blueprint_path):
+    from dsl_parser.parser import parse_from_path
+    from dsl_parser import constants as dsl_constants
+
     parsed_dsl = parse_from_path(dsl_file_path=blueprint_path)
 
     requirements = _plugins_to_requirements(
@@ -233,6 +237,7 @@ def create_requirements(blueprint_path):
 
 
 def _plugins_to_requirements(blueprint_path, plugins):
+    from dsl_parser import constants as dsl_constants
 
     sources = set()
     for plugin in plugins:
