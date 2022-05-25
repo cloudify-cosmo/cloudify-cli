@@ -18,7 +18,7 @@
 import os
 import pkg_resources
 
-from jinja2.environment import Template
+import yaml
 
 import cloudify_cli
 from cloudify_cli import blueprint, env, exceptions, local
@@ -187,16 +187,13 @@ def _raise_initialized_error(profile_name):
 
 
 def set_config(enable_colors=False):
-    cli_config = pkg_resources.resource_string(
+    config_template = pkg_resources.resource_string(
         cloudify_cli.__name__,
         'config/config_template.yaml').decode('utf-8')
-
-    enable_colors = str(enable_colors).lower()
-    template = Template(cli_config)
-    rendered = template.render(
-        log_path=DEFAULT_LOG_FILE,
-        enable_colors=enable_colors
-    )
+    config_template_yaml = yaml.safe_load(config_template)
+    config_template_yaml['colors'] = enable_colors
+    config_template_yaml['logging']['filename'] = DEFAULT_LOG_FILE
+    rendered = yaml.dump(config_template_yaml)
     with open(config.CLOUDIFY_CONFIG_PATH, 'a') as f:
         f.write(rendered)
         f.write(os.linesep)

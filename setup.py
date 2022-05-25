@@ -19,7 +19,6 @@ from setuptools import setup
 install_requires = [
         'click>7,<8',
         'wagon[venv]>=0.10.1',
-        'jinja2==2.11.3',
         'retrying==1.3.3',
         'colorama==0.4.4',
         'requests>=2.7.0,<3.0.0',
@@ -36,6 +35,7 @@ install_requires = [
         # the fabric so that fabric can be installed correctly in both py2 +
         # py3
         'fabric==2.5.0',
+        'PyYAML',
 ]
 if sys.version_info[:2] < (3, 6):
     install_requires.append('pyyaml==5.4.1')
