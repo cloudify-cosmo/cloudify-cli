@@ -16,11 +16,7 @@
 
 
 import os
-import pkg_resources
 
-import yaml
-
-import cloudify_cli
 from cloudify_cli import blueprint, env, exceptions, local
 from cloudify_cli.cli import cfy
 from cloudify_cli.config import config
@@ -187,13 +183,24 @@ def _raise_initialized_error(profile_name):
 
 
 def set_config(enable_colors=False):
-    config_template = pkg_resources.resource_string(
-        cloudify_cli.__name__,
-        'config/config_template.yaml').decode('utf-8')
-    config_template_yaml = yaml.safe_load(config_template)
-    config_template_yaml['colors'] = enable_colors
-    config_template_yaml['logging']['filename'] = DEFAULT_LOG_FILE
-    rendered = yaml.dump(config_template_yaml)
-    with open(config.CLOUDIFY_CONFIG_PATH, 'a') as f:
-        f.write(rendered)
+    config_template = """---
+colors: {enable_colors}
+
+logging:
+
+    # path to a file where cli logs will be saved.
+    filename: {log_path}
+
+    # configuring level per logger
+    loggers:
+
+        # main logger of the cli. provides basic descriptions for executed operations.
+        cloudify.cli.main: info
+
+        # rest client http logs, including headers.
+        cloudify.rest_client.http: info
+"""  # noqa
+    with open(config.CLOUDIFY_CONFIG_PATH, 'w') as f:
+        f.write(config_template.format(enable_colors=enable_colors,
+                                       log_path=DEFAULT_LOG_FILE))
         f.write(os.linesep)

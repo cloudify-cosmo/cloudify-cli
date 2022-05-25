@@ -35,7 +35,6 @@ install_requires = [
         # the fabric so that fabric can be installed correctly in both py2 +
         # py3
         'fabric==2.5.0',
-        'PyYAML',
 ]
 if sys.version_info[:2] < (3, 6):
     install_requires.append('pyyaml==5.4.1')
@@ -55,12 +54,6 @@ setup(
     author='Cloudify',
     author_email='cosmo-admin@cloudify.co',
     packages=packages,
-    package_data={
-        'cloudify_cli': [
-            'VERSION',
-            'config/config_template.yaml',
-        ],
-    },
     license='LICENSE',
     description="Cloudify's Command Line Interface",
     entry_points={
