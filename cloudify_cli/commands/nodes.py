@@ -21,6 +21,7 @@ from cloudify_cli import utils
 from cloudify_cli.cli import cfy
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.logger import (
+    get_events_logger,
     get_global_json_output,
     get_global_extended_view,
 )
@@ -28,6 +29,7 @@ from cloudify_cli.table import print_data, print_single, print_details
 from cloudify_cli.commands.summary import (
     BASE_SUMMARY_FIELDS,
     structure_summary_results)
+from cloudify_cli.execution_events_fetcher import wait_for_execution
 
 NODE_COLUMNS = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                 'visibility', 'tenant_name', 'actual_number_of_instances',
@@ -122,14 +124,34 @@ def get(node_id, deployment_id, logger, client, tenant_name):
             logger.info('\tNo node instances')
 
 
+def _run_node_checks(deployment_id, logger, client):
+    events_logger = get_events_logger()
+    for workflow_id in ('check_drift', 'check_status'):
+        execution = client.executions.start(
+            deployment_id=deployment_id,
+            workflow_id=workflow_id,
+        )
+        wait_for_execution(
+            client,
+            execution,
+            events_handler=events_logger,
+            logger=logger,
+        )
+
+
 @nodes.command(name='list',
                short_help='List nodes for a deployment '
                '[manager only]')
-@cfy.options.deployment_id()
+@cfy.options.deployment_id(required=True)
 @cfy.options.sort_by('deployment_id')
 @cfy.options.descending
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='node')
+@click.option(
+    '--run-checks',
+    help='Run the check_drift and check_status workflows before listing nodes',
+    is_flag=True,
+)
 @cfy.options.all_tenants
 @cfy.options.search
 @cfy.options.pagination_offset
@@ -144,6 +166,7 @@ def nodes_list(
     descending,
     tenant_name,
     all_tenants,
+    run_checks,
     search,
     pagination_offset,
     pagination_size,
@@ -156,6 +179,8 @@ def nodes_list(
     Otherwise, list nodes for all deployments.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
+    if run_checks:
+        _run_node_checks(deployment_id, logger, client)
     try:
         if deployment_id:
             logger.info('Listing nodes for deployment %s...', deployment_id)

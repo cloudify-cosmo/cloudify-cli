@@ -159,7 +159,7 @@ def _configure_from_file(loggers_config):
         }
 
 
-def get_events_logger(json_output, with_names=False):
+def get_events_logger(json_output=False, with_names=False):
     json_output = json_output or get_global_json_output()
 
     def json_events_logger(events):
