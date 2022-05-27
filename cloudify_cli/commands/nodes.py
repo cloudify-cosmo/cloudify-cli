@@ -208,7 +208,10 @@ def nodes_list(
             deployment_id))
 
     columns = list(NODE_COLUMNS)
-    if get_global_json_output() or get_global_extended_view():
+    if (
+        (get_global_json_output() or get_global_extended_view())
+        and deployment_id
+    ):
         columns = columns + ['drifted_instances', 'unavailable_instances']
     print_data(columns, nodes, 'Nodes:', labels=NODE_TABLE_LABELS)
     total = nodes.metadata.pagination.total
