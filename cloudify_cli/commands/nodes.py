@@ -142,7 +142,7 @@ def _run_node_checks(deployment_id, logger, client):
 @nodes.command(name='list',
                short_help='List nodes for a deployment '
                '[manager only]')
-@cfy.options.deployment_id(required=True)
+@cfy.options.deployment_id()
 @cfy.options.sort_by('deployment_id')
 @cfy.options.descending
 @cfy.options.tenant_name_for_list(
@@ -180,12 +180,17 @@ def nodes_list(
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     if run_checks:
+        if not deployment_id:
+            raise CloudifyCliError(
+                "deployment_id is required when --run-checks is set")
         _run_node_checks(deployment_id, logger, client)
     try:
         if deployment_id:
             logger.info('Listing nodes for deployment %s...', deployment_id)
+            instance_counts = True
         else:
             logger.info('Listing all nodes...')
+            instance_counts = False
         nodes = client.nodes.list(
             deployment_id=deployment_id,
             sort=sort_by,
@@ -194,7 +199,7 @@ def nodes_list(
             _search=search,
             _offset=pagination_offset,
             _size=pagination_size,
-            _instance_counts=True,
+            _instance_counts=instance_counts,
         )
     except CloudifyClientError as e:
         if e.status_code != 404:
