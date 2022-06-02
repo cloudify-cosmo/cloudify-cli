@@ -110,7 +110,7 @@ def list(sort_by,
 
 
 @users.command(name='create', short_help='Create a user [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.common_options
 @cfy.options.security_role
 @cfy.options.password
@@ -150,7 +150,7 @@ def create(username,
 
 @users.command(name='set-password',
                short_help='Set a new password for a user [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.password
 @cfy.options.common_options
 @cfy.assert_manager_active()
@@ -168,7 +168,7 @@ def set_password(username, password, logger, client):
 
 @users.command(name='set-role',
                short_help='Set a new role for a user [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.security_role
 @cfy.options.common_options
 @cfy.assert_manager_active()
@@ -187,7 +187,7 @@ def set_role(username, security_role, logger, client):
 @users.command(name='get',
                short_help='Get details for a single user [manager only]')
 @cfy.argument(
-    'username', callback=cfy.validate_name, default=env.get_username())
+    'username', default=env.get_username())
 @cfy.options.common_options
 @cfy.options.get_data
 @cfy.assert_manager_active()

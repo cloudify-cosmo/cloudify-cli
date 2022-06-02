@@ -148,7 +148,7 @@ def set_role(user_group_name, security_role, logger, client):
 
 @user_groups.command(name='add-user',
                      short_help='Add a user to a user group [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.group_name
 @cfy.options.common_options
 @cfy.assert_manager_active()
@@ -170,7 +170,7 @@ def add_user(username, group_name, logger, client):
 @user_groups.command(
     name='remove-user',
     short_help='Remove a user from a user group [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.group_name
 @cfy.options.common_options
 @cfy.assert_manager_active()
