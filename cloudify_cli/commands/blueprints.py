@@ -468,8 +468,8 @@ def set_global(blueprint_id, logger, client):
     with prettify_client_error(status_codes, logger):
         client.blueprints.set_global(blueprint_id)
         logger.info('Blueprint `{0}` was set to global'.format(blueprint_id))
-        logger.warning("This command will be deprecated soon, please use the "
-                       "'set-visibility' command instead")
+        logger.warning("This command is deprecated and will be removed soon, "
+                       "please use the 'set-visibility' command instead")
 
 
 @blueprints.command(name='set-visibility',

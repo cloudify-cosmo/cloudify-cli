@@ -295,8 +295,8 @@ def set_global(key, logger, client):
     with prettify_client_error(status_codes, logger):
         client.secrets.set_global(key)
         logger.info('Secret `{0}` was set to global'.format(key))
-        logger.warning("This command will be deprecated soon, please use the "
-                       "'set-visibility' command instead")
+        logger.warning("This command is deprecated and will be removed soon, "
+                       "please use the 'set-visibility' command instead")
 
 
 @secrets.command(name='set-visibility',
