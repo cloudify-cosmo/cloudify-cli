@@ -446,8 +446,8 @@ def set_global(plugin_id, logger, client):
     with prettify_client_error(status_codes, logger):
         client.plugins.set_global(plugin_id)
         logger.info('Plugin `%s` was set to global', plugin_id)
-        logger.info("This command will be deprecated soon, please use the "
-                    "'set-visibility' command instead")
+        logger.warning("This command will be deprecated soon, please use the "
+                       "'set-visibility' command instead")
 
 
 @plugins.command(name='set-visibility',
