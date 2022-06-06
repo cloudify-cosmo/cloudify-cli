@@ -75,9 +75,13 @@ DEPLOYMENT_COLUMNS = [
     'visibility', 'tenant_name', 'created_by', 'site_name', 'labels',
     'deployment_status', 'installation_status'
 ]
+DEPLOYMENT_STATUS_LIST_COLUMNS = [
+    'id', 'display_name', 'deployment_status', 'installation_status',
+    'unavailable_instances', 'drifted_instances',
+]
 EXTENDED_DEPLOYMENT_COLUMNS = DEPLOYMENT_COLUMNS + [
     'sub_services_count', 'sub_services_status', 'sub_environments_count',
-    'sub_environments_status'
+    'sub_environments_status', 'unavailable_instances', 'drifted_instances',
 ]
 DEPLOYMENT_UPDATE_COLUMNS = [
     'id', 'deployment_id', 'tenant_name', 'state', 'execution_id',
@@ -208,27 +212,8 @@ def _print_single_update(
                    'The following labels will be created: ')
 
 
-@deployments.command(name='list', short_help='List deployments [manager only]')
-@cfy.options.blueprint_id()
-@click.option('--group-id', '-g')
-@cfy.options.filter_id
-@cfy.options.deployment_filter_rules
-@cfy.options.sort_by()
-@cfy.options.descending
-@cfy.options.tenant_name_for_list(
-    required=False, resource_name_for_help='deployment')
-@cfy.options.all_tenants
-@cfy.options.search
-@cfy.options.search_name
-@cfy.options.dependencies_of
-@cfy.options.pagination_offset
-@cfy.options.pagination_size
-@cfy.options.common_options
-@cfy.assert_manager_active()
-@cfy.pass_client()
-@cfy.pass_logger
-@cfy.options.extended_view
-def manager_list(
+def deployments_list_base(
+    ctx,
     blueprint_id,
     group_id,
     filter_id,
@@ -245,10 +230,10 @@ def manager_list(
     client,
     tenant_name,
 ):
-    """List deployments
+    """Base function for deployment listing.
 
-    If `--blueprint-id` is provided, list deployments for that blueprint.
-    Otherwise, list deployments for all blueprints.
+    list and status-list delegate to this, so that they can have a single
+    implementation only differing by columns shown.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     if blueprint_id:
@@ -270,7 +255,10 @@ def manager_list(
                                           _dependencies_of=dependencies_of)
     serialize_resource_labels(deployments)
     total = deployments.metadata.pagination.total
-    if get_global_extended_view() or get_global_json_output():
+
+    if ctx.command.name == 'status-list':
+        columns = DEPLOYMENT_STATUS_LIST_COLUMNS
+    elif get_global_extended_view() or get_global_json_output():
         columns = EXTENDED_DEPLOYMENT_COLUMNS
     else:
         columns = DEPLOYMENT_COLUMNS
@@ -284,6 +272,69 @@ def manager_list(
                     len(deployments), total, filtered)
     else:
         logger.info('Showing %d of %d deployments', len(deployments), total)
+
+
+# to have identical behaviour for both list and status-list, apply the same
+# decorators to both. We'll have two "stub" functions repressenting those
+# commands, and both delegate to the same base.
+deployments_list_decorators = [
+    cfy.options.blueprint_id(),
+    click.option('--group-id', '-g'),
+    cfy.options.filter_id,
+    cfy.options.deployment_filter_rules,
+    cfy.options.sort_by(),
+    cfy.options.descending,
+    cfy.options.tenant_name_for_list(
+        required=False, resource_name_for_help='deployment'),
+    cfy.options.all_tenants,
+    cfy.options.search,
+    cfy.options.search_name,
+    cfy.options.dependencies_of,
+    cfy.options.pagination_offset,
+    cfy.options.pagination_size,
+    cfy.options.common_options,
+    cfy.assert_manager_active(),
+    cfy.pass_client(),
+    cfy.pass_logger,
+    cfy.pass_context,
+    cfy.options.extended_view,
+]
+
+
+def manager_list(*args, **kwargs):
+    """List deployments
+
+    If `--blueprint-id` is provided, list deployments for that blueprint.
+    Otherwise, list deployments for all blueprints.
+    """
+    return deployments_list_base(*args, **kwargs)
+
+
+def manager_status_list(*args, **kwargs):
+    """Show deployment statuses
+
+    Show a grid of various deployment statuses, allowing an at-a-glance
+    insight of the state of the system.
+
+    This command allows the same filtering that `cfy deployments list` does.
+    """
+    return deployments_list_base(*args, **kwargs)
+
+
+for deco in deployments_list_decorators + [
+    deployments.command(
+        name='list', short_help='List deployments [manager only]'
+    )
+]:
+    manager_list = deco(manager_list)
+
+
+for deco in deployments_list_decorators + [
+    deployments.command(
+        name='status-list', short_help='Show deployment status [manager only]'
+    )
+]:
+    manager_status_list = deco(manager_status_list)
 
 
 @deployments.command(name='history',
