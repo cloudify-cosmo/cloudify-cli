@@ -67,7 +67,7 @@ def delete(log_bundle_id, logger, client, tenant_name):
 @cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
-def download(log_bundle_id, output_path, logger, client, tenant_name):
+def download(log_bundle_id, output_path, logger, client):
     """Download a log bundle from the manager
 
     `LOG_BUNDLE_ID` is the id of the log bundle to download.
