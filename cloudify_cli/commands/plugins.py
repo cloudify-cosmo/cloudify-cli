@@ -983,7 +983,10 @@ def _list_metadata(plugin_id,
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing %s of plugin %s...', metadata_type, plugin_id)
     metadata = client.get(plugin_id)[metadata_type]
-    if get_global_json_output():
+    if not metadata:
+        output('There are no {0} associated with the plugin {1}'
+               .format(metadata_type, plugin_id))
+    elif get_global_json_output():
         output(json.dumps(metadata, cls=CloudifyJSONEncoder))
     elif metadata_type.endswith('labels'):
         print_data(['key', 'values'],
@@ -1006,7 +1009,7 @@ def _add_metadata(plugin_id,
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Adding %s to plugin %s...', metadata_type, plugin_id)
 
-    metadata = client.get(plugin_id)[metadata_type]
+    metadata = client.get(plugin_id)[metadata_type] or {}
     for added_metadata in metadata_list:
         for k, v in added_metadata.items():
             if k in metadata:
@@ -1030,6 +1033,10 @@ def _delete_metadata(plugin_id,
     logger.info('Deleting %s from plugin %s...', metadata_type, plugin_id)
 
     metadata = client.get(plugin_id)[metadata_type]
+    if not metadata:
+        output('There are no {0} associated with the plugin {1}'
+               .format(metadata_type, plugin_id))
+        return
     for deleted_metadata in metadata_list:
         for k, v in deleted_metadata.items():
             if k in metadata:
