@@ -591,7 +591,7 @@ def update(blueprint_id,
                 if blueprint.id in except_blueprints:
                     continue
                 try:
-                    _update_a_blueprint(blueprint.get('id'),
+                    _update_a_blueprint(blueprint.id,
                                         plugin_names,
                                         to_latest,
                                         all_to_latest,
@@ -604,7 +604,7 @@ def update(blueprint_id,
                                         auto_correct_types,
                                         reevaluate_active_statuses,
                                         client,
-                                        blueprint.get('tenant_name'))
+                                        blueprint.tenant_name)
                     update_results['successful'].append(blueprint.id)
                 except (CloudifyClientError, SuppressedCloudifyCliError) as ex:
                     update_results['failed'].append(blueprint.id)

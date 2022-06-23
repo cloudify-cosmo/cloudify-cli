@@ -445,11 +445,12 @@ class PluginsUpdateTest(CliCommandTest):
                           'cfy plugins update asdf --all-blueprints')
 
     def test_all(self):
-        bp = namedtuple('Blueprint', 'id')
+        bp = namedtuple('Blueprint', ('id', 'tenant_name'))
         update_client_mock = Mock()
         bp_list_client_mock = Mock(
             return_value=MockListResponseWithPaginationSize(
-                items=[bp(id='asdf'), bp(id='zxcv')]))
+                items=[bp(id='asdf', tenant_name='default_tenant'),
+                       bp(id='zxcv', tenant_name='default_tenant')]))
         self.client.plugins_update.update_plugins = update_client_mock
         self.client.blueprints.list = bp_list_client_mock
         self.invoke('cfy plugins update --all-blueprints')
@@ -458,13 +459,11 @@ class PluginsUpdateTest(CliCommandTest):
         self.assertListEqual(
             list(update_client_mock.call_args_list),
             [call('asdf', force=False, plugin_names=[],
-                  all_tenants=False,
                   to_latest=[], all_to_latest=True,
                   to_minor=[], all_to_minor=False,
                   auto_correct_types=False,
                   reevaluate_active_statuses=False),
              call('zxcv', force=False, plugin_names=[],
-                  all_tenants=False,
                   to_latest=[], all_to_latest=True,
                   to_minor=[], all_to_minor=False,
                   auto_correct_types=False,
@@ -483,11 +482,13 @@ class PluginsUpdateTest(CliCommandTest):
                           'cfy plugins update --except-blueprint asdf')
 
     def test_except_blueprints(self):
-        bp = namedtuple('Blueprint', 'id')
+        bp = namedtuple('Blueprint', ('id', 'tenant_name'))
         update_client_mock = Mock()
         bp_list_client_mock = Mock(
             return_value=MockListResponseWithPaginationSize(
-                items=[bp(id='asdf'), bp(id='zxcv'), bp(id='1234')]))
+                items=[bp(id='asdf', tenant_name='default_tenant'),
+                       bp(id='zxcv', tenant_name='default_tenant'),
+                       bp(id='1234', tenant_name='default_tenant')]))
         self.client.plugins_update.update_plugins = update_client_mock
         self.client.blueprints.list = bp_list_client_mock
         self.invoke('cfy plugins update --all-blueprints '
@@ -496,7 +497,7 @@ class PluginsUpdateTest(CliCommandTest):
         self.assertEqual(len(update_client_mock.mock_calls), 1)
         self.assertListEqual(
             list(update_client_mock.call_args_list),
-            [call('zxcv', force=False, plugin_names=[], all_tenants=False,
+            [call('zxcv', force=False, plugin_names=[],
                   to_latest=[], all_to_latest=True,
                   to_minor=[], all_to_minor=False,
                   auto_correct_types=False,
