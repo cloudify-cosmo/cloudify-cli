@@ -29,6 +29,7 @@ from cloudify_cli.exceptions import (
     SuppressedCloudifyCliError, CloudifyCliError, CloudifyValidationError,
 )
 
+from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 from cloudify_rest_client.exceptions import CloudifyClientError
 
@@ -560,19 +561,29 @@ def update(blueprint_id,
             '--to-minor are mutually exclusive.  If you want to upgrade '
             'only the specific plugins, use --plugin-name parameter instead.')
 
-    utils.explicit_tenant_name_message(tenant_name, logger)
     if blueprint_id:
-        _update_a_blueprint(blueprint_id, all_tenants, plugin_names,
-                            to_latest, all_to_latest, to_minor, all_to_minor,
-                            include_logs, json_output, logger,
-                            client, force, auto_correct_types,
-                            reevaluate_active_statuses)
+        _update_a_blueprint(
+            blueprint_id,
+            plugin_names,
+            to_latest,
+            all_to_latest,
+            to_minor,
+            all_to_minor,
+            include_logs,
+            json_output,
+            logger,
+            force,
+            auto_correct_types,
+            reevaluate_active_statuses,
+            client,
+            tenant_name,
+        )
     elif all_blueprints:
         update_results = {'successful': [], 'failed': []}
         pagination_offset = 0
         while True:
             blueprints = client.blueprints.list(
-                sort='created_at',
+                sort=['tenant_name', 'created_at'],
                 _all_tenants=all_tenants,
                 _offset=pagination_offset,
             )
@@ -580,12 +591,20 @@ def update(blueprint_id,
                 if blueprint.id in except_blueprints:
                     continue
                 try:
-                    _update_a_blueprint(blueprint.id, all_tenants,
-                                        plugin_names, to_latest, all_to_latest,
-                                        to_minor, all_to_minor,
-                                        include_logs, json_output, logger,
-                                        client, force, auto_correct_types,
-                                        reevaluate_active_statuses)
+                    _update_a_blueprint(blueprint.id,
+                                        plugin_names,
+                                        to_latest,
+                                        all_to_latest,
+                                        to_minor,
+                                        all_to_minor,
+                                        include_logs,
+                                        json_output,
+                                        logger,
+                                        force,
+                                        auto_correct_types,
+                                        reevaluate_active_statuses,
+                                        client,
+                                        blueprint.tenant_name)
                     update_results['successful'].append(blueprint.id)
                 except (CloudifyClientError, SuppressedCloudifyCliError) as ex:
                     update_results['failed'].append(blueprint.id)
@@ -645,7 +664,6 @@ def updates_list(tenant_name,
 
 
 def _update_a_blueprint(blueprint_id,
-                        all_tenants,
                         plugin_names,
                         to_latest,
                         all_to_latest,
@@ -654,10 +672,13 @@ def _update_a_blueprint(blueprint_id,
                         include_logs,
                         json_output,
                         logger,
-                        client,
                         force,
                         auto_correct_types,
-                        reevaluate_active_statuses):
+                        reevaluate_active_statuses,
+                        client,
+                        tenant_name):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    client._client._set_header(CLOUDIFY_TENANT_HEADER, tenant_name)
     logger.info('Updating the plugins of the deployments of the blueprint %s',
                 blueprint_id)
     plugins_update = client.plugins_update.update_plugins(
@@ -666,7 +687,6 @@ def _update_a_blueprint(blueprint_id,
         to_minor=to_minor, all_to_minor=all_to_minor,
         auto_correct_types=auto_correct_types,
         reevaluate_active_statuses=reevaluate_active_statuses,
-        all_tenants=all_tenants,
     )
     events_logger = get_events_logger(json_output)
     execution = execution_events_fetcher.wait_for_execution(
