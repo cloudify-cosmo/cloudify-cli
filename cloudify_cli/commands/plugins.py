@@ -562,20 +562,22 @@ def update(blueprint_id,
             'only the specific plugins, use --plugin-name parameter instead.')
 
     if blueprint_id:
-        _update_a_blueprint(blueprint_id,
-                            plugin_names,
-                            to_latest,
-                            all_to_latest,
-                            to_minor,
-                            all_to_minor,
-                            include_logs,
-                            json_output,
-                            logger,
-                            force,
-                            auto_correct_types,
-                            reevaluate_active_statuses,
-                            client,
-                            tenant_name)
+        _update_a_blueprint(
+            blueprint_id,
+            plugin_names,
+            to_latest,
+            all_to_latest,
+            to_minor,
+            all_to_minor,
+            include_logs,
+            json_output,
+            logger,
+            force,
+            auto_correct_types,
+            reevaluate_active_statuses,
+            client,
+            tenant_name,
+        )
     elif all_blueprints:
         update_results = {'successful': [], 'failed': []}
         pagination_offset = 0
