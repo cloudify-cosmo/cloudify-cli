@@ -17,12 +17,19 @@
 import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import utils
-from ..cli import cfy
-from ..table import print_data, print_single, print_details
-from ..exceptions import CloudifyCliError
-from ..logger import get_global_json_output
-from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
+from cloudify_cli import utils
+from cloudify_cli.cli import cfy
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import (
+    get_events_logger,
+    get_global_json_output,
+    get_global_extended_view,
+)
+from cloudify_cli.table import print_data, print_single, print_details
+from cloudify_cli.commands.summary import (
+    BASE_SUMMARY_FIELDS,
+    structure_summary_results)
+from cloudify_cli.execution_events_fetcher import wait_for_execution
 
 NODE_COLUMNS = ['id', 'deployment_id', 'blueprint_id', 'host_id', 'type',
                 'visibility', 'tenant_name', 'actual_number_of_instances',
@@ -117,6 +124,21 @@ def get(node_id, deployment_id, logger, client, tenant_name):
             logger.info('\tNo node instances')
 
 
+def _run_node_checks(deployment_id, logger, client):
+    events_logger = get_events_logger()
+    for workflow_id in ('check_drift', 'check_status'):
+        execution = client.executions.start(
+            deployment_id=deployment_id,
+            workflow_id=workflow_id,
+        )
+        wait_for_execution(
+            client,
+            execution,
+            events_handler=events_logger,
+            logger=logger,
+        )
+
+
 @nodes.command(name='list',
                short_help='List nodes for a deployment '
                '[manager only]')
@@ -125,6 +147,11 @@ def get(node_id, deployment_id, logger, client, tenant_name):
 @cfy.options.descending
 @cfy.options.tenant_name_for_list(
     required=False, resource_name_for_help='node')
+@click.option(
+    '--run-checks',
+    help='Run the check_drift and check_status workflows before listing nodes',
+    is_flag=True,
+)
 @cfy.options.all_tenants
 @cfy.options.search
 @cfy.options.pagination_offset
@@ -133,27 +160,37 @@ def get(node_id, deployment_id, logger, client, tenant_name):
 @cfy.pass_logger
 @cfy.pass_client()
 @cfy.options.extended_view
-def list(deployment_id,
-         sort_by,
-         descending,
-         tenant_name,
-         all_tenants,
-         search,
-         pagination_offset,
-         pagination_size,
-         logger, client):
+def nodes_list(
+    deployment_id,
+    sort_by,
+    descending,
+    tenant_name,
+    all_tenants,
+    run_checks,
+    search,
+    pagination_offset,
+    pagination_size,
+    logger,
+    client
+):
     """List nodes
 
     If `DEPLOYMENT_ID` is provided, list nodes for that deployment.
     Otherwise, list nodes for all deployments.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
+    if run_checks:
+        if not deployment_id:
+            raise CloudifyCliError(
+                "deployment_id is required when --run-checks is set")
+        _run_node_checks(deployment_id, logger, client)
     try:
         if deployment_id:
-            logger.info('Listing nodes for deployment {0}...'.format(
-                deployment_id))
+            logger.info('Listing nodes for deployment %s...', deployment_id)
+            instance_counts = True
         else:
             logger.info('Listing all nodes...')
+            instance_counts = False
         nodes = client.nodes.list(
             deployment_id=deployment_id,
             sort=sort_by,
@@ -161,7 +198,8 @@ def list(deployment_id,
             _all_tenants=all_tenants,
             _search=search,
             _offset=pagination_offset,
-            _size=pagination_size
+            _size=pagination_size,
+            _instance_counts=instance_counts,
         )
     except CloudifyClientError as e:
         if e.status_code != 404:
@@ -169,9 +207,15 @@ def list(deployment_id,
         raise CloudifyCliError('Deployment {0} does not exist'.format(
             deployment_id))
 
-    print_data(NODE_COLUMNS, nodes, 'Nodes:', labels=NODE_TABLE_LABELS)
+    columns = list(NODE_COLUMNS)
+    if (
+        (get_global_json_output() or get_global_extended_view())
+        and deployment_id
+    ):
+        columns = columns + ['drifted_instances', 'unavailable_instances']
+    print_data(columns, nodes, 'Nodes:', labels=NODE_TABLE_LABELS)
     total = nodes.metadata.pagination.total
-    logger.info('Showing {0} of {1} nodes'.format(len(nodes), total))
+    logger.info('Showing %d of %d nodes', len(nodes), total)
 
 
 @nodes.command(name='summary',

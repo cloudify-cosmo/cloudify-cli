@@ -119,8 +119,8 @@ class DeploymentUpdatesTest(CliCommandTest):
         old_value = 'old value 1'
         new_value = 'new value 1'
         steps = [
-            {'entity_id': 'nodes:step1', 'action': 'add'},
-            {'entity_id': 'nodes:step2', 'action': 'remove'},
+            {'entity_id': ['nodes', 'step1'], 'action': 'add'},
+            {'entity_id': ['nodes', 'step2'], 'action': 'remove'},
         ]
         self.client.deployment_updates.update_with_existing_blueprint = Mock(
             return_value={

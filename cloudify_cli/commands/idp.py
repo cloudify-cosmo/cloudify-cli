@@ -1,4 +1,4 @@
-from ..cli import cfy
+from cloudify_cli.cli import cfy
 
 
 @cfy.group(name='identity')

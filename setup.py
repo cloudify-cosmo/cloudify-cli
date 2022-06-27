@@ -19,7 +19,6 @@ from setuptools import setup
 install_requires = [
         'click>7,<8',
         'wagon[venv]>=0.10.1',
-        'jinja2==2.11.3',
         'retrying==1.3.3',
         'colorama==0.4.4',
         'requests>=2.7.0,<3.0.0',
@@ -55,12 +54,6 @@ setup(
     author='Cloudify',
     author_email='cosmo-admin@cloudify.co',
     packages=packages,
-    package_data={
-        'cloudify_cli': [
-            'VERSION',
-            'config/config_template.yaml',
-        ],
-    },
     license='LICENSE',
     description="Cloudify's Command Line Interface",
     entry_points={

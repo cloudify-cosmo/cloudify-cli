@@ -14,13 +14,11 @@
 # limitations under the License.
 ############
 
-from .. import env
-from . import blueprints
-from . import executions
-from . import deployments
-from ..local import remove as local_remove
-from ..cli import cfy, helptexts
-from ..constants import DEFAULT_UNINSTALL_WORKFLOW
+from cloudify_cli import env
+from cloudify_cli.cli import cfy, helptexts
+from cloudify_cli.constants import DEFAULT_UNINSTALL_WORKFLOW
+from cloudify_cli.local import remove as local_remove
+from cloudify_cli.commands import blueprints, executions, deployments
 
 
 @cfy.command(name='uninstall',

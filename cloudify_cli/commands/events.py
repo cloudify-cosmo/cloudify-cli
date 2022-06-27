@@ -20,12 +20,16 @@ from cloudify import logs
 
 import click
 
-from .. import utils
-from ..cli import cfy
-from ..logger import get_events_logger
-from ..exceptions import CloudifyCliError, SuppressedCloudifyCliError
-from ..execution_events_fetcher import ExecutionEventsFetcher, \
-    wait_for_execution, wait_for_execution_group
+from cloudify_cli import utils
+from cloudify_cli.cli import cfy
+from cloudify_cli.logger import get_events_logger
+from cloudify_cli.exceptions import (
+    CloudifyCliError,
+    SuppressedCloudifyCliError)
+from cloudify_cli.execution_events_fetcher import (
+    ExecutionEventsFetcher,
+    wait_for_execution,
+    wait_for_execution_group)
 
 
 @cfy.group(name='events')
@@ -45,6 +49,7 @@ def events():
               help='The execution group ID to list the events for',
               cls=cfy.MutuallyExclusiveOption,
               mutually_exclusive=['execution_id_opt'])
+@cfy.options.worker_names
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.tail
@@ -76,6 +81,7 @@ def list(execution_id,
          before,
          pagination_offset,
          pagination_size,
+         with_worker_names,
          client,
          logger):
     """Display events for an execution"""
@@ -135,7 +141,7 @@ def list(execution_id,
             **execution_selection
         )
 
-        events_logger = get_events_logger(json_output)
+        events_logger = get_events_logger(json_output, with_worker_names)
 
         if tail:
             execution = wait_for_method(client,

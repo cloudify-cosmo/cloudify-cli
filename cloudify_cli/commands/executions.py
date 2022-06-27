@@ -20,23 +20,29 @@ import time
 import click
 from cloudify_rest_client import exceptions
 
-from .. import local
-from .. import utils
-from ..table import print_data, print_single, print_details
-from ..utils import get_deployment_environment_execution
-from ..cli import cfy, helptexts
-from ..logger import (get_events_logger,
-                      get_global_json_output,
-                      get_global_extended_view)
-from ..constants import DEFAULT_UNINSTALL_WORKFLOW, CREATE_DEPLOYMENT
-from ..execution_events_fetcher import (
+from cloudify_cli import local, utils
+from cloudify_cli.cli import cfy, helptexts
+from cloudify_cli.constants import (
+    DEFAULT_UNINSTALL_WORKFLOW,
+    CREATE_DEPLOYMENT)
+from cloudify_cli.exceptions import (
+    CloudifyCliError,
+    ExecutionTimeoutError,
+    SuppressedCloudifyCliError)
+from cloudify_cli.execution_events_fetcher import (
     ExecutionEventsFetcher,
     wait_for_execution,
-    wait_for_execution_group
-)
-from ..exceptions import CloudifyCliError, ExecutionTimeoutError, \
-    SuppressedCloudifyCliError
-from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
+    wait_for_execution_group)
+from cloudify_cli.logger import (
+    get_events_logger,
+    get_global_json_output,
+    get_global_extended_view)
+from cloudify_cli.table import print_data, print_single, print_details
+from cloudify_cli.utils import get_deployment_environment_execution
+
+from cloudify_cli.commands.summary import (
+    BASE_SUMMARY_FIELDS,
+    structure_summary_results)
 
 _STATUS_CANCELING_MESSAGE = (
     'NOTE: Executions currently in a "canceling/force-canceling" status '
@@ -180,6 +186,7 @@ def manager_list(
 @cfy.options.json_output
 @cfy.options.dry_run
 @cfy.options.wait_after_fail
+@cfy.options.worker_names
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.options.schedule
@@ -199,6 +206,7 @@ def manager_start(workflow_id,
                   wait_after_fail,
                   queue,
                   schedule,
+                  with_worker_names,
                   logger,
                   client,
                   tenant_name):
@@ -207,7 +215,7 @@ def manager_start(workflow_id,
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    events_logger = get_events_logger(json_output)
+    events_logger = get_events_logger(json_output, with_worker_names)
     events_message = "* Run 'cfy events list {0}' to retrieve the " \
                      "execution's events/logs"
     original_timeout = timeout
@@ -525,7 +533,11 @@ def operations_list(execution_id, graph_id, state, show_internal,
         state=state,
         skip_internal=not show_internal,
     )
-    print_data(['id', 'name', 'type', 'state'], ops, 'Operations')
+    print_data(
+        ['id', 'name', 'type', 'state', 'manager_name', 'agent_name'],
+        ops,
+        'Operations'
+    )
 
 
 @executions.group('groups')
@@ -623,6 +635,7 @@ def execution_groups_details(execution_group_id, client, logger):
 @click.argument('workflow-id')
 @cfy.options.common_options
 @cfy.options.parameters
+@cfy.options.worker_names
 @cfy.options.json_output
 @cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
 @cfy.options.timeout()
@@ -630,8 +643,8 @@ def execution_groups_details(execution_group_id, client, logger):
 @cfy.pass_logger
 def execution_groups_start(deployment_group, workflow_id, parameters,
                            json_output, force, timeout, concurrency,
-                           client, logger):
-    events_logger = get_events_logger(json_output)
+                           with_worker_names, client, logger):
+    events_logger = get_events_logger(json_output, with_worker_names)
     group = client.execution_groups.start(
         deployment_group_id=deployment_group,
         workflow_id=workflow_id,

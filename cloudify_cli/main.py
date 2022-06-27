@@ -1,8 +1,8 @@
 import click
 import importlib
 
-from . import env
-from .cli import cfy
+from cloudify_cli import env
+from cloudify_cli.cli import cfy
 
 
 class LazyLoadedCommand(click.Command):
@@ -240,6 +240,16 @@ def tenants():
     short_help="Handle manager snapshots"
 )
 def snapshots():
+    pass
+
+
+@click.group(
+    name='log-bundles',
+    cls=LazyLoadedGroup,
+    import_spec=('cloudify_cli.commands.log_bundles', 'log_bundles'),
+    short_help="Handle manager log bundles"
+)
+def log_bundles():
     pass
 
 
@@ -527,6 +537,7 @@ def _make_cfy():
     _cfy.add_command(plugins)
     _cfy.add_command(tenants)
     _cfy.add_command(snapshots)
+    _cfy.add_command(log_bundles)
     _cfy.add_command(user_groups)
     _cfy.add_command(maintenance_mode)
     _cfy.add_command(secrets)

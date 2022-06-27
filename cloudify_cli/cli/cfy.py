@@ -21,24 +21,26 @@ from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
-from .. import env, logger
-from ..cli import helptexts
-from ..inputs import inputs_to_dict
-from ..utils import generate_random_string
-from ..constants import DEFAULT_BLUEPRINT_PATH
-from ..exceptions import SuppressedCloudifyCliError
-from ..exceptions import (LabelsValidationError,
-                          CloudifyBootstrapError,
-                          CloudifyValidationError,)
-from ..logger import (
+from cloudify_cli import env, logger
+from cloudify_cli.cli import helptexts
+from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
+from cloudify_cli.exceptions import (
+    LabelsValidationError,
+    CloudifyBootstrapError,
+    CloudifyValidationError,
+    SuppressedCloudifyCliError)
+from cloudify_cli.filters_utils import (
+    get_filter_rules,
+    create_labels_filter_rules_list,
+    create_attributes_filter_rules_list)
+from cloudify_cli.inputs import inputs_to_dict
+from cloudify_cli.logger import (
     get_logger,
     set_global_verbosity_level,
     DEFAULT_LOG_FILE,
     set_global_json_output,
     set_global_extended_view)
-from ..filters_utils import (get_filter_rules,
-                             create_labels_filter_rules_list,
-                             create_attributes_filter_rules_list)
+from cloudify_cli.utils import generate_random_string
 
 
 CLICK_CONTEXT_SETTINGS = dict(
@@ -1380,6 +1382,13 @@ class Options(object):
             help=helptexts.QUEUE_SNAPSHOTS
         )
 
+        self.queue_log_bundle = click.option(
+            '--queue',
+            is_flag=True,
+            default=False,
+            help=helptexts.QUEUE_LOG_BUNDLES,
+        )
+
         self.wait_after_fail = click.option(
             '--wait-after-fail',
             default=600,
@@ -1808,14 +1817,22 @@ class Options(object):
             help=helptexts.EXECUTION_GROUP_CONCURRENCY
         )
 
+        self.worker_names = click.option(
+            '-w', '--with-worker-names/--without-worker-names',
+            'with_worker_names',
+            is_flag=True,
+            help=helptexts.WORKER_NAMES,
+            default=False,
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
         To be used for arguments that are going to be applied for all or
         almost all commands.
         """
-        for arg in [self.json, self.verbose(), self.format, self.quiet(),
-                    self.manager]:
+        for arg in [self.manager, self.json, self.format,
+                    self.verbose(), self.quiet()]:
             f = arg(f)
         return f
 
@@ -2124,6 +2141,7 @@ class Options(object):
             '-y',
             '--yaml-path',
             required=True,
+            multiple=True,
             help=helptexts.PLUGIN_YAML_PATH)
 
     @staticmethod

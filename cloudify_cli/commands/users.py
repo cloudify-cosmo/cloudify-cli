@@ -14,10 +14,10 @@
 # limitations under the License.
 ############
 
-from .. import env
-from ..cli import cfy
-from ..table import print_data, print_single
-from ..utils import handle_client_error
+from cloudify_cli import env
+from cloudify_cli.cli import cfy
+from cloudify_cli.table import print_data, print_single
+from cloudify_cli.utils import handle_client_error
 
 USER_COLUMNS = ['username', 'groups', 'role', 'group_system_roles', 'active',
                 'last_login_at', 'is_locked']
@@ -110,7 +110,7 @@ def list(sort_by,
 
 
 @users.command(name='create', short_help='Create a user [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.common_options
 @cfy.options.security_role
 @cfy.options.password
@@ -150,7 +150,7 @@ def create(username,
 
 @users.command(name='set-password',
                short_help='Set a new password for a user [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.password
 @cfy.options.common_options
 @cfy.assert_manager_active()
@@ -168,7 +168,7 @@ def set_password(username, password, logger, client):
 
 @users.command(name='set-role',
                short_help='Set a new role for a user [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.security_role
 @cfy.options.common_options
 @cfy.assert_manager_active()
@@ -187,7 +187,7 @@ def set_role(username, security_role, logger, client):
 @users.command(name='get',
                short_help='Get details for a single user [manager only]')
 @cfy.argument(
-    'username', callback=cfy.validate_name, default=env.get_username())
+    'username', default=env.get_username())
 @cfy.options.common_options
 @cfy.options.get_data
 @cfy.assert_manager_active()
@@ -219,7 +219,7 @@ def get(username, get_data, logger, client):
 
 @users.command(name='delete',
                short_help='Delete a user [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()

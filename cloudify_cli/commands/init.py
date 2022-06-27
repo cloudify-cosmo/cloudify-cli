@@ -16,20 +16,12 @@
 
 
 import os
-import pkg_resources
 
-from jinja2.environment import Template
-
-import cloudify_cli
-from .. import env
-from .. import local
-from ..cli import cfy
-from .. import blueprint
-from .. import exceptions
-from ..config import config
-from ..logger import DEFAULT_LOG_FILE
-from ..logger import configure_loggers
-from ..exceptions import CloudifyCliError
+from cloudify_cli import blueprint, env, exceptions, local
+from cloudify_cli.cli import cfy
+from cloudify_cli.config import config
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import DEFAULT_LOG_FILE, configure_loggers
 
 
 @cfy.command(name='init',)
@@ -191,16 +183,24 @@ def _raise_initialized_error(profile_name):
 
 
 def set_config(enable_colors=False):
-    cli_config = pkg_resources.resource_string(
-        cloudify_cli.__name__,
-        'config/config_template.yaml').decode('utf-8')
+    config_template = """---
+colors: {enable_colors}
 
-    enable_colors = str(enable_colors).lower()
-    template = Template(cli_config)
-    rendered = template.render(
-        log_path=DEFAULT_LOG_FILE,
-        enable_colors=enable_colors
-    )
-    with open(config.CLOUDIFY_CONFIG_PATH, 'a') as f:
-        f.write(rendered)
+logging:
+
+    # path to a file where cli logs will be saved.
+    filename: {log_path}
+
+    # configuring level per logger
+    loggers:
+
+        # main logger of the cli. provides basic descriptions for executed operations.
+        cloudify.cli.main: info
+
+        # rest client http logs, including headers.
+        cloudify.rest_client.http: info
+"""  # noqa
+    with open(config.CLOUDIFY_CONFIG_PATH, 'w') as f:
+        f.write(config_template.format(enable_colors=enable_colors,
+                                       log_path=DEFAULT_LOG_FILE))
         f.write(os.linesep)

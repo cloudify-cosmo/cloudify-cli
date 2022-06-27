@@ -20,12 +20,13 @@ import posixpath
 
 from cloudify.cluster_status import CloudifyNodeType
 
-from .. import env
-from ..cli import helptexts, cfy
-from ..exceptions import CloudifyCliError
-from ..logger import (output,
-                      CloudifyJSONEncoder,
-                      get_global_json_output)
+from cloudify_cli import env
+from cloudify_cli.cli import helptexts, cfy
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import (
+    output,
+    CloudifyJSONEncoder,
+    get_global_json_output)
 
 
 @cfy.group(name='logs')
@@ -91,6 +92,8 @@ def _download_archive(conn, host_type, output_path,
 def download(output_path, all_nodes, logger):
     """Download an archive containing all of the manager's service logs
     """
+    logger.warning("This command is deprecated and will be removed, please "
+                   "use the 'cfy log-bundles' command instead")
     output_json = {'archive paths': {}}
 
     if not output_path:
@@ -155,6 +158,7 @@ def purge(force, backup_first, logger):
 
     The `-f, --force` flag is mandatory as a safety measure.
     """
+    logger.warning("This command is deprecated and will be removed soon.")
     if not force:
         raise CloudifyCliError(
             'You must supply the `-f, --force` flag to perform the purge')
@@ -179,6 +183,7 @@ def backup(logger):
     """Create a backup of all logs under a single archive and save it
     on the manager under /var/log.
     """
+    logger.warning("This command is deprecated and will be removed soon.")
     with env.ssh_connection() as conn:
         archive_path_on_manager = _archive_logs(
             conn, CloudifyNodeType.MANAGER, logger, env.profile.manager_ip)

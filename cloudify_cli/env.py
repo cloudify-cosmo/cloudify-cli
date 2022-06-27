@@ -18,8 +18,8 @@ from cloudify.cluster_status import CloudifyNodeType
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify.utils import ipv6_url_compat
 
-from . import constants
-from .exceptions import CloudifyCliError
+from cloudify_cli import constants
+from cloudify_cli.exceptions import CloudifyCliError
 
 try:
     from fabric import Connection

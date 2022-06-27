@@ -16,9 +16,9 @@
 
 from cloudify.snapshots import STATES
 
-from .. import utils
-from ..table import print_data
-from ..cli import helptexts, cfy
+from cloudify_cli import utils
+from cloudify_cli.table import print_data
+from cloudify_cli.cli import helptexts, cfy
 
 SNAPSHOT_COLUMNS = ['id', 'created_at', 'status', 'error',
                     'visibility', 'tenant_name', 'created_by']

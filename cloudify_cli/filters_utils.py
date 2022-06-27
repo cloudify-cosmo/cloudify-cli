@@ -1,9 +1,9 @@
 import re
 
-from . import utils
-from .exceptions import CloudifyCliError
-from .table import print_data, print_details
-from .utils import validate_visibility, handle_client_error
+from cloudify_cli import utils
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.table import print_data, print_details
+from cloudify_cli.utils import validate_visibility, handle_client_error
 
 from cloudify._compat import PY2
 from cloudify_rest_client.exceptions import InvalidFilterRule

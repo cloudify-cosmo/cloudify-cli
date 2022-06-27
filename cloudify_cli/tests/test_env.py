@@ -473,7 +473,7 @@ class TestLogger(CliCommandTest):
         events_logger = logger.get_events_logger(json_output=False)
         events = [{'key': 'output'}, {'key': 'hide'}]
 
-        def mock_create_message(event):
+        def mock_create_message(event, with_names=False):
             return None if event['key'] == 'hide' else event['key']
 
         with mock_stdout() as output:

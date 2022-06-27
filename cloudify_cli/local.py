@@ -28,12 +28,9 @@ from cloudify.utils import LocalCommandRunner
 from dsl_parser.parser import parse_from_path
 from dsl_parser import constants as dsl_constants
 
-from . import env
-from . import utils
-from . import constants
-from . import exceptions
-from .logger import get_logger
-from .config.config import CloudifyConfig
+from cloudify_cli import constants, env, exceptions, utils
+from cloudify_cli.logger import get_logger
+from cloudify_cli.config.config import CloudifyConfig
 
 
 _ENV_NAME = 'local'

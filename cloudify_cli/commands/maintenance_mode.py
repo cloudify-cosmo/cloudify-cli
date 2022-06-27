@@ -16,11 +16,10 @@
 
 import time
 
-from ..cli import cfy
-from .. import exceptions
-from ..table import print_data
-from ..logger import NO_VERBOSE
-from ..logger import get_global_verbosity
+from cloudify_cli import exceptions
+from cloudify_cli.cli import cfy
+from cloudify_cli.logger import NO_VERBOSE, get_global_verbosity
+from cloudify_cli.table import print_data
 
 
 DEFAULT_TIMEOUT_INTERVAL = 5

@@ -9,17 +9,15 @@ from cloudify.cluster_status import CloudifyNodeType
 from cloudify_rest_client.exceptions import (CloudifyClientError,
                                              UserUnauthorizedError)
 
-from . import init
-from .. import env
-from .. import utils
-from ..cli import cfy
-from .. import constants
-from ..cli import helptexts
-from ..env import get_rest_client
-from ..exceptions import CloudifyCliError
-from ..table import print_data, print_single
-from ..commands.cluster import _all_in_one_manager
-from ..commands.cluster import update_profile_logic as update_cluster_profile
+from cloudify_cli import constants, env, utils
+from cloudify_cli.cli import cfy, helptexts
+from cloudify_cli.env import get_rest_client
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.table import print_data, print_single
+from cloudify_cli.commands import init
+from cloudify_cli.commands.cluster import (
+    _all_in_one_manager,
+    update_profile_logic as update_cluster_profile)
 
 
 EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
@@ -373,13 +371,6 @@ def set_cmd(profile_name,
             "You must supply at least one of the following:  "
             "profile name, username, password, token, tenant, "
             "ssl, rest certificate, ssh user, ssh key, ssh port, kerberos env")
-    if not skip_credentials_validation:
-        env.check_configured_auth(
-            credentials=(manager_username, manager_password),
-            token=manager_token,
-            kerberos_env=kerberos_env,
-        )
-
     old_name = None
     if profile_name:
         if profile_name == 'local':
@@ -727,7 +718,7 @@ def _get_provider_context(profile, skip_credentials_validation):
 
 
 def _get_client_and_assert_manager(profile):
-    if not env.profile.manager_ip:
+    if not profile.manager_ip:
         raise CloudifyCliError('No manager IP defined for Cloudify CLI '
                                'usage.\nPlease define a profile using '
                                '`cfy profiles use`')

@@ -21,17 +21,17 @@ from cloudify.cluster_status import CloudifyNodeType
 from cloudify_rest_client.exceptions import CloudifyClientError, \
     UserUnauthorizedError
 
-from .. import env
-from ..cli import cfy
-from ..env import profile
-from ..exceptions import CloudifyCliError
-from ..table import print_data, print_details
-from ..logger import (
+from cloudify_cli import env
+from cloudify_cli.cli import cfy
+from cloudify_cli.env import profile
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import (
     output,
     get_logger,
     CloudifyJSONEncoder,
     get_global_json_output
 )
+from cloudify_cli.table import print_data, print_details
 
 # The list will be updated with the services on each manager
 MANAGER_COLUMNS = ['hostname', 'private_ip', 'public_ip', 'version', 'edition',

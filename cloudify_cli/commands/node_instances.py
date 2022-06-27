@@ -18,15 +18,18 @@ import json
 
 import click
 
-from .. import utils
-from ..cli import cfy
-from ..local import load_env
-from ..exceptions import CloudifyCliError
-from ..logger import get_global_json_output
-from ..utils import deep_update_dict, deep_subtract_dict
-from ..table import print_data, print_details, print_single
 from cloudify_rest_client.exceptions import CloudifyClientError
-from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
+
+from cloudify_cli import utils
+from cloudify_cli.cli import cfy
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.local import load_env
+from cloudify_cli.logger import get_global_json_output
+from cloudify_cli.table import print_data, print_details, print_single
+from cloudify_cli.utils import deep_update_dict, deep_subtract_dict
+from cloudify_cli.commands.summary import (
+    BASE_SUMMARY_FIELDS,
+    structure_summary_results)
 
 
 NODE_INSTANCE_COLUMNS = ['id', 'deployment_id', 'host_id', 'node_id', 'state',

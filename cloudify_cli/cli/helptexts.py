@@ -382,6 +382,9 @@ IGNORE_PLUGIN_FAILURE = 'If set, plugin installation errors during snapshot ' \
                         'not fail the snapshot restore workflow'
 QUEUE_SNAPSHOTS = 'If set, snapshot-creation-workflows that can`t currently ' \
                   'run will be queued and run automatically when possible'
+QUEUE_LOG_BUNDLES = 'If set, log-bundle-creation-workflows that can`t ' \
+                    'currently run will be queued and run automatically ' \
+                    'when possible'
 QUEUE_EXECUTIONS = 'If set, executions that can`t currently run will be '\
                    'queued and run automatically when possible'
 
@@ -584,3 +587,4 @@ AUDIT_TRUNCATE_BEFORE = 'Truncate audit logs which were stored this long ' \
 
 SET_USERNAME = 'The name of the user who will be the new owner '\
                'of the resource.'
+WORKER_NAMES = 'Show the worker name for each event'
