@@ -17,6 +17,7 @@ from __future__ import absolute_import
 import os
 import glob
 import yaml
+import json
 
 from cloudify._compat import text_type
 
@@ -135,6 +136,13 @@ def _is_not_plain_string_input(mapped_input):
 
 
 def plain_string_to_dict(input_string, **kwargs):
+    try:
+        input_dict = json.loads(input_string)
+        if isinstance(input_dict, dict):
+            return input_dict
+    except ValueError:
+        pass
+
     input_string = input_string.strip()
     input_dict = {}
     mapped_inputs = input_string.split(';')
