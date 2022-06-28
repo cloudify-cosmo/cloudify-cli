@@ -96,6 +96,18 @@ class NodeInstancesTest(CliCommandTest):
         self.invoke('cfy node-instances update-runtime instance_id -p x.y=z')
         self.assertEqual('z', call_args[1]['runtime_properties']['x']['y'])
 
+    def test_update_runtime_successful_json_format(self):
+        self.client.node_instances.get = \
+            MagicMock(return_value=node_instance_get_mock())
+        self.client.node_instances.update = MagicMock(return_value={})
+
+        self.invoke('cfy node-instances update-runtime instance_id '
+                    '-p \'{"a":[],"b":"m-3","c":["d","e"]}\'')
+        call_args = self.client.node_instances.update.call_args
+        self.assertEqual([], call_args[1]['runtime_properties']['a'])
+        self.assertEqual('m-3', call_args[1]['runtime_properties']['b'])
+        self.assertEqual(['d', 'e'], call_args[1]['runtime_properties']['c'])
+
     def test_update_runtime_successful_key_exists(self):
         self.client.node_instances.get = \
             MagicMock(return_value=node_instance_get_mock())
