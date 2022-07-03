@@ -118,8 +118,7 @@ def _get_configuration_dict(client):
                 'new_ca_key': '',
                 'new_external_ca_cert': '',
                 'new_external_ca_key': '',
-                'new_ldap_ca_cert': '',  # Relevant only if using LDAP
-                'new_ldap_ca_key': ''    # Relevant only if using LDAP
+                'new_ldap_ca_cert': ''  # Relevant only if using LDAP
                  },
             'postgresql_server': {  # Relevant only if ssl_enabled==True
                 'new_postgresql_server_cert': '',
@@ -152,8 +151,7 @@ def _get_configuration_dict(client):
             'new_ca_key': '',
             'new_external_ca_cert': '',
             'new_external_ca_key': '',
-            'new_ldap_ca_cert': '',
-            'new_ldap_ca_key': ''
+            'new_ldap_ca_cert': ''
         },
         'postgresql_server': {'cluster_members': [{
             'host_ip': str(host_ip),
