@@ -113,14 +113,18 @@ def _get_configuration_dict(client):
                 'new_prometheus_cert': '',     # Relevant only if
                 'new_prometheus_key': '',      # monitoring_service
                 'new_prometheus_ca_cert': '',  # was installed
+                'new_prometheus_ca_key': '',   # -------------
                 'new_ca_cert': '',
+                'new_ca_key': '',
                 'new_external_ca_cert': '',
+                'new_external_ca_key': '',
                 'new_ldap_ca_cert': ''  # Relevant only if using LDAP
                  },
             'postgresql_server': {  # Relevant only if ssl_enabled==True
                 'new_postgresql_server_cert': '',
                 'new_postgresql_server_key': '',
-                'new_postgresql_server_ca_cert': ''
+                'new_postgresql_server_ca_cert': '',
+                'new_postgresql_server_ca_key': ''
             },
             'rabbitmq': {  # Relevant only if specifying new_ca_cert
                 'new_rabbitmq_cert': '',
@@ -140,10 +144,13 @@ def _get_configuration_dict(client):
             'new_postgresql_client_key': '',
             'new_prometheus_cert': '',
             'new_prometheus_key': '',
-            'new_prometheus_ca_cert': ''
+            'new_prometheus_ca_cert': '',
+            'new_prometheus_ca_key': ''
         } for host_ip in instances_ips['manager_ips']],
             'new_ca_cert': '',
+            'new_ca_key': '',
             'new_external_ca_cert': '',
+            'new_external_ca_key': '',
             'new_ldap_ca_cert': ''
         },
         'postgresql_server': {'cluster_members': [{
@@ -152,9 +159,11 @@ def _get_configuration_dict(client):
             'new_key': '',
             'new_prometheus_cert': '',
             'new_prometheus_key': '',
-            'new_prometheus_ca_cert': ''
+            'new_prometheus_ca_cert': '',
+            'new_prometheus_ca_key': ''
         } for host_ip in instances_ips['postgresql_ips']],
-            'new_ca_cert': ''
+            'new_ca_cert': '',
+            'new_ca_key': ''
         },
         'rabbitmq': {'cluster_members': [{
             'host_ip': str(host_ip),
@@ -162,9 +171,11 @@ def _get_configuration_dict(client):
             'new_key': '',
             'new_prometheus_cert': '',
             'new_prometheus_key': '',
-            'new_prometheus_ca_cert': ''
+            'new_prometheus_ca_cert': '',
+            'new_prometheus_ca_key': ''
         } for host_ip in instances_ips['rabbitmq_ips']],
-            'new_ca_cert': ''
+            'new_ca_cert': '',
+            'new_ca_key': ''
         }
     }
 
