@@ -129,6 +129,7 @@ def _get_blueprint_file_with_icon(blueprint_path, icon_path):
 
     """
     source, blueprint_filename = os.path.split(blueprint_path)
+    source = source or os.curdir
     blueprint_directory = os.path.join(tempfile.mkdtemp(),
                                        blueprint_filename.rpartition('.')[0])
     copytree(source, blueprint_directory)
