@@ -588,3 +588,5 @@ AUDIT_TRUNCATE_BEFORE = 'Truncate audit logs which were stored this long ' \
 SET_USERNAME = 'The name of the user who will be the new owner '\
                'of the resource.'
 WORKER_NAMES = 'Show the worker name for each event'
+EMPTY_UPDATE = 'Run update without changing anything. This will still check ' \
+               'drift and run update operations as necessary'

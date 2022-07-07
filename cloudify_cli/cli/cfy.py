@@ -1825,6 +1825,15 @@ class Options(object):
             default=False,
         )
 
+        self.empty_update = click.option(
+            '--empty-update',
+            is_flag=True,
+            help=helptexts.EMPTY_UPDATE,
+            default=False,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['blueprint_id', 'blueprint_path', 'inputs'],
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
