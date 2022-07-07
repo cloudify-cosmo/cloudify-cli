@@ -438,6 +438,7 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
 @cfy.options.visibility(mutually_exclusive_required=False)
 @cfy.options.validate
 @cfy.options.include_logs
+@cfy.options.empty_update
 @cfy.options.json_output
 @cfy.options.common_options
 @cfy.options.runtime_only_evaluation
@@ -469,6 +470,7 @@ def manager_update(
     client,
     tenant_name,
     blueprint_id,
+    empty_update,
     visibility,
     validate,
     runtime_only_evaluation,
@@ -494,7 +496,7 @@ def manager_update(
             'supported.  Use -b, --blueprint-id option instead to pass an ID '
             'of a blueprint that is already in the system, e.g. '
             '`cfy deployments update -b UPDATED_BLUEPRINT_ID DEPLOYMENT_ID`.')
-    if not any([blueprint_id, blueprint_path, inputs]):
+    if not any([blueprint_id, blueprint_path, inputs, empty_update]):
         raise CloudifyCliError(
             'Must supply either a blueprint (by id of an existing blueprint, '
             'or a path to a new blueprint), or new inputs')
