@@ -92,6 +92,7 @@ SKIP_REINSTALL = (
     "explicitly given to the reinstall list will still be reinstalled"
 )
 SKIP_DRIFT_CHECK = "Skip running check_drift during deployment update"
+FORCE_REINSTALL = "Reinstall all changed nodes, don't run update operations"
 DONT_SKIP_REINSTALL = (
     "Reinstall node-instances that their properties have been modified as part"
     " of a deployment update. Node instances that were explicitly specified"
