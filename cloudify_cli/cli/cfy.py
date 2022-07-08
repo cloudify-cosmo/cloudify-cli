@@ -894,6 +894,11 @@ class Options(object):
             is_flag=True,
             help=helptexts.SKIP_REINSTALL)
 
+        self.skip_drift_check = click.option(
+            '--skip-drift-check',
+            is_flag=True,
+            help=helptexts.SKIP_DRIFT_CHECK)
+
         self.dont_skip_reinstall = click.option(
             '--dont-skip-reinstall',
             is_flag=True,
