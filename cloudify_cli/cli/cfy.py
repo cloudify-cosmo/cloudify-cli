@@ -899,6 +899,11 @@ class Options(object):
             is_flag=True,
             help=helptexts.SKIP_DRIFT_CHECK)
 
+        self.force_reinstall = click.option(
+            '--force-reinstall',
+            is_flag=True,
+            help=helptexts.FORCE_REINSTALL)
+
         self.dont_skip_reinstall = click.option(
             '--dont-skip-reinstall',
             is_flag=True,
