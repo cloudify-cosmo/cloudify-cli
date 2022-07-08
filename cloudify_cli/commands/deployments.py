@@ -430,6 +430,7 @@ def manager_get_update(deployment_update_id, logger, client, tenant_name):
 @cfy.options.skip_uninstall
 @cfy.options.skip_reinstall
 @cfy.options.skip_drift_check
+@cfy.options.skip_heal
 @cfy.options.force_reinstall
 @cfy.options.ignore_failure
 @cfy.options.install_first
@@ -461,6 +462,7 @@ def manager_update(
     skip_uninstall,
     skip_reinstall,
     skip_drift_check,
+    skip_heal,
     force_reinstall,
     ignore_failure,
     install_first,
@@ -532,6 +534,7 @@ def manager_update(
             skip_uninstall,
             skip_reinstall,
             skip_drift_check,
+            skip_heal,
             force_reinstall,
             workflow_id,
             force,
@@ -1346,6 +1349,7 @@ def delete_group_labels(label, deployment_group_name,
 @cfy.options.skip_uninstall
 @cfy.options.skip_reinstall
 @cfy.options.skip_drift_check
+@cfy.options.skip_heal
 @cfy.options.force_reinstall
 @cfy.options.ignore_failure
 @cfy.options.install_first

@@ -904,6 +904,11 @@ class Options(object):
             is_flag=True,
             help=helptexts.FORCE_REINSTALL)
 
+        self.skip_heal = click.option(
+            '--skip-heal',
+            is_flag=True,
+            help=helptexts.SKIP_HEAL)
+
         self.dont_skip_reinstall = click.option(
             '--dont-skip-reinstall',
             is_flag=True,
