@@ -593,3 +593,6 @@ SET_USERNAME = 'The name of the user who will be the new owner '\
 WORKER_NAMES = 'Show the worker name for each event'
 EMPTY_UPDATE = 'Run update without changing anything. This will still check ' \
                'drift and run update operations as necessary'
+TEMPDIR_PATH = "Temporary location to be used for snapshot creation. If not " \
+               "specified, /tmp will be used."
+WAIT_FOR_STATUS = "Whether to wait for snapshot status [default: False]."

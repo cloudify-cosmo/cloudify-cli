@@ -1397,6 +1397,19 @@ class Options(object):
             help=helptexts.QUEUE_SNAPSHOTS
         )
 
+        self.tempdir_path = click.option(
+            '--tempdir-path',
+            help=helptexts.TEMPDIR_PATH
+        )
+
+        self.wait_for_status = click.option(
+            '-w',
+            '--wait-for-status',
+            is_flag=True,
+            default=False,
+            help=helptexts.WAIT_FOR_STATUS
+        )
+
         self.queue_log_bundle = click.option(
             '--queue',
             is_flag=True,
