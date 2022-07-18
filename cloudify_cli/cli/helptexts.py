@@ -604,5 +604,5 @@ SUMMARY_HELP = """
     [{fields}].
 
     E.g. `cfy {type} summary tenant_name visibility` will summarize
-    executions by tenant_name with a secondary grouping by visibility.
+    {type} by tenant_name with a secondary grouping by visibility.
     """
