@@ -596,3 +596,13 @@ EMPTY_UPDATE = 'Run update without changing anything. This will still check ' \
 TEMPDIR_PATH = "Temporary location to be used for snapshot creation. If not " \
                "specified, /tmp will be used."
 WAIT_FOR_STATUS = "Whether to wait for snapshot status [default: False]."
+SUMMARY_HELP = """
+    Retrieve summary of {type}, e.g. a count of each {example}.
+
+    `TARGET_FIELD` is the field to summarize {type} on. `SUB_FIELD` is an
+    optional second field to summarize {type} on. Both can be chosen from
+    [{fields}].
+
+    E.g. `cfy {type} summary tenant_name visibility` will summarize
+    executions by tenant_name with a secondary grouping by visibility.
+    """

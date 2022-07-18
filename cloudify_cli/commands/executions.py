@@ -393,9 +393,13 @@ def manager_resume(execution_id, reset_operations, logger, client,
 
 @executions.command(name='summary',
                     short_help='Retrieve summary of execution details '
-                               '[manager only]')
-@cfy.argument('target_field', type=click.Choice(EXECUTIONS_SUMMARY_FIELDS))
-@cfy.argument('sub_field', type=click.Choice(EXECUTIONS_SUMMARY_FIELDS),
+                               '[manager only]',
+                    help=helptexts.SUMMARY_HELP.format(
+                        type='executions',
+                        example='execution with the same deployment ID',
+                        fields='|'.join(EXECUTIONS_SUMMARY_FIELDS)))
+@cfy.argument('target_field', type=cfy.SummaryArgs(EXECUTIONS_SUMMARY_FIELDS))
+@cfy.argument('sub_field', type=cfy.SummaryArgs(EXECUTIONS_SUMMARY_FIELDS),
               default=None, required=False)
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='summary')
@@ -405,11 +409,6 @@ def manager_resume(execution_id, reset_operations, logger, client,
 @cfy.pass_client()
 def summary(target_field, sub_field, group_id, logger, client, tenant_name,
             all_tenants):
-    """Retrieve summary of executions, e.g. a count of each execution with
-    the same deployment ID.
-
-    `TARGET_FIELD` is the field to summarise executions on.
-    """
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving summary of executions on field {field}'.format(
         field=target_field))

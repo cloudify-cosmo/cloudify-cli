@@ -2427,3 +2427,16 @@ class Options(object):
 
 
 options = Options()
+
+
+class SummaryArgs(click.Choice):
+    """
+    Used for correctly displaying usage of summary commands (e.g. `cfy
+    blueprints summary`) in which the user must choose a field to summarize
+    by from a list.
+    We want  Usage: cfy blueprints summary [OPTIONS] TARGET_FIELD [SUB_FIELD]
+    Not      Usage: cfy blueprints summary [OPTIONS]
+                    [visibility|tenant_name] [[visibility|tenant_name]]
+    """
+    def get_metavar(self, param):
+        pass

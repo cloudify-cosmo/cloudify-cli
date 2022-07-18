@@ -495,9 +495,13 @@ def set_visibility(blueprint_id, visibility, logger, client):
 
 @blueprints.command(name='summary',
                     short_help='Retrieve summary of blueprint details '
-                               '[manager only]')
-@cfy.argument('target_field', type=click.Choice(BLUEPRINTS_SUMMARY_FIELDS))
-@cfy.argument('sub_field', type=click.Choice(BLUEPRINTS_SUMMARY_FIELDS),
+                               '[manager only]',
+                    help=helptexts.SUMMARY_HELP.format(
+                        type='blueprints',
+                        example='blueprint with the same tenant name',
+                        fields='|'.join(BLUEPRINTS_SUMMARY_FIELDS)))
+@cfy.argument('target_field', type=cfy.SummaryArgs(BLUEPRINTS_SUMMARY_FIELDS))
+@cfy.argument('sub_field', type=cfy.SummaryArgs(BLUEPRINTS_SUMMARY_FIELDS),
               default=None, required=False)
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='summary')
@@ -506,11 +510,6 @@ def set_visibility(blueprint_id, visibility, logger, client):
 @cfy.pass_client()
 def summary(target_field, sub_field, logger, client, tenant_name,
             all_tenants):
-    """Retrieve summary of blueprints, e.g. a count of each blueprint with
-    the same tenant name.
-
-    `TARGET_FIELD` is the field to summarise blueprints on.
-    """
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving summary of blueprints on field {field}'.format(
         field=target_field))

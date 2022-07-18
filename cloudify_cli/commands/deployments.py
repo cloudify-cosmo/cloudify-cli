@@ -860,9 +860,13 @@ def manager_set_visibility(deployment_id, visibility, logger, client):
 
 @deployments.command(name='summary',
                      short_help='Retrieve summary of deployment details '
-                                '[manager only]')
-@cfy.argument('target_field', type=click.Choice(DEPLOYMENTS_SUMMARY_FIELDS))
-@cfy.argument('sub_field', type=click.Choice(DEPLOYMENTS_SUMMARY_FIELDS),
+                                '[manager only]',
+                     help=helptexts.SUMMARY_HELP.format(
+                         type='deployments',
+                         example='deployment with the same blueprint ID',
+                         fields='|'.join(DEPLOYMENTS_SUMMARY_FIELDS)))
+@cfy.argument('target_field', type=cfy.SummaryArgs(DEPLOYMENTS_SUMMARY_FIELDS))
+@cfy.argument('sub_field', type=cfy.SummaryArgs(DEPLOYMENTS_SUMMARY_FIELDS),
               default=None, required=False)
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='summary')
@@ -872,11 +876,6 @@ def manager_set_visibility(deployment_id, visibility, logger, client):
 @cfy.pass_client()
 def summary(target_field, sub_field, group_id, logger, client, tenant_name,
             all_tenants):
-    """Retrieve summary of deployments, e.g. a count of each deployment with
-    the same blueprint ID.
-
-    `TARGET_FIELD` is the field to summarise deployments on.
-    """
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving summary of deployments on field %s', target_field)
 
