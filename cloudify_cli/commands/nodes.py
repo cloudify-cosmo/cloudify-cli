@@ -18,7 +18,7 @@ import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
 from cloudify_cli import utils
-from cloudify_cli.cli import cfy
+from cloudify_cli.cli import cfy, helptexts
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.logger import (
     get_events_logger,
@@ -219,9 +219,13 @@ def nodes_list(
 
 
 @nodes.command(name='summary',
-               short_help='Retrieve summary of node details [manager only]')
-@cfy.argument('target_field', type=click.Choice(NODES_SUMMARY_FIELDS))
-@cfy.argument('sub_field', type=click.Choice(NODES_SUMMARY_FIELDS),
+               short_help='Retrieve summary of node details [manager only]',
+               help=helptexts.SUMMARY_HELP.format(
+                   type='nodes',
+                   example='node with the same deployment ID',
+                   fields='|'.join(NODES_SUMMARY_FIELDS)))
+@cfy.argument('target_field', type=cfy.SummaryArgs(NODES_SUMMARY_FIELDS))
+@cfy.argument('sub_field', type=cfy.SummaryArgs(NODES_SUMMARY_FIELDS),
               default=None, required=False)
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='summary')
@@ -229,11 +233,6 @@ def nodes_list(
 @cfy.pass_logger
 @cfy.pass_client()
 def summary(target_field, sub_field, logger, client, tenant_name, all_tenants):
-    """Retrieve summary of nodes, e.g. a count of each node with the same
-    deployment ID.
-
-    `TARGET_FIELD` is the field to summarise nodes on.
-    """
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving summary of nodes on field {field}'.format(
         field=target_field))
