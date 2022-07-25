@@ -1853,10 +1853,10 @@ class Options(object):
             default=False,
         )
 
-        self.empty_update = click.option(
-            '--empty-update',
+        self.drift_only = click.option(
+            '--drift-only',
             is_flag=True,
-            help=helptexts.EMPTY_UPDATE,
+            help=helptexts.DRIFT_ONLY,
             default=False,
             cls=MutuallyExclusiveOption,
             mutually_exclusive=['blueprint_id', 'blueprint_path', 'inputs'],
