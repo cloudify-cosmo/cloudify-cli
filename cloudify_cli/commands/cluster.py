@@ -269,7 +269,10 @@ def _update_cluster_nodes(nodes, nodes_type, logger):
 def _update_node(node, node_type, logger, stored_nodes_names):
     if _get_node_host(node) not in stored_nodes_names:
         if node_type == CloudifyNodeType.MANAGER:
-            node_ip = node['public_ip'] or node['private_ip']
+            if env.profile.manager.name == "manager-local":
+                node_ip = node['private_ip']
+            else:
+                node_ip = node['public_ip'] or node['private_ip']
         else:
             node_ip = node['host']
         if logger:
