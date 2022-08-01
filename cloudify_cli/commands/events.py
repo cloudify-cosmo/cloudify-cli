@@ -73,6 +73,12 @@ def events():
     mutually_exclusive_with=['tail', 'to_datetime'],
     help="List events that occurred this long ago or earlier",
 )
+@click.option('--node', help='List events for this node')
+@click.option(
+    '--operation',
+    help='List events for this interface operation '
+         '(eg. cloudify.interfaces.lifecycle.create)',
+)
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
 @cfy.pass_client()
@@ -90,6 +96,8 @@ def list(execution_id,
          pagination_offset,
          pagination_size,
          with_worker_names,
+         node,
+         operation,
          client,
          logger):
     """Display events for an execution"""
@@ -150,6 +158,8 @@ def list(execution_id,
             include_logs=include_logs,
             from_datetime=from_datetime,
             to_datetime=to_datetime,
+            node_id=node,
+            operation=operation,
             **execution_selection
         )
 
