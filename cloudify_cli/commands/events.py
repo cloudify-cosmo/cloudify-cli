@@ -41,30 +41,44 @@ def events():
     pass
 
 
-@events.command(name='list',
-                short_help='List deployments events [manager only]')
+@events.command(
+    name='list',
+    short_help='List deployments events [manager only]',
+)
 @cfy.argument('execution-id', required=False)
 @cfy.options.execution_id(required=False, dest='execution_id_opt')
-@click.option('--execution-group', '-g',
-              help='The execution group ID to list the events for',
-              cls=cfy.MutuallyExclusiveOption,
-              mutually_exclusive=['execution_id_opt'])
+@click.option(
+    '--execution-group', '-g',
+    help='The execution group ID to list the events for',
+    cls=cfy.MutuallyExclusiveOption,
+    mutually_exclusive=['execution_id_opt'],
+)
 @cfy.options.worker_names
 @cfy.options.include_logs
 @cfy.options.json_output
 @cfy.options.tail
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
-@cfy.options.from_datetime(required=False,
-                           help="List events that occurred at this timestamp"
-                                " or after")
-@cfy.options.to_datetime(required=False,
-                         mutually_exclusive_with=['tail', 'before'],
-                         help="List events that occurred at this timestamp"
-                              " or before", )
-@cfy.options.before(required=False,
-                    mutually_exclusive_with=['tail', 'to_datetime'],
-                    help="List events that occurred this long ago or earlier")
+@cfy.options.from_datetime(
+    required=False,
+    help="List events that occurred at this timestamp or after"
+)
+@cfy.options.to_datetime(
+    required=False,
+    mutually_exclusive_with=['tail', 'before'],
+    help="List events that occurred at this timestamp or before",
+)
+@cfy.options.before(
+    required=False,
+    mutually_exclusive_with=['tail', 'to_datetime'],
+    help="List events that occurred this long ago or earlier",
+)
+@click.option('--node', help='List events for this node')
+@click.option(
+    '--operation',
+    help='List events for this interface operation '
+         '(eg. cloudify.interfaces.lifecycle.create)',
+)
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
 @cfy.pass_client()
@@ -82,6 +96,8 @@ def list(execution_id,
          pagination_offset,
          pagination_size,
          with_worker_names,
+         node,
+         operation,
          client,
          logger):
     """Display events for an execution"""
@@ -113,18 +129,22 @@ def list(execution_id,
         to_datetime = before
 
     if execution_id:
-        logger.info('Listing events for execution id {0} [{1}]'.format(
+        logger.info(
+            'Listing events for execution id %s [%s]',
             execution_id,
-            _filter_description(include_logs, from_datetime, to_datetime)))
+            _filter_description(include_logs, from_datetime, to_datetime),
+        )
         execution_selection = {
             'execution_id': execution_id
         }
         wait_for_method = wait_for_execution
         wait_for_record = client.executions.get(execution_id)
     else:
-        logger.info('Listing events for execution group {0} [{1}]'.format(
+        logger.info(
+            'Listing events for execution group %s [%s]',
             execution_group,
-            _filter_description(include_logs, from_datetime, to_datetime)))
+            _filter_description(include_logs, from_datetime, to_datetime),
+        )
         execution_selection = {
             'execution_group_id': execution_group
         }
@@ -138,39 +158,47 @@ def list(execution_id,
             include_logs=include_logs,
             from_datetime=from_datetime,
             to_datetime=to_datetime,
+            node_id=node,
+            operation=operation,
             **execution_selection
         )
 
         events_logger = get_events_logger(json_output, with_worker_names)
 
         if tail:
-            execution = wait_for_method(client,
-                                        wait_for_record,
-                                        events_handler=events_logger,
-                                        include_logs=include_logs,
-                                        timeout=None,  # don't timeout ever
-                                        from_datetime=from_datetime)
+            execution = wait_for_method(
+                client,
+                wait_for_record,
+                events_handler=events_logger,
+                include_logs=include_logs,
+                timeout=None,  # don't timeout ever
+                from_datetime=from_datetime,
+            )
             if hasattr(execution, 'error') and execution.error:
-                logger.info('Execution of workflow {0} for deployment '
-                            '{1} failed. [error={2}]'.format(
-                                execution.workflow_id,
-                                execution.deployment_id,
-                                execution.error))
+                logger.info(
+                    'Execution of workflow %s for deployment %s failed. '
+                    '[error=%s]',
+                    execution.workflow_id,
+                    execution.deployment_id,
+                    execution.error,
+                )
                 raise SuppressedCloudifyCliError()
             if hasattr(execution, 'workflow_id'):
                 if hasattr(execution, 'deployment_id'):
-                    logger.info('Finished executing workflow {0} on '
-                                'deployment {1}'.format(
-                                    execution.workflow_id,
-                                    execution.deployment_id))
+                    logger.info(
+                        'Finished executing workflow %s on deployment %s',
+                        execution.workflow_id,
+                        execution.deployment_id,
+                    )
                 elif hasattr(execution, 'deployment_group_id'):
-                    logger.info('Finished executing workflow {0} on '
-                                'deployment group {1}'.format(
-                                    execution.workflow_id,
-                                    execution.deployment_group_id))
+                    logger.info(
+                        'Finished executing workflow %s '
+                        'on deployment group %s',
+                        execution.workflow_id,
+                        execution.deployment_group_id,
+                    )
             else:
-                logger.info('Finished executing {0}'.format(
-                    wait_for_record.id))
+                logger.info('Finished executing %s', wait_for_record.id)
 
         else:
             # don't tail, get only the events created until now and return
@@ -178,8 +206,8 @@ def list(execution_id,
                 fetch_and_process_events_batch(events_handler=events_logger,
                                                offset=pagination_offset,
                                                size=pagination_size)
-            logger.info('\nShowing {0} of {1} events'.format(current_events,
-                                                             total_events))
+            logger.info(
+                '\nShowing %s of %s events', current_events, total_events)
             if not json_output:
                 logger.info('Debug messages are only shown when you use very '
                             'verbose mode (-vv)')
