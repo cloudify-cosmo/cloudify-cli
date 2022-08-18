@@ -17,8 +17,7 @@
 import os
 import tempfile
 from shutil import copy, copytree
-
-from cloudify._compat import urlparse
+from urllib.parse import urlparse
 
 from cloudify_cli import utils
 from cloudify_cli.exceptions import CloudifyCliError

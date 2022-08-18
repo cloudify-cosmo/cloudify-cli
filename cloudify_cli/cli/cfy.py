@@ -9,12 +9,13 @@ import re
 import subprocess
 import locale
 import codecs
-from functools import wraps
 import unicodedata
+from functools import wraps
+from io import StringIO
+from urllib.parse import quote as urlquote
 
 import click
 
-from cloudify._compat import StringIO, urlquote
 from cloudify_rest_client.constants import VisibilityState
 from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError

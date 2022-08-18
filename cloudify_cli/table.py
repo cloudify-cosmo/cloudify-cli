@@ -25,8 +25,6 @@ from cloudify_cli.logger import (
     output)
 from cloudify_cli.prettytable import PrettyTable
 
-from cloudify._compat import text_type
-
 
 def generate(cols, data, defaults=None, labels=None):
     """
@@ -81,7 +79,7 @@ def generate_extended(cols, data, defaults=None, labels=None):
 
 def get_values_per_column(column, row_data, defaults):
     if column in row_data:
-        if row_data[column] and isinstance(row_data[column], text_type):
+        if row_data[column] and isinstance(row_data[column], str):
             row_data[column] = get_timestamp(row_data[column]) \
                 or row_data[column]
         elif row_data[column] and isinstance(row_data[column], list):

@@ -39,13 +39,13 @@ except ImportError:
 import yaml
 import requests
 from retrying import retry
+from urllib.parse import urlparse
 
 from cloudify_cli.constants import SUPPORTED_ARCHIVE_TYPES, DEFAULT_TIMEOUT
 from cloudify_cli.exceptions import CloudifyCliError, CloudifyTimeoutError
 from cloudify_cli.execution_events_fetcher import ExecutionEventsFetcher
 from cloudify_cli.logger import get_logger, get_events_logger
 
-from cloudify._compat import urlparse
 from cloudify.models_states import BlueprintUploadState
 from cloudify_rest_client.constants import VisibilityState
 from cloudify_rest_client.exceptions import CloudifyClientError

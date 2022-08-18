@@ -18,10 +18,10 @@ import os
 import uuid
 import json
 from datetime import datetime
+from io import StringIO
 
 import click
 
-from cloudify._compat import StringIO
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 from cloudify_rest_client.exceptions import (
     DeploymentPluginNotFound,
@@ -275,7 +275,7 @@ def deployments_list_base(
 
 
 # to have identical behaviour for both list and status-list, apply the same
-# decorators to both. We'll have two "stub" functions repressenting those
+# decorators to both. We'll have two "stub" functions representing those
 # commands, and both delegate to the same base.
 deployments_list_decorators = [
     cfy.options.blueprint_id(),
