@@ -26,7 +26,7 @@ from cloudify.utils import setup_logger
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
 import click.testing as clicktest
-from cloudify._compat import PY2, text_type
+
 from ... import env
 from ... import logger
 from ...commands import init
@@ -145,16 +145,7 @@ class CliCommandTest(testtools.TestCase):
 
     def _do_invoke(self, command):
         logger.set_global_verbosity_level(verbose=logger.NO_VERBOSE)
-
-        if PY2:
-            if isinstance(command, text_type):
-                command = command.encode('utf-8')
-                parts = shlex.split(command)
-                lexed_command = [p.decode('utf-8') for p in parts]
-            else:
-                lexed_command = shlex.split(command)
-        else:
-            lexed_command = shlex.split(command)
+        lexed_command = shlex.split(command)
 
         # Safety measure in case someone wrote `cfy` at the beginning
         # of the command

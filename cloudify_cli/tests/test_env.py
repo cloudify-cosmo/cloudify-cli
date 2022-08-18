@@ -28,11 +28,11 @@ import requests
 import tempfile
 from contextlib import closing
 from mock import MagicMock, patch
+from io import StringIO
 from itertools import chain, repeat, count
 
 from cloudify import logs
 
-from cloudify._compat import StringIO
 from cloudify_rest_client.executions import Execution
 from cloudify_rest_client.client import CloudifyClient
 from cloudify_rest_client.client import DEFAULT_API_VERSION
@@ -753,7 +753,7 @@ class WaitForExecutionTests(CliCommandTest):
         wait_for_execution(self.client, mock_execution, timeout=None)
 
         calls_count = len(self.client.executions.get.mock_calls)
-        self.assertEqual(calls_count, 101, """wait_for_execution didnt keep
+        self.assertEqual(calls_count, 101, """wait_for_execution didn't keep
             polling the execution status after it received a workflow_succeeded
             event (expected 101 calls, got %d)""" % calls_count)
 
