@@ -113,16 +113,6 @@ def profiles():
     pass
 
 
-@click.command(
-    name='ssh',
-    cls=LazyLoadedCommand,
-    short_help='Connect using SSH [manager only]',
-    import_spec=('cloudify_cli.commands.ssh', 'ssh'),
-)
-def ssh():
-    pass
-
-
 @click.group(
     name='idp',
     cls=LazyLoadedGroup,
@@ -130,16 +120,6 @@ def ssh():
     short_help='Identity provider commands'
 )
 def idp():
-    pass
-
-
-@click.group(
-    name='logs',
-    cls=LazyLoadedGroup,
-    import_spec=('cloudify_cli.commands.logs', 'logs'),
-    short_help='Handle manager service logs'
-)
-def logs():
     pass
 
 
@@ -524,9 +504,7 @@ def _make_cfy():
     _cfy.add_command(status)
     _cfy.add_command(profiles)
 
-    _cfy.add_command(ssh)
     _cfy.add_command(idp)
-    _cfy.add_command(logs)
     _cfy.add_command(ldap)
     _cfy.add_command(users)
     _cfy.add_command(agents)
