@@ -7,7 +7,6 @@ import getpass
 import tempfile
 import itertools
 from base64 import b64encode
-from contextlib import contextmanager
 
 import yaml
 import requests

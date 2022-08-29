@@ -405,7 +405,7 @@ class BlueprintsTest(CliCommandTest):
             err_str_segment='2',
             exception=SystemExit
         )
-        self.assertIn('Error: no such option: -g', outcome.output)
+        self.assertIn('Error: No such option: -g', outcome.output)
 
     def test_blueprints_upload_mutually_exclusive_arguments(self):
         outcome = self.invoke(
