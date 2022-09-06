@@ -1,5 +1,8 @@
 %define __python /opt/cfy/bin/python
 %define _cli_env /opt/cfy
+%define __find_provides %{nil}
+%define __find_requires %{nil}
+%define _use_internal_dependency_generator 0
 
 # Prevent mangling shebangs (RH8 build default), which fails
 #  with the test files of networkx<2 due to RH8 not having python2.
@@ -20,9 +23,6 @@ URL:            https://github.com/cloudify-cosmo/cloudify-cli
 Vendor:         Cloudify Platform Ltd.
 Packager:       Cloudify Platform Ltd.
 
-BuildRequires:  python3 >= 3.6, python3-devel >= 3.6
-Requires:       python3 >= 3.6
-
 
 %description
 Cloudify CLI
@@ -31,8 +31,27 @@ Cloudify CLI
 %prep
 
 %build
-python3 -m venv %_cli_env
-%_cli_env/bin/pip install --upgrade pip==20.3.4
+
+# First let's build Python 3.10 in a custom location
+mkdir -p /opt/python3.10
+
+mkdir -p /tmp/BUILD_SOURCES
+cd /tmp/BUILD_SOURCES
+
+# -- build & install OpenSSL 1.1.1, required for Python 3.10
+curl https://ftp.openssl.org/source/openssl-1.1.1k.tar.gz -o openssl-1.1.1k.tar.gz
+tar -xzvf openssl-1.1.1k.tar.gz
+cd openssl-1.1.1k && ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic && make && make install
+# -- build & install Python 3.10
+cd ..
+curl https://www.python.org/ftp/python/3.10.6/Python-3.10.6.tgz -o Python-3.10.6.tgz
+tar xvf Python-3.10.6.tgz
+cd Python-3.10.6 && sed -i 's/PKG_CONFIG openssl /PKG_CONFIG openssl11 /g' configure && ./configure --prefix=/opt/python3.10 && sudo make altinstall
+
+# Create the venv with the custom Python symlinked in
+/opt/python3.10/bin/python3.10 -m venv %_cli_env
+
+%_cli_env/bin/pip install --upgrade pip
 %_cli_env/bin/pip install -r "${RPM_SOURCE_DIR}/dev-requirements.txt"
 %_cli_env/bin/pip install "${RPM_SOURCE_DIR}"
 

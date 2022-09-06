@@ -73,7 +73,7 @@ class SecretsTest(CliCommandTest):
         outcome = self.invoke('cfy secrets set-visibility a-secret-key -g',
                               err_str_segment='2',
                               exception=SystemExit)
-        self.assertIn('Error: no such option: -g', outcome.output)
+        self.assertIn('Error: No such option: -g', outcome.output)
 
     def test_secrets_create_invalid_argument(self):
         self.invoke('cfy secrets create a-secret-key -l bla',

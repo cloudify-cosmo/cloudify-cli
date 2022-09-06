@@ -520,7 +520,7 @@ def operations_get(operation_id, client, logger):
                    '(exclusive with execution-id)')
 @click.option('--show-internal', type=bool, is_flag=True, default=False,
               help='Also list internal operations')
-@click.option('--state', default=False, help='List operations in this state')
+@click.option('--state', required=False, help='List operations in this state')
 @cfy.pass_logger
 @cfy.pass_client()
 def operations_list(execution_id, graph_id, state, show_internal,

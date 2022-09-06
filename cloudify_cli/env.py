@@ -7,7 +7,6 @@ import getpass
 import tempfile
 import itertools
 from base64 import b64encode
-from contextlib import contextmanager
 
 import yaml
 import requests
@@ -20,12 +19,6 @@ from cloudify.utils import ipv6_url_compat
 
 from cloudify_cli import constants
 from cloudify_cli.exceptions import CloudifyCliError
-
-try:
-    from fabric import Connection
-    from paramiko import AuthenticationException
-except ImportError:
-    Connection = None
 
 
 _ENV_NAME = 'manager'
@@ -672,57 +665,6 @@ class CloudifyClusterClient(CloudifyClient):
     def client_class(self, *args, **kwargs):
         kwargs.setdefault('profile', self._profile)
         return ClusterHTTPClient(*args, **kwargs)
-
-
-@contextmanager
-def ssh_connection(host=None, user=None, key=None):
-    if Connection is None:
-        raise CloudifyCliError(
-            "SSH not available - fabric not installed")
-    if host is None:
-        host = profile.manager_ip
-    if user is None:
-        user = profile.ssh_user
-    if key is None:
-        key = profile.ssh_key
-    connect_kwargs = {}
-    if key:
-        connect_kwargs['key_filename'] = [key]
-    conn = Connection(
-        host=host,
-        user=user,
-        port=profile.ssh_port or 22,
-        connect_kwargs=connect_kwargs or None
-    )
-    try:
-        conn.open()
-        yield conn
-    except AuthenticationException as e:
-        if user:
-            user_message = user
-        else:
-            user_message = '{0} (from ssh config)'.format(conn.user)
-
-        if key:
-            key_message = key
-        elif conn.ssh_config.get('identityfile'):
-            key_message = '{0} (from ssh config)'.format(
-                ', '.join(conn.ssh_config['identityfile']))
-        else:
-            key_message = 'default'
-
-        raise CloudifyCliError(
-            "SSH: could not connect to {host} "
-            "(username: {user}, key: {key}): {exc}"
-            .format(
-                host=conn.host,
-                user=user_message,
-                key=key_message,
-                exc=e
-            )
-        )
-    finally:
-        conn.close()
 
 
 profile = get_profile_context(suppress_error=True)
