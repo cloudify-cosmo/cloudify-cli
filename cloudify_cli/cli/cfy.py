@@ -447,7 +447,7 @@ def set_cli_except_hook(global_verbosity_level):
     def new_excepthook(tpe, value, tb):
         with open(DEFAULT_LOG_FILE, 'a') as log_file:
             traceback.print_exception(
-                etype=tpe,
+                tpe,
                 value=value,
                 tb=tb,
                 file=log_file)
@@ -476,7 +476,7 @@ def set_cli_except_hook(global_verbosity_level):
             # print traceback if verbose
             s_traceback = StringIO()
             traceback.print_exception(
-                etype=tpe,
+                tpe,
                 value=value,
                 tb=tb,
                 file=s_traceback)
