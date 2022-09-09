@@ -25,13 +25,8 @@ install_requires = [
         'click_didyoumean==0.3.0',
         'cloudify-common[dispatcher]==7.0.0.dev1',
         'backports.shutil_get_terminal_size==1.0.0',
-        'ipaddress==1.0.23',
-        'setuptools>=65',
         'cryptography>=37,<40',
-        'cffi>=1.14,<1.15',
-        'pynacl==1.5.0',
         'fabric==2.7.1',
-        'pyyaml==6.0'
 ]
 
 packages = ['cloudify_cli',
