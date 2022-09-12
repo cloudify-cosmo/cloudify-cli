@@ -20,23 +20,29 @@ import time
 import click
 from cloudify_rest_client import exceptions
 
-from .. import local
-from .. import utils
-from ..table import print_data, print_single, print_details
-from ..utils import get_deployment_environment_execution
-from ..cli import cfy, helptexts
-from ..logger import (get_events_logger,
-                      get_global_json_output,
-                      get_global_extended_view)
-from ..constants import DEFAULT_UNINSTALL_WORKFLOW, CREATE_DEPLOYMENT
-from ..execution_events_fetcher import (
+from cloudify_cli import local, utils
+from cloudify_cli.cli import cfy, helptexts
+from cloudify_cli.constants import (
+    DEFAULT_UNINSTALL_WORKFLOW,
+    CREATE_DEPLOYMENT)
+from cloudify_cli.exceptions import (
+    CloudifyCliError,
+    ExecutionTimeoutError,
+    SuppressedCloudifyCliError)
+from cloudify_cli.execution_events_fetcher import (
     ExecutionEventsFetcher,
     wait_for_execution,
-    wait_for_execution_group
-)
-from ..exceptions import CloudifyCliError, ExecutionTimeoutError, \
-    SuppressedCloudifyCliError
-from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
+    wait_for_execution_group)
+from cloudify_cli.logger import (
+    get_events_logger,
+    get_global_json_output,
+    get_global_extended_view)
+from cloudify_cli.table import print_data, print_single, print_details
+from cloudify_cli.utils import get_deployment_environment_execution
+
+from cloudify_cli.commands.summary import (
+    BASE_SUMMARY_FIELDS,
+    structure_summary_results)
 
 _STATUS_CANCELING_MESSAGE = (
     'NOTE: Executions currently in a "canceling/force-canceling" status '
@@ -64,13 +70,11 @@ EXECUTIONS_SUMMARY_FIELDS = [
 @cfy.group(name='executions')
 @cfy.options.common_options
 def executions():
-    """Handle workflow executions
-    """
-    pass
+    """Handle workflow executions"""
 
 
-@cfy.command(name='get',
-             short_help='Retrieve execution information [manager only]')
+@executions.command(name='get',
+                    short_help='Retrieve execution information [manager only]')
 @cfy.argument('execution-id')
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
@@ -106,8 +110,7 @@ def manager_get(execution_id, logger, client, tenant_name):
     logger.info('')
 
 
-@cfy.command(name='list',
-             short_help='List deployment executions')
+@executions.command(name='list', short_help='List deployment executions')
 @cfy.options.deployment_id(required=False)
 @cfy.options.include_system_workflows
 @cfy.options.sort_by()
@@ -172,8 +175,7 @@ def manager_list(
         logger.info(_STATUS_CANCELING_MESSAGE)
 
 
-@cfy.command(name='start',
-             short_help='Execute a workflow')
+@executions.command(name='start', short_help='Execute a workflow')
 @cfy.argument('workflow-id')
 @cfy.options.deployment_id(required=True)
 @cfy.options.parameters
@@ -184,6 +186,7 @@ def manager_list(
 @cfy.options.json_output
 @cfy.options.dry_run
 @cfy.options.wait_after_fail
+@cfy.options.worker_names
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='execution')
 @cfy.options.schedule
@@ -203,6 +206,7 @@ def manager_start(workflow_id,
                   wait_after_fail,
                   queue,
                   schedule,
+                  with_worker_names,
                   logger,
                   client,
                   tenant_name):
@@ -211,7 +215,7 @@ def manager_start(workflow_id,
     `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    events_logger = get_events_logger(json_output)
+    events_logger = get_events_logger(json_output, with_worker_names)
     events_message = "* Run 'cfy events list {0}' to retrieve the " \
                      "execution's events/logs"
     original_timeout = timeout
@@ -329,8 +333,8 @@ def manager_start(workflow_id,
         raise SuppressedCloudifyCliError()
 
 
-@cfy.command(name='cancel',
-             short_help='Cancel a workflow execution [manager only]')
+@executions.command(name='cancel',
+                    short_help='Cancel a workflow execution [manager only]')
 @cfy.argument('execution-id')
 @cfy.options.common_options
 @cfy.options.force(help=helptexts.FORCE_CANCEL_EXECUTION)
@@ -359,8 +363,8 @@ def manager_cancel(execution_id, force, kill, logger, client, tenant_name):
         "cfy executions get {0}".format(execution_id))
 
 
-@cfy.command(name='resume',
-             short_help='Resume a workflow execution [manager only]')
+@executions.command(name='resume',
+                    short_help='Resume a workflow execution [manager only]')
 @cfy.argument('execution-id')
 @cfy.options.common_options
 @cfy.options.reset_operations
@@ -387,87 +391,15 @@ def manager_resume(execution_id, reset_operations, logger, client,
         "cfy executions get {0}".format(execution_id))
 
 
-@cfy.command(name='list',
-             short_help='List deployment executions')
-@cfy.options.blueprint_id(required=True)
-@cfy.options.common_options
-@cfy.pass_logger
-@cfy.options.extended_view
-def local_list(blueprint_id, logger):
-    """Execute a workflow
-
-    `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
-    """
-    env = local.load_env(blueprint_id)
-    executions = env.storage.get_executions()
-    print_data(LOCAL_EXECUTION_COLUMNS, executions, 'Executions:',
-               labels=EXECUTION_TABLE_LABELS)
-
-
-@cfy.command(name='get',
-             short_help='Retrieve execution information')
-@cfy.argument('execution-id')
-@cfy.options.blueprint_id(required=True)
-@cfy.options.common_options
-@cfy.pass_logger
-@cfy.options.extended_view
-def local_get(execution_id, blueprint_id, logger):
-    """Retrieve information for a specific execution
-
-    `EXECUTION_ID` is the execution to get information on.
-    """
-    env = local.load_env(blueprint_id)
-    execution = env.storage.get_execution(execution_id)
-    if not execution:
-        raise CloudifyCliError('Execution {0} not found'.format(execution_id))
-    columns = LOCAL_EXECUTION_COLUMNS
-    if get_global_json_output():
-        columns += ['parameters']
-    print_single(LOCAL_EXECUTION_COLUMNS, execution, 'Execution:',
-                 labels=EXECUTION_TABLE_LABELS)
-    if not get_global_json_output():
-        print_details(execution['parameters'], 'Execution Parameters:')
-
-
-@cfy.command(name='start',
-             short_help='Execute a workflow')
-@cfy.argument('workflow-id')
-@cfy.options.blueprint_id(required=True)
-@cfy.options.parameters
-@cfy.options.allow_custom_parameters
-@cfy.options.task_retries()
-@cfy.options.task_retry_interval()
-@cfy.options.task_thread_pool_size()
-@cfy.options.common_options
-@cfy.pass_logger
-def local_start(workflow_id,
-                blueprint_id,
-                parameters,
-                allow_custom_parameters,
-                task_retries,
-                task_retry_interval,
-                task_thread_pool_size,
-                logger):
-    """Execute a workflow
-
-    `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
-    """
-    env = local.load_env(blueprint_id)
-    result = env.execute(workflow=workflow_id,
-                         parameters=parameters,
-                         allow_custom_parameters=allow_custom_parameters,
-                         task_retries=task_retries,
-                         task_retry_interval=task_retry_interval,
-                         task_thread_pool_size=task_thread_pool_size)
-    if result is not None:
-        logger.info(json.dumps(result, sort_keys=True, indent=2))
-
-
 @executions.command(name='summary',
                     short_help='Retrieve summary of execution details '
-                               '[manager only]')
-@cfy.argument('target_field', type=click.Choice(EXECUTIONS_SUMMARY_FIELDS))
-@cfy.argument('sub_field', type=click.Choice(EXECUTIONS_SUMMARY_FIELDS),
+                               '[manager only]',
+                    help=helptexts.SUMMARY_HELP.format(
+                        type='executions',
+                        example='execution with the same deployment ID',
+                        fields='|'.join(EXECUTIONS_SUMMARY_FIELDS)))
+@cfy.argument('target_field', type=cfy.SummaryArgs(EXECUTIONS_SUMMARY_FIELDS))
+@cfy.argument('sub_field', type=cfy.SummaryArgs(EXECUTIONS_SUMMARY_FIELDS),
               default=None, required=False)
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='summary')
@@ -477,11 +409,6 @@ def local_start(workflow_id,
 @cfy.pass_client()
 def summary(target_field, sub_field, group_id, logger, client, tenant_name,
             all_tenants):
-    """Retrieve summary of executions, e.g. a count of each execution with
-    the same deployment ID.
-
-    `TARGET_FIELD` is the field to summarise executions on.
-    """
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving summary of executions on field {field}'.format(
         field=target_field))
@@ -549,10 +476,73 @@ def delete(logger, client, tenant_name, to_datetime, before, keep_last,
         logger.info('\nNo executions to delete')
 
 
+@executions.group('graphs')
+@cfy.options.common_options
+def graphs():
+    """Handle executions' tasks-graphs"""
+
+
+@graphs.command('list')
+@cfy.options.common_options
+@cfy.argument('execution-id', required=True)
+@click.option('--name', help='List graphs with this name')
+@cfy.pass_logger
+@cfy.pass_client()
+def graphs_list(execution_id, name, client, logger):
+    """List tasks-graphs for an execution"""
+    tgs = client.tasks_graphs.list(execution_id=execution_id, name=name)
+    print_data(['id', 'name', 'created_at'], tgs,
+               'Tasks graphs of execution {0}:'.format(execution_id))
+
+
+@executions.group('operations')
+@cfy.options.common_options
+def operations():
+    """Handle executions' operations"""
+
+
+@operations.command('get')
+@cfy.options.common_options
+@cfy.argument('operation-id', required=True)
+@cfy.pass_logger
+@cfy.pass_client()
+def operations_get(operation_id, client, logger):
+    """Display the details of an operation"""
+    op = client.operations.get(operation_id)
+    print_details(op, 'Operation {0}:'.format(operation_id))
+
+
+@operations.command('list')
+@cfy.options.common_options
+@cfy.argument('execution-id', required=False)
+@click.option('--graph-id', required=False,
+              help='List operations of this graph '
+                   '(exclusive with execution-id)')
+@click.option('--show-internal', type=bool, is_flag=True, default=False,
+              help='Also list internal operations')
+@click.option('--state', required=False, help='List operations in this state')
+@cfy.pass_logger
+@cfy.pass_client()
+def operations_list(execution_id, graph_id, state, show_internal,
+                    client, logger):
+    """List operations for an execution or a graph"""
+    ops = client.operations.list(
+        graph_id=graph_id,
+        execution_id=execution_id,
+        state=state,
+        skip_internal=not show_internal,
+    )
+    print_data(
+        ['id', 'name', 'type', 'state', 'manager_name', 'agent_name'],
+        ops,
+        'Operations'
+    )
+
+
 @executions.group('groups')
 @cfy.options.common_options
 def groups():
-    pass
+    """Manage execution groups"""
 
 
 @groups.command('get',
@@ -640,11 +630,11 @@ def execution_groups_details(execution_group_id, client, logger):
                 short_help='Execute a workflow on each deployment in a group')
 @click.option('--deployment-group', '-g',
               help='The deployment group ID to run the workflow on')
-@click.option('--concurrency', help='Run this many executions at a time',
-              type=int, default=5)
+@cfy.options.execution_group_concurrency
 @click.argument('workflow-id')
 @cfy.options.common_options
 @cfy.options.parameters
+@cfy.options.worker_names
 @cfy.options.json_output
 @cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
 @cfy.options.timeout()
@@ -652,8 +642,8 @@ def execution_groups_details(execution_group_id, client, logger):
 @cfy.pass_logger
 def execution_groups_start(deployment_group, workflow_id, parameters,
                            json_output, force, timeout, concurrency,
-                           client, logger):
-    events_logger = get_events_logger(json_output)
+                           with_worker_names, client, logger):
+    events_logger = get_events_logger(json_output, with_worker_names)
     group = client.execution_groups.start(
         deployment_group_id=deployment_group,
         workflow_id=workflow_id,
@@ -775,3 +765,83 @@ def execution_groups_set_failure(group_id, failure_group_id,
         group_id, failed_group=failure_group_id)
     logger.info('Execution group %s: success target group set to %s',
                 group_id, failure_group_id)
+
+
+@cfy.group(name='executions')
+@cfy.options.common_options
+def local_executions():
+    """Handle workflow executions"""
+
+
+@local_executions.command(name='start', short_help='Execute a workflow')
+@cfy.argument('workflow-id')
+@cfy.options.blueprint_id(required=True)
+@cfy.options.parameters
+@cfy.options.allow_custom_parameters
+@cfy.options.task_retries()
+@cfy.options.task_retry_interval()
+@cfy.options.task_thread_pool_size()
+@cfy.options.common_options
+@cfy.pass_logger
+def local_start(workflow_id,
+                blueprint_id,
+                parameters,
+                allow_custom_parameters,
+                task_retries,
+                task_retry_interval,
+                task_thread_pool_size,
+                logger):
+    """Execute a workflow
+
+    `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
+    """
+    env = local.load_env(blueprint_id)
+    result = env.execute(workflow=workflow_id,
+                         parameters=parameters,
+                         allow_custom_parameters=allow_custom_parameters,
+                         task_retries=task_retries,
+                         task_retry_interval=task_retry_interval,
+                         task_thread_pool_size=task_thread_pool_size)
+    if result is not None:
+        logger.info(json.dumps(result, sort_keys=True, indent=2))
+
+
+@local_executions.command(name='list', short_help='List deployment executions')
+@cfy.options.blueprint_id(required=True)
+@cfy.options.common_options
+@cfy.pass_logger
+@cfy.options.extended_view
+def local_list(blueprint_id, logger):
+    """Execute a workflow
+
+    `WORKFLOW_ID` is the id of the workflow to execute (e.g. `uninstall`)
+    """
+    env = local.load_env(blueprint_id)
+    executions = env.storage.get_executions()
+    print_data(LOCAL_EXECUTION_COLUMNS, executions, 'Executions:',
+               labels=EXECUTION_TABLE_LABELS)
+
+
+@local_executions.command(
+    name='get', short_help='Retrieve execution information')
+@cfy.argument('execution-id')
+@cfy.options.blueprint_id(required=True)
+@cfy.options.common_options
+@cfy.pass_logger
+@cfy.options.extended_view
+def local_get(execution_id, blueprint_id, logger):
+    """Retrieve information for a specific execution
+
+    `EXECUTION_ID` is the execution to get information on.
+    """
+    env = local.load_env(blueprint_id)
+    execution = env.storage.get_execution(execution_id)
+    if not execution:
+        raise CloudifyCliError('Execution {0} not found'.format(execution_id))
+    columns = LOCAL_EXECUTION_COLUMNS
+    if get_global_json_output():
+        columns += ['parameters']
+    print_single(LOCAL_EXECUTION_COLUMNS, execution, 'Execution:',
+                 labels=EXECUTION_TABLE_LABELS)
+    if not get_global_json_output():
+        print_details(execution['parameters'], 'Execution Parameters:')

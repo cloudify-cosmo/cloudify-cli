@@ -17,31 +17,38 @@
 import os
 import json
 import shutil
+from urllib.parse import urlparse
 
 import click
 
 from dsl_parser.parser import parse_from_path
 from dsl_parser.exceptions import DSLParsingException
-from cloudify._compat import urlparse
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
-from .. import env
-from .. import local
-from .. import utils
-from ..cli import cfy, helptexts
-from .. import blueprint
-from .. import exceptions
-from ..config import config
-from ..logger import get_global_json_output
-from ..table import print_data, print_single
-from ..exceptions import CloudifyCliError
-from ..utils import prettify_client_error, get_visibility, validate_visibility
-from ..labels_utils import (add_labels,
-                            delete_labels,
-                            list_labels,
-                            modify_resource_labels)
-from .. import filters_utils
-from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
+from cloudify_cli import (
+    blueprint,
+    env,
+    exceptions,
+    filters_utils,
+    local,
+    utils)
+from cloudify_cli.cli import cfy, helptexts
+from cloudify_cli.config import config
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.labels_utils import (
+    add_labels,
+    delete_labels,
+    list_labels,
+    serialize_resource_labels)
+from cloudify_cli.logger import get_global_json_output
+from cloudify_cli.table import print_data, print_single
+from cloudify_cli.utils import (
+    prettify_client_error,
+    get_visibility,
+    validate_visibility)
+from cloudify_cli.commands.summary import (
+    BASE_SUMMARY_FIELDS,
+    structure_summary_results)
 
 
 DESCRIPTION_LIMIT = 20
@@ -56,32 +63,7 @@ BLUEPRINTS_SUMMARY_FIELDS = BASE_SUMMARY_FIELDS
 @cfy.group(name='blueprints')
 @cfy.options.common_options
 def blueprints():
-    """Handle blueprints on the manager
-    """
-    pass
-
-
-@blueprints.command(name='validate',
-                    short_help='Validate a blueprint')
-@cfy.argument('blueprint-path')
-@cfy.options.common_options
-@cfy.pass_logger
-def validate_blueprint(blueprint_path, logger):
-    """Validate a blueprint
-
-    `BLUEPRINT_PATH` is the path of the blueprint to validate.
-    """
-    logger.info('Validating blueprint: {0}'.format(blueprint_path))
-    try:
-        resolver = config.get_import_resolver()
-        validate_version = config.is_validate_definitions_version()
-        parse_from_path(
-            dsl_file_path=blueprint_path,
-            resolver=resolver,
-            validate_version=validate_version)
-    except DSLParsingException as ex:
-        raise CloudifyCliError('Failed to validate blueprint: {0}'.format(ex))
-    logger.info('Blueprint validated successfully')
+    """Handle blueprints on the manager"""
 
 
 @blueprints.command(name='upload',
@@ -244,7 +226,7 @@ def delete(blueprint_id, force, logger, client, tenant_name):
     logger.info('Blueprint deleted')
 
 
-@cfy.command(name='list', short_help='List blueprints')
+@blueprints.command(name='list', short_help='List blueprints')
 @cfy.options.filter_id
 @cfy.options.blueprint_filter_rules
 @cfy.options.sort_by()
@@ -296,7 +278,7 @@ def manager_list(filter_id,
         filter_id=filter_id
     )
     blueprints = [trim_description(b) for b in blueprints_list]
-    modify_resource_labels(blueprints)
+    serialize_resource_labels(blueprints)
     print_data(BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
     total = blueprints_list.metadata.pagination.total
@@ -307,15 +289,6 @@ def manager_list(filter_id,
         if filtered is not None:
             base_str += ' ({} hidden by filter)'.format(filtered)
     logger.info(base_str)
-
-
-@cfy.command(name='list', short_help='List blueprints')
-@cfy.options.local_common_options
-@cfy.pass_logger
-@cfy.options.extended_view
-def local_list(logger):
-    blueprints = local.list_blueprints()
-    print_data(BASE_BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
 
 
 @blueprints.command(name='get',
@@ -340,6 +313,13 @@ def get(blueprint_id, logger, client, tenant_name):
     blueprint_dict['#deployments'] = len(deployments)
     columns = BLUEPRINT_COLUMNS + ['#deployments']
     blueprint_metadata = blueprint_dict['plan']['metadata'] or {}
+    blueprint_plugins = {k: [p for p in blueprint_dict['plan'][k]
+                             if p['package_name'] and p['package_version']]
+                         for k in ['deployment_plugins_to_install',
+                                   'workflow_plugins_to_install',
+                                   'host_agent_plugins_to_install']
+                         if k in blueprint_dict['plan']
+                         and blueprint_dict['plan'][k]}
     blueprint_deployments = [d['id'] for d in deployments]
 
     if get_global_json_output():
@@ -349,6 +329,7 @@ def get(blueprint_id, logger, client, tenant_name):
         blueprint_dict['deployments'] = blueprint_deployments
         print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
     else:
+        serialize_resource_labels([blueprint_dict])
         print_single(columns, blueprint_dict, 'Blueprint:', max_width=50)
 
         logger.info('Description:')
@@ -359,6 +340,23 @@ def get(blueprint_id, logger, client, tenant_name):
             for property_name, property_value in \
                     blueprint_dict['plan']['metadata'].items():
                 logger.info('\t{0}: {1}'.format(property_name, property_value))
+            logger.info('')
+
+        if blueprint_plugins:
+            plugins_dict = {}
+            for plugin_key, plugins in blueprint_plugins.items():
+                plugin_purpose = plugin_key.partition('_')[0]
+                for plugin in plugins:
+                    plugin_id = '{0}=={1}'.format(plugin['package_name'],
+                                                  plugin['package_version'])
+                    if plugin_id in plugins_dict:
+                        plugins_dict[plugin_id].append(plugin_purpose)
+                    else:
+                        plugins_dict[plugin_id] = [plugin_purpose]
+            logger.info('Plugins:')
+            for plugin, plugin_purpose in plugins_dict.items():
+                logger.info('\t{0} ({1})'.format(plugin,
+                                                 ', '.join(plugin_purpose)))
             logger.info('')
 
         logger.info('Existing deployments:')
@@ -454,24 +452,6 @@ def create_requirements(blueprint_path, output_path, logger):
             logger.info(requirement)
 
 
-@blueprints.command(name='install-plugins',
-                    short_help='Install plugins [locally]')
-@cfy.argument('blueprint-path', type=click.Path(exists=True))
-@cfy.options.common_options
-@cfy.assert_local_active
-@cfy.pass_logger
-def install_plugins(blueprint_path, logger):
-    """Install the necessary plugins for a given blueprint in the
-    local environment.
-
-    Currently only supports passing the YAML of the blueprint directly.
-
-    `BLUEPRINT_PATH` is the path to the blueprint to install plugins for.
-    """
-    logger.info('Installing plugins...')
-    local._install_plugins(blueprint_path=blueprint_path)
-
-
 @blueprints.command(name='set-global',
                     short_help="Set the blueprint's visibility to global")
 @cfy.argument('blueprint-id')
@@ -488,8 +468,8 @@ def set_global(blueprint_id, logger, client):
     with prettify_client_error(status_codes, logger):
         client.blueprints.set_global(blueprint_id)
         logger.info('Blueprint `{0}` was set to global'.format(blueprint_id))
-        logger.info("This command will be deprecated soon, please use the "
-                    "'set-visibility' command instead")
+        logger.warning("This command is deprecated and will be removed soon, "
+                       "please use the 'set-visibility' command instead")
 
 
 @blueprints.command(name='set-visibility',
@@ -515,9 +495,13 @@ def set_visibility(blueprint_id, visibility, logger, client):
 
 @blueprints.command(name='summary',
                     short_help='Retrieve summary of blueprint details '
-                               '[manager only]')
-@cfy.argument('target_field', type=click.Choice(BLUEPRINTS_SUMMARY_FIELDS))
-@cfy.argument('sub_field', type=click.Choice(BLUEPRINTS_SUMMARY_FIELDS),
+                               '[manager only]',
+                    help=helptexts.SUMMARY_HELP.format(
+                        type='blueprints',
+                        example='blueprint with the same tenant name',
+                        fields='|'.join(BLUEPRINTS_SUMMARY_FIELDS)))
+@cfy.argument('target_field', type=cfy.SummaryArgs(BLUEPRINTS_SUMMARY_FIELDS))
+@cfy.argument('sub_field', type=cfy.SummaryArgs(BLUEPRINTS_SUMMARY_FIELDS),
               default=None, required=False)
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='summary')
@@ -526,11 +510,6 @@ def set_visibility(blueprint_id, visibility, logger, client):
 @cfy.pass_client()
 def summary(target_field, sub_field, logger, client, tenant_name,
             all_tenants):
-    """Retrieve summary of blueprints, e.g. a count of each blueprint with
-    the same tenant name.
-
-    `TARGET_FIELD` is the field to summarise blueprints on.
-    """
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Retrieving summary of blueprints on field {field}'.format(
         field=target_field))
@@ -584,11 +563,13 @@ def set_icon(blueprint_id, icon_path, logger, client):
                     short_help="Change blueprint's ownership")
 @cfy.argument('blueprint-id')
 @cfy.options.new_username()
+@cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.assert_manager_active()
-@cfy.pass_client()
+@cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def set_owner(blueprint_id, username, logger, client):
+def set_owner(blueprint_id, username, tenant_name, logger, client):
     """Set a new owner for the blueprint."""
+    utils.explicit_tenant_name_message(tenant_name, logger)
     bp = client.blueprints.update(blueprint_id, {'creator': username})
     logger.info('Blueprint `%s` is now owned by user `%s`.',
                 blueprint_id, bp.get('created_by'))
@@ -801,3 +782,62 @@ def delete_deployments_filter(filter_id, tenant_name, logger, client):
                                 tenant_name,
                                 logger,
                                 client.blueprints_filters)
+
+
+@cfy.group(name='blueprints')
+@cfy.options.common_options
+def local_blueprints():
+    """Handle local blueprints"""
+
+
+@local_blueprints.command(name='list', short_help='List blueprints')
+@cfy.options.local_common_options
+@cfy.pass_logger
+@cfy.options.extended_view
+def local_list(logger):
+    blueprints = local.list_blueprints()
+    print_data(BASE_BLUEPRINT_COLUMNS, blueprints, 'Blueprints:')
+
+
+@local_blueprints.command(name='install-plugins',
+                          short_help='Install plugins [locally]')
+@cfy.argument('blueprint-path', type=click.Path(exists=True))
+@cfy.options.common_options
+@cfy.assert_local_active
+@cfy.pass_logger
+def install_plugins(blueprint_path, logger):
+    """Install the necessary plugins for a given blueprint in the
+       local environment.
+
+    Currently only supports passing the YAML of the blueprint directly.
+
+    `BLUEPRINT_PATH` is the path to the blueprint to install plugins for.
+    """
+    logger.info('Installing plugins...')
+    local._install_plugins(blueprint_path=blueprint_path)
+
+
+@click.command(name='validate', short_help='Validate a blueprint')
+@cfy.argument('blueprint-path')
+@cfy.options.common_options
+@cfy.pass_logger
+def validate_blueprint(blueprint_path, logger):
+    """Validate a blueprint
+
+    `BLUEPRINT_PATH` is the path of the blueprint to validate.
+    """
+    logger.info('Validating blueprint: {0}'.format(blueprint_path))
+    try:
+        resolver = config.get_import_resolver()
+        validate_version = config.is_validate_definitions_version()
+        parse_from_path(
+            dsl_file_path=blueprint_path,
+            resolver=resolver,
+            validate_version=validate_version)
+    except DSLParsingException as ex:
+        raise CloudifyCliError('Failed to validate blueprint: {0}'.format(ex))
+    logger.info('Blueprint validated successfully')
+
+
+blueprints.add_command(validate_blueprint)
+local_blueprints.add_command(validate_blueprint)

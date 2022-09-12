@@ -24,12 +24,12 @@ from uuid import uuid4
 from functools import wraps
 from datetime import datetime
 from contextlib import contextmanager
+from io import StringIO
 
 from mock import patch
 
 from cloudify_cli.constants import DEFAULT_TENANT_NAME
 
-from cloudify._compat import StringIO
 import cloudify.utils
 import cloudify.exceptions
 from cloudify import ctx as op_ctx
@@ -69,7 +69,7 @@ def execution_mock(status, wf_id='mock_wf'):
     })
 
 
-def mock_log_message_prefix(event):
+def mock_log_message_prefix(event, with_name=False):
     return event['event_name']
 
 

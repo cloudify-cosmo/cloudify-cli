@@ -22,8 +22,7 @@ from cloudify_rest_client.exceptions import UserUnauthorizedError
 from cloudify_rest_client.manager import (ManagerItem, RabbitMQBrokerItem,
                                           DBNodeItem)
 
-from .test_base import CliCommandTest
-from ..cfy import ClickInvocationException
+from .test_base import CliCommandTest, ClickInvocationException
 
 
 class ClusterTest(CliCommandTest):
@@ -116,6 +115,7 @@ class ClusterTest(CliCommandTest):
         # Running a command which requires a target manager server without
         # first calling "cfy profiles use" or providing a target server
         # explicitly
+        self.delete_current_profile()
         self.invoke(
             'cfy cluster status',
             'This command is only available when using a manager'

@@ -6,17 +6,16 @@ from contextlib import closing
 
 from mock import MagicMock, patch
 
-from .. import cfy
 from ... import env
 from ... import utils
 from ...commands import profiles
 from .mocks import MockListResponse
-from .test_base import CliCommandTest
+from .test_base import CliCommandTest, default_manager_params
 
 
 class ProfilesTest(CliCommandTest):
     def test_profiles_uninitialized_env(self):
-        cfy.purge_dot_cloudify()
+        self.purge_dot_cloudify()
         result = self.invoke('profiles list')
         self.assertIn('No profiles found', result.output)
 
@@ -32,9 +31,10 @@ class ProfilesTest(CliCommandTest):
         self.use_manager()
         profile_output = profiles._get_profile('10.10.1.10')
         self.assertDictContainsSubset(
-            profile_output, cfy.default_manager_params)
+            profile_output, default_manager_params)
 
     def test_get_profile_no_active_manager(self):
+        self.use_local_profile()
         outcome = self.invoke('profiles show-current')
         self.assertIn("You're currently working in local mode", outcome.logs)
 
@@ -47,6 +47,7 @@ class ProfilesTest(CliCommandTest):
         self.assertIn('80', outcome.output)
 
     def test_list_profiles_no_profiles(self):
+        self.delete_current_profile()
         outcome = self.invoke('profiles list')
         self.assertIn('No profiles found.', outcome.logs)
 
@@ -60,8 +61,8 @@ class ProfilesTest(CliCommandTest):
 
     def test_delete_profile(self):
         self.use_manager()
-        self.assertTrue(os.path.isdir(
-            os.path.join(env.PROFILES_DIR, '10.10.1.10')))
+        assert os.path.isdir(
+            os.path.join(env.PROFILES_DIR, '10.10.1.10'))
         self.invoke('cfy profiles delete 10.10.1.10')
         self.invoke('cfy profiles list')
         # TODO: This isn't tested right due to the logs containing
@@ -69,7 +70,7 @@ class ProfilesTest(CliCommandTest):
         # self.assertNotIn('localhost', outcome.logs)
 
     def test_delete_non_existing_profile(self):
-        manager_ip = '10.10.1.10'
+        manager_ip = '10.10.1.11'
         self.invoke(
             'cfy profiles delete {0}'.format(manager_ip),
             err_str_segment='does not exist'
@@ -84,12 +85,12 @@ class ProfilesTest(CliCommandTest):
             with closing(tarfile.open(name=profiles_archive)) as tar:
                 members = [member.name for member in tar.getmembers()]
             self.assertIn('profiles/10.10.1.10/context.json', members)
-            cfy.purge_dot_cloudify()
-            self.assertFalse(os.path.isdir(env.PROFILES_DIR))
+            self.purge_dot_cloudify()
+            assert not os.path.isdir(env.PROFILES_DIR)
             self.invoke('cfy init')
             self.invoke('cfy profiles import {0}'.format(profiles_archive))
-            self.assertTrue(os.path.isfile(
-                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context.json')))
+            assert os.path.isfile(
+                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context.json'))
         finally:
             os.remove(profiles_archive)
 
@@ -117,7 +118,7 @@ class ProfilesTest(CliCommandTest):
             self.assertIn('profiles/{0}/{1}.10.10.1.10.profile'.format(
                 profiles.EXPORTED_KEYS_DIRNAME,
                 os.path.basename(key)), members)
-            cfy.purge_dot_cloudify()
+            self.purge_dot_cloudify()
             os.remove(key)
             self.assertFalse(os.path.isdir(env.PROFILES_DIR))
 
@@ -133,27 +134,28 @@ class ProfilesTest(CliCommandTest):
             )
 
             # Then actually import the profile with the keys
-            cfy.purge_dot_cloudify()
+            self.purge_dot_cloudify()
             self.invoke('cfy init')
             self.invoke(
                 'cfy profiles import {0} --include-keys'
                 .format(profiles_archive)
             )
 
-            self.assertTrue(os.path.isfile(
-                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context.json')))
-            self.assertTrue(os.path.isfile(key))
+            assert os.path.isfile(
+                os.path.join(env.PROFILES_DIR, '10.10.1.10', 'context.json'))
+            assert os.path.isfile(key)
         finally:
             os.remove(key)
             os.remove(profiles_archive)
 
     def test_export_profiles_no_profiles_to_export(self):
+        self.delete_current_profile()
         self.invoke(
             'cfy profiles export',
             err_str_segment='No profiles to export')
 
     def test_export_env_not_initialized(self):
-        cfy.purge_dot_cloudify()
+        self.purge_dot_cloudify()
         self.invoke(
             'cfy profiles export',
             err_str_segment='No profiles to export')
@@ -164,7 +166,7 @@ class ProfilesTest(CliCommandTest):
         self.use_manager()
         try:
             self.invoke('cfy profiles export -o {0}'.format(profiles_archive))
-            cfy.purge_dot_cloudify()
+            self.purge_dot_cloudify()
             self.invoke('cfy profiles import {0}'.format(profiles_archive))
         finally:
             os.remove(profiles_archive)
@@ -308,12 +310,11 @@ class ProfilesTest(CliCommandTest):
         self.use_manager()
         self.invoke('profiles set -u 0 -p 0 -t 0 -c 0')
 
-        validate_credentials_mock.assert_called_once_with(
-            None, '0', '0', '0', '0', None, None, None)
-        self.assertEquals('0', env.profile.manager_username)
-        self.assertEquals('0', env.profile.manager_password)
-        self.assertEquals('0', env.profile.manager_tenant)
-        self.assertEquals('0', env.profile.rest_certificate)
+        validate_credentials_mock.assert_called_once_with(env.profile)
+        assert '0' == env.profile.manager_username
+        assert '0' == env.profile.manager_password
+        assert '0' == env.profile.manager_tenant
+        assert '0' == env.profile.rest_certificate
 
     def test_cannot_set_name_local(self):
         self.use_manager()
@@ -425,8 +426,8 @@ class ProfilesTest(CliCommandTest):
     def test_cluster_profile_use(self, _, mock_aio, mock_update_cluster):
         self.use_manager()
         self.invoke('profiles use 0.0.0.0 -u name_it -p swordfish')
-        self.assertTrue(mock_aio.called)
-        self.assertTrue(mock_update_cluster.called)
+        assert mock_aio.called
+        assert mock_update_cluster.called
 
     @patch('cloudify_cli.commands.profiles.update_cluster_profile')
     @patch('cloudify_cli.commands.profiles._all_in_one_manager',
@@ -437,5 +438,5 @@ class ProfilesTest(CliCommandTest):
                                           mock_update_cluster):
         self.use_manager()
         self.invoke('profiles use 10.10.1.10')
-        self.assertTrue(mock_aio.called)
-        self.assertTrue(mock_update_cluster.called)
+        assert mock_aio.called
+        assert mock_update_cluster.called

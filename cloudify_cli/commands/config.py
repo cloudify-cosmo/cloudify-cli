@@ -15,18 +15,18 @@
 ############
 
 
-from ..cli import cfy
-from ..table import print_data
+from cloudify_cli.cli import cfy
+from cloudify_cli.table import print_data
 
 CONFIG_COLUMNS = [
-    'name', 'value', 'scope', 'updated_at', 'is_editable'
+    'name', 'value', 'scope', 'updated_at', 'is_editable', 'admin_only',
 ]
 
 
 @cfy.group(name='config')
 @cfy.options.common_options
 def config():
-    pass
+    """Handle manager configuration"""
 
 
 @config.command(name='list',

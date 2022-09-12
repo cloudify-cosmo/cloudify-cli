@@ -16,17 +16,18 @@
 
 import json
 
-import click
-
-from .. import utils
-from ..cli import cfy
-from ..local import load_env
-from ..exceptions import CloudifyCliError
-from ..logger import get_global_json_output
-from ..utils import deep_update_dict, deep_subtract_dict
-from ..table import print_data, print_details, print_single
 from cloudify_rest_client.exceptions import CloudifyClientError
-from .summary import BASE_SUMMARY_FIELDS, structure_summary_results
+
+from cloudify_cli import utils
+from cloudify_cli.cli import cfy, helptexts
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.local import load_env
+from cloudify_cli.logger import get_global_json_output
+from cloudify_cli.table import print_data, print_details, print_single
+from cloudify_cli.utils import deep_update_dict, deep_subtract_dict
+from cloudify_cli.commands.summary import (
+    BASE_SUMMARY_FIELDS,
+    structure_summary_results)
 
 
 NODE_INSTANCE_COLUMNS = ['id', 'deployment_id', 'host_id', 'node_id', 'state',
@@ -140,11 +141,16 @@ def list(deployment_id,
 
 @node_instances.command(name='summary',
                         short_help='Retrieve summary of node instance '
-                                   'details [manager only]')
+                                   'details [manager only]',
+                        help=helptexts.SUMMARY_HELP.format(
+                            type='node-instances',
+                            example='node instance with the same '
+                                    'deployment ID',
+                            fields='|'.join(NODE_INSTANCES_SUMMARY_FIELDS)))
 @cfy.argument('target_field',
-              type=click.Choice(NODE_INSTANCES_SUMMARY_FIELDS))
+              type=cfy.SummaryArgs(NODE_INSTANCES_SUMMARY_FIELDS))
 @cfy.argument('sub_field',
-              type=click.Choice(NODE_INSTANCES_SUMMARY_FIELDS),
+              type=cfy.SummaryArgs(NODE_INSTANCES_SUMMARY_FIELDS),
               default=None, required=False)
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='summary')
@@ -153,11 +159,6 @@ def list(deployment_id,
 @cfy.pass_client()
 def summary(target_field, sub_field, logger, client, tenant_name,
             all_tenants):
-    """Retrieve summary of node instances, e.g. a count of each node instance
-    with the same deployment ID.
-
-    `TARGET_FIELD` is the field to summarise node instances on.
-    """
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info(
         'Retrieving summary of node instances on field {field}'.format(

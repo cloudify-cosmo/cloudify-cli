@@ -20,17 +20,17 @@ import json
 import click
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 
-from .. import env
-from .. import utils
-from ..cli import cfy
-from ..exceptions import CloudifyCliError
-from ..table import print_data, print_details
-from ..utils import (load_json,
-                     print_dict,
-                     validate_visibility,
-                     assert_one_argument,
-                     handle_client_error,
-                     prettify_client_error)
+from cloudify_cli import env, utils
+from cloudify_cli.cli import cfy
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.table import print_data, print_details
+from cloudify_cli.utils import (
+    load_json,
+    print_dict,
+    validate_visibility,
+    assert_one_argument,
+    handle_client_error,
+    prettify_client_error)
 
 SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'visibility',
                    'tenant_name', 'created_by', 'is_hidden_value']
@@ -295,8 +295,8 @@ def set_global(key, logger, client):
     with prettify_client_error(status_codes, logger):
         client.secrets.set_global(key)
         logger.info('Secret `{0}` was set to global'.format(key))
-        logger.info("This command will be deprecated soon, please use the "
-                    "'set-visibility' command instead")
+        logger.warning("This command is deprecated and will be removed soon, "
+                       "please use the 'set-visibility' command instead")
 
 
 @secrets.command(name='set-visibility',
@@ -327,11 +327,13 @@ def set_visibility(key, visibility, tenant_name, logger, client):
                  short_help="Change secret's ownership")
 @cfy.argument('key', callback=cfy.validate_name)
 @cfy.options.new_username()
+@cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.assert_manager_active()
-@cfy.pass_client()
+@cfy.pass_client(use_tenant_in_header=True)
 @cfy.pass_logger
-def set_owner(key, username, logger, client):
+def set_owner(key, username, tenant_name, logger, client):
     """Set a new owner for the secret."""
+    utils.explicit_tenant_name_message(tenant_name, logger)
     secret = client.secrets.update(key, creator=username)
     logger.info('Secret `%s` is now owned by user `%s`.',
                 key, secret.get('created_by'))

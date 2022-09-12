@@ -24,7 +24,7 @@ from dsl_parser.import_resolver.default_import_resolver import (
     DefaultImportResolver
 )
 
-from .. import env, exceptions
+from cloudify_cli import env, exceptions
 
 
 CLOUDIFY_CONFIG_PATH = os.path.join(env.CLOUDIFY_WORKDIR, 'config.yaml')
@@ -113,12 +113,12 @@ def is_validate_definitions_version():
 class ResolverWithCatalogIdentification(DefaultImportResolver):
     """
     All catalog resources (blueprints, plugin) can only be validated
-    in the manger not via the CLI, so this resolver only supports not
+    in the manager not via the CLI, so this resolver only supports not
     catalog-style urls.
     """
     CATALOG_RESOURCES_PREFIX = ('plugin:', 'blueprint:')
 
-    def fetch_import(self, import_url):
+    def fetch_import(self, import_url, **kwargs):
         if self._is_cloudify_repository_url(import_url):
             e = exceptions.CloudifyCliError(
                 'Error fetching remote resource yaml: {0!r}\nBlueprints using '
@@ -132,7 +132,7 @@ class ResolverWithCatalogIdentification(DefaultImportResolver):
             ]
             raise e
         return super(ResolverWithCatalogIdentification, self)\
-            .fetch_import(import_url)
+            .fetch_import(import_url, **kwargs)
 
     def _is_cloudify_repository_url(self, import_url):
         return import_url.startswith(self.CATALOG_RESOURCES_PREFIX)

@@ -17,13 +17,11 @@ from __future__ import absolute_import
 import os
 import glob
 import yaml
+import json
 
-from cloudify._compat import text_type
-
-from .utils import deep_update_dict, insert_dotted_key_to_dict
-
-from .logger import get_logger
-from.exceptions import CloudifyCliError
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import get_logger
+from cloudify_cli.utils import deep_update_dict, insert_dotted_key_to_dict
 
 
 # TODO: Add test for inputs as JSON/YAML string
@@ -48,7 +46,7 @@ def inputs_to_dict(resources, **kwargs):
     for resource in resources:
         logger.debug('Processing inputs source: {0}'.format(resource))
         # Workflow parameters always pass an empty dictionary. We ignore it
-        if isinstance(resource, (text_type, bytes)):
+        if isinstance(resource, (str, bytes)):
             try:
                 if kwargs.get('dot_hierarchy'):
                     deep_update_dict(parsed_dict,
@@ -108,7 +106,7 @@ def _parse_yaml_path(resource):
         raise CloudifyCliError("'{0}' is not a valid YAML. {1}".format(
             resource, str(e)))
 
-    # Emtpy files return None
+    # Empty files return None
     content = content or dict()
     if not isinstance(content, dict):
         raise CloudifyCliError('Resource is valid YAML, but does not '
@@ -127,7 +125,7 @@ def _parse_key_value_pair(mapped_input, input_string):
     except IndexError:
         raise CloudifyCliError(
             "Invalid input format: {0}, the expected format is: "
-            "key1=value1;key2=value2".format(input_string))
+            "'key1=value1;key2=value2'".format(input_string))
 
 
 def _is_not_plain_string_input(mapped_input):
@@ -136,6 +134,13 @@ def _is_not_plain_string_input(mapped_input):
 
 
 def plain_string_to_dict(input_string, **kwargs):
+    try:
+        input_dict = json.loads(input_string)
+        if isinstance(input_dict, dict):
+            return input_dict
+    except ValueError:
+        pass
+
     input_string = input_string.strip()
     input_dict = {}
     mapped_inputs = input_string.split(';')

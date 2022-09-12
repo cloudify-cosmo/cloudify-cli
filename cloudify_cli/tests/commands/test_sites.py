@@ -80,12 +80,12 @@ class SitesTest(CliCommandTest):
     def test_create_invalid_argument(self):
         outcome = self.invoke('cfy sites create test_site -g',
                               **self.system_exit)
-        self.assertIn('no such option: -g', outcome.output)
+        self.assertIn('No such option: -g', outcome.output)
 
     def test_create_invalid_location(self):
         outcome = self.invoke('cfy sites create test_site --location',
                               **self.system_exit)
-        self.assertIn('Error: --location option requires an argument',
+        self.assertIn('Error: Option \'--location\' requires an argument',
                       outcome.output)
 
     def test_sites_update(self):
@@ -114,7 +114,7 @@ class SitesTest(CliCommandTest):
     def test_update_invalid_location(self):
         outcome = self.invoke('cfy sites update test_site --location',
                               **self.system_exit)
-        self.assertIn('Error: --location option requires an argument',
+        self.assertIn('Error: Option \'--location\' requires an argument',
                       outcome.output)
 
     def test_update_invalid_new_name(self):

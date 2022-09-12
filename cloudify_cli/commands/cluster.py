@@ -21,17 +21,17 @@ from cloudify.cluster_status import CloudifyNodeType
 from cloudify_rest_client.exceptions import CloudifyClientError, \
     UserUnauthorizedError
 
-from .. import env
-from ..cli import cfy
-from ..env import profile
-from ..exceptions import CloudifyCliError
-from ..table import print_data, print_details
-from ..logger import (
+from cloudify_cli import env
+from cloudify_cli.cli import cfy
+from cloudify_cli.env import profile
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import (
     output,
     get_logger,
     CloudifyJSONEncoder,
     get_global_json_output
 )
+from cloudify_cli.table import print_data, print_details
 
 # The list will be updated with the services on each manager
 MANAGER_COLUMNS = ['hostname', 'private_ip', 'public_ip', 'version', 'edition',
@@ -269,7 +269,10 @@ def _update_cluster_nodes(nodes, nodes_type, logger):
 def _update_node(node, node_type, logger, stored_nodes_names):
     if _get_node_host(node) not in stored_nodes_names:
         if node_type == CloudifyNodeType.MANAGER:
-            node_ip = node['public_ip'] or node['private_ip']
+            if env.profile.name == "manager-local":
+                node_ip = node['private_ip']
+            else:
+                node_ip = node['public_ip'] or node['private_ip']
         else:
             node_ip = node['host']
         if logger:

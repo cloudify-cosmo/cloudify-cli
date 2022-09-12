@@ -14,10 +14,10 @@
 # limitations under the License.
 ############
 
-from .. import env
-from ..cli import cfy
-from ..table import print_data, print_single
-from ..utils import handle_client_error
+from cloudify_cli import env
+from cloudify_cli.cli import cfy
+from cloudify_cli.table import print_data, print_single
+from cloudify_cli.utils import handle_client_error
 
 TENANT_COLUMNS = ['name', 'groups']
 GET_DATA_COLUMNS = ['direct_users', 'group_users']
@@ -133,7 +133,7 @@ def create(tenant_name, logger, client):
 
 @tenants.command(name='add-user',
                  short_help='Add a user to a tenant [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.user_tenant_role()
 @cfy.options.tenant_name(show_default_in_help=False)
 @cfy.options.common_options
@@ -160,7 +160,7 @@ def add_user(username, tenant_name, role, logger, client):
 @tenants.command(
     name='update-user',
     short_help='Update user-tenant relationship [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.user_tenant_role()
 @cfy.options.tenant_name(show_default_in_help=False)
 @cfy.options.common_options
@@ -183,7 +183,7 @@ def update_user(username, tenant_name, role, logger, client):
 
 @tenants.command(name='remove-user',
                  short_help='Remove a user from a tenant [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.tenant_name(show_default_in_help=False)
 @cfy.options.common_options
 @cfy.assert_manager_active()

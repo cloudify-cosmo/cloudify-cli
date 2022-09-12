@@ -16,25 +16,31 @@ import sys
 
 from setuptools import setup
 
+install_requires = [
+        'click>8,<9',
+        'wagon[venv]>=0.11.2',
+        'retrying==1.3.3',
+        'colorama==0.4.4',
+        'requests>=2.7.0,<3.0.0',
+        'click_didyoumean==0.3.0',
+        'cloudify-common[dispatcher]==7.0.0.dev1',
+        'backports.shutil_get_terminal_size==1.0.0',
+        'cryptography>=37,<40',
+        'fabric==2.7.1',
+]
+
 packages = ['cloudify_cli',
             'cloudify_cli.cli',
             'cloudify_cli.commands',
-            'cloudify_cli.config']
-if sys.version_info[:2] >= (3, 6):
-    packages += ['cloudify_cli.async_commands']
+            'cloudify_cli.config',
+            'cloudify_cli.async_commands']
 
 setup(
     name='cloudify',
-    version='6.3.0.dev1',
+    version='7.0.0.dev1',
     author='Cloudify',
     author_email='cosmo-admin@cloudify.co',
     packages=packages,
-    package_data={
-        'cloudify_cli': [
-            'VERSION',
-            'config/config_template.yaml',
-        ],
-    },
     license='LICENSE',
     description="Cloudify's Command Line Interface",
     entry_points={
@@ -42,26 +48,5 @@ setup(
             'cfy = cloudify_cli.main:_cfy'
         ]
     },
-    install_requires=[
-        'click>7,<8',
-        'wagon[venv]>=0.10.1',
-        'pyyaml==5.4.1',
-        'jinja2>=2.10,<2.11',
-        'retrying==1.3.3',
-        'colorama==0.4.4',
-        'requests>=2.7.0,<3.0.0',
-        'click_didyoumean==0.0.3',
-        'cloudify-common[dispatcher]==6.3.0.dev1',
-        'backports.shutil_get_terminal_size==1.0.0',
-        'ipaddress==1.0.23',
-        'setuptools<=40.7.3',
-        'cryptography==3.3.2',
-        'cffi>=1.14,<1.15',
-        'pynacl==1.4.0',
-        # Fabric depend on paramiko that depends on cryptography so we need
-        # to install the correct version of cryptography before installing
-        # the fabric so that fabric can be installed correctly in both py2 +
-        # py3
-        'fabric==2.5.0',
-    ]
+    install_requires=install_requires
 )

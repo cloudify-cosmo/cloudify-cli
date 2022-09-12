@@ -3,11 +3,9 @@ from datetime import datetime, timedelta
 
 import click
 
-from cloudify._compat import PY2
-
-from ..cli import cfy, helptexts
-from ..exceptions import CloudifyCliError
-from ..table import print_data
+from cloudify_cli.cli import cfy, helptexts
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.table import print_data
 
 AUDITLOG_COLUMNS = ['ref_table', 'ref_id', 'operation', 'creator_name',
                     'execution_id', 'created_at']
@@ -80,9 +78,7 @@ def list_logs(creator_name,
               client,
               ):
     if follow:
-        if PY2:
-            raise CloudifyCliError('Streaming requires Python>=3.6.')
-        from ..async_commands.audit_log import stream_logs
+        from cloudify_cli.async_commands.audit_log import stream_logs
         stream_logs(creator_name,
                     execution_id,
                     since,

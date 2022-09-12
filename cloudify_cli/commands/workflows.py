@@ -14,15 +14,17 @@
 # limitations under the License.
 ############
 
+import click
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from ..logger import get_global_json_output
-from ..table import print_data, print_single
-from .. import utils
-from ..cli import cfy
-from ..exceptions import CloudifyCliError
+from cloudify_cli import utils
+from cloudify_cli.cli import cfy
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import get_global_json_output
+from cloudify_cli.table import print_data, print_single
 
-WORKFLOW_COLUMNS = ['blueprint_id', 'deployment_id', 'name', 'created_at']
+WORKFLOW_COLUMNS = ['blueprint_id', 'deployment_id', 'name',
+                    'availability_rules']
 
 
 @cfy.group(name='workflows')
@@ -103,25 +105,46 @@ def get(workflow_id, deployment_id, logger, client, tenant_name):
         logger.info('')
 
 
+def _format_workflow(wf):
+    if wf.get('availability_rules'):
+        wf['availability_rules'] = ', '.join(wf['availability_rules'].keys())
+    return wf
+
+
 @workflows.command(name='list',
                    short_help='List workflows for a deployment [manager only]')
 @cfy.options.deployment_id(required=True)
 @cfy.options.common_options
+@click.option('--all', 'all_workflows', is_flag=True,
+              help='Also show unavailable workflows')
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
 @cfy.pass_logger
 @cfy.pass_client()
 @cfy.options.extended_view
-def list(deployment_id, logger, client, tenant_name):
+def list(deployment_id, all_workflows, logger, client, tenant_name):
     """List all workflows on the manager for a specific deployment
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Listing workflows for deployment {0}...'.format(
-        deployment_id))
+    logger.info('Listing workflows for deployment %s...', deployment_id)
     deployment = client.deployments.get(deployment_id)
+
     workflows = sorted(deployment.workflows, key=lambda w: w.name)
+    columns = WORKFLOW_COLUMNS
+    hidden_count = 0
+    if not all_workflows:
+        total_count = len(workflows)
+        workflows = [wf for wf in workflows if wf.is_available]
+        hidden_count = total_count - len(workflows)
+    else:
+        columns = columns + ['is_available']
 
     defaults = {
         'blueprint_id': deployment.blueprint_id,
         'deployment_id': deployment.id
     }
-    print_data(WORKFLOW_COLUMNS, workflows, 'Workflows:', defaults=defaults)
+    if not get_global_json_output():
+        workflows = [_format_workflow(wf) for wf in workflows]
+    print_data(columns, workflows, 'Workflows:', defaults=defaults)
+    if hidden_count:
+        logger.info('%d unavailable workflows hidden (use --all to show)',
+                    hidden_count)

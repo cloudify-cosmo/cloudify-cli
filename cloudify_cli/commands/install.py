@@ -17,11 +17,11 @@
 import os
 import shutil
 
-from ..cli import cfy, helptexts
-from ..constants import DEFAULT_INSTALL_WORKFLOW
-from ..blueprint import get_blueprint_path_and_id
-from ..exceptions import CloudifyCliError
-from . import init, executions, blueprints, deployments
+from cloudify_cli.cli import cfy, helptexts
+from cloudify_cli.constants import DEFAULT_INSTALL_WORKFLOW
+from cloudify_cli.blueprint import get_blueprint_path_and_id
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.commands import init, executions, blueprints, deployments
 
 
 @cfy.command(name='install',

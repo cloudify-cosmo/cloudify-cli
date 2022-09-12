@@ -1,20 +1,3 @@
-########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-############
-
-
 import os
 import json
 import errno
@@ -24,7 +7,6 @@ import getpass
 import tempfile
 import itertools
 from base64 import b64encode
-from contextlib import contextmanager
 
 import yaml
 import requests
@@ -32,18 +14,11 @@ import requests
 from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.client import HTTPClient
 from cloudify.cluster_status import CloudifyNodeType
-from cloudify_rest_client.utils import is_kerberos_env
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify.utils import ipv6_url_compat
 
-from . import constants
-from .exceptions import CloudifyCliError
-
-try:
-    from fabric import Connection
-    from paramiko import AuthenticationException
-except ImportError:
-    Connection = None
+from cloudify_cli import constants
+from cloudify_cli.exceptions import CloudifyCliError
 
 
 _ENV_NAME = 'manager'
@@ -108,8 +83,6 @@ def get_target_manager():
 
 
 def get_profile_names():
-    # TODO: This is too.. ambiguous. We should change it so there are
-    # no exclusions.
     excluded = ['local']
     profile_names = [item for item in os.listdir(PROFILES_DIR)
                      if item not in excluded and not item.startswith('.')]
@@ -132,24 +105,64 @@ def assert_local_active():
             'You can run `cfy profiles use local` to stop using a manager.')
 
 
-def assert_credentials_set():
+def check_configured_auth(credentials, token, kerberos_env, extra_help=''):
+    if all(item is None for item in credentials):
+        credentials = None
+
+    if credentials and None in credentials:
+        raise CloudifyCliError(
+            'If Manager Username is set, Manager Password must also be set.'
+        )
+
+    configured_auth = []
+    if kerberos_env:
+        configured_auth.append('kerberos')
+    if token:
+        configured_auth.append('token')
+    if credentials:
+        configured_auth.append('username+password')
+
+    if not configured_auth:
+        raise CloudifyCliError(
+            'At least one auth method must be set.\n' + extra_help
+        )
+    if len(configured_auth) > 1:
+        raise CloudifyCliError(
+            'Only one auth method may be set at a time.\n'
+            'You may need to unset env vars for auth such as '
+            'CLOUDIFY_USERNAME, CLOUDIFY_PASSWORD, CLOUDIFY_TOKEN, '
+            'or CLOUDIFY_KERBEROS_ENV\n'
+            '{extra_help}'.format(extra_help=extra_help)
+        )
+
+
+def assert_credentials_set(client_profile=None):
+    if client_profile is None:
+        client_profile = profile
     error_msg = 'Manager {0} must be set in order to use a manager.\n' \
                 'You can set it in the profile by running ' \
                 '`cfy profiles set {1}`, or you can set the `CLOUDIFY_{2}` ' \
                 'environment variable.'
-    if not get_kerberos_env():
-        if not get_username():
-            raise CloudifyCliError(
-                error_msg.format('Username', '--manager-username', 'USERNAME')
-            )
-        if not get_password():
-            raise CloudifyCliError(
-                error_msg.format('Password', '--manager-password', 'PASSWORD')
-            )
-    if not get_tenant_name():
+    if not get_tenant_name(client_profile):
         raise CloudifyCliError(
             error_msg.format('Tenant', '--manager-tenant', 'TENANT')
         )
+
+    kerberos_env = get_kerberos_env(client_profile)
+    token = get_token(client_profile)
+    credentials = (get_username(client_profile), get_password(client_profile))
+
+    configure_help = (
+        'Please configure either a token, kerberos, or a username+password. '
+        'Authentication may be configured with one of the following lines:\n'
+        '`cfy profiles set --manager-token <token>`\n'
+        '`cfy profiles set --kerberos-env <kerberos env>`\n'
+        '`cfy profiles set --manager-username <username> '
+        '--manager-password <password>`\n'
+    )
+
+    check_configured_auth(credentials, token, kerberos_env,
+                          extra_help=configure_help)
 
 
 def is_manager_active():
@@ -187,7 +200,8 @@ def get_profile_context(profile_name=None, suppress_error=False):
     if not loaded:
         if suppress_error:
             return ProfileContext({})
-        raise CloudifyCliError('No context for profile {0}'
+        raise CloudifyCliError('No context for profile {0}.\nPlease define '
+                               'the profile using `cfy profiles use`'
                                .format(profile_name))
     return ProfileContext(loaded, profile_name)
 
@@ -296,47 +310,42 @@ def get_rest_client(client_profile=None,
                     tenant_name=None,
                     trust_all=False,
                     cluster=None,
-                    kerberos_env=None):
+                    kerberos_env=None,
+                    token=None):
     if client_profile is None:
         client_profile = profile
-    rest_host = rest_host or client_profile.manager_ip
-    rest_port = rest_port or client_profile.rest_port
-    rest_protocol = rest_protocol or client_profile.rest_protocol
-    rest_cert = rest_cert or get_ssl_cert(client_profile)
+    assert_credentials_set(client_profile)
     username = username or get_username(client_profile)
     password = password or get_password(client_profile)
+    token = token or get_token(client_profile)
     tenant_name = tenant_name or get_tenant_name(client_profile)
-    trust_all = trust_all or get_ssl_trust_all()
-    headers = get_auth_header(username, password)
-    headers[constants.CLOUDIFY_TENANT_HEADER] = tenant_name
     cluster = cluster or is_cluster(client_profile)
     kerberos_env = kerberos_env \
         if kerberos_env is not None else client_profile.kerberos_env
 
-    if kerberos_env is False \
-            or (kerberos_env is None and not is_kerberos_env()):
-        if not username:
-            raise CloudifyCliError('Command failed: Missing Username')
-        if not password:
-            raise CloudifyCliError('Command failed: Missing password')
+    kwargs = {
+        'host': rest_host or client_profile.manager_ip,
+        'port': rest_port or client_profile.rest_port,
+        'protocol': rest_protocol or client_profile.rest_protocol,
+        'cert': rest_cert or get_ssl_cert(client_profile),
+        'headers': {constants.CLOUDIFY_TENANT_HEADER: tenant_name},
+        'trust_all': trust_all or get_ssl_trust_all(),
+    }
+
+    if token:
+        kwargs['token'] = token
+    elif kerberos_env:
+        kwargs['kerberos_env'] = kerberos_env
+    else:
+        kwargs['username'] = username
+        kwargs['password'] = password
+        kwargs['headers'].update(get_auth_header(username, password))
 
     if cluster:
-        client = CloudifyClusterClient(host=rest_host,
-                                       port=rest_port,
-                                       protocol=rest_protocol,
-                                       headers=headers,
-                                       cert=rest_cert,
-                                       trust_all=trust_all,
-                                       profile=client_profile,
-                                       kerberos_env=kerberos_env)
+        kwargs['profile'] = client_profile
+        client = CloudifyClusterClient(**kwargs)
     else:
-        client = CloudifyClient(host=rest_host,
-                                port=rest_port,
-                                protocol=rest_protocol,
-                                headers=headers,
-                                cert=rest_cert,
-                                trust_all=trust_all,
-                                kerberos_env=kerberos_env)
+        client = CloudifyClient(**kwargs)
     return client
 
 
@@ -359,49 +368,52 @@ def get_default_rest_cert_local_path():
     return os.path.join(base_dir, constants.PUBLIC_REST_CERT)
 
 
-def get_username(from_profile=None):
+def get_from_profile_or_env_var(key, from_profile=None):
     if from_profile is None:
         from_profile = profile
-    username = os.environ.get(constants.CLOUDIFY_USERNAME_ENV)
-    if username and from_profile.manager_username:
-        raise CloudifyCliError('Manager Username is set in profile *and* in '
-                               'the `CLOUDIFY_USERNAME` env variable. Resolve '
-                               'the conflict before continuing.\n'
-                               'Either unset the env variable, or run '
-                               '`cfy profiles unset --manager-username`')
-    return username or from_profile.manager_username
+
+    env_var = 'CLOUDIFY_{}'.format(key.upper())
+    profile_key = key
+    if key != 'kerberos_env':
+        profile_key = 'manager_' + key
+
+    env_value = os.environ.get(env_var)
+    profile_value = getattr(from_profile, profile_key)
+    if env_value and profile_value:
+        raise CloudifyCliError(
+            'Manager {title} is set in profile *and* in the `{env_var}` env '
+            'variable. Resolve the conflict before continuing.\n'
+            'Either unset the env variable, or run `cfy profiles unset '
+            '--manager-{key}'.format(
+                title=key.title(),
+                env_var=env_var,
+                key=key,
+            )
+        )
+    return env_value or profile_value
+
+
+def get_username(from_profile=None):
+    return get_from_profile_or_env_var('username', from_profile)
 
 
 def get_password(from_profile=None):
-    if from_profile is None:
-        from_profile = profile
-    password = os.environ.get(constants.CLOUDIFY_PASSWORD_ENV)
-    if password and from_profile.manager_password:
-        raise CloudifyCliError('Manager Password is set in profile *and* in '
-                               'the `CLOUDIFY_PASSWORD` env variable. Resolve '
-                               'the conflict before continuing.\n'
-                               'Either unset the env variable, or run '
-                               '`cfy profiles unset --manager-password`')
-    return password or from_profile.manager_password
+    return get_from_profile_or_env_var('password', from_profile)
 
 
-def get_tenant_name(from_profile=None):
-    if from_profile is None:
-        from_profile = profile
-    tenant = os.environ.get(constants.CLOUDIFY_TENANT_ENV)
-    if tenant and from_profile.manager_tenant:
-        raise CloudifyCliError('Manager Tenant is set in profile *and* in '
-                               'the `CLOUDIFY_TENANT` env variable. Resolve '
-                               'the conflict before continuing.\n'
-                               'Either unset the env variable, or run '
-                               '`cfy profiles unset --manager-tenant`')
-    return tenant or from_profile.manager_tenant
+def get_token(from_profile=None):
+    return get_from_profile_or_env_var('token', from_profile)
 
 
 def get_kerberos_env(from_profile=None):
-    if from_profile is None:
-        from_profile = profile
-    return from_profile.kerberos_env
+    return get_from_profile_or_env_var('kerberos_env', from_profile)
+
+
+def get_tenant_name(from_profile=None):
+    return (
+        get_from_profile_or_env_var('tenant', from_profile)
+        or 'default_tenant'
+    )
 
 
 def get_ssl_cert(from_profile=None):
@@ -444,10 +456,7 @@ def get_manager_version_data(rest_client=None):
             rest_client = get_rest_client()
         except CloudifyCliError:
             return None
-    try:
-        version_data = rest_client.manager.get_version()
-    except CloudifyClientError:
-        return None
+    version_data = rest_client.manager.get_version()
     version_data['ip'] = profile.manager_ip
     return version_data
 
@@ -463,12 +472,13 @@ class ProfileContext(object):
             'provider_context': {},
             'manager_username': None,
             'manager_password': None,
+            'manager_token': None,
             'manager_tenant': None,
             'rest_port': constants.DEFAULT_REST_PORT,
             'rest_protocol': constants.DEFAULT_REST_PROTOCOL,
             'rest_certificate': None,
             'kerberos_env': False,
-            'cluster': {}
+            'cluster': {},
         }
         if context:
             self._context.update(context)
@@ -655,57 +665,6 @@ class CloudifyClusterClient(CloudifyClient):
     def client_class(self, *args, **kwargs):
         kwargs.setdefault('profile', self._profile)
         return ClusterHTTPClient(*args, **kwargs)
-
-
-@contextmanager
-def ssh_connection(host=None, user=None, key=None):
-    if Connection is None:
-        raise CloudifyCliError(
-            "SSH not available - fabric not installed")
-    if host is None:
-        host = profile.manager_ip
-    if user is None:
-        user = profile.ssh_user
-    if key is None:
-        key = profile.ssh_key
-    connect_kwargs = {}
-    if key:
-        connect_kwargs['key_filename'] = [key]
-    conn = Connection(
-        host=host,
-        user=user,
-        port=profile.ssh_port or 22,
-        connect_kwargs=connect_kwargs or None
-    )
-    try:
-        conn.open()
-        yield conn
-    except AuthenticationException as e:
-        if user:
-            user_message = user
-        else:
-            user_message = '{0} (from ssh config)'.format(conn.user)
-
-        if key:
-            key_message = key
-        elif conn.ssh_config.get('identityfile'):
-            key_message = '{0} (from ssh config)'.format(
-                ', '.join(conn.ssh_config['identityfile']))
-        else:
-            key_message = 'default'
-
-        raise CloudifyCliError(
-            "SSH: could not connect to {host} "
-            "(username: {user}, key: {key}): {exc}"
-            .format(
-                host=conn.host,
-                user=user_message,
-                key=key_message,
-                exc=e
-            )
-        )
-    finally:
-        conn.close()
 
 
 profile = get_profile_context(suppress_error=True)

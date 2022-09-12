@@ -1,4 +1,4 @@
-from ..logger import get_global_json_output
+from cloudify_cli.logger import get_global_json_output
 
 
 BASE_SUMMARY_FIELDS = [

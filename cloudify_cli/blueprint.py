@@ -17,12 +17,11 @@
 import os
 import tempfile
 from shutil import copy, copytree
+from urllib.parse import urlparse
 
-from cloudify._compat import urlparse
-
-from . import utils
-from .exceptions import CloudifyCliError
-from .constants import DEFAULT_BLUEPRINT_PATH
+from cloudify_cli import utils
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
 
 
 ICON_FILENAME = 'icon.png'
@@ -129,6 +128,7 @@ def _get_blueprint_file_with_icon(blueprint_path, icon_path):
 
     """
     source, blueprint_filename = os.path.split(blueprint_path)
+    source = source or os.curdir
     blueprint_directory = os.path.join(tempfile.mkdtemp(),
                                        blueprint_filename.rpartition('.')[0])
     copytree(source, blueprint_directory)

@@ -29,10 +29,9 @@ import colorama
 
 from cloudify import logs
 
-from . import env
-from .config.config import is_use_colors
-from .config.config import CloudifyConfig
-from .colorful_event import ColorfulEvent, ColorfulGroupEvent
+from cloudify_cli import env
+from cloudify_cli.config.config import CloudifyConfig, is_use_colors
+from cloudify_cli.colorful_event import ColorfulEvent, ColorfulGroupEvent
 
 DEFAULT_LOG_FILE = os.path.join(env.CLOUDIFY_WORKDIR, 'logs', 'cli.log')
 
@@ -160,7 +159,7 @@ def _configure_from_file(loggers_config):
         }
 
 
-def get_events_logger(json_output):
+def get_events_logger(json_output=False, with_names=False):
     json_output = json_output or get_global_json_output()
 
     def json_events_logger(events):
@@ -184,7 +183,7 @@ def get_events_logger(json_output):
             if event.get('execution_group_id') is not None:
                 event_class = ColorfulGroupEvent
             with _nest_event_class(event_class):
-                output = logs.create_event_message_prefix(event)
+                output = logs.create_event_message_prefix(event, with_names)
             if output:
                 click.echo(output)
 

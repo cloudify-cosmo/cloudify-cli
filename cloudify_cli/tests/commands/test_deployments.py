@@ -119,8 +119,8 @@ class DeploymentUpdatesTest(CliCommandTest):
         old_value = 'old value 1'
         new_value = 'new value 1'
         steps = [
-            {'entity_id': 'nodes:step1', 'action': 'add'},
-            {'entity_id': 'nodes:step2', 'action': 'remove'},
+            {'entity_id': ['nodes', 'step1'], 'action': 'add'},
+            {'entity_id': ['nodes', 'step2'], 'action': 'remove'},
         ]
         self.client.deployment_updates.update_with_existing_blueprint = Mock(
             return_value={
@@ -631,7 +631,7 @@ class DeploymentsTest(CliCommandTest):
             err_str_segment='2',  # Exit code
             exception=SystemExit
         )
-        self.assertIn('Error: no such option: -g', outcome.output)
+        self.assertIn('Error: No such option: -g', outcome.output)
 
     def test_deployments_create_mutually_exclusive_arguments(self):
         outcome = self.invoke(

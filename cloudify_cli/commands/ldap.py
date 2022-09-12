@@ -1,5 +1,5 @@
-from ..cli import cfy
-from ..exceptions import CloudifyCliError
+from cloudify_cli.cli import cfy
+from cloudify_cli.exceptions import CloudifyCliError
 
 
 @cfy.group(name='ldap')

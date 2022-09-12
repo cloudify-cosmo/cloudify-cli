@@ -19,9 +19,8 @@ import json
 
 from mock import MagicMock, patch
 
-from .. import cfy
 from ...commands import executions
-from .test_base import CliCommandTest
+from .test_base import CliCommandTest, ClickInvocationException
 from .mocks import execution_mock, MockListResponse
 from .constants import BLUEPRINTS_DIR, DEFAULT_BLUEPRINT_FILE_NAME
 from cloudify_rest_client.exceptions import \
@@ -67,7 +66,7 @@ class ExecutionsTest(CliCommandTest):
             self.client.executions.start = MagicMock(return_value=execution)
             executions.wait_for_execution = MagicMock(return_value=execution)
             self.invoke('cfy executions start mock_wf -d dep --json')
-            get_events_logger_mock.assert_called_with(False)
+            get_events_logger_mock.assert_called_with(False, False)
         finally:
             self.client.executions.start = original_client_execution_start
             executions.wait_for_execution = original_wait_for_executions
@@ -83,7 +82,7 @@ class ExecutionsTest(CliCommandTest):
     def test_executions_start_dep_other_ex_sanity(self):
         try:
             self._test_executions_start_dep_env(ex=RuntimeError)
-        except cfy.ClickInvocationException as e:
+        except ClickInvocationException as e:
             self.assertIsInstance(e.exception, RuntimeError)
 
     def _test_executions_start_dep_env(self, ex):
@@ -151,8 +150,8 @@ class ExecutionsTest(CliCommandTest):
         )
 
     def _assert_outputs(self, expected_outputs):
-        output = json.loads(self.invoke(
-            'cfy deployments outputs -b local').logs)
+        outcome = self.invoke('cfy deployments outputs -b local')
+        output = json.loads(outcome.output)
         for key, value in expected_outputs.items():
             self.assertEqual(output[key], value)
 
@@ -162,6 +161,71 @@ class ExecutionsTest(CliCommandTest):
             'local',
             DEFAULT_BLUEPRINT_FILE_NAME
         )
-
+        self.use_local_profile()
         self.invoke('cfy init {0}'.format(blueprint_path))
-        cfy.register_commands()
+
+
+class OperationsTest(CliCommandTest):
+    def test_get_operation(self):
+        with patch.object(self.client.operations, 'get') as mock_get:
+            mock_get.return_value = {
+                'id': '11-22-33',
+                'type': 'RemoteWorkflowTask',
+            }
+            out = self.invoke('executions operations get 11-22-33')
+        mock_get.assert_called_with('11-22-33')
+        assert 'RemoteWorkflowTask' in out.output
+
+    def test_list_operations_exc_id(self):
+        with patch.object(self.client.operations, 'list') as mock_list:
+            self.invoke('executions operations list 1234-5678')
+        kws = mock_list.mock_calls[0][2]
+        assert kws['execution_id'] == '1234-5678'
+
+    def test_list_operations_graph_id(self):
+        with patch.object(self.client.operations, 'list') as mock_list:
+            self.invoke('executions operations list --graph-id 1234-5678')
+        kws = mock_list.mock_calls[0][2]
+        assert not kws['execution_id']
+        assert kws['graph_id'] == '1234-5678'
+
+    def test_list_operations_show_internal(self):
+        with patch.object(self.client.operations, 'list') as mock_list:
+            self.invoke('executions operations list 1')
+        kws = mock_list.mock_calls[0][2]
+        assert kws.get('skip_internal', True)
+
+        with patch.object(self.client.operations, 'list') as mock_list:
+            self.invoke('executions operations list 1 --show-internal')
+        kws = mock_list.mock_calls[0][2]
+        assert not kws.get('skip_internal', True)
+
+    def test_list_operations_state(self):
+        with patch.object(self.client.operations, 'list') as mock_list:
+            self.invoke('executions operations list 1')
+        kws = mock_list.mock_calls[0][2]
+        assert not kws.get('state')
+
+        with patch.object(self.client.operations, 'list') as mock_list:
+            self.invoke('executions operations list 1 --state xyz')
+        kws = mock_list.mock_calls[0][2]
+        assert kws['state'] == 'xyz'
+
+
+class TasksGraphsTest(CliCommandTest):
+    def test_list_execution_id(self):
+        with patch.object(self.client.tasks_graphs, 'list') as mock_list:
+            self.invoke('executions graphs list 1234-5678')
+        kws = mock_list.mock_calls[0][2]
+        assert kws['execution_id'] == '1234-5678'
+
+    def test_list_name(self):
+        with patch.object(self.client.tasks_graphs, 'list') as mock_list:
+            self.invoke('executions graphs list 1234-5678')
+        kws = mock_list.mock_calls[0][2]
+        assert not kws.get('name')
+
+        with patch.object(self.client.tasks_graphs, 'list') as mock_list:
+            self.invoke('executions graphs list 1234-5678 --name install')
+        kws = mock_list.mock_calls[0][2]
+        assert kws['name'] == 'install'

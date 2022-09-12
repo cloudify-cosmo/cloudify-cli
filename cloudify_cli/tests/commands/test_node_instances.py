@@ -4,7 +4,6 @@ import tempfile
 
 from mock import MagicMock
 
-from .. import cfy
 from .test_base import CliCommandTest
 from cloudify_cli.exceptions import CloudifyCliError
 from .mocks import node_instance_get_mock, MockListResponse
@@ -96,6 +95,18 @@ class NodeInstancesTest(CliCommandTest):
 
         self.invoke('cfy node-instances update-runtime instance_id -p x.y=z')
         self.assertEqual('z', call_args[1]['runtime_properties']['x']['y'])
+
+    def test_update_runtime_successful_json_format(self):
+        self.client.node_instances.get = \
+            MagicMock(return_value=node_instance_get_mock())
+        self.client.node_instances.update = MagicMock(return_value={})
+
+        self.invoke('cfy node-instances update-runtime instance_id '
+                    '-p \'{"a":[],"b":"m-3","c":["d","e"]}\'')
+        call_args = self.client.node_instances.update.call_args
+        self.assertEqual([], call_args[1]['runtime_properties']['a'])
+        self.assertEqual('m-3', call_args[1]['runtime_properties']['b'])
+        self.assertEqual(['d', 'e'], call_args[1]['runtime_properties']['c'])
 
     def test_update_runtime_successful_key_exists(self):
         self.client.node_instances.get = \
@@ -277,7 +288,7 @@ class NodeInstancesTest(CliCommandTest):
 
     def _common_runtime_invalid_dict(self, command):
         self.invoke('cfy node-instances {0} instance_id -p "{1}"'
-                    .format(command, '{a: {b: c}'),  # unbalanced brackets
+                    .format(command, r'{a: {b: c}'),  # unbalanced brackets
                     err_str_segment='It must represent a dictionary',
                     exception=CloudifyCliError)
 
@@ -297,16 +308,15 @@ class NodeInstancesTest(CliCommandTest):
             'local',
             DEFAULT_BLUEPRINT_FILE_NAME
         )
-
+        self.use_local_profile()
         self.invoke('cfy init {0}'.format(blueprint_path))
-        cfy.register_commands()
         self.invoke(
             'cfy executions start -b local {0}'
             .format('run_test_op_on_nodes')
         )
 
     def _assert_outputs(self, output, expected_outputs):
-        output = json.loads(output.logs)
+        output = json.loads(output.output)
         for item in output:
             for key, value in expected_outputs.items():
                 self.assertEqual(item[key], value)

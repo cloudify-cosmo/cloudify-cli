@@ -19,10 +19,13 @@ import json
 from cloudify_rest_client.exceptions import CloudifyClientError, \
     UserUnauthorizedError
 
-from ..cli import cfy
-from ..env import profile
-from ..table import print_data
-from ..logger import CloudifyJSONEncoder, output, get_global_json_output
+from cloudify_cli.cli import cfy
+from cloudify_cli.env import profile
+from cloudify_cli.logger import (
+    CloudifyJSONEncoder,
+    output,
+    get_global_json_output)
+from cloudify_cli.table import print_data
 
 STATUS_COLUMNS = ['service', 'status']
 
@@ -33,8 +36,7 @@ STATUS_COLUMNS = ['service', 'status']
 @cfy.pass_client()
 @cfy.pass_logger
 def status(logger, client):
-    """Show the status of the manager
-    """
+    """Show the status of the manager"""
     rest_host = profile.manager_ip
     logger.info('Retrieving manager services status... [ip={0}]'.format(
         rest_host))

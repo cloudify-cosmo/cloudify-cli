@@ -1,19 +1,3 @@
-########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-############
-
 import os
 import shutil
 import tarfile
@@ -25,21 +9,18 @@ from cloudify.cluster_status import CloudifyNodeType
 from cloudify_rest_client.exceptions import (CloudifyClientError,
                                              UserUnauthorizedError)
 
-from . import init
-from .. import env
-from .. import utils
-from ..cli import cfy
-from .. import constants
-from ..cli import helptexts
-from ..env import get_rest_client
-from ..exceptions import CloudifyCliError
-from ..table import print_data, print_single
-from ..commands.cluster import _all_in_one_manager
-from ..commands.cluster import update_profile_logic as update_cluster_profile
+from cloudify_cli import constants, env, utils
+from cloudify_cli.cli import cfy, helptexts
+from cloudify_cli.env import get_rest_client
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.table import print_data, print_single
+from cloudify_cli.commands import init
+from cloudify_cli.commands.cluster import (
+    _all_in_one_manager,
+    update_profile_logic as update_cluster_profile)
 
 
 EXPORTED_KEYS_DIRNAME = '.exported-ssh-keys'
-EXPORTED_SSH_KEYS_DIR = os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
 PROFILE_COLUMNS = ['name', 'manager_ip', 'manager_username', 'manager_tenant',
                    'ssh_user', 'ssh_key', 'ssh_port', 'kerberos_env',
                    'rest_port', 'rest_protocol', 'rest_certificate']
@@ -47,11 +28,14 @@ CLUSTER_PROFILE_COLUMNS = PROFILE_COLUMNS[:1] + ['hostname', 'host_ip'] \
     + PROFILE_COLUMNS[2:]
 
 
+def _exported_ssh_keys_dir():
+    return os.path.join(env.PROFILES_DIR, EXPORTED_KEYS_DIRNAME)
+
+
 @cfy.group(name='profiles')
 @cfy.options.common_options
 def profiles():
-    """
-    Handle Cloudify CLI profiles
+    """Handle Cloudify CLI profiles
 
     Each profile can manage a single Cloudify manager.
 
@@ -148,6 +132,7 @@ def profiles_list(logger):
 @cfy.options.ssh_user
 @cfy.options.ssh_key
 @cfy.options.ssh_port
+@cfy.options.manager_token
 @cfy.options.manager_username
 @cfy.options.manager_password
 @cfy.options.manager_tenant()
@@ -170,6 +155,13 @@ def use(manager_ip,
     Additional CLI commands will be added after a manager is used.
     To stop using a manager, you can run `cfy init -r`.
     """
+    def _auth_args_present(kwargs):
+        return any(
+            kwargs.get(kwarg)
+            for kwarg in ['manager_username', 'manager_password',
+                          'manager_token', 'kerberos_env']
+        )
+
     if not profile_name:
         profile_name = manager_ip
     if profile_name == 'local':
@@ -187,15 +179,24 @@ def use(manager_ip,
             **kwargs)
     else:
         kwargs.setdefault('manager_tenant', 'default_tenant')
+        if _auth_args_present(kwargs):
+            env.check_configured_auth(
+                credentials=(kwargs['manager_username'],
+                             kwargs['manager_password']),
+                token=kwargs['manager_token'],
+                kerberos_env=kwargs['kerberos_env'],
+            )
         _create_profile(
             manager_ip=manager_ip,
             profile_name=profile_name,
             skip_credentials_validation=skip_credentials_validation,
             logger=logger,
             **kwargs)
-    if not env.profile.manager_username:
-        return
-    if not skip_credentials_validation:
+    if (
+        # We test with the env here in case of switching to an existing one
+        _auth_args_present(env.profile.to_dict())
+        and not skip_credentials_validation
+    ):
         _update_cluster_profile_to_dict(logger)
 
 
@@ -234,6 +235,7 @@ def _create_profile(
         manager_username,
         manager_password,
         manager_tenant,
+        manager_token,
         rest_port,
         ssl,
         rest_certificate,
@@ -254,36 +256,22 @@ def _create_profile(
     logger.info('Attempting to connect to %s through port %s, using %s '
                 '(SSL mode: %s)...', manager_ip, rest_port, rest_protocol, ssl)
 
-    # First, attempt to get the provider from the manager - should it fail,
-    # the manager's profile directory won't be created
-    provider_context = _get_provider_context(
-        profile_name,
-        manager_ip,
-        rest_port,
-        rest_protocol,
-        rest_certificate,
-        manager_username,
-        manager_password,
-        manager_tenant,
-        kerberos_env,
-        skip_credentials_validation
-    )
-    init.init_manager_profile(profile_name=profile_name)
     logger.info('Using manager %s with port %s', manager_ip, rest_port)
     _set_profile_context(
         profile_name,
-        provider_context,
         manager_ip,
         ssh_key,
         ssh_user,
         ssh_port,
         manager_username,
         manager_password,
+        manager_token,
         manager_tenant,
         rest_port,
         rest_protocol,
         rest_certificate,
-        kerberos_env
+        kerberos_env,
+        skip_credentials_validation,
     )
     env.set_active_profile(profile_name)
 
@@ -343,6 +331,7 @@ def _set_profile_ssl(ssl, rest_port, logger):
     short_help='Set name/manager username/password/tenant in current profile')
 @cfy.options.profile_name
 @cfy.options.profile_manager_ip
+@cfy.options.manager_token
 @cfy.options.manager_username
 @cfy.options.manager_password
 @cfy.options.manager_tenant()
@@ -358,6 +347,7 @@ def _set_profile_ssl(ssl, rest_port, logger):
 @cfy.pass_logger
 def set_cmd(profile_name,
             manager_ip,
+            manager_token,
             manager_username,
             manager_password,
             manager_tenant,
@@ -374,28 +364,13 @@ def set_cmd(profile_name,
     and/or ssl state (on/off) in the *current* profile
     """
     if not any([profile_name, manager_ip, ssh_user, ssh_key, ssh_port,
-                manager_username, manager_password, manager_tenant,
-                ssl is not None, rest_certificate, kerberos_env is not None]):
+                manager_token, manager_username, manager_password,
+                manager_tenant, ssl is not None, rest_certificate,
+                kerberos_env is not None]):
         raise CloudifyCliError(
             "You must supply at least one of the following:  "
-            "profile name, username, password, tenant, "
+            "profile name, username, password, token, tenant, "
             "ssl, rest certificate, ssh user, ssh key, ssh port, kerberos env")
-    username = manager_username or env.get_username()
-    password = manager_password or env.get_password()
-    tenant = manager_tenant or env.get_tenant_name()
-    protocol, port = _get_ssl_protocol_and_port(ssl)
-    if rest_port is not None:
-        port = rest_port
-
-    if not skip_credentials_validation:
-        _validate_credentials(manager_ip,
-                              username,
-                              password,
-                              tenant,
-                              rest_certificate,
-                              protocol,
-                              port,
-                              kerberos_env)
     old_name = None
     if profile_name:
         if profile_name == 'local':
@@ -411,9 +386,19 @@ def set_cmd(profile_name,
     if manager_username:
         logger.info('Setting username to `%s`', manager_username)
         env.profile.manager_username = manager_username
+        logger.info('Clearing non-credentials auth')
+        env.profile.manager_token = None
+        env.profile.kerberos_env = None
     if manager_password:
-        logger.info('Setting password to `%s`', manager_password)
+        logger.info('Setting password')
         env.profile.manager_password = manager_password
+    if manager_token:
+        logger.info('Setting token')
+        logger.info('Clearing non-token auth')
+        env.profile.manager_token = manager_token
+        env.profile.manager_username = None
+        env.profile.manager_password = None
+        env.profile.kerberos_env = None
     if manager_tenant:
         logger.info('Setting tenant to `%s`', manager_tenant)
         env.profile.manager_tenant = manager_tenant
@@ -434,9 +419,16 @@ def set_cmd(profile_name,
         env.profile.ssh_port = ssh_port
     if kerberos_env is not None:
         logger.info('Setting kerberos_env to `%s`', kerberos_env)
+        logger.info('Clearing non-kerberos auth')
         env.profile.kerberos_env = kerberos_env
+        env.profile.manager_username = None
+        env.profile.manager_password = None
+        env.profile.manager_token = None
     if ssl is not None:
         _set_profile_ssl(ssl, rest_port, logger)
+
+    if not skip_credentials_validation:
+        _validate_credentials(env.profile)
 
     env.profile.save()
     if old_name is not None:
@@ -534,34 +526,6 @@ def unset(manager_username,
                                " username, password, tenant, kerberos_env, "
                                "rest certificate, ssh user, ssh key")
     if manager_username:
-        username = os.environ.get(constants.CLOUDIFY_USERNAME_ENV)
-    else:
-        username = env.profile.manager_username
-    if manager_password:
-        password = os.environ.get(constants.CLOUDIFY_PASSWORD_ENV)
-    else:
-        password = env.profile.manager_password
-    if manager_tenant:
-        tenant = os.environ.get(constants.CLOUDIFY_TENANT_ENV)
-    else:
-        tenant = env.profile.manager_tenant
-    if rest_certificate:
-        cert = os.environ.get(constants.LOCAL_REST_CERT_FILE) \
-            or env.get_default_rest_cert_local_path()
-    else:
-        cert = None
-
-    if not skip_credentials_validation:
-        _validate_credentials(env.profile.manager_ip,
-                              username,
-                              password,
-                              tenant,
-                              cert,
-                              env.profile.rest_protocol,
-                              env.profile.rest_port,
-                              None)
-
-    if manager_username:
         logger.info('Clearing manager username')
         env.profile.manager_username = None
     if manager_password:
@@ -582,6 +546,10 @@ def unset(manager_username,
     if kerberos_env:
         logger.info('Clearing kerberos_env')
         env.profile.kerberos_env = None
+
+    if not skip_credentials_validation:
+        _validate_credentials(env.profile)
+
     env.profile.save()
     logger.info('Settings saved successfully')
 
@@ -614,7 +582,7 @@ def export_profiles(include_keys, output_path, logger):
             _backup_ssh_key(profile)
     utils.tar(env.PROFILES_DIR, destination)
     if include_keys:
-        shutil.rmtree(EXPORTED_SSH_KEYS_DIR)
+        shutil.rmtree(_exported_ssh_keys_dir())
     logger.info('Export complete!')
     logger.info(
         'You can import the profiles by running '
@@ -650,7 +618,7 @@ def import_profiles(archive_path, include_keys, logger):
                         "for one or more profiles. To restore those keys to "
                         "their original locations, you can use the "
                         "`--include-keys flag or copy them manually from %s ",
-                        EXPORTED_SSH_KEYS_DIR)
+                        _exported_ssh_keys_dir())
     logger.info('Import complete!')
     logger.info('You can list profiles using `cfy profiles list`')
 
@@ -691,11 +659,11 @@ def _move_ssh_key(profile, logger, is_backup):
     key_filepath = context.ssh_key
     if key_filepath:
         backup_path = os.path.join(
-            EXPORTED_SSH_KEYS_DIR, os.path.basename(key_filepath)) + \
+            _exported_ssh_keys_dir(), os.path.basename(key_filepath)) + \
             '.{0}.profile'.format(profile)
         if is_backup:
-            if not os.path.isdir(EXPORTED_SSH_KEYS_DIR):
-                os.makedirs(EXPORTED_SSH_KEYS_DIR, mode=0o700)
+            if not os.path.isdir(_exported_ssh_keys_dir()):
+                os.makedirs(_exported_ssh_keys_dir(), mode=0o700)
             logger.info('Copying ssh key %s to %s...',
                         key_filepath, backup_path)
             shutil.copy2(key_filepath, backup_path)
@@ -734,28 +702,9 @@ def _assert_manager_available(client, profile_name):
             "Can't use manager {0}. {1}".format(profile_name, ex))
 
 
-def _get_provider_context(profile_name,
-                          manager_ip,
-                          rest_port,
-                          rest_protocol,
-                          rest_certificate,
-                          manager_username,
-                          manager_password,
-                          manager_tenant,
-                          kerberos_env,
-                          skip_credentials_validation):
+def _get_provider_context(profile, skip_credentials_validation):
     try:
-        client = _get_client_and_assert_manager(
-            profile_name,
-            manager_ip,
-            rest_port,
-            rest_protocol,
-            rest_certificate,
-            manager_username,
-            manager_password,
-            manager_tenant,
-            kerberos_env
-        )
+        client = _get_client_and_assert_manager(profile=profile)
     except CloudifyCliError:
         if skip_credentials_validation:
             return None
@@ -768,51 +717,31 @@ def _get_provider_context(profile_name,
         return None
 
 
-def _get_client_and_assert_manager(profile_name,
-                                   manager_ip=None,
-                                   rest_port=None,
-                                   rest_protocol=None,
-                                   rest_certificate=None,
-                                   manager_username=None,
-                                   manager_password=None,
-                                   manager_tenant=None,
-                                   kerberos_env=None):
-    # Attempt to update the profile with an existing profile context, if one
-    # is available. This is relevant in case the user didn't pass a username
-    # or a password, and was expecting them to be taken from the old profile
-    env.profile = env.get_profile_context(profile_name, suppress_error=True)
-
-    client = env.get_rest_client(
-        rest_host=manager_ip,
-        rest_port=rest_port,
-        rest_protocol=rest_protocol,
-        rest_cert=rest_certificate,
-        username=manager_username,
-        password=manager_password,
-        tenant_name=manager_tenant,
-        kerberos_env=kerberos_env
-    )
-
-    _assert_manager_available(client, profile_name)
+def _get_client_and_assert_manager(profile):
+    if not profile.manager_ip:
+        raise CloudifyCliError('No manager IP defined for Cloudify CLI '
+                               'usage.\nPlease define a profile using '
+                               '`cfy profiles use`')
+    client = env.get_rest_client(client_profile=profile)
+    _assert_manager_available(client, profile.name)
     return client
 
 
 def _set_profile_context(profile_name,
-                         provider_context,
                          manager_ip,
                          ssh_key,
                          ssh_user,
                          ssh_port,
                          manager_username,
                          manager_password,
+                         manager_token,
                          manager_tenant,
                          rest_port,
                          rest_protocol,
                          rest_certificate,
-                         kerberos_env):
-
-    profile = env.get_profile_context(profile_name)
-    profile.provider_context = provider_context
+                         kerberos_env,
+                         skip_credentials_validation):
+    profile = env.ProfileContext()
     if profile_name:
         profile.profile_name = profile_name
     if manager_ip:
@@ -827,6 +756,8 @@ def _set_profile_context(profile_name,
         profile.manager_username = manager_username
     if manager_password:
         profile.manager_password = manager_password
+    if manager_token:
+        profile.manager_token = manager_token
     if manager_tenant:
         profile.manager_tenant = manager_tenant
     profile.ssh_port = ssh_port or constants.REMOTE_EXECUTION_PORT
@@ -834,7 +765,11 @@ def _set_profile_context(profile_name,
     profile.rest_certificate = rest_certificate
     profile.kerberos_env = kerberos_env
 
-    profile.save()
+    profile.provider_context = _get_provider_context(
+        profile, skip_credentials_validation)
+    # We initialise the profile here so that the profile dir doesn't get
+    # created if we unexpectedly fail to get the provider context
+    init.init_manager_profile(profile_name=profile_name, profile=profile)
 
 
 def _is_manager_secured(response_history):
@@ -862,18 +797,7 @@ def _get_ssl_protocol_and_port(ssl):
 
 
 @cfy.pass_logger
-def _validate_credentials(manager_ip, username, password, tenant, certificate,
-                          protocol, rest_port, kerberos_env, logger):
+def _validate_credentials(profile, logger):
     logger.info('Validating credentials...')
-    _get_client_and_assert_manager(
-        profile_name=env.profile.profile_name,
-        manager_ip=manager_ip,
-        manager_username=username,
-        manager_password=password,
-        manager_tenant=tenant,
-        rest_certificate=certificate,
-        rest_protocol=protocol,
-        rest_port=rest_port,
-        kerberos_env=kerberos_env
-    )
+    _get_client_and_assert_manager(profile=profile)
     logger.info('Credentials validated')

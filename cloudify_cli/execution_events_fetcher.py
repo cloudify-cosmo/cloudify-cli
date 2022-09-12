@@ -19,8 +19,9 @@ import time
 
 from cloudify_rest_client.executions import Execution
 
-from .exceptions import (ExecutionTimeoutError,
-                         EventProcessingTimeoutError)
+from cloudify_cli.exceptions import (
+    ExecutionTimeoutError,
+    EventProcessingTimeoutError)
 
 
 WAIT_FOR_EXECUTION_SLEEP_INTERVAL = 1
@@ -84,7 +85,7 @@ class ExecutionEventsFetcher(object):
     def _map_api_event_to_internal_event(self, event):
         """Map data structure from API to internal.
 
-        This method adapts the data structure returend by the events API
+        This method adapts the data structure returned by the events API
         endpoint to the structure expected by `cloudify.event.Event`.
 
         Note: the event is modified in place, so even though the value is
@@ -121,7 +122,6 @@ class ExecutionEventsFetcher(object):
 
     def fetch_and_process_events(self, events_handler=None, timeout=60):
         total_events_count = 0
-
         # timeout can be None (never time out), for example when tail is used
         if timeout is not None:
             deadline = time.time() + timeout

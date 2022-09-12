@@ -7,7 +7,6 @@ from mock import patch
 
 from dsl_parser.exceptions import DSLParsingLogicException
 
-from .. import cfy
 from ... import env
 from ...config import config
 from ...commands import init
@@ -19,6 +18,9 @@ from .constants import (
 
 
 class InitTest(CliCommandTest):
+    def setUp(self):
+        super(InitTest, self).setUp()
+        self.use_local_profile()
 
     def test_init_initialized_directory(self):
         self.use_manager()
@@ -36,7 +38,7 @@ class InitTest(CliCommandTest):
             conf['colors'] = True
             f.write(yaml.safe_dump(conf))
 
-        cfy.invoke('init -r')
+        self.invoke('init -r')
         with open(config.CLOUDIFY_CONFIG_PATH) as f:
             conf = yaml.safe_load(f.read())
 
@@ -60,7 +62,7 @@ class InitTest(CliCommandTest):
 
     def test_init_overwrite_on_initial_init(self):
         # Simply verifying the overwrite flag doesn't break the first init
-        cfy.purge_dot_cloudify()
+        self.purge_dot_cloudify()
         self.invoke('cfy init -r')
 
     def test_init_invalid_blueprint_path(self):
@@ -76,10 +78,9 @@ class InitTest(CliCommandTest):
             DEFAULT_BLUEPRINT_FILE_NAME
         )
         self.invoke('cfy init {0}'.format(blueprint_path))
-        cfy.register_commands()
 
         output = json.loads(self.invoke(
-            'cfy deployments outputs -b local').logs)
+            'cfy deployments outputs -b local').output)
         self.assertEqual(output, {
             'key1': 'default_val1',
             'key2': 'default_val2',
@@ -98,10 +99,9 @@ class InitTest(CliCommandTest):
         command = 'cfy init {0}'.format(blueprint_path)
 
         self.invoke(command)
-        cfy.register_commands()
 
         output = json.loads(self.invoke(
-            'cfy deployments inputs -b local').logs)
+            'cfy deployments inputs -b local').output)
         self.assertEqual(output, {
             'key1': 'default_val1',
             'key2': 'default_val2',
@@ -120,10 +120,9 @@ class InitTest(CliCommandTest):
         )
 
         self.invoke(command)
-        cfy.register_commands()
 
         output = json.loads(self.invoke(
-            'cfy deployments inputs -b local').logs)
+            'cfy deployments inputs -b local').output)
         self.assertEqual(output, {
             'key1': 'val1',
             'key2': 'val2',
@@ -189,7 +188,7 @@ class InitTest(CliCommandTest):
 
     def test_no_init(self):
         # make sure no error is thrown
-        cfy.purge_dot_cloudify()
+        self.purge_dot_cloudify()
         self.invoke('cfy profiles list')
 
     def test_init_blueprint_archive_default_name(self):
@@ -203,10 +202,9 @@ class InitTest(CliCommandTest):
             'cfy init {0} -b local -n simple_blueprint.yaml'
             .format(SAMPLE_CUSTOM_NAME_ARCHIVE)
         )
-        cfy.register_commands()
 
         output = json.loads(self.invoke(
-            'cfy deployments inputs -b local').logs)
+            'cfy deployments inputs -b local').output)
         self.assertEqual(output, {
             'key1': 'default_val1',
             'key2': 'default_val2',
@@ -225,11 +223,12 @@ class InitTest(CliCommandTest):
 
 class LocalProfileUpdateTest(CliCommandTest):
     def setUp(self):
+        super(LocalProfileUpdateTest, self).setUp()
         shutil.copytree(
             os.path.join(RESOURCES_DIR, 'old_local_profile'),
             os.path.join(env.CLOUDIFY_WORKDIR, 'profiles', 'local')
         )
-        super(LocalProfileUpdateTest, self).setUp()
+        self.use_local_profile()
 
     def test_list_blueprints(self):
         out = self.invoke('blueprints list --json')

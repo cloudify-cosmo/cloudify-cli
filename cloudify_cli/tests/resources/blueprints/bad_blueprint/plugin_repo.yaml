@@ -5,9 +5,5 @@ description: >
     with a local `cfy blueprints validate`
 
 imports:
-  - http://www.getcloudify.org/spec/cloudify/4.3.dev1/types.yaml
   - plugin:cloudify-openstack-plugin
 
-node_templates:
-  x:
-    type: cloudify.nodes.Root

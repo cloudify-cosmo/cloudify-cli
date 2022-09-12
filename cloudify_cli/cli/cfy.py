@@ -9,36 +9,39 @@ import re
 import subprocess
 import locale
 import codecs
-from functools import wraps
 import unicodedata
+from functools import wraps
+from io import StringIO
+from urllib.parse import quote as urlquote
 
 import click
 
-from cloudify._compat import StringIO, urlquote
 from cloudify_rest_client.constants import VisibilityState
 from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
 from cloudify_rest_client.exceptions import MaintenanceModeActiveError
 from cloudify_rest_client.exceptions import MaintenanceModeActivatingError
 
-from .. import env, logger
-from ..cli import helptexts
-from ..inputs import inputs_to_dict
-from ..utils import generate_random_string
-from ..constants import DEFAULT_BLUEPRINT_PATH
-from ..exceptions import SuppressedCloudifyCliError
-from ..exceptions import (LabelsValidationError,
-                          CloudifyBootstrapError,
-                          CloudifyValidationError,)
-from ..logger import (
+from cloudify_cli import env, logger
+from cloudify_cli.cli import helptexts
+from cloudify_cli.constants import DEFAULT_BLUEPRINT_PATH
+from cloudify_cli.exceptions import (
+    LabelsValidationError,
+    CloudifyBootstrapError,
+    CloudifyValidationError,
+    SuppressedCloudifyCliError)
+from cloudify_cli.filters_utils import (
+    get_filter_rules,
+    create_labels_filter_rules_list,
+    create_attributes_filter_rules_list)
+from cloudify_cli.inputs import inputs_to_dict
+from cloudify_cli.logger import (
     get_logger,
     set_global_verbosity_level,
     DEFAULT_LOG_FILE,
     set_global_json_output,
     set_global_extended_view)
-from ..filters_utils import (get_filter_rules,
-                             create_labels_filter_rules_list,
-                             create_attributes_filter_rules_list)
+from cloudify_cli.utils import generate_random_string
 
 
 CLICK_CONTEXT_SETTINGS = dict(
@@ -164,21 +167,26 @@ def show_version(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
 
-    cli_version_data = {
-        'version': pkg_resources.require('cloudify')[0].version
-    }
-    rest_version_data = env.get_manager_version_data() \
-        if env.is_manager_active() else None
+    cli_version_output = _format_version_data(
+        {'version': pkg_resources.require('cloudify')[0].version},
+        prefix='Cloudify CLI ',
+        infix=' ' * 5,
+        suffix='\n')
+
+    try:
+        rest_version_data = env.get_manager_version_data() \
+            if env.is_manager_active() else None
+    except Exception as e:
+        get_logger().info(cli_version_output)
+        sys.stderr.write("Cannot get Cloudify Manager version. {}: "
+                         "{}\n".format(type(e).__name__, str(e)))
+        ctx.exit(1)
+
     output = ''
     if rest_version_data:
         edition = rest_version_data['edition'].title()
         output += '{0} edition\n\n'.format(edition)
-
-    output += _format_version_data(
-        cli_version_data,
-        prefix='Cloudify CLI ',
-        infix=' ' * 5,
-        suffix='\n')
+    output += cli_version_output
     if rest_version_data:
         output += _format_version_data(
             rest_version_data,
@@ -439,7 +447,7 @@ def set_cli_except_hook(global_verbosity_level):
     def new_excepthook(tpe, value, tb):
         with open(DEFAULT_LOG_FILE, 'a') as log_file:
             traceback.print_exception(
-                etype=tpe,
+                tpe,
                 value=value,
                 tb=tb,
                 file=log_file)
@@ -468,7 +476,7 @@ def set_cli_except_hook(global_verbosity_level):
             # print traceback if verbose
             s_traceback = StringIO()
             traceback.print_exception(
-                etype=tpe,
+                tpe,
                 value=value,
                 tb=tb,
                 file=s_traceback)
@@ -887,6 +895,21 @@ class Options(object):
             is_flag=True,
             help=helptexts.SKIP_REINSTALL)
 
+        self.skip_drift_check = click.option(
+            '--skip-drift-check',
+            is_flag=True,
+            help=helptexts.SKIP_DRIFT_CHECK)
+
+        self.force_reinstall = click.option(
+            '--force-reinstall',
+            is_flag=True,
+            help=helptexts.FORCE_REINSTALL)
+
+        self.skip_heal = click.option(
+            '--skip-heal',
+            is_flag=True,
+            help=helptexts.SKIP_HEAL)
+
         self.dont_skip_reinstall = click.option(
             '--dont-skip-reinstall',
             is_flag=True,
@@ -963,6 +986,13 @@ class Options(object):
         self.profile_manager_ip = click.option(
             '-m', '--manager-ip',
             help=helptexts.PROFILE_MANAGER_IP,
+        )
+
+        self.manager_token = click.option(
+            '-T',
+            '--manager-token',
+            required=False,
+            help=helptexts.MANAGER_TOKEN,
         )
 
         self.manager_username = click.option(
@@ -1366,6 +1396,26 @@ class Options(object):
             is_flag=True,
             default=False,
             help=helptexts.QUEUE_SNAPSHOTS
+        )
+
+        self.tempdir_path = click.option(
+            '--tempdir-path',
+            help=helptexts.TEMPDIR_PATH
+        )
+
+        self.wait_for_status = click.option(
+            '-w',
+            '--wait-for-status',
+            is_flag=True,
+            default=False,
+            help=helptexts.WAIT_FOR_STATUS
+        )
+
+        self.queue_log_bundle = click.option(
+            '--queue',
+            is_flag=True,
+            default=False,
+            help=helptexts.QUEUE_LOG_BUNDLES,
         )
 
         self.wait_after_fail = click.option(
@@ -1789,14 +1839,38 @@ class Options(object):
             help=helptexts.DEPENDENCIES_OF
         )
 
+        self.execution_group_concurrency = click.option(
+            '--concurrency',
+            type=int,
+            default=5,
+            help=helptexts.EXECUTION_GROUP_CONCURRENCY
+        )
+
+        self.worker_names = click.option(
+            '-w', '--with-worker-names/--without-worker-names',
+            'with_worker_names',
+            is_flag=True,
+            help=helptexts.WORKER_NAMES,
+            default=False,
+        )
+
+        self.drift_only = click.option(
+            '--drift-only',
+            is_flag=True,
+            help=helptexts.DRIFT_ONLY,
+            default=False,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['blueprint_id', 'blueprint_path', 'inputs'],
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
         To be used for arguments that are going to be applied for all or
         almost all commands.
         """
-        for arg in [self.json, self.verbose(), self.format, self.quiet(),
-                    self.manager]:
+        for arg in [self.manager, self.json, self.format,
+                    self.verbose(), self.quiet()]:
             f = arg(f)
         return f
 
@@ -2105,6 +2179,7 @@ class Options(object):
             '-y',
             '--yaml-path',
             required=True,
+            multiple=True,
             help=helptexts.PLUGIN_YAML_PATH)
 
     @staticmethod
@@ -2353,3 +2428,16 @@ class Options(object):
 
 
 options = Options()
+
+
+class SummaryArgs(click.Choice):
+    """
+    Used for correctly displaying usage of summary commands (e.g. `cfy
+    blueprints summary`) in which the user must choose a field to summarize
+    by from a list.
+    We want  Usage: cfy blueprints summary [OPTIONS] TARGET_FIELD [SUB_FIELD]
+    Not      Usage: cfy blueprints summary [OPTIONS]
+                    [visibility|tenant_name] [[visibility|tenant_name]]
+    """
+    def get_metavar(self, param):
+        pass

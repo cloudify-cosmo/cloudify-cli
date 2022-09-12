@@ -18,13 +18,14 @@ import os
 
 import yaml
 
-from .cluster import _all_in_one_manager
 
-from .. import env
-from ..cli import cfy
-from ..utils import get_dict_from_yaml
-from ..exceptions import CloudifyCliError
-from ..replace_certificates_config import ReplaceCertificatesConfig
+from cloudify_cli import env
+from cloudify_cli.cli import cfy
+from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.replace_certificates_config import ReplaceCertificatesConfig
+from cloudify_cli.utils import get_dict_from_yaml
+
+from cloudify_cli.commands.cluster import _all_in_one_manager
 
 CERTS_CONFIG_PATH = 'certificates_replacement_config.yaml'
 
@@ -112,14 +113,18 @@ def _get_configuration_dict(client):
                 'new_prometheus_cert': '',     # Relevant only if
                 'new_prometheus_key': '',      # monitoring_service
                 'new_prometheus_ca_cert': '',  # was installed
+                'new_prometheus_ca_key': '',   # -------------
                 'new_ca_cert': '',
+                'new_ca_key': '',
                 'new_external_ca_cert': '',
+                'new_external_ca_key': '',
                 'new_ldap_ca_cert': ''  # Relevant only if using LDAP
                  },
             'postgresql_server': {  # Relevant only if ssl_enabled==True
                 'new_postgresql_server_cert': '',
                 'new_postgresql_server_key': '',
-                'new_postgresql_server_ca_cert': ''
+                'new_postgresql_server_ca_cert': '',
+                'new_postgresql_server_ca_key': ''
             },
             'rabbitmq': {  # Relevant only if specifying new_ca_cert
                 'new_rabbitmq_cert': '',
@@ -139,10 +144,13 @@ def _get_configuration_dict(client):
             'new_postgresql_client_key': '',
             'new_prometheus_cert': '',
             'new_prometheus_key': '',
-            'new_prometheus_ca_cert': ''
+            'new_prometheus_ca_cert': '',
+            'new_prometheus_ca_key': ''
         } for host_ip in instances_ips['manager_ips']],
             'new_ca_cert': '',
+            'new_ca_key': '',
             'new_external_ca_cert': '',
+            'new_external_ca_key': '',
             'new_ldap_ca_cert': ''
         },
         'postgresql_server': {'cluster_members': [{
@@ -151,9 +159,11 @@ def _get_configuration_dict(client):
             'new_key': '',
             'new_prometheus_cert': '',
             'new_prometheus_key': '',
-            'new_prometheus_ca_cert': ''
+            'new_prometheus_ca_cert': '',
+            'new_prometheus_ca_key': ''
         } for host_ip in instances_ips['postgresql_ips']],
-            'new_ca_cert': ''
+            'new_ca_cert': '',
+            'new_ca_key': ''
         },
         'rabbitmq': {'cluster_members': [{
             'host_ip': str(host_ip),
@@ -161,9 +171,11 @@ def _get_configuration_dict(client):
             'new_key': '',
             'new_prometheus_cert': '',
             'new_prometheus_key': '',
-            'new_prometheus_ca_cert': ''
+            'new_prometheus_ca_cert': '',
+            'new_prometheus_ca_key': ''
         } for host_ip in instances_ips['rabbitmq_ips']],
-            'new_ca_cert': ''
+            'new_ca_cert': '',
+            'new_ca_key': ''
         }
     }
 

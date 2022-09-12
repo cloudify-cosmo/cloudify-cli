@@ -91,6 +91,9 @@ SKIP_REINSTALL = (
     "been modified, as part of a deployment update. Node instances that were "
     "explicitly given to the reinstall list will still be reinstalled"
 )
+SKIP_DRIFT_CHECK = "Skip running check_drift during deployment update"
+FORCE_REINSTALL = "Reinstall all changed nodes, don't run update operations"
+SKIP_HEAL = "Skip running heal and check_status before the update"
 DONT_SKIP_REINSTALL = (
     "Reinstall node-instances that their properties have been modified as part"
     " of a deployment update. Node instances that were explicitly specified"
@@ -198,6 +201,7 @@ PROFILE_MANAGER_IP = 'The address of the Manager'
 SSH_USER = 'The SSH user on the manager host machine'
 SSH_KEY = 'The path to the ssh key-file to use when connecting'
 SSH_PORT = 'The SSH port to use when connecting to the manager'
+MANAGER_TOKEN = 'Manager token used to run commands on the manager'
 MANAGER_USERNAME = 'Manager username used to run commands on the manager'
 MANAGER_PASSWORD = 'Manager password used to run commands on the manager'
 MANAGER_TENANT = 'The tenant associated with the current user operating the ' \
@@ -381,6 +385,9 @@ IGNORE_PLUGIN_FAILURE = 'If set, plugin installation errors during snapshot ' \
                         'not fail the snapshot restore workflow'
 QUEUE_SNAPSHOTS = 'If set, snapshot-creation-workflows that can`t currently ' \
                   'run will be queued and run automatically when possible'
+QUEUE_LOG_BUNDLES = 'If set, log-bundle-creation-workflows that can`t ' \
+                    'currently run will be queued and run automatically ' \
+                    'when possible'
 QUEUE_EXECUTIONS = 'If set, executions that can`t currently run will be '\
                    'queued and run automatically when possible'
 
@@ -549,6 +556,7 @@ DEP_GROUP_INTO_ENVIRONMENTS = 'Add created deployments to the environments ' \
                               'already existing in this group.'
 GROUP_ID_FILTER = 'Show only results belonging to this group'
 DELETE_GROUP_DEPLOYMENTS = 'Delete all deployments belonging to this group'
+EXECUTION_GROUP_CONCURRENCY = 'Run this many executions at a time'
 
 GENERATE_ID = 'Generate a UUID to serve as the deployment ID. This flag ' \
               'cannot be provided if a deployment ID is specified'
@@ -582,3 +590,19 @@ AUDIT_TRUNCATE_BEFORE = 'Truncate audit logs which were stored this long ' \
 
 SET_USERNAME = 'The name of the user who will be the new owner '\
                'of the resource.'
+WORKER_NAMES = 'Show the worker name for each event'
+DRIFT_ONLY = 'Run update without changing anything. This will still check ' \
+             'drift and run update operations as necessary'
+TEMPDIR_PATH = "Temporary location to be used for snapshot creation. If not " \
+               "specified, /tmp will be used."
+WAIT_FOR_STATUS = "Whether to wait for snapshot status [default: False]."
+SUMMARY_HELP = """
+    Retrieve summary of {type}, e.g. a count of each {example}.
+
+    `TARGET_FIELD` is the field to summarize {type} on. `SUB_FIELD` is an
+    optional second field to summarize {type} on. Both can be chosen from
+    [{fields}].
+
+    E.g. `cfy {type} summary tenant_name visibility` will summarize
+    {type} by tenant_name with a secondary grouping by visibility.
+    """

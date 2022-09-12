@@ -29,17 +29,19 @@ from cloudify_cli.exceptions import (
     SuppressedCloudifyCliError, CloudifyCliError, CloudifyValidationError,
 )
 
+from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
 from cloudify_rest_client.constants import VISIBILITY_EXCEPT_PRIVATE
 from cloudify_rest_client.exceptions import CloudifyClientError
 
-from .. import env, utils
-from ..logger import get_global_json_output
-from ..table import print_data, print_single, print_details
-from ..cli import helptexts, cfy
-from ..utils import (prettify_client_error,
-                     get_visibility,
-                     validate_visibility)
-from ..labels_utils import get_printable_resource_labels
+from cloudify_cli import env, utils
+from cloudify_cli.cli import helptexts, cfy
+from cloudify_cli.labels_utils import get_printable_resource_labels
+from cloudify_cli.logger import get_global_json_output
+from cloudify_cli.table import print_data, print_single, print_details
+from cloudify_cli.utils import (
+    prettify_client_error,
+    get_visibility,
+    validate_visibility)
 
 PLUGINS_BUNDLE_COLUMNS = ['id', 'package_name', 'package_version',
                           'distribution', 'distribution_release']
@@ -75,7 +77,7 @@ def validate(plugin_path, logger):
 
     `PLUGIN_PATH` is the path to wagon archive to validate.
     """
-    logger.info('Validating plugin {0}...'.format(plugin_path))
+    logger.info('Validating plugin %s...', plugin_path)
     wagon.validate(plugin_path)
     logger.info('Plugin validated successfully')
 
@@ -95,7 +97,7 @@ def delete(plugin_id, force, logger, client, tenant_name):
     `PLUGIN_ID` is the id of the plugin to delete.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Deleting plugin {0}...'.format(plugin_id))
+    logger.info('Deleting plugin %s...', plugin_id)
     client.plugins.delete(plugin_id=plugin_id, force=force)
     logger.info('Plugin deleted')
 
@@ -134,8 +136,8 @@ def upload(ctx,
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Creating plugin zip archive..')
     wagon_path = utils.get_local_path(plugin_path, create_temp=True)
-    yaml_path = utils.get_local_path(yaml_path, create_temp=True)
-    zip_files = [wagon_path, yaml_path]
+    zip_files = [wagon_path] + \
+                [utils.get_local_path(p, create_temp=True) for p in yaml_path]
     zip_descr = 'wagon + yaml'
     if icon_path:
         icon_path = utils.get_local_path(icon_path,
@@ -155,7 +157,7 @@ def upload(ctx,
                                        plugin_title=title,
                                        visibility=visibility,
                                        progress_callback=progress_handler)
-        logger.info("Plugin uploaded. Plugin's id is {0}".format(plugin.id))
+        logger.info("Plugin uploaded. Plugin's id is %s", plugin.id)
     finally:
         for f in zip_files:
             os.remove(f)
@@ -177,8 +179,7 @@ def upload_caravan(client, logger, path):
                'cloudify/wagons/cloudify-plugins-bundle.tgz'
     progress = utils.generate_progress_handler(path, '')
     plugins_ = client.plugins.upload(path, progress_callback=progress)
-    logger.info("Bundle uploaded, {0} Plugins installed."
-                .format(len(plugins_)))
+    logger.info("Bundle uploaded, %d Plugins installed.", len(plugins_))
     if len(plugins_) > 0:
         print_data(PLUGINS_BUNDLE_COLUMNS, plugins_, 'Plugins:')
 
@@ -197,13 +198,13 @@ def download(plugin_id, output_path, logger, client, tenant_name):
     `PLUGIN_ID` is the id of the plugin to download.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Downloading plugin {0}...'.format(plugin_id))
+    logger.info('Downloading plugin %s...', plugin_id)
     plugin_name = output_path if output_path else plugin_id
     progress_handler = utils.generate_progress_handler(plugin_name, '')
     target_file = client.plugins.download(plugin_id,
                                           output_path,
                                           progress_handler)
-    logger.info('Plugin downloaded as {0}'.format(target_file))
+    logger.info('Plugin downloaded as %s', target_file)
 
 
 @plugins.command(name='download_yaml',
@@ -220,13 +221,13 @@ def download_yaml(plugin_id, output_path, logger, client, tenant_name):
     `PLUGIN_ID` is the id of the plugin yaml to download.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Downloading plugin yaml {0}...'.format(plugin_id))
+    logger.info('Downloading plugin yaml %s...', plugin_id)
     plugin_name = output_path if output_path else plugin_id
     progress_handler = utils.generate_progress_handler(plugin_name, '')
     target_file = client.plugins.download_yaml(plugin_id,
                                                output_path,
                                                progress_handler)
-    logger.info('Plugin yaml downloaded as {0}'.format(target_file))
+    logger.info('Plugin yaml downloaded as %s', target_file)
 
 
 def _format_installation_state(plugin):
@@ -271,7 +272,7 @@ def get(plugin_id, logger, client, tenant_name, get_data):
     `PLUGIN_ID` is the id of the plugin to get information on.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Retrieving plugin {0}...'.format(plugin_id))
+    logger.info('Retrieving plugin %s...', plugin_id)
     plugin = client.plugins.get(plugin_id, _get_data=get_data)
     columns = PLUGIN_COLUMNS + GET_DATA_COLUMNS if get_data else PLUGIN_COLUMNS
     plugin['installed on'] = _format_installation_state(plugin)
@@ -340,8 +341,7 @@ def list(sort_by,
 
     print_data(columns, plugins_list, 'Plugins:')
     total = plugins_list.metadata.pagination.total
-    logger.info('Showing {0} of {1} plugins'.format(len(plugins_list),
-                                                    total))
+    logger.info('Showing %d of %d plugins', len(plugins_list), total)
 
 
 def _wait_for_plugin_to_be_installed(client, plugin_id, managers, agents,
@@ -446,9 +446,9 @@ def set_global(plugin_id, logger, client):
     status_codes = [400, 403, 404]
     with prettify_client_error(status_codes, logger):
         client.plugins.set_global(plugin_id)
-        logger.info('Plugin `{0}` was set to global'.format(plugin_id))
-        logger.info("This command will be deprecated soon, please use the "
-                    "'set-visibility' command instead")
+        logger.info('Plugin `%s` was set to global', plugin_id)
+        logger.warning("This command is deprecated and will be removed soon, "
+                       "please use the 'set-visibility' command instead")
 
 
 @plugins.command(name='set-visibility',
@@ -468,8 +468,7 @@ def set_visibility(plugin_id, visibility, logger, client):
     status_codes = [400, 403, 404]
     with prettify_client_error(status_codes, logger):
         client.plugins.set_visibility(plugin_id, visibility)
-        logger.info('Plugin `{0}` was set to {1}'.format(plugin_id,
-                                                         visibility))
+        logger.info('Plugin `%s` was set to %s', plugin_id, visibility)
 
 
 @plugins.command(name='set-owner',
@@ -562,19 +561,29 @@ def update(blueprint_id,
             '--to-minor are mutually exclusive.  If you want to upgrade '
             'only the specific plugins, use --plugin-name parameter instead.')
 
-    utils.explicit_tenant_name_message(tenant_name, logger)
     if blueprint_id:
-        _update_a_blueprint(blueprint_id, plugin_names,
-                            to_latest, all_to_latest, to_minor, all_to_minor,
-                            include_logs, json_output, logger,
-                            client, force, auto_correct_types,
-                            reevaluate_active_statuses)
+        _update_a_blueprint(
+            blueprint_id,
+            plugin_names,
+            to_latest,
+            all_to_latest,
+            to_minor,
+            all_to_minor,
+            include_logs,
+            json_output,
+            logger,
+            force,
+            auto_correct_types,
+            reevaluate_active_statuses,
+            client,
+            tenant_name,
+        )
     elif all_blueprints:
         update_results = {'successful': [], 'failed': []}
         pagination_offset = 0
         while True:
             blueprints = client.blueprints.list(
-                sort='created_at',
+                sort=['tenant_name', 'created_at'],
                 _all_tenants=all_tenants,
                 _offset=pagination_offset,
             )
@@ -582,12 +591,20 @@ def update(blueprint_id,
                 if blueprint.id in except_blueprints:
                     continue
                 try:
-                    _update_a_blueprint(blueprint.id, plugin_names,
-                                        to_latest, all_to_latest,
-                                        to_minor, all_to_minor,
-                                        include_logs, json_output, logger,
-                                        client, force, auto_correct_types,
-                                        reevaluate_active_statuses)
+                    _update_a_blueprint(blueprint.id,
+                                        plugin_names,
+                                        to_latest,
+                                        all_to_latest,
+                                        to_minor,
+                                        all_to_minor,
+                                        include_logs,
+                                        json_output,
+                                        logger,
+                                        force,
+                                        auto_correct_types,
+                                        reevaluate_active_statuses,
+                                        client,
+                                        blueprint.tenant_name)
                     update_results['successful'].append(blueprint.id)
                 except (CloudifyClientError, SuppressedCloudifyCliError) as ex:
                     update_results['failed'].append(blueprint.id)
@@ -607,6 +624,45 @@ def update(blueprint_id,
                          ', '.join(update_results['failed']))
 
 
+@plugins.command(name='list_updates',
+                 short_help='List all plugin updates for the tenant')
+@cfy.options.tenant_name(required=False,
+                         mutually_exclusive_with=['all_tenants'],
+                         resource_name_for_help='plugin')
+@cfy.assert_manager_active()
+@cfy.options.pagination_offset
+@cfy.options.pagination_size
+@cfy.options.sort_by('created_at')
+@cfy.options.descending
+@cfy.options.get_data
+@cfy.pass_logger
+@cfy.pass_client()
+def updates_list(tenant_name,
+                 pagination_offset,
+                 pagination_size,
+                 sort_by,
+                 descending,
+                 get_data,
+                 logger,
+                 client):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    updates_list = client.plugins_update.list(sort=sort_by,
+                                              is_descending=descending,
+                                              _offset=pagination_offset,
+                                              _size=pagination_size)
+    columns = [
+        'id', 'visibility', 'state', 'forced', 'all_tenants',
+        'blueprint_id', 'execution_id', 'created_by', 'created_at',
+    ]
+    if get_data:
+        columns.extend(['deployments_to_update', 'deployments_per_tenant',
+                        'temp_blueprint_id'])
+
+    print_data(columns, updates_list, 'Plugins updates:')
+    total = updates_list.metadata.pagination.total
+    logger.info('Showing %d of %d plugins updates', len(updates_list), total)
+
+
 def _update_a_blueprint(blueprint_id,
                         plugin_names,
                         to_latest,
@@ -616,12 +672,15 @@ def _update_a_blueprint(blueprint_id,
                         include_logs,
                         json_output,
                         logger,
-                        client,
                         force,
                         auto_correct_types,
-                        reevaluate_active_statuses):
-    logger.info('Updating the plugins of the deployments of the blueprint '
-                '{}'.format(blueprint_id))
+                        reevaluate_active_statuses,
+                        client,
+                        tenant_name):
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    client._client._set_header(CLOUDIFY_TENANT_HEADER, tenant_name)
+    logger.info('Updating the plugins of the deployments of the blueprint %s',
+                blueprint_id)
     plugins_update = client.plugins_update.update_plugins(
         blueprint_id, force=force, plugin_names=plugin_names,
         to_latest=to_latest, all_to_latest=all_to_latest,
@@ -639,24 +698,24 @@ def _update_a_blueprint(blueprint_id,
     )
 
     if execution.error:
-        logger.info("Execution of workflow '{0}' for blueprint "
-                    "'{1}' failed. [error={2}]"
-                    .format(execution.workflow_id,
-                            blueprint_id,
-                            execution.error))
-        logger.info('Failed updating plugins for blueprint {0}. '
-                    'Plugins update ID: {1}. Execution id: {2}'
-                    .format(blueprint_id,
-                            plugins_update.id,
-                            execution.id))
+        logger.info("Execution of workflow '%s' for blueprint "
+                    "'%s' failed. [error=%s]",
+                    execution.workflow_id,
+                    blueprint_id,
+                    execution.error)
+        logger.info('Failed updating plugins for blueprint %s. '
+                    'Plugins update ID: %s. Execution id: %s',
+                    blueprint_id,
+                    plugins_update.id,
+                    execution.id)
         raise SuppressedCloudifyCliError()
-    logger.info("Finished executing workflow '{0}'".format(
-        execution.workflow_id))
-    logger.info('Successfully updated plugins for blueprint {0}. '
-                'Plugins update ID: {1}. Execution id: {2}'
-                .format(blueprint_id,
-                        plugins_update.id,
-                        execution.id))
+    logger.info("Finished executing workflow '%s'",
+                execution.workflow_id)
+    logger.info('Successfully updated plugins for blueprint %s. '
+                'Plugins update ID: %s. Execution id: %s',
+                blueprint_id,
+                plugins_update.id,
+                execution.id)
 
 
 @plugins.command(
@@ -677,7 +736,7 @@ def manager_get_update(plugins_update_id, logger, client, tenant_name):
     `PLUGINS_UPDATE_ID` is the id of the plugins update to get information on.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Retrieving plugins update {0}...'.format(plugins_update_id))
+    logger.info('Retrieving plugins update %s...', plugins_update_id)
     plugins_update_dict = client.plugins_update.get(plugins_update_id)
     print_single(
         PLUGINS_UPDATE_COLUMNS, plugins_update_dict, 'Plugins update:')
@@ -716,8 +775,8 @@ def manager_history(blueprint_id,
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     if blueprint_id:
-        logger.info('Listing plugins updates for blueprint {0}...'.format(
-            blueprint_id))
+        logger.info('Listing plugins updates for blueprint %s...',
+                    blueprint_id)
     else:
         logger.info('Listing all plugins updates...')
 
@@ -733,8 +792,8 @@ def manager_history(blueprint_id,
     total = plugins_updates.metadata.pagination.total
     print_data(
         PLUGINS_UPDATE_COLUMNS, plugins_updates, 'Plugins updates:')
-    logger.info('Showing {0} of {1} plugins updates'.format(
-        len(plugins_updates), total))
+    logger.info('Showing %d of %d plugins updates',
+                len(plugins_updates), total)
 
 
 @plugins.group(name='blueprint-labels',
@@ -880,6 +939,62 @@ def delete_deployment_labels(label,
                      client.plugins, logger)
 
 
+@plugins.group(name='resource-tags',
+               short_help="Handle plugin's resource tags")
+@cfy.options.common_options
+def resource_tags():
+    if not env.is_initialized():
+        env.raise_uninitialized()
+
+
+@resource_tags.command(name='list',
+                       short_help="List resource tags of a specific plugin")
+@cfy.argument('plugin-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def list_resource_tags(plugin_id, logger, client, tenant_name):
+    _list_metadata(plugin_id, 'resource_tags', tenant_name, client.plugins,
+                   logger)
+
+
+@resource_tags.command(name='add',
+                       short_help="Add resource tags to a specific plugin")
+@cfy.argument('key-values',
+              callback=cfy.parse_and_validate_labels)
+@cfy.argument('plugin-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def add_resource_tags(key_values, plugin_id, logger, client, tenant_name):
+    """KEY_VALUES: <key>:<value>,<key>:<value>.
+    Any comma and colon in <value> must be escaped with '\\'."""
+    _add_metadata(plugin_id, 'resource_tags', key_values, tenant_name,
+                  client.plugins, logger)
+
+
+@resource_tags.command(name='delete',
+                       short_help="Delete resource tags from "
+                                  "a specific plugin")
+@cfy.argument('key', callback=cfy.parse_and_validate_label_to_delete)
+@cfy.argument('plugin-id')
+@cfy.options.tenant_name(required=False, resource_name_for_help='plugin')
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def delete_resource_tags(key, plugin_id, logger, client, tenant_name):
+    """
+    KEY: A resource tag's key to be deleted.
+    """
+    _delete_metadata(plugin_id, 'resource_tags', key, tenant_name,
+                     client.plugins, logger)
+
+
 def _list_metadata(plugin_id,
                    metadata_type,
                    tenant_name,
@@ -888,11 +1003,19 @@ def _list_metadata(plugin_id,
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing %s of plugin %s...', metadata_type, plugin_id)
     metadata = client.get(plugin_id)[metadata_type]
-    if get_global_json_output():
+    if not metadata:
+        output('There are no {0} associated with the plugin {1}'
+               .format(metadata_type, plugin_id))
+    elif get_global_json_output():
         output(json.dumps(metadata, cls=CloudifyJSONEncoder))
-    else:
+    elif metadata_type.endswith('labels'):
         print_data(['key', 'values'],
                    get_printable_resource_labels(metadata),
+                   '{0} labels'.format('Plugin'),
+                   max_width=50)
+    else:
+        print_data(['key', 'value'],
+                   [{'key': k, 'value': v} for k, v in metadata.items()],
                    '{0} labels'.format('Plugin'),
                    max_width=50)
 
@@ -906,7 +1029,7 @@ def _add_metadata(plugin_id,
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Adding %s to plugin %s...', metadata_type, plugin_id)
 
-    metadata = client.get(plugin_id)[metadata_type]
+    metadata = client.get(plugin_id)[metadata_type] or {}
     for added_metadata in metadata_list:
         for k, v in added_metadata.items():
             if k in metadata:
@@ -930,6 +1053,10 @@ def _delete_metadata(plugin_id,
     logger.info('Deleting %s from plugin %s...', metadata_type, plugin_id)
 
     metadata = client.get(plugin_id)[metadata_type]
+    if not metadata:
+        output('There are no {0} associated with the plugin {1}'
+               .format(metadata_type, plugin_id))
+        return
     for deleted_metadata in metadata_list:
         for k, v in deleted_metadata.items():
             if k in metadata:
@@ -939,8 +1066,13 @@ def _delete_metadata(plugin_id,
                     del metadata[k]
     _update_metadata(plugin_id, metadata_type, client,
                      **{metadata_type: metadata})
-    logger.info('The %s of plugin %s were deleted: %s',
-                metadata_type, plugin_id, metadata_list)
+    if metadata_type.endswith('labels'):
+        logger.info('The %s of plugin %s were deleted: %s',
+                    metadata_type, plugin_id, metadata_list)
+    else:
+        logger.info('The %s of plugin %s were deleted: %s',
+                    metadata_type, plugin_id,
+                    ", ".join(k for m in metadata_list for k in m.keys()))
 
 
 def _update_metadata(plugin_id,

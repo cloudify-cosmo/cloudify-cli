@@ -14,10 +14,10 @@
 # limitations under the License.
 ############
 
-from .. import env
-from ..cli import cfy
-from ..table import print_data, print_single
-from ..utils import handle_client_error
+from cloudify_cli import env
+from cloudify_cli.cli import cfy
+from cloudify_cli.table import print_data, print_single
+from cloudify_cli.utils import handle_client_error
 
 GROUP_COLUMNS = ['name', 'role', 'tenants', 'users']
 
@@ -148,7 +148,7 @@ def set_role(user_group_name, security_role, logger, client):
 
 @user_groups.command(name='add-user',
                      short_help='Add a user to a user group [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.group_name
 @cfy.options.common_options
 @cfy.assert_manager_active()
@@ -170,7 +170,7 @@ def add_user(username, group_name, logger, client):
 @user_groups.command(
     name='remove-user',
     short_help='Remove a user from a user group [manager only]')
-@cfy.argument('username', callback=cfy.validate_name)
+@cfy.argument('username')
 @cfy.options.group_name
 @cfy.options.common_options
 @cfy.assert_manager_active()

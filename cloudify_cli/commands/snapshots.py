@@ -16,9 +16,10 @@
 
 from cloudify.snapshots import STATES
 
-from .. import utils
-from ..table import print_data
-from ..cli import helptexts, cfy
+from cloudify_cli import utils
+from cloudify_cli.table import print_data
+from cloudify_cli.cli import helptexts, cfy
+from cloudify_cli.execution_events_fetcher import wait_for_execution
 
 SNAPSHOT_COLUMNS = ['id', 'created_at', 'status', 'error',
                     'visibility', 'tenant_name', 'created_by']
@@ -95,6 +96,8 @@ def restore(snapshot_id,
 @cfy.options.exclude_events
 @cfy.options.common_options
 @cfy.options.queue_snapshot
+@cfy.options.tempdir_path
+@cfy.options.wait_for_status
 @cfy.pass_client()
 @cfy.pass_logger
 def create(snapshot_id,
@@ -102,6 +105,8 @@ def create(snapshot_id,
            exclude_logs,
            exclude_events,
            queue,
+           tempdir_path,
+           wait_for_status,
            logger,
            client):
     """Create a snapshot on the manager
@@ -118,7 +123,8 @@ def create(snapshot_id,
                                         not exclude_credentials,
                                         not exclude_logs,
                                         not exclude_events,
-                                        queue)
+                                        queue,
+                                        tempdir_path=tempdir_path)
     started_log_msg = "Started workflow execution. The execution's id is" \
                       " {0}.".format(execution.id)
     queued_log_msg = '`queue` flag was passed, snapshot creation will start' \
@@ -126,6 +132,17 @@ def create(snapshot_id,
                      ' {0}'.format(execution.id)
     queued = True if execution.status == 'queued' else False
     logger.info(queued_log_msg) if queued else logger.info(started_log_msg)
+    if wait_for_status:
+        execution = wait_for_execution(
+            client,
+            client.executions.get(execution.id),
+            timeout=None
+        )
+        if execution.error:
+            logger.info("Snapshot %s creation failed [error=%s]",
+                        snapshot_id, execution.error)
+        else:
+            logger.info('Successfully created snapshot %s.', snapshot_id)
 
 
 @snapshots.command(name='delete',
