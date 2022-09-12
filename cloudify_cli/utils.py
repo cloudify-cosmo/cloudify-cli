@@ -1,19 +1,3 @@
-########
-# Copyright (c) 2014 GigaSpaces Technologies Ltd. All rights reserved
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#        http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-############
-
 import os
 import sys
 import json
@@ -250,7 +234,7 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
 
     bar_length -= len(file_name)
 
-    def print_progress(read_bytes, total_bytes):
+    def print_progress(watcher):
         """Print upload/download progress on a single line
 
         Call this function in a loop to create a progress bar in the terminal
@@ -258,19 +242,25 @@ def generate_progress_handler(file_path, action='', max_bar_length=80):
         :param read_bytes: Number of bytes already processed
         :param total_bytes: Total number of bytes in the file
         """
+        if getattr(watcher, 'cfy_progress_complete', False):
+            # Don't print the final line twice
+            return
+
+        read_bytes, total_bytes = watcher.bytes_read, watcher.len
 
         filled_length = min(bar_length, int(round(bar_length * read_bytes /
                                                   float(total_bytes))))
-        percents = min(100.00, round(
+        percent = min(100.00, round(
             100.00 * (read_bytes / float(total_bytes)), 2))
         bar = '#' * filled_length + '-' * (bar_length - filled_length)
 
         # The \r caret makes sure the cursor moves back to the beginning of
         # the line
-        msg = '\r{0} {1} |{2}| {3}%'.format(action, file_name, bar, percents)
+        msg = f'\r{action} {file_name} |{bar}| {percent}%'
         click.echo(msg, nl=False)
         if read_bytes >= total_bytes:
-            sys.stdout.write('\n')
+            click.echo('')
+            watcher.cfy_progress_complete = True
 
     return print_progress
 
