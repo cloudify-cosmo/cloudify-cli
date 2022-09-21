@@ -30,6 +30,7 @@ Maintainer: Cloudify Platform Ltd. <cosmo-admin@cloudify.co>
 Description: Cloudify's Command Line Interface
 EOF
 python3 -mvenv /opt/cfy
+/opt/cfy/bin/pip install --upgrade pip setuptools
 /opt/cfy/bin/pip install -r "${PROJECT_DIR}/dev-requirements.txt"
 /opt/cfy/bin/pip install "${PROJECT_DIR}"
 cp /opt/cfy "${BUILD_DIR}/opt/cfy" -fr
