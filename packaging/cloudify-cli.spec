@@ -23,7 +23,7 @@ URL:            https://github.com/cloudify-cosmo/cloudify-cli
 Vendor:         Cloudify Platform Ltd.
 Packager:       Cloudify Platform Ltd.
 
-Source0:        https://cloudify-cicd.s3.amazonaws.com/python-build-packages/cfy-python3.10.tgz
+Source0:        https://cloudify-cicd.s3.amazonaws.com/python-build-packages/cfy-python3.10-%{ARCHITECTURE}.tgz
 
 
 %description
