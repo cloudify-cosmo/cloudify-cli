@@ -130,7 +130,8 @@ def upload(ctx,
 
     `PLUGIN_PATH` is the path to wagon archive to upload.
     """
-    client.license.check()
+    if client.manager.get_version().get('edition') == 'premium':
+        client.license.check()
     # Test whether the path is a valid URL. If it is, no point in doing local
     # validations - it will be validated on the server side anyway
     utils.explicit_tenant_name_message(tenant_name, logger)
@@ -171,7 +172,8 @@ def upload(ctx,
 @cfy.pass_logger
 @cfy.options.extended_view
 def upload_caravan(client, logger, path):
-    client.license.check()
+    if client.manager.get_version().get('edition') == 'premium':
+        client.license.check()
     if not path:
         logger.info("Starting upload of plugins bundle, "
                     "this may take few minutes to complete.")

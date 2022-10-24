@@ -36,7 +36,7 @@ from .constants import (BLUEPRINTS_DIR,
 class BlueprintsTest(CliCommandTest):
     def setUp(self):
         super(BlueprintsTest, self).setUp()
-        self.client.license.check = Mock()
+        self.client.manager.get_version = Mock()
         self.use_manager()
         self.mock_wait_for_blueprint_upload(False)
 

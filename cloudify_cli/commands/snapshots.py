@@ -180,7 +180,8 @@ def upload(snapshot_path,
 
     `SNAPSHOT_PATH` is the path to the snapshot to upload.
     """
-    client.license.check()
+    if client.manager.get_version().get('edition') == 'premium':
+        client.license.check()
     utils.explicit_tenant_name_message(tenant_name, logger)
     snapshot_id = snapshot_id or utils.generate_suffixed_id('snapshot')
 

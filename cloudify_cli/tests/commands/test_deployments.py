@@ -78,7 +78,7 @@ class DeploymentUpdatesTest(CliCommandTest):
 
     def setUp(self):
         super(DeploymentUpdatesTest, self).setUp()
-        self.client.license.check = Mock()
+        self.client.manager.get_version = Mock()
         self.use_manager()
 
         self.client.deployment_updates.update = MagicMock()
