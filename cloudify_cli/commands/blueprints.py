@@ -104,7 +104,8 @@ def upload(ctx,
     retrieved from GitHub).
     Supported archive types are: zip, tar, tar.gz and tar.bz2
     """
-    client.license.check()
+    if client.manager.get_version().get('edition') == 'premium':
+        client.license.check()
     utils.explicit_tenant_name_message(tenant_name, logger)
     processed_blueprint_path = blueprint.get(
         blueprint_path, blueprint_filename, icon_path)

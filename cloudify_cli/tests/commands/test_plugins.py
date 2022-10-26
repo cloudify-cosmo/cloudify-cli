@@ -52,7 +52,7 @@ class PluginsTest(CliCommandTest):
 
     def setUp(self):
         super(PluginsTest, self).setUp()
-        self.client.license.check = Mock()
+        self.client.manager.get_version = Mock()
         self.use_manager()
 
     def test_plugins_list(self):
