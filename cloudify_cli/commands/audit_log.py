@@ -11,7 +11,7 @@ AUDITLOG_COLUMNS = ['ref_table', 'ref_id', 'operation', 'creator_name',
                     'execution_id', 'created_at']
 
 
-def _parse_before(ctx, spec):
+def _parse_before(ctx, _, spec):
     """Parse the --before/--since parameter"""
     if not spec:
         return spec
