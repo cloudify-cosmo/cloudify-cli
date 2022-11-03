@@ -162,6 +162,9 @@ def upload(ctx,
     finally:
         for f in zip_files:
             os.remove(f)
+            f_dir = os.path.dirname(f)
+            if os.path.exists(f_dir) and os.path.isdir(f_dir):
+                os.rmdir(f_dir)
         os.remove(zip_path)
 
 
