@@ -264,6 +264,16 @@ def secrets():
 
 
 @click.group(
+    name='secret_provider',
+    cls=LazyLoadedGroup,
+    import_spec=('cloudify_cli.commands.secret_provider', 'secret_provider'),
+    short_help="Handle Cloudify secret providers"
+)
+def secret_provider():
+    pass
+
+
+@click.group(
     name='tokens',
     cls=LazyLoadedGroup,
     import_spec=('cloudify_cli.commands.tokens', 'tokens'),
@@ -519,6 +529,7 @@ def _make_cfy():
     _cfy.add_command(user_groups)
     _cfy.add_command(maintenance_mode)
     _cfy.add_command(secrets)
+    _cfy.add_command(secret_provider)
     _cfy.add_command(tokens)
     _cfy.add_command(nodes)
     _cfy.add_command(groups)

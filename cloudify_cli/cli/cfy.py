@@ -10,6 +10,7 @@ import subprocess
 import locale
 import codecs
 import unicodedata
+import json
 from functools import wraps
 from io import StringIO
 from urllib.parse import quote as urlquote
@@ -269,6 +270,22 @@ def validate_value_not_empty(ctx, param, value):
 
     return value
 
+
+def validate_json_value(ctx, param, value):
+    if value is None or ctx.resilient_parsing:
+        return
+
+    if not value:
+        raise CloudifyValidationError(
+            'ERROR: The `{0}` argument is empty'.format(param.name))
+
+    try:
+        json.loads(value)
+    except ValueError:
+        raise CloudifyValidationError(
+            'ERROR: The `{0}` argument is not JSON format'.format(param.name))
+
+    return value
 
 def get_formatted_labels_list(raw_labels_string, allow_only_key=False):
     labels_list = []
@@ -1861,6 +1878,29 @@ class Options(object):
             default=False,
             cls=MutuallyExclusiveOption,
             mutually_exclusive=['blueprint_id', 'blueprint_path', 'inputs'],
+        )
+
+        self.secret_provider_name = click.option(
+            '--name',
+            'secret_provider_name',
+            required=True,
+            callback=validate_value_not_empty,
+            help=helptexts.SECRET_PROVIDER_NAME,
+        )
+
+        self.secret_provider_type = click.option(
+            '--type',
+            'secret_provider_type',
+            required=True,
+            callback=validate_value_not_empty,
+            help=helptexts.SECRET_PROVIDER_TYPE,
+        )
+
+        self.connection_parameters = click.option(
+            '--connection_parameters',
+            default={},
+            callback=validate_json_value,
+            help=helptexts.SECRET_PROVIDER_CONNECTION_PARAMETERS,
         )
 
     def common_options(self, f):
