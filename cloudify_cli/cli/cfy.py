@@ -10,7 +10,6 @@ import subprocess
 import locale
 import codecs
 import unicodedata
-import json
 from functools import wraps
 from io import StringIO
 from urllib.parse import quote as urlquote
