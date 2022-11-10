@@ -434,6 +434,16 @@ def permissions():
     pass
 
 
+@click.group(
+    name='community',
+    cls=LazyLoadedGroup,
+    import_spec=('cloudify_cli.commands.community', 'community'),
+    short_help="Commands specific for the Community edition"
+)
+def community():
+    pass
+
+
 @click.command(
     name='install',
     cls=LazyLoadedCommand,
@@ -528,6 +538,7 @@ def _make_cfy():
     _cfy.add_command(certificates)
     _cfy.add_command(apply)
     _cfy.add_command(auditlog)
+    _cfy.add_command(community)
 
     if env.is_manager_active():
         _cfy.add_command(manager_blueprints)
