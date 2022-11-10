@@ -271,22 +271,6 @@ def validate_value_not_empty(ctx, param, value):
     return value
 
 
-def validate_json_value(ctx, param, value):
-    if value is None or ctx.resilient_parsing:
-        return
-
-    if not value:
-        raise CloudifyValidationError(
-            'ERROR: The `{0}` argument is empty'.format(param.name))
-
-    try:
-        json.loads(value)
-    except ValueError:
-        raise CloudifyValidationError(
-            'ERROR: The `{0}` argument is not JSON format'.format(param.name))
-
-    return value
-
 def get_formatted_labels_list(raw_labels_string, allow_only_key=False):
     labels_list = []
     if any(unicodedata.category(char)[0] == 'C' or char == '"'
@@ -1899,7 +1883,8 @@ class Options(object):
         self.connection_parameters = click.option(
             '--connection_parameters',
             default={},
-            callback=validate_json_value,
+            multiple=True,
+            callback=inputs_callback,
             help=helptexts.SECRET_PROVIDER_CONNECTION_PARAMETERS,
         )
 
