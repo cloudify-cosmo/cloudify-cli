@@ -1863,6 +1863,30 @@ class Options(object):
             mutually_exclusive=['blueprint_id', 'blueprint_path', 'inputs'],
         )
 
+        self.secret_provider_name = click.option(
+            '--name',
+            'secret_provider_name',
+            required=True,
+            callback=validate_value_not_empty,
+            help=helptexts.SECRET_PROVIDER_NAME,
+        )
+
+        self.secret_provider_type = click.option(
+            '--type',
+            'secret_provider_type',
+            required=True,
+            callback=validate_value_not_empty,
+            help=helptexts.SECRET_PROVIDER_TYPE,
+        )
+
+        self.connection_parameters = click.option(
+            '--connection_parameters',
+            default={},
+            multiple=True,
+            callback=inputs_callback,
+            help=helptexts.SECRET_PROVIDER_CONNECTION_PARAMETERS,
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 

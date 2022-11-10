@@ -35,6 +35,16 @@ from cloudify_cli.utils import (
 SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'visibility',
                    'tenant_name', 'created_by', 'is_hidden_value']
 
+SECRET_PROVIDER_COLUMNS = [
+    'name',
+    'type',
+    'connection_parameters',
+    'visibility',
+    'tenant_name',
+    'created_by',
+    'created_at',
+]
+
 
 @cfy.group(name='secrets')
 @cfy.options.common_options
@@ -43,6 +53,12 @@ def secrets():
     """
     if not env.is_initialized():
         env.raise_uninitialized()
+
+
+@secrets.group(name='providers')
+@cfy.options.common_options
+def providers():
+    pass
 
 
 @secrets.command(name='create', short_help='Create a new secret '
@@ -337,6 +353,72 @@ def set_owner(key, username, tenant_name, logger, client):
     secret = client.secrets.update(key, creator=username)
     logger.info('Secret `%s` is now owned by user `%s`.',
                 key, secret.get('created_by'))
+
+
+@providers.command(
+    name='create',
+    short_help='Create a new secrets provider',
+)
+@cfy.options.secret_provider_name
+@cfy.options.secret_provider_type
+@cfy.options.connection_parameters
+@cfy.options.tenant_name(
+    required=False,
+    resource_name_for_help='secret_provider',
+)
+@cfy.options.visibility(
+    mutually_exclusive_required=False,
+)
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client(
+    use_tenant_in_header=True,
+)
+@cfy.pass_logger
+def provider_create(
+        secret_provider_name,
+        secret_provider_type,
+        connection_parameters,
+        tenant_name,
+        visibility,
+        logger,
+        client,
+):
+    client.secrets_providers.create(
+        secret_provider_name,
+        secret_provider_type,
+        connection_parameters,
+        visibility,
+    )
+
+    logger.info(
+        'Secret provider `%s` created',
+        secret_provider_name,
+    )
+
+
+@providers.command(
+    name='list',
+    short_help="List all secret providers",
+)
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+@cfy.options.extended_view
+@cfy.options.common_options
+def provider_list(
+        logger,
+        client,
+):
+    logger.info('Listing all secret providers...')
+    secrets_list = client.secrets_providers.list()
+    print_data(SECRET_PROVIDER_COLUMNS, secrets_list, 'Secret providers:')
+    total = secrets_list.metadata.pagination.total
+    logger.info(
+        'Showing %s of %s secret providers',
+        len(secrets_list),
+        total,
+    )
 
 
 def _get_secret_string(secret_file, secret_string):
