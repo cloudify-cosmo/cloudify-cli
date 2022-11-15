@@ -2451,7 +2451,7 @@ class Options(object):
     @staticmethod
     def connection_parameters(required=True, _help=None, default=None):
         args = [
-            '--connection_parameters',
+            '--connection-parameters',
         ]
         kwargs = {
             'required': required,
