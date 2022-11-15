@@ -1871,22 +1871,6 @@ class Options(object):
             help=helptexts.SECRET_PROVIDER_NAME,
         )
 
-        self.secret_provider_type = click.option(
-            '--type',
-            'secret_provider_type',
-            required=True,
-            callback=validate_value_not_empty,
-            help=helptexts.SECRET_PROVIDER_TYPE,
-        )
-
-        self.connection_parameters = click.option(
-            '--connection_parameters',
-            default={},
-            multiple=True,
-            callback=inputs_callback,
-            help=helptexts.SECRET_PROVIDER_CONNECTION_PARAMETERS,
-        )
-
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
@@ -2449,6 +2433,35 @@ class Options(object):
 
     def deployment_filter_rules(self, f):
         return self._filter_rules(f, 'deployment')
+
+    @staticmethod
+    def secret_provider_type(required=True, _help=None):
+        args = [
+            '--type',
+            'secret_provider_type',
+        ]
+        kwargs = {
+            'required': required,
+            'help': _help or helptexts.SECRET_PROVIDER_TYPE,
+            'callback': validate_value_not_empty,
+        }
+
+        return click.option(*args, **kwargs)
+
+    @staticmethod
+    def connection_parameters(required=True, _help=None, default=None):
+        args = [
+            '--connection-parameters',
+        ]
+        kwargs = {
+            'required': required,
+            'help': _help or helptexts.SECRET_PROVIDER_CONNECTION_PARAMETERS,
+            'callback': inputs_callback,
+            'multiple': True,
+            'default': default,
+        }
+
+        return click.option(*args, **kwargs)
 
 
 options = Options()

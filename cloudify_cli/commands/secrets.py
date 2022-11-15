@@ -58,6 +58,8 @@ def secrets():
 @secrets.group(name='providers')
 @cfy.options.common_options
 def providers():
+    """Handle Cloudify Secrets Providers
+    """
     pass
 
 
@@ -359,9 +361,11 @@ def set_owner(key, username, tenant_name, logger, client):
     name='create',
     short_help='Create a new secrets provider',
 )
-@cfy.options.secret_provider_name
-@cfy.options.secret_provider_type
-@cfy.options.connection_parameters
+@cfy.argument('secret_provider_name')
+@cfy.options.secret_provider_type()
+@cfy.options.connection_parameters(
+    required=False,
+)
 @cfy.options.tenant_name(
     required=False,
     resource_name_for_help='secret_provider',
@@ -375,7 +379,7 @@ def set_owner(key, username, tenant_name, logger, client):
     use_tenant_in_header=True,
 )
 @cfy.pass_logger
-def provider_create(
+def providers_create(
         secret_provider_name,
         secret_provider_type,
         connection_parameters,
@@ -398,6 +402,114 @@ def provider_create(
 
 
 @providers.command(
+    name='update',
+    short_help='Update an existing Secrets Provider',
+)
+@cfy.argument('secret_provider_name')
+@cfy.options.secret_provider_type(
+    required=False,
+)
+@cfy.options.connection_parameters(
+    required=False,
+)
+@cfy.options.tenant_name(
+    required=False,
+    resource_name_for_help='secret_provider',
+)
+@cfy.options.visibility(
+    mutually_exclusive_required=False,
+)
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client(
+    use_tenant_in_header=True,
+)
+@cfy.pass_logger
+def providers_update(
+        secret_provider_name,
+        secret_provider_type,
+        connection_parameters,
+        tenant_name,
+        visibility,
+        logger,
+        client,
+):
+    client.secrets_providers.update(
+        secret_provider_name,
+        secret_provider_type,
+        connection_parameters,
+        visibility,
+    )
+
+    logger.info(
+        'Secrets provider `%s` updated',
+        secret_provider_name,
+    )
+
+
+@providers.command(
+    name='delete',
+    short_help='Delete a secrets provider',
+)
+@cfy.argument('secret_provider_name')
+@cfy.options.tenant_name(
+    required=False,
+    resource_name_for_help='secret',
+)
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def providers_delete(secret_provider_name, tenant_name, logger, client):
+    """Delete a secrets provider
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    graceful_msg = 'Requested secrets provider with name `{0}` was not found' \
+        .format(secret_provider_name)
+
+    with handle_client_error(404, graceful_msg, logger):
+        logger.info(
+            'Deleting secrets provider `%s`...',
+            secret_provider_name
+        )
+        client.secrets_providers.delete(secret_provider_name)
+        logger.info('Secrets provider removed')
+
+
+@providers.command(
+    name='get',
+    short_help='Get details for a single secrets provider',
+)
+@cfy.argument('secret_provider_name')
+@cfy.options.tenant_name(
+    required=False,
+    resource_name_for_help='secret',
+)
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client(
+    use_tenant_in_header=True,
+)
+@cfy.pass_logger
+def providers_get(secret_provider_name, tenant_name, logger, client):
+    """Get details for a single secrets provider
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    graceful_msg = 'Requested secrets provider with name `{0}`' \
+                   ' was not found in this tenant'.format(
+                        secret_provider_name
+                    )
+    with handle_client_error(404, graceful_msg, logger):
+        logger.info(
+            'Getting info for secrets provider `%s`...',
+            secret_provider_name,
+        )
+        details = client.secrets_providers.get(secret_provider_name)
+
+        print_details(details, 'Requested secrets provider info:')
+
+
+@providers.command(
     name='list',
     short_help="List all secret providers",
 )
@@ -406,7 +518,7 @@ def provider_create(
 @cfy.pass_logger
 @cfy.options.extended_view
 @cfy.options.common_options
-def provider_list(
+def providers_list(
         logger,
         client,
 ):

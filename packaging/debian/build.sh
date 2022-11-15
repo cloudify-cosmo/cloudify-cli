@@ -31,7 +31,7 @@ Description: Cloudify's Command Line Interface
 EOF
 
 # Download and untar our python3.10 package
-curl https://cloudify-cicd.s3.amazonaws.com/python-build-packages/cfy-python3.10.tgz -o cfy-python3.10.tgz
+curl https://cloudify-cicd.s3.amazonaws.com/python-build-packages/cfy-python3.10-x86_64.tgz -o cfy-python3.10.tgz
 tar xf cfy-python3.10.tgz -C /
 
 /opt/python3.10/bin/python3.10 -m venv /opt/cfy
