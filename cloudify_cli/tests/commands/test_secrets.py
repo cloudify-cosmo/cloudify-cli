@@ -92,6 +92,12 @@ class SecretsTest(CliCommandTest):
         )
         self.assertIn('mutually exclusive with arguments:', outcome.output)
 
+    def test_secrets_create_default_schema(self):
+        self.client.secrets.create = MagicMock()
+        self.invoke('cfy secrets create s1 -s hi')
+        call_args = self.client.secrets.create.call_args
+        self.assertEqual(call_args[0][-1], {"type": "string"})
+
     def test_secrets_export_invalid_password_length(self):
         self.invoke('cfy secrets export -p 1234567',
                     err_str_segment='ERROR: Passphrase must contain at least '

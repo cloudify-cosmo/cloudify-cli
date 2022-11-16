@@ -71,6 +71,9 @@ def providers():
 @cfy.options.secret_update_if_exists
 @cfy.options.visibility(mutually_exclusive_required=False)
 @cfy.options.hidden_value
+@cfy.options.secret_schema
+@cfy.options.secret_flag_dict
+@cfy.options.secret_flag_list
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.options.common_options
 @cfy.assert_manager_active()
@@ -81,6 +84,9 @@ def create(key,
            secret_file,
            update_if_exists,
            hidden_value,
+           secret_schema,
+           secret_flag_dict,
+           secret_flag_list,
            visibility,
            tenant_name,
            logger,
@@ -96,11 +102,25 @@ def create(key,
         raise CloudifyCliError('Failed to create secret key. '
                                'Missing option '
                                '--secret-string or secret-file.')
+
+    # Set the secret's schema [default: {"type": "string"}]
+    try:
+        schema = json.loads(secret_schema)
+    except json.decoder.JSONDecodeError as e:
+        raise CloudifyCliError(
+            f'Error decoding JSON schema "{schema}: {e.args[0]}')
+
+    if secret_flag_dict:
+        schema = {"type": "object"}
+    if secret_flag_list:
+        schema = {"type": "array"}
+
     client.secrets.create(key,
                           secret_string,
                           update_if_exists,
                           hidden_value,
-                          visibility)
+                          visibility,
+                          schema)
 
     logger.info('Secret `{0}` created'.format(key))
 
