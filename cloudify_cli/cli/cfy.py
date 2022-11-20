@@ -1287,7 +1287,7 @@ class Options(object):
             '--schema',
             'secret_schema',
             required=False,
-            default='{"type": "string"}',
+            default=None,
             cls=MutuallyExclusiveOption,
             mutually_exclusive=['dict', 'list'],
             help=helptexts.SECRET_SCHEMA)

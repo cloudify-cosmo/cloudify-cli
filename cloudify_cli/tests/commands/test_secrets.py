@@ -92,11 +92,16 @@ class SecretsTest(CliCommandTest):
         )
         self.assertIn('mutually exclusive with arguments:', outcome.output)
 
-    def test_secrets_create_default_schema(self):
-        self.client.secrets.create = MagicMock()
-        self.invoke('cfy secrets create s1 -s hi')
-        call_args = self.client.secrets.create.call_args
-        self.assertEqual(call_args[0][-1], {"type": "string"})
+    def test_secrets_create_invalid_schema(self):
+        self.invoke("cfy secrets create s1 -s hi --schema bye",
+                    err_str_segment="Error decoding JSON schema",
+                    exception=CloudifyCliError)
+
+    def test_secrets_create_invalid_json_value(self):
+        self.invoke("cfy secrets create s1 -s hi --dict",
+                    err_str_segment="Error decoding secret value: 'hi' is "
+                                    "not of type 'object'",
+                    exception=CloudifyCliError)
 
     def test_secrets_export_invalid_password_length(self):
         self.invoke('cfy secrets export -p 1234567',
