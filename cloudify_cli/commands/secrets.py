@@ -35,6 +35,16 @@ from cloudify_cli.utils import (
 SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'visibility',
                    'tenant_name', 'created_by', 'is_hidden_value']
 
+SECRET_PROVIDER_COLUMNS = [
+    'name',
+    'type',
+    'connection_parameters',
+    'visibility',
+    'tenant_name',
+    'created_by',
+    'created_at',
+]
+
 
 @cfy.group(name='secrets')
 @cfy.options.common_options
@@ -45,6 +55,14 @@ def secrets():
         env.raise_uninitialized()
 
 
+@secrets.group(name='providers')
+@cfy.options.common_options
+def providers():
+    """Handle Cloudify Secrets Providers
+    """
+    pass
+
+
 @secrets.command(name='create', short_help='Create a new secret '
                                            '(key-value pair)')
 @cfy.argument('key', callback=cfy.validate_name)
@@ -53,6 +71,9 @@ def secrets():
 @cfy.options.secret_update_if_exists
 @cfy.options.visibility(mutually_exclusive_required=False)
 @cfy.options.hidden_value
+@cfy.options.secret_schema
+@cfy.options.secret_flag_dict
+@cfy.options.secret_flag_list
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.options.common_options
 @cfy.assert_manager_active()
@@ -63,6 +84,9 @@ def create(key,
            secret_file,
            update_if_exists,
            hidden_value,
+           secret_schema,
+           secret_flag_dict,
+           secret_flag_list,
            visibility,
            tenant_name,
            logger,
@@ -73,16 +97,42 @@ def create(key,
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
-    secret_string = _get_secret_string(secret_file, secret_string)
-    if not secret_string:
+    value = _get_secret_string(secret_file, secret_string)
+    if not value:
         raise CloudifyCliError('Failed to create secret key. '
                                'Missing option '
                                '--secret-string or secret-file.')
+
+    if secret_schema:
+        try:
+            secret_schema = json.loads(secret_schema)
+        except json.decoder.JSONDecodeError as e:
+            raise CloudifyCliError(
+                f'Error decoding JSON schema "{secret_schema}": {e}')
+        if not isinstance(secret_schema, dict) or \
+                not secret_schema.get('type'):
+            raise CloudifyCliError(
+                'Invalid JSON schema. Expected a dict with a "type" key')
+
+    if secret_flag_dict:
+        secret_schema = {"type": "object"}
+    if secret_flag_list:
+        secret_schema = {"type": "array"}
+
+    if secret_schema:
+        try:
+            value = json.loads(value)
+        except json.decoder.JSONDecodeError:
+            raise CloudifyCliError(
+                f'Error decoding secret value: \'{value}\' is not of '
+                f'type \'{secret_schema.get("type")}\'')
+
     client.secrets.create(key,
-                          secret_string,
+                          value,
                           update_if_exists,
                           hidden_value,
-                          visibility)
+                          visibility,
+                          secret_schema)
 
     logger.info('Secret `{0}` created'.format(key))
 
@@ -212,10 +262,19 @@ def update(key,
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
-    secret_string = _get_secret_string(secret_file, secret_string)
+    value = _get_secret_string(secret_file, secret_string)
     graceful_msg = 'Requested secret with key `{0}` was not found'.format(key)
     with handle_client_error(404, graceful_msg, logger):
-        client.secrets.update(key, secret_string, visibility, hidden_value)
+        secret_details = client.secrets.get(key)
+        if secret_details.schema:
+            try:
+                value = json.loads(value)
+            except json.decoder.JSONDecodeError:
+                raise CloudifyCliError(
+                    f'Error decoding secret value: \'{value}\' is not of '
+                    f'type \'{secret_details.schema.get("type")}\'')
+
+        client.secrets.update(key, value, visibility, hidden_value)
         logger.info('Secret `{0}` updated'.format(key))
 
 
@@ -337,6 +396,182 @@ def set_owner(key, username, tenant_name, logger, client):
     secret = client.secrets.update(key, creator=username)
     logger.info('Secret `%s` is now owned by user `%s`.',
                 key, secret.get('created_by'))
+
+
+@providers.command(
+    name='create',
+    short_help='Create a new secrets provider',
+)
+@cfy.argument('secret_provider_name')
+@cfy.options.secret_provider_type()
+@cfy.options.connection_parameters(
+    required=False,
+)
+@cfy.options.tenant_name(
+    required=False,
+    resource_name_for_help='secret_provider',
+)
+@cfy.options.visibility(
+    mutually_exclusive_required=False,
+)
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client(
+    use_tenant_in_header=True,
+)
+@cfy.pass_logger
+def providers_create(
+        secret_provider_name,
+        secret_provider_type,
+        connection_parameters,
+        tenant_name,
+        visibility,
+        logger,
+        client,
+):
+    client.secrets_providers.create(
+        secret_provider_name,
+        secret_provider_type,
+        connection_parameters,
+        visibility,
+    )
+
+    logger.info(
+        'Secret provider `%s` created',
+        secret_provider_name,
+    )
+
+
+@providers.command(
+    name='update',
+    short_help='Update an existing Secrets Provider',
+)
+@cfy.argument('secret_provider_name')
+@cfy.options.secret_provider_type(
+    required=False,
+)
+@cfy.options.connection_parameters(
+    required=False,
+)
+@cfy.options.tenant_name(
+    required=False,
+    resource_name_for_help='secret_provider',
+)
+@cfy.options.visibility(
+    mutually_exclusive_required=False,
+)
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client(
+    use_tenant_in_header=True,
+)
+@cfy.pass_logger
+def providers_update(
+        secret_provider_name,
+        secret_provider_type,
+        connection_parameters,
+        tenant_name,
+        visibility,
+        logger,
+        client,
+):
+    client.secrets_providers.update(
+        secret_provider_name,
+        secret_provider_type,
+        connection_parameters,
+        visibility,
+    )
+
+    logger.info(
+        'Secrets provider `%s` updated',
+        secret_provider_name,
+    )
+
+
+@providers.command(
+    name='delete',
+    short_help='Delete a secrets provider',
+)
+@cfy.argument('secret_provider_name')
+@cfy.options.tenant_name(
+    required=False,
+    resource_name_for_help='secret',
+)
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+def providers_delete(secret_provider_name, tenant_name, logger, client):
+    """Delete a secrets provider
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    graceful_msg = 'Requested secrets provider with name `{0}` was not found' \
+        .format(secret_provider_name)
+
+    with handle_client_error(404, graceful_msg, logger):
+        logger.info(
+            'Deleting secrets provider `%s`...',
+            secret_provider_name
+        )
+        client.secrets_providers.delete(secret_provider_name)
+        logger.info('Secrets provider removed')
+
+
+@providers.command(
+    name='get',
+    short_help='Get details for a single secrets provider',
+)
+@cfy.argument('secret_provider_name')
+@cfy.options.tenant_name(
+    required=False,
+    resource_name_for_help='secret',
+)
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client(
+    use_tenant_in_header=True,
+)
+@cfy.pass_logger
+def providers_get(secret_provider_name, tenant_name, logger, client):
+    """Get details for a single secrets provider
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    graceful_msg = 'Requested secrets provider with name `{0}`' \
+                   ' was not found in this tenant'.format(
+                        secret_provider_name
+                    )
+    with handle_client_error(404, graceful_msg, logger):
+        logger.info(
+            'Getting info for secrets provider `%s`...',
+            secret_provider_name,
+        )
+        details = client.secrets_providers.get(secret_provider_name)
+
+        print_details(details, 'Requested secrets provider info:')
+
+
+@providers.command(
+    name='list',
+    short_help="List all secret providers",
+)
+@cfy.assert_manager_active()
+@cfy.pass_client()
+@cfy.pass_logger
+@cfy.options.extended_view
+@cfy.options.common_options
+def providers_list(
+        logger,
+        client,
+):
+    logger.info('Listing all secret providers...')
+    secrets_list = client.secrets_providers.list()
+    print_data(SECRET_PROVIDER_COLUMNS, secrets_list, 'Secret providers:')
+    total = secrets_list.metadata.pagination.total
+    logger.info(
+        'Showing %s of %s secret providers',
+        len(secrets_list),
+        total,
+    )
 
 
 def _get_secret_string(secret_file, secret_string):

@@ -17,6 +17,21 @@ def pytest(){
   '''
 }
 
+def doGetVersion(){
+  sh(script: '''#!/bin/sh -e
+    . cloudify-cli/packaging/version_info
+    echo ${CLOUDIFY_VERSION}
+  ''', label: 'get package version', returnStdout: true).trim()
+}
+
+def doGetPreRelease(){
+  sh(script: '''#!/bin/sh -e
+    . cloudify-cli/packaging/version_info
+    echo ${CLOUDIFY_PACKAGE_RELEASE}
+  ''', label: 'get package release', returnStdout: true).trim()
+}
+
+
 @Library('pipeline-shared-library') _
 pipeline {
   agent {
@@ -39,8 +54,8 @@ pipeline {
     PROJECT_DIR = "${env.WORKSPACE}/project"
     BUILD_DIR = "/tmp/build"
     RESULT_DIR = "/tmp/result"
-    CLOUDIFY_PACKAGE_RELEASE = getPreRelease("${env.PROJECT}", "${env.BRANCH_NAME}").trim()
-    CLOUDIFY_VERSION = getVersion("${env.PROJECT}", "${env.BRANCH_NAME}").trim()
+    CLOUDIFY_PACKAGE_RELEASE = doGetPreRelease()
+    CLOUDIFY_VERSION = doGetVersion()
     S3_BASE_URL = "${env.CLOUDIFY_VERSION}/${env.CLOUDIFY_PACKAGE_RELEASE}-build/${env.PROJECT}/${env.BRANCH_NAME}"
     S3_BUILD_PATH = "${env.S3_BASE_URL}/${env.BUILD_NUMBER}"
     S3_LATEST_BUILD_PATH = "${env.S3_BASE_URL}/latest"
@@ -71,23 +86,8 @@ pipeline {
                 cd ~/rpmbuild
                 git clone --single-branch --branch ${env.BRANCH_NAME} https://github.com/cloudify-cosmo/cloudify-cli.git SOURCES && cd SOURCES
               """
-              sh script:"""
-                cd ~/rpmbuild/SOURCES
-                yum-builddep -y packaging/cloudify-cli.spec
-
-                spectool \
-                  -d "CLOUDIFY_VERSION ${env.CLOUDIFY_VERSION}" \
-                  -d "CLOUDIFY_PACKAGE_RELEASE ${env.CLOUDIFY_PACKAGE_RELEASE}" \
-                  -P packaging/cloudify-cli.spec \
-                  -S -g
-
-                rpmbuild \
-                  -D "CLOUDIFY_VERSION ${env.CLOUDIFY_VERSION}" \
-                  -D "CLOUDIFY_PACKAGE_RELEASE ${env.CLOUDIFY_PACKAGE_RELEASE}" \
-                  -D "dist .el7" \
-                  -bb packaging/cloudify-cli.spec
-
-              """, label: "building dependencies and rpm"
+              echo 'building dependencies and rpm'
+              buildRpm('~/rpmbuild/SOURCES', 'cloudify-cli.spec', "${env.CLOUDIFY_VERSION}", "${env.CLOUDIFY_PACKAGE_RELEASE}", "8", "x86_64")
               sh script:("mkdir -p ${env.WORKSPACE}/rpm_artifacts && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm_artifacts"), label: "Copy RPM to rpm_artifacts folder"
             }
           }

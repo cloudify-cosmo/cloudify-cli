@@ -30,20 +30,9 @@ Maintainer: Cloudify Platform Ltd. <cosmo-admin@cloudify.co>
 Description: Cloudify's Command Line Interface
 EOF
 
-mkdir -p /opt/python3.10
-mkdir -p /tmp/BUILD_SOURCES
-cd /tmp/BUILD_SOURCES
-
-
-# -- build & install OpenSSL 1.1.1, required for Python 3.10
-curl https://ftp.openssl.org/source/openssl-1.1.1k.tar.gz -o openssl-1.1.1k.tar.gz
-tar -xzvf openssl-1.1.1k.tar.gz
-cd openssl-1.1.1k && ./config --prefix=/usr --openssldir=/etc/ssl --libdir=lib no-shared zlib-dynamic && make && make install
-# -- build & install Python 3.10
-cd ..
-curl https://www.python.org/ftp/python/3.10.6/Python-3.10.6.tgz -o Python-3.10.6.tgz
-tar xvf Python-3.10.6.tgz
-cd Python-3.10.6 && sed -i 's/PKG_CONFIG openssl /PKG_CONFIG openssl11 /g' configure && ./configure --prefix=/opt/python3.10 && make altinstall
+# Download and untar our python3.10 package
+curl https://cloudify-cicd.s3.amazonaws.com/python-build-packages/cfy-python3.10-x86_64.tgz -o cfy-python3.10.tgz
+tar xf cfy-python3.10.tgz -C /
 
 /opt/python3.10/bin/python3.10 -m venv /opt/cfy
 

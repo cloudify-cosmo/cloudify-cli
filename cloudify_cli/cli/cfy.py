@@ -1283,6 +1283,33 @@ class Options(object):
             required=False,
             help=helptexts.SECRET_STRING)
 
+        self.secret_schema = click.option(
+            '--schema',
+            'secret_schema',
+            required=False,
+            default=None,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['dict', 'list'],
+            help=helptexts.SECRET_SCHEMA)
+
+        self.secret_flag_dict = click.option(
+            '--dict',
+            'secret_flag_dict',
+            is_flag=True,
+            default=False,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['schema', 'list'],
+            help=helptexts.SECRET_FLAG_DICT)
+
+        self.secret_flag_list = click.option(
+            '--list',
+            'secret_flag_list',
+            is_flag=True,
+            default=False,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['schema', 'dict'],
+            help=helptexts.SECRET_FLAG_LIST)
+
         self.secret_update_if_exists = click.option(
             '-u',
             '--update-if-exists',
@@ -1863,6 +1890,14 @@ class Options(object):
             mutually_exclusive=['blueprint_id', 'blueprint_path', 'inputs'],
         )
 
+        self.secret_provider_name = click.option(
+            '--name',
+            'secret_provider_name',
+            required=True,
+            callback=validate_value_not_empty,
+            help=helptexts.SECRET_PROVIDER_NAME,
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
@@ -2425,6 +2460,35 @@ class Options(object):
 
     def deployment_filter_rules(self, f):
         return self._filter_rules(f, 'deployment')
+
+    @staticmethod
+    def secret_provider_type(required=True, _help=None):
+        args = [
+            '--type',
+            'secret_provider_type',
+        ]
+        kwargs = {
+            'required': required,
+            'help': _help or helptexts.SECRET_PROVIDER_TYPE,
+            'callback': validate_value_not_empty,
+        }
+
+        return click.option(*args, **kwargs)
+
+    @staticmethod
+    def connection_parameters(required=True, _help=None, default=None):
+        args = [
+            '--connection-parameters',
+        ]
+        kwargs = {
+            'required': required,
+            'help': _help or helptexts.SECRET_PROVIDER_CONNECTION_PARAMETERS,
+            'callback': inputs_callback,
+            'multiple': True,
+            'default': default,
+        }
+
+        return click.option(*args, **kwargs)
 
 
 options = Options()

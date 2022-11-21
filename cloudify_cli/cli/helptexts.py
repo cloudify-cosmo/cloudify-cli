@@ -335,6 +335,10 @@ GET_DATA = 'When set to True, displays the full list of connected resources ' \
 PROFILE_NAME = 'Name of the profile to use'
 SECRET_VALUE = "The secret's value to be set"
 SECRET_STRING = "The string to use as the secret's value"
+SECRET_FLAG_DICT = "Whether the secret is to be treated as a dict"
+SECRET_FLAG_LIST = "Whether the secret is to be treated as a lists"
+SECRET_SCHEMA = "A JSON schema against which the secret will be validated [" \
+                "default: '{\"type\": \"string\"}']"
 SECRET_FILE = "The file with the contents of the secret"
 SECRET_UPDATE_IF_EXISTS = 'Update secret value if secret key already ' \
                           'exists. [This option is deprecated; use cfy ' \
@@ -605,4 +609,9 @@ SUMMARY_HELP = """
 
     E.g. `cfy {type} summary tenant_name visibility` will summarize
     {type} by tenant_name with a secondary grouping by visibility.
+    """
+SECRET_PROVIDER_NAME = "Secret Provider's name"
+SECRET_PROVIDER_TYPE = "Secret Provider's type"
+SECRET_PROVIDER_CONNECTION_PARAMETERS = """
+    Secret Provider's connection parameters in stringify JSON format
     """

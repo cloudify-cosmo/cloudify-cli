@@ -176,7 +176,7 @@ class BlueprintsLabelsTest(LabelsTest):
             'cfy blueprints upload {0} -b bp1 '.format(SAMPLE_ARCHIVE_PATH))
 
     def test_blueprint_upload_with_labels(self):
-        self.client.license.check = Mock()
+        self.client.manager.get_version = Mock()
         self.mock_wait_for_blueprint_upload(False)
         cmd = 'cfy blueprints upload {0} -b bp1 '.format(SAMPLE_ARCHIVE_PATH)
         self.client.blueprints.upload = Mock()
