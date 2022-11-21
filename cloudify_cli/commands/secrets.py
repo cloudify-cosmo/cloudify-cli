@@ -262,10 +262,19 @@ def update(key,
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
-    secret_string = _get_secret_string(secret_file, secret_string)
+    value = _get_secret_string(secret_file, secret_string)
     graceful_msg = 'Requested secret with key `{0}` was not found'.format(key)
     with handle_client_error(404, graceful_msg, logger):
-        client.secrets.update(key, secret_string, visibility, hidden_value)
+        secret_details = client.secrets.get(key)
+        if secret_details.schema:
+            try:
+                value = json.loads(value)
+            except json.decoder.JSONDecodeError:
+                raise CloudifyCliError(
+                    f'Error decoding secret value: \'{value}\' is not of '
+                    f'type \'{secret_details.schema.get("type")}\'')
+
+        client.secrets.update(key, value, visibility, hidden_value)
         logger.info('Secret `{0}` updated'.format(key))
 
 
