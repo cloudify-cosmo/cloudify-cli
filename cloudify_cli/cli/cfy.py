@@ -1283,6 +1283,33 @@ class Options(object):
             required=False,
             help=helptexts.SECRET_STRING)
 
+        self.secret_schema = click.option(
+            '--schema',
+            'secret_schema',
+            required=False,
+            default=None,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['dict', 'list'],
+            help=helptexts.SECRET_SCHEMA)
+
+        self.secret_flag_dict = click.option(
+            '--dict',
+            'secret_flag_dict',
+            is_flag=True,
+            default=False,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['schema', 'list'],
+            help=helptexts.SECRET_FLAG_DICT)
+
+        self.secret_flag_list = click.option(
+            '--list',
+            'secret_flag_list',
+            is_flag=True,
+            default=False,
+            cls=MutuallyExclusiveOption,
+            mutually_exclusive=['schema', 'dict'],
+            help=helptexts.SECRET_FLAG_LIST)
+
         self.secret_update_if_exists = click.option(
             '-u',
             '--update-if-exists',

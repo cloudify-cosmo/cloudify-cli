@@ -92,6 +92,17 @@ class SecretsTest(CliCommandTest):
         )
         self.assertIn('mutually exclusive with arguments:', outcome.output)
 
+    def test_secrets_create_invalid_schema(self):
+        self.invoke("cfy secrets create s1 -s hi --schema bye",
+                    err_str_segment="Error decoding JSON schema",
+                    exception=CloudifyCliError)
+
+    def test_secrets_create_invalid_json_value(self):
+        self.invoke("cfy secrets create s1 -s hi --dict",
+                    err_str_segment="Error decoding secret value: 'hi' is "
+                                    "not of type 'object'",
+                    exception=CloudifyCliError)
+
     def test_secrets_export_invalid_password_length(self):
         self.invoke('cfy secrets export -p 1234567',
                     err_str_segment='ERROR: Passphrase must contain at least '

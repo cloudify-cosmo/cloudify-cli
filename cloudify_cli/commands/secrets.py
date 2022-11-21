@@ -71,6 +71,9 @@ def providers():
 @cfy.options.secret_update_if_exists
 @cfy.options.visibility(mutually_exclusive_required=False)
 @cfy.options.hidden_value
+@cfy.options.secret_schema
+@cfy.options.secret_flag_dict
+@cfy.options.secret_flag_list
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.options.common_options
 @cfy.assert_manager_active()
@@ -81,6 +84,9 @@ def create(key,
            secret_file,
            update_if_exists,
            hidden_value,
+           secret_schema,
+           secret_flag_dict,
+           secret_flag_list,
            visibility,
            tenant_name,
            logger,
@@ -91,16 +97,42 @@ def create(key,
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
-    secret_string = _get_secret_string(secret_file, secret_string)
-    if not secret_string:
+    value = _get_secret_string(secret_file, secret_string)
+    if not value:
         raise CloudifyCliError('Failed to create secret key. '
                                'Missing option '
                                '--secret-string or secret-file.')
+
+    if secret_schema:
+        try:
+            secret_schema = json.loads(secret_schema)
+        except json.decoder.JSONDecodeError as e:
+            raise CloudifyCliError(
+                f'Error decoding JSON schema "{secret_schema}": {e}')
+        if not isinstance(secret_schema, dict) or \
+                not secret_schema.get('type'):
+            raise CloudifyCliError(
+                'Invalid JSON schema. Expected a dict with a "type" key')
+
+    if secret_flag_dict:
+        secret_schema = {"type": "object"}
+    if secret_flag_list:
+        secret_schema = {"type": "array"}
+
+    if secret_schema:
+        try:
+            value = json.loads(value)
+        except json.decoder.JSONDecodeError:
+            raise CloudifyCliError(
+                f'Error decoding secret value: \'{value}\' is not of '
+                f'type \'{secret_schema.get("type")}\'')
+
     client.secrets.create(key,
-                          secret_string,
+                          value,
                           update_if_exists,
                           hidden_value,
-                          visibility)
+                          visibility,
+                          secret_schema)
 
     logger.info('Secret `{0}` created'.format(key))
 
