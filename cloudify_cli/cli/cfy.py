@@ -46,7 +46,7 @@ from cloudify_cli.utils import generate_random_string
 
 CLICK_CONTEXT_SETTINGS = dict(
     help_option_names=['-h', '--help'],
-    token_normalize_func=lambda param: param.lower())
+)
 
 AGENT_FILTER_NODE_IDS = 'node_ids'
 AGENT_FILTER_NODE_INSTANCE_IDS = 'node_instance_ids'
