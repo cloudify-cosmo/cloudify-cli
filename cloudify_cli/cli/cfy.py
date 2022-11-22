@@ -1898,6 +1898,14 @@ class Options(object):
             help=helptexts.SECRET_PROVIDER_NAME,
         )
 
+        self.provider = click.option(
+            '--provider',
+            'provider',
+            required=False,
+            callback=validate_value_not_empty,
+            help=helptexts.SECRET_PROVIDER_NAME,
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
