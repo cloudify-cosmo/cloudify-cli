@@ -306,16 +306,18 @@ def update(key,
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.extended_view
-def _list(sort_by,
-         descending,
-         tenant_name,
-         all_tenants,
-         search,
-         pagination_offset,
-         pagination_size,
-         provider,
-         logger,
-         client):
+def _list(
+        sort_by,
+        descending,
+        tenant_name,
+        all_tenants,
+        search,
+        pagination_offset,
+        pagination_size,
+        provider,
+        logger,
+        client,
+):
     """List all secrets
     """
     filter_rules = None
