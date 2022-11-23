@@ -1906,6 +1906,14 @@ class Options(object):
             help=helptexts.SECRET_PROVIDER_NAME,
         )
 
+        self.evaluate_functions = click.option(
+            '--evaluate-functions',
+            is_flag=True,
+            default=False,
+            required=False,
+            help=helptexts.EVALUATE_FUNCTIONS,
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
