@@ -32,8 +32,16 @@ from cloudify_cli.utils import (
     handle_client_error,
     prettify_client_error)
 
-SECRETS_COLUMNS = ['key', 'created_at', 'updated_at', 'visibility',
-                   'tenant_name', 'created_by', 'is_hidden_value']
+SECRETS_COLUMNS = [
+    'key',
+    'created_at',
+    'updated_at',
+    'visibility',
+    'tenant_name',
+    'created_by',
+    'is_hidden_value',
+    'provider_name',
+]
 
 SECRET_PROVIDER_COLUMNS = [
     'name',
@@ -75,6 +83,7 @@ def providers():
 @cfy.options.secret_flag_dict
 @cfy.options.secret_flag_list
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
+@cfy.options.provider
 @cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
@@ -89,6 +98,7 @@ def create(key,
            secret_flag_list,
            visibility,
            tenant_name,
+           provider,
            logger,
            client):
     """Create a new secret (key-value pair)
@@ -127,12 +137,15 @@ def create(key,
                 f'Error decoding secret value: \'{value}\' is not of '
                 f'type \'{secret_schema.get("type")}\'')
 
-    client.secrets.create(key,
-                          value,
-                          update_if_exists,
-                          hidden_value,
-                          visibility,
-                          secret_schema)
+    client.secrets.create(
+        key,
+        value,
+        update_if_exists,
+        hidden_value,
+        visibility,
+        secret_schema,
+        provider,
+    )
 
     logger.info('Secret `{0}` created'.format(key))
 
@@ -288,26 +301,43 @@ def update(key,
 @cfy.options.search
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
+@cfy.options.provider_multiple()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.extended_view
-def list(sort_by,
-         descending,
-         tenant_name,
-         all_tenants,
-         search,
-         pagination_offset,
-         pagination_size,
-         logger,
-         client):
+def _list(
+        sort_by,
+        descending,
+        tenant_name,
+        all_tenants,
+        search,
+        pagination_offset,
+        pagination_size,
+        provider,
+        logger,
+        client,
+):
     """List all secrets
     """
+    filter_rules = None
+
+    if provider:
+        filter_rules = [
+            {
+                "key": "provider_name",
+                "values": provider,
+                "operator": "starts_with",
+                "type": "attribute",
+            }
+        ]
+
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Listing all secrets...')
     secrets_list = client.secrets.list(
         sort=sort_by,
         is_descending=descending,
+        filter_rules=filter_rules,
         _all_tenants=all_tenants,
         _search=search,
         _offset=pagination_offset,

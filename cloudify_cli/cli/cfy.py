@@ -1898,6 +1898,14 @@ class Options(object):
             help=helptexts.SECRET_PROVIDER_NAME,
         )
 
+        self.provider = click.option(
+            '--provider',
+            'provider',
+            required=False,
+            callback=validate_value_not_empty,
+            help=helptexts.SECRET_PROVIDER_NAME,
+        )
+
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
 
@@ -2484,6 +2492,21 @@ class Options(object):
             'required': required,
             'help': _help or helptexts.SECRET_PROVIDER_CONNECTION_PARAMETERS,
             'callback': inputs_callback,
+            'multiple': True,
+            'default': default,
+        }
+
+        return click.option(*args, **kwargs)
+
+    @staticmethod
+    def provider_multiple(required=False, _help=None, default=None):
+        args = [
+            '--provider',
+            'provider',
+        ]
+        kwargs = {
+            'required': required,
+            'help': _help or helptexts.SECRET_PROVIDER_NAME_MULTIPLE,
             'multiple': True,
             'default': default,
         }

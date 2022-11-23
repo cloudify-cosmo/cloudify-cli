@@ -611,6 +611,7 @@ SUMMARY_HELP = """
     {type} by tenant_name with a secondary grouping by visibility.
     """
 SECRET_PROVIDER_NAME = "Secret Provider's name"
+SECRET_PROVIDER_NAME_MULTIPLE = "Secret Provider's name list"
 SECRET_PROVIDER_TYPE = "Secret Provider's type"
 SECRET_PROVIDER_CONNECTION_PARAMETERS = """
     Secret Provider's connection parameters in stringify JSON format
