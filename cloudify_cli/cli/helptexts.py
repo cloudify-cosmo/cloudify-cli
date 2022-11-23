@@ -616,3 +616,4 @@ SECRET_PROVIDER_TYPE = "Secret Provider's type"
 SECRET_PROVIDER_CONNECTION_PARAMETERS = """
     Secret Provider's connection parameters in stringify JSON format
     """
+EVALUATE_FUNCTIONS = "Evaluate functions in returned nodes and node instances"

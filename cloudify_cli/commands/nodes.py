@@ -60,10 +60,18 @@ def nodes():
 @cfy.options.deployment_id(required=True)
 @cfy.options.common_options
 @cfy.options.tenant_name(required=False, resource_name_for_help='node')
+@cfy.options.evaluate_functions
 @cfy.pass_logger
 @cfy.pass_client()
 @cfy.options.extended_view
-def get(node_id, deployment_id, logger, client, tenant_name):
+def get(
+    node_id,
+    deployment_id,
+    evaluate_functions,
+    client,
+    logger,
+    tenant_name,
+):
     """Retrieve information for a specific node of a specific deployment
 
     `NODE_ID` is the node id to get information on.
@@ -72,7 +80,11 @@ def get(node_id, deployment_id, logger, client, tenant_name):
     logger.info('Retrieving node {0} for deployment {1}'.format(
         node_id, deployment_id))
     try:
-        node = client.nodes.get(deployment_id, node_id)
+        node = client.nodes.get(
+            deployment_id,
+            node_id,
+            evaluate_functions=evaluate_functions,
+        )
     except CloudifyClientError as e:
         if e.status_code != 404:
             raise
@@ -157,6 +169,7 @@ def _run_node_checks(deployment_id, logger, client):
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
 @cfy.options.common_options
+@cfy.options.evaluate_functions
 @cfy.pass_logger
 @cfy.pass_client()
 @cfy.options.extended_view
@@ -170,6 +183,7 @@ def nodes_list(
     search,
     pagination_offset,
     pagination_size,
+    evaluate_functions,
     logger,
     client
 ):
@@ -195,6 +209,7 @@ def nodes_list(
             deployment_id=deployment_id,
             sort=sort_by,
             is_descending=descending,
+            evaluate_functions=evaluate_functions,
             _all_tenants=all_tenants,
             _search=search,
             _offset=pagination_offset,

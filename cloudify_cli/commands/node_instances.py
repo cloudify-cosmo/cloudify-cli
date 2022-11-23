@@ -56,18 +56,22 @@ def node_instances():
 @cfy.options.common_options
 @cfy.options.tenant_name(
     required=False, resource_name_for_help='node-instance')
+@cfy.options.evaluate_functions
 @cfy.pass_logger
 @cfy.pass_client()
 @cfy.options.extended_view
-def get(node_instance_id, logger, client, tenant_name):
+def get(node_instance_id, evaluate_functions, logger, client, tenant_name):
     """Retrieve information for a specific node-instance
 
     `NODE_INSTANCE_ID` is the id of the node-instance to get information on.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    logger.info('Retrieving node instance {0}'.format(node_instance_id))
+    logger.info('Retrieving node instance %s', node_instance_id)
     try:
-        node_instance = client.node_instances.get(node_instance_id)
+        node_instance = client.node_instances.get(
+            node_instance_id,
+            evaluate_functions=evaluate_functions,
+        )
     except CloudifyClientError as e:
         if e.status_code != 404:
             raise
