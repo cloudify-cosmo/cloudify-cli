@@ -301,12 +301,12 @@ def update(key,
 @cfy.options.search
 @cfy.options.pagination_offset
 @cfy.options.pagination_size
-@cfy.options.provider
+@cfy.options.provider_multiple()
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
 @cfy.options.extended_view
-def list(sort_by,
+def _list(sort_by,
          descending,
          tenant_name,
          all_tenants,
@@ -324,7 +324,7 @@ def list(sort_by,
         filter_rules = [
             {
                 "key": "provider_name",
-                "values": [provider],
+                "values": provider,
                 "operator": "starts_with",
                 "type": "attribute",
             }

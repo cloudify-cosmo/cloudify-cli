@@ -2498,6 +2498,20 @@ class Options(object):
 
         return click.option(*args, **kwargs)
 
+    @staticmethod
+    def provider_multiple(required=False, _help=None, default=None):
+        args = [
+            '--provider',
+            'provider',
+        ]
+        kwargs = {
+            'required': required,
+            'help': _help or helptexts.SECRET_PROVIDER_NAME_MULTIPLE,
+            'multiple': True,
+            'default': default,
+        }
+
+        return click.option(*args, **kwargs)
 
 options = Options()
 
