@@ -257,6 +257,7 @@ def import_secrets(passphrase,
 @cfy.options.update_hidden_value
 @cfy.options.update_visibility
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
+@cfy.options.provider
 @cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
@@ -267,6 +268,7 @@ def update(key,
            hidden_value,
            visibility,
            tenant_name,
+           provider,
            logger,
            client):
     """Update an existing secret
@@ -275,6 +277,10 @@ def update(key,
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
+
+    if provider:
+        client.secrets_providers.get(provider)
+
     value = _get_secret_string(secret_file, secret_string)
     graceful_msg = 'Requested secret with key `{0}` was not found'.format(key)
     with handle_client_error(404, graceful_msg, logger):
@@ -287,7 +293,7 @@ def update(key,
                     f'Error decoding secret value: \'{value}\' is not of '
                     f'type \'{secret_details.schema.get("type")}\'')
 
-        client.secrets.update(key, value, visibility, hidden_value)
+        client.secrets.update(key, value, visibility, hidden_value, provider)
         logger.info('Secret `{0}` updated'.format(key))
 
 
