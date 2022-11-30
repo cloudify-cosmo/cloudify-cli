@@ -261,7 +261,7 @@ def _update_cluster_nodes(nodes, nodes_type, logger):
         _update_node(node, nodes_type, logger, stored_nodes_names)
     # filter out removed nodes
     env.profile.cluster[nodes_type] = [
-        node for node in env.profile.cluster[nodes_type]
+        node for node in env.profile.cluster.get(nodes_type, {})
         if _get_node_host(node) in received_nodes_names]
     env.profile.save()
 
