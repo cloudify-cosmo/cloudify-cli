@@ -1899,6 +1899,7 @@ class Options(object):
         )
 
         self.provider = click.option(
+            '-p',
             '--provider',
             'provider',
             required=False,
@@ -2478,22 +2479,32 @@ class Options(object):
         return self._filter_rules(f, 'deployment')
 
     @staticmethod
-    def secret_provider_type(required=True, _help=None):
+    def secret_provider_type(
+            required=True,
+            _help=None,
+            default=None,
+            callback=validate_value_not_empty,
+    ):
         args = [
+            '-y',
             '--type',
             'secret_provider_type',
         ]
         kwargs = {
             'required': required,
             'help': _help or helptexts.SECRET_PROVIDER_TYPE,
-            'callback': validate_value_not_empty,
+            'callback': callback,
         }
+
+        if default is not None:
+            kwargs['default'] = default
 
         return click.option(*args, **kwargs)
 
     @staticmethod
     def connection_parameters(required=True, _help=None, default=None):
         args = [
+            '-c',
             '--connection-parameters',
         ]
         kwargs = {
@@ -2509,6 +2520,7 @@ class Options(object):
     @staticmethod
     def provider_multiple(required=False, _help=None, default=None):
         args = [
+            '-p',
             '--provider',
             'provider',
         ]

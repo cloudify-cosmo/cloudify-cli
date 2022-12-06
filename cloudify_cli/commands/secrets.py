@@ -46,7 +46,6 @@ SECRETS_COLUMNS = [
 SECRET_PROVIDER_COLUMNS = [
     'name',
     'type',
-    'connection_parameters',
     'visibility',
     'tenant_name',
     'created_by',
@@ -473,8 +472,16 @@ def providers_create(
     )
 
     logger.info(
-        'Secret provider `%s` created',
+        'Secrets Provider `%s` created',
         secret_provider_name,
+    )
+
+    client.secrets_providers.check(
+        name=secret_provider_name,
+    )
+
+    logger.info(
+        'Connected to the Secrets Provider successfully',
     )
 
 
@@ -609,6 +616,55 @@ def providers_list(
         total,
     )
 
+
+@providers.command(
+    name='test',
+    short_help='Test a Secrets Provider connectivity',
+)
+@cfy.argument(
+    'secret_provider_name',
+    required=False,
+    default='',
+)
+@cfy.options.secret_provider_type(
+    required=False,
+    default='',
+    callback=None,
+)
+@cfy.options.connection_parameters(
+    required=False,
+)
+@cfy.options.tenant_name(
+    required=False,
+    resource_name_for_help='secret_provider',
+)
+@cfy.options.visibility(
+    mutually_exclusive_required=False,
+)
+@cfy.options.common_options
+@cfy.assert_manager_active()
+@cfy.pass_client(
+    use_tenant_in_header=True,
+)
+@cfy.pass_logger
+def providers_test(
+        secret_provider_name,
+        secret_provider_type,
+        connection_parameters,
+        tenant_name,
+        visibility,
+        logger,
+        client,
+):
+    client.secrets_providers.check(
+        name=secret_provider_name,
+        _type=secret_provider_type,
+        connection_parameters=connection_parameters,
+    )
+
+    logger.info(
+        'Connected to the Secrets Provider successfully',
+    )
 
 def _get_secret_string(secret_file, secret_string):
     if secret_file:
