@@ -666,6 +666,7 @@ def providers_test(
         'Connected to the Secrets Provider successfully',
     )
 
+
 def _get_secret_string(secret_file, secret_string):
     if secret_file:
         if not os.path.exists(secret_file):
