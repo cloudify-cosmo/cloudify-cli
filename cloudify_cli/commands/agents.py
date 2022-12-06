@@ -35,8 +35,8 @@ from cloudify_cli.table import print_data
 
 
 _NODE_INSTANCE_STATE_STARTED = 'started'
-AGENT_COLUMNS = ['id', 'ip', 'deployment', 'node', 'system', 'version',
-                 'install_method', 'tenant_name']
+AGENT_COLUMNS = ['id', 'ip', 'deployment', 'state', 'node', 'system',
+                 'version', 'install_method', 'tenant_name']
 
 MAX_TRACKER_THREADS = 20
 
