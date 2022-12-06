@@ -16,6 +16,7 @@ from urllib.parse import quote as urlquote
 
 import click
 
+from cloudify.models_states import AgentState
 from cloudify_rest_client.constants import VisibilityState
 from cloudify_rest_client.exceptions import NotModifiedError
 from cloudify_rest_client.exceptions import CloudifyClientError
@@ -1949,18 +1950,36 @@ class Options(object):
 
         Applies deployment id, node id and node instance id filters.
         """
-        node_instance_id = click.option('--node-instance-id', multiple=True,
-                                        help=helptexts.AGENT_NODE_INSTANCE_ID,
-                                        callback=self.parse_comma_separated)
-        node_id = click.option('--node-id', multiple=True,
-                               help=helptexts.AGENT_NODE_ID,
-                               callback=self.parse_comma_separated)
-        install_method = click.option('--install-method', multiple=True,
-                                      help=helptexts.AGENT_INSTALL_METHOD,
-                                      callback=self.parse_comma_separated)
-        deployment_id = click.option('--deployment-id', multiple=True,
-                                     help=helptexts.AGENT_DEPLOYMENT_ID,
-                                     callback=self.parse_comma_separated)
+        node_instance_id = click.option(
+            '--node-instance-id',
+            multiple=True,
+            help=helptexts.AGENT_NODE_INSTANCE_ID,
+            callback=self.parse_comma_separated,
+        )
+        node_id = click.option(
+            '--node-id',
+            multiple=True,
+            help=helptexts.AGENT_NODE_ID,
+            callback=self.parse_comma_separated,
+        )
+        install_method = click.option(
+            '--install-method',
+            multiple=True,
+            help=helptexts.AGENT_INSTALL_METHOD,
+            callback=self.parse_comma_separated,
+        )
+        deployment_id = click.option(
+            '--deployment-id',
+            multiple=True,
+            help=helptexts.AGENT_DEPLOYMENT_ID,
+            callback=self.parse_comma_separated,
+        )
+        all_states = click.option(
+            '--all-states',
+            default=False,
+            is_flag=True,
+            help=helptexts.AGENT_ALL_STATES,
+        )
 
         # we add separate --node-instance-id, --node-id and --deployment-id
         # arguments, but only expose a agents_filter = {'node_id': ..} dict
@@ -1976,12 +1995,14 @@ class Options(object):
                         ('install_method', AGENT_FILTER_INSTALL_METHODS)]:
                     filters[filter_name] = kwargs.pop(arg_name, None)
 
+                if not kwargs.pop('all_states', False):
+                    filters['state'] = [AgentState.STARTED]
                 kwargs['agent_filters'] = filters
                 return f(*args, **kwargs)
             return _inner
 
         for arg in [install_method, node_instance_id, node_id,
-                    deployment_id, _filters_deco]:
+                    deployment_id, all_states, _filters_deco]:
             f = arg(f)
         return f
 

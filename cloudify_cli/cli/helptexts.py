@@ -433,6 +433,7 @@ AGENT_NODE_ID = 'The node id to be used for filtering' \
 AGENT_INSTALL_METHOD = 'Only show agents installed with this install_method' \
                        + _MULTIPLE_TIMES_FRAGMENT
 AGENT_DEPLOYMENT_ID = DEPLOYMENT_ID + _MULTIPLE_TIMES_FRAGMENT
+AGENT_ALL_STATES = 'Show agents in all states, not only started ones'
 
 AGENTS_WAIT = "Wait for agents operations to end, and show execution logs"
 INSTALL_AGENT_TIMEOUT = "Agent installation timeout"

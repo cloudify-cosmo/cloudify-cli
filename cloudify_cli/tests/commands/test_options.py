@@ -1,5 +1,6 @@
 from mock import MagicMock
 
+from cloudify.models_states import AgentState
 from cloudify_cli.logger import get_global_json_output
 
 from .mocks import MockListResponse
@@ -33,7 +34,9 @@ class OptionsTest(CliCommandTest):
             install_methods=[],
             node_ids=['a'],
             node_instance_ids=[],
-            _all_tenants=True)
+            _all_tenants=True,
+            state=[AgentState.STARTED],
+        )
 
     def test_agent_filters_multiple(self):
         self.invoke('agents list --node-id a --node-id b')
@@ -42,7 +45,9 @@ class OptionsTest(CliCommandTest):
             install_methods=[],
             node_ids=['a', 'b'],
             node_instance_ids=[],
-            _all_tenants=False)
+            _all_tenants=False,
+            state=[AgentState.STARTED],
+        )
 
     def test_agent_filters_commaseparated(self):
         self.invoke('agents list --node-id a,b')
@@ -51,7 +56,9 @@ class OptionsTest(CliCommandTest):
             install_methods=[],
             node_ids=['a', 'b'],
             node_instance_ids=[],
-            _all_tenants=False)
+            _all_tenants=False,
+            state=[AgentState.STARTED],
+        )
 
     def test_agent_filters_commaseparated_multiple(self):
         self.invoke('agents list --node-id a,b --node-id c')
@@ -60,4 +67,16 @@ class OptionsTest(CliCommandTest):
             install_methods=[],
             node_ids=['a', 'b', 'c'],
             node_instance_ids=[],
-            _all_tenants=False)
+            _all_tenants=False,
+            state=[AgentState.STARTED],
+        )
+
+    def test_agents_filters_all_states(self):
+        self.invoke('agents list --all-states')
+        self.client.agents.list.assert_called_with(
+            deployment_id=[],
+            install_methods=[],
+            node_ids=[],
+            node_instance_ids=[],
+            _all_tenants=False,
+        )
