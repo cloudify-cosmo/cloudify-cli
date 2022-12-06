@@ -1950,24 +1950,37 @@ class Options(object):
 
         Applies deployment id, node id and node instance id filters.
         """
-        node_instance_id = click.option('--node-instance-id', multiple=True,
-                                        help=helptexts.AGENT_NODE_INSTANCE_ID,
-                                        callback=self.parse_comma_separated)
-        node_id = click.option('--node-id', multiple=True,
-                               help=helptexts.AGENT_NODE_ID,
-                               callback=self.parse_comma_separated)
-        install_method = click.option('--install-method', multiple=True,
-                                      help=helptexts.AGENT_INSTALL_METHOD,
-                                      callback=self.parse_comma_separated)
-        deployment_id = click.option('--deployment-id', multiple=True,
-                                     help=helptexts.AGENT_DEPLOYMENT_ID,
-                                     callback=self.parse_comma_separated)
-        all_states =click.option(
+        node_instance_id = click.option(
+            '--node-instance-id',
+            multiple=True,
+            help=helptexts.AGENT_NODE_INSTANCE_ID,
+            callback=self.parse_comma_separated,
+        )
+        node_id = click.option(
+            '--node-id',
+            multiple=True,
+            help=helptexts.AGENT_NODE_ID,
+            callback=self.parse_comma_separated,
+        )
+        install_method = click.option(
+            '--install-method',
+            multiple=True,
+            help=helptexts.AGENT_INSTALL_METHOD,
+            callback=self.parse_comma_separated,
+        )
+        deployment_id = click.option(
+            '--deployment-id',
+            multiple=True,
+            help=helptexts.AGENT_DEPLOYMENT_ID,
+            callback=self.parse_comma_separated,
+        )
+        all_states = click.option(
             '--all-states',
             default=False,
             is_flag=True,
             help=helptexts.AGENT_ALL_STATES,
         )
+
         # we add separate --node-instance-id, --node-id and --deployment-id
         # arguments, but only expose a agents_filter = {'node_id': ..} dict
         # to the decorated function
