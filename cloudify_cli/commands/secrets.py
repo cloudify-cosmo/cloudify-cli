@@ -83,6 +83,9 @@ def providers():
 @cfy.options.secret_flag_list
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.options.provider
+@cfy.options.provider_options(
+    required=False,
+)
 @cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
@@ -98,6 +101,7 @@ def create(key,
            visibility,
            tenant_name,
            provider,
+           provider_options,
            logger,
            client):
     """Create a new secret (key-value pair)
@@ -144,6 +148,7 @@ def create(key,
         visibility,
         secret_schema,
         provider,
+        provider_options,
     )
 
     logger.info('Secret `{0}` created'.format(key))
@@ -257,6 +262,9 @@ def import_secrets(passphrase,
 @cfy.options.update_visibility
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
 @cfy.options.provider
+@cfy.options.provider_options(
+    required=False,
+)
 @cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client(use_tenant_in_header=True)
@@ -268,6 +276,7 @@ def update(key,
            visibility,
            tenant_name,
            provider,
+           provider_options,
            logger,
            client):
     """Update an existing secret
@@ -292,7 +301,14 @@ def update(key,
                     f'Error decoding secret value: \'{value}\' is not of '
                     f'type \'{secret_details.schema.get("type")}\'')
 
-        client.secrets.update(key, value, visibility, hidden_value, provider)
+        client.secrets.update(
+            key,
+            value,
+            visibility,
+            hidden_value,
+            provider,
+            provider_options,
+        )
         logger.info('Secret `{0}` updated'.format(key))
 
 
