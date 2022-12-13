@@ -1896,7 +1896,7 @@ class Options(object):
             'secret_provider_name',
             required=True,
             callback=validate_value_not_empty,
-            help=helptexts.SECRET_PROVIDER_NAME,
+            help=helptexts.SECRETS_PROVIDER_NAME,
         )
 
         self.provider = click.option(
@@ -1905,7 +1905,7 @@ class Options(object):
             'provider',
             required=False,
             callback=validate_value_not_empty,
-            help=helptexts.SECRET_PROVIDER_NAME,
+            help=helptexts.SECRETS_PROVIDER_NAME,
         )
 
         self.evaluate_functions = click.option(
@@ -2513,7 +2513,7 @@ class Options(object):
         ]
         kwargs = {
             'required': required,
-            'help': _help or helptexts.SECRET_PROVIDER_TYPE,
+            'help': _help or helptexts.SECRETS_PROVIDER_TYPE,
             'callback': callback,
         }
 
@@ -2530,7 +2530,23 @@ class Options(object):
         ]
         kwargs = {
             'required': required,
-            'help': _help or helptexts.SECRET_PROVIDER_CONNECTION_PARAMETERS,
+            'help': _help or helptexts.SECRETS_PROVIDER_CONNECTION_PARAMETERS,
+            'callback': inputs_callback,
+            'multiple': True,
+            'default': default,
+        }
+
+        return click.option(*args, **kwargs)
+
+    @staticmethod
+    def provider_options(required=True, _help=None, default=None):
+        args = [
+            '-o',
+            '--provider-options',
+        ]
+        kwargs = {
+            'required': required,
+            'help': _help or helptexts.SECRETS_PROVIDER_OPTIONS,
             'callback': inputs_callback,
             'multiple': True,
             'default': default,
@@ -2547,7 +2563,7 @@ class Options(object):
         ]
         kwargs = {
             'required': required,
-            'help': _help or helptexts.SECRET_PROVIDER_NAME_MULTIPLE,
+            'help': _help or helptexts.SECRETS_PROVIDER_NAME_MULTIPLE,
             'multiple': True,
             'default': default,
         }

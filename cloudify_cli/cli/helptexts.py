@@ -611,10 +611,13 @@ SUMMARY_HELP = """
     E.g. `cfy {type} summary tenant_name visibility` will summarize
     {type} by tenant_name with a secondary grouping by visibility.
     """
-SECRET_PROVIDER_NAME = "Secret Provider's name"
-SECRET_PROVIDER_NAME_MULTIPLE = "Secret Provider's name list"
-SECRET_PROVIDER_TYPE = "Secret Provider's type"
-SECRET_PROVIDER_CONNECTION_PARAMETERS = """
-    Secret Provider's connection parameters in stringify JSON format
+SECRETS_PROVIDER_NAME = "Secrets Provider's name"
+SECRETS_PROVIDER_NAME_MULTIPLE = "Secrets Provider's name list"
+SECRETS_PROVIDER_TYPE = "Secrets Provider's type"
+SECRETS_PROVIDER_CONNECTION_PARAMETERS = """
+    Secrets Provider's connection parameters in stringify JSON format
+    """
+SECRETS_PROVIDER_OPTIONS = """
+    Secrets Provider's options in stringify JSON format
     """
 EVALUATE_FUNCTIONS = "Evaluate functions in returned nodes and node instances"
