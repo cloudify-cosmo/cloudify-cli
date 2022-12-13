@@ -132,7 +132,6 @@ class UseTest(CliCommandTest):
             self.verify = client_self.get_request_verify()
             return 'success'
 
-
         with patch('cloudify_rest_client.client.HTTPClient.do_request',
                    new=mock_do_request):
             if self.client._client.port == SSL_PORT:

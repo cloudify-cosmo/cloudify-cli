@@ -1,20 +1,15 @@
 import os
 import json
 import errno
-import types
 import shutil
 import getpass
 import tempfile
-import itertools
 from base64 import b64encode
 
 import yaml
-import requests
 
 from cloudify_rest_client.client import CloudifyClient, HTTPClient
 from cloudify.cluster_status import CloudifyNodeType
-from cloudify_rest_client.exceptions import CloudifyClientError
-from cloudify.utils import ipv6_url_compat
 
 from cloudify_cli import constants
 from cloudify_cli.exceptions import CloudifyCliError
@@ -557,7 +552,6 @@ def get_auth_header(username, password):
                 constants.BASIC_AUTH_PREFIX + ' ' + encoded_credentials}
 
     return header
-
 
 
 # attributes that can differ for each node in a cluster. Those will be updated

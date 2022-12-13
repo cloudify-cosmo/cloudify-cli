@@ -91,26 +91,30 @@ def list_logs(
     else:
         import asyncio
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(_list_logs(creator_name,
-                   execution_id,
-                   since,
-                   sort_by,
-                   descending,
-                   pagination_offset,
-                   pagination_size,
-                   logger,
-                   client))
+        loop.run_until_complete(_list_logs(
+            creator_name,
+            execution_id,
+            since,
+            sort_by,
+            descending,
+            pagination_offset,
+            pagination_size,
+            logger,
+            client,
+        ))
 
 
-async def _list_logs(creator_name,
-               execution_id,
-               since,
-               sort_by,
-               descending,
-               pagination_offset,
-               pagination_size,
-               logger,
-               client):
+async def _list_logs(
+    creator_name,
+    execution_id,
+    since,
+    sort_by,
+    descending,
+    pagination_offset,
+    pagination_size,
+    logger,
+    client,
+):
     """List audit_log entries"""
     logger.info('Listing audit log entries...')
     logs = await client.auditlog.list(

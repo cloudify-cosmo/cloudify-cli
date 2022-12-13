@@ -123,7 +123,8 @@ class AgentsTests(CliCommandTest):
                 CLOUDIFY_TENANT_HEADER)
             if not tenant_name:
                 tenant_name = DEFAULT_TENANT_NAME
-            all_node_instances = _topology_filter(client_inst, lambda x: True, **kwargs)
+            all_node_instances = _topology_filter(
+                client_inst, lambda x: True, **kwargs)
             deployments = {(x['tenant_name'], x['deployment_id'])
                            for x in all_node_instances}
             deployments = [Deployment({'id': b, 'tenant_name': a}) for a, b in
@@ -137,7 +138,8 @@ class AgentsTests(CliCommandTest):
 
         def list_nodes(client_inst, **kwargs):
             node_ids = kwargs.get('id')
-            all_node_instances = _topology_filter(client_inst, lambda x: True, **kwargs)
+            all_node_instances = _topology_filter(
+                client_inst, lambda x: True, **kwargs)
             nodes = {(x['tenant_name'], x['deployment_id'], x['node_id'])
                      for x in all_node_instances}
             nodes = [Node({'id': c, 'deployment_id': b, 'tenant_name': a}) for
@@ -409,8 +411,9 @@ class AgentsTests(CliCommandTest):
         with patch('cloudify_cli.commands.agents.wait_for_execution',
                    return_value=PropertyMock(error=False),
                    side_effect=_wait_side_effect), \
-            patch.object(ExecutionsClient, 'start', _mock_execution_start), \
-            patch('cloudify_cli.commands.agents.time.sleep'):
+                patch.object(
+                    ExecutionsClient, 'start', _mock_execution_start), \
+                patch('cloudify_cli.commands.agents.time.sleep'):
 
             get_deployments_and_run_workers(
                 self.client, self._agent_filters(), True, self.logger,

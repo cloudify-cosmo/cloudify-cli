@@ -23,7 +23,6 @@ import testtools
 from mock import patch, Mock, PropertyMock
 
 from cloudify.utils import setup_logger
-from cloudify_rest_client import CloudifyClient
 from cloudify_rest_client.client import CLOUDIFY_TENANT_HEADER
 import click.testing as clicktest
 
