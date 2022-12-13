@@ -105,7 +105,7 @@ class CliCommandTest(testtools.TestCase):
         if not os.path.exists(logdir):
             os.makedirs(logdir, mode=0o700)
 
-        self.client = CloudifyClient()
+        self.client = env.ProfileSavingClusterClient()
 
         def get_mock_rest_client(*args, **kwargs):
             if 'tenant_name' in kwargs:
