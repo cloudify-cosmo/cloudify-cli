@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 
 import click
 
+from cloudify_cli import env
 from cloudify_cli.cli import cfy, helptexts
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.table import print_data
@@ -65,18 +66,20 @@ def auditlog():
 @cfy.options.common_options
 @cfy.pass_logger
 @cfy.pass_client()
-def list_logs(creator_name,
-              execution_id,
-              since,
-              follow,
-              timeout,
-              sort_by,
-              descending,
-              pagination_offset,
-              pagination_size,
-              logger,
-              client,
-              ):
+def list_logs(
+    creator_name,
+    execution_id,
+    since,
+    follow,
+    timeout,
+    sort_by,
+    descending,
+    pagination_offset,
+    pagination_size,
+    logger,
+    client,
+):
+    client = env.get_rest_client(async_client=True)
     if follow:
         from cloudify_cli.async_commands.audit_log import stream_logs
         stream_logs(creator_name,
@@ -86,7 +89,9 @@ def list_logs(creator_name,
                     logger,
                     client)
     else:
-        _list_logs(creator_name,
+        import asyncio
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(_list_logs(creator_name,
                    execution_id,
                    since,
                    sort_by,
@@ -94,10 +99,10 @@ def list_logs(creator_name,
                    pagination_offset,
                    pagination_size,
                    logger,
-                   client)
+                   client))
 
 
-def _list_logs(creator_name,
+async def _list_logs(creator_name,
                execution_id,
                since,
                sort_by,
@@ -108,7 +113,7 @@ def _list_logs(creator_name,
                client):
     """List audit_log entries"""
     logger.info('Listing audit log entries...')
-    logs = client.auditlog.list(
+    logs = await client.auditlog.list(
         creator_name=creator_name,
         execution_id=execution_id,
         since=since,

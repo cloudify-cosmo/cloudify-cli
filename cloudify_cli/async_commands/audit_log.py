@@ -27,8 +27,6 @@ async def _stream_logs(creator_name,
                        timeout,
                        logger,
                        client):
-    if not hasattr(client.auditlog, 'stream'):
-        raise CloudifyCliError('Streaming requires Python>=3.6.')
     logger.info('Streaming audit log entries...')
     response = await client.auditlog.stream(timeout=timeout,
                                             creator_name=creator_name,
