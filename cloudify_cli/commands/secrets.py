@@ -114,7 +114,7 @@ def create(key,
     if not value and not provider:
         raise CloudifyCliError('Failed to create secret key. '
                                'Missing option '
-                               '--secret-string, secret-file or provider')
+                               '--secret-string, secret-file or provider.')
 
     if secret_schema:
         try:
