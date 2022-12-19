@@ -45,7 +45,8 @@ class SecretsTest(CliCommandTest):
         self.invoke(
             'cfy secrets create key',
             err_str_segment='Failed to create secret key. '
-                            'Missing option --secret-string or secret-file.',
+                            'Missing option --secret-string, '
+                            'secret-file or provider.',
             exception=CloudifyCliError
         )
 

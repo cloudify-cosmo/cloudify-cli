@@ -111,10 +111,10 @@ def create(key,
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
     value = _get_secret_string(secret_file, secret_string)
-    if not value:
+    if not value and not provider:
         raise CloudifyCliError('Failed to create secret key. '
                                'Missing option '
-                               '--secret-string or secret-file.')
+                               '--secret-string, secret-file or provider.')
 
     if secret_schema:
         try:
@@ -132,7 +132,7 @@ def create(key,
     if secret_flag_list:
         secret_schema = {"type": "array"}
 
-    if secret_schema:
+    if secret_schema and value:
         try:
             value = json.loads(value)
         except json.decoder.JSONDecodeError:
