@@ -43,7 +43,7 @@ SECRETS_COLUMNS = [
     'provider_name',
 ]
 
-SECRET_PROVIDER_COLUMNS = [
+SECRETS_PROVIDER_COLUMNS = [
     'name',
     'type',
     'visibility',
@@ -451,16 +451,16 @@ def set_owner(key, username, tenant_name, logger, client):
 
 @providers.command(
     name='create',
-    short_help='Create a new secrets provider',
+    short_help='Create a new Secrets Provider',
 )
-@cfy.argument('secret_provider_name')
-@cfy.options.secret_provider_type()
+@cfy.argument('secrets_provider_name')
+@cfy.options.secrets_provider_type()
 @cfy.options.connection_parameters(
     required=False,
 )
 @cfy.options.tenant_name(
     required=False,
-    resource_name_for_help='secret_provider',
+    resource_name_for_help='Secrets Provider',
 )
 @cfy.options.visibility(
     mutually_exclusive_required=False,
@@ -472,8 +472,8 @@ def set_owner(key, username, tenant_name, logger, client):
 )
 @cfy.pass_logger
 def providers_create(
-        secret_provider_name,
-        secret_provider_type,
+        secrets_provider_name,
+        secrets_provider_type,
         connection_parameters,
         tenant_name,
         visibility,
@@ -481,19 +481,19 @@ def providers_create(
         client,
 ):
     client.secrets_providers.create(
-        secret_provider_name,
-        secret_provider_type,
+        secrets_provider_name,
+        secrets_provider_type,
         connection_parameters,
         visibility,
     )
 
     logger.info(
         'Secrets Provider `%s` created',
-        secret_provider_name,
+        secrets_provider_name,
     )
 
     client.secrets_providers.check(
-        name=secret_provider_name,
+        name=secrets_provider_name,
     )
 
     logger.info(
@@ -505,8 +505,8 @@ def providers_create(
     name='update',
     short_help='Update an existing Secrets Provider',
 )
-@cfy.argument('secret_provider_name')
-@cfy.options.secret_provider_type(
+@cfy.argument('secrets_provider_name')
+@cfy.options.secrets_provider_type(
     required=False,
 )
 @cfy.options.connection_parameters(
@@ -514,7 +514,7 @@ def providers_create(
 )
 @cfy.options.tenant_name(
     required=False,
-    resource_name_for_help='secret_provider',
+    resource_name_for_help='Secrets Provider',
 )
 @cfy.options.visibility(
     mutually_exclusive_required=False,
@@ -526,8 +526,8 @@ def providers_create(
 )
 @cfy.pass_logger
 def providers_update(
-        secret_provider_name,
-        secret_provider_type,
+        secrets_provider_name,
+        secrets_provider_type,
         connection_parameters,
         tenant_name,
         visibility,
@@ -535,55 +535,55 @@ def providers_update(
         client,
 ):
     client.secrets_providers.update(
-        secret_provider_name,
-        secret_provider_type,
+        secrets_provider_name,
+        secrets_provider_type,
         connection_parameters,
         visibility,
     )
 
     logger.info(
-        'Secrets provider `%s` updated',
-        secret_provider_name,
+        'Secrets Provider `%s` updated',
+        secrets_provider_name,
     )
 
 
 @providers.command(
     name='delete',
-    short_help='Delete a secrets provider',
+    short_help='Delete a Secrets Provider',
 )
-@cfy.argument('secret_provider_name')
+@cfy.argument('secrets_provider_name')
 @cfy.options.tenant_name(
     required=False,
-    resource_name_for_help='secret',
+    resource_name_for_help='Secrets Provider',
 )
 @cfy.options.common_options
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def providers_delete(secret_provider_name, tenant_name, logger, client):
-    """Delete a secrets provider
+def providers_delete(secrets_provider_name, tenant_name, logger, client):
+    """Delete a Secrets Provider
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    graceful_msg = 'Requested secrets provider with name `{0}` was not found' \
-        .format(secret_provider_name)
+    graceful_msg = 'Requested Secrets Provider with name `{0}` was not found' \
+        .format(secrets_provider_name)
 
     with handle_client_error(404, graceful_msg, logger):
         logger.info(
-            'Deleting secrets provider `%s`...',
-            secret_provider_name
+            'Deleting Secrets Provider `%s`...',
+            secrets_provider_name
         )
-        client.secrets_providers.delete(secret_provider_name)
-        logger.info('Secrets provider removed')
+        client.secrets_providers.delete(secrets_provider_name)
+        logger.info('Secrets Provider removed')
 
 
 @providers.command(
     name='get',
-    short_help='Get details for a single secrets provider',
+    short_help='Get details for a single Secrets Provider',
 )
-@cfy.argument('secret_provider_name')
+@cfy.argument('secrets_provider_name')
 @cfy.options.tenant_name(
     required=False,
-    resource_name_for_help='secret',
+    resource_name_for_help='Secrets Provider',
 )
 @cfy.options.common_options
 @cfy.assert_manager_active()
@@ -591,27 +591,27 @@ def providers_delete(secret_provider_name, tenant_name, logger, client):
     use_tenant_in_header=True,
 )
 @cfy.pass_logger
-def providers_get(secret_provider_name, tenant_name, logger, client):
-    """Get details for a single secrets provider
+def providers_get(secrets_provider_name, tenant_name, logger, client):
+    """Get details for a single Secrets Provider
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
-    graceful_msg = 'Requested secrets provider with name `{0}`' \
+    graceful_msg = 'Requested Secrets Provider with name `{0}`' \
                    ' was not found in this tenant'.format(
-                        secret_provider_name
+                        secrets_provider_name
                     )
     with handle_client_error(404, graceful_msg, logger):
         logger.info(
-            'Getting info for secrets provider `%s`...',
-            secret_provider_name,
+            'Getting info for Secrets Provider `%s`...',
+            secrets_provider_name,
         )
-        details = client.secrets_providers.get(secret_provider_name)
+        details = client.secrets_providers.get(secrets_provider_name)
 
-        print_details(details, 'Requested secrets provider info:')
+        print_details(details, 'Requested Secrets Provider info:')
 
 
 @providers.command(
     name='list',
-    short_help="List all secret providers",
+    short_help="List all Secrets Providers",
 )
 @cfy.assert_manager_active()
 @cfy.pass_client()
@@ -622,12 +622,12 @@ def providers_list(
         logger,
         client,
 ):
-    logger.info('Listing all secret providers...')
+    logger.info('Listing all Secrets Providers...')
     secrets_list = client.secrets_providers.list()
-    print_data(SECRET_PROVIDER_COLUMNS, secrets_list, 'Secret providers:')
+    print_data(SECRETS_PROVIDER_COLUMNS, secrets_list, 'Secrets Providers:')
     total = secrets_list.metadata.pagination.total
     logger.info(
-        'Showing %s of %s secret providers',
+        'Showing %s of %s Secrets Providers',
         len(secrets_list),
         total,
     )
@@ -638,11 +638,11 @@ def providers_list(
     short_help='Test a Secrets Provider connectivity',
 )
 @cfy.argument(
-    'secret_provider_name',
+    'secrets_provider_name',
     required=False,
     default='',
 )
-@cfy.options.secret_provider_type(
+@cfy.options.secrets_provider_type(
     required=False,
     default='',
     callback=None,
@@ -652,7 +652,7 @@ def providers_list(
 )
 @cfy.options.tenant_name(
     required=False,
-    resource_name_for_help='secret_provider',
+    resource_name_for_help='Secrets Provider',
 )
 @cfy.options.visibility(
     mutually_exclusive_required=False,
@@ -664,8 +664,8 @@ def providers_list(
 )
 @cfy.pass_logger
 def providers_test(
-        secret_provider_name,
-        secret_provider_type,
+        secrets_provider_name,
+        secrets_provider_type,
         connection_parameters,
         tenant_name,
         visibility,
@@ -673,8 +673,8 @@ def providers_test(
         client,
 ):
     client.secrets_providers.check(
-        name=secret_provider_name,
-        _type=secret_provider_type,
+        name=secrets_provider_name,
+        _type=secrets_provider_type,
         connection_parameters=connection_parameters,
     )
 

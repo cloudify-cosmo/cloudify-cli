@@ -1891,9 +1891,9 @@ class Options(object):
             mutually_exclusive=['blueprint_id', 'blueprint_path', 'inputs'],
         )
 
-        self.secret_provider_name = click.option(
+        self.secrets_provider_name = click.option(
             '--name',
-            'secret_provider_name',
+            'secrets_provider_name',
             required=True,
             callback=validate_value_not_empty,
             help=helptexts.SECRETS_PROVIDER_NAME,
@@ -2500,7 +2500,7 @@ class Options(object):
         return self._filter_rules(f, 'deployment')
 
     @staticmethod
-    def secret_provider_type(
+    def secrets_provider_type(
             required=True,
             _help=None,
             default=None,
@@ -2509,7 +2509,7 @@ class Options(object):
         args = [
             '-y',
             '--type',
-            'secret_provider_type',
+            'secrets_provider_type',
         ]
         kwargs = {
             'required': required,
