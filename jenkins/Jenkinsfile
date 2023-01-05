@@ -49,20 +49,6 @@ pipeline {
   stages {
     stage('flake8, build rpm and deb-build') {
       parallel {
-        stage('flake8_py27') {
-          steps {
-            sh script: "mkdir -p ${env.WORKSPACE}/flake8 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/flake8", label: "copying repo to seperate workspace"
-            container('py27') {
-              dir("${env.WORKSPACE}/flake8") {
-                echo 'Install and run flake8'
-                sh '''
-                  pip install flake8 --user
-                  flake8 --extend-exclude "async*" cloudify_cli
-                '''
-              }
-            }
-          }
-        }
         stage('flake8_py36') {
           steps {
             sh script: "mkdir -p ${env.WORKSPACE}/flake8 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/flake8", label: "copying repo to seperate workspace"
@@ -140,24 +126,6 @@ pipeline {
     }
     stage('pytests') {
       parallel {
-        stage('test_py27') {
-          steps {
-            sh script: "mkdir -p ${env.WORKSPACE}/test_py27 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/test_py27", label: "copying repo to seperate workspace"
-            container('py27') {
-              dir("${env.WORKSPACE}/test_py27") {
-                echo 'create virtual env'
-                sh 'virtualenv ~/venv'
-                install_test_dependencies()
-                pytest()
-              }
-            }
-          }
-          post {
-            always {
-              junit '**/test-results/*.xml'
-            }
-          }
-        }
         stage('test_py36') {
           steps {
             sh script: "mkdir -p ${env.WORKSPACE}/test_py36 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/test_py36", label: "copying repo to seperate workspace"
