@@ -553,6 +553,11 @@ def groups():
 @cfy.pass_logger
 @cfy.options.extended_view
 def execution_groups_get(execution_group_id, client, logger):
+    """Display execution group information
+
+    This includes the source deployment group, and the workflow name.
+    """
+
     group = client.execution_groups.get(execution_group_id)
     print_single(
         ['id', 'workflow_id', 'deployment_group_id'],
@@ -576,6 +581,7 @@ def _format_group(g):
 @cfy.pass_logger
 @cfy.options.extended_view
 def execution_groups_list(client, logger):
+    """List all execution groups"""
     groups = [_format_group(g) for g in client.execution_groups.list()]
     print_data(
         ['id', 'workflow_id', 'deployment_group'],
@@ -592,6 +598,7 @@ def execution_groups_list(client, logger):
 @cfy.pass_logger
 @cfy.options.extended_view
 def execution_groups_details(execution_group_id, client, logger):
+    """Show execution group details"""
     group = client.execution_groups.get(execution_group_id)
     group.update({'#executions': len(group.get('execution_ids'))})
     print_single(['workflow_id', 'deployment_group_id', '#executions',
@@ -643,6 +650,11 @@ def execution_groups_details(execution_group_id, client, logger):
 def execution_groups_start(deployment_group, workflow_id, parameters,
                            json_output, force, timeout, concurrency,
                            with_worker_names, client, logger):
+    """Start an execution group
+
+    This starts an execution on every deployment in the given deployment
+    group.
+    """
     events_logger = get_events_logger(json_output, with_worker_names)
     group = client.execution_groups.start(
         deployment_group_id=deployment_group,
@@ -693,6 +705,11 @@ def execution_groups_start(deployment_group, workflow_id, parameters,
 @cfy.pass_logger
 def execution_groups_cancel(group_id, force, kill,
                             client, logger, tenant_name):
+    """Cancel an execution group
+
+    This cancels all running executions in the group. Executions that already
+    finished are unaffected.
+    """
     utils.explicit_tenant_name_message(tenant_name, logger)
     if kill:
         message = 'Killing'
@@ -715,6 +732,11 @@ def execution_groups_cancel(group_id, force, kill,
 @cfy.pass_logger
 def execution_groups_resume(group_id, reset_operations,
                             client, logger, tenant_name):
+    """Resume an execution group
+
+    This resumes all failed executions in the group. Executions that already
+    finished are unaffected.
+    """
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Resuming execution group %s', group_id)
     client.execution_groups.resume(group_id, force=reset_operations)
@@ -755,15 +777,15 @@ def execution_groups_set_success(group_id, success_group_id,
 @cfy.pass_logger
 def execution_groups_set_failure(group_id, failure_group_id,
                                  client, logger, tenant_name):
-    """Set success target group for this execution-group.
+    """Set failure target group for this execution-group.
 
-    Deployments for which the execution succeeds, will be added to the
+    Deployments for which the execution fails, will be added to the
     success target deployments group.
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     client.execution_groups.set_target_group(
         group_id, failed_group=failure_group_id)
-    logger.info('Execution group %s: success target group set to %s',
+    logger.info('Execution group %s: failure target group set to %s',
                 group_id, failure_group_id)
 
 
