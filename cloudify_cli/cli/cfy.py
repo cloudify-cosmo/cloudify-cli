@@ -2523,6 +2523,17 @@ class Options(object):
         return click.option(*args, **kwargs)
 
     @staticmethod
+    def secrets_provider_skip_check():
+        return click.option(
+            '-s',
+            '--skip-check',
+            is_flag=True,
+            default=False,
+            required=False,
+            help=helptexts.SECRETS_PROVIDER_SKIP_CHECK,
+        )
+
+    @staticmethod
     def connection_parameters(required=True, _help=None, default=None):
         args = [
             '-c',

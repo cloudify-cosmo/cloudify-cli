@@ -613,6 +613,7 @@ SUMMARY_HELP = """
     """
 SECRETS_PROVIDER_NAME = "Secrets Provider's name"
 SECRETS_PROVIDER_NAME_MULTIPLE = "Secrets Provider's name list"
+SECRETS_PROVIDER_SKIP_CHECK = "Do not check connectivity to secrets provider."
 SECRETS_PROVIDER_TYPE = "Secrets Provider's type"
 SECRETS_PROVIDER_CONNECTION_PARAMETERS = """
     Secrets Provider's connection parameters in stringify JSON format
