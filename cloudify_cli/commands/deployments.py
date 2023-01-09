@@ -278,8 +278,11 @@ def deployments_list_base(
 # decorators to both. We'll have two "stub" functions representing those
 # commands, and both delegate to the same base.
 deployments_list_decorators = [
-    cfy.options.blueprint_id(),
-    click.option('--group-id', '-g'),
+    cfy.options.blueprint_id(
+        help='Show deployments created from this blueprint'),
+    click.option(
+        '--group-id', '-g',
+        help='Show deployments belonging to this group'),
     cfy.options.filter_id,
     cfy.options.deployment_filter_rules,
     cfy.options.sort_by(),
@@ -1157,6 +1160,7 @@ def _format_group(g):
 @cfy.pass_logger
 @cfy.options.extended_view
 def groups_list(client, logger):
+    """List all deployment groups"""
     groups = [_format_group(g) for g in client.deployment_groups.list()]
     print_data(DEP_GROUP_COLUMNS, groups, 'Deployment groups:')
 
@@ -1170,6 +1174,11 @@ def groups_list(client, logger):
 @cfy.pass_logger
 def groups_create(deployment_group_name, inputs, default_blueprint,
                   description, client, logger):
+    """Create a deployment group
+
+    The provided inputs will be used as default inputs for new deployments
+    created using `cfy deployments groups extend --count`.
+    """
     client.deployment_groups.put(
         deployment_group_name,
         default_inputs=inputs,
@@ -1188,6 +1197,12 @@ def groups_create(deployment_group_name, inputs, default_blueprint,
 @cfy.pass_logger
 def groups_delete(deployment_group_name, delete_deployments, force, with_logs,
                   client, logger):
+    """Delete a deployment group
+
+    This deletes a deployment group, which by default only removes the
+    grouping, the deployments in the group are still left intact.
+    To delete all deployments, pass `--delete-deployments`.
+    """
     client.deployment_groups.delete(
         deployment_group_name,
         delete_deployments=delete_deployments,
@@ -1206,6 +1221,11 @@ def groups_delete(deployment_group_name, delete_deployments, force, with_logs,
 @cfy.pass_logger
 def groups_update(deployment_group_name, inputs, default_blueprint,
                   description, client, logger):
+    """Update a deployment group
+
+    This changes the group's attributes; for updating deployments belonging
+    to this group, see `update-deployments`.
+    """
     client.deployment_groups.put(
         deployment_group_name,
         default_inputs=inputs,
@@ -1228,6 +1248,11 @@ def groups_update(deployment_group_name, inputs, default_blueprint,
 def groups_extend(deployment_group_name, deployment_id, count, filter_id,
                   filter_rules, from_group, environments_group,
                   client, logger):
+    """Add deployments to an existing group
+
+    This adds deployments from a filter, or from another group, or creates
+    new deployments, using this group's default blueprint and inputs.
+    """
     new_deployments = []
     if environments_group:
         for deployment in client.deployments.list(
@@ -1263,6 +1288,7 @@ def groups_extend(deployment_group_name, deployment_id, count, filter_id,
 @cfy.pass_logger
 def groups_shrink(deployment_group_name, deployment_id, filter_id,
                   filter_rules, from_group, client, logger):
+    """Shrink a group, removing deployments from it"""
     group = client.deployment_groups.remove_deployments(
         deployment_group_name,
         deployment_id,
@@ -1300,6 +1326,7 @@ def group_labels():
 @cfy.pass_client()
 @cfy.pass_logger
 def list_group_labels(deployment_group_name, logger, client, tenant_name):
+    """List labels of a group"""
     list_labels(deployment_group_name, 'deployment group',
                 client.deployment_groups, logger, tenant_name)
 
@@ -1314,7 +1341,11 @@ def list_group_labels(deployment_group_name, logger, client, tenant_name):
 @cfy.pass_logger
 def add_group_labels(labels_list, deployment_group_name,
                      logger, client, tenant_name):
-    """LABELS_LIST: <key>:<value>,<key>:<value>"""
+    """Add labels to the deployment group.
+
+    Dpeloyments added to this group will have the group labels added to them.
+    LABELS_LIST: <key>:<value>,<key>:<value>
+    """
     add_labels(deployment_group_name, 'deployment group',
                client.deployment_groups, labels_list, logger, tenant_name)
 
@@ -1329,7 +1360,11 @@ def add_group_labels(labels_list, deployment_group_name,
 @cfy.pass_logger
 def delete_group_labels(label, deployment_group_name,
                         logger, client, tenant_name):
-    """
+    """Remove a label from the deployment group.
+
+    Deployments added to this group will no longer have the label
+    added to them.
+
     LABEL: Can be either <key>:<value> or <key>. If <key> is provided,
     all labels associated with this key will be deleted from the group.
     """

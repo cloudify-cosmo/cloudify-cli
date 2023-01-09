@@ -2189,12 +2189,16 @@ class Options(object):
             help=helptexts.EXECUTION_ID)
 
     @staticmethod
-    def blueprint_id(required=False, validate=False):
+    def blueprint_id(
+        required=False,
+        validate=False,
+        help=helptexts.BLUEPRINT_ID,
+    ):
         return click.option(
             '-b',
             '--blueprint-id',
             required=required,
-            help=helptexts.BLUEPRINT_ID,
+            help=help,
             callback=_get_validate_callback(validate))
 
     @staticmethod
