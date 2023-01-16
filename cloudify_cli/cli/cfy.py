@@ -1901,7 +1901,7 @@ class Options(object):
 
         self.provider_name = click.option(
             '-p',
-            '--provider-name',
+            '--provider',
             'provider_name',
             required=False,
             callback=validate_value_not_empty,
