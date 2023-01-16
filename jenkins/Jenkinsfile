@@ -67,7 +67,7 @@ pipeline {
         stage('flake8') {
           steps {
             sh script: "mkdir -p ${env.WORKSPACE}/flake8 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/flake8", label: "copying repo to separate workspace"
-            container('py310') {
+            container('py311') {
               dir("${env.WORKSPACE}/flake8") {
                 echo 'Install and run flake8'
                 sh '''
@@ -126,9 +126,9 @@ pipeline {
     }
     stage('tests') {
       steps {
-        sh script: "mkdir -p ${env.WORKSPACE}/test_py310 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/test_py310", label: "copying repo to separate workspace"
-        container('py310') {
-          dir("${env.WORKSPACE}/test_py310") {
+        sh script: "mkdir -p ${env.WORKSPACE}/test_py311 && cp -rf ${env.WORKSPACE}/${env.PROJECT}/. ${env.WORKSPACE}/test_py311", label: "copying repo to separate workspace"
+        container('py311') {
+          dir("${env.WORKSPACE}/test_py311") {
             echo 'create virtual env'
             sh 'virtualenv ~/venv'
             install_test_dependencies()
