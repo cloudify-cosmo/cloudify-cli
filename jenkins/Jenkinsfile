@@ -87,7 +87,7 @@ pipeline {
                 git clone --single-branch --branch ${env.BRANCH_NAME} https://github.com/cloudify-cosmo/cloudify-cli.git SOURCES && cd SOURCES
               """
               echo 'building dependencies and rpm'
-              buildRpm('~/rpmbuild/SOURCES', 'cloudify-cli.spec', "${env.CLOUDIFY_VERSION}", "${env.CLOUDIFY_PACKAGE_RELEASE}", "8", "x86_64")
+              buildRpm('~/rpmbuild/SOURCES', 'cloudify-cli.spec', "${env.CLOUDIFY_VERSION}", "${env.CLOUDIFY_PACKAGE_RELEASE}", "7", "x86_64")
               sh script:("mkdir -p ${env.WORKSPACE}/rpm_artifacts && cp -rf /root/rpmbuild/RPMS/x86_64/. ${env.WORKSPACE}/rpm_artifacts"), label: "Copy RPM to rpm_artifacts folder"
             }
           }
