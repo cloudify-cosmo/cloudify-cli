@@ -1899,10 +1899,10 @@ class Options(object):
             help=helptexts.SECRETS_PROVIDER_NAME,
         )
 
-        self.provider = click.option(
+        self.provider_name = click.option(
             '-p',
             '--provider',
-            'provider',
+            'provider_name',
             required=False,
             callback=validate_value_not_empty,
             help=helptexts.SECRETS_PROVIDER_NAME,
