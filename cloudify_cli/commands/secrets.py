@@ -66,7 +66,7 @@ def providers():
 @cfy.options.secret_flag_dict
 @cfy.options.secret_flag_list
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
-@cfy.options.provider
+@cfy.options.provider_name
 @cfy.options.provider_options(
     required=False,
 )
@@ -84,7 +84,7 @@ def create(key,
            secret_flag_list,
            visibility,
            tenant_name,
-           provider,
+           provider_name,
            provider_options,
            logger,
            client):
@@ -95,7 +95,7 @@ def create(key,
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
     value = _get_secret_string(secret_file, secret_string)
-    if not value and not provider:
+    if not value and not provider_name:
         raise CloudifyCliError('Failed to create secret key. '
                                'Missing option '
                                '--secret-string, secret-file or provider.')
@@ -131,7 +131,7 @@ def create(key,
         hidden_value,
         visibility,
         secret_schema,
-        provider,
+        provider_name,
         provider_options,
     )
 
@@ -245,7 +245,7 @@ def import_secrets(passphrase,
 @cfy.options.update_hidden_value
 @cfy.options.update_visibility
 @cfy.options.tenant_name(required=False, resource_name_for_help='secret')
-@cfy.options.provider
+@cfy.options.provider_name
 @cfy.options.provider_options(
     required=False,
 )
@@ -259,7 +259,7 @@ def update(key,
            hidden_value,
            visibility,
            tenant_name,
-           provider,
+           provider_name,
            provider_options,
            logger,
            client):
@@ -270,8 +270,8 @@ def update(key,
     utils.explicit_tenant_name_message(tenant_name, logger)
     validate_visibility(visibility)
 
-    if provider:
-        client.secrets_providers.get(provider)
+    if provider_name:
+        client.secrets_providers.get(provider_name)
 
     value = _get_secret_string(secret_file, secret_string)
     graceful_msg = 'Requested secret with key `{0}` was not found'.format(key)
@@ -290,7 +290,7 @@ def update(key,
             value,
             visibility,
             hidden_value,
-            provider,
+            provider_name,
             provider_options,
         )
         logger.info('Secret `{0}` updated'.format(key))
