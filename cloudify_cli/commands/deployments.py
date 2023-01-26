@@ -1255,8 +1255,11 @@ def groups_extend(deployment_group_name, deployment_id, count, filter_id,
     """
     new_deployments = []
     if environments_group:
-        for deployment in client.deployments.list(
-                deployment_group_id=environments_group):
+        request_params = {
+            'deployment_group_id': environments_group,
+            '_get_all_results': True,
+        }
+        for deployment in client.deployments.list(**request_params):
             if deployment.is_environment():
                 new_deployments.append({
                     'id': '{uuid}',
