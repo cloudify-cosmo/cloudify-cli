@@ -789,6 +789,29 @@ def execution_groups_set_failure(group_id, failure_group_id,
                 group_id, failure_group_id)
 
 
+@groups.command('set-concurrency',
+                short_help='Change the concurrency for a group')
+@cfy.argument('group-id')
+@cfy.argument('concurrency', type=int)
+@cfy.options.tenant_name(
+    required=False, resource_name_for_help='execution group')
+@cfy.options.common_options
+@cfy.pass_client()
+@cfy.pass_logger
+def execution_groups_set_concurrency(
+    group_id, concurrency, client, logger, tenant_name,
+):
+    """Change the concurrency setting of an execution group.
+
+    When starting executions belonging to this group, the new concurrency
+    setting will be used. Already-running executions are unaffected.
+    """
+    utils.explicit_tenant_name_message(tenant_name, logger)
+    client.execution_groups.set_concurrency(group_id, concurrency)
+    logger.info('Execution group %s: concurrency set to %s',
+                group_id, concurrency)
+
+
 @cfy.group(name='executions')
 @cfy.options.common_options
 def local_executions():
