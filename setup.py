@@ -23,7 +23,7 @@ install_requires = [
         'colorama==0.4.4',
         'requests>=2.7.0,<3.0.0',
         'click_didyoumean==0.3.0',
-        'cloudify-common[dispatcher]==7.1.0.dev1',
+        'cloudify-common[dispatcher]==7.0.0.dev1',
         'backports.shutil_get_terminal_size==1.0.0',
         'cryptography>=37,<40',
         'fabric==2.7.1',
@@ -37,7 +37,7 @@ packages = ['cloudify_cli',
 
 setup(
     name='cloudify',
-    version='7.1.0.dev1',
+    version='7.0.0.dev1',
     author='Cloudify',
     author_email='cosmo-admin@cloudify.co',
     packages=packages,
