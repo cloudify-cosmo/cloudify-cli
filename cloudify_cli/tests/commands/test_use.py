@@ -92,8 +92,6 @@ class UseTest(CliCommandTest):
 
     @patch('cloudify_cli.commands.profiles._get_provider_context',
            return_value={})
-    @patch('cloudify_rest_client.client.HTTPClient._do_request',
-           return_value={})
     def test_use_secured(self, *_):
         outcome = self.invoke('profiles use 1.2.3.4 --ssl')
         self.assertIn('Using manager 1.2.3.4', outcome.logs)
@@ -103,8 +101,6 @@ class UseTest(CliCommandTest):
                          context.rest_protocol)
 
     @patch('cloudify_cli.commands.profiles._get_provider_context',
-           return_value={})
-    @patch('cloudify_rest_client.client.HTTPClient._do_request',
            return_value={})
     def test_use_sets_default_port_and_protocol(self, *_):
         outcome = self.invoke('profiles use 1.2.3.4')
@@ -127,13 +123,16 @@ class UseTest(CliCommandTest):
         self.request_url = None
         self.verify = None
 
-        def mock_do_request(*_, **kwargs):
+        def mock_do_request(client_self, method, uri, **kwargs):
             self.do_request_headers = kwargs.get('headers')
-            self.request_url = kwargs.get('request_url')
-            self.verify = kwargs.get('verify')
+            self.request_url = client_self.get_request_url(
+                client_self.get_host(),
+                uri,
+            )
+            self.verify = client_self.get_request_verify()
             return 'success'
 
-        with patch('cloudify_rest_client.client.HTTPClient._do_request',
+        with patch('cloudify_rest_client.client.HTTPClient.do_request',
                    new=mock_do_request):
             if self.client._client.port == SSL_PORT:
                 secured_flag = '--ssl'
