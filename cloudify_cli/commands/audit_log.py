@@ -7,8 +7,8 @@ from cloudify_cli.cli import cfy, helptexts
 from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.table import print_data
 
-AUDITLOG_COLUMNS = ['ref_table', 'ref_id', 'operation', 'creator_name',
-                    'execution_id', 'created_at']
+AUDITLOG_COLUMNS = ['id', 'ref_table', 'ref_id', 'ref_identifier', 'operation',
+                    'creator_name', 'execution_id', 'created_at']
 
 
 def _parse_before(ctx, _, spec):
@@ -42,7 +42,6 @@ def _parse_before(ctx, _, spec):
 @cfy.assert_manager_active()
 def auditlog():
     """Manage the audit log"""
-    pass
 
 
 @auditlog.command(name='list',
