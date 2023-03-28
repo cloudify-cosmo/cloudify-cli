@@ -5,10 +5,14 @@ import click
 
 from cloudify_cli.cli import cfy, helptexts
 from cloudify_cli.exceptions import CloudifyCliError
+from cloudify_cli.logger import get_global_json_output
 from cloudify_cli.table import print_data
 
-AUDITLOG_COLUMNS = ['ref_table', 'ref_id', 'operation', 'creator_name',
-                    'execution_id', 'created_at']
+REF_OBJECT = 'ref_object'
+LIST_COLUMNS = ['operation', REF_OBJECT, 'creator_name', 'execution_id',
+                'created_at']
+JSON_COLUMNS = ['id', 'ref_table', 'ref_id', 'ref_identifier', 'operation',
+                'creator_name', 'execution_id', 'created_at']
 
 
 def _parse_before(ctx, _, spec):
@@ -42,7 +46,6 @@ def _parse_before(ctx, _, spec):
 @cfy.assert_manager_active()
 def auditlog():
     """Manage the audit log"""
-    pass
 
 
 @auditlog.command(name='list',
@@ -117,9 +120,25 @@ def _list_logs(creator_name,
         offset=pagination_offset,
         size=pagination_size,
     )
-    print_data(AUDITLOG_COLUMNS, logs, 'AuditLogs:')
+    columns = JSON_COLUMNS if get_global_json_output() else LIST_COLUMNS
+    print_data(columns, _update_refs(logs), 'AuditLogs:')
     logger.info('Showing %d of %d audit log entries',
                 len(logs), logs.metadata.pagination.total)
+
+
+def _update_refs(logs_response):
+    for log in logs_response:
+        if ref_identifier := log.get('ref_identifier'):
+            if tenant_name := ref_identifier.get("tenant_name"):
+                prefix = f'{tenant_name}:'
+            else:
+                prefix = ''
+            for col in ['id', 'manager_id', 'username', 'storage_id']:
+                if val := ref_identifier.get(col):
+                    log[REF_OBJECT] = f'{prefix}{log.get("ref_table")}:{val}'
+            if not log.get(REF_OBJECT):
+                log[REF_OBJECT] = f'{log.get("ref_table")}:{log.get("ref_id")}'
+        yield log
 
 
 @auditlog.command(name='truncate',
