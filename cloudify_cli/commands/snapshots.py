@@ -37,7 +37,6 @@ SNAPSHOT_STATUSES = {
 def snapshots():
     """Handle manager snapshots
     """
-    pass
 
 
 @snapshots.command(name='restore',
@@ -97,6 +96,7 @@ def restore(snapshot_id,
 @cfy.options.common_options
 @cfy.options.queue_snapshot
 @cfy.options.tempdir_path
+@cfy.options.legacy
 @cfy.options.wait_for_status
 @cfy.pass_client()
 @cfy.pass_logger
@@ -106,6 +106,7 @@ def create(snapshot_id,
            exclude_events,
            queue,
            tempdir_path,
+           legacy,
            wait_for_status,
            logger,
            client):
@@ -124,7 +125,8 @@ def create(snapshot_id,
                                         not exclude_logs,
                                         not exclude_events,
                                         queue,
-                                        tempdir_path=tempdir_path)
+                                        tempdir_path=tempdir_path,
+                                        legacy=legacy)
     started_log_msg = "Started workflow execution. The execution's id is" \
                       " {0}.".format(execution.id)
     queued_log_msg = '`queue` flag was passed, snapshot creation will start' \
