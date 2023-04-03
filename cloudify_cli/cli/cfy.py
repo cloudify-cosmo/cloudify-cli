@@ -1431,6 +1431,13 @@ class Options(object):
             help=helptexts.TEMPDIR_PATH
         )
 
+        self.legacy = click.option(
+            '--legacy/--no-legacy',
+            is_flag=True,
+            default=True,
+            help=helptexts.LEGACY_SNAPSHOT
+        )
+
         self.wait_for_status = click.option(
             '-w',
             '--wait-for-status',
