@@ -600,6 +600,7 @@ DRIFT_ONLY = 'Run update without changing anything. This will still check ' \
              'drift and run update operations as necessary'
 TEMPDIR_PATH = "Temporary location to be used for snapshot creation. If not " \
                "specified, /tmp will be used."
+LEGACY_SNAPSHOT = "Create legacy version of the snapshot (as opposed to 'new')"
 WAIT_FOR_STATUS = "Whether to wait for snapshot status [default: False]."
 SUMMARY_HELP = """
     Retrieve summary of {type}, e.g. a count of each {example}.
