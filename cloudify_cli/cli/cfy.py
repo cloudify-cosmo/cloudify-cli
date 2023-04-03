@@ -1432,7 +1432,7 @@ class Options(object):
         )
 
         self.legacy = click.option(
-            '--legacy',
+            '--legacy/--no-legacy',
             is_flag=True,
             default=True,
             help=helptexts.LEGACY_SNAPSHOT
