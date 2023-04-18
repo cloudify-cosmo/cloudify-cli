@@ -35,7 +35,7 @@ sudo tar xf %{S:0} -C /
 %build
 
 # Create the venv with the custom Python symlinked in
-/opt/python3.11/bin/python3.11 -m venv %_cli_env
+/opt/python3.11/bin/python3.11 -m venv --copies %_cli_env
 
 %_cli_env/bin/pip install --upgrade pip
 %_cli_env/bin/pip install -r "${RPM_SOURCE_DIR}/dev-requirements.txt"
