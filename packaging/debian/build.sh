@@ -31,10 +31,10 @@ Description: Cloudify's Command Line Interface
 EOF
 
 # Download and untar our python3.11 package
-curl https://cloudify-cicd.s3.amazonaws.com/python-build-packages/cfy-python3.11-x86_64.tgz -o cfy-python3.11.tgz
+curl https://cloudify-cicd.s3.amazonaws.com/python-build-packages/cfy-python3.11-x86_64-cli.tgz -o cfy-python3.11.tgz
 tar xf cfy-python3.11.tgz -C /
 
-/opt/python3.11/bin/python3.11 -m venv /opt/cfy
+/opt/cfy/python3.11/bin/python3.11 -m venv /opt/cfy
 
 /opt/cfy/bin/pip install --upgrade pip setuptools
 /opt/cfy/bin/pip install -r "${PROJECT_DIR}/dev-requirements.txt"

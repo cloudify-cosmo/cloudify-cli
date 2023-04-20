@@ -23,7 +23,7 @@ URL:            https://github.com/cloudify-cosmo/cloudify-cli
 Vendor:         Cloudify Platform Ltd.
 Packager:       Cloudify Platform Ltd.
 
-Source0:        https://cloudify-cicd.s3.amazonaws.com/python-build-packages/cfy-python3.11-%{ARCHITECTURE}.tgz
+Source0:        https://cloudify-cicd.s3.amazonaws.com/python-build-packages/cfy-python3.11-%{ARCHITECTURE}-cli.tgz
 
 
 %description
@@ -35,7 +35,7 @@ sudo tar xf %{S:0} -C /
 %build
 
 # Create the venv with the custom Python symlinked in
-/opt/python3.11/bin/python3.11 -m venv %_cli_env
+/opt/cfy/python3.11/bin/python3.11 -m venv %_cli_env
 
 %_cli_env/bin/pip install --upgrade pip
 %_cli_env/bin/pip install -r "${RPM_SOURCE_DIR}/dev-requirements.txt"
