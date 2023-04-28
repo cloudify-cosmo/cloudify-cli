@@ -50,10 +50,10 @@ def create(log_bundle_id,
 @cfy.options.common_options
 @cfy.pass_client()
 @cfy.pass_logger
-def delete(log_bundle_id, logger, client, tenant_name):
+def delete(log_bundle_id, logger, client):
     """Delete a log_bundle from the manager
 
-    `LOG_BUNDLE_ID` is the id of the log bundle to download.
+    `LOG_BUNDLE_ID` is the id of the log bundle to delete.
     """
     logger.info('Deleting log_bundle {0}...'.format(log_bundle_id))
     client.log_bundles.delete(log_bundle_id)
