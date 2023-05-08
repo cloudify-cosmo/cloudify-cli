@@ -38,7 +38,7 @@ sudo tar xf %{S:0} -C /
 /opt/cfy/python3.11/bin/python3.11 -m venv %_cli_env
 
 %_cli_env/bin/pip install --upgrade pip
-%_cli_env/bin/pip install -r "${RPM_SOURCE_DIR}/dev-requirements.txt"
+%_cli_env/bin/pip install -r "${RPM_SOURCE_DIR}/requirements.txt"
 %_cli_env/bin/pip install "${RPM_SOURCE_DIR}"
 
 

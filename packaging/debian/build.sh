@@ -37,7 +37,7 @@ tar xf cfy-python3.11.tgz -C /
 /opt/cfy/python3.11/bin/python3.11 -m venv /opt/cfy
 
 /opt/cfy/bin/pip install --upgrade pip setuptools
-/opt/cfy/bin/pip install -r "${PROJECT_DIR}/dev-requirements.txt"
+/opt/cfy/bin/pip install -r "${PROJECT_DIR}/requirements.txt"
 /opt/cfy/bin/pip install "${PROJECT_DIR}"
 cp /opt/cfy "${BUILD_DIR}/opt/cfy" -fr
 

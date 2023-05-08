@@ -1,7 +1,7 @@
 def install_test_dependencies() {
   echo 'installing test dependencies'
   sh """#!/bin/bash
-    ~/venv/bin/pip install -r dev-requirements.txt
+    ~/venv/bin/pip install -r requirements.txt
     ~/venv/bin/pip install -r test-requirements.txt
     ~/venv/bin/pip install -e .
   """
