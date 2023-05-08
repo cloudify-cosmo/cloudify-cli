@@ -107,7 +107,7 @@ run $CLI_PATH\python.exe get-pip.py pip==$PIP_VERSION
 
 Write-Host "Installing CLI"
 pushd cloudify-cli
-    run $CLI_PATH\scripts\pip.exe install --prefix="$CLI_PATH" -r dev-requirements.txt
+    run $CLI_PATH\scripts\pip.exe install --prefix="$CLI_PATH" -r requirements.txt
     run $CLI_PATH\scripts\pip.exe install --prefix="$CLI_PATH" .
 popd
 
