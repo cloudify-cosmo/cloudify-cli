@@ -1988,6 +1988,12 @@ class Options(object):
             is_flag=True,
             help=helptexts.AGENT_ALL_STATES,
         )
+        self.recursive_delete = click.option(
+            '--recursive',
+            default=False,
+            is_flag=True,
+            help=helptexts.RECURSIVE_DELETE,
+        )
 
         # we add separate --node-instance-id, --node-id and --deployment-id
         # arguments, but only expose a agents_filter = {'node_id': ..} dict

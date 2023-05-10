@@ -623,3 +623,5 @@ SECRETS_PROVIDER_OPTIONS = """
     Secrets Provider's options in stringify JSON format
     """
 EVALUATE_FUNCTIONS = "Evaluate functions in returned nodes and node instances"
+RECURSIVE_DELETE = 'Recursively delete all service deployments contained in ' \
+                   'this deployment'
