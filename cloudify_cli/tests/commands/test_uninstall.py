@@ -91,7 +91,8 @@ class UninstallTest(CliCommandTest):
         deployments_delete_mock.assert_called_with(
             deployment_id=u'did',
             force=False,
-            tenant_name=None
+            tenant_name=None,
+            recursive=False,
         )
 
     @patch('cloudify_cli.env.get_rest_client')

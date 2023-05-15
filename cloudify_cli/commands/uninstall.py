@@ -26,6 +26,7 @@ from cloudify_cli.commands import blueprints, executions, deployments
 @cfy.argument('deployment-id')
 @cfy.options.workflow_id('uninstall')
 @cfy.options.force(help=helptexts.FORCE_CONCURRENT_EXECUTION)
+@cfy.options.recursive_delete
 @cfy.options.parameters
 @cfy.options.allow_custom_parameters
 @cfy.options.timeout()
@@ -39,6 +40,7 @@ def manager(ctx,
             deployment_id,
             workflow_id,
             force,
+            recursive,
             parameters,
             allow_custom_parameters,
             timeout,
@@ -57,6 +59,8 @@ def manager(ctx,
     # if no workflow was supplied, execute the `uninstall` workflow
     workflow_id = workflow_id or DEFAULT_UNINSTALL_WORKFLOW
 
+    if recursive:
+        parameters['recursive'] = True
     ctx.invoke(
         executions.manager_start,
         workflow_id=workflow_id,
@@ -79,7 +83,9 @@ def manager(ctx,
         deployments.manager_delete,
         deployment_id=deployment_id,
         force=force,
-        tenant_name=tenant_name)
+        tenant_name=tenant_name,
+        recursive=recursive,
+    )
     ctx.invoke(
         blueprints.delete,
         blueprint_id=blueprint_id,
