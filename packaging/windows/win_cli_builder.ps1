@@ -13,7 +13,7 @@ $CLI_PATH = "C:\Program Files\Cloudify $VERSION-$PRERELEASE CLI"
 $GET_PIP_URL = "http://repository.cloudifysource.org/cloudify/components/win-cli-package-resources/get-pip-20.py"
 $PIP_VERSION = "20.1.1"
 $REPO_URL = "https://github.com/cloudify-cosmo/cloudify-cli/archive/$DEV_BRANCH.zip"
-$PY_URL = "https://repository.cloudifysource.org/cloudify/components/python-3.6.8-embed-amd64.zip"
+$PY_URL = "https://repository.cloudifysource.org/cloudify/components/python-3.11.1-embed-amd64.zip"
 $INNO_SETUP_URL = "http://repository.cloudifysource.org/cloudify/components/win-cli-package-resources/inno_setup_6.exe"
 
 
