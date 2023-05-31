@@ -88,16 +88,16 @@ Expand-Archive -Path python.zip -DestinationPath $CLI_PATH
 
 # We need to expand this to make virtualenv work
 pushd "$CLI_PATH"
-    Expand-Archive -Path python36.zip
-    rm_rf python36.zip
+    Expand-Archive -Path python311.zip
+    rm_rf python311.zip
     mkdir Lib
-    move python36\* Lib
-    rmdir python36
+    move python311\* Lib
+    rmdir python311
 popd
 
 
 Write-Host "Adding pip to embedded python"
-Set-Content -Path "$CLI_PATH\python36._pth" -Value ".
+Set-Content -Path "$CLI_PATH\python311._pth" -Value ".
 .\Lib
 .\Lib\site-packages
 
