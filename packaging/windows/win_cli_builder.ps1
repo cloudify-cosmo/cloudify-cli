@@ -13,7 +13,7 @@ $CLI_PATH = "C:\Program Files\Cloudify $VERSION-$PRERELEASE CLI"
 $GET_PIP_URL = "http://repository.cloudifysource.org/cloudify/components/win-cli-package-resources/get-pip-20.py"
 $PIP_VERSION = "20.1.1"
 $REPO_URL = "https://github.com/cloudify-cosmo/cloudify-cli/archive/$DEV_BRANCH.zip"
-$PY_URL = "https://repository.cloudifysource.org/cloudify/components/python-3.6.8-embed-amd64.zip"
+$PY_URL = "https://repository.cloudifysource.org/cloudify/components/python-3.11.1-embed-amd64.zip"
 $INNO_SETUP_URL = "http://repository.cloudifysource.org/cloudify/components/win-cli-package-resources/inno_setup_6.exe"
 
 
@@ -36,7 +36,6 @@ function rm_rf {
 
 
 ### Main ###
-
 Write-Host "Deleting existing artifacts"
 rm_rf python.zip
 rm_rf get-pip.py
@@ -88,16 +87,16 @@ Expand-Archive -Path python.zip -DestinationPath $CLI_PATH
 
 # We need to expand this to make virtualenv work
 pushd "$CLI_PATH"
-    Expand-Archive -Path python36.zip
-    rm_rf python36.zip
+    Expand-Archive -Path python311.zip
+    rm_rf python311.zip
     mkdir Lib
-    move python36\* Lib
-    rmdir python36
+    move python311\* Lib
+    rmdir python311
 popd
 
 
 Write-Host "Adding pip to embedded python"
-Set-Content -Path "$CLI_PATH\python36._pth" -Value ".
+Set-Content -Path "$CLI_PATH\python311._pth" -Value ".
 .\Lib
 .\Lib\site-packages
 
@@ -107,7 +106,10 @@ run $CLI_PATH\python.exe get-pip.py pip==$PIP_VERSION
 
 Write-Host "Installing CLI"
 pushd cloudify-cli
-    run $CLI_PATH\scripts\pip.exe install --prefix="$CLI_PATH" -r dev-requirements.txt
+    run $CLI_PATH\python.exe -m pip install --upgrade pip
+    run $CLI_PATH\scripts\pip.exe install --upgrade wheel
+    run $CLI_PATH\scripts\pip.exe install --upgrade setuptools
+    run $CLI_PATH\scripts\pip.exe install --prefix="$CLI_PATH" -r requirements.txt
     run $CLI_PATH\scripts\pip.exe install --prefix="$CLI_PATH" .
 popd
 

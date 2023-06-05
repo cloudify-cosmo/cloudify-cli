@@ -1922,6 +1922,12 @@ class Options(object):
             required=False,
             help=helptexts.EVALUATE_FUNCTIONS,
         )
+        self.recursive_delete = click.option(
+            '--recursive',
+            default=False,
+            is_flag=True,
+            help=helptexts.RECURSIVE_DELETE,
+        )
 
     def common_options(self, f):
         """A shorthand for applying commonly used arguments.
@@ -1992,6 +1998,7 @@ class Options(object):
         # we add separate --node-instance-id, --node-id and --deployment-id
         # arguments, but only expose a agents_filter = {'node_id': ..} dict
         # to the decorated function
+
         def _filters_deco(f):
             @wraps(f)
             def _inner(*args, **kwargs):

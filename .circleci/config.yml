@@ -26,14 +26,14 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - << parameters.cache_prefix >>-venv-{{ checksum "dev-requirements.txt" }}-{{ checksum "test-requirements.txt" }}-{{ checksum "setup.py" }}
-      - run: ~/venv/bin/pip install -r dev-requirements.txt
+            - << parameters.cache_prefix >>-venv-{{ checksum "requirements.txt" }}-{{ checksum "test-requirements.txt" }}-{{ checksum "setup.py" }}
+      - run: ~/venv/bin/pip install -r requirements.txt
       - run: ~/venv/bin/pip install -r test-requirements.txt
       - run: ~/venv/bin/pip install -e .
       - save_cache:
           paths:
             - /home/circleci/venv
-          key: << parameters.cache_prefix >>-venv-{{ checksum "dev-requirements.txt" }}-{{ checksum "test-requirements.txt" }}-{{ checksum "setup.py" }}
+          key: << parameters.cache_prefix >>-venv-{{ checksum "requirements.txt" }}-{{ checksum "test-requirements.txt" }}-{{ checksum "setup.py" }}
   pytest:
     steps:
       - run:

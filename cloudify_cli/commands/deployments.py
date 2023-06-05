@@ -698,11 +698,19 @@ def manager_create(
 @cfy.options.common_options
 @cfy.options.with_logs
 @cfy.options.tenant_name(required=False, resource_name_for_help='deployment')
+@cfy.options.recursive_delete
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-def manager_delete(deployment_id, force, with_logs, logger, client,
-                   tenant_name):
+def manager_delete(
+    deployment_id,
+    force,
+    with_logs,
+    recursive,
+    logger,
+    client,
+    tenant_name,
+):
     """Delete a deployment from the manager
 
     `DEPLOYMENT_ID` is the id of the deployment to delete.
@@ -710,7 +718,12 @@ def manager_delete(deployment_id, force, with_logs, logger, client,
 
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Trying to delete deployment %s...', deployment_id)
-    client.deployments.delete(deployment_id, force, with_logs=with_logs)
+    client.deployments.delete(
+        deployment_id,
+        force,
+        with_logs=with_logs,
+        recursive=recursive,
+    )
     try:
         execution = get_deployment_environment_execution(
             client, deployment_id, DELETE_DEP)
@@ -1192,11 +1205,19 @@ def groups_create(deployment_group_name, inputs, default_blueprint,
 @click.argument('deployment-group-name')
 @cfy.options.delete_deployments
 @cfy.options.with_logs
+@cfy.options.recursive_delete
 @cfy.options.force(help=helptexts.FORCE_DELETE_DEPLOYMENT)
 @cfy.pass_client()
 @cfy.pass_logger
-def groups_delete(deployment_group_name, delete_deployments, force, with_logs,
-                  client, logger):
+def groups_delete(
+    deployment_group_name,
+    delete_deployments,
+    force,
+    with_logs,
+    recursive,
+    client,
+    logger,
+):
     """Delete a deployment group
 
     This deletes a deployment group, which by default only removes the
@@ -1208,6 +1229,7 @@ def groups_delete(deployment_group_name, delete_deployments, force, with_logs,
         delete_deployments=delete_deployments,
         force=force,
         with_logs=with_logs,
+        recursive=recursive,
     )
     logger.info('Group %s deleted', deployment_group_name)
 
