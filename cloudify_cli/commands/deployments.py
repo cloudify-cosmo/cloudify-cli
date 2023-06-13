@@ -1420,9 +1420,8 @@ def delete_group_labels(label, deployment_group_name,
 @cfy.assert_manager_active()
 @cfy.pass_client()
 @cfy.pass_logger
-@cfy.pass_context
-def groups_update_deployments(ctx, group_id, logger, client, tenant_name,
-                              concurrency, **kwargs):
+def groups_update_deployments(group_id, logger, client, tenant_name,
+                              concurrency, blueprint_id=None, **kwargs):
     """Update all deployments in the given group.
 
     If updating with a new blueprint, the blueprint must already be
@@ -1434,11 +1433,11 @@ def groups_update_deployments(ctx, group_id, logger, client, tenant_name,
     """
     utils.explicit_tenant_name_message(tenant_name, logger)
     logger.info('Starting update of all deployments in group %s', group_id)
-    if 'blueprint_id' in kwargs:
+    if blueprint_id:
         # check that the blueprint exists ahead of time, throw otherwise
-        client.blueprints.get(kwargs['blueprint_id'])
-    if 'dont_update_plugins' in kwargs:
-        kwargs['update_plugins'] = not kwargs.pop('dont_update_plugins')
+        client.blueprints.get(blueprint_id)
+        kwargs['blueprint_id'] = blueprint_id
+    kwargs['update_plugins'] = not kwargs.pop('dont_update_plugins')
     execution_group = client.execution_groups.start(
         deployment_group_id=group_id,
         workflow_id='csys_update_deployment',
