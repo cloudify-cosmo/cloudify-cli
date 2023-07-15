@@ -25,7 +25,7 @@ install_requires = [
         'click_didyoumean==0.3.0',
         'cloudify-common[dispatcher]==7.1.0.dev1',
         'backports.shutil_get_terminal_size==1.0.0',
-        'cryptography>=37,<40',
+        'cryptography>=37,<42',
         'fabric==2.7.1',
 ]
 
