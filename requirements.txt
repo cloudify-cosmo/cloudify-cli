@@ -90,7 +90,7 @@ pynacl==1.5.0
     # via paramiko
 pytz==2022.2.1
     # via cloudify-common
-pyyaml==6.0
+pyyaml==6.0.1
     # via cloudify-common
 requests==2.30.0
     # via
