@@ -308,7 +308,7 @@ class BlueprintsTest(CliCommandTest):
             self.assertEqual(input['description'], description)
 
         with patch('cloudify_cli.env.get_rest_client',
-                   get_rest_client_mock),\
+                   get_rest_client_mock), \
                 patch('cloudify_cli.table.generate', table_mock):
             self.invoke('cfy blueprints inputs {0}'.format(blueprint_id))
 
