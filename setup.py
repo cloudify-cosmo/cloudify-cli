@@ -17,16 +17,16 @@ import sys
 from setuptools import setup
 
 install_requires = [
-        'click>8,<9',
-        'wagon[venv]>=0.11.2',
-        'retrying==1.3.3',
-        'colorama==0.4.4',
-        'requests>=2.7.0,<3.0.0',
-        'click_didyoumean==0.3.0',
-        'cloudify-common[dispatcher]==7.0.3.dev1',
-        'backports.shutil_get_terminal_size==1.0.0',
-        'cryptography>=37,<40',
-        'fabric==2.7.1',
+    'backports.shutil_get_terminal_size==1.0.0',
+    'click>8,<9',
+    'click_didyoumean==0.3.0',
+    'cloudify-common[dispatcher]==7.0.3.dev1',
+    'colorama==0.4.4',
+    'cryptography>=37,<40',
+    'fabric==2.7.1',
+    'requests>=2.7.0,<3.0.0',
+    'retrying==1.3.3',
+    'wagon[venv]>=0.11.2',
 ]
 
 packages = ['cloudify_cli',
