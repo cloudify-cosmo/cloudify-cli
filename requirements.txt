@@ -34,11 +34,7 @@ click==8.1.7
     #   cloudify (setup.py)
 click-didyoumean==0.3.0
     # via cloudify (setup.py)
-<<<<<<< HEAD
-cloudify-common @ https://github.com/cloudify-cosmo/cloudify-common/archive/master.zip
-=======
-cloudify-common[dispatcher] @ https://github.com/cloudify-cosmo/cloudify-common/archive/7.0.3-build.zip
->>>>>>> ce68d6e6 (NE-7622 - Upgrade dependencies (#1496))
+cloudify-common[dispatcher] @ https://github.com/cloudify-cosmo/cloudify-common/archive/master.zip
     # via
     #   -r requirements.in
     #   cloudify (setup.py)
@@ -109,13 +105,7 @@ urllib3==2.0.6
     # via
     #   -r requirements.in
     #   requests
-<<<<<<< HEAD
-virtualenv==20.23.0
-    # via wagon
-wagon[venv]==0.12.0
-=======
 wagon[venv]==1.0.1
->>>>>>> ce68d6e6 (NE-7622 - Upgrade dependencies (#1496))
     # via
     #   cloudify (setup.py)
     #   cloudify-common
