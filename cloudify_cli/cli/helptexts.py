@@ -601,6 +601,13 @@ DRIFT_ONLY = 'Run update without changing anything. This will still check ' \
 TEMPDIR_PATH = "Temporary location to be used for snapshot creation. If not " \
                "specified, /tmp will be used."
 LEGACY_SNAPSHOT = "Create legacy version of the snapshot (as opposed to 'new')"
+SNAPSHOT_LISTNER_TIMEOUT = "Changes the timeout for pending actions to " \
+                           "complete. As snapshot creation is a " \
+                           "non-blocking execution, it can be run " \
+                           "independently of others. System changes " \
+                           "occuring during snapshot creation are added " \
+                           "to the snapshot. This parameter specified the " \
+                           "additional waiting time (in seconds)."
 WAIT_FOR_STATUS = "Whether to wait for snapshot status [default: False]."
 SUMMARY_HELP = """
     Retrieve summary of {type}, e.g. a count of each {example}.

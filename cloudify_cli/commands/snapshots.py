@@ -19,6 +19,7 @@ from cloudify.snapshots import STATES
 from cloudify_cli import utils
 from cloudify_cli.table import print_data
 from cloudify_cli.cli import helptexts, cfy
+from cloudify_cli.exceptions import CloudifyCliError
 from cloudify_cli.execution_events_fetcher import wait_for_execution
 
 SNAPSHOT_COLUMNS = ['id', 'created_at', 'status', 'error',
@@ -97,6 +98,7 @@ def restore(snapshot_id,
 @cfy.options.queue_snapshot
 @cfy.options.tempdir_path
 @cfy.options.legacy
+@cfy.options.listener_timeout
 @cfy.options.wait_for_status
 @cfy.pass_client()
 @cfy.pass_logger
@@ -107,6 +109,7 @@ def create(snapshot_id,
            queue,
            tempdir_path,
            legacy,
+           listener_timeout,
            wait_for_status,
            logger,
            client):
@@ -117,6 +120,10 @@ def create(snapshot_id,
 
     `SNAPSHOT_ID` is the id to attach to the snapshot.
     """
+    if legacy and listener_timeout:
+        raise CloudifyCliError(
+            'Listener timeout can be set only for non-legacy snapshots.')
+
     snapshot_id = snapshot_id or utils.generate_suffixed_id('snapshot')
     logger.info('Creating snapshot {0}...'.format(snapshot_id))
 
@@ -126,7 +133,8 @@ def create(snapshot_id,
                                         not exclude_events,
                                         queue,
                                         tempdir_path=tempdir_path,
-                                        legacy=legacy)
+                                        legacy=legacy,
+                                        listener_timeout=listener_timeout)
     started_log_msg = "Started workflow execution. The execution's id is" \
                       " {0}.".format(execution.id)
     queued_log_msg = '`queue` flag was passed, snapshot creation will start' \
