@@ -1441,7 +1441,7 @@ class Options(object):
         self.listener_timeout = click.option(
             '--listener-timeout',
             type=float,
-            help=helptexts.SNAPSHOT_LISTNER_TIMEOUT,
+            help=helptexts.SNAPSHOT_LISTENER_TIMEOUT,
         )
 
         self.wait_for_status = click.option(
