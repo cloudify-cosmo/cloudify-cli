@@ -1438,6 +1438,12 @@ class Options(object):
             help=helptexts.LEGACY_SNAPSHOT
         )
 
+        self.listener_timeout = click.option(
+            '--listener-timeout',
+            type=float,
+            help=helptexts.SNAPSHOT_LISTENER_TIMEOUT,
+        )
+
         self.wait_for_status = click.option(
             '-w',
             '--wait-for-status',
