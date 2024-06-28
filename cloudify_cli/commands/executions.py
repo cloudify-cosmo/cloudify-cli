@@ -155,7 +155,8 @@ def manager_list(
             is_descending=descending,
             _all_tenants=all_tenants,
             _offset=pagination_offset,
-            _size=pagination_size
+            _size=pagination_size,
+            _include=MINIMAL_EXECUTION_COLUMNS,
         )
 
     except exceptions.CloudifyClientError as e:
