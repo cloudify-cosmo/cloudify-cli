@@ -4,3 +4,4 @@ coverage==6.4.4
 pytest
 pytest-cov==2.8.1
 decorator==4.4.2
+zipp>=3.19.1 # not directly required, pinned by Snyk to avoid a vulnerability
