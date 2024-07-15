@@ -4,30 +4,26 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in setup.py
 #
-aiohttp==3.8.6
+aiohttp==3.9.3
     # via cloudify-common
 aiosignal==1.3.1
     # via aiohttp
-async-timeout==4.0.3
-    # via aiohttp
-attrs==23.1.0
+attrs==23.2.0
     # via aiohttp
 backports-shutil-get-terminal-size==1.0.0
     # via cloudify (setup.py)
-bcrypt==4.0.1
+bcrypt==4.1.2
     # via paramiko
 bottle==0.12.25
     # via cloudify-common
-certifi==2023.7.22
+certifi==2024.2.2
     # via requests
 cffi==1.16.0
     # via
     #   cryptography
     #   pynacl
-charset-normalizer==3.3.0
-    # via
-    #   aiohttp
-    #   requests
+charset-normalizer==3.3.2
+    # via requests
 click==8.1.7
     # via
     #   click-didyoumean
@@ -40,7 +36,7 @@ cloudify-common[dispatcher] @ https://github.com/cloudify-cosmo/cloudify-common/
     #   cloudify (setup.py)
 colorama==0.4.6
     # via cloudify (setup.py)
-cryptography==41.0.4
+cryptography==42.0.5
     # via
     #   cloudify (setup.py)
     #   paramiko
@@ -48,37 +44,37 @@ decorator==5.1.1
     # via fabric
 deprecated==1.2.14
     # via fabric
-distro==1.8.0
+distro==1.9.0
     # via cloudify-common
 fabric==3.2.2
     # via cloudify (setup.py)
 fasteners==0.19
     # via cloudify-common
-frozenlist==1.4.0
+frozenlist==1.4.1
     # via
     #   aiohttp
     #   aiosignal
-idna==3.4
+idna==3.6
     # via
     #   requests
     #   yarl
 invoke==2.2.0
     # via fabric
-jinja2==3.1.2
+jinja2==3.1.3
     # via cloudify-common
-markupsafe==2.1.3
+markupsafe==2.1.5
     # via jinja2
-multidict==6.0.4
+multidict==6.0.5
     # via
     #   aiohttp
     #   yarl
 networkx==2.8.8
     # via cloudify-common
-paramiko==3.3.1
+paramiko==3.4.0
     # via fabric
 pika==1.3.2
     # via cloudify-common
-pkginfo==1.9.6
+pkginfo==1.10.0
     # via wagon
 proxy-tools==0.1.0
     # via cloudify-common
@@ -86,7 +82,7 @@ pycparser==2.21
     # via cffi
 pynacl==1.5.0
     # via paramiko
-pytz==2023.3.post1
+pytz==2024.1
     # via cloudify-common
 pyyaml==6.0.1
     # via cloudify-common
@@ -101,7 +97,7 @@ retrying==1.3.4
     # via cloudify (setup.py)
 six==1.16.0
     # via retrying
-urllib3==2.0.6
+urllib3==2.2.1
     # via
     #   -r requirements.in
     #   requests
@@ -109,9 +105,9 @@ wagon[venv]==1.0.1
     # via
     #   cloudify (setup.py)
     #   cloudify-common
-wheel==0.41.2
+wheel==0.43.0
     # via wagon
-wrapt==1.15.0
+wrapt==1.16.0
     # via deprecated
-yarl==1.9.2
+yarl==1.9.4
     # via aiohttp
