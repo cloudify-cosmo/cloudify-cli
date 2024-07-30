@@ -12,6 +12,7 @@ attrs==23.2.0
     # via aiohttp
 backports-shutil-get-terminal-size==1.0.0
     # via cloudify (setup.py)
+
 bcrypt==4.2.0
     # via paramiko
 bottle==0.12.25
