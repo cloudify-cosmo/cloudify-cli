@@ -23,7 +23,7 @@ install_requires = [
     'colorama',
     'cryptography',
     'fabric',
-    'requests',
+    'requests>=2.32.0,<3',
     'retrying',
     'wagon[venv]',
 ]
