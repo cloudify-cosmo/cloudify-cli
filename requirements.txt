@@ -30,7 +30,7 @@ click==8.1.7
     #   cloudify (setup.py)
 click-didyoumean==0.3.0
     # via cloudify (setup.py)
-cloudify-common[dispatcher] @ https://github.com/cloudify-cosmo/cloudify-common/archive/7.0.4-build.zip
+cloudify-common[dispatcher] @ https://github.com/cloudify-cosmo/cloudify-common/archive/7.0.5-build.zip
     # via
     #   -r requirements.in
     #   cloudify (setup.py)

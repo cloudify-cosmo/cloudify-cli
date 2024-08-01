@@ -38,7 +38,7 @@ packages = [
 
 setup(
     name='cloudify',
-    version='7.0.4',
+    version='7.0.5.dev1',
     author='Cloudify',
     author_email='cosmo-admin@cloudify.co',
     packages=packages,
