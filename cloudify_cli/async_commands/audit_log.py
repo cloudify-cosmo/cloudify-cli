@@ -32,19 +32,24 @@ async def _stream_logs(creator_name,
     if not hasattr(client.auditlog, 'stream'):
         raise CloudifyCliError('Streaming requires Python>=3.6.')
     logger.info('Streaming audit log entries...')
-    response = await client.auditlog.stream(timeout=timeout,
-                                            creator_name=creator_name,
-                                            execution_id=execution_id,
-                                            since=since)
-    try:
-        async for data in response.content:
-            for audit_log in _streamed_audit_log(data):
-                if get_global_json_output():
-                    print(audit_log)
-                else:
-                    print(_format_audit_log(audit_log))
-    except aiohttp.client_exceptions.ClientError as e:
-        raise CloudifyCliError(f'Error getting audit log stream: {e}') from e
+    async with client.auditlog as auditlog:
+        response = await auditlog.stream(
+            timeout=timeout,
+            creator_name=creator_name,
+            execution_id=execution_id,
+            since=since
+        )
+        try:
+            async for data in response.content:
+                for audit_log in _streamed_audit_log(data):
+                    if get_global_json_output():
+                        print(audit_log)
+                    else:
+                        print(_format_audit_log(audit_log))
+        except aiohttp.client_exceptions.ClientError as e:
+            raise CloudifyCliError(
+                f'Error getting audit log stream: {e}'
+            ) from e
 
 
 def _streamed_audit_log(data):
