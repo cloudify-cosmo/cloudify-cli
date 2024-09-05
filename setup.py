@@ -21,7 +21,7 @@ install_requires = [
     'click_didyoumean',
     'cloudify-common[dispatcher]',
     'colorama',
-    'cryptography',
+    'cryptography==43.0.1',
     'fabric',
     'requests>=2.32.0,<3',
     'retrying',
