@@ -109,8 +109,8 @@ pushd cloudify-cli
     run $CLI_PATH\python.exe -m pip install --upgrade pip
     run $CLI_PATH\scripts\pip.exe install --upgrade wheel
     run $CLI_PATH\scripts\pip.exe install --upgrade setuptools
-    run $CLI_PATH\scripts\pip.exe install --prefix="$CLI_PATH" -r requirements.txt
-    run $CLI_PATH\scripts\pip.exe install --prefix="$CLI_PATH" .
+    run $CLI_PATH\scripts\pip.exe install --no-cache-dir --prefix="$CLI_PATH" -r requirements.txt
+    run $CLI_PATH\scripts\pip.exe install --no-cache-dir --prefix="$CLI_PATH" .
 popd
 
 
